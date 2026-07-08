@@ -35,8 +35,8 @@ const groups = [
   {
     title: "Experiment",
     items: [
-      { label: "Blank Experiment", icon: Beaker, href: "/experiments" },
-      { label: "From Protocol", icon: ClipboardList, href: "/protocol-run" },
+      { label: "Blank Experiment", icon: Beaker, href: "/entries/new" },
+      { label: "From Protocol", icon: ClipboardList, href: "/entries/new" },
       { label: "From Entry", icon: BookOpen, href: "/entries" },
     ],
   },
@@ -56,7 +56,7 @@ const groups = [
 
 const mobileItems = [
   { label: "Quick Entry", href: "/entries/new?source=text" },
-  { label: "Start from Protocol", href: "/protocol-run" },
+  { label: "Start from Protocol", href: "/entries/new" },
   { label: "Photo Entry", href: "/entries/new?source=photo" },
   { label: "Add Result", href: "/results" },
   { label: "Add Inventory", href: "/inventory" },

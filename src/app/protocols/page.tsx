@@ -162,12 +162,20 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
             title={version.title}
             eyebrow="Structured editor"
             action={
-              <Link
-                href="/protocol-run"
-                className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
-              >
-                Start Run
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/entries/new?protocolVersionId=${version.id}`}
+                  className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
+                >
+                  Record Entry
+                </Link>
+                <Link
+                  href="/protocol-run"
+                  className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss shadow-paper transition hover:bg-sage-surface"
+                >
+                  Run Preview
+                </Link>
+              </div>
             }
           />
           <CardBody className="space-y-5">

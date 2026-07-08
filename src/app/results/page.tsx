@@ -4,11 +4,41 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
-import { results } from "@/lib/demo-data";
+import { results as demoResults } from "@/lib/demo-data";
+import { prisma } from "@/lib/db";
 import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import type { ResultRecord } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+async function getResultRecords(): Promise<ResultRecord[]> {
+  try {
+    const records = await prisma.result.findMany({
+      include: { experiment: true, entity: true, project: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    return records.map((result) => ({
+      id: result.id,
+      title: result.title,
+      resultType: result.resultType,
+      experimentTitle: result.experiment?.title,
+      entityName: result.entity?.name,
+      projectName: result.project?.name,
+      status: result.status,
+      numericValue: result.numericValue ?? undefined,
+      textValue: result.textValue ?? undefined,
+      unit: result.unit ?? undefined,
+      notes: result.notes ?? undefined,
+    }));
+  } catch {
+    return demoResults;
+  }
+}
 
 export default async function ResultsPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
+  const results = await getResultRecords();
   const type = firstSearchParam(params, "type");
   const status = firstSearchParam(params, "status");
   const filteredResults = results.filter((result) => {

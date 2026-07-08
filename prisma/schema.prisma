@@ -1,0 +1,784 @@
+// LabNest V1 schema.
+// Prisma 7 keeps the datasource URL in prisma.config.ts; this schema remains
+// provider-focused and is designed for local PostgreSQL via Docker Compose.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EntrySourceType {
+  text
+  photo
+  file
+  voice
+  manual
+}
+
+enum RecordLifecycleStatus {
+  draft
+  recorded
+  submitted
+  reviewed
+}
+
+enum ExperimentStatus {
+  planned
+  running
+  completed
+  failed
+  archived
+}
+
+enum ProtocolStatus {
+  draft
+  active
+  retired
+  archived
+}
+
+enum ProjectStatus {
+  active
+  paused
+  completed
+  archived
+}
+
+enum EntityType {
+  plasmid
+  primer
+  oligo
+  cell_line
+  antibody
+  protein
+  reagent
+  compound
+  bacteria
+  mixture
+  sample
+  other
+}
+
+enum ObjectStatus {
+  active
+  inactive
+  archived
+}
+
+enum SampleLifecycleStatus {
+  registered
+  prepared
+  stocked
+  in_use
+  depleted
+  discarded
+  archived
+}
+
+enum SampleLifecycleEventType {
+  register
+  collect
+  prepare
+  aliquot
+  receive
+  store
+  transfer
+  thaw
+  refreeze
+  consume
+  qc
+  discard
+  result_link
+  note
+}
+
+enum InventoryLocationType {
+  freezer
+  fridge
+  shelf
+  box
+  position
+  drawer
+  plate
+  rack
+  room
+  other
+}
+
+enum InventoryTransactionType {
+  add
+  consume
+  transfer
+  adjust
+  discard
+  receive
+  aliquot
+  thaw
+  refreeze
+  qc
+  return
+}
+
+enum PurchaseStatus {
+  planned
+  ordered
+  received
+  stocked
+  cancelled
+}
+
+enum ProcurementInquiryStatus {
+  draft
+  quoted
+  selected
+  converted
+  archived
+}
+
+enum ProcurementQuoteLineStatus {
+  candidate
+  selected
+  not_selected
+  expired
+  rejected
+  duplicate
+  future_candidate
+  converted
+}
+
+enum ProcurementSourceType {
+  excel
+  manual
+  school_template
+}
+
+enum SequenceType {
+  DNA
+  RNA
+  Protein
+}
+
+enum LinkCreatedBy {
+  user
+  system
+  ai
+}
+
+enum ProposedActionSourceType {
+  ai
+  protocol
+  entry
+  import
+  manual
+  system
+}
+
+enum ProposedActionStatus {
+  pending
+  accepted
+  rejected
+  edited
+  executed
+}
+
+enum ProposedActionType {
+  create_experiment
+  update_experiment
+  consume_inventory
+  create_entity
+  create_result
+  create_purchase_request
+  receive_purchase
+  link_attachment
+  link_item
+  create_inventory_item
+  create_protocol_run
+}
+
+enum AIProviderType {
+  openai
+  anthropic
+  openai_compatible
+  manual_copy_paste
+}
+
+enum ReferenceProviderType {
+  zotero
+  endnote
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(active)
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  entries              Entry[]
+  experiments          Experiment[]
+  protocols            Protocol[]
+  entities             Entity[]
+  results              Result[]
+  procurementInquiries ProcurementInquiry[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Entry {
+  id           String                @id @default(cuid())
+  title        String
+  body         String
+  occurredAt   DateTime              @default(now())
+  projectId    String?
+  project      Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tags         String[]              @default([])
+  moodStatus   String?
+  sourceType   EntrySourceType       @default(text)
+  recordStatus RecordLifecycleStatus @default(draft)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([recordStatus])
+  @@index([occurredAt])
+  @@index([projectId])
+}
+
+model Experiment {
+  id                String                @id @default(cuid())
+  title             String
+  projectId         String?
+  project           Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status            ExperimentStatus      @default(planned)
+  recordStatus      RecordLifecycleStatus @default(draft)
+  date              DateTime              @default(now())
+  purpose           String?
+  background        String?
+  materialsText     String?
+  stepsText         String?
+  observations      String?
+  resultSummary     String?
+  conclusion        String?
+  deviations        String?
+  protocolVersionId String?
+  protocolVersion   ProtocolVersion?      @relation(fields: [protocolVersionId], references: [id], onDelete: SetNull)
+  tags              String[]              @default([])
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  protocolRun           ProtocolRun?
+  steps                 ExperimentStep[]
+  inventoryTransactions InventoryTransaction[]
+  sampleEvents          SampleLifecycleEvent[]
+  results               Result[]
+
+  @@index([status])
+  @@index([recordStatus])
+  @@index([date])
+  @@index([projectId])
+  @@index([protocolVersionId])
+}
+
+model Protocol {
+  id           String                @id @default(cuid())
+  title        String
+  description  String?
+  status       ProtocolStatus        @default(draft)
+  recordStatus RecordLifecycleStatus @default(draft)
+  projectId    String?
+  project      Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tags         String[]              @default([])
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  versions ProtocolVersion[]
+
+  @@index([status])
+  @@index([recordStatus])
+  @@index([projectId])
+}
+
+model ProtocolVersion {
+  id                   String                @id @default(cuid())
+  protocolId           String
+  protocol             Protocol              @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  versionNumber        Int
+  recordStatus         RecordLifecycleStatus @default(draft)
+  createdFromVersionId String?
+  changeSummary        String?
+  title                String
+  purpose              String?
+  background           String?
+  scope                String?
+  notes                String?
+  parametersJson       Json                  @default("[]")
+  materialsJson        Json                  @default("[]")
+  equipmentJson        Json                  @default("[]")
+  stepsJson            Json                  @default("[]")
+  consumptionRulesJson Json                  @default("[]")
+  resultTemplatesJson  Json                  @default("[]")
+  createdAt            DateTime              @default(now())
+
+  experiments  Experiment[]
+  protocolRuns ProtocolRun[]
+
+  @@unique([protocolId, versionNumber])
+  @@index([protocolId])
+  @@index([recordStatus])
+  @@index([createdFromVersionId])
+}
+
+model ProtocolRun {
+  id                        String           @id @default(cuid())
+  protocolVersionId         String
+  protocolVersion           ProtocolVersion  @relation(fields: [protocolVersionId], references: [id], onDelete: Restrict)
+  experimentId              String           @unique
+  experiment                Experiment       @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  parametersJson            Json             @default("{}")
+  calculatedConsumptionJson Json             @default("[]")
+  status                    ExperimentStatus @default(planned)
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+
+  @@index([protocolVersionId])
+}
+
+model ExperimentStep {
+  id              String     @id @default(cuid())
+  experimentId    String
+  experiment      Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  protocolStepRef String?
+  order           Int
+  title           String
+  description     String
+  completed       Boolean    @default(false)
+  completedAt     DateTime?
+  deviationNote   String?
+
+  @@index([experimentId, order])
+}
+
+model Entity {
+  id             String       @id @default(cuid())
+  name           String
+  type           EntityType   @default(other)
+  code           String?
+  projectId      String?
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status         ObjectStatus @default(active)
+  description    String?
+  metadataJson   Json         @default("{}")
+  parentEntityId String?
+  parentEntity   Entity?      @relation("EntityHierarchy", fields: [parentEntityId], references: [id], onDelete: SetNull)
+  childEntities  Entity[]     @relation("EntityHierarchy")
+  sequenceId     String?
+  sequence       Sequence?    @relation(fields: [sequenceId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  inventoryItems InventoryItem[]
+  results        Result[]
+  sampleProfile  SampleProfile?
+
+  @@index([type])
+  @@index([status])
+  @@index([projectId])
+  @@index([sequenceId])
+}
+
+model InventoryLocation {
+  id               String                @id @default(cuid())
+  name             String
+  type             InventoryLocationType @default(other)
+  parentLocationId String?
+  parentLocation   InventoryLocation?    @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
+  childLocations   InventoryLocation[]   @relation("LocationHierarchy")
+  temperature      String?
+  description      String?
+
+  itemsFrom        InventoryTransaction[] @relation("FromLocation")
+  itemsTo          InventoryTransaction[] @relation("ToLocation")
+  items            InventoryItem[]
+  sampleEventsFrom SampleLifecycleEvent[] @relation("SampleEventFromLocation")
+  sampleEventsTo   SampleLifecycleEvent[] @relation("SampleEventToLocation")
+
+  @@index([type])
+  @@index([parentLocationId])
+}
+
+model InventoryItem {
+  id                    String             @id @default(cuid())
+  entityId              String?
+  entity                Entity?            @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  name                  String
+  containerType         String?
+  barcode               String?
+  aliquotCode           String?
+  lotNumber             String?
+  vendor                String?
+  catalogNumber         String?
+  currentQuantity       Float              @default(0)
+  unit                  String
+  concentration         String?
+  locationId            String?
+  location              InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  positionCode          String?
+  parentInventoryItemId String?
+  parentInventoryItem   InventoryItem?     @relation("InventoryAliquots", fields: [parentInventoryItemId], references: [id], onDelete: SetNull)
+  childInventoryItems   InventoryItem[]    @relation("InventoryAliquots")
+  expiryDate            DateTime?
+  storageCondition      String?
+  freezeThawCount       Int                @default(0)
+  status                ObjectStatus       @default(active)
+  notes                 String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  transactions InventoryTransaction[]
+  purchases    PurchaseRequest[]
+  sampleEvents SampleLifecycleEvent[]
+
+  @@unique([aliquotCode])
+  @@index([entityId])
+  @@index([locationId])
+  @@index([parentInventoryItemId])
+  @@index([expiryDate])
+  @@index([status])
+}
+
+model InventoryTransaction {
+  id               String                   @id @default(cuid())
+  inventoryItemId  String
+  inventoryItem    InventoryItem            @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  type             InventoryTransactionType
+  quantityChange   Float
+  unit             String
+  fromLocationId   String?
+  fromLocation     InventoryLocation?       @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocationId     String?
+  toLocation       InventoryLocation?       @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
+  experimentId     String?
+  experiment       Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  purchaseId       String?
+  purchase         PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  proposedActionId String?
+  proposedAction   ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
+  notes            String?
+  createdAt        DateTime                 @default(now())
+
+  @@index([inventoryItemId])
+  @@index([type])
+  @@index([experimentId])
+  @@index([purchaseId])
+}
+
+model SampleProfile {
+  id                 String                @id @default(cuid())
+  entityId           String                @unique
+  entity             Entity                @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  sampleCode         String                @unique
+  sampleType         String
+  sourceLabel        String?
+  sourceType         String?
+  parentSampleId     String?
+  parentSample       SampleProfile?        @relation("SampleLineage", fields: [parentSampleId], references: [id], onDelete: SetNull)
+  childSamples       SampleProfile[]       @relation("SampleLineage")
+  collectedAt        DateTime?
+  preparedAt         DateTime?
+  status             SampleLifecycleStatus @default(registered)
+  biosafetyLevel     String?
+  storageRequirement String?
+  freezeThawCount    Int                   @default(0)
+  notes              String?
+  metadataJson       Json                  @default("{}")
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  events SampleLifecycleEvent[]
+
+  @@index([sampleType])
+  @@index([status])
+  @@index([parentSampleId])
+}
+
+model SampleLifecycleEvent {
+  id              String                   @id @default(cuid())
+  sampleProfileId String
+  sampleProfile   SampleProfile            @relation(fields: [sampleProfileId], references: [id], onDelete: Cascade)
+  type            SampleLifecycleEventType
+  title           String
+  occurredAt      DateTime                 @default(now())
+  experimentId    String?
+  experiment      Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  inventoryItemId String?
+  inventoryItem   InventoryItem?           @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+  fromLocationId  String?
+  fromLocation    InventoryLocation?       @relation("SampleEventFromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocationId    String?
+  toLocation      InventoryLocation?       @relation("SampleEventToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
+  quantityChange  Float?
+  unit            String?
+  notes           String?
+  metadataJson    Json                     @default("{}")
+  createdAt       DateTime                 @default(now())
+
+  @@index([sampleProfileId])
+  @@index([type])
+  @@index([occurredAt])
+  @@index([experimentId])
+  @@index([inventoryItemId])
+}
+
+model Result {
+  id           String       @id @default(cuid())
+  experimentId String?
+  experiment   Experiment?  @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  entityId     String?
+  entity       Entity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  projectId    String?
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  resultType   String
+  title        String
+  textValue    String?
+  numericValue Float?
+  unit         String?
+  status       ObjectStatus @default(active)
+  metadataJson Json         @default("{}")
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([experimentId])
+  @@index([entityId])
+  @@index([projectId])
+  @@index([resultType])
+}
+
+model PurchaseRequest {
+  id                     String                @id @default(cuid())
+  title                  String
+  status                 PurchaseStatus        @default(planned)
+  vendor                 String?
+  catalogNumber          String?
+  quantity               Float
+  unit                   String
+  price                  Float?
+  orderDate              DateTime?
+  receivedDate           DateTime?
+  lotNumber              String?
+  expiryDate             DateTime?
+  storageCondition       String?
+  linkedInventoryItemId  String?
+  linkedInventoryItem    InventoryItem?        @relation(fields: [linkedInventoryItemId], references: [id], onDelete: SetNull)
+  procurementQuoteLineId String?               @unique
+  procurementQuoteLine   ProcurementQuoteLine? @relation(fields: [procurementQuoteLineId], references: [id], onDelete: SetNull)
+  notes                  String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  transactions InventoryTransaction[]
+
+  @@index([status])
+  @@index([linkedInventoryItemId])
+}
+
+model ProcurementInquiry {
+  id               String                   @id @default(cuid())
+  title            String
+  status           ProcurementInquiryStatus @default(draft)
+  sourceType       ProcurementSourceType    @default(excel)
+  projectId        String?
+  project          Project?                 @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  importedFileName String?
+  supplierScope    String?
+  quotedAt         DateTime?
+  notes            String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  quoteLines ProcurementQuoteLine[]
+
+  @@index([status])
+  @@index([sourceType])
+  @@index([projectId])
+  @@index([quotedAt])
+}
+
+model ProcurementQuoteLine {
+  id                  String                     @id @default(cuid())
+  inquiryId           String
+  inquiry             ProcurementInquiry         @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  status              ProcurementQuoteLineStatus @default(candidate)
+  supplierName        String?
+  productCategory     String?
+  productName         String
+  casNumber           String?
+  specification       String?
+  quantity            Float
+  packageUnit         String
+  amountExclTax       Float?
+  taxAmount           Float?
+  unitPriceExclTax    Float?
+  specialPurchaseNote String?
+  capacity            Float?
+  capacityUnit        String?
+  brand               String?
+  catalogNumber       String?
+  taxRate             Float?
+  amountInclTax       Float?
+  decisionReason      String?
+  selectedAt          DateTime?
+  metadataJson        Json                       @default("{}")
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  purchaseRequest PurchaseRequest?
+
+  @@index([inquiryId])
+  @@index([status])
+  @@index([supplierName])
+  @@index([productCategory])
+}
+
+model Attachment {
+  id               String   @id @default(cuid())
+  filename         String
+  originalFilename String
+  mimeType         String
+  size             Int
+  storagePath      String
+  uploadedAt       DateTime @default(now())
+
+  links AttachmentLink[]
+}
+
+model AttachmentLink {
+  id           String     @id @default(cuid())
+  attachmentId String
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  targetType   String
+  targetId     String
+  linkType     String     @default("attached_to")
+  createdAt    DateTime   @default(now())
+
+  @@index([attachmentId])
+  @@index([targetType, targetId])
+}
+
+model Sequence {
+  id           String       @id @default(cuid())
+  name         String
+  type         SequenceType
+  sequence     String
+  description  String?
+  metadataJson Json         @default("{}")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  entities Entity[]
+  features SequenceFeature[]
+
+  @@index([type])
+}
+
+model SequenceFeature {
+  id         String   @id @default(cuid())
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  name       String
+  type       String
+  start      Int
+  end        Int
+  strand     String?
+  note       String?
+
+  @@index([sequenceId])
+}
+
+model ItemLink {
+  id         String        @id @default(cuid())
+  sourceType String
+  sourceId   String
+  targetType String
+  targetId   String
+  linkType   String
+  createdBy  LinkCreatedBy @default(user)
+  confidence Float?
+  note       String?
+  createdAt  DateTime      @default(now())
+
+  @@index([sourceType, sourceId])
+  @@index([targetType, targetId])
+}
+
+model ProposedAction {
+  id          String                   @id @default(cuid())
+  sourceType  ProposedActionSourceType
+  sourceId    String?
+  actionType  ProposedActionType
+  status      ProposedActionStatus     @default(pending)
+  confidence  Float?
+  reason      String?
+  payloadJson Json                     @default("{}")
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  executedAt  DateTime?
+
+  inventoryTransactions InventoryTransaction[]
+
+  @@index([status])
+  @@index([sourceType, sourceId])
+  @@index([actionType])
+}
+
+model AIProvider {
+  id               String         @id @default(cuid())
+  name             String
+  type             AIProviderType
+  baseUrl          String?
+  apiKeyEncrypted  String?
+  defaultModel     String?
+  capabilitiesJson Json           @default("[]")
+  enabled          Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([type])
+  @@index([enabled])
+}
+
+model ReferenceConnector {
+  id           String                @id @default(cuid())
+  provider     ReferenceProviderType
+  displayName  String
+  libraryScope String?
+  baseUrl      String?
+  enabled      Boolean               @default(false)
+  lastSyncedAt DateTime?
+  notes        String?
+  metadataJson Json                  @default("{}")
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([provider])
+  @@index([enabled])
+}
+
+model ActivityLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String
+  targetType   String
+  targetId     String
+  metadataJson Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}

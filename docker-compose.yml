@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: labnest-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: labnest
+      POSTGRES_USER: labnest
+      POSTGRES_PASSWORD: labnest
+    ports:
+      - "5432:5432"
+    volumes:
+      - labnest-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labnest -d labnest"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: labnest-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://labnest:labnest@postgres:5432/labnest?schema=public
+      LABNEST_ATTACHMENT_ROOT: /app/storage/attachments
+      LABNEST_AI_ENCRYPTION_KEY: replace-with-32-byte-base64-or-hex-key
+      NEXT_PUBLIC_APP_NAME: LabNest
+    ports:
+      - "3000:3000"
+    volumes:
+      - labnest-attachments:/app/storage/attachments
+    command: sh -c "npm run prisma:generate && npm run build && npm run start"
+
+volumes:
+  labnest-postgres:
+  labnest-attachments:

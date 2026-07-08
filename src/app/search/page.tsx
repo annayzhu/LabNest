@@ -5,13 +5,134 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { searchDemoRecords } from "@/lib/search";
+import { searchDemoRecords, type SearchResult } from "@/lib/search";
+
+export const dynamic = "force-dynamic";
+
+function textFilter(query: string) {
+  return { contains: query, mode: "insensitive" as const };
+}
+
+async function searchRecords(query: string): Promise<SearchResult[]> {
+  if (!query) return [];
+
+  try {
+    const [entries, protocols, inventoryItems, sampleProfiles, results, purchases] = await Promise.all([
+      prisma.entry.findMany({
+        where: { OR: [{ title: textFilter(query) }, { body: textFilter(query) }, { moodStatus: textFilter(query) }] },
+        include: { project: true },
+        orderBy: { occurredAt: "desc" },
+        take: 20,
+      }),
+      prisma.protocol.findMany({
+        where: { OR: [{ title: textFilter(query) }, { description: textFilter(query) }] },
+        include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+      prisma.inventoryItem.findMany({
+        where: {
+          OR: [
+            { name: textFilter(query) },
+            { barcode: textFilter(query) },
+            { aliquotCode: textFilter(query) },
+            { lotNumber: textFilter(query) },
+            { vendor: textFilter(query) },
+            { catalogNumber: textFilter(query) },
+            { notes: textFilter(query) },
+          ],
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+      prisma.sampleProfile.findMany({
+        where: {
+          OR: [
+            { sampleCode: textFilter(query) },
+            { sampleType: textFilter(query) },
+            { sourceLabel: textFilter(query) },
+            { notes: textFilter(query) },
+            { entity: { name: textFilter(query) } },
+          ],
+        },
+        include: { entity: true },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+      prisma.result.findMany({
+        where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
+        include: { experiment: true },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+      prisma.purchaseRequest.findMany({
+        where: { OR: [{ title: textFilter(query) }, { vendor: textFilter(query) }, { catalogNumber: textFilter(query) }, { notes: textFilter(query) }] },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+    ]);
+
+    return [
+      ...entries.map((entry) => ({
+        id: entry.id,
+        type: "entry" as const,
+        title: entry.title,
+        subtitle: entry.project?.name,
+        href: "/entries",
+        matchedText: entry.body,
+      })),
+      ...protocols.map((protocol) => ({
+        id: protocol.id,
+        type: "protocol" as const,
+        title: protocol.title,
+        subtitle: protocol.versions[0]?.title ?? protocol.status,
+        href: "/protocols",
+        matchedText: protocol.description ?? undefined,
+      })),
+      ...inventoryItems.map((item) => ({
+        id: item.id,
+        type: "inventory_item" as const,
+        title: item.name,
+        subtitle: item.aliquotCode ?? item.lotNumber ?? item.status,
+        href: `/inventory?status=${item.status}`,
+        matchedText: item.notes ?? item.catalogNumber ?? undefined,
+      })),
+      ...sampleProfiles.map((sample) => ({
+        id: sample.id,
+        type: "sample_profile" as const,
+        title: sample.entity.name,
+        subtitle: sample.sampleCode,
+        href: `/samples?status=${sample.status}`,
+        matchedText: sample.notes ?? sample.sourceLabel ?? undefined,
+      })),
+      ...results.map((result) => ({
+        id: result.id,
+        type: "result" as const,
+        title: result.title,
+        subtitle: result.experiment?.title ?? result.resultType,
+        href: `/results?type=${result.resultType}`,
+        matchedText: result.notes ?? result.textValue ?? undefined,
+      })),
+      ...purchases.map((purchase) => ({
+        id: purchase.id,
+        type: "purchase" as const,
+        title: purchase.title,
+        subtitle: purchase.vendor ?? purchase.status,
+        href: `/purchases?status=${purchase.status}`,
+        matchedText: purchase.notes ?? purchase.catalogNumber ?? undefined,
+      })),
+    ];
+  } catch {
+    return searchDemoRecords(query, 80);
+  }
+}
 
 export default async function SearchPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q") ?? "";
-  const results = query ? searchDemoRecords(query, 80) : [];
+  const results = await searchRecords(query);
 
   return (
     <AppShell>

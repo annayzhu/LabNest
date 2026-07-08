@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   Beaker,
@@ -25,41 +26,41 @@ const groups = [
   {
     title: "Entry",
     items: [
-      { label: "Text Entry", icon: BookOpen },
-      { label: "Photo Entry", icon: ImagePlus },
-      { label: "Voice Entry placeholder", icon: Sparkles },
-      { label: "File Entry", icon: Paperclip },
+      { label: "Text Entry", icon: BookOpen, href: "/entries/new?source=text" },
+      { label: "Photo Entry", icon: ImagePlus, href: "/entries/new?source=photo" },
+      { label: "Voice Entry placeholder", icon: Sparkles, href: "/entries/new?source=voice" },
+      { label: "File Entry", icon: Paperclip, href: "/entries/new?source=file" },
     ],
   },
   {
     title: "Experiment",
     items: [
-      { label: "Blank Experiment", icon: Beaker },
-      { label: "From Protocol", icon: ClipboardList },
-      { label: "From Entry", icon: BookOpen },
+      { label: "Blank Experiment", icon: Beaker, href: "/experiments" },
+      { label: "From Protocol", icon: ClipboardList, href: "/protocol-run" },
+      { label: "From Entry", icon: BookOpen, href: "/entries" },
     ],
   },
   {
     title: "Lab Objects",
     items: [
-      { label: "Blank Protocol", icon: FlaskConical },
-      { label: "Project", icon: FolderKanban },
-      { label: "Entity / Sample", icon: TestTube2 },
-      { label: "Inventory Item", icon: Boxes },
-      { label: "Result", icon: Database },
-      { label: "Purchase", icon: ShoppingCart },
-      { label: "Import / Attachment", icon: Upload },
+      { label: "Blank Protocol", icon: FlaskConical, href: "/protocols/new" },
+      { label: "Project", icon: FolderKanban, href: "/projects" },
+      { label: "Entity / Sample", icon: TestTube2, href: "/entities" },
+      { label: "Inventory Item", icon: Boxes, href: "/inventory" },
+      { label: "Result", icon: Database, href: "/results" },
+      { label: "Purchase", icon: ShoppingCart, href: "/purchases" },
+      { label: "Import / Attachment", icon: Upload, href: "/attachments" },
     ],
   },
 ];
 
 const mobileItems = [
-  "Quick Entry",
-  "Start from Protocol",
-  "Photo Entry",
-  "Add Result",
-  "Add Inventory",
-  "Add Sample",
+  { label: "Quick Entry", href: "/entries/new?source=text" },
+  { label: "Start from Protocol", href: "/protocol-run" },
+  { label: "Photo Entry", href: "/entries/new?source=photo" },
+  { label: "Add Result", href: "/results" },
+  { label: "Add Inventory", href: "/inventory" },
+  { label: "Add Sample", href: "/samples" },
 ];
 
 export function CreateMenu() {
@@ -121,16 +122,16 @@ export function CreateMenu() {
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <button
+                      <Link
                         key={item.label}
+                        href={item.href}
                         className="focus-ring flex w-full items-center gap-2 rounded-[8px] px-2 py-2 text-left text-sm text-graphite transition hover:bg-sage-surface/70 hover:text-ink"
                         role="menuitem"
-                        type="button"
                         onClick={() => setOpen(false)}
                       >
                         <Icon className="h-4 w-4 text-moss" aria-hidden />
                         <span>{item.label}</span>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>
@@ -140,15 +141,15 @@ export function CreateMenu() {
 
           <div className="grid grid-cols-2 gap-2 sm:hidden">
             {mobileItems.map((item) => (
-              <button
-                key={item}
+              <Link
+                key={item.label}
+                href={item.href}
                 className="focus-ring rounded-[10px] border border-hairline bg-warm px-3 py-3 text-left text-sm font-medium text-ink"
                 role="menuitem"
-                type="button"
                 onClick={() => setOpen(false)}
               >
-                {item}
-              </button>
+                {item.label}
+              </Link>
             ))}
           </div>
         </div>

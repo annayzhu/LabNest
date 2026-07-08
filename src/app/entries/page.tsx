@@ -1,13 +1,54 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { ActiveFilterBar, type ActiveFilter } from "@/components/ActiveFilterBar";
 import { EntryCard } from "@/components/EntryCard";
 import { PageHeader } from "@/components/PageHeader";
 import { RelevantItemsPanel } from "@/components/RelevantItemsPanel";
-import { entries, relevantItems } from "@/lib/demo-data";
+import { entries as demoEntries, relevantItems } from "@/lib/demo-data";
+import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import type { Entry } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+async function getEntryRecords(): Promise<Entry[]> {
+  try {
+    const records = await prisma.entry.findMany({
+      include: { project: true },
+      orderBy: { occurredAt: "desc" },
+    });
+
+    return Promise.all(
+      records.map(async (entry) => {
+        const pendingActionCount = await prisma.proposedAction.count({
+          where: { sourceType: "entry", sourceId: entry.id, status: "pending" },
+        });
+
+        return {
+          id: entry.id,
+          title: entry.title,
+          body: entry.body,
+          occurredAt: entry.occurredAt.toISOString(),
+          projectId: entry.projectId ?? undefined,
+          projectName: entry.project?.name,
+          tags: entry.tags,
+          sourceType: entry.sourceType,
+          recordStatus: entry.recordStatus,
+          moodStatus: entry.moodStatus ?? undefined,
+          attachmentCount: 0,
+          relevantItems: [],
+          pendingActionCount,
+        };
+      }),
+    );
+  } catch {
+    return demoEntries;
+  }
+}
 
 export default async function EntriesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
+  const entries = await getEntryRecords();
   const tag = firstSearchParam(params, "tag");
   const source = firstSearchParam(params, "source");
   const status = firstSearchParam(params, "status");
@@ -40,6 +81,14 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
             eyebrow="Journal-like capture"
             title="Entries"
             description="Fast lab notes that can remain standalone or become experiment drafts, proposed actions, and backlinks after review."
+            actions={
+              <Link
+                href="/entries/new"
+                className="focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
+              >
+                New Entry
+              </Link>
+            }
           />
           <ActiveFilterBar
             filters={activeFilters}

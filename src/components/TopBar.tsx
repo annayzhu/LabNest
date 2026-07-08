@@ -6,11 +6,12 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-hairline bg-paper/88 px-4 py-3 backdrop-blur md:px-6">
       <div className="mx-auto flex max-w-[1480px] items-center gap-3">
-        <div className="min-w-0 flex-1">
+        <form action="/search" className="min-w-0 flex-1">
           <label className="focus-within:ring-info/20 flex h-10 max-w-xl items-center gap-2 rounded-[10px] border border-hairline bg-surface px-3 text-sm text-muted shadow-paper focus-within:border-fog focus-within:ring-4">
             <Search className="h-4 w-4" aria-hidden />
             <span className="sr-only">Search LabNest</span>
             <input
+              name="q"
               className="w-full bg-transparent text-ink outline-none placeholder:text-muted"
               placeholder="Search entries, protocols, inventory, results..."
             />
@@ -18,7 +19,7 @@ export function TopBar() {
               <Command className="h-3 w-3" aria-hidden /> K
             </span>
           </label>
-        </div>
+        </form>
       </div>
     </header>
   );

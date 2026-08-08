@@ -45,7 +45,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
           eyebrow="Execution records"
           title="Experiments"
           description="Each experiment belongs to a research plan and preserves every protocol version used, including repeated runs of the same method."
-          actions={<Link href="/entries/new" className="focus-ring inline-flex h-10 items-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm">Record experiment</Link>}
+          actions={<Link href="/experiments/new" className="focus-ring inline-flex h-10 items-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm">New Experiment</Link>}
         />
 
         {activeExperiment ? (
@@ -95,7 +95,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
                 {
                   key: "experiment",
                   header: "Experiment",
-                  render: (row) => <Link href={filterHref("/experiments", { experiment: row.id, status, project: projectId, plan: planId })} className="font-semibold text-ink hover:text-moss">{row.title}</Link>,
+                  render: (row) => <Link href={`/experiments/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link>,
                 },
                 {
                   key: "plan",

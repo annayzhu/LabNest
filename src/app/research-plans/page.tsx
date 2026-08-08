@@ -37,6 +37,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
           eyebrow="Scientific design"
           title="Research Plans"
           description="Plans translate a project objective into a testable hypothesis, design, adapted protocols, and a series of repeatable experiments."
+          actions={<Link href="/research-plans/new" className="focus-ring inline-flex h-10 items-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm">New Research Plan</Link>}
         />
         <Card>
           <CardHeader title="Plan index" eyebrow="Project → plan → protocol → experiment" />
@@ -54,7 +55,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
                     <div>
                       <div className="flex items-center gap-2">
                         {row.code ? <span className="font-mono text-xs text-muted">{row.code}</span> : null}
-                        <span className="font-semibold text-ink">{row.title}</span>
+                        <Link href={`/research-plans/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link>
                       </div>
                       <p className="mt-1 max-w-xl text-xs leading-5 text-muted">{row.objective ?? "Objective not recorded."}</p>
                     </div>

@@ -35,12 +35,14 @@ export async function GET(request: Request) {
 
   const [
     entries,
+    researchPlans,
     experiments,
     protocols,
     entities,
     sampleProfiles,
     inventoryItems,
     results,
+    reports,
     purchases,
     procurementQuoteLines,
     sequences,
@@ -49,6 +51,12 @@ export async function GET(request: Request) {
       where: { OR: [{ title: textFilter(query) }, { body: textFilter(query) }, { moodStatus: textFilter(query) }] },
       take: limit,
       orderBy: { occurredAt: "desc" },
+      include: { project: true },
+    }),
+    prisma.researchPlan.findMany({
+      where: { OR: [{ code: textFilter(query) }, { title: textFilter(query) }, { objective: textFilter(query) }, { hypothesis: textFilter(query) }, { rationale: textFilter(query) }, { design: textFilter(query) }] },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
       include: { project: true },
     }),
     prisma.experiment.findMany({
@@ -115,6 +123,12 @@ export async function GET(request: Request) {
       orderBy: { updatedAt: "desc" },
       include: { experiment: true, entity: true, project: true },
     }),
+    prisma.report.findMany({
+      where: { title: textFilter(query) },
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+      include: { project: true, researchPlan: true },
+    }),
     prisma.purchaseRequest.findMany({
       where: {
         OR: [
@@ -165,15 +179,23 @@ export async function GET(request: Request) {
       type: "experiment" as const,
       title: experiment.title,
       subtitle: experiment.project?.name,
-      href: `/experiments?status=${experiment.status}`,
+      href: `/experiments/${experiment.id}`,
       matchedText: experiment.purpose ?? experiment.observations ?? undefined,
+    })),
+    ...researchPlans.map((plan) => ({
+      id: plan.id,
+      type: "research_plan" as const,
+      title: plan.title,
+      subtitle: `${plan.project.name} · ${plan.code ?? plan.status}`,
+      href: `/research-plans/${plan.id}`,
+      matchedText: plan.objective ?? plan.hypothesis ?? undefined,
     })),
     ...protocols.map((protocol) => ({
       id: protocol.id,
       type: "protocol" as const,
       title: protocol.title,
       subtitle: protocol.availability,
-      href: `/protocols?availability=${protocol.availability}&protocol=${protocol.id}`,
+      href: `/protocols/${protocol.id}`,
       matchedText: protocol.description ?? undefined,
     })),
     ...entities.map((entity) => ({
@@ -205,8 +227,16 @@ export async function GET(request: Request) {
       type: "result" as const,
       title: result.title,
       subtitle: result.experiment?.title ?? result.resultType,
-      href: `/results?type=${result.resultType}`,
+      href: `/results/${result.id}`,
       matchedText: result.notes ?? result.textValue ?? undefined,
+    })),
+    ...reports.map((report) => ({
+      id: report.id,
+      type: "report" as const,
+      title: report.title,
+      subtitle: `${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`,
+      href: `/reports/${report.id}`,
+      matchedText: report.status,
     })),
     ...purchases.map((purchase) => ({
       id: purchase.id,

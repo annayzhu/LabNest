@@ -1,46 +1,21 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
-
 export default async function ReportsPage() {
-  const projects = await prisma.project.findMany({
-    include: {
-      _count: { select: { researchPlans: true, experiments: true, results: true, entries: true } },
-      experiments: { select: { status: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          eyebrow="Synthesis"
-          title="Reports"
-          description="Reports summarize traceable project records. Narrative report editing and export will be built on this project-level source map."
-        />
-        <Card>
-          <CardHeader title="Project report readiness" eyebrow="Compact source coverage" />
-          <CardBody>
-            <DataTable
-              rows={projects}
-              getRowKey={(row) => row.id}
-              columns={[
-                { key: "project", header: "Project", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
-                { key: "plans", header: "Plans", render: (row) => row._count.researchPlans },
-                { key: "entries", header: "Entries", render: (row) => row._count.entries },
-                { key: "experiments", header: "Experiments", render: (row) => `${row._count.experiments} total · ${row.experiments.filter((item) => item.status === "completed").length} completed` },
-                { key: "results", header: "Results", render: (row) => row._count.results },
-                { key: "readiness", header: "Readiness", render: (row) => row._count.researchPlans > 0 && row._count.results > 0 ? "Source records available" : "Needs structured records" },
-              ]}
-            />
-          </CardBody>
-        </Card>
-      </div>
-    </AppShell>
-  );
+  const reports = await prisma.report.findMany({ include: { project: true, researchPlan: true, _count: { select: { sources: true } } }, orderBy: { updatedAt: "desc" } });
+  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Traceable synthesis" title="Reports" description="Reports are editable documents with a separate, refreshable source snapshot covering plans, exact ProtocolVersions, Experiments, Results and Entries." actions={<Link href="/reports/new" className="focus-ring inline-flex h-10 items-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm">New Report</Link>} />
+    <Card><CardHeader title="Report index" eyebrow="Small status surface, complete source trail" /><CardBody>{reports.length ? <DataTable rows={reports} getRowKey={(row) => row.id} columns={[
+      { key: "report", header: "Report", render: (row) => <div><Link href={`/reports/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link><p className="mt-1 text-xs text-muted">Updated {row.updatedAt.toLocaleDateString()}</p></div> },
+      { key: "scope", header: "Scope", render: (row) => <div>{row.project.name}<p className="text-xs text-muted">{row.researchPlan?.code ?? row.researchPlan?.title ?? "Entire Project"}</p></div> },
+      { key: "sources", header: "Sources", render: (row) => row._count.sources },
+      { key: "period", header: "Period", render: (row) => row.periodStart || row.periodEnd ? `${row.periodStart?.toLocaleDateString() ?? "…"} – ${row.periodEnd?.toLocaleDateString() ?? "…"}` : "All records" },
+      { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
+    ]} /> : <div className="rounded-[10px] border border-dashed border-hairline bg-warm px-6 py-10 text-center"><h3 className="font-serif text-xl text-ink">No Reports yet</h3><p className="mt-2 text-sm text-muted">Create a traceable draft from a Project or Research Plan.</p></div>}</CardBody></Card>
+  </div></AppShell>;
 }

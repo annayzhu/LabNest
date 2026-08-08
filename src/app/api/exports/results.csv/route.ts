@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const results = await prisma.result.findMany({
-    include: { experiment: true, entity: true, project: true },
+    include: { experiment: true, researchPlan: true, entity: true, project: true, _count: { select: { datasets: true } } },
     orderBy: { updatedAt: "desc" },
   });
   const rows = results.map((result) => ({
@@ -15,7 +15,13 @@ export async function GET() {
     experiment: result.experiment?.title,
     entity: result.entity?.name,
     project: result.project?.name,
+    researchPlan: result.researchPlan?.code ?? result.researchPlan?.title,
     status: result.status,
+    recordStatus: result.recordStatus,
+    sourceType: result.sourceType,
+    qualityStatus: result.qualityStatus,
+    analysisMethod: result.analysisMethod,
+    datasetCount: result._count.datasets,
     numericValue: result.numericValue,
     textValue: result.textValue,
     unit: result.unit,
@@ -30,7 +36,13 @@ export async function GET() {
     "experiment",
     "entity",
     "project",
+    "researchPlan",
     "status",
+    "recordStatus",
+    "sourceType",
+    "qualityStatus",
+    "analysisMethod",
+    "datasetCount",
     "numericValue",
     "textValue",
     "unit",

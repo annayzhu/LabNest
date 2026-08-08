@@ -139,6 +139,9 @@ async function resetDatabase() {
   await prisma.purchaseRequest.deleteMany();
   await prisma.procurementQuoteLine.deleteMany();
   await prisma.procurementInquiry.deleteMany();
+  await prisma.reportSource.deleteMany();
+  await prisma.report.deleteMany();
+  await prisma.resultDataset.deleteMany();
   await prisma.result.deleteMany();
   await prisma.experimentStep.deleteMany();
   await prisma.protocolRun.deleteMany();

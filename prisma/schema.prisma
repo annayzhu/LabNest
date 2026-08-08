@@ -42,6 +42,33 @@ enum ResearchPlanStatus {
   archived
 }
 
+enum ResultSourceType {
+  manual
+  protocol_template
+  file_import
+  tool
+  analysis
+}
+
+enum ResultQualityStatus {
+  not_assessed
+  pass
+  warning
+  fail
+}
+
+enum ResultDatasetStorageMode {
+  managed_file
+  external_reference
+}
+
+enum ReportStatus {
+  draft
+  ready_for_review
+  final
+  archived
+}
+
 enum ProtocolAvailability {
   draft
   active
@@ -258,6 +285,7 @@ model Project {
   protocols            Protocol[]
   entities             Entity[]
   results              Result[]
+  reports              Report[]
   procurementInquiries ProcurementInquiry[]
 
   @@index([status])
@@ -265,23 +293,26 @@ model Project {
 }
 
 model ResearchPlan {
-  id         String             @id @default(cuid())
-  projectId  String
-  project    Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  code       String?
-  title      String
-  objective  String?
-  hypothesis String?
-  rationale  String?
-  design     String?
-  status     ResearchPlanStatus @default(draft)
-  tags       String[]           @default([])
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id          String             @id @default(cuid())
+  projectId   String
+  project     Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  code        String?
+  title       String
+  objective   String?
+  hypothesis  String?
+  rationale   String?
+  design      String?
+  contentJson Json               @default("{}")
+  status      ResearchPlanStatus @default(draft)
+  tags        String[]           @default([])
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   entries     Entry[]
   experiments Experiment[]
   protocols   ResearchPlanProtocol[]
+  results     Result[]
+  reports     Report[]
 
   @@unique([projectId, code])
   @@index([projectId])
@@ -325,6 +356,7 @@ model Entry {
 
 model Experiment {
   id                       String                @id @default(cuid())
+  runCode                  String?
   title                    String
   projectId                String?
   project                  Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
@@ -341,6 +373,8 @@ model Experiment {
   resultSummary            String?
   conclusion               String?
   deviations               String?
+  contentJson              Json                  @default("{}")
+  protocolSnapshotJson     Json                  @default("{}")
   primaryProtocolVersionId String?               @map("protocolVersionId")
   primaryProtocolVersion   ProtocolVersion?      @relation("PrimaryExperimentProtocol", fields: [primaryProtocolVersionId], references: [id], onDelete: SetNull)
   tags                     String[]              @default([])
@@ -354,6 +388,7 @@ model Experiment {
   results               Result[]
   protocolVersions      ExperimentProtocolVersion[]
 
+  @@unique([researchPlanId, runCode])
   @@index([status])
   @@index([recordStatus])
   @@index([date])
@@ -651,28 +686,111 @@ model SampleLifecycleEvent {
 }
 
 model Result {
-  id           String       @id @default(cuid())
-  experimentId String?
-  experiment   Experiment?  @relation(fields: [experimentId], references: [id], onDelete: SetNull)
-  entityId     String?
-  entity       Entity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
-  projectId    String?
-  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  resultType   String
-  title        String
-  textValue    String?
-  numericValue Float?
-  unit         String?
-  status       ObjectStatus @default(active)
-  metadataJson Json         @default("{}")
-  notes        String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id             String                @id @default(cuid())
+  experimentId   String?
+  experiment     Experiment?           @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  researchPlanId String?
+  researchPlan   ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  entityId       String?
+  entity         Entity?               @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  projectId      String?
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  resultType     String
+  title          String
+  textValue      String?
+  numericValue   Float?
+  unit           String?
+  status         ObjectStatus          @default(active)
+  recordStatus   RecordLifecycleStatus @default(draft)
+  sourceType     ResultSourceType      @default(manual)
+  qualityStatus  ResultQualityStatus   @default(not_assessed)
+  analysisMethod String?
+  contentJson    Json                  @default("{}")
+  provenanceJson Json                  @default("{}")
+  metadataJson   Json                  @default("{}")
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  datasets      ResultDataset[]
+  reportSources ReportSource[]
 
   @@index([experimentId])
   @@index([entityId])
   @@index([projectId])
+  @@index([researchPlanId])
   @@index([resultType])
+  @@index([recordStatus])
+  @@index([sourceType])
+  @@index([qualityStatus])
+}
+
+model ResultDataset {
+  id             String                   @id @default(cuid())
+  resultId       String
+  result         Result                   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  name           String
+  storageMode    ResultDatasetStorageMode @default(managed_file)
+  sourceFileName String?
+  mimeType       String?
+  size           Int?
+  storagePath    String?
+  externalUri    String?
+  checksum       String?
+  rowCount       Int                      @default(0)
+  columnCount    Int                      @default(0)
+  columnsJson    Json                     @default("[]")
+  previewJson    Json                     @default("[]")
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@index([resultId])
+  @@index([storageMode])
+}
+
+model Report {
+  id                 String        @id @default(cuid())
+  projectId          String
+  project            Project       @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  researchPlanId     String?
+  researchPlan       ResearchPlan? @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  title              String
+  status             ReportStatus  @default(draft)
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  contentJson        Json          @default("{}")
+  sourceSnapshotJson Json          @default("{}")
+  tags               String[]      @default([])
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  sources ReportSource[]
+
+  @@index([projectId])
+  @@index([researchPlanId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model ReportSource {
+  id              String   @id @default(cuid())
+  reportId        String
+  report          Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  sourceType      String
+  sourceId        String
+  titleSnapshot   String
+  versionSnapshot String?
+  hrefSnapshot    String?
+  metadataJson    Json     @default("{}")
+  order           Int      @default(0)
+  includedAt      DateTime @default(now())
+  resultId        String?
+  result          Result?  @relation(fields: [resultId], references: [id], onDelete: SetNull)
+
+  @@unique([reportId, sourceType, sourceId])
+  @@index([reportId, order])
+  @@index([sourceType, sourceId])
+  @@index([resultId])
 }
 
 model PurchaseRequest {

@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 export async function GET() {
   const [
     projects,
+    researchPlans,
     entries,
     experiments,
     protocols,
@@ -15,6 +16,8 @@ export async function GET() {
     inventoryItems,
     inventoryTransactions,
     results,
+    resultDatasets,
+    reports,
     procurementInquiries,
     purchaseRequests,
     attachments,
@@ -25,8 +28,9 @@ export async function GET() {
     referenceConnectors,
   ] = await Promise.all([
     prisma.project.findMany(),
+    prisma.researchPlan.findMany({ include: { protocols: true } }),
     prisma.entry.findMany(),
-    prisma.experiment.findMany({ include: { steps: true, protocolRun: true } }),
+    prisma.experiment.findMany({ include: { steps: true, protocolRun: true, protocolVersions: true } }),
     prisma.protocol.findMany({ include: { versions: true } }),
     prisma.entity.findMany(),
     prisma.sampleProfile.findMany({ include: { events: true } }),
@@ -34,6 +38,8 @@ export async function GET() {
     prisma.inventoryItem.findMany(),
     prisma.inventoryTransaction.findMany(),
     prisma.result.findMany(),
+    prisma.resultDataset.findMany(),
+    prisma.report.findMany({ include: { sources: true } }),
     prisma.procurementInquiry.findMany({ include: { quoteLines: true } }),
     prisma.purchaseRequest.findMany(),
     prisma.attachment.findMany({ include: { links: true } }),
@@ -58,11 +64,12 @@ export async function GET() {
 
   const backup = {
     app: "LabNest",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    note: "File binaries are not embedded; attachment metadata includes storagePath for local recovery.",
+    note: "File binaries are not embedded; attachment and ResultDataset metadata include storage paths or external references for local recovery.",
     data: {
       projects,
+      researchPlans,
       entries,
       experiments,
       protocols,
@@ -72,6 +79,8 @@ export async function GET() {
       inventoryItems,
       inventoryTransactions,
       results,
+      resultDatasets,
+      reports,
       procurementInquiries,
       purchaseRequests,
       attachments,

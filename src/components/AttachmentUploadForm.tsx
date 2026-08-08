@@ -4,7 +4,7 @@ import { FileUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 
-export function AttachmentUploadForm() {
+export function AttachmentUploadForm({ targetType = "", targetId = "", hideTargetFields = false }: { targetType?: string; targetId?: string; hideTargetFields?: boolean }) {
   const [status, setStatus] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -36,8 +36,8 @@ export function AttachmentUploadForm() {
   }
 
   return (
-    <form onSubmit={upload} className="grid gap-3 md:grid-cols-[1.2fr_0.6fr_0.8fr_auto]">
-      <label className="block min-w-0">
+    <form onSubmit={upload} className={`grid gap-3 ${hideTargetFields ? "md:grid-cols-[1fr_auto]" : "md:grid-cols-[1.2fr_0.6fr_0.8fr_auto]"}`}>
+      {hideTargetFields ? <><input type="hidden" name="targetType" value={targetType} /><input type="hidden" name="targetId" value={targetId} /></> : <><label className="block min-w-0">
         <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">File</span>
         <input
           required
@@ -51,6 +51,7 @@ export function AttachmentUploadForm() {
         <input
           name="targetType"
           placeholder="experiment"
+          defaultValue={targetType}
           className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
         />
       </label>
@@ -59,16 +60,17 @@ export function AttachmentUploadForm() {
         <input
           name="targetId"
           placeholder="optional"
+          defaultValue={targetId}
           className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
         />
-      </label>
+      </label></>}
       <div className="flex items-end">
         <Button type="submit" disabled={isUploading} variant="primary">
           <FileUp className="h-4 w-4" aria-hidden />
           Upload
         </Button>
       </div>
-      {status ? <p className="text-sm text-graphite md:col-span-4">{status}</p> : null}
+      {status ? <p className={`text-sm text-graphite ${hideTargetFields ? "md:col-span-2" : "md:col-span-4"}`}>{status}</p> : null}
     </form>
   );
 }

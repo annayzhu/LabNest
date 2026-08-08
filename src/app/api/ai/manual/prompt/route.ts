@@ -4,6 +4,7 @@ import {
   manualCopyPasteProviderConfig,
 } from "@/lib/ai";
 import type { ProposedAction } from "@/lib/types";
+import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -15,6 +16,14 @@ const promptRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
+  if (!settings?.enabled) {
+    return Response.json(
+      { error: "AI is disabled. Enable it explicitly in Settings before preparing external model prompts." },
+      { status: 403 },
+    );
+  }
+
   const parsed = promptRequestSchema.safeParse(await request.json());
 
   if (!parsed.success) {

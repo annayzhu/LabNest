@@ -142,6 +142,7 @@ async function resetDatabase() {
   await prisma.result.deleteMany();
   await prisma.experimentStep.deleteMany();
   await prisma.protocolRun.deleteMany();
+  await prisma.experimentProtocolVersion.deleteMany();
   await prisma.experiment.deleteMany();
   await prisma.inventoryItem.deleteMany();
   await prisma.inventoryLocation.deleteMany();
@@ -149,9 +150,12 @@ async function resetDatabase() {
   await prisma.sequenceFeature.deleteMany();
   await prisma.sequence.deleteMany();
   await prisma.protocolVersion.deleteMany();
+  await prisma.researchPlanProtocol.deleteMany();
   await prisma.protocol.deleteMany();
   await prisma.entry.deleteMany();
+  await prisma.researchPlan.deleteMany();
   await prisma.referenceConnector.deleteMany();
+  await prisma.aISettings.deleteMany();
   await prisma.aIProvider.deleteMany();
   await prisma.project.deleteMany();
 }
@@ -164,6 +168,20 @@ async function main() {
       name: "GFP transfection optimization",
       description:
         "Personal notebook project for optimizing HEK293T transient transfection while tracking protocol versions and inventory consumption.",
+      tags: ["HEK293T", "GFP", "optimization"],
+    },
+  });
+
+  const researchPlan = await prisma.researchPlan.create({
+    data: {
+      projectId: project.id,
+      code: "RP-001",
+      title: "Optimize GFP transient transfection conditions",
+      objective: "Identify a reproducible transfection setup for HEK293T pilot experiments.",
+      hypothesis: "Cell confluence and reagent scaling influence transfection performance and toxicity.",
+      rationale: "Seed data demonstrates the Project → Research Plan → Protocol → Experiment backbone; it is not biological evidence.",
+      design: "Repeat the same reviewed protocol version while varying one documented condition at a time.",
+      status: "active",
       tags: ["HEK293T", "GFP", "optimization"],
     },
   });
@@ -239,21 +257,26 @@ async function main() {
   });
 
   const protocolVersions = [];
-  for (const template of protocolTemplates) {
+  for (const [templateIndex, template] of protocolTemplates.entries()) {
     const protocol = await prisma.protocol.create({
       data: {
+        humanCode: `PRT-${String(100001 + templateIndex).padStart(6, "0")}`,
         title: template.title,
+        canonicalTitle: template.title,
         description: template.description,
-        status: "active",
+        scope: template.title === "Cell transfection" ? "project" : "general",
+        availability: "active",
         recordStatus: "reviewed",
         projectId: template.title === "Cell transfection" ? project.id : null,
         tags: template.tags,
         versions: {
           create: {
-            versionNumber: 1,
+            revision: 1,
+            displayVersion: "0.1",
+            reviewStage: "reviewed",
             recordStatus: "reviewed",
             changeSummary: "Initial seeded protocol version.",
-            title: `${template.title} v1`,
+            title: `${template.title} v0.1`,
             purpose: template.description,
             background: "Seeded V1 protocol template. Review locally before production use.",
             scope: "Personal and small-lab use; not a regulated GxP workflow.",
@@ -290,6 +313,15 @@ async function main() {
   }
 
   const cellTransfectionVersion = protocolVersions[0];
+
+  await prisma.researchPlanProtocol.create({
+    data: {
+      researchPlanId: researchPlan.id,
+      protocolId: cellTransfectionVersion.protocolId,
+      isPrimary: true,
+      note: "Project-adapted protocol for the initial research plan.",
+    },
+  });
 
   const room = await prisma.inventoryLocation.create({
     data: { name: "Tissue culture room", type: "room", description: "Demo room location" },
@@ -457,6 +489,7 @@ async function main() {
       body:
         "Cells looked slightly over-confluent in two wells. Plan to reduce seeding density by 15% and document whether expression improves at 24 h.",
       projectId: project.id,
+      researchPlanId: researchPlan.id,
       tags: ["observation", "transfection"],
       moodStatus: "needs follow-up",
       sourceType: "text",
@@ -468,6 +501,7 @@ async function main() {
     data: {
       title: "GFP transfection pilot - 2 well scale",
       projectId: project.id,
+      researchPlanId: researchPlan.id,
       status: "running",
       recordStatus: "recorded",
       purpose: "Pilot a 2-well HEK293T transfection and confirm that protocol-derived consumption remains reviewable.",
@@ -475,8 +509,11 @@ async function main() {
         "This seeded experiment demonstrates the V1 protocol-to-experiment workflow. It should not be treated as biological evidence.",
       materialsText: "HEK293T, pLenti-GFP, Lipofectamine 3000, Complete DMEM.",
       observations: "No observations recorded yet.",
-      protocolVersionId: cellTransfectionVersion.id,
+      primaryProtocolVersionId: cellTransfectionVersion.id,
       tags: ["demo", "protocol-run"],
+      protocolVersions: {
+        create: { protocolVersionId: cellTransfectionVersion.id, role: "primary", order: 0 },
+      },
     },
   });
 
@@ -829,24 +866,33 @@ async function main() {
     ],
   });
 
-  await prisma.aIProvider.createMany({
-    data: [
-      {
-        name: "Manual copy-paste mode",
-        type: "manual_copy_paste",
-        enabled: true,
-        defaultModel: "external-web-subscription",
-        capabilitiesJson: ["text", "structured_output"],
-      },
-      {
-        name: "OpenAI API placeholder",
-        type: "openai",
-        enabled: false,
-        baseUrl: "https://api.openai.com/v1",
-        defaultModel: "gpt-4.1",
-        capabilitiesJson: ["text", "structured_output", "vision", "embeddings"],
-      },
-    ],
+  const manualProvider = await prisma.aIProvider.create({
+    data: {
+      name: "Manual copy-paste mode",
+      type: "manual_copy_paste",
+      enabled: true,
+      defaultModel: "external-web-subscription",
+      capabilitiesJson: ["text", "structured_output"],
+    },
+  });
+  await prisma.aIProvider.create({
+    data: {
+      name: "OpenAI API placeholder",
+      type: "openai",
+      enabled: false,
+      baseUrl: "https://api.openai.com/v1",
+      defaultModel: "provider-model-to-configure",
+      capabilitiesJson: ["text", "structured_output", "vision", "embeddings"],
+    },
+  });
+  await prisma.aISettings.create({
+    data: {
+      id: "default",
+      enabled: false,
+      defaultProviderId: manualProvider.id,
+      externalDataPolicy: "explicit_context",
+      attachmentsEnabled: false,
+    },
   });
 
   await prisma.referenceConnector.createMany({

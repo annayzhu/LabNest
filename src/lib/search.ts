@@ -79,7 +79,7 @@ function searchableSources(): SearchSource[] {
       type: "protocol" as const,
       title: protocol.title,
       subtitle: protocol.currentVersion.title,
-      href: `/protocols?status=${protocol.status}`,
+      href: `/protocols?availability=${protocol.availability}`,
       keywords: [protocol.title, protocol.description, protocol.currentVersion.changeSummary, ...protocol.tags],
     })),
     ...projects.map((project) => ({

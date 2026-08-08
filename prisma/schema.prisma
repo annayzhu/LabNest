@@ -34,11 +34,37 @@ enum ExperimentStatus {
   archived
 }
 
-enum ProtocolStatus {
+enum ResearchPlanStatus {
+  draft
+  active
+  paused
+  completed
+  archived
+}
+
+enum ProtocolAvailability {
   draft
   active
   retired
   archived
+
+  @@map("ProtocolStatus")
+}
+
+enum ProtocolReviewStage {
+  draft
+  ready_for_review
+  reviewed
+}
+
+enum ProtocolScope {
+  general
+  project
+}
+
+enum ExperimentProtocolRole {
+  primary
+  supporting
 }
 
 enum ProjectStatus {
@@ -221,6 +247,7 @@ model Project {
   updatedAt   DateTime      @updatedAt
 
   entries              Entry[]
+  researchPlans        ResearchPlan[]
   experiments          Experiment[]
   protocols            Protocol[]
   entities             Entity[]
@@ -231,75 +258,140 @@ model Project {
   @@index([createdAt])
 }
 
+model ResearchPlan {
+  id         String             @id @default(cuid())
+  projectId  String
+  project    Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  code       String?
+  title      String
+  objective  String?
+  hypothesis String?
+  rationale  String?
+  design     String?
+  status     ResearchPlanStatus @default(draft)
+  tags       String[]           @default([])
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  entries     Entry[]
+  experiments Experiment[]
+  protocols   ResearchPlanProtocol[]
+
+  @@unique([projectId, code])
+  @@index([projectId])
+  @@index([status])
+}
+
+model ResearchPlanProtocol {
+  researchPlanId String
+  researchPlan   ResearchPlan @relation(fields: [researchPlanId], references: [id], onDelete: Cascade)
+  protocolId     String
+  protocol       Protocol     @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  isPrimary      Boolean      @default(false)
+  note           String?
+  createdAt      DateTime     @default(now())
+
+  @@id([researchPlanId, protocolId])
+  @@index([protocolId])
+}
+
 model Entry {
-  id           String                @id @default(cuid())
-  title        String
-  body         String
-  occurredAt   DateTime              @default(now())
-  projectId    String?
-  project      Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  tags         String[]              @default([])
-  moodStatus   String?
-  sourceType   EntrySourceType       @default(text)
-  recordStatus RecordLifecycleStatus @default(draft)
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  id             String                @id @default(cuid())
+  title          String
+  body           String
+  occurredAt     DateTime              @default(now())
+  projectId      String?
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  researchPlanId String?
+  researchPlan   ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  tags           String[]              @default([])
+  moodStatus     String?
+  sourceType     EntrySourceType       @default(text)
+  recordStatus   RecordLifecycleStatus @default(draft)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   @@index([recordStatus])
   @@index([occurredAt])
   @@index([projectId])
+  @@index([researchPlanId])
 }
 
 model Experiment {
-  id                String                @id @default(cuid())
-  title             String
-  projectId         String?
-  project           Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  status            ExperimentStatus      @default(planned)
-  recordStatus      RecordLifecycleStatus @default(draft)
-  date              DateTime              @default(now())
-  purpose           String?
-  background        String?
-  materialsText     String?
-  stepsText         String?
-  observations      String?
-  resultSummary     String?
-  conclusion        String?
-  deviations        String?
-  protocolVersionId String?
-  protocolVersion   ProtocolVersion?      @relation(fields: [protocolVersionId], references: [id], onDelete: SetNull)
-  tags              String[]              @default([])
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  id                       String                @id @default(cuid())
+  title                    String
+  projectId                String?
+  project                  Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  researchPlanId           String?
+  researchPlan             ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  status                   ExperimentStatus      @default(planned)
+  recordStatus             RecordLifecycleStatus @default(draft)
+  date                     DateTime              @default(now())
+  purpose                  String?
+  background               String?
+  materialsText            String?
+  stepsText                String?
+  observations             String?
+  resultSummary            String?
+  conclusion               String?
+  deviations               String?
+  primaryProtocolVersionId String?               @map("protocolVersionId")
+  primaryProtocolVersion   ProtocolVersion?      @relation("PrimaryExperimentProtocol", fields: [primaryProtocolVersionId], references: [id], onDelete: SetNull)
+  tags                     String[]              @default([])
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
 
   protocolRun           ProtocolRun?
   steps                 ExperimentStep[]
   inventoryTransactions InventoryTransaction[]
   sampleEvents          SampleLifecycleEvent[]
   results               Result[]
+  protocolVersions      ExperimentProtocolVersion[]
 
   @@index([status])
   @@index([recordStatus])
   @@index([date])
   @@index([projectId])
+  @@index([researchPlanId])
+  @@index([primaryProtocolVersionId])
+}
+
+model ExperimentProtocolVersion {
+  experimentId      String
+  experiment        Experiment             @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  protocolVersionId String
+  protocolVersion   ProtocolVersion        @relation(fields: [protocolVersionId], references: [id], onDelete: Restrict)
+  role              ExperimentProtocolRole @default(supporting)
+  order             Int                    @default(0)
+  createdAt         DateTime               @default(now())
+
+  @@id([experimentId, protocolVersionId])
   @@index([protocolVersionId])
+  @@index([experimentId, order])
 }
 
 model Protocol {
-  id           String                @id @default(cuid())
-  title        String
-  description  String?
-  status       ProtocolStatus        @default(draft)
-  recordStatus RecordLifecycleStatus @default(draft)
-  projectId    String?
-  project      Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  tags         String[]              @default([])
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  id             String                @id @default(cuid())
+  humanCode      String?               @unique
+  title          String
+  canonicalTitle String?
+  shortTitle     String?
+  englishTitle   String?
+  description    String?
+  scope          ProtocolScope         @default(general)
+  availability   ProtocolAvailability  @default(draft) @map("status")
+  recordStatus   RecordLifecycleStatus @default(draft)
+  projectId      String?
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tags           String[]              @default([])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
-  versions ProtocolVersion[]
+  versions      ProtocolVersion[]
+  researchPlans ResearchPlanProtocol[]
 
-  @@index([status])
+  @@index([availability])
+  @@index([scope])
   @@index([recordStatus])
   @@index([projectId])
 }
@@ -308,9 +400,17 @@ model ProtocolVersion {
   id                   String                @id @default(cuid())
   protocolId           String
   protocol             Protocol              @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  versionNumber        Int
+  revision             Int                   @map("versionNumber")
+  displayVersion       String                @default("0.1")
+  reviewStage          ProtocolReviewStage   @default(draft)
   recordStatus         RecordLifecycleStatus @default(draft)
-  createdFromVersionId String?
+  previousVersionId    String?
+  previousVersion      ProtocolVersion?      @relation("ProtocolRevisionHistory", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersions         ProtocolVersion[]     @relation("ProtocolRevisionHistory")
+  derivedFromVersionId String?
+  derivedFromVersion   ProtocolVersion?      @relation("ProtocolDerivation", fields: [derivedFromVersionId], references: [id], onDelete: SetNull)
+  derivedVersions      ProtocolVersion[]     @relation("ProtocolDerivation")
+  adaptationRationale  String?
   changeSummary        String?
   title                String
   purpose              String?
@@ -325,13 +425,16 @@ model ProtocolVersion {
   resultTemplatesJson  Json                  @default("[]")
   createdAt            DateTime              @default(now())
 
-  experiments  Experiment[]
-  protocolRuns ProtocolRun[]
+  primaryExperiments Experiment[]                @relation("PrimaryExperimentProtocol")
+  experimentLinks    ExperimentProtocolVersion[]
+  protocolRuns       ProtocolRun[]
 
-  @@unique([protocolId, versionNumber])
+  @@unique([protocolId, revision])
   @@index([protocolId])
+  @@index([reviewStage])
   @@index([recordStatus])
-  @@index([createdFromVersionId])
+  @@index([previousVersionId])
+  @@index([derivedFromVersionId])
 }
 
 model ProtocolRun {
@@ -748,9 +851,22 @@ model AIProvider {
   enabled          Boolean        @default(false)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+  aisettings       AISettings[]
 
   @@index([type])
   @@index([enabled])
+}
+
+model AISettings {
+  id                 String      @id @default("default")
+  enabled            Boolean     @default(false)
+  defaultProviderId  String?
+  defaultProvider    AIProvider? @relation(fields: [defaultProviderId], references: [id], onDelete: SetNull)
+  externalDataPolicy String      @default("explicit_context")
+  attachmentsEnabled Boolean     @default(false)
+  updatedAt          DateTime    @updatedAt
+
+  @@index([defaultProviderId])
 }
 
 model ReferenceConnector {

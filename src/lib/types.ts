@@ -8,6 +8,9 @@ export type ItemType =
   | "protocol"
   | "protocol_version"
   | "project"
+  | "research_plan"
+  | "report"
+  | "tool"
   | "entity"
   | "sample_profile"
   | "sample_lifecycle_event"
@@ -69,9 +72,13 @@ export type ResultTemplate = {
 export type ProtocolVersionData = {
   id: string;
   protocolId: string;
-  versionNumber: number;
+  revision: number;
+  displayVersion: string;
+  reviewStage: "draft" | "ready_for_review" | "reviewed";
   recordStatus: RecordLifecycleStatus;
-  createdFromVersionId?: string;
+  previousVersionId?: string;
+  derivedFromVersionId?: string;
+  adaptationRationale?: string;
   changeSummary?: string;
   title: string;
   purpose: string;
@@ -89,9 +96,12 @@ export type ProtocolVersionData = {
 
 export type Protocol = {
   id: string;
+  humanCode?: string;
   title: string;
+  canonicalTitle?: string;
   description: string;
-  status: "draft" | "active" | "retired" | "archived";
+  availability: "draft" | "active" | "retired" | "archived";
+  scope: "general" | "project";
   recordStatus: RecordLifecycleStatus;
   tags: string[];
   currentVersion: ProtocolVersionData;
@@ -107,6 +117,20 @@ export type Project = {
   tags: string[];
 };
 
+export type ResearchPlan = {
+  id: string;
+  projectId: string;
+  projectName?: string;
+  code?: string;
+  title: string;
+  objective?: string;
+  hypothesis?: string;
+  rationale?: string;
+  design?: string;
+  status: "draft" | "active" | "paused" | "completed" | "archived";
+  tags: string[];
+};
+
 export type Entry = {
   id: string;
   title: string;
@@ -114,6 +138,8 @@ export type Entry = {
   occurredAt: string;
   projectId?: string;
   projectName?: string;
+  researchPlanId?: string;
+  researchPlanTitle?: string;
   tags: string[];
   sourceType: "text" | "photo" | "file" | "voice" | "manual";
   recordStatus: RecordLifecycleStatus;
@@ -148,7 +174,7 @@ export type Experiment = {
   resultSummary: string;
   conclusion: string;
   deviations: string;
-  protocolVersionId?: string;
+  primaryProtocolVersionId?: string;
   protocolRunId?: string;
   tags: string[];
   steps: ExperimentStepRecord[];

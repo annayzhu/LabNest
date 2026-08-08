@@ -1,4 +1,5 @@
 import { ManualCopyPasteProvider, manualCopyPasteProviderConfig } from "@/lib/ai";
+import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -8,6 +9,14 @@ const parseRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
+  if (!settings?.enabled) {
+    return Response.json(
+      { error: "AI is disabled. Enable it explicitly in Settings before importing model output." },
+      { status: 403 },
+    );
+  }
+
   const parsed = parseRequestSchema.safeParse(await request.json());
 
   if (!parsed.success) {

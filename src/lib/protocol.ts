@@ -44,10 +44,19 @@ export function canTransitionRecordStatus(
   return getNextRecordStatus(from) === to;
 }
 
-function nextVersionTitle(title: string, nextVersionNumber: number): string {
-  return /\bv\d+\b$/i.test(title)
-    ? title.replace(/\bv\d+\b$/i, `v${nextVersionNumber}`)
-    : `${title} v${nextVersionNumber}`;
+function nextDisplayVersion(displayVersion: string): string {
+  const parts = displayVersion.split(".").map(Number);
+  if (parts.length < 2 || parts.some((part) => !Number.isInteger(part) || part < 0)) {
+    return "0.1";
+  }
+  parts[parts.length - 1] += 1;
+  return parts.join(".");
+}
+
+function nextVersionTitle(title: string, displayVersion: string): string {
+  return /\bv\d+(?:\.\d+)+$/i.test(title)
+    ? title.replace(/\bv\d+(?:\.\d+)+$/i, `v${displayVersion}`)
+    : `${title} v${displayVersion}`;
 }
 
 export function createProtocolVersionFromParameterChange({
@@ -73,16 +82,19 @@ export function createProtocolVersionFromParameterChange({
   }
 
   const changeByName = new Map(parameterChanges.map((change) => [change.name, change.updates]));
-  const nextVersionNumber = previousVersion.versionNumber + 1;
+  const nextRevision = previousVersion.revision + 1;
+  const displayVersion = nextDisplayVersion(previousVersion.displayVersion);
 
   return {
     ...previousVersion,
-    id: `${previousVersion.protocolId}-v${nextVersionNumber}`,
-    versionNumber: nextVersionNumber,
+    id: `${previousVersion.protocolId}-r${nextRevision}`,
+    revision: nextRevision,
+    displayVersion,
+    reviewStage: "draft",
     recordStatus: "recorded",
-    createdFromVersionId: previousVersion.id,
+    previousVersionId: previousVersion.id,
     changeSummary,
-    title: nextVersionTitle(previousVersion.title, nextVersionNumber),
+    title: nextVersionTitle(previousVersion.title, displayVersion),
     parameters: previousVersion.parameters.map((parameter) => ({
       ...parameter,
       ...(changeByName.get(parameter.name) ?? {}),

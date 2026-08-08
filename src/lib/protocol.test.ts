@@ -13,9 +13,11 @@ import type { ProtocolVersionData } from "./types";
 const protocolVersion: ProtocolVersionData = {
   id: "pv-1",
   protocolId: "p-1",
-  versionNumber: 1,
+  revision: 1,
+  displayVersion: "0.1",
+  reviewStage: "reviewed",
   recordStatus: "recorded",
-  title: "Cell transfection v1",
+  title: "Cell transfection v0.1",
   purpose: "Demo",
   background: "Demo",
   scope: "Demo",
@@ -66,10 +68,11 @@ describe("protocol calculations", () => {
       createdAt: "2026-07-08T09:00:00Z",
     });
 
-    expect(nextVersion.versionNumber).toBe(2);
-    expect(nextVersion.title).toBe("Cell transfection v2");
+    expect(nextVersion.revision).toBe(2);
+    expect(nextVersion.displayVersion).toBe("0.2");
+    expect(nextVersion.title).toBe("Cell transfection v0.2");
     expect(nextVersion.recordStatus).toBe("recorded");
-    expect(nextVersion.createdFromVersionId).toBe("pv-1");
+    expect(nextVersion.previousVersionId).toBe("pv-1");
     expect(nextVersion.changeSummary).toBe("Confirmed pilot scale default from 2 wells to 3 wells.");
     expect(nextVersion.parameters[0].default).toBe(3);
     expect(protocolVersion.parameters[0].default).toBe(2);

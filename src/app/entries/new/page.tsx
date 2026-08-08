@@ -17,6 +17,7 @@ const experimentStatuses = ["planned", "running", "completed", "failed", "archiv
 const createEntryFormSchema = entrySchema.extend({
   recordStatus: z.enum(recordStatuses).default("recorded"),
   moodStatus: z.string().trim().optional(),
+  researchPlanId: z.string().trim().optional(),
   protocolVersionId: z.string().trim().optional(),
   experimentTitle: z.string().trim().optional(),
   experimentStatus: z.enum(experimentStatuses).default("running"),
@@ -62,6 +63,7 @@ async function createEntry(formData: FormData) {
     sourceType: formData.get("sourceType") || "text",
     recordStatus: formData.get("recordStatus") || "recorded",
     moodStatus: String(formData.get("moodStatus") ?? "").trim() || undefined,
+    researchPlanId: String(formData.get("researchPlanId") ?? "").trim() || undefined,
     protocolVersionId: String(formData.get("protocolVersionId") ?? "").trim() || undefined,
     experimentTitle: String(formData.get("experimentTitle") ?? "").trim() || undefined,
     experimentStatus: formData.get("experimentStatus") || "running",
@@ -76,6 +78,7 @@ async function createEntry(formData: FormData) {
       title: parsed.title,
       body: parsed.body,
       projectId: parsed.projectId,
+      researchPlanId: parsed.researchPlanId,
       tags: parsed.tags,
       sourceType: parsed.sourceType,
       recordStatus: parsed.recordStatus,
@@ -108,11 +111,21 @@ async function createEntry(formData: FormData) {
     })();
     const experimentTitle = parsed.experimentTitle || parsed.title;
     const projectId = parsed.projectId ?? version.protocol.projectId;
+    const researchPlanId = parsed.researchPlanId ?? (
+      projectId
+        ? (await prisma.researchPlan.findFirst({
+            where: { projectId, status: { in: ["active", "draft"] } },
+            orderBy: { updatedAt: "desc" },
+            select: { id: true },
+          }))?.id
+        : undefined
+    );
 
     const experiment = await prisma.experiment.create({
       data: {
         title: experimentTitle,
         projectId,
+        researchPlanId,
         status: parsed.experimentStatus,
         recordStatus: "recorded",
         purpose: parsed.title,
@@ -120,7 +133,7 @@ async function createEntry(formData: FormData) {
         materialsText: materialSummary(materials),
         observations: parsed.body,
         resultSummary: resultTemplates.length ? "Result records registered from protocol template." : "Result registration pending.",
-        protocolVersionId: version.id,
+        primaryProtocolVersionId: version.id,
         tags: Array.from(new Set([...parsed.tags, "from-entry", "protocol-based"])),
         steps: {
           create: steps.map((step) => ({
@@ -129,6 +142,9 @@ async function createEntry(formData: FormData) {
             title: step.title,
             description: step.description,
           })),
+        },
+        protocolVersions: {
+          create: { protocolVersionId: version.id, role: "primary", order: 0 },
         },
       },
     });
@@ -235,8 +251,12 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   const protocolVersionId = firstSearchParam(params, "protocolVersionId");
   const defaultSource = sourceTypes.includes(source as (typeof sourceTypes)[number]) ? source : "text";
   const projects = await prisma.project.findMany({ orderBy: { name: "asc" } });
+  const researchPlans = await prisma.researchPlan.findMany({
+    include: { project: true },
+    orderBy: [{ project: { name: "asc" } }, { title: "asc" }],
+  });
   const protocols = await prisma.protocol.findMany({
-    include: { versions: { orderBy: { versionNumber: "desc" } } },
+    include: { versions: { orderBy: { revision: "desc" } } },
     orderBy: { title: "asc" },
   });
 
@@ -273,7 +293,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
                 />
               </label>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <label className="block">
                   <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Project</span>
                   <select
@@ -284,6 +304,21 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
                     {projects.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Research plan</span>
+                  <select
+                    name="researchPlanId"
+                    className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
+                  >
+                    <option value="">Unassigned</option>
+                    {researchPlans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.project.name} · {plan.code ?? plan.title}
                       </option>
                     ))}
                   </select>
@@ -352,7 +387,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
                       {protocols.map((protocol) =>
                         protocol.versions.map((version) => (
                           <option key={version.id} value={version.id}>
-                            {protocol.title} / v{version.versionNumber} / {version.recordStatus}
+                            {protocol.humanCode ?? protocol.title} / {version.displayVersion} / {version.reviewStage}
                           </option>
                         )),
                       )}

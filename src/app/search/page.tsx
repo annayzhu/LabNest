@@ -28,7 +28,7 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
       }),
       prisma.protocol.findMany({
         where: { OR: [{ title: textFilter(query) }, { description: textFilter(query) }] },
-        include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
+        include: { versions: { orderBy: { revision: "desc" }, take: 1 } },
         orderBy: { updatedAt: "desc" },
         take: 20,
       }),
@@ -87,8 +87,8 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
         id: protocol.id,
         type: "protocol" as const,
         title: protocol.title,
-        subtitle: protocol.versions[0]?.title ?? protocol.status,
-        href: "/protocols",
+        subtitle: protocol.versions[0]?.title ?? protocol.availability,
+        href: `/protocols?protocol=${protocol.id}`,
         matchedText: protocol.description ?? undefined,
       })),
       ...inventoryItems.map((item) => ({

@@ -7,37 +7,35 @@ import {
   BookOpen,
   Boxes,
   ClipboardList,
+  FileBarChart,
   Database,
-  Download,
-  FlaskConical,
   FolderKanban,
   Home,
   Link2,
-  Paperclip,
+  Lightbulb,
   Search,
   Settings,
-  ShoppingCart,
   Sparkles,
-  TestTube2,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/", label: "Overview", icon: Home },
   { href: "/entries", label: "Entries", icon: BookOpen },
-  { href: "/experiments", label: "Experiments", icon: Beaker },
-  { href: "/protocols", label: "Protocols", icon: ClipboardList },
-  { href: "/samples", label: "Samples", icon: TestTube2 },
   { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/entities", label: "Entities", icon: TestTube2 },
-  { href: "/inventory", label: "Inventory", icon: Boxes },
+  { href: "/research-plans", label: "Research Plans", icon: Lightbulb },
+  { href: "/protocols", label: "Protocols", icon: ClipboardList },
+  { href: "/experiments", label: "Experiments", icon: Beaker },
   { href: "/results", label: "Results", icon: Database },
-  { href: "/purchases", label: "Purchases", icon: ShoppingCart },
-  { href: "/sequences", label: "Sequences", icon: FlaskConical },
+  { href: "/reports", label: "Reports", icon: FileBarChart },
+  { href: "/inventory", label: "Inventory", icon: Boxes, separated: true },
+  { href: "/tools", label: "Tools", icon: Wrench },
+];
+
+const utilityItems = [
   { href: "/search", label: "Search", icon: Search },
-  { href: "/attachments", label: "Attachments", icon: Paperclip },
-  { href: "/exports", label: "Exports", icon: Download },
-  { href: "/actions", label: "AI / Tasks", icon: Sparkles },
+  { href: "/actions", label: "AI review", icon: Sparkles },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -66,9 +64,29 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "focus-ring flex items-center gap-3 rounded-[9px] px-3 py-2.5 text-sm font-medium transition",
+                item.separated && "mt-4 border-t border-hairline pt-4",
                 active
                   ? "border border-hairline bg-sage-surface text-moss"
                   : "text-graphite hover:bg-stone/80 hover:text-ink",
+              )}
+            >
+              <Icon className="h-4 w-4" aria-hidden />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+      <nav aria-label="Utilities" className="mt-6 space-y-1 border-t border-hairline pt-4">
+        {utilityItems.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "focus-ring flex items-center gap-3 rounded-[9px] px-3 py-2 text-sm font-medium transition",
+                active ? "bg-stone text-ink" : "text-muted hover:bg-stone/70 hover:text-ink",
               )}
             >
               <Icon className="h-4 w-4" aria-hidden />
@@ -83,7 +101,7 @@ export function Sidebar() {
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const items = navItems.slice(0, 5);
+  const items = [navItems[0], navItems[1], navItems[4], navItems[7], navItems[9]];
 
   return (
     <nav

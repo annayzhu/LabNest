@@ -5,7 +5,11 @@ export const runtime = "nodejs";
 
 export async function GET() {
   const protocols = await prisma.protocol.findMany({
-    include: { project: true, versions: { orderBy: { versionNumber: "asc" } } },
+    include: {
+      project: true,
+      researchPlans: { include: { researchPlan: true } },
+      versions: { orderBy: { revision: "asc" } },
+    },
     orderBy: { updatedAt: "desc" },
   });
 

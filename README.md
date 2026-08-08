@@ -1,4 +1,4 @@
-# LabNest V1
+# LabNest Foundation
 
 Your personal nest for protocols, notes, samples, and results.
 
@@ -8,7 +8,8 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 
 - Next.js + TypeScript + Tailwind 4 application shell.
 - Warm scientific editorial design system with reusable tokens and components.
-- Dashboard with recent entries, experiments, protocols, pending proposed actions, inventory warnings, and activity.
+- Compact Overview with actionable counts and recent records.
+- Project -> Research Plan -> ProtocolVersion -> Experiment scientific backbone.
 - Journal-like Entry cards.
 - Experiment notebook page with formal sections and protocol checklist.
 - Protocol editor/read view with versioned protocol data, parameters, steps, consumption rules, and result templates.
@@ -20,7 +21,8 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 - Search page and `/api/search` endpoint across notes, experiments, protocols, entities, samples, inventory, results, purchases, procurement quote lines, and sequences.
 - Attachments page with local file upload storage, metadata capture, record links, and download endpoint.
 - Export page with database-backed CSV exports for inventory, results, and entities, JSON protocol export, and a metadata backup snapshot.
-- Manual AI copy-paste workbench for ChatGPT/Claude web subscriptions. It generates prompts and validates pasted JSON into proposed actions without API keys.
+- Optional AI workbench with a database-backed master switch that is off by default.
+- Versioned Tools directory for standalone qPCR/CNV planning and analysis applications.
 - Prisma 7 schema for PostgreSQL, Docker Compose, and seed data.
 - Unit tests for protocol consumption calculation, inventory transaction logic, procurement inquiry conversion, sequence utilities, and manual AI response parsing.
 
@@ -29,8 +31,9 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 - AI is optional and subordinate to manual workflows.
 - AI and protocol calculations can only create proposed actions.
 - Users must accept, edit, reject, and execute actions before data changes.
-- Entry, Experiment, Protocol, and ProtocolVersion records share the lightweight `draft -> recorded -> submitted -> reviewed` lifecycle.
-- Protocols are versioned, and confirmed local parameter changes create a new `ProtocolVersion` instead of mutating the prior version.
+- Project execution is organized through one or more Research Plans.
+- Protocol availability and scientific review stage are separate states.
+- Protocols are versioned, and confirmed changes create a new immutable `ProtocolVersion` instead of mutating the prior version.
 - Experiments created from protocols store the exact protocol version used.
 - Inventory quantity changes should occur through `InventoryTransaction`.
 - Direct inventory quantity edits should be represented as `adjust` transactions.
@@ -58,7 +61,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-The current UI renders from typed demo data so it is immediately browsable even before connecting pages to live database reads. The Prisma schema and seed are ready for the database-backed implementation path.
+Core foundation pages render from PostgreSQL through Prisma. Typed demo data remains only for secondary legacy surfaces and unit fixtures while those modules are migrated incrementally.
 
 ## Quality Checks
 
@@ -82,6 +85,7 @@ npm run build
 - `src/lib/search.ts` - typed demo search index used by the search page.
 - `src/lib/export.ts` - CSV and download response helpers.
 - `src/lib/ai.ts` - manual copy-paste AI provider boundary and proposed-action parsing.
+- `src/lib/tool-manifest.ts` - versioned external experimental-tool registry.
 - `src/lib/sequence.ts` - lightweight sequence utilities.
 - `src/lib/demo-data.ts` - V1 demo data used by the UI.
 - `prisma/schema.prisma` - PostgreSQL data model.
@@ -90,8 +94,10 @@ npm run build
 
 ## Known Gaps For The Next Pass
 
-- Wire pages to Prisma reads/writes and server actions.
-- Add real CRUD forms and validation feedback.
+- Add complete Research Plan and Experiment CRUD with validation feedback.
+- Build the full Protocol block editor, DOCX template import, and General -> Project adaptation workflow.
+- Add large-dataset storage, server-side pagination, virtualized tables, and structured Result content blocks.
+- Connect standalone tool endpoints and register tool exports as Results or Attachments.
 - Add persisted Excel upload UI for procurement inquiries and save generated exports as attachments.
 - Add action handlers behind the simplified UI surfaces, then restore only the buttons that perform real work.
 - Expand exports with Markdown/PDF report views and scheduled backup rotation.

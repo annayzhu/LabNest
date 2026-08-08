@@ -31,7 +31,7 @@ export default function ProtocolRunPage() {
             <CardBody className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-3">
                 <InfoTile label="Protocol" value={cellTransfectionVersion.title} />
-                <InfoTile label="Version" value={`v${cellTransfectionVersion.versionNumber}`} />
+                <InfoTile label="Version" value={cellTransfectionVersion.displayVersion} />
                 <InfoTile label="Status" value={experiment.status} />
               </div>
               <div className="rounded-[10px] border border-hairline bg-warm p-4">

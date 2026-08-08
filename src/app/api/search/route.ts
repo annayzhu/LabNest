@@ -172,8 +172,8 @@ export async function GET(request: Request) {
       id: protocol.id,
       type: "protocol" as const,
       title: protocol.title,
-      subtitle: protocol.status,
-      href: `/protocols?status=${protocol.status}`,
+      subtitle: protocol.availability,
+      href: `/protocols?availability=${protocol.availability}&protocol=${protocol.id}`,
       matchedText: protocol.description ?? undefined,
     })),
     ...entities.map((entity) => ({

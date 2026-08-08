@@ -3,7 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
-import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
+import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
+import { saveProtocolDocument } from "./actions";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 
 function asArray<T>(value: unknown): T[] {
@@ -19,13 +20,20 @@ function nextDisplayVersion(value: string) {
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await params;
-  const version = await prisma.protocolVersion.findUnique({
-    where: { id: versionId },
-    include: { protocol: true },
-  });
+  const [version, projects, researchPlans] = await Promise.all([
+    prisma.protocolVersion.findUnique({
+      where: { id: versionId },
+      include: { protocol: { include: { project: true, researchPlans: true } } },
+    }),
+    prisma.project.findMany({ where: { status: "active" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.researchPlan.findMany({
+      include: { project: { select: { name: true } } },
+      orderBy: [{ project: { name: "asc" } }, { title: "asc" }],
+    }),
+  ]);
   if (!version || version.protocolId !== id) notFound();
 
-  const document = normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
+  const document = upgradeProtocolDocumentForEditing(normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
     description: version.protocol.description,
     purpose: version.purpose,
     background: version.background,
@@ -34,7 +42,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
     steps: asArray<ProtocolStep>(version.stepsJson),
     resultTemplates: asArray<ResultTemplate>(version.resultTemplatesJson),
     consumptionRules: asArray<ConsumptionRule>(version.consumptionRulesJson),
-  });
+  }));
 
   return (
     <AppShell>
@@ -42,16 +50,22 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
         <PageHeader
           eyebrow={`${version.protocol.humanCode ?? "Protocol"} · ${version.displayVersion}`}
           title={version.reviewStage === "reviewed" ? "Create Protocol Revision" : "Edit Protocol"}
-          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using text, checklist, table, heading, and callout blocks."}
+          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
         />
         <ProtocolDocumentEditor
+          action={saveProtocolDocument}
+          mode="edit"
           protocol={{
             id: version.protocol.id,
+            humanCode: version.protocol.humanCode ?? undefined,
             canonicalTitle: version.protocol.canonicalTitle ?? version.protocol.title,
             shortTitle: version.protocol.shortTitle ?? undefined,
             englishTitle: version.protocol.englishTitle ?? undefined,
             availability: version.protocol.availability,
             tags: version.protocol.tags,
+            scope: version.protocol.scope,
+            projectId: version.protocol.projectId ?? undefined,
+            projectName: version.protocol.project?.name,
           }}
           version={{
             id: version.id,
@@ -61,6 +75,16 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
           }}
           initialDocument={document}
           suggestedDisplayVersion={nextDisplayVersion(version.displayVersion)}
+          projects={projects}
+          researchPlans={researchPlans.map((plan) => ({
+            id: plan.id,
+            code: plan.code,
+            title: plan.title,
+            projectId: plan.projectId,
+            projectName: plan.project.name,
+          }))}
+          initialResearchPlanIds={version.protocol.researchPlans.map((link) => link.researchPlanId)}
+          initialPrimaryResearchPlanIds={version.protocol.researchPlans.filter((link) => link.isPrimary).map((link) => link.researchPlanId)}
         />
       </div>
     </AppShell>

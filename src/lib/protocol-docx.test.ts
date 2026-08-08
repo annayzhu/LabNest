@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseProtocolDocumentXml } from "./protocol-docx";
+import { parseProtocolDocxBytes } from "./protocol-docx";
+import { exportProtocolDocx, protocolDocxFilename } from "./protocol-docx-export";
+import { createProtocolTemplateDocument } from "./protocol-document";
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -41,5 +44,36 @@ describe("Protocol DOCX parser", () => {
   it("reports filename and internal code mismatches", () => {
     const parsed = parseProtocolDocumentXml(xml, "PRT-100009_RNA逆转录_v0.1_Active.docx");
     expect(parsed.document.importWarnings[0]).toContain("does not match");
+  });
+
+  it("exports a valid DOCX that can be imported back into the fixed template", () => {
+    const document = createProtocolTemplateDocument();
+    document.sections.find((section) => section.key === "description")!.blocks = [
+      { id: "description-rich", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Quantify RNA", bold: true }, { text: " before reverse transcription." }] }] },
+    ];
+    document.sections.find((section) => section.key === "steps")!.blocks = [
+      { id: "step-heading", type: "heading", text: "1. Prepare reaction" },
+      { id: "step-detail", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Mix gently and keep on ice." }] }] },
+    ];
+    const identity = {
+      humanCode: "PRT-100099",
+      canonicalTitle: "RNA逆转录",
+      englishTitle: "Reverse Transcription",
+      availability: "active",
+      reviewStage: "reviewed",
+      displayVersion: "1.0",
+      scope: "general",
+      tags: ["RNA", "qPCR"],
+    };
+
+    const bytes = exportProtocolDocx(identity, document);
+    const parsed = parseProtocolDocxBytes(bytes, protocolDocxFilename(identity));
+    expect(parsed.humanCode).toBe(identity.humanCode);
+    expect(parsed.canonicalTitle).toBe(identity.canonicalTitle);
+    expect(parsed.displayVersion).toBe("1.0");
+    expect(parsed.tags).toEqual(["RNA", "qPCR"]);
+    expect(parsed.steps[0]).toEqual(expect.objectContaining({ title: "Prepare reaction", description: "Mix gently and keep on ice." }));
+    expect(parsed.resultTemplates[0].result_type).toBe("result_type");
+    expect(parsed.document.sections).toHaveLength(7);
   });
 });

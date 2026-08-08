@@ -28,6 +28,7 @@ export type ParsedProtocolDocx = {
   purpose: string;
   background: string;
   materials: ReturnType<typeof projectProtocolDocument>["materials"];
+  equipment: ReturnType<typeof projectProtocolDocument>["equipment"];
   steps: ReturnType<typeof projectProtocolDocument>["steps"];
   resultTemplates: ReturnType<typeof projectProtocolDocument>["resultTemplates"];
   consumptionRules: ReturnType<typeof projectProtocolDocument>["consumptionRules"];
@@ -52,6 +53,11 @@ function tableRows(element: Element) {
       return paragraphs.join("\n");
     }),
   );
+}
+
+function tableCaption(element: Element) {
+  const caption = element.getElementsByTagName("w:tblCaption")[0];
+  return caption?.getAttribute("w:val") ?? caption?.getAttribute("val") ?? undefined;
 }
 
 function simpleValue(value: string | undefined) {
@@ -168,7 +174,13 @@ export function parseProtocolDocumentXml(
           text: flatText,
         });
       } else {
-        pushBlock({ type: "table", rows });
+        const caption = tableCaption(element);
+        if (caption && currentSection) {
+          const blocks = getSection(currentSection).blocks;
+          const previous = blocks.at(-1);
+          if (previous?.type === "text" && previous.text === caption) blocks.pop();
+        }
+        pushBlock({ type: "table", rows, caption });
       }
     }
   }

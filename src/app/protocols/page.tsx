@@ -53,7 +53,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
             <CardHeader
               title={<Link href={`/protocols/${activeProtocol.id}`} className="hover:text-moss">{activeProtocol.canonicalTitle ?? activeProtocol.title}</Link>}
               eyebrow={`${activeProtocol.humanCode ?? "Uncoded"} · version ${currentVersion.displayVersion}`}
-              action={<div className="flex flex-wrap gap-2"><Link href={`/protocols/${activeProtocol.id}`} className={secondaryButton}>Open document</Link><Link href={`/entries/new?protocolVersionId=${currentVersion.id}`} className={primaryButton}>Use in experiment</Link></div>}
+              action={<div className="flex flex-wrap gap-2"><Link href={`/protocols/${activeProtocol.id}`} className={secondaryButton}>Open document</Link>{activeProtocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${currentVersion.id}`} className={primaryButton}>Use in experiment</Link> : <Link href={`/protocols/${activeProtocol.id}/versions/${currentVersion.id}/edit`} className={primaryButton}>Link Research Plan</Link>}</div>}
             />
             <CardBody className="space-y-4">
               <div className="flex flex-wrap gap-2">

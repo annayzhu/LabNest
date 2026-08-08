@@ -44,9 +44,10 @@ export async function adaptProtocolToProject(
     if (sourceVersion.protocol.scope !== "general") return { error: "Only a General Protocol can start this adaptation workflow." };
     if (!researchPlan || researchPlan.projectId !== parsed.projectId) return { error: "The selected Research Plan does not belong to the selected Project." };
 
-    const protocol = await prisma.protocol.create({
-      data: {
-        humanCode: await nextProtocolCode(),
+    const humanCode = await nextProtocolCode();
+    const protocol = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.protocol.create({ data: {
+        humanCode,
         title: parsed.canonicalTitle,
         canonicalTitle: parsed.canonicalTitle,
         shortTitle: sourceVersion.protocol.shortTitle,
@@ -84,7 +85,14 @@ export async function adaptProtocolToProject(
             contentJson: cloneJson(sourceVersion.contentJson),
           },
         },
-      },
+      }, include: { versions: { select: { id: true } } } });
+      await transaction.activityLog.create({ data: {
+        action: "adapt_to_project",
+        targetType: "protocol",
+        targetId: created.id,
+        metadataJson: { sourceProtocolId: parsed.protocolId, sourceVersionId: sourceVersion.id, protocolVersionId: created.versions[0]?.id, projectId: parsed.projectId, researchPlanId: parsed.researchPlanId },
+      } });
+      return created;
     });
 
     revalidatePath("/protocols");

@@ -51,8 +51,8 @@ export async function importProtocolDocx(
     }
 
     const recordStatus = recordStatusFor(parsed.reviewStage);
-    const protocol = await prisma.protocol.create({
-      data: {
+    const protocol = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.protocol.create({ data: {
         humanCode,
         title: parsed.canonicalTitle,
         canonicalTitle: parsed.canonicalTitle,
@@ -72,6 +72,7 @@ export async function importProtocolDocx(
             purpose: parsed.purpose,
             background: parsed.background,
             materialsJson: parsed.materials,
+            equipmentJson: parsed.equipment,
             stepsJson: parsed.steps,
             resultTemplatesJson: parsed.resultTemplates,
             consumptionRulesJson: parsed.consumptionRules,
@@ -83,7 +84,14 @@ export async function importProtocolDocx(
             sourceImportedAt: new Date(),
           },
         },
-      },
+      }, include: { versions: { select: { id: true } } } });
+      await transaction.activityLog.create({ data: {
+        action: "import_docx",
+        targetType: "protocol",
+        targetId: created.id,
+        metadataJson: { protocolVersionId: created.versions[0]?.id, sourceFileName: parsed.sourceFileName, sourceFileChecksum: parsed.sourceFileChecksum },
+      } });
+      return created;
     });
 
     revalidatePath("/protocols");

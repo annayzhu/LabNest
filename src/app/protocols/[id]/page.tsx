@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -59,6 +60,18 @@ export default async function ProtocolDetailPage({
     resultTemplates: asArray<ResultTemplate>(version.resultTemplatesJson),
     consumptionRules: asArray<ConsumptionRule>(version.consumptionRulesJson),
   });
+  const [attachmentLinks, activityLogs] = await Promise.all([
+    prisma.attachmentLink.findMany({
+      where: { targetType: "protocol_version", targetId: version.id },
+      include: { attachment: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.activityLog.findMany({
+      where: { targetType: "protocol", targetId: protocol.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+  ]);
 
   return (
     <AppShell>
@@ -69,9 +82,11 @@ export default async function ProtocolDetailPage({
           description={protocol.englishTitle ?? protocol.description ?? undefined}
           actions={
             <>
-              <Link href={`/entries/new?protocolVersionId=${version.id}`} className={primaryButton}>Use in experiment</Link>
+              {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={primaryButton}>Use in experiment</Link> : <Link href={`/protocols/${protocol.id}/versions/${version.id}/edit`} className={primaryButton}>Link Research Plan</Link>}
               <Link href={`/protocols/${protocol.id}/versions/${version.id}/edit`} className={secondaryButton}>{version.reviewStage === "reviewed" ? "Create revision" : "Edit"}</Link>
               {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
+              <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} className={secondaryButton}>Export DOCX</Link>
+              <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/json`} className={secondaryButton}>Export JSON</Link>
             </>
           }
         />
@@ -90,11 +105,20 @@ export default async function ProtocolDetailPage({
               {version.derivedFromVersion ? <Link href={`/protocols/${version.derivedFromVersion.protocol.id}?version=${version.derivedFromVersion.id}`} className="text-xs font-medium text-moss hover:underline">Derived from {version.derivedFromVersion.protocol.humanCode ?? version.derivedFromVersion.protocol.title} · {version.derivedFromVersion.displayVersion}</Link> : null}
               {version.previousVersion ? <Link href={`/protocols/${protocol.id}?version=${version.previousVersion.id}`} className="text-xs font-medium text-moss hover:underline">Previous revision {version.previousVersion.displayVersion}</Link> : null}
               {version.sourceFileName ? <span className="font-mono text-xs text-muted">Source: {version.sourceFileName}</span> : null}
+              {protocol.researchPlans.map((link) => <Link key={link.researchPlanId} href={`/research-plans/${link.researchPlanId}`} className="text-xs font-medium text-moss hover:underline">{link.isPrimary ? "Primary · " : ""}{link.researchPlan.code} · {link.researchPlan.title}</Link>)}
             </div>
           </CardBody>
         </Card>
 
         <ProtocolDocumentView document={document} />
+
+        <Card>
+          <CardHeader title="Attachments" eyebrow="Version-specific files" />
+          <CardBody className="space-y-4">
+            <AttachmentUploadForm targetType="protocol_version" targetId={version.id} hideTargetFields />
+            {attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id}><Link href={`/api/attachments/${link.attachment.id}`} className="text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link> <span className="text-xs text-muted">· {(link.attachment.size / 1024).toFixed(1)} KB</span></li>)}</ul> : <p className="border-t border-hairline pt-4 text-sm text-muted">No files attached to this exact version.</p>}
+          </CardBody>
+        </Card>
 
         <Card>
           <CardHeader title="Version history" eyebrow="Immutable lineage" />
@@ -112,6 +136,8 @@ export default async function ProtocolDetailPage({
             />
           </CardBody>
         </Card>
+
+        {activityLogs.length ? <Card><CardHeader title="Activity" eyebrow="Audit trail" /><CardBody><ul className="divide-y divide-hairline">{activityLogs.map((log) => <li key={log.id} className="flex items-center justify-between gap-4 py-2 text-sm"><span className="font-medium capitalize text-ink">{log.action.replaceAll("_", " ")}</span><time className="shrink-0 text-xs text-muted">{log.createdAt.toLocaleString()}</time></li>)}</ul></CardBody></Card> : null}
       </div>
     </AppShell>
   );

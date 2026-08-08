@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
+import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 
-export type ProtocolEditorState = { error?: string };
+export type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 
 const editorSchema = z.object({
   protocolId: z.string().min(1),
@@ -20,6 +21,8 @@ const editorSchema = z.object({
   changeSummary: z.string().trim().optional(),
   tags: z.array(z.string().trim().min(1).max(48)),
   contentJson: z.string().min(1),
+  researchPlanIds: z.array(z.string().min(1)),
+  primaryResearchPlanIds: z.array(z.string().min(1)),
 });
 
 function cloneJson(value: unknown) {
@@ -49,6 +52,8 @@ export async function saveProtocolDocument(
       changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
       tags: String(formData.get("tags") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
       contentJson: formData.get("contentJson"),
+      researchPlanIds: formData.getAll("researchPlanIds").map(String),
+      primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
     const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
     const projection = projectProtocolDocument(document);
@@ -61,6 +66,16 @@ export async function saveProtocolDocument(
       return { error: "A reviewed version is immutable. Enter a change summary to create the next revision." };
     }
 
+    const researchPlanIds = [...new Set([...parsed.researchPlanIds, ...parsed.primaryResearchPlanIds])];
+    const researchPlans = researchPlanIds.length ? await prisma.researchPlan.findMany({
+      where: { id: { in: researchPlanIds } },
+      select: { id: true, projectId: true },
+    }) : [];
+    if (researchPlans.length !== researchPlanIds.length) return { error: "One or more selected Research Plans no longer exist." };
+    if (sourceVersion.protocol.scope === "project" && researchPlans.some((plan) => plan.projectId !== sourceVersion.protocol.projectId)) {
+      return { error: "A Project Protocol can only be linked to Research Plans in the same Project." };
+    }
+
     const recordStatus = recordStatusFor(parsed.reviewStage);
     const duplicateVersion = await prisma.protocolVersion.findFirst({
       where: {
@@ -71,7 +86,7 @@ export async function saveProtocolDocument(
     });
     if (duplicateVersion) return { error: `Version ${parsed.displayVersion} already exists for this Protocol.` };
 
-    const nextVersion = sourceVersion.reviewStage === "reviewed"
+    const latestVersion = sourceVersion.reviewStage === "reviewed"
       ? await prisma.protocolVersion.findFirst({ where: { protocolId: parsed.protocolId }, orderBy: { revision: "desc" } })
       : undefined;
 
@@ -101,28 +116,55 @@ export async function saveProtocolDocument(
         stepsJson: projection.steps,
         resultTemplatesJson: projection.resultTemplates,
         consumptionRulesJson: projection.consumptionRules,
+        equipmentJson: projection.equipment,
         contentJson: JSON.parse(JSON.stringify(document)),
         changeSummary: parsed.changeSummary,
       } as const;
 
+      let savedVersionId = sourceVersion.id;
       if (sourceVersion.reviewStage === "reviewed") {
-        await transaction.protocolVersion.create({
+        const createdVersion = await transaction.protocolVersion.create({
           data: {
             protocolId: parsed.protocolId,
-            revision: (nextVersion?.revision ?? sourceVersion.revision) + 1,
+            revision: (latestVersion?.revision ?? sourceVersion.revision) + 1,
             previousVersionId: sourceVersion.id,
             sourceType: "manual",
             scope: sourceVersion.scope,
             notes: sourceVersion.notes,
             parametersJson: cloneJson(sourceVersion.parametersJson),
-            equipmentJson: cloneJson(sourceVersion.equipmentJson),
             adaptationRationale: sourceVersion.adaptationRationale,
             ...versionData,
           },
         });
+        savedVersionId = createdVersion.id;
       } else {
         await transaction.protocolVersion.update({ where: { id: sourceVersion.id }, data: versionData });
       }
+
+      await transaction.researchPlanProtocol.deleteMany({ where: { protocolId: parsed.protocolId } });
+      if (researchPlanIds.length) {
+        await transaction.researchPlanProtocol.createMany({
+          data: researchPlanIds.map((researchPlanId) => ({
+            protocolId: parsed.protocolId,
+            researchPlanId,
+            isPrimary: parsed.primaryResearchPlanIds.includes(researchPlanId),
+          })),
+        });
+      }
+      await transaction.activityLog.create({
+        data: {
+          action: sourceVersion.reviewStage === "reviewed" ? "create_revision" : "update",
+          targetType: "protocol",
+          targetId: parsed.protocolId,
+          metadataJson: {
+            sourceVersionId: sourceVersion.id,
+            savedVersionId,
+            displayVersion: parsed.displayVersion,
+            reviewStage: parsed.reviewStage,
+            researchPlanIds,
+          },
+        },
+      });
     });
 
     revalidatePath("/protocols");

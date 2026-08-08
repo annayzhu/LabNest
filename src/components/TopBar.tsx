@@ -1,6 +1,7 @@
 "use client";
 
 import { Command, Search } from "lucide-react";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function TopBar() {
   return (
@@ -20,6 +21,7 @@ export function TopBar() {
             </span>
           </label>
         </form>
+        <LanguageToggle />
       </div>
     </header>
   );

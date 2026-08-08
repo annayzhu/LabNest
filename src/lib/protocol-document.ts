@@ -356,9 +356,16 @@ export function projectProtocolDocument(document: ProtocolDocument) {
           required: /^(yes|true|1|是|必填)$/i.test(row[requiredIndex]?.trim() ?? ""),
         };
       }).filter((field) => field.name);
+      const normalizedHeaders = headers.map((header) => header.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, ""));
+      const isFieldDefinitionTable = normalizedHeaders.some((header) => ["field", "name", "字段", "名称"].some((candidate) => header.includes(candidate)))
+        && normalizedHeaders.some((header) => ["type", "类型"].some((candidate) => header.includes(candidate)));
       return {
         result_type: block.caption || `result_template_${index + 1}`,
-        fields: fields.length ? fields : headers.filter(Boolean).map((name) => ({ name, type: "text" as const })),
+        fields: fields.length
+          ? fields
+          : isFieldDefinitionTable
+            ? []
+            : headers.filter(Boolean).map((name) => ({ name, type: "text" as const })),
       };
     });
 

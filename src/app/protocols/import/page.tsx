@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Download } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolImportForm } from "@/components/ProtocolImportForm";
@@ -13,7 +15,20 @@ export default function ImportProtocolPage() {
           description="Import the established LabNest DOCX template into fixed scientific sections while preserving paragraphs, checklists, tables, and warning callouts."
         />
         <Card>
-          <CardHeader title="DOCX import" eyebrow="Template-aware parser" />
+          <CardHeader
+            title="DOCX import"
+            eyebrow="Template-aware parser"
+            action={
+              <Link
+                href="/api/protocols/template/docx"
+                download
+                className="focus-ring inline-flex h-10 shrink-0 items-center gap-2 rounded-[8px] border border-moss bg-surface px-3 text-sm font-medium text-moss transition-colors hover:bg-sage-surface"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                Download DOCX template
+              </Link>
+            }
+          />
           <CardBody><ProtocolImportForm /></CardBody>
         </Card>
         <Card>

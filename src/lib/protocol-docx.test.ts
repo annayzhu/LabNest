@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { parseProtocolDocumentXml } from "./protocol-docx";
 import { parseProtocolDocxBytes } from "./protocol-docx";
 import { exportProtocolDocx, protocolDocxFilename } from "./protocol-docx-export";
+import {
+  exportProtocolDocxTemplate,
+  isUnfilledProtocolDocxTemplateTitle,
+  protocolDocxTemplateFilename,
+  protocolDocxTemplateTitle,
+} from "./protocol-docx-template";
 import { createProtocolTemplateDocument } from "./protocol-document";
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -75,5 +81,17 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.steps[0]).toEqual(expect.objectContaining({ title: "Prepare reaction", description: "Mix gently and keep on ice." }));
     expect(parsed.resultTemplates[0].result_type).toBe("result_type");
     expect(parsed.document.sections).toHaveLength(7);
+  });
+
+  it("provides a blank import template that round-trips without fake steps or result fields", () => {
+    const bytes = exportProtocolDocxTemplate();
+    const parsed = parseProtocolDocxBytes(bytes, protocolDocxTemplateFilename);
+
+    expect(parsed.canonicalTitle).toBe(protocolDocxTemplateTitle);
+    expect(isUnfilledProtocolDocxTemplateTitle(parsed.canonicalTitle)).toBe(true);
+    expect(parsed.document.sections).toHaveLength(7);
+    expect(parsed.steps).toEqual([]);
+    expect(parsed.materials).toEqual([]);
+    expect(parsed.resultTemplates[0]).toEqual(expect.objectContaining({ fields: [] }));
   });
 });

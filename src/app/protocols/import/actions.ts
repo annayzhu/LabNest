@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseProtocolDocx } from "@/lib/protocol-docx";
+import { isUnfilledProtocolDocxTemplateTitle } from "@/lib/protocol-docx-template";
 
 export type ProtocolImportState = { error?: string };
 
@@ -36,6 +37,9 @@ export async function importProtocolDocx(
 
   try {
     const parsed = await parseProtocolDocx(file);
+    if (isUnfilledProtocolDocxTemplateTitle(parsed.canonicalTitle)) {
+      return { error: "Replace the template Protocol title before importing." };
+    }
     const humanCode = parsed.humanCode ?? await nextProtocolCode();
     const [codeConflict, duplicateSource] = await Promise.all([
       prisma.protocol.findUnique({ where: { humanCode } }),

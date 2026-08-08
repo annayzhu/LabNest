@@ -1,0 +1,45 @@
+import { describe, expect, it } from "vitest";
+import { parseProtocolDocumentXml } from "./protocol-docx";
+
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>PRT-100012</w:t></w:r></w:p>
+    <w:p><w:r><w:t>RNA逆转录</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Reverse Transcription</w:t></w:r></w:p>
+    <w:tbl>
+      <w:tr><w:tc><w:p><w:r><w:t>Protocol Title</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>PRT-100012 RNA逆转录</w:t></w:r></w:p></w:tc></w:tr>
+      <w:tr><w:tc><w:p><w:r><w:t>Availability</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Active</w:t></w:r></w:p></w:tc></w:tr>
+      <w:tr><w:tc><w:p><w:r><w:t>Review stage</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Reviewed</w:t></w:r></w:p></w:tc></w:tr>
+      <w:tr><w:tc><w:p><w:r><w:t>Tag</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>RNA; qPCR</w:t></w:r></w:p></w:tc></w:tr>
+    </w:tbl>
+    <w:p><w:r><w:t>Description</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Structured description.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Purpose</w:t></w:r></w:p><w:p><w:r><w:t>Make cDNA.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Background</w:t></w:r></w:p><w:p><w:r><w:t>Background text.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Material</w:t></w:r></w:p>
+    <w:tbl><w:tr><w:tc><w:p><w:r><w:t>Name</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Use</w:t></w:r></w:p></w:tc></w:tr><w:tr><w:tc><w:p><w:r><w:t>RT Mix</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Reaction</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+    <w:p><w:r><w:t>Steps</w:t></w:r></w:p><w:p><w:r><w:t>1. Setup</w:t></w:r></w:p><w:p><w:r><w:t>☐ Mix gently.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Result Templates</w:t></w:r></w:p><w:tbl><w:tr><w:tc><w:p><w:r><w:t>Sample ID</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>QC</w:t></w:r></w:p></w:tc></w:tr><w:tr><w:tc><w:p><w:r><w:t></w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t></w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+    <w:p><w:r><w:t>Consumption Rules</w:t></w:r></w:p><w:p><w:r><w:t>Per sample.</w:t></w:r></w:p>
+  </w:body>
+</w:document>`;
+
+describe("Protocol DOCX parser", () => {
+  it("preserves fixed sections and mixed content blocks", () => {
+    const parsed = parseProtocolDocumentXml(xml, "PRT-100012_RNA逆转录_v0.1_Active.docx");
+    expect(parsed.humanCode).toBe("PRT-100012");
+    expect(parsed.canonicalTitle).toBe("RNA逆转录");
+    expect(parsed.availability).toBe("active");
+    expect(parsed.reviewStage).toBe("reviewed");
+    expect(parsed.tags).toEqual(["RNA", "qPCR"]);
+    expect(parsed.document.sections.map((section) => section.key)).toHaveLength(7);
+    expect(parsed.materials[0].name).toBe("RT Mix");
+    expect(parsed.steps[0].description).toBe("Mix gently.");
+  });
+
+  it("reports filename and internal code mismatches", () => {
+    const parsed = parseProtocolDocumentXml(xml, "PRT-100009_RNA逆转录_v0.1_Active.docx");
+    expect(parsed.document.importWarnings[0]).toContain("does not match");
+  });
+});

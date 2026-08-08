@@ -62,6 +62,12 @@ enum ProtocolScope {
   project
 }
 
+enum ProtocolVersionSourceType {
+  manual
+  docx_import
+  derived
+}
+
 enum ExperimentProtocolRole {
   primary
   supporting
@@ -397,33 +403,38 @@ model Protocol {
 }
 
 model ProtocolVersion {
-  id                   String                @id @default(cuid())
+  id                   String                    @id @default(cuid())
   protocolId           String
-  protocol             Protocol              @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  revision             Int                   @map("versionNumber")
-  displayVersion       String                @default("0.1")
-  reviewStage          ProtocolReviewStage   @default(draft)
-  recordStatus         RecordLifecycleStatus @default(draft)
+  protocol             Protocol                  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  revision             Int                       @map("versionNumber")
+  displayVersion       String                    @default("0.1")
+  reviewStage          ProtocolReviewStage       @default(draft)
+  recordStatus         RecordLifecycleStatus     @default(draft)
   previousVersionId    String?
-  previousVersion      ProtocolVersion?      @relation("ProtocolRevisionHistory", fields: [previousVersionId], references: [id], onDelete: SetNull)
-  nextVersions         ProtocolVersion[]     @relation("ProtocolRevisionHistory")
+  previousVersion      ProtocolVersion?          @relation("ProtocolRevisionHistory", fields: [previousVersionId], references: [id], onDelete: SetNull)
+  nextVersions         ProtocolVersion[]         @relation("ProtocolRevisionHistory")
   derivedFromVersionId String?
-  derivedFromVersion   ProtocolVersion?      @relation("ProtocolDerivation", fields: [derivedFromVersionId], references: [id], onDelete: SetNull)
-  derivedVersions      ProtocolVersion[]     @relation("ProtocolDerivation")
+  derivedFromVersion   ProtocolVersion?          @relation("ProtocolDerivation", fields: [derivedFromVersionId], references: [id], onDelete: SetNull)
+  derivedVersions      ProtocolVersion[]         @relation("ProtocolDerivation")
   adaptationRationale  String?
   changeSummary        String?
+  sourceType           ProtocolVersionSourceType @default(manual)
+  sourceFileName       String?
+  sourceFileChecksum   String?
+  sourceImportedAt     DateTime?
   title                String
   purpose              String?
   background           String?
   scope                String?
   notes                String?
-  parametersJson       Json                  @default("[]")
-  materialsJson        Json                  @default("[]")
-  equipmentJson        Json                  @default("[]")
-  stepsJson            Json                  @default("[]")
-  consumptionRulesJson Json                  @default("[]")
-  resultTemplatesJson  Json                  @default("[]")
-  createdAt            DateTime              @default(now())
+  parametersJson       Json                      @default("[]")
+  materialsJson        Json                      @default("[]")
+  equipmentJson        Json                      @default("[]")
+  stepsJson            Json                      @default("[]")
+  consumptionRulesJson Json                      @default("[]")
+  resultTemplatesJson  Json                      @default("[]")
+  contentJson          Json                      @default("{}")
+  createdAt            DateTime                  @default(now())
 
   primaryExperiments Experiment[]                @relation("PrimaryExperimentProtocol")
   experimentLinks    ExperimentProtocolVersion[]
@@ -433,6 +444,7 @@ model ProtocolVersion {
   @@index([protocolId])
   @@index([reviewStage])
   @@index([recordStatus])
+  @@index([sourceType])
   @@index([previousVersionId])
   @@index([derivedFromVersionId])
 }

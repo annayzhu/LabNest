@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 
 const primaryButton =
   "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm transition hover:brightness-95";
+const secondaryButton =
+  "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss transition hover:bg-warm";
 
 export default async function ProtocolsPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
@@ -43,15 +45,15 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
           eyebrow="Controlled methods"
           title="Protocols"
           description="General protocols can be adapted for a research plan. Availability and scientific review are tracked separately, and experiments retain the exact version used."
-          actions={<Link href="/protocols/new" className={primaryButton}>New protocol</Link>}
+          actions={<><Link href="/protocols/import" className={secondaryButton}>Import DOCX</Link><Link href="/protocols/new" className={primaryButton}>New protocol</Link></>}
         />
 
         {activeProtocol && currentVersion ? (
           <Card>
             <CardHeader
-              title={activeProtocol.canonicalTitle ?? activeProtocol.title}
+              title={<Link href={`/protocols/${activeProtocol.id}`} className="hover:text-moss">{activeProtocol.canonicalTitle ?? activeProtocol.title}</Link>}
               eyebrow={`${activeProtocol.humanCode ?? "Uncoded"} · version ${currentVersion.displayVersion}`}
-              action={<Link href={`/entries/new?protocolVersionId=${currentVersion.id}`} className={primaryButton}>Use in experiment</Link>}
+              action={<div className="flex flex-wrap gap-2"><Link href={`/protocols/${activeProtocol.id}`} className={secondaryButton}>Open document</Link><Link href={`/entries/new?protocolVersionId=${currentVersion.id}`} className={primaryButton}>Use in experiment</Link></div>}
             />
             <CardBody className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -94,7 +96,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
                   key: "protocol",
                   header: "Protocol",
                   render: (row) => (
-                    <Link href={filterHref("/protocols", { protocol: row.id, availability, scope })} className="block">
+                    <Link href={`/protocols/${row.id}`} className="block">
                       <span className="font-mono text-xs text-muted">{row.humanCode ?? "—"}</span>
                       <span className="ml-2 font-semibold text-ink hover:text-moss">{row.canonicalTitle ?? row.title}</span>
                     </Link>

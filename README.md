@@ -13,6 +13,8 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 - Journal-like Entry cards.
 - Experiment notebook page with formal sections and protocol checklist.
 - Protocol editor/read view with versioned protocol data, parameters, steps, consumption rules, and result templates.
+- Template-aware Protocol DOCX import with fixed scientific sections, mixed content blocks, source checksums, and conflict warnings.
+- Reviewed Protocol versions are immutable; edits create linked revisions. General Protocols can be adapted into separately traceable Project Protocols.
 - Protocol Run page that shows parameters, step checklist, calculated consumption, result form, and pending actions.
 - Lightweight Samples ledger with biological sample profiles, aliquots, storage positions, lifecycle events, warnings, and experiment provenance.
 - Inventory table and transaction history. Quantity changes are modeled through transactions.

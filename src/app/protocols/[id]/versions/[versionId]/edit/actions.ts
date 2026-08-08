@@ -1,0 +1,135 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
+
+export type ProtocolEditorState = { error?: string };
+
+const editorSchema = z.object({
+  protocolId: z.string().min(1),
+  versionId: z.string().min(1),
+  canonicalTitle: z.string().trim().min(1).max(180),
+  shortTitle: z.string().trim().optional(),
+  englishTitle: z.string().trim().optional(),
+  availability: z.enum(["draft", "active", "retired", "archived"]),
+  reviewStage: z.enum(["draft", "ready_for_review", "reviewed"]),
+  displayVersion: z.string().trim().regex(/^\d+\.\d+(?:\.\d+)?$/),
+  changeSummary: z.string().trim().optional(),
+  tags: z.array(z.string().trim().min(1).max(48)),
+  contentJson: z.string().min(1),
+});
+
+function cloneJson(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function recordStatusFor(reviewStage: "draft" | "ready_for_review" | "reviewed") {
+  if (reviewStage === "reviewed") return "reviewed" as const;
+  if (reviewStage === "ready_for_review") return "submitted" as const;
+  return "draft" as const;
+}
+
+export async function saveProtocolDocument(
+  _previousState: ProtocolEditorState,
+  formData: FormData,
+): Promise<ProtocolEditorState> {
+  try {
+    const parsed = editorSchema.parse({
+      protocolId: formData.get("protocolId"),
+      versionId: formData.get("versionId"),
+      canonicalTitle: formData.get("canonicalTitle"),
+      shortTitle: String(formData.get("shortTitle") ?? "").trim() || undefined,
+      englishTitle: String(formData.get("englishTitle") ?? "").trim() || undefined,
+      availability: formData.get("availability"),
+      reviewStage: formData.get("reviewStage"),
+      displayVersion: formData.get("displayVersion"),
+      changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
+      tags: String(formData.get("tags") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+      contentJson: formData.get("contentJson"),
+    });
+    const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
+    const projection = projectProtocolDocument(document);
+    const sourceVersion = await prisma.protocolVersion.findUnique({
+      where: { id: parsed.versionId },
+      include: { protocol: true },
+    });
+    if (!sourceVersion || sourceVersion.protocolId !== parsed.protocolId) return { error: "Protocol version not found." };
+    if (sourceVersion.reviewStage === "reviewed" && !parsed.changeSummary) {
+      return { error: "A reviewed version is immutable. Enter a change summary to create the next revision." };
+    }
+
+    const recordStatus = recordStatusFor(parsed.reviewStage);
+    const duplicateVersion = await prisma.protocolVersion.findFirst({
+      where: {
+        protocolId: parsed.protocolId,
+        displayVersion: parsed.displayVersion,
+        NOT: { id: sourceVersion.id },
+      },
+    });
+    if (duplicateVersion) return { error: `Version ${parsed.displayVersion} already exists for this Protocol.` };
+
+    const nextVersion = sourceVersion.reviewStage === "reviewed"
+      ? await prisma.protocolVersion.findFirst({ where: { protocolId: parsed.protocolId }, orderBy: { revision: "desc" } })
+      : undefined;
+
+    await prisma.$transaction(async (transaction) => {
+      await transaction.protocol.update({
+        where: { id: parsed.protocolId },
+        data: {
+          title: parsed.canonicalTitle,
+          canonicalTitle: parsed.canonicalTitle,
+          shortTitle: parsed.shortTitle,
+          englishTitle: parsed.englishTitle,
+          description: projection.description,
+          availability: parsed.availability,
+          recordStatus,
+          tags: parsed.tags,
+        },
+      });
+
+      const versionData = {
+        displayVersion: parsed.displayVersion,
+        reviewStage: parsed.reviewStage,
+        recordStatus,
+        title: `${parsed.canonicalTitle} v${parsed.displayVersion}`,
+        purpose: projection.purpose,
+        background: projection.background,
+        materialsJson: projection.materials,
+        stepsJson: projection.steps,
+        resultTemplatesJson: projection.resultTemplates,
+        consumptionRulesJson: projection.consumptionRules,
+        contentJson: JSON.parse(JSON.stringify(document)),
+        changeSummary: parsed.changeSummary,
+      } as const;
+
+      if (sourceVersion.reviewStage === "reviewed") {
+        await transaction.protocolVersion.create({
+          data: {
+            protocolId: parsed.protocolId,
+            revision: (nextVersion?.revision ?? sourceVersion.revision) + 1,
+            previousVersionId: sourceVersion.id,
+            sourceType: "manual",
+            scope: sourceVersion.scope,
+            notes: sourceVersion.notes,
+            parametersJson: cloneJson(sourceVersion.parametersJson),
+            equipmentJson: cloneJson(sourceVersion.equipmentJson),
+            adaptationRationale: sourceVersion.adaptationRationale,
+            ...versionData,
+          },
+        });
+      } else {
+        await transaction.protocolVersion.update({ where: { id: sourceVersion.id }, data: versionData });
+      }
+    });
+
+    revalidatePath("/protocols");
+    revalidatePath(`/protocols/${parsed.protocolId}`);
+    redirect(`/protocols/${parsed.protocolId}`);
+  } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) throw error;
+    return { error: error instanceof Error ? error.message : "The Protocol could not be saved." };
+  }
+}

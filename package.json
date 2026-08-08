@@ -16,10 +16,12 @@
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.9.10",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "fflate": "^0.8.3",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
     "pg": "^8.22.0",

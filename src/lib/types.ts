@@ -56,17 +56,78 @@ export type ConsumptionRule = {
   requires_inventory_selection?: boolean;
 };
 
+export type ResultFieldDataType = "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime";
+export type ResultDatasetColumnType = "text" | "number" | "category" | "boolean" | "date" | "datetime";
+export type ResultSemanticRole = "identifier" | "design" | "group" | "label" | "measurement" | "qc" | "annotation";
+export type ResultCardinality = "single" | "per_run" | "per_sample" | "per_timepoint" | "repeatable";
+export type ResultKind = "measurement" | "assay" | "imaging" | "blot" | "flow_cytometry" | "omics" | "observation";
+export type ResultViewPreset = "generic" | "qpcr" | "imaging" | "blot" | "flow" | "timeseries" | "omics";
+
 export type ResultTemplateField = {
-  name: string;
-  type: "text" | "number" | "select" | "attachment[]" | "boolean";
+  key?: string;
+  label?: string;
+  dataType?: ResultFieldDataType;
+  /** Legacy aliases retained for imported Protocols and older snapshots. */
+  name?: string;
+  type?: ResultFieldDataType;
   unit?: string;
   required?: boolean;
   options?: string[];
+  semanticRole?: ResultSemanticRole;
+  description?: string;
+  validation?: { min?: number; max?: number; pattern?: string };
+};
+
+export type ResultDatasetColumn = {
+  key: string;
+  label: string;
+  dataType: ResultDatasetColumnType;
+  required?: boolean;
+  unit?: string;
+  semanticRole?: ResultSemanticRole;
+};
+
+export type ResultTemplateDataset = {
+  key: string;
+  label: string;
+  required?: boolean;
+  columns: ResultDatasetColumn[];
+};
+
+export type ResultTemplateArtifact = {
+  key: string;
+  label: string;
+  kind: "file" | "image" | "video";
+  required?: boolean;
+};
+
+export type ResultChartSpec = {
+  key: string;
+  label: string;
+  type: "bar" | "line" | "scatter";
+  datasetKey: string;
+  xField: string;
+  yField: string;
+  seriesField?: string;
 };
 
 export type ResultTemplate = {
   result_type: string;
+  templateKey?: string;
+  schemaVersion?: number;
+  title?: string;
+  description?: string;
+  resultKind?: ResultKind;
+  cardinality?: ResultCardinality;
   fields: ResultTemplateField[];
+  datasets?: ResultTemplateDataset[];
+  artifacts?: ResultTemplateArtifact[];
+  view?: {
+    preset?: ResultViewPreset;
+    primaryMetric?: string;
+    groupBy?: string;
+    charts?: ResultChartSpec[];
+  };
 };
 
 export type ProtocolVersionData = {
@@ -131,6 +192,17 @@ export type ResearchPlan = {
   tags: string[];
 };
 
+export type EntryAttachment = {
+  id: string;
+  originalFilename: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+  sha256?: string;
+  metadata?: Record<string, unknown>;
+  derivativeKind?: string;
+};
+
 export type Entry = {
   id: string;
   title: string;
@@ -145,8 +217,11 @@ export type Entry = {
   recordStatus: RecordLifecycleStatus;
   moodStatus?: string;
   attachmentCount: number;
+  attachments?: EntryAttachment[];
   relevantItems: RelevantItem[];
+  linkedItemCount?: number;
   pendingActionCount: number;
+  contentMarkdown?: string;
 };
 
 export type ExperimentStepRecord = {
@@ -168,12 +243,6 @@ export type Experiment = {
   recordStatus: RecordLifecycleStatus;
   date: string;
   purpose: string;
-  background: string;
-  materialsText: string;
-  observations: string;
-  resultSummary: string;
-  conclusion: string;
-  deviations: string;
   primaryProtocolVersionId?: string;
   protocolRunId?: string;
   tags: string[];
@@ -183,6 +252,9 @@ export type Experiment = {
 export type InventoryItem = {
   id: string;
   name: string;
+  englishName?: string;
+  category?: string;
+  brand?: string;
   entityId?: string;
   containerType?: string;
   barcode?: string;
@@ -190,8 +262,10 @@ export type InventoryItem = {
   lotNumber?: string;
   vendor?: string;
   catalogNumber?: string;
+  casNumber?: string;
   currentQuantity: number;
   unit: string;
+  lowThreshold?: number;
   concentration?: string;
   location: string;
   positionCode?: string;
@@ -201,7 +275,6 @@ export type InventoryItem = {
   storageCondition?: string;
   status: "active" | "inactive" | "archived";
   notes?: string;
-  lowThreshold?: number;
 };
 
 export type InventoryTransaction = {
@@ -226,6 +299,7 @@ export type InventoryTransaction = {
   experimentId?: string;
   purchaseId?: string;
   proposedActionId?: string;
+  performedBy?: string;
   notes?: string;
   createdAt: string;
 };

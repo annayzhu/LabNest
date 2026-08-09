@@ -22,22 +22,21 @@ export function Card({
 
 export function CardHeader({
   title,
-  eyebrow,
   action,
   className,
 }: {
   title: ReactNode;
+  // Accepted for compatibility; cards use a single, content-oriented heading.
   eyebrow?: ReactNode;
   action?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-start justify-between gap-4 border-b border-hairline/80 px-5 py-4", className)}>
+    <div className={cn("flex items-center justify-between gap-4 border-b border-hairline/80 px-5 py-3", className)}>
       <div className="min-w-0">
-        {eyebrow ? <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted">{eyebrow}</p> : null}
-        <h2 className="mt-1 font-serif text-xl font-medium leading-tight text-ink">{title}</h2>
+        <h2 className="font-serif text-[17px] font-medium leading-tight text-ink">{title}</h2>
       </div>
-      {action}
+      {action ? <div className="card-action">{action}</div> : null}
     </div>
   );
 }

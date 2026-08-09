@@ -5,6 +5,11 @@ import type {
   ProtocolStep,
   ResultTemplate,
 } from "./types";
+import {
+  normalizeResultTemplate,
+  resultTemplateFieldsToRows,
+  resultTemplateInputSchema,
+} from "./result-templates";
 
 export const protocolSectionKeys = [
   "description",
@@ -75,6 +80,7 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     type: z.literal("table"),
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
+    resultTemplate: resultTemplateInputSchema.optional(),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),
@@ -135,19 +141,28 @@ export function createProtocolTemplateDocument(): ProtocolDocument {
   }
   section("material").blocks.push({ id: "material-table-1", type: "table", caption: "Materials", rows: [["Name", "Unit", "Role", "Notes"], ["", "", "", ""]] });
   section("steps").blocks.push({ id: "steps-rich-1", type: "rich_text", nodes: [{ type: "numbered", content: [{ text: "" }] }] });
-  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: "result_type", rows: [["Field", "Type", "Unit", "Required"], ["", "text", "", "No"]] });
+  const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
+  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   section("consumption_rules").blocks.push({ id: "consumption-table-1", type: "table", caption: "Consumption rules", rows: [["Material", "Formula", "Unit"], ["", "", ""]] });
   return document;
 }
 
 export function upgradeProtocolDocumentForEditing(document: ProtocolDocument): ProtocolDocument {
+  const projectedTemplates = projectProtocolDocument(document).resultTemplates;
+  let resultTemplateIndex = 0;
   return {
     ...document,
     sections: document.sections.map((section) => ({
       ...section,
-      blocks: section.blocks.map((block) => block.type === "text"
-        ? { id: block.id, type: "rich_text" as const, nodes: richTextFromPlainText(block.text) }
-        : block),
+      blocks: section.blocks.map((block) => {
+        if (block.type === "text") return { id: block.id, type: "rich_text" as const, nodes: richTextFromPlainText(block.text) };
+        if (section.key === "result_templates" && block.type === "table") {
+          const template = normalizeResultTemplate(block.resultTemplate ?? projectedTemplates[resultTemplateIndex], resultTemplateIndex);
+          resultTemplateIndex += 1;
+          return { ...block, caption: template.result_type, rows: resultTemplateFieldsToRows(template), resultTemplate: template };
+        }
+        return block;
+      }),
     })),
   };
 }
@@ -218,19 +233,13 @@ export function protocolDocumentFromLegacy({
     });
   }
   resultTemplates.forEach((template, index) => {
+    const normalizedTemplate = normalizeResultTemplate(template, index);
     section("result_templates").blocks.push({
       id: blockId("result-template", index),
       type: "table",
-      caption: template.result_type,
-      rows: [
-        ["Field", "Type", "Unit", "Required"],
-        ...template.fields.map((field) => [
-          field.name,
-          field.type,
-          field.unit ?? "",
-          field.required ? "Yes" : "No",
-        ]),
-      ],
+      caption: normalizedTemplate.result_type,
+      rows: resultTemplateFieldsToRows(normalizedTemplate),
+      resultTemplate: normalizedTemplate,
     });
   });
   if (consumptionRules.length) {
@@ -341,21 +350,46 @@ export function projectProtocolDocument(document: ProtocolDocument) {
   const resultTemplates: ResultTemplate[] = (resultSection?.blocks ?? [])
     .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && block.rows.length > 1)
     .map((block, index) => {
+      if (block.resultTemplate) return normalizeResultTemplate({ ...block.resultTemplate, result_type: block.caption || block.resultTemplate.result_type }, index);
       const headers = block.rows[0] ?? [];
-      const fieldIndex = tableIndex(headers, ["field", "name", "字段", "名称"], 0);
+      const fieldIndex = tableIndex(headers, ["fieldkey", "field", "name", "字段键", "字段", "名称"], 0);
+      const labelIndex = tableIndex(headers, ["label", "displayname", "显示名", "标签"], -1);
       const typeIndex = tableIndex(headers, ["type", "类型"], 1);
       const unitIndex = tableIndex(headers, ["unit", "单位"], 2);
       const requiredIndex = tableIndex(headers, ["required", "必填"], 3);
-      const allowedTypes = new Set(["text", "number", "select", "attachment[]", "boolean"]);
+      const roleIndex = tableIndex(headers, ["role", "semanticrole", "语义角色", "角色"], -1);
+      const optionsIndex = tableIndex(headers, ["options", "选项"], -1);
+      const minIndex = tableIndex(headers, ["min", "minimum", "最小值"], -1);
+      const maxIndex = tableIndex(headers, ["max", "maximum", "最大值"], -1);
+      const allowedTypes = new Set(["text", "number", "select", "attachment[]", "boolean", "date", "datetime"]);
+      const allowedRoles = new Set(["identifier", "design", "group", "label", "measurement", "qc", "annotation"]);
+      const isLegacyFieldTable = labelIndex < 0 && roleIndex < 0 && optionsIndex < 0 && minIndex < 0 && maxIndex < 0;
       const fields = block.rows.slice(1).map((row) => {
         const rawType = row[typeIndex]?.trim().toLowerCase() ?? "text";
-        return {
-          name: row[fieldIndex]?.trim() ?? "",
-          type: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean",
+        const key = row[fieldIndex]?.trim() ?? "";
+        const label = labelIndex >= 0 ? row[labelIndex]?.trim() || key : key;
+        const min = minIndex >= 0 && row[minIndex]?.trim() ? Number(row[minIndex]) : undefined;
+        const max = maxIndex >= 0 && row[maxIndex]?.trim() ? Number(row[maxIndex]) : undefined;
+        const rawRole = roleIndex >= 0 ? row[roleIndex]?.trim() : undefined;
+        if (isLegacyFieldTable) return {
+          name: label,
+          type: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
           unit: row[unitIndex]?.trim() || undefined,
           required: /^(yes|true|1|是|必填)$/i.test(row[requiredIndex]?.trim() ?? ""),
         };
-      }).filter((field) => field.name);
+        return {
+          key,
+          label,
+          name: label,
+          dataType: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
+          type: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
+          unit: row[unitIndex]?.trim() || undefined,
+          required: /^(yes|true|1|是|必填)$/i.test(row[requiredIndex]?.trim() ?? ""),
+          semanticRole: rawRole && allowedRoles.has(rawRole) ? rawRole as ResultTemplate["fields"][number]["semanticRole"] : undefined,
+          options: optionsIndex >= 0 ? row[optionsIndex]?.split(/[|;,；，]/).map((item) => item.trim()).filter(Boolean) : undefined,
+          validation: min !== undefined || max !== undefined ? { min: Number.isFinite(min) ? min : undefined, max: Number.isFinite(max) ? max : undefined } : undefined,
+        };
+      }).filter((field) => ("key" in field ? field.key : field.name));
       const normalizedHeaders = headers.map((header) => header.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, ""));
       const isFieldDefinitionTable = normalizedHeaders.some((header) => ["field", "name", "字段", "名称"].some((candidate) => header.includes(candidate)))
         && normalizedHeaders.some((header) => ["type", "类型"].some((candidate) => header.includes(candidate)));

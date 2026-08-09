@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { localeStorageKey, translateUiText, type AppLocale } from "@/lib/i18n";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { localeCookieName, localeStorageKey, resolveAppLocale, translateUiText, type AppLocale } from "@/lib/i18n";
 
 type I18nContextValue = {
   locale: AppLocale;
@@ -70,17 +70,44 @@ function localizeTree(root: Node, locale: AppLocale) {
   }
 }
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, updateLocale] = useState<AppLocale>("en");
+function persistLocale(locale: AppLocale) {
+  window.localStorage.setItem(localeStorageKey, locale);
+  document.cookie = `${localeCookieName}=${locale}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export function I18nProvider({ children, initialLocale = "en" }: { children: React.ReactNode; initialLocale?: AppLocale }) {
+  const [locale, updateLocale] = useState<AppLocale>(initialLocale);
+  const localeRef = useRef<AppLocale>(initialLocale);
+
   useEffect(() => {
+    let active = true;
     const stored = window.localStorage.getItem(localeStorageKey);
-    if (stored === "zh" || stored === "en") queueMicrotask(() => updateLocale(stored));
-  }, []);
+    const next = resolveAppLocale(stored, initialLocale);
+    localeRef.current = next;
+    if (stored !== "zh" && stored !== "en") persistLocale(next);
+    else if (next !== initialLocale) document.cookie = `${localeCookieName}=${next}; path=/; max-age=31536000; samesite=lax`;
+    if (next !== initialLocale) {
+      queueMicrotask(() => {
+        if (active && localeRef.current === next) updateLocale(next);
+      });
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key !== localeStorageKey || (event.newValue !== "zh" && event.newValue !== "en")) return;
+      localeRef.current = event.newValue;
+      updateLocale(event.newValue);
+    }
+
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      active = false;
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [initialLocale]);
+
   useEffect(() => {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
     document.documentElement.dataset.locale = locale;
-    window.localStorage.setItem(localeStorageKey, locale);
-    document.cookie = `labnest_locale=${locale}; path=/; max-age=31536000; samesite=lax`;
     localizeTree(document.body, locale);
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -95,8 +122,17 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     return () => observer.disconnect();
   }, [locale]);
 
-  const setLocale = useCallback((next: AppLocale) => updateLocale(next), []);
-  const toggleLocale = useCallback(() => updateLocale((current) => current === "en" ? "zh" : "en"), []);
+  const setLocale = useCallback((next: AppLocale) => {
+    localeRef.current = next;
+    persistLocale(next);
+    updateLocale(next);
+  }, []);
+  const toggleLocale = useCallback(() => {
+    const next = localeRef.current === "en" ? "zh" : "en";
+    localeRef.current = next;
+    persistLocale(next);
+    updateLocale(next);
+  }, []);
   const value = useMemo<I18nContextValue>(() => ({ locale, setLocale, toggleLocale, t: (text) => translateUiText(text, locale) }), [locale, setLocale, toggleLocale]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

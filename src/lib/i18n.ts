@@ -1,6 +1,11 @@
 export type AppLocale = "en" | "zh";
 
 export const localeStorageKey = "labnest.locale";
+export const localeCookieName = "labnest_locale";
+
+export function resolveAppLocale(value: unknown, fallback: AppLocale = "en"): AppLocale {
+  return value === "zh" || value === "en" ? value : fallback;
+}
 
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
@@ -37,6 +42,11 @@ export const zhUi: Record<string, string> = {
   "Protocols, notes, samples, results": "实验规程、记录、样本与结果",
   "Primary navigation": "主导航",
   "Mobile navigation": "移动端导航",
+  "More": "更多",
+  "Open more navigation": "打开更多导航",
+  "Close menu": "关闭菜单",
+  "All modules": "全部模块",
+  "Open any LabNest workspace or utility.": "打开任意 LabNest 工作区或辅助功能。",
   "Utilities": "辅助功能",
   "Search LabNest": "搜索 LabNest",
   "Search entries, protocols, inventory, results...": "搜索记录、实验规程、库存和结果……",
@@ -57,6 +67,18 @@ export const zhUi: Record<string, string> = {
   "View all": "查看全部",
   "Execution": "实验执行",
   "Recent experiments": "最近实验",
+  "Calendar": "日历",
+  "Previous month": "上个月",
+  "Next month": "下个月",
+  "Today": "今天",
+  "Monthly calendar": "月历",
+  "Daily activities": "当日活动",
+  "Workspace dashboard": "工作区看板",
+  "activity": "项活动",
+  "activities": "项活动",
+  "No activities for this day.": "当天暂无活动。",
+  "Entries and experiment dates will appear here automatically.": "实验记录和实验日期会自动显示在这里。",
+  "Add an entry": "添加记录",
 
   "Journal-like capture": "实验日志式记录",
   "Fast lab notes that can remain standalone or become experiment drafts, proposed actions, and backlinks after review.": "快速记录实验现场信息；既可独立保存，也可在审核后转为实验草稿、建议操作和关联记录。",
@@ -76,6 +98,7 @@ export const zhUi: Record<string, string> = {
   "State": "状态说明",
   "needs follow-up": "需要跟进",
   "Tags": "标签",
+  "Separate with commas, semicolons, or spaces.": "多个标签可用逗号、分号或空格分隔。",
   "Protocol-Based Experiment": "基于实验规程的实验",
   "Protocol version": "实验规程版本",
   "Standalone entry": "独立记录",
@@ -126,7 +149,11 @@ export const zhUi: Record<string, string> = {
   "Hypothesis": "研究假设",
   "Rationale": "理论依据",
   "Design": "实验设计",
+  "Scientific premise": "科学前提",
+  "Material & methods": "材料与方法",
   "Protocol set": "实验规程集合",
+  "Expand": "展开",
+  "Collapse": "收起",
   "General or project-adapted methods": "通用或项目适配方法",
   "Primary protocol": "主要实验规程",
   "No primary protocol": "不设主要实验规程",
@@ -195,6 +222,13 @@ export const zhUi: Record<string, string> = {
   "Create Protocol": "创建实验规程",
   "Save Protocol": "保存实验规程",
   "Create revision": "创建修订版",
+  "Edit Protocol": "编辑实验规程",
+  "Edit version": "编辑此版本",
+  "Edit as new revision": "编辑并新建修订版",
+  "Edit Protocol as New Revision": "编辑实验规程并新建修订版",
+  "All fields remain editable": "所有字段仍可编辑",
+  "This reviewed version remains protected. Edit any field below; saving creates a linked revision and preserves the current version.": "此已审核版本会继续受到保护。你可以编辑下方任意字段；保存时将建立关联的新修订版，并保留当前版本。",
+  "Save as new revision": "保存为新修订版",
   "Saving…": "正在保存……",
   "Table caption": "表格标题",
   "Paste tab-separated cells; one row per line": "粘贴制表符分隔的单元格；每行对应一行数据",
@@ -212,6 +246,116 @@ export const zhUi: Record<string, string> = {
   "DOCX import": "DOCX 导入",
   "Template-aware parser": "模板感知解析器",
   "Download DOCX template": "下载 DOCX 模板",
+  "Import": "导入",
+  "Export": "导出",
+  "Export…": "导出…",
+  "Export selected…": "导出所选…",
+  "Apply": "应用",
+  "Clear all": "清除全部",
+  "Recently updated": "最近更新",
+  "Name A–Z": "名称 A–Z",
+  "Title A–Z": "标题 A–Z",
+  "Protocol code": "实验规程编号",
+  "Experiment date": "实验日期",
+  "Expiry date": "有效期",
+  "Search projects…": "搜索项目……",
+  "Search plans, codes, objectives…": "搜索研究方案、编号和目的……",
+  "Search protocol code, title, tags…": "搜索实验规程编号、标题和标签……",
+  "Search run code, title, purpose…": "搜索实验编号、标题和目的……",
+  "Search results, types, methods…": "搜索结果、类型和方法……",
+  "Search reports and projects…": "搜索报告和项目……",
+  "Search item, barcode, lot, vendor…": "搜索物料、条码、批号和供应商……",
+  "Choose a structured format": "选择结构化格式",
+  "Upload and preview": "上传并预览",
+  "Structured source file": "结构化源文件",
+  "Preview mapping": "预览字段映射",
+  "Confirm import": "确认导入",
+  "Template": "模板",
+  "Ready": "可以导入",
+  "Needs correction": "需要修正",
+  "not imported": "不导入",
+  "Choose an export format": "选择导出格式",
+  "1. Choose what to export": "1. 选择导出范围",
+  "2. Choose the output": "2. 选择导出格式",
+  "Current filtered view": "当前筛选结果",
+  "Selected records": "所选记录",
+  "All records": "全部记录",
+  "No filters are active; this currently matches the full collection.": "当前没有启用筛选；此范围与全部记录相同。",
+  "Select records in the list first to enable this scope.": "请先在清单中勾选记录，才能使用此范围。",
+  "Only the records selected in the collection list.": "仅导出清单中已勾选的记录。",
+  "Lossless structured package for backup, migration, and re-import.": "无损结构化数据包，适合备份、迁移和重新导入。",
+  "Readable, editable scientific document with stable section headings.": "使用稳定区块标题的可阅读、可编辑科研文档。",
+  "Spreadsheet for review, collaboration, and controlled bulk editing.": "用于审核、协作和受控批量编辑的电子表格。",
+  "Flat table for analysis software and data pipelines.": "适用于分析软件和数据管线的扁平数据表。",
+  "Maximum 25 MB and 500 records. LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.": "最大 25 MB、500 条记录。确认导入时 LabNest 会重新校验原文件，并连同 SHA-256 校验值一起保留。",
+  "Imported scientific records are validated again and the original source is linked to every created record. Template placeholders and ambiguous relationships are blocked.": "导入时会再次验证科研记录，并将原始来源关联到每条新记录；模板占位符和歧义关系会被阻止。",
+  "Choose an import file first.": "请先选择导入文件。",
+  "The file could not be previewed.": "无法预览该文件。",
+  "The import could not be completed.": "无法完成导入。",
+  "Project identity": "项目基本信息",
+  "Project name": "项目名称",
+  "Description and scientific objective": "项目说明与科学目标",
+  "Save Project": "保存项目",
+  "Inventory identity": "库存物料信息",
+  "Register Inventory Item": "登记库存物料",
+  "Material identity": "物料信息",
+  "Stock and storage": "库存量与存储",
+  "Item name": "物料名称",
+  "English name": "英文名称",
+  "Brand": "品牌",
+  "CAS number": "CAS 号",
+  "Opening quantity *": "初始数量 *",
+  "Current quantity *": "当前数量 *",
+  "Unit *": "单位 *",
+  "Safety stock": "安全库存",
+  "Register Item": "登记物料",
+  "Save Item": "保存物料",
+  "A changed value is recorded as an adjustment movement.": "数量变化会被记录为一条调整流水。",
+  "Registered items": "已登记物料",
+  "Low stock": "低库存",
+  "Out of stock": "库存耗尽",
+  "Expiry attention": "有效期提醒",
+  "Open purchases": "待处理采购",
+  "Search name, barcode, lot, catalog, CAS…": "搜索名称、条码、批号、货号或 CAS……",
+  "No supplier metadata": "无供应商信息",
+  "Unclassified": "未分类",
+  "unclassified": "未分类",
+  "Lot / catalog": "批号／货号",
+  "Stock": "库存",
+  "No position": "未记录库位",
+  "Record stock movement": "记录库存流水",
+  "Movement ledger": "库存流水",
+  "Material record": "物料档案",
+  "Risk status": "风险状态",
+  "No safety stock set": "未设置安全库存",
+  "No expiry date recorded": "未记录有效期",
+  "Record Movement": "记录流水",
+  "Movement *": "流水类型 *",
+  "Used by / handled by": "使用人／经手人",
+  "Experiment link": "关联实验",
+  "Purchase link": "关联采购",
+  "Movement note": "流水备注",
+  "No experiment link": "不关联实验",
+  "No purchase link": "不关联采购",
+  "Use / consume": "使用／消耗",
+  "Receive into stock": "入库",
+  "Return to stock": "退回库存",
+  "Discard": "弃置",
+  "Handled by": "经手人",
+  "Research / purchase link": "研究／采购关联",
+  "Movement": "流水类型",
+  "categories": "分类",
+  "locations": "位置",
+  "stock flags": "库存标记",
+  "Initial quantity": "初始数量",
+  "Container type": "容器类型",
+  "Aliquot code": "分装编号",
+  "Concentration": "浓度",
+  "Freeze-thaw count": "冻融次数",
+  "Save Inventory Item": "保存库存物料",
+  "New Item": "新建物料",
+  "Edit Item": "编辑物料",
+  "Transaction history": "库存流水",
   "Protocol DOCX": "实验规程 DOCX",
   "Validation boundary": "校验边界",
   "No silent correction": "不进行静默修正",
@@ -263,7 +407,6 @@ export const zhUi: Record<string, string> = {
   "Deviations": "偏差",
   "Result summary": "结果摘要",
   "Conclusion": "结论",
-  "Protocol steps": "实验规程步骤",
   "Execution checklist copied from the locked version": "从锁定版本复制的执行检查清单",
   "Save Experiment": "保存实验",
   "Experiment index": "实验索引",
@@ -277,10 +420,13 @@ export const zhUi: Record<string, string> = {
   "steps": "步骤",
   "results": "结果",
   "Repeatable runs": "可重复实验",
+  "Background & rationale": "背景与依据",
   "Setup & samples": "实验设置与样本",
   "Execution notes": "执行记录",
   "Observations & media": "观察与媒体",
   "Deviations & incidents": "偏差与事件",
+  "Summary & conclusion": "小结与结论",
+  "One line: what this execution is meant to establish": "一句话说明这次执行要确认什么",
 
   "Structured evidence": "结构化证据",
   "Each Result keeps its Experiment provenance while allowing narrative, metrics, media, small tables and independently stored large Datasets.": "每条结果保留实验来源，同时支持叙述、指标、媒体、小型表格和独立存储的大型数据集。",
@@ -494,7 +640,6 @@ export const zhUi: Record<string, string> = {
   "Download reviewable tables and a local-first JSON snapshot.": "下载可审核表格和本地优先的 JSON 快照。",
   "Database-backed": "数据库支持",
   "Available Exports": "可用导出",
-  "Export": "导出",
   "Format": "格式",
   "Full Backup": "完整备份",
   "Portable metadata snapshot; file binaries remain in attachment storage": "可移植元数据快照；文件二进制仍保存在附件存储中",
@@ -629,6 +774,11 @@ export const zhUi: Record<string, string> = {
   "fail": "失败",
   "general": "通用",
   "project": "项目",
+  "scope": "范围",
+  "availability": "可用状态",
+  "status": "状态",
+  "review": "审核",
+  "search": "搜索",
   "protocol template": "实验规程模板",
   "file import": "文件导入",
   "tool": "工具",
@@ -660,6 +810,40 @@ export const zhUi: Record<string, string> = {
   "plasmid": "质粒",
   "primer": "引物",
   "sample": "样本",
+  "Protocol Run": "实验现场执行",
+  "Run mode": "现场模式",
+  "Runs": "执行列表",
+  "Open run": "打开执行",
+  "Run": "执行",
+  "Run progress": "执行进度",
+  "Experiment record": "实验记录",
+  "Protocol steps": "实验规程步骤",
+  "Changes save to the Experiment record": "修改将保存到实验记录",
+  "Deviation or incident": "偏差或异常",
+  "Only record what differed from the locked ProtocolVersion": "仅记录与锁定实验规程版本不一致的内容",
+  "Quick observation": "快速观察",
+  "What happened just now? This is appended with a timestamp and never replaces earlier observations.": "刚才发生了什么？内容将带时间戳追加，不会覆盖之前的观察记录。",
+  "Start run": "开始执行",
+  "Resume run": "继续执行",
+  "Save progress": "保存进度",
+  "Complete run": "完成执行",
+  "Photos and files": "照片与文件",
+  "Photo or file": "照片或文件",
+  "No run evidence attached.": "尚未添加现场证据。",
+  "Inventory consumption": "库存消耗",
+  "Inventory Item": "库存物品",
+  "Select material…": "选择材料……",
+  "Quantity used": "使用数量",
+  "Performed by": "操作人",
+  "Plate, sample or step context": "板位、样本或步骤说明",
+  "Record consumption": "记录消耗",
+  "No active Inventory with available quantity.": "没有可用数量大于零的活跃库存。",
+  "Archived runs cannot change Inventory.": "已归档执行不能修改库存。",
+  "No Results recorded yet.": "尚未记录实验结果。",
+  "No planned or running Experiments are available.": "当前没有计划中或执行中的实验。",
+  "Create an Experiment": "创建实验",
+  "No locked ProtocolVersion": "没有锁定的实验规程版本",
+  "The locked ProtocolVersion has no executable steps.": "锁定的实验规程版本没有可执行步骤。",
   "Items, aliquots, lots, locations, quantities": "项目、分装、批次、位置和数量",
   "Result records with experiment, entity, and project labels": "包含实验、对象和项目标签的结果记录",
   "Plasmids, primers, samples, antibodies, and linked sequences": "质粒、引物、样本、抗体及关联序列",
@@ -691,6 +875,8 @@ function translateDynamic(value: string) {
   if (match) return `${match[1]} 次主要实验`;
   match = value.match(/^(\d+) rows · (\d+) columns · (.+)$/);
   if (match) return `${match[1]} 行 · ${match[2]} 列 · ${zhUi[match[3]] ?? match[3]}`;
+  match = value.match(/^(\d+)\/(\d+) steps · (\d+) results$/);
+  if (match) return `${match[1]}/${match[2]} 个步骤 · ${match[3]} 个结果`;
   match = value.match(/^Source: (.+)$/);
   if (match) return `来源：${match[1]}`;
   match = value.match(/^Protocol source: (.+)$/);
@@ -699,6 +885,31 @@ function translateDynamic(value: string) {
   if (match) return `关联方案：${match[1]}`;
   match = value.match(/^(\d+) stored$/);
   if (match) return `已存储 ${match[1]} 个文件`;
+  match = value.match(/^(\d+) records?$/);
+  if (match) return `${match[1]} 条记录`;
+  match = value.match(/^(\d+) of (\d+)$/);
+  if (match) return `${match[1]} / ${match[2]} 条记录`;
+  match = value.match(/^All (.+)$/);
+  if (match) return `全部${zhUi[match[1]] ?? match[1]}`;
+  match = value.match(/^(Import|Export) (Projects|Research Plans|Protocols|Experiments|Results|Inventory|Reports)$/);
+  if (match) return `${match[1] === "Import" ? "导入" : "导出"}${zhUi[match[2]] ?? match[2]}`;
+  match = value.match(/^Mapping preview · (\d+) records?$/);
+  if (match) return `字段映射预览 · ${match[1]} 条记录`;
+  match = value.match(/^Selected records \((\d+)\)$/);
+  if (match) return `所选记录（${match[1]}）`;
+  match = value.match(/^Every (.+) in LabNest\. This is never selected implicitly when filters are active\.$/);
+  if (match) return `LabNest 中的全部${zhUi[match[1]] ?? match[1]}。启用筛选时不会自动选择此范围。`;
+  if (value.includes(": ") && value.split(" · ").every((part) => part.includes(": "))) {
+    return value.split(" · ").map((part) => {
+      const [key, ...rest] = part.split(": ");
+      const item = rest.join(": ");
+      return `${zhUi[key] ?? key}：${zhUi[item] ?? item}`;
+    }).join(" · ");
+  }
+  match = value.match(/^Structured (.+) input$/);
+  if (match) return `结构化${zhUi[match[1]] ?? match[1]}导入`;
+  match = value.match(/^Export (.+) with stable field names$/);
+  if (match) return `使用稳定字段名导出${zhUi[match[1]] ?? match[1]}`;
   return value;
 }
 

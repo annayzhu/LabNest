@@ -63,11 +63,9 @@ export async function GET(request: Request) {
       where: {
         OR: [
           { title: textFilter(query) },
+          { runCode: textFilter(query) },
           { purpose: textFilter(query) },
-          { background: textFilter(query) },
-          { materialsText: textFilter(query) },
-          { observations: textFilter(query) },
-          { resultSummary: textFilter(query) },
+          { searchText: textFilter(query) },
         ],
       },
       take: limit,
@@ -104,11 +102,15 @@ export async function GET(request: Request) {
       where: {
         OR: [
           { name: textFilter(query) },
+          { englishName: textFilter(query) },
+          { category: textFilter(query) },
+          { brand: textFilter(query) },
           { barcode: textFilter(query) },
           { aliquotCode: textFilter(query) },
           { lotNumber: textFilter(query) },
           { vendor: textFilter(query) },
           { catalogNumber: textFilter(query) },
+          { casNumber: textFilter(query) },
           { storageCondition: textFilter(query) },
           { notes: textFilter(query) },
         ],
@@ -118,7 +120,7 @@ export async function GET(request: Request) {
       include: { location: true },
     }),
     prisma.result.findMany({
-      where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
+      where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { templateKey: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
       take: limit,
       orderBy: { updatedAt: "desc" },
       include: { experiment: true, entity: true, project: true },
@@ -171,7 +173,7 @@ export async function GET(request: Request) {
       type: "entry" as const,
       title: entry.title,
       subtitle: entry.project?.name,
-      href: "/entries",
+      href: `/entries/${entry.id}`,
       matchedText: entry.body,
     })),
     ...experiments.map((experiment) => ({
@@ -180,7 +182,7 @@ export async function GET(request: Request) {
       title: experiment.title,
       subtitle: experiment.project?.name,
       href: `/experiments/${experiment.id}`,
-      matchedText: experiment.purpose ?? experiment.observations ?? undefined,
+      matchedText: experiment.purpose ?? experiment.searchText ?? undefined,
     })),
     ...researchPlans.map((plan) => ({
       id: plan.id,
@@ -218,9 +220,9 @@ export async function GET(request: Request) {
       id: item.id,
       type: "inventory_item" as const,
       title: item.name,
-      subtitle: item.aliquotCode ?? item.lotNumber ?? item.location?.name,
-      href: `/inventory?status=${item.status}`,
-      matchedText: item.notes ?? item.storageCondition ?? undefined,
+      subtitle: item.englishName ?? item.brand ?? item.aliquotCode ?? item.lotNumber ?? item.location?.name,
+      href: `/inventory/${item.id}`,
+      matchedText: item.casNumber ?? item.catalogNumber ?? item.notes ?? item.storageCondition ?? undefined,
     })),
     ...results.map((result) => ({
       id: result.id,

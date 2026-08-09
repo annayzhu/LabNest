@@ -3,10 +3,17 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 
-export function ScientificDocumentView({ document }: { document: ScientificDocument }) {
+export function ScientificDocumentView({
+  document,
+  showEmptySections = false,
+}: {
+  document: ScientificDocument;
+  showEmptySections?: boolean;
+}) {
   const populatedSections = document.sections.filter((section) => section.blocks.length > 0);
+  const displayedSections = showEmptySections ? document.sections : populatedSections;
 
-  if (!populatedSections.length) {
+  if (!displayedSections.length) {
     return (
       <Card>
         <CardHeader title="Structured record" eyebrow="Flexible content" />
@@ -19,11 +26,13 @@ export function ScientificDocumentView({ document }: { document: ScientificDocum
 
   return (
     <div className="space-y-4">
-      {populatedSections.map((section) => (
+      {displayedSections.map((section) => (
         <Card key={section.key}>
-          <CardHeader title={section.title} eyebrow="Structured record" />
+          <CardHeader title={<span className={section.key === "constraints" ? "text-error" : undefined}>{section.title}</span>} eyebrow="Structured record" />
           <CardBody className="space-y-4">
-            {section.blocks.map((block) => <BlockView key={block.id} block={block} />)}
+            {section.blocks.length
+              ? section.blocks.map((block) => <BlockView key={block.id} block={block} />)
+              : <p className="text-sm text-muted">Not recorded.</p>}
           </CardBody>
         </Card>
       ))}

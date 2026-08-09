@@ -6,6 +6,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
+import { parseTags } from "@/lib/tags";
+import { checkResultTemplate } from "@/lib/result-templates";
 
 export type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 
@@ -50,13 +52,17 @@ export async function saveProtocolDocument(
       reviewStage: formData.get("reviewStage"),
       displayVersion: formData.get("displayVersion"),
       changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
-      tags: String(formData.get("tags") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+      tags: parseTags(formData.get("tags")),
       contentJson: formData.get("contentJson"),
       researchPlanIds: formData.getAll("researchPlanIds").map(String),
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
     const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
     const projection = projectProtocolDocument(document);
+    if (parsed.reviewStage !== "draft") {
+      const templateErrors = projection.resultTemplates.flatMap((template) => checkResultTemplate(template).errors);
+      if (templateErrors.length) return { error: `Result Templates must be complete before review: ${templateErrors.join(" ")}` };
+    }
     const sourceVersion = await prisma.protocolVersion.findUnique({
       where: { id: parsed.versionId },
       include: { protocol: true },

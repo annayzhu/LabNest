@@ -3,6 +3,7 @@ import {
   applyInventoryTransaction,
   calculateQuantityFromTransactions,
   directQuantityEditToAdjustTransaction,
+  getInventoryRiskFlags,
 } from "./inventory";
 
 describe("inventory transaction logic", () => {
@@ -43,5 +44,27 @@ describe("inventory transaction logic", () => {
     expect(adjustment.type).toBe("adjust");
     expect(adjustment.quantityChange).toBe(16);
     expect(adjustment.unit).toBe("g");
+  });
+});
+
+describe("inventory risk flags", () => {
+  const now = new Date("2026-08-08T00:00:00Z");
+
+  it("distinguishes depleted and low stock", () => {
+    expect(getInventoryRiskFlags({ currentQuantity: 0, lowThreshold: 10 }, now)).toContain("depleted");
+    expect(getInventoryRiskFlags({ currentQuantity: 8, lowThreshold: 10 }, now)).toContain("low");
+  });
+
+  it("distinguishes expired and soon-to-expire items", () => {
+    expect(getInventoryRiskFlags({ currentQuantity: 1, expiryDate: "2026-08-07" }, now)).toContain("expired");
+    expect(getInventoryRiskFlags({ currentQuantity: 1, expiryDate: "2026-08-20" }, now)).toContain("expiring");
+  });
+
+  it("keeps an item valid through its expiry date", () => {
+    expect(getInventoryRiskFlags({ currentQuantity: 1, expiryDate: "2026-08-08" }, new Date("2026-08-08T15:00:00Z"))).not.toContain("expired");
+  });
+
+  it("does not flag healthy stock", () => {
+    expect(getInventoryRiskFlags({ currentQuantity: 20, lowThreshold: 10, expiryDate: "2027-01-01" }, now)).toEqual([]);
   });
 });

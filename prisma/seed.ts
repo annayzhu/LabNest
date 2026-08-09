@@ -1,4 +1,13 @@
 import { prisma } from "../src/lib/db";
+import { experimentSearchText } from "../src/lib/experiment-document";
+import { normalizeResultTemplate, validateResultRecord } from "../src/lib/result-templates";
+import { experimentSections, scientificDocumentFromSectionText } from "../src/lib/scientific-document";
+
+const seededExperimentDocument = scientificDocumentFromSectionText(experimentSections, {
+  background: "This seeded experiment demonstrates the V1 protocol-to-experiment workflow. It should not be treated as biological evidence.",
+  setup: "HEK293T, pLenti-GFP, Lipofectamine 3000, Complete DMEM.",
+  observations: "No observations recorded yet.",
+}, "seed");
 
 const protocolTemplates = [
   {
@@ -66,17 +75,29 @@ const protocolTemplates = [
     resultTemplates: [
       {
         result_type: "fluorescence_expression",
+        templateKey: "fluorescence_expression",
+        schemaVersion: 1,
+        title: "Fluorescence expression",
+        description: "Capture the imaging timepoint, categorical GFP readout, quantitative efficiency and source microscopy evidence.",
+        resultKind: "imaging",
+        cardinality: "per_timepoint",
         fields: [
-          { name: "timepoint", type: "number", unit: "h", required: true },
+          { key: "timepoint", label: "Timepoint", name: "timepoint", dataType: "number", type: "number", unit: "h", required: true, semanticRole: "design" },
           {
+            key: "gfp_expression",
+            label: "GFP expression",
             name: "gfp_expression",
+            dataType: "select",
             type: "select",
             options: ["positive", "weak", "negative"],
             required: true,
+            semanticRole: "measurement",
           },
-          { name: "transfection_efficiency", type: "number", unit: "%", required: false },
-          { name: "microscopy_images", type: "attachment[]", required: false },
+          { key: "transfection_efficiency", label: "Transfection efficiency", name: "transfection_efficiency", dataType: "number", type: "number", unit: "%", required: false, semanticRole: "measurement", validation: { min: 0, max: 100 } },
         ],
+        datasets: [{ key: "image_quantification", label: "Image quantification", required: false, columns: [{ key: "sample_id", label: "Sample ID", dataType: "text", required: true, semanticRole: "identifier" }, { key: "field_id", label: "Field ID", dataType: "text", required: true, semanticRole: "identifier" }, { key: "gfp_positive_percent", label: "GFP-positive cells", dataType: "number", unit: "%", required: true, semanticRole: "measurement" }] }],
+        artifacts: [{ key: "microscopy_images", label: "Microscopy images", kind: "image", required: true }],
+        view: { preset: "imaging", primaryMetric: "transfection_efficiency", charts: [{ key: "gfp_positive", label: "GFP-positive cells", type: "bar", datasetKey: "image_quantification", xField: "field_id", yField: "gfp_positive_percent" }] },
       },
     ],
   },
@@ -128,6 +149,7 @@ const protocolTemplates = [
 ];
 
 async function resetDatabase() {
+  await prisma.recordCodeCounter.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.inventoryTransaction.deleteMany();
   await prisma.proposedAction.deleteMany();
@@ -356,6 +378,9 @@ async function main() {
   const lipo = await prisma.inventoryItem.create({
     data: {
       name: "Lipofectamine 3000",
+      englishName: "Lipofectamine 3000 Transfection Reagent",
+      category: "reagent",
+      brand: "Invitrogen",
       entityId: null,
       containerType: "tube",
       lotNumber: "LIPO-DEMO-24",
@@ -363,6 +388,7 @@ async function main() {
       catalogNumber: "L3000008",
       currentQuantity: 120,
       unit: "uL",
+      lowThreshold: 30,
       locationId: fridge.id,
       expiryDate: new Date("2026-10-01T00:00:00Z"),
       storageCondition: "4 C, protect from light",
@@ -373,11 +399,14 @@ async function main() {
   const dmem = await prisma.inventoryItem.create({
     data: {
       name: "Complete DMEM",
+      category: "reagent",
+      brand: "Gibco",
       containerType: "bottle",
       lotNumber: "DMEM-DEMO-07",
       vendor: "Gibco",
       currentQuantity: 38,
       unit: "mL",
+      lowThreshold: 20,
       locationId: fridge.id,
       expiryDate: new Date("2026-07-25T00:00:00Z"),
       storageCondition: "4 C",
@@ -388,11 +417,14 @@ async function main() {
   const agarose = await prisma.inventoryItem.create({
     data: {
       name: "Agarose",
+      category: "chemical",
+      brand: "Bio-Rad",
       containerType: "bottle",
       lotNumber: "AGR-DEMO-01",
       vendor: "Bio-Rad",
       currentQuantity: 9,
       unit: "g",
+      lowThreshold: 10,
       locationId: roomShelf.id,
       expiryDate: new Date("2027-02-01T00:00:00Z"),
       notes: "Low stock example.",
@@ -403,6 +435,7 @@ async function main() {
     data: {
       entityId: hekWorkingCellBank.id,
       name: "HEK293T working cell bank A01",
+      category: "biological_sample",
       containerType: "cryovial",
       barcode: "LN-SMP-HEK-WCB-A01",
       aliquotCode: "HEK-WCB-A01",
@@ -424,6 +457,7 @@ async function main() {
     data: {
       entityId: hekWorkingCellBank.id,
       name: "HEK293T working cell bank A02",
+      category: "biological_sample",
       containerType: "cryovial",
       barcode: "LN-SMP-HEK-WCB-A02",
       aliquotCode: "HEK-WCB-A02",
@@ -502,16 +536,18 @@ async function main() {
 
   const experiment = await prisma.experiment.create({
     data: {
+      runCode: "EXP-001",
       title: "GFP transfection pilot - 2 well scale",
       projectId: project.id,
       researchPlanId: researchPlan.id,
       status: "running",
       recordStatus: "recorded",
       purpose: "Pilot a 2-well HEK293T transfection and confirm that protocol-derived consumption remains reviewable.",
-      background:
-        "This seeded experiment demonstrates the V1 protocol-to-experiment workflow. It should not be treated as biological evidence.",
-      materialsText: "HEK293T, pLenti-GFP, Lipofectamine 3000, Complete DMEM.",
-      observations: "No observations recorded yet.",
+      contentJson: seededExperimentDocument,
+      searchText: experimentSearchText(
+        "Pilot a 2-well HEK293T transfection and confirm that protocol-derived consumption remains reviewable.",
+        seededExperimentDocument,
+      ),
       primaryProtocolVersionId: cellTransfectionVersion.id,
       tags: ["demo", "protocol-run"],
       protocolVersions: {
@@ -709,8 +745,19 @@ async function main() {
       resultType: "fluorescence_expression",
       title: "24 h GFP expression placeholder",
       status: "active",
+      recordStatus: "draft",
+      sourceType: "protocol_template",
+      qualityStatus: "not_assessed",
+      validationStatus: validateResultRecord({ template: normalizeResultTemplate(protocolTemplates[0].resultTemplates?.[0]), values: { timepoint: 24 } }).status,
+      protocolVersionId: cellTransfectionVersion.id,
+      templateKey: "fluorescence_expression",
+      templateSnapshotJson: normalizeResultTemplate(protocolTemplates[0].resultTemplates?.[0]),
+      valuesJson: { timepoint: 24 },
+      validationJson: validateResultRecord({ template: normalizeResultTemplate(protocolTemplates[0].resultTemplates?.[0]), values: { timepoint: 24 } }),
+      viewSpecJson: normalizeResultTemplate(protocolTemplates[0].resultTemplates?.[0]).view ?? {},
       notes: "Result form seeded from protocol result template; no real measurement yet.",
-      metadataJson: { timepoint_h: 24, gfp_expression: "pending" },
+      provenanceJson: { experimentId: experiment.id, protocolVersionId: cellTransfectionVersion.id },
+      metadataJson: { templateKey: "fluorescence_expression", timepoint_h: 24, gfp_expression: "pending" },
     },
   });
 

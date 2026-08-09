@@ -30,7 +30,7 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
   versionMap.forEach((source) => push(source));
   experiments.forEach((experiment) => push({ sourceType: "experiment", sourceId: experiment.id, titleSnapshot: experiment.title, versionSnapshot: experiment.runCode ?? experiment.status, hrefSnapshot: `/experiments/${experiment.id}`, metadataJson: { date: experiment.date.toISOString(), status: experiment.status, recordStatus: experiment.recordStatus } }));
   results.forEach((result) => push({ sourceType: "result", sourceId: result.id, resultId: result.id, titleSnapshot: result.title, versionSnapshot: result.recordStatus, hrefSnapshot: `/results/${result.id}`, metadataJson: { resultType: result.resultType, qualityStatus: result.qualityStatus, sourceType: result.sourceType } }));
-  entries.forEach((entry) => push({ sourceType: "entry", sourceId: entry.id, titleSnapshot: entry.title, versionSnapshot: entry.recordStatus, hrefSnapshot: `/entries?entry=${entry.id}`, metadataJson: { occurredAt: entry.occurredAt.toISOString() } }));
+  entries.forEach((entry) => push({ sourceType: "entry", sourceId: entry.id, titleSnapshot: entry.title, versionSnapshot: entry.recordStatus, hrefSnapshot: `/entries/${entry.id}`, metadataJson: { occurredAt: entry.occurredAt.toISOString() } }));
 
   const snapshot = {
     schemaVersion: 1, generatedAt: new Date().toISOString(), projectId, researchPlanId: researchPlanId ?? null,

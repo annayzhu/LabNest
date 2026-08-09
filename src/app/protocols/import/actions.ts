@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { parseProtocolDocx } from "@/lib/protocol-docx";
 import { isUnfilledProtocolDocxTemplateTitle } from "@/lib/protocol-docx-template";
+import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
+import { checkResultTemplate } from "@/lib/result-templates";
 
 export type ProtocolImportState = { error?: string };
 
@@ -12,18 +14,6 @@ function recordStatusFor(reviewStage: "draft" | "ready_for_review" | "reviewed")
   if (reviewStage === "reviewed") return "reviewed" as const;
   if (reviewStage === "ready_for_review") return "submitted" as const;
   return "draft" as const;
-}
-
-async function nextProtocolCode() {
-  const protocols = await prisma.protocol.findMany({
-    where: { humanCode: { startsWith: "PRT-" } },
-    select: { humanCode: true },
-  });
-  const highest = protocols.reduce((max, item) => {
-    const parsed = Number(item.humanCode?.replace("PRT-", ""));
-    return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
-  }, 100000);
-  return `PRT-${String(highest + 1).padStart(6, "0")}`;
 }
 
 export async function importProtocolDocx(
@@ -40,9 +30,16 @@ export async function importProtocolDocx(
     if (isUnfilledProtocolDocxTemplateTitle(parsed.canonicalTitle)) {
       return { error: "Replace the template Protocol title before importing." };
     }
-    const humanCode = parsed.humanCode ?? await nextProtocolCode();
+    if (parsed.reviewStage !== "draft") {
+      const templateErrors = parsed.resultTemplates.flatMap((template) => checkResultTemplate(template).errors);
+      if (templateErrors.length) return { error: `Reviewed Protocols require complete Result Templates: ${templateErrors.join(" ")}` };
+    }
+    const suppliedHumanCode = parsed.humanCode?.trim().toUpperCase();
+    if (suppliedHumanCode && !isValidRecordCode("protocol", suppliedHumanCode)) {
+      return { error: "Protocol code must use PRT- followed by at least six digits." };
+    }
     const [codeConflict, duplicateSource] = await Promise.all([
-      prisma.protocol.findUnique({ where: { humanCode } }),
+      suppliedHumanCode ? prisma.protocol.findUnique({ where: { humanCode: suppliedHumanCode } }) : Promise.resolve(null),
       prisma.protocolVersion.findFirst({ where: { sourceFileChecksum: parsed.sourceFileChecksum } }),
     ]);
     if (duplicateSource) {
@@ -50,12 +47,13 @@ export async function importProtocolDocx(
     }
     if (codeConflict) {
       return {
-        error: `${humanCode} already belongs to “${codeConflict.canonicalTitle ?? codeConflict.title}”. Resolve the identifier conflict before importing; LabNest will not overwrite it silently.`,
+        error: `${suppliedHumanCode} already belongs to “${codeConflict.canonicalTitle ?? codeConflict.title}”. Resolve the identifier conflict before importing; LabNest will not overwrite it silently.`,
       };
     }
 
     const recordStatus = recordStatusFor(parsed.reviewStage);
     const protocol = await prisma.$transaction(async (transaction) => {
+      const humanCode = suppliedHumanCode ?? await reserveRecordCode(transaction, "protocol");
       const created = await transaction.protocol.create({ data: {
         humanCode,
         title: parsed.canonicalTitle,
@@ -93,7 +91,7 @@ export async function importProtocolDocx(
         action: "import_docx",
         targetType: "protocol",
         targetId: created.id,
-        metadataJson: { protocolVersionId: created.versions[0]?.id, sourceFileName: parsed.sourceFileName, sourceFileChecksum: parsed.sourceFileChecksum },
+        metadataJson: { humanCode, protocolVersionId: created.versions[0]?.id, sourceFileName: parsed.sourceFileName, sourceFileChecksum: parsed.sourceFileChecksum },
       } });
       return created;
     });

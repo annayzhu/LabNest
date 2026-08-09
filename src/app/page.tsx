@@ -1,16 +1,33 @@
 import Link from "next/link";
+import { addMonths, format, startOfMonth } from "date-fns";
 import { AppShell } from "@/components/AppShell";
+import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
+import {
+  calendarDateKey,
+  calendarMonthKey,
+  parseCalendarMonth,
+  type OverviewCalendarActivity,
+} from "@/lib/overview-calendar";
 
 export const dynamic = "force-dynamic";
 
 const createLinkClass =
   "focus-ring inline-flex h-9 items-center rounded-[8px] border border-moss bg-moss px-3 text-sm font-medium text-warm transition hover:brightness-95";
 
-export default async function OverviewPage() {
+export default async function OverviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ month?: string | string[] }>;
+}) {
+  const params = searchParams ? await searchParams : undefined;
+  const requestedMonth = typeof params?.month === "string" ? params.month : undefined;
+  const today = new Date();
+  const viewMonth = parseCalendarMonth(requestedMonth, today);
+  const nextMonth = startOfMonth(addMonths(viewMonth, 1));
   const [
     projectCount,
     planCount,
@@ -19,6 +36,8 @@ export default async function OverviewPage() {
     activeProtocolCount,
     recentEntries,
     recentExperiments,
+    calendarEntries,
+    calendarExperiments,
   ] = await Promise.all([
     prisma.project.count({ where: { status: "active" } }),
     prisma.researchPlan.count({ where: { status: { in: ["draft", "active"] } } }),
@@ -35,7 +54,63 @@ export default async function OverviewPage() {
       orderBy: { date: "desc" },
       include: { project: true, researchPlan: true },
     }),
+    prisma.entry.findMany({
+      where: { occurredAt: { gte: viewMonth, lt: nextMonth } },
+      orderBy: { occurredAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        occurredAt: true,
+        recordStatus: true,
+        project: { select: { name: true } },
+        researchPlan: { select: { title: true } },
+      },
+    }),
+    prisma.experiment.findMany({
+      where: { date: { gte: viewMonth, lt: nextMonth } },
+      orderBy: { date: "asc" },
+      select: {
+        id: true,
+        title: true,
+        date: true,
+        purpose: true,
+        status: true,
+        project: { select: { name: true } },
+        researchPlan: { select: { title: true } },
+      },
+    }),
   ]);
+
+  const calendarActivities: OverviewCalendarActivity[] = [
+    ...calendarEntries.map((entry) => ({
+      id: `entry-${entry.id}`,
+      kind: "entry" as const,
+      title: entry.title,
+      dateKey: calendarDateKey(entry.occurredAt),
+      startsAt: entry.occurredAt.toISOString(),
+      href: `/entries/${entry.id}`,
+      status: entry.recordStatus,
+      context: entry.researchPlan?.title ?? entry.project?.name ?? undefined,
+      summary: entry.body || undefined,
+    })),
+    ...calendarExperiments.map((experiment) => ({
+      id: `experiment-${experiment.id}`,
+      kind: "experiment" as const,
+      title: experiment.title,
+      dateKey: calendarDateKey(experiment.date),
+      startsAt: experiment.date.toISOString(),
+      href: `/experiments/${experiment.id}`,
+      status: experiment.status,
+      context: experiment.researchPlan?.title ?? experiment.project?.name ?? undefined,
+      summary: experiment.purpose ?? undefined,
+    })),
+  ].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+  const viewMonthKey = calendarMonthKey(viewMonth);
+  const todayKey = calendarDateKey(today);
+  const initialSelectedDateKey = viewMonthKey === calendarMonthKey(today)
+    ? todayKey
+    : calendarActivities[0]?.dateKey ?? format(viewMonth, "yyyy-MM-dd");
 
   const metrics = [
     ["Active projects", projectCount, "/projects?status=active"],
@@ -59,61 +134,76 @@ export default async function OverviewPage() {
           }
         />
 
-        <section aria-label="Workspace metrics" className="grid gap-px overflow-hidden rounded-[10px] border border-hairline bg-hairline sm:grid-cols-2 xl:grid-cols-5">
-          {metrics.map(([label, value, href]) => (
-            <Link key={label} href={href} className="focus-ring bg-surface px-4 py-3 transition hover:bg-warm">
-              <span className="block font-mono text-2xl font-medium text-ink">{value}</span>
-              <span className="mt-1 block text-xs text-muted">{label}</span>
-            </Link>
-          ))}
-        </section>
-
-        <div className="grid gap-5 xl:grid-cols-2">
-          <Card>
-            <CardHeader
-              title="Recent entries"
-              eyebrow="Fast capture"
-              action={<Link href="/entries" className="text-sm font-medium text-moss hover:underline">View all</Link>}
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+            <OverviewCalendar
+              key={viewMonthKey}
+              monthKey={viewMonthKey}
+              todayKey={todayKey}
+              initialSelectedDateKey={initialSelectedDateKey}
+              activities={calendarActivities}
             />
-            <CardBody className="divide-y divide-hairline p-0">
-              {recentEntries.length ? recentEntries.map((entry) => (
-                <article key={entry.id} className="px-5 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-ink">{entry.title}</h3>
-                      <p className="mt-1 truncate text-xs text-muted">
-                        {entry.researchPlan?.title ?? entry.project?.name ?? "Unassigned"}
-                      </p>
-                    </div>
-                    <StatusPill status={entry.recordStatus} />
-                  </div>
-                </article>
-              )) : <p className="px-5 py-6 text-sm text-muted">No entries yet.</p>}
-            </CardBody>
-          </Card>
+          </div>
 
-          <Card>
-            <CardHeader
-              title="Recent experiments"
-              eyebrow="Execution"
-              action={<Link href="/experiments" className="text-sm font-medium text-moss hover:underline">View all</Link>}
-            />
-            <CardBody className="divide-y divide-hairline p-0">
-              {recentExperiments.length ? recentExperiments.map((experiment) => (
-                <article key={experiment.id} className="px-5 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-ink">{experiment.title}</h3>
-                      <p className="mt-1 truncate text-xs text-muted">
-                        {experiment.researchPlan?.title ?? experiment.project?.name ?? "Unassigned"}
-                      </p>
-                    </div>
-                    <StatusPill status={experiment.status} />
+          <aside aria-label="Workspace dashboard" className="min-w-0 xl:sticky xl:top-20">
+            <Card className="overflow-hidden">
+              <CardHeader title="Workspace dashboard" />
+              <CardBody className="p-0">
+                <section aria-label="Workspace metrics" className="grid grid-cols-2 gap-px bg-hairline">
+                  {metrics.map(([label, value, href], index) => (
+                    <Link
+                      key={label}
+                      href={href}
+                      className={`focus-ring min-w-0 bg-surface px-3 py-3 transition hover:bg-warm ${index === metrics.length - 1 ? "col-span-2" : ""}`}
+                    >
+                      <span className="block font-mono text-xl font-medium text-ink">{value}</span>
+                      <span className="mt-1 block text-[11px] leading-4 text-muted">{label}</span>
+                    </Link>
+                  ))}
+                </section>
+
+                <section className="border-t border-hairline">
+                  <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <h3 className="text-xs font-semibold text-ink">Recent entries</h3>
+                    <Link href="/entries" className="text-xs text-moss hover:underline">View all</Link>
                   </div>
-                </article>
-              )) : <p className="px-5 py-6 text-sm text-muted">No experiments yet.</p>}
-            </CardBody>
-          </Card>
+                  <div className="divide-y divide-hairline border-t border-hairline">
+                    {recentEntries.length ? recentEntries.map((entry) => (
+                      <Link key={entry.id} href={`/entries/${entry.id}`} className="focus-ring block px-4 py-2.5 transition hover:bg-warm/60">
+                        <span className="flex items-start justify-between gap-2">
+                          <span className="line-clamp-2 text-xs font-semibold leading-4 text-ink">{entry.title}</span>
+                          <StatusPill status={entry.recordStatus} />
+                        </span>
+                        <span className="mt-1 block truncate text-[11px] text-muted">
+                          {entry.researchPlan?.title ?? entry.project?.name ?? "Unassigned"}
+                        </span>
+                      </Link>
+                    )) : <p className="px-4 py-4 text-xs text-muted">No entries yet.</p>}
+                  </div>
+                </section>
+
+                <section className="border-t border-hairline">
+                  <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <h3 className="text-xs font-semibold text-ink">Recent experiments</h3>
+                    <Link href="/experiments" className="text-xs text-moss hover:underline">View all</Link>
+                  </div>
+                  <div className="divide-y divide-hairline border-t border-hairline">
+                    {recentExperiments.length ? recentExperiments.map((experiment) => (
+                      <Link key={experiment.id} href={`/experiments/${experiment.id}`} className="focus-ring block px-4 py-2.5 transition hover:bg-warm/60">
+                        <span className="flex items-start justify-between gap-2">
+                          <span className="line-clamp-2 text-xs font-semibold leading-4 text-ink">{experiment.title}</span>
+                          <StatusPill status={experiment.status} />
+                        </span>
+                        <span className="mt-1 block truncate text-[11px] text-muted">
+                          {experiment.researchPlan?.title ?? experiment.project?.name ?? "Unassigned"}
+                        </span>
+                      </Link>
+                    )) : <p className="px-4 py-4 text-xs text-muted">No experiments yet.</p>}
+                  </div>
+                </section>
+              </CardBody>
+            </Card>
+          </aside>
         </div>
       </div>
     </AppShell>

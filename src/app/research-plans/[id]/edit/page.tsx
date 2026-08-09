@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ResearchPlanForm } from "@/components/ResearchPlanForm";
 import { prisma } from "@/lib/db";
-import { normalizeScientificDocument, researchPlanSections } from "@/lib/scientific-document";
+import { normalizeResearchPlanDocument } from "@/lib/scientific-document";
 import { updateResearchPlan } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +16,5 @@ export default async function EditResearchPlanPage({ params }: { params: Promise
     prisma.protocol.findMany({ where: { availability: { in: ["draft", "active"] } }, orderBy: [{ scope: "asc" }, { title: "asc" }], select: { id: true, humanCode: true, title: true, scope: true, projectId: true } }),
   ]);
   if (!plan) notFound();
-  return <AppShell><div className="space-y-6"><PageHeader eyebrow={plan.code ?? "Research Plan"} title={`Edit ${plan.title}`} description="Changing a plan does not alter any ProtocolVersion already used by an Experiment." /><ResearchPlanForm action={updateResearchPlan} projects={projects} protocols={protocols} initial={{ ...plan, selectedProtocolIds: plan.protocols.map((link) => link.protocolId), primaryProtocolId: plan.protocols.find((link) => link.isPrimary)?.protocolId, document: normalizeScientificDocument(plan.contentJson, researchPlanSections) }} /></div></AppShell>;
+  return <AppShell><div className="space-y-6"><PageHeader eyebrow={plan.code ?? "Research Plan"} title={`Edit ${plan.title}`} description="Changing a plan does not alter any ProtocolVersion already used by an Experiment." /><ResearchPlanForm action={updateResearchPlan} projects={projects} protocols={protocols} initial={{ ...plan, selectedProtocolIds: plan.protocols.map((link) => link.protocolId), primaryProtocolId: plan.protocols.find((link) => link.isPrimary)?.protocolId, document: normalizeResearchPlanDocument(plan.contentJson, plan.design) }} /></div></AppShell>;
 }

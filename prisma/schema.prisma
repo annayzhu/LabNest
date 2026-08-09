@@ -57,6 +57,14 @@ enum ResultQualityStatus {
   fail
 }
 
+enum ResultValidationStatus {
+  not_applicable
+  incomplete
+  valid
+  warning
+  invalid
+}
+
 enum ResultDatasetStorageMode {
   managed_file
   external_reference
@@ -296,7 +304,7 @@ model ResearchPlan {
   id          String             @id @default(cuid())
   projectId   String
   project     Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  code        String?
+  code        String             @unique
   title       String
   objective   String?
   hypothesis  String?
@@ -314,7 +322,6 @@ model ResearchPlan {
   results     Result[]
   reports     Report[]
 
-  @@unique([projectId, code])
   @@index([projectId])
   @@index([status])
 }
@@ -345,6 +352,7 @@ model Entry {
   moodStatus     String?
   sourceType     EntrySourceType       @default(text)
   recordStatus   RecordLifecycleStatus @default(draft)
+  contentJson    Json                  @default("{}")
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
@@ -356,7 +364,7 @@ model Entry {
 
 model Experiment {
   id                       String                @id @default(cuid())
-  runCode                  String?
+  runCode                  String                @unique
   title                    String
   projectId                String?
   project                  Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
@@ -366,14 +374,10 @@ model Experiment {
   recordStatus             RecordLifecycleStatus @default(draft)
   date                     DateTime              @default(now())
   purpose                  String?
-  background               String?
-  materialsText            String?
-  stepsText                String?
-  observations             String?
-  resultSummary            String?
-  conclusion               String?
-  deviations               String?
   contentJson              Json                  @default("{}")
+  /// Derived plain-text mirror of purpose + contentJson. Written on every save,
+  /// never edited directly; exists only so search does not need per-section columns.
+  searchText               String?
   protocolSnapshotJson     Json                  @default("{}")
   primaryProtocolVersionId String?               @map("protocolVersionId")
   primaryProtocolVersion   ProtocolVersion?      @relation("PrimaryExperimentProtocol", fields: [primaryProtocolVersionId], references: [id], onDelete: SetNull)
@@ -388,7 +392,6 @@ model Experiment {
   results               Result[]
   protocolVersions      ExperimentProtocolVersion[]
 
-  @@unique([researchPlanId, runCode])
   @@index([status])
   @@index([recordStatus])
   @@index([date])
@@ -413,7 +416,7 @@ model ExperimentProtocolVersion {
 
 model Protocol {
   id             String                @id @default(cuid())
-  humanCode      String?               @unique
+  humanCode      String                @unique
   title          String
   canonicalTitle String?
   shortTitle     String?
@@ -435,6 +438,12 @@ model Protocol {
   @@index([scope])
   @@index([recordStatus])
   @@index([projectId])
+}
+
+model RecordCodeCounter {
+  key       String   @id
+  value     Int
+  updatedAt DateTime @updatedAt
 }
 
 model ProtocolVersion {
@@ -474,6 +483,7 @@ model ProtocolVersion {
   primaryExperiments Experiment[]                @relation("PrimaryExperimentProtocol")
   experimentLinks    ExperimentProtocolVersion[]
   protocolRuns       ProtocolRun[]
+  results            Result[]
 
   @@unique([protocolId, revision])
   @@index([protocolId])
@@ -567,14 +577,19 @@ model InventoryItem {
   entityId              String?
   entity                Entity?            @relation(fields: [entityId], references: [id], onDelete: SetNull)
   name                  String
+  englishName           String?
+  category              String?
+  brand                 String?
   containerType         String?
   barcode               String?
   aliquotCode           String?
   lotNumber             String?
   vendor                String?
   catalogNumber         String?
+  casNumber             String?
   currentQuantity       Float              @default(0)
   unit                  String
+  lowThreshold          Float?
   concentration         String?
   locationId            String?
   location              InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
@@ -596,6 +611,7 @@ model InventoryItem {
 
   @@unique([aliquotCode])
   @@index([entityId])
+  @@index([category])
   @@index([locationId])
   @@index([parentInventoryItemId])
   @@index([expiryDate])
@@ -619,6 +635,7 @@ model InventoryTransaction {
   purchase         PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   proposedActionId String?
   proposedAction   ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
+  performedBy      String?
   notes            String?
   createdAt        DateTime                 @default(now())
 
@@ -704,7 +721,17 @@ model Result {
   recordStatus   RecordLifecycleStatus @default(draft)
   sourceType     ResultSourceType      @default(manual)
   qualityStatus  ResultQualityStatus   @default(not_assessed)
+  validationStatus ResultValidationStatus @default(not_applicable)
   analysisMethod String?
+  protocolVersionId String?
+  protocolVersion   ProtocolVersion?      @relation(fields: [protocolVersionId], references: [id], onDelete: SetNull)
+  templateKey       String?
+  templateInstanceKey   String?
+  templateInstanceLabel String?
+  templateSnapshotJson Json               @default("{}")
+  valuesJson           Json               @default("{}")
+  validationJson       Json               @default("{}")
+  viewSpecJson         Json               @default("{}")
   contentJson    Json                  @default("{}")
   provenanceJson Json                  @default("{}")
   metadataJson   Json                  @default("{}")
@@ -723,6 +750,10 @@ model Result {
   @@index([recordStatus])
   @@index([sourceType])
   @@index([qualityStatus])
+  @@index([validationStatus])
+  @@index([protocolVersionId])
+  @@index([templateKey])
+  @@index([experimentId, templateKey, templateInstanceKey])
 }
 
 model ResultDataset {
@@ -741,11 +772,17 @@ model ResultDataset {
   columnCount    Int                      @default(0)
   columnsJson    Json                     @default("[]")
   previewJson    Json                     @default("[]")
+  templateDatasetKey String?
+  schemaJson         Json                     @default("{}")
+  validationStatus  ResultValidationStatus   @default(not_applicable)
+  validationJson    Json                     @default("{}")
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
 
   @@index([resultId])
   @@index([storageMode])
+  @@index([templateDatasetKey])
+  @@index([validationStatus])
 }
 
 model Report {
@@ -880,15 +917,24 @@ model ProcurementQuoteLine {
 }
 
 model Attachment {
-  id               String   @id @default(cuid())
+  id               String       @id @default(cuid())
   filename         String
   originalFilename String
   mimeType         String
   size             Int
   storagePath      String
-  uploadedAt       DateTime @default(now())
+  sha256           String?
+  metadataJson     Json         @default("{}")
+  derivedFromId    String?
+  derivedFrom      Attachment?  @relation("AttachmentDerivatives", fields: [derivedFromId], references: [id], onDelete: SetNull)
+  derivatives      Attachment[] @relation("AttachmentDerivatives")
+  derivativeKind   String?
+  uploadedAt       DateTime     @default(now())
 
   links AttachmentLink[]
+
+  @@index([sha256])
+  @@index([derivedFromId])
 }
 
 model AttachmentLink {
@@ -898,6 +944,7 @@ model AttachmentLink {
   targetType   String
   targetId     String
   linkType     String     @default("attached_to")
+  order        Int        @default(0)
   createdAt    DateTime   @default(now())
 
   @@index([attachmentId])

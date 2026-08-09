@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { reserveRecordCode } from "@/lib/record-codes";
 
 export type ProtocolAdaptState = { error?: string };
 
@@ -21,15 +22,6 @@ function cloneJson(value: unknown) {
   return JSON.parse(JSON.stringify(value));
 }
 
-async function nextProtocolCode() {
-  const protocols = await prisma.protocol.findMany({ where: { humanCode: { startsWith: "PRT-" } }, select: { humanCode: true } });
-  const highest = protocols.reduce((max, item) => {
-    const value = Number(item.humanCode?.replace("PRT-", ""));
-    return Number.isFinite(value) ? Math.max(max, value) : max;
-  }, 100000);
-  return `PRT-${String(highest + 1).padStart(6, "0")}`;
-}
-
 export async function adaptProtocolToProject(
   _previousState: ProtocolAdaptState,
   formData: FormData,
@@ -44,8 +36,8 @@ export async function adaptProtocolToProject(
     if (sourceVersion.protocol.scope !== "general") return { error: "Only a General Protocol can start this adaptation workflow." };
     if (!researchPlan || researchPlan.projectId !== parsed.projectId) return { error: "The selected Research Plan does not belong to the selected Project." };
 
-    const humanCode = await nextProtocolCode();
     const protocol = await prisma.$transaction(async (transaction) => {
+      const humanCode = await reserveRecordCode(transaction, "protocol");
       const created = await transaction.protocol.create({ data: {
         humanCode,
         title: parsed.canonicalTitle,

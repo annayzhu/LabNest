@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { GitBranchPlus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
@@ -48,10 +49,19 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow={`${version.protocol.humanCode ?? "Protocol"} · ${version.displayVersion}`}
-          title={version.reviewStage === "reviewed" ? "Create Protocol Revision" : "Edit Protocol"}
+          identifier={`${version.protocol.humanCode ?? "Protocol"} · v${version.displayVersion}`}
+          title={version.reviewStage === "reviewed" ? "Edit Protocol as New Revision" : "Edit Protocol"}
           description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
         />
+        {version.reviewStage === "reviewed" ? (
+          <div className="flex items-start gap-3 rounded-[10px] border border-sage/45 bg-sage-surface/55 px-4 py-3">
+            <GitBranchPlus className="mt-0.5 h-5 w-5 shrink-0 text-moss" aria-hidden />
+            <div>
+              <h2 className="text-sm font-semibold text-ink">All fields remain editable</h2>
+              <p className="mt-1 text-sm leading-6 text-graphite">This reviewed version remains protected. Edit any field below; saving creates a linked revision and preserves the current version.</p>
+            </div>
+          </div>
+        ) : null}
         <ProtocolDocumentEditor
           action={saveProtocolDocument}
           mode="edit"

@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { I18nProvider } from "@/components/I18nProvider";
+import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,14 +14,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="overflow-x-hidden">{children}</body>
+    <html lang={locale === "zh" ? "zh-CN" : "en"} data-locale={locale} suppressHydrationWarning>
+      <body className="overflow-x-hidden">
+        <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

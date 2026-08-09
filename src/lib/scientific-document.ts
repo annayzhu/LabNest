@@ -47,20 +47,23 @@ export const scientificDocumentSchema = z.object({
 });
 
 export type ScientificDocument = z.infer<typeof scientificDocumentSchema>;
-export type ScientificSectionDefinition = { key: string; title: string };
+export type ScientificSectionDefinition = { key: string; title: string; aliases?: string[] };
 
 export const researchPlanSections: ScientificSectionDefinition[] = [
-  { key: "variables", title: "Variables & controls" },
+  { key: "design", title: "Design" },
+  { key: "material_methods", title: "Material & methods", aliases: ["variables"] },
   { key: "acceptance_criteria", title: "Acceptance criteria" },
   { key: "constraints", title: "Constraints & dependencies" },
   { key: "references", title: "References & working notes" },
 ];
 
 export const experimentSections: ScientificSectionDefinition[] = [
-  { key: "setup", title: "Setup & samples" },
-  { key: "execution", title: "Execution notes" },
+  { key: "background", title: "Background & rationale" },
+  { key: "setup", title: "Setup & samples", aliases: ["materials"] },
+  { key: "execution", title: "Execution notes", aliases: ["steps"] },
   { key: "observations", title: "Observations & media" },
   { key: "deviations", title: "Deviations & incidents" },
+  { key: "conclusion", title: "Summary & conclusion" },
 ];
 
 export const resultSections: ScientificSectionDefinition[] = [
@@ -83,8 +86,26 @@ export const reportSections: ScientificSectionDefinition[] = [
 export function createScientificDocument(definitions: ScientificSectionDefinition[]): ScientificDocument {
   return {
     schemaVersion: 1,
-    sections: definitions.map((definition) => ({ ...definition, blocks: [] })),
+    sections: definitions.map(({ key, title }) => ({ key, title, blocks: [] })),
   };
+}
+
+/**
+ * Build a document from plain text keyed by section. Used wherever narrative
+ * text arrives as loose strings (entry formalization, structured import) and
+ * has to land in the document rather than in its own column.
+ */
+export function scientificDocumentFromSectionText(
+  definitions: ScientificSectionDefinition[],
+  texts: Record<string, string | null | undefined>,
+  idSuffix = "1",
+): ScientificDocument {
+  const document = createScientificDocument(definitions);
+  for (const section of document.sections) {
+    const text = texts[section.key]?.trim();
+    if (text) section.blocks.push({ id: `${section.key}-${idSuffix}`, type: "text", text });
+  }
+  return document;
 }
 
 export function normalizeScientificDocument(
@@ -97,8 +118,21 @@ export function normalizeScientificDocument(
   const sections = new Map(parsed.data.sections.map((section) => [section.key, section]));
   return {
     schemaVersion: 1,
-    sections: definitions.map((definition) => sections.get(definition.key) ?? { ...definition, blocks: [] }),
+    sections: definitions.map(({ key, title, aliases }) => {
+      const existing = sections.get(key) ?? aliases?.map((alias) => sections.get(alias)).find(Boolean);
+      return existing ? { ...existing, key, title } : { key, title, blocks: [] };
+    }),
   };
+}
+
+export function normalizeResearchPlanDocument(value: unknown, legacyDesign?: string | null): ScientificDocument {
+  const document = normalizeScientificDocument(value, researchPlanSections);
+  const design = document.sections.find((section) => section.key === "design");
+  const legacyText = legacyDesign?.trim();
+  if (design && !design.blocks.length && legacyText) {
+    design.blocks.push({ id: "design-legacy-1", type: "text", text: legacyText });
+  }
+  return document;
 }
 
 export function parseScientificDocumentJson(

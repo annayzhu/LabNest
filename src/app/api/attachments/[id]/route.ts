@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const attachment = await prisma.attachment.findUnique({ where: { id } });
 
@@ -13,12 +13,16 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   }
 
   const fileBuffer = await readFile(resolveAttachmentPath(attachment.storagePath));
+  const inline = new URL(request.url).searchParams.get("inline") === "1";
 
   return new Response(new Uint8Array(fileBuffer), {
     headers: {
       "content-type": attachment.mimeType,
       "content-length": String(attachment.size),
-      "content-disposition": `attachment; filename="${attachment.originalFilename.replaceAll('"', "'")}"`,
+      "content-disposition": inline
+        ? "inline"
+        : `attachment; filename="${attachment.originalFilename.replaceAll('"', "'")}"`,
+      "x-content-type-options": "nosniff",
     },
   });
 }

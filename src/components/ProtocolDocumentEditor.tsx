@@ -3,6 +3,10 @@
 import { useActionState, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { ProtocolRichTextEditor } from "@/components/ProtocolRichTextEditor";
+import { RecordCodeField } from "@/components/RecordCodeField";
+import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEditor";
+import { TagFieldLabel } from "@/components/TagFieldLabel";
+import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import {
   protocolSectionLabels,
   richTextFromPlainText,
@@ -10,6 +14,8 @@ import {
   type ProtocolDocument,
   type ProtocolSectionKey,
 } from "@/lib/protocol-document";
+import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/result-templates";
+import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
 
 export type ProtocolEditorState = { error?: string };
 export type ProtocolEditorAction = (
@@ -34,11 +40,13 @@ function tsvToRows(value: string) {
 
 function BlockEditor({
   block,
+  sectionKey,
   onChange,
   onMove,
   onRemove,
 }: {
   block: ProtocolContentBlock;
+  sectionKey: ProtocolSectionKey;
   onChange: (block: ProtocolContentBlock) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
@@ -64,7 +72,8 @@ function BlockEditor({
           <textarea value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} className={textareaClass} />
         </div>
       ) : null}
-      {block.type === "table" ? (
+      {block.type === "table" && sectionKey === "result_templates" ? <ResultTemplateConfigEditor block={block} onChange={onChange} /> : null}
+      {block.type === "table" && sectionKey !== "result_templates" ? (
         <div className="space-y-2">
           <input value={block.caption ?? ""} onChange={(event) => onChange({ ...block, caption: event.target.value })} className={inputClass} placeholder="Table caption" />
           <textarea value={block.rows.map((row) => row.join("\t")).join("\n")} onChange={(event) => onChange({ ...block, rows: tsvToRows(event.target.value) })} className={`${textareaClass} min-h-40 font-mono text-xs`} placeholder="Paste tab-separated cells; one row per line" />
@@ -148,11 +157,14 @@ export function ProtocolDocumentEditor({
   };
   const addBlock = (sectionKey: ProtocolSectionKey, type: ProtocolContentBlock["type"]) => {
     const id = uniqueBlockId(sectionKey);
+    const resultTemplate = sectionKey === "result_templates" && type === "table" ? createDefaultResultTemplate("measurement") : undefined;
     const block: ProtocolContentBlock = type === "heading" ? { id, type, text: "New subsection" }
       : type === "text" ? { id, type, text: "" }
         : type === "rich_text" ? { id, type, nodes: richTextFromPlainText("") }
           : type === "checklist" ? { id, type, items: [""] }
-            : type === "table" ? { id, type, caption: "", rows: [["Column 1", "Column 2"], ["", ""]] }
+            : type === "table" ? resultTemplate
+              ? { id, type, caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate }
+              : { id, type, caption: "", rows: [["Column 1", "Column 2"], ["", ""]] }
               : type === "media" ? { id, type, mediaType: "image", url: "", caption: "" }
                 : type === "timer" ? { id, type, label: "Timer", durationMinutes: 5, notes: "" }
                   : { id, type: "callout", tone: "warning", text: "" };
@@ -178,16 +190,16 @@ export function ProtocolDocumentEditor({
       <section className="rounded-[12px] border border-hairline bg-surface shadow-paper">
         <header className="border-b border-hairline px-5 py-4"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Identity and governance</p><h2 className="mt-1 font-serif text-xl font-medium text-ink">Protocol record</h2></header>
         <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-          {protocol.humanCode ? <div><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol ID</span><p className="mt-2 font-mono text-sm font-semibold text-ink">{protocol.humanCode}</p></div> : null}
+          <RecordCodeField label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" existingCode={mode === "edit" ? protocol.humanCode : undefined} />
           <label className="md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol title</span><input required name="canonicalTitle" defaultValue={protocol.canonicalTitle} className={inputClass} /></label>
           <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={inputClass} /></label>
           <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={inputClass} /></label>
           {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={inputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Scope</span><p className="mt-2 text-sm font-medium capitalize text-ink">{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</p><p className="mt-1 text-xs text-muted">Use “Adapt to project” to preserve General → Project lineage.</p></div>}
           {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={inputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Availability</span><select name="availability" defaultValue={protocol.availability} className={inputClass}><option value="draft">Draft</option><option value="active">Active</option><option value="retired">Retired</option><option value="archived">Archived</option></select></label>
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Review stage</span><select name="reviewStage" defaultValue={reviewed ? "draft" : version.reviewStage} className={inputClass}><option value="draft">Draft</option><option value="ready_for_review">Ready for review</option><option value="reviewed">Reviewed</option></select></label>
+          <StatusRadioGroup label="Availability" name="availability" options={protocolAvailabilityOptions} defaultValue={protocol.availability} required className="md:col-span-2" />
+          <StatusRadioGroup label="Review stage" name="reviewStage" options={protocolReviewStageOptions} defaultValue={reviewed ? "draft" : version.reviewStage} required className="md:col-span-2" />
           <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" defaultValue={reviewed ? suggestedDisplayVersion : version.displayVersion} className={inputClass} /></label>
-          <label className="md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Tags</span><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={inputClass} /></label>
+          <label className="md:col-span-2"><TagFieldLabel /><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={inputClass} /></label>
           <label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
         </div>
       </section>
@@ -215,13 +227,13 @@ export function ProtocolDocumentEditor({
             </div>
           </div>
           <div className="mt-4 space-y-3">
-            {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="rounded-[8px] border border-dashed border-hairline bg-surface px-3 py-5 text-center text-sm text-muted">No blocks. Add rich text, a checklist, a table, a callout, media, or a timer.</p>}
+            {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="rounded-[8px] border border-dashed border-hairline bg-surface px-3 py-5 text-center text-sm text-muted">No blocks. Add rich text, a checklist, a table, a callout, media, or a timer.</p>}
           </div>
         </section>
       ))}
 
       {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      <div className="sticky bottom-4 z-20 flex justify-end"><button disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Create revision" : "Save Protocol"}</button></div>
+      <div className="sticky bottom-4 z-20 flex justify-end"><button disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</button></div>
     </form>
   );
 }

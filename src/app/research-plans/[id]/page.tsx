@@ -7,7 +7,7 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { normalizeScientificDocument, researchPlanSections } from "@/lib/scientific-document";
+import { normalizeResearchPlanDocument } from "@/lib/scientific-document";
 
 export const dynamic = "force-dynamic";
 const primaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
@@ -27,28 +27,28 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
     },
   });
   if (!plan) notFound();
-  const document = normalizeScientificDocument(plan.contentJson, researchPlanSections);
-  const scientificLogic = [
+  const document = normalizeResearchPlanDocument(plan.contentJson, plan.design);
+  const scientificPremise = [
+    ["Objective", plan.objective],
     ["Hypothesis", plan.hypothesis],
     ["Rationale", plan.rationale],
-    ["Design", plan.design],
-  ].filter((item): item is [string, string] => Boolean(item[1]));
+  ] as const;
   return (
     <AppShell><div className="space-y-6">
-      <PageHeader eyebrow={`${plan.project.name} · ${plan.code ?? "Uncoded plan"}`} title={plan.title} description={plan.objective ?? "Objective not recorded."} actions={<><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link></>} />
+      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link></>} />
       <Card><CardHeader title="Plan control" eyebrow="Compact source map" action={<StatusPill status={plan.status} />} /><CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <Control label="Project"><Link href={`/projects?project=${plan.projectId}`} className="text-moss hover:underline">{plan.project.name}</Link></Control>
         <Control label="Protocols">{plan.protocols.length}</Control><Control label="Experiments">{plan._count.experiments}</Control><Control label="Results">{plan._count.results}</Control><Control label="Entries">{plan._count.entries}</Control><Control label="Reports">{plan._count.reports}</Control>
         <div className="sm:col-span-2 xl:col-span-6 flex flex-wrap gap-2 border-t border-hairline pt-3">{plan.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}</div>
       </CardBody></Card>
-      {scientificLogic.length ? <Card><CardHeader title="Scientific logic" eyebrow="Recorded design fields" /><CardBody className="grid gap-5 md:grid-cols-2">{scientificLogic.map(([label, value]) => <section key={label} className="border-l border-hairline pl-3"><h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-graphite">{value}</p></section>)}</CardBody></Card> : null}
+      <Card><CardHeader title="Scientific premise" eyebrow="Template-aligned sections" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{scientificPremise.map(([label, value]) => <ContentField key={label} label={label} value={value} compact />)}</CardBody></Card>
+      <ScientificDocumentView document={document} showEmptySections />
       <Card><CardHeader title="Associated Protocols" eyebrow="Reusable methods; Experiments lock exact versions" /><CardBody><DataTable rows={plan.protocols} getRowKey={(row) => row.protocolId} columns={[
         { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.protocolId}`} className="font-semibold text-moss hover:underline">{row.protocol.humanCode ?? row.protocol.title}</Link> },
         { key: "scope", header: "Scope", render: (row) => <Badge tone={row.protocol.scope === "project" ? "sage" : "info"}>{row.protocol.scope}</Badge> },
         { key: "version", header: "Latest", render: (row) => row.protocol.versions[0]?.displayVersion ?? "—" },
         { key: "role", header: "Role", render: (row) => row.isPrimary ? <Badge tone="sage">primary</Badge> : <Badge>supporting</Badge> },
       ]} /></CardBody></Card>
-      <ScientificDocumentView document={document} />
       <Card><CardHeader title="Experiments" eyebrow="Repeated executions" action={<Link href={`/experiments/new?plan=${plan.id}`} className="text-sm font-medium text-moss hover:underline">Create experiment</Link>} /><CardBody><DataTable rows={plan.experiments} getRowKey={(row) => row.id} columns={[
         { key: "experiment", header: "Experiment", render: (row) => <Link href={`/experiments/${row.id}`} className="font-semibold text-moss hover:underline">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link> },
         { key: "protocol", header: "Primary ProtocolVersion", render: (row) => row.primaryProtocolVersion ? `${row.primaryProtocolVersion.protocol.humanCode ?? row.primaryProtocolVersion.protocol.title} · ${row.primaryProtocolVersion.displayVersion}` : "—" },
@@ -67,3 +67,6 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
 }
 
 function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }
+function ContentField({ label, value, compact = false }: { label?: string; value?: string | null; compact?: boolean }) {
+  return <section className={compact ? "rounded-[9px] border border-hairline bg-warm/70 p-4" : undefined}>{label ? <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</h3> : null}<p className={`${label ? "mt-2 " : ""}whitespace-pre-wrap text-sm leading-7 ${value ? "text-graphite" : "text-muted"}`}>{value || "Not recorded."}</p></section>;
+}

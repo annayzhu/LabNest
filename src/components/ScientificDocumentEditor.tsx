@@ -86,7 +86,7 @@ export function ScientificDocumentEditor({
               <h3 className="mt-1 font-serif text-lg font-medium text-ink">{section.title}</h3>
             </div>
             <div className="flex flex-wrap gap-1">
-              {(["text", "checklist", "table", "metric", "callout", "media"] as const).map((type) => (
+              {(["heading", "text", "checklist", "table", "metric", "callout", "media"] as const).map((type) => (
                 <button key={type} type="button" onClick={() => addBlock(sectionIndex, type)} className="focus-ring inline-flex h-8 items-center gap-1 rounded-[7px] border border-hairline bg-surface px-2 text-xs font-medium text-graphite hover:border-border-strong">
                   <Plus className="h-3.5 w-3.5" />{type}
                 </button>

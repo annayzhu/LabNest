@@ -13,7 +13,7 @@ const toneClass: Record<StatusTone, string> = {
 };
 
 const badgeClass =
-  "inline-flex min-h-6 items-center rounded-[7px] border px-2 py-0.5 text-xs font-medium leading-5";
+  "inline-flex min-h-6 items-center rounded-[7px] border px-2 py-0.5 text-xs font-normal leading-5 tracking-[0.005em]";
 
 export function Badge({
   children,
@@ -77,6 +77,11 @@ const statusTone: Record<string, StatusTone> = {
   failed: "danger",
   fail: "danger",
   pass: "success",
+  valid: "success",
+  warning: "warning",
+  incomplete: "warning",
+  invalid: "danger",
+  not_applicable: "neutral",
   not_assessed: "neutral",
   rejected: "danger",
   archived: "neutral",

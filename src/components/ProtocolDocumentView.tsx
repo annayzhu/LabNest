@@ -2,6 +2,7 @@ import { AlertTriangle, CheckSquare2, FileImage, FileText, Link2, Table2 } from 
 import { ProtocolTimer } from "@/components/ProtocolTimer";
 import { cn } from "@/lib/cn";
 import type { ProtocolContentBlock, ProtocolDocument, ProtocolRichTextNode, ProtocolRichTextRun } from "@/lib/protocol-document";
+import { checkResultTemplate, normalizeResultTemplate, resultTemplateCardinalityLabel, RESULT_VIEW_PRESETS } from "@/lib/result-templates";
 
 function safeLink(value: string | undefined) {
   if (!value) return undefined;
@@ -63,7 +64,13 @@ function ContentBlock({ block }: { block: ProtocolContentBlock }) {
   if (block.type === "timer") return <ProtocolTimer label={block.label} durationMinutes={block.durationMinutes} notes={block.notes} />;
 
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
-  return <figure className="space-y-2">{block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}<div className="max-h-[480px] overflow-auto rounded-[9px] border border-hairline editorial-scrollbar"><table className="min-w-full border-collapse text-left text-sm"><tbody className="divide-y divide-hairline">{block.rows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex}`} className={rowIndex === 0 ? "sticky top-0 z-10 bg-stone text-ink" : "bg-surface even:bg-warm/70"}>{Array.from({ length: columnCount }).map((_, columnIndex) => { const Cell = rowIndex === 0 ? "th" : "td"; return <Cell key={columnIndex} className="min-w-36 border-r border-hairline px-3 py-2 align-top last:border-r-0">{row[columnIndex] ?? ""}</Cell>; })}</tr>)}</tbody></table></div></figure>;
+  const template = block.resultTemplate ? normalizeResultTemplate(block.resultTemplate) : undefined;
+  const templateCheck = template ? checkResultTemplate(template) : undefined;
+  const preset = template ? RESULT_VIEW_PRESETS[template.view?.preset ?? "generic"] : undefined;
+  return <figure className="space-y-2">
+    {template ? <div className="rounded-[8px] border border-sage/40 bg-sage-surface/50 p-3"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-ink">{template.title ?? template.result_type}</p><p className="mt-1 text-xs text-muted">{template.templateKey} · {resultTemplateCardinalityLabel(template.cardinality)} · {preset?.label}</p></div><span className={`rounded-full px-2 py-1 text-xs font-semibold ${templateCheck?.status === "complete" ? "bg-success-surface text-success" : templateCheck?.status === "warning" ? "bg-warning-surface text-warning" : "bg-error-surface text-error"}`}>{templateCheck?.status}</span></div>{template.description ? <p className="mt-2 text-xs leading-5 text-graphite">{template.description}</p> : null}{templateCheck && (templateCheck.errors.length || templateCheck.warnings.length) ? <ul className="mt-2 list-disc pl-5 text-xs text-graphite">{[...templateCheck.errors, ...templateCheck.warnings].map((message) => <li key={message}>{message}</li>)}</ul> : null}</div> : null}
+    {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}<div className="max-h-[480px] overflow-auto rounded-[9px] border border-hairline editorial-scrollbar"><table className="min-w-full border-collapse text-left text-sm"><tbody className="divide-y divide-hairline">{block.rows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex}`} className={rowIndex === 0 ? "sticky top-0 z-10 bg-stone text-ink" : "bg-surface even:bg-warm/70"}>{Array.from({ length: columnCount }).map((_, columnIndex) => { const Cell = rowIndex === 0 ? "th" : "td"; return <Cell key={columnIndex} className="min-w-36 border-r border-hairline px-3 py-2 align-top last:border-r-0">{row[columnIndex] ?? ""}</Cell>; })}</tr>)}</tbody></table></div>
+  </figure>;
 }
 
 export function ProtocolDocumentView({ document }: { document: ProtocolDocument }) {

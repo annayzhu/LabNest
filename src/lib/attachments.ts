@@ -1,6 +1,5 @@
 import path from "node:path";
-
-const maxUploadBytes = 25 * 1024 * 1024;
+import { MAX_ATTACHMENT_BYTES } from "./attachment-limits";
 
 export function getAttachmentRoot() {
   const configured = process.env.LABNEST_ATTACHMENT_ROOT;
@@ -13,7 +12,7 @@ export function getAttachmentRoot() {
 }
 
 export function assertUploadSize(size: number) {
-  if (size > maxUploadBytes) {
+  if (size > MAX_ATTACHMENT_BYTES) {
     throw new Error("Attachment is larger than the 25 MB V1 upload limit.");
   }
 }

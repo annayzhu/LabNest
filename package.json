@@ -10,9 +10,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "docker:up": "docker compose up -d --build app",
+    "docker:status": "docker compose ps",
+    "docker:logs": "docker compose logs -f app",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "attachments:backfill-metadata": "tsx scripts/backfill-attachment-metadata.ts",
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {

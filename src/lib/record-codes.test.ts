@@ -1,0 +1,37 @@
+import { describe, expect, it } from "vitest";
+import { formatRecordCode, isValidRecordCode, recordCodeExample, recordCodeFromSuffix } from "./record-codes";
+
+describe("record code rules", () => {
+  it("uses the fixed prefixes and starting formats", () => {
+    expect(recordCodeExample("researchPlan")).toBe("RP-001");
+    expect(recordCodeExample("protocol")).toBe("PRT-100001");
+    expect(recordCodeExample("experiment")).toBe("EXP-001");
+  });
+
+  it("pads numeric suffixes without truncating larger sequences", () => {
+    expect(formatRecordCode("researchPlan", 8)).toBe("RP-008");
+    expect(formatRecordCode("protocol", 100009)).toBe("PRT-100009");
+    expect(formatRecordCode("experiment", 1002)).toBe("EXP-1002");
+  });
+
+  it("rejects missing, incorrect, or undersized prefixes", () => {
+    expect(isValidRecordCode("researchPlan", "RP-008")).toBe(true);
+    expect(isValidRecordCode("protocol", "PRT-100008")).toBe(true);
+    expect(isValidRecordCode("experiment", "EXP-008")).toBe(true);
+    expect(isValidRecordCode("researchPlan", "EXP-008")).toBe(false);
+    expect(isValidRecordCode("protocol", "PRT-8")).toBe(false);
+    expect(isValidRecordCode("experiment", "8")).toBe(false);
+  });
+
+  it("combines a fixed prefix with a user-entered numeric suffix", () => {
+    expect(recordCodeFromSuffix("researchPlan", "008")).toBe("RP-008");
+    expect(recordCodeFromSuffix("protocol", " 100008 ")).toBe("PRT-100008");
+    expect(recordCodeFromSuffix("experiment", "1002")).toBe("EXP-1002");
+  });
+
+  it("rejects invalid user-entered suffixes", () => {
+    expect(() => recordCodeFromSuffix("researchPlan", "8")).toThrow("RP- must be followed by at least 3 digits.");
+    expect(() => recordCodeFromSuffix("protocol", "ABC123")).toThrow("PRT- must be followed by at least 6 digits.");
+    expect(() => recordCodeFromSuffix("experiment", "EXP-008")).toThrow("EXP- must be followed by at least 3 digits.");
+  });
+});

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PencilLine } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { PageHeader } from "@/components/PageHeader";
@@ -18,8 +19,8 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
 }
 
-const primaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
-const secondaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss hover:bg-warm";
+const primaryButton = "focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
+const secondaryButton = "focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss hover:bg-warm";
 
 export default async function ProtocolDetailPage({
   params,
@@ -72,18 +73,19 @@ export default async function ProtocolDetailPage({
       take: 8,
     }),
   ]);
+  const editHref = `/protocols/${protocol.id}/versions/${version.id}/edit`;
 
   return (
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow={`${protocol.humanCode ?? "Uncoded"} · version ${version.displayVersion}`}
+          identifier={`${protocol.humanCode ?? "Uncoded"} · v${version.displayVersion}`}
           title={protocol.canonicalTitle ?? protocol.title}
           description={protocol.englishTitle ?? protocol.description ?? undefined}
           actions={
             <>
-              {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={primaryButton}>Use in experiment</Link> : <Link href={`/protocols/${protocol.id}/versions/${version.id}/edit`} className={primaryButton}>Link Research Plan</Link>}
-              <Link href={`/protocols/${protocol.id}/versions/${version.id}/edit`} className={secondaryButton}>{version.reviewStage === "reviewed" ? "Create revision" : "Edit"}</Link>
+              <Link href={editHref} className={primaryButton}><PencilLine className="h-4 w-4" aria-hidden />Edit Protocol</Link>
+              {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={secondaryButton}>Use in experiment</Link> : <Link href={editHref} className={secondaryButton}>Link Research Plan</Link>}
               {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
               <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} className={secondaryButton}>Export DOCX</Link>
               <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/json`} className={secondaryButton}>Export JSON</Link>
@@ -132,6 +134,7 @@ export default async function ProtocolDetailPage({
                 { key: "source", header: "Source", render: (row) => row.sourceType.replaceAll("_", " ") },
                 { key: "change", header: "Change", render: (row) => row.changeSummary ?? "—" },
                 { key: "created", header: "Created", render: (row) => row.createdAt.toLocaleDateString() },
+                { key: "actions", header: "Actions", className: "text-right", render: (row) => <Link href={`/protocols/${protocol.id}/versions/${row.id}/edit`} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[7px] border border-hairline bg-surface px-2.5 text-xs font-medium text-moss hover:bg-warm"><PencilLine className="h-3.5 w-3.5" aria-hidden />{row.reviewStage === "reviewed" ? "Edit as new revision" : "Edit version"}</Link> },
               ]}
             />
           </CardBody>

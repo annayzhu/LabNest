@@ -1,8 +1,9 @@
 import { exportProtocolDocx } from "./protocol-docx-export";
 import { createProtocolTemplateDocument } from "./protocol-document";
 
-export const protocolDocxTemplateTitle = "Replace with Protocol title / 请填写实验规程标题";
-export const protocolDocxTemplateFilename = "LabNest_Protocol_Import_Template_v0.1_Draft.docx";
+export const protocolDocxTemplateTitle = "请填写实验规程标题 / Replace with Protocol title";
+export const protocolDocxTemplateEnglishTitle = "Replace with English title (optional)";
+export const protocolDocxTemplateFilename = "LabNest_Protocol_Import_Template_v0.2_Draft.docx";
 
 export function isUnfilledProtocolDocxTemplateTitle(title: string) {
   return title === protocolDocxTemplateTitle
@@ -25,10 +26,12 @@ export function exportProtocolDocxTemplate() {
 
   return exportProtocolDocx({
     canonicalTitle: protocolDocxTemplateTitle,
+    englishTitle: protocolDocxTemplateEnglishTitle,
     availability: "draft",
     reviewStage: "draft",
-    displayVersion: "0.1",
+    displayVersion: "0.2",
     scope: "general",
     tags: [],
+    templateMode: true,
   }, document);
 }

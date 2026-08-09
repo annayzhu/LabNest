@@ -62,7 +62,7 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
         take: 20,
       }),
       prisma.result.findMany({
-        where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
+        where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { templateKey: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
         include: { experiment: true },
         orderBy: { updatedAt: "desc" },
         take: 20,
@@ -80,7 +80,7 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
         type: "entry" as const,
         title: entry.title,
         subtitle: entry.project?.name,
-        href: "/entries",
+        href: `/entries/${entry.id}`,
         matchedText: entry.body,
       })),
       ...protocols.map((protocol) => ({

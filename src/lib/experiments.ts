@@ -1,6 +1,12 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { createScientificDocument, resultSections } from "@/lib/scientific-document";
+import { experimentSearchText } from "@/lib/experiment-document";
+import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
+import {
+  createScientificDocument,
+  resultSections,
+} from "@/lib/scientific-document";
+import { normalizeResultTemplates, validateResultRecord } from "@/lib/result-templates";
 import type { ProtocolStep, ResultTemplate } from "@/lib/types";
 
 function cloneJson<T>(value: T): T {
@@ -11,7 +17,7 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
 }
 
-export async function createExperimentWithProtocolSnapshot(input: {
+export type ExperimentSnapshotInput = {
   researchPlanId: string;
   runCode?: string;
   title: string;
@@ -19,27 +25,25 @@ export async function createExperimentWithProtocolSnapshot(input: {
   status: "planned" | "running" | "completed" | "failed" | "archived";
   recordStatus: "draft" | "recorded" | "submitted" | "reviewed";
   purpose?: string;
-  background?: string;
-  materialsText?: string;
-  stepsText?: string;
-  observations?: string;
-  resultSummary?: string;
-  conclusion?: string;
-  deviations?: string;
   tags: string[];
   contentJson: Prisma.InputJsonValue;
   primaryProtocolVersionId: string;
   supportingProtocolVersionIds: string[];
   createResultTemplates: boolean;
-}) {
-  const plan = await prisma.researchPlan.findUnique({
+};
+
+export async function createExperimentWithProtocolSnapshotInTransaction(
+  tx: Prisma.TransactionClient,
+  input: ExperimentSnapshotInput,
+) {
+  const plan = await tx.researchPlan.findUnique({
     where: { id: input.researchPlanId },
     include: { project: true, protocols: { select: { protocolId: true } } },
   });
   if (!plan) throw new Error("Selected Research Plan does not exist.");
 
   const versionIds = Array.from(new Set([input.primaryProtocolVersionId, ...input.supportingProtocolVersionIds])).filter(Boolean);
-  const versions = await prisma.protocolVersion.findMany({
+  const versions = await tx.protocolVersion.findMany({
     where: { id: { in: versionIds } },
     include: { protocol: true },
   });
@@ -51,7 +55,16 @@ export async function createExperimentWithProtocolSnapshot(input: {
   if (!primary) throw new Error("A primary ProtocolVersion is required.");
 
   const primarySteps = asArray<ProtocolStep>(primary.stepsJson);
-  const resultTemplates = asArray<ResultTemplate>(primary.resultTemplatesJson);
+  const resultTemplates = normalizeResultTemplates(asArray<ResultTemplate>(primary.resultTemplatesJson));
+  const suppliedRunCode = input.runCode?.trim().toUpperCase();
+  if (suppliedRunCode && !isValidRecordCode("experiment", suppliedRunCode)) {
+    throw new Error("Experiment code must use EXP- followed by at least three digits.");
+  }
+  const runCode = suppliedRunCode ?? await reserveRecordCode(tx, "experiment");
+  if (suppliedRunCode) {
+    const duplicate = await tx.experiment.findUnique({ where: { runCode }, select: { id: true } });
+    if (duplicate) throw new Error(`${runCode} is already in use. Enter a different suffix.`);
+  }
   const snapshot = {
     schemaVersion: 1,
     capturedAt: new Date().toISOString(),
@@ -72,10 +85,9 @@ export async function createExperimentWithProtocolSnapshot(input: {
     })),
   };
 
-  return prisma.$transaction(async (tx) => {
-    const experiment = await tx.experiment.create({
+  const experiment = await tx.experiment.create({
       data: {
-        runCode: input.runCode,
+        runCode,
         title: input.title,
         projectId: plan.projectId,
         researchPlanId: plan.id,
@@ -83,15 +95,9 @@ export async function createExperimentWithProtocolSnapshot(input: {
         status: input.status,
         recordStatus: input.recordStatus,
         purpose: input.purpose,
-        background: input.background,
-        materialsText: input.materialsText,
-        stepsText: input.stepsText,
-        observations: input.observations,
-        resultSummary: input.resultSummary,
-        conclusion: input.conclusion,
-        deviations: input.deviations,
         tags: input.tags,
         contentJson: input.contentJson,
+        searchText: experimentSearchText(input.purpose, input.contentJson),
         protocolSnapshotJson: snapshot,
         primaryProtocolVersionId: primary.id,
         protocolVersions: {
@@ -124,6 +130,7 @@ export async function createExperimentWithProtocolSnapshot(input: {
         data: resultTemplates.map((template) => {
           const content = createScientificDocument(resultSections);
           content.sections[0].blocks.push({ id: "template-summary", type: "text", text: "Result record created from the primary ProtocolVersion template. Measurement pending." });
+          const validation = validateResultRecord({ template, values: {} });
           return {
             experimentId: experiment.id,
             projectId: plan.projectId,
@@ -133,15 +140,25 @@ export async function createExperimentWithProtocolSnapshot(input: {
             recordStatus: "draft" as const,
             sourceType: "protocol_template" as const,
             qualityStatus: "not_assessed" as const,
+            validationStatus: validation.status,
+            protocolVersionId: primary.id,
+            templateKey: template.templateKey,
+            templateSnapshotJson: cloneJson(template),
+            valuesJson: {},
+            validationJson: cloneJson(validation),
+            viewSpecJson: cloneJson(template.view ?? {}),
             contentJson: content,
-            metadataJson: { protocolVersionId: primary.id, templateFields: template.fields },
+            metadataJson: { protocolVersionId: primary.id, templateKey: template.templateKey, templateFields: template.fields, cardinality: template.cardinality, viewPreset: template.view?.preset },
             provenanceJson: { experimentId: experiment.id, protocolVersionId: primary.id },
             notes: "Template registered; no measurement has been entered.",
           };
         }),
       });
     }
-    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { researchPlanId: plan.id, protocolVersionIds: versionIds } } });
-    return experiment;
-  });
+    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, protocolVersionIds: versionIds } } });
+  return experiment;
+}
+
+export async function createExperimentWithProtocolSnapshot(input: ExperimentSnapshotInput) {
+  return prisma.$transaction((tx) => createExperimentWithProtocolSnapshotInTransaction(tx, input));
 }

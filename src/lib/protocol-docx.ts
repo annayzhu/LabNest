@@ -60,6 +60,11 @@ function tableCaption(element: Element) {
   return caption?.getAttribute("w:val") ?? caption?.getAttribute("val") ?? undefined;
 }
 
+function tableDescription(element: Element) {
+  const description = element.getElementsByTagName("w:tblDescription")[0];
+  return description?.getAttribute("w:val") ?? description?.getAttribute("val") ?? undefined;
+}
+
 function simpleValue(value: string | undefined) {
   return value?.split(/[（(]/)[0].trim();
 }
@@ -167,10 +172,15 @@ export function parseProtocolDocumentXml(
       }
       if (!currentSection || !rows.length) continue;
       const flatText = rows.flat().join(" ");
-      if (rows.length === 1 && rows[0]?.length === 1 && /(关键|边界|完成判定|警告)/.test(flatText)) {
+      if (rows.length === 1 && rows[0]?.length === 1 && /(关键|边界|完成判定|警告|风险提示|说明|CRITICAL|WARNING|NOTE)/i.test(flatText)) {
+        const tone = /(不得|Invalid|无效|关键警告|CRITICAL)/i.test(flatText)
+          ? "critical"
+          : /(警告|风险提示|WARNING)/i.test(flatText)
+            ? "warning"
+            : "note";
         pushBlock({
           type: "callout",
-          tone: /(不得|Invalid|无效|警告)/i.test(flatText) ? "critical" : "warning",
+          tone,
           text: flatText,
         });
       } else {
@@ -180,7 +190,13 @@ export function parseProtocolDocumentXml(
           const previous = blocks.at(-1);
           if (previous?.type === "text" && previous.text === caption) blocks.pop();
         }
-        pushBlock({ type: "table", rows, caption });
+        const rawDescription = tableDescription(element);
+        let resultTemplate: Extract<ProtocolContentBlockInput, { type: "table" }>["resultTemplate"];
+        if (currentSection === "result_templates" && rawDescription?.startsWith("labnest-result-template:")) {
+          try { resultTemplate = JSON.parse(rawDescription.slice("labnest-result-template:".length)); }
+          catch { warnings.push(`Result Template metadata for ${caption ?? "unnamed table"} could not be parsed.`); }
+        }
+        pushBlock({ type: "table", rows, caption, resultTemplate });
       }
     }
   }
@@ -194,7 +210,15 @@ export function parseProtocolDocumentXml(
   const internalCode = protocolTitle.match(/PRT-\d{6}/)?.[0] ?? identityParagraphs.find((item) => /^PRT-\d{6}$/.test(item));
   const titleWithoutCode = protocolTitle.replace(/^PRT-\d{6}\s*/, "").trim();
   const canonicalTitle = titleWithoutCode || identityParagraphs.find((item) => !/^PRT-\d{6}$/.test(item)) || "Untitled Protocol";
-  const englishTitle = identityParagraphs.find((item) => item !== internalCode && item !== canonicalTitle && /^[\x00-\x7F]+$/.test(item));
+  const englishTitleCandidate = identityParagraphs.find((item) =>
+    item !== internalCode
+    && item !== canonicalTitle
+    && !/^PRT-(?:\d{6}|X{6})$/i.test(item)
+    && /^[\x00-\x7F]+$/.test(item),
+  );
+  const englishTitle = /replace with english title/i.test(englishTitleCandidate ?? "")
+    ? undefined
+    : englishTitleCandidate;
   const availability = parseAvailability(metadata.get("availability"));
   const reviewStage = parseReviewStage(metadata.get("review stage"));
   const tags = (metadata.get("tag") ?? "").split(/[;；]/).map((item) => item.trim()).filter(Boolean);

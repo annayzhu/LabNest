@@ -1,50 +1,15 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { ActiveFilterBar, type ActiveFilter } from "@/components/ActiveFilterBar";
+import { EntryCollectionNav } from "@/components/EntryCollectionNav";
 import { EntryCard } from "@/components/EntryCard";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
-import { RelevantItemsPanel } from "@/components/RelevantItemsPanel";
-import { entries as demoEntries, relevantItems } from "@/lib/demo-data";
-import { prisma } from "@/lib/db";
+import { groupEntriesByMonth, summarizeProjectCollections } from "@/lib/entry-timeline";
+import { getEntryRecords } from "@/lib/entries";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import type { Entry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-async function getEntryRecords(): Promise<Entry[]> {
-  try {
-    const records = await prisma.entry.findMany({
-      include: { project: true },
-      orderBy: { occurredAt: "desc" },
-    });
-
-    return Promise.all(
-      records.map(async (entry) => {
-        const pendingActionCount = await prisma.proposedAction.count({
-          where: { sourceType: "entry", sourceId: entry.id, status: "pending" },
-        });
-
-        return {
-          id: entry.id,
-          title: entry.title,
-          body: entry.body,
-          occurredAt: entry.occurredAt.toISOString(),
-          projectId: entry.projectId ?? undefined,
-          projectName: entry.project?.name,
-          tags: entry.tags,
-          sourceType: entry.sourceType,
-          recordStatus: entry.recordStatus,
-          moodStatus: entry.moodStatus ?? undefined,
-          attachmentCount: 0,
-          relevantItems: [],
-          pendingActionCount,
-        };
-      }),
-    );
-  } catch {
-    return demoEntries;
-  }
-}
 
 export default async function EntriesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
@@ -54,7 +19,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
   const status = firstSearchParam(params, "status");
   const mood = firstSearchParam(params, "mood");
   const project = firstSearchParam(params, "project");
-  const projectLabel = entries.find((entry) => entry.projectId === project)?.projectName ?? project;
+  const projectLabel = project === "unassigned" ? "Unassigned" : entries.find((entry) => entry.projectId === project)?.projectName ?? project;
 
   const filteredEntries = entries.filter((entry) => {
     return (
@@ -62,9 +27,14 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
       (!source || entry.sourceType === source) &&
       (!status || entry.recordStatus === status) &&
       (!mood || entry.moodStatus === mood) &&
-      (!project || entry.projectId === project)
+      (!project || (project === "unassigned" ? !entry.projectId : entry.projectId === project))
     );
   });
+  const monthGroups = groupEntriesByMonth(filteredEntries);
+  const projectCollections = summarizeProjectCollections(entries);
+  const unassignedCount = entries.filter((entry) => !entry.projectId).length;
+  const attachmentCount = entries.reduce((count, entry) => count + entry.attachmentCount, 0);
+  const pendingActionCount = entries.reduce((count, entry) => count + entry.pendingActionCount, 0);
   const activeFilters: ActiveFilter[] = [];
 
   if (tag) activeFilters.push({ label: "tag", value: tag });
@@ -75,34 +45,70 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
 
   return (
     <AppShell>
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          <PageHeader
-            eyebrow="Journal-like capture"
-            title="Entries"
-            description="Fast lab notes that can remain standalone or become experiment drafts, proposed actions, and backlinks after review."
-            actions={
-              <Link
-                href="/entries/new"
-                className="focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
-              >
-                New Entry
-              </Link>
-            }
-          />
-          <ActiveFilterBar
-            filters={activeFilters}
-            clearHref="/entries"
-            resultCount={filteredEntries.length}
+      <div className="mx-auto max-w-[1220px] space-y-7">
+        <PageHeader
+          eyebrow="Journal-like capture"
+          title="Entries"
+          description="A chronological lab journal for observations, decisions, deviations, media, and links to formal research records."
+          actions={
+            <Link
+              href="/entries/new"
+              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
+            >
+              New Entry
+            </Link>
+          }
+        />
+
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)]">
+          <EntryCollectionNav
+            collections={projectCollections}
+            activeProject={project}
             totalCount={entries.length}
+            unassignedCount={unassignedCount}
+            attachmentCount={attachmentCount}
+            pendingActionCount={pendingActionCount}
+            preservedFilters={{ tag, source, status, mood }}
           />
-          <section className="grid gap-4 md:grid-cols-2">
-            {filteredEntries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
-            ))}
-          </section>
+
+          <div className="min-w-0 space-y-7">
+            <ActiveFilterBar
+              filters={activeFilters}
+              clearHref="/entries"
+              resultCount={filteredEntries.length}
+              totalCount={entries.length}
+            />
+
+            {monthGroups.length ? (
+              <div className="space-y-9">
+                {monthGroups.map((group) => (
+                  <section key={group.key} aria-labelledby={`entries-${group.key}`}>
+                    <div className="mb-4 flex items-end justify-between gap-4 border-b border-hairline pb-3">
+                      <h2 id={`entries-${group.key}`} className="font-serif text-[24px] font-medium text-ink sm:text-[28px]">
+                        {group.label}
+                      </h2>
+                      <span className="font-mono text-xs text-muted">
+                        {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"}
+                      </span>
+                    </div>
+                    <div className="space-y-5">
+                      {group.entries.map((entry) => (
+                        <EntryCard key={entry.id} entry={entry} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No entries in this journal"
+                body="Clear the active filters or create a new lab entry for this project."
+                actionLabel="New Entry"
+                actionHref="/entries/new"
+              />
+            )}
+          </div>
         </div>
-        <RelevantItemsPanel items={relevantItems} />
       </div>
     </AppShell>
   );

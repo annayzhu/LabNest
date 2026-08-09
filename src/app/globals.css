@@ -11,6 +11,11 @@
   --muted: #737b73;
   --disabled: #a3a99f;
   --moss: #465a45;
+  --action: #596f58;
+  --action-hover: #4f654f;
+  --action-surface: #e3e9dc;
+  --action-surface-hover: #d7e0d0;
+  --action-border: #c7d2c0;
   --sage: #8a9a7b;
   --sage-surface: #dde5d5;
   --fog: #6f8087;
@@ -64,7 +69,7 @@
   --font-sans: var(--font-ui);
   --font-mono: var(--font-data);
   --shadow-soft: 0 18px 45px rgba(31, 37, 34, 0.08);
-  --shadow-paper: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 8px 24px rgba(31, 37, 34, 0.06);
+  --shadow-paper: 0 1px 2px rgba(31, 37, 34, 0.05);
 }
 
 * {
@@ -77,9 +82,7 @@ html {
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(221, 229, 213, 0.56), transparent 34rem),
-    linear-gradient(180deg, var(--paper) 0%, var(--warm) 42%, var(--paper) 100%);
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
 }
@@ -88,7 +91,73 @@ button,
 input,
 select,
 textarea {
-  font: inherit;
+  font-family: inherit;
+}
+
+:where(a, button).bg-moss.text-warm {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 7px;
+  box-shadow: none;
+  filter: none;
+  padding-inline: 0.75rem;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1;
+}
+
+:where(button).bg-moss.text-warm {
+  border-color: var(--action);
+  background-color: var(--action);
+}
+
+:where(button).bg-moss.text-warm:hover {
+  border-color: var(--action-hover);
+  background-color: var(--action-hover);
+  filter: none;
+}
+
+:where(a).bg-moss.text-warm {
+  border-color: var(--action-border);
+  background-color: var(--action-surface);
+  color: var(--moss);
+}
+
+:where(a).bg-moss.text-warm:hover {
+  border-color: var(--action-border);
+  background-color: var(--action-surface-hover);
+  color: var(--ink);
+  filter: none;
+}
+
+:where(a, button).bg-surface.text-moss.text-sm {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 7px;
+  box-shadow: none;
+  padding-inline: 0.75rem;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1;
+}
+
+.page-actions :where(a, button) {
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 7px;
+  box-shadow: none;
+  padding-inline: 0.75rem;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1;
+}
+
+:where(nav a, nav button, .card-action a, .card-action button) {
+  font-weight: 400;
+  letter-spacing: 0.005em;
 }
 
 ::selection {

@@ -6,19 +6,19 @@ type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-moss text-warm border-moss shadow-paper hover:brightness-95",
+    "border-moss bg-moss text-warm hover:brightness-95",
   secondary:
-    "bg-surface text-ink border-hairline hover:border-border-strong hover:bg-warm shadow-paper",
+    "border-hairline bg-transparent text-ink hover:border-border-strong hover:bg-warm",
   ghost: "border-transparent text-graphite hover:bg-sage-surface/55 hover:text-ink",
   destructive:
-    "bg-error text-warm border-error shadow-paper hover:brightness-95",
+    "border-error/30 bg-error-surface text-error hover:border-error/45 hover:bg-error-surface/70",
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-9 px-3 text-[13px]",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-5 text-[15px]",
-  icon: "h-10 w-10 p-0",
+  sm: "h-8 px-2.5 text-xs",
+  md: "h-9 px-3 text-[13px]",
+  lg: "h-10 px-4 text-sm",
+  icon: "h-9 w-9 p-0",
 };
 
 export function Button({
@@ -35,7 +35,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "focus-ring inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[8px] border font-medium transition duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+        "focus-ring inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border font-normal tracking-[0.005em] transition duration-150 disabled:cursor-not-allowed disabled:opacity-55",
         variants[variant],
         sizes[size],
         className,

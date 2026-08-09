@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { strFromU8, unzipSync } from "fflate";
 import { parseProtocolDocumentXml } from "./protocol-docx";
 import { parseProtocolDocxBytes } from "./protocol-docx";
 import { exportProtocolDocx, protocolDocxFilename } from "./protocol-docx-export";
@@ -9,6 +10,7 @@ import {
   protocolDocxTemplateTitle,
 } from "./protocol-docx-template";
 import { createProtocolTemplateDocument } from "./protocol-document";
+import { normalizeResultTemplate, resultTemplateFieldsToRows } from "./result-templates";
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -61,6 +63,8 @@ describe("Protocol DOCX parser", () => {
       { id: "step-heading", type: "heading", text: "1. Prepare reaction" },
       { id: "step-detail", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Mix gently and keep on ice." }] }] },
     ];
+    const resultTemplate = normalizeResultTemplate({ result_type: "qpcr_expression", templateKey: "qpcr_expression", resultKind: "assay", cardinality: "per_run", fields: [{ key: "reference_gene", label: "Reference gene", dataType: "text", required: true }], datasets: [{ key: "cq_table", label: "Cq table", required: true, columns: [{ key: "sample_id", label: "Sample ID", dataType: "text", required: true }] }], artifacts: [{ key: "raw_export", label: "Raw export", kind: "file", required: true }], view: { preset: "qpcr" } });
+    document.sections.find((section) => section.key === "result_templates")!.blocks = [{ id: "result-template-rich", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate }];
     const identity = {
       humanCode: "PRT-100099",
       canonicalTitle: "RNA逆转录",
@@ -79,7 +83,9 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.displayVersion).toBe("1.0");
     expect(parsed.tags).toEqual(["RNA", "qPCR"]);
     expect(parsed.steps[0]).toEqual(expect.objectContaining({ title: "Prepare reaction", description: "Mix gently and keep on ice." }));
-    expect(parsed.resultTemplates[0].result_type).toBe("result_type");
+    expect(parsed.resultTemplates[0]).toMatchObject({ result_type: "qpcr_expression", templateKey: "qpcr_expression", cardinality: "per_run", view: { preset: "qpcr" } });
+    expect(parsed.resultTemplates[0].datasets?.[0]).toMatchObject({ key: "cq_table", required: true });
+    expect(parsed.resultTemplates[0].artifacts?.[0]).toMatchObject({ key: "raw_export", kind: "file" });
     expect(parsed.document.sections).toHaveLength(7);
   });
 
@@ -89,9 +95,62 @@ describe("Protocol DOCX parser", () => {
 
     expect(parsed.canonicalTitle).toBe(protocolDocxTemplateTitle);
     expect(isUnfilledProtocolDocxTemplateTitle(parsed.canonicalTitle)).toBe(true);
+    expect(parsed.englishTitle).toBeUndefined();
     expect(parsed.document.sections).toHaveLength(7);
     expect(parsed.steps).toEqual([]);
     expect(parsed.materials).toEqual([]);
     expect(parsed.resultTemplates[0]).toEqual(expect.objectContaining({ fields: [] }));
+  });
+
+  it("matches the reference protocol typography, grayscale tables, and page furniture", () => {
+    const archive = unzipSync(exportProtocolDocxTemplate());
+    const documentXml = strFromU8(archive["word/document.xml"]);
+    const stylesXml = strFromU8(archive["word/styles.xml"]);
+
+    expect(archive["word/header1.xml"]).toBeDefined();
+    expect(archive["word/footer1.xml"]).toBeDefined();
+    expect(documentXml).toContain('<w:tblW w:w="9576" w:type="dxa"/>');
+    expect(documentXml).toContain('<w:tblLayout w:type="fixed"/>');
+    expect(documentXml).toContain('<w:gridCol w:w="2183"/><w:gridCol w:w="7393"/>');
+    expect(documentXml).toContain('<w:shd w:val="clear" w:color="auto" w:fill="D9D9D9"/>');
+    expect(documentXml).toContain('<w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>');
+    expect(documentXml).toContain("<w:tblHeader/>");
+    expect(documentXml).toContain("<w:cantSplit/>");
+    expect(documentXml).toContain('<w:pgMar w:top="1020" w:right="1077" w:bottom="964" w:left="1077"');
+    expect(stylesXml).toMatch(/w:style w:type="paragraph" w:styleId="Title"[\s\S]*?w:eastAsia="Microsoft YaHei"[\s\S]*?<w:sz w:val="24"/);
+    expect(stylesXml).toContain('w:eastAsia="SimSun"');
+    expect(stylesXml).toContain('<w:spacing w:after="60" w:line="240" w:lineRule="auto"/>');
+    expect(stylesXml).not.toContain('w:line="300"');
+  });
+
+  it("exports warning and critical callouts in red and preserves their tone on import", () => {
+    const document = createProtocolTemplateDocument();
+    document.sections.find((section) => section.key === "steps")!.blocks = [
+      { id: "risk-1", type: "callout", tone: "warning", text: "Keep the reaction on ice." },
+      { id: "risk-2", type: "callout", tone: "critical", text: "Do not interchange enzyme mixes." },
+    ];
+    const identity = {
+      humanCode: "PRT-100099",
+      canonicalTitle: "RNA逆转录",
+      availability: "active",
+      reviewStage: "reviewed",
+      displayVersion: "1.0",
+      scope: "general",
+      tags: ["RNA"],
+    };
+
+    const bytes = exportProtocolDocx(identity, document);
+    const documentXml = strFromU8(unzipSync(bytes)["word/document.xml"]);
+    const parsed = parseProtocolDocxBytes(bytes, protocolDocxFilename(identity));
+    const callouts = parsed.document.sections
+      .find((section) => section.key === "steps")!
+      .blocks.filter((block) => block.type === "callout");
+
+    expect(documentXml).toContain('w:fill="FDECEC"');
+    expect(documentXml).toContain('<w:color w:val="C00000"/>');
+    expect(callouts).toEqual([
+      expect.objectContaining({ type: "callout", tone: "warning" }),
+      expect.objectContaining({ type: "callout", tone: "critical" }),
+    ]);
   });
 });

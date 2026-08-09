@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { TagFieldLabel } from "@/components/TagFieldLabel";
 
 type Project = { id: string; name: string };
 type Plan = { id: string; projectId: string; code: string | null; title: string };
@@ -14,6 +15,6 @@ export function ReportCreateForm({ action, projects, plans }: { action: (formDat
     <label><span className={formLabelClass}>Research Plan scope</span><select name="researchPlanId" defaultValue="" className={formInputClass}><option value="">Entire Project</option>{visiblePlans.map((plan) => <option key={plan.id} value={plan.id}>{plan.code ?? plan.title} · {plan.title}</option>)}</select></label>
     <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" placeholder="Project evidence report" className={formInputClass} /></label>
     <label><span className={formLabelClass}>Period start</span><input type="date" name="periodStart" className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input type="date" name="periodEnd" className={formInputClass} /></label>
-    <label className="md:col-span-2"><span className={formLabelClass}>Tags</span><input name="tags" className={formInputClass} placeholder="monthly, internal review" /></label>
+    <label className="md:col-span-2"><TagFieldLabel /><input name="tags" className={formInputClass} placeholder="monthly, internal-review" /></label>
   </CardBody></Card><div className="flex justify-end"><button className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm">Create traceable draft</button></div></form>;
 }

@@ -6,6 +6,9 @@ import { z } from "zod";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
+import { recordCodeFromSuffix } from "@/lib/record-codes";
+import { checkResultTemplate } from "@/lib/result-templates";
+import { parseTags } from "@/lib/tags";
 
 const createSchema = z.object({
   canonicalTitle: z.string().trim().min(1).max(180),
@@ -33,18 +36,6 @@ function recordStatusFor(reviewStage: "draft" | "ready_for_review" | "reviewed")
   return "draft" as const;
 }
 
-async function nextProtocolCode() {
-  const protocols = await prisma.protocol.findMany({
-    where: { humanCode: { startsWith: "PRT-" } },
-    select: { humanCode: true },
-  });
-  const highest = protocols.reduce((max, item) => {
-    const parsed = Number(item.humanCode?.replace("PRT-", ""));
-    return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
-  }, 100000);
-  return `PRT-${String(highest + 1).padStart(6, "0")}`;
-}
-
 export async function createProtocolDocument(
   _previousState: ProtocolEditorState,
   formData: FormData,
@@ -60,13 +51,18 @@ export async function createProtocolDocument(
       reviewStage: formData.get("reviewStage") || "draft",
       displayVersion: formData.get("displayVersion") || "0.1",
       changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
-      tags: String(formData.get("tags") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+      tags: parseTags(formData.get("tags")),
       contentJson: formData.get("contentJson"),
       researchPlanIds: formData.getAll("researchPlanIds").map(String),
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
+    const humanCode = recordCodeFromSuffix("protocol", String(formData.get("humanCodeSuffix") ?? ""));
     const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
     const projection = projectProtocolDocument(document);
+    if (parsed.reviewStage !== "draft") {
+      const templateErrors = projection.resultTemplates.flatMap((template) => checkResultTemplate(template).errors);
+      if (templateErrors.length) return { error: `Result Templates must be complete before review: ${templateErrors.join(" ")}` };
+    }
     const project = parsed.projectId ? await prisma.project.findUnique({ where: { id: parsed.projectId }, select: { id: true } }) : null;
     if (parsed.protocolScope === "project" && !project) return { error: "The selected Project no longer exists." };
 
@@ -81,8 +77,9 @@ export async function createProtocolDocument(
     }
 
     const recordStatus = recordStatusFor(parsed.reviewStage);
-    const humanCode = await nextProtocolCode();
     const protocol = await prisma.$transaction(async (transaction) => {
+      const duplicate = await transaction.protocol.findUnique({ where: { humanCode }, select: { id: true } });
+      if (duplicate) throw new Error(`${humanCode} is already in use. Enter a different suffix.`);
       const created = await transaction.protocol.create({
         data: {
           humanCode,

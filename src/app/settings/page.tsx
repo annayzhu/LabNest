@@ -112,6 +112,23 @@ export default async function SettingsPage() {
           </CardBody>
         </Card>
 
+        <div id="local-backup" className="scroll-mt-20">
+          <Card>
+            <CardHeader title="Local backup" eyebrow="Portability" />
+            <CardBody className="flex flex-wrap items-center justify-between gap-4">
+              <p className="max-w-prose text-sm leading-6 text-muted">
+                A portable JSON snapshot of every record. Attachment binaries stay in attachment storage; back that directory up alongside this file. Per-module CSV and XLSX exports live in each module&rsquo;s Export view.
+              </p>
+              <a
+                href="/api/exports/backup.json"
+                className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss transition hover:bg-warm"
+              >
+                Download backup.json
+              </a>
+            </CardBody>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader title="Literature connectors" eyebrow="External libraries" />
           <CardBody>

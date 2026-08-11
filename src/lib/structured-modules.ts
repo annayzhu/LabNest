@@ -223,6 +223,7 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "englishName", label: "English name", aliases: ["英文名"] },
       { key: "category", label: "Category", aliases: ["materialType", "物料类型", "分类"], example: "reagent" },
       { key: "brand", label: "Brand", aliases: ["品牌"] },
+      { key: "principalInvestigator", label: "Principal investigator (PI)", aliases: ["PI", "principalInvestigator", "课题负责人", "负责人", "所属PI"] },
       { key: "containerType", label: "Container type" },
       { key: "barcode", label: "Barcode" },
       { key: "aliquotCode", label: "Aliquot code" },

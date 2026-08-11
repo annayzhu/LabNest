@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 export default async function NewInventoryItemPage() {
   const locations = await prisma.inventoryLocation.findMany({
-    select: { id: true, name: true, temperature: true },
+    where: { status: "active" },
+    select: { id: true, name: true, temperature: true, status: true },
     orderBy: { name: "asc" },
   });
 

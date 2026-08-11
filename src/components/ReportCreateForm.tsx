@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
+import type { FormAction, FormActionState } from "@/lib/form-actions";
 
 type Project = { id: string; name: string };
 type Plan = { id: string; projectId: string; code: string | null; title: string };
-export function ReportCreateForm({ action, projects, plans }: { action: (formData: FormData) => void | Promise<void>; projects: Project[]; plans: Plan[] }) {
+const initialState: FormActionState = {};
+
+export function ReportCreateForm({ action, projects, plans }: { action: FormAction; projects: Project[]; plans: Plan[] }) {
+  const [state, formAction, pending] = useActionState(action, initialState);
   const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
   const visiblePlans = plans.filter((plan) => plan.projectId === projectId);
-  return <form action={action} className="space-y-5"><Card><CardHeader title="Report scope" eyebrow="Deterministic source snapshot; editable narrative" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+  return <form action={formAction} className="space-y-5"><Card><CardHeader title="Report scope" eyebrow="Deterministic source snapshot; editable narrative" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
     <label><span className={formLabelClass}>Project</span><select required name="projectId" value={projectId} onChange={(event) => setProjectId(event.target.value)} className={formInputClass}>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
     <label><span className={formLabelClass}>Research Plan scope</span><select name="researchPlanId" defaultValue="" className={formInputClass}><option value="">Entire Project</option>{visiblePlans.map((plan) => <option key={plan.id} value={plan.id}>{plan.code ?? plan.title} · {plan.title}</option>)}</select></label>
     <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" placeholder="Project evidence report" className={formInputClass} /></label>
     <label><span className={formLabelClass}>Period start</span><input type="date" name="periodStart" className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input type="date" name="periodEnd" className={formInputClass} /></label>
     <label className="md:col-span-2"><TagFieldLabel /><input name="tags" className={formInputClass} placeholder="monthly, internal-review" /></label>
-  </CardBody></Card><div className="flex justify-end"><button className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm">Create traceable draft</button></div></form>;
+  </CardBody></Card><div className="flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}<button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">{pending ? "Creating…" : "Create traceable draft"}</button></div></form>;
 }

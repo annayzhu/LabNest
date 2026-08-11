@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
-import { procurementInquiries, procurementQuoteLines, purchases } from "@/lib/demo-data";
+import { getProcurementRecords } from "@/lib/live-data";
 import {
   getInquirySummary,
   getQuoteLineAmountInclTax,
@@ -13,11 +13,14 @@ import {
 } from "@/lib/procurement";
 import { Download } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 function money(value: number | undefined) {
   return value === undefined ? "not set" : `￥${value.toFixed(2)}`;
 }
 
-export default function PurchasesPage() {
+export default async function PurchasesPage() {
+  const { procurementInquiries, procurementQuoteLines, purchases } = await getProcurementRecords();
   const inquiryRows = procurementInquiries.map((inquiry) => ({
     ...inquiry,
     summary: getInquirySummary(inquiry, procurementQuoteLines),

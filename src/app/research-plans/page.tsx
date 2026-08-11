@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Download, Plus, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { normalizeResearchPlanSort, researchPlanOrderBy, researchPlanSortOptions } from "@/lib/research-plan-sorting";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,8 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
   const query = firstSearchParam(params, "q")?.trim();
   const projectId = firstSearchParam(params, "project");
   const status = firstSearchParam(params, "status");
-  const sort = firstSearchParam(params, "sort") ?? "updated_desc";
-  const orderBy = sort === "title_asc" ? { title: "asc" as const }
-    : sort === "status_asc" ? [{ status: "asc" as const }, { title: "asc" as const }]
-      : { updatedAt: "desc" as const };
+  const sort = normalizeResearchPlanSort(firstSearchParam(params, "sort"));
+  const orderBy = researchPlanOrderBy(sort);
   const where = {
     ...(projectId ? { projectId } : {}),
     ...(status ? { status: status as "draft" | "active" | "paused" | "completed" | "archived" } : {}),
@@ -50,14 +50,10 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
           { name: "project", label: "projects", value: projectId, options: projects.map((project) => ({ value: project.id, label: project.name })) },
           { name: "status", label: "status", value: status, options: ["draft", "active", "paused", "completed", "archived"].map((value) => ({ value, label: value })) },
         ]}
-        sortOptions={[
-          { value: "updated_desc", label: "Recently updated" },
-          { value: "title_asc", label: "Title A–Z" },
-          { value: "status_asc", label: "Status" },
-        ]}
+        sortOptions={[...researchPlanSortOptions]}
         actions={<>
           <Link href="/research-plans/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <Link href={exportHref} className={collectionSecondaryActionClass}><Download className="h-4 w-4" aria-hidden />Export…</Link>
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/research-plans/export" />
           <Link href="/research-plans/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Research Plan</Link>
         </>}
       />

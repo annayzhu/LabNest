@@ -1,15 +1,26 @@
-import { ChevronDown } from "lucide-react";
+"use client";
+
+import { useActionState, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { RecordCodeField } from "@/components/RecordCodeField";
+import { ResearchPlanPremiseView } from "@/components/ResearchPlanPremiseView";
+import { ResearchPlanProtocolPicker } from "@/components/ResearchPlanProtocolPicker";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass, formLabelClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import type { ResearchPlanProtocolOption } from "@/lib/research-plan-protocol-picker";
 import { researchPlanStatusOptions } from "@/lib/status-options";
 
 type ProjectOption = { id: string; name: string };
-type ProtocolOption = { id: string; humanCode: string | null; title: string; scope: string; projectId: string | null };
+export type ResearchPlanFormState = { error?: string };
+export type ResearchPlanFormAction = (
+  previousState: ResearchPlanFormState,
+  formData: FormData,
+) => Promise<ResearchPlanFormState>;
+
+const initialState: ResearchPlanFormState = {};
 
 export function ResearchPlanForm({
   action,
@@ -17,13 +28,14 @@ export function ResearchPlanForm({
   protocols,
   initial,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: ResearchPlanFormAction;
   projects: ProjectOption[];
-  protocols: ProtocolOption[];
+  protocols: ResearchPlanProtocolOption[];
   initial: {
     id?: string;
     projectId?: string;
     code?: string | null;
+    suggestedCodeSuffix?: string;
     title?: string;
     objective?: string | null;
     hypothesis?: string | null;
@@ -35,45 +47,82 @@ export function ResearchPlanForm({
     document: ScientificDocument;
   };
 }) {
-  const selected = new Set(initial.selectedProtocolIds ?? []);
+  const [state, formAction, pending] = useActionState(action, initialState);
+  const [title, setTitle] = useState(initial.title ?? "");
+  const [projectId, setProjectId] = useState(initial.projectId ?? "");
+  const [status, setStatus] = useState(initial.status ?? "draft");
+  const [codeSuffix, setCodeSuffix] = useState(initial.suggestedCodeSuffix ?? "");
+  const [objective, setObjective] = useState(initial.objective ?? "");
+  const [hypothesis, setHypothesis] = useState(initial.hypothesis ?? "");
+  const [rationale, setRationale] = useState(initial.rationale ?? "");
+  const project = projects.find((item) => item.id === projectId);
+  const identifier = initial.code ?? (codeSuffix ? `RP-${codeSuffix}` : "Draft Research Plan");
+
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
-      <Card>
-        <CardHeader title="Plan identity" eyebrow="Project-level scientific design" />
-        <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <label><span className={formLabelClass}>Project</span><select required name="projectId" defaultValue={initial.projectId ?? ""} className={formInputClass}><option value="" disabled>Select project</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
-          <RecordCodeField label="Plan code" prefix="RP-" name="codeSuffix" minimumDigits={3} placeholder="001" existingCode={initial.id ? initial.code : undefined} />
-          <StatusRadioGroup label="Status" name="status" options={researchPlanStatusOptions} defaultValue={initial.status ?? "draft"} required />
-          <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Title</span><input required name="title" defaultValue={initial.title ?? ""} className={formInputClass} /></label>
-          <label className="md:col-span-2 xl:col-span-3"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Scientific logic" eyebrow="Question → hypothesis → design" />
-        <CardBody className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <label><span className={formLabelClass}>Objective</span><textarea name="objective" defaultValue={initial.objective ?? ""} className={formTextareaClass} /></label>
-          <label><span className={formLabelClass}>Hypothesis</span><textarea name="hypothesis" defaultValue={initial.hypothesis ?? ""} className={formTextareaClass} /></label>
-          <label><span className={formLabelClass}>Rationale</span><textarea name="rationale" defaultValue={initial.rationale ?? ""} className={formTextareaClass} /></label>
-        </CardBody>
-      </Card>
-
-      <details className="group rounded-[12px] border border-hairline bg-surface shadow-paper">
-        <summary className="focus-ring flex h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-[12px] px-4 [&::-webkit-details-marker]:hidden">
-          <h2 className="font-serif text-[17px] font-medium leading-tight text-ink">Protocol set</h2>
-          <span className="flex items-center gap-2 text-xs font-medium text-muted"><span className="group-open:hidden">Expand</span><span className="hidden group-open:inline">Collapse</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></span>
-        </summary>
-        <div className="space-y-3 border-t border-hairline/80 p-4">
-          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
-            {protocols.map((protocol) => <label key={protocol.id} className="flex min-h-10 items-start gap-2 rounded-[7px] border border-hairline bg-warm/70 px-2.5 py-2 text-xs text-graphite"><input type="checkbox" name="protocolIds" value={protocol.id} defaultChecked={selected.has(protocol.id)} className="mt-0.5" /><span className="min-w-0"><strong className="block truncate font-medium text-ink">{protocol.humanCode ?? protocol.title}</strong><span className="block truncate text-[11px] text-muted">{protocol.humanCode ? `${protocol.title} · ` : ""}{protocol.scope}</span></span></label>)}
-          </div>
-          <label className="block"><span className={formLabelClass}>Primary protocol</span><select name="primaryProtocolId" defaultValue={initial.primaryProtocolId ?? ""} className={formInputClass}><option value="">No primary protocol</option>{protocols.map((protocol) => <option key={protocol.id} value={protocol.id}>{protocol.humanCode ?? protocol.title} · {protocol.title}</option>)}</select></label>
-        </div>
-      </details>
-
-      <ScientificDocumentEditor initialDocument={initial.document} />
-      <div className="sticky bottom-4 z-20 flex justify-end"><button className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft">Save Research Plan</button></div>
+      <div className="document-editor-layout">
+        <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" headerFacts={[
+          { label: "Project", value: project?.name ?? "Not selected" },
+          { label: "Status", value: status.replaceAll("_", " ") },
+        ]} leadingContent={<ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} />} /></div>
+        <aside className="document-editor-sidebar" aria-label="Research Plan properties">
+          <Card>
+            <CardHeader title="Plan identity" eyebrow="Project-level scientific design" />
+            <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <label><span className={formLabelClass}>Project</span><select required name="projectId" value={projectId} onChange={(event) => setProjectId(event.target.value)} className={formInputClass}><option value="" disabled>Select project</option>{projects.map((projectOption) => <option key={projectOption.id} value={projectOption.id}>{projectOption.name}</option>)}</select></label>
+              <RecordCodeField label="Plan code" prefix="RP-" name="codeSuffix" minimumDigits={3} placeholder="001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={initial.id ? initial.code : undefined} />
+              <StatusRadioGroup label="Status" name="status" options={researchPlanStatusOptions} value={status} onValueChange={setStatus} required />
+              <label><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
+              <label><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
+            </CardBody>
+          </Card>
+          <ResearchPlanProtocolPicker protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
+        </aside>
+      </div>
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
+        {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
+        <button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : "Save Research Plan"}</button>
+      </div>
     </form>
+  );
+}
+
+function ResearchPlanPremiseEditor({
+  objective,
+  hypothesis,
+  rationale,
+  onObjectiveChange,
+  onHypothesisChange,
+  onRationaleChange,
+}: {
+  objective: string;
+  hypothesis: string;
+  rationale: string;
+  onObjectiveChange: (value: string) => void;
+  onHypothesisChange: (value: string) => void;
+  onRationaleChange: (value: string) => void;
+}) {
+  const fields = [
+    { label: "Objective", name: "objective", value: objective, onChange: onObjectiveChange, placeholder: "What should this Research Plan establish?" },
+    { label: "Hypothesis", name: "hypothesis", value: hypothesis, onChange: onHypothesisChange, placeholder: "State the testable expectation." },
+    { label: "Rationale", name: "rationale", value: rationale, onChange: onRationaleChange, placeholder: "Why is this design appropriate?" },
+  ];
+
+  return (
+    <>
+      <section className="document-section research-plan-premise" data-print-hidden>
+        <header className="mb-5"><h2 className="document-section-title font-serif font-medium text-ink">Scientific premise</h2></header>
+        <div className="space-y-4">
+          {fields.map((field) => (
+            <label key={field.name} className="block">
+              <span className="document-premise-label">{field.label}</span>
+              <textarea name={field.name} value={field.value} onChange={(event) => field.onChange(event.target.value)} placeholder={field.placeholder} className="document-premise-editor focus-ring" />
+            </label>
+          ))}
+        </div>
+      </section>
+      <div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>
+    </>
   );
 }

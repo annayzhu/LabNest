@@ -43,11 +43,20 @@ export const protocolRichTextRunSchema = z.object({
   strike: z.boolean().optional(),
   code: z.boolean().optional(),
   link: z.string().optional(),
+  fontSizePt: z.union([
+    z.literal(8),
+    z.literal(9),
+    z.literal(10),
+    z.literal(11),
+    z.literal(12),
+    z.literal(14),
+  ]).optional(),
 });
 
 export const protocolRichTextNodeSchema = z.object({
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(protocolRichTextRunSchema),
+  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.5), z.literal(2)]).optional(),
 });
 
 export type ProtocolRichTextRun = z.infer<typeof protocolRichTextRunSchema>;

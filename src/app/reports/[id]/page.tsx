@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { ScientificDocumentView } from "@/components/ScientificDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { normalizeScientificDocument, reportSections } from "@/lib/scientific-document";
-import { refreshReportSources } from "../actions";
+import { reportDeleteBlockers } from "@/lib/record-lifecycle";
+import { archiveReport, deleteReport, refreshReportSources } from "../actions";
 
 export const dynamic = "force-dynamic";
 const primaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
@@ -26,14 +28,19 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const snapshot = report.sourceSnapshotJson && typeof report.sourceSnapshotJson === "object" && !Array.isArray(report.sourceSnapshotJson) ? report.sourceSnapshotJson as Record<string, unknown> : {};
   const counts = snapshot.counts && typeof snapshot.counts === "object" && !Array.isArray(snapshot.counts) ? snapshot.counts as Record<string, number> : {};
   const generatedAt = typeof snapshot.generatedAt === "string" ? new Date(snapshot.generatedAt) : null;
+  const [itemReferences, reportSourceReferences] = await Promise.all([
+    prisma.itemLink.count({ where: { OR: [{ sourceType: "report", sourceId: report.id }, { targetType: "report", targetId: report.id }] } }),
+    prisma.reportSource.count({ where: { sourceType: "report", sourceId: report.id } }),
+  ]);
+  const deletionBlockers = reportDeleteBlockers(report.status, { externalReferences: itemReferences + reportSourceReferences });
   return <AppShell><div className="space-y-6">
-    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><Link href={`/api/reports/${report.id}/markdown`} className={secondaryButton}>Export Markdown</Link></>} />
+    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><Link href={`/api/reports/${report.id}/markdown`} className={secondaryButton}>Export Markdown</Link><RecordLifecycleControl id={report.id} identifier={report.title} title="Report record" recordLabel="Report" recordLabelZh="报告" blockers={deletionBlockers} archived={report.status === "archived"} deleteAction={deleteReport} archiveAction={archiveReport} editHref={`/reports/${report.id}/edit`} /></>} />
     <Card><CardHeader title="Report control" eyebrow="Status and source coverage" action={<StatusPill status={report.status} />} /><CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
       <Control label="Scope">{report.researchPlan ? <Link href={`/research-plans/${report.researchPlan.id}`} className="text-moss hover:underline">{report.researchPlan.code ?? report.researchPlan.title}</Link> : "Entire Project"}</Control>
       <Control label="Plans">{counts.researchPlans ?? 0}</Control><Control label="Protocol versions">{counts.protocolVersions ?? 0}</Control><Control label="Experiments">{counts.experiments ?? 0}</Control><Control label="Results">{counts.results ?? 0}</Control><Control label="Entries">{counts.entries ?? 0}</Control>
       <div className="sm:col-span-2 xl:col-span-6 flex flex-wrap items-center gap-2 border-t border-hairline pt-3">{report.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}<span className="text-xs text-muted">Source snapshot {generatedAt && !Number.isNaN(generatedAt.valueOf()) ? generatedAt.toLocaleString() : "not dated"}</span><form action={refreshReportSources} className="ml-auto"><input type="hidden" name="id" value={report.id} /><button className="text-xs font-semibold text-moss hover:underline">Refresh source index</button></form></div>
     </CardBody></Card>
-    <ScientificDocumentView document={document} />
+    <ScientificDocumentView document={document} title={report.title} subtitle={`${report.project.name}${report.researchPlan ? ` · ${report.researchPlan.title}` : " · Entire Project"}`} />
     <Card><CardHeader title="Source index" eyebrow="Titles and versions frozen at inclusion" /><CardBody><DataTable rows={report.sources} getRowKey={(row) => row.id} columns={[
       { key: "type", header: "Type", render: (row) => <Badge>{row.sourceType.replaceAll("_", " ")}</Badge> },
       { key: "source", header: "Source", render: (row) => row.hrefSnapshot ? <Link href={row.hrefSnapshot} className="font-semibold text-moss hover:underline">{row.titleSnapshot}</Link> : <span className="font-semibold text-ink">{row.titleSnapshot}</span> },

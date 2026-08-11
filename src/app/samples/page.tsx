@@ -6,8 +6,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
-import { inventoryItems, sampleLifecycleEvents, sampleProfiles } from "@/lib/demo-data";
 import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { getSampleLedger } from "@/lib/live-data";
 import {
   calculateSampleQuantityFromAliquots,
   countActionableSampleWarnings,
@@ -21,8 +21,11 @@ const warningTone: Record<SampleWarning["severity"], StatusTone> = {
   action: "danger",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function SamplesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
+  const { inventoryItems, sampleLifecycleEvents, sampleProfiles } = await getSampleLedger();
   const status = firstSearchParam(params, "status");
   const warning = firstSearchParam(params, "warning");
   const aliquotStatus = firstSearchParam(params, "aliquotStatus");

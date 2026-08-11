@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
   fieldDataType,
   fieldSemanticRole,
@@ -21,9 +22,10 @@ import type { ResultTemplateField } from "@/lib/types";
 
 type ExperimentOption = { id: string; runCode: string | null; title: string; researchPlan: { code: string | null; title: string } | null; project: { name: string } | null };
 type ResultValidationSnapshot = { errors?: string[]; warnings?: string[] };
+const initialState: FormActionState = {};
 
 export function ResultForm({ action, experiments, initial, lockedExperiment = false }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: FormAction;
   experiments: ExperimentOption[];
   lockedExperiment?: boolean;
   initial: {
@@ -49,7 +51,14 @@ export function ResultForm({ action, experiments, initial, lockedExperiment = fa
     document: ScientificDocument;
   };
 }) {
-  const experiment = experiments.find((item) => item.id === initial.experimentId);
+  const [state, formAction, pending] = useActionState(action, initialState);
+  const [experimentId, setExperimentId] = useState(initial.experimentId ?? "");
+  const [title, setTitle] = useState(initial.title ?? "");
+  const [resultType, setResultType] = useState(initial.resultType ?? "observation");
+  const [sourceType, setSourceType] = useState(initial.sourceType ?? "manual");
+  const [recordStatus, setRecordStatus] = useState(initial.recordStatus ?? "draft");
+  const [qualityStatus, setQualityStatus] = useState(initial.qualityStatus ?? "not_assessed");
+  const experiment = experiments.find((item) => item.id === experimentId);
   const hasTemplate = Boolean(initial.templateKey && initial.templateSnapshotJson && typeof initial.templateSnapshotJson === "object" && Object.keys(initial.templateSnapshotJson as object).length);
   const template = useMemo(() => hasTemplate ? normalizeResultTemplate(initial.templateSnapshotJson) : undefined, [hasTemplate, initial.templateSnapshotJson]);
   const [templateValues, setTemplateValues] = useState<Record<string, unknown>>(() => normalizeResultValues(initial.valuesJson));
@@ -57,18 +66,27 @@ export function ResultForm({ action, experiments, initial, lockedExperiment = fa
   const validation = initial.validationJson && typeof initial.validationJson === "object" ? initial.validationJson as ResultValidationSnapshot : {};
   const preset = template ? RESULT_VIEW_PRESETS[template.view?.preset ?? "generic"] : undefined;
 
-  return <form action={action} className="space-y-5">
+  return <form action={formAction} className="space-y-5">
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {lockedExperiment ? <input type="hidden" name="experimentId" value={initial.experimentId ?? ""} /> : null}
     <input type="hidden" name="templateValuesJson" value={serializedValues} />
     {template ? <input type="hidden" name="templateKey" value={template.templateKey ?? ""} /> : null}
+    <div className="document-editor-layout">
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Result" title={title} titlePlaceholder="Untitled Result" headerFacts={[
+        { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
+        { label: "Result type", value: resultType },
+        { label: "Source", value: sourceType.replaceAll("_", " ") },
+        { label: "Record", value: recordStatus.replaceAll("_", " ") },
+        { label: "QC", value: qualityStatus.replaceAll("_", " ") },
+      ]} /></div>
+      <aside className="document-editor-sidebar" aria-label="Result properties">
     <Card><CardHeader title="Result identity" eyebrow="Evidence from one Experiment" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <label className="md:col-span-2 xl:col-span-4"><span className={formLabelClass}>Experiment</span>{lockedExperiment ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{experiment?.project?.name} · {experiment?.researchPlan?.code ?? experiment?.researchPlan?.title} · {experiment?.runCode ?? experiment?.title}</div> : <select required name="experimentId" defaultValue={initial.experimentId ?? ""} className={formInputClass}><option value="" disabled>Select Experiment</option>{experiments.map((item) => <option key={item.id} value={item.id}>{item.project?.name} · {item.researchPlan?.code ?? item.researchPlan?.title ?? "No plan"} · {item.runCode ?? item.title}</option>)}</select>}</label>
-      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" defaultValue={initial.title ?? ""} className={formInputClass} /></label>
-      {hasTemplate ? <label><span className={formLabelClass}>Result type · locked by template</span><input readOnly name="resultType" value={initial.resultType ?? template?.result_type ?? "measurement"} className={`${formInputClass} bg-stone/50`} /></label> : <label><span className={formLabelClass}>Result type</span><input required name="resultType" defaultValue={initial.resultType ?? "observation"} placeholder="qPCR, microscopy, cell count…" className={formInputClass} /></label>}
-      {hasTemplate ? <label><span className={formLabelClass}>Source · locked</span><input readOnly name="sourceType" value={initial.sourceType ?? "protocol_template"} className={`${formInputClass} bg-stone/50`} /></label> : <label><span className={formLabelClass}>Source</span><select name="sourceType" defaultValue={initial.sourceType ?? "manual"} className={formInputClass}><option value="manual">Manual</option><option value="file_import">File import</option><option value="tool">External tool</option><option value="analysis">Analysis</option></select></label>}
-      <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} defaultValue={initial.recordStatus ?? "draft"} required className="md:col-span-2" />
-      <StatusRadioGroup label="QC status" name="qualityStatus" options={resultQualityStatusOptions} defaultValue={initial.qualityStatus ?? "not_assessed"} required className="md:col-span-2" />
+      <label className="md:col-span-2 xl:col-span-4"><span className={formLabelClass}>Experiment</span>{lockedExperiment ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{experiment?.project?.name} · {experiment?.researchPlan?.code ?? experiment?.researchPlan?.title} · {experiment?.runCode ?? experiment?.title}</div> : <select required name="experimentId" value={experimentId} onChange={(event) => setExperimentId(event.target.value)} className={formInputClass}><option value="" disabled>Select Experiment</option>{experiments.map((item) => <option key={item.id} value={item.id}>{item.project?.name} · {item.researchPlan?.code ?? item.researchPlan?.title ?? "No plan"} · {item.runCode ?? item.title}</option>)}</select>}</label>
+      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
+      {hasTemplate ? <label><span className={formLabelClass}>Result type · locked by template</span><input readOnly name="resultType" value={resultType || template?.result_type || "measurement"} className={`${formInputClass} bg-stone/50`} /></label> : <label><span className={formLabelClass}>Result type</span><input required name="resultType" value={resultType} onChange={(event) => setResultType(event.target.value)} placeholder="qPCR, microscopy, cell count…" className={formInputClass} /></label>}
+      {hasTemplate ? <label><span className={formLabelClass}>Source · locked</span><input readOnly name="sourceType" value={sourceType || "protocol_template"} className={`${formInputClass} bg-stone/50`} /></label> : <label><span className={formLabelClass}>Source</span><select name="sourceType" value={sourceType} onChange={(event) => setSourceType(event.target.value)} className={formInputClass}><option value="manual">Manual</option><option value="file_import">File import</option><option value="tool">External tool</option><option value="analysis">Analysis</option></select></label>}
+      <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
+      <StatusRadioGroup label="QC status" name="qualityStatus" options={resultQualityStatusOptions} value={qualityStatus} onValueChange={setQualityStatus} required className="md:col-span-2" />
       <label className="md:col-span-2"><span className={formLabelClass}>Analysis method / software</span><input name="analysisMethod" defaultValue={initial.analysisMethod ?? ""} placeholder="Method, version, parameters or tool" className={formInputClass} /></label>
       <label><span className={formLabelClass}>Key numeric summary</span><input name="numericValue" type="number" step="any" defaultValue={initial.numericValue ?? ""} className={formInputClass} /></label>
       <label><span className={formLabelClass}>Summary unit</span><input name="unit" defaultValue={initial.unit ?? ""} className={formInputClass} /></label>
@@ -92,9 +110,12 @@ export function ResultForm({ action, experiments, initial, lockedExperiment = fa
       {!template.fields.length ? <p className="rounded-[8px] border border-dashed border-hairline px-3 py-4 text-center text-sm text-muted">This template has no scalar fields. Register the expected Datasets and artifacts after saving.</p> : null}
       {(template.datasets?.length || template.artifacts?.length) ? <div className="grid gap-3 md:grid-cols-2"><ExpectedList title="Expected Datasets" items={(template.datasets ?? []).map((item) => `${item.label}${item.required ? " · required" : ""} · ${item.columns.length} columns`)} /><ExpectedList title="Expected artifacts" items={(template.artifacts ?? []).map((item) => `${item.label}${item.required ? " · required" : ""} · ${item.kind}`)} /></div> : null}
     </CardBody></Card> : null}
-
-    <ScientificDocumentEditor initialDocument={initial.document} />
-    <div className="sticky bottom-4 z-20 flex justify-end"><button className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft">Save Result</button></div>
+      </aside>
+    </div>
+    <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
+      {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
+      <button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : "Save Result"}</button>
+    </div>
   </form>;
 }
 

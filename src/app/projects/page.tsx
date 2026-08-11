@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Download, Plus, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import {
   CollectionToolbar,
   collectionPrimaryActionClass,
@@ -61,7 +62,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
         ]}
         actions={<>
           <Link href="/projects/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <Link href={exportHref} className={collectionSecondaryActionClass}><Download className="h-4 w-4" aria-hidden />Export…</Link>
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/projects/export" />
           <Link href="/projects/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Project</Link>
         </>}
       />

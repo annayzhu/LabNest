@@ -215,6 +215,7 @@ export type Entry = {
   tags: string[];
   sourceType: "text" | "photo" | "file" | "voice" | "manual";
   recordStatus: RecordLifecycleStatus;
+  archivedAt?: string;
   moodStatus?: string;
   attachmentCount: number;
   attachments?: EntryAttachment[];
@@ -255,6 +256,7 @@ export type InventoryItem = {
   englishName?: string;
   category?: string;
   brand?: string;
+  principalInvestigator?: string;
   entityId?: string;
   containerType?: string;
   barcode?: string;

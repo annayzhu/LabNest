@@ -20,6 +20,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  Trash2,
   Wrench,
   X,
 } from "lucide-react";
@@ -43,6 +44,7 @@ const navItems = [
 const utilityItems = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/actions", label: "AI review", icon: Sparkles },
+  { href: "/trash", label: "Recycle Bin", icon: Trash2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

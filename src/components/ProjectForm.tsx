@@ -1,14 +1,20 @@
+"use client";
+
+import { useActionState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
+import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { projectStatusOptions } from "@/lib/status-options";
+
+const initialState: FormActionState = {};
 
 export function ProjectForm({
   action,
   initial = {},
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: FormAction;
   initial?: {
     id?: string;
     name?: string;
@@ -17,8 +23,10 @@ export function ProjectForm({
     tags?: string[];
   };
 }) {
+  const [state, formAction, pending] = useActionState(action, initialState);
+
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
       <Card>
         <CardHeader title="Project identity" />
@@ -44,9 +52,10 @@ export function ProjectForm({
           </label>
         </CardBody>
       </Card>
-      <div className="flex justify-end">
-        <button className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm">
-          Save Project
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        <button type="submit" disabled={pending} className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+          {pending ? "Saving…" : "Save Project"}
         </button>
       </div>
     </form>

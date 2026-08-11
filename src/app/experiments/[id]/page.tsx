@@ -4,12 +4,15 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { ScientificDocumentView } from "@/components/ScientificDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
+import { experimentDeleteBlockers } from "@/lib/record-lifecycle";
+import { archiveExperiment, deleteExperiment } from "../actions";
 
 export const dynamic = "force-dynamic";
 const primaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
@@ -22,20 +25,35 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } },
       protocolVersions: { orderBy: { order: "asc" }, include: { protocolVersion: { include: { protocol: true } } } },
       protocolRun: true, steps: { orderBy: { order: "asc" } }, results: { orderBy: { updatedAt: "desc" }, include: { _count: { select: { datasets: true } } } },
+      _count: { select: { results: true, inventoryTransactions: true, sampleEvents: true } },
     } }),
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
   const document = normalizeScientificDocument(experiment.contentJson, experimentSections);
   const completed = experiment.steps.filter((step) => step.completed).length;
+  const [reportSourceReferences, entryReferences, proposedActions] = await Promise.all([
+    prisma.reportSource.count({ where: { sourceType: "experiment", sourceId: experiment.id } }),
+    prisma.itemLink.count({ where: { sourceType: "entry", targetType: "experiment", targetId: experiment.id } }),
+    experiment.protocolRun ? prisma.proposedAction.count({ where: { sourceType: "protocol", sourceId: experiment.protocolRun.id } }) : Promise.resolve(0),
+  ]);
+  const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
+    ...experiment._count,
+    completedSteps: completed,
+    deviations: experiment.steps.filter((step) => Boolean(step.deviationNote)).length,
+    attachments: attachmentLinks.length,
+    reportSourceReferences,
+    entryReferences,
+    proposedActions,
+  });
   return <AppShell><div className="space-y-6">
-    <PageHeader identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<>{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={`/results/new?experiment=${experiment.id}`} className={secondaryButton}>Add Result</Link><Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link></>} />
+    <PageHeader identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<>{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={`/results/new?experiment=${experiment.id}`} className={secondaryButton}>Add Result</Link><Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link><RecordLifecycleControl id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></>} />
     <Card><CardHeader title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>} /><CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
       <Control label="Research Plan">{experiment.researchPlan ? <Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link> : <span className="text-warning">Unassigned</span>}</Control>
       <Control label="Project">{experiment.project?.name ?? "—"}</Control><Control label="Date">{experiment.date.toLocaleDateString()}</Control><Control label="Steps">{completed}/{experiment.steps.length}</Control><Control label="Results">{experiment.results.length}</Control><Control label="Attachments">{attachmentLinks.length}</Control>
       <div className="sm:col-span-2 xl:col-span-6 flex flex-wrap gap-2 border-t border-hairline pt-3">{experiment.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}{experiment.primaryProtocolVersion ? <Link href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="text-xs font-medium text-moss hover:underline">Primary: {experiment.primaryProtocolVersion.protocol.humanCode ?? experiment.primaryProtocolVersion.protocol.title} · {experiment.primaryProtocolVersion.displayVersion}</Link> : null}</div>
     </CardBody></Card>
-    <ScientificDocumentView document={document} />
+    <ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} />
     <Card><CardHeader title="Locked ProtocolVersions" eyebrow="Snapshot retained independently of future Protocol edits" /><CardBody><DataTable rows={experiment.protocolVersions} getRowKey={(row) => row.protocolVersionId} columns={[
       { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.protocolVersion.protocolId}?version=${row.protocolVersionId}`} className="font-semibold text-moss hover:underline">{row.protocolVersion.protocol.humanCode ?? row.protocolVersion.protocol.title}</Link> },
       { key: "version", header: "Version", render: (row) => row.protocolVersion.displayVersion },

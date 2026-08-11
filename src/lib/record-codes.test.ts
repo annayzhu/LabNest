@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRecordCode, isValidRecordCode, recordCodeExample, recordCodeFromSuffix } from "./record-codes";
+import { formatRecordCode, isValidRecordCode, recordCodeExample, recordCodeFromSuffix, suggestNextRecordCode } from "./record-codes";
 
 describe("record code rules", () => {
   it("uses the fixed prefixes and starting formats", () => {
@@ -33,5 +33,13 @@ describe("record code rules", () => {
     expect(() => recordCodeFromSuffix("researchPlan", "8")).toThrow("RP- must be followed by at least 3 digits.");
     expect(() => recordCodeFromSuffix("protocol", "ABC123")).toThrow("PRT- must be followed by at least 6 digits.");
     expect(() => recordCodeFromSuffix("experiment", "EXP-008")).toThrow("EXP- must be followed by at least 3 digits.");
+  });
+
+  it("suggests the next available code from records and the reservation counter", () => {
+    expect(suggestNextRecordCode("researchPlan", ["RP-001"])).toBe("RP-002");
+    expect(suggestNextRecordCode("researchPlan", ["RP-001", "legacy"], 4)).toBe("RP-005");
+    expect(suggestNextRecordCode("protocol", [])).toBe("PRT-100001");
+    expect(suggestNextRecordCode("protocol", ["PRT-100008"], 100008)).toBe("PRT-100009");
+    expect(suggestNextRecordCode("experiment", ["EXP-001"], 1)).toBe("EXP-002");
   });
 });

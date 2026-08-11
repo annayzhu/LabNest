@@ -14,7 +14,7 @@ describe("entry content documents", () => {
   });
 
   it("derives searchable plain text without formatting markers", () => {
-    expect(plainTextFromEntryMarkdown("## Result\n\n- **GFP** signal was ++higher++.\n- [ ] Review signal.\n- [Source](https://example.com)"))
+    expect(plainTextFromEntryMarkdown('## Result\n\n<!--labnest-line-height:1.5-->- **GFP** signal was <span data-labnest-size="12">++higher++</span>.\n- [ ] Review signal.\n- [Source](https://example.com)'))
       .toBe("Result\n\nGFP signal was higher.\nReview signal.\nSource");
   });
 

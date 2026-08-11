@@ -1,27 +1,23 @@
 "use client";
 
 import {
-  Bold,
   Camera,
-  CheckSquare,
   ChevronLeft,
   ChevronRight,
   Cloud,
   File,
   ImagePlus,
-  Italic,
-  List,
-  ListOrdered,
   Paperclip,
   RotateCcw,
   Save,
-  Strikethrough,
-  Underline,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
@@ -140,7 +136,6 @@ export function EntryComposer({
   entry?: EntryComposerInitialEntry;
 }) {
   const router = useRouter();
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const mediaInputPrefix = useId();
   const imageInputId = `${mediaInputPrefix}-photos`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
@@ -218,6 +213,9 @@ export function EntryComposer({
 
   const availablePlans = fields.projectId ? researchPlans.filter((plan) => plan.projectId === fields.projectId) : researchPlans;
   const totalBytes = media.reduce((total, item) => total + item.size, 0);
+  const selectedProject = projects.find((project) => project.id === fields.projectId);
+  const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
+  const selectedProtocol = protocols.find((protocol) => protocol.id === fields.protocolVersionId);
 
   function updateField<K extends keyof EntryComposerFields>(key: K, value: EntryComposerFields[K]) {
     setFields((current) => ({ ...current, [key]: value }));
@@ -326,37 +324,6 @@ export function EntryComposer({
     });
   }
 
-  function applyInline(prefix: string, suffix = prefix, placeholder = "text") {
-    const textarea = bodyRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = fields.contentMarkdown.slice(start, end) || placeholder;
-    const replacement = `${prefix}${selected}${suffix}`;
-    updateField("contentMarkdown", `${fields.contentMarkdown.slice(0, start)}${replacement}${fields.contentMarkdown.slice(end)}`);
-    window.requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    });
-  }
-
-  function applyList(kind: "bullet" | "number" | "check") {
-    const textarea = bodyRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const lineStart = fields.contentMarkdown.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
-    const lineEndIndex = fields.contentMarkdown.indexOf("\n", end);
-    const lineEnd = lineEndIndex === -1 ? fields.contentMarkdown.length : lineEndIndex;
-    const selected = fields.contentMarkdown.slice(lineStart, lineEnd) || "List item";
-    const transformed = selected.split("\n").map((line, index) => {
-      const prefix = kind === "bullet" ? "- " : kind === "check" ? "- [ ] " : `${index + 1}. `;
-      return `${prefix}${line.replace(/^\s*(?:-\s+\[[ xX]\]\s+|[-*+]\s+|\d+\.\s+)/, "")}`;
-    }).join("\n");
-    updateField("contentMarkdown", `${fields.contentMarkdown.slice(0, lineStart)}${transformed}${fields.contentMarkdown.slice(lineEnd)}`);
-    window.requestAnimationFrame(() => textarea.focus());
-  }
-
   async function discardDraft() {
     await deleteEntryDraft(draftKey).catch(() => undefined);
     media.forEach((item) => {
@@ -408,7 +375,8 @@ export function EntryComposer({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <section className="overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-paper">
+      <div className="entry-editor-layout">
+      <section className="entry-editor-draft overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-paper" data-print-hidden>
         <div className="flex flex-col gap-3 border-b border-hairline bg-warm/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
             <Cloud className="h-4 w-4 shrink-0 text-moss" aria-hidden />
@@ -420,59 +388,39 @@ export function EntryComposer({
           </Button>
         </div>
 
-        <div className="space-y-5 p-4 sm:p-6">
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Title</span>
-              <input
-                required
-                value={fields.title}
-                onChange={(event) => updateField("title", event.target.value)}
-                className="focus-ring mt-2 h-12 w-full rounded-[9px] border border-hairline bg-warm px-4 font-serif text-lg text-ink"
-                placeholder="Short lab note title"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Occurred at</span>
-              <input
-                required
-                type="datetime-local"
-                value={fields.occurredAt}
-                onChange={(event) => updateField("occurredAt", event.target.value)}
-                className="focus-ring mt-2 h-12 w-full rounded-[9px] border border-hairline bg-warm px-3 text-sm text-ink"
-              />
-            </label>
-          </div>
-
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Entry body</span>
-            <div className="mt-2 overflow-hidden rounded-[10px] border border-hairline bg-warm focus-within:border-moss/50 focus-within:ring-2 focus-within:ring-moss/15">
-              <div className="editorial-scrollbar flex gap-1 overflow-x-auto border-b border-hairline bg-surface px-2 py-2" aria-label="Entry formatting toolbar">
-                <Button type="button" size="icon" variant="ghost" title="Bold" aria-label="Bold" onClick={() => applyInline("**", "**", "important text")}><Bold className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" title="Italic" aria-label="Italic" onClick={() => applyInline("*", "*", "emphasis")}><Italic className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" title="Underline" aria-label="Underline" onClick={() => applyInline("++", "++", "underlined text")}><Underline className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" title="Strikethrough" aria-label="Strikethrough" onClick={() => applyInline("~~", "~~", "revised text")}><Strikethrough className="h-4 w-4" /></Button>
-                <span className="mx-1 w-px shrink-0 bg-hairline" />
-                <Button type="button" size="icon" variant="ghost" title="Bulleted list" aria-label="Bulleted list" onClick={() => applyList("bullet")}><List className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" title="Numbered list" aria-label="Numbered list" onClick={() => applyList("number")}><ListOrdered className="h-4 w-4" /></Button>
-                <Button type="button" size="icon" variant="ghost" title="Checklist" aria-label="Checklist" onClick={() => applyList("check")}><CheckSquare className="h-4 w-4" /></Button>
-              </div>
-              <textarea
-                ref={bodyRef}
-                required
-                value={fields.contentMarkdown}
-                onChange={(event) => updateField("contentMarkdown", event.target.value)}
-                className="min-h-64 w-full resize-y bg-transparent p-4 text-[15px] leading-7 text-ink outline-none"
-                placeholder="Observation, decision, deviation, or follow-up. Use the toolbar for emphasis and lists."
-              />
-            </div>
-          </div>
-        </div>
       </section>
+
+      <DocumentCanvas className="entry-editor-document" label={fields.title || "Entry editor"} toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Write directly in the final layout</span><DocumentPrintButton /></>}>
+        <header className="document-page-header">
+          <p className="document-page-kicker">Entry</p>
+          <input
+            required
+            value={fields.title}
+            onChange={(event) => updateField("title", event.target.value)}
+            className="document-page-title focus-ring w-full border-0 bg-transparent p-0 font-serif font-medium leading-tight text-ink outline-none placeholder:text-muted"
+            placeholder="Untitled Entry"
+            aria-label="Entry title"
+          />
+          <dl className="document-page-facts">
+            <div><dt>Occurred</dt><dd><input required type="datetime-local" value={fields.occurredAt} onChange={(event) => updateField("occurredAt", event.target.value)} className="focus-ring w-full rounded-[4px] border border-transparent bg-transparent p-0 text-graphite hover:border-hairline" /></dd></div>
+            <div><dt>Project</dt><dd>{selectedProject?.name ?? "Unassigned"}</dd></div>
+            <div><dt>Research Plan</dt><dd>{selectedPlan ? selectedPlan.code ?? selectedPlan.title : "Unassigned"}</dd></div>
+            <div><dt>Source</dt><dd>{fields.sourceType.replaceAll("_", " ")}</dd></div>
+            <div><dt>Record</dt><dd>{fields.recordStatus.replaceAll("_", " ")}</dd></div>
+            {selectedProtocol ? <div><dt>Protocol</dt><dd>{selectedProtocol.label}</dd></div> : null}
+          </dl>
+        </header>
+        <MarkdownRichTextEditor
+          value={fields.contentMarkdown}
+          onChange={(value) => updateField("contentMarkdown", value)}
+          placeholder="Observation, decision, deviation, or follow-up…"
+          minHeightClass="min-h-[420px]"
+        />
+      </DocumentCanvas>
 
       <section
         className={cn(
-          "rounded-[18px] border bg-surface p-4 shadow-paper transition sm:p-6",
+          "entry-editor-media rounded-[18px] border bg-surface p-4 shadow-paper transition sm:p-6",
           isDraggingFiles ? "border-moss ring-2 ring-moss/15" : "border-hairline",
         )}
         onDragEnter={handleMediaDragEnter}
@@ -551,7 +499,7 @@ export function EntryComposer({
         <p className="mt-4 text-xs text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
       </section>
 
-      <section className="rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
+      <section className="entry-editor-context rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
         <h2 className="font-serif text-xl font-medium text-ink">Research context</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => {
@@ -577,7 +525,7 @@ export function EntryComposer({
       </section>
 
       {!entry ? (
-        <details className="rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
+        <details className="entry-editor-experiment rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
           <summary className="cursor-pointer font-serif text-xl font-medium text-ink">Protocol-Based Experiment <span className="ml-2 font-sans text-xs font-normal text-muted">optional</span></summary>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => updateField("protocolVersionId", value)} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
@@ -590,6 +538,7 @@ export function EntryComposer({
           </div>
         </details>
       ) : null}
+      </div>
 
       {submitStatus ? <div role="alert" className="rounded-[12px] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">

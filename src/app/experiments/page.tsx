@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Download, Play, Plus, Upload } from "lucide-react";
+import { Play, Plus, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
@@ -62,7 +63,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
         actions={<>
           <Link href="/protocol-run" className={collectionSecondaryActionClass}><Play className="h-4 w-4" aria-hidden />Run mode</Link>
           <Link href="/experiments/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <Link href={exportHref} className={collectionSecondaryActionClass}><Download className="h-4 w-4" aria-hidden />Export…</Link>
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/experiments/export" />
           <Link href="/experiments/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>
         </>}
       />

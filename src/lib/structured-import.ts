@@ -12,11 +12,11 @@ import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
 import { collectReportSources } from "@/lib/reports";
 import { checkResultTemplate, normalizeResultTemplate, normalizeResultValues, validateResultRecord } from "@/lib/result-templates";
 import {
-  createScientificDocument,
+  documentPlainText,
   reportSections,
   researchPlanSections,
   resultSections,
-  type ScientificSectionDefinition,
+  scientificDocumentFromStructuredRecord,
 } from "@/lib/scientific-document";
 import type { ParsedStructuredFile } from "@/lib/structured-files";
 import { structuredModules, type StructuredModuleKey } from "@/lib/structured-modules";
@@ -107,6 +107,7 @@ type InventoryData = {
   englishName?: string;
   category?: string;
   brand?: string;
+  principalInvestigator?: string;
   containerType?: string;
   barcode?: string;
   aliquotCode?: string;
@@ -230,20 +231,6 @@ function parseJsonValue(value: unknown) {
   try { return JSON.parse(text) as unknown; } catch { return value; }
 }
 
-function scientificDocumentFromRecord(
-  definitions: ScientificSectionDefinition[],
-  record: Record<string, unknown>,
-  fields: Record<string, string>,
-) {
-  const document = createScientificDocument(definitions);
-  for (const section of document.sections) {
-    const sourceField = fields[section.key];
-    const text = sourceField ? optionalText(record[sourceField]) : undefined;
-    if (text) section.blocks.push({ id: `${section.key}-import-1`, type: "text", text });
-  }
-  return document;
-}
-
 function protocolDocumentFromRecord(record: Record<string, unknown>) {
   const parsed = normalizeProtocolDocument(parseJsonValue(record.contentJson));
   if (parsed) return parsed;
@@ -276,7 +263,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     prisma.researchPlan.findMany({ include: { protocols: true } }),
     prisma.protocol.findMany({ include: { versions: { orderBy: { revision: "desc" } }, researchPlans: true } }),
     prisma.experiment.findMany(),
-    prisma.inventoryLocation.findMany(),
+    prisma.inventoryLocation.findMany({ where: { status: "active" } }),
     prisma.inventoryItem.findMany({ select: { id: true, aliquotCode: true, barcode: true } }),
     prisma.attachment.findFirst({ where: { sha256: parsed.checksum, links: { some: { linkType: "structured_import_source" } } }, select: { id: true } }),
   ]);
@@ -337,10 +324,12 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       if (primaryMatch?.error) errors.push(primaryMatch.error);
       const protocolIds = [...new Set(protocolMatches.flatMap((match) => match.value ? [match.value.id] : []))];
       if (primaryMatch?.value && !protocolIds.includes(primaryMatch.value.id)) protocolIds.push(primaryMatch.value.id);
-      const document = scientificDocumentFromRecord(researchPlanSections, record, { design: "design", material_methods: "materialMethods", acceptance_criteria: "acceptanceCriteria", constraints: "constraints", references: "references" });
+      const document = scientificDocumentFromStructuredRecord(researchPlanSections, record, { design: "design", material_methods: "materialMethods", acceptance_criteria: "acceptanceCriteria", constraints: "constraints", references: "references" });
+      const designSection = document.sections.find((section) => section.key === "design");
+      const design = designSection ? optionalText(documentPlainText({ schemaVersion: 1, sections: [designSection] })) : undefined;
       const declaredStatus = enumValue(record.status, ["draft", "active", "paused", "completed", "archived"] as const, "draft", "Status", errors);
       if (declaredStatus !== "draft") warnings.push(`Declared status “${declaredStatus}” is retained in the source file; imported Research Plans start as Draft.`);
-      if (projectMatch.value) data = { kind: "research-plans", projectId: projectMatch.value.id, code, title, objective: optionalText(record.objective), hypothesis: optionalText(record.hypothesis), rationale: optionalText(record.rationale), design: optionalText(record.design), status: "draft", tags: parseTags(record.tags), protocolIds, primaryProtocolId: primaryMatch?.value?.id, contentJson: document as Prisma.InputJsonValue };
+      if (projectMatch.value) data = { kind: "research-plans", projectId: projectMatch.value.id, code, title, objective: optionalText(record.objective), hypothesis: optionalText(record.hypothesis), rationale: optionalText(record.rationale), design, status: "draft", tags: parseTags(record.tags), protocolIds, primaryProtocolId: primaryMatch?.value?.id, contentJson: document as Prisma.InputJsonValue };
     }
 
     if (parsed.module === "protocols") {
@@ -424,7 +413,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       if (isPlaceholder(title)) errors.push("Replace the template Result title before importing.");
       const numericText = optionalText(record.numericValue);
       const numericValue = numericText ? numberValue(record.numericValue, "Numeric value", errors) : undefined;
-      const document = scientificDocumentFromRecord(resultSections, record, { summary: "summary", analysis: "analysis", interpretation: "interpretation", quality_limitations: "qualityLimitations" });
+      const document = scientificDocumentFromStructuredRecord(resultSections, record, { summary: "summary", analysis: "analysis", interpretation: "interpretation", quality_limitations: "qualityLimitations" });
       const declaredRecordStatus = enumValue(record.recordStatus, ["draft", "recorded", "submitted", "reviewed"] as const, "draft", "Record status", errors);
       enumValue(record.sourceType, ["manual", "protocol_template", "file_import", "tool", "analysis"] as const, "file_import", "Source type", errors);
       if (declaredRecordStatus !== "draft") warnings.push(`Declared record status “${declaredRecordStatus}” is retained in the source file; imported Results start as Draft.`);
@@ -460,7 +449,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const locationName = optionalText(record.location);
       const locationMatch = locationName ? uniqueMatch(locations.filter((location) => location.id === locationName || lower(location.name) === lower(locationName)), `Inventory location “${locationName}”`) : undefined;
       if (locationMatch?.error) errors.push(locationMatch.error);
-      data = { kind: "inventory", name, englishName: optionalText(record.englishName), category: optionalText(record.category), brand: optionalText(record.brand), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: requiredText(record.unit, "Unit", errors), lowThreshold, concentration: optionalText(record.concentration), locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
+      data = { kind: "inventory", name, englishName: optionalText(record.englishName), category: optionalText(record.category), brand: optionalText(record.brand), principalInvestigator: optionalText(record.principalInvestigator), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: requiredText(record.unit, "Unit", errors), lowThreshold, concentration: optionalText(record.concentration), locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
     }
 
     if (parsed.module === "reports") {
@@ -473,7 +462,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const periodStart = dateValue(record.periodStart, "Period start", errors);
       const periodEnd = dateValue(record.periodEnd, "Period end", errors);
       if (periodStart && periodEnd && periodStart > periodEnd) errors.push("Period start must not be after period end.");
-      const document = scientificDocumentFromRecord(reportSections, record, { executive_summary: "executiveSummary", research_question: "researchQuestion", methods: "methods", results: "results", interpretation: "interpretation", limitations_next_steps: "limitationsNextSteps" });
+      const document = scientificDocumentFromStructuredRecord(reportSections, record, { executive_summary: "executiveSummary", research_question: "researchQuestion", methods: "methods", results: "results", interpretation: "interpretation", limitations_next_steps: "limitationsNextSteps" });
       if (projectMatch.value) {
         const collected = await collectReportSources(projectMatch.value.id, planMatch?.value?.id);
         const declaredStatus = enumValue(record.status, ["draft", "ready_for_review", "final", "archived"] as const, "draft", "Status", errors);
@@ -549,7 +538,7 @@ export async function commitStructuredImport(
         createdTargets.push({ targetType: "result", targetId: record.id, href: `/results/${record.id}` });
       }
       if (data.kind === "inventory") {
-        const record = await tx.inventoryItem.create({ data: { name: data.name, englishName: data.englishName, category: data.category, brand: data.brand, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
+        const record = await tx.inventoryItem.create({ data: { name: data.name, englishName: data.englishName, category: data.category, brand: data.brand, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
         if (data.currentQuantity !== 0) await tx.inventoryTransaction.create({ data: { inventoryItemId: record.id, type: "receive", quantityChange: data.currentQuantity, unit: data.unit, toLocationId: data.locationId, notes: `Initial structured import from ${parsed.fileName}.` } });
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "inventory_item", targetId: record.id, metadataJson: sourceMetadata } });
         createdTargets.push({ targetType: "inventory_item", targetId: record.id, href: `/inventory/${record.id}` });

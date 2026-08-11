@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
+import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 
 const baseBlockSchema = z.object({ id: z.string().min(1) });
 
@@ -48,6 +50,103 @@ export const scientificDocumentSchema = z.object({
 
 export type ScientificDocument = z.infer<typeof scientificDocumentSchema>;
 export type ScientificSectionDefinition = { key: string; title: string; aliases?: string[] };
+
+function markdownTableRow(line: string) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return undefined;
+  const cells: string[] = [];
+  let cell = "";
+  let escaped = false;
+  for (const character of trimmed.slice(1, -1)) {
+    if (escaped) {
+      cell += character;
+      escaped = false;
+    } else if (character === "\\") escaped = true;
+    else if (character === "|") {
+      cells.push(cell.trim().replaceAll(/<br\s*\/?>/gi, "\n"));
+      cell = "";
+    } else cell += character;
+  }
+  if (escaped) cell += "\\";
+  cells.push(cell.trim().replaceAll(/<br\s*\/?>/gi, "\n"));
+  return cells;
+}
+
+function markdownTableAt(lines: string[], start: number) {
+  const header = markdownTableRow(lines[start] ?? "");
+  const separator = markdownTableRow(lines[start + 1] ?? "");
+  if (!header?.length || !separator?.length || separator.some((cell) => !/^:?-{3,}:?$/.test(cell))) return undefined;
+  const rows = [header];
+  let next = start + 2;
+  while (next < lines.length) {
+    const row = markdownTableRow(lines[next]);
+    if (!row) break;
+    rows.push(row);
+    next += 1;
+  }
+  const width = Math.max(...rows.map((row) => row.length));
+  return {
+    rows: rows.map((row) => Array.from({ length: width }, (_, index) => row[index] ?? "")),
+    next,
+  };
+}
+
+/**
+ * Upgrade legacy text blocks containing Markdown tables into native scientific
+ * table blocks. This also lets structured imports share one lossless path for
+ * Markdown and DOCX sources.
+ */
+export function scientificBlocksFromText(text: string, idPrefix: string): ScientificContentBlock[] {
+  const lines = text.replaceAll("\r\n", "\n").split("\n");
+  const blocks: ScientificContentBlock[] = [];
+  let textLines: string[] = [];
+  let tableCount = 0;
+  let textCount = 0;
+
+  const flushText = () => {
+    const value = textLines.join("\n").trim();
+    textLines = [];
+    if (!value) return;
+    textCount += 1;
+    blocks.push({ id: `${idPrefix}-text-${textCount}`, type: "text", text: value });
+  };
+
+  for (let index = 0; index < lines.length;) {
+    const table = markdownTableAt(lines, index);
+    if (!table) {
+      textLines.push(lines[index]);
+      index += 1;
+      continue;
+    }
+    flushText();
+    tableCount += 1;
+    blocks.push({ id: `${idPrefix}-table-${tableCount}`, type: "table", rows: table.rows });
+    index = table.next;
+  }
+  flushText();
+
+  if (!tableCount) return [{ id: idPrefix, type: "text", text }];
+  return blocks;
+}
+
+export function scientificDocumentFromStructuredRecord(
+  definitions: ScientificSectionDefinition[],
+  record: Record<string, unknown>,
+  fields: Record<string, string>,
+) {
+  const document = createScientificDocument(definitions);
+  for (const section of document.sections) {
+    const sourceField = fields[section.key];
+    const source = sourceField ? record[sourceField] : undefined;
+    const text = source === null || source === undefined
+      ? ""
+      : typeof source === "object"
+        ? JSON.stringify(source)
+        : String(source).trim();
+    if (text) section.blocks.push(...scientificBlocksFromText(text, `${section.key}-import-1`));
+  }
+  return document;
+}
 
 export const researchPlanSections: ScientificSectionDefinition[] = [
   { key: "design", title: "Design" },
@@ -120,7 +219,14 @@ export function normalizeScientificDocument(
     schemaVersion: 1,
     sections: definitions.map(({ key, title, aliases }) => {
       const existing = sections.get(key) ?? aliases?.map((alias) => sections.get(alias)).find(Boolean);
-      return existing ? { ...existing, key, title } : { key, title, blocks: [] };
+      return existing
+        ? {
+            ...existing,
+            key,
+            title,
+            blocks: existing.blocks.flatMap((block) => block.type === "text" ? scientificBlocksFromText(block.text, block.id) : [block]),
+          }
+        : { key, title, blocks: [] };
     }),
   };
 }
@@ -149,7 +255,8 @@ export function parseScientificDocumentJson(
 
 export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
-    if (block.type === "heading" || block.type === "text" || block.type === "callout") return [block.text];
+    if (block.type === "heading" || block.type === "callout") return [block.text];
+    if (block.type === "text") return [stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(block.text))];
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];

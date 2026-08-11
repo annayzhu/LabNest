@@ -57,7 +57,7 @@ describe("Protocol DOCX parser", () => {
   it("exports a valid DOCX that can be imported back into the fixed template", () => {
     const document = createProtocolTemplateDocument();
     document.sections.find((section) => section.key === "description")!.blocks = [
-      { id: "description-rich", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Quantify RNA", bold: true }, { text: " before reverse transcription." }] }] },
+      { id: "description-rich", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Quantify RNA", bold: true, fontSizePt: 14 }, { text: " before reverse transcription." }], lineHeight: 1.5 }] },
     ];
     document.sections.find((section) => section.key === "steps")!.blocks = [
       { id: "step-heading", type: "heading", text: "1. Prepare reaction" },
@@ -77,7 +77,10 @@ describe("Protocol DOCX parser", () => {
     };
 
     const bytes = exportProtocolDocx(identity, document);
+    const documentXml = strFromU8(unzipSync(bytes)["word/document.xml"]);
     const parsed = parseProtocolDocxBytes(bytes, protocolDocxFilename(identity));
+    expect(documentXml).toContain('<w:sz w:val="28"/><w:szCs w:val="28"/>');
+    expect(documentXml).toContain('w:line="360" w:lineRule="auto"');
     expect(parsed.humanCode).toBe(identity.humanCode);
     expect(parsed.canonicalTitle).toBe(identity.canonicalTitle);
     expect(parsed.displayVersion).toBe("1.0");

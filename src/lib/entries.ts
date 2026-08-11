@@ -1,4 +1,3 @@
-import { entries as demoEntries } from "@/lib/demo-data";
 import { prisma } from "@/lib/db";
 import { getEntryMarkdown, getOrderedAttachmentIds } from "@/lib/entry-content";
 import type { Entry, EntryAttachment } from "@/lib/types";
@@ -57,14 +56,6 @@ function serializeAttachment(attachment: {
 function orderAttachments<T extends { id: string }>(attachments: T[], contentJson: unknown) {
   const positions = new Map(getOrderedAttachmentIds(contentJson).map((id, index) => [id, index]));
   return [...attachments].sort((a, b) => (positions.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (positions.get(b.id) ?? Number.MAX_SAFE_INTEGER));
-}
-
-function fallbackEntries(): Entry[] {
-  return demoEntries.map((entry) => ({
-    ...entry,
-    attachments: entry.attachments ?? [],
-    linkedItemCount: entry.linkedItemCount ?? entry.relevantItems.length,
-  }));
 }
 
 export async function getEntryRecords(): Promise<Entry[]> {
@@ -140,6 +131,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
         tags: entry.tags,
         sourceType: entry.sourceType,
         recordStatus: entry.recordStatus,
+        archivedAt: entry.archivedAt?.toISOString(),
         moodStatus: entry.moodStatus ?? undefined,
         attachmentCount: attachments.length,
         attachments,
@@ -150,7 +142,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
       };
     });
   } catch {
-    return fallbackEntries();
+    return [];
   }
 }
 
@@ -197,6 +189,7 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
       tags: entry.tags,
       sourceType: entry.sourceType,
       recordStatus: entry.recordStatus,
+      archivedAt: entry.archivedAt?.toISOString(),
       moodStatus: entry.moodStatus ?? undefined,
       attachmentCount: attachments.length,
       attachments,
@@ -228,8 +221,6 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
       })),
     };
   } catch {
-    const entry = fallbackEntries().find((candidate) => candidate.id === id);
-    if (!entry) return undefined;
-    return { ...entry, attachments: entry.attachments ?? [], itemLinks: [], pendingActions: [] };
+    return undefined;
   }
 }

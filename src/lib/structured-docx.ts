@@ -142,7 +142,12 @@ function tableRows(element: Element) {
   return Array.from(element.getElementsByTagName("w:tr")).map((row) =>
     Array.from(row.childNodes)
       .filter((node): node is Element => node.nodeType === 1 && (node as Element).tagName === "w:tc")
-      .map((cell) => elementText(cell)),
+      .map((cell) => {
+        const paragraphs = Array.from(cell.getElementsByTagName("w:p"))
+          .map((paragraph) => elementText(paragraph))
+          .filter(Boolean);
+        return paragraphs.join("\n") || elementText(cell);
+      }),
   );
 }
 
@@ -153,7 +158,10 @@ function normalized(value: string) {
 function markdownTable(rows: string[][]) {
   if (!rows.length) return "";
   const width = Math.max(...rows.map((row) => row.length));
-  const padded = rows.map((row) => Array.from({ length: width }, (_, index) => row[index] ?? ""));
+  const padded = rows.map((row) => Array.from({ length: width }, (_, index) => (row[index] ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("|", "\\|")
+    .replaceAll(/\r?\n/g, "<br>")));
   return [
     `| ${padded[0].join(" | ")} |`,
     `| ${padded[0].map(() => "---").join(" | ")} |`,

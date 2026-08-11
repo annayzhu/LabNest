@@ -3,12 +3,18 @@ import { ArrowLeft, Download, FileText, Link2, ListChecks, Paperclip, Pencil } f
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
 import { filterHref } from "@/lib/filters";
+import { prisma } from "@/lib/db";
+import { entryDeleteBlockers } from "@/lib/record-lifecycle";
+import { archiveEntry, deleteEntry, restoreEntry } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +47,12 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   if (!entry) notFound();
 
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/"));
+  const reportSourceReferences = await prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } });
+  const deletionBlockers = entryDeleteBlockers(entry.recordStatus, {
+    itemLinks: entry.itemLinks.length,
+    proposedActions: entry.pendingActions.length,
+    reportSourceReferences,
+  });
 
   return (
     <AppShell>
@@ -52,6 +64,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           actions={<div className="flex flex-wrap gap-2">
             <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
             <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
+            <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
           </div>}
         />
 
@@ -63,7 +76,11 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <main className="min-w-0 space-y-6">
-            <article className="rounded-[18px] border border-hairline bg-surface p-6 shadow-paper sm:p-8">
+            <DocumentCanvas label={entry.title} toolbar={<DocumentPrintButton />}>
+              <header className="mb-8 border-b border-hairline pb-6">
+                <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(entry.occurredAt), "yyyy-MM-dd HH:mm")}</p>
+                <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{entry.title}</h1>
+              </header>
               <EntryContentView markdown={entry.contentMarkdown ?? entry.body} />
 
               {entry.tags.length || entry.moodStatus ? (
@@ -74,7 +91,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   {entry.moodStatus ? <Badge tone="warning">{entry.moodStatus}</Badge> : null}
                 </div>
               ) : null}
-            </article>
+            </DocumentCanvas>
 
             <section className="rounded-[18px] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
@@ -170,7 +187,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   </div>
                   <div>
                     <dt className="text-xs text-muted">Record</dt>
-                    <dd className="mt-1"><StatusPill status={entry.recordStatus} /></dd>
+                    <dd className="mt-1 flex flex-wrap gap-2"><StatusPill status={entry.recordStatus} />{entry.archivedAt ? <StatusPill status="archived" /> : null}</dd>
                   </div>
                 </div>
               </dl>

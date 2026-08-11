@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Download, Plus, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
@@ -31,7 +32,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pag
         { name: "status", label: "status", value: status, options: ["draft", "ready_for_review", "final", "archived"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
-      actions={<><Link href="/reports/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><Link href={exportHref} className={collectionSecondaryActionClass}><Download className="h-4 w-4" aria-hidden />Export…</Link><Link href="/reports/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Report</Link></>}
+      actions={<><Link href="/reports/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><CollectionExportMenu filteredHref={exportHref} exportPath="/reports/export" /><Link href="/reports/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Report</Link></>}
     />
     <DataTable rows={reports} getRowKey={(row) => row.id} emptyMessage="No Reports match this view." selection={{ exportPath: "/reports/export" }} columns={[
       { key: "report", header: "Report", render: (row) => <div><Link href={`/reports/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link><p className="mt-1 text-xs text-muted">Updated {row.updatedAt.toLocaleDateString()}</p></div> },

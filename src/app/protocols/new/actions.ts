@@ -141,6 +141,10 @@ export async function createProtocolDocument(
     redirect(`/protocols/${protocol.id}`);
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
-    return { error: error instanceof Error ? error.message : "The Protocol could not be created." };
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return { error: "This Protocol ID is already in use. Enter a different suffix." };
+    }
+    const message = error instanceof Error ? error.message.trim() : "";
+    return { error: message || "The Protocol could not be created." };
   }
 }

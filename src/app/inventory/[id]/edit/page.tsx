@@ -12,7 +12,8 @@ export default async function EditInventoryItemPage({ params }: { params: Promis
   const [item, locations] = await Promise.all([
     prisma.inventoryItem.findUnique({ where: { id } }),
     prisma.inventoryLocation.findMany({
-      select: { id: true, name: true, temperature: true },
+      where: { OR: [{ status: "active" }, { items: { some: { id } } }] },
+      select: { id: true, name: true, temperature: true, status: true },
       orderBy: { name: "asc" },
     }),
   ]);

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 
 const optionalText = (value: FormDataEntryValue | null) => {
   const text = String(value ?? "").trim();
@@ -26,6 +27,7 @@ const inventoryItemSchema = z.object({
   englishName: z.string().trim().max(180).optional(),
   category: z.string().trim().max(64).optional(),
   brand: z.string().trim().max(120).optional(),
+  principalInvestigator: z.string().trim().max(120).optional(),
   vendor: z.string().trim().max(180).optional(),
   catalogNumber: z.string().trim().max(120).optional(),
   casNumber: z.string().trim().max(64).optional(),
@@ -52,6 +54,7 @@ function parseInventoryItem(formData: FormData) {
     englishName: optionalText(formData.get("englishName")),
     category: optionalText(formData.get("category")),
     brand: optionalText(formData.get("brand")),
+    principalInvestigator: optionalText(formData.get("principalInvestigator")),
     vendor: optionalText(formData.get("vendor")),
     catalogNumber: optionalText(formData.get("catalogNumber")),
     casNumber: optionalText(formData.get("casNumber")),
@@ -71,7 +74,7 @@ function parseInventoryItem(formData: FormData) {
   });
 }
 
-export async function createInventoryItem(formData: FormData) {
+async function persistNewInventoryItem(formData: FormData) {
   const parsed = parseInventoryItem(formData);
   const createData = createInventoryItemSchema.parse(parsed);
 
@@ -104,18 +107,31 @@ export async function createInventoryItem(formData: FormData) {
         action: "create",
         targetType: "inventory_item",
         targetId: created.id,
-        metadataJson: { category: parsed.category ?? null, openingQuantity: parsed.currentQuantity, unit: parsed.unit },
+        metadataJson: { category: parsed.category ?? null, principalInvestigator: parsed.principalInvestigator ?? null, openingQuantity: parsed.currentQuantity, unit: parsed.unit },
       },
     });
 
     return created;
   });
 
-  revalidatePath("/inventory");
-  redirect(`/inventory/${item.id}`);
+  return item.id;
 }
 
-export async function updateInventoryItem(formData: FormData) {
+export async function createInventoryItem(
+  _previousState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  let itemId: string;
+  try {
+    itemId = await persistNewInventoryItem(formData);
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The Inventory Item could not be registered.", "This aliquot code is already in use.") };
+  }
+  revalidatePath("/inventory");
+  redirect(`/inventory/${itemId}`);
+}
+
+async function persistInventoryItemUpdate(formData: FormData) {
   const parsed = parseInventoryItem(formData);
   if (!parsed.id) throw new Error("Inventory item ID is required.");
   const { id, ...updateData } = parsed;
@@ -134,12 +150,16 @@ export async function updateInventoryItem(formData: FormData) {
 
     const quantityChange = Number((parsed.currentQuantity - current.currentQuantity).toFixed(6));
     const locationChanged = parsed.locationId !== (current.locationId ?? undefined);
+    const principalInvestigatorChanged = parsed.principalInvestigator !== (current.principalInvestigator ?? undefined);
     if (parsed.unit !== current.unit) {
       const movementCount = await tx.inventoryTransaction.count({ where: { inventoryItemId: id } });
       if (movementCount > 0) throw new Error("Unit cannot be changed after stock movements exist. Register a separate item or conversion instead.");
     }
 
-    await tx.inventoryItem.update({ where: { id }, data: updateData });
+    await tx.inventoryItem.update({
+      where: { id },
+      data: { ...updateData, principalInvestigator: parsed.principalInvestigator ?? null },
+    });
     if (quantityChange !== 0) {
       await tx.inventoryTransaction.create({
         data: {
@@ -171,14 +191,34 @@ export async function updateInventoryItem(formData: FormData) {
         action: "update",
         targetType: "inventory_item",
         targetId: id,
-        metadataJson: { quantityChange, locationChanged, category: parsed.category ?? null },
+        metadataJson: {
+          quantityChange,
+          locationChanged,
+          category: parsed.category ?? null,
+          principalInvestigatorChanged,
+          previousPrincipalInvestigator: current.principalInvestigator,
+          principalInvestigator: parsed.principalInvestigator ?? null,
+        },
       },
     });
   });
 
+  return id;
+}
+
+export async function updateInventoryItem(
+  _previousState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  let itemId: string;
+  try {
+    itemId = await persistInventoryItemUpdate(formData);
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The Inventory Item could not be saved.", "This aliquot code is already in use.") };
+  }
   revalidatePath("/inventory");
-  revalidatePath(`/inventory/${id}`);
-  redirect(`/inventory/${id}`);
+  revalidatePath(`/inventory/${itemId}`);
+  redirect(`/inventory/${itemId}`);
 }
 
 const transactionSchema = z.object({

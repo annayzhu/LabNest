@@ -76,7 +76,7 @@ export function EntryCard({ entry }: { entry: Entry }) {
             <Link2 className="h-3.5 w-3.5" aria-hidden />
             {linkedItemCount} {linkedItemCount === 1 ? "link" : "links"}
           </span>
-          <StatusPill status={entry.recordStatus} href={filterHref("/entries", { status: entry.recordStatus })} />
+          <StatusPill status={entry.archivedAt ? "archived" : entry.recordStatus} href={filterHref("/entries", { status: entry.archivedAt ? "archived" : entry.recordStatus })} />
           {entry.pendingActionCount ? (
             <BadgeLink href={filterHref("/actions", { status: "pending" })} tone="warning">
               {entry.pendingActionCount} pending {entry.pendingActionCount === 1 ? "action" : "actions"}

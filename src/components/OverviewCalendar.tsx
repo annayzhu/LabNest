@@ -101,15 +101,15 @@ export function OverviewCalendar({
           }
         />
         <CardBody className="p-0">
-          <section aria-label={t("Monthly calendar")} className="min-w-0 p-3 sm:p-5">
-            <div className="grid grid-cols-7 border-b border-hairline pb-2">
+          <section aria-label={t("Monthly calendar")} className="min-w-0 p-3 sm:p-4">
+            <div className="grid grid-cols-7 border-b border-hairline pb-1.5">
               {weekdayLabels.map((label, index) => (
                 <span key={`${label}-${index}`} className="text-center text-[11px] font-medium uppercase tracking-[0.08em] text-muted" data-i18n-ignore>
                   {label}
                 </span>
               ))}
             </div>
-            <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-1.5">
+            <div className="mt-1.5 grid grid-cols-7 gap-1">
               {days.map((day) => {
                 const dateKey = calendarDateKey(day);
                 const dayActivities = activitiesByDate.get(dateKey) ?? [];
@@ -120,7 +120,7 @@ export function OverviewCalendar({
                   ? `${format(day, "yyyy")}年${format(day, "M")}月${format(day, "d")}日 ${format(day, "EEEE", { locale: dateLocale })}`
                   : format(day, "EEEE, MMMM d, yyyy", { locale: dateLocale });
                 const sharedClass = cn(
-                  "focus-ring relative flex min-h-14 min-w-0 flex-col rounded-[8px] border p-1.5 text-left transition sm:min-h-20 sm:p-2",
+                  "focus-ring relative flex min-h-11 min-w-0 flex-col rounded-[7px] border p-1.5 text-left transition sm:min-h-14",
                   inCurrentMonth ? "border-transparent hover:border-hairline hover:bg-warm" : "border-transparent text-disabled hover:bg-warm/70",
                   isSelected && "border-sage bg-sage-surface/70 hover:border-sage hover:bg-sage-surface/70",
                   isToday && !isSelected && "border-hairline bg-warm",
@@ -147,14 +147,14 @@ export function OverviewCalendar({
                       {format(day, "d")}
                     </span>
                     <span className="mt-auto hidden min-w-0 space-y-1 sm:block">
-                      {dayActivities.slice(0, 2).map((activity) => (
+                      {dayActivities.slice(0, 1).map((activity) => (
                         <span key={activity.id} className="flex min-w-0 items-center gap-1 text-[10px] leading-4 text-graphite">
                           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", activityColor(activity.kind))} aria-hidden />
                           <span className="truncate" data-i18n-ignore>{activity.title}</span>
                         </span>
                       ))}
-                      {dayActivities.length > 2 ? (
-                        <span className="block pl-2.5 text-[10px] leading-3 text-muted" data-i18n-ignore>+{dayActivities.length - 2}</span>
+                      {dayActivities.length > 1 ? (
+                        <span className="block pl-2.5 text-[10px] leading-3 text-muted" data-i18n-ignore>+{dayActivities.length - 1}</span>
                       ) : null}
                     </span>
                     {dayActivities.length ? (
@@ -168,7 +168,7 @@ export function OverviewCalendar({
                 );
               })}
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline pt-3 text-xs text-muted">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline pt-2.5 text-xs text-muted">
               <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-info" aria-hidden />{t("Entries")}</span>
               <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-moss" aria-hidden />{t("Experiments")}</span>
             </div>

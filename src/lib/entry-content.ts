@@ -1,3 +1,6 @@
+import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
+import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
+
 export const ENTRY_CONTENT_SCHEMA_VERSION = 1;
 export const ENTRY_MARKDOWN_FORMAT = "labnest-markdown-v1";
 
@@ -121,7 +124,7 @@ export function getOrderedAttachmentIds(value: unknown) {
 }
 
 export function plainTextFromEntryMarkdown(markdown: string) {
-  return markdown
+  return stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(markdown))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]+)\]\((?:https?:\/\/)[^)]+\)/g, "$1")

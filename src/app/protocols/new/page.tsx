@@ -4,17 +4,21 @@ import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { createProtocolDocument } from "@/app/protocols/new/actions";
 import { prisma } from "@/lib/db";
 import { createProtocolTemplateDocument } from "@/lib/protocol-document";
+import { suggestNextRecordCode } from "@/lib/record-codes";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProtocolPage() {
-  const [projects, researchPlans] = await Promise.all([
+  const [projects, researchPlans, existingProtocolCodes, counter] = await Promise.all([
     prisma.project.findMany({ where: { status: "active" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.researchPlan.findMany({
       include: { project: { select: { name: true } } },
       orderBy: [{ project: { name: "asc" } }, { title: "asc" }],
     }),
+    prisma.protocol.findMany({ select: { humanCode: true } }),
+    prisma.recordCodeCounter.findUnique({ where: { key: "protocol" }, select: { value: true } }),
   ]);
+  const suggestedCode = suggestNextRecordCode("protocol", existingProtocolCodes.map((protocol) => protocol.humanCode), counter?.value);
 
   return (
     <AppShell>
@@ -27,7 +31,7 @@ export default async function NewProtocolPage() {
         <ProtocolDocumentEditor
           action={createProtocolDocument}
           mode="create"
-          protocol={{ canonicalTitle: "", availability: "draft", tags: [], scope: "general" }}
+          protocol={{ canonicalTitle: "", suggestedCodeSuffix: suggestedCode.slice("PRT-".length), availability: "draft", tags: [], scope: "general" }}
           version={{ displayVersion: "0.1", reviewStage: "draft", changeSummary: "Initial version." }}
           initialDocument={createProtocolTemplateDocument()}
           projects={projects}

@@ -7,7 +7,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { searchDemoRecords, type SearchResult } from "@/lib/search";
+import type { SearchResult } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +125,7 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
       })),
     ];
   } catch {
-    return searchDemoRecords(query, 80);
+    return [];
   }
 }
 

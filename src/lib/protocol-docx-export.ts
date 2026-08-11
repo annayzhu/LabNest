@@ -41,9 +41,9 @@ function run(text: string, options: { bold?: boolean; italic?: boolean; underlin
 function paragraph(
   content: string,
   style?: string,
-  options: { before?: number; after?: number; align?: "left" | "center" | "right"; keepNext?: boolean } = {},
+  options: { before?: number; after?: number; align?: "left" | "center" | "right"; keepNext?: boolean; lineHeight?: number } = {},
 ) {
-  const spacing = `<w:spacing w:before="${options.before ?? 0}" w:after="${options.after ?? 60}" w:line="240" w:lineRule="auto"/>`;
+  const spacing = `<w:spacing w:before="${options.before ?? 0}" w:after="${options.after ?? 60}" w:line="${Math.round((options.lineHeight ?? 1) * 240)}" w:lineRule="auto"/>`;
   return `<w:p><w:pPr>${style ? `<w:pStyle w:val="${style}"/>` : ""}${spacing}${options.align ? `<w:jc w:val="${options.align}"/>` : ""}${options.keepNext ? "<w:keepNext/>" : ""}</w:pPr>${content || run(" ")}</w:p>`;
 }
 
@@ -55,6 +55,7 @@ function richRuns(runs: ProtocolRichTextRun[]) {
     strike: item.strike,
     code: item.code,
     color: item.link ? palette.secondaryText : undefined,
+    size: item.fontSizePt ? item.fontSizePt * 2 : undefined,
   })).join("");
 }
 
@@ -144,16 +145,16 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }) {
   if (block.type === "text") return block.text.split(/\r?\n/).map((line) => paragraph(run(line))).join("");
   if (block.type === "rich_text") return block.nodes.map((node) => {
     const content = richRuns(node.content);
-    if (node.type === "heading2") return paragraph(content, "Heading2", { before: 120, keepNext: true });
-    if (node.type === "heading3") return paragraph(content, "Heading3", { before: 80, keepNext: true });
-    if (node.type === "bullet") return paragraph(run("• ") + content, "ListBullet");
+    if (node.type === "heading2") return paragraph(content, "Heading2", { before: 120, keepNext: true, lineHeight: node.lineHeight });
+    if (node.type === "heading3") return paragraph(content, "Heading3", { before: 80, keepNext: true, lineHeight: node.lineHeight });
+    if (node.type === "bullet") return paragraph(run("• ") + content, "ListBullet", { lineHeight: node.lineHeight });
     if (node.type === "numbered") {
       const prefix = `${sequence.numbered}. `;
       sequence.numbered += 1;
-      return paragraph(run(prefix) + content, "ListBullet");
+      return paragraph(run(prefix) + content, "ListBullet", { lineHeight: node.lineHeight });
     }
-    if (node.type === "quote") return paragraph(content, "Quote");
-    return paragraph(content);
+    if (node.type === "quote") return paragraph(content, "Quote", { lineHeight: node.lineHeight });
+    return paragraph(content, undefined, { lineHeight: node.lineHeight });
   }).join("");
   if (block.type === "checklist") return block.items.filter(Boolean).map((item) => paragraph(run(`☐ ${item}`), "Checklist")).join("");
   if (block.type === "table") return table(block.rows, block.caption, { description: block.resultTemplate ? `labnest-result-template:${JSON.stringify(block.resultTemplate)}` : undefined });

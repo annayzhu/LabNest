@@ -110,11 +110,11 @@ export async function structuredExportRecords(
       await prisma.inventoryItem.findMany({ include: { location: true }, orderBy: { updatedAt: "desc" } }),
       selection,
       (row) => ({
-        search: [row.name, row.englishName, row.barcode, row.aliquotCode, row.lotNumber, row.vendor, row.brand, row.catalogNumber, row.casNumber],
-        filters: { status: row.status, category: row.category, location: row.locationId, flag: getInventoryRiskFlags(row) },
+        search: [row.name, row.englishName, row.principalInvestigator, row.barcode, row.aliquotCode, row.lotNumber, row.vendor, row.brand, row.catalogNumber, row.casNumber],
+        filters: { status: row.status, category: row.category, location: row.locationId, pi: row.principalInvestigator, flag: getInventoryRiskFlags(row) },
       }),
     );
-    return rows.map((row) => ({ name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, currentQuantity: row.currentQuantity, unit: row.unit, lowThreshold: row.lowThreshold, concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
+    return rows.map((row) => ({ name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, principalInvestigator: row.principalInvestigator, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, currentQuantity: row.currentQuantity, unit: row.unit, lowThreshold: row.lowThreshold, concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
   }
   const rows = applyExportSelection(
     await prisma.report.findMany({ include: { project: true, researchPlan: true }, orderBy: { updatedAt: "desc" } }),

@@ -39,6 +39,20 @@ function numericSuffix(kind: RecordCodeKind, value: string) {
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
+function nextRecordCodeValue(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number) {
+  const rule = recordCodeRules[kind];
+  const highestExisting = existingCodes.reduce((highest, code) => {
+    const suffix = numericSuffix(kind, code);
+    return suffix === undefined ? highest : Math.max(highest, suffix);
+  }, rule.firstValue - 1);
+  const safeLastReserved = Number.isSafeInteger(lastReservedValue) ? lastReservedValue! : rule.firstValue - 1;
+  return Math.max(rule.firstValue, highestExisting + 1, safeLastReserved + 1);
+}
+
+export function suggestNextRecordCode(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number) {
+  return formatRecordCode(kind, nextRecordCodeValue(kind, existingCodes, lastReservedValue));
+}
+
 export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
   let existingCodes: string[];
   if (kind === "researchPlan") {
@@ -50,11 +64,7 @@ export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: Reco
   }
 
   const rule = recordCodeRules[kind];
-  const highestExisting = existingCodes.reduce((highest, code) => {
-    const suffix = numericSuffix(kind, code);
-    return suffix === undefined ? highest : Math.max(highest, suffix);
-  }, rule.firstValue - 1);
-  const baseline = Math.max(rule.firstValue, highestExisting + 1);
+  const baseline = nextRecordCodeValue(kind, existingCodes);
 
   const rows = await tx.$queryRaw<Array<{ value: number }>>(Prisma.sql`
     INSERT INTO "RecordCodeCounter" ("key", "value", "updatedAt")

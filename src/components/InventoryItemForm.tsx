@@ -1,14 +1,21 @@
+"use client";
+
+import { useActionState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { inventoryCategories } from "@/lib/inventory";
 
-type LocationOption = { id: string; name: string; temperature?: string | null };
+const initialState: FormActionState = {};
+
+type LocationOption = { id: string; name: string; temperature?: string | null; status?: "active" | "inactive" | "archived" };
 type InventoryItemInitial = {
   id?: string;
   name?: string;
   englishName?: string | null;
   category?: string | null;
   brand?: string | null;
+  principalInvestigator?: string | null;
   vendor?: string | null;
   catalogNumber?: string | null;
   casNumber?: string | null;
@@ -32,16 +39,17 @@ export function InventoryItemForm({
   locations,
   initial = {},
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: FormAction;
   locations: LocationOption[];
   initial?: InventoryItemInitial;
 }) {
+  const [state, formAction, pending] = useActionState(action, initialState);
   const expiryDate = initial.expiryDate
     ? new Date(initial.expiryDate).toISOString().slice(0, 10)
     : "";
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
       <Card>
         <CardHeader title="Material identity" />
@@ -59,6 +67,10 @@ export function InventoryItemForm({
             <select name="category" defaultValue={initial.category ?? "reagent"} className={formInputClass}>
               {inventoryCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
             </select>
+          </label>
+          <label>
+            <span className={formLabelClass}>Principal investigator (PI)</span>
+            <input name="principalInvestigator" defaultValue={initial.principalInvestigator ?? ""} maxLength={120} className={formInputClass} placeholder="Prof. Zhang / Zhang Lab" />
           </label>
           <label>
             <span className={formLabelClass}>Brand</span>
@@ -110,6 +122,7 @@ export function InventoryItemForm({
               {locations.map((location) => (
                 <option key={location.id} value={location.id}>
                   {location.name}{location.temperature ? ` · ${location.temperature}` : ""}
+                  {location.status === "archived" ? " · archived" : ""}
                 </option>
               ))}
             </select>
@@ -145,9 +158,10 @@ export function InventoryItemForm({
         </CardBody>
       </Card>
 
-      <div className="flex justify-end">
-        <button className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm">
-          {initial.id ? "Save Item" : "Register Item"}
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        <button type="submit" disabled={pending} className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+          {pending ? "Saving…" : initial.id ? "Save Item" : "Register Item"}
         </button>
       </div>
     </form>

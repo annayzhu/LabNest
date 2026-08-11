@@ -1,19 +1,36 @@
+"use client";
+
+import { useActionState, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { reportStatusOptions } from "@/lib/status-options";
 
-export function ReportEditForm({ action, initial }: { action: (formData: FormData) => void | Promise<void>; initial: { id: string; projectId: string; researchPlanId: string | null; projectName: string; researchPlanTitle?: string; title: string; status: string; periodStart: string; periodEnd: string; tags: string[]; document: ScientificDocument } }) {
-  return <form action={action} className="space-y-5"><input type="hidden" name="id" value={initial.id} /><input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
-    <Card><CardHeader title="Report control" eyebrow="Scope is locked; narrative remains editable" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <label className="md:col-span-2"><span className={formLabelClass}>Scope</span><div className={`${formInputClass} flex items-center bg-stone/50`}>{initial.projectName}{initial.researchPlanTitle ? ` · ${initial.researchPlanTitle}` : " · Entire Project"}</div></label>
-      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" defaultValue={initial.title} className={formInputClass} /></label>
-      <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} defaultValue={initial.status} required className="md:col-span-2" />
-      <label><span className={formLabelClass}>Period start</span><input name="periodStart" type="date" defaultValue={initial.periodStart} className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input name="periodEnd" type="date" defaultValue={initial.periodEnd} className={formInputClass} /></label>
+const initialState: FormActionState = {};
+
+export function ReportEditForm({ action, initial }: { action: FormAction; initial: { id: string; projectId: string; researchPlanId: string | null; projectName: string; researchPlanTitle?: string; title: string; status: string; periodStart: string; periodEnd: string; tags: string[]; document: ScientificDocument } }) {
+  const [state, formAction, pending] = useActionState(action, initialState);
+  const [title, setTitle] = useState(initial.title);
+  const [status, setStatus] = useState(initial.status);
+  const [periodStart, setPeriodStart] = useState(initial.periodStart);
+  const [periodEnd, setPeriodEnd] = useState(initial.periodEnd);
+  const scope = `${initial.projectName}${initial.researchPlanTitle ? ` · ${initial.researchPlanTitle}` : " · Entire Project"}`;
+  const period = [periodStart, periodEnd].filter(Boolean).join(" – ") || "Not specified";
+  return <form action={formAction} className="space-y-5"><input type="hidden" name="id" value={initial.id} /><input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
+    <div className="document-editor-layout"><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" headerFacts={[
+      { label: "Scope", value: scope },
+      { label: "Status", value: status.replaceAll("_", " ") },
+      { label: "Period", value: period },
+    ]} /></div><aside className="document-editor-sidebar" aria-label="Report properties"><Card><CardHeader title="Report control" eyebrow="Scope is locked; narrative remains editable" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <label className="md:col-span-2"><span className={formLabelClass}>Scope</span><div className={`${formInputClass} flex items-center bg-stone/50`}>{scope}</div></label>
+      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
+      <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
+      <label><span className={formLabelClass}>Period start</span><input name="periodStart" type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input name="periodEnd" type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className={formInputClass} /></label>
       <label><TagFieldLabel /><input name="tags" defaultValue={initial.tags.join(", ")} placeholder="monthly, internal-review" className={formInputClass} /></label>
-    </CardBody></Card><ScientificDocumentEditor initialDocument={initial.document} /><div className="sticky bottom-4 z-20 flex justify-end"><button className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft">Save Report</button></div>
+    </CardBody></Card></aside></div><div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}<button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : "Save Report"}</button></div>
   </form>;
 }

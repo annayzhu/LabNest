@@ -2,6 +2,11 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { DocumentPageHeader } from "@/components/DocumentPageHeader";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { InlineTableEditor } from "@/components/InlineTableEditor";
+import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { ProtocolRichTextEditor } from "@/components/ProtocolRichTextEditor";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEditor";
@@ -34,10 +39,6 @@ function uniqueBlockId(sectionKey: ProtocolSectionKey) {
   return `${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function tsvToRows(value: string) {
-  return value.split("\n").map((line) => line.split("\t"));
-}
-
 function BlockEditor({
   block,
   sectionKey,
@@ -52,9 +53,10 @@ function BlockEditor({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-[9px] border border-hairline bg-surface p-3">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{block.type.replaceAll("_", " ")}</span>
+    <div className="document-block document-editor-control rounded-[7px] border border-transparent px-2 py-2">
+      <div className="document-print-only"><ProtocolContentBlockView block={block} /></div>
+      <div data-print-hidden>
+      <div className="flex items-center justify-end gap-3">
         <div className="flex gap-1">
           <button type="button" onClick={() => onMove(-1)} aria-label="Move block up" className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone"><ChevronUp className="h-4 w-4" /></button>
           <button type="button" onClick={() => onMove(1)} aria-label="Move block down" className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone"><ChevronDown className="h-4 w-4" /></button>
@@ -74,11 +76,7 @@ function BlockEditor({
       ) : null}
       {block.type === "table" && sectionKey === "result_templates" ? <ResultTemplateConfigEditor block={block} onChange={onChange} /> : null}
       {block.type === "table" && sectionKey !== "result_templates" ? (
-        <div className="space-y-2">
-          <input value={block.caption ?? ""} onChange={(event) => onChange({ ...block, caption: event.target.value })} className={inputClass} placeholder="Table caption" />
-          <textarea value={block.rows.map((row) => row.join("\t")).join("\n")} onChange={(event) => onChange({ ...block, rows: tsvToRows(event.target.value) })} className={`${textareaClass} min-h-40 font-mono text-xs`} placeholder="Paste tab-separated cells; one row per line" />
-          <p className="text-xs leading-5 text-muted">Large tables remain scrollable in the Protocol. Paste cells directly from Excel using tab-separated columns.</p>
-        </div>
+        <InlineTableEditor rows={block.rows} onChange={(rows) => onChange({ ...block, rows })} caption={block.caption} onCaptionChange={(caption) => onChange({ ...block, caption })} />
       ) : null}
       {block.type === "media" ? (
         <div className="grid gap-3 md:grid-cols-[150px_1fr]">
@@ -94,6 +92,7 @@ function BlockEditor({
           <textarea value={block.notes ?? ""} onChange={(event) => onChange({ ...block, notes: event.target.value })} className={`${textareaClass} md:col-span-2`} placeholder="Timer notes" />
         </div>
       ) : null}
+      </div>
     </div>
   );
 }
@@ -112,7 +111,7 @@ export function ProtocolDocumentEditor({
 }: {
   action: ProtocolEditorAction;
   mode: "create" | "edit";
-  protocol: { id?: string; humanCode?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
+  protocol: { id?: string; humanCode?: string; suggestedCodeSuffix?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
   version: { id?: string; displayVersion: string; reviewStage: string; changeSummary?: string };
   initialDocument: ProtocolDocument;
   suggestedDisplayVersion?: string;
@@ -121,15 +120,22 @@ export function ProtocolDocumentEditor({
   initialResearchPlanIds?: string[];
   initialPrimaryResearchPlanIds?: string[];
 }) {
+  const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const [document, setDocument] = useState(initialDocument);
+  const [canonicalTitle, setCanonicalTitle] = useState(protocol.canonicalTitle);
   const [state, formAction, pending] = useActionState(action, initialState);
   const [scope, setScope] = useState(protocol.scope);
   const [projectId, setProjectId] = useState(protocol.projectId ?? "");
+  const [codeSuffix, setCodeSuffix] = useState(protocol.suggestedCodeSuffix ?? "");
+  const [availability, setAvailability] = useState(protocol.availability);
+  const [reviewStage, setReviewStage] = useState(reviewed ? "draft" : version.reviewStage);
+  const [displayVersion, setDisplayVersion] = useState(reviewed ? suggestedDisplayVersion ?? version.displayVersion : version.displayVersion);
   const [selectedPlanIds, setSelectedPlanIds] = useState(initialResearchPlanIds);
   const [primaryPlanIds, setPrimaryPlanIds] = useState(initialPrimaryResearchPlanIds);
-  const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const serialized = useMemo(() => JSON.stringify(document), [document]);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
+  const project = projects.find((item) => item.id === projectId);
+  const identifier = protocol.humanCode ?? (codeSuffix ? `PRT-${codeSuffix}` : "Draft Protocol");
 
   const updateBlock = (sectionKey: ProtocolSectionKey, index: number, block: ProtocolContentBlock) => {
     setDocument((current) => ({
@@ -187,18 +193,20 @@ export function ProtocolDocumentEditor({
       <input type="hidden" name="contentJson" value={serialized} />
       {mode === "edit" ? <><input type="hidden" name="protocolScope" value={protocol.scope} /><input type="hidden" name="projectId" value={protocol.projectId ?? ""} /></> : null}
 
+      <div className="document-editor-layout">
+      <aside className="document-editor-sidebar" aria-label="Protocol properties">
       <section className="rounded-[12px] border border-hairline bg-surface shadow-paper">
         <header className="border-b border-hairline px-5 py-4"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Identity and governance</p><h2 className="mt-1 font-serif text-xl font-medium text-ink">Protocol record</h2></header>
         <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-          <RecordCodeField label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" existingCode={mode === "edit" ? protocol.humanCode : undefined} />
-          <label className="md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol title</span><input required name="canonicalTitle" defaultValue={protocol.canonicalTitle} className={inputClass} /></label>
+          <RecordCodeField label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={mode === "edit" ? protocol.humanCode : undefined} />
+          <label className="md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol title</span><input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className={inputClass} /></label>
           <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={inputClass} /></label>
           <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={inputClass} /></label>
           {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={inputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Scope</span><p className="mt-2 text-sm font-medium capitalize text-ink">{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</p><p className="mt-1 text-xs text-muted">Use “Adapt to project” to preserve General → Project lineage.</p></div>}
           {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={inputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
-          <StatusRadioGroup label="Availability" name="availability" options={protocolAvailabilityOptions} defaultValue={protocol.availability} required className="md:col-span-2" />
-          <StatusRadioGroup label="Review stage" name="reviewStage" options={protocolReviewStageOptions} defaultValue={reviewed ? "draft" : version.reviewStage} required className="md:col-span-2" />
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" defaultValue={reviewed ? suggestedDisplayVersion : version.displayVersion} className={inputClass} /></label>
+          <StatusRadioGroup label="Availability" name="availability" options={protocolAvailabilityOptions} value={availability} onValueChange={setAvailability} required className="md:col-span-2" />
+          <StatusRadioGroup label="Review stage" name="reviewStage" options={protocolReviewStageOptions} value={reviewStage} onValueChange={setReviewStage} required className="md:col-span-2" />
+          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={inputClass} /></label>
           <label className="md:col-span-2"><TagFieldLabel /><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={inputClass} /></label>
           <label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
         </div>
@@ -217,20 +225,33 @@ export function ProtocolDocumentEditor({
           }) : <p className="px-3 py-6 text-center text-sm text-muted">No Research Plans are available for this scope.</p>}
         </div>
       </section>
+      </aside>
 
-      {document.sections.map((section) => (
-        <section key={section.key} className="rounded-[12px] border border-hairline bg-warm/70 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Fixed section</p><h2 className="font-serif text-xl font-medium text-ink">{protocolSectionLabels[section.key]}</h2></div>
-            <div className="flex flex-wrap gap-1">
-              {(["rich_text", "heading", "checklist", "table", "callout", "media", "timer"] as const).map((type) => <button key={type} type="button" onClick={() => addBlock(section.key, type)} className="focus-ring inline-flex h-8 items-center gap-1 rounded-[7px] border border-hairline bg-surface px-2 text-xs font-medium text-graphite hover:border-border-strong"><Plus className="h-3.5 w-3.5" />{type.replaceAll("_", " ")}</button>)}
+      <div className="document-editor-main">
+      <DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Edit on the page · the printed A4 keeps this layout</span><DocumentPrintButton /></>}>
+        <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" facts={[
+          { label: "Version", value: displayVersion, mono: true },
+          { label: "Scope", value: scope === "general" ? "General library" : "Project-adapted" },
+          { label: "Project", value: scope === "project" ? project?.name ?? protocol.projectName ?? "Not selected" : null },
+          { label: "Availability", value: availability.replaceAll("_", " ") },
+          { label: "Review", value: reviewStage.replaceAll("_", " ") },
+        ]} />
+        {document.sections.map((section) => (
+          <section key={section.key} className="document-section">
+            <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <h2 className="document-section-title font-serif font-medium text-ink">{protocolSectionLabels[section.key]}</h2>
+              <div className="flex flex-wrap justify-end gap-1" data-print-hidden>
+                {(["rich_text", "heading", "checklist", "table", "callout", "media", "timer"] as const).map((type) => <button key={type} type="button" onClick={() => addBlock(section.key, type)} className="focus-ring inline-flex h-8 items-center gap-1 rounded-[7px] border border-hairline bg-surface px-2 text-xs font-medium capitalize text-graphite hover:border-border-strong"><Plus className="h-3.5 w-3.5" />{type.replaceAll("_", " ")}</button>)}
+              </div>
+            </header>
+            <div>
+              {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="border-y border-dashed border-hairline px-3 py-5 text-center text-sm text-muted" data-print-hidden>No blocks. Add rich text, a checklist, a table, a callout, media, or a timer.</p>}
             </div>
-          </div>
-          <div className="mt-4 space-y-3">
-            {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="rounded-[8px] border border-dashed border-hairline bg-surface px-3 py-5 text-center text-sm text-muted">No blocks. Add rich text, a checklist, a table, a callout, media, or a timer.</p>}
-          </div>
-        </section>
-      ))}
+          </section>
+        ))}
+      </DocumentCanvas>
+      </div>
+      </div>
 
       {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       <div className="sticky bottom-4 z-20 flex justify-end"><button disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</button></div>

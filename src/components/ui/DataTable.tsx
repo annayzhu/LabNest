@@ -51,6 +51,7 @@ export function DataTable<T>({
                         type="checkbox"
                         name={selection.fieldName ?? "id"}
                         value={getRowKey(row)}
+                        data-selection-group={selection.exportPath}
                         aria-label={`Select record ${getRowKey(row)}`}
                         className="selection-checkbox focus-ring mt-0.5 h-4 w-4 rounded border-hairline accent-moss"
                       />

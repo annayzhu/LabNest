@@ -6,14 +6,20 @@ export function RecordCodeField({
   name,
   minimumDigits,
   placeholder,
+  defaultValue,
   existingCode,
+  value,
+  onValueChange,
 }: {
   label: string;
   prefix: string;
   name: string;
   minimumDigits: number;
   placeholder: string;
+  defaultValue?: string;
   existingCode?: string | null;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }) {
   if (existingCode) {
     return (
@@ -44,6 +50,9 @@ export function RecordCodeField({
           minLength={minimumDigits}
           pattern={`[0-9]{${minimumDigits},}`}
           placeholder={placeholder}
+          value={value}
+          defaultValue={value === undefined ? defaultValue : undefined}
+          onChange={(event) => onValueChange?.(event.target.value)}
           aria-label={`${label} suffix after ${prefix}`}
           className="min-w-0 flex-1 bg-transparent px-3 font-mono outline-none placeholder:text-muted/70"
         />

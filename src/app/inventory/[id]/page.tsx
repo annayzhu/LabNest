@@ -88,6 +88,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             <CardBody className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
               <Field label="English name" value={item.englishName} />
               <Field label="Category" value={categoryLabel} />
+              <Field label="Principal investigator (PI)" value={item.principalInvestigator} />
               <Field label="Brand" value={item.brand} />
               <Field label="Supplier" value={item.vendor} />
               <Field label="Catalog" value={item.catalogNumber} mono />

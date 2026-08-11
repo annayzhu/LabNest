@@ -4,11 +4,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
-import { entities } from "@/lib/demo-data";
 import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { getEntityRecords } from "@/lib/live-data";
+
+export const dynamic = "force-dynamic";
 
 export default async function EntitiesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
+  const entities = await getEntityRecords();
   const type = firstSearchParam(params, "type");
   const status = firstSearchParam(params, "status");
   const filteredEntities = entities.filter((entity) => {

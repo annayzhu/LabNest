@@ -1,4 +1,4 @@
-import { procurementQuoteLines } from "@/lib/demo-data";
+import { getProcurementRecords } from "@/lib/live-data";
 import { groupSelectedQuoteLinesBySupplier, toSchoolSelfPurchaseRows } from "@/lib/procurement";
 import { writeSchoolSelfPurchaseWorkbook } from "@/lib/procurement-excel";
 
@@ -31,6 +31,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Missing supplier query parameter." }, { status: 400 });
   }
 
+  const { procurementQuoteLines } = await getProcurementRecords();
   const group = groupSelectedQuoteLinesBySupplier(procurementQuoteLines).find(
     (candidate) => candidate.supplierName === supplierName,
   );
@@ -45,4 +46,3 @@ export async function GET(request: Request) {
 
   return workbookResponse(buffer, filename);
 }
-

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { strFromU8, unzipSync } from "fflate";
+import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { normalizeProtocolDocument } from "./protocol-document";
+import { researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
 import { buildStructuredTemplate, parseStructuredFile } from "./structured-files";
 import { structuredModules } from "./structured-modules";
 
@@ -143,6 +144,27 @@ Seed cells in a six-well plate and retain matched vehicle controls.
     const parsed = await parseStructuredFile(new File([markdown], "research-plan.md", { type: "text/markdown" }), "research-plans");
 
     expect(parsed.records[0]?.materialMethods).toBe("Seed cells in a six-well plate and retain matched vehicle controls.");
+  });
+
+  it("recognizes native Word tables as Research Plan table blocks", async () => {
+    const paragraph = (text: string) => `<w:p><w:r><w:t>${text}</w:t></w:r></w:p>`;
+    const cell = (text: string) => `<w:tc>${paragraph(text)}</w:tc>`;
+    const table = (rows: string[][]) => `<w:tbl>${rows.map((row) => `<w:tr>${row.map(cell).join("")}</w:tr>`).join("")}</w:tbl>`;
+    const documentXml = `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+      ${paragraph("Imported table plan")}
+      ${table([["Project", "ZHY project"], ["Plan code", "RP-999"], ["Status", "draft"]])}
+      ${paragraph("Design")}
+      ${paragraph("【实验一】细胞质量控制")}
+      ${table([["细胞", "分组", "检测方法"], ["A549", "无", "qPCR | Western blotting"]])}
+    </w:body></w:document>`;
+    const bytes = zipSync({ "word/document.xml": strToU8(documentXml) });
+    const parsed = await parseStructuredFile(new File([bytes], "native-table-plan.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }), "research-plans");
+    const document = scientificDocumentFromStructuredRecord(researchPlanSections, parsed.records[0]!, { design: "design" });
+
+    expect(document.sections[0].blocks.map((block) => block.type)).toEqual(["text", "table"]);
+    expect(document.sections[0].blocks[1]).toEqual(expect.objectContaining({
+      rows: [["细胞", "分组", "检测方法"], ["A549", "无", "qPCR | Western blotting"]],
+    }));
   });
 
   it("keeps legacy Research Plan Variables & controls imports readable", async () => {

@@ -282,6 +282,7 @@ model Project {
   id          String        @id @default(cuid())
   name        String
   description String?
+  keyInformation String?
   status      ProjectStatus @default(active)
   tags        String[]      @default([])
   createdAt   DateTime      @default(now())
@@ -309,6 +310,7 @@ model ResearchPlan {
   objective   String?
   hypothesis  String?
   rationale   String?
+  keyInformation String?
   design      String?
   contentJson Json               @default("{}")
   status      ResearchPlanStatus @default(draft)
@@ -353,6 +355,7 @@ model Entry {
   sourceType     EntrySourceType       @default(text)
   recordStatus   RecordLifecycleStatus @default(draft)
   contentJson    Json                  @default("{}")
+  archivedAt     DateTime?
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
@@ -360,6 +363,7 @@ model Entry {
   @@index([occurredAt])
   @@index([projectId])
   @@index([researchPlanId])
+  @@index([archivedAt])
 }
 
 model Experiment {
@@ -556,6 +560,7 @@ model InventoryLocation {
   id               String                @id @default(cuid())
   name             String
   type             InventoryLocationType @default(other)
+  status           ObjectStatus          @default(active)
   parentLocationId String?
   parentLocation   InventoryLocation?    @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
   childLocations   InventoryLocation[]   @relation("LocationHierarchy")
@@ -569,6 +574,7 @@ model InventoryLocation {
   sampleEventsTo   SampleLifecycleEvent[] @relation("SampleEventToLocation")
 
   @@index([type])
+  @@index([status])
   @@index([parentLocationId])
 }
 
@@ -580,6 +586,7 @@ model InventoryItem {
   englishName           String?
   category              String?
   brand                 String?
+  principalInvestigator String?
   containerType         String?
   barcode               String?
   aliquotCode           String?
@@ -612,6 +619,7 @@ model InventoryItem {
   @@unique([aliquotCode])
   @@index([entityId])
   @@index([category])
+  @@index([principalInvestigator])
   @@index([locationId])
   @@index([parentInventoryItemId])
   @@index([expiryDate])
@@ -1074,4 +1082,18 @@ model ActivityLog {
 
   @@index([targetType, targetId])
   @@index([createdAt])
+}
+
+model DeletedRecord {
+  id           String   @id @default(cuid())
+  targetType   String
+  targetId     String
+  identifier   String
+  title        String
+  snapshotJson Json
+  deletedAt    DateTime @default(now())
+  restoredAt   DateTime?
+
+  @@index([restoredAt, deletedAt])
+  @@index([targetType, targetId])
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ActiveFilterBar, type ActiveFilter } from "@/components/ActiveFilterBar";
 import { EntryCollectionNav } from "@/components/EntryCollectionNav";
@@ -25,7 +26,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
     return (
       (!tag || entry.tags.includes(tag)) &&
       (!source || entry.sourceType === source) &&
-      (!status || entry.recordStatus === status) &&
+      (!status || (status === "archived" ? Boolean(entry.archivedAt) : !entry.archivedAt && entry.recordStatus === status)) &&
       (!mood || entry.moodStatus === mood) &&
       (!project || (project === "unassigned" ? !entry.projectId : entry.projectId === project))
     );
@@ -53,8 +54,9 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
           actions={
             <Link
               href="/entries/new"
-              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
+              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
             >
+              <Plus className="h-3.5 w-3.5" aria-hidden />
               New Entry
             </Link>
           }

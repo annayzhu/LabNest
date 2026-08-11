@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { createEmptyProtocolDocument, projectProtocolDocument } from "./protocol-document";
+import { createEmptyProtocolDocument, normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
 
 describe("Protocol document structured projections", () => {
+  it("preserves controlled inline font sizes while normalizing saved content", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections[0].blocks = [
+      { id: "sized-run", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Important", fontSizePt: 14 }], lineHeight: 1.5 }] },
+    ];
+
+    const normalized = normalizeProtocolDocument(document);
+    const block = normalized?.sections[0].blocks[0];
+    expect(block?.type).toBe("rich_text");
+    if (block?.type === "rich_text") {
+      expect(block.nodes[0].content[0].fontSizePt).toBe(14);
+      expect(block.nodes[0].lineHeight).toBe(1.5);
+    }
+  });
+
   it("preserves numbered step headings and their following descriptions", () => {
     const document = createEmptyProtocolDocument();
     const steps = document.sections.find((section) => section.key === "steps")!;

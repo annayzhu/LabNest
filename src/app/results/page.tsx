@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Download, Plus, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
@@ -14,6 +15,7 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const type = firstSearchParam(params, "type");
+  const status = firstSearchParam(params, "status");
   const record = firstSearchParam(params, "record");
   const quality = firstSearchParam(params, "quality");
   const validation = firstSearchParam(params, "validation");
@@ -21,6 +23,7 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
   const orderBy = sort === "title_asc" ? { title: "asc" as const } : { updatedAt: "desc" as const };
   const where = {
     ...(type ? { resultType: type } : {}),
+    ...(status ? { status: status as "active" | "inactive" | "archived" } : {}),
     ...(record ? { recordStatus: record as "draft" | "recorded" | "submitted" | "reviewed" } : {}),
     ...(quality ? { qualityStatus: quality as "not_assessed" | "pass" | "warning" | "fail" } : {}),
     ...(validation ? { validationStatus: validation as "not_applicable" | "incomplete" | "valid" | "warning" | "invalid" } : {}),
@@ -37,18 +40,19 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
     prisma.result.count(),
     prisma.result.findMany({ distinct: ["resultType"], select: { resultType: true }, orderBy: { resultType: "asc" } }),
   ]);
-  const exportHref = filterHref("/results/export", { exportScope: "filtered", q: query, type, record, quality, validation, sort });
+  const exportHref = filterHref("/results/export", { exportScope: "filtered", q: query, type, status, record, quality, validation, sort });
   return <AppShell><div className="space-y-4">
     <PageHeader title="Results" />
     <CollectionToolbar path="/results" query={query} searchPlaceholder="Search results, types, methods…" resultCount={results.length} totalCount={totalCount} sort={sort} defaultSort="updated_desc"
       filters={[
         { name: "type", label: "types", value: type, options: typeRows.map((row) => ({ value: row.resultType, label: row.resultType })) },
+        { name: "status", label: "status", value: status, options: ["active", "inactive", "archived"].map((value) => ({ value, label: value })) },
         { name: "record", label: "record status", value: record, options: ["draft", "recorded", "submitted", "reviewed"].map((value) => ({ value, label: value })) },
         { name: "quality", label: "QC", value: quality, options: ["not_assessed", "pass", "warning", "fail"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
         { name: "validation", label: "template validation", value: validation, options: ["not_applicable", "incomplete", "valid", "warning", "invalid"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
-      actions={<><Link href="/results/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><Link href={exportHref} className={collectionSecondaryActionClass}><Download className="h-4 w-4" aria-hidden />Export…</Link><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
+      actions={<><Link href="/results/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><CollectionExportMenu filteredHref={exportHref} exportPath="/results/export" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
     />
     <DataTable rows={results} getRowKey={(row) => row.id} emptyMessage="No Results match this view." selection={{ exportPath: "/results/export" }} columns={[
       { key: "result", header: "Result", render: (row) => <div><Link href={`/results/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link><p className="mt-1 text-xs text-muted">{row.project?.name ?? "No project"}{row.templateInstanceKey ? ` · ${row.templateInstanceLabel ?? row.templateInstanceKey}` : ""}</p></div> },
@@ -58,6 +62,7 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
       { key: "data", header: "Datasets", render: (row) => row._count.datasets },
       { key: "quality", header: "QC", render: (row) => <StatusPill status={row.qualityStatus} href={filterHref("/results", { quality: row.qualityStatus })} /> },
       { key: "validation", header: "Template", render: (row) => <StatusPill status={row.validationStatus} href={filterHref("/results", { validation: row.validationStatus })} /> },
+      { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} href={filterHref("/results", { status: row.status })} /> },
       { key: "record", header: "Record", render: (row) => <StatusPill status={row.recordStatus} href={filterHref("/results", { record: row.recordStatus })} /> },
     ]} />
   </div></AppShell>;

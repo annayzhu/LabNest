@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { protocolDeleteBlockers } from "@/lib/record-lifecycle";
+import { protocolRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
 
 const lifecycleSchema = z.object({
@@ -52,7 +52,7 @@ export async function deleteProtocol(
           recordStatus: true,
           projectId: true,
           versions: { select: { id: true } },
-          _count: { select: { researchPlans: true } },
+          _count: { select: { projectAssociations: true, researchPlans: true } },
         },
       });
       if (!protocol) throw new Error("This Protocol no longer exists.");
@@ -65,11 +65,15 @@ export async function deleteProtocol(
         tx.protocolVersion.count({ where: { protocolId: { not: protocol.id }, derivedFromVersion: { protocolId: protocol.id } } }),
         tx.reportSource.count({ where: { OR: [{ sourceType: "protocol", sourceId: protocol.id }, { sourceType: "protocol_version", sourceId: { in: versionIds } }] } }),
       ]);
-      const counts = { researchPlans: protocol._count.researchPlans, experiments, results, nonDraftVersions, derivedVersions, reportSourceReferences };
-      const blockers = protocolDeleteBlockers(protocol.availability, protocol.recordStatus, counts);
-      if (blockers.length) throw new Error("This Protocol is recorded or referenced and can only be archived.");
+      const counts = { projects: protocol._count.projectAssociations, researchPlans: protocol._count.researchPlans, experiments, results, nonDraftVersions, derivedVersions, reportSourceReferences };
+      const preserveAssociations = protocolRequiresAssociationPreservingRecycle(counts);
 
-      const recycled = await captureDeletedRecord(tx, "protocol", protocol.id);
+      const recycled = await captureDeletedRecord(tx, "protocol", protocol.id, { deletionMode: preserveAssociations ? "soft" : "physical" });
+      if (preserveAssociations) {
+        await tx.protocol.update({ where: { id: protocol.id }, data: { availability: "archived" } });
+        await tx.activityLog.create({ data: { action: "recycle", targetType: "protocol", targetId: protocol.id, metadataJson: { recycleBinId: recycled.id, deletionMode: "soft", humanCode: protocol.humanCode, title: protocol.title, previousAvailability: protocol.availability, recordStatus: protocol.recordStatus, projectId: protocol.projectId, versionIds, dependencyCounts: counts } } });
+        return;
+      }
       await tx.attachmentLink.deleteMany({ where: { OR: [{ targetType: "protocol", targetId: protocol.id }, { targetType: "protocol_version", targetId: { in: versionIds } }] } });
       await tx.itemLink.deleteMany({
         where: {

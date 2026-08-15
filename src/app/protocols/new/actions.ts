@@ -121,6 +121,16 @@ export async function createProtocolDocument(
         },
         include: { versions: { select: { id: true } } },
       });
+      const associatedProjectIds = Array.from(new Set([
+        ...(parsed.projectId ? [parsed.projectId] : []),
+        ...researchPlans.map((plan) => plan.projectId),
+      ]));
+      if (associatedProjectIds.length) {
+        await transaction.projectProtocol.createMany({
+          data: associatedProjectIds.map((projectId) => ({ projectId, protocolId: created.id })),
+          skipDuplicates: true,
+        });
+      }
       await transaction.activityLog.create({
         data: {
           action: "create",

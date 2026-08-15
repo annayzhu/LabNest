@@ -5,11 +5,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { isSingleResultTemplate } from "@/lib/experiment-results";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { normalizeResultTemplates, parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
-import { resultDeleteBlockers } from "@/lib/record-lifecycle";
+import { resultRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
-import { parseScientificDocumentJson, resultSections } from "@/lib/scientific-document";
+import { normalizeResultDocument, parseScientificDocumentJson, resultSections } from "@/lib/scientific-document";
 
 const resultSchema = z.object({
   id: z.string().optional(), experimentId: z.string().min(1, "Experiment is required."), title: z.string().trim().min(1, "Title is required.").max(180), resultType: z.string().trim().min(1, "Result type is required.").max(100),
@@ -20,25 +21,38 @@ function optionalText(value: FormDataEntryValue | null) { const text = String(va
 function optionalNumber(value: FormDataEntryValue | null) { const text = optionalText(value); if (!text) return undefined; const number = Number(text); if (!Number.isFinite(number)) throw new Error("Numeric value must be finite."); return number; }
 function fields(formData: FormData) {
   const parsed = resultSchema.parse({ id: optionalText(formData.get("id")), experimentId: formData.get("experimentId"), title: formData.get("title"), resultType: formData.get("resultType"), recordStatus: formData.get("recordStatus"), sourceType: formData.get("sourceType"), qualityStatus: formData.get("qualityStatus") });
-  return { parsed, templateKey: optionalText(formData.get("templateKey")), templateInstanceKey: optionalText(formData.get("templateInstanceKey")), templateInstanceLabel: optionalText(formData.get("templateInstanceLabel")), textValue: optionalText(formData.get("textValue")), numericValue: optionalNumber(formData.get("numericValue")), unit: optionalText(formData.get("unit")), analysisMethod: optionalText(formData.get("analysisMethod")), notes: optionalText(formData.get("notes")), valuesJson: parseResultValuesJson(formData.get("templateValuesJson")), contentJson: parseScientificDocumentJson(formData.get("contentJson"), resultSections) };
+  return { parsed, templateKey: optionalText(formData.get("templateKey")), templateProtocolVersionId: optionalText(formData.get("templateProtocolVersionId")), templateInstanceKey: optionalText(formData.get("templateInstanceKey")), templateInstanceLabel: optionalText(formData.get("templateInstanceLabel")), textValue: optionalText(formData.get("textValue")), numericValue: optionalNumber(formData.get("numericValue")), unit: optionalText(formData.get("unit")), analysisMethod: optionalText(formData.get("analysisMethod")), notes: optionalText(formData.get("notes")), valuesJson: parseResultValuesJson(formData.get("templateValuesJson")), contentJson: normalizeResultDocument(parseScientificDocumentJson(formData.get("contentJson"), resultSections)) };
 }
 
 async function persistNewResult(formData: FormData) {
   const data = fields(formData);
-  const experiment = await prisma.experiment.findUnique({ where: { id: data.parsed.experimentId }, select: { id: true, projectId: true, researchPlanId: true, primaryProtocolVersionId: true, primaryProtocolVersion: { select: { resultTemplatesJson: true } } } });
+  const experiment = await prisma.experiment.findUnique({ where: { id: data.parsed.experimentId }, select: { id: true, projectId: true, researchPlanId: true, primaryProtocolVersionId: true, protocolVersions: { orderBy: { order: "asc" }, select: { protocolVersionId: true, protocolVersion: { select: { resultTemplatesJson: true } } } } } });
   if (!experiment) throw new Error("Selected Experiment does not exist.");
-  const template = data.templateKey ? normalizeResultTemplates(experiment.primaryProtocolVersion?.resultTemplatesJson).find((item) => item.templateKey === data.templateKey) : undefined;
-  if (data.templateKey && !template) throw new Error("The selected Result Template is not part of this Experiment's locked primary ProtocolVersion.");
+  const templateVersionLink = data.templateKey
+    ? data.templateProtocolVersionId
+      ? experiment.protocolVersions.find((link) => link.protocolVersionId === data.templateProtocolVersionId)
+      : experiment.protocolVersions.find((link) => normalizeResultTemplates(link.protocolVersion.resultTemplatesJson).some((item) => item.templateKey === data.templateKey))
+    : undefined;
+  const template = data.templateKey ? normalizeResultTemplates(templateVersionLink?.protocolVersion.resultTemplatesJson).find((item) => item.templateKey === data.templateKey) : undefined;
+  if (data.templateKey && (!template || !templateVersionLink)) throw new Error("The selected Result Template is not part of this Experiment's locked ProtocolVersions.");
+  if (template && templateVersionLink && isSingleResultTemplate(template)) {
+    const existing = await prisma.result.findFirst({ where: { experimentId: experiment.id, protocolVersionId: templateVersionLink.protocolVersionId, templateKey: template.templateKey, sourceType: "protocol_template", status: { not: "archived" } }, select: { id: true, title: true } });
+    if (existing) throw new Error(`This Protocol template already has a Result record (${existing.title}). Open the existing record instead of creating a duplicate.`);
+  }
+  if (!template) {
+    const typeDefinition = await prisma.resultTypeDefinition.findUnique({ where: { label: data.parsed.resultType }, select: { id: true } });
+    if (!typeDefinition) throw new Error("Choose an available Result type or add it in Manage types.");
+  }
   const validation = validateResultRecord({ template, values: data.valuesJson, instanceKey: data.templateInstanceKey });
   if (["submitted", "reviewed"].includes(data.parsed.recordStatus) && !validation.complete) throw new Error(`This Result cannot be ${data.parsed.recordStatus}: ${validation.errors.join(" ")}`);
   const result = await prisma.result.create({ data: {
     experimentId: experiment.id, projectId: experiment.projectId, researchPlanId: experiment.researchPlanId,
-    protocolVersionId: template ? experiment.primaryProtocolVersionId : undefined,
+    protocolVersionId: template ? templateVersionLink?.protocolVersionId : undefined,
     title: data.parsed.title, resultType: template?.result_type ?? data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: template ? "protocol_template" : data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus,
     templateKey: template?.templateKey, templateInstanceKey: template ? data.templateInstanceKey : undefined, templateInstanceLabel: template ? data.templateInstanceLabel : undefined,
     templateSnapshotJson: (template ?? {}) as Prisma.InputJsonValue, valuesJson: data.valuesJson as Prisma.InputJsonValue, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, viewSpecJson: (template?.view ?? {}) as Prisma.InputJsonValue,
     textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, contentJson: data.contentJson,
-    provenanceJson: { experimentId: experiment.id, researchPlanId: experiment.researchPlanId, projectId: experiment.projectId, protocolVersionId: template ? experiment.primaryProtocolVersionId : undefined },
+    provenanceJson: { experimentId: experiment.id, researchPlanId: experiment.researchPlanId, projectId: experiment.projectId, protocolVersionId: template ? templateVersionLink?.protocolVersionId : undefined },
     metadataJson: template ? { templateKey: template.templateKey, cardinality: template.cardinality, viewPreset: template.view?.preset } : {},
   } });
   await prisma.$transaction([
@@ -75,6 +89,10 @@ async function persistResultUpdate(formData: FormData) {
   if (current.experimentId !== data.parsed.experimentId) throw new Error("A Result cannot be moved to another Experiment; create a new Result to preserve provenance.");
   if (current.templateKey && current.resultType !== data.parsed.resultType) throw new Error("A template-created Result cannot change result type; create a new Result instead.");
   if (current.templateKey && current.sourceType !== data.parsed.sourceType) throw new Error("A template-created Result cannot change source type.");
+  if (!current.templateKey && current.resultType !== data.parsed.resultType) {
+    const typeDefinition = await prisma.resultTypeDefinition.findUnique({ where: { label: data.parsed.resultType }, select: { id: true } });
+    if (!typeDefinition) throw new Error("Choose an available Result type or add it in Manage types.");
+  }
   const validation = validateResultRecord({
     template: current.templateSnapshotJson,
     values: data.valuesJson,
@@ -172,10 +190,14 @@ export async function deleteResult(
         tx.itemLink.count({ where: { targetType: "result", targetId: result.id } }),
       ]);
       const counts = { datasets: result._count.datasets, reportSources: result._count.reportSources, attachments, inboundLinks };
-      const blockers = resultDeleteBlockers(result.recordStatus, counts);
-      if (blockers.length) throw new Error("This Result contains data or downstream references and can only be archived.");
+      const preserveAssociations = resultRequiresAssociationPreservingRecycle(counts);
 
-      const recycled = await captureDeletedRecord(tx, "result", result.id);
+      const recycled = await captureDeletedRecord(tx, "result", result.id, { deletionMode: preserveAssociations ? "soft" : "physical" });
+      if (preserveAssociations) {
+        await tx.result.update({ where: { id: result.id }, data: { status: "archived" } });
+        await tx.activityLog.create({ data: { action: "recycle", targetType: "result", targetId: result.id, metadataJson: { recycleBinId: recycled.id, deletionMode: "soft", title: result.title, resultType: result.resultType, previousStatus: result.status, recordStatus: result.recordStatus, projectId: result.projectId, researchPlanId: result.researchPlanId, experimentId: result.experimentId, dependencyCounts: counts } } });
+        return result.experimentId;
+      }
       await tx.attachmentLink.deleteMany({ where: { targetType: "result", targetId: result.id } });
       await tx.itemLink.deleteMany({ where: { OR: [{ sourceType: "result", sourceId: result.id }, { targetType: "result", targetId: result.id }] } });
       await tx.activityLog.create({ data: { action: "delete", targetType: "result", targetId: result.id, metadataJson: { recycleBinId: recycled.id, title: result.title, resultType: result.resultType, status: result.status, recordStatus: result.recordStatus, projectId: result.projectId, researchPlanId: result.researchPlanId, experimentId: result.experimentId, dependencyCounts: counts } } });

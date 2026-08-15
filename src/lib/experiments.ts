@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { experimentSearchText } from "@/lib/experiment-document";
+import { buildProtocolExperimentSteps } from "@/lib/experiment-planning";
 import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
 import {
   createScientificDocument,
@@ -27,8 +28,9 @@ export type ExperimentSnapshotInput = {
   purpose?: string;
   tags: string[];
   contentJson: Prisma.InputJsonValue;
-  primaryProtocolVersionId: string;
-  supportingProtocolVersionIds: string[];
+  methodMode: "protocol" | "custom";
+  protocolVersionIds: string[];
+  customSteps: ProtocolStep[];
   createResultTemplates: boolean;
 };
 
@@ -42,20 +44,33 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   });
   if (!plan) throw new Error("Selected Research Plan does not exist.");
 
-  const versionIds = Array.from(new Set([input.primaryProtocolVersionId, ...input.supportingProtocolVersionIds])).filter(Boolean);
+  const versionIds = Array.from(new Set(input.protocolVersionIds)).filter(Boolean);
+  if (input.methodMode === "protocol" && !versionIds.length) {
+    throw new Error("Select at least one ProtocolVersion or choose a fully custom Experiment.");
+  }
+  if (input.methodMode === "custom" && versionIds.length) {
+    throw new Error("A fully custom Experiment cannot submit locked ProtocolVersions.");
+  }
   const versions = await tx.protocolVersion.findMany({
     where: { id: { in: versionIds } },
     include: { protocol: true },
   });
   if (versions.length !== versionIds.length) throw new Error("One or more selected ProtocolVersions no longer exist.");
-  const allowedProtocols = new Set(plan.protocols.map((link) => link.protocolId));
-  const unlinked = versions.find((version) => !allowedProtocols.has(version.protocolId));
-  if (unlinked) throw new Error(`${unlinked.protocol.humanCode ?? unlinked.protocol.title} is not associated with this Research Plan.`);
-  const primary = versions.find((version) => version.id === input.primaryProtocolVersionId);
-  if (!primary) throw new Error("A primary ProtocolVersion is required.");
+  const versionMap = new Map(versions.map((version) => [version.id, version]));
+  const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
+  const primary = orderedVersions[0];
 
-  const primarySteps = asArray<ProtocolStep>(primary.stepsJson);
-  const resultTemplates = normalizeResultTemplates(asArray<ResultTemplate>(primary.resultTemplatesJson));
+  if (orderedVersions.length) {
+    const protocolIds = Array.from(new Set(orderedVersions.map((version) => version.protocolId)));
+    await tx.projectProtocol.createMany({
+      data: protocolIds.map((protocolId) => ({ projectId: plan.projectId, protocolId })),
+      skipDuplicates: true,
+    });
+    await tx.researchPlanProtocol.createMany({
+      data: protocolIds.map((protocolId) => ({ researchPlanId: plan.id, protocolId, isPrimary: false })),
+      skipDuplicates: true,
+    });
+  }
   const suppliedRunCode = input.runCode?.trim().toUpperCase();
   if (suppliedRunCode && !isValidRecordCode("experiment", suppliedRunCode)) {
     throw new Error("Experiment code must use EXP- followed by at least three digits.");
@@ -67,8 +82,9 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   }
   const snapshot = {
     schemaVersion: 1,
+    methodMode: input.methodMode,
     capturedAt: new Date().toISOString(),
-    versions: versions.map((version) => ({
+    versions: orderedVersions.map((version) => ({
       protocolId: version.protocolId,
       protocolVersionId: version.id,
       humanCode: version.protocol.humanCode,
@@ -99,37 +115,51 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
         contentJson: input.contentJson,
         searchText: experimentSearchText(input.purpose, input.contentJson),
         protocolSnapshotJson: snapshot,
-        primaryProtocolVersionId: primary.id,
-        protocolVersions: {
+        primaryProtocolVersionId: primary?.id,
+        protocolVersions: versionIds.length ? {
           create: versionIds.map((versionId, order) => ({
             protocolVersionId: versionId,
-            role: versionId === primary.id ? "primary" : "supporting",
+            role: versionId === primary?.id ? "primary" : "supporting",
             order,
           })),
-        },
+        } : undefined,
         steps: {
-          create: primarySteps.map((step, index) => ({
-            protocolStepRef: String(step.order ?? index + 1),
-            order: step.order ?? index + 1,
-            title: step.title || `Step ${index + 1}`,
-            description: step.description ?? "",
-          })),
+          create: input.methodMode === "custom"
+            ? input.customSteps.map((step, index) => ({
+                protocolStepRef: `manual:${index + 1}`,
+                groupKey: "manual",
+                groupTitle: "Custom experiment steps",
+                groupOrder: 0,
+                order: step.order ?? index + 1,
+                title: step.title || `Step ${index + 1}`,
+                description: step.description ?? "",
+              }))
+            : buildProtocolExperimentSteps(orderedVersions.map((version) => ({
+                versionId: version.id,
+                humanCode: version.protocol.humanCode,
+                protocolTitle: version.protocol.title,
+                versionTitle: version.title,
+                displayVersion: version.displayVersion,
+                steps: asArray<ProtocolStep>(version.stepsJson),
+              }))),
         },
       },
     });
 
-    await tx.protocolRun.create({
-      data: { protocolVersionId: primary.id, experimentId: experiment.id, status: input.status, parametersJson: {}, calculatedConsumptionJson: [] },
-    });
-    await tx.itemLink.create({
-      data: { sourceType: "experiment", sourceId: experiment.id, targetType: "protocol_version", targetId: primary.id, linkType: "executed_from", createdBy: "system", note: "Exact ProtocolVersion locked at experiment creation." },
-    });
+    if (primary) {
+      await tx.protocolRun.create({
+        data: { protocolVersionId: primary.id, experimentId: experiment.id, status: input.status, parametersJson: {}, calculatedConsumptionJson: [] },
+      });
+      await tx.itemLink.createMany({
+        data: orderedVersions.map((version, order) => ({ sourceType: "experiment", sourceId: experiment.id, targetType: "protocol_version", targetId: version.id, linkType: "executed_from", createdBy: "system", note: `Protocol execution order ${order + 1}; exact version locked at experiment creation.` })),
+      });
+    }
 
-    if (input.createResultTemplates && resultTemplates.length) {
+    const resultTemplateRegistrations = orderedVersions.flatMap((version) => normalizeResultTemplates(asArray<ResultTemplate>(version.resultTemplatesJson)).map((template) => ({ version, template })));
+    if (input.createResultTemplates && resultTemplateRegistrations.length) {
       await tx.result.createMany({
-        data: resultTemplates.map((template) => {
+        data: resultTemplateRegistrations.map(({ version, template }) => {
           const content = createScientificDocument(resultSections);
-          content.sections[0].blocks.push({ id: "template-summary", type: "text", text: "Result record created from the primary ProtocolVersion template. Measurement pending." });
           const validation = validateResultRecord({ template, values: {} });
           return {
             experimentId: experiment.id,
@@ -141,21 +171,20 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
             sourceType: "protocol_template" as const,
             qualityStatus: "not_assessed" as const,
             validationStatus: validation.status,
-            protocolVersionId: primary.id,
+            protocolVersionId: version.id,
             templateKey: template.templateKey,
             templateSnapshotJson: cloneJson(template),
             valuesJson: {},
             validationJson: cloneJson(validation),
             viewSpecJson: cloneJson(template.view ?? {}),
             contentJson: content,
-            metadataJson: { protocolVersionId: primary.id, templateKey: template.templateKey, templateFields: template.fields, cardinality: template.cardinality, viewPreset: template.view?.preset },
-            provenanceJson: { experimentId: experiment.id, protocolVersionId: primary.id },
-            notes: "Template registered; no measurement has been entered.",
+            metadataJson: { protocolVersionId: version.id, templateKey: template.templateKey, templateFields: template.fields, cardinality: template.cardinality, viewPreset: template.view?.preset },
+            provenanceJson: { experimentId: experiment.id, protocolVersionId: version.id },
           };
         }),
       });
     }
-    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, protocolVersionIds: versionIds } } });
+    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
   return experiment;
 }
 

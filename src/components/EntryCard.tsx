@@ -1,12 +1,13 @@
-import { format } from "date-fns";
 import { ArrowUpRight, Link2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import type { Entry } from "@/lib/types";
+import { formatEntryCardTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
+import type { AppLocale } from "@/lib/i18n";
 import { EntryMediaGrid } from "./EntryMediaGrid";
 import { BadgeLink, StatusPill } from "./ui/Badge";
 
-export function EntryCard({ entry }: { entry: Entry }) {
+export function EntryCard({ entry, locale = "en" }: { entry: Entry; locale?: AppLocale }) {
   const entryHref = `/entries/${entry.id}`;
   const linkedItemCount = entry.linkedItemCount ?? entry.relevantItems.length;
 
@@ -17,7 +18,7 @@ export function EntryCard({ entry }: { entry: Entry }) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <time className="font-mono text-xs text-muted" dateTime={entry.occurredAt}>
-              {format(new Date(entry.occurredAt), "EEEE, MMM d · HH:mm")}
+              {formatEntryCardTimestamp(entry.occurredAt, locale)}
             </time>
             <h3 className="mt-2 font-serif text-[24px] font-medium leading-tight text-ink sm:text-[28px]">
               <Link href={entryHref} className="focus-ring rounded-[6px] transition hover:text-moss">

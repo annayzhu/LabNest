@@ -4,9 +4,12 @@ import {
   experimentDeleteBlockers,
   projectDeleteBlockers,
   protocolDeleteBlockers,
+  protocolRequiresAssociationPreservingRecycle,
   reportDeleteBlockers,
   researchPlanDeleteBlockerItems,
+  researchPlanRequiresAssociationPreservingRecycle,
   resultDeleteBlockers,
+  resultRequiresAssociationPreservingRecycle,
 } from "./record-lifecycle";
 
 describe("two-tier record lifecycle deletion policy", () => {
@@ -23,9 +26,11 @@ describe("two-tier record lifecycle deletion policy", () => {
   });
 
   it("protects used or reviewed Protocols", () => {
-    const empty = { researchPlans: 0, experiments: 0, results: 0, nonDraftVersions: 0, derivedVersions: 0, reportSourceReferences: 0 };
+    const empty = { projects: 0, researchPlans: 0, experiments: 0, results: 0, nonDraftVersions: 0, derivedVersions: 0, reportSourceReferences: 0 };
     expect(protocolDeleteBlockers("draft", "draft", empty)).toEqual([]);
     expect(protocolDeleteBlockers("draft", "draft", { ...empty, experiments: 1 })[0]).toMatchObject({ key: "experiments", count: 1 });
+    expect(protocolRequiresAssociationPreservingRecycle({ ...empty, nonDraftVersions: 1 })).toBe(false);
+    expect(protocolRequiresAssociationPreservingRecycle({ ...empty, researchPlans: 1 })).toBe(true);
   });
 
   it("protects Experiments as soon as execution evidence exists", () => {
@@ -38,6 +43,15 @@ describe("two-tier record lifecycle deletion policy", () => {
     const empty = { datasets: 0, attachments: 0, reportSources: 0, inboundLinks: 0 };
     expect(resultDeleteBlockers("draft", empty)).toEqual([]);
     expect(resultDeleteBlockers("draft", { ...empty, datasets: 1 })[0]?.key).toBe("datasets");
+  });
+
+  it("uses association-preserving recycle only when linked evidence exists", () => {
+    const planCounts = { entries: 0, experiments: 0, results: 0, reports: 0, reportSourceReferences: 0 };
+    const resultCounts = { datasets: 0, attachments: 0, reportSources: 0, inboundLinks: 0 };
+    expect(researchPlanRequiresAssociationPreservingRecycle(planCounts)).toBe(false);
+    expect(researchPlanRequiresAssociationPreservingRecycle({ ...planCounts, experiments: 1 })).toBe(true);
+    expect(resultRequiresAssociationPreservingRecycle(resultCounts)).toBe(false);
+    expect(resultRequiresAssociationPreservingRecycle({ ...resultCounts, datasets: 1 })).toBe(true);
   });
 
   it("allows only unreferenced Draft Reports and Entries", () => {

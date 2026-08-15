@@ -6,6 +6,7 @@ import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
+import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
@@ -38,6 +39,7 @@ export default async function ProtocolDetailPage({
     where: { id },
     include: {
       project: true,
+      projectAssociations: true,
       researchPlans: { include: { researchPlan: { include: { project: true } } } },
       versions: {
         orderBy: { revision: "desc" },
@@ -53,11 +55,13 @@ export default async function ProtocolDetailPage({
   const version = protocol.versions.find((item) => item.id === selectedVersionId) ?? protocol.versions[0];
   if (!version) notFound();
   const versionIds = protocol.versions.map((item) => item.id);
-  const [derivedVersions, reportSourceReferences] = await Promise.all([
+  const [derivedVersions, reportSourceReferences, recycleEntry] = await Promise.all([
     prisma.protocolVersion.count({ where: { protocolId: { not: protocol.id }, derivedFromVersion: { protocolId: protocol.id } } }),
     prisma.reportSource.count({ where: { OR: [{ sourceType: "protocol", sourceId: protocol.id }, { sourceType: "protocol_version", sourceId: { in: versionIds } }] } }),
+    prisma.deletedRecord.findFirst({ where: { targetType: "protocol", targetId: protocol.id, restoredAt: null }, select: { id: true } }),
   ]);
   const deletionBlockers = protocolDeleteBlockers(protocol.availability, protocol.recordStatus, {
+    projects: protocol.projectAssociations.length,
     researchPlans: protocol.researchPlans.length,
     experiments: protocol.versions.reduce((count, item) => count + item._count.experimentLinks, 0),
     results: protocol.versions.reduce((count, item) => count + item._count.results, 0),
@@ -98,16 +102,18 @@ export default async function ProtocolDetailPage({
           title={protocol.canonicalTitle ?? protocol.title}
           description={protocol.englishTitle ?? protocol.description ?? undefined}
           actions={
-            <>
+            recycleEntry ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <>
               <Link href={editHref} className={primaryButton}><PencilLine className="h-4 w-4" aria-hidden />Edit Protocol</Link>
               {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={secondaryButton}>Use in experiment</Link> : <Link href={editHref} className={secondaryButton}>Link Research Plan</Link>}
               {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
               <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} className={secondaryButton}>Export DOCX</Link>
               <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/json`} className={secondaryButton}>Export JSON</Link>
-              <RecordLifecycleControl id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} />
+              <RecordLifecycleControl id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} allowLinkedRecycle />
             </>
           }
         />
+
+        {recycleEntry ? <RecycleBinWarning kind="self" label="Protocol" labelZh="实验规程" /> : null}
 
         <div className="document-editor-layout">
           <main className="document-editor-main">
@@ -137,7 +143,7 @@ export default async function ProtocolDetailPage({
             <Card>
               <CardHeader title="Attachments" eyebrow="Version-specific files" />
               <CardBody className="space-y-4">
-                <AttachmentUploadForm targetType="protocol_version" targetId={version.id} hideTargetFields />
+                {!recycleEntry ? <AttachmentUploadForm targetType="protocol_version" targetId={version.id} hideTargetFields /> : null}
                 {attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id}><Link href={`/api/attachments/${link.attachment.id}`} className="break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link> <span className="text-xs text-muted">· {(link.attachment.size / 1024).toFixed(1)} KB</span></li>)}</ul> : <p className="border-t border-hairline pt-4 text-sm text-muted">No files attached to this exact version.</p>}
               </CardBody>
             </Card>

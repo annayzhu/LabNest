@@ -25,7 +25,7 @@ export function DocumentPageHeader({
   return (
     <header className="document-page-header">
       {kicker ? <p className="document-page-kicker">{kicker}</p> : null}
-      <h1 className={`document-page-title font-serif font-medium leading-tight ${title?.trim() ? "text-ink" : "text-muted"}`}>
+      <h1 className={`document-page-title font-serif font-bold leading-tight ${title?.trim() ? "text-ink" : "text-muted"}`}>
         {title?.trim() || titlePlaceholder}
       </h1>
       {subtitle?.trim() ? <p className="document-page-subtitle">{subtitle}</p> : null}

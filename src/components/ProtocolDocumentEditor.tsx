@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ListX, Plus, Trash2 } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -33,7 +33,7 @@ type ResearchPlanOption = { id: string; code?: string | null; title: string; pro
 
 const initialState: ProtocolEditorState = {};
 const inputClass = "focus-ring mt-2 h-10 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink";
-const textareaClass = "focus-ring mt-2 min-h-24 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-6 text-ink";
+const textareaClass = "focus-ring mt-1 min-h-16 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-[1.3] text-ink";
 
 function uniqueBlockId(sectionKey: ProtocolSectionKey) {
   return `${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -53,21 +53,21 @@ function BlockEditor({
   onRemove: () => void;
 }) {
   return (
-    <div className="document-block document-editor-control rounded-[7px] border border-transparent px-2 py-2">
+    <div className="document-block document-editor-control rounded-[7px] border border-transparent px-1 py-0.5">
       <div className="document-print-only"><ProtocolContentBlockView block={block} /></div>
       <div data-print-hidden>
-      <div className="flex items-center justify-end gap-3">
+      <div className="mb-0.5 flex items-center justify-end gap-1">
         <div className="flex gap-1">
-          <button type="button" onClick={() => onMove(-1)} aria-label="Move block up" className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone"><ChevronUp className="h-4 w-4" /></button>
-          <button type="button" onClick={() => onMove(1)} aria-label="Move block down" className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone"><ChevronDown className="h-4 w-4" /></button>
-          <button type="button" onClick={onRemove} aria-label="Remove block" className="focus-ring rounded-[6px] p-1.5 text-error hover:bg-error-surface"><Trash2 className="h-4 w-4" /></button>
+          <button type="button" onClick={() => onMove(-1)} aria-label="Move block up" className="focus-ring rounded-[5px] p-1 text-muted hover:bg-stone"><ChevronUp className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={() => onMove(1)} aria-label="Move block down" className="focus-ring rounded-[5px] p-1 text-muted hover:bg-stone"><ChevronDown className="h-3.5 w-3.5" /></button>
+          <button type="button" onClick={onRemove} aria-label="Remove block" className="focus-ring rounded-[5px] p-1 text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       </div>
 
       {block.type === "heading" ? <input value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} className={inputClass} /> : null}
       {block.type === "text" ? <textarea value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} className={textareaClass} /> : null}
       {block.type === "rich_text" ? <ProtocolRichTextEditor nodes={block.nodes} onChange={(nodes) => onChange({ ...block, nodes })} /> : null}
-      {block.type === "checklist" ? <textarea value={block.items.join("\n")} onChange={(event) => onChange({ ...block, items: event.target.value.split("\n") })} className={textareaClass} placeholder="One checklist item per line" /> : null}
+      {block.type === "checklist" ? <div><div className="flex justify-end"><button type="button" onClick={() => onChange({ id: block.id, type: "rich_text", nodes: richTextFromPlainText(block.items.join("\n")) })} className="focus-ring inline-flex h-7 items-center gap-1 rounded-[6px] border border-hairline px-2 text-[11px] font-normal text-muted hover:bg-stone hover:text-graphite"><ListX className="h-3.5 w-3.5" />Remove bullets</button></div><textarea value={block.items.join("\n")} onChange={(event) => onChange({ ...block, items: event.target.value.split("\n") })} className={textareaClass} placeholder="One checklist item per line" /></div> : null}
       {block.type === "callout" ? (
         <div className="grid gap-3 md:grid-cols-[160px_1fr]">
           <select value={block.tone} onChange={(event) => onChange({ ...block, tone: event.target.value as "note" | "warning" | "critical" })} className={inputClass}><option value="note">Note</option><option value="warning">Warning</option><option value="critical">Critical</option></select>
@@ -238,14 +238,16 @@ export function ProtocolDocumentEditor({
         ]} />
         {document.sections.map((section) => (
           <section key={section.key} className="document-section">
-            <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <h2 className="document-section-title font-serif font-medium text-ink">{protocolSectionLabels[section.key]}</h2>
               <div className="flex flex-wrap justify-end gap-1" data-print-hidden>
-                {(["rich_text", "heading", "checklist", "table", "callout", "media", "timer"] as const).map((type) => <button key={type} type="button" onClick={() => addBlock(section.key, type)} className="focus-ring inline-flex h-8 items-center gap-1 rounded-[7px] border border-hairline bg-surface px-2 text-xs font-medium capitalize text-graphite hover:border-border-strong"><Plus className="h-3.5 w-3.5" />{type.replaceAll("_", " ")}</button>)}
+                {section.key === "result_templates"
+                  ? <button type="button" onClick={() => addBlock(section.key, "table")} className="focus-ring inline-flex h-6 items-center gap-1 rounded-[5px] border border-hairline bg-surface px-1.5 text-[10.5px] font-medium text-moss transition-colors hover:bg-sage-surface"><Plus className="h-3 w-3" strokeWidth={1.75} />Result Template</button>
+                  : (["rich_text", "heading", "checklist", "table", "callout", "media", "timer"] as const).map((type) => <button key={type} type="button" onClick={() => addBlock(section.key, type)} className="focus-ring inline-flex h-6 items-center gap-0.5 rounded-[5px] border border-hairline/70 bg-transparent px-1.5 text-[10.5px] font-normal capitalize text-muted transition-colors hover:border-hairline hover:bg-warm/55 hover:text-graphite"><Plus className="h-3 w-3" strokeWidth={1.75} />{type.replaceAll("_", " ")}</button>)}
               </div>
             </header>
             <div>
-              {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="border-y border-dashed border-hairline px-3 py-5 text-center text-sm text-muted" data-print-hidden>No blocks. Add rich text, a checklist, a table, a callout, media, or a timer.</p>}
+              {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="border-y border-dashed border-hairline px-3 py-3 text-center text-sm text-muted" data-print-hidden>{section.key === "result_templates" ? "No Result Templates. Use + Result Template to add one." : "No blocks. Add rich text, a checklist, a table, a callout, media, or a timer."}</p>}
             </div>
           </section>
         ))}

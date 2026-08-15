@@ -13,13 +13,15 @@ export default async function NewExperimentPage({ searchParams }: { searchParams
   const query = searchParams ? await searchParams : undefined;
   const requestedPlanId = firstSearchParam(query, "plan");
   const selectedProtocolVersionId = firstSearchParam(query, "protocolVersionId");
-  const [plansRaw, existingExperimentCodes, counter] = await Promise.all([
-    prisma.researchPlan.findMany({ where: { status: { in: ["draft", "active"] } }, include: { project: true, protocols: { include: { protocol: { include: { versions: { orderBy: { revision: "desc" } } } } } } }, orderBy: [{ project: { name: "asc" } }, { title: "asc" }] }),
+  const [plansRaw, protocolVersionsRaw, existingExperimentCodes, counter] = await Promise.all([
+    prisma.researchPlan.findMany({ where: { status: { in: ["draft", "active"] } }, include: { project: true }, orderBy: [{ project: { name: "asc" } }, { title: "asc" }] }),
+    prisma.protocolVersion.findMany({ where: { protocol: { availability: { not: "archived" } } }, include: { protocol: { include: { project: { select: { name: true } } } } }, orderBy: [{ protocol: { title: "asc" } }, { revision: "desc" }] }),
     prisma.experiment.findMany({ select: { runCode: true } }),
     prisma.recordCodeCounter.findUnique({ where: { key: "experiment" }, select: { value: true } }),
   ]);
-  const plans = plansRaw.map((plan) => ({ id: plan.id, code: plan.code, title: plan.title, project: { name: plan.project.name }, protocols: plan.protocols.flatMap((link) => link.protocol.versions.map((version) => ({ id: version.id, displayVersion: version.displayVersion, reviewStage: version.reviewStage, protocol: { id: link.protocol.id, humanCode: link.protocol.humanCode, title: link.protocol.title, scope: link.protocol.scope } }))) }));
-  const selectedPlanId = requestedPlanId ?? plans.find((plan) => plan.protocols.some((version) => version.id === selectedProtocolVersionId))?.id;
+  const plans = plansRaw.map((plan) => ({ id: plan.id, code: plan.code, title: plan.title, project: { name: plan.project.name } }));
+  const protocolVersions = protocolVersionsRaw.map((version) => ({ id: version.id, displayVersion: version.displayVersion, versionTitle: version.title, reviewStage: version.reviewStage, stepCount: Array.isArray(version.stepsJson) ? version.stepsJson.length : 0, protocol: { id: version.protocol.id, humanCode: version.protocol.humanCode, title: version.protocol.canonicalTitle ?? version.protocol.title, scope: version.protocol.scope, projectName: version.protocol.project?.name ?? null } }));
+  const selectedPlanId = requestedPlanId;
   const suggestedCode = suggestNextRecordCode("experiment", existingExperimentCodes.map((experiment) => experiment.runCode), counter?.value);
-  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Execution record" title="New Experiment" description="Create a repeatable run from one Research Plan and lock the exact primary and supporting ProtocolVersions used." /><ExperimentForm action={createExperiment} plans={plans} initial={{ researchPlanId: selectedPlanId, primaryProtocolVersionId: selectedProtocolVersionId, suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
+  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Experiment planning" title="New Experiment" description="Plan a future Experiment from any ordered set of ProtocolVersions, or create it independently with a fully custom method." /><ExperimentForm action={createExperiment} plans={plans} protocolVersions={protocolVersions} initial={{ researchPlanId: selectedPlanId, methodMode: "protocol", selectedProtocolVersionIds: selectedProtocolVersionId ? [selectedProtocolVersionId] : [], suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
 }

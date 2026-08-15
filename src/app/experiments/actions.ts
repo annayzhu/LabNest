@@ -7,6 +7,7 @@ import type { ExperimentFormState } from "@/components/ExperimentForm";
 import { prisma } from "@/lib/db";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshot } from "@/lib/experiments";
+import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { experimentDeleteBlockers } from "@/lib/record-lifecycle";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
@@ -21,7 +22,7 @@ const schema = z.object({
   date: z.coerce.date(),
   status: z.enum(["planned", "running", "completed", "failed", "archived"]),
   recordStatus: z.enum(["draft", "recorded", "submitted", "reviewed"]),
-  primaryProtocolVersionId: z.string().optional(),
+  methodMode: z.enum(["protocol", "custom"]),
 });
 
 const lifecycleSchema = z.object({ id: z.string().min(1, "Experiment ID is required."), confirmation: z.string().trim().optional() });
@@ -29,7 +30,7 @@ const lifecycleSchema = z.object({ id: z.string().min(1, "Experiment ID is requi
 function optionalText(value: FormDataEntryValue | null) { const text = String(value ?? "").trim(); return text || undefined; }
 function fields(formData: FormData) {
   const parsed = schema.parse({
-    id: optionalText(formData.get("id")), researchPlanId: formData.get("researchPlanId"), title: formData.get("title"), date: formData.get("date"), status: formData.get("status"), recordStatus: formData.get("recordStatus"), primaryProtocolVersionId: optionalText(formData.get("primaryProtocolVersionId")),
+    id: optionalText(formData.get("id")), researchPlanId: formData.get("researchPlanId"), title: formData.get("title"), date: formData.get("date"), status: formData.get("status"), recordStatus: formData.get("recordStatus"), methodMode: formData.get("methodMode"),
   });
   const purpose = optionalText(formData.get("purpose"));
   const document = parseScientificDocumentJson(formData.get("contentJson"), experimentSections);
@@ -62,15 +63,18 @@ export async function createExperiment(
   let researchPlanId: string;
   try {
     const data = fields(formData);
-    if (!data.parsed.primaryProtocolVersionId) throw new Error("A primary ProtocolVersion is required.");
     const runCode = recordCodeFromSuffix("experiment", String(formData.get("runCodeSuffix") ?? ""));
+    const protocolVersionIds = data.parsed.methodMode === "protocol"
+      ? orderedUniqueIds(formData.getAll("protocolVersionIds").map(String))
+      : [];
     const experiment = await createExperimentWithProtocolSnapshot({
       ...data,
       ...data.parsed,
       runCode,
-      primaryProtocolVersionId: data.parsed.primaryProtocolVersionId,
-      supportingProtocolVersionIds: formData.getAll("supportingProtocolVersionIds").map(String).filter((id) => id !== data.parsed.primaryProtocolVersionId),
-      createResultTemplates: formData.get("createResultTemplates") === "on",
+      methodMode: data.parsed.methodMode,
+      protocolVersionIds,
+      customSteps: data.parsed.methodMode === "custom" ? parseCustomExperimentSteps(String(formData.get("customSteps") ?? "")) : [],
+      createResultTemplates: data.parsed.methodMode === "protocol",
     });
     experimentId = experiment.id;
     researchPlanId = data.parsed.researchPlanId;

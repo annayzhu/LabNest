@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { ActiveFilterBar, type ActiveFilter } from "@/components/ActiveFilterBar";
 import { EntryCollectionNav } from "@/components/EntryCollectionNav";
@@ -9,11 +10,13 @@ import { PageHeader } from "@/components/PageHeader";
 import { groupEntriesByMonth, summarizeProjectCollections } from "@/lib/entry-timeline";
 import { getEntryRecords } from "@/lib/entries";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function EntriesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
+  const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const entries = await getEntryRecords();
   const tag = firstSearchParam(params, "tag");
   const source = firstSearchParam(params, "source");
@@ -31,7 +34,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
       (!project || (project === "unassigned" ? !entry.projectId : entry.projectId === project))
     );
   });
-  const monthGroups = groupEntriesByMonth(filteredEntries);
+  const monthGroups = groupEntriesByMonth(filteredEntries, locale);
   const projectCollections = summarizeProjectCollections(entries);
   const unassignedCount = entries.filter((entry) => !entry.projectId).length;
   const attachmentCount = entries.reduce((count, entry) => count + entry.attachmentCount, 0);
@@ -46,7 +49,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1220px] space-y-7">
+      <div className="space-y-7">
         <PageHeader
           eyebrow="Journal-like capture"
           title="Entries"
@@ -95,7 +98,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
                     </div>
                     <div className="space-y-5">
                       {group.entries.map((entry) => (
-                        <EntryCard key={entry.id} entry={entry} />
+                        <EntryCard key={entry.id} entry={entry} locale={locale} />
                       ))}
                     </div>
                   </section>

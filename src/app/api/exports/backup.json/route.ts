@@ -43,7 +43,7 @@ export async function GET() {
     prisma.procurementInquiry.findMany({ include: { quoteLines: true } }),
     prisma.purchaseRequest.findMany(),
     prisma.attachment.findMany({ include: { links: true } }),
-    prisma.sequence.findMany({ include: { features: true } }),
+    prisma.sequence.findMany({ include: { versions: { include: { features: true, modifications: true, collectionMembers: true } }, entityLinks: true } }),
     prisma.itemLink.findMany(),
     prisma.proposedAction.findMany(),
     prisma.aIProvider.findMany({

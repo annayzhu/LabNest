@@ -78,6 +78,7 @@ export async function adaptProtocolToProject(
           },
         },
       }, include: { versions: { select: { id: true } } } });
+      await transaction.projectProtocol.create({ data: { projectId: parsed.projectId, protocolId: created.id } });
       await transaction.activityLog.create({ data: {
         action: "adapt_to_project",
         targetType: "protocol",

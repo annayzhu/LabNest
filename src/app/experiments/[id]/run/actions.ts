@@ -7,6 +7,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { appendExperimentObservation, experimentSearchText } from "@/lib/experiment-document";
+import { formActionErrorMessage } from "@/lib/form-actions";
+
+export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string };
 
 const progressSchema = z.object({
   experimentId: z.string().min(1),
@@ -27,22 +30,26 @@ function optionalText(value: FormDataEntryValue | null) {
   return text || undefined;
 }
 
-export async function saveProtocolRunProgress(formData: FormData) {
-  const parsed = progressSchema.parse({
-    experimentId: formData.get("experimentId"),
-    intent: optionalText(formData.get("intent")) ?? "save",
-    quickNote: optionalText(formData.get("quickNote")),
-  });
-  const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
-  const recordedAt = new Date();
+export async function saveProtocolRunProgress(
+  _previousState: ProtocolRunProgressState,
+  formData: FormData,
+): Promise<ProtocolRunProgressState> {
+  let parsed: z.infer<typeof progressSchema>;
+  try {
+    parsed = progressSchema.parse({
+      experimentId: formData.get("experimentId"),
+      intent: optionalText(formData.get("intent")) ?? "save",
+      quickNote: optionalText(formData.get("quickNote")),
+    });
+    const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
+    const recordedAt = new Date();
 
-  await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
     const experiment = await tx.experiment.findUnique({
       where: { id: parsed.experimentId },
-      include: { steps: { orderBy: { order: "asc" } } },
+      include: { steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] } },
     });
     if (!experiment) throw new Error("Experiment not found.");
-    if (!experiment.primaryProtocolVersionId) throw new Error("This Experiment has no locked primary ProtocolVersion.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
 
     const knownStepIds = new Set(experiment.steps.map((step) => step.id));
@@ -50,7 +57,7 @@ export async function saveProtocolRunProgress(formData: FormData) {
     if (unknownStep) throw new Error("A submitted step does not belong to this Experiment.");
 
     if (parsed.intent === "complete" && experiment.steps.some((step) => !completedStepIds.has(step.id))) {
-      throw new Error("Complete every Protocol step before marking the Experiment completed.");
+      throw new Error("Complete every execution step before marking the Experiment completed.");
     }
 
     const allStepsCompleted = experiment.steps.every((step) => completedStepIds.has(step.id));
@@ -88,23 +95,25 @@ export async function saveProtocolRunProgress(formData: FormData) {
           data: {
             completed,
             completedAt: completed ? step.completedAt ?? recordedAt : null,
-            deviationNote,
+            deviationNote: deviationNote ?? null,
           },
         });
       }
     }
 
-    await tx.protocolRun.upsert({
-      where: { experimentId: experiment.id },
-      create: {
-        experimentId: experiment.id,
-        protocolVersionId: experiment.primaryProtocolVersionId,
-        status: nextStatus,
-        parametersJson: {},
-        calculatedConsumptionJson: [],
-      },
-      update: { status: nextStatus },
-    });
+    if (experiment.primaryProtocolVersionId) {
+      await tx.protocolRun.upsert({
+        where: { experimentId: experiment.id },
+        create: {
+          experimentId: experiment.id,
+          protocolVersionId: experiment.primaryProtocolVersionId,
+          status: nextStatus,
+          parametersJson: {},
+          calculatedConsumptionJson: [],
+        },
+        update: { status: nextStatus },
+      });
+    }
     await tx.activityLog.create({
       data: {
         action: `protocol_run_${parsed.intent}`,
@@ -118,13 +127,17 @@ export async function saveProtocolRunProgress(formData: FormData) {
         },
       },
     });
-  });
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "Run progress could not be saved.") };
+  }
 
   revalidatePath("/protocol-run");
   revalidatePath("/experiments");
   revalidatePath(`/experiments/${parsed.experimentId}`);
   revalidatePath(`/experiments/${parsed.experimentId}/run`);
-  redirect(`/experiments/${parsed.experimentId}/run`);
+  const message = parsed.intent === "start" ? "Run started." : parsed.intent === "complete" ? "Run completed." : "Progress saved.";
+  return { message, savedAt: new Date().toISOString() };
 }
 
 export async function recordProtocolRunConsumption(formData: FormData) {

@@ -26,4 +26,28 @@ describe("LabNest UI translations", () => {
   it("does not translate unknown scientific or user-authored content", () => {
     expect(translateUiText("CHMP2A knockdown cohort", "zh")).toBe("CHMP2A knockdown cohort");
   });
+
+  it("covers structured editors, inventory filters, and accessibility labels", () => {
+    expect(translateUiText("Formatting toolbar", "zh")).toBe("格式工具栏");
+    expect(translateUiText("Result Template contract", "zh")).toBe("结果模板约定");
+    expect(translateUiText("Filter Inventory by principal investigator", "zh")).toBe("按负责人筛选库存");
+    expect(translateUiText("Close permanent deletion dialog", "zh")).toBe("关闭永久删除对话框");
+  });
+
+  it("translates generated counts, record labels, and file actions", () => {
+    expect(translateUiText("0 experiments · 1 entries", "zh")).toBe("0 个实验 · 1 条记录");
+    expect(translateUiText("Select record result-1", "zh")).toBe("选择记录 result-1");
+    expect(translateUiText("Table row 2, column 3", "zh")).toBe("表格第 2 行，第 3 列");
+    expect(translateUiText("Download results.xlsx", "zh")).toBe("下载 results.xlsx");
+    expect(translateUiText("Experiment code suffix after EXP-", "zh")).toBe("EXP- 之后的实验编号后缀");
+    expect(translateUiText("Protocol · PRT-100010", "zh")).toBe("实验规程 · PRT-100010");
+    expect(translateUiText("8/11/2026, 1:44:12 PM", "zh")).toBe("2026/8/11 13:44:12");
+  });
+
+  it("keeps units, brands, schema keys, and software names canonical", () => {
+    expect(translateUiText("1 mg/mL", "zh")).toBe("1 mg/mL");
+    expect(translateUiText("BioLegend", "zh")).toBe("BioLegend");
+    expect(translateUiText("dataset_key", "zh")).toBe("dataset_key");
+    expect(translateUiText("LabNest", "zh")).toBe("LabNest");
+  });
 });

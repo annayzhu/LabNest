@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { experimentNarrativeFromDocument } from "@/lib/experiment-document";
 import { getInventoryRiskFlags } from "@/lib/inventory";
 import { normalizeProtocolDocument, sectionPlainText } from "@/lib/protocol-document";
-import { documentPlainText, normalizeResearchPlanDocument, normalizeScientificDocument, experimentSections, reportSections, resultSections, type ScientificDocument } from "@/lib/scientific-document";
+import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, experimentSections, reportSections, type ScientificDocument } from "@/lib/scientific-document";
 import { structuredModules, type StructuredFileFormat, type StructuredModuleKey } from "@/lib/structured-modules";
 
 export type StructuredExport = { body: string | ArrayBuffer; filename: string; contentType: string };
@@ -101,7 +101,7 @@ export async function structuredExportRecords(
       (row) => ({ search: [row.title, row.resultType, row.templateKey, row.textValue, row.analysisMethod], filters: { type: row.resultType, record: row.recordStatus, quality: row.qualityStatus, validation: row.validationStatus } }),
     );
     return rows.map((row) => {
-      const document = normalizeScientificDocument(row.contentJson, resultSections);
+      const document = normalizeResultDocument(row.contentJson);
       return { experiment: row.experiment?.runCode ?? row.experiment?.title, title: row.title, resultType: row.resultType, templateKey: row.templateKey, templateInstanceKey: row.templateInstanceKey, templateInstanceLabel: row.templateInstanceLabel, templateValuesJson: row.valuesJson, templateSnapshotJson: row.templateKey ? row.templateSnapshotJson : null, validationStatus: row.validationStatus, recordStatus: row.recordStatus, sourceType: row.sourceType, qualityStatus: row.qualityStatus, textValue: row.textValue, numericValue: row.numericValue, unit: row.unit, analysisMethod: row.analysisMethod, notes: row.notes, summary: scientificSectionText(document, "summary"), analysis: scientificSectionText(document, "analysis"), interpretation: scientificSectionText(document, "interpretation"), qualityLimitations: scientificSectionText(document, "quality_limitations") };
     });
   }

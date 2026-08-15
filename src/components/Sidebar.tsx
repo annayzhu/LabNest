@@ -10,6 +10,7 @@ import {
   ClipboardList,
   FileBarChart,
   Database,
+  Dna,
   FolderKanban,
   Home,
   Link2,
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/results", label: "Results", icon: Database },
   { href: "/reports", label: "Reports", icon: FileBarChart },
   { href: "/inventory", label: "Inventory", icon: Boxes, separated: true },
+  { href: "/sequences", label: "Sequences", icon: Dna },
   { href: "/tools", label: "Tools", icon: Wrench },
 ];
 

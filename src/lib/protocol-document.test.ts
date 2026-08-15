@@ -5,7 +5,7 @@ describe("Protocol document structured projections", () => {
   it("preserves controlled inline font sizes while normalizing saved content", () => {
     const document = createEmptyProtocolDocument();
     document.sections[0].blocks = [
-      { id: "sized-run", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Important", fontSizePt: 14 }], lineHeight: 1.5 }] },
+      { id: "sized-run", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Important", fontSizePt: 14 }], lineHeight: 1.5, fontFamily: "serif" }] },
     ];
 
     const normalized = normalizeProtocolDocument(document);
@@ -14,6 +14,7 @@ describe("Protocol document structured projections", () => {
     if (block?.type === "rich_text") {
       expect(block.nodes[0].content[0].fontSizePt).toBe(14);
       expect(block.nodes[0].lineHeight).toBe(1.5);
+      expect(block.nodes[0].fontFamily).toBe("serif");
     }
   });
 

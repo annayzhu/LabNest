@@ -18,6 +18,7 @@ export function StatusRadioGroup({
   required,
   disabled,
   className,
+  optionsClassName,
 }: {
   label: string;
   name?: string;
@@ -28,6 +29,7 @@ export function StatusRadioGroup({
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  optionsClassName?: string;
 }) {
   const controlled = value !== undefined;
 
@@ -36,7 +38,7 @@ export function StatusRadioGroup({
       <legend className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
         {label}
       </legend>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className={cn("mt-2 flex flex-wrap gap-2", optionsClassName)}>
         {options.map((option) => (
           <label
             key={option.value}

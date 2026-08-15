@@ -30,6 +30,7 @@ type StoredItemLink = {
 
 export type RecycleBinSnapshot = {
   schemaVersion: 1;
+  deletionMode?: "physical" | "soft";
   record: Record<string, unknown>;
   related?: Record<string, unknown>;
   attachmentLinks?: StoredAttachmentLink[];
@@ -49,6 +50,11 @@ function jsonClone<T>(value: T): T {
 }
 
 export async function storeDeletedRecord(tx: Prisma.TransactionClient, input: StoreDeletedRecordInput) {
+  const existing = await tx.deletedRecord.findFirst({
+    where: { targetType: input.targetType, targetId: input.targetId, restoredAt: null },
+    select: { id: true },
+  });
+  if (existing) throw new Error("This record is already in the Recycle Bin.");
   return tx.deletedRecord.create({
     data: {
       targetType: input.targetType,
@@ -80,19 +86,21 @@ export async function captureDeletedRecord(
   tx: Prisma.TransactionClient,
   targetType: RecyclableRecordType,
   targetId: string,
+  options?: { deletionMode?: "physical" | "soft" },
 ) {
+  const deletionMode = options?.deletionMode ?? "physical";
   if (targetType === "project") {
     const record = await tx.project.findUnique({ where: { id: targetId } });
     if (!record) throw new Error("This Project no longer exists.");
     const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "project", targetIds: [record.id] }], itemTargets: [{ type: "project", ids: [record.id] }] });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.name, title: record.name, snapshot: { schemaVersion: 1, record, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.name, title: record.name, snapshot: { schemaVersion: 1, deletionMode, record, ...links } });
   }
   if (targetType === "research_plan") {
     const source = await tx.researchPlan.findUnique({ where: { id: targetId }, include: { protocols: true } });
     if (!source) throw new Error("This Research Plan no longer exists.");
     const { protocols, ...record } = source;
     const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "research_plan", targetIds: [record.id] }], itemTargets: [{ type: "research_plan", ids: [record.id] }] });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.code, title: record.title, snapshot: { schemaVersion: 1, record, related: { protocols }, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.code, title: record.title, snapshot: { schemaVersion: 1, deletionMode, record, related: { protocols }, ...links } });
   }
   if (targetType === "protocol") {
     const source = await tx.protocol.findUnique({ where: { id: targetId }, include: { versions: true } });
@@ -103,32 +111,32 @@ export async function captureDeletedRecord(
       attachmentTargets: [{ targetType: "protocol", targetIds: [record.id] }, { targetType: "protocol_version", targetIds: versionIds }],
       itemTargets: [{ type: "protocol", ids: [record.id] }, { type: "protocol_version", ids: versionIds }],
     });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.humanCode, title: record.canonicalTitle ?? record.title, snapshot: { schemaVersion: 1, record, related: { versions }, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.humanCode, title: record.canonicalTitle ?? record.title, snapshot: { schemaVersion: 1, deletionMode, record, related: { versions }, ...links } });
   }
   if (targetType === "experiment") {
     const source = await tx.experiment.findUnique({ where: { id: targetId }, include: { protocolRun: true, steps: true, protocolVersions: true } });
     if (!source) throw new Error("This Experiment no longer exists.");
     const { protocolRun, steps, protocolVersions, ...record } = source;
     const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "experiment", targetIds: [record.id] }], itemTargets: [{ type: "experiment", ids: [record.id] }] });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.runCode, title: record.title, snapshot: { schemaVersion: 1, record, related: { protocolRun: protocolRun ? [protocolRun] : [], steps, protocolVersions }, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.runCode, title: record.title, snapshot: { schemaVersion: 1, deletionMode, record, related: { protocolRun: protocolRun ? [protocolRun] : [], steps, protocolVersions }, ...links } });
   }
   if (targetType === "result") {
     const record = await tx.result.findUnique({ where: { id: targetId } });
     if (!record) throw new Error("This Result no longer exists.");
     const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "result", targetIds: [record.id] }], itemTargets: [{ type: "result", ids: [record.id] }] });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, record, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, deletionMode, record, ...links } });
   }
   if (targetType === "report") {
     const source = await tx.report.findUnique({ where: { id: targetId }, include: { sources: true } });
     if (!source) throw new Error("This Report no longer exists.");
     const { sources, ...record } = source;
     const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "report", targetIds: [record.id] }], itemTargets: [{ type: "report", ids: [record.id] }] });
-    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, record, related: { sources }, ...links } });
+    return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, deletionMode, record, related: { sources }, ...links } });
   }
   const record = await tx.entry.findUnique({ where: { id: targetId } });
   if (!record) throw new Error("This Entry no longer exists.");
   const links = await genericLinks(tx, { attachmentTargets: [{ targetType: "entry", targetIds: [record.id] }], itemTargets: [{ type: "entry", ids: [record.id] }] });
-  return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, record, ...links } });
+  return storeDeletedRecord(tx, { targetType, targetId, identifier: record.title, title: record.title, snapshot: { schemaVersion: 1, deletionMode, record, ...links } });
 }
 
 function snapshotFrom(value: unknown): RecycleBinSnapshot {
@@ -138,6 +146,10 @@ function snapshotFrom(value: unknown): RecycleBinSnapshot {
     throw new Error("This recycle-bin snapshot uses an unsupported format.");
   }
   return snapshot as RecycleBinSnapshot;
+}
+
+export function isAssociationPreservingSnapshot(value: unknown) {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value) && (value as { deletionMode?: unknown }).deletionMode === "soft");
 }
 
 function relatedArray<T>(snapshot: RecycleBinSnapshot, key: string) {
@@ -231,6 +243,22 @@ async function restoreEntry(tx: Prisma.TransactionClient, snapshot: RecycleBinSn
   await tx.entry.create({ data: snapshot.record as unknown as Prisma.EntryUncheckedCreateInput });
 }
 
+function updateDataFromSnapshot(record: Record<string, unknown>) {
+  const data = { ...record };
+  delete data.id;
+  return data;
+}
+
+async function restoreSoftDeletedRecord(tx: Prisma.TransactionClient, targetType: RecyclableRecordType, snapshot: RecycleBinSnapshot) {
+  const id = String(snapshot.record.id ?? "");
+  if (!id) throw new Error("This recycle-bin snapshot is missing its original record ID.");
+  const data = updateDataFromSnapshot(snapshot.record);
+  if (targetType === "protocol") await tx.protocol.update({ where: { id }, data: data as Prisma.ProtocolUncheckedUpdateInput });
+  else if (targetType === "research_plan") await tx.researchPlan.update({ where: { id }, data: data as Prisma.ResearchPlanUncheckedUpdateInput });
+  else if (targetType === "result") await tx.result.update({ where: { id }, data: data as Prisma.ResultUncheckedUpdateInput });
+  else throw new Error("This soft-deleted record type cannot be restored.");
+}
+
 export async function restoreDeletedRecord(deletedRecordId: string) {
   return prisma.$transaction(async (tx) => {
     const deleted = await tx.deletedRecord.findUnique({ where: { id: deletedRecordId } });
@@ -238,8 +266,11 @@ export async function restoreDeletedRecord(deletedRecordId: string) {
     if (deleted.restoredAt) throw new Error("This record has already been restored.");
     if (!recyclableRecordTypes.includes(deleted.targetType as RecyclableRecordType)) throw new Error("This record type cannot be restored.");
     const snapshot = snapshotFrom(deleted.snapshotJson);
+    const targetType = deleted.targetType as RecyclableRecordType;
+    const softDeleted = snapshot.deletionMode === "soft";
 
-    if (deleted.targetType === "project") await restoreProject(tx, snapshot);
+    if (softDeleted) await restoreSoftDeletedRecord(tx, targetType, snapshot);
+    else if (deleted.targetType === "project") await restoreProject(tx, snapshot);
     else if (deleted.targetType === "research_plan") await restoreResearchPlan(tx, snapshot);
     else if (deleted.targetType === "protocol") await restoreProtocol(tx, snapshot);
     else if (deleted.targetType === "experiment") await restoreExperiment(tx, snapshot);
@@ -247,8 +278,10 @@ export async function restoreDeletedRecord(deletedRecordId: string) {
     else if (deleted.targetType === "report") await restoreReport(tx, snapshot);
     else if (deleted.targetType === "entry") await restoreEntry(tx, snapshot);
 
-    await restoreAttachmentLinks(tx, snapshot.attachmentLinks);
-    await restoreItemLinks(tx, snapshot.itemLinks);
+    if (!softDeleted) {
+      await restoreAttachmentLinks(tx, snapshot.attachmentLinks);
+      await restoreItemLinks(tx, snapshot.itemLinks);
+    }
     const restoredAt = new Date();
     await tx.deletedRecord.update({ where: { id: deleted.id }, data: { restoredAt } });
     await tx.activityLog.create({
@@ -269,6 +302,9 @@ export async function permanentlyDeleteSnapshot(deletedRecordId: string, confirm
     if (!deleted) throw new Error("This recycle-bin record no longer exists.");
     if (deleted.restoredAt) throw new Error("A restored record cannot be purged from the active recycle bin.");
     if (confirmation !== deleted.identifier) throw new Error(`Enter ${deleted.identifier} exactly to confirm permanent deletion.`);
+    if (snapshotFrom(deleted.snapshotJson).deletionMode === "soft") {
+      throw new Error("This recovery entry preserves live scientific associations and cannot be purged. Restore the record instead.");
+    }
     await tx.activityLog.create({
       data: {
         action: "purge",

@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { ResearchPlanFormState } from "@/components/ResearchPlanForm";
 import { prisma } from "@/lib/db";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
-import { researchPlanDeleteBlockers } from "@/lib/research-plan-deletion";
+import { researchPlanRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { documentPlainText, parseScientificDocumentJson, researchPlanSections } from "@/lib/scientific-document";
 import { normalizeKeyInformation, type KeyInformationFormState } from "@/lib/key-information";
 import { parseTags } from "@/lib/tags";
@@ -216,10 +216,14 @@ export async function deleteResearchPlan(
         where: { sourceType: "research_plan", sourceId: plan.id },
       });
       const counts = { ...plan._count, reportSourceReferences };
-      const blockers = researchPlanDeleteBlockers(plan.status, counts);
-      if (blockers.length) throw new Error(`This Research Plan cannot be moved to the Recycle Bin: ${blockers.join("; ")}. Archive it instead.`);
+      const preserveAssociations = researchPlanRequiresAssociationPreservingRecycle(counts);
 
-      const recycled = await captureDeletedRecord(tx, "research_plan", plan.id);
+      const recycled = await captureDeletedRecord(tx, "research_plan", plan.id, { deletionMode: preserveAssociations ? "soft" : "physical" });
+      if (preserveAssociations) {
+        await tx.researchPlan.update({ where: { id: plan.id }, data: { status: "archived" } });
+        await tx.activityLog.create({ data: { action: "recycle", targetType: "research_plan", targetId: plan.id, metadataJson: { code: plan.code, recycleBinId: recycled.id, deletionMode: "soft", title: plan.title, projectId: plan.projectId, previousStatus: plan.status, dependencyCounts: counts, protocolLinks: plan.protocols } } });
+        return plan.projectId;
+      }
       await tx.attachmentLink.deleteMany({ where: { targetType: "research_plan", targetId: plan.id } });
       await tx.itemLink.deleteMany({
         where: {

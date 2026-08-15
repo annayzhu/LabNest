@@ -1,12 +1,15 @@
-import { ArrowLeft, Camera, CheckCircle2, Circle, FlaskConical, PackageMinus, Play, Save } from "lucide-react";
+import { ArrowLeft, Camera, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
+import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, StatusPill } from "@/components/ui/Badge";
+import { ProtocolRunProgressForm } from "@/components/ProtocolRunProgressForm";
+import { StatusPill } from "@/components/ui/Badge";
 import { prisma } from "@/lib/db";
-import { recordProtocolRunConsumption, saveProtocolRunProgress } from "./actions";
+import { buildExperimentResultRecording } from "@/lib/experiment-results";
+import { recordProtocolRunConsumption } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +26,9 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         project: true,
         researchPlan: true,
         primaryProtocolVersion: { include: { protocol: true } },
+        protocolVersions: { orderBy: { order: "asc" }, include: { protocolVersion: { include: { protocol: true } } } },
         protocolRun: true,
-        steps: { orderBy: { order: "asc" } },
+        steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] },
         results: { orderBy: { updatedAt: "desc" }, take: 8 },
       },
     }),
@@ -53,6 +57,13 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const progress = total ? Math.round((completed / total) * 100) : 0;
   const lockedProtocol = experiment.primaryProtocolVersion;
   const editable = experiment.status !== "archived";
+  const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
+    protocolVersionId: link.protocolVersionId,
+    protocolCode: link.protocolVersion.protocol.humanCode,
+    protocolTitle: link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title,
+    displayVersion: link.protocolVersion.displayVersion,
+    resultTemplatesJson: link.protocolVersion.resultTemplatesJson,
+  })), experiment.results);
 
   return (
     <AppShell>
@@ -80,71 +91,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <form action={saveProtocolRunProgress} className="space-y-4">
-          <input type="hidden" name="experimentId" value={experiment.id} />
-          <section className="overflow-hidden rounded-[12px] border border-hairline bg-surface">
-            <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
-              <h2 className="font-serif text-lg font-medium text-ink">Protocol steps</h2>
-              <span className="text-xs text-muted">Changes save to the Experiment record</span>
-            </div>
-            {experiment.steps.length ? (
-              <div className="divide-y divide-hairline">
-                {experiment.steps.map((step) => (
-                  <div key={step.id} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
-                    <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                      <input
-                        type="checkbox"
-                        name="completedStepIds"
-                        value={step.id}
-                        defaultChecked={step.completed}
-                        disabled={!editable}
-                        className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
-                      />
-                      <span className="min-w-0">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-xs text-muted">Step {step.order}</span>
-                          {step.completed ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}
-                        </span>
-                        <strong className="mt-1 block font-medium text-ink">{step.title}</strong>
-                        <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span>
-                      </span>
-                    </label>
-                    <label>
-                      <span className={labelClass}>Deviation or incident</span>
-                      <textarea
-                        name={`deviation:${step.id}`}
-                        defaultValue={step.deviationNote ?? ""}
-                        disabled={!editable}
-                        placeholder="Only record what differed from the locked ProtocolVersion"
-                        className={`${fieldClass} min-h-20 resize-y`}
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-            ) : <p className="px-4 py-8 text-center text-sm text-muted">The locked ProtocolVersion has no executable steps.</p>}
-          </section>
-
-          <section className="rounded-[12px] border border-hairline bg-surface p-4">
-            <label>
-              <span className={labelClass}>Quick observation</span>
-              <textarea
-                name="quickNote"
-                disabled={!editable}
-                placeholder="What happened just now? This is appended with a timestamp and never replaces earlier observations."
-                className={`${fieldClass} min-h-24 resize-y`}
-              />
-            </label>
-          </section>
-
-          {editable ? (
-            <div className="sticky bottom-20 z-30 flex flex-wrap justify-end gap-2 rounded-[12px] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur md:bottom-4">
-              {experiment.status === "planned" || experiment.status === "failed" ? <button name="intent" value="start" className={secondaryButton}><Play className="h-4 w-4" aria-hidden />{experiment.status === "failed" ? "Resume run" : "Start run"}</button> : null}
-              <button name="intent" value="save" className={secondaryButton}><Save className="h-4 w-4" aria-hidden />Save progress</button>
-              <button name="intent" value="complete" className="focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm"><CheckCircle2 className="h-4 w-4" aria-hidden />Complete run</button>
-            </div>
-          ) : null}
-        </form>
+        <ProtocolRunProgressForm experimentId={experiment.id} status={experiment.status} steps={experiment.steps} editable={editable} />
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-[12px] border border-hairline bg-surface p-4">
@@ -169,13 +116,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </section>
         </div>
 
-        <section className="rounded-[12px] border border-hairline bg-surface p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2"><FlaskConical className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Results</h2></div>
-            <Link href={`/results/new?experiment=${experiment.id}`} className={secondaryButton}>Add Result</Link>
-          </div>
-          {experiment.results.length ? <ul className="mt-4 divide-y divide-hairline border-t border-hairline">{experiment.results.map((result) => <li key={result.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><Link href={`/results/${result.id}`} className="font-medium text-moss hover:underline">{result.title}</Link><div className="flex gap-2"><Badge>{result.resultType}</Badge><StatusPill status={result.recordStatus} /></div></li>)}</ul> : <p className="mt-4 text-sm text-muted">No Results recorded yet.</p>}
-        </section>
+        <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>
     </AppShell>
   );

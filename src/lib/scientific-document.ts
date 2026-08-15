@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 
@@ -173,6 +174,8 @@ export const resultSections: ScientificSectionDefinition[] = [
   { key: "quality_limitations", title: "QC & limitations" },
 ];
 
+const legacyTemplateSummary = "Result record created from a selected ProtocolVersion template. Measurement pending.";
+
 export const reportSections: ScientificSectionDefinition[] = [
   { key: "executive_summary", title: "Executive summary" },
   { key: "research_question", title: "Research question & design" },
@@ -241,6 +244,15 @@ export function normalizeResearchPlanDocument(value: unknown, legacyDesign?: str
   return document;
 }
 
+export function normalizeResultDocument(value: unknown): ScientificDocument {
+  const document = normalizeScientificDocument(value, resultSections);
+  const summary = document.sections.find((section) => section.key === "summary");
+  if (summary) {
+    summary.blocks = summary.blocks.filter((block) => !(block.id === "template-summary" && block.type === "text" && block.text.trim() === legacyTemplateSummary));
+  }
+  return document;
+}
+
 export function parseScientificDocumentJson(
   value: FormDataEntryValue | null,
   definitions: ScientificSectionDefinition[],
@@ -256,7 +268,7 @@ export function parseScientificDocumentJson(
 export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
     if (block.type === "heading" || block.type === "callout") return [block.text];
-    if (block.type === "text") return [stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(block.text))];
+    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(block.text)))];
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];

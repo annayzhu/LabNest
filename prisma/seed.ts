@@ -171,8 +171,13 @@ async function resetDatabase() {
   await prisma.experiment.deleteMany();
   await prisma.inventoryItem.deleteMany();
   await prisma.inventoryLocation.deleteMany();
+  await prisma.sequenceCollectionMember.deleteMany();
+  await prisma.sequenceCollection.deleteMany();
+  await prisma.entitySequenceLink.deleteMany();
   await prisma.entity.deleteMany();
+  await prisma.sequenceModification.deleteMany();
   await prisma.sequenceFeature.deleteMany();
+  await prisma.sequenceVersion.deleteMany();
   await prisma.sequence.deleteMany();
   await prisma.protocolVersion.deleteMany();
   await prisma.researchPlanProtocol.deleteMany();
@@ -213,16 +218,29 @@ async function main() {
 
   const sequence = await prisma.sequence.create({
     data: {
+      code: "SEQ-000001",
       name: "GFP insert demo",
-      type: "DNA",
-      sequence:
-        "ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAG",
+      designType: "fragment",
+      status: "active",
+      targetName: "GFP",
       description: "Short demo coding sequence fragment used for sequence utility tests and entity linking.",
       metadataJson: { source: "demo" },
-      features: {
-        create: [{ name: "GFP coding fragment", type: "CDS", start: 1, end: 120, strand: "+" }],
+      versions: {
+        create: {
+          versionNumber: 1,
+          displayVersion: "1.0",
+          moleculeType: "DNA",
+          sequence: "ATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAG",
+          checksum: "e64190f02ae23ddf9cfb0b870c8dceac-seed",
+          topology: "linear",
+          strandedness: "double",
+          validationStatus: "unverified",
+          changeSummary: "Initial demo sequence version",
+          features: { create: [{ name: "GFP coding fragment", type: "CDS", start: 1, end: 120, strand: "+" }] },
+        },
       },
     },
+    include: { versions: true },
   });
 
   const hek = await prisma.entity.create({
@@ -245,6 +263,16 @@ async function main() {
       sequenceId: sequence.id,
       description: "Demo GFP plasmid linked to the sequence library.",
       metadataJson: { resistance: "Ampicillin", promoter: "CMV" },
+    },
+  });
+
+  await prisma.entitySequenceLink.create({
+    data: {
+      entityId: plasmid.id,
+      sequenceId: sequence.id,
+      sequenceVersionId: sequence.versions[0].id,
+      role: "insert",
+      isPrimary: true,
     },
   });
 

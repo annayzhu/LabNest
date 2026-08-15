@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -38,11 +38,11 @@ export default function ToolsPage() {
                     {tool.launchUrl ? (
                       <Link
                         href={tool.launchUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                        target={tool.external ? "_blank" : undefined}
+                        rel={tool.external ? "noreferrer" : undefined}
                         className="focus-ring inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-3 text-sm font-medium text-warm"
                       >
-                        Open <ExternalLink className="h-4 w-4" aria-hidden />
+                        Open {tool.external ? <ExternalLink className="h-4 w-4" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
                       </Link>
                     ) : (
                       <Badge tone="warning">Not connected</Badge>
@@ -55,7 +55,7 @@ export default function ToolsPage() {
         })}
 
         <p className="text-xs leading-5 text-muted">
-          Tool endpoints are configured through environment variables. External applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
+          Standalone tools are preconnected to their managed releases. Environment variables can override those endpoints; external applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
         </p>
       </div>
     </AppShell>

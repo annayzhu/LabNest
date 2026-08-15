@@ -28,6 +28,7 @@ describe("entry timeline", () => {
 
     expect(groups.map((group) => group.key)).toEqual(["2026-08", "2026-07"]);
     expect(groups[0].entries.map((item) => item.id)).toEqual(["aug-2", "aug-1"]);
+    expect(groupEntriesByMonth(entries, "zh")[0].label).toBe("2026年8月");
   });
 
   it("summarizes project-backed journals and excludes unassigned entries", () => {

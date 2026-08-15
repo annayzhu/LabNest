@@ -107,6 +107,13 @@ const statusTone: Record<string, StatusTone> = {
   in_use: "warning",
   depleted: "neutral",
   discarded: "danger",
+  inactive: "neutral",
+  unverified: "neutral",
+  validation_in_progress: "warning",
+  validated_recommended: "success",
+  validated_limited: "warning",
+  validated_not_recommended: "danger",
+  inconclusive: "warning",
 };
 
 export function StatusPill({ status, href }: { status: string; href?: string }) {

@@ -1,10 +1,11 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { Bold, Italic, Link2, List, ListOrdered, Quote, Redo2, Strikethrough, Underline, Undo2, Unlink } from "lucide-react";
+import { Bold, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough, Underline, Undo2, Unlink } from "lucide-react";
 import type { ProtocolRichTextNode, ProtocolRichTextRun } from "@/lib/protocol-document";
+import { applyRichTextFontFamily, clearSelectedRichTextFormatting, normalizePastedRichTextTypography, parseRichTextFontFamily, RICH_TEXT_FONT_FAMILIES } from "@/lib/rich-text-font-family";
 import { parseRichTextFontSizePt, RICH_TEXT_FONT_SIZES_PT, type RichTextFontSizePt } from "@/lib/rich-text-font-size";
-import { applyRichTextLineHeight, parseRichTextLineHeight, RICH_TEXT_LINE_HEIGHTS, type RichTextLineHeight } from "@/lib/rich-text-line-height";
+import { applyRichTextLineHeight, DEFAULT_RICH_TEXT_LINE_HEIGHT, parseRichTextLineHeight, RICH_TEXT_LINE_HEIGHTS, type RichTextLineHeight } from "@/lib/rich-text-line-height";
 
 function escapeHtml(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -39,19 +40,17 @@ function nodesHtml(nodes: ProtocolRichTextNode[]) {
   };
   for (const node of nodes) {
     const content = node.content.map(runHtml).join("") || "<br>";
-    const lineHeightAttributes = node.lineHeight && node.lineHeight !== 1
-      ? ` data-labnest-line-height="${node.lineHeight}" style="line-height:${node.lineHeight}"`
-      : "";
+    const blockAttributes = `${node.lineHeight && node.lineHeight !== DEFAULT_RICH_TEXT_LINE_HEIGHT ? ` data-labnest-line-height="${node.lineHeight}" style="line-height:${node.lineHeight}"` : ""}${node.fontFamily ? ` data-labnest-font-family="${node.fontFamily}"` : ""}`;
     if (node.type === "bullet" || node.type === "numbered") {
       if (listType !== node.type) {
         closeList(); listType = node.type; chunks.push(node.type === "bullet" ? "<ul>" : "<ol>");
       }
-      chunks.push(`<li${lineHeightAttributes}>${content}</li>`);
+      chunks.push(`<li${blockAttributes}>${content}</li>`);
       continue;
     }
     closeList();
     const tag = node.type === "heading2" ? "h2" : node.type === "heading3" ? "h3" : node.type === "quote" ? "blockquote" : "p";
-    chunks.push(`<${tag}${lineHeightAttributes}>${content}</${tag}>`);
+    chunks.push(`<${tag}${blockAttributes}>${content}</${tag}>`);
   }
   closeList();
   return chunks.join("");
@@ -98,7 +97,8 @@ function serializeEditor(root: HTMLElement): ProtocolRichTextNode[] {
   const nodes: ProtocolRichTextNode[] = [];
   const add = (type: ProtocolRichTextNode["type"], element: Node) => {
     const lineHeight = element instanceof HTMLElement ? parseRichTextLineHeight(element.dataset.labnestLineHeight) : undefined;
-    nodes.push({ type, content: mergeRuns(inlineRuns(element)), ...(lineHeight && lineHeight !== 1 ? { lineHeight } : {}) });
+    const fontFamily = element instanceof HTMLElement ? parseRichTextFontFamily(element.dataset.labnestFontFamily) : undefined;
+    nodes.push({ type, content: mergeRuns(inlineRuns(element)), ...(lineHeight && lineHeight !== DEFAULT_RICH_TEXT_LINE_HEIGHT ? { lineHeight } : {}), ...(fontFamily ? { fontFamily } : {}) });
   };
   for (const child of Array.from(root.childNodes)) {
     if (child.nodeType === Node.TEXT_NODE) { if (child.textContent) add("paragraph", child); continue; }
@@ -167,21 +167,43 @@ export function ProtocolRichTextEditor({ nodes, onChange }: { nodes: ProtocolRic
     sync();
     rememberSelection();
   };
+  const applyFontFamily = (fontFamily: string) => {
+    const parsed = parseRichTextFontFamily(fontFamily);
+    restoreSelection();
+    if (editorRef.current && parsed) applyRichTextFontFamily(editorRef.current, parsed);
+    sync();
+    rememberSelection();
+  };
+  const clearFormatting = () => {
+    restoreSelection();
+    if (editorRef.current) clearSelectedRichTextFormatting(editorRef.current);
+    sync();
+    rememberSelection();
+  };
+  const normalizePaste = () => {
+    window.requestAnimationFrame(() => {
+      if (!editorRef.current) return;
+      normalizePastedRichTextTypography(editorRef.current);
+      sync();
+      rememberSelection();
+    });
+  };
   const addLink = () => {
     const value = window.prompt("Link URL (https://, mailto:, or /path)");
     if (value && safeLink(value)) command("createLink", value);
   };
 
-  return <div className="mt-2 overflow-hidden rounded-[8px] border border-transparent bg-surface transition focus-within:border-border-strong hover:border-hairline">
-    <div className="flex flex-wrap items-center gap-1 border-b border-hairline bg-stone/60 px-2 py-1.5" data-print-hidden>
+  return <div className="mt-1 overflow-hidden rounded-[8px] border border-transparent bg-surface transition focus-within:border-border-strong hover:border-hairline">
+    <div className="editorial-scrollbar flex items-center gap-0.5 overflow-x-auto whitespace-nowrap border-b border-hairline bg-stone/60 px-1.5 py-1" aria-label="Formatting toolbar" data-print-hidden>
       <Toolbar label="Bold" onClick={() => command("bold")}><Bold /></Toolbar><Toolbar label="Italic" onClick={() => command("italic")}><Italic /></Toolbar><Toolbar label="Underline" onClick={() => command("underline")}><Underline /></Toolbar><Toolbar label="Strikethrough" onClick={() => command("strikeThrough")}><Strikethrough /></Toolbar>
-      <span className="mx-1 h-5 border-l border-hairline" />
-      <select aria-label="Font size" defaultValue="" onMouseDown={rememberSelection} onChange={(event) => { const fontSizePt = parseRichTextFontSizePt(event.target.value); if (fontSizePt) applyFontSize(fontSizePt); event.currentTarget.value = ""; }} className="focus-ring h-8 rounded-[6px] border border-hairline bg-surface px-2 text-xs text-graphite"><option value="" disabled>Size</option>{RICH_TEXT_FONT_SIZES_PT.map((size) => <option key={size} value={size}>{size} pt</option>)}</select>
-      <select aria-label="Line spacing" defaultValue="" onMouseDown={rememberSelection} onChange={(event) => { const lineHeight = parseRichTextLineHeight(event.target.value); if (lineHeight) applyLineHeight(lineHeight); event.currentTarget.value = ""; }} className="focus-ring h-8 rounded-[6px] border border-hairline bg-surface px-2 text-xs text-graphite"><option value="" disabled>Line</option>{RICH_TEXT_LINE_HEIGHTS.map((value) => <option key={value} value={value}>{value}×</option>)}</select>
-      <select aria-label="Block style" defaultValue="p" onMouseDown={rememberSelection} onChange={(event) => command("formatBlock", event.target.value)} className="focus-ring h-8 rounded-[6px] border border-hairline bg-surface px-2 text-xs text-graphite"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select>
+      <span className="mx-0.5 h-4 border-l border-hairline" />
+      <select aria-label="Font family" defaultValue="" onMouseDown={rememberSelection} onChange={(event) => { applyFontFamily(event.target.value); event.currentTarget.value = ""; }} className="focus-ring h-6 shrink-0 rounded-[5px] border border-hairline bg-surface px-1.5 text-[11px] text-graphite"><option value="" disabled>Font</option>{RICH_TEXT_FONT_FAMILIES.map((fontFamily) => <option key={fontFamily} value={fontFamily}>{fontFamily === "sans" ? "Sans" : fontFamily === "serif" ? "Serif" : "Mono"}</option>)}</select>
+      <select aria-label="Font size" defaultValue="" onMouseDown={rememberSelection} onChange={(event) => { const fontSizePt = parseRichTextFontSizePt(event.target.value); if (fontSizePt) applyFontSize(fontSizePt); event.currentTarget.value = ""; }} className="focus-ring h-6 shrink-0 rounded-[5px] border border-hairline bg-surface px-1.5 text-[11px] text-graphite"><option value="" disabled>Size</option>{RICH_TEXT_FONT_SIZES_PT.map((size) => <option key={size} value={size}>{size} pt</option>)}</select>
+      <select aria-label="Line spacing" defaultValue="" onMouseDown={rememberSelection} onChange={(event) => { const lineHeight = parseRichTextLineHeight(event.target.value); if (lineHeight) applyLineHeight(lineHeight); event.currentTarget.value = ""; }} className="focus-ring h-6 shrink-0 rounded-[5px] border border-hairline bg-surface px-1.5 text-[11px] text-graphite"><option value="" disabled>Line</option>{RICH_TEXT_LINE_HEIGHTS.map((value) => <option key={value} value={value}>{value}×</option>)}</select>
+      <select aria-label="Block style" defaultValue="p" onMouseDown={rememberSelection} onChange={(event) => command("formatBlock", event.target.value)} className="focus-ring h-6 shrink-0 rounded-[5px] border border-hairline bg-surface px-1.5 text-[11px] text-graphite"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select>
       <Toolbar label="Bullet list" onClick={() => command("insertUnorderedList")}><List /></Toolbar><Toolbar label="Numbered list" onClick={() => command("insertOrderedList")}><ListOrdered /></Toolbar><Toolbar label="Quote" onClick={() => command("formatBlock", "blockquote")}><Quote /></Toolbar>
-      <span className="mx-1 h-5 border-l border-hairline" />
-      <Toolbar label="Add link" onClick={addLink}><Link2 /></Toolbar><Toolbar label="Remove link" onClick={() => command("unlink")}><Unlink /></Toolbar><Toolbar label="Undo" onClick={() => command("undo")}><Undo2 /></Toolbar><Toolbar label="Redo" onClick={() => command("redo")}><Redo2 /></Toolbar>
+      <span className="mx-0.5 h-4 border-l border-hairline" />
+      <Toolbar label="Add link" onClick={addLink}><Link2 /></Toolbar><Toolbar label="Remove link" onClick={() => command("unlink")}><Unlink /></Toolbar><Toolbar label="Undo" onClick={() => command("undo")}><Undo2 /></Toolbar><Toolbar label="Redo" onClick={() => command("redo")}><Redo2 /></Toolbar><Toolbar label="Clear formatting" onClick={clearFormatting}><RemoveFormatting /></Toolbar>
     </div>
     <div
       ref={editorRef}
@@ -192,11 +214,12 @@ export function ProtocolRichTextEditor({ nodes, onChange }: { nodes: ProtocolRic
       onSelect={rememberSelection}
       onKeyUp={rememberSelection}
       onMouseUp={rememberSelection}
-      className="protocol-rich-editor min-h-28 px-2 py-2 text-sm leading-none text-graphite outline-none"
+      onPaste={normalizePaste}
+      className="protocol-rich-editor min-h-16 px-2 py-2 text-sm leading-[1.3] text-graphite outline-none"
     />
   </div>;
 }
 
 function Toolbar({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactElement<{ className?: string }> }) {
-  return <button type="button" title={label} aria-label={label} onMouseDown={(event) => event.preventDefault()} onClick={onClick} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-muted hover:bg-surface hover:text-ink">{children && <span className="[&>svg]:h-4 [&>svg]:w-4">{children}</span>}</button>;
+  return <button type="button" title={label} aria-label={label} onMouseDown={(event) => event.preventDefault()} onClick={onClick} className="focus-ring flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] text-muted hover:bg-surface hover:text-ink">{children && <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{children}</span>}</button>;
 }

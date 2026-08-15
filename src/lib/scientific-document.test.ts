@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createScientificDocument, normalizeResearchPlanDocument, normalizeScientificDocument, researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
+import { createScientificDocument, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
 
 describe("Research Plan scientific document", () => {
   it("creates the current template modules without persisting compatibility aliases", () => {
@@ -96,5 +96,24 @@ describe("Research Plan scientific document", () => {
 
     expect(document.sections[0].blocks.map((block) => block.type)).toEqual(["text", "table"]);
     expect(document.sections[0].blocks[1]).toEqual(expect.objectContaining({ rows: [["Cell", "Group"], ["A549", "Control"]] }));
+  });
+});
+
+describe("Result scientific document", () => {
+  it("removes only the obsolete generated pending summary", () => {
+    const document = normalizeResultDocument({
+      schemaVersion: 1,
+      sections: [{
+        key: "summary",
+        title: "Summary",
+        blocks: [
+          { id: "template-summary", type: "text", text: "Result record created from a selected ProtocolVersion template. Measurement pending." },
+          { id: "user-summary", type: "text", text: "RNA yield met the predefined acceptance criterion." },
+        ],
+      }],
+    });
+    expect(document.sections.find((section) => section.key === "summary")?.blocks).toEqual([
+      { id: "user-summary", type: "text", text: "RNA yield met the predefined acceptance criterion." },
+    ]);
   });
 });

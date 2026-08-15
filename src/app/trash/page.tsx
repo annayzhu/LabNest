@@ -9,7 +9,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { recyclableRecordTypes, recycleBinTypeLabel } from "@/lib/recycle-bin";
+import { isAssociationPreservingSnapshot, recyclableRecordTypes, recycleBinTypeLabel } from "@/lib/recycle-bin";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +32,8 @@ export default async function TrashPage({ searchParams }: { searchParams?: PageS
 
   return (
     <AppShell><div className="space-y-5">
-      <PageHeader title="Recycle Bin" description="Deleted draft records remain recoverable here until you explicitly delete their recovery snapshot forever." />
-      <Card><CardBody><p className="text-sm leading-6 text-graphite">Restoring keeps the original record ID, code, scientific content, template snapshot, and recoverable links. Restore may be blocked if another record has reused the same unique code or a required parent record was later removed.</p></CardBody></Card>
+      <PageHeader title="Recycle Bin" description="Removed records remain recoverable here. Linked scientific records retain their associations and provenance until restored." />
+      <Card><CardBody><p className="text-sm leading-6 text-graphite">Restoring keeps the original record ID, code, scientific content, template snapshot, and recoverable links. Records marked “Associations preserved” cannot be permanently deleted while live scientific links depend on them.</p></CardBody></Card>
       <CollectionToolbar
         path="/trash"
         query={query}
@@ -44,10 +44,10 @@ export default async function TrashPage({ searchParams }: { searchParams?: PageS
       />
       {records.length ? <DataTable rows={records} getRowKey={(row) => row.id} columns={[
         { key: "record", header: "Deleted record", render: (row) => <div><p className="font-semibold text-ink">{row.title}</p><p className="mt-1 font-mono text-xs text-muted">{row.identifier}</p></div> },
-        { key: "type", header: "Type", render: (row) => <Badge tone="sage">{recycleBinTypeLabel(row.targetType)}</Badge> },
+        { key: "type", header: "Type", render: (row) => <div className="flex flex-wrap gap-1"><Badge tone="sage">{recycleBinTypeLabel(row.targetType)}</Badge>{isAssociationPreservingSnapshot(row.snapshotJson) ? <Badge tone="warning">Associations preserved</Badge> : null}</div> },
         { key: "deleted", header: "Deleted", render: (row) => <time dateTime={row.deletedAt.toISOString()}>{format(row.deletedAt, "yyyy-MM-dd HH:mm")}</time> },
-        { key: "actions", header: "Actions", className: "text-right", render: (row) => <RecycleBinActions id={row.id} identifier={row.identifier} title={row.title} /> },
-      ]} /> : <EmptyState title="Recycle Bin is empty" body="Deleted draft records will appear here and can be restored." actionLabel="Browse results" actionHref="/results" />}
+        { key: "actions", header: "Actions", className: "text-right", render: (row) => <RecycleBinActions id={row.id} identifier={row.identifier} title={row.title} associationsPreserved={isAssociationPreservingSnapshot(row.snapshotJson)} /> },
+      ]} /> : <EmptyState title="Recycle Bin is empty" body="Removed records will appear here and can be restored." actionLabel="Browse results" actionHref="/results" />}
     </div></AppShell>
   );
 }

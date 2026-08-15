@@ -111,12 +111,31 @@ export type ResultChartSpec = {
   seriesField?: string;
 };
 
+export type ResultTemplateInstructionRun = {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strike?: boolean;
+  code?: boolean;
+  link?: string;
+  fontSizePt?: 8 | 9 | 10 | 11 | 12 | 14;
+};
+
+export type ResultTemplateInstructionNode = {
+  type: "paragraph" | "heading2" | "heading3" | "bullet" | "numbered" | "quote";
+  content: ResultTemplateInstructionRun[];
+  lineHeight?: 1 | 1.15 | 1.3 | 1.5 | 2;
+  fontFamily?: "sans" | "serif" | "mono";
+};
+
 export type ResultTemplate = {
   result_type: string;
   templateKey?: string;
   schemaVersion?: number;
   title?: string;
   description?: string;
+  instructions?: ResultTemplateInstructionNode[];
   resultKind?: ResultKind;
   cardinality?: ResultCardinality;
   fields: ResultTemplateField[];
@@ -536,9 +555,14 @@ export type SchoolSelfPurchaseRow = {
 
 export type SequenceRecord = {
   id: string;
+  code: string;
   name: string;
+  designType: string;
+  status: "draft" | "active" | "inactive" | "archived";
   type: "DNA" | "RNA" | "Protein";
   sequence: string;
+  version: string;
+  validationStatus: string;
   description: string;
   linkedEntity?: string;
 };

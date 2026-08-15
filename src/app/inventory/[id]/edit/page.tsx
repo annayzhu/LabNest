@@ -9,13 +9,14 @@ export const dynamic = "force-dynamic";
 
 export default async function EditInventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [item, locations] = await Promise.all([
+  const [item, locations, entities] = await Promise.all([
     prisma.inventoryItem.findUnique({ where: { id } }),
     prisma.inventoryLocation.findMany({
       where: { OR: [{ status: "active" }, { items: { some: { id } } }] },
       select: { id: true, name: true, temperature: true, status: true },
       orderBy: { name: "asc" },
     }),
+    prisma.entity.findMany({ where: { OR: [{ status: "active" }, { inventoryItems: { some: { id } } }] }, select: { id: true, name: true, type: true, code: true }, orderBy: [{ type: "asc" }, { name: "asc" }] }),
   ]);
   if (!item) notFound();
 
@@ -23,7 +24,7 @@ export default async function EditInventoryItemPage({ params }: { params: Promis
     <AppShell>
       <div className="space-y-5">
         <PageHeader title={`Edit ${item.name}`} />
-        <InventoryItemForm action={updateInventoryItem} locations={locations} initial={item} />
+        <InventoryItemForm action={updateInventoryItem} locations={locations} entities={entities} initial={item} />
       </div>
     </AppShell>
   );

@@ -1,4 +1,6 @@
 import { format } from "date-fns";
+import { enUS, zhCN } from "date-fns/locale";
+import type { AppLocale } from "@/lib/i18n";
 import type { Entry } from "@/lib/types";
 
 export type EntryMonthGroup = {
@@ -13,7 +15,25 @@ export type EntryProjectCollection = {
   count: number;
 };
 
-export function groupEntriesByMonth(entries: Entry[]): EntryMonthGroup[] {
+function dateLocale(locale: AppLocale) {
+  return locale === "zh" ? zhCN : enUS;
+}
+
+export function formatEntryCardTimestamp(value: string | Date, locale: AppLocale) {
+  const date = new Date(value);
+  return locale === "zh"
+    ? format(date, "M月d日 EEEE · HH:mm", { locale: dateLocale(locale) })
+    : format(date, "EEEE, MMM d · HH:mm", { locale: dateLocale(locale) });
+}
+
+export function formatEntryDetailTimestamp(value: string | Date, locale: AppLocale) {
+  const date = new Date(value);
+  return locale === "zh"
+    ? format(date, "yyyy年M月d日 EEEE · HH:mm", { locale: dateLocale(locale) })
+    : format(date, "EEEE, MMMM d, yyyy · HH:mm", { locale: dateLocale(locale) });
+}
+
+export function groupEntriesByMonth(entries: Entry[], locale: AppLocale = "en"): EntryMonthGroup[] {
   const groups = new Map<string, EntryMonthGroup>();
 
   entries.forEach((entry) => {
@@ -28,7 +48,9 @@ export function groupEntriesByMonth(entries: Entry[]): EntryMonthGroup[] {
 
     groups.set(key, {
       key,
-      label: format(occurredAt, "MMMM yyyy"),
+      label: locale === "zh"
+        ? format(occurredAt, "yyyy年M月", { locale: dateLocale(locale) })
+        : format(occurredAt, "MMMM yyyy", { locale: dateLocale(locale) }),
       entries: [entry],
     });
   });

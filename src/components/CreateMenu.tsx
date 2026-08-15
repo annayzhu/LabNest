@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ClipboardList,
   Database,
+  Dna,
   FlaskConical,
   FolderKanban,
   ImagePlus,
@@ -47,6 +48,7 @@ const groups = [
       { label: "Project", icon: FolderKanban, href: "/projects" },
       { label: "Entity / Sample", icon: TestTube2, href: "/entities" },
       { label: "Inventory Item", icon: Boxes, href: "/inventory" },
+      { label: "Sequence", icon: Dna, href: "/sequences/new" },
       { label: "Result", icon: Database, href: "/results" },
       { label: "Purchase", icon: ShoppingCart, href: "/purchases" },
       { label: "Import / Attachment", icon: Upload, href: "/attachments" },
@@ -60,6 +62,7 @@ const mobileItems = [
   { label: "Photo Entry", href: "/entries/new?source=photo" },
   { label: "Add Result", href: "/results" },
   { label: "Add Inventory", href: "/inventory" },
+  { label: "Add Sequence", href: "/sequences/new" },
   { label: "Add Sample", href: "/samples" },
 ];
 

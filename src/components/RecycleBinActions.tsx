@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { RotateCcw, Trash2, X } from "lucide-react";
+import { Link2, RotateCcw, Trash2, X } from "lucide-react";
 import { purgeTrashRecord, restoreTrashRecord } from "@/app/trash/actions";
 import { useI18n } from "@/components/I18nProvider";
 import { formInputClass } from "@/components/forms";
@@ -10,7 +10,7 @@ import type { FormActionState } from "@/lib/form-actions";
 
 const initialState: FormActionState = {};
 
-export function RecycleBinActions({ id, identifier, title }: { id: string; identifier: string; title: string }) {
+export function RecycleBinActions({ id, identifier, title, associationsPreserved = false }: { id: string; identifier: string; title: string; associationsPreserved?: boolean }) {
   const { locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [restoreState, restoreAction, restoring] = useActionState(restoreTrashRecord, initialState);
@@ -31,10 +31,10 @@ export function RecycleBinActions({ id, identifier, title }: { id: string; ident
         <input type="hidden" name="id" value={id} />
         <Button type="submit" variant="primary" disabled={restoring || purging}><RotateCcw className="h-4 w-4" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复" : "Restore"}</Button>
       </form>
-      <Button type="button" variant="destructive" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>
+      {associationsPreserved ? <span className="inline-flex min-h-9 items-center gap-1.5 rounded-[7px] border border-warning/30 bg-warning-surface px-2.5 text-xs font-medium text-warning"><Link2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "关联保留中，不可永久删除" : "Protected while linked"}</span> : <Button type="button" variant="destructive" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>}
       {restoreState.error ? <p role="alert" className="w-full text-right text-xs text-error">{restoreState.error}</p> : null}
 
-      {open ? (
+      {open && !associationsPreserved ? (
         <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget && !purging) setOpen(false); }}>
           <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="w-full max-w-lg rounded-[12px] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">

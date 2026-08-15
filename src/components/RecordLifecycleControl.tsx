@@ -23,6 +23,7 @@ export function RecordLifecycleControl({
   archiveAction,
   restoreAction,
   editHref,
+  allowLinkedRecycle = false,
 }: {
   id: string;
   identifier: string;
@@ -35,6 +36,7 @@ export function RecordLifecycleControl({
   archiveAction?: FormAction;
   restoreAction?: FormAction;
   editHref?: string;
+  allowLinkedRecycle?: boolean;
 }) {
   const { locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -91,22 +93,26 @@ export function RecordLifecycleControl({
 
             {blockers.length ? (
               <div className="mt-4">
-                <p className="flex items-start gap-2 text-sm font-medium text-warning"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{locale === "zh" ? `该${label}不能移入回收站。` : `This ${label} cannot be moved to the Recycle Bin.`}</p>
+                <p className="flex items-start gap-2 text-sm font-medium text-warning"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{allowLinkedRecycle ? locale === "zh" ? "以下状态或关联会被处理，但仍可移入回收站。" : "The following state or associations will be handled, but this record can still be recycled." : locale === "zh" ? `该${label}不能移入回收站。` : `This ${label} cannot be moved to the Recycle Bin.`}</p>
                 <ul className="mt-2 space-y-1 pl-6 text-sm text-graphite">
                   {blockers.map((blocker) => (
                     <li key={blocker.key} className="list-disc">
                       {locale === "zh" ? blocker.labelZh : blocker.label}
-                      {blocker.count !== undefined ? `：${blocker.count}` : blocker.detail || blocker.detailZh ? ` — ${locale === "zh" ? blocker.detailZh : blocker.detail}` : ""}
+                      {blocker.count !== undefined ? `：${blocker.count}` : !allowLinkedRecycle && (blocker.detail || blocker.detailZh) ? ` — ${locale === "zh" ? blocker.detailZh : blocker.detail}` : ""}
                     </li>
                   ))}
                 </ul>
                 <p className="mt-3 text-sm leading-6 text-muted">
-                  {archived
+                  {allowLinkedRecycle
+                    ? locale === "zh" ? "有关联时将保留一个隐藏的可恢复记录；原关联位置会显示“来源在回收站”警告。" : "When links exist, a hidden recoverable record is retained and linked pages show a Recycle Bin warning."
+                    : archived
                     ? locale === "zh" ? "该记录已归档，关联链路仍被保留。" : "This record is already archived and its linked provenance remains preserved."
                     : locale === "zh" ? "请归档记录，而不是破坏已有的科研关联链路。" : "Archive the record instead of breaking its existing scientific provenance."}
                 </p>
               </div>
-            ) : (
+            ) : null}
+
+            {!blockers.length || allowLinkedRecycle ? (
               <form action={deleteFormAction} className="mt-4 space-y-4">
                 <input type="hidden" name="id" value={id} />
                 <label className="block">
@@ -119,7 +125,7 @@ export function RecordLifecycleControl({
                   <Button type="submit" variant="destructive" disabled={pending}><Trash2 className="h-4 w-4" aria-hidden />{deleting ? locale === "zh" ? "处理中…" : "Moving…" : locale === "zh" ? "移入回收站" : "Move to Recycle Bin"}</Button>
                 </div>
               </form>
-            )}
+            ) : null}
 
             <div className={`${blockers.length ? "mt-5" : "mt-3"} flex flex-wrap justify-end gap-2`}>
               {restoreAction && archived ? (

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { ArrowLeft, Download, FileText, Link2, ListChecks, Paperclip, Pencil } from "lucide-react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
@@ -11,7 +12,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
+import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
+import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { entryDeleteBlockers } from "@/lib/record-lifecycle";
 import { archiveEntry, deleteEntry, restoreEntry } from "../actions";
@@ -43,6 +46,7 @@ const collectionHref: Record<string, (id: string) => string> = {
 
 export default async function EntryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const entry = await getEntryDetailRecord(id);
   if (!entry) notFound();
 
@@ -56,9 +60,9 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1180px] space-y-6">
+      <div className="space-y-6">
         <PageHeader
-          eyebrow={format(new Date(entry.occurredAt), "EEEE, MMMM d, yyyy · HH:mm")}
+          eyebrow={formatEntryDetailTimestamp(entry.occurredAt, locale)}
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">

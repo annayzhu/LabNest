@@ -157,7 +157,7 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
         description: "Choose one of the controlled record lifecycle states.",
         allowedValues: recordStatusValues,
       },
-      { key: "primaryProtocolCode", label: "Primary Protocol code", required: true, aliases: ["protocol", "protocolCode", "主要实验规程"] },
+      { key: "primaryProtocolCode", label: "First Protocol code", aliases: ["protocol", "protocolCode", "primaryProtocolCode", "主要实验规程"], description: "Optional. Leave blank for a fully custom Experiment." },
       { key: "protocolVersion", label: "Protocol version", example: "0.1" },
       { key: "supportingProtocolCodes", label: "Supporting Protocol codes" },
       { key: "purpose", label: "Purpose" },

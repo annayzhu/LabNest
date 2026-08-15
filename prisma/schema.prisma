@@ -229,6 +229,64 @@ enum SequenceType {
   Protein
 }
 
+enum SequenceDesignType {
+  plasmid
+  primer
+  probe
+  siRNA
+  shRNA
+  gRNA
+  oligo
+  peptide
+  protein
+  fragment
+  other
+}
+
+enum SequenceLifecycleStatus {
+  draft
+  active
+  inactive
+  archived
+}
+
+enum SequenceValidationStatus {
+  unverified
+  validation_in_progress
+  validated_recommended
+  validated_limited
+  validated_not_recommended
+  inconclusive
+}
+
+enum SequenceTopology {
+  linear
+  circular
+}
+
+enum SequenceStrandedness {
+  single
+  double
+  unknown
+}
+
+enum SequenceSourceType {
+  manual
+  fasta_import
+  csv_import
+  xlsx_import
+}
+
+enum SequenceCollectionType {
+  primer_pair
+  sirna_duplex
+  shrna_construct
+  probe_panel
+  plasmid_construct
+  peptide_set
+  other
+}
+
 enum LinkCreatedBy {
   user
   system
@@ -279,20 +337,23 @@ enum ReferenceProviderType {
 }
 
 model Project {
-  id          String        @id @default(cuid())
-  name        String
-  description String?
+  id             String        @id @default(cuid())
+  name           String
+  description    String?
   keyInformation String?
-  status      ProjectStatus @default(active)
-  tags        String[]      @default([])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status         ProjectStatus @default(active)
+  tags           String[]      @default([])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   entries              Entry[]
   researchPlans        ResearchPlan[]
   experiments          Experiment[]
   protocols            Protocol[]
+  protocolAssociations ProjectProtocol[]
   entities             Entity[]
+  sequences            Sequence[]
+  sequenceCollections  SequenceCollection[]
   results              Result[]
   reports              Report[]
   procurementInquiries ProcurementInquiry[]
@@ -302,21 +363,21 @@ model Project {
 }
 
 model ResearchPlan {
-  id          String             @id @default(cuid())
-  projectId   String
-  project     Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  code        String             @unique
-  title       String
-  objective   String?
-  hypothesis  String?
-  rationale   String?
+  id             String             @id @default(cuid())
+  projectId      String
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  code           String             @unique
+  title          String
+  objective      String?
+  hypothesis     String?
+  rationale      String?
   keyInformation String?
-  design      String?
-  contentJson Json               @default("{}")
-  status      ResearchPlanStatus @default(draft)
-  tags        String[]           @default([])
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  design         String?
+  contentJson    Json               @default("{}")
+  status         ResearchPlanStatus @default(draft)
+  tags           String[]           @default([])
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   entries     Entry[]
   experiments Experiment[]
@@ -435,13 +496,27 @@ model Protocol {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
-  versions      ProtocolVersion[]
-  researchPlans ResearchPlanProtocol[]
+  versions            ProtocolVersion[]
+  researchPlans       ResearchPlanProtocol[]
+  projectAssociations ProjectProtocol[]
 
   @@index([availability])
   @@index([scope])
   @@index([recordStatus])
   @@index([projectId])
+}
+
+/// Reusable library Protocols may be associated with several Projects without
+/// changing their ownership/context (`Protocol.projectId`).
+model ProjectProtocol {
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  protocolId String
+  protocol   Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([projectId, protocolId])
+  @@index([protocolId])
 }
 
 model RecordCodeCounter {
@@ -518,6 +593,9 @@ model ExperimentStep {
   experimentId    String
   experiment      Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
   protocolStepRef String?
+  groupKey        String     @default("manual")
+  groupTitle      String     @default("Custom experiment steps")
+  groupOrder      Int        @default(0)
   order           Int
   title           String
   description     String
@@ -525,7 +603,7 @@ model ExperimentStep {
   completedAt     DateTime?
   deviationNote   String?
 
-  @@index([experimentId, order])
+  @@index([experimentId, groupOrder, order])
 }
 
 model Entity {
@@ -547,6 +625,7 @@ model Entity {
   updatedAt      DateTime     @updatedAt
 
   inventoryItems InventoryItem[]
+  sequenceLinks  EntitySequenceLink[]
   results        Result[]
   sampleProfile  SampleProfile?
 
@@ -711,41 +790,41 @@ model SampleLifecycleEvent {
 }
 
 model Result {
-  id             String                @id @default(cuid())
-  experimentId   String?
-  experiment     Experiment?           @relation(fields: [experimentId], references: [id], onDelete: SetNull)
-  researchPlanId String?
-  researchPlan   ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
-  entityId       String?
-  entity         Entity?               @relation(fields: [entityId], references: [id], onDelete: SetNull)
-  projectId      String?
-  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  resultType     String
-  title          String
-  textValue      String?
-  numericValue   Float?
-  unit           String?
-  status         ObjectStatus          @default(active)
-  recordStatus   RecordLifecycleStatus @default(draft)
-  sourceType     ResultSourceType      @default(manual)
-  qualityStatus  ResultQualityStatus   @default(not_assessed)
-  validationStatus ResultValidationStatus @default(not_applicable)
-  analysisMethod String?
-  protocolVersionId String?
-  protocolVersion   ProtocolVersion?      @relation(fields: [protocolVersionId], references: [id], onDelete: SetNull)
-  templateKey       String?
+  id                    String                 @id @default(cuid())
+  experimentId          String?
+  experiment            Experiment?            @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  researchPlanId        String?
+  researchPlan          ResearchPlan?          @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  entityId              String?
+  entity                Entity?                @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  projectId             String?
+  project               Project?               @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  resultType            String
+  title                 String
+  textValue             String?
+  numericValue          Float?
+  unit                  String?
+  status                ObjectStatus           @default(active)
+  recordStatus          RecordLifecycleStatus  @default(draft)
+  sourceType            ResultSourceType       @default(manual)
+  qualityStatus         ResultQualityStatus    @default(not_assessed)
+  validationStatus      ResultValidationStatus @default(not_applicable)
+  analysisMethod        String?
+  protocolVersionId     String?
+  protocolVersion       ProtocolVersion?       @relation(fields: [protocolVersionId], references: [id], onDelete: SetNull)
+  templateKey           String?
   templateInstanceKey   String?
   templateInstanceLabel String?
-  templateSnapshotJson Json               @default("{}")
-  valuesJson           Json               @default("{}")
-  validationJson       Json               @default("{}")
-  viewSpecJson         Json               @default("{}")
-  contentJson    Json                  @default("{}")
-  provenanceJson Json                  @default("{}")
-  metadataJson   Json                  @default("{}")
-  notes          String?
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  templateSnapshotJson  Json                   @default("{}")
+  valuesJson            Json                   @default("{}")
+  validationJson        Json                   @default("{}")
+  viewSpecJson          Json                   @default("{}")
+  contentJson           Json                   @default("{}")
+  provenanceJson        Json                   @default("{}")
+  metadataJson          Json                   @default("{}")
+  notes                 String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
   datasets      ResultDataset[]
   reportSources ReportSource[]
@@ -764,28 +843,43 @@ model Result {
   @@index([experimentId, templateKey, templateInstanceKey])
 }
 
+/// User-maintained point-and-click vocabulary for manual Result records.
+/// Result.resultType remains a text snapshot so renaming or deleting an option
+/// never rewrites historical evidence.
+model ResultTypeDefinition {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder, label])
+}
+
 model ResultDataset {
-  id             String                   @id @default(cuid())
-  resultId       String
-  result         Result                   @relation(fields: [resultId], references: [id], onDelete: Cascade)
-  name           String
-  storageMode    ResultDatasetStorageMode @default(managed_file)
-  sourceFileName String?
-  mimeType       String?
-  size           Int?
-  storagePath    String?
-  externalUri    String?
-  checksum       String?
-  rowCount       Int                      @default(0)
-  columnCount    Int                      @default(0)
-  columnsJson    Json                     @default("[]")
-  previewJson    Json                     @default("[]")
+  id                 String                   @id @default(cuid())
+  resultId           String
+  result             Result                   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  name               String
+  storageMode        ResultDatasetStorageMode @default(managed_file)
+  sourceFileName     String?
+  mimeType           String?
+  size               Int?
+  storagePath        String?
+  externalUri        String?
+  checksum           String?
+  rowCount           Int                      @default(0)
+  columnCount        Int                      @default(0)
+  columnsJson        Json                     @default("[]")
+  previewJson        Json                     @default("[]")
   templateDatasetKey String?
   schemaJson         Json                     @default("{}")
-  validationStatus  ResultValidationStatus   @default(not_applicable)
-  validationJson    Json                     @default("{}")
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
+  validationStatus   ResultValidationStatus   @default(not_applicable)
+  validationJson     Json                     @default("{}")
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   @@index([resultId])
   @@index([storageMode])
@@ -960,33 +1054,141 @@ model AttachmentLink {
 }
 
 model Sequence {
-  id           String       @id @default(cuid())
+  id           String                  @id @default(cuid())
+  code         String                  @unique
   name         String
-  type         SequenceType
-  sequence     String
+  designType   SequenceDesignType      @default(other)
+  status       SequenceLifecycleStatus @default(draft)
   description  String?
-  metadataJson Json         @default("{}")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  projectId    String?
+  project      Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  targetName   String?
+  organism     String?
+  metadataJson Json                    @default("{}")
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
 
-  entities Entity[]
-  features SequenceFeature[]
+  entities    Entity[]
+  versions    SequenceVersion[]
+  entityLinks EntitySequenceLink[]
 
-  @@index([type])
+  @@index([designType])
+  @@index([status])
+  @@index([projectId])
+  @@index([targetName])
+}
+
+model SequenceVersion {
+  id                String                   @id @default(cuid())
+  sequenceId        String
+  sequenceRecord    Sequence                 @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  versionNumber     Int
+  displayVersion    String                   @default("1.0")
+  moleculeType      SequenceType
+  sequence          String
+  checksum          String
+  topology          SequenceTopology         @default(linear)
+  strandedness      SequenceStrandedness     @default(unknown)
+  orientation       String                   @default("5to3")
+  validationStatus  SequenceValidationStatus @default(unverified)
+  validationSummary String?
+  validatedAt       DateTime?
+  changeSummary     String?
+  sourceType        SequenceSourceType       @default(manual)
+  sourceFileName    String?
+  createdAt         DateTime                 @default(now())
+
+  features          SequenceFeature[]
+  modifications     SequenceModification[]
+  entityLinks       EntitySequenceLink[]
+  collectionMembers SequenceCollectionMember[]
+
+  @@unique([sequenceId, versionNumber])
+  @@index([sequenceId, checksum])
+  @@index([moleculeType])
+  @@index([validationStatus])
+  @@index([checksum])
 }
 
 model SequenceFeature {
-  id         String   @id @default(cuid())
-  sequenceId String
-  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  name       String
-  type       String
-  start      Int
-  end        Int
-  strand     String?
-  note       String?
+  id                String          @id @default(cuid())
+  sequenceVersionId String
+  sequenceVersion   SequenceVersion @relation(fields: [sequenceVersionId], references: [id], onDelete: Cascade)
+  name              String
+  type              String
+  start             Int
+  end               Int
+  strand            String?
+  note              String?
 
+  @@index([sequenceVersionId])
+}
+
+model SequenceModification {
+  id                String          @id @default(cuid())
+  sequenceVersionId String
+  sequenceVersion   SequenceVersion @relation(fields: [sequenceVersionId], references: [id], onDelete: Cascade)
+  position          String
+  modification      String
+  note              String?
+  order             Int             @default(0)
+
+  @@index([sequenceVersionId, order])
+}
+
+model EntitySequenceLink {
+  id                String          @id @default(cuid())
+  entityId          String
+  entity            Entity          @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  sequenceId        String
+  sequenceRecord    Sequence        @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  sequenceVersionId String
+  sequenceVersion   SequenceVersion @relation(fields: [sequenceVersionId], references: [id], onDelete: Restrict)
+  role              String          @default("primary")
+  isPrimary         Boolean         @default(false)
+  order             Int             @default(0)
+  note              String?
+  createdAt         DateTime        @default(now())
+
+  @@unique([entityId, sequenceVersionId, role])
+  @@index([entityId, order])
   @@index([sequenceId])
+  @@index([sequenceVersionId])
+}
+
+model SequenceCollection {
+  id           String                  @id @default(cuid())
+  code         String                  @unique
+  name         String
+  type         SequenceCollectionType
+  status       SequenceLifecycleStatus @default(draft)
+  description  String?
+  projectId    String?
+  project      Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  metadataJson Json                    @default("{}")
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  members SequenceCollectionMember[]
+
+  @@index([type])
+  @@index([status])
+  @@index([projectId])
+}
+
+model SequenceCollectionMember {
+  id                String             @id @default(cuid())
+  collectionId      String
+  collection        SequenceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  sequenceVersionId String
+  sequenceVersion   SequenceVersion    @relation(fields: [sequenceVersionId], references: [id], onDelete: Restrict)
+  role              String             @default("member")
+  order             Int                @default(0)
+  note              String?
+
+  @@unique([collectionId, sequenceVersionId, role])
+  @@index([collectionId, order])
+  @@index([sequenceVersionId])
 }
 
 model ItemLink {
@@ -1085,13 +1287,13 @@ model ActivityLog {
 }
 
 model DeletedRecord {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   targetType   String
   targetId     String
   identifier   String
   title        String
   snapshotJson Json
-  deletedAt    DateTime @default(now())
+  deletedAt    DateTime  @default(now())
   restoredAt   DateTime?
 
   @@index([restoredAt, deletedAt])

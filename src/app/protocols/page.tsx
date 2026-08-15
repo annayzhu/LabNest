@@ -21,8 +21,10 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
   const orderBy = sort === "title_asc" ? [{ canonicalTitle: "asc" as const }, { title: "asc" as const }]
     : sort === "code_asc" ? { humanCode: "asc" as const }
       : { updatedAt: "desc" as const };
+  const recycledIds = (await prisma.deletedRecord.findMany({ where: { targetType: "protocol", restoredAt: null }, select: { targetId: true } })).map((row) => row.targetId);
   const baseProtocols = await prisma.protocol.findMany({
     where: {
+      id: { notIn: recycledIds },
       ...(availability ? { availability: availability as "draft" | "active" | "retired" | "archived" } : {}),
       ...(scope ? { scope: scope as "general" | "project" } : {}),
       ...(query ? { OR: [
@@ -37,7 +39,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
     orderBy,
   });
   const protocols = review ? baseProtocols.filter((protocol) => protocol.versions[0]?.reviewStage === review) : baseProtocols;
-  const totalCount = await prisma.protocol.count();
+  const totalCount = await prisma.protocol.count({ where: { id: { notIn: recycledIds } } });
   const exportHref = filterHref("/protocols/export", { exportScope: "filtered", q: query, availability, scope, review, sort });
 
   return (

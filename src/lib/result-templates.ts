@@ -76,12 +76,31 @@ const resultChartInputSchema = z.object({
   seriesField: z.string().optional(),
 });
 
+const resultTemplateInstructionRunSchema = z.object({
+  text: z.string(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
+  strike: z.boolean().optional(),
+  code: z.boolean().optional(),
+  link: z.string().optional(),
+  fontSizePt: z.union([z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(14)]).optional(),
+});
+
+const resultTemplateInstructionNodeSchema = z.object({
+  type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
+  content: z.array(resultTemplateInstructionRunSchema),
+  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(2)]).optional(),
+  fontFamily: z.enum(["sans", "serif", "mono"]).optional(),
+});
+
 export const resultTemplateInputSchema = z.object({
   result_type: z.string().optional(),
   templateKey: z.string().optional(),
   schemaVersion: z.number().int().positive().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
+  instructions: z.array(resultTemplateInstructionNodeSchema).optional(),
   resultKind: z.enum(resultKinds).optional(),
   cardinality: z.enum(cardinalities).optional(),
   fields: z.array(resultTemplateFieldInputSchema).default([]),
@@ -116,6 +135,10 @@ export type DatasetPreviewShape = {
   rowCount: number;
   columnCount: number;
 };
+
+export const RESULT_DATASET_VALUES_KEY = "__datasets";
+export type ResultDatasetRowValues = Record<string, unknown>;
+export type ResultDatasetValues = Record<string, ResultDatasetRowValues[]>;
 
 export const RESULT_VIEW_PRESETS: Record<ResultViewPreset, { label: string; description: string; evidence: string[] }> = {
   generic: { label: "Generic evidence", description: "Metrics, tables, media and narrative are arranged without assay-specific assumptions.", evidence: ["Structured fields", "Datasets", "Attachments"] },
@@ -152,6 +175,51 @@ function inferredPreset(resultType: string): ResultViewPreset {
   if (/time|kinetic|growth.curve/.test(value)) return "timeseries";
   if (/rna.?seq|proteom|metabolom|omics|differential/.test(value)) return "omics";
   return "generic";
+}
+
+type ResultTemplateEvidenceShape = Pick<ResultTemplate, "fields" | "datasets" | "artifacts"> & {
+  result_type?: string;
+  title?: string;
+};
+
+export function inferResultViewPreset(input: ResultTemplateEvidenceShape): ResultViewPreset {
+  const resultType = cleanText(input.result_type) ?? cleanText(input.title) ?? "result";
+  const namedPreset = inferredPreset(resultType);
+  if (namedPreset !== "generic") return namedPreset;
+  if (input.artifacts?.some((artifact) => artifact.kind === "image" || artifact.kind === "video")) return "imaging";
+  if (input.datasets?.some((dataset) => dataset.columns.some((column) => {
+    const key = `${column.key} ${column.label}`.toLowerCase();
+    return column.dataType === "date" || column.dataType === "datetime" || /time|day|hour|minute|时间|时点/.test(key);
+  }))) return "timeseries";
+  return "generic";
+}
+
+export function inferResultKind(input: ResultTemplateEvidenceShape, preset = inferResultViewPreset(input)): ResultKind {
+  if (preset === "qpcr") return "assay";
+  if (preset === "imaging") return "imaging";
+  if (preset === "blot") return "blot";
+  if (preset === "flow") return "flow_cytometry";
+  if (preset === "omics") return "omics";
+  if (input.datasets?.length || input.fields.some((field) => (field.dataType ?? field.type) === "number")) return "measurement";
+  return "observation";
+}
+
+export function withInferredResultTemplateMetadata(template: ResultTemplate): ResultTemplate {
+  const preset = inferResultViewPreset(template);
+  return {
+    ...template,
+    resultKind: inferResultKind(template, preset),
+    view: { ...template.view, preset },
+  };
+}
+
+export function uniqueResultKey(value: string, usedKeys: Iterable<string>, fallback = "result") {
+  const used = new Set(usedKeys);
+  const base = stableResultKey(value, fallback);
+  if (!used.has(base)) return base;
+  let suffix = 2;
+  while (used.has(`${base}_${suffix}`)) suffix += 1;
+  return `${base}_${suffix}`;
 }
 
 function normalizeField(input: z.infer<typeof resultTemplateFieldInputSchema>, index: number): ResultTemplateField {
@@ -212,19 +280,22 @@ export function normalizeResultTemplate(value: unknown, index = 0): ResultTempla
     yField: stableResultKey(chart.yField),
     seriesField: chart.seriesField ? stableResultKey(chart.seriesField) : undefined,
   }));
+  const evidenceShape = { result_type: resultType, title: input.title, fields, datasets, artifacts };
+  const preset = input.view?.preset ?? inferResultViewPreset(evidenceShape);
   return {
     result_type: resultType,
     templateKey,
     schemaVersion: input.schemaVersion ?? 1,
     title: cleanText(input.title) ?? resultType,
     description: cleanText(input.description),
-    resultKind: input.resultKind ?? "measurement",
+    instructions: input.instructions?.length ? input.instructions : undefined,
+    resultKind: input.resultKind ?? inferResultKind(evidenceShape, preset),
     cardinality: input.cardinality ?? "per_run",
     fields,
     datasets,
     artifacts,
     view: {
-      preset: input.view?.preset ?? inferredPreset(resultType),
+      preset,
       primaryMetric: cleanText(input.view?.primaryMetric),
       groupBy: cleanText(input.view?.groupBy),
       charts,
@@ -242,12 +313,12 @@ export function createDefaultResultTemplate(resultType = "measurement"): ResultT
     result_type: resultType,
     templateKey: stableResultKey(resultType),
     schemaVersion: 1,
-    resultKind: "measurement",
     cardinality: "per_run",
+    instructions: [{ type: "paragraph", content: [{ text: "" }] }],
     fields: [{ key: "value", label: "Value", dataType: "number", required: false, semanticRole: "measurement" }],
     datasets: [],
     artifacts: [],
-    view: { preset: inferredPreset(resultType), charts: [] },
+    view: { charts: [] },
   });
 }
 
@@ -281,6 +352,7 @@ export function checkResultTemplate(value: unknown): ResultTemplateCheck {
   const warnings: string[] = [];
   if (!template.templateKey) errors.push("Template key is required.");
   if (!template.result_type.trim()) errors.push("Result type is required.");
+  if (template.result_type === "result_type") errors.push("Replace the placeholder with a Result name.");
   if (!template.fields.length && !(template.datasets?.length) && !(template.artifacts?.length)) errors.push("Define at least one field, Dataset, or artifact.");
   const duplicateFields = duplicateKeys(template.fields.map((field) => field.key ?? ""));
   if (duplicateFields.length) errors.push(`Duplicate field keys: ${duplicateFields.join(", ")}.`);
@@ -316,6 +388,62 @@ export function normalizeResultValues(value: unknown): Record<string, unknown> {
   return { ...(value as Record<string, unknown>) };
 }
 
+export function resultDatasetValuesFromResultValues(value: unknown): ResultDatasetValues {
+  const values = normalizeResultValues(value);
+  const rawDatasets = values[RESULT_DATASET_VALUES_KEY];
+  if (!rawDatasets || typeof rawDatasets !== "object" || Array.isArray(rawDatasets)) return {};
+  return Object.fromEntries(Object.entries(rawDatasets).flatMap(([datasetKey, rawRows]) => {
+    if (!Array.isArray(rawRows)) return [];
+    const rows = rawRows.flatMap((row) => row && typeof row === "object" && !Array.isArray(row)
+      ? [{ ...(row as ResultDatasetRowValues) }]
+      : []);
+    return [[stableResultKey(datasetKey), rows]];
+  }));
+}
+
+export function withResultDatasetValues(value: unknown, datasets: ResultDatasetValues) {
+  const values = normalizeResultValues(value);
+  const normalized = Object.fromEntries(Object.entries(datasets).map(([datasetKey, rows]) => [
+    stableResultKey(datasetKey),
+    rows.map((row) => ({ ...row })),
+  ]));
+  if (Object.keys(normalized).length) values[RESULT_DATASET_VALUES_KEY] = normalized;
+  else delete values[RESULT_DATASET_VALUES_KEY];
+  return values;
+}
+
+function rowHasRecordedValue(row: ResultDatasetRowValues, dataset: ResultTemplateDataset) {
+  return dataset.columns.some((column) => !isBlank(row[column.key]));
+}
+
+export function validateResultDatasetRows(dataset: ResultTemplateDataset, rawRows: unknown) {
+  const rows = Array.isArray(rawRows)
+    ? rawRows.flatMap((row) => row && typeof row === "object" && !Array.isArray(row) ? [{ ...(row as ResultDatasetRowValues) }] : [])
+    : [];
+  const recordedRows = rows.filter((row) => rowHasRecordedValue(row, dataset));
+  const errors: string[] = [];
+  for (const [rowIndex, row] of recordedRows.entries()) {
+    for (const column of dataset.columns) {
+      const value = row[column.key];
+      if (column.required && isBlank(value)) {
+        errors.push(`Row ${rowIndex + 1}: ${column.label} is required.`);
+        continue;
+      }
+      if (isBlank(value)) continue;
+      if (column.dataType === "number" && (typeof value !== "number" || !Number.isFinite(value))) errors.push(`Row ${rowIndex + 1}: ${column.label} must be a finite number.`);
+      if (column.dataType === "boolean" && typeof value !== "boolean") errors.push(`Row ${rowIndex + 1}: ${column.label} must be true or false.`);
+      if ((column.dataType === "date" || column.dataType === "datetime") && (typeof value !== "string" || Number.isNaN(Date.parse(value)))) errors.push(`Row ${rowIndex + 1}: ${column.label} must be a valid ${column.dataType}.`);
+    }
+  }
+  return {
+    status: recordedRows.length ? errors.length ? "invalid" as const : "valid" as const : "not_applicable" as const,
+    rows: recordedRows,
+    rowCount: recordedRows.length,
+    errors,
+    warnings: [] as string[],
+  };
+}
+
 export function validateResultRecord(input: {
   template?: unknown;
   values?: unknown;
@@ -329,6 +457,7 @@ export function validateResultRecord(input: {
   const template = normalizeResultTemplate(input.template);
   const templateCheck = checkResultTemplate(template);
   const values = normalizeResultValues(input.values);
+  const inlineDatasets = resultDatasetValuesFromResultValues(values);
   const errors = [...templateCheck.errors];
   const warnings = [...templateCheck.warnings];
   if (["per_sample", "per_timepoint", "repeatable"].includes(template.cardinality ?? "per_run") && !input.instanceKey?.trim()) {
@@ -352,7 +481,9 @@ export function validateResultRecord(input: {
   const datasetStatuses = input.datasetStatuses ?? [];
   for (const dataset of template.datasets ?? []) {
     const matches = datasetStatuses.filter((item) => item.templateDatasetKey === dataset.key);
-    if (dataset.required && !matches.length) errors.push(`${dataset.label} Dataset is required.`);
+    const inlineValidation = validateResultDatasetRows(dataset, inlineDatasets[dataset.key]);
+    if (dataset.required && !matches.length && !inlineValidation.rowCount) errors.push(`${dataset.label} Dataset is required.`);
+    if (inlineValidation.errors.length) errors.push(...inlineValidation.errors.map((error) => `${dataset.label} · ${error}`));
     if (matches.some((item) => item.validationStatus === "invalid")) errors.push(`${dataset.label} Dataset failed schema validation.`);
     if (matches.some((item) => item.validationStatus === "warning" || item.validationStatus === "not_assessed")) warnings.push(`${dataset.label} Dataset needs validation review.`);
   }

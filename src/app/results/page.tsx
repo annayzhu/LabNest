@@ -21,7 +21,9 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
   const validation = firstSearchParam(params, "validation");
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const orderBy = sort === "title_asc" ? { title: "asc" as const } : { updatedAt: "desc" as const };
+  const recycledIds = (await prisma.deletedRecord.findMany({ where: { targetType: "result", restoredAt: null }, select: { targetId: true } })).map((row) => row.targetId);
   const where = {
+    id: { notIn: recycledIds },
     ...(type ? { resultType: type } : {}),
     ...(status ? { status: status as "active" | "inactive" | "archived" } : {}),
     ...(record ? { recordStatus: record as "draft" | "recorded" | "submitted" | "reviewed" } : {}),
@@ -37,7 +39,7 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
   };
   const [results, totalCount, typeRows] = await Promise.all([
     prisma.result.findMany({ where, include: { experiment: true, researchPlan: true, project: true, _count: { select: { datasets: true } } }, orderBy }),
-    prisma.result.count(),
+    prisma.result.count({ where: { id: { notIn: recycledIds } } }),
     prisma.result.findMany({ distinct: ["resultType"], select: { resultType: true }, orderBy: { resultType: "asc" } }),
   ]);
   const exportHref = filterHref("/results/export", { exportScope: "filtered", q: query, type, status, record, quality, validation, sort });

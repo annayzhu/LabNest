@@ -41,18 +41,30 @@ export async function getEntityRecords(): Promise<EntityRecord[]> {
 
 export async function getSequenceRecords(): Promise<SequenceRecord[]> {
   const records = await prisma.sequence.findMany({
-    include: { entities: { select: { name: true }, orderBy: { name: "asc" } } },
+    include: {
+      versions: { orderBy: { versionNumber: "desc" }, take: 1 },
+      entityLinks: { include: { entity: { select: { name: true } } }, orderBy: { order: "asc" } },
+    },
     orderBy: { name: "asc" },
   });
 
-  return records.map((record) => ({
-    id: record.id,
-    name: record.name,
-    type: record.type,
-    sequence: record.sequence,
-    description: record.description ?? "",
-    linkedEntity: record.entities.map((entity) => entity.name).join(", ") || undefined,
-  }));
+  return records.flatMap((record) => {
+    const latest = record.versions[0];
+    if (!latest) return [];
+    return [{
+      id: record.id,
+      code: record.code,
+      name: record.name,
+      designType: record.designType,
+      status: record.status,
+      type: latest.moleculeType,
+      sequence: latest.sequence,
+      version: latest.displayVersion,
+      validationStatus: latest.validationStatus,
+      description: record.description ?? "",
+      linkedEntity: record.entityLinks.map((link) => link.entity.name).join(", ") || undefined,
+    }];
+  });
 }
 
 export async function getProposedActionRecords(): Promise<ProposedAction[]> {

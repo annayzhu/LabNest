@@ -205,9 +205,9 @@ function searchableSources(): SearchSource[] {
       id: sequence.id,
       type: "sequence" as const,
       title: sequence.name,
-      subtitle: sequence.linkedEntity ?? sequence.type,
-      href: `/sequences?type=${sequence.type}`,
-      keywords: [sequence.name, sequence.type, sequence.sequence, sequence.description, sequence.linkedEntity],
+      subtitle: sequence.linkedEntity ?? `${sequence.code} · ${sequence.designType} · v${sequence.version}`,
+      href: `/sequences/${sequence.id}`,
+      keywords: [sequence.code, sequence.name, sequence.designType, sequence.type, sequence.sequence, sequence.validationStatus, sequence.description, sequence.linkedEntity],
     })),
     ...referenceConnectors.map((connector) => ({
       id: connector.id,

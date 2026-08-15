@@ -19,7 +19,7 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
   if (!query) return [];
 
   try {
-    const [entries, protocols, inventoryItems, sampleProfiles, results, purchases] = await Promise.all([
+    const [entries, protocols, inventoryItems, sampleProfiles, results, purchases, sequences] = await Promise.all([
       prisma.entry.findMany({
         where: { OR: [{ title: textFilter(query) }, { body: textFilter(query) }, { moodStatus: textFilter(query) }] },
         include: { project: true },
@@ -69,6 +69,12 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
       }),
       prisma.purchaseRequest.findMany({
         where: { OR: [{ title: textFilter(query) }, { vendor: textFilter(query) }, { catalogNumber: textFilter(query) }, { notes: textFilter(query) }] },
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      }),
+      prisma.sequence.findMany({
+        where: { OR: [{ code: textFilter(query) }, { name: textFilter(query) }, { targetName: textFilter(query) }, { organism: textFilter(query) }, { description: textFilter(query) }, { versions: { some: { sequence: textFilter(query) } } }] },
+        include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
         orderBy: { updatedAt: "desc" },
         take: 20,
       }),
@@ -122,6 +128,14 @@ async function searchRecords(query: string): Promise<SearchResult[]> {
         subtitle: purchase.vendor ?? purchase.status,
         href: `/purchases?status=${purchase.status}`,
         matchedText: purchase.notes ?? purchase.catalogNumber ?? undefined,
+      })),
+      ...sequences.map((sequence) => ({
+        id: sequence.id,
+        type: "sequence" as const,
+        title: sequence.name,
+        subtitle: `${sequence.code} · ${sequence.designType} · v${sequence.versions[0]?.displayVersion ?? "?"}`,
+        href: `/sequences/${sequence.id}`,
+        matchedText: sequence.targetName ?? sequence.organism ?? sequence.description ?? undefined,
       })),
     ];
   } catch {

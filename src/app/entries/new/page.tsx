@@ -21,7 +21,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1180px] space-y-6">
+      <div className="space-y-6">
         <PageHeader
           eyebrow="New entry"
           title="Add Entry"

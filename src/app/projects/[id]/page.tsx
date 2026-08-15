@@ -27,11 +27,16 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
     include: {
       researchPlans: { orderBy: researchPlanOrderBy(planSort), include: { _count: { select: { experiments: true, results: true } } } },
       protocols: { orderBy: { updatedAt: "desc" }, include: { versions: { orderBy: { revision: "desc" }, take: 1 } } },
+      protocolAssociations: { orderBy: { createdAt: "desc" }, include: { protocol: { include: { versions: { orderBy: { revision: "desc" }, take: 1 } } } } },
       reports: { orderBy: { updatedAt: "desc" } },
       _count: { select: { researchPlans: true, protocols: true, experiments: true, results: true, reports: true, entries: true, entities: true, procurementInquiries: true } },
     },
   });
   if (!project) notFound();
+  const projectProtocols = Array.from(new Map([
+    ...project.protocols.map((protocol) => [protocol.id, protocol] as const),
+    ...project.protocolAssociations.map((link) => [link.protocol.id, link.protocol] as const),
+  ]).values());
   const genericReferences = await prisma.itemLink.count({ where: { OR: [{ sourceType: "project", sourceId: project.id }, { targetType: "project", targetId: project.id }] } });
   const deletionBlockers = projectDeleteBlockers({ ...project._count, genericReferences });
   const researchPlanExportHref = filterHref("/research-plans/export", {
@@ -56,7 +61,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
             { key: "results", header: "Results", render: (row) => row._count.results },
             { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
           ]} /></CardBody></Card>
-          {project.protocols.length ? <Card><CardHeader title="Project Protocols" /><CardBody><DataTable rows={project.protocols} getRowKey={(row) => row.id} columns={[
+          {projectProtocols.length ? <Card><CardHeader title="Project-associated Protocols" /><CardBody><DataTable rows={projectProtocols} getRowKey={(row) => row.id} columns={[
             { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="font-semibold text-moss hover:underline">{row.humanCode ?? row.canonicalTitle ?? row.title}</Link> },
             { key: "version", header: "Current version", render: (row) => row.versions[0]?.displayVersion ?? "—" },
             { key: "availability", header: "Availability", render: (row) => <StatusPill status={row.availability} /> },

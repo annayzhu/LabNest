@@ -814,9 +814,14 @@ const gfpSequence =
 export const sequences: SequenceRecord[] = [
   {
     id: "seq-gfp",
+    code: "SEQ-000001",
     name: "GFP insert demo",
+    designType: "fragment",
+    status: "active",
     type: "DNA",
     sequence: gfpSequence,
+    version: "1.0",
+    validationStatus: "unverified",
     description: `Length ${sequenceLength(gfpSequence)} bp; GC ${gcPercent(
       gfpSequence,
     )}%; translation preview ${translateDna(gfpSequence).slice(0, 16)}...`,

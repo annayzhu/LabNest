@@ -88,7 +88,12 @@ export function researchPlanDeleteBlockerItems(status: string, counts: ResearchP
   ];
 }
 
+export function researchPlanRequiresAssociationPreservingRecycle(counts: ResearchPlanDependencyCounts) {
+  return Object.values(counts).some((count) => count > 0);
+}
+
 export type ProtocolDependencyCounts = {
+  projects: number;
   researchPlans: number;
   experiments: number;
   results: number;
@@ -108,6 +113,7 @@ export function protocolDeleteBlockers(
     ...(availabilityBlocker ? [availabilityBlocker] : []),
     ...(recordBlocker ? [recordBlocker] : []),
     ...dependencyBlockers(counts, [
+      { key: "projects", label: "Project links", labelZh: "项目关联" },
       { key: "researchPlans", label: "Research Plan links", labelZh: "研究方案关联" },
       { key: "experiments", label: "Experiment uses", labelZh: "实验引用" },
       { key: "results", label: "Result references", labelZh: "结果引用" },
@@ -116,6 +122,10 @@ export function protocolDeleteBlockers(
       { key: "reportSourceReferences", label: "Report source references", labelZh: "报告来源引用" },
     ]),
   ];
+}
+
+export function protocolRequiresAssociationPreservingRecycle(counts: ProtocolDependencyCounts) {
+  return counts.projects + counts.researchPlans + counts.experiments + counts.results + counts.derivedVersions + counts.reportSourceReferences > 0;
 }
 
 export type ExperimentDependencyCounts = {
@@ -172,6 +182,10 @@ export function resultDeleteBlockers(recordStatus: string, counts: ResultDepende
       { key: "inboundLinks", label: "Inbound record links", labelZh: "入站记录链接" },
     ]),
   ];
+}
+
+export function resultRequiresAssociationPreservingRecycle(counts: ResultDependencyCounts) {
+  return Object.values(counts).some((count) => count > 0);
 }
 
 export type ReportDependencyCounts = {

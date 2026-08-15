@@ -1,17 +1,20 @@
 import { AlertTriangle, BarChart3, CheckCircle2, Database, FileCheck2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ProtocolRichTextContent } from "@/components/ProtocolDocumentView";
+import { ResultDatasetTableView } from "@/components/ResultDatasetTable";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import {
   fieldDataType,
   fieldSemanticRole,
   normalizeResultTemplate,
   normalizeResultValues,
-  resultKindLabel,
+  resultDatasetValuesFromResultValues,
   resultTemplateCardinalityLabel,
-  RESULT_VIEW_PRESETS,
   stableResultKey,
+  validateResultDatasetRows,
 } from "@/lib/result-templates";
 import type { ResultChartSpec, ResultTemplate } from "@/lib/types";
+import { richTextPlainText } from "@/lib/protocol-document";
 
 type DatasetView = {
   id: string;
@@ -36,22 +39,18 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
   if (!rawTemplate || typeof rawTemplate !== "object" || Array.isArray(rawTemplate) || !Object.keys(rawTemplate as object).length) return null;
   const template = normalizeResultTemplate(rawTemplate);
   const values = normalizeResultValues(rawValues);
+  const inlineDatasets = resultDatasetValuesFromResultValues(values);
   const validation = rawValidation && typeof rawValidation === "object" ? rawValidation as ValidationView : {};
-  const preset = RESULT_VIEW_PRESETS[template.view?.preset ?? "generic"];
   const metrics = template.fields.filter((field) => fieldSemanticRole(field) === "measurement" || fieldSemanticRole(field) === "qc").filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
   const remainingFields = template.fields.filter((field) => !metrics.includes(field)).filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
   const artifactLinks = new Map(attachments.flatMap((link) => link.linkType.startsWith("template_artifact:") ? [[link.linkType.slice("template_artifact:".length), link]] as const : []));
   const charts = resolveCharts(template, datasets);
 
   return <div className="space-y-5">
-    <Card><CardHeader title={template.title ?? template.result_type} eyebrow="Protocol-defined evidence" action={<ValidationBadge status={validationStatus} />} /><CardBody className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Fact label="Template key" value={template.templateKey ?? "—"} mono />
-        <Fact label="Result kind" value={resultKindLabel(template.resultKind)} />
-        <Fact label="Cardinality" value={resultTemplateCardinalityLabel(template.cardinality)} />
-        <Fact label="View preset" value={preset.label} />
-      </div>
-      <p className="text-sm leading-6 text-graphite">{template.description || preset.description}</p>
+    <Card><CardHeader title="实验结果 / Result record" eyebrow={template.title ?? template.result_type} action={<ValidationBadge status={validationStatus} />} /><CardBody className="space-y-4">
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted"><span className="font-medium text-ink">{template.title ?? template.result_type}</span><span>{resultTemplateCardinalityLabel(template.cardinality)}</span></div>
+      {template.description ? <p className="text-sm leading-6 text-graphite">{template.description}</p> : null}
+      {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="rounded-[9px] border border-sage/35 bg-sage-surface/45 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-moss">填写说明 / Instructions</p><ProtocolRichTextContent nodes={template.instructions} /></div> : null}
       {validation.errors?.length || validation.warnings?.length ? <div className="rounded-[9px] border border-warning/40 bg-warning-surface p-3"><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-warning"><AlertTriangle className="h-4 w-4" />Validation findings</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-graphite">{[...(validation.errors ?? []), ...(validation.warnings ?? [])].map((message) => <li key={message}>{message}</li>)}</ul></div> : null}
     </CardBody></Card>
 
@@ -59,10 +58,12 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
 
     {remainingFields.length ? <Card><CardHeader title="Structured fields" eyebrow="Template values" /><CardBody><dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">{remainingFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="border-b border-hairline pb-3"><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl></CardBody></Card> : null}
 
+    {template.datasets?.length ? <ResultDatasetTableView datasets={template.datasets} values={inlineDatasets} /> : null}
+
     {charts.length ? <div className="grid gap-4 xl:grid-cols-2">{charts.map(({ chart, dataset }) => <Card key={`${dataset.id}-${chart.key}`}><CardHeader title={chart.label} eyebrow={`${chart.type} · ${dataset.name}`} /><CardBody><DatasetPreviewChart chart={chart} dataset={dataset} /></CardBody></Card>)}</div> : null}
 
     {(template.datasets?.length || template.artifacts?.length) ? <div className="grid gap-4 xl:grid-cols-2">
-      <Card><CardHeader title="Dataset requirements" eyebrow="Schema-aware evidence" /><CardBody className="space-y-3">{(template.datasets ?? []).map((expected) => { const matches = datasets.filter((dataset) => dataset.templateDatasetKey === expected.key); return <Requirement key={expected.key} icon={<Database className="h-4 w-4" />} label={expected.label} detail={`${expected.columns.length} defined columns${expected.required ? " · required" : ""}`} status={!matches.length ? "missing" : matches.some((item) => item.validationStatus === "invalid") ? "invalid" : matches.some((item) => item.validationStatus === "warning") ? "warning" : "complete"} />; })}{!template.datasets?.length ? <p className="text-sm text-muted">No Dataset requirements.</p> : null}</CardBody></Card>
+      <Card><CardHeader title="Dataset requirements" eyebrow="Structured table or original data file" /><CardBody className="space-y-3">{(template.datasets ?? []).map((expected) => { const matches = datasets.filter((dataset) => dataset.templateDatasetKey === expected.key); const inline = validateResultDatasetRows(expected, inlineDatasets[expected.key]); const status = inline.status === "invalid" || matches.some((item) => item.validationStatus === "invalid") ? "invalid" : inline.rowCount || matches.some((item) => item.validationStatus === "valid") ? "complete" : matches.some((item) => item.validationStatus === "warning") ? "warning" : "missing"; const detail = inline.rowCount ? `${inline.rowCount} manually recorded rows` : matches.length ? `${matches.length} registered data file${matches.length === 1 ? "" : "s"}` : `${expected.columns.length} expected columns${expected.required ? " · required" : ""}`; return <Requirement key={expected.key} icon={<Database className="h-4 w-4" />} label={expected.label} detail={detail} status={status} />; })}{!template.datasets?.length ? <p className="text-sm text-muted">No Dataset requirements.</p> : null}</CardBody></Card>
       <Card><CardHeader title="Artifact requirements" eyebrow="Raw and visual evidence" /><CardBody className="space-y-3">{(template.artifacts ?? []).map((expected) => { const link = artifactLinks.get(expected.key); return <Requirement key={expected.key} icon={<FileCheck2 className="h-4 w-4" />} label={expected.label} detail={link?.attachment.originalFilename ?? `${expected.kind}${expected.required ? " · required" : ""}`} status={link ? "complete" : "missing"} />; })}{!template.artifacts?.length ? <p className="text-sm text-muted">No artifact requirements.</p> : null}</CardBody></Card>
     </div> : null}
   </div>;
@@ -113,6 +114,5 @@ function ValidationBadge({ status }: { status: string }) {
   return <Badge tone={tone}>{status.replaceAll("_", " ")}</Badge>;
 }
 
-function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) { return <div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><p className={`mt-1 text-sm font-medium text-ink ${mono ? "font-mono" : ""}`}>{value}</p></div>; }
 function formatValue(value: unknown, type: string) { if (Array.isArray(value)) return value.join(", "); if (type === "boolean") return value === true ? "Yes" : "No"; return String(value ?? "—"); }
 function Requirement({ icon, label, detail, status }: { icon: React.ReactNode; label: string; detail: string; status: "complete" | "warning" | "invalid" | "missing" }) { return <div className="flex items-start gap-3 rounded-[8px] border border-hairline p-3"><span className={status === "complete" ? "text-success" : status === "warning" ? "text-warning" : "text-error"}>{status === "complete" ? <CheckCircle2 className="h-4 w-4" /> : icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium text-ink">{label}</p><p className="mt-1 truncate text-xs text-muted">{detail}</p></div><span className="text-xs font-semibold capitalize text-muted">{status}</span></div>; }

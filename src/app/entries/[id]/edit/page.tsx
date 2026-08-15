@@ -21,7 +21,7 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1180px] space-y-6">
+      <div className="space-y-6">
         <PageHeader
           eyebrow="Edit entry"
           title={entry.title}

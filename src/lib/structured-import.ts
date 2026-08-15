@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { experimentDocumentFromNarrative } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshotInTransaction, type ExperimentSnapshotInput } from "@/lib/experiments";
+import { parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import {
   createEmptyProtocolDocument,
   normalizeProtocolDocument,
@@ -369,19 +370,14 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       if (planMatch.error) errors.push(planMatch.error);
       const title = requiredText(record.title, "Title", errors);
       if (isPlaceholder(title)) errors.push("Replace the template Experiment title before importing.");
-      const primaryMatch = resolveProtocol(record.primaryProtocolCode);
-      if (primaryMatch.error) errors.push(primaryMatch.error);
+      const primaryMatch = optionalText(record.primaryProtocolCode) ? resolveProtocol(record.primaryProtocolCode) : undefined;
+      if (primaryMatch?.error) errors.push(primaryMatch.error);
       const versionLabel = optionalText(record.protocolVersion);
-      const primaryVersion = primaryMatch.value?.versions.find((version) => !versionLabel || version.displayVersion === versionLabel);
-      if (primaryMatch.value && !primaryVersion) errors.push(`${primaryMatch.value.humanCode ?? primaryMatch.value.title} version ${versionLabel} was not found.`);
-      if (planMatch.value && primaryMatch.value && !planMatch.value.protocols.some((link) => link.protocolId === primaryMatch.value!.id)) errors.push("The primary Protocol is not associated with the selected Research Plan.");
+      const primaryVersion = primaryMatch?.value?.versions.find((version) => !versionLabel || version.displayVersion === versionLabel);
+      if (primaryMatch?.value && !primaryVersion) errors.push(`${primaryMatch.value.humanCode ?? primaryMatch.value.title} version ${versionLabel} was not found.`);
       const supportingMatches = listValue(record.supportingProtocolCodes).map((codeValue) => resolveProtocol(codeValue));
       supportingMatches.filter((match) => match.error).forEach((match) => errors.push(match.error!));
       const supportingVersions = supportingMatches.flatMap((match) => match.value?.versions[0] ? [match.value.versions[0]] : []);
-      if (planMatch.value) {
-        const unlinked = supportingMatches.find((match) => match.value && !planMatch.value!.protocols.some((link) => link.protocolId === match.value!.id));
-        if (unlinked?.value) errors.push(`${unlinked.value.humanCode ?? unlinked.value.title} is not associated with the selected Research Plan.`);
-      }
       const runCode = optionalText(record.runCode)?.toUpperCase();
       if (runCode && !isValidRecordCode("experiment", runCode)) errors.push("Experiment code must use EXP- followed by at least three digits.");
       if (runCode && experiments.some((experiment) => lower(experiment.runCode) === lower(runCode))) errors.push(`${runCode} already exists.`);
@@ -403,7 +399,10 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const declaredStatus = enumValue(record.status, ["planned", "running", "completed", "failed", "archived"] as const, "planned", "Status", errors);
       const declaredRecordStatus = enumValue(record.recordStatus, ["draft", "recorded", "submitted", "reviewed"] as const, "draft", "Record status", errors);
       if (declaredStatus !== "planned" || declaredRecordStatus !== "draft") warnings.push(`Declared state ${declaredStatus} / ${declaredRecordStatus} is retained in the source file; imported Experiments start as Planned / Draft.`);
-      if (planMatch.value && primaryVersion && date) data = { kind: "experiments", input: { researchPlanId: planMatch.value.id, runCode, title, date, status: "planned", recordStatus: "draft", purpose: optionalText(record.purpose), tags: parseTags(record.tags), contentJson: document as Prisma.InputJsonValue, primaryProtocolVersionId: primaryVersion.id, supportingProtocolVersionIds: supportingVersions.map((version) => version.id), createResultTemplates: booleanValue(record.createResultTemplates, true) } };
+      if (planMatch.value && date) {
+        const protocolVersionIds = primaryVersion ? [primaryVersion.id, ...supportingVersions.map((version) => version.id)] : [];
+        data = { kind: "experiments", input: { researchPlanId: planMatch.value.id, runCode, title, date, status: "planned", recordStatus: "draft", purpose: optionalText(record.purpose), tags: parseTags(record.tags), contentJson: document as Prisma.InputJsonValue, methodMode: protocolVersionIds.length ? "protocol" : "custom", protocolVersionIds, customSteps: protocolVersionIds.length ? [] : parseCustomExperimentSteps(optionalText(record.steps) ?? ""), createResultTemplates: protocolVersionIds.length ? booleanValue(record.createResultTemplates, true) : false } };
+      }
     }
 
     if (parsed.module === "results") {

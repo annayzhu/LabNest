@@ -10,6 +10,7 @@ import {
   resultTemplateFieldsToRows,
   resultTemplateInputSchema,
 } from "./result-templates";
+import { RICH_TEXT_FONT_FAMILIES } from "./rich-text-font-family";
 
 export const protocolSectionKeys = [
   "description",
@@ -56,7 +57,8 @@ export const protocolRichTextRunSchema = z.object({
 export const protocolRichTextNodeSchema = z.object({
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(protocolRichTextRunSchema),
-  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.5), z.literal(2)]).optional(),
+  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(2)]).optional(),
+  fontFamily: z.enum(RICH_TEXT_FONT_FAMILIES).optional(),
 });
 
 export type ProtocolRichTextRun = z.infer<typeof protocolRichTextRunSchema>;
@@ -150,7 +152,7 @@ export function createProtocolTemplateDocument(): ProtocolDocument {
   }
   section("material").blocks.push({ id: "material-table-1", type: "table", caption: "Materials", rows: [["Name", "Unit", "Role", "Notes"], ["", "", "", ""]] });
   section("steps").blocks.push({ id: "steps-rich-1", type: "rich_text", nodes: [{ type: "numbered", content: [{ text: "" }] }] });
-  const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
+  const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", instructions: richTextFromPlainText(""), fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
   section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   section("consumption_rules").blocks.push({ id: "consumption-table-1", type: "table", caption: "Consumption rules", rows: [["Material", "Formula", "Unit"], ["", "", ""]] });
   return document;

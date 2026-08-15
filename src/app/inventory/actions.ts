@@ -23,6 +23,7 @@ const optionalDate = (value: FormDataEntryValue | null) => {
 
 const inventoryItemSchema = z.object({
   id: z.string().trim().optional(),
+  entityId: z.string().trim().optional(),
   name: z.string().trim().min(1, "Item name is required.").max(180),
   englishName: z.string().trim().max(180).optional(),
   category: z.string().trim().max(64).optional(),
@@ -50,6 +51,7 @@ const createInventoryItemSchema = inventoryItemSchema.omit({ id: true });
 function parseInventoryItem(formData: FormData) {
   return inventoryItemSchema.parse({
     id: optionalText(formData.get("id")),
+    entityId: optionalText(formData.get("entityId")),
     name: formData.get("name"),
     englishName: optionalText(formData.get("englishName")),
     category: optionalText(formData.get("category")),

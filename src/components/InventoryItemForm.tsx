@@ -9,8 +9,10 @@ import { inventoryCategories } from "@/lib/inventory";
 const initialState: FormActionState = {};
 
 type LocationOption = { id: string; name: string; temperature?: string | null; status?: "active" | "inactive" | "archived" };
+type EntityOption = { id: string; name: string; type: string; code?: string | null };
 type InventoryItemInitial = {
   id?: string;
+  entityId?: string | null;
   name?: string;
   englishName?: string | null;
   category?: string | null;
@@ -37,10 +39,12 @@ type InventoryItemInitial = {
 export function InventoryItemForm({
   action,
   locations,
+  entities,
   initial = {},
 }: {
   action: FormAction;
   locations: LocationOption[];
+  entities: EntityOption[];
   initial?: InventoryItemInitial;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -67,6 +71,14 @@ export function InventoryItemForm({
             <select name="category" defaultValue={initial.category ?? "reagent"} className={formInputClass}>
               {inventoryCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
             </select>
+          </label>
+          <label>
+            <span className={formLabelClass}>Scientific Entity / design</span>
+            <select name="entityId" defaultValue={initial.entityId ?? ""} className={formInputClass}>
+              <option value="">Not linked</option>
+              {entities.map((entity) => <option key={entity.id} value={entity.id}>{entity.name} · {entity.type}{entity.code ? ` · ${entity.code}` : ""}</option>)}
+            </select>
+            <span className="mt-1 block text-xs text-muted">Link physical stock to the design object that carries exact Sequence versions.</span>
           </label>
           <label>
             <span className={formLabelClass}>Principal investigator (PI)</span>

@@ -19,7 +19,9 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
   const status = firstSearchParam(params, "status");
   const sort = normalizeResearchPlanSort(firstSearchParam(params, "sort"));
   const orderBy = researchPlanOrderBy(sort);
+  const recycledIds = (await prisma.deletedRecord.findMany({ where: { targetType: "research_plan", restoredAt: null }, select: { targetId: true } })).map((row) => row.targetId);
   const where = {
+    id: { notIn: recycledIds },
     ...(projectId ? { projectId } : {}),
     ...(status ? { status: status as "draft" | "active" | "paused" | "completed" | "archived" } : {}),
     ...(query ? { OR: [
@@ -30,7 +32,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
   };
   const [plans, totalCount, projects] = await Promise.all([
     prisma.researchPlan.findMany({ where, include: { project: true, protocols: { include: { protocol: true } }, _count: { select: { entries: true, experiments: true } } }, orderBy }),
-    prisma.researchPlan.count(),
+    prisma.researchPlan.count({ where: { id: { notIn: recycledIds } } }),
     prisma.project.findMany({ where: { status: { not: "archived" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const exportHref = filterHref("/research-plans/export", { exportScope: "filtered", q: query, project: projectId, status, sort });

@@ -24,7 +24,7 @@ export function ScientificDocumentView({
 
   return (
     <DocumentCanvas toolbar={<DocumentPrintButton />} label={title ?? "Scientific document"}>
-      {title ? <header className="mb-10 border-b border-hairline pb-6">
+      {title ? <header className="document-page-header">
         {identifier ? <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">{identifier}</p> : null}
         <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
         {subtitle ? <p className="mt-3 text-sm leading-6 text-muted">{subtitle}</p> : null}

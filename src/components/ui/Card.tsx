@@ -11,7 +11,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-[12px] border border-hairline bg-surface shadow-paper",
+        "rounded-[10px] border border-hairline bg-surface shadow-paper",
         className,
       )}
     >
@@ -32,9 +32,9 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-4 border-b border-hairline/80 px-5 py-3", className)}>
+    <div className={cn("flex items-center justify-between gap-3 border-b border-hairline/80 px-4 py-2", className)}>
       <div className="min-w-0">
-        <h2 className="font-serif text-[17px] font-medium leading-tight text-ink">{title}</h2>
+        <h2 className="font-serif text-[16px] font-medium leading-tight text-ink">{title}</h2>
       </div>
       {action ? <div className="card-action">{action}</div> : null}
     </div>
@@ -48,7 +48,7 @@ export function CardBody({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("p-5", className)}>{children}</div>;
+  return <div className={cn("p-4", className)}>{children}</div>;
 }
 
 export function SectionPanel({

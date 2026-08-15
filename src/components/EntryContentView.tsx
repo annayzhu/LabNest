@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { parseRichTextFontFamilyLine } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
 
@@ -24,11 +25,12 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
 
   return (
-    <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-none text-graphite" : "space-y-1 text-[16px] leading-none text-graphite"}`}>
+    <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-[1.3] text-graphite" : "space-y-1 text-[16px] leading-[1.3] text-graphite"}`}>
       {lines.map((rawLine, index) => {
         const parsedLine = parseRichTextLineHeightLine(rawLine);
-        const line = parsedLine.content;
-        const lineProps = parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight, style: { lineHeight: parsedLine.lineHeight } } : {};
+        const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
+        const line = parsedFontFamily.content;
+        const lineProps = { ...(parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight, style: { lineHeight: parsedLine.lineHeight } } : {}), ...(parsedFontFamily.fontFamily ? { "data-labnest-font-family": parsedFontFamily.fontFamily } : {}) };
         const key = `${index}-${line.slice(0, 12)}`;
         if (!line.trim()) return <div key={key} {...lineProps} className="h-1" aria-hidden />;
         const heading = line.match(/^(#{1,3})\s+(.+)$/);

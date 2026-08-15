@@ -9,7 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar />
           <div className="min-w-0 flex-1 pb-28 lg:pb-0">
           <TopBar />
-          <main className="mx-auto max-w-[1480px] overflow-x-hidden px-4 py-5 md:px-6 md:py-6">
+          <main className="mx-auto max-w-[1480px] overflow-x-hidden px-4 py-4 md:px-5 md:py-4">
             {children}
           </main>
         </div>

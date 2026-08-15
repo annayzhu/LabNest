@@ -33,6 +33,12 @@ export async function GET(request: Request) {
     return response([], query);
   }
 
+  const recycled = await prisma.deletedRecord.findMany({
+    where: { restoredAt: null, targetType: { in: ["research_plan", "protocol", "result"] } },
+    select: { targetType: true, targetId: true },
+  });
+  const recycledIds = (targetType: string) => recycled.filter((row) => row.targetType === targetType).map((row) => row.targetId);
+
   const [
     entries,
     researchPlans,
@@ -54,7 +60,7 @@ export async function GET(request: Request) {
       include: { project: true },
     }),
     prisma.researchPlan.findMany({
-      where: { OR: [{ code: textFilter(query) }, { title: textFilter(query) }, { objective: textFilter(query) }, { hypothesis: textFilter(query) }, { rationale: textFilter(query) }, { design: textFilter(query) }] },
+      where: { id: { notIn: recycledIds("research_plan") }, OR: [{ code: textFilter(query) }, { title: textFilter(query) }, { objective: textFilter(query) }, { hypothesis: textFilter(query) }, { rationale: textFilter(query) }, { design: textFilter(query) }] },
       take: limit,
       orderBy: { updatedAt: "desc" },
       include: { project: true },
@@ -73,7 +79,7 @@ export async function GET(request: Request) {
       include: { project: true },
     }),
     prisma.protocol.findMany({
-      where: { OR: [{ title: textFilter(query) }, { description: textFilter(query) }] },
+      where: { id: { notIn: recycledIds("protocol") }, OR: [{ title: textFilter(query) }, { description: textFilter(query) }] },
       take: limit,
       orderBy: { updatedAt: "desc" },
     }),
@@ -121,7 +127,7 @@ export async function GET(request: Request) {
       include: { location: true },
     }),
     prisma.result.findMany({
-      where: { OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { templateKey: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
+      where: { id: { notIn: recycledIds("result") }, OR: [{ title: textFilter(query) }, { resultType: textFilter(query) }, { templateKey: textFilter(query) }, { textValue: textFilter(query) }, { notes: textFilter(query) }] },
       take: limit,
       orderBy: { updatedAt: "desc" },
       include: { experiment: true, entity: true, project: true },
@@ -162,7 +168,8 @@ export async function GET(request: Request) {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.sequence.findMany({
-      where: { OR: [{ name: textFilter(query) }, { sequence: textFilter(query) }, { description: textFilter(query) }] },
+      where: { OR: [{ code: textFilter(query) }, { name: textFilter(query) }, { targetName: textFilter(query) }, { organism: textFilter(query) }, { description: textFilter(query) }, { versions: { some: { sequence: textFilter(query) } } }] },
+      include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
       take: limit,
       orderBy: { updatedAt: "desc" },
     }),
@@ -261,8 +268,8 @@ export async function GET(request: Request) {
       id: sequence.id,
       type: "sequence" as const,
       title: sequence.name,
-      subtitle: sequence.type,
-      href: `/sequences?type=${sequence.type}`,
+      subtitle: `${sequence.code} · ${sequence.designType} · v${sequence.versions[0]?.displayVersion ?? "?"}`,
+      href: `/sequences/${sequence.id}`,
       matchedText: sequence.description ?? undefined,
     })),
   ];

@@ -10,6 +10,7 @@ import {
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
@@ -110,11 +111,11 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                     {items.length === totalCount ? `${totalCount} records` : `${items.length} of ${totalCount}`}
                   </span>
                   <div className="hidden items-center gap-1.5 md:flex">
-                    <button form={filterFormId} type="submit" className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-moss bg-moss px-2.5 text-xs font-medium text-warm hover:brightness-95">
+                    <button form={filterFormId} type="submit" className={filterApplyButtonClass}>
                       <Filter className="h-3.5 w-3.5" aria-hidden />Apply
                     </button>
                     {hasActiveView ? (
-                      <Link href="/inventory" className="focus-ring inline-flex h-8 items-center gap-1 rounded-[6px] px-2 text-xs font-medium text-muted hover:bg-warm hover:text-ink">
+                      <Link href="/inventory" className={filterClearButtonClass}>
                         <X className="h-3.5 w-3.5" aria-hidden />Clear
                       </Link>
                     ) : null}
@@ -258,6 +259,8 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
 }
 
 const tableFilterClass = "focus-ring h-8 w-full rounded-[6px] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
+const filterApplyButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
+const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", className: "font-medium text-muted" });
 
 function InventoryColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (

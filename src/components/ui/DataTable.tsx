@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { buttonStyles } from "@/components/ui/Button";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
+
+const selectionExportButtonClass = buttonStyles({
+  variant: "primary",
+  size: "sm",
+  className: "font-medium",
+});
 
 export type TableColumn<T> = {
   key: string;
@@ -99,7 +106,7 @@ export function DataTable<T>({
       <input type="hidden" name="exportScope" value="selected" />
       {table}
       <div className="hidden justify-end group-has-[.selection-checkbox:checked]:flex">
-        <button type="submit" className="focus-ring h-9 rounded-[7px] border border-moss bg-moss px-3 text-[13px] font-medium text-warm">
+        <button type="submit" className={selectionExportButtonClass}>
           {selection.label ?? "Export selected…"}
         </button>
       </div>

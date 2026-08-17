@@ -7,6 +7,7 @@ import { collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/
 import { PageHeader } from "@/components/PageHeader";
 import { SequenceCollectionBatchActions } from "@/components/SequenceCollectionBatchActions";
 import { Badge, StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { bulkUpdateSequences } from "./actions";
 import { prisma } from "@/lib/db";
@@ -67,8 +68,8 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
               <span className="hidden whitespace-nowrap text-xs text-muted sm:inline">{`${collectionCount} ${collectionCount === 1 ? "collection" : "collections"}`}</span>
               <div className="hidden items-center gap-1.5 md:flex">
                 <select form={filterFormId} name="sort" defaultValue={sort} aria-label="Sort Sequences" className={`${tableFilterClass} w-36`}><option value="updated_desc">Recently updated</option><option value="name_asc">Name A–Z</option><option value="code_asc">Sequence code</option></select>
-                <button form={filterFormId} type="submit" className="focus-ring inline-flex h-8 whitespace-nowrap items-center gap-1.5 rounded-[6px] border border-moss bg-moss px-2.5 text-xs font-medium text-warm"><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button>
-                {hasActiveView ? <Link href="/sequences" className="focus-ring inline-flex h-8 items-center gap-1 rounded-[6px] px-2 text-xs font-medium text-muted hover:bg-warm hover:text-ink"><X className="h-3.5 w-3.5" aria-hidden />Clear</Link> : null}
+                <button form={filterFormId} type="submit" className={filterApplyButtonClass}><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button>
+                {hasActiveView ? <Link href="/sequences" className={filterClearButtonClass}><X className="h-3.5 w-3.5" aria-hidden />Clear</Link> : null}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -137,6 +138,8 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
 }
 
 const tableFilterClass = "focus-ring h-8 w-full rounded-[6px] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
+const filterApplyButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
+const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", className: "font-medium text-muted" });
 
 function SequenceColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return <div className={`normal-case tracking-normal ${className}`}><span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</span><div className="mt-1.5 hidden md:block">{children}</div></div>;
@@ -154,7 +157,7 @@ function SequenceMobileFilters({ query, designType, moleculeType, status, valida
           <select name="validationStatus" defaultValue={validationStatus ?? ""} className={tableFilterClass}><option value="">All validation states</option>{sequenceValidationStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
           <select name="status" defaultValue={status ?? ""} className={tableFilterClass}><option value="">All lifecycle states</option>{sequenceLifecycleStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
           <select name="sort" defaultValue={sort} className={tableFilterClass}><option value="updated_desc">Recently updated</option><option value="name_asc">Name A–Z</option><option value="code_asc">Sequence code</option></select>
-          <div className="mt-1 flex justify-end gap-2"><Link href="/sequences" className="focus-ring inline-flex h-8 items-center px-2 text-xs text-muted">Clear</Link><button type="submit" className="focus-ring h-8 rounded-[6px] bg-moss px-3 text-xs text-warm">Apply</button></div>
+          <div className="mt-1 flex justify-end gap-2"><Link href="/sequences" className={filterClearButtonClass}>Clear</Link><button type="submit" className={filterApplyButtonClass}>Apply</button></div>
         </form>
       </div>
     </details>

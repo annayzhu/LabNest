@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
@@ -170,10 +171,10 @@ export default async function SearchPage({ searchParams }: { searchParams?: Page
                   className="focus-ring h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
                 />
               </label>
-              <button className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95">
+              <Button type="submit" variant="primary" size="lg" className="shadow-paper">
                 <Search className="h-4 w-4" aria-hidden />
                 Search
-              </button>
+              </Button>
             </form>
           </CardBody>
         </Card>

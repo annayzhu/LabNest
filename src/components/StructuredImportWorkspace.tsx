@@ -28,6 +28,77 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+type PreviewField = { label: string; value: string; key?: string };
+
+const narrativePreviewKeys = new Set([
+  "acceptanceCriteria",
+  "analysis",
+  "background",
+  "conclusion",
+  "constraints",
+  "consumptionRules",
+  "description",
+  "design",
+  "executiveSummary",
+  "hypothesis",
+  "interpretation",
+  "limitationsNextSteps",
+  "material",
+  "materialMethods",
+  "materials",
+  "methods",
+  "notes",
+  "observations",
+  "objective",
+  "purpose",
+  "qualityLimitations",
+  "rationale",
+  "references",
+  "researchQuestion",
+  "resultSummary",
+  "resultTemplates",
+  "results",
+  "steps",
+  "summary",
+]);
+
+const identityPreviewLabels = [
+  "Protocol code",
+  "Plan code",
+  "Run code",
+  "Project name",
+  "Item name",
+  "Title",
+  "Protocol title",
+  "English title",
+  "Version",
+];
+
+function isTechnicalPreviewField(field: PreviewField) {
+  return /json|checksum|snapshot|values/i.test(field.key ?? field.label);
+}
+
+function groupPreviewFields(module: StructuredModuleKey, values: Record<string, string>) {
+  const fieldsByLabel = new Map(structuredModules[module].fields.map((field) => [field.label, field]));
+  const entries = Object.entries(values).map(([label, value]) => {
+    const field = fieldsByLabel.get(label);
+    return { label, value, key: field?.key };
+  });
+  const technical = entries.filter(isTechnicalPreviewField);
+  const narrative = entries.filter((field) => !isTechnicalPreviewField(field) && (narrativePreviewKeys.has(field.key ?? "") || field.value.length > 180 || field.value.includes("\n")));
+  const core = entries.filter((field) => !technical.includes(field) && !narrative.includes(field));
+  return { core, narrative, technical };
+}
+
+function recordPreviewTitle(module: StructuredModuleKey, values: Record<string, string>, index: number) {
+  const fields = groupPreviewFields(module, values);
+  const candidates = identityPreviewLabels
+    .map((label) => fields.core.find((field) => field.label === label)?.value)
+    .filter(Boolean);
+  if (candidates.length) return candidates.slice(0, 2).join(" · ");
+  return `Record ${index}`;
+}
+
 export function StructuredImportWorkspace({ module }: { module: StructuredModuleKey }) {
   const definition = structuredModules[module];
   const router = useRouter();
@@ -220,27 +291,44 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
 }
 
 function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImportPreview; pending: boolean; onConfirm: () => void }) {
+  const mappedCount = preview.mapping.filter((mapping) => mapping.target).length;
+  const ignoredCount = preview.mapping.length - mappedCount;
+  const readyCount = preview.rows.filter((row) => !row.errors.length).length;
+  const rowErrorCount = preview.rows.reduce((sum, row) => sum + row.errors.length, 0);
+  const rowWarningCount = preview.rows.reduce((sum, row) => sum + row.warnings.length, 0) + preview.warnings.length;
+
   return (
     <Card>
-      <CardHeader title={`Mapping preview · ${preview.rows.length} record${preview.rows.length === 1 ? "" : "s"}`} />
+      <CardHeader title={`Import check · ${preview.rows.length} record${preview.rows.length === 1 ? "" : "s"}`} />
       <CardBody className="space-y-4">
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {preview.mapping.map((mapping) => (
-            <div key={mapping.source} className="flex items-center justify-between gap-2 rounded-[7px] border border-hairline px-3 py-2 text-xs">
-              <span className="truncate font-mono text-graphite">{mapping.source}</span>
-              <span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "not imported"}</span>
-            </div>
-          ))}
+        <div className="grid gap-2 md:grid-cols-4">
+          <PreviewMetric label="Import status" value={preview.canImport ? "Ready" : "Needs correction"} tone={preview.canImport ? "success" : "error"} />
+          <PreviewMetric label="Records ready" value={`${readyCount}/${preview.rows.length}`} />
+          <PreviewMetric label="Fields recognized" value={`${mappedCount}/${preview.mapping.length}`} />
+          <PreviewMetric label="Warnings / errors" value={`${rowWarningCount}/${rowErrorCount}`} tone={rowErrorCount ? "error" : rowWarningCount ? "warning" : "neutral"} />
         </div>
+
         {[...preview.errors, ...preview.warnings].map((message) => <p key={message} className="flex items-start gap-2 rounded-[8px] border border-warning/30 bg-warning-surface px-3 py-2 text-sm text-warning"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{message}</p>)}
-        <div className="max-h-[540px] space-y-3 overflow-auto pr-1 editorial-scrollbar">
+
+        <details className="rounded-[9px] border border-hairline bg-warm/50">
+          <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-[9px] px-3 py-2 text-sm font-medium text-ink">
+            <span>Field recognition details</span>
+            <span className="text-xs font-normal text-muted">{mappedCount} mapped · {ignoredCount} ignored</span>
+          </summary>
+          <div className="grid gap-2 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-3">
+            {preview.mapping.map((mapping) => (
+              <div key={mapping.source} className="grid gap-1 rounded-[7px] border border-hairline bg-surface px-3 py-2 text-xs">
+                <span className="text-[11px] uppercase tracking-[0.06em] text-muted">Source column</span>
+                <span className="truncate font-mono text-graphite" title={mapping.source}>{mapping.source}</span>
+                <span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "Not imported"}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <div className="space-y-3">
           {preview.rows.map((row) => (
-            <section key={row.index} className={`rounded-[9px] border p-3 ${row.errors.length ? "border-error/30 bg-error-surface/40" : "border-hairline bg-surface"}`}>
-              <div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-ink">Record {row.index}</h3>{row.errors.length ? <span className="text-xs font-medium text-error">Needs correction</span> : <span className="flex items-center gap-1 text-xs font-medium text-moss"><Check className="h-3.5 w-3.5" aria-hidden />Ready</span>}</div>
-              <dl className="grid gap-x-5 gap-y-2 md:grid-cols-2 xl:grid-cols-3">{Object.entries(row.values).map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</dt><dd className="mt-0.5 break-words text-xs leading-5 text-graphite">{value || "—"}</dd></div>)}</dl>
-              {row.errors.map((message) => <p key={message} className="mt-2 text-xs text-error">{message}</p>)}
-              {row.warnings.map((message) => <p key={message} className="mt-2 text-xs text-warning">{message}</p>)}
-            </section>
+            <PreviewRecord key={row.index} module={preview.module} row={row} />
           ))}
         </div>
         <div className="flex flex-col gap-3 border-t border-hairline pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -252,5 +340,72 @@ function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImpo
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+function PreviewMetric({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "success" | "warning" | "error" }) {
+  const toneClass = tone === "success" ? "text-moss" : tone === "warning" ? "text-warning" : tone === "error" ? "text-error" : "text-ink";
+  return (
+    <div className="rounded-[9px] border border-hairline bg-surface px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</p>
+      <p className={`mt-1 text-sm font-semibold ${toneClass}`}>{value}</p>
+    </div>
+  );
+}
+
+function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: StructuredImportPreview["rows"][number] }) {
+  const grouped = groupPreviewFields(module, row.values);
+  const title = recordPreviewTitle(module, row.values, row.index);
+  return (
+    <section className={`rounded-[10px] border ${row.errors.length ? "border-error/30 bg-error-surface/40" : "border-hairline bg-surface"}`}>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline px-3 py-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Record {row.index}</p>
+          <h3 className="mt-1 break-words text-sm font-semibold text-ink">{title}</h3>
+        </div>
+        {row.errors.length ? <span className="shrink-0 text-xs font-medium text-error">Needs correction</span> : <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-moss"><Check className="h-3.5 w-3.5" aria-hidden />Ready to import</span>}
+      </header>
+
+      <div className="space-y-4 p-3">
+        {grouped.core.length ? (
+          <section>
+            <h4 className="text-xs font-semibold text-ink">Core fields</h4>
+            <div className="mt-2 grid gap-x-5 gap-y-2 md:grid-cols-2 xl:grid-cols-3">
+              {grouped.core.map((field) => <PreviewFieldValue key={field.label} field={field} compact />)}
+            </div>
+          </section>
+        ) : null}
+
+        {grouped.narrative.length ? (
+          <section>
+            <h4 className="text-xs font-semibold text-ink">Document sections</h4>
+            <div className="mt-2 grid gap-2 lg:grid-cols-2">
+              {grouped.narrative.map((field) => <PreviewFieldValue key={field.label} field={field} />)}
+            </div>
+          </section>
+        ) : null}
+
+        {grouped.technical.length ? (
+          <details className="rounded-[8px] border border-hairline bg-warm/50">
+            <summary className="focus-ring cursor-pointer list-none rounded-[8px] px-3 py-2 text-xs font-medium text-muted">Advanced raw/system fields · {grouped.technical.length}</summary>
+            <div className="grid gap-2 border-t border-hairline p-3 md:grid-cols-2">
+              {grouped.technical.map((field) => <PreviewFieldValue key={field.label} field={field} />)}
+            </div>
+          </details>
+        ) : null}
+
+        {row.errors.map((message) => <p key={message} className="rounded-[7px] bg-error-surface px-3 py-2 text-xs text-error">{message}</p>)}
+        {row.warnings.map((message) => <p key={message} className="rounded-[7px] bg-warning-surface px-3 py-2 text-xs text-warning">{message}</p>)}
+      </div>
+    </section>
+  );
+}
+
+function PreviewFieldValue({ field, compact = false }: { field: PreviewField; compact?: boolean }) {
+  return (
+    <div className="min-w-0 rounded-[7px] border border-hairline/70 bg-warm/35 px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{field.label}</p>
+      <p className={`mt-1 break-words text-xs leading-5 text-graphite ${compact ? "" : "max-h-28 overflow-auto pr-1 editorial-scrollbar"}`}>{field.value || "—"}</p>
+    </div>
   );
 }

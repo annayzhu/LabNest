@@ -461,6 +461,17 @@ export const zhUi: Record<string, string> = {
   "Template": "模板",
   "Ready": "可以导入",
   "Needs correction": "需要修正",
+  "Ready to import": "可以导入",
+  "Import status": "导入状态",
+  "Records ready": "可导入记录",
+  "Fields recognized": "已识别字段",
+  "Warnings / errors": "警告 / 错误",
+  "Field recognition details": "字段识别详情",
+  "Source column": "源文件列名",
+  "Not imported": "不导入",
+  "Core fields": "核心字段",
+  "Document sections": "正文内容",
+  "Advanced raw/system fields": "高级原始/系统字段",
   "not imported": "不导入",
   "Choose an export format": "选择导出格式",
   "1. Choose what to export": "1. 选择导出范围",
@@ -1770,6 +1781,14 @@ function translateDynamic(value: string): string {
   if (match) return `全部${zhUi[match[1]] ?? match[1]}`;
   match = value.match(/^(Import|Export) (Projects|Research Plans|Protocols|Experiments|Results|Inventory|Reports|Sequences)$/);
   if (match) return `${match[1] === "Import" ? "导入" : "导出"}${zhUi[match[2]] ?? match[2]}`;
+  match = value.match(/^Import check · (\d+) records?$/);
+  if (match) return `导入检查 · ${match[1]} 条记录`;
+  match = value.match(/^(\d+) mapped · (\d+) ignored$/);
+  if (match) return `已识别 ${match[1]} 个 · 忽略 ${match[2]} 个`;
+  match = value.match(/^Record (\d+)$/);
+  if (match) return `记录 ${match[1]}`;
+  match = value.match(/^Advanced raw\/system fields · (\d+)$/);
+  if (match) return `高级原始/系统字段 · ${match[1]} 个`;
   match = value.match(/^Mapping preview · (\d+) records?$/);
   if (match) return `字段映射预览 · ${match[1]} 条记录`;
   match = value.match(/^Selected records \((\d+)\)$/);

@@ -40,6 +40,21 @@
   --font-ui: "Source Sans 3", "IBM Plex Sans", Inter, ui-sans-serif, system-ui, sans-serif; /* 系统界面、按钮和表单字体。 */
   --font-data: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* 编号、字段键、代码和数据字体。 */
 
+  /* 全局控件基元：控制按钮、筛选器和表单输入框的共同尺寸。 */
+  --ln-radius-control-sm: 6px; /* 小型图标按钮、紧凑筛选器圆角。 */
+  --ln-radius-control-md: 7px; /* 默认按钮和列表页工具栏控件圆角。 */
+  --ln-radius-control-lg: 8px; /* 表单输入框和较宽控件圆角。 */
+  --ln-control-height-sm: 2rem; /* 小按钮高度，等价于 32px。 */
+  --ln-control-height-md: 2.25rem; /* 默认按钮和筛选器高度，等价于 36px。 */
+  --ln-control-height-lg: 2.5rem; /* 表单输入框和主要动作高度，等价于 40px。 */
+  --ln-control-padding-x-sm: 0.625rem; /* 小按钮左右内边距。 */
+  --ln-control-padding-x-md: 0.75rem; /* 默认按钮和筛选器左右内边距。 */
+  --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
+  --ln-control-font-size-xs: 0.75rem; /* 小按钮和紧凑工具按钮字号。 */
+  --ln-control-font-size-sm: 0.8125rem; /* 默认按钮、筛选器、辅助操作字号。 */
+  --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
+  --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
+
   /* 列表页 DataTable：控制项目、研究方案、Protocol 等列表表格外观。 */
   --ln-list-table-radius: 14px; /* 列表表格外框圆角。 */
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */

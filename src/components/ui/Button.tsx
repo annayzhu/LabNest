@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
-type ButtonSize = "sm" | "md" | "lg" | "icon";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
@@ -15,11 +15,28 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-8 px-2.5 text-xs",
-  md: "h-9 px-3 text-[13px]",
-  lg: "h-10 px-4 text-sm",
-  icon: "h-9 w-9 p-0",
+  sm: "h-[var(--ln-control-height-sm)] px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-control-font-size-xs)]",
+  md: "h-[var(--ln-control-height-md)] px-[var(--ln-control-padding-x-md)] text-[length:var(--ln-control-font-size-sm)]",
+  lg: "h-[var(--ln-control-height-lg)] px-[var(--ln-control-padding-x-lg)] text-[length:var(--ln-control-font-size-md)]",
+  icon: "h-[var(--ln-control-height-md)] w-[var(--ln-control-height-md)] p-0",
 };
+
+export function buttonStyles({
+  variant = "secondary",
+  size = "md",
+  className,
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+} = {}) {
+  return cn(
+    "focus-ring inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-normal tracking-[0.005em] transition duration-150 disabled:cursor-not-allowed disabled:opacity-55",
+    variants[variant],
+    sizes[size],
+    className,
+  );
+}
 
 export function Button({
   variant = "secondary",
@@ -34,12 +51,7 @@ export function Button({
 }) {
   return (
     <button
-      className={cn(
-        "focus-ring inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border font-normal tracking-[0.005em] transition duration-150 disabled:cursor-not-allowed disabled:opacity-55",
-        variants[variant],
-        sizes[size],
-        className,
-      )}
+      className={buttonStyles({ variant, size, className })}
       {...props}
     >
       {children}

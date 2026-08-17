@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { ExperimentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 
 export const dynamic = "force-dynamic";
 
-const primaryButton = "focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
+const primaryButton = buttonStyles({ variant: "primary", size: "md" });
 
 export default async function ProtocolRunIndex({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;

@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { AppShell } from "@/components/AppShell";
+import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
@@ -74,8 +76,8 @@ export default async function SettingsPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Default provider</span>
-                  <select name="defaultProviderId" defaultValue={settings.defaultProviderId ?? ""} className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink">
+                  <span className={formLabelClass}>Default provider</span>
+                  <select name="defaultProviderId" defaultValue={settings.defaultProviderId ?? ""} className={formInputClass}>
                     <option value="">No default provider</option>
                     {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
                   </select>
@@ -88,7 +90,7 @@ export default async function SettingsPage() {
 
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs text-muted">Data policy: explicit context only. The master switch never authorizes full-project upload.</p>
-                <button className="focus-ring h-10 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm">Save AI settings</button>
+                <Button type="submit" variant="primary" size="lg">Save AI settings</Button>
               </div>
             </form>
           </CardBody>

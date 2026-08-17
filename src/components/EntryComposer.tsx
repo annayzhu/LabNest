@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
@@ -519,7 +520,7 @@ export function EntryComposer({
         <div className="mt-4">
           <label className="block">
             <TagFieldLabel />
-            <input value={fields.tags} onChange={(event) => updateField("tags", event.target.value)} placeholder="transfection, observation" className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink" />
+            <input value={fields.tags} onChange={(event) => updateField("tags", event.target.value)} placeholder="transfection, observation" className={formInputClass} />
           </label>
         </div>
       </section>
@@ -553,15 +554,15 @@ export function EntryComposer({
 }
 
 function ComposerInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="block"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink" /></label>;
+  return <label className="block"><span className={formLabelClass}>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={formInputClass} /></label>;
 }
 
 function ComposerTextarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="block"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 min-h-24 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-6 text-ink" /></label>;
+  return <label className="block"><span className={formLabelClass}>{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${formTextareaClass} resize-y`} /></label>;
 }
 
 function ComposerSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <label className="block"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+  return <label className="block"><span className={formLabelClass}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className={formInputClass}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
 }
 
 function MediaPickerLabel({ htmlFor, disabled, children }: { htmlFor: string; disabled?: boolean; children: React.ReactNode }) {

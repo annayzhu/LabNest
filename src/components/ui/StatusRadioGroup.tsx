@@ -1,5 +1,6 @@
 "use client";
 
+import { formLabelClass } from "@/components/forms";
 import { cn } from "@/lib/cn";
 
 export type StatusRadioOption = {
@@ -35,7 +36,7 @@ export function StatusRadioGroup({
 
   return (
     <fieldset className={cn("min-w-0", className)} disabled={disabled}>
-      <legend className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+      <legend className={formLabelClass}>
         {label}
       </legend>
       <div className={cn("mt-2 flex flex-wrap gap-2", optionsClassName)}>

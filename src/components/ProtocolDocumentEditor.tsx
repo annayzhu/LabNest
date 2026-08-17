@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Download, ListX, Plus, Trash2 } from "lucide-re
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { InlineTableEditor } from "@/components/InlineTableEditor";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { ProtocolRichTextEditor } from "@/components/ProtocolRichTextEditor";
@@ -32,8 +33,8 @@ type ProjectOption = { id: string; name: string };
 type ResearchPlanOption = { id: string; code?: string | null; title: string; projectId: string; projectName: string };
 
 const initialState: ProtocolEditorState = {};
-const inputClass = "focus-ring mt-2 h-10 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink";
-const textareaClass = "focus-ring mt-1 min-h-16 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-[var(--ln-rich-text-default-line-height)] text-ink";
+const inputClass = formInputClass;
+const textareaClass = `${formTextareaClass} min-h-16 resize-y leading-[var(--ln-rich-text-default-line-height)]`;
 
 function uniqueBlockId(sectionKey: ProtocolSectionKey) {
   return `${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -202,16 +203,16 @@ export function ProtocolDocumentEditor({
         <header className="border-b border-hairline px-5 py-4"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Identity and governance</p><h2 className="mt-1 font-serif text-xl font-medium text-ink">Protocol record</h2></header>
         <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
           <RecordCodeField label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={mode === "edit" ? protocol.humanCode : undefined} />
-          <label className="md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol title</span><input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className={inputClass} /></label>
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={inputClass} /></label>
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={inputClass} /></label>
-          {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={inputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Scope</span><p className="mt-2 text-sm font-medium capitalize text-ink">{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</p><p className="mt-1 text-xs text-muted">Use “Adapt to project” to preserve General → Project lineage.</p></div>}
-          {mode === "create" ? <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={inputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
+          <label className="md:col-span-2"><span className={formLabelClass}>Protocol title</span><input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className={formInputClass} /></label>
+          <label><span className={formLabelClass}>Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={formInputClass} /></label>
+          <label><span className={formLabelClass}>English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={formInputClass} /></label>
+          {mode === "create" ? <label><span className={formLabelClass}>Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={formInputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div><span className={formLabelClass}>Scope</span><p className="mt-2 text-sm font-medium capitalize text-ink">{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</p><p className="mt-1 text-xs text-muted">Use “Adapt to project” to preserve General → Project lineage.</p></div>}
+          {mode === "create" ? <label><span className={formLabelClass}>Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={formInputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
           <StatusRadioGroup label="Availability" name="availability" options={protocolAvailabilityOptions} value={availability} onValueChange={setAvailability} required className="md:col-span-2" />
           <StatusRadioGroup label="Review stage" name="reviewStage" options={protocolReviewStageOptions} value={reviewStage} onValueChange={setReviewStage} required className="md:col-span-2" />
-          <label><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={inputClass} /></label>
-          <label className="md:col-span-2"><TagFieldLabel /><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={inputClass} /></label>
-          <label className="md:col-span-2 xl:col-span-3"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
+          <label><span className={formLabelClass}>{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={formInputClass} /></label>
+          <label className="md:col-span-2"><TagFieldLabel /><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={formInputClass} /></label>
+          <label className="md:col-span-2 xl:col-span-3"><span className={formLabelClass}>Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
         </div>
       </section>
 

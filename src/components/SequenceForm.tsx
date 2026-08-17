@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
@@ -193,7 +193,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
               onChange={(event) => setSequence(event.target.value)}
               spellCheck={false}
               data-i18n-ignore
-              className="focus-ring mt-2 min-h-44 w-full rounded-[8px] border border-hairline bg-warm px-3 py-2 font-mono text-xs leading-5 text-ink"
+              className={`${formMonoTextareaClass} min-h-44`}
               placeholder={moleculeType === "Protein" ? "MKWVTFISLL..." : moleculeType === "RNA" ? "AUGCUU..." : "ATGCTT..."}
             />
           </label>

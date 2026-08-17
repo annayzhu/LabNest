@@ -2,6 +2,7 @@
 
 import { FileUp } from "lucide-react";
 import { useState } from "react";
+import { formFileInputClass, formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import type { ResultTemplateArtifact } from "@/lib/types";
 
@@ -54,32 +55,32 @@ export function AttachmentUploadForm({
 
   return (
     <form onSubmit={upload} className={`grid gap-3 ${hideTargetFields ? expectedArtifacts.length ? "md:grid-cols-[0.8fr_1.2fr_auto]" : "md:grid-cols-[1fr_auto]" : "md:grid-cols-[1.2fr_0.6fr_0.8fr_auto]"}`}>
-      {hideTargetFields ? <><input type="hidden" name="targetType" value={targetType} /><input type="hidden" name="targetId" value={targetId} />{expectedArtifacts.length ? <label className="block min-w-0"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Template artifact slot</span><select name="linkType" className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"><option value="attached_to">Additional evidence</option>{expectedArtifacts.map((artifact) => <option key={artifact.key} value={`template_artifact:${artifact.key}`}>{artifact.label}{artifact.required ? " · required" : ""}</option>)}</select></label> : <input type="hidden" name="linkType" value={linkType} />}<label className="block min-w-0"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{fileLabel}</span><input required name="file" type="file" accept={accept} className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 py-2 text-sm text-ink" /></label></> : <><label className="block min-w-0">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">File</span>
+      {hideTargetFields ? <><input type="hidden" name="targetType" value={targetType} /><input type="hidden" name="targetId" value={targetId} />{expectedArtifacts.length ? <label className="block min-w-0"><span className={formLabelClass}>Template artifact slot</span><select name="linkType" className={formInputClass}><option value="attached_to">Additional evidence</option>{expectedArtifacts.map((artifact) => <option key={artifact.key} value={`template_artifact:${artifact.key}`}>{artifact.label}{artifact.required ? " · required" : ""}</option>)}</select></label> : <input type="hidden" name="linkType" value={linkType} />}<label className="block min-w-0"><span className={formLabelClass}>{fileLabel}</span><input required name="file" type="file" accept={accept} className={formFileInputClass} /></label></> : <><label className="block min-w-0">
+        <span className={formLabelClass}>File</span>
         <input
           required
           name="file"
           type="file"
           accept={accept}
-          className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 py-2 text-sm text-ink"
+          className={formFileInputClass}
         />
       </label>
       <label className="block min-w-0">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Target type</span>
+        <span className={formLabelClass}>Target type</span>
         <input
           name="targetType"
           placeholder="experiment"
           defaultValue={targetType}
-          className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
+          className={formInputClass}
         />
       </label>
       <label className="block min-w-0">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Target ID</span>
+        <span className={formLabelClass}>Target ID</span>
         <input
           name="targetId"
           placeholder="optional"
           defaultValue={targetId}
-          className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
+          className={formInputClass}
         />
       </label></>}
       <div className="flex items-end">

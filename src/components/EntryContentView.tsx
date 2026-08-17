@@ -25,7 +25,7 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
 
   return (
-    <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-[1.3] text-graphite" : "space-y-1 text-[16px] leading-[1.3] text-graphite"}`}>
+    <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-[var(--ln-rich-text-default-line-height)] text-graphite" : "space-y-1 text-[16px] leading-[var(--ln-rich-text-default-line-height)] text-graphite"}`}>
       {lines.map((rawLine, index) => {
         const parsedLine = parseRichTextLineHeightLine(rawLine);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);

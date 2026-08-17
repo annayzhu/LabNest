@@ -15,6 +15,12 @@ export type EntryProjectCollection = {
   count: number;
 };
 
+export type EntryCardLayout = "featured" | "standard";
+
+export function entryCardLayout(index: number): EntryCardLayout {
+  return index === 0 ? "featured" : "standard";
+}
+
 function dateLocale(locale: AppLocale) {
   return locale === "zh" ? zhCN : enUS;
 }

@@ -3,6 +3,9 @@
 import { Plus, Trash2 } from "lucide-react";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 
+const tableToolbarButtonClass = "focus-ring inline-flex h-[var(--ln-inline-table-button-height)] min-h-0 shrink-0 items-center gap-0.5 rounded-[4px] px-[var(--ln-inline-table-button-padding-x)] text-[length:var(--ln-inline-table-button-font-size)] text-graphite hover:bg-surface";
+const tableToolbarDangerButtonClass = "focus-ring inline-flex h-[var(--ln-inline-table-button-height)] min-h-0 shrink-0 items-center gap-0.5 rounded-[4px] px-[var(--ln-inline-table-button-padding-x)] text-[length:var(--ln-inline-table-button-font-size)] text-error hover:bg-error-surface disabled:opacity-35";
+
 function widthOf(rows: string[][]) {
   return Math.max(1, ...rows.map((row) => row.length));
 }
@@ -47,12 +50,12 @@ export function InlineTableEditor({
   const removeColumn = () => onChange(columnCount > 1 ? normalized.map((row) => row.slice(0, -1)) : normalized);
 
   return <figure className="mt-0.5 overflow-hidden rounded-[7px] border border-hairline bg-surface">
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-hairline bg-stone/35 px-1 py-0.5" data-print-hidden>
-      {onCaptionChange ? <input value={caption ?? ""} onChange={(event) => onCaptionChange(event.target.value)} className="focus-ring mr-auto h-5 min-h-0 min-w-28 flex-1 border-0 bg-transparent px-1.5 text-[10.5px] font-semibold text-ink outline-none" placeholder="Table caption" /> : <span className="mr-auto px-1.5 text-[10.5px] font-semibold text-muted">Table</span>}
-      <button type="button" onClick={addRow} className="focus-ring inline-flex h-5 min-h-0 items-center gap-0.5 rounded-[4px] px-1 text-[10.5px] text-graphite hover:bg-surface"><Plus className="h-3 w-3" />Row</button>
-      <button type="button" onClick={addColumn} className="focus-ring inline-flex h-5 min-h-0 items-center gap-0.5 rounded-[4px] px-1 text-[10.5px] text-graphite hover:bg-surface"><Plus className="h-3 w-3" />Column</button>
-      <button type="button" onClick={removeRow} disabled={normalized.length <= 1} className="focus-ring inline-flex h-5 min-h-0 items-center gap-0.5 rounded-[4px] px-1 text-[10.5px] text-error hover:bg-error-surface disabled:opacity-35"><Trash2 className="h-3 w-3" />Row</button>
-      <button type="button" onClick={removeColumn} disabled={columnCount <= 1} className="focus-ring inline-flex h-5 min-h-0 items-center gap-0.5 rounded-[4px] px-1 text-[10.5px] text-error hover:bg-error-surface disabled:opacity-35"><Trash2 className="h-3 w-3" />Column</button>
+    <div className="flex flex-wrap items-center gap-[var(--ln-inline-table-toolbar-gap)] border-b border-hairline bg-stone/35 px-[var(--ln-inline-table-toolbar-padding-x)] py-[var(--ln-inline-table-toolbar-padding-y)]" data-print-hidden>
+      {onCaptionChange ? <input value={caption ?? ""} onChange={(event) => onCaptionChange(event.target.value)} className="focus-ring mr-auto h-[var(--ln-inline-table-caption-height)] min-h-0 min-w-[var(--ln-inline-table-caption-min-width)] flex-[1_1_var(--ln-inline-table-caption-basis)] border-0 bg-transparent px-[var(--ln-inline-table-caption-padding-x)] text-[length:var(--ln-inline-table-caption-font-size)] font-semibold leading-none text-ink outline-none" placeholder="Table caption" /> : <span className="mr-auto min-w-[var(--ln-inline-table-caption-min-width)] flex-[1_1_var(--ln-inline-table-caption-basis)] px-[var(--ln-inline-table-caption-padding-x)] text-[length:var(--ln-inline-table-caption-font-size)] font-semibold text-muted">Table</span>}
+      <button type="button" onClick={addRow} className={tableToolbarButtonClass}><Plus className="h-3 w-3" />Row</button>
+      <button type="button" onClick={addColumn} className={tableToolbarButtonClass}><Plus className="h-3 w-3" />Column</button>
+      <button type="button" onClick={removeRow} disabled={normalized.length <= 1} className={tableToolbarDangerButtonClass}><Trash2 className="h-3 w-3" />Row</button>
+      <button type="button" onClick={removeColumn} disabled={columnCount <= 1} className={tableToolbarDangerButtonClass}><Trash2 className="h-3 w-3" />Column</button>
     </div>
     <ResizableTableFrame className="max-h-[520px] overflow-auto editorial-scrollbar">
       <table className="min-w-full table-fixed border-collapse text-left text-[length:var(--ln-result-dataset-font-size)]">

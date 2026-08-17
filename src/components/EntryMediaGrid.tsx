@@ -7,10 +7,12 @@ export function EntryMediaGrid({
   attachments,
   entryHref,
   detail = false,
+  compact = false,
 }: {
   attachments: EntryAttachment[];
   entryHref?: string;
   detail?: boolean;
+  compact?: boolean;
 }) {
   const images = attachments.filter((attachment) => attachment.mimeType.startsWith("image/"));
   if (!images.length) return null;
@@ -21,7 +23,7 @@ export function EntryMediaGrid({
     <div
       className={cn(
         "grid overflow-hidden bg-stone",
-        detail ? "h-[300px] sm:h-[420px]" : "h-[220px] sm:h-[300px]",
+        detail ? "h-[300px] sm:h-[420px]" : compact ? "h-[150px] sm:h-[170px]" : "h-[190px] sm:h-[220px]",
         imageCount === 1 ? "grid-cols-1" : "grid-cols-2",
         imageCount >= 3 && "grid-rows-2",
       )}
@@ -41,7 +43,7 @@ export function EntryMediaGrid({
             alt={attachment.originalFilename}
             fill
             unoptimized
-            sizes={detail ? "(max-width: 768px) 100vw, 900px" : "(max-width: 768px) 100vw, 760px"}
+            sizes={detail ? "(max-width: 768px) 100vw, 900px" : compact ? "(max-width: 768px) 100vw, 420px" : "(max-width: 768px) 100vw, 900px"}
             className="object-cover transition duration-500 group-hover/media:scale-[1.015]"
           />
           {index === visibleImages.length - 1 && images.length > visibleImages.length ? (

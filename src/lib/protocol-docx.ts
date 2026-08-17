@@ -44,6 +44,58 @@ function elementText(element: Element) {
     .trim();
 }
 
+function localName(element: Element) {
+  return element.tagName.split(":").pop()?.toLowerCase() ?? element.tagName.toLowerCase();
+}
+
+function elementValue(element: Element, key: string) {
+  return element.getAttribute(`w:${key}`) ?? element.getAttribute(key) ?? "";
+}
+
+function descendants(element: Element) {
+  return Array.from(element.getElementsByTagName("*")) as Element[];
+}
+
+function paragraphStyleValue(element: Element) {
+  const style = descendants(element).find((child) => localName(child) === "pstyle");
+  return style ? elementValue(style, "val") : "";
+}
+
+function paragraphHasNumbering(element: Element) {
+  return descendants(element).some((child) => localName(child) === "numpr");
+}
+
+function paragraphHasCheckboxControl(element: Element) {
+  return descendants(element).some((child) => {
+    const name = localName(child);
+    if (name === "checkbox" || name === "checkboxes") return true;
+    if (name !== "sym") return false;
+    const font = elementValue(child, "font");
+    const char = elementValue(child, "char");
+    return /wingdings|segou?e ui symbol/i.test(font) && /^(?:f0a8|f0fe|f052|f0fc|2610|2611|2612)$/i.test(char);
+  });
+}
+
+const checkboxTextPrefix = /^\s*(?:☐|□|☑|☒|✓|✔|\[[ xX]\])\s*/;
+const bulletTextPrefix = /^\s*(?:[•\-–—])\s*/;
+
+function isStepHeadingParagraph(element: Element, text: string) {
+  const style = paragraphStyleValue(element);
+  return /^\d+[.、]\s*/.test(text) || /^heading\d*$/i.test(style) || /^标题\d*$/.test(style);
+}
+
+function checklistItemText(element: Element, text: string, currentSection: ProtocolSectionKey | undefined) {
+  const style = paragraphStyleValue(element);
+  const explicitChecklist = checkboxTextPrefix.test(text)
+    || paragraphHasCheckboxControl(element)
+    || /check\s*(?:box|list)|todo|task/i.test(style);
+  const implicitStepList = currentSection === "steps"
+    && paragraphHasNumbering(element)
+    && !isStepHeadingParagraph(element, text);
+  if (!explicitChecklist && !implicitStepList) return undefined;
+  return text.replace(checkboxTextPrefix, "").replace(bulletTextPrefix, "").trim();
+}
+
 function tableRows(element: Element) {
   return Array.from(element.getElementsByTagName("w:tr")).map((row) =>
     Array.from(row.getElementsByTagName("w:tc")).map((cell) => {
@@ -155,9 +207,10 @@ export function parseProtocolDocumentXml(
         identityParagraphs.push(text);
         continue;
       }
-      if (text.startsWith("☐")) {
-        checklistBuffer.push(text.replace(/^☐\s*/, ""));
-      } else if (/^\d+[.、]\s*/.test(text)) {
+      const checklistText = checklistItemText(element, text, currentSection);
+      if (checklistText !== undefined) {
+        if (checklistText) checklistBuffer.push(checklistText);
+      } else if (isStepHeadingParagraph(element, text)) {
         pushBlock({ type: "heading", text });
       } else {
         pushBlock({ type: "text", text });

@@ -7,7 +7,7 @@ import { EntryCollectionNav } from "@/components/EntryCollectionNav";
 import { EntryCard } from "@/components/EntryCard";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
-import { groupEntriesByMonth, summarizeProjectCollections } from "@/lib/entry-timeline";
+import { entryCardLayout, groupEntriesByMonth, summarizeProjectCollections } from "@/lib/entry-timeline";
 import { getEntryRecords } from "@/lib/entries";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
@@ -96,21 +96,23 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
                         {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"}
                       </span>
                     </div>
-                    <div className="space-y-5">
-                      {group.entries.map((entry) => (
-                        <EntryCard key={entry.id} entry={entry} locale={locale} />
+                    <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                      {group.entries.map((entry, entryIndex) => (
+                        <EntryCard key={entry.id} entry={entry} locale={locale} layout={entryCardLayout(entryIndex)} />
                       ))}
                     </div>
                   </section>
                 ))}
               </div>
             ) : (
-              <EmptyState
-                title="No entries in this journal"
-                body="Clear the active filters or create a new lab entry for this project."
-                actionLabel="New Entry"
-                actionHref="/entries/new"
-              />
+              <div className="mx-auto w-full max-w-2xl">
+                <EmptyState
+                  title="No entries in this journal"
+                  body="Clear the active filters or create a new lab entry for this project."
+                  actionLabel="New Entry"
+                  actionHref="/entries/new"
+                />
+              </div>
             )}
           </div>
         </div>

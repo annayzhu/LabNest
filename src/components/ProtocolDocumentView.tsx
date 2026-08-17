@@ -69,17 +69,18 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
 
 function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[] }) {
   if (!fields.length) return null;
-  return <section className="rounded-[8px] border border-hairline bg-surface/70 p-3">
+  return <section data-result-template-fields-preview className="rounded-[8px] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
     <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
-    <div className="mt-2 grid gap-2 md:grid-cols-2">
+    <div className="mt-2 grid gap-[var(--ln-result-template-preview-grid-gap)] md:grid-cols-2">
       {fields.map((field) => {
         const dataType = fieldDataType(field);
         const semanticRole = fieldSemanticRole(field);
         const label = field.label ?? field.name ?? field.key ?? "Field";
-        return <div key={field.key ?? label} className="min-w-0 rounded-[7px] border border-hairline bg-warm/60 px-3 py-2">
-          <p className="truncate text-sm font-medium text-ink">{label}</p>
-          <p className="mt-1 text-xs text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{resultFieldTypeLabel[dataType]}{field.unit ? ` · ${field.unit}` : ""} · {requiredLabel(field.required)} · {resultSemanticRoleLabel[semanticRole]}</p>
-          {field.description ? <p className="mt-1 text-xs leading-5 text-graphite">{field.description}</p> : null}
+        const metadata = [field.key, resultFieldTypeLabel[dataType], field.unit, requiredLabel(field.required), resultSemanticRoleLabel[semanticRole]].filter(Boolean).join(" · ");
+        const title = field.description ? `${label}\n${metadata}\n${field.description}` : `${label}\n${metadata}`;
+        return <div key={field.key ?? label} title={title} className="flex min-w-0 items-center justify-between gap-[var(--ln-result-template-preview-field-meta-gap)] rounded-[7px] border border-hairline bg-warm/60 px-[var(--ln-result-template-preview-field-padding-x)] py-[var(--ln-result-template-preview-field-padding-y)]">
+          <p data-result-template-field-name className="min-w-0 flex-1 truncate font-medium leading-tight text-ink">{label}</p>
+          <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{resultFieldTypeLabel[dataType]}{field.unit ? ` · ${field.unit}` : ""} · {requiredLabel(field.required)} · {resultSemanticRoleLabel[semanticRole]}</p>
         </div>;
       })}
     </div>

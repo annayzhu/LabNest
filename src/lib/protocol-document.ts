@@ -3,6 +3,8 @@ import type {
   ConsumptionRule,
   ProtocolMaterial,
   ProtocolStep,
+  ResultFieldDataType,
+  ResultSemanticRole,
   ResultTemplate,
 } from "./types";
 import {
@@ -283,6 +285,108 @@ export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectio
     .join("\n");
 }
 
+function resultFieldDataTypeFromText(value: string | undefined): ResultFieldDataType {
+  const normalized = (value || "text").trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff\[\]]/g, "");
+  const aliases: Record<string, ResultFieldDataType> = {
+    text: "text",
+    string: "text",
+    str: "text",
+    文本: "text",
+    文字: "text",
+    字符串: "text",
+    number: "number",
+    numeric: "number",
+    num: "number",
+    float: "number",
+    double: "number",
+    integer: "number",
+    int: "number",
+    数值: "number",
+    数字: "number",
+    数量: "number",
+    浓度: "number",
+    select: "select",
+    enum: "select",
+    choice: "select",
+    option: "select",
+    options: "select",
+    选项: "select",
+    选择: "select",
+    下拉: "select",
+    枚举: "select",
+    "attachment[]": "attachment[]",
+    attachment: "attachment[]",
+    attachments: "attachment[]",
+    file: "attachment[]",
+    files: "attachment[]",
+    image: "attachment[]",
+    media: "attachment[]",
+    文件: "attachment[]",
+    附件: "attachment[]",
+    图片: "attachment[]",
+    boolean: "boolean",
+    bool: "boolean",
+    yesno: "boolean",
+    truefalse: "boolean",
+    passfail: "boolean",
+    是否: "boolean",
+    布尔: "boolean",
+    通过失败: "boolean",
+    date: "date",
+    日期: "date",
+    datetime: "datetime",
+    timestamp: "datetime",
+    时间: "datetime",
+    日期时间: "datetime",
+  };
+  return aliases[normalized] ?? "text";
+}
+
+function resultSemanticRoleFromText(value: string | undefined): ResultSemanticRole | undefined {
+  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, "");
+  if (!normalized) return undefined;
+  const aliases: Record<string, ResultSemanticRole> = {
+    identifier: "identifier",
+    id: "identifier",
+    key: "identifier",
+    标识: "identifier",
+    标识符: "identifier",
+    编号: "identifier",
+    design: "design",
+    condition: "design",
+    treatment: "design",
+    设计: "design",
+    条件: "design",
+    处理: "design",
+    group: "group",
+    grouping: "group",
+    分组: "group",
+    组别: "group",
+    label: "label",
+    tag: "label",
+    标签: "label",
+    measurement: "measurement",
+    value: "measurement",
+    measure: "measurement",
+    metric: "measurement",
+    测量: "measurement",
+    测量值: "measurement",
+    数值: "measurement",
+    指标: "measurement",
+    qc: "qc",
+    qualitycontrol: "qc",
+    质控: "qc",
+    质量控制: "qc",
+    annotation: "annotation",
+    note: "annotation",
+    comment: "annotation",
+    注释: "annotation",
+    备注: "annotation",
+    说明: "annotation",
+  };
+  return aliases[normalized];
+}
+
 export function projectProtocolDocument(document: ProtocolDocument) {
   const materialSection = document.sections.find((item) => item.key === "material");
   const stepSection = document.sections.find((item) => item.key === "steps");
@@ -372,19 +476,17 @@ export function projectProtocolDocument(document: ProtocolDocument) {
       const optionsIndex = tableIndex(headers, ["options", "选项"], -1);
       const minIndex = tableIndex(headers, ["min", "minimum", "最小值"], -1);
       const maxIndex = tableIndex(headers, ["max", "maximum", "最大值"], -1);
-      const allowedTypes = new Set(["text", "number", "select", "attachment[]", "boolean", "date", "datetime"]);
-      const allowedRoles = new Set(["identifier", "design", "group", "label", "measurement", "qc", "annotation"]);
       const isLegacyFieldTable = labelIndex < 0 && roleIndex < 0 && optionsIndex < 0 && minIndex < 0 && maxIndex < 0;
       const fields = block.rows.slice(1).map((row) => {
-        const rawType = row[typeIndex]?.trim().toLowerCase() ?? "text";
+        const dataType = resultFieldDataTypeFromText(row[typeIndex]);
         const key = row[fieldIndex]?.trim() ?? "";
         const label = labelIndex >= 0 ? row[labelIndex]?.trim() || key : key;
         const min = minIndex >= 0 && row[minIndex]?.trim() ? Number(row[minIndex]) : undefined;
         const max = maxIndex >= 0 && row[maxIndex]?.trim() ? Number(row[maxIndex]) : undefined;
-        const rawRole = roleIndex >= 0 ? row[roleIndex]?.trim() : undefined;
+        const semanticRole = roleIndex >= 0 ? resultSemanticRoleFromText(row[roleIndex]) : undefined;
         if (isLegacyFieldTable) return {
           name: label,
-          type: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
+          type: dataType,
           unit: row[unitIndex]?.trim() || undefined,
           required: /^(yes|true|1|是|必填)$/i.test(row[requiredIndex]?.trim() ?? ""),
         };
@@ -392,11 +494,11 @@ export function projectProtocolDocument(document: ProtocolDocument) {
           key,
           label,
           name: label,
-          dataType: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
-          type: (allowedTypes.has(rawType) ? rawType : "text") as "text" | "number" | "select" | "attachment[]" | "boolean" | "date" | "datetime",
+          dataType,
+          type: dataType,
           unit: row[unitIndex]?.trim() || undefined,
           required: /^(yes|true|1|是|必填)$/i.test(row[requiredIndex]?.trim() ?? ""),
-          semanticRole: rawRole && allowedRoles.has(rawRole) ? rawRole as ResultTemplate["fields"][number]["semanticRole"] : undefined,
+          semanticRole,
           options: optionsIndex >= 0 ? row[optionsIndex]?.split(/[|;,；，]/).map((item) => item.trim()).filter(Boolean) : undefined,
           validation: min !== undefined || max !== undefined ? { min: Number.isFinite(min) ? min : undefined, max: Number.isFinite(max) ? max : undefined } : undefined,
         };

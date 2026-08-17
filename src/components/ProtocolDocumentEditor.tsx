@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, ListX, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, ListX, Plus, Trash2 } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -33,7 +33,7 @@ type ResearchPlanOption = { id: string; code?: string | null; title: string; pro
 
 const initialState: ProtocolEditorState = {};
 const inputClass = "focus-ring mt-2 h-10 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink";
-const textareaClass = "focus-ring mt-1 min-h-16 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-[1.3] text-ink";
+const textareaClass = "focus-ring mt-1 min-h-16 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-[var(--ln-rich-text-default-line-height)] text-ink";
 
 function uniqueBlockId(sectionKey: ProtocolSectionKey) {
   return `${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -136,6 +136,9 @@ export function ProtocolDocumentEditor({
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
   const identifier = protocol.humanCode ?? (codeSuffix ? `PRT-${codeSuffix}` : "Draft Protocol");
+  const docxExportHref = mode === "edit" && protocol.id && version.id
+    ? `/api/protocols/${protocol.id}/versions/${version.id}/docx`
+    : undefined;
 
   const updateBlock = (sectionKey: ProtocolSectionKey, index: number, block: ProtocolContentBlock) => {
     setDocument((current) => ({
@@ -228,7 +231,7 @@ export function ProtocolDocumentEditor({
       </aside>
 
       <div className="document-editor-main">
-      <DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Edit on the page · the printed A4 keeps this layout</span><DocumentPrintButton /></>}>
+      <DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Edit on the page · the printed A4 keeps this layout</span>{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-9 items-center gap-2 rounded-[8px] border border-hairline bg-surface px-3 text-xs font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-4 w-4" />Export DOCX</a> : null}<DocumentPrintButton /></>}>
         <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" facts={[
           { label: "Version", value: displayVersion, mono: true },
           { label: "Scope", value: scope === "general" ? "General library" : "Project-adapted" },

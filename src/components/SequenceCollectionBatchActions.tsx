@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { AlertCircle, Save, Trash2 } from "lucide-react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { cn } from "@/lib/cn";
 import type { FormActionState } from "@/lib/form-actions";
 
 type Option = { readonly value: string; readonly label: string };
@@ -18,6 +19,7 @@ export function SequenceCollectionBatchActions({
   typeOptions,
   projects,
   action,
+  layout = "full",
 }: {
   selectionGroup: string;
   targetName: string;
@@ -25,11 +27,14 @@ export function SequenceCollectionBatchActions({
   typeOptions: ReadonlyArray<Option>;
   projects: ProjectOption[];
   action: SequenceBatchAction;
+  layout?: "full" | "sidebar";
 }) {
   const initialState: BulkActionState = {};
   const [state, formAction, pending] = useActionState(action, initialState);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
+  const isSidebar = layout === "sidebar";
+  const primaryButtonClass = cn("focus-ring inline-flex h-9 items-center justify-center gap-1.5 rounded-[7px] border border-moss bg-moss px-3 text-xs font-medium text-warm disabled:opacity-60", isSidebar && "w-full");
 
   const refreshSelection = useCallback(() => {
     const ids = [...document.querySelectorAll<HTMLInputElement>("input[data-selection-group]:checked")]
@@ -76,12 +81,12 @@ export function SequenceCollectionBatchActions({
       >
         <input type="hidden" name="intent" value="delete" />
         {selectedIds.map((id) => <input key={`delete-${id}`} type="hidden" name="ids" value={id} />)}
-        <button type="submit" disabled={pending || !hasSelection} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[7px] border border-error bg-error px-3 text-xs font-medium text-white disabled:opacity-60">
+        <button type="submit" disabled={pending || !hasSelection} className={cn("focus-ring inline-flex h-8 items-center justify-center gap-1.5 rounded-[7px] border border-error bg-error px-3 text-xs font-medium text-white disabled:opacity-60", isSidebar && "w-full")}>
           <Trash2 className="h-3.5 w-3.5" aria-hidden />
           批量删除
         </button>
       </form>
-      <form action={formAction} className="grid gap-2 md:grid-cols-[minmax(180px,1fr)_1fr_auto] md:items-end" onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
+      <form action={formAction} className={cn("grid gap-2", !isSidebar && "md:grid-cols-[minmax(180px,1fr)_1fr_auto] md:items-end")} onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
         <input type="hidden" name="intent" value="set_project" />
         {selectedIds.map((id) => <input key={`project-${id}`} type="hidden" name="ids" value={id} />)}
         <label className="space-y-1">
@@ -91,25 +96,25 @@ export function SequenceCollectionBatchActions({
             {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
           </select>
         </label>
-        <p className="text-xs text-muted md:pb-1">空选项表示移动到共享库</p>
-        <button type="submit" disabled={pending || !hasSelection} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[7px] border border-moss bg-moss px-3 text-xs font-medium text-warm disabled:opacity-60">
+        <p className={cn("text-xs text-muted", !isSidebar && "md:pb-1")}>空选项表示移动到共享库</p>
+        <button type="submit" disabled={pending || !hasSelection} className={primaryButtonClass}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           应用项目修改
         </button>
       </form>
-      <form action={formAction} className="grid gap-2 md:grid-cols-[1fr_auto]" onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
+      <form action={formAction} className={cn("grid gap-2", !isSidebar && "md:grid-cols-[1fr_auto]")} onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
         <input type="hidden" name="intent" value="set_description" />
         {selectedIds.map((id) => <input key={`description-${id}`} type="hidden" name="ids" value={id} />)}
         <label className="space-y-1">
           <span className={formLabelClass}>批量修改说明</span>
           <textarea name="description" maxLength={5000} className={`${formTextareaClass} min-h-20`} placeholder="输入新的说明内容（留空表示清空）" />
         </label>
-        <button type="submit" disabled={pending || !hasSelection} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[7px] border border-moss bg-moss px-3 text-xs font-medium text-warm disabled:opacity-60 md:self-end">
+        <button type="submit" disabled={pending || !hasSelection} className={cn(primaryButtonClass, !isSidebar && "md:self-end")}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           应用说明修改
         </button>
       </form>
-      <form action={formAction} className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_auto] md:items-end" onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
+      <form action={formAction} className={cn("grid gap-2", !isSidebar && "md:grid-cols-[minmax(220px,1fr)_auto] md:items-end")} onSubmit={(event) => { if (!hasSelection) event.preventDefault(); }}>
         <input type="hidden" name="intent" value="set_type" />
         {selectedIds.map((id) => <input key={`type-${id}`} type="hidden" name="ids" value={id} />)}
         <label className="space-y-1">
@@ -119,7 +124,7 @@ export function SequenceCollectionBatchActions({
             {typeOptions.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
         </label>
-        <button type="submit" disabled={pending || !hasSelection} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[7px] border border-moss bg-moss px-3 text-xs font-medium text-warm disabled:opacity-60 md:self-end">
+        <button type="submit" disabled={pending || !hasSelection} className={cn(primaryButtonClass, !isSidebar && "md:self-end")}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           应用类型修改
         </button>

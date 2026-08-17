@@ -1,107 +1,183 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f5f6f9;
-  --warm: #fbfafb;
-  --stone: #eeedf2;
-  --sand-panel: #e7e5eb;
-  --surface: #ffffff;
-  --ink: #24242b;
-  --graphite: #555563;
-  --muted: #747381;
-  --disabled: #a7a5af;
-  --moss: #5a5674;
-  --action: #625e7e;
-  --action-hover: #56516f;
-  --action-surface: #eeecf6;
-  --action-surface-hover: #e4e1f0;
-  --action-border: #d3cee3;
-  --sage: #918ba7;
-  --sage-surface: #eceaf3;
-  --fog: #737990;
-  --fog-surface: #eef0f6;
-  --clay: #b17e68;
-  --pale-sand: #f1e3db;
-  --success: #526f60;
-  --success-surface: #e8f1ec;
-  --warning: #805b24;
-  --warning-surface: #faf0dc;
-  --error: #8f4e52;
-  --error-surface: #f7e7e7;
-  --info: #5d627f;
-  --info-surface: #eceef7;
-  --hairline: #dedce4;
-  --border-strong: #cbc7d3;
-  --divider: rgba(36, 36, 43, 0.08);
-  --font-editorial: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --font-ui: "Source Sans 3", "IBM Plex Sans", Inter, ui-sans-serif, system-ui, sans-serif;
-  --font-data: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --ln-list-table-radius: 14px;
-  --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface));
-  --ln-list-table-shadow: 0 10px 28px rgba(42, 39, 57, 0.035);
-  --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface));
-  --ln-list-table-head-font-size: 14px;
-  --ln-list-table-head-line-height: 1.35;
-  --ln-list-table-head-padding-x: 1rem;
-  --ln-list-table-head-padding-y: 0.68rem;
-  --ln-list-table-cell-padding-x: 1rem;
-  --ln-list-table-cell-padding-y: 0.9rem;
-  --ln-list-table-row-border-color: color-mix(in srgb, var(--hairline) 78%, var(--surface));
-  --ln-list-table-row-hover-bg: color-mix(in srgb, var(--warm) 78%, var(--sage-surface));
-  --ln-list-table-selection-col-width: 3rem;
-  --ln-result-dataset-font-size: 13px;
-  --ln-result-dataset-key-font-size: 9.5px;
-  --ln-result-dataset-input-height: 2rem;
-  --ln-result-dataset-input-min-width: 6rem;
-  --ln-result-dataset-input-padding-x: 0.5rem;
-  --ln-result-dataset-number-col-width: 7rem;
-  --ln-result-dataset-text-col-width: 7.5rem;
-  --ln-result-dataset-action-col-width: 6.25rem;
-  --ln-result-dataset-view-number-col-width: 6.5rem;
-  --ln-result-dataset-view-text-col-width: 7rem;
-  --ln-result-dataset-cell-padding-x: 0.5rem;
-  --ln-result-dataset-cell-padding-y: 0.375rem;
-  --ln-result-dataset-min-col-width: 4rem;
-  --ln-result-dataset-schema-min-width: 520px;
-  --ln-result-dataset-schema-cell-padding-x: 0.5rem;
-  --ln-result-dataset-schema-cell-padding-y: 0.375rem;
-  --ln-result-dataset-schema-min-col-width: 4rem;
-  --ln-result-dataset-schema-key-font-size: 11px;
-  --ln-result-dataset-schema-key-col-width: 7rem;
-  --ln-result-dataset-schema-label-col-width: 7rem;
-  --ln-result-dataset-schema-type-col-width: 5.5rem;
-  --ln-result-dataset-schema-unit-col-width: 4rem;
-  --ln-result-dataset-schema-required-col-width: 4.5rem;
-  --ln-result-dataset-schema-role-col-width: 6rem;
-  --ln-inline-table-col-width: 6.5rem;
-  --ln-inline-table-cell-height: 1.75rem;
-  --ln-inline-table-cell-min-width: 5rem;
-  --ln-inline-table-cell-padding-x: 0.5rem;
-  --ln-inline-table-font-size: 12.5px;
-  --ln-document-table-col-width: 7rem;
-  --ln-document-table-min-col-width: 4rem;
-  --ln-document-table-cell-padding-x: 0.5rem;
-  --ln-document-table-cell-padding-y: 0.375rem;
-  --ln-document-copy-line-height: 1.32;
-  --ln-document-heading-line-height: 1.18;
-  --ln-document-section-heading-gap: 0.55rem;
-  --ln-document-block-gap: 0.58rem;
-  --ln-document-rich-flow-gap: 0.45rem;
-  --ln-document-list-item-gap: 0.36rem;
-  --ln-document-heading-follow-gap: 0.58rem;
-  --ln-document-print-table-border-color: #4b4852;
-  --ln-document-print-table-border-width: 1.2pt;
-  --ln-document-print-table-head-bg: #eeeeec;
-  --ln-document-print-table-head-border-width: 0.75pt;
-  --ln-template-dataset-grid: minmax(128px, 1fr) 108px 64px 36px 44px 48px 68px;
-  --ln-template-dataset-min-width: 560px;
-  --ln-template-dataset-row-gap: 0.25rem;
-  --ln-template-dataset-row-padding-x: 0.25rem;
-  --ln-template-dataset-row-padding-y: 0.25rem;
-  --ln-template-dataset-input-height: 1.75rem;
-  --ln-template-dataset-input-padding-x: 0.5rem;
-  --ln-template-dataset-font-size: 12.5px;
-  --ln-template-dataset-checkbox-size: 0.875rem;
+  /* 基础色板：控制全站背景、文字、边框和状态颜色。 */
+  --paper: #f5f6f9; /* 页面最外层浅灰背景。 */
+  --warm: #fbfafb; /* 卡片、输入框等偏暖白背景。 */
+  --stone: #eeedf2; /* 表头、工具栏、弱强调区域背景。 */
+  --sand-panel: #e7e5eb; /* 较深的面板底色。 */
+  --surface: #ffffff; /* 主卡片和文档纸张白色背景。 */
+  --ink: #24242b; /* 主要文字颜色。 */
+  --graphite: #555563; /* 正文和次级正文颜色。 */
+  --muted: #747381; /* 标签、说明、弱信息文字颜色。 */
+  --disabled: #a7a5af; /* 禁用状态文字或图标颜色。 */
+  --moss: #5a5674; /* 品牌主色，用于重点按钮、图标和链接。 */
+  --action: #625e7e; /* 可点击主操作默认色。 */
+  --action-hover: #56516f; /* 可点击主操作悬停色。 */
+  --action-surface: #eeecf6; /* 主操作按钮的浅色背景。 */
+  --action-surface-hover: #e4e1f0; /* 主操作浅色按钮悬停背景。 */
+  --action-border: #d3cee3; /* 主操作相关边框颜色。 */
+  --sage: #918ba7; /* 辅助紫灰色，用于边框、图标和弱强调。 */
+  --sage-surface: #eceaf3; /* 辅助紫灰浅背景。 */
+  --fog: #737990; /* 冷灰蓝文字或图标色。 */
+  --fog-surface: #eef0f6; /* 冷灰蓝浅背景。 */
+  --clay: #b17e68; /* 暖色强调色。 */
+  --pale-sand: #f1e3db; /* 暖色浅背景。 */
+  --success: #526f60; /* 成功状态文字或图标色。 */
+  --success-surface: #e8f1ec; /* 成功状态浅背景。 */
+  --warning: #805b24; /* 警告状态文字或图标色。 */
+  --warning-surface: #faf0dc; /* 警告状态浅背景。 */
+  --error: #8f4e52; /* 错误、删除、风险提示颜色。 */
+  --error-surface: #f7e7e7; /* 错误、删除、风险提示浅背景。 */
+  --info: #5d627f; /* 信息提示文字或图标色。 */
+  --info-surface: #eceef7; /* 信息提示浅背景。 */
+  --hairline: #dedce4; /* 默认细边框颜色。 */
+  --border-strong: #cbc7d3; /* 较明显边框颜色。 */
+  --divider: rgba(36, 36, 43, 0.08); /* 弱分割线颜色。 */
+
+  /* 字体：控制文档标题、界面文字和数据/编号显示。 */
+  --font-editorial: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif; /* 文档标题和纸面排版的衬线字体。 */
+  --font-ui: "Source Sans 3", "IBM Plex Sans", Inter, ui-sans-serif, system-ui, sans-serif; /* 系统界面、按钮和表单字体。 */
+  --font-data: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* 编号、字段键、代码和数据字体。 */
+
+  /* 列表页 DataTable：控制项目、研究方案、Protocol 等列表表格外观。 */
+  --ln-list-table-radius: 14px; /* 列表表格外框圆角。 */
+  --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
+  --ln-list-table-shadow: 0 10px 28px rgba(42, 39, 57, 0.035); /* 列表表格轻微阴影。 */
+  --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
+  --ln-list-table-head-font-size: 14px; /* 列表表头字号。 */
+  --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
+  --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
+  --ln-list-table-head-padding-y: 0.68rem; /* 列表表头上下内边距。 */
+  --ln-list-table-cell-padding-x: 1rem; /* 列表表格单元格左右内边距。 */
+  --ln-list-table-cell-padding-y: 0.9rem; /* 列表表格单元格上下内边距，也影响行高。 */
+  --ln-list-table-row-border-color: color-mix(in srgb, var(--hairline) 78%, var(--surface)); /* 列表表格行分割线颜色。 */
+  --ln-list-table-row-hover-bg: color-mix(in srgb, var(--warm) 78%, var(--sage-surface)); /* 列表表格鼠标悬停背景。 */
+  --ln-list-table-selection-col-width: 3rem; /* 列表表格最左侧 checkbox 选择列宽度。 */
+
+  /* Result 数据表：控制结果记录页面中可填写/查看的数据表。 */
+  --ln-result-dataset-font-size: 13px; /* Result 数据表正文和表头字号。 */
+  --ln-result-dataset-key-font-size: 9.5px; /* Result 数据表字段 key 的小号字体。 */
+  --ln-result-dataset-input-height: 2rem; /* Result 数据表编辑输入框高度。 */
+  --ln-result-dataset-input-min-width: 6rem; /* Result 数据表编辑输入框最小宽度。 */
+  --ln-result-dataset-input-padding-x: 0.5rem; /* Result 数据表编辑输入框左右内边距。 */
+  --ln-result-dataset-number-col-width: 7rem; /* Result 数据表编辑态数值列默认宽度。 */
+  --ln-result-dataset-text-col-width: 7.5rem; /* Result 数据表编辑态文本列默认宽度。 */
+  --ln-result-dataset-action-col-width: 6.25rem; /* Result 数据表编辑态操作列宽度。 */
+  --ln-result-dataset-view-number-col-width: 6.5rem; /* Result 数据表浏览态数值列默认宽度。 */
+  --ln-result-dataset-view-text-col-width: 7rem; /* Result 数据表浏览态文本列默认宽度。 */
+  --ln-result-dataset-cell-padding-x: 0.5rem; /* Result 数据表单元格左右内边距。 */
+  --ln-result-dataset-cell-padding-y: 0.375rem; /* Result 数据表单元格上下内边距，也影响行高。 */
+  --ln-result-dataset-min-col-width: 4rem; /* Result 数据表列调整时允许的最小列宽。 */
+
+  /* Result Template 的 Dataset schema 预览表：控制 Protocol 里展示字段结构的表。 */
+  --ln-result-dataset-schema-min-width: 520px; /* Dataset schema 表格最小宽度。 */
+  --ln-result-dataset-schema-cell-padding-x: 0.5rem; /* Dataset schema 单元格左右内边距。 */
+  --ln-result-dataset-schema-cell-padding-y: 0.375rem; /* Dataset schema 单元格上下内边距，也影响行高。 */
+  --ln-result-dataset-schema-min-col-width: 4rem; /* Dataset schema 列调整时允许的最小列宽。 */
+  --ln-result-dataset-schema-key-font-size: 11px; /* Dataset schema 字段键列字号。 */
+  --ln-result-dataset-schema-key-col-width: 7rem; /* Dataset schema 字段键列默认宽度。 */
+  --ln-result-dataset-schema-label-col-width: 7rem; /* Dataset schema 标签列默认宽度。 */
+  --ln-result-dataset-schema-type-col-width: 5.5rem; /* Dataset schema 类型列默认宽度。 */
+  --ln-result-dataset-schema-unit-col-width: 4rem; /* Dataset schema 单位列默认宽度。 */
+  --ln-result-dataset-schema-required-col-width: 4.5rem; /* Dataset schema 必填列默认宽度。 */
+  --ln-result-dataset-schema-role-col-width: 6rem; /* Dataset schema 角色列默认宽度。 */
+
+  /* 富文本/Protocol 内嵌普通表格编辑器：控制表格标题栏、列宽、输入框和按钮。 */
+  --ln-inline-table-col-width: 6.5rem; /* 内嵌普通表格每列默认宽度。 */
+  --ln-inline-table-cell-height: 1.75rem; /* 内嵌普通表格单元格输入框高度。 */
+  --ln-inline-table-cell-min-width: 5rem; /* 内嵌普通表格列调整时允许的最小列宽。 */
+  --ln-inline-table-cell-padding-x: 0.5rem; /* 内嵌普通表格单元格左右内边距。 */
+  --ln-inline-table-font-size: 12.5px; /* 内嵌普通表格单元格字号。 */
+  --ln-inline-table-toolbar-gap: 0.35rem; /* 内嵌普通表格标题栏中控件之间的间距。 */
+  --ln-inline-table-toolbar-padding-x: 0.45rem; /* 内嵌普通表格标题栏左右内边距。 */
+  --ln-inline-table-toolbar-padding-y: 0.28rem; /* 内嵌普通表格标题栏上下内边距。 */
+  --ln-inline-table-caption-height: 2rem; /* 内嵌普通表格标题输入框高度。 */
+  --ln-inline-table-caption-min-width: 18rem; /* 内嵌普通表格标题输入框最小宽度。 */
+  --ln-inline-table-caption-basis: 28rem; /* 内嵌普通表格标题输入框优先占用宽度。 */
+  --ln-inline-table-caption-padding-x: 0.65rem; /* 内嵌普通表格标题输入框左右内边距。 */
+  --ln-inline-table-caption-font-size: 13px; /* 内嵌普通表格标题输入框字号。 */
+  --ln-inline-table-button-height: 1.65rem; /* 内嵌普通表格标题栏按钮高度。 */
+  --ln-inline-table-button-padding-x: 0.45rem; /* 内嵌普通表格标题栏按钮左右内边距。 */
+  --ln-inline-table-button-font-size: 12px; /* 内嵌普通表格标题栏按钮字号。 */
+
+  /* 文档显示和打印前的普通表格：控制 Protocol/Entry 文档中的三线表。 */
+  --ln-document-table-col-width: 7rem; /* 文档普通表格每列默认宽度。 */
+  --ln-document-table-min-col-width: 4rem; /* 文档普通表格列调整时允许的最小列宽。 */
+  --ln-document-table-cell-padding-x: 0.5rem; /* 文档普通表格单元格左右内边距。 */
+  --ln-document-table-cell-padding-y: 0.375rem; /* 文档普通表格单元格上下内边距，也影响行高。 */
+
+  /* 文档正文密度：控制 Protocol/Entry 文档阅读和打印的文字行距、段距、模块间距。 */
+  --ln-document-copy-line-height: 1.32; /* 文档正文默认行高。 */
+  --ln-document-heading-line-height: 1.18; /* 文档小标题默认行高。 */
+  --ln-document-section-heading-gap: 0.55rem; /* 文档 section 标题与正文之间距离。 */
+  --ln-document-block-gap: 0.58rem; /* 文档内容块之间距离。 */
+  --ln-document-rich-flow-gap: 0.45rem; /* 富文本段落、列表、引用之间距离。 */
+  --ln-document-list-item-gap: 0.36rem; /* checklist 或列表项之间距离。 */
+  --ln-document-heading-follow-gap: 0.58rem; /* 标题块后面第一个内容块的距离。 */
+  --ln-rich-text-default-line-height: 1.5; /* 富文本编辑器和未单独设置行距的富文本块默认行高。 */
+
+  /* 文档打印：控制 A4 打印页边距、纸面内补白和三线表边框。 */
+  --ln-document-print-page-margin-top: 20mm; /* 打印每一页顶部边距。 */
+  --ln-document-print-page-margin-x: 14mm; /* 打印机页边距的左右值；需要同步到下方 @page 字面值。 */
+  --ln-document-print-page-margin-bottom: 18mm; /* 打印每一页底部边距。 */
+  --ln-document-print-paper-padding-top: 1.5mm; /* 打印内容容器顶部微调补白。 */
+  --ln-document-print-paper-padding-x: 8mm; /* 打印纸张内容区左右内边距；这是 Chrome 预览里最直观看到的正文左右空白。 */
+  --ln-document-print-paper-padding-bottom: 2mm; /* 打印内容容器底部微调补白。 */
+  --ln-document-print-table-border-color: #4b4852; /* 打印三线表上下边框颜色。 */
+  --ln-document-print-table-border-width: 1.2pt; /* 打印三线表上下边框粗细。 */
+  --ln-document-print-table-head-bg: #eeeeec; /* 打印三线表表头背景色。 */
+  --ln-document-print-table-head-border-width: 0.75pt; /* 打印三线表表头下边框粗细。 */
+
+  /* Protocol 结果模板中的 Dataset 设计器：控制添加数据库/数据表时的列布局和行高。 */
+  --ln-template-dataset-grid: minmax(128px, 1fr) 108px 64px 36px 44px 48px 68px; /* Dataset 设计器各列宽度：列名、类型、单位、必填、分组、主要、排序。 */
+  --ln-template-dataset-min-width: 560px; /* Dataset 设计器整体最小宽度。 */
+  --ln-template-dataset-row-gap: 0.25rem; /* Dataset 设计器行内网格间距。 */
+  --ln-template-dataset-row-padding-x: 0.25rem; /* Dataset 设计器每行左右内边距。 */
+  --ln-template-dataset-row-padding-y: 0.25rem; /* Dataset 设计器每行上下内边距，也影响行高。 */
+  --ln-template-dataset-input-height: 1.75rem; /* Dataset 设计器输入框高度。 */
+  --ln-template-dataset-input-padding-x: 0.5rem; /* Dataset 设计器输入框左右内边距。 */
+  --ln-template-dataset-font-size: 12.5px; /* Dataset 设计器输入框和内容字号。 */
+  --ln-template-dataset-checkbox-size: 0.875rem; /* Dataset 设计器 checkbox 尺寸。 */
+
+  /* Protocol 结果模板编辑器：控制“需要记录什么”区域的卡片、输入框和高级设置密度。 */
+  --ln-result-template-root-margin-top: 0.65rem; /* 结果模板编辑器整体顶部距离。 */
+  --ln-result-template-section-gap: 0.55rem; /* 结果模板编辑器各大 section 之间距离。 */
+  --ln-result-template-section-item-gap: 0.55rem; /* “需要记录什么”里字段/数据表/文件卡片之间距离。 */
+  --ln-result-template-panel-padding: 0.65rem; /* 结果模板编辑器外层 panel 内边距。 */
+  --ln-result-template-panel-radius: 9px; /* 结果模板编辑器外层 panel 圆角。 */
+  --ln-result-template-card-padding: 0.65rem; /* 字段、数据表、文件卡片内边距。 */
+  --ln-result-template-card-radius: 8px; /* 字段、数据表、文件卡片圆角。 */
+  --ln-result-template-card-header-gap: 0.35rem; /* 卡片标题行和卡片内容之间距离。 */
+  --ln-result-template-card-header-x-gap: 0.65rem; /* 卡片标题和右侧按钮组之间横向距离。 */
+  --ln-result-template-field-grid-gap: 0.55rem; /* 字段卡片内部表单列之间距离。 */
+  --ln-result-template-label-control-gap: 0.22rem; /* 字段标签文字和输入框之间距离。 */
+  --ln-result-template-input-height: 2rem; /* 结果模板编辑器输入框和选择框高度。 */
+  --ln-result-template-input-padding-x: 0.55rem; /* 结果模板编辑器输入框左右内边距。 */
+  --ln-result-template-control-radius: 7px; /* 结果模板编辑器输入框、按钮圆角。 */
+  --ln-result-template-font-size: 12.5px; /* 结果模板编辑器输入框和按钮字号。 */
+  --ln-result-template-checkbox-offset: 0.38rem; /* checkbox 行底部偏移，用于和输入框视觉对齐。 */
+  --ln-result-template-icon-button-padding: 0.25rem; /* 上移、下移、删除图标按钮内边距。 */
+  --ln-result-template-advanced-margin-top: 0.5rem; /* 高级设置区域顶部距离。 */
+  --ln-result-template-advanced-padding-top: 0.45rem; /* 高级设置区域顶部内边距。 */
+  --ln-result-template-advanced-grid-margin-top: 0.5rem; /* 高级设置展开后内容顶部距离。 */
+
+  /* Protocol 保存后结果模板预览：控制字段要求卡片的一行化展示、字号和间距。 */
+  --ln-result-template-preview-section-padding: 0.75rem; /* 保存后结果模板预览外框内边距。 */
+  --ln-result-template-preview-grid-gap: 0.45rem; /* 字段预览卡片之间的间距。 */
+  --ln-result-template-preview-field-padding-x: 0.65rem; /* 单个字段预览卡片左右内边距。 */
+  --ln-result-template-preview-field-padding-y: 0.45rem; /* 单个字段预览卡片上下内边距，影响卡片高度。 */
+  --ln-result-template-preview-field-name-size: 13px; /* 字段名显示字号。 */
+  --ln-result-template-preview-field-meta-size: 10.5px; /* 字段属性摘要字号。 */
+  --ln-result-template-preview-field-meta-gap: 0.35rem; /* 字段名和属性摘要之间的横向距离。 */
+
+  /* 新建实验页 Protocol 选择器：控制最新版本/历史版本列表的密度和层级。 */
+  --ln-experiment-protocol-picker-row-padding-x: 0.75rem; /* Protocol 选择列表每行左右内边距。 */
+  --ln-experiment-protocol-picker-row-padding-y: 0.65rem; /* Protocol 选择列表每行上下内边距。 */
+  --ln-experiment-protocol-picker-history-padding-left: 1rem; /* 展开历史版本时左侧缩进。 */
+  --ln-experiment-protocol-picker-title-size: 13px; /* Protocol 选择列表主标题字号。 */
+  --ln-experiment-protocol-picker-meta-size: 11px; /* Protocol 选择列表版本、状态和步骤信息字号。 */
+  --ln-experiment-protocol-picker-badge-size: 10.5px; /* 最新版本/历史版本标签字号。 */
 }
 
 @theme inline {
@@ -347,7 +423,7 @@ textarea {
 
 .protocol-rich-editor {
   font-family: var(--font-ui);
-  line-height: 1.3;
+  line-height: var(--ln-rich-text-default-line-height);
 }
 
 .protocol-rich-editor :where(span, strong, b, em, i, u, s, strike, a) {
@@ -622,6 +698,16 @@ body.labnest-column-resizing {
 .document-block :where(p, li, td, th, input, textarea, select) {
   font-size: 10pt !important;
   line-height: var(--ln-document-copy-line-height) !important;
+}
+
+[data-result-template-fields-preview] [data-result-template-field-name] {
+  font-size: var(--ln-result-template-preview-field-name-size) !important;
+  line-height: 1.15 !important;
+}
+
+[data-result-template-fields-preview] [data-result-template-field-meta] {
+  font-size: var(--ln-result-template-preview-field-meta-size) !important;
+  line-height: 1.15 !important;
 }
 
 .document-rich-text-flow {
@@ -1020,7 +1106,8 @@ table :where(td) {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0;
+    /* 与上方 --ln-document-print-page-margin-* 保持一致；@page 中直接写字面值，避免打印预览忽略 var()。 */
+    margin: 20mm 14mm 18mm;
   }
 
   html,
@@ -1044,16 +1131,17 @@ table :where(td) {
     inset: 0 auto auto 0;
     margin: 0 !important;
     position: absolute;
-    max-width: none !important;
-    min-width: 210mm !important;
-    width: 210mm !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
 
   .document-workspace,
   .document-editor-main,
   .entry-editor-document {
-    max-width: none !important;
-    width: 210mm !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
 
   .document-print-root [data-print-hidden] {
@@ -1065,12 +1153,14 @@ table :where(td) {
   }
 
   .document-a4-paper {
+    -webkit-box-decoration-break: clone;
     border: 0 !important;
+    box-decoration-break: clone;
     box-shadow: none !important;
     margin: 0 !important;
     max-width: none !important;
-    min-height: 297mm;
-    padding: 16mm 16mm 18mm !important;
+    min-height: auto !important;
+    padding: var(--ln-document-print-paper-padding-top) var(--ln-document-print-paper-padding-x) var(--ln-document-print-paper-padding-bottom) !important;
     width: 100% !important;
   }
 

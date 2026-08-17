@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Download, Upload } from "lucide-react";
 import { importSequences, type SequenceManageState } from "@/app/sequences/actions";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { sequenceDesignTypes } from "@/lib/sequence-registry";
 
@@ -37,7 +38,7 @@ export function SequenceImportForm() {
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
               <div>{state.error ? <p role="alert" className="text-sm text-error">{state.error}</p> : state.success ? <p role="status" className="text-sm text-success">{state.success} <Link href="/sequences" className="font-medium underline">Open sequence library</Link></p> : null}</div>
-              <button type="submit" disabled={pending} className="focus-ring inline-flex h-10 items-center gap-2 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:opacity-55"><Upload className="h-4 w-4" aria-hidden />{pending ? "Importing…" : "Import Sequences"}</button>
+              <Button type="submit" variant="primary" size="md" disabled={pending}><Upload className="h-4 w-4" aria-hidden />{pending ? "Importing…" : "Import Sequences"}</Button>
             </div>
           </form>
         </CardBody>

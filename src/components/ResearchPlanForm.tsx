@@ -7,6 +7,7 @@ import { ResearchPlanPremiseView } from "@/components/ResearchPlanPremiseView";
 import { ResearchPlanProtocolPicker } from "@/components/ResearchPlanProtocolPicker";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
@@ -82,7 +83,7 @@ export function ResearchPlanForm({
       </div>
       <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
         {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-        <button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : "Save Research Plan"}</button>
+        <Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : "Save Research Plan"}</Button>
       </div>
     </form>
   );

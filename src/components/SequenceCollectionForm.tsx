@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { sequenceCollectionTypes, sequenceLifecycleStatuses, type SequenceCollectionTypeValue } from "@/lib/sequence-registry";
@@ -108,9 +109,9 @@ export function SequenceCollectionForm({
 
       <div className="flex flex-wrap items-center justify-end gap-3">
         {state.error ? <p role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-        <button type="submit" disabled={pending} className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+        <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : initial.id ? "Save Collection" : "Create Collection"}
-        </button>
+        </Button>
       </div>
     </form>
   );

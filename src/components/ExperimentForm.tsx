@@ -7,6 +7,7 @@ import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor"
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
@@ -115,7 +116,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </div>
     <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <button type="submit" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-50">{pending ? "Saving…" : "Save Experiment"}</button>
+      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
 }

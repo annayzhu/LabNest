@@ -12,6 +12,7 @@ import { ProtocolRichTextEditor } from "@/components/ProtocolRichTextEditor";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
+import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import {
   protocolSectionLabels,
@@ -260,7 +261,7 @@ export function ProtocolDocumentEditor({
       </div>
 
       {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      <div className="sticky bottom-4 z-20 flex justify-end"><button disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm shadow-soft disabled:cursor-wait disabled:opacity-60">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</button></div>
+      <div className="sticky bottom-4 z-20 flex justify-end"><Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
     </form>
   );
 }

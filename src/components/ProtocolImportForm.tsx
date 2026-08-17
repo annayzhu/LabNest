@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { FileUp } from "lucide-react";
 import { importProtocolDocx, type ProtocolImportState } from "@/app/protocols/import/actions";
+import { Button } from "@/components/ui/Button";
 
 const initialState: ProtocolImportState = {};
 
@@ -27,9 +28,9 @@ export function ProtocolImportForm() {
       </label>
       {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       <div className="flex justify-end">
-        <button disabled={pending} className="focus-ring h-10 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+        <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Reading document…" : "Import Protocol"}
-        </button>
+        </Button>
       </div>
     </form>
   );

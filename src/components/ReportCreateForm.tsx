@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
@@ -20,5 +21,5 @@ export function ReportCreateForm({ action, projects, plans }: { action: FormActi
     <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" placeholder="Project evidence report" className={formInputClass} /></label>
     <label><span className={formLabelClass}>Period start</span><input type="date" name="periodStart" className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input type="date" name="periodEnd" className={formInputClass} /></label>
     <label className="md:col-span-2"><TagFieldLabel /><input name="tags" className={formInputClass} placeholder="monthly, internal-review" /></label>
-  </CardBody></Card><div className="flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}<button type="submit" disabled={pending} className="focus-ring h-11 rounded-[8px] border border-moss bg-moss px-5 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">{pending ? "Creating…" : "Create traceable draft"}</button></div></form>;
+  </CardBody></Card><div className="flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}<Button type="submit" variant="primary" size="lg" disabled={pending}>{pending ? "Creating…" : "Create traceable draft"}</Button></div></form>;
 }

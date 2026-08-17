@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
@@ -54,9 +55,9 @@ export function ProjectForm({
       </Card>
       <div className="flex flex-wrap items-center justify-end gap-3">
         {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-        <button type="submit" disabled={pending} className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+        <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : "Save Project"}
-        </button>
+        </Button>
       </div>
     </form>
   );

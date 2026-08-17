@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { AlertCircle, Save, Trash2 } from "lucide-react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import type { FormActionState } from "@/lib/form-actions";
 
@@ -34,7 +35,7 @@ export function SequenceCollectionBatchActions({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
   const isSidebar = layout === "sidebar";
-  const primaryButtonClass = cn("focus-ring inline-flex h-9 items-center justify-center gap-1.5 rounded-[7px] border border-moss bg-moss px-3 text-xs font-medium text-warm disabled:opacity-60", isSidebar && "w-full");
+  const primaryButtonClass = cn(buttonStyles({ variant: "primary", size: "sm", className: "font-medium" }), isSidebar && "w-full");
 
   const refreshSelection = useCallback(() => {
     const ids = [...document.querySelectorAll<HTMLInputElement>("input[data-selection-group]:checked")]

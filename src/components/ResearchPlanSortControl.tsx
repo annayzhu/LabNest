@@ -1,5 +1,6 @@
 import Form from "next/form";
 import { ArrowUpDown } from "lucide-react";
+import { buttonStyles } from "@/components/ui/Button";
 import { normalizeResearchPlanSort, researchPlanSortOptions } from "@/lib/research-plan-sorting";
 
 export function ResearchPlanSortControl({ path, value }: { path: string; value?: string }) {
@@ -12,7 +13,7 @@ export function ResearchPlanSortControl({ path, value }: { path: string; value?:
           {researchPlanSortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </label>
-      <button className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite hover:bg-warm">
+      <button className={buttonStyles({ size: "sm", className: "bg-surface font-medium text-graphite hover:bg-warm" })}>
         <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
         Apply
       </button>

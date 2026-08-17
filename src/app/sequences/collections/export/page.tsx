@@ -2,13 +2,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
+import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 
 export default function SequenceCollectionExportPage() {
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader title="Export Sequence Collections" actions={<Link href="/sequences/collections" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] text-moss"><ArrowLeft className="h-4 w-4" aria-hidden />Sequence Collections</Link>} />
+        <PageHeader title="Export Sequence Collections" actions={<Link href="/sequences/collections" className={backButtonClass}><ArrowLeft className="h-4 w-4" aria-hidden />Sequence Collections</Link>} />
         <Card>
           <CardHeader title="Export status" />
           <CardBody>
@@ -21,3 +22,4 @@ export default function SequenceCollectionExportPage() {
   );
 }
 
+const backButtonClass = buttonStyles({ size: "sm", className: "font-medium text-moss" });

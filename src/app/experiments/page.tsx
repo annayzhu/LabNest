@@ -7,14 +7,15 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { experimentStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
 export default async function ExperimentsPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
-  const status = firstSearchParam(params, "status");
+  const status = firstOptionSearchParam(params, "status", experimentStatusOptions);
   const projectId = firstSearchParam(params, "project");
   const planId = firstSearchParam(params, "plan");
   const sort = firstSearchParam(params, "sort") ?? "date_desc";
@@ -22,7 +23,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
     : sort === "title_asc" ? { title: "asc" as const }
       : { date: "desc" as const };
   const where = {
-    ...(status ? { status: status as "planned" | "running" | "completed" | "failed" | "archived" } : {}),
+    ...(status ? { status } : {}),
     ...(projectId ? { projectId } : {}),
     ...(planId ? { researchPlanId: planId } : {}),
     ...(query ? { OR: [
@@ -53,7 +54,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
         filters={[
           { name: "project", label: "projects", value: projectId, options: projects.map((project) => ({ value: project.id, label: project.name })) },
           { name: "plan", label: "plans", value: planId, options: plans.map((plan) => ({ value: plan.id, label: plan.code ? `${plan.code} · ${plan.title}` : plan.title })) },
-          { name: "status", label: "status", value: status, options: ["planned", "running", "completed", "failed", "archived"].map((value) => ({ value, label: value })) },
+          { name: "status", label: "status", value: status, options: experimentStatusOptions },
         ]}
         sortOptions={[
           { value: "date_desc", label: "Experiment date" },

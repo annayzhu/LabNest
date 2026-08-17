@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { RecordLifecycleStatus, ResultQualityStatus, ResultSourceType } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { isSingleResultTemplate } from "@/lib/experiment-results";
@@ -14,7 +15,7 @@ import { normalizeResultDocument, parseScientificDocumentJson, resultSections } 
 
 const resultSchema = z.object({
   id: z.string().optional(), experimentId: z.string().min(1, "Experiment is required."), title: z.string().trim().min(1, "Title is required.").max(180), resultType: z.string().trim().min(1, "Result type is required.").max(100),
-  recordStatus: z.enum(["draft", "recorded", "submitted", "reviewed"]), sourceType: z.enum(["manual", "protocol_template", "file_import", "tool", "analysis"]), qualityStatus: z.enum(["not_assessed", "pass", "warning", "fail"]),
+  recordStatus: z.enum(RecordLifecycleStatus), sourceType: z.enum(ResultSourceType), qualityStatus: z.enum(ResultQualityStatus),
 });
 const lifecycleSchema = z.object({ id: z.string().min(1, "Result ID is required."), confirmation: z.string().trim().optional() });
 function optionalText(value: FormDataEntryValue | null) { const text = String(value ?? "").trim(); return text || undefined; }

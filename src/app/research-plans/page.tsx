@@ -7,8 +7,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { normalizeResearchPlanSort, researchPlanOrderBy, researchPlanSortOptions } from "@/lib/research-plan-sorting";
+import { researchPlanStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,14 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const projectId = firstSearchParam(params, "project");
-  const status = firstSearchParam(params, "status");
+  const status = firstOptionSearchParam(params, "status", researchPlanStatusOptions);
   const sort = normalizeResearchPlanSort(firstSearchParam(params, "sort"));
   const orderBy = researchPlanOrderBy(sort);
   const recycledIds = (await prisma.deletedRecord.findMany({ where: { targetType: "research_plan", restoredAt: null }, select: { targetId: true } })).map((row) => row.targetId);
   const where = {
     id: { notIn: recycledIds },
     ...(projectId ? { projectId } : {}),
-    ...(status ? { status: status as "draft" | "active" | "paused" | "completed" | "archived" } : {}),
+    ...(status ? { status } : {}),
     ...(query ? { OR: [
       { code: { contains: query, mode: "insensitive" as const } },
       { title: { contains: query, mode: "insensitive" as const } },
@@ -50,7 +51,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
         defaultSort="updated_desc"
         filters={[
           { name: "project", label: "projects", value: projectId, options: projects.map((project) => ({ value: project.id, label: project.name })) },
-          { name: "status", label: "status", value: status, options: ["draft", "active", "paused", "completed", "archived"].map((value) => ({ value, label: value })) },
+          { name: "status", label: "status", value: status, options: researchPlanStatusOptions },
         ]}
         sortOptions={[...researchPlanSortOptions]}
         actions={<>

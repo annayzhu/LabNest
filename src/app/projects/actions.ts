@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ProjectStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { normalizeKeyInformation, type KeyInformationFormState } from "@/lib/key-information";
@@ -14,7 +15,7 @@ const projectSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Project name is required.").max(180),
   description: z.string().trim().max(10000).optional(),
-  status: z.enum(["active", "paused", "completed", "archived"]),
+  status: z.enum(ProjectStatus),
   tags: z.array(z.string().trim().min(1).max(48)),
 });
 

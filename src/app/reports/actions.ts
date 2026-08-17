@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ReportStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { buildReportDraft, collectReportSources } from "@/lib/reports";
@@ -11,7 +12,7 @@ import { captureDeletedRecord } from "@/lib/recycle-bin";
 import { parseScientificDocumentJson, reportSections } from "@/lib/scientific-document";
 import { parseTags } from "@/lib/tags";
 
-const schema = z.object({ id: z.string().optional(), projectId: z.string().min(1, "Project is required."), researchPlanId: z.string().optional(), title: z.string().trim().min(1, "Title is required.").max(180), status: z.enum(["draft", "ready_for_review", "final", "archived"]).optional(), periodStart: z.coerce.date().optional(), periodEnd: z.coerce.date().optional() });
+const schema = z.object({ id: z.string().optional(), projectId: z.string().min(1, "Project is required."), researchPlanId: z.string().optional(), title: z.string().trim().min(1, "Title is required.").max(180), status: z.enum(ReportStatus).optional(), periodStart: z.coerce.date().optional(), periodEnd: z.coerce.date().optional() });
 const lifecycleSchema = z.object({ id: z.string().min(1, "Report ID is required."), confirmation: z.string().trim().optional() });
 function optionalText(value: FormDataEntryValue | null) { const text = String(value ?? "").trim(); return text || undefined; }
 function parse(formData: FormData) { return schema.parse({ id: optionalText(formData.get("id")), projectId: formData.get("projectId"), researchPlanId: optionalText(formData.get("researchPlanId")), title: formData.get("title"), status: optionalText(formData.get("status")), periodStart: optionalText(formData.get("periodStart")), periodEnd: optionalText(formData.get("periodEnd")) }); }

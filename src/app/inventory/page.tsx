@@ -11,16 +11,18 @@ import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
+import { PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { getInventoryRiskFlags, inventoryCategories, type InventoryRiskFlag } from "@/lib/inventory";
+import { objectStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
-  const status = firstSearchParam(params, "status");
+  const status = firstOptionSearchParam(params, "status", objectStatusOptions);
   const locationId = firstSearchParam(params, "location");
   const category = firstSearchParam(params, "category");
   const principalInvestigator = firstSearchParam(params, "pi");
@@ -29,7 +31,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
   const now = new Date();
 
   const where = {
-    ...(status ? { status: status as "active" | "inactive" | "archived" } : {}),
+    ...(status ? { status } : {}),
     ...(locationId ? { locationId } : {}),
     ...(category ? { category } : {}),
     ...(principalInvestigator ? { principalInvestigator } : {}),
@@ -65,7 +67,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
       orderBy: { principalInvestigator: "asc" },
     }),
     prisma.inventoryItem.findMany({ select: { id: true, currentQuantity: true, lowThreshold: true, expiryDate: true } }),
-    prisma.purchaseRequest.count({ where: { status: { in: ["planned", "ordered", "received"] } } }),
+    prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
   ]);
 
   const itemsWithRisk = matchedItems.map((item) => ({ ...item, riskFlags: getInventoryRiskFlags(item, now) }));
@@ -232,9 +234,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                     <InventoryColumnFilter label="Status" className="md:min-w-36">
                       <select form={filterFormId} name="status" defaultValue={status ?? ""} aria-label="Filter Inventory by status" className={tableFilterClass}>
                         <option value="">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="archived">Archived</option>
+                        {objectStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </InventoryColumnFilter>
                   ),
@@ -333,9 +333,7 @@ function InventoryMobileFilters({
           <MobileFilterField label="Status">
             <select name="status" defaultValue={status ?? ""} className={tableFilterClass}>
               <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+              {objectStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </MobileFilterField>
         </div>

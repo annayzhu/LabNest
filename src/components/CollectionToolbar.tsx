@@ -9,7 +9,7 @@ export type CollectionFilter = {
   name: string;
   label: string;
   value?: string;
-  options: CollectionFilterOption[];
+  options: readonly CollectionFilterOption[];
 };
 
 export type CollectionSortOption = { value: string; label: string };

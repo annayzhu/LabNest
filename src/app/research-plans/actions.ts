@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ResearchPlanStatus } from "@/generated/prisma/enums";
 import type { ResearchPlanFormState } from "@/components/ResearchPlanForm";
 import { prisma } from "@/lib/db";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
@@ -19,7 +20,7 @@ const researchPlanSchema = z.object({
   objective: z.string().trim().max(5000).optional(),
   hypothesis: z.string().trim().max(5000).optional(),
   rationale: z.string().trim().max(5000).optional(),
-  status: z.enum(["draft", "active", "paused", "completed", "archived"]),
+  status: z.enum(ResearchPlanStatus),
 });
 
 const deleteResearchPlanSchema = z.object({

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ProtocolAvailability, ProtocolReviewStage } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
@@ -17,8 +18,8 @@ const editorSchema = z.object({
   canonicalTitle: z.string().trim().min(1).max(180),
   shortTitle: z.string().trim().optional(),
   englishTitle: z.string().trim().optional(),
-  availability: z.enum(["draft", "active", "retired", "archived"]),
-  reviewStage: z.enum(["draft", "ready_for_review", "reviewed"]),
+  availability: z.enum(ProtocolAvailability),
+  reviewStage: z.enum(ProtocolReviewStage),
   displayVersion: z.string().trim().regex(/^\d+\.\d+(?:\.\d+)?$/),
   changeSummary: z.string().trim().optional(),
   tags: z.array(z.string().trim().min(1).max(48)),
@@ -31,7 +32,7 @@ function cloneJson(value: unknown) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function recordStatusFor(reviewStage: "draft" | "ready_for_review" | "reviewed") {
+function recordStatusFor(reviewStage: ProtocolReviewStage) {
   if (reviewStage === "reviewed") return "reviewed" as const;
   if (reviewStage === "ready_for_review") return "submitted" as const;
   return "draft" as const;

@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { objectStatusOptions, recordStatusOptions, resultQualityStatusOptions, resultValidationStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
@@ -15,20 +16,20 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const type = firstSearchParam(params, "type");
-  const status = firstSearchParam(params, "status");
-  const record = firstSearchParam(params, "record");
-  const quality = firstSearchParam(params, "quality");
-  const validation = firstSearchParam(params, "validation");
+  const status = firstOptionSearchParam(params, "status", objectStatusOptions);
+  const record = firstOptionSearchParam(params, "record", recordStatusOptions);
+  const quality = firstOptionSearchParam(params, "quality", resultQualityStatusOptions);
+  const validation = firstOptionSearchParam(params, "validation", resultValidationStatusOptions);
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const orderBy = sort === "title_asc" ? { title: "asc" as const } : { updatedAt: "desc" as const };
   const recycledIds = (await prisma.deletedRecord.findMany({ where: { targetType: "result", restoredAt: null }, select: { targetId: true } })).map((row) => row.targetId);
   const where = {
     id: { notIn: recycledIds },
     ...(type ? { resultType: type } : {}),
-    ...(status ? { status: status as "active" | "inactive" | "archived" } : {}),
-    ...(record ? { recordStatus: record as "draft" | "recorded" | "submitted" | "reviewed" } : {}),
-    ...(quality ? { qualityStatus: quality as "not_assessed" | "pass" | "warning" | "fail" } : {}),
-    ...(validation ? { validationStatus: validation as "not_applicable" | "incomplete" | "valid" | "warning" | "invalid" } : {}),
+    ...(status ? { status } : {}),
+    ...(record ? { recordStatus: record } : {}),
+    ...(quality ? { qualityStatus: quality } : {}),
+    ...(validation ? { validationStatus: validation } : {}),
     ...(query ? { OR: [
       { title: { contains: query, mode: "insensitive" as const } },
       { resultType: { contains: query, mode: "insensitive" as const } },
@@ -48,10 +49,10 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
     <CollectionToolbar path="/results" query={query} searchPlaceholder="Search results, types, methods…" resultCount={results.length} totalCount={totalCount} sort={sort} defaultSort="updated_desc"
       filters={[
         { name: "type", label: "types", value: type, options: typeRows.map((row) => ({ value: row.resultType, label: row.resultType })) },
-        { name: "status", label: "status", value: status, options: ["active", "inactive", "archived"].map((value) => ({ value, label: value })) },
-        { name: "record", label: "record status", value: record, options: ["draft", "recorded", "submitted", "reviewed"].map((value) => ({ value, label: value })) },
-        { name: "quality", label: "QC", value: quality, options: ["not_assessed", "pass", "warning", "fail"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
-        { name: "validation", label: "template validation", value: validation, options: ["not_applicable", "incomplete", "valid", "warning", "invalid"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
+        { name: "status", label: "status", value: status, options: objectStatusOptions },
+        { name: "record", label: "record status", value: record, options: recordStatusOptions },
+        { name: "quality", label: "QC", value: quality, options: resultQualityStatusOptions },
+        { name: "validation", label: "template validation", value: validation, options: resultValidationStatusOptions },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
       actions={<><Link href="/results/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><CollectionExportMenu filteredHref={exportHref} exportPath="/results/export" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}

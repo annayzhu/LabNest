@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { reportStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +16,11 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pag
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const projectId = firstSearchParam(params, "project");
-  const status = firstSearchParam(params, "status");
+  const status = firstOptionSearchParam(params, "status", reportStatusOptions);
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const orderBy = sort === "title_asc" ? { title: "asc" as const } : { updatedAt: "desc" as const };
   const [reports, totalCount, projects] = await Promise.all([
-    prisma.report.findMany({ where: { ...(projectId ? { projectId } : {}), ...(status ? { status: status as "draft" | "ready_for_review" | "final" | "archived" } : {}), ...(query ? { OR: [{ title: { contains: query, mode: "insensitive" as const } }, { project: { name: { contains: query, mode: "insensitive" as const } } }] } : {}) }, include: { project: true, researchPlan: true, _count: { select: { sources: true } } }, orderBy }),
+    prisma.report.findMany({ where: { ...(projectId ? { projectId } : {}), ...(status ? { status } : {}), ...(query ? { OR: [{ title: { contains: query, mode: "insensitive" as const } }, { project: { name: { contains: query, mode: "insensitive" as const } } }] } : {}) }, include: { project: true, researchPlan: true, _count: { select: { sources: true } } }, orderBy }),
     prisma.report.count(),
     prisma.project.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
@@ -29,7 +30,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pag
     <CollectionToolbar path="/reports" query={query} searchPlaceholder="Search reports and projects…" resultCount={reports.length} totalCount={totalCount} sort={sort} defaultSort="updated_desc"
       filters={[
         { name: "project", label: "projects", value: projectId, options: projects.map((project) => ({ value: project.id, label: project.name })) },
-        { name: "status", label: "status", value: status, options: ["draft", "ready_for_review", "final", "archived"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
+        { name: "status", label: "status", value: status, options: reportStatusOptions },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
       actions={<><Link href="/reports/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><CollectionExportMenu filteredHref={exportHref} exportPath="/reports/export" /><Link href="/reports/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Report</Link></>}

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
+import { ExperimentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 
@@ -17,7 +18,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
   if (selectedExperiment) redirect(`/experiments/${selectedExperiment}/run`);
 
   const experiments = await prisma.experiment.findMany({
-    where: { status: { in: ["planned", "running", "failed"] } },
+    where: { status: { in: [ExperimentStatus.planned, ExperimentStatus.running, ExperimentStatus.failed] } },
     include: {
       researchPlan: true,
       primaryProtocolVersion: { include: { protocol: true } },

@@ -199,6 +199,7 @@ export const zhUi: Record<string, string> = {
   "Open any LabNest workspace or utility.": "打开任意 LabNest 工作区或辅助功能。",
   "Utilities": "辅助功能",
   "Search LabNest": "搜索 LabNest",
+  "Search LabNest...": "搜索 LabNest……",
   "Search entries, protocols, inventory, results...": "搜索记录、实验规程、库存和结果……",
   "English": "English",
   "Chinese": "中文",
@@ -843,14 +844,34 @@ export const zhUi: Record<string, string> = {
   "Redo": "重做",
   "Move block up": "内容块上移",
   "Move block down": "内容块下移",
+  "Drag to reorder block": "拖动调整内容块顺序",
   "Remove block": "删除内容块",
   "Find": "查找",
+  "Global Search": "全局搜索",
   "Search notes, protocols, samples, inventory, results, purchases, and references.": "搜索记录、实验规程、样本、库存、结果、采购和参考资料。",
+  "Search across Projects, Research Plans, Experiments, Protocols, Entries, Results, Reports, Inventory, Samples, Sequences, Purchases, Tools, and references.": "跨项目、研究方案、实验、实验规程、实验记录、结果、报告、库存、样本、序列、采购、工具和参考资料搜索。",
   "Local index": "本地索引",
   "Query": "查询",
   "Search query": "搜索关键词",
+  "Search result": "搜索结果",
   "Matched Text": "匹配文本",
+  "Project, plan code, protocol, sample, reagent, result...": "项目、方案编号、实验规程、样本、试剂、结果……",
+  "No records match this query.": "没有匹配该关键词的记录。",
   "Enter a query to search records.": "输入关键词以搜索记录。",
+  "title / location": "标题 / 位置",
+  "Versions": "版本",
+  "Objects": "对象",
+  "Sample profiles": "样本档案",
+  "Inquiries": "询价",
+  "Quotes": "报价",
+  "References": "参考资料",
+  "Project scope": "项目范围",
+  "research plan": "研究方案",
+  "inventory item": "库存物料",
+  "sample lifecycle event": "样本生命周期事件",
+  "procurement inquiry": "采购询价",
+  "procurement quote line": "采购报价行",
+  "reference connector": "参考文献连接器",
   "Review inbox": "审核收件箱",
   "Proposed Actions": "建议操作",
   "Protocol calculations, imports, manual review, and future AI tasks can propose actions. Nothing mutates core records until the user confirms execution.": "实验规程计算、导入、人工审核和未来 AI 任务可以提出操作建议；只有用户确认执行后才会修改核心记录。",
@@ -1222,6 +1243,7 @@ export const zhUi: Record<string, string> = {
   "Order": "排序",
   "Parent location": "上级位置",
   "Paste a rectangular range directly from Excel; rows and columns expand automatically.": "可直接从 Excel 粘贴矩形区域，行列将自动扩展。",
+  "Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.": "单元格会自动换行并随内容增高；可直接从 Excel 粘贴矩形区域，行列将自动扩展。",
   "Plan control": "方案管理",
   "plans ·": "个方案 ·",
   "primary runs": "次主要执行",
@@ -1801,6 +1823,9 @@ function translateDynamic(value: string): string {
       const item = rest.join(": ");
       return `${zhUi[key] ?? key}：${zhUi[item] ?? item}`;
     }).join(" · ");
+  }
+  if (value.includes(" / ")) {
+    return value.split(" / ").map((part) => zhUi[part] ?? part).join(" / ");
   }
   match = value.match(/^Structured (.+) input$/);
   if (match) return `结构化${zhUi[match[1]] ?? match[1]}导入`;

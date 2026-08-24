@@ -42,7 +42,7 @@ export default function ToolsPage() {
                         rel={tool.external ? "noreferrer" : undefined}
                         className="focus-ring inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-3 text-sm font-medium text-warm"
                       >
-                        Open {tool.external ? <ExternalLink className="h-4 w-4" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
+                        Open tool {tool.external ? <ExternalLink className="h-4 w-4" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
                       </Link>
                     ) : (
                       <Badge tone="warning">Not connected</Badge>
@@ -55,7 +55,7 @@ export default function ToolsPage() {
         })}
 
         <p className="text-xs leading-5 text-muted">
-          Standalone tools are preconnected to their managed releases. Environment variables can override those endpoints; external applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
+          Available tools open their managed releases. Environment variables can override managed endpoints; external applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
         </p>
       </div>
     </AppShell>

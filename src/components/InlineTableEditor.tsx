@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 
@@ -14,6 +15,41 @@ function rectangular(rows: string[][]) {
   const width = widthOf(rows);
   const source = rows.length ? rows : [[""]];
   return source.map((row) => Array.from({ length: width }, (_, index) => row[index] ?? ""));
+}
+
+function AutoGrowingTableCell({
+  value,
+  header,
+  rowIndex,
+  columnIndex,
+  onChange,
+  onPaste,
+}: {
+  value: string;
+  header: boolean;
+  rowIndex: number;
+  columnIndex: number;
+  onChange: (value: string) => void;
+  onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "0px";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [value]);
+
+  return <textarea
+    ref={textareaRef}
+    rows={1}
+    value={value}
+    onChange={(event) => onChange(event.target.value)}
+    onPaste={onPaste}
+    className={`focus-ring field-sizing-content min-h-[var(--ln-inline-table-cell-height)] max-h-48 w-full resize-y overflow-y-auto whitespace-pre-wrap break-words border-0 bg-transparent px-[var(--ln-inline-table-cell-padding-x)] py-[var(--ln-inline-table-cell-padding-y)] text-[length:var(--ln-inline-table-font-size)] leading-[var(--ln-inline-table-line-height)] outline-none ${header ? "font-medium text-graphite" : "text-graphite"}`}
+    aria-label={`Table row ${rowIndex + 1}, column ${columnIndex + 1}`}
+  />;
 }
 
 export function InlineTableEditor({
@@ -33,7 +69,7 @@ export function InlineTableEditor({
   const updateCell = (rowIndex: number, columnIndex: number, value: string) => {
     onChange(normalized.map((row, currentRow) => row.map((cell, currentColumn) => currentRow === rowIndex && currentColumn === columnIndex ? value : cell)));
   };
-  const pasteCells = (event: React.ClipboardEvent<HTMLInputElement>, startRow: number, startColumn: number) => {
+  const pasteCells = (event: React.ClipboardEvent<HTMLTextAreaElement>, startRow: number, startColumn: number) => {
     const value = event.clipboardData.getData("text/plain");
     if (!value.includes("\t") && !value.includes("\n")) return;
     event.preventDefault();
@@ -61,16 +97,17 @@ export function InlineTableEditor({
       <table className="min-w-full table-fixed border-collapse text-left text-[length:var(--ln-result-dataset-font-size)]">
         <colgroup>{Array.from({ length: columnCount }).map((_, columnIndex) => <col key={columnIndex} data-resizable-column-index={columnIndex} style={{ width: "var(--ln-inline-table-col-width)" }} />)}</colgroup>
         <tbody>
-          {normalized.map((row, rowIndex) => <tr key={rowIndex} className={rowIndex === 0 ? "sticky top-0 z-10 bg-stone/90" : "bg-surface even:bg-warm/70"}>
+          {normalized.map((row, rowIndex) => <tr key={rowIndex} className={rowIndex === 0 ? "sticky top-0 z-10 bg-[var(--ln-inline-table-head-bg)]" : "bg-surface even:bg-warm/70"}>
             {row.map((cell, columnIndex) => {
               const Cell = rowIndex === 0 ? "th" : "td";
-              return <Cell key={columnIndex} data-resizable-column-cell={rowIndex === 0 ? columnIndex : undefined} className="min-w-[var(--ln-inline-table-cell-min-width)] border-b border-r border-hairline p-0 last:border-r-0">
-                <input
+              return <Cell key={columnIndex} data-resizable-column-cell={rowIndex === 0 ? columnIndex : undefined} className={`min-w-[var(--ln-inline-table-cell-min-width)] border-b border-r p-0 align-top last:border-r-0 ${rowIndex === 0 ? "border-b-border-strong border-r-hairline" : "border-hairline"}`}>
+                <AutoGrowingTableCell
                   value={cell}
-                  onChange={(event) => updateCell(rowIndex, columnIndex, event.target.value)}
+                  header={rowIndex === 0}
+                  rowIndex={rowIndex}
+                  columnIndex={columnIndex}
+                  onChange={(value) => updateCell(rowIndex, columnIndex, value)}
                   onPaste={(event) => pasteCells(event, rowIndex, columnIndex)}
-                  className={`focus-ring h-[var(--ln-inline-table-cell-height)] min-h-0 w-full border-0 bg-transparent px-[var(--ln-inline-table-cell-padding-x)] text-[length:var(--ln-inline-table-font-size)] leading-none outline-none ${rowIndex === 0 ? "font-semibold text-ink" : "text-graphite"}`}
-                  aria-label={`Table row ${rowIndex + 1}, column ${columnIndex + 1}`}
                 />
                 {rowIndex === 0 ? <span data-column-resize-handle={columnIndex} data-min-width="var(--ln-inline-table-cell-min-width)" aria-hidden /> : null}
               </Cell>;
@@ -79,6 +116,6 @@ export function InlineTableEditor({
         </tbody>
       </table>
     </ResizableTableFrame>
-    <p className="border-t border-hairline px-2 py-0.5 text-[10.5px] leading-5 text-muted" data-print-hidden>Paste a rectangular range directly from Excel; rows and columns expand automatically.</p>
+    <p className="border-t border-hairline px-2 py-0.5 text-[10.5px] leading-5 text-muted" data-print-hidden>Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.</p>
   </figure>;
 }

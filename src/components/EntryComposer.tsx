@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass } from "@/components/forms";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
@@ -377,21 +377,24 @@ export function EntryComposer({
   return (
     <form onSubmit={submit} className="space-y-5">
       <div className="entry-editor-layout">
-      <section className="entry-editor-draft overflow-hidden rounded-[12px] border border-hairline bg-surface shadow-paper" data-print-hidden>
-        <div className="flex flex-col gap-3 border-b border-hairline bg-warm/55 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
-            <Cloud className="h-4 w-4 shrink-0 text-moss" aria-hidden />
-            <span className="truncate">{draftStatus || "Draft recovery will start after the editor loads."}</span>
-          </div>
-          <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting}>
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-            Discard local draft
-          </Button>
-        </div>
-
-      </section>
-
-      <DocumentCanvas className="entry-editor-document" label={fields.title || "Entry editor"} toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Write directly in the final layout</span><DocumentPrintButton /></>}>
+      <div className="entry-editor-main-column">
+      <DocumentCanvas
+        className="entry-editor-document"
+        label={fields.title || "Entry editor"}
+        toolbar={
+          <>
+            <span className="mr-auto flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
+              <Cloud className="h-3.5 w-3.5 shrink-0 text-moss" aria-hidden />
+              <span className="max-w-48 truncate sm:max-w-72">{draftStatus || "Draft recovery is ready"}</span>
+            </span>
+            <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting} className="hidden sm:inline-flex">
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+              Discard draft
+            </Button>
+            <DocumentPrintButton />
+          </>
+        }
+      >
         <header className="document-page-header">
           <p className="document-page-kicker">Entry</p>
           <input
@@ -415,13 +418,13 @@ export function EntryComposer({
           value={fields.contentMarkdown}
           onChange={(value) => updateField("contentMarkdown", value)}
           placeholder="Observation, decision, deviation, or follow-up…"
-          minHeightClass="min-h-[420px]"
+          minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
         />
       </DocumentCanvas>
 
       <section
         className={cn(
-          "entry-editor-media rounded-[18px] border bg-surface p-4 shadow-paper transition sm:p-6",
+          "entry-editor-media rounded-[var(--ln-radius-panel)] border bg-surface p-4 transition",
           isDraggingFiles ? "border-moss ring-2 ring-moss/15" : "border-hairline",
         )}
         onDragEnter={handleMediaDragEnter}
@@ -429,11 +432,10 @@ export function EntryComposer({
         onDragLeave={handleMediaDragLeave}
         onDrop={handleMediaDrop}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Photos and files</p>
-            <h2 className="mt-1 font-serif text-2xl font-medium text-ink">Entry media</h2>
-            <p className="mt-1 text-sm text-muted">Up to 14 files, 25 MB each and 100 MB combined. Originals are preserved.</p>
+            <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Attachments</h2>
+            <p className="mt-0.5 text-xs text-muted">Up to 14 files, 25 MB each. Originals are preserved.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <MediaPickerLabel htmlFor={imageInputId} disabled={isSubmitting}><ImagePlus className="h-4 w-4" />Add photos</MediaPickerLabel>
@@ -448,14 +450,18 @@ export function EntryComposer({
         <label
           htmlFor={fileInputId}
           className={cn(
-            "focus-ring mt-5 block cursor-pointer rounded-[14px] border border-dashed px-4 py-7 text-center transition",
+            "focus-ring mt-3 flex cursor-pointer items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border border-dashed px-4 py-4 text-left transition",
             isDraggingFiles ? "border-moss bg-sage-surface/70" : "border-hairline bg-warm/45",
             isSubmitting && "pointer-events-none cursor-not-allowed opacity-55",
           )}
         >
-          <ImagePlus className="mx-auto h-6 w-6 text-moss" aria-hidden />
-          <p className="mt-2 text-sm font-semibold text-ink">Drop experiment photos or files here</p>
-          <p className="mt-1 text-xs text-muted">Drop anywhere in this panel or click here to browse. Nothing is uploaded until Save Entry.</p>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-action-surface text-moss">
+            <ImagePlus className="h-4 w-4" aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[13px] font-medium text-ink">Drop files here or click to browse</span>
+            <span className="mt-0.5 block text-[11px] text-muted">Files upload only when you save the Entry.</span>
+          </span>
         </label>
 
         {media.length ? (
@@ -497,12 +503,14 @@ export function EntryComposer({
             ))}
           </div>
         ) : null}
-        <p className="mt-4 text-xs text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
+        <p className="mt-2 text-[11px] text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
       </section>
+      </div>
 
-      <section className="entry-editor-context rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
-        <h2 className="font-serif text-xl font-medium text-ink">Research context</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="entry-editor-sidebar-column">
+      <section className="entry-editor-context rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
+        <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Research context</h2>
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => {
             updateField("projectId", value);
             const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
@@ -515,9 +523,9 @@ export function EntryComposer({
           }} options={[{ value: "", label: "Unassigned" }, ...availablePlans.map((plan) => ({ value: plan.id, label: `${plan.projectName} · ${plan.code ?? plan.title}` }))]} />
           <ComposerSelect label="Source" value={fields.sourceType} onChange={(value) => updateField("sourceType", value)} options={["text", "photo", "file", "voice", "manual"].map((value) => ({ value, label: value }))} />
           <ComposerInput label="State" value={fields.moodStatus} onChange={(value) => updateField("moodStatus", value)} placeholder="needs follow-up" />
-          <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} className="md:col-span-2 xl:col-span-5" />
+          <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} density="compact" className="md:col-span-2 xl:col-span-5" />
         </div>
-        <div className="mt-4">
+        <div className="mt-3">
           <label className="block">
             <TagFieldLabel />
             <input value={fields.tags} onChange={(event) => updateField("tags", event.target.value)} placeholder="transfection, observation" className={formInputClass} />
@@ -526,12 +534,12 @@ export function EntryComposer({
       </section>
 
       {!entry ? (
-        <details className="entry-editor-experiment rounded-[18px] border border-hairline bg-surface p-4 shadow-paper sm:p-6">
-          <summary className="cursor-pointer font-serif text-xl font-medium text-ink">Protocol-Based Experiment <span className="ml-2 font-sans text-xs font-normal text-muted">optional</span></summary>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <details className="entry-editor-experiment rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
+          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">Protocol-based experiment <span className="ml-1.5 text-[11px] font-normal text-muted">Optional</span></summary>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => updateField("protocolVersionId", value)} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
             <ComposerInput label="Experiment title" value={fields.experimentTitle} onChange={(value) => updateField("experimentTitle", value)} placeholder="Defaults to Entry title" />
-            <StatusRadioGroup label="Experiment status" value={fields.experimentStatus} onValueChange={(value) => updateField("experimentStatus", value)} options={experimentStatusOptions} className="md:col-span-2" />
+            <StatusRadioGroup label="Experiment status" value={fields.experimentStatus} onValueChange={(value) => updateField("experimentStatus", value)} options={experimentStatusOptions} density="compact" className="md:col-span-2" />
             <ComposerInput label="Result title" value={fields.resultTitle} onChange={(value) => updateField("resultTitle", value)} placeholder="Optional first result" />
             <ComposerInput label="Result type" value={fields.resultType} onChange={(value) => updateField("resultType", value)} placeholder="fluorescence_expression" />
             <div className="md:col-span-2"><ComposerTextarea label="Initial result text" value={fields.resultTextValue} onChange={(value) => updateField("resultTextValue", value)} /></div>
@@ -540,9 +548,10 @@ export function EntryComposer({
         </details>
       ) : null}
       </div>
+      </div>
 
       {submitStatus ? <div role="alert" className="rounded-[12px] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
         {submitStatus && !isSubmitting ? <Button type="submit" size="lg"><RotateCcw className="h-4 w-4" />Try again</Button> : null}
         <Button type="submit" size="lg" variant="primary" disabled={isSubmitting}>
           <Save className="h-4 w-4" />
@@ -554,15 +563,15 @@ export function EntryComposer({
 }
 
 function ComposerInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="block"><span className={formLabelClass}>{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={formInputClass} /></label>;
+  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
 }
 
 function ComposerTextarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="block"><span className={formLabelClass}>{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${formTextareaClass} resize-y`} /></label>;
+  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 min-h-20 w-full resize-y rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 py-1.5 text-xs leading-5 text-ink" /></label>;
 }
 
 function ComposerSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <label className="block"><span className={formLabelClass}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className={formInputClass}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
 }
 
 function MediaPickerLabel({ htmlFor, disabled, children }: { htmlFor: string; disabled?: boolean; children: React.ReactNode }) {
@@ -578,7 +587,7 @@ function MediaPickerLabel({ htmlFor, disabled, children }: { htmlFor: string; di
         document.getElementById(htmlFor)?.click();
       }}
       className={cn(
-        "focus-ring inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border border-hairline bg-transparent px-3 text-[13px] font-normal tracking-[0.005em] text-ink transition hover:border-border-strong hover:bg-warm",
+        "focus-ring inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 text-xs font-medium tracking-[-0.005em] text-graphite transition hover:border-border-strong hover:bg-warm hover:text-ink",
         disabled && "pointer-events-none cursor-not-allowed opacity-55",
       )}
     >

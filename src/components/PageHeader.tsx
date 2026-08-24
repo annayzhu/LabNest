@@ -17,11 +17,11 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("flex flex-col gap-2 md:min-h-10 md:flex-row md:items-center md:justify-between", className)}>
+    <header className={cn("flex flex-col gap-2 md:min-h-9 md:flex-row md:items-center md:justify-between", className)}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {identifier ? <span className="font-mono text-xs font-normal tracking-[0.03em] text-muted">{identifier}</span> : null}
-          <h1 className="break-words font-serif text-[22px] font-medium leading-tight text-ink md:text-[26px]">
+          {identifier ? <span className="font-mono text-[11px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}
+          <h1 className="break-words font-serif text-[21px] font-medium leading-tight tracking-[-0.015em] text-ink md:text-[24px]">
             {title}
           </h1>
         </div>

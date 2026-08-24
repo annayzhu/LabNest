@@ -7,6 +7,7 @@ import { EntryCollectionNav } from "@/components/EntryCollectionNav";
 import { EntryCard } from "@/components/EntryCard";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { buttonStyles } from "@/components/ui/Button";
 import { entryCardLayout, groupEntriesByMonth, summarizeProjectCollections } from "@/lib/entry-timeline";
 import { getEntryRecords } from "@/lib/entries";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
@@ -57,7 +58,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
           actions={
             <Link
               href="/entries/new"
-              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"
+              className={buttonStyles({ variant: "secondary", size: "md", className: "border-action-border bg-action-surface text-moss hover:bg-action-surface-hover" })}
             >
               <Plus className="h-3.5 w-3.5" aria-hidden />
               New Entry
@@ -89,7 +90,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
                 {monthGroups.map((group) => (
                   <section key={group.key} aria-labelledby={`entries-${group.key}`}>
                     <div className="mb-4 flex items-end justify-between gap-4 border-b border-hairline pb-3">
-                      <h2 id={`entries-${group.key}`} className="font-serif text-[24px] font-medium text-ink sm:text-[28px]">
+                      <h2 id={`entries-${group.key}`} className="text-[18px] font-semibold tracking-[-0.02em] text-ink sm:text-[20px]">
                         {group.label}
                       </h2>
                       <span className="font-mono text-xs text-muted">

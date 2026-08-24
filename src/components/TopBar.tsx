@@ -11,15 +11,15 @@ export function TopBar() {
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-hairline bg-paper/88 px-3 py-2 backdrop-blur md:px-5 md:py-2">
+    <header className="sticky top-0 z-30 border-b border-hairline/80 bg-paper/92 px-3 py-2 backdrop-blur-xl md:px-5">
       <div className="mx-auto flex max-w-[1480px] items-center gap-2 md:gap-3">
         {pathname !== "/" ? (
-          <Link href="/" aria-label="Back to Overview" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-hairline bg-surface text-moss shadow-paper lg:hidden">
+          <Link href="/" aria-label="Back to Overview" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface text-moss lg:hidden">
             <Home className="h-4 w-4" aria-hidden />
           </Link>
         ) : null}
         <form action="/search" className="min-w-0 flex-1">
-          <label className="focus-within:ring-info/20 flex h-9 max-w-xl items-center gap-2 rounded-[8px] border border-hairline bg-surface px-2.5 text-xs text-muted shadow-paper focus-within:border-fog focus-within:ring-4 md:text-sm">
+          <label className="flex h-9 max-w-xl items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-xs text-muted transition focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/10 md:text-sm">
             <Search className="h-4 w-4" aria-hidden />
             <span className="sr-only">Search LabNest</span>
             <input

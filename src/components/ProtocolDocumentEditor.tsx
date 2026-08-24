@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Download, ListX, Plus, Trash2 } from "lucide-react";
+import { BlockDragHandle } from "@/components/BlockDragHandle";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -14,6 +15,7 @@ import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEdi
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
+import { reorderBlocks, type BlockDropEdge } from "@/lib/block-reorder";
 import {
   protocolSectionLabels,
   richTextFromPlainText,
@@ -37,6 +39,9 @@ const initialState: ProtocolEditorState = {};
 const inputClass = formInputClass;
 const textareaClass = `${formTextareaClass} min-h-16 resize-y leading-[var(--ln-rich-text-default-line-height)]`;
 
+type ProtocolBlockLocation = { sectionKey: ProtocolSectionKey; blockIndex: number };
+type ProtocolBlockDropTarget = ProtocolBlockLocation & { edge: BlockDropEdge };
+
 function uniqueBlockId(sectionKey: ProtocolSectionKey) {
   return `${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -47,19 +52,38 @@ function BlockEditor({
   onChange,
   onMove,
   onRemove,
+  dragging,
+  dropEdge,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
 }: {
   block: ProtocolContentBlock;
   sectionKey: ProtocolSectionKey;
   onChange: (block: ProtocolContentBlock) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
+  dragging: boolean;
+  dropEdge?: BlockDropEdge;
+  onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void;
+  onDragEnd: () => void;
+  onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
 }) {
   return (
-    <div className="document-block document-editor-control rounded-[7px] border border-transparent px-1 py-0.5">
+    <div
+      className="document-block document-editor-control rounded-[7px] border border-transparent px-1 py-0.5"
+      data-dragging={dragging ? "true" : undefined}
+      data-drop-edge={dropEdge}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <div className="document-print-only"><ProtocolContentBlockView block={block} /></div>
       <div data-print-hidden>
       <div className="mb-0.5 flex items-center justify-end gap-1">
         <div className="flex gap-1">
+          <BlockDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd} />
           <button type="button" onClick={() => onMove(-1)} aria-label="Move block up" className="focus-ring rounded-[5px] p-1 text-muted hover:bg-stone"><ChevronUp className="h-3.5 w-3.5" /></button>
           <button type="button" onClick={() => onMove(1)} aria-label="Move block down" className="focus-ring rounded-[5px] p-1 text-muted hover:bg-stone"><ChevronDown className="h-3.5 w-3.5" /></button>
           <button type="button" onClick={onRemove} aria-label="Remove block" className="focus-ring rounded-[5px] p-1 text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -134,6 +158,8 @@ export function ProtocolDocumentEditor({
   const [displayVersion, setDisplayVersion] = useState(reviewed ? suggestedDisplayVersion ?? version.displayVersion : version.displayVersion);
   const [selectedPlanIds, setSelectedPlanIds] = useState(initialResearchPlanIds);
   const [primaryPlanIds, setPrimaryPlanIds] = useState(initialPrimaryResearchPlanIds);
+  const [draggedBlock, setDraggedBlock] = useState<ProtocolBlockLocation | null>(null);
+  const [dropTarget, setDropTarget] = useState<ProtocolBlockDropTarget | null>(null);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
@@ -162,6 +188,45 @@ export function ProtocolDocumentEditor({
         return { ...section, blocks };
       }),
     }));
+  };
+  const reorderBlock = (sectionKey: ProtocolSectionKey, sourceIndex: number, targetIndex: number, edge: BlockDropEdge) => {
+    setDocument((current) => ({
+      ...current,
+      sections: current.sections.map((section) => section.key === sectionKey
+        ? { ...section, blocks: reorderBlocks(section.blocks, sourceIndex, targetIndex, edge) }
+        : section),
+    }));
+  };
+  const startBlockDrag = (event: React.DragEvent<HTMLButtonElement>, location: ProtocolBlockLocation, blockId: string) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", blockId);
+    setDraggedBlock(location);
+    setDropTarget(null);
+  };
+  const dragBlockOver = (event: React.DragEvent<HTMLDivElement>, location: ProtocolBlockLocation) => {
+    if (!draggedBlock || draggedBlock.sectionKey !== location.sectionKey) {
+      setDropTarget(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const edge: BlockDropEdge = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+    setDropTarget({ ...location, edge });
+  };
+  const dropBlock = (event: React.DragEvent<HTMLDivElement>, location: ProtocolBlockLocation) => {
+    if (!draggedBlock || draggedBlock.sectionKey !== location.sectionKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const edge: BlockDropEdge = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+    reorderBlock(location.sectionKey, draggedBlock.blockIndex, location.blockIndex, edge);
+    setDraggedBlock(null);
+    setDropTarget(null);
+  };
+  const finishBlockDrag = () => {
+    setDraggedBlock(null);
+    setDropTarget(null);
   };
   const removeBlock = (sectionKey: ProtocolSectionKey, index: number) => {
     setDocument((current) => ({ ...current, sections: current.sections.map((section) => section.key === sectionKey ? { ...section, blocks: section.blocks.filter((_, itemIndex) => itemIndex !== index) } : section) }));
@@ -252,7 +317,20 @@ export function ProtocolDocumentEditor({
               </div>
             </header>
             <div>
-              {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor key={block.id} block={block} sectionKey={section.key} onChange={(next) => updateBlock(section.key, index, next)} onMove={(direction) => moveBlock(section.key, index, direction)} onRemove={() => removeBlock(section.key, index)} />) : <p className="border-y border-dashed border-hairline px-3 py-3 text-center text-sm text-muted" data-print-hidden>{section.key === "result_templates" ? "No Result Templates. Use + Result Template to add one." : "No blocks. Add rich text, a checklist, a table, a callout, media, or a timer."}</p>}
+              {section.blocks.length ? section.blocks.map((block, index) => <BlockEditor
+                key={block.id}
+                block={block}
+                sectionKey={section.key}
+                dragging={draggedBlock?.sectionKey === section.key && draggedBlock.blockIndex === index}
+                dropEdge={dropTarget?.sectionKey === section.key && dropTarget.blockIndex === index ? dropTarget.edge : undefined}
+                onChange={(next) => updateBlock(section.key, index, next)}
+                onMove={(direction) => moveBlock(section.key, index, direction)}
+                onRemove={() => removeBlock(section.key, index)}
+                onDragStart={(event) => startBlockDrag(event, { sectionKey: section.key, blockIndex: index }, block.id)}
+                onDragEnd={finishBlockDrag}
+                onDragOver={(event) => dragBlockOver(event, { sectionKey: section.key, blockIndex: index })}
+                onDrop={(event) => dropBlock(event, { sectionKey: section.key, blockIndex: index })}
+              />) : <p className="border-y border-dashed border-hairline px-3 py-3 text-center text-sm text-muted" data-print-hidden>{section.key === "result_templates" ? "No Result Templates. Use + Result Template to add one." : "No blocks. Add rich text, a checklist, a table, a callout, media, or a timer."}</p>}
             </div>
           </section>
         ))}

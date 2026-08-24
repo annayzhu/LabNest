@@ -2,25 +2,25 @@
 
 :root {
   /* 基础色板：控制全站背景、文字、边框和状态颜色。 */
-  --paper: #f5f6f9; /* 页面最外层浅灰背景。 */
-  --warm: #fbfafb; /* 卡片、输入框等偏暖白背景。 */
-  --stone: #eeedf2; /* 表头、工具栏、弱强调区域背景。 */
-  --sand-panel: #e7e5eb; /* 较深的面板底色。 */
+  --paper: #f7f8fb; /* 页面最外层浅冷灰背景。 */
+  --warm: #fbfcfe; /* 卡片、输入框等近白背景。 */
+  --stone: #f1f3f7; /* 表头、工具栏、弱强调区域背景。 */
+  --sand-panel: #e9ebf2; /* 较深的面板底色。 */
   --surface: #ffffff; /* 主卡片和文档纸张白色背景。 */
-  --ink: #24242b; /* 主要文字颜色。 */
-  --graphite: #555563; /* 正文和次级正文颜色。 */
-  --muted: #747381; /* 标签、说明、弱信息文字颜色。 */
-  --disabled: #a7a5af; /* 禁用状态文字或图标颜色。 */
-  --moss: #5a5674; /* 品牌主色，用于重点按钮、图标和链接。 */
-  --action: #625e7e; /* 可点击主操作默认色。 */
-  --action-hover: #56516f; /* 可点击主操作悬停色。 */
-  --action-surface: #eeecf6; /* 主操作按钮的浅色背景。 */
-  --action-surface-hover: #e4e1f0; /* 主操作浅色按钮悬停背景。 */
-  --action-border: #d3cee3; /* 主操作相关边框颜色。 */
-  --sage: #918ba7; /* 辅助紫灰色，用于边框、图标和弱强调。 */
-  --sage-surface: #eceaf3; /* 辅助紫灰浅背景。 */
-  --fog: #737990; /* 冷灰蓝文字或图标色。 */
-  --fog-surface: #eef0f6; /* 冷灰蓝浅背景。 */
+  --ink: #20232c; /* 主要文字颜色。 */
+  --graphite: #515765; /* 正文和次级正文颜色。 */
+  --muted: #767c8b; /* 标签、说明、弱信息文字颜色。 */
+  --disabled: #a9aeba; /* 禁用状态文字或图标颜色。 */
+  --moss: #59618b; /* 品牌主色，用于重点按钮、图标和链接。 */
+  --action: #59618b; /* 可点击主操作默认色。 */
+  --action-hover: #4d557b; /* 可点击主操作悬停色。 */
+  --action-surface: #eff1f8; /* 主操作按钮的浅色背景。 */
+  --action-surface-hover: #e7eaf4; /* 主操作浅色按钮悬停背景。 */
+  --action-border: #d5d9e8; /* 主操作相关边框颜色。 */
+  --sage: #9299b4; /* 辅助蓝灰色，用于边框、图标和弱强调。 */
+  --sage-surface: #eef0f7; /* 辅助蓝灰浅背景。 */
+  --fog: #6f7792; /* 冷灰蓝文字或图标色。 */
+  --fog-surface: #f0f2f7; /* 冷灰蓝浅背景。 */
   --clay: #b17e68; /* 暖色强调色。 */
   --pale-sand: #f1e3db; /* 暖色浅背景。 */
   --success: #526f60; /* 成功状态文字或图标色。 */
@@ -31,9 +31,9 @@
   --error-surface: #f7e7e7; /* 错误、删除、风险提示浅背景。 */
   --info: #5d627f; /* 信息提示文字或图标色。 */
   --info-surface: #eceef7; /* 信息提示浅背景。 */
-  --hairline: #dedce4; /* 默认细边框颜色。 */
-  --border-strong: #cbc7d3; /* 较明显边框颜色。 */
-  --divider: rgba(36, 36, 43, 0.08); /* 弱分割线颜色。 */
+  --hairline: #e1e4eb; /* 默认细边框颜色。 */
+  --border-strong: #cbd0dc; /* 较明显边框颜色。 */
+  --divider: rgba(32, 35, 44, 0.075); /* 弱分割线颜色。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
   --font-editorial: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif; /* 文档标题和纸面排版的衬线字体。 */
@@ -44,6 +44,9 @@
   --ln-radius-control-sm: 6px; /* 小型图标按钮、紧凑筛选器圆角。 */
   --ln-radius-control-md: 7px; /* 默认按钮和列表页工具栏控件圆角。 */
   --ln-radius-control-lg: 8px; /* 表单输入框和较宽控件圆角。 */
+  --ln-radius-panel: 12px; /* 页面级卡片和主要面板圆角。 */
+  --ln-radius-panel-inner: 8px; /* 卡片内部容器和空状态圆角。 */
+  --ln-shadow-panel: 0 1px 2px rgba(32, 35, 44, 0.025), 0 8px 24px rgba(56, 62, 86, 0.025); /* 仅用于需要抬升层级的面板。 */
   --ln-control-height-sm: 2rem; /* 小按钮高度，等价于 32px。 */
   --ln-control-height-md: 2.25rem; /* 默认按钮和筛选器高度，等价于 36px。 */
   --ln-control-height-lg: 2.5rem; /* 表单输入框和主要动作高度，等价于 40px。 */
@@ -55,17 +58,31 @@
   --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
+  /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
+  --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
+  --ln-entry-editor-body-min-height: 20rem; /* Entry 富文本正文的初始书写高度。 */
+  --ln-entry-editor-panel-gap: 0.75rem; /* Entry 主画布、属性和附件区间距。 */
+
+  /* Visualization Studio：高密度科研制图工作台的面板层级与间距。 */
+  --ln-vis-panel-radius: 9px; /* 工作台主要面板圆角，克制于通用内容卡片。 */
+  --ln-vis-panel-gap: 0.75rem; /* 三栏及纵向面板的默认间距。 */
+  --ln-vis-panel-border: color-mix(in srgb, var(--hairline) 86%, var(--surface)); /* 次级工作面板边线。 */
+  --ln-vis-preview-border: color-mix(in srgb, var(--border-strong) 42%, var(--hairline)); /* 当前图预览的强调边线。 */
+  --ln-vis-preview-shadow: 0 8px 24px rgba(42, 39, 57, 0.045); /* 仅用于核心预览，避免所有面板同时浮起。 */
+  --ln-vis-canvas-bg: color-mix(in srgb, var(--stone) 56%, var(--surface)); /* 图纸外侧的中性画布。 */
+  --ln-vis-active-bg: color-mix(in srgb, var(--sage-surface) 82%, var(--surface)); /* 当前图形和配色的选择背景。 */
+
   /* 列表页 DataTable：控制项目、研究方案、Protocol 等列表表格外观。 */
-  --ln-list-table-radius: 14px; /* 列表表格外框圆角。 */
+  --ln-list-table-radius: var(--ln-radius-panel); /* 列表表格外框圆角。 */
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
-  --ln-list-table-shadow: 0 10px 28px rgba(42, 39, 57, 0.035); /* 列表表格轻微阴影。 */
+  --ln-list-table-shadow: none; /* 列表表格保持平面层级，减少视觉重量。 */
   --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
-  --ln-list-table-head-font-size: 14px; /* 列表表头字号。 */
+  --ln-list-table-head-font-size: 12.5px; /* 列表表头字号。 */
   --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
   --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
   --ln-list-table-head-padding-y: 0.68rem; /* 列表表头上下内边距。 */
   --ln-list-table-cell-padding-x: 1rem; /* 列表表格单元格左右内边距。 */
-  --ln-list-table-cell-padding-y: 0.9rem; /* 列表表格单元格上下内边距，也影响行高。 */
+  --ln-list-table-cell-padding-y: 0.76rem; /* 列表表格单元格上下内边距，也影响行高。 */
   --ln-list-table-row-border-color: color-mix(in srgb, var(--hairline) 78%, var(--surface)); /* 列表表格行分割线颜色。 */
   --ln-list-table-row-hover-bg: color-mix(in srgb, var(--warm) 78%, var(--sage-surface)); /* 列表表格鼠标悬停背景。 */
   --ln-list-table-selection-col-width: 3rem; /* 列表表格最左侧 checkbox 选择列宽度。 */
@@ -100,10 +117,13 @@
 
   /* 富文本/Protocol 内嵌普通表格编辑器：控制表格标题栏、列宽、输入框和按钮。 */
   --ln-inline-table-col-width: 6.5rem; /* 内嵌普通表格每列默认宽度。 */
-  --ln-inline-table-cell-height: 1.75rem; /* 内嵌普通表格单元格输入框高度。 */
+  --ln-inline-table-cell-height: 2rem; /* 内嵌普通表格单元格编辑区的最小高度；长内容会自动增高。 */
   --ln-inline-table-cell-min-width: 5rem; /* 内嵌普通表格列调整时允许的最小列宽。 */
   --ln-inline-table-cell-padding-x: 0.5rem; /* 内嵌普通表格单元格左右内边距。 */
+  --ln-inline-table-cell-padding-y: 0.35rem; /* 内嵌普通表格单元格上下内边距。 */
   --ln-inline-table-font-size: 12.5px; /* 内嵌普通表格单元格字号。 */
+  --ln-inline-table-line-height: 1.4; /* 内嵌普通表格多行内容行距。 */
+  --ln-inline-table-head-bg: color-mix(in srgb, var(--stone) 32%, var(--surface)); /* 内嵌普通表格的轻量表头背景。 */
   --ln-inline-table-toolbar-gap: 0.35rem; /* 内嵌普通表格标题栏中控件之间的间距。 */
   --ln-inline-table-toolbar-padding-x: 0.45rem; /* 内嵌普通表格标题栏左右内边距。 */
   --ln-inline-table-toolbar-padding-y: 0.28rem; /* 内嵌普通表格标题栏上下内边距。 */
@@ -131,6 +151,9 @@
   --ln-document-list-item-gap: 0.36rem; /* checklist 或列表项之间距离。 */
   --ln-document-heading-follow-gap: 0.58rem; /* 标题块后面第一个内容块的距离。 */
   --ln-rich-text-default-line-height: 1.5; /* 富文本编辑器和未单独设置行距的富文本块默认行高。 */
+  --ln-document-block-drag-opacity: 0.48; /* 正在拖动的内容块透明度。 */
+  --ln-document-block-drop-line-width: 2px; /* 内容块拖拽落点提示线粗细。 */
+  --ln-document-block-drop-line-offset: -0.34rem; /* 内容块拖拽落点提示线与内容块的距离。 */
 
   /* 文档打印：控制 A4 打印页边距、纸面内补白和三线表边框。 */
   --ln-document-print-page-margin-top: 20mm; /* 打印每一页顶部边距。 */
@@ -206,6 +229,11 @@
   --color-muted: var(--muted);
   --color-disabled: var(--disabled);
   --color-moss: var(--moss);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-surface: var(--action-surface);
+  --color-action-surface-hover: var(--action-surface-hover);
+  --color-action-border: var(--action-border);
   --color-sage: var(--sage);
   --color-sage-surface: var(--sage-surface);
   --color-fog: var(--fog);
@@ -225,8 +253,8 @@
   --font-serif: var(--font-editorial);
   --font-sans: var(--font-ui);
   --font-mono: var(--font-data);
-  --shadow-soft: 0 18px 45px rgba(42, 39, 57, 0.07);
-  --shadow-paper: 0 1px 2px rgba(42, 39, 57, 0.045);
+  --shadow-soft: 0 14px 38px rgba(56, 62, 86, 0.065);
+  --shadow-paper: 0 1px 2px rgba(32, 35, 44, 0.035);
 }
 
 * {
@@ -241,7 +269,7 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   max-width: 100%;
   background: var(--paper);
   color: var(--ink);
@@ -265,8 +293,8 @@ textarea {
   filter: none;
   padding-inline: 0.65rem;
   font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.005em;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   line-height: 1;
 }
 
@@ -313,8 +341,8 @@ textarea {
   box-shadow: none;
   padding-inline: 0.65rem;
   font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.005em;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   line-height: 1;
 }
 
@@ -351,13 +379,13 @@ textarea {
   background: var(--ln-list-table-head-bg);
   color: var(--muted);
   font-size: var(--ln-list-table-head-font-size);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   line-height: var(--ln-list-table-head-line-height) !important;
 }
 
 .ln-data-table th {
   border-bottom: 1px solid var(--ln-list-table-row-border-color);
-  font-weight: 650;
+  font-weight: 600;
   line-height: var(--ln-list-table-head-line-height) !important;
   padding: var(--ln-list-table-head-padding-y) var(--ln-list-table-head-padding-x) !important;
   vertical-align: middle;
@@ -540,7 +568,24 @@ textarea {
 .entry-editor-layout {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: var(--ln-entry-editor-panel-gap);
+}
+
+.entry-editor-main-column,
+.entry-editor-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ln-entry-editor-panel-gap);
+  min-width: 0;
+}
+
+.entry-editor-document .document-a4-paper {
+  min-height: var(--ln-entry-editor-paper-min-height);
+  padding: 12mm 14mm 14mm;
+}
+
+.entry-editor-document .document-canvas-toolbar {
+  top: 4.1rem;
 }
 
 .document-canvas-toolbar {
@@ -868,6 +913,30 @@ table :where(td) {
   transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
 }
 
+.document-editor-control[data-dragging="true"] {
+  opacity: var(--ln-document-block-drag-opacity);
+}
+
+.document-editor-control[data-drop-edge]::after {
+  background: var(--moss);
+  border-radius: 999px;
+  content: "";
+  height: var(--ln-document-block-drop-line-width);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 4;
+}
+
+.document-editor-control[data-drop-edge="before"]::after {
+  top: var(--ln-document-block-drop-line-offset);
+}
+
+.document-editor-control[data-drop-edge="after"]::after {
+  bottom: var(--ln-document-block-drop-line-offset);
+}
+
 .document-editor-control:hover,
 .document-editor-control:focus-within {
   background: color-mix(in srgb, var(--warm) 68%, transparent);
@@ -923,31 +992,9 @@ table :where(td) {
     grid-template-columns: minmax(0, 1fr) 20rem;
   }
 
-  .entry-editor-document {
-    grid-column: 1;
-    grid-row: 1 / span 3;
-    min-width: 0;
-  }
-
-  .entry-editor-draft {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .entry-editor-context {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .entry-editor-experiment {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
-  .entry-editor-media {
-    grid-column: 1;
-    grid-row: 4;
-    min-width: 0;
+  .entry-editor-main-column,
+  .entry-editor-sidebar-column {
+    width: 100%;
   }
 
   .entry-editor-context .grid,
@@ -962,6 +1009,11 @@ table :where(td) {
 }
 
 @media (max-width: 760px) {
+  :root {
+    --ln-entry-editor-paper-min-height: 0px;
+    --ln-entry-editor-body-min-height: 18rem;
+  }
+
   main {
     padding: 0.75rem 0.75rem 1rem !important;
   }
@@ -1044,6 +1096,14 @@ table :where(td) {
   .document-editor-layout,
   .entry-editor-layout {
     gap: 0.55rem;
+  }
+
+  .entry-editor-document .document-canvas-toolbar {
+    top: 3.75rem;
+  }
+
+  .entry-editor-save-bar {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
 
   .document-editor-sidebar {

@@ -18,7 +18,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
 
   return (
     <article className={cn(
-      "flex h-full min-h-[260px] flex-col overflow-hidden rounded-[16px] border border-hairline bg-surface shadow-paper transition duration-300 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-soft",
+      "flex h-full min-h-[248px] flex-col overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface transition duration-200 hover:-translate-y-px hover:border-border-strong hover:shadow-[var(--ln-shadow-panel)]",
       featured && "md:col-span-2 2xl:col-span-2",
     )}>
       <EntryMediaGrid attachments={entry.attachments ?? []} entryHref={entryHref} compact={!featured} />
@@ -28,7 +28,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
             <time className="font-mono text-xs text-muted" dateTime={entry.occurredAt}>
               {formatEntryCardTimestamp(entry.occurredAt, locale)}
             </time>
-            <h3 className={cn("mt-2 line-clamp-2 font-serif font-medium leading-snug text-ink", featured ? "text-[22px] sm:text-[24px]" : "text-[18px] sm:text-[20px]")}>
+            <h3 className={cn("mt-2 line-clamp-2 font-semibold leading-snug tracking-[-0.02em] text-ink", featured ? "text-[20px] sm:text-[22px]" : "text-[16px] sm:text-[17px]")}>
               <Link href={entryHref} className="focus-ring rounded-[6px] transition hover:text-moss">
                 {entry.title}
               </Link>

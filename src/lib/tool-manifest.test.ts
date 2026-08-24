@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { labToolManifest, standaloneToolDefaultUrls } from "./tool-manifest";
 
 describe("lab tool manifest", () => {
+  it("lists six tools in the requested groups", () => {
+    expect(labToolManifest).toHaveLength(6);
+    expect(labToolManifest.filter((tool) => tool.category === "Planning")).toHaveLength(3);
+    expect(labToolManifest.filter((tool) => tool.category === "Analysis")).toHaveLength(3);
+  });
+
   it("connects every standalone tool to a managed HTTPS release", () => {
     expect(Object.values(standaloneToolDefaultUrls)).toHaveLength(4);
     for (const launchUrl of Object.values(standaloneToolDefaultUrls)) {
@@ -11,5 +17,10 @@ describe("lab tool manifest", () => {
     const standaloneTools = labToolManifest.filter((tool) => tool.external);
     expect(standaloneTools).toHaveLength(4);
     expect(standaloneTools.every((tool) => Boolean(tool.launchUrl))).toBe(true);
+  });
+
+  it("keeps both visualization and free plate planning inside LabNest", () => {
+    expect(labToolManifest.find((tool) => tool.id === "visualization-studio")?.launchUrl).toBe("/tools/visualization");
+    expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toBe("/tools/free-plate-layout/index.html");
   });
 });

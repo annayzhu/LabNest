@@ -7,16 +7,17 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { protocolAvailabilityOptions, protocolReviewStageOptions, protocolScopeOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProtocolsPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
-  const availability = firstSearchParam(params, "availability") ?? firstSearchParam(params, "status");
-  const scope = firstSearchParam(params, "scope");
-  const review = firstSearchParam(params, "review");
+  const availability = firstOptionSearchParam(params, "availability", protocolAvailabilityOptions) ?? firstOptionSearchParam(params, "status", protocolAvailabilityOptions);
+  const scope = firstOptionSearchParam(params, "scope", protocolScopeOptions);
+  const review = firstOptionSearchParam(params, "review", protocolReviewStageOptions);
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const orderBy = sort === "title_asc" ? [{ canonicalTitle: "asc" as const }, { title: "asc" as const }]
     : sort === "code_asc" ? { humanCode: "asc" as const }
@@ -25,8 +26,8 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
   const baseProtocols = await prisma.protocol.findMany({
     where: {
       id: { notIn: recycledIds },
-      ...(availability ? { availability: availability as "draft" | "active" | "retired" | "archived" } : {}),
-      ...(scope ? { scope: scope as "general" | "project" } : {}),
+      ...(availability ? { availability } : {}),
+      ...(scope ? { scope } : {}),
       ...(query ? { OR: [
         { humanCode: { contains: query, mode: "insensitive" } },
         { title: { contains: query, mode: "insensitive" } },
@@ -54,9 +55,9 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         sort={sort}
         defaultSort="updated_desc"
         filters={[
-          { name: "scope", label: "scope", value: scope, options: ["general", "project"].map((value) => ({ value, label: value })) },
-          { name: "availability", label: "availability", value: availability, options: ["draft", "active", "retired", "archived"].map((value) => ({ value, label: value })) },
-          { name: "review", label: "review", value: review, options: ["draft", "ready_for_review", "reviewed"].map((value) => ({ value, label: value.replaceAll("_", " ") })) },
+          { name: "scope", label: "scope", value: scope, options: protocolScopeOptions },
+          { name: "availability", label: "availability", value: availability, options: protocolAvailabilityOptions },
+          { name: "review", label: "review", value: review, options: protocolReviewStageOptions },
         ]}
         sortOptions={[
           { value: "updated_desc", label: "Recently updated" },

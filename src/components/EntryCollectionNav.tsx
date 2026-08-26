@@ -30,36 +30,36 @@ export function EntryCollectionNav({
 }) {
   const itemClass = (active: boolean) =>
     cn(
-      "focus-ring flex shrink-0 items-center gap-2 rounded-[10px] px-3 py-2 text-sm transition lg:w-full",
-      active ? "bg-moss text-warm shadow-paper" : "bg-warm text-graphite hover:bg-sage-surface/70 hover:text-ink",
+      "focus-ring flex shrink-0 items-center gap-2 rounded-[var(--ln-radius-panel-inner)] px-3 py-2 text-[13px] transition lg:w-full",
+      active ? "bg-action-surface text-moss" : "bg-transparent text-muted hover:bg-stone/75 hover:text-ink",
     );
   const collectionHref = (project?: string) => filterHref("/entries", { ...preservedFilters, project });
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
-      <section className="rounded-[14px] border border-hairline bg-surface p-4 shadow-paper">
+      <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
         <div className="flex items-center gap-2 text-moss">
           <BookOpenText className="h-4 w-4" aria-hidden />
-          <p className="text-xs font-semibold uppercase tracking-[0.12em]">Project journals</p>
+          <p className="text-[13px] font-semibold tracking-[-0.01em] text-ink">Project journals</p>
         </div>
         <nav aria-label="Entry project collections" className="editorial-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
           <Link href={collectionHref()} className={itemClass(!activeProject)}>
             <BookOpenText className="h-4 w-4 shrink-0" aria-hidden />
             <span className="whitespace-nowrap">All entries</span>
-            <span className={cn("ml-auto font-mono text-xs", !activeProject ? "text-warm/75" : "text-muted")}>{totalCount}</span>
+            <span className="ml-auto font-mono text-[11px] text-muted">{totalCount}</span>
           </Link>
           {collections.map((collection) => (
             <Link key={collection.id} href={collectionHref(collection.id)} className={itemClass(activeProject === collection.id)}>
               <FolderClosed className="h-4 w-4 shrink-0" aria-hidden />
               <span className="max-w-44 truncate whitespace-nowrap">{collection.name}</span>
-              <span className={cn("ml-auto font-mono text-xs", activeProject === collection.id ? "text-warm/75" : "text-muted")}>{collection.count}</span>
+              <span className="ml-auto font-mono text-[11px] text-muted">{collection.count}</span>
             </Link>
           ))}
           {unassignedCount ? (
             <Link href={collectionHref("unassigned")} className={itemClass(activeProject === "unassigned")}>
               <Link2 className="h-4 w-4 shrink-0" aria-hidden />
               <span className="whitespace-nowrap">Unassigned</span>
-              <span className={cn("ml-auto font-mono text-xs", activeProject === "unassigned" ? "text-warm/75" : "text-muted")}>{unassignedCount}</span>
+              <span className="ml-auto font-mono text-[11px] text-muted">{unassignedCount}</span>
             </Link>
           ) : null}
         </nav>

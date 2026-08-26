@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ExperimentStatus, RecordLifecycleStatus } from "@/generated/prisma/enums";
 import type { ExperimentFormState } from "@/components/ExperimentForm";
 import { prisma } from "@/lib/db";
 import { experimentSearchText } from "@/lib/experiment-document";
@@ -20,8 +21,8 @@ const schema = z.object({
   researchPlanId: z.string().min(1, "Research Plan is required."),
   title: z.string().trim().min(1, "Title is required.").max(180),
   date: z.coerce.date(),
-  status: z.enum(["planned", "running", "completed", "failed", "archived"]),
-  recordStatus: z.enum(["draft", "recorded", "submitted", "reviewed"]),
+  status: z.enum(ExperimentStatus),
+  recordStatus: z.enum(RecordLifecycleStatus),
   methodMode: z.enum(["protocol", "custom"]),
 });
 

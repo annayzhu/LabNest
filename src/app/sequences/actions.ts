@@ -6,19 +6,20 @@ import { redirect } from "next/navigation";
 import { readSheet } from "read-excel-file/node";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  SequenceCollectionType,
+  SequenceDesignType,
+  SequenceLifecycleStatus,
+  SequenceStrandedness,
+  SequenceTopology,
+  SequenceType,
+  SequenceValidationStatus,
+} from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
-
-const designTypes = ["plasmid", "primer", "probe", "siRNA", "shRNA", "gRNA", "oligo", "peptide", "protein", "fragment", "other"] as const;
-const lifecycleStatuses = ["draft", "active", "inactive", "archived"] as const;
-const validationStatuses = ["unverified", "validation_in_progress", "validated_recommended", "validated_limited", "validated_not_recommended", "inconclusive"] as const;
-const moleculeTypes = ["DNA", "RNA", "Protein"] as const;
-const topologies = ["linear", "circular"] as const;
-const strandednessValues = ["single", "double", "unknown"] as const;
-const collectionTypes = ["primer_pair", "sirna_duplex", "shrna_construct", "probe_panel", "plasmid_construct", "peptide_set", "other"] as const;
 
 const featureSchema = z.object({
   name: z.string().trim().min(1, "Feature name is required.").max(160),
@@ -38,18 +39,18 @@ const modificationSchema = z.object({
 const sequenceInputSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Sequence name is required.").max(180),
-  designType: z.enum(designTypes),
-  status: z.enum(lifecycleStatuses),
+  designType: z.enum(SequenceDesignType),
+  status: z.enum(SequenceLifecycleStatus),
   description: z.string().trim().max(5000).optional(),
   projectId: z.string().trim().optional(),
   targetName: z.string().trim().max(180).optional(),
   organism: z.string().trim().max(180).optional(),
-  moleculeType: z.enum(moleculeTypes),
+  moleculeType: z.enum(SequenceType),
   sequence: z.string().max(10_000_000),
-  topology: z.enum(topologies),
-  strandedness: z.enum(strandednessValues),
+  topology: z.enum(SequenceTopology),
+  strandedness: z.enum(SequenceStrandedness),
   displayVersion: z.string().trim().min(1).max(30),
-  validationStatus: z.enum(validationStatuses),
+  validationStatus: z.enum(SequenceValidationStatus),
   validationSummary: z.string().trim().max(5000).optional(),
   changeSummary: z.string().trim().max(1000).optional(),
   features: z.array(featureSchema).max(500),
@@ -482,8 +483,8 @@ const collectionMemberSchema = z.object({
 const collectionSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Collection name is required.").max(180),
-  type: z.enum(collectionTypes),
-  status: z.enum(lifecycleStatuses),
+  type: z.enum(SequenceCollectionType),
+  status: z.enum(SequenceLifecycleStatus),
   description: z.string().trim().max(5000).optional(),
   projectId: z.string().trim().optional(),
   members: z.array(collectionMemberSchema).min(1, "Add at least one sequence version.").max(500),
@@ -652,8 +653,8 @@ export async function importSequences(_previousState: SequenceManageState, formD
     if (!(file instanceof File) || !file.name || !file.size) throw new Error("Choose a non-empty FASTA, CSV, TSV, or XLSX file.");
     if (file.size > 25 * 1024 * 1024) throw new Error("Sequence import files must be 25 MB or smaller.");
     const extension = file.name.toLowerCase().split(".").pop();
-    const defaultDesignType = z.enum(designTypes).parse(formData.get("defaultDesignType") ?? "other");
-    const defaultMoleculeType = z.enum(moleculeTypes).parse(formData.get("defaultMoleculeType") ?? "DNA");
+    const defaultDesignType = z.enum(SequenceDesignType).parse(formData.get("defaultDesignType") ?? "other");
+    const defaultMoleculeType = z.enum(SequenceType).parse(formData.get("defaultMoleculeType") ?? "DNA");
     const buffer = Buffer.from(await file.arrayBuffer());
     let rows: Record<string, unknown>[];
     let sourceType: "fasta_import" | "csv_import" | "xlsx_import";
@@ -762,7 +763,7 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
         return;
       }
       if (intent === "set_type") {
-        const designType = z.enum(designTypes).parse(formData.get("type"));
+        const designType = z.enum(SequenceDesignType).parse(formData.get("type"));
         await tx.sequence.updateMany({ where: { id: { in: ids } }, data: { designType } });
         await tx.activityLog.create({
           data: {
@@ -832,7 +833,7 @@ export async function bulkUpdateSequenceCollections(_previousState: BulkActionSt
         return;
       }
       if (intent === "set_type") {
-        const type = z.enum(collectionTypes).parse(formData.get("type"));
+        const type = z.enum(SequenceCollectionType).parse(formData.get("type"));
         await tx.sequenceCollection.updateMany({ where: { id: { in: ids } }, data: { type } });
         await tx.activityLog.create({
           data: {

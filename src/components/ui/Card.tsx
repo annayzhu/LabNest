@@ -11,7 +11,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-[10px] border border-hairline bg-surface shadow-paper",
+        "rounded-[var(--ln-radius-panel)] border border-hairline bg-surface",
         className,
       )}
     >
@@ -32,9 +32,9 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between gap-3 border-b border-hairline/80 px-4 py-2", className)}>
+    <div className={cn("flex min-h-11 items-center justify-between gap-3 border-b border-hairline/70 px-4 py-2.5", className)}>
       <div className="min-w-0">
-        <h2 className="font-serif text-[16px] font-medium leading-tight text-ink">{title}</h2>
+        <h2 className="text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">{title}</h2>
       </div>
       {action ? <div className="card-action">{action}</div> : null}
     </div>

@@ -11,6 +11,7 @@ import {
   type SequenceManageState,
 } from "@/app/sequences/actions";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 
 const initialState: SequenceManageState = {};
@@ -173,5 +174,5 @@ function ActionMessage({ state }: { state: SequenceManageState }) {
   return <span />;
 }
 
-const saveButtonClass = "focus-ring inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-moss bg-moss px-2.5 text-xs font-medium text-warm disabled:opacity-55";
+const saveButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
 const removeButtonClass = "focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-error hover:bg-error-surface disabled:opacity-55";

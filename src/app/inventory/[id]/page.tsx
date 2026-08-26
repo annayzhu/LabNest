@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { getInventoryRiskFlags, inventoryCategories } from "@/lib/inventory";
 import { recordInventoryTransaction } from "../actions";
@@ -38,7 +39,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       },
     }),
     prisma.experiment.findMany({
-      where: { status: { in: ["planned", "running", "completed"] } },
+      where: { status: { in: [ExperimentStatus.planned, ExperimentStatus.running, ExperimentStatus.completed] } },
       select: { id: true, title: true, project: { select: { name: true } } },
       orderBy: { updatedAt: "desc" },
       take: 100,
@@ -47,7 +48,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       where: {
         OR: [
           { linkedInventoryItemId: id },
-          { status: { in: ["planned", "ordered", "received"] } },
+          { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } },
         ],
       },
       select: { id: true, title: true, status: true },

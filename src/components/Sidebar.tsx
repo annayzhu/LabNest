@@ -71,7 +71,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative hidden min-h-screen shrink-0 border-r border-hairline bg-warm/75 py-4 transition-[width,padding] duration-200 ease-out lg:block",
+        "sticky top-0 z-50 hidden h-screen shrink-0 border-r border-hairline/80 bg-surface transition-[width,padding] duration-200 ease-out lg:block",
         collapsed ? "w-[72px] px-2" : "w-56 px-3",
       )}
     >
@@ -82,7 +82,7 @@ export function Sidebar() {
         aria-expanded={!collapsed}
         aria-controls="primary-sidebar-navigation"
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="focus-ring absolute -right-3 top-5 z-40 flex h-6 w-6 items-center justify-center rounded-full border border-hairline bg-surface text-muted shadow-sm transition hover:border-sage hover:text-ink"
+        className="focus-ring absolute -right-3 top-5 z-[60] flex h-6 w-6 items-center justify-center rounded-full border border-hairline bg-surface text-muted shadow-[0_2px_8px_rgba(56,62,86,0.08)] transition hover:border-sage hover:text-ink active:scale-[0.96]"
       >
         {collapsed ? (
           <PanelLeftOpen className="h-3.5 w-3.5" aria-hidden />
@@ -91,69 +91,71 @@ export function Sidebar() {
         )}
       </button>
 
-      <Link
-        href="/"
-        aria-label="LabNest home"
-        title={collapsed ? "LabNest" : undefined}
-        className={cn(
-          "focus-ring mb-5 flex items-center rounded-[9px] py-1.5",
-          collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-        )}
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-[9px] border border-hairline bg-sage-surface text-moss">
-          <Link2 className="h-4 w-4" aria-hidden />
-        </span>
-        <span className={cn("font-serif text-lg font-medium text-ink", collapsed && "sr-only")}>LabNest</span>
-      </Link>
-      <nav id="primary-sidebar-navigation" aria-label="Primary navigation" className="space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active =
-            item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Fragment key={item.href}>
-              {item.separated ? <div className="my-3 border-t border-hairline" aria-hidden /> : null}
+      <div className="h-full overflow-y-auto py-4 [scrollbar-gutter:stable]">
+        <Link
+          href="/"
+          aria-label="LabNest home"
+          title={collapsed ? "LabNest" : undefined}
+          className={cn(
+            "focus-ring mb-5 flex items-center rounded-[var(--ln-radius-control-lg)] py-1.5",
+            collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
+          )}
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-action-border bg-action-surface text-moss">
+            <Link2 className="h-4 w-4" aria-hidden />
+          </span>
+          <span className={cn("text-[15px] font-semibold tracking-[-0.02em] text-ink", collapsed && "sr-only")}>LabNest</span>
+        </Link>
+        <nav id="primary-sidebar-navigation" aria-label="Primary navigation" className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active =
+              item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Fragment key={item.href}>
+                {item.separated ? <div className="my-3 border-t border-hairline" aria-hidden /> : null}
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  aria-label={collapsed ? item.label : undefined}
+                  title={collapsed ? item.label : undefined}
+                  className={cn(
+                    "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
+                    collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
+                    active ? "bg-action-surface text-moss" : "text-muted hover:bg-stone/75 hover:text-ink",
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+                </Link>
+              </Fragment>
+            );
+          })}
+        </nav>
+        <nav aria-label="Utilities" className="mt-5 space-y-1 border-t border-hairline pt-3">
+          {utilityItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
               <Link
+                key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 aria-label={collapsed ? item.label : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "focus-ring flex items-center rounded-[8px] py-2 text-[13px] font-normal tracking-[0.005em] transition",
+                  "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
                   collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                  active ? "bg-sage-surface text-moss" : "text-muted hover:bg-stone/70 hover:text-ink",
+                  active ? "bg-stone text-ink" : "text-muted hover:bg-stone/70 hover:text-ink",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
                 <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
               </Link>
-            </Fragment>
-          );
-        })}
-      </nav>
-      <nav aria-label="Utilities" className="mt-5 space-y-1 border-t border-hairline pt-3">
-        {utilityItems.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              aria-label={collapsed ? item.label : undefined}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "focus-ring flex items-center rounded-[8px] py-2 text-[13px] font-normal tracking-[0.005em] transition",
-                collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                active ? "bg-stone text-ink" : "text-muted hover:bg-stone/70 hover:text-ink",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+            );
+          })}
+        </nav>
+      </div>
     </aside>
   );
 }

@@ -9,6 +9,7 @@ import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { ScientificDocumentView } from "@/components/ScientificDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
@@ -19,8 +20,8 @@ import { resultDeleteBlockers } from "@/lib/record-lifecycle";
 import { archiveResult, deleteResult, restoreResult } from "../actions";
 
 export const dynamic = "force-dynamic";
-const primaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm";
-const secondaryButton = "focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-ink";
+const primaryButton = buttonStyles({ variant: "primary", size: "md" });
+const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-ink hover:bg-warm" });
 
 export default async function ResultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

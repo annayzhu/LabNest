@@ -53,4 +53,37 @@ describe("Protocol document structured projections", () => {
     expect(projected.resultTemplates[0].fields[0]).toEqual({ name: "Concentration", type: "number", unit: "ng/µL", required: true });
     expect(projected.consumptionRules[0]).toEqual({ material_name: "RT Mix", formula: "sample_count * 4", unit: "µL" });
   });
+
+  it("maps Chinese result template field types and roles during import projection", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections.find((section) => section.key === "result_templates")!.blocks = [
+      {
+        id: "results",
+        type: "table",
+        caption: "Transfection QC",
+        rows: [
+          ["字段键", "标签", "类型", "单位", "必填", "角色"],
+          ["transfection_efficiency", "转染效率", "数值", "%", "是", "测量值"],
+          ["qc_pass", "是否通过", "是/否", "", "否", "质控"],
+        ],
+      },
+    ];
+
+    const projected = projectProtocolDocument(document);
+    expect(projected.resultTemplates[0].fields[0]).toEqual(expect.objectContaining({
+      key: "transfection_efficiency",
+      label: "转染效率",
+      dataType: "number",
+      unit: "%",
+      required: true,
+      semanticRole: "measurement",
+    }));
+    expect(projected.resultTemplates[0].fields[1]).toEqual(expect.objectContaining({
+      key: "qc_pass",
+      label: "是否通过",
+      dataType: "boolean",
+      required: false,
+      semanticRole: "qc",
+    }));
+  });
 });

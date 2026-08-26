@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupEntriesByMonth, summarizeProjectCollections } from "./entry-timeline";
+import { entryCardLayout, groupEntriesByMonth, summarizeProjectCollections } from "./entry-timeline";
 import type { Entry } from "./types";
 
 function entry(overrides: Partial<Entry> & Pick<Entry, "id" | "occurredAt">): Entry {
@@ -17,6 +17,12 @@ function entry(overrides: Partial<Entry> & Pick<Entry, "id" | "occurredAt">): En
 }
 
 describe("entry timeline", () => {
+  it("features only the newest entry in each chronological group", () => {
+    expect(entryCardLayout(0)).toBe("featured");
+    expect(entryCardLayout(1)).toBe("standard");
+    expect(entryCardLayout(8)).toBe("standard");
+  });
+
   it("groups entries by calendar month while preserving input order", () => {
     const entries = [
       entry({ id: "aug-2", occurredAt: "2026-08-08T10:00:00.000Z" }),

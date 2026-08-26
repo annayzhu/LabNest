@@ -13,7 +13,7 @@ const toneClass: Record<StatusTone, string> = {
 };
 
 const badgeClass =
-  "inline-flex min-h-6 items-center rounded-[7px] border px-2 py-0.5 text-xs font-normal leading-5 tracking-[0.005em]";
+  "inline-flex min-h-6 items-center rounded-[var(--ln-radius-control-sm)] border px-2 py-0.5 text-[11px] font-medium leading-5 tracking-[-0.005em]";
 
 export function Badge({
   children,

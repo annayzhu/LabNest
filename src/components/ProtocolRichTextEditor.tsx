@@ -215,7 +215,7 @@ export function ProtocolRichTextEditor({ nodes, onChange }: { nodes: ProtocolRic
       onKeyUp={rememberSelection}
       onMouseUp={rememberSelection}
       onPaste={normalizePaste}
-      className="protocol-rich-editor min-h-16 px-2 py-2 text-sm leading-[1.3] text-graphite outline-none"
+      className="protocol-rich-editor min-h-16 px-2 py-2 text-sm leading-[var(--ln-rich-text-default-line-height)] text-graphite outline-none"
     />
   </div>;
 }

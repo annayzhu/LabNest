@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge, StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import {
   existingResultHref,
@@ -8,8 +9,8 @@ import {
   type ExperimentResultRecording,
 } from "@/lib/experiment-results";
 
-const secondaryButton = "focus-ring inline-flex min-h-9 items-center justify-center rounded-[8px] border border-hairline bg-surface px-3 py-2 text-xs font-medium text-moss hover:bg-warm";
-const primaryButton = "focus-ring inline-flex min-h-9 items-center justify-center rounded-[8px] border border-moss bg-moss px-3 py-2 text-xs font-medium text-warm";
+const secondaryButton = buttonStyles({ size: "sm", className: "h-auto min-h-9 bg-surface py-2 font-medium text-moss hover:bg-warm" });
+const primaryButton = buttonStyles({ variant: "primary", size: "sm", className: "h-auto min-h-9 py-2 font-medium" });
 
 export function ExperimentResultRecordingCard({ experimentId, recording }: {
   experimentId: string;

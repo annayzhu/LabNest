@@ -16,11 +16,11 @@ export default function ToolsPage() {
           description="A focused directory of standalone planning and analysis applications. Each tool keeps an independent release cycle; LabNest supplies context, launch, and later result provenance."
         />
 
-        {(["Planning", "Analysis"] as const).map((category) => {
+        {(["Planning", "Calculators", "Analysis"] as const).map((category) => {
           const tools = labToolManifest.filter((tool) => tool.category === category);
           return (
             <Card key={category}>
-              <CardHeader title={category} eyebrow={category === "Planning" ? "Before the experiment" : "After data acquisition"} />
+              <CardHeader title={category} />
               <CardBody className="divide-y divide-hairline p-0">
                 {tools.map((tool) => (
                   <article key={tool.id} className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.7fr)_auto] lg:items-center">
@@ -42,7 +42,7 @@ export default function ToolsPage() {
                         rel={tool.external ? "noreferrer" : undefined}
                         className="focus-ring inline-flex h-9 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-3 text-sm font-medium text-warm"
                       >
-                        Open {tool.external ? <ExternalLink className="h-4 w-4" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
+                        Open tool {tool.external ? <ExternalLink className="h-4 w-4" aria-hidden /> : <ArrowRight className="h-4 w-4" aria-hidden />}
                       </Link>
                     ) : (
                       <Badge tone="warning">Not connected</Badge>
@@ -55,7 +55,7 @@ export default function ToolsPage() {
         })}
 
         <p className="text-xs leading-5 text-muted">
-          Standalone tools are preconnected to their managed releases. Environment variables can override those endpoints; external applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
+          Available tools open their managed releases. Environment variables can override managed endpoints; external applications open in a separate tab so failures or upgrades cannot destabilize the LabNest workspace.
         </p>
       </div>
     </AppShell>

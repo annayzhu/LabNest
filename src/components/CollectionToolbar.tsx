@@ -3,21 +3,22 @@ import Link from "next/link";
 import Form from "next/form";
 import { Filter, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { buttonStyles } from "./ui/Button";
 
 export type CollectionFilterOption = { value: string; label: string };
 export type CollectionFilter = {
   name: string;
   label: string;
   value?: string;
-  options: CollectionFilterOption[];
+  options: readonly CollectionFilterOption[];
 };
 
 export type CollectionSortOption = { value: string; label: string };
 
 export const collectionPrimaryActionClass =
-  "focus-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border border-moss bg-moss px-3 text-[13px] font-medium text-warm transition hover:brightness-95";
+  buttonStyles({ variant: "primary", size: "md", className: "font-medium" });
 export const collectionSecondaryActionClass =
-  "focus-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss transition hover:border-border-strong hover:bg-warm";
+  buttonStyles({ variant: "secondary", size: "md", className: "bg-surface font-medium text-moss" });
 
 export function CollectionToolbar({
   path,
@@ -67,7 +68,7 @@ export function CollectionToolbar({
               name="q"
               defaultValue={query ?? ""}
               placeholder={searchPlaceholder}
-              className="focus-ring h-9 w-full rounded-[7px] border border-hairline bg-warm pl-9 pr-3 text-sm text-ink placeholder:text-muted"
+              className="focus-ring h-[var(--ln-control-height-md)] w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm pl-9 pr-[var(--ln-control-padding-x-md)] text-[length:var(--ln-control-font-size-md)] text-ink placeholder:text-muted"
             />
           </label>
           {filters.map((filter) => (
@@ -76,7 +77,7 @@ export function CollectionToolbar({
               <select
                 name={filter.name}
                 defaultValue={filter.value ?? ""}
-                className="focus-ring h-9 max-w-52 rounded-[7px] border border-hairline bg-surface px-2 text-[13px] text-graphite"
+                className="focus-ring h-[var(--ln-control-height-md)] max-w-52 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-control-font-size-sm)] text-graphite"
               >
                 <option value="">{`All ${filter.label}`}</option>
                 {filter.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -89,13 +90,13 @@ export function CollectionToolbar({
               <select
                 name="sort"
                 defaultValue={sort ?? defaultSort ?? sortOptions[0]?.value}
-                className="focus-ring h-9 max-w-52 rounded-[7px] border border-hairline bg-surface px-2 text-[13px] text-graphite"
+                className="focus-ring h-[var(--ln-control-height-md)] max-w-52 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-control-font-size-sm)] text-graphite"
               >
                 {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
           ) : null}
-          <button className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite hover:bg-warm">
+          <button className={buttonStyles({ size: "md", className: "bg-surface font-medium text-graphite hover:bg-warm" })}>
             <Filter className="h-3.5 w-3.5" aria-hidden />
             Apply
           </button>

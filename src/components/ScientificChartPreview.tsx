@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode, RefObject } from "react";
+import { ScientificAdvancedChartPreview } from "@/components/ScientificAdvancedChartPreview";
 import {
   boxStatistics,
   divergingColor,
@@ -42,6 +43,8 @@ type PlotFrame = {
   plotWidth: number;
   plotHeight: number;
 };
+
+const CHART_TEXT_COLOR = "#23242A";
 
 type LegendItem = { label: string; color: string; shape?: "circle" | "line" | "square" };
 
@@ -199,6 +202,16 @@ function paletteForGroups(groups: string[], colors: string[]) {
   return new Map(groups.map((group, index) => [group, colors[index % colors.length]]));
 }
 
+function barIntervalAwayFromAxis(valuePosition: number, baseline: number, axisLineWidth: number) {
+  const clearance = Math.max(1, axisLineWidth / 2 + 0.5);
+  const direction = valuePosition < baseline ? -1 : 1;
+  const axisEdge = baseline + direction * clearance;
+  const length = Math.abs(valuePosition - axisEdge);
+  if (length <= 0.2) return null;
+  const start = Math.min(valuePosition, axisEdge);
+  return { start, length: Math.max(0.8, length) };
+}
+
 function renderBar(
   frame: PlotFrame,
   dataset: ParsedDataset,
@@ -241,13 +254,14 @@ function renderBar(
         if (settings.swapAxes) {
           const y = frame.top + index * band + band * 0.16;
           const x = scaleLinear(row.value, domain, [frame.left, frame.left + frame.plotWidth]);
+          const interval = barIntervalAwayFromAxis(x, baseline, settings.axisLineWidth);
           const errorStart = scaleLinear(row.value - row.error, domain, [frame.left, frame.left + frame.plotWidth]);
           const errorEnd = scaleLinear(row.value + row.error, domain, [frame.left, frame.left + frame.plotWidth]);
           const errorCenter = y + band * 0.34;
           const capHalf = Math.min(settings.errorBarCapSize / 2, band * 0.3);
           return (
             <g key={`${row.category}-${index}`}>
-              <rect data-plot-element="bar" x={Math.min(baseline, x)} y={y} width={Math.max(1, Math.abs(x - baseline))} height={band * 0.68} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} />
+              {interval ? <rect data-plot-element="bar" x={interval.start} y={y} width={interval.length} height={band * 0.68} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} /> : null}
               {settings.barErrorType !== "none" ? <g data-plot-element="error-bar" stroke={ink} strokeWidth={settings.errorBarLineWidth} strokeLinecap="round"><line x1={errorStart} x2={errorEnd} y1={errorCenter} y2={errorCenter} /><line x1={errorStart} x2={errorStart} y1={errorCenter - capHalf} y2={errorCenter + capHalf} /><line x1={errorEnd} x2={errorEnd} y1={errorCenter - capHalf} y2={errorCenter + capHalf} /></g> : null}
               <text x={frame.left - 9} y={y + band * 0.43} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(row.category, 18)}</text>
             </g>
@@ -255,13 +269,14 @@ function renderBar(
         }
         const x = frame.left + index * band + band * 0.16;
         const y = scaleLinear(row.value, domain, [frame.top + frame.plotHeight, frame.top]);
+        const interval = barIntervalAwayFromAxis(y, baseline, settings.axisLineWidth);
         const errorStart = scaleLinear(row.value - row.error, domain, [frame.top + frame.plotHeight, frame.top]);
         const errorEnd = scaleLinear(row.value + row.error, domain, [frame.top + frame.plotHeight, frame.top]);
         const errorCenter = x + band * 0.34;
         const capHalf = Math.min(settings.errorBarCapSize / 2, band * 0.3);
         return (
           <g key={`${row.category}-${index}`}>
-            <rect data-plot-element="bar" x={x} y={Math.min(baseline, y)} width={band * 0.68} height={Math.max(1, Math.abs(y - baseline))} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} />
+            {interval ? <rect data-plot-element="bar" x={x} y={interval.start} width={band * 0.68} height={interval.length} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} /> : null}
             {settings.barErrorType !== "none" ? <g data-plot-element="error-bar" stroke={ink} strokeWidth={settings.errorBarLineWidth} strokeLinecap="round"><line x1={errorCenter} x2={errorCenter} y1={errorStart} y2={errorEnd} /><line x1={errorCenter - capHalf} x2={errorCenter + capHalf} y1={errorStart} y2={errorStart} /><line x1={errorCenter - capHalf} x2={errorCenter + capHalf} y1={errorEnd} y2={errorEnd} /></g> : null}
             <text transform={`translate(${x + band * 0.34} ${frame.top + frame.plotHeight + 10}) rotate(-30)`} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(row.category, 16)}</text>
           </g>
@@ -273,7 +288,7 @@ function renderBar(
 }
 
 function renderLineOrScatter(
-  type: "line" | "scatter",
+  type: "line" | "scatter" | "pca",
   frame: PlotFrame,
   dataset: ParsedDataset,
   mapping: Record<string, string>,
@@ -292,7 +307,7 @@ function renderLineOrScatter(
       y: settings.swapAxes ? rawX : rawY,
       error: lineErrorsEnabled && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0,
       group: row[type === "line" ? mapping.series : mapping.group] || "All",
-      label: type === "scatter" && mapping.label ? row[mapping.label] : "",
+      label: type !== "line" && mapping.label ? row[mapping.label] : "",
       index,
       order: rawX,
     };
@@ -631,6 +646,13 @@ function renderEnrichment(
 }
 
 export function ScientificChartPreview({ svgRef, type, dataset, mapping, settings, themeId }: ChartProps) {
+  if ([
+    "correlation", "pcoa", "umap", "beeswarm", "raincloud", "ma", "quadrant", "errorbar", "area", "lollipop",
+    "clustered-heatmap", "correlation-heatmap", "enrichment-bar", "gsea", "km", "survival-forest", "roc", "venn",
+    "upset", "sankey", "chord", "circos",
+  ].includes(type)) {
+    return <ScientificAdvancedChartPreview svgRef={svgRef} type={type} dataset={dataset} mapping={mapping} settings={settings} themeId={themeId} />;
+  }
   const theme = journalThemes[themeId];
   const frame = getFrame(settings, type);
   const definition = getPlotDefinition(type);
@@ -639,12 +661,12 @@ export function ScientificChartPreview({ svgRef, type, dataset, mapping, setting
   const diverging: [string, string, string] = [settings.divergingLow, settings.divergingMid, settings.divergingHigh];
   let content: ReactNode;
 
-  if (type === "bar") content = renderBar(frame, dataset, mapping, settings, categorical, theme.ink, theme.muted, theme.grid);
-  else if (type === "line" || type === "scatter") content = renderLineOrScatter(type, frame, dataset, mapping, settings, categorical, theme.ink, theme.muted, theme.grid);
-  else if (type === "box" || type === "violin") content = renderDistribution(type, frame, dataset, mapping, settings, categorical, theme.ink, theme.muted, theme.grid);
-  else if (type === "volcano") content = renderVolcano(frame, dataset, mapping, settings, categorical, theme.ink, theme.muted, theme.grid);
-  else if (type === "heatmap") content = renderHeatmap(frame, dataset, settings, diverging, theme.ink, theme.muted);
-  else content = renderEnrichment(frame, dataset, mapping, settings, sequential, theme.ink, theme.muted, theme.grid);
+  if (type === "bar") content = renderBar(frame, dataset, mapping, settings, categorical, CHART_TEXT_COLOR, CHART_TEXT_COLOR, theme.grid);
+  else if (type === "line" || type === "scatter" || type === "pca") content = renderLineOrScatter(type, frame, dataset, mapping, settings, categorical, CHART_TEXT_COLOR, CHART_TEXT_COLOR, theme.grid);
+  else if (type === "box" || type === "violin") content = renderDistribution(type, frame, dataset, mapping, settings, categorical, CHART_TEXT_COLOR, CHART_TEXT_COLOR, theme.grid);
+  else if (type === "volcano") content = renderVolcano(frame, dataset, mapping, settings, categorical, CHART_TEXT_COLOR, CHART_TEXT_COLOR, theme.grid);
+  else if (type === "heatmap") content = renderHeatmap(frame, dataset, settings, diverging, CHART_TEXT_COLOR, CHART_TEXT_COLOR);
+  else content = renderEnrichment(frame, dataset, mapping, settings, sequential, CHART_TEXT_COLOR, CHART_TEXT_COLOR, theme.grid);
 
   return (
     <svg
@@ -654,13 +676,14 @@ export function ScientificChartPreview({ svgRef, type, dataset, mapping, setting
       width={frame.width}
       height={frame.height}
       role="img"
+      data-chart-text-color={CHART_TEXT_COLOR}
       aria-label={`${definition.name} scientific figure preview`}
       style={{ fontFamily: figureFontPresets[settings.fontFamily].family, background: "white", maxWidth: "100%", height: "auto" }}
     >
       <title>{settings.title || `${definition.name} figure`}</title>
       <desc>{definition.summary} Generated in LabNest Visualization Studio.</desc>
       <rect width={frame.width} height={frame.height} fill="#FFFFFF" />
-      <ChartTitle frame={frame} settings={settings} color={theme.ink} />
+      <ChartTitle frame={frame} settings={settings} color={CHART_TEXT_COLOR} />
       {content}
     </svg>
   );

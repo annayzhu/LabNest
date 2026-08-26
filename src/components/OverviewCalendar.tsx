@@ -179,9 +179,8 @@ export function OverviewCalendar({
       <section className="min-w-0" aria-label={t("Daily activities")}>
         <Card className="overflow-hidden">
           <div className="border-b border-hairline bg-warm/45 px-4 py-3 sm:px-5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted">{t("Daily activities")}</p>
-            <div className="mt-1 flex items-baseline justify-between gap-2">
-              <h3 className="font-serif text-lg font-medium text-ink" data-i18n-ignore>{selectedDateLabel}</h3>
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink" data-i18n-ignore>{selectedDateLabel}</h3>
               <span className="shrink-0 font-mono text-[11px] text-muted" data-i18n-ignore>
                 {locale === "zh" ? `${selectedActivities.length} 项` : `${selectedActivities.length} ${selectedActivities.length === 1 ? "item" : "items"}`}
               </span>

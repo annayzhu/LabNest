@@ -1,5 +1,6 @@
 "use client";
 
+import { formLabelClass } from "@/components/forms";
 import { cn } from "@/lib/cn";
 
 export type StatusRadioOption = {
@@ -19,6 +20,7 @@ export function StatusRadioGroup({
   disabled,
   className,
   optionsClassName,
+  density = "default",
 }: {
   label: string;
   name?: string;
@@ -30,20 +32,24 @@ export function StatusRadioGroup({
   disabled?: boolean;
   className?: string;
   optionsClassName?: string;
+  density?: "default" | "compact";
 }) {
   const controlled = value !== undefined;
 
   return (
     <fieldset className={cn("min-w-0", className)} disabled={disabled}>
-      <legend className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+      <legend className={density === "compact" ? "text-[10px] font-medium uppercase tracking-[0.05em] text-muted" : formLabelClass}>
         {label}
       </legend>
-      <div className={cn("mt-2 flex flex-wrap gap-2", optionsClassName)}>
+      <div className={cn(density === "compact" ? "mt-1.5 flex flex-wrap gap-1.5" : "mt-2 flex flex-wrap gap-2", optionsClassName)}>
         {options.map((option) => (
           <label
             key={option.value}
             className={cn(
-              "focus-within:ring-2 focus-within:ring-moss/30 flex min-h-10 cursor-pointer items-start gap-2 rounded-[8px] border border-hairline bg-surface px-3 py-2 text-sm text-graphite transition hover:border-border-strong hover:bg-warm",
+              "focus-within:ring-2 focus-within:ring-moss/30 flex cursor-pointer items-start border border-hairline bg-surface text-graphite transition hover:border-border-strong hover:bg-warm",
+              density === "compact"
+                ? "min-h-8 gap-1.5 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs"
+                : "min-h-10 gap-2 rounded-[8px] px-3 py-2 text-sm",
               disabled && "cursor-not-allowed opacity-55",
             )}
           >
@@ -55,7 +61,7 @@ export function StatusRadioGroup({
               checked={controlled ? value === option.value : undefined}
               defaultChecked={!controlled ? defaultValue === option.value : undefined}
               onChange={() => onValueChange?.(option.value)}
-              className="mt-0.5 h-4 w-4 shrink-0 accent-moss"
+              className={cn("mt-0.5 shrink-0 accent-moss", density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4")}
             />
             <span>
               <span className="block font-medium text-ink">{option.label}</span>

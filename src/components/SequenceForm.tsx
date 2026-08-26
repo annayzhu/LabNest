@@ -2,7 +2,8 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
+import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
@@ -193,7 +194,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
               onChange={(event) => setSequence(event.target.value)}
               spellCheck={false}
               data-i18n-ignore
-              className="focus-ring mt-2 min-h-44 w-full rounded-[8px] border border-hairline bg-warm px-3 py-2 font-mono text-xs leading-5 text-ink"
+              className={`${formMonoTextareaClass} min-h-44`}
               placeholder={moleculeType === "Protein" ? "MKWVTFISLL..." : moleculeType === "RNA" ? "AUGCUU..." : "ATGCTT..."}
             />
           </label>
@@ -259,9 +260,9 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
 
       <div className="flex flex-wrap items-center justify-end gap-3">
         {state.error ? <p role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-        <button type="submit" disabled={pending} className="focus-ring h-10 rounded-[7px] border border-moss bg-moss px-4 text-sm font-medium text-warm disabled:cursor-wait disabled:opacity-60">
+        <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : initial.id ? "Save Sequence" : "Create Sequence"}
-        </button>
+        </Button>
       </div>
     </form>
   );

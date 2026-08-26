@@ -1,5 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { resolveAppLocale, translateUiText } from "./i18n";
+import { resolveAppLocale, translateUiText, zhUi } from "./i18n";
+
+const canonicalTermsAllowedAsChinese = new Set([
+  "English",
+  "FASTA",
+  "Markdown",
+]);
+
+const requiredPrimaryModuleKeys = [
+  "Overview",
+  "Entries",
+  "Projects",
+  "Research Plans",
+  "Protocols",
+  "Experiments",
+  "Results",
+  "Reports",
+  "Inventory",
+  "Tools",
+  "Sequences",
+  "Sequence Collections",
+  "Recycle Bin",
+  "Settings",
+];
 
 describe("LabNest UI translations", () => {
   it("resolves only supported persisted locales", () => {
@@ -49,5 +72,20 @@ describe("LabNest UI translations", () => {
     expect(translateUiText("BioLegend", "zh")).toBe("BioLegend");
     expect(translateUiText("dataset_key", "zh")).toBe("dataset_key");
     expect(translateUiText("LabNest", "zh")).toBe("LabNest");
+  });
+
+  it("keeps the Chinese UI dictionary complete enough to catch silent fallbacks", () => {
+    expect(Object.keys(zhUi).length).toBeGreaterThan(1000);
+    expect(requiredPrimaryModuleKeys.filter((key) => !zhUi[key])).toEqual([]);
+
+    const emptyTranslations = Object.entries(zhUi)
+      .filter(([, translated]) => !translated.trim())
+      .map(([source]) => source);
+    expect(emptyTranslations).toEqual([]);
+
+    const untranslatedEntries = Object.entries(zhUi)
+      .filter(([source, translated]) => source === translated && !canonicalTermsAllowedAsChinese.has(source))
+      .map(([source]) => source);
+    expect(untranslatedEntries).toEqual([]);
   });
 });

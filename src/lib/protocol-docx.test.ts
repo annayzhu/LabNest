@@ -54,6 +54,25 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.document.importWarnings[0]).toContain("does not match");
   });
 
+  it("recognizes Word checklist controls, checklist styles and list paragraphs in Steps", () => {
+    const checklistXml = xml.replace(
+      "<w:p><w:r><w:t>☐ Mix gently.</w:t></w:r></w:p>",
+      `<w:p><w:pPr><w:pStyle w:val="Checklist"/></w:pPr><w:r><w:t>Seed cells.</w:t></w:r></w:p>
+       <w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>Add transfection mix.</w:t></w:r></w:p>
+       <w:p><w:sdt><w:sdtPr><w14:checkbox xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"/></w:sdtPr><w:sdtContent><w:r><w:t>Change medium.</w:t></w:r></w:sdtContent></w:sdt></w:p>`,
+    );
+
+    const parsed = parseProtocolDocumentXml(checklistXml, "PRT-100012_RNA逆转录_v0.1_Active.docx");
+    const checklist = parsed.document.sections
+      .find((section) => section.key === "steps")!
+      .blocks.find((block) => block.type === "checklist");
+    expect(checklist).toEqual(expect.objectContaining({
+      type: "checklist",
+      items: ["Seed cells.", "Add transfection mix.", "Change medium."],
+    }));
+    expect(parsed.steps[0].description).toBe("Seed cells.\nAdd transfection mix.\nChange medium.");
+  });
+
   it("exports a valid DOCX that can be imported back into the fixed template", () => {
     const document = createProtocolTemplateDocument();
     document.sections.find((section) => section.key === "description")!.blocks = [

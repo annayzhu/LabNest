@@ -279,7 +279,7 @@ export function MarkdownRichTextEditor({
       onKeyUp={rememberSelection}
       onMouseUp={rememberSelection}
       onPaste={normalizePaste}
-      className={cn("protocol-rich-editor wysiwyg-placeholder px-2 py-2 text-[15px] leading-[1.3] text-graphite outline-none", minHeightClass)}
+      className={cn("protocol-rich-editor wysiwyg-placeholder px-2 py-2 text-[15px] leading-[var(--ln-rich-text-default-line-height)] text-graphite outline-none", minHeightClass)}
     />
   </div>;
 }

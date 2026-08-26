@@ -28,6 +28,7 @@
 
 # local assistant settings
 /.claude
+/.codex
 
 # misc
 .DS_Store

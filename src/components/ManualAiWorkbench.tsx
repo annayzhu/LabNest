@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Clipboard, RotateCcw, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
+import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 
 const exampleEntry = {
@@ -100,19 +101,19 @@ export function ManualAiWorkbench() {
     <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
       <div className="space-y-4">
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Entry title</span>
+          <span className={formLabelClass}>Entry title</span>
           <input
             value={entryTitle}
             onChange={(event) => setEntryTitle(event.target.value)}
-            className="focus-ring mt-2 h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
+            className={formInputClass}
           />
         </label>
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Entry body</span>
+          <span className={formLabelClass}>Entry body</span>
           <textarea
             value={entryBody}
             onChange={(event) => setEntryBody(event.target.value)}
-            className="focus-ring mt-2 min-h-40 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 text-sm leading-6 text-ink"
+            className={`${formTextareaClass} min-h-40 resize-y`}
           />
         </label>
         <div className="flex flex-wrap gap-2">
@@ -129,11 +130,11 @@ export function ManualAiWorkbench() {
 
       <div className="space-y-4">
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Prompt</span>
+          <span className={formLabelClass}>Prompt</span>
           <textarea
             readOnly
             value={prompt}
-            className="focus-ring mt-2 min-h-40 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 font-mono text-xs leading-5 text-ink"
+            className={`${formMonoTextareaClass} min-h-40 resize-y`}
             placeholder="Create a prompt, then paste it into ChatGPT or Claude."
           />
         </label>
@@ -147,11 +148,11 @@ export function ManualAiWorkbench() {
 
       <div className="space-y-4 xl:col-span-2">
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Pasted AI JSON</span>
+          <span className={formLabelClass}>Pasted AI JSON</span>
           <textarea
             value={rawResponse}
             onChange={(event) => setRawResponse(event.target.value)}
-            className="focus-ring mt-2 min-h-44 w-full resize-y rounded-[8px] border border-hairline bg-warm p-3 font-mono text-xs leading-5 text-ink"
+            className={`${formMonoTextareaClass} min-h-44 resize-y`}
             placeholder='[{"sourceType":"ai","actionType":"create_experiment","reason":"...","payload":{}}]'
           />
         </label>

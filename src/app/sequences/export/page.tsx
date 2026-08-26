@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
+import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 
@@ -25,7 +26,7 @@ export default async function SequenceExportPage({ searchParams }: { searchParam
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader title="Export Sequences" actions={<Link href="/sequences" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] text-moss"><ArrowLeft className="h-4 w-4" aria-hidden />Sequences</Link>} />
+        <PageHeader title="Export Sequences" actions={<Link href="/sequences" className={backButtonClass}><ArrowLeft className="h-4 w-4" aria-hidden />Sequences</Link>} />
         <Card>
           <CardHeader title="Export scope" />
           <CardBody><p className="text-sm text-graphite">This export includes {scopeLabel}. Choose whether to export only the latest version or the complete immutable version history.</p></CardBody>
@@ -39,4 +40,5 @@ export default async function SequenceExportPage({ searchParams }: { searchParam
   );
 }
 
-const exportButtonClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-moss bg-moss px-3 text-[13px] font-medium text-warm";
+const backButtonClass = buttonStyles({ size: "sm", className: "font-medium text-moss" });
+const exportButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });

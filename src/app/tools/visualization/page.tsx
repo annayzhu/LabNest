@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
-import { PageHeader } from "@/components/PageHeader";
 import { VisualizationStudio } from "@/components/VisualizationStudio";
 
 export const metadata: Metadata = {
@@ -11,10 +10,7 @@ export const metadata: Metadata = {
 export default function VisualizationStudioPage() {
   return (
     <AppShell>
-      <div className="space-y-4">
-        <PageHeader identifier="TOOLS / VIS" title="Visualization Studio" />
-        <VisualizationStudio />
-      </div>
+      <VisualizationStudio />
     </AppShell>
   );
 }

@@ -13,6 +13,15 @@ export function firstSearchParam(
   return value;
 }
 
+export function firstOptionSearchParam<const T extends string>(
+  params: Record<string, string | string[] | undefined> | undefined,
+  key: string,
+  options: readonly { value: T }[],
+) {
+  const value = firstSearchParam(params, key);
+  return value !== undefined && options.some((option) => option.value === value) ? value as T : undefined;
+}
+
 export function filterHref(pathname: string, filters: Record<string, string | number | undefined>) {
   const searchParams = new URLSearchParams();
 
@@ -25,4 +34,3 @@ export function filterHref(pathname: string, filters: Record<string, string | nu
   const queryString = searchParams.toString();
   return queryString ? `${pathname}?${queryString}` : pathname;
 }
-

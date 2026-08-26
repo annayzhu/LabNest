@@ -11,7 +11,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { projectStatusOptions } from "@/lib/status-options";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,13 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
   const params = searchParams ? await searchParams : undefined;
   const query = firstSearchParam(params, "q")?.trim();
   const tag = firstSearchParam(params, "tag");
-  const status = firstSearchParam(params, "status");
+  const status = firstOptionSearchParam(params, "status", projectStatusOptions);
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
   const orderBy = sort === "name_asc" ? { name: "asc" as const }
     : sort === "status_asc" ? [{ status: "asc" as const }, { name: "asc" as const }]
       : { updatedAt: "desc" as const };
   const where = {
-    ...(status ? { status: status as "active" | "paused" | "completed" | "archived" } : {}),
+    ...(status ? { status } : {}),
     ...(tag ? { tags: { has: tag } } : {}),
     ...(query ? { OR: [
       { name: { contains: query, mode: "insensitive" as const } },
@@ -52,7 +53,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
         sort={sort}
         defaultSort="updated_desc"
         filters={[
-          { name: "status", label: "status", value: status, options: ["active", "paused", "completed", "archived"].map((value) => ({ value, label: value })) },
+          { name: "status", label: "status", value: status, options: projectStatusOptions },
           { name: "tag", label: "tags", value: tag, options: tags.map((value) => ({ value, label: value })) },
         ]}
         sortOptions={[

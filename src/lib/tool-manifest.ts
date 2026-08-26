@@ -1,4 +1,4 @@
-export type LabToolCategory = "Planning" | "Analysis";
+export type LabToolCategory = "Planning" | "Calculators" | "Analysis";
 
 export type LabToolManifestItem = {
   id: string;
@@ -51,6 +51,28 @@ export const labToolManifest: LabToolManifestItem[] = [
     external: true,
   },
   {
+    id: "free-plate-layout",
+    name: "Free Plate Layout Planner",
+    version: "0.2",
+    category: "Planning",
+    description: "Plan independent multi-plate experiments, shared liquid preparation, and execution-ready Excel workbooks.",
+    accepts: ["sample list", "one or more plate formats", "custom labels", "saved liquid recipes"],
+    produces: ["multi-plate map", "shared liquid summary", "pipetting checklist", "XLSX workbook"],
+    launchUrl: "/tools/free-plate-layout/index.html",
+    external: false,
+  },
+  {
+    id: "calculator",
+    name: "Experimental Calculator",
+    version: "1.0",
+    category: "Calculators",
+    description: "Run 31 browser-local wet-lab calculations with bilingual methods, presets, and reviewable results.",
+    accepts: ["experimental parameters", "units", "optional plate context"],
+    produces: ["calculated values", "warnings", "local history"],
+    launchUrl: "/tools/calculator",
+    external: false,
+  },
+  {
     id: "qpcr-analysis",
     name: "qPCR Analysis Studio",
     version: "1.0",
@@ -63,7 +85,7 @@ export const labToolManifest: LabToolManifestItem[] = [
   },
   {
     id: "cnv-analysis",
-    name: "CNV Analyzer",
+    name: "CNV Analysis Studio",
     version: "1.0",
     category: "Analysis",
     description: "Calculate and review copy-number calls from CNV assay output with traceable QC.",

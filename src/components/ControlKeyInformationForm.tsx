@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Save } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { Button } from "@/components/ui/Button";
-import { formTextareaClass } from "@/components/forms";
+import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { keyInformationMaxLength, type KeyInformationAction, type KeyInformationFormState } from "@/lib/key-information";
 
 const initialState: KeyInformationFormState = {};
@@ -29,7 +29,7 @@ export function ControlKeyInformationForm({
   return (
     <form action={formAction} className="border-t border-hairline pt-4">
       <input type="hidden" name="id" value={id} />
-      <label htmlFor={`key-information-${scope}-${id}`} className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+      <label htmlFor={`key-information-${scope}-${id}`} className={formLabelClass}>
         {locale === "zh" ? "关键信息" : "Key information"}
       </label>
       <textarea

@@ -4,18 +4,20 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
+import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolRunProgressForm } from "@/components/ProtocolRunProgressForm";
 import { StatusPill } from "@/components/ui/Badge";
+import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording } from "@/lib/experiment-results";
 import { recordProtocolRunConsumption } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const secondaryButton = "focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss hover:bg-warm";
-const fieldClass = "focus-ring mt-2 w-full rounded-[8px] border border-hairline bg-surface px-3 py-2 text-sm text-ink";
-const labelClass = "text-xs font-semibold uppercase tracking-[0.08em] text-muted";
+const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
+const primaryButton = buttonStyles({ variant: "primary", size: "md", className: "sm:col-span-2 font-medium" });
+const fieldClass = `${formInputClass} bg-surface`;
 
 export default async function ProtocolRunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -105,11 +107,11 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             {editable && inventoryItems.length ? (
               <form action={recordProtocolRunConsumption} className="grid gap-3 sm:grid-cols-2">
                 <input type="hidden" name="experimentId" value={experiment.id} />
-                <label className="sm:col-span-2"><span className={labelClass}>Inventory Item</span><select required name="inventoryItemId" className={`${fieldClass} h-11`}><option value="">Select material…</option>{inventoryItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.currentQuantity} {item.unit}{item.location ? ` · ${item.location.name}` : ""}</option>)}</select></label>
-                <label><span className={labelClass}>Quantity used</span><input required name="quantity" type="number" min="0.000001" step="any" className={`${fieldClass} h-11`} /></label>
-                <label><span className={labelClass}>Performed by</span><input name="performedBy" className={`${fieldClass} h-11`} /></label>
-                <label className="sm:col-span-2"><span className={labelClass}>Note</span><input name="notes" placeholder="Plate, sample or step context" className={`${fieldClass} h-11`} /></label>
-                <button className="focus-ring sm:col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm"><PackageMinus className="h-4 w-4" aria-hidden />Record consumption</button>
+                <label className="sm:col-span-2"><span className={formLabelClass}>Inventory Item</span><select required name="inventoryItemId" className={fieldClass}><option value="">Select material…</option>{inventoryItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.currentQuantity} {item.unit}{item.location ? ` · ${item.location.name}` : ""}</option>)}</select></label>
+                <label><span className={formLabelClass}>Quantity used</span><input required name="quantity" type="number" min="0.000001" step="any" className={fieldClass} /></label>
+                <label><span className={formLabelClass}>Performed by</span><input name="performedBy" className={fieldClass} /></label>
+                <label className="sm:col-span-2"><span className={formLabelClass}>Note</span><input name="notes" placeholder="Plate, sample or step context" className={fieldClass} /></label>
+                <button className={primaryButton}><PackageMinus className="h-4 w-4" aria-hidden />Record consumption</button>
               </form>
             ) : <p className="text-sm text-muted">{editable ? "No active Inventory with available quantity." : "Archived runs cannot change Inventory."}</p>}
             {transactions.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{transactions.map((transaction) => <li key={transaction.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span>{transaction.inventoryItem.name}</span><span className="font-mono text-xs text-muted">{transaction.quantityChange} {transaction.unit}</span></li>)}</ul> : null}

@@ -1,3 +1,5 @@
-export const formInputClass = "focus-ring mt-1.5 h-10 w-full rounded-[8px] border border-hairline bg-warm px-2.5 text-sm text-ink";
-export const formTextareaClass = "focus-ring mt-1.5 min-h-24 w-full rounded-[8px] border border-hairline bg-warm px-2.5 py-2 text-sm leading-5 text-ink";
+export const formInputClass = "focus-ring mt-[var(--ln-form-field-gap)] h-[var(--ln-control-height-lg)] w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-control-font-size-md)] text-ink";
+export const formTextareaClass = "focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-[var(--ln-control-padding-x-sm)] py-2 text-[length:var(--ln-control-font-size-md)] leading-5 text-ink";
+export const formFileInputClass = `${formInputClass} py-2`;
+export const formMonoTextareaClass = `${formTextareaClass} font-mono text-xs leading-5`;
 export const formLabelClass = "text-xs font-semibold uppercase tracking-[0.08em] text-muted";

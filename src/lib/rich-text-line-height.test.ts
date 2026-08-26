@@ -15,9 +15,9 @@ describe("controlled rich-text line heights", () => {
   });
 
   it("round-trips non-default line metadata without polluting plain text", () => {
-    const value = `${richTextLineHeightPrefix(1.5)}**Observation**`;
-    expect(parseRichTextLineHeightLine(value)).toEqual({ lineHeight: 1.5, content: "**Observation**" });
-    expect(richTextLineHeightPrefix(1.3)).toBe("");
+    const value = `${richTextLineHeightPrefix(1.3)}**Observation**`;
+    expect(parseRichTextLineHeightLine(value)).toEqual({ lineHeight: 1.3, content: "**Observation**" });
+    expect(richTextLineHeightPrefix(1.5)).toBe("");
     expect(richTextLineHeightPrefix(1)).toBe("<!--labnest-line-height:1-->");
     expect(stripLabNestLineHeightMarkup(value)).toBe("**Observation**");
   });

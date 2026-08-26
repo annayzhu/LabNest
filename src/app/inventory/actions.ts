@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
+import {
+  inventoryBenchActionFreezeThawDelta,
+  inventoryBenchActionQuantityChange,
+  inventoryBenchActionTypes,
+} from "@/lib/inventory";
 
 const optionalText = (value: FormDataEntryValue | null) => {
   const text = String(value ?? "").trim();
@@ -223,68 +228,203 @@ export async function updateInventoryItem(
   redirect(`/inventory/${itemId}`);
 }
 
-const transactionSchema = z.object({
-  type: z.enum(["receive", "consume", "discard", "return"]),
-  quantity: z.number().finite().positive(),
+const inventoryBenchActionSchema = z.object({
+  type: z.enum(inventoryBenchActionTypes),
+  quantity: z.number().finite().positive().optional(),
   performedBy: z.string().trim().max(120).optional(),
   experimentId: z.string().trim().optional(),
   purchaseId: z.string().trim().optional(),
+  targetLocationId: z.string().trim().optional(),
+  targetPositionCode: z.string().trim().max(120).optional(),
+  childName: z.string().trim().max(180).optional(),
+  childAliquotCode: z.string().trim().max(160).optional(),
+  qcResult: z.enum(["pass", "fail", "inconclusive"]).optional(),
+  qcMethod: z.string().trim().max(180).optional(),
   notes: z.string().trim().max(2000).optional(),
+}).superRefine((value, context) => {
+  if (["consume", "receive", "return", "aliquot", "discard"].includes(value.type) && !value.quantity) {
+    context.addIssue({ code: "custom", path: ["quantity"], message: "A positive quantity is required for this action." });
+  }
+  if (value.type === "aliquot" && !value.childName) {
+    context.addIssue({ code: "custom", path: ["childName"], message: "A child container name is required for aliquoting." });
+  }
+  if (value.type === "aliquot" && !value.childAliquotCode) {
+    context.addIssue({ code: "custom", path: ["childAliquotCode"], message: "A unique aliquot code is required for the child container." });
+  }
+  if (value.type === "qc" && !value.qcResult) {
+    context.addIssue({ code: "custom", path: ["qcResult"], message: "Select a QC result." });
+  }
+  if (value.type === "discard" && !value.notes) {
+    context.addIssue({ code: "custom", path: ["notes"], message: "A disposal reason is required." });
+  }
 });
 
-export async function recordInventoryTransaction(itemId: string, formData: FormData) {
-  const parsed = transactionSchema.parse({
-    type: formData.get("type"),
-    quantity: optionalNumber(formData.get("quantity")),
-    performedBy: optionalText(formData.get("performedBy")),
-    experimentId: optionalText(formData.get("experimentId")),
-    purchaseId: optionalText(formData.get("purchaseId")),
-    notes: optionalText(formData.get("notes")),
-  });
-  const isInbound = parsed.type === "receive" || parsed.type === "return";
-  const quantityChange = isInbound ? parsed.quantity : -parsed.quantity;
-
-  await prisma.$transaction(async (tx) => {
-    const item = await tx.inventoryItem.findUnique({ where: { id: itemId } });
-    if (!item) throw new Error("Inventory item not found.");
-
-    const nextQuantity = Number((item.currentQuantity + quantityChange).toFixed(6));
-    if (nextQuantity < 0) {
-      throw new Error(`This transaction would make stock negative. Available: ${item.currentQuantity} ${item.unit}.`);
-    }
-
-    await tx.inventoryTransaction.create({
-      data: {
-        inventoryItemId: item.id,
-        type: parsed.type,
-        quantityChange,
-        unit: item.unit,
-        fromLocationId: isInbound ? undefined : item.locationId ?? undefined,
-        toLocationId: isInbound ? item.locationId ?? undefined : undefined,
-        experimentId: parsed.experimentId,
-        purchaseId: parsed.purchaseId,
-        performedBy: parsed.performedBy,
-        notes: parsed.notes,
-      },
+export async function recordInventoryBenchAction(
+  itemId: string,
+  _previousState: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  try {
+    const parsed = inventoryBenchActionSchema.parse({
+      type: formData.get("type"),
+      quantity: optionalNumber(formData.get("quantity")),
+      performedBy: optionalText(formData.get("performedBy")),
+      experimentId: optionalText(formData.get("experimentId")),
+      purchaseId: optionalText(formData.get("purchaseId")),
+      targetLocationId: optionalText(formData.get("targetLocationId")),
+      targetPositionCode: optionalText(formData.get("targetPositionCode")),
+      childName: optionalText(formData.get("childName")),
+      childAliquotCode: optionalText(formData.get("childAliquotCode")),
+      qcResult: optionalText(formData.get("qcResult")),
+      qcMethod: optionalText(formData.get("qcMethod")),
+      notes: optionalText(formData.get("notes")),
     });
-    const updated = await tx.inventoryItem.updateMany({
-      where: { id: item.id, currentQuantity: item.currentQuantity },
-      data: { currentQuantity: nextQuantity },
-    });
-    if (updated.count !== 1) {
-      throw new Error("Stock changed while this movement was being recorded. Review the latest quantity and submit again.");
-    }
-    await tx.activityLog.create({
-      data: {
-        action: parsed.type,
-        targetType: "inventory_item",
-        targetId: item.id,
-        metadataJson: { quantityChange, unit: item.unit, experimentId: parsed.experimentId ?? null, purchaseId: parsed.purchaseId ?? null },
-      },
-    });
-  });
+    const targetLocationId = parsed.targetLocationId === "__unassigned__" ? null : parsed.targetLocationId ?? null;
 
-  revalidatePath("/inventory");
-  revalidatePath(`/inventory/${itemId}`);
-  redirect(`/inventory/${itemId}`);
+    await prisma.$transaction(async (tx) => {
+      const item = await tx.inventoryItem.findUnique({ where: { id: itemId } });
+      if (!item) throw new Error("Inventory item not found.");
+      if (targetLocationId) {
+        const targetLocation = await tx.inventoryLocation.findUnique({ where: { id: targetLocationId }, select: { status: true } });
+        if (!targetLocation || targetLocation.status !== "active") {
+          throw new Error("Choose an active Inventory location.");
+        }
+      }
+
+      const quantityChange = inventoryBenchActionQuantityChange(parsed.type, parsed.quantity);
+      const freezeThawDelta = inventoryBenchActionFreezeThawDelta(parsed.type);
+      const nextQuantity = Number((item.currentQuantity + quantityChange).toFixed(6));
+      if (nextQuantity < 0) {
+        throw new Error(`This action would make stock negative. Available: ${item.currentQuantity} ${item.unit}.`);
+      }
+
+      if (parsed.type === "transfer") {
+        const nextLocationId = targetLocationId;
+        const nextPositionCode = parsed.targetPositionCode ?? null;
+        if (nextLocationId === item.locationId && nextPositionCode === item.positionCode) {
+          throw new Error("Choose a different location or position before recording a move.");
+        }
+
+        const updated = await tx.inventoryItem.updateMany({
+          where: { id: item.id, locationId: item.locationId, positionCode: item.positionCode },
+          data: { locationId: nextLocationId, positionCode: nextPositionCode },
+        });
+        if (updated.count !== 1) throw new Error("Location changed while this move was being recorded. Review the item and submit again.");
+      } else if (quantityChange !== 0 || freezeThawDelta !== 0) {
+        const updated = await tx.inventoryItem.updateMany({
+          where: { id: item.id, currentQuantity: item.currentQuantity, freezeThawCount: item.freezeThawCount },
+          data: {
+            currentQuantity: nextQuantity,
+            freezeThawCount: item.freezeThawCount + freezeThawDelta,
+          },
+        });
+        if (updated.count !== 1) throw new Error("Stock changed while this action was being recorded. Review the latest item and submit again.");
+      }
+
+      let childItemId: string | null = null;
+      if (parsed.type === "aliquot") {
+        const duplicate = await tx.inventoryItem.findUnique({ where: { aliquotCode: parsed.childAliquotCode! }, select: { id: true } });
+        if (duplicate) throw new Error("This aliquot code is already in use.");
+
+        const child = await tx.inventoryItem.create({
+          data: {
+            entityId: item.entityId,
+            name: parsed.childName!,
+            englishName: item.englishName,
+            category: item.category,
+            brand: item.brand,
+            principalInvestigator: item.principalInvestigator,
+            containerType: item.containerType,
+            aliquotCode: parsed.childAliquotCode!,
+            lotNumber: item.lotNumber,
+            vendor: item.vendor,
+            catalogNumber: item.catalogNumber,
+            casNumber: item.casNumber,
+            currentQuantity: parsed.quantity!,
+            unit: item.unit,
+            concentration: item.concentration,
+            locationId: targetLocationId,
+            positionCode: parsed.targetPositionCode,
+            parentInventoryItemId: item.id,
+            expiryDate: item.expiryDate,
+            storageCondition: item.storageCondition,
+            notes: `Aliquoted from ${item.name}${item.aliquotCode ? ` (${item.aliquotCode})` : ""}.`,
+          },
+        });
+        childItemId = child.id;
+        await tx.inventoryTransaction.create({
+          data: {
+            inventoryItemId: child.id,
+            type: "receive",
+            quantityChange: parsed.quantity!,
+            unit: item.unit,
+            toLocationId: child.locationId ?? undefined,
+            experimentId: parsed.experimentId,
+            performedBy: parsed.performedBy,
+            notes: `Opening balance received from parent stock ${item.name}.`,
+          },
+        });
+      }
+
+      const actionDetails = parsed.type === "transfer"
+        ? `Position ${item.positionCode ?? "unassigned"} → ${parsed.targetPositionCode ?? "unassigned"}.`
+        : parsed.type === "aliquot"
+          ? `Created child aliquot ${parsed.childAliquotCode}.`
+          : parsed.type === "qc"
+            ? `QC result: ${parsed.qcResult}${parsed.qcMethod ? `; method: ${parsed.qcMethod}` : ""}.`
+            : parsed.type === "thaw"
+              ? `Freeze-thaw count ${item.freezeThawCount} → ${item.freezeThawCount + 1}.`
+              : undefined;
+      const notes = [actionDetails, parsed.notes].filter(Boolean).join("\n") || undefined;
+      const isInbound = parsed.type === "receive" || parsed.type === "return";
+
+      await tx.inventoryTransaction.create({
+        data: {
+          inventoryItemId: item.id,
+          type: parsed.type,
+          quantityChange,
+          unit: item.unit,
+          fromLocationId: isInbound || parsed.type === "qc" || parsed.type === "refreeze" ? undefined : item.locationId ?? undefined,
+          toLocationId: parsed.type === "transfer" || parsed.type === "aliquot"
+            ? targetLocationId ?? undefined
+            : isInbound
+              ? item.locationId ?? undefined
+              : undefined,
+          experimentId: parsed.experimentId,
+          purchaseId: parsed.purchaseId,
+          performedBy: parsed.performedBy,
+          notes,
+        },
+      });
+      await tx.activityLog.create({
+        data: {
+          action: parsed.type,
+          targetType: "inventory_item",
+          targetId: item.id,
+          metadataJson: {
+            quantityChange,
+            unit: item.unit,
+            experimentId: parsed.experimentId ?? null,
+            purchaseId: parsed.purchaseId ?? null,
+            performedBy: parsed.performedBy ?? null,
+            fromLocationId: item.locationId,
+            fromPositionCode: item.positionCode,
+            toLocationId: targetLocationId,
+            toPositionCode: parsed.targetPositionCode ?? null,
+            childItemId,
+            childAliquotCode: parsed.childAliquotCode ?? null,
+            qcResult: parsed.qcResult ?? null,
+            qcMethod: parsed.qcMethod ?? null,
+            freezeThawDelta,
+          },
+        },
+      });
+    });
+
+    revalidatePath("/inventory");
+    revalidatePath(`/inventory/${itemId}`);
+    return { message: "Inventory action recorded." };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The Inventory action could not be recorded.", "This aliquot code is already in use.") };
+  }
 }

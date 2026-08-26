@@ -4,6 +4,9 @@ import {
   calculateQuantityFromTransactions,
   directQuantityEditToAdjustTransaction,
   getInventoryRiskFlags,
+  inventoryBenchActionFreezeThawDelta,
+  inventoryBenchActionQuantityChange,
+  inventoryBenchActionRequiresQuantity,
 } from "./inventory";
 
 describe("inventory transaction logic", () => {
@@ -44,6 +47,33 @@ describe("inventory transaction logic", () => {
     expect(adjustment.type).toBe("adjust");
     expect(adjustment.quantityChange).toBe(16);
     expect(adjustment.unit).toBe("g");
+  });
+});
+
+describe("inventory bench actions", () => {
+  it("derives stock changes for inbound and outbound actions", () => {
+    expect(inventoryBenchActionQuantityChange("receive", 5)).toBe(5);
+    expect(inventoryBenchActionQuantityChange("consume", 2)).toBe(-2);
+    expect(inventoryBenchActionQuantityChange("aliquot", 1)).toBe(-1);
+  });
+
+  it("keeps non-quantity actions neutral", () => {
+    expect(inventoryBenchActionQuantityChange("transfer")).toBe(0);
+    expect(inventoryBenchActionQuantityChange("qc")).toBe(0);
+    expect(inventoryBenchActionQuantityChange("refreeze")).toBe(0);
+  });
+
+  it("allows an optional removed quantity for thaw and increments the handling count", () => {
+    expect(inventoryBenchActionQuantityChange("thaw")).toBe(0);
+    expect(inventoryBenchActionQuantityChange("thaw", 1)).toBe(-1);
+    expect(inventoryBenchActionFreezeThawDelta("thaw")).toBe(1);
+    expect(inventoryBenchActionFreezeThawDelta("refreeze")).toBe(0);
+  });
+
+  it("requires quantities only for stock-changing actions", () => {
+    expect(inventoryBenchActionRequiresQuantity("discard")).toBe(true);
+    expect(inventoryBenchActionRequiresQuantity("transfer")).toBe(false);
+    expect(() => inventoryBenchActionQuantityChange("discard")).toThrow("positive quantity");
   });
 });
 

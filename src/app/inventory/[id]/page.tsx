@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, ShoppingCart } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { InventoryBenchActionForm } from "@/components/InventoryBenchActionForm";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
-import { InventoryTransactionForm } from "@/components/InventoryTransactionForm";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -11,7 +11,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import { ExperimentStatus, PurchaseStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { getInventoryRiskFlags, inventoryCategories } from "@/lib/inventory";
-import { recordInventoryTransaction } from "../actions";
+import { recordInventoryBenchAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ const actionLinkClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[
 
 export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [item, experiments, purchases] = await Promise.all([
+  const [item, experiments, purchases, locations] = await Promise.all([
     prisma.inventoryItem.findUnique({
       where: { id },
       include: {
@@ -55,13 +55,18 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
       orderBy: { updatedAt: "desc" },
       take: 100,
     }),
+    prisma.inventoryLocation.findMany({
+      where: { OR: [{ status: "active" }, { items: { some: { id } } }] },
+      select: { id: true, name: true, temperature: true, status: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   if (!item) notFound();
 
   const riskFlags = getInventoryRiskFlags(item);
   const categoryLabel = inventoryCategories.find((category) => category.value === item.category)?.label ?? item.category ?? "Unclassified";
-  const transactionAction = recordInventoryTransaction.bind(null, item.id);
+  const transactionAction = recordInventoryBenchAction.bind(null, item.id);
 
   return (
     <AppShell>
@@ -107,9 +112,21 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           </Card>
 
           <Card>
-            <CardHeader title="Record stock movement" />
+            <CardHeader title="Bench actions" />
             <CardBody>
-              <InventoryTransactionForm action={transactionAction} unit={item.unit} experiments={experiments} purchases={purchases} />
+              <InventoryBenchActionForm
+                action={transactionAction}
+                item={{
+                  currentQuantity: item.currentQuantity,
+                  unit: item.unit,
+                  locationId: item.locationId,
+                  positionCode: item.positionCode,
+                  freezeThawCount: item.freezeThawCount,
+                }}
+                locations={locations}
+                experiments={experiments}
+                purchases={purchases}
+              />
             </CardBody>
           </Card>
         </section>

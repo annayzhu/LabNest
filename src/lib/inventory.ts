@@ -11,6 +11,42 @@ export const inventoryCategories = [
   { value: "other", label: "Other" },
 ] as const;
 
+export const inventoryBenchActionTypes = [
+  "consume",
+  "receive",
+  "return",
+  "transfer",
+  "aliquot",
+  "thaw",
+  "refreeze",
+  "qc",
+  "discard",
+] as const;
+
+export type InventoryBenchActionType = (typeof inventoryBenchActionTypes)[number];
+
+export function inventoryBenchActionRequiresQuantity(type: InventoryBenchActionType) {
+  return ["consume", "receive", "return", "aliquot", "discard"].includes(type);
+}
+
+export function inventoryBenchActionQuantityChange(
+  type: InventoryBenchActionType,
+  quantity?: number,
+) {
+  if (inventoryBenchActionRequiresQuantity(type) && (!quantity || quantity <= 0)) {
+    throw new Error("A positive quantity is required for this Inventory action.");
+  }
+
+  if (type === "receive" || type === "return") return quantity ?? 0;
+  if (type === "consume" || type === "aliquot" || type === "discard") return -(quantity ?? 0);
+  if (type === "thaw") return quantity ? -quantity : 0;
+  return 0;
+}
+
+export function inventoryBenchActionFreezeThawDelta(type: InventoryBenchActionType) {
+  return type === "thaw" ? 1 : 0;
+}
+
 export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring";
 
 type InventoryRiskInput = {

@@ -18,7 +18,7 @@ Success means a researcher can select a narrowly defined calculation, enter scie
 
 ## Positioning
 
-LabNest combines provenance-aware research records with deterministic, browser-local experimental utilities. Calculator formulas live in one authoritative calculation module and are reused through both a quick-calculation interface and plate-aware adapters, so a correction or validation improvement applies everywhere.
+LabNest combines provenance-aware research records with deterministic, browser-local experimental utilities. The main Calculator keeps the complete formula catalog; the six plate-aware formulas are also packaged into Free Plate Layout so its standalone HTML remains functional. Shared method-version identifiers and parity tests are required whenever either surface changes.
 
 ## Operating Context
 
@@ -32,7 +32,7 @@ LabNest combines provenance-aware research records with deterministic, browser-l
 
 - Calculator contains 31 complete calculators grouped into cell culture, solutions, molecular biology, virology and microbiology, and general utilities.
 - Calculator is available from Tools and as a quick action on the Overview page.
-- Free Plate presents one unified calculation workspace: the four established liquid-preparation modules remain unchanged, while six missing plate-aware capabilities (Seeding, Hydrogel, Kill Curve, Fold Dilution, Master Mix, and plate-mode MOI) use the central Calculator implementation in the same drawer. Overlapping dilution, transfection, serial-gradient, and dosing workflows continue through the richer established plate modules instead of appearing as duplicate buttons.
+- Free Plate presents one unified calculation workspace: the four established liquid-preparation modules remain unchanged, while six missing plate-aware capabilities (Seeding, Hydrogel, Kill Curve, Fold Dilution, Master Mix, and plate-mode MOI) run directly in the same drawer, including when the standalone HTML is opened without LabNest. Overlapping dilution, transfection, serial-gradient, and dosing workflows continue through the richer established plate modules instead of appearing as duplicate buttons.
 - Calculator supports bilingual Chinese and English labels, scientific abbreviations, aliases, search, favorites, reusable presets, and the 50 most recent structured calculation records.
 - Calculation records retain inputs, units, method version, outputs, warnings, and time. Users can delete one record or clear all records.
 - Colony Counter is a formal image-assisted counting tool with visible detections and mandatory human review. It is not labeled Beta and must not imply that automated counts are ground truth.

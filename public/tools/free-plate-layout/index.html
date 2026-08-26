@@ -7,7 +7,7 @@
     <meta name="description" content="纯浏览器本地运行的 6、12、24、96、384 孔板布局、标签与批量计算工具。" />
     <title>Plate Layout Planner · 孔板布局规划工具</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f625d'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3Ccircle cx='22' cy='10' r='3'/%3E%3Ccircle cx='10' cy='22' r='3'/%3E%3Ccircle cx='22' cy='22' r='3'/%3E%3C/g%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="styles.css?v=20260826-1" />
+    <link rel="stylesheet" href="styles.css?v=20260826-2" />
   </head>
   <body>
     <header class="topbar">
@@ -294,7 +294,7 @@
           <button type="button" data-plate-calculator="moi">MOI</button>
         </nav>
         <div id="liquidDrawerContent" class="liquid-drawer-content"></div>
-        <iframe id="plateCalculatorFrame" class="plate-calculator-frame" title="板感知计算" hidden></iframe>
+        <div id="plateCalculatorHost" class="liquid-drawer-content plate-calculator-host" aria-live="polite" hidden></div>
       </section>
     </div>
 
@@ -353,6 +353,6 @@
     <script src="liquid-plan-core.js?v=20260823-18"></script>
     <script src="workspace-core.js?v=20260823-15"></script>
     <script src="xlsx-core.js?v=20260822-1"></script>
-    <script src="app.js?v=20260826-1"></script>
+    <script src="app.js?v=20260826-2"></script>
   </body>
 </html>

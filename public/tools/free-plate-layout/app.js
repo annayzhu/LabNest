@@ -33,7 +33,7 @@
       newDimension: "新维度名称", newDimensionPlaceholder: "例如：细胞系、药物、批次", type: "类型", add: "＋ 添加", assignTitle: "为所选孔赋值",
       assignBody: "可输入单个值，也可直接粘贴 Excel 多个值；只应用已勾选项。", applySelected: "应用到所选孔", clearChecked: "清除勾选参数",
       calculationTitle: "条件批量计算", calculationBody: "按孔位标签筛选，对数值参数统一运算。", runCalculation: "运行批量计算",
-      liquidTitle: "配液计算", liquidBody: "从当前孔板取孔数，完成常规配液、转染、梯度稀释和药物排板。",
+      liquidTitle: "配液与板感知计算", liquidBody: "沿用现有配液流程，并从当前选择直接完成铺板、培养、加药和感染等孔位相关计算。",
       plateCalculatorTitle: "板感知计算", plateCalculatorBody: "把当前选择带入 LabNest Calculator，确认后可将结果写回孔位。", dualChannel: "双通道", plateCalculatorNote: "未选择孔位时默认使用当前整板；共享计算核心由 Calculator 统一维护。",
       calcSeeding: "细胞铺板", calcHydrogel: "水凝胶", calcTransfection: "转染体系", calcKillCurve: "杀灭曲线", calcDosing: "试剂加药", calcDilution: "常规稀释", calcFoldDilution: "倍数稀释", calcSerialDilution: "连续稀释",
       footerLocal: "所有编辑与计算均在当前浏览器完成。", footerReview: "研究工具 · 请在实验前复核最终板图和参数。",
@@ -54,7 +54,7 @@
       newDimension: "New parameter", newDimensionPlaceholder: "e.g. Cell line, drug, batch", type: "Type", add: "+ Add", assignTitle: "Assign selected wells",
       assignBody: "Enter one value or paste multiple values from Excel. Only checked parameters are applied.", applySelected: "Apply to wells", clearChecked: "Clear checked",
       calculationTitle: "Batch calculation", calculationBody: "Filter wells by labels and calculate numeric parameters.", runCalculation: "Run calculation",
-      liquidTitle: "Liquid preparation", liquidBody: "Use the current plate scope for routine solutions, transfection mixes, serial dilutions, and drug layouts.",
+      liquidTitle: "Liquid & plate-aware calculations", liquidBody: "Keep the existing preparation workflow and use the current selection for seeding, culture, dosing, and infection calculations.",
       plateCalculatorTitle: "Plate-aware calculations", plateCalculatorBody: "Send the current selection to LabNest Calculator, then return reviewed results to those wells.", dualChannel: "Dual channel", plateCalculatorNote: "When no wells are selected, the full current plate is used. Calculator maintains the shared calculation core.",
       calcSeeding: "Cell seeding", calcHydrogel: "Hydrogel", calcTransfection: "Transfection", calcKillCurve: "Kill curve", calcDosing: "Reagent dosing", calcDilution: "Dilution", calcFoldDilution: "Fold dilution", calcSerialDilution: "Serial dilution",
       footerLocal: "All edits and calculations run in this browser.", footerReview: "Research tool · Review the final plate and parameters before use.",
@@ -97,7 +97,7 @@
       "calculationGuide", "runCalculationButton", "calculationResult", "calculationOutputCount", "calculationOutputList", "exportCsvButton", "exportSvgButton",
       "exportJsonButton", "exportXlsxButton", "xlsxOrderSelect", "excelTemplateButton", "projectTemplateButton", "openProjectImportButton", "openBackupRestoreButton", "importJsonLabel", "importJsonInput", "importModeSelect", "confirmImportButton", "importPreview", "restoreJsonLabel", "restoreJsonInput", "restorePreview", "confirmRestoreButton", "projectFileDialog", "projectFileDialogTitle", "projectFileDialogHelp", "projectImportPanel", "projectRestorePanel", "closeProjectFileDialogButton", "printButton",
       "workspaceName", "workspaceNameLabel", "plateTabs", "addPlateButton", "duplicatePlateButton", "copyStructureButton", "movePlateLeftButton", "movePlateRightButton", "deletePlateButton", "overviewToggleButton", "plateOverview", "plateOverviewTitle", "plateOverviewDescription", "overviewColorLabel", "overviewColorDimension", "plateOverviewGrid", "exportXlsxButton",
-      "liquidScopeBadge", "openLiquidCalculatorButton", "projectLiquidScope", "projectLiquidOverage", "projectLiquidContainerCapacity", "projectLiquidSummaryButton", "projectLiquidPlatePicker", "projectLiquidSummary", "liquidDrawer", "closeLiquidDrawerButton", "liquidDrawerScope", "liquidModuleTabs", "liquidDrawerContent", "toast",
+      "liquidScopeBadge", "openLiquidCalculatorButton", "projectLiquidScope", "projectLiquidOverage", "projectLiquidContainerCapacity", "projectLiquidSummaryButton", "projectLiquidPlatePicker", "projectLiquidSummary", "liquidDrawer", "closeLiquidDrawerButton", "liquidDrawerScope", "liquidModuleTabs", "liquidDrawerContent", "plateCalculatorFrame", "toast",
       "savedLiquidPlansTitle", "savedLiquidPlansHelp", "savedLiquidPlanCount", "savedLiquidPlanList", "summaryDrawer", "summaryDrawerTitle", "summaryDrawerMeta", "summaryDrawerActions", "summaryDrawerContent", "closeSummaryDrawerButton",
     ].map((id) => [id, document.getElementById(id)]),
   );
@@ -129,6 +129,7 @@
   let overviewColorName = "";
   let indexedSaveTimer = null;
   let activeLiquidModule = "basic";
+  let activePlateCalculator = "";
   let lastLiquidResult = null;
   let pendingDrugLayout = null;
   let pendingSerialLayout = null;
@@ -203,7 +204,23 @@
       button.querySelector("strong").textContent = liquidCardLabels[index][0];
       button.querySelector("small").textContent = liquidCardLabels[index][1];
     });
-    elements.openLiquidCalculatorButton.textContent = bilingual("打开配液计算", "Open liquid preparation");
+    const plateCardLabels = language === "en"
+      ? [
+          ["Cell seeding", "Cells and medium"], ["Hydrogel culture", "Cells and gel volume"], ["Kill curve", "Dose-gradient layout"],
+          ["Fold dilution", "Working-solution conversion"], ["Master Mix", "Scale a mix by well count"], ["MOI", "Virus volume and infection rate"],
+        ]
+      : [
+          ["细胞铺板", "细胞数与培养基"], ["水凝胶培养", "细胞与胶体积"], ["杀灭曲线", "浓度梯度排板"],
+          ["倍数稀释", "工作液倍数换算"], ["Master Mix", "按孔数汇总体系"], ["MOI", "病毒用量与感染率"],
+        ];
+    document.querySelectorAll(".plate-calculator-launch").forEach((button, index) => {
+      button.querySelector("strong").textContent = plateCardLabels[index][0];
+      button.querySelector("small").textContent = plateCardLabels[index][1];
+    });
+    document.querySelectorAll(".liquid-module-group-label").forEach((label, index) => {
+      label.textContent = language === "en" ? ["Existing preparation modules", "Added plate-related calculations"][index] : ["现有配液模块", "新增板相关计算"][index];
+    });
+    elements.openLiquidCalculatorButton.textContent = bilingual("打开现有配液计算", "Open existing liquid preparation");
     document.querySelector(".liquid-card-note").textContent = bilingual("默认余量 10% · 最小可靠移液体积 1 µL · 结果仅保存在当前浏览器", "10% default overage · 1 µL minimum reliable pipetting volume · browser-local results");
   }
 
@@ -1153,12 +1170,17 @@
   }
 
   function renderLiquidModule(module = activeLiquidModule, { captureCurrent = true } = {}) {
-    if (captureCurrent && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
+    if (captureCurrent && !activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
+    activePlateCalculator = "";
     activeLiquidModule = ["basic", "transfection", "serial", "drug"].includes(module) ? module : "basic";
     lastLiquidResult = null;
     pendingDrugLayout = null;
     pendingSerialLayout = null;
     document.querySelectorAll("[data-liquid-module]").forEach((button) => button.classList.toggle("active", button.dataset.liquidModule === activeLiquidModule));
+    document.querySelectorAll("[data-plate-calculator]").forEach((button) => button.classList.remove("active"));
+    elements.plateCalculatorFrame.hidden = true;
+    elements.plateCalculatorFrame.removeAttribute("src");
+    elements.liquidDrawerContent.hidden = false;
     const markup = liquidModuleDefinition(activeLiquidModule).markup();
     elements.liquidDrawerContent.innerHTML = markup;
     restoreLiquidDraft(document.getElementById("liquidActiveForm"), activeLiquidModule);
@@ -1172,8 +1194,48 @@
     elements.closeLiquidDrawerButton.focus({ preventScroll: true });
   }
 
+  function plateCalculatorUrl(calculatorId) {
+    const wellIds = selection.size ? [...selection] : Core.makeWellIds(project.plateSize);
+    const params = new URLSearchParams({
+      source: "plate",
+      embed: "plate",
+      locale: language,
+      workspaceId: workspace.id,
+      plateId: project.id,
+      plateName: project.name,
+      plateSize: String(project.plateSize),
+      wellIds: wellIds.join(","),
+    });
+    if (["seeding", "hydrogel", "kill-curve"].includes(calculatorId)) params.set("wells", String(wellIds.length));
+    if (calculatorId === "master-mix") params.set("reactions", String(wellIds.length));
+    return `/tools/calculator/${calculatorId}?${params.toString()}`;
+  }
+
+  function openPlateCalculator(calculatorId) {
+    if (window.location.protocol === "file:") {
+      showToast(bilingual("板感知计算需要从 LabNest 的 Tools 页面打开", "Plate-aware calculations must be opened from LabNest Tools"));
+      return;
+    }
+    if (!calculatorId) return;
+    if (!activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
+    activePlateCalculator = calculatorId;
+    renderLiquidScopeBadge();
+    elements.liquidDrawer.hidden = false;
+    document.body.style.overflow = "hidden";
+    elements.liquidDrawerContent.hidden = true;
+    elements.plateCalculatorFrame.hidden = false;
+    elements.plateCalculatorFrame.src = plateCalculatorUrl(calculatorId);
+    document.querySelectorAll("[data-liquid-module]").forEach((button) => button.classList.remove("active"));
+    document.querySelectorAll("[data-plate-calculator]").forEach((button) => button.classList.toggle("active", button.dataset.plateCalculator === calculatorId));
+    elements.closeLiquidDrawerButton.focus({ preventScroll: true });
+  }
+
   function closeLiquidDrawer() {
-    captureLiquidDraft(activeLiquidModule);
+    if (!activePlateCalculator) captureLiquidDraft(activeLiquidModule);
+    activePlateCalculator = "";
+    elements.plateCalculatorFrame.hidden = true;
+    elements.plateCalculatorFrame.removeAttribute("src");
+    elements.liquidDrawerContent.hidden = false;
     elements.liquidDrawer.hidden = true;
     document.body.style.overflow = "";
   }
@@ -2489,6 +2551,7 @@
   });
 
   document.querySelectorAll(".liquid-module-launch").forEach((button) => button.addEventListener("click", () => { editingLiquidPlanId = null; openLiquidDrawer(button.dataset.liquidModule); }));
+  document.querySelectorAll(".plate-calculator-launch").forEach((button) => button.addEventListener("click", () => { editingLiquidPlanId = null; openPlateCalculator(button.dataset.plateCalculator); }));
   elements.openLiquidCalculatorButton.addEventListener("click", () => { editingLiquidPlanId = null; openLiquidDrawer(activeLiquidModule); });
   elements.savedLiquidPlanList.addEventListener("change", (event) => {
     const row = event.target.closest("[data-saved-liquid-plan]");
@@ -2594,8 +2657,13 @@
   elements.closeLiquidDrawerButton.addEventListener("click", closeLiquidDrawer);
   elements.liquidDrawer.querySelector(".liquid-drawer-backdrop").addEventListener("click", closeLiquidDrawer);
   elements.liquidModuleTabs.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-liquid-module]");
-    if (button) renderLiquidModule(button.dataset.liquidModule);
+    const liquidButton = event.target.closest("[data-liquid-module]");
+    if (liquidButton) {
+      renderLiquidModule(liquidButton.dataset.liquidModule);
+      return;
+    }
+    const calculatorButton = event.target.closest("[data-plate-calculator]");
+    if (calculatorButton) openPlateCalculator(calculatorButton.dataset.plateCalculator);
   });
 
   function fixedReagentRows(form) {
@@ -3498,24 +3566,6 @@
     });
   });
 
-  document.querySelectorAll("[data-plate-calculator]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const wellIds = selection.size ? [...selection] : Core.makeWellIds(project.plateSize);
-      const calculatorId = button.dataset.plateCalculator;
-      const params = new URLSearchParams({
-        source: "plate",
-        workspaceId: workspace.id,
-        plateId: project.id,
-        plateName: project.name,
-        plateSize: String(project.plateSize),
-        wellIds: wellIds.join(","),
-      });
-      if (["seeding", "hydrogel", "transfection", "kill-curve"].includes(calculatorId)) params.set("wells", String(wellIds.length));
-      if (calculatorId === "master-mix") params.set("reactions", String(wellIds.length));
-      window.open(`/tools/calculator/${calculatorId}?${params.toString()}`, "labnest-calculator", "popup,width=1120,height=860");
-    });
-  });
-
   function plateMappingsForCalculator(payload, wellIds) {
     const input = payload.inputs || {};
     const sameValue = (nameZh, nameEn, unit, value) => Number.isFinite(Number(value))
@@ -3553,6 +3603,7 @@
 
   window.addEventListener("message", (event) => {
     if (event.origin !== window.location.origin || event.data?.type !== "labnest:calculator-result") return;
+    if (activePlateCalculator && event.source !== elements.plateCalculatorFrame.contentWindow) return;
     const payload = event.data;
     if (payload.plateContext?.workspaceId !== workspace.id || payload.plateContext?.plateId !== project.id || Number(payload.plateContext?.plateSize) !== project.plateSize) {
       showToast(bilingual("计算结果对应的孔板已不是当前板，请返回原板后重试", "The calculation belongs to another plate. Return to that plate and try again."));
@@ -3578,6 +3629,7 @@
     });
     selection = new Set(validWellIds);
     renderAll();
+    closeLiquidDrawer();
     showToast(mappings.length
       ? bilingual(`已将 ${mappings.length} 项孔级参数写入 ${validWellIds.length} 个孔；批量结果已保留在计算记录`, `Wrote ${mappings.length} per-well parameter(s) to ${validWellIds.length} wells; batch results remain in the calculation log`)
       : bilingual("批量计算结果已关联到当前孔位范围，但未把批量总量误写为逐孔参数", "Batch results are linked to the selected well scope without copying batch totals into each well"));

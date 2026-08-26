@@ -182,19 +182,29 @@
           <section class="card liquid-card" aria-labelledby="liquidCalculationTitle">
             <div class="liquid-card-heading">
               <div>
-                <span class="eyebrow">LIQUID PREPARATION</span>
-                <h2 id="liquidCalculationTitle" data-i18n="liquidTitle">配液计算</h2>
-                <p data-i18n="liquidBody">从当前孔板取孔数，完成常规配液、转染、梯度稀释和药物排板。</p>
+                <span class="eyebrow">PLATE-AWARE PREPARATION</span>
+                <h2 id="liquidCalculationTitle" data-i18n="liquidTitle">配液与板感知计算</h2>
+                <p data-i18n="liquidBody">沿用现有配液流程，并从当前选择直接完成铺板、培养、加药和感染等孔位相关计算。</p>
               </div>
               <span id="liquidScopeBadge" class="liquid-scope-badge">整板 · 24 孔</span>
             </div>
+            <p class="liquid-module-group-label">现有配液模块</p>
             <div class="liquid-module-grid">
               <button class="liquid-module-launch" type="button" data-liquid-module="basic"><span>01</span><strong>基础常规配液</strong><small>C1V1 与目标浓度配液</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="transfection"><span>02</span><strong>转染体系配液</strong><small>siRNA、质粒与多管 Mix</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="serial"><span>03</span><strong>连续梯度稀释</strong><small>直接或逐级稀释</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="drug"><span>04</span><strong>药物浓度梯度</strong><small>配液、预览与排板</small></button>
             </div>
-            <button id="openLiquidCalculatorButton" class="primary-button full" type="button">打开配液计算</button>
+            <p class="liquid-module-group-label">新增板相关计算</p>
+            <div class="plate-module-grid">
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="seeding"><strong>细胞铺板</strong><small>细胞数与培养基</small></button>
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="hydrogel"><strong>水凝胶培养</strong><small>细胞与胶体积</small></button>
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="kill-curve"><strong>杀灭曲线</strong><small>浓度梯度排板</small></button>
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="fold-dilution"><strong>倍数稀释</strong><small>工作液倍数换算</small></button>
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="master-mix"><strong>Master Mix</strong><small>按孔数汇总体系</small></button>
+              <button class="plate-calculator-launch" type="button" data-plate-calculator="moi"><strong>MOI</strong><small>病毒用量与感染率</small></button>
+            </div>
+            <button id="openLiquidCalculatorButton" class="primary-button full" type="button">打开现有配液计算</button>
             <p class="liquid-card-note">默认余量 10% · 最小可靠移液体积 1 µL · 结果仅保存在当前浏览器</p>
             <section class="saved-liquid-plans" aria-labelledby="savedLiquidPlansTitle">
               <div class="saved-liquid-plans-heading"><div><h3 id="savedLiquidPlansTitle">当前板已保存方案</h3><p id="savedLiquidPlansHelp">只有保存到项目且状态有效的方案，才会进入跨板汇总和项目导出。</p></div><span id="savedLiquidPlanCount" class="count-badge">0</span></div>
@@ -218,26 +228,6 @@
               <div id="projectLiquidPlatePicker" class="project-liquid-plate-picker" hidden></div>
               <div id="projectLiquidSummary" class="project-liquid-summary" aria-live="polite"></div>
             </section>
-          </section>
-
-          <section class="card plate-calculator-card" aria-labelledby="plateCalculatorTitle">
-            <div class="plate-calculator-heading">
-              <div><h2 id="plateCalculatorTitle" data-i18n="plateCalculatorTitle">板感知计算</h2><p data-i18n="plateCalculatorBody">把当前选择带入 LabNest Calculator，确认后可将结果写回孔位。</p></div>
-              <span class="local-pill"><i></i><span data-i18n="dualChannel">双通道</span></span>
-            </div>
-            <div class="plate-calculator-grid">
-              <button type="button" data-plate-calculator="seeding" data-i18n="calcSeeding">细胞铺板</button>
-              <button type="button" data-plate-calculator="hydrogel" data-i18n="calcHydrogel">水凝胶</button>
-              <button type="button" data-plate-calculator="transfection" data-i18n="calcTransfection">转染体系</button>
-              <button type="button" data-plate-calculator="kill-curve" data-i18n="calcKillCurve">杀灭曲线</button>
-              <button type="button" data-plate-calculator="reagent-dosing" data-i18n="calcDosing">试剂加药</button>
-              <button type="button" data-plate-calculator="dilution" data-i18n="calcDilution">常规稀释</button>
-              <button type="button" data-plate-calculator="fold-dilution" data-i18n="calcFoldDilution">倍数稀释</button>
-              <button type="button" data-plate-calculator="serial-dilution" data-i18n="calcSerialDilution">连续稀释</button>
-              <button type="button" data-plate-calculator="master-mix">Master Mix</button>
-              <button type="button" data-plate-calculator="moi">MOI</button>
-            </div>
-            <p class="plate-calculator-note" data-i18n="plateCalculatorNote">未选择孔位时默认使用当前整板；共享计算核心由 Calculator 统一维护。</p>
           </section>
 
           <details class="card calculation-card collapsible-card legacy-calculation" hidden>
@@ -296,8 +286,15 @@
           <button type="button" data-liquid-module="transfection">转染体系</button>
           <button type="button" data-liquid-module="serial">梯度稀释</button>
           <button type="button" data-liquid-module="drug">药物排板</button>
+          <button type="button" data-plate-calculator="seeding">细胞铺板</button>
+          <button type="button" data-plate-calculator="hydrogel">水凝胶</button>
+          <button type="button" data-plate-calculator="kill-curve">杀灭曲线</button>
+          <button type="button" data-plate-calculator="fold-dilution">倍数稀释</button>
+          <button type="button" data-plate-calculator="master-mix">Master Mix</button>
+          <button type="button" data-plate-calculator="moi">MOI</button>
         </nav>
         <div id="liquidDrawerContent" class="liquid-drawer-content"></div>
+        <iframe id="plateCalculatorFrame" class="plate-calculator-frame" title="板感知计算" hidden></iframe>
       </section>
     </div>
 

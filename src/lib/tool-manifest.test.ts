@@ -22,7 +22,7 @@ describe("lab tool manifest", () => {
 
   it("keeps both visualization and free plate planning inside LabNest", () => {
     expect(labToolManifest.find((tool) => tool.id === "visualization-studio")?.launchUrl).toBe("/tools/visualization");
-    expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toBe("/tools/free-plate-layout/index.html");
+    expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toBe("/tools/free-plate-layout/index.html?v=20260826-2");
   });
 
   it("connects Calculator to its internal catalog", () => {

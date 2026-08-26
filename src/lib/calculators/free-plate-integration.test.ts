@@ -4,9 +4,6 @@ import { describe, expect, it } from "vitest";
 
 const html = readFileSync(resolve(process.cwd(), "public/tools/free-plate-layout/index.html"), "utf8");
 const script = readFileSync(resolve(process.cwd(), "public/tools/free-plate-layout/app.js"), "utf8");
-const calculatorPage = readFileSync(resolve(process.cwd(), "src/app/tools/calculator/[calculatorId]/page.tsx"), "utf8");
-const calculatorWorkspace = readFileSync(resolve(process.cwd(), "src/components/calculators/CalculatorWorkspace.tsx"), "utf8");
-
 describe("Free Plate unified calculation workspace", () => {
   it("keeps the four existing liquid modules and adds plate-aware modules to the same calculation card", () => {
     const liquidCard = html.match(/<section class="card liquid-card"[\s\S]*?<\/section>\s*<details/)?.[0] ?? "";
@@ -23,20 +20,26 @@ describe("Free Plate unified calculation workspace", () => {
     expect(html).not.toContain("plate-calculator-card");
   });
 
-  it("opens new plate-aware calculators inside the existing drawer rather than a popup", () => {
-    expect(script).not.toContain("window.open(`/tools/calculator/");
-    expect(html).toContain('id="plateCalculatorFrame"');
-    expect(script).toContain("plateCalculatorFrame.src");
-    expect(calculatorPage).toContain('query.embed === "plate"');
+  it("ships the plate-aware calculators inside the standalone planner", () => {
+    expect(html).toContain('id="plateCalculatorHost"');
+    expect(html).not.toContain('id="plateCalculatorFrame"');
+    expect(script).toContain("plateCalculatorDefinitions");
+    expect(script).toContain("calculateStandalonePlateCalculator");
+    expect(script).not.toContain("板感知计算需要从 LabNest 的 Tools 页面打开");
+    expect(script).not.toContain("plateCalculatorFrame.src");
   });
 
-  it("keeps the embedded calculator language aligned with Free Plate", () => {
-    expect(script).toContain('locale: language');
-    expect(calculatorPage).toContain("embeddedLocale");
+  it("uses the selected wells as locked plate context", () => {
+    expect(script).toContain("standalonePlateCalculatorMarkup");
+    expect(script).toContain("liquidTargetWellIds().length");
+    expect(script).toContain('["wells", "孔数"');
+    expect(script).toContain('["reactions", "反应数"');
+    expect(script).toContain('readonly aria-readonly="true"');
   });
 
-  it("returns calculator results to the containing plate window", () => {
-    expect(calculatorWorkspace).toContain("window.parent.postMessage");
-    expect(script).toContain('event.data?.type !== "labnest:calculator-result"');
+  it("applies standalone calculator results directly to the active plate", () => {
+    expect(script).toContain("applyPlateCalculatorPayload");
+    expect(script).toContain("applyStandalonePlateCalculatorResult");
+    expect(script).toContain("plateMappingsForCalculator");
   });
 });

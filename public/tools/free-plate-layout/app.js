@@ -34,7 +34,7 @@
       assignBody: "可输入单个值，也可直接粘贴 Excel 多个值；只应用已勾选项。", applySelected: "应用到所选孔", clearChecked: "清除勾选参数",
       calculationTitle: "条件批量计算", calculationBody: "按孔位标签筛选，对数值参数统一运算。", runCalculation: "运行批量计算",
       liquidTitle: "配液与板感知计算", liquidBody: "沿用现有配液流程，并从当前选择直接完成铺板、培养、加药和感染等孔位相关计算。",
-      plateCalculatorTitle: "板感知计算", plateCalculatorBody: "把当前选择带入 LabNest Calculator，确认后可将结果写回孔位。", dualChannel: "双通道", plateCalculatorNote: "未选择孔位时默认使用当前整板；共享计算核心由 Calculator 统一维护。",
+      plateCalculatorTitle: "板感知计算", plateCalculatorBody: "直接使用当前选择完成计算，确认后可将结果写回孔位。", dualChannel: "双通道", plateCalculatorNote: "未选择孔位时默认使用当前整板；独立 HTML 也可完整使用。",
       calcSeeding: "细胞铺板", calcHydrogel: "水凝胶", calcTransfection: "转染体系", calcKillCurve: "杀灭曲线", calcDosing: "试剂加药", calcDilution: "常规稀释", calcFoldDilution: "倍数稀释", calcSerialDilution: "连续稀释",
       footerLocal: "所有编辑与计算均在当前浏览器完成。", footerReview: "研究工具 · 请在实验前复核最终板图和参数。",
       localOnly: "仅保存在本机", autosaved: "已自动保存", selectedCount: "已选 {n} 孔", wellsCount: "{n} 孔", emptyWell: "空孔",
@@ -55,7 +55,7 @@
       assignBody: "Enter one value or paste multiple values from Excel. Only checked parameters are applied.", applySelected: "Apply to wells", clearChecked: "Clear checked",
       calculationTitle: "Batch calculation", calculationBody: "Filter wells by labels and calculate numeric parameters.", runCalculation: "Run calculation",
       liquidTitle: "Liquid & plate-aware calculations", liquidBody: "Keep the existing preparation workflow and use the current selection for seeding, culture, dosing, and infection calculations.",
-      plateCalculatorTitle: "Plate-aware calculations", plateCalculatorBody: "Send the current selection to LabNest Calculator, then return reviewed results to those wells.", dualChannel: "Dual channel", plateCalculatorNote: "When no wells are selected, the full current plate is used. Calculator maintains the shared calculation core.",
+      plateCalculatorTitle: "Plate-aware calculations", plateCalculatorBody: "Calculate directly with the current selection, then apply reviewed results to those wells.", dualChannel: "Dual channel", plateCalculatorNote: "When no wells are selected, the full current plate is used. The standalone HTML remains fully functional.",
       calcSeeding: "Cell seeding", calcHydrogel: "Hydrogel", calcTransfection: "Transfection", calcKillCurve: "Kill curve", calcDosing: "Reagent dosing", calcDilution: "Dilution", calcFoldDilution: "Fold dilution", calcSerialDilution: "Serial dilution",
       footerLocal: "All edits and calculations run in this browser.", footerReview: "Research tool · Review the final plate and parameters before use.",
       localOnly: "Stored locally", autosaved: "Autosaved", selectedCount: "{n} selected", wellsCount: "{n} wells", emptyWell: "Empty well",
@@ -97,7 +97,7 @@
       "calculationGuide", "runCalculationButton", "calculationResult", "calculationOutputCount", "calculationOutputList", "exportCsvButton", "exportSvgButton",
       "exportJsonButton", "exportXlsxButton", "xlsxOrderSelect", "excelTemplateButton", "projectTemplateButton", "openProjectImportButton", "openBackupRestoreButton", "importJsonLabel", "importJsonInput", "importModeSelect", "confirmImportButton", "importPreview", "restoreJsonLabel", "restoreJsonInput", "restorePreview", "confirmRestoreButton", "projectFileDialog", "projectFileDialogTitle", "projectFileDialogHelp", "projectImportPanel", "projectRestorePanel", "closeProjectFileDialogButton", "printButton",
       "workspaceName", "workspaceNameLabel", "plateTabs", "addPlateButton", "duplicatePlateButton", "copyStructureButton", "movePlateLeftButton", "movePlateRightButton", "deletePlateButton", "overviewToggleButton", "plateOverview", "plateOverviewTitle", "plateOverviewDescription", "overviewColorLabel", "overviewColorDimension", "plateOverviewGrid", "exportXlsxButton",
-      "liquidScopeBadge", "openLiquidCalculatorButton", "projectLiquidScope", "projectLiquidOverage", "projectLiquidContainerCapacity", "projectLiquidSummaryButton", "projectLiquidPlatePicker", "projectLiquidSummary", "liquidDrawer", "closeLiquidDrawerButton", "liquidDrawerScope", "liquidModuleTabs", "liquidDrawerContent", "plateCalculatorFrame", "toast",
+      "liquidScopeBadge", "openLiquidCalculatorButton", "projectLiquidScope", "projectLiquidOverage", "projectLiquidContainerCapacity", "projectLiquidSummaryButton", "projectLiquidPlatePicker", "projectLiquidSummary", "liquidDrawer", "closeLiquidDrawerButton", "liquidDrawerScope", "liquidModuleTabs", "liquidDrawerContent", "plateCalculatorHost", "toast",
       "savedLiquidPlansTitle", "savedLiquidPlansHelp", "savedLiquidPlanCount", "savedLiquidPlanList", "summaryDrawer", "summaryDrawerTitle", "summaryDrawerMeta", "summaryDrawerActions", "summaryDrawerContent", "closeSummaryDrawerButton",
     ].map((id) => [id, document.getElementById(id)]),
   );
@@ -130,6 +130,7 @@
   let indexedSaveTimer = null;
   let activeLiquidModule = "basic";
   let activePlateCalculator = "";
+  let lastStandalonePlateResult = null;
   let lastLiquidResult = null;
   let pendingDrugLayout = null;
   let pendingSerialLayout = null;
@@ -1169,6 +1170,173 @@
     }[module];
   }
 
+  const plateCalculatorDefinitions = {
+    seeding: {
+      nameZh: "细胞铺板", nameEn: "Cell seeding", methodVersion: "seeding-v1",
+      methodZh: "总细胞需求和终体积统一加入一次余量，再按细胞原液浓度计算原液及培养基体积。",
+      methodEn: "Apply overage once to total cells and final volume, then calculate stock suspension and medium volumes.",
+      fields: [
+        ["stockCellsPerMl", "细胞原液浓度", "Stock cell density", 1000000, "cells/mL"],
+        ["wells", "孔数", "Wells", 24, "", "scope"], ["plates", "板数", "Plates", 1, ""],
+        ["cellsPerWell", "每孔细胞数", "Cells per well", 50000, "cells"],
+        ["volumePerWellUl", "每孔体积", "Volume per well", 500, "µL"],
+        ["overagePercent", "额外余量", "Overage", 10, "%"],
+      ],
+    },
+    hydrogel: {
+      nameZh: "水凝胶培养", nameEn: "Hydrogel culture", methodVersion: "hydrogel-v1",
+      methodZh: "按所选孔总体积和凝胶/细胞悬液比例计算混合体系，并校验细胞原液能否装入悬液部分。",
+      methodEn: "Calculate the mixture from selected-well volume and gel/suspension ratio, checking that cell stock fits.",
+      fields: [
+        ["stockCellsPerMl", "细胞原液浓度", "Stock cell density", 2000000, "cells/mL"],
+        ["targetCellsPerMl", "目标细胞密度", "Target cell density", 1000000, "cells/mL"],
+        ["wells", "孔数", "Wells", 24, "", "scope"], ["volumePerWellUl", "每孔体积", "Volume per well", 100, "µL"],
+        ["gelParts", "水凝胶份数", "Hydrogel parts", 4, ""], ["suspensionParts", "细胞悬液份数", "Suspension parts", 1, ""],
+      ],
+    },
+    "kill-curve": {
+      nameZh: "杀灭曲线", nameEn: "Kill curve", methodVersion: "kill-curve-v1",
+      methodZh: "生成线性或对数浓度序列，再按 C1V1=C2V2 计算每孔母液加入量。",
+      methodEn: "Generate a linear or logarithmic dose series and calculate stock additions using C1V1=C2V2.",
+      fields: [
+        ["stockConcentration", "母液浓度", "Stock concentration", 10, "mg/mL"],
+        ["minimum", "最低浓度", "Minimum dose", 0.5, "µg/mL"], ["maximum", "最高浓度", "Maximum dose", 10, "µg/mL"],
+        ["points", "浓度点数", "Dose points", 8, ""], ["volumePerWellMl", "每孔体积", "Volume per well", 0.5, "mL"],
+        ["scale", "梯度方式", "Scale", "linear", "", "select", [["linear", "线性", "Linear"], ["log", "对数", "Logarithmic"]]],
+      ],
+    },
+    "fold-dilution": {
+      nameZh: "倍数稀释", nameEn: "Fold dilution", methodVersion: "fold-dilution-v1",
+      methodZh: "浓缩液体积 = 最终体积 ÷ 浓缩倍数；其余为稀释液。",
+      methodEn: "Concentrated stock volume = final volume divided by stock fold; the remainder is diluent.",
+      fields: [["fold", "浓缩倍数", "Stock fold", 10, "×"], ["finalVolume", "最终体积", "Final volume", 100, "mL"]],
+    },
+    "master-mix": {
+      nameZh: "Master Mix体系", nameEn: "Master mix", methodVersion: "master-mix-v1",
+      methodZh: "每反应组分体积 × 所选孔对应反应数 ×（1 + 余量）。",
+      methodEn: "Per-reaction component volume × reactions from selected wells × (1 + overage).",
+      fields: [
+        ["reactions", "反应数", "Reactions", 24, "", "scope"], ["overagePercent", "额外余量", "Overage", 10, "%"],
+        ["components", "组分（名称, 每反应µL）", "Components (name, µL/reaction)", "2× SYBR Mix,10\nForward primer,0.5\nReverse primer,0.5\nWater,8", "", "textarea"],
+      ],
+    },
+    moi: {
+      nameZh: "感染复数 MOI", nameEn: "Multiplicity of infection", methodVersion: "moi-v1",
+      methodZh: "所需感染单位 = 细胞数 × MOI；未感染及感染事件概率按泊松分布计算。",
+      methodEn: "Required infectious units = cells × MOI; infection-event probabilities use the Poisson distribution.",
+      fields: [
+        ["cells", "所选孔细胞总数", "Total cells in selected wells", 1000000, "cells"], ["desiredMoi", "目标 MOI", "Desired MOI", 1, ""],
+        ["titer", "病毒滴度", "Virus titer", 100000000, ""],
+        ["titerUnit", "滴度单位", "Titer unit", "PFU/mL", "", "select", [["PFU/mL", "PFU/mL", "PFU/mL"], ["IU/mL", "IU/mL", "IU/mL"], ["TU/mL", "TU/mL", "TU/mL"], ["VG/mL", "VG/mL", "VG/mL"]]],
+      ],
+    },
+  };
+
+  function standalonePlateFieldMarkup(field, scopeCount) {
+    const [name, zh, en, defaultValue, unit, type, options] = field;
+    const label = bilingual(zh, en);
+    const unitMarkup = unit ? `<small>${escapeHtml(unit)}</small>` : "";
+    if (type === "textarea") return `<label class="wide"><span>${escapeHtml(label)}</span><textarea name="${name}" required>${escapeHtml(defaultValue)}</textarea></label>`;
+    if (type === "select") return `<label><span>${escapeHtml(label)}</span><select name="${name}">${options.map(([value, optionZh, optionEn]) => `<option value="${escapeHtml(value)}">${escapeHtml(bilingual(optionZh, optionEn))}</option>`).join("")}</select></label>`;
+    const value = type === "scope" ? scopeCount : defaultValue;
+    return `<label${type === "scope" ? ' class="liquid-scope-field"' : ""}><span>${escapeHtml(label)}</span><span class="liquid-inline-input"><input name="${name}" type="number" step="any" min="0" value="${escapeHtml(value)}" ${type === "scope" ? 'readonly aria-readonly="true"' : ""} required />${unitMarkup}</span></label>`;
+  }
+
+  function standalonePlateCalculatorMarkup(calculatorId) {
+    const definition = plateCalculatorDefinitions[calculatorId];
+    const scopeCount = liquidTargetWellIds().length;
+    return `<div class="liquid-workspace plate-calculator-workspace">
+      <section class="liquid-form-card">
+        <h3>${escapeHtml(bilingual(definition.nameZh, definition.nameEn))}</h3>
+        <p>${escapeHtml(bilingual("当前范围：" + scopeCount + " 孔。直接在此计算，不需要打开 LabNest 其他页面。", `Current scope: ${scopeCount} wells. Calculate here without another LabNest page.`))}</p>
+        <form id="standalonePlateCalculatorForm" data-calculator-id="${calculatorId}">
+          <div class="liquid-form-grid">${definition.fields.map((field) => standalonePlateFieldMarkup(field, scopeCount)).join("")}</div>
+          <div class="plate-calculator-method"><strong>${escapeHtml(bilingual("计算方法", "Method"))}</strong><br />${escapeHtml(bilingual(definition.methodZh, definition.methodEn))}</div>
+          <div class="liquid-action-row"><button class="primary-button" type="submit">${escapeHtml(bilingual("计算", "Calculate"))}</button></div>
+        </form>
+      </section>
+      <section class="liquid-result-card"><h3>${escapeHtml(bilingual("计算结果", "Result"))}</h3><p>${escapeHtml(bilingual("计算后可将孔级参数直接写回当前选择。", "After calculation, apply per-well parameters directly to the current selection."))}</p><div id="standalonePlateResult"><div class="liquid-result-empty">${escapeHtml(bilingual("填写参数并点击“计算”。", "Enter parameters and select Calculate."))}</div></div></section>
+    </div>`;
+  }
+
+  function standaloneNumber(inputs, key, { min = 0, positive = false } = {}) {
+    const value = Number(inputs[key]);
+    if (!Number.isFinite(value) || (positive ? value <= 0 : value < min)) throw new Error(bilingual(`请检查“${key}”的输入值。`, `Check the value entered for “${key}”.`));
+    return value;
+  }
+
+  function plateOutput(key, zh, en, value, unit = "") { return { key, label: en, labelZh: zh, value, unit }; }
+  function roundedPlateValue(value) { return Math.round((value + Number.EPSILON) * 1000000) / 1000000; }
+
+  function calculateStandalonePlateCalculator(calculatorId, inputs) {
+    let outputs = [], warnings = [], table;
+    if (calculatorId === "seeding") {
+      const wells = standaloneNumber(inputs, "wells", { positive: true }) * standaloneNumber(inputs, "plates", { positive: true });
+      const factor = 1 + standaloneNumber(inputs, "overagePercent") / 100;
+      const totalCells = standaloneNumber(inputs, "cellsPerWell", { positive: true }) * wells * factor;
+      const finalMl = standaloneNumber(inputs, "volumePerWellUl", { positive: true }) * wells * factor / 1000;
+      const stockMl = totalCells / standaloneNumber(inputs, "stockCellsPerMl", { positive: true });
+      if (stockMl > finalMl) throw new Error(bilingual("细胞原液浓度不足，无法在目标体积内达到要求。", "Stock cell density is too low for the requested volume."));
+      outputs = [plateOutput("totalCells", "总细胞数", "Total cells", totalCells, "cells"), plateOutput("stockVolumeMl", "细胞悬液", "Cell suspension", stockMl, "mL"), plateOutput("mediumVolumeMl", "培养基", "Medium", finalMl - stockMl, "mL"), plateOutput("finalVolumeMl", "最终悬液", "Final suspension", finalMl, "mL")];
+    } else if (calculatorId === "hydrogel") {
+      const totalUl = standaloneNumber(inputs, "wells", { positive: true }) * standaloneNumber(inputs, "volumePerWellUl", { positive: true });
+      const totalCells = standaloneNumber(inputs, "targetCellsPerMl", { positive: true }) * totalUl / 1000;
+      const cellStockUl = totalCells / standaloneNumber(inputs, "stockCellsPerMl", { positive: true }) * 1000;
+      const gelParts = standaloneNumber(inputs, "gelParts", { positive: true }), suspensionParts = standaloneNumber(inputs, "suspensionParts", { positive: true });
+      const gelUl = totalUl * gelParts / (gelParts + suspensionParts), suspensionUl = totalUl - gelUl;
+      if (cellStockUl > suspensionUl) warnings.push(bilingual("细胞原液体积超过悬液部分；请提高原液浓度或增加悬液比例。", "Cell stock exceeds the suspension fraction; increase stock density or suspension fraction."));
+      outputs = [plateOutput("totalCells", "总细胞数", "Total cells", totalCells, "cells"), plateOutput("hydrogelUl", "水凝胶", "Hydrogel", gelUl, "µL"), plateOutput("cellStockUl", "细胞原液", "Cell stock", cellStockUl, "µL"), plateOutput("mediumUl", "悬液培养基", "Suspension medium", Math.max(0, suspensionUl - cellStockUl), "µL")];
+    } else if (calculatorId === "kill-curve") {
+      const points = Math.floor(standaloneNumber(inputs, "points", { positive: true }));
+      const minimum = standaloneNumber(inputs, "minimum"), maximum = standaloneNumber(inputs, "maximum", { positive: true });
+      if (maximum < minimum) throw new Error(bilingual("最高浓度不能低于最低浓度。", "Maximum dose must be at least the minimum dose."));
+      if (inputs.scale === "log" && minimum <= 0) throw new Error(bilingual("对数梯度的最低浓度必须大于 0。", "The minimum logarithmic dose must be greater than 0."));
+      const stockUgMl = standaloneNumber(inputs, "stockConcentration", { positive: true }) * 1000;
+      const volume = standaloneNumber(inputs, "volumePerWellMl", { positive: true });
+      table = Array.from({ length: points }, (_, index) => {
+        const dose = inputs.scale === "log" ? minimum * (maximum / minimum) ** (index / Math.max(1, points - 1)) : minimum + (maximum - minimum) * index / Math.max(1, points - 1);
+        return { level: index + 1, doseUgMl: roundedPlateValue(dose), stockToAddUl: roundedPlateValue(dose * volume / stockUgMl * 1000) };
+      });
+      if (table.some((row) => row.stockToAddUl < 1)) warnings.push(bilingual("一个或多个母液加入量低于 1 µL，建议先配制中间工作液。", "One or more additions are below 1 µL; prepare an intermediate stock."));
+      outputs = [plateOutput("dosePoints", "浓度点数", "Dose points", points), plateOutput("highestStockAdditionUl", "最高浓度母液加入量", "Highest stock addition", table.at(-1)?.stockToAddUl || 0, "µL")];
+    } else if (calculatorId === "fold-dilution") {
+      const fold = standaloneNumber(inputs, "fold", { positive: true }), finalVolume = standaloneNumber(inputs, "finalVolume", { positive: true });
+      if (fold < 1) throw new Error(bilingual("浓缩倍数必须至少为 1。", "Stock fold must be at least 1."));
+      outputs = [plateOutput("stockVolume", "浓缩液", "Concentrated stock", finalVolume / fold, "mL"), plateOutput("diluentVolume", "稀释液", "Diluent", finalVolume - finalVolume / fold, "mL"), plateOutput("finalVolume", "最终1×体积", "Final 1× volume", finalVolume, "mL")];
+    } else if (calculatorId === "master-mix") {
+      const reactions = standaloneNumber(inputs, "reactions", { positive: true }), factor = 1 + standaloneNumber(inputs, "overagePercent") / 100;
+      table = String(inputs.components || "").split(/\r?\n/).map((line) => line.split(",").map((item) => item.trim())).filter((row) => row.some(Boolean)).map(([component, volume]) => ({ component, perReactionUl: Number(volume), batchUl: roundedPlateValue(Number(volume) * reactions * factor) }));
+      if (!table.length || table.some((row) => !row.component || !Number.isFinite(row.perReactionUl) || row.perReactionUl < 0)) throw new Error(bilingual("请按“组分名称, 每反应µL”逐行输入。", "Enter each line as component name, µL per reaction."));
+      outputs = [plateOutput("preparedReactions", "配制反应当量", "Prepared reaction equivalents", reactions * factor), plateOutput("totalMasterMixUl", "Master Mix总量", "Total master mix", table.reduce((sum, row) => sum + row.batchUl, 0), "µL")];
+    } else if (calculatorId === "moi") {
+      const moi = standaloneNumber(inputs, "desiredMoi"), cells = standaloneNumber(inputs, "cells", { positive: true });
+      const virusVolumeUl = cells * moi / standaloneNumber(inputs, "titer", { positive: true }) * 1000;
+      const p0 = Math.exp(-moi), p1 = moi * p0;
+      outputs = [plateOutput("virusVolumeUl", "病毒体积", "Virus volume", virusVolumeUl, "µL"), plateOutput("probabilityUninfectedPercent", "未感染概率", "Uninfected", p0 * 100, "%"), plateOutput("probabilityExactlyOnePercent", "恰好一次感染概率", "Exactly one event", p1 * 100, "%"), plateOutput("probabilityAtLeastOnePercent", "至少一次感染概率", "At least one event", (1 - p0) * 100, "%")];
+      warnings.push(bilingual(`结果沿用 ${inputs.titerUnit} 的感染单位；PFU、IU、TU 与 VG 不默认等价。`, `The result remains in ${inputs.titerUnit}; PFU, IU, TU, and VG are not assumed equivalent.`));
+    } else throw new Error(bilingual("未知的板相关计算器。", "Unknown plate calculator."));
+    return { calculatorId, methodVersion: plateCalculatorDefinitions[calculatorId].methodVersion, outputs: outputs.map((output) => ({ ...output, value: typeof output.value === "number" ? roundedPlateValue(output.value) : output.value })), warnings, table };
+  }
+
+  function renderStandalonePlateResult(result) {
+    const host = document.getElementById("standalonePlateResult");
+    if (!host) return;
+    const outputs = `<div class="plate-calculator-output-grid">${result.outputs.map((output) => `<div class="plate-calculator-output"><span>${escapeHtml(bilingual(output.labelZh, output.label))}</span><strong>${escapeHtml(Number.isFinite(output.value) ? Number(output.value).toLocaleString(undefined, { maximumSignificantDigits: 8 }) : output.value)}${output.unit ? ` ${escapeHtml(output.unit)}` : ""}</strong></div>`).join("")}</div>`;
+    const warnings = result.warnings.length ? `<div class="liquid-warning-list">${result.warnings.map((warning) => `<div class="liquid-warning">${escapeHtml(warning)}</div>`).join("")}</div>` : "";
+    let table = "";
+    if (result.table?.length) {
+      const keys = Object.keys(result.table[0]);
+      const labels = { level: bilingual("级别", "Level"), doseUgMl: bilingual("浓度 (µg/mL)", "Dose (µg/mL)"), stockToAddUl: bilingual("母液加入量 (µL)", "Stock addition (µL)"), component: bilingual("组分", "Component"), perReactionUl: bilingual("每反应 (µL)", "Per reaction (µL)"), batchUl: bilingual("整批 (µL)", "Batch (µL)") };
+      table = `<div class="liquid-table-wrap"><table class="liquid-table"><thead><tr>${keys.map((key) => `<th>${escapeHtml(labels[key] || key)}</th>`).join("")}</tr></thead><tbody>${result.table.map((row) => `<tr>${keys.map((key) => `<td>${escapeHtml(row[key])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
+    host.innerHTML = `${outputs}${warnings}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button></div>`;
+  }
+
+  function applyStandalonePlateCalculatorResult() {
+    if (!lastStandalonePlateResult) return;
+    applyPlateCalculatorPayload(lastStandalonePlateResult);
+  }
+
   function renderLiquidModule(module = activeLiquidModule, { captureCurrent = true } = {}) {
     if (captureCurrent && !activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = "";
@@ -1178,8 +1346,8 @@
     pendingSerialLayout = null;
     document.querySelectorAll("[data-liquid-module]").forEach((button) => button.classList.toggle("active", button.dataset.liquidModule === activeLiquidModule));
     document.querySelectorAll("[data-plate-calculator]").forEach((button) => button.classList.remove("active"));
-    elements.plateCalculatorFrame.hidden = true;
-    elements.plateCalculatorFrame.removeAttribute("src");
+    elements.plateCalculatorHost.hidden = true;
+    elements.plateCalculatorHost.innerHTML = "";
     elements.liquidDrawerContent.hidden = false;
     const markup = liquidModuleDefinition(activeLiquidModule).markup();
     elements.liquidDrawerContent.innerHTML = markup;
@@ -1194,37 +1362,17 @@
     elements.closeLiquidDrawerButton.focus({ preventScroll: true });
   }
 
-  function plateCalculatorUrl(calculatorId) {
-    const wellIds = selection.size ? [...selection] : Core.makeWellIds(project.plateSize);
-    const params = new URLSearchParams({
-      source: "plate",
-      embed: "plate",
-      locale: language,
-      workspaceId: workspace.id,
-      plateId: project.id,
-      plateName: project.name,
-      plateSize: String(project.plateSize),
-      wellIds: wellIds.join(","),
-    });
-    if (["seeding", "hydrogel", "kill-curve"].includes(calculatorId)) params.set("wells", String(wellIds.length));
-    if (calculatorId === "master-mix") params.set("reactions", String(wellIds.length));
-    return `/tools/calculator/${calculatorId}?${params.toString()}`;
-  }
-
   function openPlateCalculator(calculatorId) {
-    if (window.location.protocol === "file:") {
-      showToast(bilingual("板感知计算需要从 LabNest 的 Tools 页面打开", "Plate-aware calculations must be opened from LabNest Tools"));
-      return;
-    }
-    if (!calculatorId) return;
+    if (!plateCalculatorDefinitions[calculatorId]) return;
     if (!activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = calculatorId;
+    lastStandalonePlateResult = null;
     renderLiquidScopeBadge();
     elements.liquidDrawer.hidden = false;
     document.body.style.overflow = "hidden";
     elements.liquidDrawerContent.hidden = true;
-    elements.plateCalculatorFrame.hidden = false;
-    elements.plateCalculatorFrame.src = plateCalculatorUrl(calculatorId);
+    elements.plateCalculatorHost.hidden = false;
+    elements.plateCalculatorHost.innerHTML = standalonePlateCalculatorMarkup(calculatorId);
     document.querySelectorAll("[data-liquid-module]").forEach((button) => button.classList.remove("active"));
     document.querySelectorAll("[data-plate-calculator]").forEach((button) => button.classList.toggle("active", button.dataset.plateCalculator === calculatorId));
     elements.closeLiquidDrawerButton.focus({ preventScroll: true });
@@ -1233,8 +1381,9 @@
   function closeLiquidDrawer() {
     if (!activePlateCalculator) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = "";
-    elements.plateCalculatorFrame.hidden = true;
-    elements.plateCalculatorFrame.removeAttribute("src");
+    lastStandalonePlateResult = null;
+    elements.plateCalculatorHost.hidden = true;
+    elements.plateCalculatorHost.innerHTML = "";
     elements.liquidDrawerContent.hidden = false;
     elements.liquidDrawer.hidden = true;
     document.body.style.overflow = "";
@@ -3047,6 +3196,33 @@
     }
   });
 
+  elements.plateCalculatorHost.addEventListener("submit", (event) => {
+    if (event.target.id !== "standalonePlateCalculatorForm") return;
+    event.preventDefault();
+    const form = event.target;
+    const inputs = Object.fromEntries(new FormData(form).entries());
+    try {
+      const calculated = calculateStandalonePlateCalculator(form.dataset.calculatorId, inputs);
+      const wellIds = liquidTargetWellIds();
+      lastStandalonePlateResult = {
+        ...calculated,
+        type: "labnest:calculator-result",
+        calculatorName: bilingual(plateCalculatorDefinitions[form.dataset.calculatorId].nameZh, plateCalculatorDefinitions[form.dataset.calculatorId].nameEn),
+        inputs,
+        plateContext: { workspaceId: workspace.id, plateId: project.id, plateSize: project.plateSize, wellIds },
+      };
+      renderStandalonePlateResult(lastStandalonePlateResult);
+    } catch (error) {
+      lastStandalonePlateResult = null;
+      const host = document.getElementById("standalonePlateResult");
+      if (host) host.innerHTML = `<div class="liquid-warning">${escapeHtml(error.message)}</div>`;
+    }
+  });
+
+  elements.plateCalculatorHost.addEventListener("click", (event) => {
+    if (event.target.closest('[data-plate-result-action="apply"]')) applyStandalonePlateCalculatorResult();
+  });
+
   function downloadBlob(content, mimeType, fileName) {
     const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -3601,10 +3777,7 @@
     return [];
   }
 
-  window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin || event.data?.type !== "labnest:calculator-result") return;
-    if (activePlateCalculator && event.source !== elements.plateCalculatorFrame.contentWindow) return;
-    const payload = event.data;
+  function applyPlateCalculatorPayload(payload) {
     if (payload.plateContext?.workspaceId !== workspace.id || payload.plateContext?.plateId !== project.id || Number(payload.plateContext?.plateSize) !== project.plateSize) {
       showToast(bilingual("计算结果对应的孔板已不是当前板，请返回原板后重试", "The calculation belongs to another plate. Return to that plate and try again."));
       return;
@@ -3633,6 +3806,11 @@
     showToast(mappings.length
       ? bilingual(`已将 ${mappings.length} 项孔级参数写入 ${validWellIds.length} 个孔；批量结果已保留在计算记录`, `Wrote ${mappings.length} per-well parameter(s) to ${validWellIds.length} wells; batch results remain in the calculation log`)
       : bilingual("批量计算结果已关联到当前孔位范围，但未把批量总量误写为逐孔参数", "Batch results are linked to the selected well scope without copying batch totals into each well"));
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.origin !== window.location.origin || event.data?.type !== "labnest:calculator-result") return;
+    applyPlateCalculatorPayload(event.data);
   });
 
   document.addEventListener("keydown", (event) => {

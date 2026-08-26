@@ -577,8 +577,13 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-module-tabs button { flex: 0 0 auto; min-height: 34px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-strong); color: var(--ink-soft); font-size: var(--type-caption); font-weight: 780; }
 .liquid-module-tabs button.active { border-color: var(--pine); background: var(--pine); color: #fff; }
 .liquid-drawer-content { overflow: auto; padding: 18px 24px 32px; }
-.plate-calculator-frame { grid-row: 3; width: 100%; height: 100%; min-height: 0; border: 0; background: #f5f8f7; }
-.plate-calculator-frame[hidden] { display: none; }
+.plate-calculator-host { grid-row: 3; }
+.plate-calculator-host[hidden] { display: none; }
+.plate-calculator-method { margin-top: 12px; padding: 10px 12px; border-radius: 9px; background: var(--pine-soft); color: var(--pine); font-size: var(--type-caption); line-height: 1.55; }
+.plate-calculator-output-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.plate-calculator-output { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.plate-calculator-output span { display: block; color: var(--muted); font-size: var(--type-meta); }
+.plate-calculator-output strong { display: block; margin-top: 4px; overflow-wrap: anywhere; color: var(--ink); font-family: var(--font-mono); font-size: var(--type-body); }
 .liquid-recipe-library { display: grid; grid-template-columns: minmax(160px,1fr) minmax(180px,1fr) auto; gap: 10px; align-items: center; margin-bottom: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
 .liquid-recipe-library > div:first-child { display: grid; gap: 2px; }
 .liquid-recipe-library strong { font-size: var(--type-body); }

@@ -479,6 +479,12 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-module-launch > span { grid-row: 1 / 3; display: grid; width: 26px; height: 26px; place-items: center; border-radius: 7px; background: #fff; color: var(--pine); font-size: var(--type-meta); font-weight: 850; }
 .liquid-module-launch strong { overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
 .liquid-module-launch small { overflow: hidden; color: var(--muted); font-size: var(--type-meta); text-overflow: ellipsis; white-space: nowrap; }
+.liquid-module-group-label { margin: 14px 0 7px; color: var(--muted); font-size: var(--type-meta); font-weight: 820; letter-spacing: .04em; }
+.plate-module-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.plate-calculator-launch { display: grid; gap: 2px; min-width: 0; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); color: var(--ink); text-align: left; transition: border-color 140ms ease, background 140ms ease, transform 140ms ease; }
+.plate-calculator-launch:hover { border-color: var(--pine); background: var(--pine-soft); transform: translateY(-1px); }
+.plate-calculator-launch strong { overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
+.plate-calculator-launch small { overflow: hidden; color: var(--muted); font-size: var(--type-meta); text-overflow: ellipsis; white-space: nowrap; }
 .liquid-card-note { margin: 9px 0 0; color: var(--muted); font-size: var(--type-meta); line-height: 1.5; text-align: center; }
 .saved-liquid-plans { min-width: 0; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .saved-liquid-plans-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -571,6 +577,8 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-module-tabs button { flex: 0 0 auto; min-height: 34px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-strong); color: var(--ink-soft); font-size: var(--type-caption); font-weight: 780; }
 .liquid-module-tabs button.active { border-color: var(--pine); background: var(--pine); color: #fff; }
 .liquid-drawer-content { overflow: auto; padding: 18px 24px 32px; }
+.plate-calculator-frame { grid-row: 3; width: 100%; height: 100%; min-height: 0; border: 0; background: #f5f8f7; }
+.plate-calculator-frame[hidden] { display: none; }
 .liquid-recipe-library { display: grid; grid-template-columns: minmax(160px,1fr) minmax(180px,1fr) auto; gap: 10px; align-items: center; margin-bottom: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
 .liquid-recipe-library > div:first-child { display: grid; gap: 2px; }
 .liquid-recipe-library strong { font-size: var(--type-body); }
@@ -667,18 +675,6 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px
   .liquid-library-actions { justify-content: flex-start; }
 }
 
-.plate-calculator-card { padding: 18px; }
-.plate-calculator-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.plate-calculator-heading h2 { margin: 0; font-size: 17px; }
-.plate-calculator-heading p, .plate-calculator-note { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.plate-calculator-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 14px; }
-.plate-calculator-grid button { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); color: var(--ink); font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
-.plate-calculator-grid button:hover { border-color: var(--pine); background: var(--pine-soft); }
-
-@media (max-width: 760px) {
-  .plate-calculator-grid { grid-template-columns: 1fr; }
-}
-
 @media (max-width: 760px) {
   .topbar { display: flex; flex-wrap: wrap; gap: 10px; padding: 9px 16px; }
   .brand { flex: 1 1 auto; }
@@ -722,6 +718,7 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px
   .export-actions { justify-content: flex-start; }
   footer { flex-direction: column; gap: 4px; }
   .liquid-module-grid { grid-template-columns: 1fr; }
+  .plate-module-grid { grid-template-columns: 1fr; }
   .liquid-drawer { grid-template-columns: 1fr; }
   .liquid-drawer-backdrop { display: none; }
   .liquid-drawer-panel { width: 100%; border-left: 0; }

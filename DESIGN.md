@@ -190,7 +190,7 @@ The shape language is gently technical: 12px outer panels, 8px inputs and primar
 
 ### Chips
 
-- **Style:** Pale primary or info surfaces with compact 10–12px labels. Pills identify presets or plate-aware status; segmented modes use 7px rounded rectangles.
+- **Style:** Pale primary or info surfaces with compact 10–12px labels. Pills identify presets or plate-aware status; segmented modes use 7px rounded rectangles. Free Plate uses one calculation card and one drawer: established liquid modules appear first, followed by only the non-duplicative plate-aware additions.
 - **State:** Selection changes both surface and text color. Do not rely on color alone when the action changes scientific meaning.
 
 ### Cards / Containers

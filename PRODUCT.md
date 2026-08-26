@@ -32,7 +32,7 @@ LabNest combines provenance-aware research records with deterministic, browser-l
 
 - Calculator contains 31 complete calculators grouped into cell culture, solutions, molecular biology, virology and microbiology, and general utilities.
 - Calculator is available from Tools and as a quick action on the Overview page.
-- Ten calculators have two adapters over the same calculation implementation: quick calculation and Free Plate Layout plate-aware calculation. These are Seeding, Hydrogel, Transfection, Kill Curve, Reagent Dosing, Dilution, Fold Dilution, Serial Dilution, Master Mix, and plate-mode MOI.
+- Free Plate presents one unified calculation workspace: the four established liquid-preparation modules remain unchanged, while six missing plate-aware capabilities (Seeding, Hydrogel, Kill Curve, Fold Dilution, Master Mix, and plate-mode MOI) use the central Calculator implementation in the same drawer. Overlapping dilution, transfection, serial-gradient, and dosing workflows continue through the richer established plate modules instead of appearing as duplicate buttons.
 - Calculator supports bilingual Chinese and English labels, scientific abbreviations, aliases, search, favorites, reusable presets, and the 50 most recent structured calculation records.
 - Calculation records retain inputs, units, method version, outputs, warnings, and time. Users can delete one record or clear all records.
 - Colony Counter is a formal image-assisted counting tool with visible detections and mandatory human review. It is not labeled Beta and must not imply that automated counts are ground truth.

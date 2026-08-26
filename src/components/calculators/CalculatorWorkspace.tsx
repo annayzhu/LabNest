@@ -118,9 +118,10 @@ function CompactToolLink({ tool, zh, marker }: { tool: CalculatorDefinition; zh:
 
 type PlateContext = { workspaceId: string; plateId: string; plateName: string; plateSize: number; wellIds: string[] };
 
-export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext }: { calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext }) {
+export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext, embedded = false, embeddedLocale }: { calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext; embedded?: boolean; embeddedLocale?: "zh" | "en" }) {
   const definition = getCalculatorDefinition(calculatorId);
-  const { locale } = useI18n();
+  const { locale: appLocale } = useI18n();
+  const locale = embeddedLocale ?? appLocale;
   const zh = locale === "zh";
   const { state, update, persistenceWarning } = useCalculatorState();
   const defaults = useMemo(() => Object.fromEntries(definition.fields.map((field) => [field.key, initialInputs[field.key] ?? field.defaultValue ?? ""])), [definition, initialInputs]);
@@ -156,9 +157,14 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   }
 
   function applyToPlate() {
-    if (!result || !plateContext || !window.opener) return;
-    window.opener.postMessage({ type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion }, window.location.origin);
-    window.close();
+    if (!result || !plateContext) return;
+    const payload = { type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion };
+    if (window.opener) {
+      window.opener.postMessage(payload, window.location.origin);
+      window.close();
+      return;
+    }
+    if (window.parent !== window) window.parent.postMessage(payload, window.location.origin);
   }
 
   async function copyResult() {
@@ -181,10 +187,10 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Link href="/tools/calculator" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-hairline text-muted hover:bg-warm hover:text-ink" aria-label={zh ? "返回计算器" : "Back to calculators"}><ArrowLeft className="h-4 w-4" /></Link>
+          {!embedded ? <Link href="/tools/calculator" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-hairline text-muted hover:bg-warm hover:text-ink" aria-label={zh ? "返回计算器" : "Back to calculators"}><ArrowLeft className="h-4 w-4" /></Link> : null}
           <div className="min-w-0"><h1 className="font-serif text-[21px] font-medium text-ink md:text-[24px]">{zh ? definition.nameZh : definition.name}</h1><p className="text-xs leading-5 text-muted">{zh ? definition.shortDescriptionZh : definition.shortDescription}</p></div>
         </div>
-        {state ? <button type="button" onClick={() => update(toggleFavorite(state, calculatorId))} className="focus-ring inline-flex h-9 items-center gap-2 rounded-[8px] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}
+        {state && !embedded ? <button type="button" onClick={() => update(toggleFavorite(state, calculatorId))} className="focus-ring inline-flex h-9 items-center gap-2 rounded-[8px] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}
       </div>
 
       {plateContext ? <div className="flex items-center gap-2 rounded-[8px] border border-info/20 bg-info-surface px-3 py-2 text-xs text-info"><FlaskConical className="h-4 w-4 shrink-0" /><span>{zh ? `来自“${plateContext.plateName}”的 ${plateContext.wellIds.length} 个孔；结果可回写到这些孔位。` : `${plateContext.wellIds.length} wells from “${plateContext.plateName}”; results can be sent back to these wells.`}</span></div> : null}

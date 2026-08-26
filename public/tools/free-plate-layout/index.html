@@ -7,7 +7,7 @@
     <meta name="description" content="纯浏览器本地运行的 6、12、24、96、384 孔板布局、标签与批量计算工具。" />
     <title>Plate Layout Planner · 孔板布局规划工具</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f625d'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3Ccircle cx='22' cy='10' r='3'/%3E%3Ccircle cx='10' cy='22' r='3'/%3E%3Ccircle cx='22' cy='22' r='3'/%3E%3C/g%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="styles.css?v=20260823-18" />
+    <link rel="stylesheet" href="styles.css?v=20260826-1" />
   </head>
   <body>
     <header class="topbar">
@@ -220,6 +220,26 @@
             </section>
           </section>
 
+          <section class="card plate-calculator-card" aria-labelledby="plateCalculatorTitle">
+            <div class="plate-calculator-heading">
+              <div><h2 id="plateCalculatorTitle" data-i18n="plateCalculatorTitle">板感知计算</h2><p data-i18n="plateCalculatorBody">把当前选择带入 LabNest Calculator，确认后可将结果写回孔位。</p></div>
+              <span class="local-pill"><i></i><span data-i18n="dualChannel">双通道</span></span>
+            </div>
+            <div class="plate-calculator-grid">
+              <button type="button" data-plate-calculator="seeding" data-i18n="calcSeeding">细胞铺板</button>
+              <button type="button" data-plate-calculator="hydrogel" data-i18n="calcHydrogel">水凝胶</button>
+              <button type="button" data-plate-calculator="transfection" data-i18n="calcTransfection">转染体系</button>
+              <button type="button" data-plate-calculator="kill-curve" data-i18n="calcKillCurve">杀灭曲线</button>
+              <button type="button" data-plate-calculator="reagent-dosing" data-i18n="calcDosing">试剂加药</button>
+              <button type="button" data-plate-calculator="dilution" data-i18n="calcDilution">常规稀释</button>
+              <button type="button" data-plate-calculator="fold-dilution" data-i18n="calcFoldDilution">倍数稀释</button>
+              <button type="button" data-plate-calculator="serial-dilution" data-i18n="calcSerialDilution">连续稀释</button>
+              <button type="button" data-plate-calculator="master-mix">Master Mix</button>
+              <button type="button" data-plate-calculator="moi">MOI</button>
+            </div>
+            <p class="plate-calculator-note" data-i18n="plateCalculatorNote">未选择孔位时默认使用当前整板；共享计算核心由 Calculator 统一维护。</p>
+          </section>
+
           <details class="card calculation-card collapsible-card legacy-calculation" hidden>
             <summary class="collapsible-summary">
               <div>
@@ -336,6 +356,6 @@
     <script src="liquid-plan-core.js?v=20260823-18"></script>
     <script src="workspace-core.js?v=20260823-15"></script>
     <script src="xlsx-core.js?v=20260822-1"></script>
-    <script src="app.js?v=20260823-18"></script>
+    <script src="app.js?v=20260826-1"></script>
   </body>
 </html>

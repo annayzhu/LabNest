@@ -72,7 +72,7 @@
 
   function createWorkspace({ name = "未命名项目", plateSize = 24, plateName } = {}) {
     const first = createPlate({ name: plateName || "未命名孔板", plateSize });
-    return { version: 2, name: String(name).slice(0, 80), activePlateId: first.id, plates: [first], latestLiquidSummary: null, updatedAt: new Date().toISOString() };
+    return { version: 2, id: newId("workspace"), name: String(name).slice(0, 80), activePlateId: first.id, plates: [first], latestLiquidSummary: null, updatedAt: new Date().toISOString() };
   }
 
   function hasLegacyContent(raw, size) {
@@ -97,6 +97,7 @@
     }));
     return {
       version: 2,
+      id: newId("workspace"),
       name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 80) : "未命名项目",
       activePlateId: plates[0].id,
       plates,
@@ -121,6 +122,7 @@
     if (!plates.length) plates.push(createPlate());
     return {
       version: 2,
+      id: typeof raw.id === "string" && raw.id ? raw.id : newId("workspace"),
       name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 80) : "未命名项目",
       activePlateId: plates.some((plate) => plate.id === raw.activePlateId) ? raw.activePlateId : plates[0].id,
       plates,

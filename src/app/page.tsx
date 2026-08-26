@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addMonths, format, startOfMonth } from "date-fns";
-import { ArrowUpRight, Beaker, BookOpen, Database, FlaskConical } from "lucide-react";
+import { ArrowUpRight, Beaker, BookOpen, Calculator, Database, FlaskConical } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
@@ -33,6 +33,12 @@ const quickActions = [
     href: "/results/new",
     icon: Database,
     iconClass: "bg-stone text-graphite",
+  },
+  {
+    label: "Calculator",
+    href: "/tools/calculator",
+    icon: Calculator,
+    iconClass: "bg-sage-surface text-moss",
   },
 ] as const;
 
@@ -134,7 +140,7 @@ export default async function OverviewPage({
           <aside aria-label="Start here" className="min-w-0 space-y-3">
             <Card className="overflow-hidden">
               <CardHeader title="Start here" />
-              <CardBody className="grid gap-1.5 p-2.5 md:grid-cols-3 xl:grid-cols-1">
+              <CardBody className="grid gap-1.5 p-2.5 md:grid-cols-2 xl:grid-cols-1">
                 {quickActions.map((action) => {
                   const Icon = action.icon;
                   return (

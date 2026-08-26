@@ -1,4 +1,4 @@
-export type LabToolCategory = "Planning" | "Analysis";
+export type LabToolCategory = "Planning" | "Calculators" | "Analysis";
 
 export type LabToolManifestItem = {
   id: string;
@@ -59,6 +59,17 @@ export const labToolManifest: LabToolManifestItem[] = [
     accepts: ["sample list", "one or more plate formats", "custom labels", "saved liquid recipes"],
     produces: ["multi-plate map", "shared liquid summary", "pipetting checklist", "XLSX workbook"],
     launchUrl: "/tools/free-plate-layout/index.html",
+    external: false,
+  },
+  {
+    id: "calculator",
+    name: "Experimental Calculator",
+    version: "1.0",
+    category: "Calculators",
+    description: "Run 31 browser-local wet-lab calculations with bilingual methods, presets, and reviewable results.",
+    accepts: ["experimental parameters", "units", "optional plate context"],
+    produces: ["calculated values", "warnings", "local history"],
+    launchUrl: "/tools/calculator",
     external: false,
   },
   {

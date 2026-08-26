@@ -34,6 +34,8 @@
       assignBody: "可输入单个值，也可直接粘贴 Excel 多个值；只应用已勾选项。", applySelected: "应用到所选孔", clearChecked: "清除勾选参数",
       calculationTitle: "条件批量计算", calculationBody: "按孔位标签筛选，对数值参数统一运算。", runCalculation: "运行批量计算",
       liquidTitle: "配液计算", liquidBody: "从当前孔板取孔数，完成常规配液、转染、梯度稀释和药物排板。",
+      plateCalculatorTitle: "板感知计算", plateCalculatorBody: "把当前选择带入 LabNest Calculator，确认后可将结果写回孔位。", dualChannel: "双通道", plateCalculatorNote: "未选择孔位时默认使用当前整板；共享计算核心由 Calculator 统一维护。",
+      calcSeeding: "细胞铺板", calcHydrogel: "水凝胶", calcTransfection: "转染体系", calcKillCurve: "杀灭曲线", calcDosing: "试剂加药", calcDilution: "常规稀释", calcFoldDilution: "倍数稀释", calcSerialDilution: "连续稀释",
       footerLocal: "所有编辑与计算均在当前浏览器完成。", footerReview: "研究工具 · 请在实验前复核最终板图和参数。",
       localOnly: "仅保存在本机", autosaved: "已自动保存", selectedCount: "已选 {n} 孔", wellsCount: "{n} 孔", emptyWell: "空孔",
       expand: "展开", collapse: "收起", text: "文本", number: "数值", unit: "单位", noColor: "不着色", noFilter: "不筛选", noNumeric: "没有数值维度",
@@ -53,6 +55,8 @@
       assignBody: "Enter one value or paste multiple values from Excel. Only checked parameters are applied.", applySelected: "Apply to wells", clearChecked: "Clear checked",
       calculationTitle: "Batch calculation", calculationBody: "Filter wells by labels and calculate numeric parameters.", runCalculation: "Run calculation",
       liquidTitle: "Liquid preparation", liquidBody: "Use the current plate scope for routine solutions, transfection mixes, serial dilutions, and drug layouts.",
+      plateCalculatorTitle: "Plate-aware calculations", plateCalculatorBody: "Send the current selection to LabNest Calculator, then return reviewed results to those wells.", dualChannel: "Dual channel", plateCalculatorNote: "When no wells are selected, the full current plate is used. Calculator maintains the shared calculation core.",
+      calcSeeding: "Cell seeding", calcHydrogel: "Hydrogel", calcTransfection: "Transfection", calcKillCurve: "Kill curve", calcDosing: "Reagent dosing", calcDilution: "Dilution", calcFoldDilution: "Fold dilution", calcSerialDilution: "Serial dilution",
       footerLocal: "All edits and calculations run in this browser.", footerReview: "Research tool · Review the final plate and parameters before use.",
       localOnly: "Stored locally", autosaved: "Autosaved", selectedCount: "{n} selected", wellsCount: "{n} wells", emptyWell: "Empty well",
       expand: "Expand", collapse: "Collapse", text: "Text", number: "Number", unit: "Unit", noColor: "No color", noFilter: "No filter", noNumeric: "No numeric parameters",
@@ -3492,6 +3496,91 @@
       elements.calculationResult.className = "calculation-result";
       renderAll();
     });
+  });
+
+  document.querySelectorAll("[data-plate-calculator]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const wellIds = selection.size ? [...selection] : Core.makeWellIds(project.plateSize);
+      const calculatorId = button.dataset.plateCalculator;
+      const params = new URLSearchParams({
+        source: "plate",
+        workspaceId: workspace.id,
+        plateId: project.id,
+        plateName: project.name,
+        plateSize: String(project.plateSize),
+        wellIds: wellIds.join(","),
+      });
+      if (["seeding", "hydrogel", "transfection", "kill-curve"].includes(calculatorId)) params.set("wells", String(wellIds.length));
+      if (calculatorId === "master-mix") params.set("reactions", String(wellIds.length));
+      window.open(`/tools/calculator/${calculatorId}?${params.toString()}`, "labnest-calculator", "popup,width=1120,height=860");
+    });
+  });
+
+  function plateMappingsForCalculator(payload, wellIds) {
+    const input = payload.inputs || {};
+    const sameValue = (nameZh, nameEn, unit, value) => Number.isFinite(Number(value))
+      ? [{ name: bilingual(nameZh, nameEn), unit, values: wellIds.map(() => Number(value)) }]
+      : [];
+    if (payload.calculatorId === "seeding") {
+      return [
+        ...sameValue("铺板细胞数/孔", "Seeding cells/well", "cells", input.cellsPerWell),
+        ...sameValue("铺板体积/孔", "Seeding volume/well", "µL", input.volumePerWellUl),
+      ];
+    }
+    if (payload.calculatorId === "hydrogel") return sameValue("水凝胶培养体积/孔", "Hydrogel volume/well", "µL", input.volumePerWellUl);
+    if (payload.calculatorId === "transfection") {
+      return [
+        ...sameValue("转染 DNA/孔", "Transfection DNA/well", "µg", input.dnaUgPerWell),
+        ...sameValue("转染复合物/孔", "Transfection complex/well", "µL", input.complexVolumeUlPerWell),
+      ];
+    }
+    if (payload.calculatorId === "reagent-dosing") return sameValue("加药目标浓度", "Target dosing concentration", "µM", input.targetConcentration);
+    if (payload.calculatorId === "fold-dilution") return sameValue("工作液倍数", "Working-solution fold", "×", 1);
+    if (payload.calculatorId === "moi") return sameValue("目标 MOI", "Target MOI", "MOI", input.desiredMoi);
+    if (payload.calculatorId === "kill-curve" || payload.calculatorId === "serial-dilution") {
+      const rows = Array.isArray(payload.table) ? payload.table : [];
+      const valueKey = payload.calculatorId === "kill-curve" ? "doseUgMl" : "concentration";
+      const validRows = rows.filter((row) => Number.isFinite(Number(row?.[valueKey])));
+      if (!validRows.length) return [];
+      return [{
+        name: payload.calculatorId === "kill-curve" ? bilingual("杀灭曲线浓度", "Kill-curve dose") : bilingual("连续稀释浓度", "Serial-dilution concentration"),
+        unit: payload.calculatorId === "kill-curve" ? "µg/mL" : "relative",
+        values: wellIds.map((_, index) => Number(validRows[Math.min(validRows.length - 1, Math.floor(index * validRows.length / wellIds.length))][valueKey])),
+      }];
+    }
+    return [];
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.origin !== window.location.origin || event.data?.type !== "labnest:calculator-result") return;
+    const payload = event.data;
+    if (payload.plateContext?.workspaceId !== workspace.id || payload.plateContext?.plateId !== project.id || Number(payload.plateContext?.plateSize) !== project.plateSize) {
+      showToast(bilingual("计算结果对应的孔板已不是当前板，请返回原板后重试", "The calculation belongs to another plate. Return to that plate and try again."));
+      return;
+    }
+    const validWellIds = (payload.plateContext.wellIds || []).filter((wellId) => Core.makeWellIds(project.plateSize).includes(wellId));
+    if (!validWellIds.length || !Array.isArray(payload.outputs)) return;
+    const mappings = plateMappingsForCalculator(payload, validWellIds);
+    commit(() => {
+      const wells = currentWells();
+      mappings.forEach((mapping, mappingIndex) => {
+        const name = nextAvailableDimensionName(mapping.name);
+        const id = `calculator_${Date.now().toString(36)}_${mappingIndex}_${Math.random().toString(36).slice(2, 6)}`;
+        project.dimensions.push({ id, name, type: "number", unit: mapping.unit || "" });
+        validWellIds.forEach((wellId, wellIndex) => {
+          if (!wells[wellId]) wells[wellId] = { params: {} };
+          wells[wellId].params[id] = mapping.values[wellIndex];
+        });
+        project.colorDimension = id;
+      });
+      project.calculationLog.push({ at: new Date().toISOString(), plateSize: project.plateSize, calculatorId: payload.calculatorId, outputName: payload.calculatorName, targetWellIds: validWellIds, inputs: payload.inputs, outputs: payload.outputs, table: payload.table, updated: mappings.length ? validWellIds.length : 0, methodVersion: payload.methodVersion });
+      project.calculationLog = project.calculationLog.slice(-50);
+    });
+    selection = new Set(validWellIds);
+    renderAll();
+    showToast(mappings.length
+      ? bilingual(`已将 ${mappings.length} 项孔级参数写入 ${validWellIds.length} 个孔；批量结果已保留在计算记录`, `Wrote ${mappings.length} per-well parameter(s) to ${validWellIds.length} wells; batch results remain in the calculation log`)
+      : bilingual("批量计算结果已关联到当前孔位范围，但未把批量总量误写为逐孔参数", "Batch results are linked to the selected well scope without copying batch totals into each well"));
   });
 
   document.addEventListener("keydown", (event) => {

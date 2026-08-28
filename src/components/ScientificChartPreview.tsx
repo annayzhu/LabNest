@@ -3,11 +3,16 @@
 import type { ReactNode, RefObject } from "react";
 import { ScientificAdvancedChartPreview } from "@/components/ScientificAdvancedChartPreview";
 import {
+  BAR_CATEGORY_LABEL_ANGLE,
+  benjaminiHochbergAdjust,
+  barCategoryAxisLayoutMetrics,
+  barCategoryLabelText,
   boxStatistics,
   divergingColor,
   formatTick,
   figureFontPresets,
   getPlotDefinition,
+  getPlotModule,
   groupNumericValues,
   interpolateColor,
   journalThemes,
@@ -15,9 +20,12 @@ import {
   linearRegression,
   meanErrorStatistics,
   numericExtent,
+  observedAxisTicks,
   parseNumericValue,
   parseRatioValue,
+  resolveAxisDomain,
   scaleLinear,
+  welchSummaryPValue,
   type JournalThemeId,
   type ParsedDataset,
   type PlotType,
@@ -48,7 +56,7 @@ const CHART_TEXT_COLOR = "#23242A";
 
 type LegendItem = { label: string; color: string; shape?: "circle" | "line" | "square" };
 
-function getFrame(settings: VisualizationSettings, type: PlotType): PlotFrame {
+function getFrame(settings: VisualizationSettings, type: PlotType, bottomOverride?: number): PlotFrame {
   const titleOffset = settings.title ? 24 : 0;
   const supportsLegend = type !== "box" && type !== "violin";
   const compactWidth = settings.width < 420;
@@ -56,11 +64,11 @@ function getFrame(settings: VisualizationSettings, type: PlotType): PlotFrame {
   const rightLegend = supportsLegend && settings.legendPosition === "right" ? (compactWidth ? 104 : 132) : 0;
   const bottomLegend = supportsLegend && settings.legendPosition === "bottom" ? 34 : 0;
   const left = compactWidth
-    ? type === "enrichment" ? 124 : type === "heatmap" ? 90 : type === "bar" && settings.swapAxes ? 104 : 60
-    : type === "enrichment" ? 168 : type === "heatmap" ? 108 : type === "bar" && settings.swapAxes ? 132 : 72;
-  const right = (compactWidth ? 18 : 24) + rightLegend;
+    ? type === "enrichment" ? 124 : type === "heatmap" ? 90 : type === "bar" && (settings.swapAxes || ["horizontal", "bullet", "pyramid"].includes(settings.barVariant)) ? 104 : 60
+    : type === "enrichment" ? 168 : type === "heatmap" ? 108 : type === "bar" && (settings.swapAxes || ["horizontal", "bullet", "pyramid"].includes(settings.barVariant)) ? 132 : 72;
+  const right = (compactWidth ? 18 : 24) + rightLegend + (type === "bar" && settings.barVariant === "dual-axis" ? 38 : 0);
   const top = (compactHeight ? 20 : 24) + titleOffset;
-  const bottom = (compactHeight ? 48 : 58) + bottomLegend;
+  const bottom = bottomOverride ?? (compactHeight ? 48 : 58) + bottomLegend;
   return {
     width: settings.width,
     height: settings.height,
@@ -100,6 +108,10 @@ function NumericAxes({
   hideYTicks = false,
   categoryXPositions,
   categoryYPositions,
+  xTickValues,
+  yTickValues,
+  xScaleOverride,
+  yScaleOverride,
 }: {
   frame: PlotFrame;
   settings: VisualizationSettings;
@@ -114,14 +126,18 @@ function NumericAxes({
   hideYTicks?: boolean;
   categoryXPositions?: number[];
   categoryYPositions?: number[];
+  xTickValues?: number[];
+  yTickValues?: number[];
+  xScaleOverride?: (value: number) => number;
+  yScaleOverride?: (value: number) => number;
 }) {
-  const xTicks = ticks(xDomain);
-  const yTicks = ticks(yDomain);
+  const xTicks = xTickValues ?? ticks(xDomain);
+  const yTicks = yTickValues ?? ticks(yDomain);
   const xBottom = frame.top + frame.plotHeight;
   const verticalGridPositions = categoryXPositions
-    ?? (hideXTicks ? [] : xTicks.map((value) => scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])));
+    ?? (hideXTicks ? [] : xTicks.map((value) => xScaleOverride ? xScaleOverride(value) : scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])));
   const horizontalGridPositions = categoryYPositions
-    ?? (hideYTicks ? [] : yTicks.map((value) => scaleLinear(value, yDomain, [xBottom, frame.top])));
+    ?? (hideYTicks ? [] : yTicks.map((value) => yScaleOverride ? yScaleOverride(value) : scaleLinear(value, yDomain, [xBottom, frame.top])));
   return (
     <g>
       {settings.grid === "both"
@@ -137,25 +153,25 @@ function NumericAxes({
       <line x1={frame.left} x2={frame.left + frame.plotWidth} y1={xBottom} y2={xBottom} stroke={ink} strokeWidth={settings.axisLineWidth} />
       <line x1={frame.left} x2={frame.left} y1={frame.top} y2={xBottom} stroke={ink} strokeWidth={settings.axisLineWidth} />
       {!hideXTicks ? xTicks.map((value) => {
-        const x = scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth]);
+        const x = xScaleOverride ? xScaleOverride(value) : scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth]);
         return (
           <g key={`xt-${value}`}>
             <line x1={x} x2={x} y1={xBottom} y2={xBottom + 5} stroke={ink} strokeWidth={settings.axisLineWidth} />
-            <text x={x} y={xBottom + 19} textAnchor="middle" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
+            <text data-axis-tick="x" x={x} y={xBottom + 19} textAnchor="middle" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
           </g>
         );
       }) : null}
       {!hideYTicks ? yTicks.map((value) => {
-        const y = scaleLinear(value, yDomain, [xBottom, frame.top]);
+        const y = yScaleOverride ? yScaleOverride(value) : scaleLinear(value, yDomain, [xBottom, frame.top]);
         return (
           <g key={`yt-${value}`}>
             <line x1={frame.left - 5} x2={frame.left} y1={y} y2={y} stroke={ink} strokeWidth={settings.axisLineWidth} />
-            <text x={frame.left - 9} y={y + settings.tickSize * 0.34} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
+            <text data-axis-tick="y" x={frame.left - 9} y={y + settings.tickSize * 0.34} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
           </g>
         );
       }) : null}
-      <text x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 45 : 13)} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text>
-      <text transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text>
+      {xLabel.trim() ? <text data-axis-label="x" x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 57 : 13)} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text> : null}
+      {yLabel.trim() ? <text data-axis-label="y" transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text> : null}
     </g>
   );
 }
@@ -164,13 +180,17 @@ function Legend({ frame, settings, items, ink }: { frame: PlotFrame; settings: V
   if (settings.legendPosition === "none" || items.length === 0) return null;
   if (settings.legendPosition === "bottom") {
     const available = frame.width - frame.left - 20;
-    const itemWidth = Math.min(130, available / Math.max(1, items.length));
+    const columns = Math.min(items.length, Math.max(1, Math.floor(available / 112)));
+    const rows = Math.ceil(items.length / columns);
+    const itemWidth = available / columns;
+    const rowHeight = settings.legendSize + 7;
+    const labelLimit = Math.max(8, Math.min(24, Math.floor((itemWidth - 15) / Math.max(5.5, settings.legendSize * .55))));
     return (
-      <g transform={`translate(${frame.left} ${frame.height - 23})`}>
+      <g transform={`translate(${frame.left} ${frame.height - 22 - (rows - 1) * rowHeight})`}>
         {items.map((item, index) => (
-          <g key={item.label} transform={`translate(${index * itemWidth} 0)`}>
+          <g key={item.label} transform={`translate(${(index % columns) * itemWidth} ${Math.floor(index / columns) * rowHeight})`}>
             <LegendMark item={item} y={-4} />
-            <text x={13} y={0} fill={ink} fontSize={settings.legendSize}>{truncate(item.label, 18)}</text>
+            <text x={13} y={0} fill={ink} fontSize={settings.legendSize}>{truncate(item.label, labelLimit)}</text>
           </g>
         ))}
       </g>
@@ -222,66 +242,139 @@ function renderBar(
   muted: string,
   gridColor: string,
 ) {
-  const rows = dataset.rows.map((row) => ({
-    category: row[mapping.category],
-    value: parseNumericValue(row[mapping.value]) ?? 0,
+  type BarDatum = { category: string; value: number; error: number; group: string; facet: string; secondary: number | null; target: number | null; pValue: number | null };
+  const rawRows: BarDatum[] = dataset.rows.map((row) => ({
+    category: row[mapping.category], value: parseNumericValue(row[mapping.value]) ?? 0,
     error: settings.barErrorType !== "none" && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0,
-    group: mapping.group ? row[mapping.group] || "Value" : "Value",
+    group: mapping.group ? row[mapping.group] || "Value" : "Value", facet: mapping.facet ? row[mapping.facet] || "All" : "All",
+    secondary: mapping.secondary ? parseNumericValue(row[mapping.secondary]) : null,
+    target: mapping.target ? parseNumericValue(row[mapping.target]) : null,
+    pValue: mapping.pValue ? parseNumericValue(row[mapping.pValue]) : null,
   }));
+  const rows = settings.barInputMode === "summary" ? rawRows : [...rawRows.reduce((buckets, row) => {
+    const key = `${row.category}\u0000${row.group}\u0000${row.facet}`;
+    const bucket = buckets.get(key) ?? [];
+    bucket.push(row); buckets.set(key, bucket); return buckets;
+  }, new Map<string, BarDatum[]>())].map(([, values]) => {
+    const mean = values.reduce((sum, row) => sum + row.value, 0) / values.length;
+    const variance = values.length > 1 ? values.reduce((sum, row) => sum + (row.value - mean) ** 2, 0) / (values.length - 1) : 0;
+    const sd = Math.sqrt(variance);
+    const meanOptional = (key: "secondary" | "target") => {
+      const numeric = values.flatMap((row) => row[key] === null ? [] : [row[key] as number]);
+      return numeric.length ? numeric.reduce((sum, value) => sum + value, 0) / numeric.length : null;
+    };
+    return { ...values[0], value: mean, secondary: meanOptional("secondary"), target: meanOptional("target"), error: settings.barErrorType === "sd" ? sd : settings.barErrorType === "sem" ? sd / Math.sqrt(values.length) : 0 };
+  });
+  const categoryKey = (row: BarDatum) => settings.barVariant === "faceted" ? `${row.facet}\u0000${row.category}` : row.category;
+  const categories = [...new Set(rows.map(categoryKey))];
   const groups = [...new Set(rows.map((row) => row.group))];
+  const facets = [...new Set(rows.map((row) => row.facet))];
   const colorMap = paletteForGroups(groups, colors);
-  const domain = numericExtent(rows.flatMap((row) => [row.value - row.error, row.value + row.error]), true);
-  const band = (settings.swapAxes ? frame.plotHeight : frame.plotWidth) / Math.max(1, rows.length);
-  const categoryPositions = rows.map((_, index) => settings.swapAxes
-    ? frame.top + band * (index + 0.5)
-    : frame.left + band * (index + 0.5));
-  const baseline = settings.swapAxes
-    ? scaleLinear(0, domain, [frame.left, frame.left + frame.plotWidth])
-    : scaleLinear(0, domain, [frame.top + frame.plotHeight, frame.top]);
-  const categoryLabel = (settings.swapAxes ? settings.yLabel : settings.xLabel).trim();
-  const valueLabel = (settings.swapAxes ? settings.xLabel : settings.yLabel).trim();
-  const numericAxes = settings.swapAxes ? (
-    <NumericAxes frame={frame} settings={settings} xDomain={domain} yDomain={[0, rows.length]} xLabel={valueLabel} yLabel={categoryLabel} ink={ink} muted={muted} gridColor={gridColor} hideYTicks categoryYPositions={categoryPositions} />
+  const stacked = settings.barVariant === "stacked" || settings.barVariant === "percentage";
+  const isHorizontal = settings.swapAxes || ["horizontal", "bullet", "pyramid"].includes(settings.barVariant);
+  const valueFor = (row: BarDatum) => settings.barVariant === "pyramid"
+    ? (groups.indexOf(row.group) < Math.ceil(groups.length / 2) ? -Math.abs(row.value) : Math.abs(row.value))
+    : row.value;
+  const stackExtents = categories.flatMap((category) => {
+    const matching = rows.filter((row) => categoryKey(row) === category);
+    return [matching.filter((row) => valueFor(row) < 0).reduce((sum, row) => sum + valueFor(row), 0), matching.filter((row) => valueFor(row) >= 0).reduce((sum, row) => sum + valueFor(row), 0)];
+  });
+  const automaticValues = stacked ? stackExtents : rows.flatMap((row) => {
+    const values = [valueFor(row) - row.error, valueFor(row) + row.error];
+    if (settings.barVariant === "overlay" && row.secondary !== null) values.push(row.secondary);
+    if (settings.barVariant === "bullet" && row.target !== null) values.push(row.target);
+    return values;
+  });
+  const automaticDomain = settings.barVariant === "percentage" ? [0, 100] as [number, number] : numericExtent(automaticValues, true);
+  const domain = isHorizontal
+    ? resolveAxisDomain(automaticDomain, settings.xMin, settings.xMax)
+    : resolveAxisDomain(automaticDomain, settings.yMin, settings.yMax);
+  const band = (isHorizontal ? frame.plotHeight : frame.plotWidth) / Math.max(1, categories.length);
+  const categoryPositions = categories.map((_, index) => isHorizontal ? frame.top + band * (index + 0.5) : frame.left + band * (index + 0.5));
+  const linearValueScale = isHorizontal
+    ? (value: number) => scaleLinear(value, domain, [frame.left, frame.left + frame.plotWidth])
+    : (value: number) => scaleLinear(value, domain, [frame.top + frame.plotHeight, frame.top]);
+  const hasAxisBreak = settings.barVariant === "axis-break" && domain[0] < settings.axisBreakStart && settings.axisBreakEnd < domain[1];
+  const valueScale = (value: number) => {
+    if (!hasAxisBreak) return linearValueScale(value);
+    const rangeStart = isHorizontal ? frame.left : frame.top + frame.plotHeight;
+    const rangeEnd = isHorizontal ? frame.left + frame.plotWidth : frame.top;
+    const direction = rangeEnd >= rangeStart ? 1 : -1;
+    const totalPixels = Math.abs(rangeEnd - rangeStart); const gap = 12; const segmentPixels = (totalPixels - gap) / 2;
+    if (value <= settings.axisBreakStart) return rangeStart + direction * scaleLinear(value, [domain[0], settings.axisBreakStart], [0, segmentPixels]);
+    if (value >= settings.axisBreakEnd) return rangeStart + direction * (segmentPixels + gap + scaleLinear(value, [settings.axisBreakEnd, domain[1]], [0, segmentPixels]));
+    return rangeStart + direction * (segmentPixels + gap / 2);
+  };
+  const breakTicks = hasAxisBreak ? [domain[0], settings.axisBreakStart, settings.axisBreakEnd, domain[1]] : undefined;
+  const categoryLabel = (isHorizontal ? settings.yLabel : settings.xLabel).trim();
+  const valueLabel = (isHorizontal ? settings.xLabel : settings.yLabel).trim();
+  const numericAxes = isHorizontal ? (
+    <NumericAxes frame={frame} settings={settings} xDomain={domain} yDomain={[0, categories.length]} xLabel={valueLabel} yLabel={categoryLabel} ink={ink} muted={muted} gridColor={gridColor} hideYTicks categoryYPositions={categoryPositions} xTickValues={breakTicks} xScaleOverride={hasAxisBreak ? valueScale : undefined} />
   ) : (
-    <NumericAxes frame={frame} settings={settings} xDomain={[0, rows.length]} yDomain={domain} xLabel={categoryLabel} yLabel={valueLabel} ink={ink} muted={muted} gridColor={gridColor} hideXTicks categoryXPositions={categoryPositions} />
+    <NumericAxes frame={frame} settings={settings} xDomain={[0, categories.length]} yDomain={domain} xLabel={categoryLabel} yLabel={valueLabel} ink={ink} muted={muted} gridColor={gridColor} hideXTicks categoryXPositions={categoryPositions} yTickValues={breakTicks} yScaleOverride={hasAxisBreak ? valueScale : undefined} />
   );
+
+  if (settings.barVariant === "polar") {
+    const cx = frame.left + frame.plotWidth / 2; const cy = frame.top + frame.plotHeight / 2;
+    const inner = 24; const outer = Math.max(inner + 10, Math.min(frame.plotWidth, frame.plotHeight) / 2 - 28);
+    const max = Math.max(...rows.map((row) => Math.abs(row.value)), 1);
+    const step = Math.PI * 2 / Math.max(1, rows.length); const gap = Math.min(step * settings.barGap, 0.18);
+    const arc = (radius: number, start: number, end: number) => { const p1 = [cx + Math.cos(start) * radius, cy + Math.sin(start) * radius]; const p2 = [cx + Math.cos(end) * radius, cy + Math.sin(end) * radius]; return `M ${p1[0]} ${p1[1]} A ${radius} ${radius} 0 ${end - start > Math.PI ? 1 : 0} 1 ${p2[0]} ${p2[1]}`; };
+    return <><circle cx={cx} cy={cy} r={inner} fill="white" stroke={gridColor} />{rows.map((row, index) => { const radius = inner + Math.abs(row.value) / max * (outer - inner); const start = -Math.PI / 2 + index * step + gap; const end = -Math.PI / 2 + (index + 1) * step - gap; const angle = (start + end) / 2; return <g key={`${row.category}-${index}`} data-plot-data><path data-plot-element="bar" d={arc(radius, start, end)} fill="none" stroke={colorMap.get(row.group) ?? colors[0]} strokeWidth={Math.max(7, (outer - inner) * 0.16)} strokeOpacity={settings.opacity} /><text x={cx + Math.cos(angle) * (outer + 13)} y={cy + Math.sin(angle) * (outer + 13) + 3} textAnchor={Math.cos(angle) > .2 ? "start" : Math.cos(angle) < -.2 ? "end" : "middle"} fill={muted} fontSize={settings.tickSize}>{truncate(row.category, 11)}</text></g>; })}<Legend frame={frame} settings={settings} ink={ink} items={groups.map((group) => ({ label: group, color: colorMap.get(group) ?? colors[0], shape: "square" }))} /></>;
+  }
+
+  const starFor = (p: number | null) => p === null || p > settings.significanceThreshold ? "" : p <= .001 ? "***" : p <= .01 ? "**" : "*";
+  const groupBand = band * (1 - settings.barGap);
+  const maximumGroupsPerCategory = Math.max(1, ...categories.map((category) => new Set(rows.filter((row) => categoryKey(row) === category).map((row) => row.group)).size));
+  const usesGroupedSlots = maximumGroupsPerCategory > 1;
+  const subgroupBand = stacked ? groupBand : groupBand / (usesGroupedSlots ? Math.max(1, groups.length) : 1);
+  const stackOffsets = new Map<string, { positive: number; negative: number }>();
+  const marks = rows.map((row, index) => {
+    const categoryIndex = categories.indexOf(categoryKey(row));
+    const groupIndex = usesGroupedSlots ? groups.indexOf(row.group) : 0;
+    const stack = stackOffsets.get(categoryKey(row)) ?? { positive: 0, negative: 0 };
+    let displayValue = valueFor(row); let from = 0;
+    if (settings.barVariant === "percentage") { const total = rows.filter((item) => categoryKey(item) === categoryKey(row)).reduce((sum, item) => sum + Math.abs(valueFor(item)), 0) || 1; displayValue = Math.abs(displayValue) / total * 100; }
+    if (stacked) { from = displayValue >= 0 ? stack.positive : stack.negative; if (displayValue >= 0) stack.positive += displayValue; else stack.negative += displayValue; stackOffsets.set(categoryKey(row), stack); }
+    const to = from + displayValue; const color = colorMap.get(row.group) ?? colors[0];
+    const categoryStart = (isHorizontal ? frame.top : frame.left) + categoryIndex * band + band * settings.barGap / 2;
+    const cross = categoryStart + (stacked ? 0 : groupIndex * subgroupBand); const thickness = stacked ? groupBand : subgroupBand;
+    const primaryScale = valueScale;
+    const a = primaryScale(from); const b = primaryScale(to);
+    const axisSafeInterval = from === 0 ? barIntervalAwayFromAxis(b, a, settings.axisLineWidth) : { start: Math.min(a, b), length: Math.abs(b - a) };
+    const start = axisSafeInterval?.start ?? Math.min(a, b); const length = axisSafeInterval?.length ?? 0;
+    const center = cross + thickness / 2; const errorA = primaryScale(displayValue - row.error); const errorB = primaryScale(displayValue + row.error); const cap = Math.min(settings.errorBarCapSize / 2, thickness * .35);
+    const star = settings.showSignificance ? starFor(row.pValue) : "";
+    return <g key={`${row.category}-${row.group}-${index}`} data-plot-data data-facet={row.facet}>
+      <rect data-plot-element="bar" data-value={displayValue} x={isHorizontal ? start : cross} y={isHorizontal ? cross : start} width={isHorizontal ? Math.max(.8, length) : thickness} height={isHorizontal ? thickness : Math.max(.8, length)} rx={settings.barVariant === "bullet" ? 0 : 1.5} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} />
+      {settings.barVariant === "bullet" && row.target !== null ? <line data-plot-element="target" x1={primaryScale(row.target)} x2={primaryScale(row.target)} y1={cross - 2} y2={cross + thickness + 2} stroke={ink} strokeWidth={Math.max(2, settings.dataLineWidth)} /> : null}
+      {!stacked && settings.barErrorType !== "none" ? <g data-plot-element="error-bar" stroke={ink} strokeWidth={settings.errorBarLineWidth} strokeLinecap="round">{isHorizontal ? <><line x1={errorA} x2={errorB} y1={center} y2={center} /><line x1={errorA} x2={errorA} y1={center-cap} y2={center+cap} /><line x1={errorB} x2={errorB} y1={center-cap} y2={center+cap} /></> : <><line x1={center} x2={center} y1={errorA} y2={errorB} /><line x1={center-cap} x2={center+cap} y1={errorA} y2={errorA} /><line x1={center-cap} x2={center+cap} y1={errorB} y2={errorB} /></>}</g> : null}
+      {star ? <text data-plot-label x={isHorizontal ? Math.min(frame.left + frame.plotWidth - 4, b + 6) : center} y={isHorizontal ? center + settings.tickSize / 3 : Math.max(frame.top + settings.tickSize, b - 5)} textAnchor={isHorizontal ? "start" : "middle"} fill={ink} fontSize={settings.tickSize} fontWeight={700}>{star}</text> : null}
+    </g>;
+  });
+
+  const secondaryRows = rows.filter((row) => row.secondary !== null);
+  const secondaryDomain = numericExtent(secondaryRows.map((row) => row.secondary ?? 0), true);
+  const secondaryScaleDomain = settings.barVariant === "dual-axis" ? secondaryDomain : domain;
+  const secondaryMarks = ["dual-axis", "overlay"].includes(settings.barVariant) ? groups.flatMap((group) => {
+    const seriesRows = secondaryRows.filter((row) => row.group === group).sort((a, b) => categories.indexOf(categoryKey(a)) - categories.indexOf(categoryKey(b)));
+    const color = colorMap.get(group) ?? ink;
+    return seriesRows.map((row, index) => {
+      const categoryIndex = categories.indexOf(categoryKey(row)); const x = frame.left + band * (categoryIndex + .5);
+      const y = scaleLinear(row.secondary ?? 0, secondaryScaleDomain, [frame.top + frame.plotHeight, frame.top]);
+      const previous = index > 0 ? seriesRows[index - 1] : null; const px = previous ? frame.left + band * (categories.indexOf(categoryKey(previous)) + .5) : x; const py = previous ? scaleLinear(previous.secondary ?? 0, secondaryScaleDomain, [frame.top + frame.plotHeight, frame.top]) : y;
+      return <g key={`secondary-${group}-${index}`} data-plot-data>{settings.barOverlayType === "line" && previous ? <line x1={px} y1={py} x2={x} y2={y} stroke={color} strokeWidth={settings.dataLineWidth} /> : null}<circle cx={x} cy={y} r={settings.pointSize} fill="white" stroke={color} strokeWidth={settings.dataLineWidth} /></g>;
+    });
+  }) : null;
 
   return (
     <>
       {numericAxes}
-      {rows.map((row, index) => {
-        const color = colorMap.get(row.group) ?? colors[0];
-        if (settings.swapAxes) {
-          const y = frame.top + index * band + band * 0.16;
-          const x = scaleLinear(row.value, domain, [frame.left, frame.left + frame.plotWidth]);
-          const interval = barIntervalAwayFromAxis(x, baseline, settings.axisLineWidth);
-          const errorStart = scaleLinear(row.value - row.error, domain, [frame.left, frame.left + frame.plotWidth]);
-          const errorEnd = scaleLinear(row.value + row.error, domain, [frame.left, frame.left + frame.plotWidth]);
-          const errorCenter = y + band * 0.34;
-          const capHalf = Math.min(settings.errorBarCapSize / 2, band * 0.3);
-          return (
-            <g key={`${row.category}-${index}`}>
-              {interval ? <rect data-plot-element="bar" x={interval.start} y={y} width={interval.length} height={band * 0.68} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} /> : null}
-              {settings.barErrorType !== "none" ? <g data-plot-element="error-bar" stroke={ink} strokeWidth={settings.errorBarLineWidth} strokeLinecap="round"><line x1={errorStart} x2={errorEnd} y1={errorCenter} y2={errorCenter} /><line x1={errorStart} x2={errorStart} y1={errorCenter - capHalf} y2={errorCenter + capHalf} /><line x1={errorEnd} x2={errorEnd} y1={errorCenter - capHalf} y2={errorCenter + capHalf} /></g> : null}
-              <text x={frame.left - 9} y={y + band * 0.43} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(row.category, 18)}</text>
-            </g>
-          );
-        }
-        const x = frame.left + index * band + band * 0.16;
-        const y = scaleLinear(row.value, domain, [frame.top + frame.plotHeight, frame.top]);
-        const interval = barIntervalAwayFromAxis(y, baseline, settings.axisLineWidth);
-        const errorStart = scaleLinear(row.value - row.error, domain, [frame.top + frame.plotHeight, frame.top]);
-        const errorEnd = scaleLinear(row.value + row.error, domain, [frame.top + frame.plotHeight, frame.top]);
-        const errorCenter = x + band * 0.34;
-        const capHalf = Math.min(settings.errorBarCapSize / 2, band * 0.3);
-        return (
-          <g key={`${row.category}-${index}`}>
-            {interval ? <rect data-plot-element="bar" x={x} y={interval.start} width={band * 0.68} height={interval.length} rx={2} fill={color} fillOpacity={settings.opacity} stroke={settings.barBorderWidth > 0 ? settings.barBorderColor : "none"} strokeWidth={settings.barBorderWidth} /> : null}
-            {settings.barErrorType !== "none" ? <g data-plot-element="error-bar" stroke={ink} strokeWidth={settings.errorBarLineWidth} strokeLinecap="round"><line x1={errorCenter} x2={errorCenter} y1={errorStart} y2={errorEnd} /><line x1={errorCenter - capHalf} x2={errorCenter + capHalf} y1={errorStart} y2={errorStart} /><line x1={errorCenter - capHalf} x2={errorCenter + capHalf} y1={errorEnd} y2={errorEnd} /></g> : null}
-            <text transform={`translate(${x + band * 0.34} ${frame.top + frame.plotHeight + 10}) rotate(-30)`} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(row.category, 16)}</text>
-          </g>
-        );
-      })}
+      <g clipPath="url(#plot-area-bar)">{marks}{secondaryMarks}</g>
+      {categories.map((category, index) => { const label = category.includes("\u0000") ? category.split("\u0000")[1] : category; return isHorizontal ? <text key={category} x={frame.left - 9} y={frame.top + band * (index + .5) + settings.tickSize / 3} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(label, 18)}</text> : <text key={category} data-plot-element="bar-category-label" data-full-label={label} transform={`translate(${frame.left + band * (index + .5)} ${frame.top + frame.plotHeight + 10}) rotate(${BAR_CATEGORY_LABEL_ANGLE})`} textAnchor="end" fill={muted} fontSize={settings.tickSize}><title>{label}</title>{barCategoryLabelText(label)}</text>; })}
+      {hasAxisBreak ? isHorizontal ? <g><rect x={valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-6} y={frame.top} width={12} height={frame.plotHeight} fill="white" /><path d={`M ${valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-4} ${frame.top+frame.plotHeight+4} l 8 -8 m -8 0 l 8 8`} fill="none" stroke={ink} strokeWidth={settings.axisLineWidth} /></g> : <g><rect x={frame.left} y={valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-6} width={frame.plotWidth} height={12} fill="white" /><path d={`M ${frame.left-4} ${valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-4} l 8 8 m -8 0 l 8 -8`} fill="none" stroke={ink} strokeWidth={settings.axisLineWidth} /></g> : null}
+      {settings.barVariant === "faceted" ? facets.map((facet) => { const indices = categories.map((key, index) => key.startsWith(`${facet}\u0000`) ? index : -1).filter((index) => index >= 0); const center = indices.length ? indices.reduce((sum, index) => sum + frame.left + band * (index + .5), 0) / indices.length : frame.left; return <text key={facet} x={center} y={frame.top + settings.tickSize} textAnchor="middle" fill={ink} fontSize={settings.tickSize} fontWeight={700}>{facet}</text>; }) : null}
+      {settings.barVariant === "dual-axis" ? <g><line x1={frame.left+frame.plotWidth} x2={frame.left+frame.plotWidth} y1={frame.top} y2={frame.top+frame.plotHeight} stroke={ink} strokeWidth={settings.axisLineWidth} />{[0, .5, 1].map((t) => <text key={t} x={frame.left+frame.plotWidth+7} y={frame.top+frame.plotHeight*(1-t)+4} fill={muted} fontSize={settings.tickSize}>{formatTick(secondaryDomain[0]+t*(secondaryDomain[1]-secondaryDomain[0]))}</text>)}{settings.secondaryAxisLabel.trim() ? <text transform={`translate(${frame.width-10} ${frame.top+frame.plotHeight/2}) rotate(90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{settings.secondaryAxisLabel}</text> : null}</g> : null}
       <Legend frame={frame} settings={settings} ink={ink} items={groups.map((group) => ({ label: group, color: colorMap.get(group) ?? colors[0], shape: "square" }))} />
     </>
   );
@@ -305,27 +398,49 @@ function renderLineOrScatter(
     return {
       x: settings.swapAxes ? rawY : rawX,
       y: settings.swapAxes ? rawX : rawY,
+      mean: rawY,
       error: lineErrorsEnabled && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0,
+      n: mapping.n ? parseNumericValue(row[mapping.n]) : null,
       group: row[type === "line" ? mapping.series : mapping.group] || "All",
       label: type !== "line" && mapping.label ? row[mapping.label] : "",
       index,
       order: rawX,
     };
   });
-  const xDomain = numericExtent(lineErrorsEnabled && settings.swapAxes
+  const xDomain = resolveAxisDomain(numericExtent(lineErrorsEnabled && settings.swapAxes
     ? points.flatMap((point) => [point.x - point.error, point.x + point.error])
-    : points.map((point) => point.x));
-  const yDomain = numericExtent(lineErrorsEnabled && !settings.swapAxes
+    : points.map((point) => point.x)), settings.xMin, settings.xMax);
+  const yDomain = resolveAxisDomain(numericExtent(lineErrorsEnabled && !settings.swapAxes
     ? points.flatMap((point) => [point.y - point.error, point.y + point.error])
-    : points.map((point) => point.y));
+    : points.map((point) => point.y)), settings.yMin, settings.yMax);
   const groups = [...new Set(points.map((point) => point.group))];
   const colorMap = paletteForGroups(groups, colors);
+  const referenceSeries = settings.lineReferenceSeries && groups.includes(settings.lineReferenceSeries) ? settings.lineReferenceSeries : groups[0];
+  const rawLineComparisons = type === "line" && settings.showSignificance && (settings.lineErrorType === "sd" || settings.lineErrorType === "sem")
+    ? points.flatMap((point) => {
+        if (point.group === referenceSeries || point.n === null) return [];
+        const reference = points.find((candidate) => candidate.group === referenceSeries && candidate.order === point.order && candidate.n !== null);
+        if (!reference || reference.n === null) return [];
+        const pointSd = settings.lineErrorType === "sem" ? point.error * Math.sqrt(point.n) : point.error;
+        const referenceSd = settings.lineErrorType === "sem" ? reference.error * Math.sqrt(reference.n) : reference.error;
+        const pValue = welchSummaryPValue(point.mean, pointSd, point.n, reference.mean, referenceSd, reference.n);
+        return pValue === null ? [] : [{ pointIndex: point.index, pValue }];
+      })
+    : [];
+  const adjustedLinePValues = settings.linePAdjustment === "bh"
+    ? benjaminiHochbergAdjust(rawLineComparisons.map((comparison) => comparison.pValue))
+    : rawLineComparisons.map((comparison) => comparison.pValue);
+  const lineSignificance = new Map(rawLineComparisons.map((comparison, index) => [comparison.pointIndex, { ...comparison, adjustedPValue: adjustedLinePValues[index] }]));
+  const maximumObservedTicks = Math.max(2, Math.min(12, Math.floor((settings.swapAxes ? frame.plotHeight : frame.plotWidth) / Math.max(24, settings.tickSize * 2.2))));
+  const lineTimeTicks = type === "line"
+    ? observedAxisTicks(points.map((point) => settings.swapAxes ? point.y : point.x), maximumObservedTicks)
+    : undefined;
   const xLabel = settings.swapAxes
-    ? settings.yLabel || (type === "line" ? "Value" : "Y")
-    : settings.xLabel || "X";
+    ? settings.yLabel.trim()
+    : settings.xLabel.trim();
   const yLabel = settings.swapAxes
-    ? settings.xLabel || "X"
-    : settings.yLabel || (type === "line" ? "Value" : "Y");
+    ? settings.xLabel.trim()
+    : settings.yLabel.trim();
   const scaled = points.map((point) => ({
     ...point,
     sx: scaleLinear(point.x, xDomain, [frame.left, frame.left + frame.plotWidth]),
@@ -334,7 +449,8 @@ function renderLineOrScatter(
 
   return (
     <>
-      <NumericAxes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={xLabel} yLabel={yLabel} ink={ink} muted={muted} gridColor={gridColor} />
+      <NumericAxes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={xLabel} yLabel={yLabel} ink={ink} muted={muted} gridColor={gridColor} xTickValues={type === "line" && !settings.swapAxes ? lineTimeTicks : undefined} yTickValues={type === "line" && settings.swapAxes ? lineTimeTicks : undefined} />
+      <g data-plot-data>
       {lineErrorsEnabled
         ? scaled.map((point) => {
             const capHalf = settings.errorBarCapSize / 2;
@@ -390,9 +506,19 @@ function renderLineOrScatter(
       {scaled.map((point) => (
         <g key={`point-${point.index}`}>
           <circle cx={point.sx} cy={point.sy} r={settings.pointSize} fill={colorMap.get(point.group)} fillOpacity={settings.opacity} stroke="#FFFFFF" strokeWidth={0.8} />
-          {settings.showLabels && point.label ? <text x={point.sx + settings.pointSize + 2} y={point.sy - 3} fill={ink} fontSize={settings.tickSize}>{truncate(point.label, 12)}</text> : null}
+          {settings.showLabels && point.label ? <text data-plot-label x={point.x > (xDomain[0] + xDomain[1]) / 2 ? point.sx - settings.pointSize - 2 : point.sx + settings.pointSize + 2} y={point.y > (yDomain[0] + yDomain[1]) / 2 ? point.sy + settings.tickSize + 2 + (point.index % 2) * 3 : point.sy - 3 - (point.index % 2) * 3} textAnchor={point.x > (xDomain[0] + xDomain[1]) / 2 ? "end" : "start"} fill={ink} fontSize={settings.tickSize}>{truncate(point.label, 12)}</text> : null}
         </g>
       ))}
+      {type === "line" ? scaled.map((point) => {
+        const comparison = lineSignificance.get(point.index);
+        if (!comparison) return null;
+        const mark = comparison.adjustedPValue <= 0.001 ? "***" : comparison.adjustedPValue <= 0.01 ? "**" : comparison.adjustedPValue <= settings.significanceThreshold ? "*" : "ns";
+        const offset = settings.pointSize + settings.errorBarCapSize / 2 + settings.tickSize;
+        const x = settings.swapAxes ? Math.min(frame.left + frame.plotWidth - 4, point.sx + offset) : point.sx;
+        const y = settings.swapAxes ? point.sy + settings.tickSize * 0.3 : Math.max(frame.top + settings.tickSize, point.sy - offset);
+        return <text key={`line-significance-${point.index}`} data-plot-element="line-significance" data-adjusted-p={comparison.adjustedPValue.toPrecision(5)} x={x} y={y} textAnchor={settings.swapAxes ? "start" : "middle"} fill={ink} fillOpacity={comparison.adjustedPValue <= settings.significanceThreshold ? 1 : 0.62} fontSize={settings.tickSize} fontWeight={700}><title>{`${point.group} vs ${referenceSeries}; ${settings.linePAdjustment === "bh" ? "BH-adjusted " : ""}P=${comparison.adjustedPValue.toPrecision(4)}`}</title>{mark}</text>;
+      }) : null}
+      </g>
       <Legend frame={frame} settings={settings} ink={ink} items={groups.map((group) => ({ label: group, color: colorMap.get(group) ?? colors[0], shape: type === "line" ? "line" : "circle" }))} />
     </>
   );
@@ -425,9 +551,10 @@ function renderDistribution(
   const densityBoundaryDomain: [number, number] = [rawYDomain[0] - rawSpan, rawYDomain[1] + rawSpan];
   const densityCurves = new Map(entries.map(([group, values]) => [group, kernelDensityEstimate(values, densityBoundaryDomain, settings.violinBandwidth).points]));
   const densitySupport = [...densityCurves.values()].flatMap((curve) => curve.map((point) => point.position));
-  const yDomain = type === "violin" && densitySupport.length > 0
+  const automaticYDomain = type === "violin" && densitySupport.length > 0
     ? numericExtent(densitySupport)
     : numericExtent([...entries.flatMap(([, values]) => values), ...boxSummaryExtent]);
+  const yDomain = resolveAxisDomain(automaticYDomain, settings.yMin, settings.yMax);
   const band = frame.plotWidth / Math.max(1, entries.length);
   const groupNames = entries.map(([group]) => group);
   const colorMap = paletteForGroups(groupNames, colors);
@@ -452,7 +579,7 @@ function renderDistribution(
           violin = <polygon data-plot-element="violin" points={[...right, ...left].join(" ")} fill={color} fillOpacity={0.3} stroke={color} strokeWidth={settings.dataLineWidth} strokeLinejoin="round" />;
         }
         return (
-          <g key={group}>
+          <g key={group} data-plot-data>
             {violin}
             {type === "box" && settings.showBox ? (
               <g data-plot-element="box-layer">
@@ -502,8 +629,8 @@ function renderVolcano(
         : "Not significant";
     return { index, label: row[mapping.label], effect, pValue, significance, state };
   });
-  const xDomain = numericExtent(points.map((point) => point.effect));
-  const yDomain = numericExtent(points.map((point) => point.significance), true);
+  const xDomain = resolveAxisDomain(numericExtent([...points.map((point) => point.effect), -settings.foldChangeThreshold, settings.foldChangeThreshold]), settings.xMin, settings.xMax);
+  const yDomain = resolveAxisDomain(numericExtent([...points.map((point) => point.significance), -Math.log10(settings.pValueThreshold)], true), settings.yMin, settings.yMax);
   const stateColors = new Map<string, string>([["Down", colors[0]], ["Up", colors[1] ?? colors[0]], ["Not significant", colors[2] ?? "#B8B8BC"]]);
   const labels = points
     .filter((point) => point.state !== "Not significant")
@@ -514,18 +641,20 @@ function renderVolcano(
   return (
     <>
       <NumericAxes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={settings.xLabel || "log₂ fold change"} yLabel={settings.yLabel || "−log₁₀ adjusted P"} ink={ink} muted={muted} gridColor={gridColor} />
-      {[-settings.foldChangeThreshold, settings.foldChangeThreshold].map((value) => <line key={value} x1={scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])} x2={scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])} y1={frame.top} y2={frame.top + frame.plotHeight} stroke={muted} strokeWidth={1} strokeDasharray="5 4" />)}
-      <line x1={frame.left} x2={frame.left + frame.plotWidth} y1={scaleLinear(-Math.log10(settings.pValueThreshold), yDomain, [frame.top + frame.plotHeight, frame.top])} y2={scaleLinear(-Math.log10(settings.pValueThreshold), yDomain, [frame.top + frame.plotHeight, frame.top])} stroke={muted} strokeWidth={1} strokeDasharray="5 4" />
+      <g data-plot-data>
+      {[-settings.foldChangeThreshold, settings.foldChangeThreshold].map((value) => <line key={value} data-plot-element="fold-change-threshold" x1={scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])} x2={scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])} y1={frame.top} y2={frame.top + frame.plotHeight} stroke={muted} strokeWidth={1} strokeDasharray="5 4" />)}
+      <line data-plot-element="p-value-threshold" x1={frame.left} x2={frame.left + frame.plotWidth} y1={scaleLinear(-Math.log10(settings.pValueThreshold), yDomain, [frame.top + frame.plotHeight, frame.top])} y2={scaleLinear(-Math.log10(settings.pValueThreshold), yDomain, [frame.top + frame.plotHeight, frame.top])} stroke={muted} strokeWidth={1} strokeDasharray="5 4" />
       {points.map((point) => {
         const x = scaleLinear(point.effect, xDomain, [frame.left, frame.left + frame.plotWidth]);
         const y = scaleLinear(point.significance, yDomain, [frame.top + frame.plotHeight, frame.top]);
         return (
           <g key={point.index}>
             <circle cx={x} cy={y} r={settings.pointSize} fill={stateColors.get(point.state)} fillOpacity={settings.opacity} stroke="#FFFFFF" strokeWidth={0.6} />
-            {labelSet.has(point.index) ? <text x={x + settings.pointSize + 2} y={y - 3} fill={ink} fontSize={settings.tickSize} fontWeight={600}>{truncate(point.label, 13)}</text> : null}
+            {labelSet.has(point.index) ? <text data-plot-label x={point.effect > (xDomain[0] + xDomain[1]) / 2 ? x - settings.pointSize - 2 : x + settings.pointSize + 2} y={point.significance > (yDomain[0] + yDomain[1]) / 2 ? y + settings.tickSize + 2 + (point.index % 2) * 3 : y - 3 - (point.index % 2) * 3} textAnchor={point.effect > (xDomain[0] + xDomain[1]) / 2 ? "end" : "start"} fill={ink} fontSize={settings.tickSize} fontWeight={600}>{truncate(point.label, 13)}</text> : null}
           </g>
         );
       })}
+      </g>
       <Legend frame={frame} settings={settings} ink={ink} items={["Up", "Down", "Not significant"].map((state) => ({ label: state, color: stateColors.get(state) ?? colors[0] }))} />
     </>
   );
@@ -606,7 +735,7 @@ function renderEnrichment(
     pValue: parseNumericValue(row[mapping.pValue]) ?? 1,
     group: mapping.group ? row[mapping.group] || "All" : "All",
   })).sort((a, b) => a.ratio - b.ratio);
-  const ratioDomain = numericExtent(rows.map((row) => row.ratio), true);
+  const ratioDomain = resolveAxisDomain(numericExtent(rows.map((row) => row.ratio), true), settings.xMin, settings.xMax);
   const countExtent = numericExtent(rows.map((row) => row.count), true);
   const significance = rows.map((row) => -Math.log10(row.pValue));
   const significanceExtent = numericExtent(significance, true);
@@ -623,7 +752,7 @@ function renderEnrichment(
         const radius = scaleLinear(row.count, countExtent, [3.5, 10.5]);
         const color = interpolateColor(sequential[0], sequential[1], scaleLinear(-Math.log10(row.pValue), significanceExtent, [0, 1]));
         return (
-          <g key={`${row.term}-${index}`}>
+          <g key={`${row.term}-${index}`} data-plot-data>
             <circle cx={x} cy={y} r={radius} fill={color} fillOpacity={settings.opacity} stroke={ink} strokeWidth={0.45} />
             <text x={frame.left - 9} y={y + settings.tickSize * 0.34} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(row.term, 24)}</text>
           </g>
@@ -646,15 +775,14 @@ function renderEnrichment(
 }
 
 export function ScientificChartPreview({ svgRef, type, dataset, mapping, settings, themeId }: ChartProps) {
-  if ([
-    "correlation", "pcoa", "umap", "beeswarm", "raincloud", "ma", "quadrant", "errorbar", "area", "lollipop",
-    "clustered-heatmap", "correlation-heatmap", "enrichment-bar", "gsea", "km", "survival-forest", "roc", "venn",
-    "upset", "sankey", "chord", "circos",
-  ].includes(type)) {
+  if (getPlotModule(type).renderer === "advanced") {
     return <ScientificAdvancedChartPreview svgRef={svgRef} type={type} dataset={dataset} mapping={mapping} settings={settings} themeId={themeId} />;
   }
   const theme = journalThemes[themeId];
-  const frame = getFrame(settings, type);
+  const barCategoryLayout = type === "bar"
+    ? barCategoryAxisLayoutMetrics(settings, dataset.rows.map((row) => mapping.category ? row[mapping.category] ?? "" : ""))
+    : null;
+  const frame = getFrame(settings, type, barCategoryLayout?.bottom);
   const definition = getPlotDefinition(type);
   const categorical: string[] = settings.categoricalColors.length > 0 ? settings.categoricalColors : theme.categorical;
   const sequential: [string, string] = [settings.continuousLow, settings.continuousHigh];
@@ -676,6 +804,7 @@ export function ScientificChartPreview({ svgRef, type, dataset, mapping, setting
       width={frame.width}
       height={frame.height}
       role="img"
+      data-plot-renderer="standard"
       data-chart-text-color={CHART_TEXT_COLOR}
       aria-label={`${definition.name} scientific figure preview`}
       style={{ fontFamily: figureFontPresets[settings.fontFamily].family, background: "white", maxWidth: "100%", height: "auto" }}
@@ -683,6 +812,8 @@ export function ScientificChartPreview({ svgRef, type, dataset, mapping, setting
       <title>{settings.title || `${definition.name} figure`}</title>
       <desc>{definition.summary} Generated in LabNest Visualization Studio.</desc>
       <rect width={frame.width} height={frame.height} fill="#FFFFFF" />
+      <defs><clipPath id={`plot-area-${type}`}><rect x={frame.left} y={frame.top} width={frame.plotWidth} height={frame.plotHeight} /></clipPath></defs>
+      <style>{`[data-plot-data] path:not([data-no-clip]),[data-plot-data] circle:not([data-no-clip]),[data-plot-data] rect:not([data-no-clip]),[data-plot-data] line:not([data-no-clip]),[data-plot-data] polyline:not([data-no-clip]),[data-plot-data] polygon:not([data-no-clip]),[data-plot-data] text[data-plot-label]:not([data-no-clip]){clip-path:url(#plot-area-${type})}`}</style>
       <ChartTitle frame={frame} settings={settings} color={CHART_TEXT_COLOR} />
       {content}
     </svg>

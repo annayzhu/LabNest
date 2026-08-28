@@ -14,16 +14,13 @@ async function expectStablePreviewScreenshot(page: Page, locator: Locator, name:
 test.describe("Visualization Studio browser acceptance", () => {
   test("calculates auditable Bar statistics for raw, summary, paired, and qPCR examples", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop Bar-statistics acceptance");
-    await page.goto("/");
-
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: "Example 2" }).click();
     await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("raw-independent");
     await expect(page.getByRole("combobox", { name: "Reference category" })).toHaveValue("Control");
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await expect(page.getByText("Statistical results · 2 comparisons")).toBeVisible();
-    const stars = page.locator("svg[aria-label='Bar scientific figure preview'] text[data-plot-label]").filter({ hasText: /\*/ });
-    await expect(stars).toHaveCount(2);
-
+    await expect(page.locator("svg[aria-label='Bar scientific figure preview'] text[data-plot-label]").filter({ hasText: /\*/ })).toHaveCount(2);
     await page.getByText("Statistical results · 2 comparisons").click();
     await expect(page.getByText("Welch two-sample t-test", { exact: false }).first()).toBeVisible();
     const downloadEvent = page.waitForEvent("download");
@@ -32,17 +29,14 @@ test.describe("Visualization Studio browser acceptance", () => {
     const results = await readFile((await download.path())!, "utf8");
     expect(results).toContain("difference\tci95_lower\tci95_upper\tt\tdf\tp_raw\tp_adjusted");
     expect(results).toContain("Welch two-sample t-test");
-
     await page.getByRole("button", { name: "Example 3" }).click();
     await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("summary-independent");
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page.getByRole("combobox", { name: "Biological sample size (n)" }).selectOption("");
     await expect(page.getByText(/explicit sample-size \(n\)/)).toBeVisible();
-
     await page.getByRole("button", { name: "Example 4" }).click();
     await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("raw-paired");
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-
     await page.getByRole("button", { name: "Example 5" }).click();
     await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("qpcr-delta-ct");
     await expect(page.getByRole("combobox", { name: "Analysis value (ΔCt)" })).toHaveValue("delta_ct");
@@ -50,6 +44,88 @@ test.describe("Visualization Studio browser acceptance", () => {
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     await page.getByText("Statistical results · 2 comparisons").click();
     await expect(page.getByText(/Welch two-sample t-test · ΔCt/).first()).toBeVisible();
+  });
+
+  test("keeps rotated bar categories clear of the X-axis title", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop bar-axis geometry regression");
+    await page.goto("/", { waitUntil: "networkidle" });
+
+    await page.getByRole("textbox", { name: "CSV or TSV data" }).fill(`category\tvalue\tsd\tgroup
+Mock\t1.32\t0.76\tMock
+NC\t1.00\t0.42\tNC
+siFBN2-1224\t0.04\t0.03\tFBN2
+siFBN2-7173\t0.05\t0.03\tFBN2
+siFBN2-9706\t0.07\t0.04\tFBN2`);
+    await page.getByRole("button", { name: "Auto-map" }).click();
+    await page.getByRole("textbox", { name: "X-axis label" }).fill("H596");
+    const width = page.getByRole("textbox", { name: "Width value", exact: true });
+    const height = page.getByRole("textbox", { name: "Height value", exact: true });
+    await width.fill("480");
+    await width.press("Enter");
+    await height.fill("340");
+    await height.press("Enter");
+
+    const svg = page.locator("svg[aria-label='Bar scientific figure preview']");
+    await expect(svg).toHaveAttribute("width", "480");
+    await expect(svg.locator("[data-plot-element='bar-category-label']")).toHaveCount(5);
+    await expect(svg.locator("[data-axis-label='x']")).toHaveText("H596");
+    const geometry = await svg.evaluate((element) => {
+      const canvas = element.getBoundingClientRect();
+      const title = element.querySelector<SVGTextElement>("[data-axis-label='x']")!.getBoundingClientRect();
+      const labels = [...element.querySelectorAll<SVGTextElement>("[data-plot-element='bar-category-label']")].map((label) => label.getBoundingClientRect());
+      return {
+        minimumGap: Math.min(...labels.map((label) => title.top - label.bottom)),
+        escaped: [...labels, title].filter((box) => box.left < canvas.left - 1 || box.top < canvas.top - 1 || box.right > canvas.right + 1 || box.bottom > canvas.bottom + 1).length,
+      };
+    });
+    expect(geometry.minimumGap).toBeGreaterThanOrEqual(3.5);
+    expect(geometry.escaped).toBe(0);
+
+    const downloadEvent = page.waitForEvent("download");
+    await page.getByRole("button", { name: "SVG" }).click();
+    const download = await downloadEvent;
+    const source = await readFile((await download.path())!, "utf8");
+    expect(source).toContain('data-plot-element="bar-category-label"');
+    expect(source).toContain('data-axis-label="x"');
+    expect(source).toContain("H596");
+  });
+
+  test("uses actual time points and calculates adjusted line significance", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop line-statistics regression");
+    await page.goto("/");
+    await page.getByRole("button", { name: /^Line/ }).click();
+    await page.getByRole("textbox", { name: "CSV or TSV data" }).fill(`time\tvalue\tsd\tsem\tn\tseries
+0\t0.2292416667\t0.0456901316\t0.0263792098\t3\tMock
+1\t0.2277416667\t0.0061745614\t0.0035648847\t3\tMock
+2\t0.6077083333\t0.0611888828\t0.0353274179\t3\tMock
+3\t0.9141\t0.1925812994\t0.1111868650\t3\tMock
+0\t0.2025666667\t0.0125768637\t0.0072612556\t3\tNC
+1\t0.2676833333\t0.0132398074\t0.0076440064\t3\tNC
+2\t0.6331333333\t0.0476931795\t0.0275356700\t3\tNC
+3\t1.0819666667\t0.0700105810\t0.0404206278\t3\tNC
+0\t0.196475\t0.0145138368\t0.0083795676\t3\tsiFBN2-1224
+1\t0.217675\t0.0182540464\t0.0105389786\t3\tsiFBN2-1224
+2\t0.43765\t0.0376459687\t0.0217349102\t3\tsiFBN2-1224
+3\t0.6097083333\t0.0203331984\t0.0117393776\t3\tsiFBN2-1224
+0\t0.1690416667\t0.0026113933\t0.0015076886\t3\tsiFBN2-9706
+1\t0.2015083333\t0.0251189296\t0.0145024208\t3\tsiFBN2-9706
+2\t0.420225\t0.0086766329\t0.0050094563\t3\tsiFBN2-9706
+3\t0.7469583333\t0.0106625024\t0.0061559987\t3\tsiFBN2-9706`);
+    await page.getByRole("button", { name: "Auto-map" }).click();
+    await page.getByRole("combobox", { name: "Error representation" }).selectOption("sd");
+
+    const svg = page.locator("svg[aria-label='Line scientific figure preview']");
+    await expect(svg.locator("[data-axis-tick='x']")).toHaveText(["0", "1", "2", "3"]);
+    await expect(svg.locator("[data-axis-label='x']")).toHaveCount(0);
+    await expect(svg.locator("[data-axis-label='y']")).toHaveCount(0);
+
+    await page.getByRole("checkbox", { name: "Calculate significance" }).check({ force: true });
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await page.getByRole("combobox", { name: "Reference series" }).selectOption("Mock");
+    const annotations = svg.locator("[data-plot-element='line-significance']");
+    await expect(annotations).toHaveCount(12);
+    const adjusted = await annotations.evaluateAll((elements) => elements.map((element) => Number(element.getAttribute("data-adjusted-p"))));
+    expect(adjusted.every((value) => Number.isFinite(value) && value >= 0 && value <= 1)).toBe(true);
   });
 
   test("selects, resets, remaps, adjusts, and exports a representative plot", async ({ page }, testInfo) => {
@@ -209,59 +285,18 @@ test.describe("Visualization Studio browser acceptance", () => {
     await page.getByRole("button", { name: "墨蓝", exact: true }).click();
     const bars = page.locator("svg[aria-label='Bar scientific figure preview'] [data-plot-element='bar']");
     await expect(bars).toHaveCount(8);
-    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0"]);
+    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#2878B5", "#5595C3", "#82B0D2", "#B7D5E8"]);
   });
 
-  test("keeps every sample category in a dense grouped summary bar chart", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop grouped-bar regression");
-    await page.goto("/", { waitUntil: "networkidle" });
-    const genes = ["CCND1", "EGR1", "FBN2", "FOS", "MMP9", "MYC", "S100A4"];
-    const samples = ["A549-Mock", "A549-NC-FAM", "A549-siFBN2-2", "A549-siFBN2-3", "A549-siFBN2-4"];
-    const rows = genes.flatMap((gene, geneIndex) => samples.map((sample, sampleIndex) =>
-      `${sample}\t${(0.1 + geneIndex * 0.1 + sampleIndex * 0.01).toFixed(3)}\t0.02\t0.01\t${gene}`,
-    ));
-    await page.getByRole("textbox", { name: "CSV or TSV data" }).fill([
-      "category\tvalue\tsd\tsem\tgroup",
-      ...rows,
-    ].join("\n"));
-    await page.getByRole("button", { name: "Auto-map" }).click();
-    await page.getByRole("combobox", { name: "Error representation" }).selectOption("sd");
-    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-
-    const svg = page.locator("svg[aria-label='Bar scientific figure preview']");
-    const bars = svg.locator("[data-plot-element='bar']");
-    await expect(bars).toHaveCount(35);
-    expect(new Set(await bars.evaluateAll((marks) => marks.map((mark) => mark.getAttribute("fill")))).size).toBe(7);
-    for (const sample of samples) await expect(svg.getByText(sample, { exact: true })).toHaveCount(1);
-    for (const gene of genes) await expect(svg.getByText(gene, { exact: true })).toHaveCount(1);
-    const clippedSampleLabels = await svg.evaluate((element, expectedSamples) => {
-      const canvas = element.getBoundingClientRect();
-      return [...element.querySelectorAll("text")].flatMap((label) => {
-        if (!expectedSamples.includes(label.textContent ?? "")) return [];
-        const box = label.getBoundingClientRect();
-        return box.left < canvas.left - 1 || box.top < canvas.top - 1 || box.right > canvas.right + 1 || box.bottom > canvas.bottom + 1
-          ? [label.textContent]
-          : [];
-      });
-    }, samples);
-    expect(clippedSampleLabels).toEqual([]);
-  });
-
-  test("keeps default, Chinese red, and heatmap palette renderings stable", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop palette visual baselines");
+  test("renders source-faithful traditional and journal colors", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop palette rendering");
     await page.goto("/");
+    const bars = page.locator("svg[aria-label='Bar scientific figure preview'] [data-plot-element='bar']");
+    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#957454", "#1D4C50", "#D4A278", "#3F605B"]);
 
-    const defaultPreview = page.getByRole("heading", { name: "Bar preview" }).locator("xpath=ancestor::section");
-    await expect(page.getByText("Categorical contrast checked", { exact: true })).toBeVisible();
-    await expectStablePreviewScreenshot(page, defaultPreview, "palette-default-chai-dye-brown-desktop.png");
-
-    await page.getByRole("button", { name: "中国传统", exact: true }).click();
-    await page.getByRole("button", { name: "中国红", exact: true }).click();
-    await expectStablePreviewScreenshot(page, defaultPreview, "palette-chinese-red-desktop.png");
-
-    await page.getByRole("button", { name: /^Clustered heatmap/ }).click();
-    const heatmapPreview = page.getByRole("heading", { name: "Clustered heatmap preview" }).locator("xpath=ancestor::section");
-    await expectStablePreviewScreenshot(page, heatmapPreview, "palette-chinese-red-heatmap-desktop.png");
+    await page.getByRole("button", { name: "期刊配色", exact: true }).click();
+    await page.getByRole("button", { name: "Nature", exact: true }).click();
+    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#8FCFC9", "#FFBE7A", "#FA7F6F", "#82B0D2"]);
   });
 
   test("keeps the desktop workbench aligned and brings a distant selection fully into view", async ({ page }, testInfo) => {

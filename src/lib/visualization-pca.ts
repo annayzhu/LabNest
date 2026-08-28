@@ -16,8 +16,11 @@ export type PcaAnalysisResult = {
   groups: string[];
   availableLayers: Array<{ id: "counts" | "abundance"; label: string; columns: number }>;
   featuresRead: number;
+  featuresComplete: number;
+  featuresVariable: number;
   featuresUsed: number;
   explainedVariance: number[];
+  loadings: Array<{ feature: string; coordinates: number[] }>;
   transformation: string;
 };
 
@@ -68,8 +71,11 @@ function emptyResult(errors: string[], delimiter: "tab" | "comma" = "tab"): PcaA
     groups: [],
     availableLayers: [],
     featuresRead: 0,
+    featuresComplete: 0,
+    featuresVariable: 0,
     featuresUsed: 0,
     explainedVariance: [],
+    loadings: [],
     transformation: "",
   };
 }
@@ -91,7 +97,7 @@ function numericCandidateColumns(headers: string[], previewRows: string[][]) {
       observed += 1;
       if (Number.isFinite(Number(rawValue))) numeric += 1;
     }
-    return observed > 0 && numeric / observed >= 0.95;
+    return observed > 0 && numeric / observed >= 0.8;
   });
 }
 
@@ -100,7 +106,7 @@ function sampleNameFromColumn(column: string) {
 }
 
 export function inferPcaGroup(sampleName: string) {
-  const withoutReplicate = sampleName.replace(/(?:[_ .-]?\d+)$/u, "").replace(/[_ .-]+$/u, "");
+  const withoutReplicate = sampleName.replace(/(?:[_ .-]\d+)$/u, "").replace(/[_ .-]+$/u, "");
   return withoutReplicate || sampleName;
 }
 
@@ -110,71 +116,56 @@ function variance(values: number[]) {
   return values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (values.length - 1);
 }
 
-function identity(size: number): number[][] {
-  return Array.from({ length: size }, (_, row): number[] => Array.from({ length: size }, (_, column): number => row === column ? 1 : 0));
+function vectorNorm(values: number[]) {
+  return Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
 }
 
-function symmetricEigenDecomposition(input: number[][]) {
-  const size = input.length;
-  const matrix = input.map((row) => [...row]);
-  const vectors = identity(size);
-  const maximumIterations = Math.max(80, size * size * 40);
-
-  for (let iteration = 0; iteration < maximumIterations; iteration += 1) {
-    let p = 0;
-    let q = 1;
-    let maximum = 0;
-    for (let row = 0; row < size; row += 1) {
-      for (let column = row + 1; column < size; column += 1) {
-        const magnitude = Math.abs(matrix[row][column]);
-        if (magnitude > maximum) {
-          maximum = magnitude;
-          p = row;
-          q = column;
-        }
-      }
+export function nipalsPca(matrix: number[][], maximumComponents: number, denominator: number, maximumIterations = 200) {
+  const residual = matrix.map((row) => [...row]);
+  const featureCount = residual.length;
+  const sampleCount = residual[0]?.length ?? 0;
+  const components: Array<{ value: number; scores: number[]; loadings: number[] }> = [];
+  let converged = true;
+  for (let componentIndex = 0; componentIndex < Math.min(maximumComponents, featureCount, Math.max(0, sampleCount - 1)); componentIndex += 1) {
+    const initialRow = residual.reduce((best, row) => row.reduce((sum, value) => sum + value * value, 0) > best.reduce((sum, value) => sum + value * value, 0) ? row : best, residual[0]);
+    let scores = [...initialRow];
+    if (vectorNorm(scores) <= 1e-12) break;
+    let loadings = Array(featureCount).fill(0) as number[];
+    let componentConverged = false;
+    for (let iteration = 0; iteration < maximumIterations; iteration += 1) {
+      const scoreNormSquared = scores.reduce((sum, value) => sum + value * value, 0);
+      if (scoreNormSquared <= 1e-24) break;
+      loadings = residual.map((row) => row.reduce((sum, value, sampleIndex) => sum + value * scores[sampleIndex], 0) / scoreNormSquared);
+      const loadingNorm = vectorNorm(loadings);
+      if (loadingNorm <= 1e-12) break;
+      loadings = loadings.map((value) => value / loadingNorm);
+      const nextScores = Array.from({ length: sampleCount }, (_, sampleIndex) => residual.reduce((sum, row, featureIndex) => sum + row[sampleIndex] * loadings[featureIndex], 0));
+      const nextNorm = vectorNorm(nextScores);
+      const directDifference = Math.sqrt(nextScores.reduce((sum, value, index) => sum + (value - scores[index]) ** 2, 0));
+      const flippedDifference = Math.sqrt(nextScores.reduce((sum, value, index) => sum + (value + scores[index]) ** 2, 0));
+      scores = nextScores;
+      if (Math.min(directDifference, flippedDifference) <= 1e-10 * Math.max(1, nextNorm)) { componentConverged = true; break; }
     }
-    if (maximum < 1e-10) break;
-
-    const angle = 0.5 * Math.atan2(2 * matrix[p][q], matrix[q][q] - matrix[p][p]);
-    const cosine = Math.cos(angle);
-    const sine = Math.sin(angle);
-    const app = matrix[p][p];
-    const aqq = matrix[q][q];
-    const apq = matrix[p][q];
-
-    matrix[p][p] = cosine * cosine * app - 2 * sine * cosine * apq + sine * sine * aqq;
-    matrix[q][q] = sine * sine * app + 2 * sine * cosine * apq + cosine * cosine * aqq;
-    matrix[p][q] = 0;
-    matrix[q][p] = 0;
-
-    for (let index = 0; index < size; index += 1) {
-      if (index !== p && index !== q) {
-        const aip = matrix[index][p];
-        const aiq = matrix[index][q];
-        matrix[index][p] = cosine * aip - sine * aiq;
-        matrix[p][index] = matrix[index][p];
-        matrix[index][q] = sine * aip + cosine * aiq;
-        matrix[q][index] = matrix[index][q];
-      }
-      const vip = vectors[index][p];
-      const viq = vectors[index][q];
-      vectors[index][p] = cosine * vip - sine * viq;
-      vectors[index][q] = sine * vip + cosine * viq;
+    const scoreNormSquared = scores.reduce((sum, value) => sum + value * value, 0);
+    const value = scoreNormSquared / denominator;
+    if (value <= 1e-12) break;
+    if (!componentConverged) { converged = false; break; }
+    const anchor = scores.reduce((best, score) => Math.abs(score) > Math.abs(best) ? score : best, 0);
+    if (anchor < 0) {
+      scores = scores.map((score) => -score);
+      loadings = loadings.map((loading) => -loading);
     }
+    components.push({ value, scores, loadings });
+    residual.forEach((row, featureIndex) => row.forEach((entry, sampleIndex) => { row[sampleIndex] = entry - loadings[featureIndex] * scores[sampleIndex]; }));
   }
-
-  return Array.from({ length: size }, (_, index) => ({
-    value: Math.max(0, matrix[index][index]),
-    vector: vectors.map((row) => row[index]),
-  })).sort((left, right) => right.value - left.value);
+  return { components, converged };
 }
 
 function formatScore(value: number) {
   return Number.isFinite(value) ? value.toPrecision(8) : "0";
 }
 
-export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defaultPcaOptions): PcaAnalysisResult {
+export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defaultPcaOptions, observationMetadataRaw = ""): PcaAnalysisResult {
   const lines = normalizeLines(raw);
   if (lines.length < 2) return emptyResult(["Upload or paste a feature-by-observation matrix."]);
 
@@ -203,9 +194,20 @@ export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defau
   if (selectedColumns.length < 3) {
     return { ...emptyResult(["Could not identify at least three numeric observation columns. Choose a data layer or remove annotation-only columns."], delimiterName), availableLayers };
   }
+  if (selectedColumns.length > 300) {
+    return { ...emptyResult([`Browser PCA is limited to 300 observations; detected ${selectedColumns.length}. Compute PCA in a documented external workflow and import the coordinates instead.`], delimiterName), availableLayers };
+  }
+  const sampleNames = selectedColumns.map(sampleNameFromColumn);
+  const duplicateSampleNames = [...new Set(sampleNames.filter((sample, index) => sampleNames.indexOf(sample) !== index))];
+  if (duplicateSampleNames.length > 0) {
+    return { ...emptyResult([`Observation names must remain unique after removing data-layer suffixes; duplicates: ${duplicateSampleNames.slice(0, 6).join(", ")}.`], delimiterName), availableLayers };
+  }
 
   const columnIndexes = selectedColumns.map((column) => headers.indexOf(column));
-  const rawFeatures: number[][] = [];
+  const rawFeatures: Array<{ feature: string; values: number[] }> = [];
+  const seenFeatureIds = new Set<string>();
+  const duplicateFeatureIds = new Set<string>();
+  const blankFeatureRows: number[] = [];
   let malformedRows = 0;
   let incompleteRows = 0;
   for (const line of lines.slice(1)) {
@@ -214,58 +216,78 @@ export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defau
       malformedRows += 1;
       continue;
     }
-    const values = columnIndexes.map((index) => Number(cells[index]));
+    const selectedCells = columnIndexes.map((index) => cells[index]);
+    if (selectedCells.some((value) => value === undefined || value.trim() === "")) {
+      incompleteRows += 1;
+      continue;
+    }
+    const values = selectedCells.map((value) => Number(value));
     if (values.some((value) => !Number.isFinite(value))) {
       incompleteRows += 1;
       continue;
     }
-    rawFeatures.push(values);
+    const feature = cells[0]?.trim();
+    if (!feature) {
+      blankFeatureRows.push(rawFeatures.length + malformedRows + incompleteRows + blankFeatureRows.length + 2);
+      continue;
+    }
+    if (seenFeatureIds.has(feature)) duplicateFeatureIds.add(feature);
+    seenFeatureIds.add(feature);
+    rawFeatures.push({ feature, values });
+  }
+
+  if (blankFeatureRows.length > 0) {
+    return { ...emptyResult([`Feature IDs must not be blank; affected input row${blankFeatureRows.length === 1 ? "" : "s"}: ${blankFeatureRows.slice(0, 6).join(", ")}.`], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length };
+  }
+
+  if (duplicateFeatureIds.size > 0) {
+    return { ...emptyResult([`Feature IDs must be unique for traceable PCA loadings; duplicates: ${[...duplicateFeatureIds].slice(0, 6).join(", ")}.`], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length };
   }
 
   if (rawFeatures.length < 2) {
     return { ...emptyResult(["The selected observation columns do not contain enough complete numeric feature rows."], delimiterName), availableLayers };
   }
 
-  const flattenedPreview = rawFeatures.slice(0, 500).flat();
-  const allNonNegative = flattenedPreview.every((value) => value >= 0);
-  const integerRatio = flattenedPreview.filter(Number.isInteger).length / Math.max(1, flattenedPreview.length);
   const inferredLayer: Exclude<PcaDataLayer, "auto"> = options.dataLayer !== "auto"
     ? options.dataLayer
-    : countColumns.length >= 3 || (allNonNegative && integerRatio >= 0.995)
+    : countColumns.length >= 3
       ? "counts"
-      : abundanceColumns.length >= 3 || allNonNegative
+      : abundanceColumns.length >= 3
         ? "abundance"
         : "normalized";
 
-  if ((inferredLayer === "counts" || inferredLayer === "abundance") && rawFeatures.some((feature) => feature.some((value) => value < 0))) {
+  if ((inferredLayer === "counts" || inferredLayer === "abundance") && rawFeatures.some((feature) => feature.values.some((value) => value < 0))) {
     return { ...emptyResult([`${inferredLayer === "counts" ? "Counts" : "Non-negative abundance values"} cannot contain negative values.`], delimiterName), availableLayers };
   }
 
-  const librarySizes = Array.from({ length: selectedColumns.length }, (_, sampleIndex) => rawFeatures.reduce((sum, feature) => sum + feature[sampleIndex], 0));
+  const librarySizes = Array.from({ length: selectedColumns.length }, (_, sampleIndex) => rawFeatures.reduce((sum, feature) => sum + feature.values[sampleIndex], 0));
   if (inferredLayer === "counts" && librarySizes.some((size) => size <= 0)) {
     return { ...emptyResult(["Every count-matrix observation must have a positive column total."], delimiterName), availableLayers };
   }
 
   const minimumSamples = Math.min(3, Math.max(2, Math.floor(selectedColumns.length / 4)));
   const transformed = rawFeatures.flatMap((feature) => {
-    if (inferredLayer === "counts" && feature.filter((value) => value >= 10).length < minimumSamples) return [];
+    if (inferredLayer === "counts" && feature.values.filter((value) => value >= 10).length < minimumSamples) return [];
     const values = inferredLayer === "counts"
-      ? feature.map((value, sampleIndex) => Math.log2((value / librarySizes[sampleIndex]) * 1_000_000 + 1))
+      ? feature.values.map((value, sampleIndex) => Math.log2((value / librarySizes[sampleIndex]) * 1_000_000 + 1))
       : inferredLayer === "abundance"
-        ? feature.map((value) => Math.log2(value + 1))
-        : feature;
+        ? feature.values.map((value) => Math.log2(value + 1))
+        : feature.values;
     const featureVariance = variance(values);
-    return featureVariance > 0 ? [{ values, variance: featureVariance }] : [];
+    return featureVariance > 0 ? [{ feature: feature.feature, values, variance: featureVariance }] : [];
   });
 
   transformed.sort((left, right) => right.variance - left.variance);
   const selectedFeatures = options.topVariableFeatures > 0 ? transformed.slice(0, options.topVariableFeatures) : transformed;
   if (selectedFeatures.length < 2) {
-    return { ...emptyResult(["Too few variable features remain after filtering."], delimiterName), availableLayers };
+    return { ...emptyResult(["Too few variable features remain after filtering."], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length, featuresVariable: transformed.length };
   }
 
   const sampleCount = selectedColumns.length;
-  const gram = Array.from({ length: sampleCount }, () => Array(sampleCount).fill(0) as number[]);
+  if (selectedFeatures.length * sampleCount > 1_000_000) {
+    return { ...emptyResult([`Browser PCA is limited to one million selected feature-by-observation cells; detected ${(selectedFeatures.length * sampleCount).toLocaleString()}. Reduce top-variable features or import externally computed coordinates.`], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length, featuresVariable: transformed.length };
+  }
+  const centeredFeatures: Array<{ feature: string; values: number[] }> = [];
   for (const feature of selectedFeatures) {
     const mean = feature.values.reduce((sum, value) => sum + value, 0) / sampleCount;
     const centered = feature.values.map((value) => value - mean);
@@ -273,44 +295,61 @@ export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defau
       const standardDeviation = Math.sqrt(variance(feature.values));
       if (standardDeviation > 0) centered.forEach((value, index) => { centered[index] = value / standardDeviation; });
     }
-    for (let row = 0; row < sampleCount; row += 1) {
-      for (let column = row; column < sampleCount; column += 1) {
-        gram[row][column] += centered[row] * centered[column];
-      }
-    }
+    centeredFeatures.push({ feature: feature.feature, values: centered });
   }
   const denominator = Math.max(1, sampleCount - 1);
-  for (let row = 0; row < sampleCount; row += 1) {
-    for (let column = row; column < sampleCount; column += 1) {
-      gram[row][column] /= denominator;
-      gram[column][row] = gram[row][column];
-    }
+  const decomposition = nipalsPca(centeredFeatures.map((feature) => feature.values), 10, denominator);
+  if (!decomposition.converged) {
+    return { ...emptyResult(["PCA NIPALS solver did not converge for this matrix. Reduce the observation count or compute PCA in a documented external workflow."], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length, featuresVariable: transformed.length };
   }
-
-  const components = symmetricEigenDecomposition(gram).filter((component) => component.value > 1e-12);
+  const components = decomposition.components.filter((component) => component.value > 1e-12);
   if (components.length < 2) {
-    return { ...emptyResult(["PCA needs at least two non-zero components; the selected observations may be identical."], delimiterName), availableLayers };
+    return { ...emptyResult(["PCA needs at least two non-zero components; the selected observations may be identical."], delimiterName), availableLayers, featuresRead: lines.length - 1, featuresComplete: rawFeatures.length, featuresVariable: transformed.length };
   }
-  const totalVariance = components.reduce((sum, component) => sum + component.value, 0);
+  const totalVariance = centeredFeatures.reduce((sum, feature) => sum + feature.values.reduce((rowSum, value) => rowSum + value * value, 0), 0) / denominator;
   const explainedVariance = components.map((component) => component.value / totalVariance);
-  const componentScores = components.slice(0, Math.min(10, components.length)).map((component) => {
-    const scale = Math.sqrt(component.value * denominator);
-    const scores = component.vector.map((value) => value * scale);
-    const anchor = scores.reduce((best, value) => Math.abs(value) > Math.abs(best) ? value : best, 0);
-    return anchor < 0 ? scores.map((value) => -value) : scores;
-  });
-  const sampleNames = selectedColumns.map(sampleNameFromColumn);
-  const groupValues = sampleNames.map(inferPcaGroup);
+  const componentScores = components.map((component) => component.scores);
+  const loadings = centeredFeatures.map((feature, featureIndex) => ({
+    feature: feature.feature,
+    coordinates: components.map((component) => component.loadings[featureIndex]),
+  }));
+  const metadataLines = normalizeLines(observationMetadataRaw);
+  const metadataErrors: string[] = [];
+  const metadataWarnings: string[] = [];
+  let metadataHeaders: string[] = [];
+  const metadataBySample = new Map<string, Record<string, string>>();
+  if (metadataLines.length > 0) {
+    const metadataDelimiter = detectDelimiter(metadataLines[0]);
+    const headers = splitLine(metadataLines[0], metadataDelimiter);
+    metadataHeaders = headers.slice(1);
+    if (headers.length < 2) metadataErrors.push("PCA observation metadata needs a sample-ID column and at least one annotation column.");
+    if (new Set(headers).size !== headers.length) metadataErrors.push("PCA observation metadata headers must be unique.");
+    if (metadataHeaders.some((header) => header === "sample" || /^PC\d+$/i.test(header))) metadataErrors.push("PCA observation metadata columns cannot be named sample or PC1, PC2, and so on.");
+    metadataLines.slice(1).forEach((line, rowIndex) => {
+      const cells = splitLine(line, metadataDelimiter);
+      if (cells.length !== headers.length) { metadataErrors.push(`PCA observation metadata row ${rowIndex + 2} has ${cells.length} fields; expected ${headers.length}.`); return; }
+      const sampleId = cells[0]?.trim();
+      if (!sampleId) { metadataErrors.push(`PCA observation metadata row ${rowIndex + 2} has a blank sample ID.`); return; }
+      if (metadataBySample.has(sampleId)) { metadataErrors.push(`PCA observation metadata sample IDs must be unique; duplicate: ${sampleId}.`); return; }
+      metadataBySample.set(sampleId, Object.fromEntries(metadataHeaders.map((header, index) => [header, cells[index + 1] ?? ""])));
+    });
+    const missing = sampleNames.filter((sample) => !metadataBySample.has(sample));
+    const extra = [...metadataBySample.keys()].filter((sample) => !sampleNames.includes(sample));
+    if (missing.length > 0) metadataErrors.push(`PCA observation metadata is missing ${missing.length} sample ID${missing.length === 1 ? "" : "s"}: ${missing.slice(0, 6).join(", ")}${missing.length > 6 ? "…" : ""}.`);
+    if (extra.length > 0) metadataWarnings.push(`${extra.length} PCA observation metadata row${extra.length === 1 ? " does" : "s do"} not match a matrix observation and will be ignored: ${extra.slice(0, 6).join(", ")}${extra.length > 6 ? "…" : ""}.`);
+  }
+  const groupValues = sampleNames.map((sample) => metadataBySample.get(sample)?.group ?? inferPcaGroup(sample));
   const groups = [...new Set(groupValues)];
   const rows = sampleNames.map((sample, sampleIndex) => Object.fromEntries([
     ["sample", sample],
     ["group", groupValues[sampleIndex]],
+    ...metadataHeaders.filter((header) => header !== "group").map((header) => [header, metadataBySample.get(sample)?.[header] ?? ""]),
     ...componentScores.map((scores, componentIndex) => [`PC${componentIndex + 1}`, formatScore(scores[sampleIndex])]),
   ]));
-  const warnings: string[] = [];
+  const warnings: string[] = [...metadataWarnings];
   if (malformedRows > 0) warnings.push(`${malformedRows} malformed feature row${malformedRows === 1 ? " was" : "s were"} skipped.`);
   if (incompleteRows > 0) warnings.push(`${incompleteRows} feature row${incompleteRows === 1 ? " was" : "s were"} skipped because selected observation values were incomplete.`);
-  if (options.dataLayer === "auto") warnings.push(`Auto-detected ${inferredLayer === "counts" ? "count-like values" : inferredLayer === "abundance" ? "non-negative abundance values" : "continuous / already normalized values"}.`);
+  if (options.dataLayer === "auto") warnings.push(inferredLayer === "counts" ? "Auto-detected count columns from explicit _count/_counts suffixes." : inferredLayer === "abundance" ? "Auto-detected abundance columns from explicit _tpm/_fpkm suffixes." : "No explicit count/TPM/FPKM suffixes were detected; values were treated as continuous / already normalized without a log transform.");
 
   const transformation = inferredLayer === "counts"
     ? `Features with count ≥10 in at least ${minimumSamples} observations; log₂(CPM + 1)`
@@ -321,20 +360,24 @@ export function analyzeExpressionMatrix(raw: string, options: PcaOptions = defau
 
   return {
     dataset: {
-      headers: ["sample", "group", ...componentScores.map((_, index) => `PC${index + 1}`)],
+      headers: ["sample", "group", ...metadataHeaders.filter((header) => header !== "group"), ...componentScores.map((_, index) => `PC${index + 1}`)],
       rows,
       delimiter: delimiterName,
-      errors: [],
+      errors: metadataErrors,
       warnings,
+      analysis: { pca: { explainedVariance, loadings } },
     },
     detectedLayer: inferredLayer,
     sampleColumns: selectedColumns,
     sampleNames,
     groups,
     availableLayers,
-    featuresRead: rawFeatures.length,
+    featuresRead: lines.length - 1,
+    featuresComplete: rawFeatures.length,
+    featuresVariable: transformed.length,
     featuresUsed: selectedFeatures.length,
     explainedVariance,
+    loadings,
     transformation,
   };
 }

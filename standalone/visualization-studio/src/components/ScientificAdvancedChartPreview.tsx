@@ -22,6 +22,7 @@ import {
 } from "@/lib/visualization-advanced";
 import {
   alignHeatmapAnnotations,
+  benjaminiHochbergAdjust,
   categoricalColorForIndex,
   boxStatistics,
   confidenceInterval95,
@@ -43,6 +44,7 @@ import {
   loessSmooth,
   meanErrorStatistics,
   numericExtent,
+  observedAxisTicks,
   ordinationAnnotationLayout,
   ordinationFrameMetrics,
   ordinationLegendLayout,
@@ -53,6 +55,7 @@ import {
   polynomialRegression,
   resolveAxisDomain,
   scaleLinear,
+  welchSummaryPValue,
   type JournalThemeId,
   type OrdinationType,
   type ParsedDataset,
@@ -101,10 +104,10 @@ function tickValues(domain: [number, number], count = 5) {
   return Array.from({ length: count }, (_, index) => domain[0] + (domain[1] - domain[0]) * index / Math.max(1, count - 1));
 }
 
-function Axes({ frame, settings, xDomain, yDomain, xLabel, yLabel, gridColor, hideXTicks = false, hideYTicks = false, categoryXPositions, categoryYPositions }: { frame: Frame; settings: VisualizationSettings; xDomain: [number, number]; yDomain: [number, number]; xLabel: string; yLabel: string; gridColor: string; hideXTicks?: boolean; hideYTicks?: boolean; categoryXPositions?: number[]; categoryYPositions?: number[] }) {
+function Axes({ frame, settings, xDomain, yDomain, xLabel, yLabel, gridColor, hideXTicks = false, hideYTicks = false, categoryXPositions, categoryYPositions, xTickValues, yTickValues }: { frame: Frame; settings: VisualizationSettings; xDomain: [number, number]; yDomain: [number, number]; xLabel: string; yLabel: string; gridColor: string; hideXTicks?: boolean; hideYTicks?: boolean; categoryXPositions?: number[]; categoryYPositions?: number[]; xTickValues?: number[]; yTickValues?: number[] }) {
   const bottom = frame.top + frame.plotHeight;
-  const xTicks = tickValues(xDomain, Math.max(3, Math.min(6, Math.floor(frame.plotWidth / 90))));
-  const yTicks = tickValues(yDomain, Math.max(3, Math.min(6, Math.floor(frame.plotHeight / 70))));
+  const xTicks = xTickValues ?? tickValues(xDomain, Math.max(3, Math.min(6, Math.floor(frame.plotWidth / 90))));
+  const yTicks = yTickValues ?? tickValues(yDomain, Math.max(3, Math.min(6, Math.floor(frame.plotHeight / 70))));
   const verticalGridPositions = categoryXPositions
     ?? (hideXTicks ? [] : xTicks.map((value) => scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth])));
   const horizontalGridPositions = categoryYPositions
@@ -114,10 +117,10 @@ function Axes({ frame, settings, xDomain, yDomain, xLabel, yLabel, gridColor, hi
     {settings.grid !== "none" ? horizontalGridPositions.map((y) => <line key={`gy-${y}`} data-grid-axis="y" x1={frame.left} x2={frame.left + frame.plotWidth} y1={y} y2={y} stroke={gridColor} strokeWidth={settings.gridLineWidth} />) : null}
     <line x1={frame.left} x2={frame.left + frame.plotWidth} y1={bottom} y2={bottom} stroke={TEXT} strokeWidth={settings.axisLineWidth} />
     <line x1={frame.left} x2={frame.left} y1={frame.top} y2={bottom} stroke={TEXT} strokeWidth={settings.axisLineWidth} />
-    {!hideXTicks ? xTicks.map((value) => { const x = scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth]); return <g key={`xt-${value}`}><line x1={x} x2={x} y1={bottom} y2={bottom + 5} stroke={TEXT} strokeWidth={settings.axisLineWidth} /><text x={x} y={bottom + 19} textAnchor="middle" fill={TEXT} fontSize={settings.tickSize}>{formatTick(value)}</text></g>; }) : null}
-    {!hideYTicks ? yTicks.map((value) => { const y = scaleLinear(value, yDomain, [bottom, frame.top]); return <g key={`yt-${value}`}><line x1={frame.left - 5} x2={frame.left} y1={y} y2={y} stroke={TEXT} strokeWidth={settings.axisLineWidth} /><text x={frame.left - 9} y={y + 4} textAnchor="end" fill={TEXT} fontSize={settings.tickSize}>{formatTick(value)}</text></g>; }) : null}
-    {xLabel ? <text x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 47 : 13)} textAnchor="middle" fill={TEXT} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text> : null}
-    {yLabel ? <text transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={TEXT} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text> : null}
+    {!hideXTicks ? xTicks.map((value) => { const x = scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth]); return <g key={`xt-${value}`}><line x1={x} x2={x} y1={bottom} y2={bottom + 5} stroke={TEXT} strokeWidth={settings.axisLineWidth} /><text data-axis-tick="x" x={x} y={bottom + 19} textAnchor="middle" fill={TEXT} fontSize={settings.tickSize}>{formatTick(value)}</text></g>; }) : null}
+    {!hideYTicks ? yTicks.map((value) => { const y = scaleLinear(value, yDomain, [bottom, frame.top]); return <g key={`yt-${value}`}><line x1={frame.left - 5} x2={frame.left} y1={y} y2={y} stroke={TEXT} strokeWidth={settings.axisLineWidth} /><text data-axis-tick="y" x={frame.left - 9} y={y + 4} textAnchor="end" fill={TEXT} fontSize={settings.tickSize}>{formatTick(value)}</text></g>; }) : null}
+    {xLabel ? <text data-axis-label="x" x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 47 : 13)} textAnchor="middle" fill={TEXT} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text> : null}
+    {yLabel ? <text data-axis-label="y" transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={TEXT} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text> : null}
   </g>;
 }
 
@@ -153,7 +156,7 @@ function LineAssociationPlot({ frame, dataset, mapping, settings, colors, gridCo
   const rows = dataset.rows.map((row, index) => {
     const rawX = parseNumericValue(row[mapping.x]) ?? 0;
     const rawY = parseNumericValue(row[mapping.value]) ?? 0;
-    return { x: settings.swapAxes ? rawY : rawX, y: settings.swapAxes ? rawX : rawY, error: settings.lineErrorType !== "none" && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0, group: mapping.series ? row[mapping.series] || "All" : "All", index };
+    return { x: settings.swapAxes ? rawY : rawX, y: settings.swapAxes ? rawX : rawY, rawX, mean: rawY, error: settings.lineErrorType !== "none" && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0, n: mapping.n ? parseNumericValue(row[mapping.n]) : null, group: mapping.series ? row[mapping.series] || "All" : "All", index };
   });
   const groups = [...new Set(rows.map((row) => row.group))];
   const colorMap = palette(groups, colors);
@@ -162,14 +165,32 @@ function LineAssociationPlot({ frame, dataset, mapping, settings, colors, gridCo
   const yDomain = resolveAxisDomain(numericExtent(settings.swapAxes ? rows.map((row) => row.y) : valueExtent), settings.yMin, settings.yMax);
   const xAt = (value: number) => scaleLinear(value, xDomain, [frame.left, frame.left + frame.plotWidth]);
   const yAt = (value: number) => scaleLinear(value, yDomain, [frame.top + frame.plotHeight, frame.top]);
+  const maximumTimeTicks = Math.max(2, Math.min(12, Math.floor((settings.swapAxes ? frame.plotHeight : frame.plotWidth) / Math.max(24, settings.tickSize * 2.2))));
+  const timeTicks = observedAxisTicks(rows.map((row) => row.rawX), maximumTimeTicks);
+  const referenceSeries = settings.lineReferenceSeries && groups.includes(settings.lineReferenceSeries) ? settings.lineReferenceSeries : groups[0];
+  const rawComparisons = settings.showSignificance && (settings.lineErrorType === "sd" || settings.lineErrorType === "sem")
+    ? rows.flatMap((row) => {
+        if (row.group === referenceSeries || row.n === null) return [];
+        const reference = rows.find((candidate) => candidate.group === referenceSeries && candidate.rawX === row.rawX && candidate.n !== null);
+        if (!reference || reference.n === null) return [];
+        const rowSd = settings.lineErrorType === "sem" ? row.error * Math.sqrt(row.n) : row.error;
+        const referenceSd = settings.lineErrorType === "sem" ? reference.error * Math.sqrt(reference.n) : reference.error;
+        const pValue = welchSummaryPValue(row.mean, rowSd, row.n, reference.mean, referenceSd, reference.n);
+        return pValue === null ? [] : [{ rowIndex: row.index, pValue }];
+      })
+    : [];
+  const adjustedPValues = settings.linePAdjustment === "bh" ? benjaminiHochbergAdjust(rawComparisons.map((comparison) => comparison.pValue)) : rawComparisons.map((comparison) => comparison.pValue);
+  const significanceByRow = new Map(rawComparisons.map((comparison, index) => [comparison.rowIndex, adjustedPValues[index]]));
+  const significanceLabel = (pValue: number) => pValue <= 0.001 ? "***" : pValue <= 0.01 ? "**" : pValue <= settings.significanceThreshold ? "*" : "ns";
   return <>
-    <Axes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={settings.xLabel || (settings.swapAxes ? "Value" : "X")} yLabel={settings.yLabel || (settings.swapAxes ? "X" : "Value")} gridColor={gridColor} />
+    <Axes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={settings.swapAxes ? settings.yLabel.trim() : settings.xLabel.trim()} yLabel={settings.swapAxes ? settings.xLabel.trim() : settings.yLabel.trim()} gridColor={gridColor} xTickValues={settings.swapAxes ? undefined : timeTicks} yTickValues={settings.swapAxes ? timeTicks : undefined} />
     <g data-plot-data data-plot-family="line-association">
       {groups.map((group) => { const groupRows = rows.filter((row) => row.group === group).sort((left, right) => (settings.swapAxes ? left.y - right.y : left.x - right.x) || left.index - right.index); const color = colorMap.get(group) ?? colors[0]; const upper = groupRows.map((row) => settings.swapAxes ? `${xAt(row.x + row.error)},${yAt(row.y)}` : `${xAt(row.x)},${yAt(row.y + row.error)}`); const lower = [...groupRows].reverse().map((row) => settings.swapAxes ? `${xAt(row.x - row.error)},${yAt(row.y)}` : `${xAt(row.x)},${yAt(row.y - row.error)}`); return <g key={group}>
         {settings.lineErrorType !== "none" && settings.lineUncertaintyStyle === "band" ? <polygon data-plot-element="line-uncertainty-band" points={[...upper, ...lower].join(" ")} fill={color} fillOpacity={settings.lineBandOpacity} stroke="none" /> : null}
         <polyline data-plot-element="line-series" points={groupRows.map((row) => `${xAt(row.x)},${yAt(row.y)}`).join(" ")} fill="none" stroke={color} strokeWidth={settings.dataLineWidth} strokeLinejoin="round" strokeLinecap="round" />
         {settings.lineErrorType !== "none" && settings.lineUncertaintyStyle === "bars" ? groupRows.map((row) => settings.swapAxes ? <g key={row.index} data-plot-element="line-uncertainty-bar" stroke={color} strokeWidth={settings.errorBarLineWidth}><line x1={xAt(row.x - row.error)} x2={xAt(row.x + row.error)} y1={yAt(row.y)} y2={yAt(row.y)} /><line x1={xAt(row.x - row.error)} x2={xAt(row.x - row.error)} y1={yAt(row.y) - settings.errorBarCapSize / 2} y2={yAt(row.y) + settings.errorBarCapSize / 2} /><line x1={xAt(row.x + row.error)} x2={xAt(row.x + row.error)} y1={yAt(row.y) - settings.errorBarCapSize / 2} y2={yAt(row.y) + settings.errorBarCapSize / 2} /></g> : <g key={row.index} data-plot-element="line-uncertainty-bar" stroke={color} strokeWidth={settings.errorBarLineWidth}><line x1={xAt(row.x)} x2={xAt(row.x)} y1={yAt(row.y - row.error)} y2={yAt(row.y + row.error)} /><line x1={xAt(row.x) - settings.errorBarCapSize / 2} x2={xAt(row.x) + settings.errorBarCapSize / 2} y1={yAt(row.y - row.error)} y2={yAt(row.y - row.error)} /><line x1={xAt(row.x) - settings.errorBarCapSize / 2} x2={xAt(row.x) + settings.errorBarCapSize / 2} y1={yAt(row.y + row.error)} y2={yAt(row.y + row.error)} /></g>) : null}
         {settings.showPoints ? groupRows.map((row) => <circle key={row.index} data-plot-element="line-point" cx={xAt(row.x)} cy={yAt(row.y)} r={settings.pointSize} fill={color} stroke="#FFFFFF" strokeWidth={0.7} />) : null}
+        {settings.showSignificance ? groupRows.map((row) => { const adjustedPValue = significanceByRow.get(row.index); if (adjustedPValue === undefined) return null; const labelX = settings.swapAxes ? xAt(row.x + row.error) + 8 : xAt(row.x); const labelY = settings.swapAxes ? yAt(row.y) + 4 : Math.max(frame.top + settings.tickSize, yAt(row.y + row.error) - 7); return <text key={`line-significance-${row.index}`} data-plot-element="line-significance" data-adjusted-p={adjustedPValue.toPrecision(6)} x={labelX} y={labelY} textAnchor={settings.swapAxes ? "start" : "middle"} fill={color} fillOpacity={adjustedPValue <= settings.significanceThreshold ? 1 : 0.62} fontSize={settings.tickSize} fontWeight={700}><title>{`${row.group} vs ${referenceSeries}; ${settings.linePAdjustment === "bh" ? "BH-adjusted " : ""}P=${adjustedPValue.toPrecision(4)}`}</title>{significanceLabel(adjustedPValue)}</text>; }) : null}
       </g>; })}
     </g>
     <Legend entries={groups.map((group) => ({ label: group, color: colorMap.get(group) ?? colors[0] }))} frame={frame} settings={settings} />

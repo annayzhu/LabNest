@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function Card({
@@ -41,15 +41,11 @@ export function CardHeader({
   );
 }
 
-export function CardBody({
-  children,
-  className,
-}: {
+export const CardBody = forwardRef<HTMLDivElement, {
   children: ReactNode;
   className?: string;
-}) {
-  return <div className={cn("p-4", className)}>{children}</div>;
-}
+}>(({ children, className }, ref) => <div ref={ref} className={cn("p-4", className)}>{children}</div>);
+CardBody.displayName = "CardBody";
 
 export function SectionPanel({
   title,

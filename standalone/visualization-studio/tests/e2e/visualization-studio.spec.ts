@@ -12,6 +12,46 @@ async function expectStablePreviewScreenshot(page: Page, locator: Locator, name:
 }
 
 test.describe("Visualization Studio browser acceptance", () => {
+  test("calculates auditable Bar statistics for raw, summary, paired, and qPCR examples", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop Bar-statistics acceptance");
+    await page.goto("/");
+
+    await page.getByRole("button", { name: "Example 2" }).click();
+    await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("raw-independent");
+    await expect(page.getByRole("combobox", { name: "Reference category" })).toHaveValue("Control");
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await expect(page.getByText("Statistical results · 2 comparisons")).toBeVisible();
+    const stars = page.locator("svg[aria-label='Bar scientific figure preview'] text[data-plot-label]").filter({ hasText: /\*/ });
+    await expect(stars).toHaveCount(2);
+
+    await page.getByText("Statistical results · 2 comparisons").click();
+    await expect(page.getByText("Welch two-sample t-test", { exact: false }).first()).toBeVisible();
+    const downloadEvent = page.waitForEvent("download");
+    await page.getByRole("button", { name: "TSV" }).click();
+    const download = await downloadEvent;
+    const results = await readFile((await download.path())!, "utf8");
+    expect(results).toContain("difference\tci95_lower\tci95_upper\tt\tdf\tp_raw\tp_adjusted");
+    expect(results).toContain("Welch two-sample t-test");
+
+    await page.getByRole("button", { name: "Example 3" }).click();
+    await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("summary-independent");
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await page.getByRole("combobox", { name: "Biological sample size (n)" }).selectOption("");
+    await expect(page.getByText(/explicit sample-size \(n\)/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Example 4" }).click();
+    await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("raw-paired");
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Example 5" }).click();
+    await expect(page.getByRole("combobox", { name: "Analysis source / design" })).toHaveValue("qpcr-delta-ct");
+    await expect(page.getByRole("combobox", { name: "Analysis value (ΔCt)" })).toHaveValue("delta_ct");
+    await expect(page.getByRole("combobox", { name: "Value *" })).toHaveValue("relative_expression");
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+    await page.getByText("Statistical results · 2 comparisons").click();
+    await expect(page.getByText(/Welch two-sample t-test · ΔCt/).first()).toBeVisible();
+  });
+
   test("selects, resets, remaps, adjusts, and exports a representative plot", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop interaction baseline");
     await page.goto("/");

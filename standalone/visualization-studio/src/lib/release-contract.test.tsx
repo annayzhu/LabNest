@@ -39,15 +39,15 @@ describe("Visualization Studio release contract", () => {
     });
   });
 
-  it("locks the compact publication defaults and restrained Chinese-traditional palette", () => {
+  it("locks the compact publication defaults and canonical Chinese-traditional palette", () => {
     expect(defaultVisualizationSettings).toMatchObject({
       width: 340,
       height: 340,
       fontFamily: "arial",
-      categoricalColors: ["#8A6F58", "#355F61", "#C99573", "#71877C"],
-      divergingLow: "#9AADB0",
-      divergingMid: "#FAF8F4",
-      divergingHigh: "#D5B49E",
+      categoricalColors: ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
+      divergingLow: "#90B5CF",
+      divergingMid: "#FAF8F3",
+      divergingHigh: "#CDA18A",
     });
     expect(defaultVisualizationPaletteSeriesId).toBe("chinese-traditional");
     expect(defaultVisualizationThemeId).toBe("cn-beihai");

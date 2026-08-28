@@ -32,6 +32,11 @@ export type PlotType =
   | "circos";
 
 export type JournalThemeId =
+  | "minimal-ink"
+  | "minimal-cobalt"
+  | "minimal-pine"
+  | "minimal-clay"
+  | "minimal-plum"
   | "nature"
   | "cell"
   | "science"
@@ -51,7 +56,7 @@ export type JournalThemeId =
   | "cn-autumn"
   | "cn-vermilion";
 
-export type PaletteSeriesId = "journal" | "curated" | "chinese-traditional" | "custom";
+export type PaletteSeriesId = "minimal" | "journal" | "curated" | "chinese-traditional" | "custom";
 
 export const defaultVisualizationThemeId: JournalThemeId = "cn-beihai";
 export const defaultVisualizationPaletteSeriesId: PaletteSeriesId = "chinese-traditional";
@@ -120,7 +125,94 @@ export type JournalTheme = {
   grid: string;
 };
 
+export type CategoricalPaletteQuality = {
+  validHex: boolean;
+  duplicateColors: string[];
+  nearWhiteIndexes: number[];
+  minimumNormalDistance: number;
+  minimumProtanopiaDistance: number;
+  minimumDeuteranopiaDistance: number;
+  requiresSecondaryEncoding: boolean;
+};
+
+function paletteRgb(hex: string): [number, number, number] {
+  return [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16) / 255) as [number, number, number];
+}
+
+function simulatedRgb(rgb: [number, number, number], mode: "protanopia" | "deuteranopia"): [number, number, number] {
+  const matrix = mode === "protanopia"
+    ? [[0.56667, 0.43333, 0], [0.55833, 0.44167, 0], [0, 0.24167, 0.75833]]
+    : [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]];
+  return matrix.map((row) => row.reduce((sum, weight, index) => sum + weight * rgb[index], 0)) as [number, number, number];
+}
+
+function minimumPaletteDistance(colors: string[], mode?: "protanopia" | "deuteranopia"): number {
+  if (colors.length < 2) return 1;
+  const vectors = colors.map((color) => {
+    const rgb = paletteRgb(color);
+    return mode ? simulatedRgb(rgb, mode) : rgb;
+  });
+  let minimum = Number.POSITIVE_INFINITY;
+  vectors.forEach((left, leftIndex) => vectors.slice(leftIndex + 1).forEach((right) => {
+    minimum = Math.min(minimum, Math.hypot(left[0] - right[0], left[1] - right[1], left[2] - right[2]) / Math.sqrt(3));
+  }));
+  return minimum;
+}
+
+export function assessCategoricalPalette(colors: string[]): CategoricalPaletteQuality {
+  const validHex = colors.every((color) => /^#[0-9A-F]{6}$/i.test(color));
+  if (!validHex) return { validHex, duplicateColors: [], nearWhiteIndexes: [], minimumNormalDistance: 0, minimumProtanopiaDistance: 0, minimumDeuteranopiaDistance: 0, requiresSecondaryEncoding: true };
+  const normalizedColors = colors.map((color) => color.toUpperCase());
+  const duplicateColors = [...new Set(normalizedColors.filter((color, index) => normalizedColors.indexOf(color) !== index))];
+  const nearWhiteIndexes = colors.map((color, index) => ({ color, index })).filter(({ color }) => {
+    const [red, green, blue] = paletteRgb(color);
+    return (red + green + blue) / 3 > 0.9;
+  }).map(({ index }) => index);
+  const minimumNormalDistance = minimumPaletteDistance(colors);
+  const minimumProtanopiaDistance = minimumPaletteDistance(colors, "protanopia");
+  const minimumDeuteranopiaDistance = minimumPaletteDistance(colors, "deuteranopia");
+  return {
+    validHex,
+    duplicateColors,
+    nearWhiteIndexes,
+    minimumNormalDistance,
+    minimumProtanopiaDistance,
+    minimumDeuteranopiaDistance,
+    requiresSecondaryEncoding: duplicateColors.length > 0 || nearWhiteIndexes.length > 0 || minimumNormalDistance < 0.08 || Math.min(minimumProtanopiaDistance, minimumDeuteranopiaDistance) < 0.08,
+  };
+}
+
+/** Expand a chosen categorical palette deterministically without reusing a color. */
+export function categoricalColorForIndex(index: number, colors: string[]) {
+  const safeColors = colors.length > 0 ? colors : ["#A7A5A0"];
+  const base = safeColors[index % safeColors.length];
+  const tier = Math.floor(index / safeColors.length);
+  if (tier === 0) return base;
+  const hue = (index * 137.50776405003785) % 360;
+  const saturation = 34 + (tier % 4) * 4;
+  const lightness = 42 + (tier % 5) * 5;
+  const normalizedSaturation = saturation / 100;
+  const normalizedLightness = lightness / 100;
+  const chroma = (1 - Math.abs(2 * normalizedLightness - 1)) * normalizedSaturation;
+  const hueSector = hue / 60;
+  const secondary = chroma * (1 - Math.abs(hueSector % 2 - 1));
+  const [red, green, blue] = hueSector < 1 ? [chroma, secondary, 0]
+    : hueSector < 2 ? [secondary, chroma, 0]
+      : hueSector < 3 ? [0, chroma, secondary]
+        : hueSector < 4 ? [0, secondary, chroma]
+          : hueSector < 5 ? [secondary, 0, chroma]
+            : [chroma, 0, secondary];
+  const match = normalizedLightness - chroma / 2;
+  return `#${[red, green, blue].map((channel) => Math.round((channel + match) * 255).toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+}
+
 export const paletteSeries: Record<PaletteSeriesId, { id: PaletteSeriesId; name: string; description: string; themeIds: JournalThemeId[] }> = {
+  minimal: {
+    id: "minimal",
+    name: "极简",
+    description: "单一主色配合中性明度阶梯，减少同图中的色相数量。",
+    themeIds: ["minimal-ink", "minimal-cobalt", "minimal-pine", "minimal-clay", "minimal-plum"],
+  },
   journal: {
     id: "journal",
     name: "期刊配色",
@@ -136,7 +228,7 @@ export const paletteSeries: Record<PaletteSeriesId, { id: PaletteSeriesId; name:
   "chinese-traditional": {
     id: "chinese-traditional",
     name: "中国传统",
-    description: "取自 Pixso 中国传统高级感配色色卡的九套东方配色。",
+    description: "九套经白底科研图表校准的中国传统色，颜色名称与来源可追溯。",
     themeIds: ["cn-beihai", "cn-imperial-orange", "cn-wisteria", "cn-sunset", "cn-hutong", "cn-dragon", "cn-coral", "cn-autumn", "cn-vermilion"],
   },
   custom: {
@@ -252,15 +344,40 @@ export const defaultVisualizationSettings: VisualizationSettings = {
   clusterColumns: true,
   showRiskTable: true,
   forestReferenceValue: 1,
-  categoricalColors: ["#957454", "#1D4C50", "#D4A278", "#3F605B"],
-  continuousLow: "#D4A278",
-  continuousHigh: "#1D4C50",
-  divergingLow: "#91A7A6",
-  divergingMid: "#FAF7F2",
-  divergingHigh: "#D3BBA4",
+  categoricalColors: ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
+  continuousLow: "#F5E9D7",
+  continuousHigh: "#A87535",
+  divergingLow: "#90B5CF",
+  divergingMid: "#FAF8F3",
+  divergingHigh: "#CDA18A",
 };
 
 export const journalThemes: Record<JournalThemeId, JournalTheme> = {
+  "minimal-ink": {
+    id: "minimal-ink", series: "minimal", name: "石墨", description: "近单色石墨阶梯，适合需要最大克制感的比较图。",
+    categorical: ["#46505A", "#65707A", "#838D96", "#A3AAB1", "#596168", "#778087", "#969EA4", "#B3B8BD"],
+    sequential: ["#F1F3F4", "#4B5660"], diverging: ["#7890A0", "#F8F8F6", "#A9827A"], ink: "#23242A", muted: "#6C737B", grid: "#E4E6E7",
+  },
+  "minimal-cobalt": {
+    id: "minimal-cobalt", series: "minimal", name: "墨蓝", description: "一组蓝灰明度阶梯，以墨蓝作为唯一强调色。",
+    categorical: ["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0", "#596168", "#778087", "#969EA4", "#B3B8BD"],
+    sequential: ["#EFF4F7", "#3F6F9D"], diverging: ["#6F8FA8", "#F8F8F6", "#B58176"], ink: "#23242A", muted: "#687784", grid: "#E2E7EA",
+  },
+  "minimal-pine": {
+    id: "minimal-pine", series: "minimal", name: "松柏", description: "一组松绿色阶梯，安静、自然，适合组学与生态数据。",
+    categorical: ["#43796D", "#6A9187", "#8AA79F", "#A9BBB6", "#59635F", "#77817D", "#969F9C", "#B3BAB8"],
+    sequential: ["#EFF5F2", "#43796D"], diverging: ["#78969C", "#F8F8F5", "#B38472"], ink: "#23242A", muted: "#6A7A74", grid: "#E2E8E5",
+  },
+  "minimal-clay": {
+    id: "minimal-clay", series: "minimal", name: "陶赭", description: "一组温暖陶赭阶梯，适合临床与实验比较图。",
+    categorical: ["#AD6954", "#BB826F", "#C79B8B", "#D1B2A7", "#655954", "#837570", "#A0948F", "#B9B1AD"],
+    sequential: ["#F8F0ED", "#AD6954"], diverging: ["#78909D", "#FAF8F5", "#B97A63"], ink: "#23242A", muted: "#806F68", grid: "#EAE3DF",
+  },
+  "minimal-plum": {
+    id: "minimal-plum", series: "minimal", name: "梅灰", description: "一组克制梅紫阶梯，适合强调单一研究主题。",
+    categorical: ["#8B617B", "#9F7991", "#B092A4", "#C0AABA", "#62575F", "#80727C", "#9E929A", "#B7AFB4"],
+    sequential: ["#F5F0F3", "#8B617B"], diverging: ["#7893A0", "#FAF8F7", "#A77793"], ink: "#23242A", muted: "#786B74", grid: "#E8E2E6",
+  },
   nature: {
     id: "nature",
     series: "journal",
@@ -373,108 +490,108 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     id: "cn-beihai",
     series: "chinese-traditional",
     name: "柴染棕",
-    description: "北海公园：柴染棕、青灰蓝、薄香橙与飞泉青。",
-    categorical: ["#957454", "#1D4C50", "#D4A278", "#3F605B"],
-    sequential: ["#D4A278", "#1D4C50"],
-    diverging: ["#91A7A6", "#FAF7F2", "#D3BBA4"],
-    ink: "#1D4C50",
-    muted: "#957454",
+    description: "桂皮淡棕、天青、海螺橙与梧枝绿；梧枝绿为白底色觉区分做轻微校准。",
+    categorical: ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
+    sequential: ["#F5E9D7", "#A87535"],
+    diverging: ["#90B5CF", "#FAF8F3", "#CDA18A"],
+    ink: "#23242A",
+    muted: "#7A7065",
     grid: "#F1E7E5",
   },
   "cn-imperial-orange": {
     id: "cn-imperial-orange",
     series: "chinese-traditional",
     name: "橙绯红",
-    description: "贵气天成：橙绯红、石槲绿、洗柿橙与伽罗褐。",
-    categorical: ["#DB5E40", "#2E2F25", "#E68959", "#866040"],
-    sequential: ["#E68959", "#2E2F25"],
-    diverging: ["#A3A59F", "#FCF8F3", "#D8B09B"],
-    ink: "#2E2F25",
-    muted: "#866040",
+    description: "纁色、青矾绿、谷鞘红与烟蓝；暖色主调配合清晰冷色对照。",
+    categorical: ["#D46D3A", "#2C9678", "#F17666", "#7BA4B8"],
+    sequential: ["#F8E6DC", "#B6542E"],
+    diverging: ["#91BEB0", "#FCF9F5", "#D4A08D"],
+    ink: "#23242A",
+    muted: "#786E68",
     grid: "#F1E7E5",
   },
   "cn-wisteria": {
     id: "cn-wisteria",
     series: "chinese-traditional",
     name: "淡藤萝紫",
-    description: "园博园：淡藤萝紫、青灰蓝、赤白橡与芦穗灰。",
-    categorical: ["#F1E7E5", "#1D4C50", "#D3A488", "#BDAEAD"],
-    sequential: ["#F1E7E5", "#1D4C50"],
-    diverging: ["#9AAEAE", "#FCF9F8", "#DFC4B7"],
-    ink: "#1D4C50",
-    muted: "#BDAEAD",
+    description: "藤萝紫、凤信紫、景泰蓝与颊红；避免近白色数据标记。",
+    categorical: ["#8076A3", "#C8ADC4", "#2775B6", "#EEAA9C"],
+    sequential: ["#F0EDF5", "#685D8C"],
+    diverging: ["#9BB8D1", "#FCFAFC", "#C4A9BE"],
+    ink: "#23242A",
+    muted: "#786F82",
     grid: "#F1E7E5",
   },
   "cn-sunset": {
     id: "cn-sunset",
     series: "chinese-traditional",
     name: "瓜瓤粉",
-    description: "夕阳古楼：瓜瓤粉、长石灰、金莺黄与淡玫瑰灰。",
-    categorical: ["#F7CD9B", "#313534", "#F0A72E", "#AE7F77"],
-    sequential: ["#F7CD9B", "#313534"],
-    diverging: ["#A4AAA8", "#FFF9F2", "#D8BDB7"],
-    ink: "#313534",
-    muted: "#AE7F77",
+    description: "瓜瓤粉、霁青、玉红与松霜绿；明快但保留期刊图表的克制感。",
+    categorical: ["#F9CB8B", "#63BBD0", "#C04851", "#83A78D"],
+    sequential: ["#FFF0D9", "#B67638"],
+    diverging: ["#93C2CF", "#FFFAF4", "#D2A1A4"],
+    ink: "#23242A",
+    muted: "#7C7470",
     grid: "#F1E7E5",
   },
   "cn-hutong": {
     id: "cn-hutong",
     series: "chinese-traditional",
     name: "蓝墨茶",
-    description: "京城胡同：蓝墨茶、赤白橡、中红驼与岩碇黑。",
-    categorical: ["#3E443C", "#D3A488", "#8B6B5B", "#24271E"],
-    sequential: ["#D3A488", "#24271E"],
-    diverging: ["#A4AAA3", "#FAF7F3", "#CBB4A7"],
-    ink: "#24271E",
-    muted: "#8B6B5B",
+    description: "蝶翅蓝、浅栗棕、鹅黄与梧枝绿；以蓝色为主轴的清爽组合。",
+    categorical: ["#4E7CA1", "#C8A58E", "#F2C867", "#69A794"],
+    sequential: ["#EAF1F6", "#3F6788"],
+    diverging: ["#93B4CE", "#FAF9F6", "#D1AA91"],
+    ink: "#23242A",
+    muted: "#6F7478",
     grid: "#F1E7E5",
   },
   "cn-dragon": {
     id: "cn-dragon",
     series: "chinese-traditional",
     name: "棉絮灰",
-    description: "盘龙纹：棉絮灰、老茶棕、淡红穹与苍灰绿。",
-    categorical: ["#B5A59B", "#655045", "#AF5F54", "#3B4E3D"],
-    sequential: ["#B5A59B", "#3B4E3D"],
-    diverging: ["#9FAC9F", "#FAF7F5", "#D4A8A2"],
-    ink: "#3B4E3D",
-    muted: "#655045",
+    description: "中灰、晴山蓝、谷鞘红与梧枝绿；中性基底配合三种清晰强调色。",
+    categorical: ["#A49C93", "#8FB2C9", "#F17666", "#69A794"],
+    sequential: ["#F1F3F4", "#6F7F89"],
+    diverging: ["#A5BDC9", "#FAF9F7", "#D0A3A0"],
+    ink: "#23242A",
+    muted: "#74706C",
     grid: "#F1E7E5",
   },
   "cn-coral": {
     id: "cn-coral",
     series: "chinese-traditional",
     name: "珊瑚朱",
-    description: "京城脚下：珊瑚朱、铜器青、藏花红与淡土棕。",
-    categorical: ["#DB785C", "#283F3E", "#E9A182", "#824E40"],
-    sequential: ["#E9A182", "#283F3E"],
-    diverging: ["#91A7A4", "#FCF8F4", "#D7AC9D"],
-    ink: "#283F3E",
-    muted: "#824E40",
+    description: "珊瑚红、天水碧、景泰蓝与鹅黄；高识别度的冷暖四组配色。",
+    categorical: ["#F04A3A", "#AED9D4", "#2775B6", "#F2C867"],
+    sequential: ["#FDE8E3", "#C43D32"],
+    diverging: ["#91B8CE", "#FCFAF7", "#D4A19B"],
+    ink: "#23242A",
+    muted: "#776D69",
     grid: "#F1E7E5",
   },
   "cn-autumn": {
     id: "cn-autumn",
     series: "chinese-traditional",
     name: "杏叶黄",
-    description: "故宫之秋：杏叶黄、岩碇黑、穹灰蓝与鹿角棕。",
-    categorical: ["#E5B552", "#24271E", "#CCD8D0", "#DFBE96"],
-    sequential: ["#CCD8D0", "#24271E"],
-    diverging: ["#9EA8A2", "#FBF9F3", "#DCCB9C"],
-    ink: "#24271E",
-    muted: "#DFBE96",
+    description: "金莺黄、晴山蓝、藤萝紫与梅子青；适合多组比较的秋日明色。",
+    categorical: ["#F4A83A", "#8FB2C9", "#8076A3", "#7BC092"],
+    sequential: ["#FFF0D6", "#B87527"],
+    diverging: ["#9CB9D0", "#FBFAF5", "#CCB18E"],
+    ink: "#23242A",
+    muted: "#746F68",
     grid: "#F1E7E5",
   },
   "cn-vermilion": {
     id: "cn-vermilion",
     series: "chinese-traditional",
     name: "中国红",
-    description: "青铜兽环：中国红、深栗棕、淡枣红与鹿角棕。",
-    categorical: ["#BF1103", "#580F05", "#970804", "#DFBE96"],
-    sequential: ["#DFBE96", "#580F05"],
-    diverging: ["#B69B96", "#FCF7F3", "#D2A29B"],
-    ink: "#580F05",
-    muted: "#970804",
+    description: "朱砂红、景泰蓝、金莺黄与青矾绿；保留中国红主色并增加跨色相区分。",
+    categorical: ["#D92121", "#2775B6", "#F4A83A", "#2C9678"],
+    sequential: ["#FDE5E3", "#B41C1C"],
+    diverging: ["#91B6CC", "#FCF9F7", "#D1A09C"],
+    ink: "#23242A",
+    muted: "#746A68",
     grid: "#F1E7E5",
   },
 };

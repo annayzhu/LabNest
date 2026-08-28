@@ -169,7 +169,24 @@ test.describe("Visualization Studio browser acceptance", () => {
     await page.getByRole("button", { name: "墨蓝", exact: true }).click();
     const bars = page.locator("svg[aria-label='Bar scientific figure preview'] [data-plot-element='bar']");
     await expect(bars).toHaveCount(8);
-    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#315C86", "#526E88", "#70849A", "#8F9DAC"]);
+    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0"]);
+  });
+
+  test("keeps default, Chinese red, and heatmap palette renderings stable", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop palette visual baselines");
+    await page.goto("/");
+
+    const defaultPreview = page.getByRole("heading", { name: "Bar preview" }).locator("xpath=ancestor::section");
+    await expect(page.getByText("Categorical contrast checked", { exact: true })).toBeVisible();
+    await expectStablePreviewScreenshot(page, defaultPreview, "palette-default-chai-dye-brown-desktop.png");
+
+    await page.getByRole("button", { name: "中国传统", exact: true }).click();
+    await page.getByRole("button", { name: "中国红", exact: true }).click();
+    await expectStablePreviewScreenshot(page, defaultPreview, "palette-chinese-red-desktop.png");
+
+    await page.getByRole("button", { name: /^Clustered heatmap/ }).click();
+    const heatmapPreview = page.getByRole("heading", { name: "Clustered heatmap preview" }).locator("xpath=ancestor::section");
+    await expectStablePreviewScreenshot(page, heatmapPreview, "palette-chinese-red-heatmap-desktop.png");
   });
 
   test("keeps the desktop workbench aligned and brings a distant selection fully into view", async ({ page }, testInfo) => {

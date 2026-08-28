@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assessCategoricalPalette,
   boxStatistics,
   defaultVisualizationPaletteSeriesId,
   defaultVisualizationSettings,
@@ -208,7 +209,8 @@ describe("Visualization Studio data contracts", () => {
   });
 
   it("provides complete publication palettes for categorical and continuous plots", () => {
-    expect(Object.keys(journalThemes)).toHaveLength(18);
+    expect(Object.keys(journalThemes)).toHaveLength(23);
+    expect(paletteSeries.minimal.themeIds).toHaveLength(5);
     expect(paletteSeries.journal.themeIds).toHaveLength(6);
     expect(paletteSeries.curated.themeIds).toHaveLength(3);
     expect(paletteSeries["chinese-traditional"].themeIds).toHaveLength(9);
@@ -239,21 +241,41 @@ describe("Visualization Studio data contracts", () => {
     });
   });
 
-  it("keeps the nine Pixso Chinese-traditional source palettes exact", () => {
+  it("keeps the nine canonical Chinese-traditional publication anchors exact", () => {
     const sourcePalettes = {
-      "cn-beihai": ["#957454", "#1D4C50", "#D4A278", "#3F605B"],
-      "cn-imperial-orange": ["#DB5E40", "#2E2F25", "#E68959", "#866040"],
-      "cn-wisteria": ["#F1E7E5", "#1D4C50", "#D3A488", "#BDAEAD"],
-      "cn-sunset": ["#F7CD9B", "#313534", "#F0A72E", "#AE7F77"],
-      "cn-hutong": ["#3E443C", "#D3A488", "#8B6B5B", "#24271E"],
-      "cn-dragon": ["#B5A59B", "#655045", "#AF5F54", "#3B4E3D"],
-      "cn-coral": ["#DB785C", "#283F3E", "#E9A182", "#824E40"],
-      "cn-autumn": ["#E5B552", "#24271E", "#CCD8D0", "#DFBE96"],
-      "cn-vermilion": ["#BF1103", "#580F05", "#970804", "#DFBE96"],
+      "cn-beihai": ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
+      "cn-imperial-orange": ["#D46D3A", "#2C9678", "#F17666", "#7BA4B8"],
+      "cn-wisteria": ["#8076A3", "#C8ADC4", "#2775B6", "#EEAA9C"],
+      "cn-sunset": ["#F9CB8B", "#63BBD0", "#C04851", "#83A78D"],
+      "cn-hutong": ["#4E7CA1", "#C8A58E", "#F2C867", "#69A794"],
+      "cn-dragon": ["#A49C93", "#8FB2C9", "#F17666", "#69A794"],
+      "cn-coral": ["#F04A3A", "#AED9D4", "#2775B6", "#F2C867"],
+      "cn-autumn": ["#F4A83A", "#8FB2C9", "#8076A3", "#7BC092"],
+      "cn-vermilion": ["#D92121", "#2775B6", "#F4A83A", "#2C9678"],
     } as const;
     Object.entries(sourcePalettes).forEach(([id, colors]) => {
       expect(journalThemes[id as keyof typeof journalThemes].categorical).toEqual(colors);
+      expect(journalThemes[id as keyof typeof journalThemes].ink).toBe("#23242A");
     });
+  });
+
+  it("reports deterministic normal, protanopia, and deuteranopia palette quality", () => {
+    Object.values(journalThemes).forEach((theme) => {
+      const report = assessCategoricalPalette(theme.categorical);
+      expect(report.validHex).toBe(true);
+      expect(report.duplicateColors).toEqual([]);
+      expect(report.nearWhiteIndexes).toEqual([]);
+      expect(report.minimumNormalDistance).toBeGreaterThan(0);
+      expect(report.minimumProtanopiaDistance).toBeGreaterThanOrEqual(0);
+      expect(report.minimumDeuteranopiaDistance).toBeGreaterThanOrEqual(0);
+      if (Math.min(report.minimumProtanopiaDistance, report.minimumDeuteranopiaDistance) < 0.08) {
+        expect(report.requiresSecondaryEncoding).toBe(true);
+      }
+    });
+    expect(assessCategoricalPalette(["#AABBCC", "#aabbcc"]).duplicateColors).toEqual(["#AABBCC"]);
+    expect(assessCategoricalPalette(["#FFFFFF", "#000000"]).nearWhiteIndexes).toEqual([0]);
+    expect(assessCategoricalPalette(["not-a-color", "#000000"]).requiresSecondaryEncoding).toBe(true);
+    expect(assessCategoricalPalette(journalThemes[defaultVisualizationThemeId].categorical.slice(0, 4)).requiresSecondaryEncoding).toBe(false);
   });
 
   it("provides portable sans-serif and serif figure-font presets", () => {

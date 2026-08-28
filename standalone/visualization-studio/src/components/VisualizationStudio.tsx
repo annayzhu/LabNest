@@ -15,6 +15,8 @@ import {
   defaultVisualizationSettings,
   defaultVisualizationThemeId,
   activeNumericAxes,
+  assessCategoricalPalette,
+  categoricalColorForIndex,
   analysisProvenanceForPlot,
   figureFontPresets,
   getPlotDefinition,
@@ -587,18 +589,21 @@ export function VisualizationStudio() {
   }, [paletteSeriesId, selectedCustomPalette, themeId]);
   const currentPaletteName = paletteSeriesId === "custom" ? selectedCustomPalette?.name || "Custom" : journalThemes[themeId].name;
   const currentPalettePreviewColors = paletteColorsFromSettings(settings, themeId).categoricalColors.slice(0, 4);
+  const effectiveCategoricalColors = useMemo(() => categoryLabels.map((_, index) => categoricalColorForIndex(index, settings.categoricalColors)), [categoryLabels, settings.categoricalColors]);
+  const currentPaletteQuality = useMemo(() => assessCategoricalPalette(effectiveCategoricalColors.length ? effectiveCategoricalColors : settings.categoricalColors.slice(0, 4)), [effectiveCategoricalColors, settings.categoricalColors]);
   const hasUnsavedColorChanges = currentColorFingerprint !== selectedPaletteFingerprint;
+  const colorResolvedSettings = useMemo(() => effectiveCategoricalColors.length ? { ...settings, categoricalColors: effectiveCategoricalColors } : settings, [effectiveCategoricalColors, settings]);
   const previewSettings = useMemo(() => {
-    if (!pcaAnalysis) return settings;
-    if (settings.ordinationView === "scree") return settings;
+    if (!pcaAnalysis) return colorResolvedSettings;
+    if (settings.ordinationView === "scree") return colorResolvedSettings;
     const displayedX = settings.swapAxes ? mapping.y : mapping.x;
     const displayedY = settings.swapAxes ? mapping.x : mapping.y;
     return {
-      ...settings,
+      ...colorResolvedSettings,
       xLabel: settings.xLabel || pcaAxisLabel(displayedX, pcaAnalysis.explainedVariance),
       yLabel: settings.yLabel || pcaAxisLabel(displayedY, pcaAnalysis.explainedVariance),
     };
-  }, [mapping.x, mapping.y, pcaAnalysis, settings]);
+  }, [colorResolvedSettings, mapping.x, mapping.y, pcaAnalysis, settings.ordinationView, settings.swapAxes, settings.xLabel, settings.yLabel]);
 
   const updateSetting = <Key extends keyof VisualizationSettings>(key: Key, value: VisualizationSettings[Key]) => {
     setSettings((current) => ({ ...current, [key]: value }));
@@ -608,7 +613,7 @@ export function VisualizationStudio() {
     setSettings((current) => {
       const themeColors = journalThemes[themeId].categorical;
       const nextLength = Math.max(current.categoricalColors.length, index + 1);
-      const categoricalColors = Array.from({ length: nextLength }, (_, colorIndex) => current.categoricalColors[colorIndex] ?? themeColors[colorIndex % themeColors.length]);
+      const categoricalColors = Array.from({ length: nextLength }, (_, colorIndex) => current.categoricalColors[colorIndex] ?? categoricalColorForIndex(colorIndex, themeColors));
       categoricalColors[index] = value;
       return { ...current, categoricalColors };
     });
@@ -857,7 +862,7 @@ export function VisualizationStudio() {
       plotType,
       themeId,
       mapping,
-      settings,
+      settings: previewSettings,
       analysisProvenance: analysisProvenance ?? undefined,
       pca: plotType === "pca" ? {
         inputMode: pcaInputMode,
@@ -919,6 +924,7 @@ export function VisualizationStudio() {
                   {themeId === id ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
                 </button>
               ))}
+              {currentPaletteQuality.requiresSecondaryEncoding ? <Badge tone="warning">Color overlap · use outlines, shapes, line styles, or direct labels</Badge> : <Badge tone="success">Categorical contrast checked</Badge>}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <input aria-label="Custom palette name" value={customPaletteName} placeholder="Custom palette name" onChange={(event) => setCustomPaletteName(event.target.value)} className="focus-ring h-7 w-40 rounded-[6px] border border-hairline bg-white px-2 text-[11px] text-ink placeholder:text-muted" />
@@ -1307,7 +1313,7 @@ export function VisualizationStudio() {
             </ControlGroup> : null}
 
               <ControlGroup title="Editable colors">
-                {categoryLabels.map((label, index) => <ColorControl key={`${label}-${index}`} label={`${index + 1} · ${label}`} value={settings.categoricalColors[index] ?? journalThemes[themeId].categorical[index % journalThemes[themeId].categorical.length]} onChange={(value) => updateCategoryColor(index, value)} />)}
+                {categoryLabels.map((label, index) => <ColorControl key={`${label}-${index}`} label={`${index + 1} · ${label}`} value={effectiveCategoricalColors[index] ?? categoricalColorForIndex(index, journalThemes[themeId].categorical)} onChange={(value) => updateCategoryColor(index, value)} />)}
                 {(["enrichment", "enrichment-bar", "go-circle", "kegg-circle", "pathway-impact", "nes-fdr"] as PlotType[]).includes(plotType) || ((plotType === "heatmap" || plotType === "clustered-heatmap") && settings.heatmapScale === "none" && settings.heatmapColorMode === "sequential") ? <><ColorControl label="Sequential low" value={settings.continuousLow} onChange={(value) => updateSetting("continuousLow", value)} /><ColorControl label="Sequential high" value={settings.continuousHigh} onChange={(value) => updateSetting("continuousHigh", value)} /></> : null}
                 {(["heatmap", "clustered-heatmap", "correlation-heatmap"] as PlotType[]).includes(plotType) && (plotType === "correlation-heatmap" || settings.heatmapScale !== "none" || settings.heatmapColorMode === "diverging") ? <><ColorControl label="Diverging low" value={settings.divergingLow} onChange={(value) => updateSetting("divergingLow", value)} /><ColorControl label="Midpoint" value={settings.divergingMid} onChange={(value) => updateSetting("divergingMid", value)} /><ColorControl label="Diverging high" value={settings.divergingHigh} onChange={(value) => updateSetting("divergingHigh", value)} /></> : null}
               </ControlGroup>

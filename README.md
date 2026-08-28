@@ -74,6 +74,9 @@ npm run test
 npm run build
 ```
 
+Visualization Studio's Chinese Traditional palettes use named anchors from the MIT-licensed [zhongguo-traditional-colors](https://github.com/nevertoday/zhongguo-traditional-colors) reference. LabNest calibrates those source colors separately for white-background categorical, sequential, and diverging scientific encodings; text remains near-black and never inherits a palette data color.
+The default 柴染棕 theme retains the canonical 梧枝绿 `#69A794` as its provenance anchor but uses a small white-background accessibility adjustment (`#5FA88F`) for the fourth categorical mark; this prevents the default four-group figure from failing the built-in deuteranopia separation threshold.
+
 ## Important Paths
 
 - `src/app/` - Next.js routes.

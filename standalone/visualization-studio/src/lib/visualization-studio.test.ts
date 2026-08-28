@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assessCategoricalPalette,
   alignHeatmapAnnotations,
   analysisProvenanceForPlot,
   categoricalColorForIndex,
@@ -686,6 +687,13 @@ describe("Visualization Studio data contracts", () => {
   });
 
   it("keeps minimal palettes within a single restrained hue family", () => {
+    expect(Object.fromEntries(paletteSeries.minimal.themeIds.map((id) => [id, journalThemes[id].categorical.slice(0, 4)]))).toEqual({
+      "minimal-ink": ["#46505A", "#65707A", "#838D96", "#A3AAB1"],
+      "minimal-cobalt": ["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0"],
+      "minimal-pine": ["#43796D", "#6A9187", "#8AA79F", "#A9BBB6"],
+      "minimal-clay": ["#AD6954", "#BB826F", "#C79B8B", "#D1B2A7"],
+      "minimal-plum": ["#8B617B", "#9F7991", "#B092A4", "#C0AABA"],
+    });
     paletteSeries.minimal.themeIds.forEach((id) => {
       const theme = journalThemes[id];
       expect(theme.series).toBe("minimal");
@@ -698,10 +706,41 @@ describe("Visualization Studio data contracts", () => {
     });
   });
 
-  it("uses recalibrated low-saturation Chinese-traditional palettes", () => {
-    Object.values(journalThemes).filter((theme) => theme.series === "chinese-traditional").forEach((theme) => {
-      expect(theme.categorical.every((color) => rgbChroma(color) < 0.48)).toBe(true);
+  it("uses canonical, brighter Chinese-traditional publication anchors", () => {
+    const anchors = {
+      "cn-beihai": ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
+      "cn-imperial-orange": ["#D46D3A", "#2C9678", "#F17666", "#7BA4B8"],
+      "cn-wisteria": ["#8076A3", "#C8ADC4", "#2775B6", "#EEAA9C"],
+      "cn-sunset": ["#F9CB8B", "#63BBD0", "#C04851", "#83A78D"],
+      "cn-hutong": ["#4E7CA1", "#C8A58E", "#F2C867", "#69A794"],
+      "cn-dragon": ["#A49C93", "#8FB2C9", "#F17666", "#69A794"],
+      "cn-coral": ["#F04A3A", "#AED9D4", "#2775B6", "#F2C867"],
+      "cn-autumn": ["#F4A83A", "#8FB2C9", "#8076A3", "#7BC092"],
+      "cn-vermilion": ["#D92121", "#2775B6", "#F4A83A", "#2C9678"],
+    } as const;
+    Object.entries(anchors).forEach(([id, colors]) => {
+      const theme = journalThemes[id as keyof typeof journalThemes];
+      expect(theme.categorical).toEqual(colors);
+      expect(theme.ink).toBe("#23242A");
+      expect(theme.categorical.every((color) => relativeLuminance(color) > 0.04 && relativeLuminance(color) < 0.82)).toBe(true);
     });
+  });
+
+  it("reports deterministic color-vision separation and secondary-encoding needs", () => {
+    Object.values(journalThemes).forEach((theme) => {
+      const report = assessCategoricalPalette(theme.categorical);
+      expect(report.validHex).toBe(true);
+      expect(report.duplicateColors).toEqual([]);
+      expect(report.nearWhiteIndexes).toEqual([]);
+      expect(report.minimumNormalDistance).toBeGreaterThan(0);
+      if (Math.min(report.minimumProtanopiaDistance, report.minimumDeuteranopiaDistance) < 0.08) {
+        expect(report.requiresSecondaryEncoding).toBe(true);
+      }
+    });
+    expect(assessCategoricalPalette(["#AABBCC", "#aabbcc"]).duplicateColors).toEqual(["#AABBCC"]);
+    expect(assessCategoricalPalette(["#FFFFFF", "#000000"]).nearWhiteIndexes).toEqual([0]);
+    expect(assessCategoricalPalette(["not-a-color", "#000000"]).requiresSecondaryEncoding).toBe(true);
+    expect(assessCategoricalPalette(journalThemes[defaultVisualizationThemeId].categorical.slice(0, 4)).requiresSecondaryEncoding).toBe(false);
   });
 
   it("provides portable sans-serif and serif figure-font presets", () => {

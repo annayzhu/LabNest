@@ -22,17 +22,74 @@ export function rankValues(values: number[]) {
 
 export function pearsonCorrelation(x: number[], y: number[]) {
   const pairs = x.map((value, index) => [value, y[index]] as const).filter(([a, b]) => Number.isFinite(a) && Number.isFinite(b));
-  if (pairs.length < 2) return 0;
+  if (pairs.length < 2) return Number.NaN;
   const meanX = mean(pairs.map(([a]) => a));
   const meanY = mean(pairs.map(([, b]) => b));
   const numerator = pairs.reduce((sum, [a, b]) => sum + (a - meanX) * (b - meanY), 0);
   const denominatorX = Math.sqrt(pairs.reduce((sum, [a]) => sum + (a - meanX) ** 2, 0));
   const denominatorY = Math.sqrt(pairs.reduce((sum, [, b]) => sum + (b - meanY) ** 2, 0));
-  return denominatorX > 0 && denominatorY > 0 ? numerator / (denominatorX * denominatorY) : 0;
+  return denominatorX > 0 && denominatorY > 0 ? numerator / (denominatorX * denominatorY) : Number.NaN;
 }
 
 export function correlation(x: number[], y: number[], method: CorrelationMethod) {
   return method === "spearman" ? pearsonCorrelation(rankValues(x), rankValues(y)) : pearsonCorrelation(x, y);
+}
+
+function logGamma(value: number): number {
+  const coefficients = [676.5203681218851, -1259.1392167224028, 771.3234287776531, -176.6150291621406, 12.507343278686905, -0.13857109526572012, 9.984369578019572e-6, 1.5056327351493116e-7];
+  if (value < 0.5) return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * value)) - logGamma(1 - value);
+  const shifted = value - 1;
+  let series = 0.9999999999998099;
+  coefficients.forEach((coefficient, index) => { series += coefficient / (shifted + index + 1); });
+  const t = shifted + coefficients.length - 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (shifted + 0.5) * Math.log(t) - t + Math.log(series);
+}
+
+function betaContinuedFraction(a: number, b: number, x: number) {
+  const maximumIterations = 200;
+  const epsilon = 3e-14;
+  const floor = 1e-300;
+  const qab = a + b;
+  const qap = a + 1;
+  const qam = a - 1;
+  let c = 1;
+  let d = 1 - qab * x / qap;
+  if (Math.abs(d) < floor) d = floor;
+  d = 1 / d;
+  let result = d;
+  for (let iteration = 1; iteration <= maximumIterations; iteration += 1) {
+    const doubled = iteration * 2;
+    let numerator = iteration * (b - iteration) * x / ((qam + doubled) * (a + doubled));
+    d = 1 + numerator * d; if (Math.abs(d) < floor) d = floor;
+    c = 1 + numerator / c; if (Math.abs(c) < floor) c = floor;
+    d = 1 / d; result *= d * c;
+    numerator = -(a + iteration) * (qab + iteration) * x / ((a + doubled) * (qap + doubled));
+    d = 1 + numerator * d; if (Math.abs(d) < floor) d = floor;
+    c = 1 + numerator / c; if (Math.abs(c) < floor) c = floor;
+    d = 1 / d;
+    const delta = d * c;
+    result *= delta;
+    if (Math.abs(delta - 1) < epsilon) break;
+  }
+  return result;
+}
+
+export function regularizedIncompleteBeta(x: number, a: number, b: number) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const front = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2)
+    ? front * betaContinuedFraction(a, b, x) / a
+    : 1 - front * betaContinuedFraction(b, a, 1 - x) / b;
+}
+
+export function correlationPValue(coefficient: number, sampleSize: number) {
+  if (sampleSize < 3 || !Number.isFinite(coefficient)) return Number.NaN;
+  const bounded = Math.max(-1, Math.min(1, coefficient));
+  if (Math.abs(bounded) >= 1) return 0;
+  const degreesOfFreedom = sampleSize - 2;
+  const tSquared = bounded ** 2 * degreesOfFreedom / Math.max(Number.EPSILON, 1 - bounded ** 2);
+  return Math.max(0, Math.min(1, regularizedIncompleteBeta(degreesOfFreedom / (degreesOfFreedom + tSquared), degreesOfFreedom / 2, 0.5)));
 }
 
 export function matrixFromRows(rows: DelimitedRow[], columns: string[]) {
@@ -49,23 +106,48 @@ function euclidean(left: number[], right: number[]) {
   return Math.sqrt(left.reduce((sum, value, index) => sum + (value - right[index]) ** 2, 0));
 }
 
-export function hierarchicalClusterOrder(vectors: number[][]) {
-  if (vectors.length <= 1) return vectors.map((_, index) => index);
-  type Cluster = { members: number[]; order: number[] };
-  const clusters: Cluster[] = vectors.map((_, index) => ({ members: [index], order: [index] }));
-  const averageDistance = (left: Cluster, right: Cluster) => {
-    const distances = left.members.flatMap((a) => right.members.map((b) => euclidean(vectors[a], vectors[b])));
-    return mean(distances);
-  };
+export type ClusterDistance = "euclidean" | "correlation";
+export type ClusterLinkage = "average" | "complete" | "single";
+export type HierarchicalClusterNode = {
+  id: string;
+  members: number[];
+  order: number[];
+  height: number;
+  left?: HierarchicalClusterNode;
+  right?: HierarchicalClusterNode;
+};
+
+function vectorDistance(left: number[], right: number[], distance: ClusterDistance) {
+  if (distance === "correlation") {
+    const coefficient = pearsonCorrelation(left, right);
+    if (!Number.isFinite(coefficient)) throw new Error("Correlation distance is undefined for a zero-variance vector.");
+    return Math.max(0, 1 - coefficient);
+  }
+  return euclidean(left, right);
+}
+
+export function hierarchicalClusterTree(
+  vectors: number[][],
+  distance: ClusterDistance = "euclidean",
+  linkage: ClusterLinkage = "average",
+): HierarchicalClusterNode | null {
+  if (vectors.length === 0) return null;
+  const clusters: HierarchicalClusterNode[] = vectors.map((_, index) => ({ id: `leaf-${index}`, members: [index], order: [index], height: 0 }));
+  const distances = new Map<string, number>();
+  const distanceKey = (left: HierarchicalClusterNode, right: HierarchicalClusterNode) => left.id < right.id ? `${left.id}\u0000${right.id}` : `${right.id}\u0000${left.id}`;
+  const getDistance = (left: HierarchicalClusterNode, right: HierarchicalClusterNode) => distances.get(distanceKey(left, right)) ?? Number.POSITIVE_INFINITY;
+  for (let left = 0; left < clusters.length; left += 1) {
+    for (let right = left + 1; right < clusters.length; right += 1) distances.set(distanceKey(clusters[left], clusters[right]), vectorDistance(vectors[left], vectors[right], distance));
+  }
   while (clusters.length > 1) {
     let bestI = 0;
     let bestJ = 1;
     let bestDistance = Number.POSITIVE_INFINITY;
     for (let i = 0; i < clusters.length; i += 1) {
       for (let j = i + 1; j < clusters.length; j += 1) {
-        const distance = averageDistance(clusters[i], clusters[j]);
-        if (distance < bestDistance - 1e-12) {
-          bestDistance = distance;
+        const candidateDistance = getDistance(clusters[i], clusters[j]);
+        if (candidateDistance < bestDistance - 1e-12) {
+          bestDistance = candidateDistance;
           bestI = i;
           bestJ = j;
         }
@@ -73,29 +155,80 @@ export function hierarchicalClusterOrder(vectors: number[][]) {
     }
     const left = clusters[bestI];
     const right = clusters[bestJ];
-    const merged: Cluster = { members: [...left.members, ...right.members], order: [...left.order, ...right.order] };
+    const merged: HierarchicalClusterNode = {
+      id: `node-${left.id}-${right.id}`,
+      members: [...left.members, ...right.members],
+      order: [...left.order, ...right.order],
+      height: bestDistance,
+      left,
+      right,
+    };
+    const updatedDistances = clusters.flatMap((other) => {
+      if (other === left || other === right) return;
+      const leftDistance = getDistance(left, other);
+      const rightDistance = getDistance(right, other);
+      const mergedDistance = linkage === "single"
+        ? Math.min(leftDistance, rightDistance)
+        : linkage === "complete"
+          ? Math.max(leftDistance, rightDistance)
+          : (left.members.length * leftDistance + right.members.length * rightDistance) / (left.members.length + right.members.length);
+      return [{ other, mergedDistance }];
+    }).filter((entry): entry is { other: HierarchicalClusterNode; mergedDistance: number } => Boolean(entry));
+    [...distances.keys()].forEach((key) => {
+      const [firstId, secondId] = key.split("\u0000");
+      if (firstId === left.id || secondId === left.id || firstId === right.id || secondId === right.id) distances.delete(key);
+    });
+    updatedDistances.forEach(({ other, mergedDistance }) => distances.set(distanceKey(merged, other), mergedDistance));
     clusters.splice(bestJ, 1);
     clusters.splice(bestI, 1, merged);
   }
-  return clusters[0].order;
+  return clusters[0];
+}
+
+export function hierarchicalClusterOrder(
+  vectors: number[][],
+  distance: ClusterDistance = "euclidean",
+  linkage: ClusterLinkage = "average",
+) {
+  return hierarchicalClusterTree(vectors, distance, linkage)?.order ?? [];
+}
+
+export function cutHierarchicalCluster(tree: HierarchicalClusterNode | null, clusterCount: number) {
+  if (!tree) return [];
+  const requested = Math.max(1, Math.min(Math.floor(clusterCount), tree.members.length));
+  const clusters = [tree];
+  while (clusters.length < requested) {
+    const splittable = clusters
+      .map((node, index) => ({ node, index }))
+      .filter(({ node }) => node.left && node.right)
+      .sort((a, b) => b.node.height - a.node.height || Math.min(...a.node.members) - Math.min(...b.node.members))[0];
+    if (!splittable?.node.left || !splittable.node.right) break;
+    clusters.splice(splittable.index, 1, splittable.node.left, splittable.node.right);
+  }
+  clusters.sort((left, right) => Math.min(...left.members) - Math.min(...right.members));
+  const labels = Array(tree.members.length).fill(0) as number[];
+  clusters.forEach((node, clusterIndex) => node.members.forEach((member) => { labels[member] = clusterIndex; }));
+  return labels;
 }
 
 export type KaplanMeierPoint = { time: number; survival: number; atRisk: number; events: number; censored: number };
 
 export function kaplanMeier(records: Array<{ time: number; event: 0 | 1 }>) {
   const ordered = [...records].sort((a, b) => a.time - b.time || b.event - a.event);
-  const times = [...new Set(ordered.map((record) => record.time))];
   const points: KaplanMeierPoint[] = [{ time: 0, survival: 1, atRisk: ordered.length, events: 0, censored: 0 }];
   let survival = 1;
   let atRisk = ordered.length;
-  times.forEach((time) => {
-    const recordsAtTime = ordered.filter((record) => record.time === time);
-    const events = recordsAtTime.filter((record) => record.event === 1).length;
-    const censored = recordsAtTime.length - events;
+  for (let start = 0; start < ordered.length;) {
+    const time = ordered[start].time;
+    let end = start; let events = 0;
+    while (end < ordered.length && ordered[end].time === time) { if (ordered[end].event === 1) events += 1; end += 1; }
+    const countAtTime = end - start;
+    const censored = countAtTime - events;
     if (atRisk > 0 && events > 0) survival *= 1 - events / atRisk;
     points.push({ time, survival, atRisk, events, censored });
-    atRisk -= recordsAtTime.length;
-  });
+    atRisk -= countAtTime;
+    start = end;
+  }
   return points;
 }
 
@@ -105,14 +238,15 @@ export function rocCurve(records: Array<{ truth: 0 | 1; score: number }>) {
   const positives = records.filter((record) => record.truth === 1).length;
   const negatives = records.length - positives;
   if (positives === 0 || negatives === 0) return { points: [] as RocPoint[], auc: Number.NaN };
-  const thresholds = [Number.POSITIVE_INFINITY, ...[...new Set(records.map((record) => record.score))].sort((a, b) => b - a), Number.NEGATIVE_INFINITY];
-  const points = thresholds.map((threshold) => {
-    const predictedPositive = records.filter((record) => record.score >= threshold);
-    const truePositive = predictedPositive.filter((record) => record.truth === 1).length;
-    const falsePositive = predictedPositive.length - truePositive;
-    return { fpr: falsePositive / negatives, tpr: truePositive / positives, threshold };
-  });
-  const unique = points.filter((point, index) => index === 0 || point.fpr !== points[index - 1].fpr || point.tpr !== points[index - 1].tpr);
+  const ordered = [...records].sort((a, b) => b.score - a.score);
+  const unique: RocPoint[] = [{ fpr: 0, tpr: 0, threshold: Number.POSITIVE_INFINITY }];
+  let truePositive = 0; let falsePositive = 0;
+  for (let start = 0; start < ordered.length;) {
+    const threshold = ordered[start].score; let end = start;
+    while (end < ordered.length && ordered[end].score === threshold) { if (ordered[end].truth === 1) truePositive += 1; else falsePositive += 1; end += 1; }
+    unique.push({ fpr: falsePositive / negatives, tpr: truePositive / positives, threshold });
+    start = end;
+  }
   const auc = unique.slice(1).reduce((sum, point, index) => {
     const previous = unique[index];
     return sum + (point.fpr - previous.fpr) * (point.tpr + previous.tpr) / 2;

@@ -16,9 +16,8 @@ import {
   defaultVisualizationSettings,
   defaultVisualizationThemeId,
   activeNumericAxes,
-  assessCategoricalPalette,
-  categoricalColorForIndex,
   analysisProvenanceForPlot,
+  categoricalColorForIndex,
   figureFontPresets,
   getPlotDefinition,
   getPlotModule,
@@ -565,14 +564,21 @@ export function VisualizationStudio() {
   }) : null, [barCategoryOptions, dataset.rows, mapping, plotType, settings.barAnalysisMode, settings.barPAdjustment, settings.barReferenceCategory]);
   const displayDataset = useMemo(() => barAnalysis ? {
     ...dataset,
-    headers: barAnalysis.pValueColumn && !dataset.headers.includes(barAnalysis.pValueColumn) ? [...dataset.headers, barAnalysis.pValueColumn] : dataset.headers,
+    headers: barAnalysis.pValueColumn && !dataset.headers.includes(barAnalysis.pValueColumn)
+      ? [...dataset.headers, barAnalysis.pValueColumn]
+      : dataset.headers,
     rows: barAnalysis.rows,
   } : dataset, [barAnalysis, dataset]);
   const displayMapping = useMemo(() => plotType === "bar" ? {
     ...mapping,
-    error: settings.barInputMode === "summary" && settings.barErrorType !== "none" ? mapping[settings.barErrorType] || mapping.error : mapping.error,
+    error: settings.barInputMode === "summary" && settings.barErrorType !== "none"
+      ? mapping[settings.barErrorType] || mapping.error
+      : mapping.error,
     pValue: barAnalysis?.pValueColumn ?? mapping.pValue,
   } : mapping, [barAnalysis?.pValueColumn, mapping, plotType, settings.barErrorType, settings.barInputMode]);
+  const lineSeriesOptions = useMemo(() => plotType === "line" && mapping.series
+    ? [...new Set(dataset.rows.map((row) => row[mapping.series]).filter(Boolean))]
+    : [], [dataset.rows, mapping.series, plotType]);
   const setAnalysis = useMemo(
     () => (plotType === "venn" || plotType === "upset") ? analyzeSetIntersections(dataset.rows, mapping, settings.setInputMode) : null,
     [dataset.rows, mapping, plotType, settings.setInputMode],
@@ -610,7 +616,6 @@ export function VisualizationStudio() {
   const currentPaletteName = paletteSeriesId === "custom" ? selectedCustomPalette?.name || "Custom" : journalThemes[themeId].name;
   const currentPalettePreviewColors = paletteColorsFromSettings(settings, themeId).categoricalColors.slice(0, 4);
   const effectiveCategoricalColors = useMemo(() => categoryLabels.map((_, index) => categoricalColorForIndex(index, settings.categoricalColors)), [categoryLabels, settings.categoricalColors]);
-  const currentPaletteQuality = useMemo(() => assessCategoricalPalette(effectiveCategoricalColors.length ? effectiveCategoricalColors : settings.categoricalColors.slice(0, 4)), [effectiveCategoricalColors, settings.categoricalColors]);
   const hasUnsavedColorChanges = currentColorFingerprint !== selectedPaletteFingerprint;
   const colorResolvedSettings = useMemo(() => effectiveCategoricalColors.length ? { ...settings, categoricalColors: effectiveCategoricalColors } : settings, [effectiveCategoricalColors, settings]);
   const previewSettings = useMemo(() => {
@@ -961,7 +966,6 @@ export function VisualizationStudio() {
                   {themeId === id ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
                 </button>
               ))}
-              {currentPaletteQuality.requiresSecondaryEncoding ? <Badge tone="warning">Color overlap · use outlines, shapes, line styles, or direct labels</Badge> : <Badge tone="success">Categorical contrast checked</Badge>}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <input aria-label="Custom palette name" value={customPaletteName} placeholder="Custom palette name" onChange={(event) => setCustomPaletteName(event.target.value)} className="focus-ring h-7 w-40 rounded-[6px] border border-hairline bg-white px-2 text-[11px] text-ink placeholder:text-muted" />
@@ -1044,7 +1048,12 @@ export function VisualizationStudio() {
               {validation.warnings.length > 0 ? <div className="mt-3 rounded-[8px] border border-warning/20 bg-warning-surface px-3 py-2 text-xs leading-5 text-warning">{validation.warnings.join(" · ")}</div> : null}
               {plotType === "bar" && isValid && barAnalysis?.results.length ? <details className="mt-3 overflow-hidden rounded-[8px] border border-hairline bg-white">
                 <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-ink"><span>Statistical results · {barAnalysis.results.length} comparison{barAnalysis.results.length === 1 ? "" : "s"}</span><Button type="button" size="sm" onClick={(event) => { event.preventDefault(); downloadBarAnalysis(); }}><Download className="h-3.5 w-3.5" aria-hidden />TSV</Button></summary>
-                <div className="overflow-x-auto border-t border-hairline"><table className="min-w-full text-left text-[11px] text-graphite"><thead className="bg-stone text-[10px] uppercase tracking-[0.04em] text-muted"><tr><th className="px-3 py-2">Group</th><th className="px-3 py-2">Comparison</th><th className="px-3 py-2">Difference (95% CI)</th><th className="px-3 py-2">n</th><th className="px-3 py-2">P raw</th><th className="px-3 py-2">P adjusted</th><th className="px-3 py-2">Method / scale</th></tr></thead><tbody>{barAnalysis.results.map((result) => <tr key={`${result.facet}-${result.group}-${result.reference}-${result.comparison}`} className="border-t border-hairline first:border-t-0"><td className="whitespace-nowrap px-3 py-2">{result.group}</td><td className="whitespace-nowrap px-3 py-2">{result.comparison} vs {result.reference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.difference.toPrecision(4)} ({result.lower95.toPrecision(4)}, {result.upper95.toPrecision(4)})</td><td className="whitespace-nowrap px-3 py-2">{result.nComparison} / {result.nReference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.rawPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.adjustedPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2">{result.method} · {result.analysisScale}</td></tr>)}</tbody></table></div>
+                <div className="overflow-x-auto border-t border-hairline">
+                  <table className="min-w-full text-left text-[11px] text-graphite">
+                    <thead className="bg-stone text-[10px] uppercase tracking-[0.04em] text-muted"><tr><th className="px-3 py-2">Group</th><th className="px-3 py-2">Comparison</th><th className="px-3 py-2">Difference (95% CI)</th><th className="px-3 py-2">n</th><th className="px-3 py-2">P raw</th><th className="px-3 py-2">P adjusted</th><th className="px-3 py-2">Method / scale</th></tr></thead>
+                    <tbody>{barAnalysis.results.map((result) => <tr key={`${result.facet}-${result.group}-${result.reference}-${result.comparison}`} className="border-t border-hairline first:border-t-0"><td className="whitespace-nowrap px-3 py-2">{result.group}</td><td className="whitespace-nowrap px-3 py-2">{result.comparison} vs {result.reference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.difference.toPrecision(4)} ({result.lower95.toPrecision(4)}, {result.upper95.toPrecision(4)})</td><td className="whitespace-nowrap px-3 py-2">{result.nComparison} / {result.nReference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.rawPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.adjustedPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2">{result.method} · {result.analysisScale}</td></tr>)}</tbody>
+                  </table>
+                </div>
               </details> : null}
             </CardBody>
           </Card>
@@ -1216,6 +1225,16 @@ export function VisualizationStudio() {
               {(plotType === "bar" ? settings.barErrorType : settings.lineErrorType) !== "none" ? <>{plotType === "line" ? <SelectControl label="Display style" value={settings.lineUncertaintyStyle} onChange={(value) => updateSetting("lineUncertaintyStyle", value as VisualizationSettings["lineUncertaintyStyle"])}><option value="bars">Pointwise bars</option><option value="band">Ribbon</option></SelectControl> : null}{plotType === "line" && settings.lineUncertaintyStyle === "band" ? <RangeControl label="Ribbon opacity" value={settings.lineBandOpacity} minimum={0.04} maximum={0.5} step={0.01} onChange={(value) => updateSetting("lineBandOpacity", value)} /> : <><RangeControl label="Error line" value={settings.errorBarLineWidth} minimum={0.8} maximum={3} step={0.1} unit=" px" onChange={(value) => updateSetting("errorBarLineWidth", value)} /><RangeControl label="Cap width" value={settings.errorBarCapSize} minimum={4} maximum={30} step={1} unit=" px" onChange={(value) => updateSetting("errorBarCapSize", value)} /></>}<p className="rounded-[8px] bg-stone px-3 py-2 text-[11px] leading-4 text-graphite">Map an already-calculated non-negative half-width. SD describes spread, SEM describes mean precision, and a 95% CI half-width describes an interval around the estimate. A ribbon changes only the display, not the statistic.</p></> : null}
             </ControlGroup> : null}
 
+            {plotType === "line" ? <ControlGroup title="Pointwise significance">
+              <ToggleControl label="Calculate significance" checked={settings.showSignificance} onChange={(value) => updateSetting("showSignificance", value)} />
+              {settings.showSignificance ? <>
+                <SelectControl label="Reference series" value={settings.lineReferenceSeries || lineSeriesOptions[0] || ""} onChange={(value) => updateSetting("lineReferenceSeries", value)}>{lineSeriesOptions.map((series) => <option key={series} value={series}>{series}</option>)}</SelectControl>
+                <SelectControl label="Multiple-testing correction" value={settings.linePAdjustment} onChange={(value) => updateSetting("linePAdjustment", value as VisualizationSettings["linePAdjustment"])}><option value="bh">Benjamini–Hochberg FDR</option><option value="none">None</option></SelectControl>
+                <RangeControl label="Adjusted P threshold" value={settings.significanceThreshold} minimum={0.001} maximum={0.1} step={0.001} onChange={(value) => updateSetting("significanceThreshold", value)} />
+                <p className="rounded-[8px] bg-stone px-3 py-2 text-[11px] leading-4 text-graphite">At each X value, every non-reference series is compared with the selected reference using an independent-samples Welch t test. Map mean, SD or SEM, and an explicit integer n ≥ 2. BH correction is applied across all displayed pointwise comparisons. Do not use this calculation for paired or repeated-measures data; supply results from the appropriate upstream model instead.</p>
+              </> : null}
+            </ControlGroup> : null}
+
             {plotType === "bar" ? <>
               <ControlGroup title="Categorical design">
                 <SelectControl label="Variant" value={settings.barVariant} onChange={(value) => selectBarVariant(value as VisualizationSettings["barVariant"])}>
@@ -1231,9 +1250,17 @@ export function VisualizationStudio() {
               </ControlGroup>
               {settings.barVariant !== "polar" ? <ControlGroup title="Statistical analysis">
                 <SelectControl label="Analysis source / design" value={settings.barAnalysisMode} onChange={(value) => selectBarAnalysisMode(value as VisualizationSettings["barAnalysisMode"])}>
-                  <option value="none">Visualization only · no P values</option><option value="supplied">Display supplied P values</option><option value="raw-independent">Raw independent observations · Welch</option><option value="summary-independent">Mean + SD/SEM + n · Welch</option><option value="raw-paired">Raw matched observations · paired t</option><option value="qpcr-delta-ct">qPCR · display relative expression, test ΔCt</option>
+                  <option value="none">Visualization only · no P values</option>
+                  <option value="supplied">Display supplied P values</option>
+                  <option value="raw-independent">Raw independent observations · Welch</option>
+                  <option value="summary-independent">Mean + SD/SEM + n · Welch</option>
+                  <option value="raw-paired">Raw matched observations · paired t</option>
+                  <option value="qpcr-delta-ct">qPCR · display relative expression, test ΔCt</option>
                 </SelectControl>
-                {!["none", "supplied"].includes(settings.barAnalysisMode) ? <><SelectControl label="Reference category" value={settings.barReferenceCategory || barCategoryOptions[0] || ""} onChange={(value) => updateSetting("barReferenceCategory", value)}>{barCategoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}</SelectControl><SelectControl label="Multiple-testing correction" value={settings.barPAdjustment} onChange={(value) => updateSetting("barPAdjustment", value as VisualizationSettings["barPAdjustment"])}><option value="bh">Benjamini–Hochberg FDR</option><option value="holm">Holm family-wise correction</option><option value="none">None</option></SelectControl></> : null}
+                {!["none", "supplied"].includes(settings.barAnalysisMode) ? <>
+                  <SelectControl label="Reference category" value={settings.barReferenceCategory || barCategoryOptions[0] || ""} onChange={(value) => updateSetting("barReferenceCategory", value)}>{barCategoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}</SelectControl>
+                  <SelectControl label="Multiple-testing correction" value={settings.barPAdjustment} onChange={(value) => updateSetting("barPAdjustment", value as VisualizationSettings["barPAdjustment"])}><option value="bh">Benjamini–Hochberg FDR</option><option value="holm">Holm family-wise correction</option><option value="none">None</option></SelectControl>
+                </> : null}
                 {settings.barAnalysisMode !== "none" ? <ToggleControl label="Significance annotations" checked={settings.showSignificance} onChange={(value) => updateSetting("showSignificance", value)} /> : null}
                 {settings.showSignificance ? <RangeControl label={settings.barPAdjustment === "none" || settings.barAnalysisMode === "supplied" ? "P-value threshold" : "Adjusted P threshold"} value={settings.significanceThreshold} minimum={0.001} maximum={0.1} step={0.001} onChange={(value) => updateSetting("significanceThreshold", value)} /> : null}
                 <p className="rounded-[8px] bg-stone px-3 py-2 text-[11px] leading-4 text-graphite">Independent modes use two-sided Welch t-tests within each group/facet. Summary inference requires explicit integer n ≥ 2 and SD or SEM; n is never inferred. Paired mode requires the same subject IDs in both categories. qPCR displays relative expression but tests biological-replicate ΔCt. Technical replicates must be aggregated before import.</p>

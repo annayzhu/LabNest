@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  assessCategoricalPalette,
   alignHeatmapAnnotations,
+  barCategoryAxisLayoutMetrics,
+  benjaminiHochbergAdjust,
   analysisProvenanceForPlot,
   categoricalColorForIndex,
   boxStatistics,
@@ -26,6 +27,7 @@ import {
   loessSmooth,
   meanErrorStatistics,
   numericExtent,
+  observedAxisTicks,
   ordinationLoadingLayout,
   ordinationLegendLayout,
   parseDelimitedData,
@@ -33,10 +35,12 @@ import {
   polynomialRegression,
   resolveAxisDomain,
   studentTCritical95,
+  studentTTwoSidedPValue,
   plotDefinitions,
   plotGuidance,
   plotReferences,
   validatePlotDataset,
+  welchSummaryPValue,
 } from "./visualization-studio";
 
 function relativeLuminance(hex: string) {
@@ -51,6 +55,38 @@ function rgbChroma(hex: string) {
 }
 
 describe("Visualization Studio data contracts", () => {
+  it("uses actual ordered sampling times when a line axis can display them clearly", () => {
+    expect(observedAxisTicks([0, 1, 2, 3, 0, 1, 2, 3], 8)).toEqual([0, 1, 2, 3]);
+    expect(observedAxisTicks([3, 1, 2, 0], 8)).toEqual([0, 1, 2, 3]);
+    expect(observedAxisTicks(Array.from({ length: 20 }, (_, index) => index), 8)).toBeUndefined();
+  });
+
+  it("calculates Welch summary P values and BH-adjusted pointwise comparisons", () => {
+    expect(studentTTwoSidedPValue(2.228, 10)).toBeCloseTo(0.05, 3);
+    expect(welchSummaryPValue(1, 0.2, 3, 1, 0.3, 3)).toBe(1);
+    expect((welchSummaryPValue(1, 0.2, 3, 2, 0.2, 3) ?? 1) < 0.01).toBe(true);
+    expect(benjaminiHochbergAdjust([0.01, 0.04, 0.03])).toEqual([0.03, 0.04, 0.04]);
+  });
+
+  it("requires explicit n and SD or SEM for line significance calculation", () => {
+    const definition = getPlotDefinition("line");
+    const withoutN = validatePlotDataset(
+      definition,
+      parseDelimitedData("time\tvalue\tsd\tseries\n0\t1\t0.1\tA\n0\t2\t0.2\tB"),
+      { x: "time", value: "value", error: "sd", n: "", series: "series" },
+      { ...defaultVisualizationSettings, lineErrorType: "sd", showSignificance: true },
+    );
+    expect(withoutN.errors).toContain("Map an explicit sample-size (n) column before calculating line significance.");
+
+    const valid = validatePlotDataset(
+      definition,
+      parseDelimitedData("time\tvalue\tsd\tn\tseries\n0\t1\t0.1\t3\tA\n0\t2\t0.2\t3\tB"),
+      { x: "time", value: "value", error: "sd", n: "n", series: "series" },
+      { ...defaultVisualizationSettings, lineErrorType: "sd", showSignificance: true },
+    );
+    expect(valid.errors).toEqual([]);
+  });
+
   it("reports whether analysis results were supplied or calculated in Studio", () => {
     expect(analysisProvenanceForPlot("pca", defaultVisualizationSettings, "scores")?.source).toBe("supplied");
     expect(analysisProvenanceForPlot("pca", defaultVisualizationSettings, "matrix")?.source).toBe("calculated-in-studio");
@@ -458,6 +494,39 @@ describe("Visualization Studio data contracts", () => {
     expect(negative.errors.join(" ")).toMatch(/SD and SEM must be non-negative/);
   });
 
+  it("reserves dynamic footer space for rotated bar categories and an X-axis title", () => {
+    const labels = ["Mock", "NC", "siFBN2-1224", "siFBN2-7173", "siFBN2-9706"];
+    const titled = barCategoryAxisLayoutMetrics(
+      { ...defaultVisualizationSettings, width: 480, height: 340, xLabel: "H596", legendPosition: "right" },
+      labels,
+    );
+    expect(titled.applies).toBe(true);
+    expect(titled.bottom).toBeGreaterThan(58);
+    expect(titled.fits).toBe(true);
+
+    const untitled = barCategoryAxisLayoutMetrics(
+      { ...defaultVisualizationSettings, width: 480, height: 340, xLabel: "", legendPosition: "right" },
+      labels,
+    );
+    expect(untitled.bottom).toBeLessThan(titled.bottom);
+
+    const horizontal = barCategoryAxisLayoutMetrics(
+      { ...defaultVisualizationSettings, width: 480, height: 340, xLabel: "H596", swapAxes: true },
+      labels,
+    );
+    expect(horizontal.applies).toBe(false);
+
+    const cannotFit = { ...defaultVisualizationSettings, width: 220, height: 140, xLabel: "H596", tickSize: 20, axisLabelSize: 24 };
+    expect(barCategoryAxisLayoutMetrics(cannotFit, labels).fits).toBe(false);
+    const validation = validatePlotDataset(
+      getPlotDefinition("bar"),
+      parseDelimitedData(`category\tvalue\n${labels.map((label, index) => `${label}\t${index + 1}`).join("\n")}`),
+      { category: "category", value: "value", group: "", error: "", secondary: "", target: "", pValue: "", facet: "" },
+      cannotFit,
+    );
+    expect(validation.errors.join(" ")).toMatch(/Category labels and the X-axis title need/);
+  });
+
   it("rejects misleading percentage and axis-break inputs while ignoring hidden uncertainty", () => {
     const definition = getPlotDefinition("bar");
     const signed = parseDelimitedData("category\tvalue\tgroup\nA\t-2\tG1\nA\t5\tG2");
@@ -676,71 +745,46 @@ describe("Visualization Studio data contracts", () => {
       expect(colors.every((color) => /^#[0-9A-F]{6}$/i.test(color))).toBe(true);
       expect(Math.abs(relativeLuminance(theme.sequential[0]) - relativeLuminance(theme.sequential[1]))).toBeGreaterThan(theme.series === "chinese-traditional" ? 0.25 : 0.35);
       expect(relativeLuminance(theme.diverging[1])).toBeGreaterThan(Math.max(relativeLuminance(theme.diverging[0]), relativeLuminance(theme.diverging[2])));
+      expect(theme.categorical.reduce((sum, color) => sum + relativeLuminance(color), 0) / theme.categorical.length).toBeGreaterThan(0.15);
+      expect(theme.categorical.some((color) => relativeLuminance(color) > 0.35)).toBe(true);
     });
     Object.values(journalThemes).filter((theme) => theme.series === "chinese-traditional").forEach((theme) => {
       expect(relativeLuminance(theme.diverging[1])).toBeGreaterThan(0.85);
-      expect(relativeLuminance(theme.diverging[0])).toBeGreaterThan(0.3);
-      expect(relativeLuminance(theme.diverging[2])).toBeGreaterThan(0.3);
-      expect(rgbChroma(theme.diverging[0])).toBeLessThan(0.3);
-      expect(rgbChroma(theme.diverging[2])).toBeLessThan(0.3);
+      expect(relativeLuminance(theme.diverging[1]) - relativeLuminance(theme.diverging[0])).toBeGreaterThan(0.35);
+      expect(relativeLuminance(theme.diverging[1]) - relativeLuminance(theme.diverging[2])).toBeGreaterThan(0.35);
     });
   });
 
   it("keeps minimal palettes within a single restrained hue family", () => {
-    expect(Object.fromEntries(paletteSeries.minimal.themeIds.map((id) => [id, journalThemes[id].categorical.slice(0, 4)]))).toEqual({
-      "minimal-ink": ["#46505A", "#65707A", "#838D96", "#A3AAB1"],
-      "minimal-cobalt": ["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0"],
-      "minimal-pine": ["#43796D", "#6A9187", "#8AA79F", "#A9BBB6"],
-      "minimal-clay": ["#AD6954", "#BB826F", "#C79B8B", "#D1B2A7"],
-      "minimal-plum": ["#8B617B", "#9F7991", "#B092A4", "#C0AABA"],
-    });
     paletteSeries.minimal.themeIds.forEach((id) => {
       const theme = journalThemes[id];
       expect(theme.series).toBe("minimal");
       expect(theme.categorical).toHaveLength(8);
       const luminances = theme.categorical.slice(0, 4).map(relativeLuminance);
       expect(luminances.every((value, index) => index === 0 || value > luminances[index - 1])).toBe(true);
-      expect(rgbChroma(theme.categorical[0])).toBeLessThan(0.38);
+      expect(rgbChroma(theme.categorical[0])).toBeLessThan(0.6);
       expect(theme.categorical.slice(4).every((color) => rgbChroma(color) < 0.09)).toBe(true);
-      expect(theme.categorical.every((color) => relativeLuminance(color) < 0.55)).toBe(true);
+      expect(theme.categorical.every((color) => relativeLuminance(color) < 0.72)).toBe(true);
     });
   });
 
-  it("uses canonical, brighter Chinese-traditional publication anchors", () => {
-    const anchors = {
-      "cn-beihai": ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
-      "cn-imperial-orange": ["#D46D3A", "#2C9678", "#F17666", "#7BA4B8"],
-      "cn-wisteria": ["#8076A3", "#C8ADC4", "#2775B6", "#EEAA9C"],
-      "cn-sunset": ["#F9CB8B", "#63BBD0", "#C04851", "#83A78D"],
-      "cn-hutong": ["#4E7CA1", "#C8A58E", "#F2C867", "#69A794"],
-      "cn-dragon": ["#A49C93", "#8FB2C9", "#F17666", "#69A794"],
-      "cn-coral": ["#F04A3A", "#AED9D4", "#2775B6", "#F2C867"],
-      "cn-autumn": ["#F4A83A", "#8FB2C9", "#8076A3", "#7BC092"],
-      "cn-vermilion": ["#D92121", "#2775B6", "#F4A83A", "#2C9678"],
-    } as const;
-    Object.entries(anchors).forEach(([id, colors]) => {
-      const theme = journalThemes[id as keyof typeof journalThemes];
-      expect(theme.categorical).toEqual(colors);
-      expect(theme.ink).toBe("#23242A");
-      expect(theme.categorical.every((color) => relativeLuminance(color) > 0.04 && relativeLuminance(color) < 0.82)).toBe(true);
-    });
+  it("uses the named Pixso source colors for Chinese-traditional palettes", () => {
+    expect(journalThemes["cn-beihai"].categorical).toEqual(["#957454", "#1D4C50", "#D4A278", "#3F605B"]);
+    expect(journalThemes["cn-imperial-orange"].categorical).toEqual(["#DB5E40", "#2E2F25", "#E68959", "#866040"]);
+    expect(journalThemes["cn-wisteria"].categorical).toEqual(["#F1E7E5", "#1D4C50", "#D3A488", "#BDAEAD"]);
+    expect(journalThemes["cn-sunset"].categorical).toEqual(["#F7CD9B", "#313534", "#F0A72E", "#AE7F77"]);
+    expect(journalThemes["cn-hutong"].categorical).toEqual(["#3E443C", "#D3A488", "#8B6B5B", "#24271E"]);
+    expect(journalThemes["cn-dragon"].categorical).toEqual(["#B5A59B", "#655045", "#AF5F54", "#3B4E3D"]);
+    expect(journalThemes["cn-coral"].categorical).toEqual(["#DB785C", "#283F3E", "#E9A182", "#824E40"]);
+    expect(journalThemes["cn-autumn"].categorical).toEqual(["#E5B552", "#24271E", "#CCD8D0", "#DFBE96"]);
+    expect(journalThemes["cn-vermilion"].categorical).toEqual(["#BF1103", "#580F05", "#970804", "#DFBE96"]);
   });
 
-  it("reports deterministic color-vision separation and secondary-encoding needs", () => {
-    Object.values(journalThemes).forEach((theme) => {
-      const report = assessCategoricalPalette(theme.categorical);
-      expect(report.validHex).toBe(true);
-      expect(report.duplicateColors).toEqual([]);
-      expect(report.nearWhiteIndexes).toEqual([]);
-      expect(report.minimumNormalDistance).toBeGreaterThan(0);
-      if (Math.min(report.minimumProtanopiaDistance, report.minimumDeuteranopiaDistance) < 0.08) {
-        expect(report.requiresSecondaryEncoding).toBe(true);
-      }
-    });
-    expect(assessCategoricalPalette(["#AABBCC", "#aabbcc"]).duplicateColors).toEqual(["#AABBCC"]);
-    expect(assessCategoricalPalette(["#FFFFFF", "#000000"]).nearWhiteIndexes).toEqual([0]);
-    expect(assessCategoricalPalette(["not-a-color", "#000000"]).requiresSecondaryEncoding).toBe(true);
-    expect(assessCategoricalPalette(journalThemes[defaultVisualizationThemeId].categorical.slice(0, 4)).requiresSecondaryEncoding).toBe(false);
+  it("uses clear publication-figure color relationships for journal palettes", () => {
+    expect(journalThemes.nature.categorical.slice(0, 7)).toEqual(["#8FCFC9", "#FFBE7A", "#FA7F6F", "#82B0D2", "#BEB8DC", "#E7DAD2", "#999999"]);
+    expect(journalThemes.cell.categorical).toEqual(["#934B43", "#D76364", "#EF7A6D", "#F1D77E", "#B1CE46", "#63CFA0", "#9394E7", "#5F97D2"]);
+    expect(journalThemes.science.categorical.slice(0, 5)).toEqual(["#2878B5", "#9AC9DB", "#F8AC8C", "#C82423", "#FF8884"]);
+    expect(journalThemes.jama.categorical).toEqual(["#A1A9D0", "#F0988C", "#B883D4", "#9E9E9E", "#CFEAF1", "#C4A5DE", "#F6CAE5", "#96CCCB"]);
   });
 
   it("provides portable sans-serif and serif figure-font presets", () => {

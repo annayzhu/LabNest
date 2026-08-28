@@ -237,63 +237,6 @@ export type JournalTheme = {
   grid: string;
 };
 
-export type CategoricalPaletteQuality = {
-  validHex: boolean;
-  duplicateColors: string[];
-  nearWhiteIndexes: number[];
-  minimumNormalDistance: number;
-  minimumProtanopiaDistance: number;
-  minimumDeuteranopiaDistance: number;
-  requiresSecondaryEncoding: boolean;
-};
-
-function paletteRgb(hex: string): [number, number, number] {
-  return [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16) / 255) as [number, number, number];
-}
-
-function simulatedRgb(rgb: [number, number, number], mode: "protanopia" | "deuteranopia"): [number, number, number] {
-  const matrix = mode === "protanopia"
-    ? [[0.56667, 0.43333, 0], [0.55833, 0.44167, 0], [0, 0.24167, 0.75833]]
-    : [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]];
-  return matrix.map((row) => row.reduce((sum, weight, index) => sum + weight * rgb[index], 0)) as [number, number, number];
-}
-
-function minimumPaletteDistance(colors: string[], mode?: "protanopia" | "deuteranopia"): number {
-  if (colors.length < 2) return 1;
-  const vectors = colors.map((color) => {
-    const rgb = paletteRgb(color);
-    return mode ? simulatedRgb(rgb, mode) : rgb;
-  });
-  let minimum = Number.POSITIVE_INFINITY;
-  vectors.forEach((left, leftIndex) => vectors.slice(leftIndex + 1).forEach((right) => {
-    minimum = Math.min(minimum, Math.hypot(left[0] - right[0], left[1] - right[1], left[2] - right[2]) / Math.sqrt(3));
-  }));
-  return minimum;
-}
-
-export function assessCategoricalPalette(colors: string[]): CategoricalPaletteQuality {
-  const validHex = colors.every((color) => /^#[0-9A-F]{6}$/i.test(color));
-  if (!validHex) return { validHex, duplicateColors: [], nearWhiteIndexes: [], minimumNormalDistance: 0, minimumProtanopiaDistance: 0, minimumDeuteranopiaDistance: 0, requiresSecondaryEncoding: true };
-  const normalizedColors = colors.map((color) => color.toUpperCase());
-  const duplicateColors = [...new Set(normalizedColors.filter((color, index) => normalizedColors.indexOf(color) !== index))];
-  const nearWhiteIndexes = colors.map((color, index) => ({ color, index })).filter(({ color }) => {
-    const [red, green, blue] = paletteRgb(color);
-    return (red + green + blue) / 3 > 0.9;
-  }).map(({ index }) => index);
-  const minimumNormalDistance = minimumPaletteDistance(colors);
-  const minimumProtanopiaDistance = minimumPaletteDistance(colors, "protanopia");
-  const minimumDeuteranopiaDistance = minimumPaletteDistance(colors, "deuteranopia");
-  return {
-    validHex,
-    duplicateColors,
-    nearWhiteIndexes,
-    minimumNormalDistance,
-    minimumProtanopiaDistance,
-    minimumDeuteranopiaDistance,
-    requiresSecondaryEncoding: duplicateColors.length > 0 || nearWhiteIndexes.length > 0 || minimumNormalDistance < 0.08 || Math.min(minimumProtanopiaDistance, minimumDeuteranopiaDistance) < 0.08,
-  };
-}
-
 export function analysisProvenanceForPlot(
   type: PlotType,
   settings: VisualizationSettings,
@@ -348,7 +291,7 @@ export const paletteSeries: Record<PaletteSeriesId, { id: PaletteSeriesId; name:
   "chinese-traditional": {
     id: "chinese-traditional",
     name: "中国传统",
-    description: "九套经白底科研图表校准的中国传统色，颜色名称与来源可追溯。",
+    description: "九套低饱和、适合科研图表的中国传统色。",
     themeIds: ["cn-beihai", "cn-imperial-orange", "cn-wisteria", "cn-sunset", "cn-hutong", "cn-dragon", "cn-coral", "cn-autumn", "cn-vermilion"],
   },
   custom: {
@@ -420,6 +363,8 @@ export type VisualizationSettings = {
   lineErrorType: "none" | "sd" | "sem" | "ci95";
   lineUncertaintyStyle: "bars" | "band";
   lineBandOpacity: number;
+  lineReferenceSeries: string;
+  linePAdjustment: "none" | "bh";
   associationVariant: "points" | "marginal" | "density" | "hexbin" | "ellipse" | "hull" | "pair-matrix" | "3d" | "ternary";
   associationFit: "none" | "linear" | "polynomial" | "loess";
   associationPolynomialDegree: 2 | 3;
@@ -561,6 +506,8 @@ export const defaultVisualizationSettings: VisualizationSettings = {
   lineErrorType: "none",
   lineUncertaintyStyle: "bars",
   lineBandOpacity: 0.16,
+  lineReferenceSeries: "",
+  linePAdjustment: "bh",
   associationVariant: "points",
   associationFit: "none",
   associationPolynomialDegree: 2,
@@ -642,12 +589,12 @@ export const defaultVisualizationSettings: VisualizationSettings = {
   radarFillOpacity: 0.16,
   radialMaximum: null,
   pyramidDisplayMode: "value",
-  categoricalColors: ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
-  continuousLow: "#F5E9D7",
-  continuousHigh: "#A87535",
-  divergingLow: "#90B5CF",
-  divergingMid: "#FAF8F3",
-  divergingHigh: "#CDA18A",
+  categoricalColors: ["#957454", "#1D4C50", "#D4A278", "#3F605B"],
+  continuousLow: "#F3E6DC",
+  continuousHigh: "#3F605B",
+  divergingLow: "#1D4C50",
+  divergingMid: "#FAF8F4",
+  divergingHigh: "#D4A278",
 };
 
 export type OrdinationType = "pca" | "pcoa" | "umap" | "tsne" | "nmds";
@@ -745,6 +692,62 @@ export function estimateLegendTextWidth(label: string, fontSize: number) {
     return sum + 0.46;
   }, 0);
   return em * Math.max(1, fontSize);
+}
+
+export const BAR_CATEGORY_LABEL_ANGLE = -30;
+
+/** Keep the visible bar-category text identical in layout and rendering. */
+export function barCategoryLabelText(value: string) {
+  return value.length <= 16 ? value : `${value.slice(0, 15)}…`;
+}
+
+/**
+ * Deterministic bottom-axis geometry for compact vertical bar charts.
+ *
+ * The rotated labels extend below their SVG baseline by roughly half their
+ * text width at -30 degrees. Reserving that footprint before the plot frame is
+ * created keeps preview and exported SVG geometry identical without relying on
+ * a post-render DOM measurement.
+ */
+export function barCategoryAxisLayoutMetrics(settings: VisualizationSettings, labels: string[]) {
+  const isHorizontal = settings.swapAxes || ["horizontal", "bullet", "pyramid"].includes(settings.barVariant);
+  const applies = !isHorizontal && settings.barVariant !== "polar";
+  const compactHeight = settings.height < 300;
+  const baseBottom = (compactHeight ? 48 : 58) + (settings.legendPosition === "bottom" ? 34 : 0);
+  const top = (compactHeight ? 20 : 24) + (settings.title ? 24 : 0);
+  if (!applies) return {
+    applies,
+    bottom: baseBottom,
+    requiredBottom: baseBottom,
+    labelBottomOffset: 0,
+    xTitleY: settings.height - (settings.legendPosition === "bottom" ? 57 : 13),
+    minimumGap: 4,
+    fits: settings.height - top - baseBottom >= 80,
+  };
+
+  const displayedLabels = labels.map(barCategoryLabelText);
+  const maximumLabelWidth = Math.max(0, ...displayedLabels.map((label) => estimateLegendTextWidth(label, settings.tickSize)));
+  const rotation = Math.abs(BAR_CATEGORY_LABEL_ANGLE) * Math.PI / 180;
+  const labelBaselineOffset = 10;
+  const labelDescent = settings.tickSize * 0.25;
+  const labelBottomOffset = labelBaselineOffset + Math.sin(rotation) * maximumLabelWidth + Math.cos(rotation) * labelDescent;
+  const minimumGap = 4;
+  const hasXTitle = Boolean(settings.xLabel.trim());
+  const xTitleY = settings.height - (settings.legendPosition === "bottom" ? 57 : 13);
+  const contentTopFromBottom = hasXTitle
+    ? settings.height - xTitleY + settings.axisLabelSize * 0.82
+    : settings.legendPosition === "bottom" ? 34 : 4;
+  const requiredBottom = Math.ceil(labelBottomOffset + minimumGap + contentTopFromBottom);
+  const bottom = Math.max(baseBottom, requiredBottom);
+  return {
+    applies,
+    bottom,
+    requiredBottom,
+    labelBottomOffset,
+    xTitleY,
+    minimumGap,
+    fits: settings.height - top - bottom >= 80,
+  };
 }
 
 export type EnrichmentSpecializedLayoutInput = {
@@ -1055,10 +1058,10 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "minimal",
     name: "石墨",
     description: "近单色石墨阶梯，适合需要最大克制感的比较图。",
-    categorical: ["#46505A", "#65707A", "#838D96", "#A3AAB1", "#596168", "#778087", "#969EA4", "#B3B8BD"],
-    sequential: ["#F1F3F4", "#4B5660"],
-    diverging: ["#7890A0", "#F8F8F6", "#A9827A"],
-    ink: "#23242A",
+    categorical: ["#4A4D52", "#696D73", "#898E94", "#ABB0B5", "#565A5F", "#74797E", "#969BA0", "#B9BDC1"],
+    sequential: ["#F0F1F2", "#4A4D52"],
+    diverging: ["#657B89", "#F7F7F5", "#A86F68"],
+    ink: "#25292E",
     muted: "#6C737B",
     grid: "#E4E6E7",
   },
@@ -1067,10 +1070,10 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "minimal",
     name: "墨蓝",
     description: "一组蓝灰明度阶梯，以墨蓝作为唯一强调色。",
-    categorical: ["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0", "#596168", "#778087", "#969EA4", "#B3B8BD"],
-    sequential: ["#EFF4F7", "#3F6F9D"],
-    diverging: ["#6F8FA8", "#F8F8F6", "#B58176"],
-    ink: "#23242A",
+    categorical: ["#2878B5", "#5595C3", "#82B0D2", "#B7D5E8", "#515B64", "#707A83", "#929AA2", "#B7BDC2"],
+    sequential: ["#EDF5FA", "#2878B5"],
+    diverging: ["#2878B5", "#F7F7F5", "#E88482"],
+    ink: "#26333F",
     muted: "#687784",
     grid: "#E2E7EA",
   },
@@ -1079,10 +1082,10 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "minimal",
     name: "松柏",
     description: "一组松绿色阶梯，安静、自然，适合组学与生态数据。",
-    categorical: ["#43796D", "#6A9187", "#8AA79F", "#A9BBB6", "#59635F", "#77817D", "#969F9C", "#B3BAB8"],
-    sequential: ["#EFF5F2", "#43796D"],
-    diverging: ["#78969C", "#F8F8F5", "#B38472"],
-    ink: "#23242A",
+    categorical: ["#3F8F7F", "#63A694", "#8FCFC9", "#BDDCD7", "#4F5B57", "#6F7B77", "#919B98", "#B6BEBC"],
+    sequential: ["#EDF7F4", "#3F8F7F"],
+    diverging: ["#3F8F7F", "#F7F7F4", "#E88482"],
+    ink: "#293B36",
     muted: "#6A7A74",
     grid: "#E2E8E5",
   },
@@ -1091,10 +1094,10 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "minimal",
     name: "陶赭",
     description: "一组温暖陶赭阶梯，适合临床与实验比较图。",
-    categorical: ["#AD6954", "#BB826F", "#C79B8B", "#D1B2A7", "#655954", "#837570", "#A0948F", "#B9B1AD"],
-    sequential: ["#F8F0ED", "#AD6954"],
-    diverging: ["#78909D", "#FAF8F5", "#B97A63"],
-    ink: "#23242A",
+    categorical: ["#C86852", "#E0846E", "#F2A08D", "#F7C2B5", "#5C5350", "#7A706C", "#9A908C", "#BAB2AE"],
+    sequential: ["#FBEFEB", "#C86852"],
+    diverging: ["#5F97D2", "#F8F7F4", "#C86852"],
+    ink: "#46342E",
     muted: "#806F68",
     grid: "#EAE3DF",
   },
@@ -1103,10 +1106,10 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "minimal",
     name: "梅灰",
     description: "一组克制梅紫阶梯，适合强调单一研究主题。",
-    categorical: ["#8B617B", "#9F7991", "#B092A4", "#C0AABA", "#62575F", "#80727C", "#9E929A", "#B7AFB4"],
-    sequential: ["#F5F0F3", "#8B617B"],
-    diverging: ["#7893A0", "#FAF8F7", "#A77793"],
-    ink: "#23242A",
+    categorical: ["#8B6FB0", "#A186C1", "#B8A2D0", "#D1C4E1", "#575158", "#756E76", "#958E96", "#B8B1B8"],
+    sequential: ["#F4F0F7", "#8B6FB0"],
+    diverging: ["#5F97D2", "#F8F7F5", "#B883D4"],
+    ink: "#3E303A",
     muted: "#786B74",
     grid: "#E8E2E6",
   },
@@ -1115,9 +1118,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "Nature",
     description: "Cool blue, coral red, and restrained botanical accents.",
-    categorical: ["#3C5488", "#E64B35", "#00A087", "#4DBBD5", "#F39B7F", "#8491B4", "#91D1C2", "#7E6148"],
-    sequential: ["#E8F1F2", "#147A86"],
-    diverging: ["#3C5488", "#F7F7F4", "#E64B35"],
+    categorical: ["#8FCFC9", "#FFBE7A", "#FA7F6F", "#82B0D2", "#BEB8DC", "#E7DAD2", "#999999", "#6BAED6"],
+    sequential: ["#EDF6F5", "#3E8E89"],
+    diverging: ["#2878B5", "#F7F7F4", "#E46E61"],
     ink: "#23242A",
     muted: "#686A73",
     grid: "#E5E5E1",
@@ -1127,9 +1130,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "Cell",
     description: "Warm coral, teal, plum, and muted gold for mechanistic figures.",
-    categorical: ["#C44E52", "#4C8B8B", "#8172B3", "#CCB974", "#4C72B0", "#DD8452", "#64A66A", "#937860"],
-    sequential: ["#F4EEE5", "#A65A3A"],
-    diverging: ["#4C72B0", "#FAF7F2", "#C44E52"],
+    categorical: ["#934B43", "#D76364", "#EF7A6D", "#F1D77E", "#B1CE46", "#63CFA0", "#9394E7", "#5F97D2"],
+    sequential: ["#FFF2EE", "#D76364"],
+    diverging: ["#5F97D2", "#FAF7F2", "#EF7A6D"],
     ink: "#252427",
     muted: "#6B6768",
     grid: "#E8E2DD",
@@ -1139,9 +1142,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "Science",
     description: "High-clarity navy, red, green, and purple with strong separation.",
-    categorical: ["#3B4992", "#D64545", "#008B68", "#6A4C93", "#1F7A8C", "#A33D5D", "#7B8F3A", "#6B6D76"],
-    sequential: ["#E9EEF6", "#315B88"],
-    diverging: ["#3B4992", "#F7F7F7", "#D64545"],
+    categorical: ["#2878B5", "#9AC9DB", "#F8AC8C", "#C82423", "#FF8884", "#5A9F68", "#8D7DBE", "#6F6F6F"],
+    sequential: ["#EEF5F9", "#2878B5"],
+    diverging: ["#2878B5", "#F7F7F6", "#C82423"],
     ink: "#1F2025",
     muted: "#62656D",
     grid: "#E2E4E8",
@@ -1151,9 +1154,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "NEJM",
     description: "Clinical oxblood, steel blue, muted teal, and restrained ochre.",
-    categorical: ["#8E2C3A", "#356A87", "#4E8174", "#C18A3B", "#71627C", "#7C8F99", "#B96A58", "#8B7A64"],
-    sequential: ["#F5ECEE", "#8E2C3A"],
-    diverging: ["#356A87", "#F8F6F2", "#A33A45"],
+    categorical: ["#496C88", "#A5B6C5", "#FEB2B4", "#7E8FA4", "#D79B9C", "#C9D3DD", "#B9A3A4", "#767676"],
+    sequential: ["#EEF2F5", "#496C88"],
+    diverging: ["#496C88", "#F8F6F2", "#E88482"],
     ink: "#252326",
     muted: "#6E686B",
     grid: "#E8E3E2",
@@ -1163,9 +1166,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "Lancet",
     description: "Editorial burgundy, deep teal, warm amber, and composed slate.",
-    categorical: ["#8C294A", "#006D77", "#D49A3A", "#536B87", "#816A8D", "#577C67", "#B9654F", "#74777E"],
-    sequential: ["#F5EBEF", "#8C294A"],
-    diverging: ["#006D77", "#FAF7F2", "#A64050"],
+    categorical: ["#8E8BFE", "#FEA3A2", "#E88482", "#6F6F6F", "#6F91D7", "#B99BE5", "#F3C27D", "#79B8A4"],
+    sequential: ["#F2F0FF", "#8E8BFE"],
+    diverging: ["#8E8BFE", "#FAF7F2", "#E88482"],
     ink: "#262326",
     muted: "#6D686C",
     grid: "#E7E2E4",
@@ -1175,9 +1178,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "journal",
     name: "JAMA",
     description: "Medical teal, burnished orange, clear cyan, and muted wine.",
-    categorical: ["#374E55", "#DF8F44", "#00A1D5", "#B24745", "#79AF97", "#6A6599", "#80796B", "#5C8290"],
-    sequential: ["#EDF2F2", "#374E55"],
-    diverging: ["#007FA3", "#F7F6F2", "#B24745"],
+    categorical: ["#A1A9D0", "#F0988C", "#B883D4", "#9E9E9E", "#CFEAF1", "#C4A5DE", "#F6CAE5", "#96CCCB"],
+    sequential: ["#F2F5FA", "#A1A9D0"],
+    diverging: ["#96CCCB", "#F7F6F2", "#F0988C"],
     ink: "#23282A",
     muted: "#687176",
     grid: "#E2E7E7",
@@ -1187,9 +1190,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "curated",
     name: "Nordic",
     description: "Cool navy and fjord teal balanced by clay, straw, and soft violet.",
-    categorical: ["#294C60", "#5B8E8D", "#C7785A", "#A49B62", "#776987", "#688292", "#D0A15F", "#547064"],
-    sequential: ["#EAF1F2", "#294C60"],
-    diverging: ["#3E7188", "#F7F5EF", "#C7785A"],
+    categorical: ["#14517C", "#2F7FC1", "#96C37D", "#F3D266", "#D8383A", "#C497B2", "#A9B8C6", "#E7EFFA"],
+    sequential: ["#E7EFFA", "#2F7FC1"],
+    diverging: ["#2F7FC1", "#F7F5EF", "#D8383A"],
     ink: "#22282C",
     muted: "#647078",
     grid: "#E1E7E8",
@@ -1199,9 +1202,9 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "curated",
     name: "Earth",
     description: "Botanical green, terracotta, ochre, aubergine, and mineral blue.",
-    categorical: ["#405D53", "#B86B4B", "#C19745", "#6F5C78", "#718355", "#986A5A", "#4F7880", "#85725B"],
-    sequential: ["#F1EFE5", "#405D53"],
-    diverging: ["#4F7880", "#F6F2E8", "#B86B4B"],
+    categorical: ["#3B4E3D", "#AF5F54", "#E5B552", "#655045", "#D3A488", "#283F3E", "#DFBE96", "#8B6B5B"],
+    sequential: ["#F1EFE5", "#3B4E3D"],
+    diverging: ["#283F3E", "#F6F2E8", "#AF5F54"],
     ink: "#292825",
     muted: "#706D65",
     grid: "#E7E3D8",
@@ -1211,8 +1214,8 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     series: "curated",
     name: "Colorblind",
     description: "Okabe–Ito-derived contrasts tuned for legibility on a white background.",
-    categorical: ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#C58A00", "#56B4E9", "#6B6B6B", "#8A6E00"],
-    sequential: ["#E8F2F7", "#0072B2"],
+    categorical: ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442", "#6B6B6B"],
+    sequential: ["#EAF4F8", "#0072B2"],
     diverging: ["#0072B2", "#F7F7F3", "#D55E00"],
     ink: "#222426",
     muted: "#666B70",
@@ -1222,108 +1225,108 @@ export const journalThemes: Record<JournalThemeId, JournalTheme> = {
     id: "cn-beihai",
     series: "chinese-traditional",
     name: "柴染棕",
-    description: "桂皮淡棕、天青、海螺橙与梧枝绿；梧枝绿为白底色觉区分做轻微校准。",
-    categorical: ["#C09351", "#6C9BCA", "#F0945D", "#5FA88F"],
-    sequential: ["#F5E9D7", "#A87535"],
-    diverging: ["#90B5CF", "#FAF8F3", "#CDA18A"],
-    ink: "#23242A",
-    muted: "#7A7065",
+    description: "北海公园：柴染棕、青灰蓝、薄香橙与飞泉青。",
+    categorical: ["#957454", "#1D4C50", "#D4A278", "#3F605B"],
+    sequential: ["#F3E6DC", "#3F605B"],
+    diverging: ["#1D4C50", "#FAF8F4", "#D4A278"],
+    ink: "#1D4C50",
+    muted: "#957454",
     grid: "#F1E7E5",
   },
   "cn-imperial-orange": {
     id: "cn-imperial-orange",
     series: "chinese-traditional",
     name: "橙绯红",
-    description: "纁色、青矾绿、谷鞘红与烟蓝；暖色主调配合清晰冷色对照。",
-    categorical: ["#D46D3A", "#2C9678", "#F17666", "#7BA4B8"],
-    sequential: ["#F8E6DC", "#B6542E"],
-    diverging: ["#91BEB0", "#FCF9F5", "#D4A08D"],
-    ink: "#23242A",
-    muted: "#786E68",
+    description: "贵气天成：橙绯红、石槲绿、洗柿橙与伽罗褐。",
+    categorical: ["#DB5E40", "#2E2F25", "#E68959", "#866040"],
+    sequential: ["#F6E2D8", "#DB5E40"],
+    diverging: ["#2E2F25", "#FCF8F3", "#E68959"],
+    ink: "#2E2F25",
+    muted: "#866040",
     grid: "#F1E7E5",
   },
   "cn-wisteria": {
     id: "cn-wisteria",
     series: "chinese-traditional",
     name: "淡藤萝紫",
-    description: "藤萝紫、凤信紫、景泰蓝与颊红；避免近白色数据标记。",
-    categorical: ["#8076A3", "#C8ADC4", "#2775B6", "#EEAA9C"],
-    sequential: ["#F0EDF5", "#685D8C"],
-    diverging: ["#9BB8D1", "#FCFAFC", "#C4A9BE"],
-    ink: "#23242A",
-    muted: "#786F82",
+    description: "园博园：淡藤萝紫、青灰蓝、赤白橡与芦穗灰。",
+    categorical: ["#F1E7E5", "#1D4C50", "#D3A488", "#BDAEAD"],
+    sequential: ["#F1E7E5", "#1D4C50"],
+    diverging: ["#1D4C50", "#FCF9F8", "#D3A488"],
+    ink: "#1D4C50",
+    muted: "#BDAEAD",
     grid: "#F1E7E5",
   },
   "cn-sunset": {
     id: "cn-sunset",
     series: "chinese-traditional",
     name: "瓜瓤粉",
-    description: "瓜瓤粉、霁青、玉红与松霜绿；明快但保留期刊图表的克制感。",
-    categorical: ["#F9CB8B", "#63BBD0", "#C04851", "#83A78D"],
-    sequential: ["#FFF0D9", "#B67638"],
-    diverging: ["#93C2CF", "#FFFAF4", "#D2A1A4"],
-    ink: "#23242A",
-    muted: "#7C7470",
+    description: "夕阳古楼：瓜瓤粉、长石灰、金莺黄与淡玫瑰灰。",
+    categorical: ["#F7CD9B", "#313534", "#F0A72E", "#AE7F77"],
+    sequential: ["#FFF2DE", "#F0A72E"],
+    diverging: ["#313534", "#FFF9F2", "#F0A72E"],
+    ink: "#313534",
+    muted: "#AE7F77",
     grid: "#F1E7E5",
   },
   "cn-hutong": {
     id: "cn-hutong",
     series: "chinese-traditional",
     name: "蓝墨茶",
-    description: "蝶翅蓝、浅栗棕、鹅黄与梧枝绿；以蓝色为主轴的清爽组合。",
-    categorical: ["#4E7CA1", "#C8A58E", "#F2C867", "#69A794"],
-    sequential: ["#EAF1F6", "#3F6788"],
-    diverging: ["#93B4CE", "#FAF9F6", "#D1AA91"],
-    ink: "#23242A",
-    muted: "#6F7478",
+    description: "京城胡同：蓝墨茶、赤白橡、中红驼与岩碇黑。",
+    categorical: ["#3E443C", "#D3A488", "#8B6B5B", "#24271E"],
+    sequential: ["#F1E3D9", "#3E443C"],
+    diverging: ["#24271E", "#FAF7F3", "#D3A488"],
+    ink: "#24271E",
+    muted: "#8B6B5B",
     grid: "#F1E7E5",
   },
   "cn-dragon": {
     id: "cn-dragon",
     series: "chinese-traditional",
     name: "棉絮灰",
-    description: "中灰、晴山蓝、谷鞘红与梧枝绿；中性基底配合三种清晰强调色。",
-    categorical: ["#A49C93", "#8FB2C9", "#F17666", "#69A794"],
-    sequential: ["#F1F3F4", "#6F7F89"],
-    diverging: ["#A5BDC9", "#FAF9F7", "#D0A3A0"],
-    ink: "#23242A",
-    muted: "#74706C",
+    description: "盘龙纹：棉絮灰、老茶棕、淡红穹与苍灰绿。",
+    categorical: ["#B5A59B", "#655045", "#AF5F54", "#3B4E3D"],
+    sequential: ["#E9E1DC", "#3B4E3D"],
+    diverging: ["#3B4E3D", "#FAF7F5", "#AF5F54"],
+    ink: "#3B4E3D",
+    muted: "#655045",
     grid: "#F1E7E5",
   },
   "cn-coral": {
     id: "cn-coral",
     series: "chinese-traditional",
     name: "珊瑚朱",
-    description: "珊瑚红、天水碧、景泰蓝与鹅黄；高识别度的冷暖四组配色。",
-    categorical: ["#F04A3A", "#AED9D4", "#2775B6", "#F2C867"],
-    sequential: ["#FDE8E3", "#C43D32"],
-    diverging: ["#91B8CE", "#FCFAF7", "#D4A19B"],
-    ink: "#23242A",
-    muted: "#776D69",
+    description: "京城脚下：珊瑚朱、铜器青、藏花红与淡土棕。",
+    categorical: ["#DB785C", "#283F3E", "#E9A182", "#824E40"],
+    sequential: ["#F8E5DC", "#DB785C"],
+    diverging: ["#283F3E", "#FCF8F4", "#DB785C"],
+    ink: "#283F3E",
+    muted: "#824E40",
     grid: "#F1E7E5",
   },
   "cn-autumn": {
     id: "cn-autumn",
     series: "chinese-traditional",
     name: "杏叶黄",
-    description: "金莺黄、晴山蓝、藤萝紫与梅子青；适合多组比较的秋日明色。",
-    categorical: ["#F4A83A", "#8FB2C9", "#8076A3", "#7BC092"],
-    sequential: ["#FFF0D6", "#B87527"],
-    diverging: ["#9CB9D0", "#FBFAF5", "#CCB18E"],
-    ink: "#23242A",
-    muted: "#746F68",
+    description: "故宫之秋：杏叶黄、岩碇黑、穹灰蓝与鹿角棕。",
+    categorical: ["#E5B552", "#24271E", "#CCD8D0", "#DFBE96"],
+    sequential: ["#F6EDCF", "#E5B552"],
+    diverging: ["#24271E", "#FBF9F3", "#E5B552"],
+    ink: "#24271E",
+    muted: "#DFBE96",
     grid: "#F1E7E5",
   },
   "cn-vermilion": {
     id: "cn-vermilion",
     series: "chinese-traditional",
     name: "中国红",
-    description: "朱砂红、景泰蓝、金莺黄与青矾绿；保留中国红主色并增加跨色相区分。",
-    categorical: ["#D92121", "#2775B6", "#F4A83A", "#2C9678"],
-    sequential: ["#FDE5E3", "#B41C1C"],
-    diverging: ["#91B6CC", "#FCF9F7", "#D1A09C"],
-    ink: "#23242A",
-    muted: "#746A68",
+    description: "青铜兽环：中国红、深栗棕、淡枣红与鹿角棕。",
+    categorical: ["#BF1103", "#580F05", "#970804", "#DFBE96"],
+    sequential: ["#F5DECF", "#BF1103"],
+    diverging: ["#580F05", "#FCF7F3", "#BF1103"],
+    ink: "#580F05",
+    muted: "#970804",
     grid: "#F1E7E5",
   },
 };
@@ -1618,15 +1621,15 @@ Day 7\t7.2\t0.54\tControl\t6.8\t7.5\t0.18\tLate
 Day 7\t7.8\t0.61\tTreatment A\t7.4\t8.1\t0.041\tLate
 Day 7\t8.4\t0.66\tTreatment B\t8.0\t8.8\t0.006\tLate
 Day 7\t9.0\t0.72\tTreatment C\t8.6\t9.4\t0.0007\tLate`,
-  line: `time\tvalue\tsd\tsem\tseries
-0\t1.0\t0.12\t0.05\tControl
-1\t1.3\t0.16\t0.07\tControl
-2\t1.6\t0.18\t0.08\tControl
-3\t1.8\t0.21\t0.09\tControl
-0\t1.0\t0.14\t0.06\tTreatment
-1\t2.1\t0.24\t0.11\tTreatment
-2\t3.5\t0.31\t0.14\tTreatment
-3\t4.4\t0.38\t0.17\tTreatment`,
+  line: `time\tvalue\tsd\tsem\tn\tseries
+0\t1.0\t0.12\t0.069\t3\tControl
+1\t1.3\t0.16\t0.092\t3\tControl
+2\t1.6\t0.18\t0.104\t3\tControl
+3\t1.8\t0.21\t0.121\t3\tControl
+0\t1.0\t0.14\t0.081\t3\tTreatment
+1\t2.1\t0.24\t0.139\t3\tTreatment
+2\t3.5\t0.31\t0.179\t3\tTreatment
+3\t4.4\t0.38\t0.219\t3\tTreatment`,
   lineNoError: `time\tvalue\tseries
 0\t1.0\tControl
 1\t1.3\tControl
@@ -2219,18 +2222,19 @@ const plotDefinitionSeeds: PlotDefinition[] = [
     name: "Line",
     family: "Trend",
     summary: "Time-course or ordered trend with multiple series and visible markers.",
-    inputHint: "One row per ordered estimate. Map an optional non-negative SD, SEM, or 95% CI half-width column and display it as bars or a ribbon.",
+    inputHint: "One row per ordered estimate. Map SD or SEM plus sample size to calculate reference-series Welch tests at each X value, or display uncertainty without testing.",
     roles: [
       { key: "x", label: "X", kind: "number", required: true },
       { key: "value", label: "Value", kind: "number", required: true },
       { key: "error", label: "Uncertainty half-width (SD / SEM / 95% CI)", kind: "number", required: false },
+      { key: "n", label: "Sample size (n)", kind: "number", required: false },
       { key: "series", label: "Series", kind: "category", required: false },
     ],
-    defaultMapping: { x: "time", value: "value", error: "sd", series: "series" },
+    defaultMapping: { x: "time", value: "value", error: "sd", n: "n", series: "series" },
     sampleData: samples.line,
     examples: [
-      { label: "Example 1", description: "Ordered means with SD and SEM columns.", data: samples.line, mapping: { x: "time", value: "value", error: "sd", series: "series" } },
-      { label: "Example 2", description: "Ordered observations without an error column.", data: samples.lineNoError, mapping: { x: "time", value: "value", error: "", series: "series" } },
+      { label: "Example 1", description: "Ordered means with SD, SEM, and explicit sample size for optional Welch tests.", data: samples.line, mapping: { x: "time", value: "value", error: "sd", n: "n", series: "series" } },
+      { label: "Example 2", description: "Ordered estimates without uncertainty or significance calculation.", data: samples.lineNoError, mapping: { x: "time", value: "value", error: "", n: "", series: "series" } },
     ],
   },
   {
@@ -3096,9 +3100,9 @@ const plotGuidanceSeeds: Record<PlotType, PlotGuidance> = {
     references: [plotReferences.visualizationHistory, plotReferences.graphicalPerception, plotReferences.errorBars],
   },
   line: {
-    definition: "按 X 的自然顺序连接相邻估计值，以位置和线段方向编码连续变化；可将预先计算的 SD、SEM 或 95% CI 半宽显示为逐点误差棒或连续不确定性带。",
-    suitableData: "具有自然顺序的时间、剂量或阶段数据；每行应是一个估计值，若显示不确定性还需对应的非负半宽。带状区域不会自动把 SD 或 SEM 变成置信区间。",
-    answers: "指标随顺序如何变化，不同序列的方向、速度或响应模式是否不同，以及已给定的不确定性范围有多大。",
+    definition: "按实际 X 采样值的自然顺序连接相邻估计值，以位置和线段方向编码连续变化；可将预先计算的 SD、SEM 或 95% CI 半宽显示为逐点误差棒或连续不确定性带。",
+    suitableData: "具有自然顺序的时间、剂量或阶段数据；每行应是一个估计值。若计算逐时间点显著性，必须提供均值、SD 或 SEM、显式样本量 n 和分组，并明确数据不是配对或重复测量。",
+    answers: "指标随顺序如何变化，不同序列的方向、速度或响应模式是否不同，以及已给定的不确定性范围有多大。可选 Welch 检验只回答各时间点相对参考组的独立样本差异，不检验整体时间×组交互。",
     origin: "Playfair 同样在 1786 年用时间序列折线展示贸易变化，使“随时间阅读趋势”成为统计图形的核心用途。",
     references: [plotReferences.visualizationHistory, plotReferences.graphicalPerception, plotReferences.errorBars],
   },
@@ -3544,7 +3548,7 @@ const commonSettingKeys: Array<keyof VisualizationSettings> = [
 const hiddenLegendIds = new Set<PlotType>(["box", "violin", "beeswarm", "raincloud", "histogram", "density", "ridge", "heatmap", "clustered-heatmap", "correlation-heatmap", "venn", "upset", "sankey", "alluvial", "chord", "ligand-receptor", "circos", "manhattan", "qq", "chromosome-ideogram", "snp-density", "genome-tracks", "waterfall", "oncoplot", "motif-logo", "treemap", "funnel", "precision-recall", "calibration", "decision-curve", "nomogram", "lasso-path", "km-cutoff", "risk-score", "go-circle", "kegg-circle", "go-chord", "pathway-impact", "nes-fdr", "multi-gsea", "enrichment-ridge", "sankey-bubble", "geographic-map", "petal", "word-cloud"]);
 const specializedSettingKeys: Partial<Record<PlotType, Array<keyof VisualizationSettings>>> = {
   bar: ["swapAxes", "barErrorType", "barVariant", "barInputMode", "barAnalysisMode", "barReferenceCategory", "barPAdjustment", "barOverlayType", "secondaryAxisLabel", "showSignificance", "significanceThreshold", "axisBreakStart", "axisBreakEnd", "barGap", "barBorderWidth", "barBorderColor", "errorBarLineWidth", "errorBarCapSize"],
-  line: ["swapAxes", "showPoints", "lineErrorType", "lineUncertaintyStyle", "lineBandOpacity", "errorBarLineWidth", "errorBarCapSize"],
+  line: ["swapAxes", "showPoints", "lineErrorType", "lineUncertaintyStyle", "lineBandOpacity", "showSignificance", "significanceThreshold", "lineReferenceSeries", "linePAdjustment", "errorBarLineWidth", "errorBarCapSize"],
   scatter: ["swapAxes", "showLabels", "correlationMethod", "associationVariant", "associationFit", "associationPolynomialDegree", "associationLoessSpan", "associationShowConfidenceBand", "associationShowPValue", "associationGroupMode", "associationHexbinSize", "associationDensityBandwidth"],
   correlation: ["showLabels", "correlationMethod", "associationVariant", "associationFit", "associationPolynomialDegree", "associationLoessSpan", "associationShowConfidenceBand", "associationShowPValue", "associationGroupMode", "associationHexbinSize", "associationDensityBandwidth"],
   pca: ["swapAxes", "showLabels", "ordinationView", "ordinationShowEllipse", "ordinationShowHull", "ordinationShowCentroids", "ordinationShowLoadings", "ordinationLoadingCount", "ordinationUseShapes", "ordinationPermanovaR2", "ordinationPermanovaP", "ordinationPermanovaPermutations", "ordinationMethodNote"],
@@ -3930,22 +3934,10 @@ export function categoricalColorForIndex(index: number, colors: string[]) {
   if (tier === 0) return base;
   // Golden-angle hues remain deterministic and unique across the browser
   // safety ceiling (250 categories) while keeping restrained saturation.
-  const hue = (index * 137.50776405003785) % 360;
+  const hue = ((index * 137.50776405003785) % 360).toFixed(6);
   const saturation = 34 + (tier % 4) * 4;
   const lightness = 42 + (tier % 5) * 5;
-  const normalizedSaturation = saturation / 100;
-  const normalizedLightness = lightness / 100;
-  const chroma = (1 - Math.abs(2 * normalizedLightness - 1)) * normalizedSaturation;
-  const hueSector = hue / 60;
-  const secondary = chroma * (1 - Math.abs(hueSector % 2 - 1));
-  const [red, green, blue] = hueSector < 1 ? [chroma, secondary, 0]
-    : hueSector < 2 ? [secondary, chroma, 0]
-      : hueSector < 3 ? [0, chroma, secondary]
-        : hueSector < 4 ? [0, secondary, chroma]
-          : hueSector < 5 ? [secondary, 0, chroma]
-            : [chroma, 0, secondary];
-  const match = normalizedLightness - chroma / 2;
-  return `#${[red, green, blue].map((channel) => Math.round((channel + match) * 255).toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+  return `hsl(${hue} ${saturation}% ${lightness}%)`;
 }
 
 /** Parse and align a row/column annotation table by its stable first-column identifier. */
@@ -4803,6 +4795,24 @@ export function validatePlotDataset(
       }).length;
       if (negativeErrors > 0) errors.push(`Error magnitude contains ${negativeErrors} negative value${negativeErrors === 1 ? "" : "s"}; SD and SEM must be non-negative, as must all uncertainty half-widths.`);
     }
+    if (definition.id === "line" && settings?.showSignificance) {
+      if (settings.lineErrorType !== "sd" && settings.lineErrorType !== "sem") errors.push("Line significance calculation requires Mean ± SD or Mean ± SEM.");
+      if (!mapping.n) errors.push("Map an explicit sample-size (n) column before calculating line significance.");
+      if (!mapping.series) errors.push("Map a series column before calculating line significance.");
+      if (mapping.n) {
+        const invalidSampleSizes = dataset.rows.filter((row) => {
+          const sampleSize = parseNumericValue(row[mapping.n]);
+          return sampleSize === null || !Number.isInteger(sampleSize) || sampleSize < 2;
+        }).length;
+        if (invalidSampleSizes > 0) errors.push(`Sample size contains ${invalidSampleSizes} invalid value${invalidSampleSizes === 1 ? "" : "s"}; Welch tests require an integer n ≥ 2 for every estimate.`);
+      }
+      if (mapping.x && mapping.series) {
+        const duplicatePairs = dataset.rows.map((row) => `${row[mapping.x]}\u0000${row[mapping.series] || "All"}`);
+        if (new Set(duplicatePairs).size !== duplicatePairs.length) errors.push("Summary-mode line significance requires exactly one mean per X and series pair.");
+        const series = [...new Set(dataset.rows.map((row) => row[mapping.series]).filter(Boolean))];
+        if (series.length < 2) errors.push("Line significance calculation requires at least two series.");
+      }
+    }
   }
 
   if ((definition.id === "scatter" || definition.id === "correlation") && settings) {
@@ -4893,6 +4903,10 @@ export function validatePlotDataset(
     const needsSecondary = ["dual-axis", "overlay"].includes(settings.barVariant);
     const needsTarget = settings.barVariant === "bullet";
     const needsFacet = settings.barVariant === "faceted";
+    const categoryLayout = barCategoryAxisLayoutMetrics(settings, dataset.rows.map((row) => mapping.category ? row[mapping.category] ?? "" : ""));
+    if (categoryLayout.applies && !categoryLayout.fits) {
+      errors.push(`Category labels and the X-axis title need ${categoryLayout.requiredBottom}px of bottom space at the current text sizes; increase figure height, shorten category labels, or reduce the configured text sizes.`);
+    }
     if (needsSecondary && !mapping.secondary) errors.push(`${settings.barVariant === "dual-axis" ? "Dual-axis" : "Overlay"} bars require a mapped secondary value column.`);
     if (needsTarget && !mapping.target) errors.push("Bullet charts require a mapped target value column.");
     if (needsFacet && !mapping.facet) errors.push("Faceted bars require a mapped facet column.");
@@ -5829,6 +5843,84 @@ export function numericExtent(values: number[], includeZero = false): [number, n
   }
   const padding = (maximum - minimum) * 0.08;
   return [minimum - padding, maximum + padding];
+}
+
+/** Prefer the actual ordered sampling values for compact time-course axes. */
+export function observedAxisTicks(values: number[], maximumCount: number) {
+  const ticks = [...new Set(values.filter(Number.isFinite))].sort((a, b) => a - b);
+  return ticks.length >= 2 && ticks.length <= Math.max(2, maximumCount) ? ticks : undefined;
+}
+
+function logGamma(value: number): number {
+  const coefficients = [676.5203681218851, -1259.1392167224028, 771.3234287776531, -176.6150291621406, 12.507343278686905, -0.13857109526572012, 9.984369578019572e-6, 1.5056327351493116e-7];
+  if (value < 0.5) return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * value)) - logGamma(1 - value);
+  const shifted = value - 1;
+  let series = 0.9999999999998099;
+  coefficients.forEach((coefficient, index) => { series += coefficient / (shifted + index + 1); });
+  const t = shifted + coefficients.length - 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (shifted + 0.5) * Math.log(t) - t + Math.log(series);
+}
+
+function betaContinuedFraction(a: number, b: number, x: number) {
+  const maximumIterations = 200;
+  const epsilon = 3e-12;
+  const floor = 1e-300;
+  const qab = a + b; const qap = a + 1; const qam = a - 1;
+  let c = 1; let d = 1 - qab * x / qap;
+  if (Math.abs(d) < floor) d = floor;
+  d = 1 / d;
+  let result = d;
+  for (let iteration = 1; iteration <= maximumIterations; iteration += 1) {
+    const twice = 2 * iteration;
+    let aa = iteration * (b - iteration) * x / ((qam + twice) * (a + twice));
+    d = 1 + aa * d; if (Math.abs(d) < floor) d = floor;
+    c = 1 + aa / c; if (Math.abs(c) < floor) c = floor;
+    d = 1 / d; result *= d * c;
+    aa = -(a + iteration) * (qab + iteration) * x / ((a + twice) * (qap + twice));
+    d = 1 + aa * d; if (Math.abs(d) < floor) d = floor;
+    c = 1 + aa / c; if (Math.abs(c) < floor) c = floor;
+    d = 1 / d;
+    const delta = d * c; result *= delta;
+    if (Math.abs(delta - 1) < epsilon) break;
+  }
+  return result;
+}
+
+function regularizedIncompleteBeta(x: number, a: number, b: number) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const front = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2)
+    ? front * betaContinuedFraction(a, b, x) / a
+    : 1 - front * betaContinuedFraction(b, a, 1 - x) / b;
+}
+
+export function studentTTwoSidedPValue(tStatistic: number, degreesOfFreedom: number) {
+  if (!Number.isFinite(tStatistic) || !Number.isFinite(degreesOfFreedom) || degreesOfFreedom <= 0) return null;
+  const squared = tStatistic * tStatistic;
+  return Math.min(1, Math.max(0, regularizedIncompleteBeta(degreesOfFreedom / (degreesOfFreedom + squared), degreesOfFreedom / 2, 0.5)));
+}
+
+export function welchSummaryPValue(meanA: number, sdA: number, nA: number, meanB: number, sdB: number, nB: number) {
+  if (![meanA, sdA, nA, meanB, sdB, nB].every(Number.isFinite) || sdA < 0 || sdB < 0 || nA < 2 || nB < 2) return null;
+  const varianceA = sdA * sdA / nA;
+  const varianceB = sdB * sdB / nB;
+  const variance = varianceA + varianceB;
+  if (variance === 0) return meanA === meanB ? 1 : 0;
+  const degreesOfFreedom = variance * variance / (varianceA * varianceA / (nA - 1) + varianceB * varianceB / (nB - 1));
+  return studentTTwoSidedPValue(Math.abs(meanA - meanB) / Math.sqrt(variance), degreesOfFreedom);
+}
+
+export function benjaminiHochbergAdjust(pValues: number[]) {
+  const indexed = pValues.map((pValue, index) => ({ pValue: Math.min(1, Math.max(0, pValue)), index })).sort((a, b) => a.pValue - b.pValue);
+  const adjusted = Array<number>(pValues.length).fill(1);
+  let runningMinimum = 1;
+  for (let rankIndex = indexed.length - 1; rankIndex >= 0; rankIndex -= 1) {
+    const entry = indexed[rankIndex];
+    runningMinimum = Math.min(runningMinimum, entry.pValue * indexed.length / (rankIndex + 1));
+    adjusted[entry.index] = Math.min(1, runningMinimum);
+  }
+  return adjusted;
 }
 
 export function resolveAxisDomain(

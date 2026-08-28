@@ -3,6 +3,10 @@
 import type { ReactNode, RefObject } from "react";
 import { ScientificAdvancedChartPreview } from "@/components/ScientificAdvancedChartPreview";
 import {
+  BAR_CATEGORY_LABEL_ANGLE,
+  benjaminiHochbergAdjust,
+  barCategoryAxisLayoutMetrics,
+  barCategoryLabelText,
   boxStatistics,
   divergingColor,
   formatTick,
@@ -16,10 +20,12 @@ import {
   linearRegression,
   meanErrorStatistics,
   numericExtent,
+  observedAxisTicks,
   parseNumericValue,
   parseRatioValue,
   resolveAxisDomain,
   scaleLinear,
+  welchSummaryPValue,
   type JournalThemeId,
   type ParsedDataset,
   type PlotType,
@@ -50,7 +56,7 @@ const CHART_TEXT_COLOR = "#23242A";
 
 type LegendItem = { label: string; color: string; shape?: "circle" | "line" | "square" };
 
-function getFrame(settings: VisualizationSettings, type: PlotType): PlotFrame {
+function getFrame(settings: VisualizationSettings, type: PlotType, bottomOverride?: number): PlotFrame {
   const titleOffset = settings.title ? 24 : 0;
   const supportsLegend = type !== "box" && type !== "violin";
   const compactWidth = settings.width < 420;
@@ -62,7 +68,7 @@ function getFrame(settings: VisualizationSettings, type: PlotType): PlotFrame {
     : type === "enrichment" ? 168 : type === "heatmap" ? 108 : type === "bar" && (settings.swapAxes || ["horizontal", "bullet", "pyramid"].includes(settings.barVariant)) ? 132 : 72;
   const right = (compactWidth ? 18 : 24) + rightLegend + (type === "bar" && settings.barVariant === "dual-axis" ? 38 : 0);
   const top = (compactHeight ? 20 : 24) + titleOffset;
-  const bottom = (compactHeight ? 48 : 58) + bottomLegend;
+  const bottom = bottomOverride ?? (compactHeight ? 48 : 58) + bottomLegend;
   return {
     width: settings.width,
     height: settings.height,
@@ -151,7 +157,7 @@ function NumericAxes({
         return (
           <g key={`xt-${value}`}>
             <line x1={x} x2={x} y1={xBottom} y2={xBottom + 5} stroke={ink} strokeWidth={settings.axisLineWidth} />
-            <text x={x} y={xBottom + 19} textAnchor="middle" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
+            <text data-axis-tick="x" x={x} y={xBottom + 19} textAnchor="middle" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
           </g>
         );
       }) : null}
@@ -160,12 +166,12 @@ function NumericAxes({
         return (
           <g key={`yt-${value}`}>
             <line x1={frame.left - 5} x2={frame.left} y1={y} y2={y} stroke={ink} strokeWidth={settings.axisLineWidth} />
-            <text x={frame.left - 9} y={y + settings.tickSize * 0.34} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
+            <text data-axis-tick="y" x={frame.left - 9} y={y + settings.tickSize * 0.34} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{formatTick(value)}</text>
           </g>
         );
       }) : null}
-      <text x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 57 : 13)} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text>
-      <text transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text>
+      {xLabel.trim() ? <text data-axis-label="x" x={frame.left + frame.plotWidth / 2} y={frame.height - (settings.legendPosition === "bottom" ? 57 : 13)} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{xLabel}</text> : null}
+      {yLabel.trim() ? <text data-axis-label="y" transform={`translate(18 ${frame.top + frame.plotHeight / 2}) rotate(-90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{yLabel}</text> : null}
     </g>
   );
 }
@@ -365,7 +371,7 @@ function renderBar(
     <>
       {numericAxes}
       <g clipPath="url(#plot-area-bar)">{marks}{secondaryMarks}</g>
-      {categories.map((category, index) => { const label = category.includes("\u0000") ? category.split("\u0000")[1] : category; return isHorizontal ? <text key={category} x={frame.left - 9} y={frame.top + band * (index + .5) + settings.tickSize / 3} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(label, 18)}</text> : <text key={category} transform={`translate(${frame.left + band * (index + .5)} ${frame.top + frame.plotHeight + 10}) rotate(-30)`} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(label, 16)}</text>; })}
+      {categories.map((category, index) => { const label = category.includes("\u0000") ? category.split("\u0000")[1] : category; return isHorizontal ? <text key={category} x={frame.left - 9} y={frame.top + band * (index + .5) + settings.tickSize / 3} textAnchor="end" fill={muted} fontSize={settings.tickSize}>{truncate(label, 18)}</text> : <text key={category} data-plot-element="bar-category-label" data-full-label={label} transform={`translate(${frame.left + band * (index + .5)} ${frame.top + frame.plotHeight + 10}) rotate(${BAR_CATEGORY_LABEL_ANGLE})`} textAnchor="end" fill={muted} fontSize={settings.tickSize}><title>{label}</title>{barCategoryLabelText(label)}</text>; })}
       {hasAxisBreak ? isHorizontal ? <g><rect x={valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-6} y={frame.top} width={12} height={frame.plotHeight} fill="white" /><path d={`M ${valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-4} ${frame.top+frame.plotHeight+4} l 8 -8 m -8 0 l 8 8`} fill="none" stroke={ink} strokeWidth={settings.axisLineWidth} /></g> : <g><rect x={frame.left} y={valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-6} width={frame.plotWidth} height={12} fill="white" /><path d={`M ${frame.left-4} ${valueScale((settings.axisBreakStart+settings.axisBreakEnd)/2)-4} l 8 8 m -8 0 l 8 -8`} fill="none" stroke={ink} strokeWidth={settings.axisLineWidth} /></g> : null}
       {settings.barVariant === "faceted" ? facets.map((facet) => { const indices = categories.map((key, index) => key.startsWith(`${facet}\u0000`) ? index : -1).filter((index) => index >= 0); const center = indices.length ? indices.reduce((sum, index) => sum + frame.left + band * (index + .5), 0) / indices.length : frame.left; return <text key={facet} x={center} y={frame.top + settings.tickSize} textAnchor="middle" fill={ink} fontSize={settings.tickSize} fontWeight={700}>{facet}</text>; }) : null}
       {settings.barVariant === "dual-axis" ? <g><line x1={frame.left+frame.plotWidth} x2={frame.left+frame.plotWidth} y1={frame.top} y2={frame.top+frame.plotHeight} stroke={ink} strokeWidth={settings.axisLineWidth} />{[0, .5, 1].map((t) => <text key={t} x={frame.left+frame.plotWidth+7} y={frame.top+frame.plotHeight*(1-t)+4} fill={muted} fontSize={settings.tickSize}>{formatTick(secondaryDomain[0]+t*(secondaryDomain[1]-secondaryDomain[0]))}</text>)}{settings.secondaryAxisLabel.trim() ? <text transform={`translate(${frame.width-10} ${frame.top+frame.plotHeight/2}) rotate(90)`} textAnchor="middle" fill={ink} fontSize={settings.axisLabelSize} fontWeight={600}>{settings.secondaryAxisLabel}</text> : null}</g> : null}
@@ -392,7 +398,9 @@ function renderLineOrScatter(
     return {
       x: settings.swapAxes ? rawY : rawX,
       y: settings.swapAxes ? rawX : rawY,
+      mean: rawY,
       error: lineErrorsEnabled && mapping.error ? Math.max(0, parseNumericValue(row[mapping.error]) ?? 0) : 0,
+      n: mapping.n ? parseNumericValue(row[mapping.n]) : null,
       group: row[type === "line" ? mapping.series : mapping.group] || "All",
       label: type !== "line" && mapping.label ? row[mapping.label] : "",
       index,
@@ -407,12 +415,32 @@ function renderLineOrScatter(
     : points.map((point) => point.y)), settings.yMin, settings.yMax);
   const groups = [...new Set(points.map((point) => point.group))];
   const colorMap = paletteForGroups(groups, colors);
+  const referenceSeries = settings.lineReferenceSeries && groups.includes(settings.lineReferenceSeries) ? settings.lineReferenceSeries : groups[0];
+  const rawLineComparisons = type === "line" && settings.showSignificance && (settings.lineErrorType === "sd" || settings.lineErrorType === "sem")
+    ? points.flatMap((point) => {
+        if (point.group === referenceSeries || point.n === null) return [];
+        const reference = points.find((candidate) => candidate.group === referenceSeries && candidate.order === point.order && candidate.n !== null);
+        if (!reference || reference.n === null) return [];
+        const pointSd = settings.lineErrorType === "sem" ? point.error * Math.sqrt(point.n) : point.error;
+        const referenceSd = settings.lineErrorType === "sem" ? reference.error * Math.sqrt(reference.n) : reference.error;
+        const pValue = welchSummaryPValue(point.mean, pointSd, point.n, reference.mean, referenceSd, reference.n);
+        return pValue === null ? [] : [{ pointIndex: point.index, pValue }];
+      })
+    : [];
+  const adjustedLinePValues = settings.linePAdjustment === "bh"
+    ? benjaminiHochbergAdjust(rawLineComparisons.map((comparison) => comparison.pValue))
+    : rawLineComparisons.map((comparison) => comparison.pValue);
+  const lineSignificance = new Map(rawLineComparisons.map((comparison, index) => [comparison.pointIndex, { ...comparison, adjustedPValue: adjustedLinePValues[index] }]));
+  const maximumObservedTicks = Math.max(2, Math.min(12, Math.floor((settings.swapAxes ? frame.plotHeight : frame.plotWidth) / Math.max(24, settings.tickSize * 2.2))));
+  const lineTimeTicks = type === "line"
+    ? observedAxisTicks(points.map((point) => settings.swapAxes ? point.y : point.x), maximumObservedTicks)
+    : undefined;
   const xLabel = settings.swapAxes
-    ? settings.yLabel || (type === "line" ? "Value" : "Y")
-    : settings.xLabel || "X";
+    ? settings.yLabel.trim()
+    : settings.xLabel.trim();
   const yLabel = settings.swapAxes
-    ? settings.xLabel || "X"
-    : settings.yLabel || (type === "line" ? "Value" : "Y");
+    ? settings.xLabel.trim()
+    : settings.yLabel.trim();
   const scaled = points.map((point) => ({
     ...point,
     sx: scaleLinear(point.x, xDomain, [frame.left, frame.left + frame.plotWidth]),
@@ -421,7 +449,7 @@ function renderLineOrScatter(
 
   return (
     <>
-      <NumericAxes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={xLabel} yLabel={yLabel} ink={ink} muted={muted} gridColor={gridColor} />
+      <NumericAxes frame={frame} settings={settings} xDomain={xDomain} yDomain={yDomain} xLabel={xLabel} yLabel={yLabel} ink={ink} muted={muted} gridColor={gridColor} xTickValues={type === "line" && !settings.swapAxes ? lineTimeTicks : undefined} yTickValues={type === "line" && settings.swapAxes ? lineTimeTicks : undefined} />
       <g data-plot-data>
       {lineErrorsEnabled
         ? scaled.map((point) => {
@@ -481,6 +509,15 @@ function renderLineOrScatter(
           {settings.showLabels && point.label ? <text data-plot-label x={point.x > (xDomain[0] + xDomain[1]) / 2 ? point.sx - settings.pointSize - 2 : point.sx + settings.pointSize + 2} y={point.y > (yDomain[0] + yDomain[1]) / 2 ? point.sy + settings.tickSize + 2 + (point.index % 2) * 3 : point.sy - 3 - (point.index % 2) * 3} textAnchor={point.x > (xDomain[0] + xDomain[1]) / 2 ? "end" : "start"} fill={ink} fontSize={settings.tickSize}>{truncate(point.label, 12)}</text> : null}
         </g>
       ))}
+      {type === "line" ? scaled.map((point) => {
+        const comparison = lineSignificance.get(point.index);
+        if (!comparison) return null;
+        const mark = comparison.adjustedPValue <= 0.001 ? "***" : comparison.adjustedPValue <= 0.01 ? "**" : comparison.adjustedPValue <= settings.significanceThreshold ? "*" : "ns";
+        const offset = settings.pointSize + settings.errorBarCapSize / 2 + settings.tickSize;
+        const x = settings.swapAxes ? Math.min(frame.left + frame.plotWidth - 4, point.sx + offset) : point.sx;
+        const y = settings.swapAxes ? point.sy + settings.tickSize * 0.3 : Math.max(frame.top + settings.tickSize, point.sy - offset);
+        return <text key={`line-significance-${point.index}`} data-plot-element="line-significance" data-adjusted-p={comparison.adjustedPValue.toPrecision(5)} x={x} y={y} textAnchor={settings.swapAxes ? "start" : "middle"} fill={ink} fillOpacity={comparison.adjustedPValue <= settings.significanceThreshold ? 1 : 0.62} fontSize={settings.tickSize} fontWeight={700}><title>{`${point.group} vs ${referenceSeries}; ${settings.linePAdjustment === "bh" ? "BH-adjusted " : ""}P=${comparison.adjustedPValue.toPrecision(4)}`}</title>{mark}</text>;
+      }) : null}
       </g>
       <Legend frame={frame} settings={settings} ink={ink} items={groups.map((group) => ({ label: group, color: colorMap.get(group) ?? colors[0], shape: type === "line" ? "line" : "circle" }))} />
     </>
@@ -742,7 +779,10 @@ export function ScientificChartPreview({ svgRef, type, dataset, mapping, setting
     return <ScientificAdvancedChartPreview svgRef={svgRef} type={type} dataset={dataset} mapping={mapping} settings={settings} themeId={themeId} />;
   }
   const theme = journalThemes[themeId];
-  const frame = getFrame(settings, type);
+  const barCategoryLayout = type === "bar"
+    ? barCategoryAxisLayoutMetrics(settings, dataset.rows.map((row) => mapping.category ? row[mapping.category] ?? "" : ""))
+    : null;
+  const frame = getFrame(settings, type, barCategoryLayout?.bottom);
   const definition = getPlotDefinition(type);
   const categorical: string[] = settings.categoricalColors.length > 0 ? settings.categoricalColors : theme.categorical;
   const sequential: [string, string] = [settings.continuousLow, settings.continuousHigh];

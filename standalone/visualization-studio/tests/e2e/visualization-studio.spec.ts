@@ -214,7 +214,7 @@ test.describe("Visualization Studio browser acceptance", () => {
 
   test("keeps every sample category in a dense grouped summary bar chart", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop grouped-bar regression");
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     const genes = ["CCND1", "EGR1", "FBN2", "FOS", "MMP9", "MYC", "S100A4"];
     const samples = ["A549-Mock", "A549-NC-FAM", "A549-siFBN2-2", "A549-siFBN2-3", "A549-siFBN2-4"];
     const rows = genes.flatMap((gene, geneIndex) => samples.map((sample, sampleIndex) =>

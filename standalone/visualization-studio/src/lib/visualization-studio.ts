@@ -299,6 +299,11 @@ export function analysisProvenanceForPlot(
   settings: VisualizationSettings,
   pcaInputMode: "scores" | "matrix" = "scores",
 ): AnalysisProvenance | null {
+  if (type === "bar") return settings.barAnalysisMode === "none"
+    ? null
+    : settings.barAnalysisMode === "supplied"
+      ? { source: "supplied", label: "Supplied", detail: "P values are supplied by an upstream analysis; Studio displays them without recomputing significance." }
+      : { source: "calculated-in-studio", label: "Calculated in Studio", detail: settings.barAnalysisMode === "qpcr-delta-ct" ? "Bar heights summarize relative expression, while two-sided Welch tests are calculated locally on biological-replicate ΔCt values." : "Reference-category comparisons, confidence intervals, and multiple-testing adjustments are calculated locally from the declared Bar design." };
   if (type === "pca") return pcaInputMode === "matrix"
     ? { source: "calculated-in-studio", label: "Calculated in Studio", detail: "PCA scores, explained variance, and loadings are calculated locally from the supplied feature matrix." }
     : { source: "supplied", label: "Supplied", detail: "PCA coordinates are supplied by an upstream analysis; Studio renders them without recomputing PCA." };
@@ -402,6 +407,9 @@ export type VisualizationSettings = {
   barErrorType: "none" | "sd" | "sem";
   barVariant: "grouped" | "stacked" | "percentage" | "horizontal" | "bidirectional" | "faceted" | "polar" | "bullet" | "pyramid" | "axis-break" | "dual-axis" | "overlay";
   barInputMode: "summary" | "long";
+  barAnalysisMode: "none" | "supplied" | "raw-independent" | "summary-independent" | "raw-paired" | "qpcr-delta-ct";
+  barReferenceCategory: string;
+  barPAdjustment: "none" | "holm" | "bh";
   barOverlayType: "line" | "points";
   secondaryAxisLabel: string;
   showSignificance: boolean;
@@ -540,6 +548,9 @@ export const defaultVisualizationSettings: VisualizationSettings = {
   barErrorType: "none",
   barVariant: "grouped",
   barInputMode: "summary",
+  barAnalysisMode: "none",
+  barReferenceCategory: "",
+  barPAdjustment: "bh",
   barOverlayType: "line",
   secondaryAxisLabel: "Secondary value",
   showSignificance: false,
@@ -1558,6 +1569,46 @@ Day 7\t7.2\tControl\tLate
 Day 7\t8.2\tTreatment\tLate
 Day 7\t8.5\tTreatment\tLate
 Day 7\t8.4\tTreatment\tLate`,
+  barRawIndependent: `category\tvalue\tgroup\tsample_id
+Control\t1.02\tGene A\tA-C1
+Control\t0.96\tGene A\tA-C2
+Control\t1.08\tGene A\tA-C3
+Treatment\t1.54\tGene A\tA-T1
+Treatment\t1.63\tGene A\tA-T2
+Treatment\t1.48\tGene A\tA-T3
+Control\t1.01\tGene B\tB-C1
+Control\t0.93\tGene B\tB-C2
+Control\t1.06\tGene B\tB-C3
+Treatment\t0.68\tGene B\tB-T1
+Treatment\t0.74\tGene B\tB-T2
+Treatment\t0.71\tGene B\tB-T3`,
+  barSummaryInference: `category\tvalue\tsd\tsem\tn\tgroup
+Control\t1.02\t0.061\t0.035\t3\tGene A
+Treatment\t1.55\t0.075\t0.043\t3\tGene A
+Control\t1.00\t0.066\t0.038\t3\tGene B
+Treatment\t0.71\t0.030\t0.017\t3\tGene B`,
+  barPaired: `category\tvalue\tgroup\tsubject_id
+Before\t2.1\tMarker A\tP01
+After\t2.8\tMarker A\tP01
+Before\t2.4\tMarker A\tP02
+After\t3.0\tMarker A\tP02
+Before\t2.0\tMarker A\tP03
+After\t2.9\tMarker A\tP03
+Before\t2.5\tMarker A\tP04
+After\t3.1\tMarker A\tP04`,
+  barQpcr: `category\tgroup\tsample_id\tdelta_ct\trelative_expression
+Control\tFBN2\tC01\t6.12\t1.00
+Control\tFBN2\tC02\t6.28\t0.90
+Control\tFBN2\tC03\t6.03\t1.06
+siFBN2\tFBN2\tT01\t8.71\t0.17
+siFBN2\tFBN2\tT02\t8.95\t0.14
+siFBN2\tFBN2\tT03\t8.62\t0.18
+Control\tEGR1\tC04\t4.32\t1.00
+Control\tEGR1\tC05\t4.21\t1.08
+Control\tEGR1\tC06\t4.39\t0.95
+siFBN2\tEGR1\tT04\t4.51\t0.88
+siFBN2\tEGR1\tT05\t4.44\t0.92
+siFBN2\tEGR1\tT06\t4.62\t0.81`,
   barVariants: `category\tvalue\tsd\tgroup\tsecondary\ttarget\tp_value\tfacet
 Day 1\t3.8\t0.31\tControl\t4.0\t4.5\t0.41\tEarly
 Day 1\t4.2\t0.36\tTreatment A\t4.4\t4.8\t0.12\tEarly
@@ -2137,23 +2188,30 @@ const plotDefinitionSeeds: PlotDefinition[] = [
     name: "Bar",
     family: "Comparison",
     summary: "One categorical family for grouped, stacked, radial, target, overlay, and uncertainty comparisons.",
-    inputHint: "Summary mode uses one row per category/group; long-form mode aggregates replicate observations into means and SD/SEM.",
+    inputHint: "Choose a visualization-only, supplied-P, independent raw, summary-statistics, paired, or qPCR ΔCt workflow. Inference requires biological IDs or explicit n.",
     roles: [
       { key: "category", label: "Category", kind: "category", required: true },
       { key: "value", label: "Value", kind: "number", required: true },
       { key: "error", label: "Error magnitude (SD / SEM)", kind: "number", required: false },
+      { key: "sd", label: "Standard deviation (SD)", kind: "number", required: false },
+      { key: "sem", label: "Standard error (SEM)", kind: "number", required: false },
+      { key: "n", label: "Biological sample size (n)", kind: "number", required: false },
+      { key: "subject", label: "Biological sample / subject ID", kind: "label", required: false },
+      { key: "analysisValue", label: "Analysis value (ΔCt)", kind: "number", required: false },
       { key: "group", label: "Group", kind: "category", required: false },
       { key: "secondary", label: "Secondary value", kind: "number", required: false },
       { key: "target", label: "Target value", kind: "number", required: false },
       { key: "pValue", label: "P value", kind: "number", required: false },
       { key: "facet", label: "Facet", kind: "category", required: false },
     ],
-    defaultMapping: { category: "category", value: "value", error: "sd", group: "group", secondary: "secondary", target: "target", pValue: "p_value", facet: "facet" },
+    defaultMapping: { category: "category", value: "value", error: "sd", sd: "sd", sem: "sem", n: "n", subject: "sample_id", analysisValue: "delta_ct", group: "group", secondary: "secondary", target: "target", pValue: "p_value", facet: "facet" },
     sampleData: samples.barVariants,
     examples: [
-      { label: "Example 1", description: "Summary values with uncertainty, secondary values, targets, P values, and facets.", data: samples.barVariants, mapping: { category: "category", value: "value", error: "sd", group: "group", secondary: "secondary", target: "target", pValue: "p_value", facet: "facet" } },
-      { label: "Example 2", description: "Long-form replicate observations; select Long-form observations to calculate means and uncertainty.", data: samples.barLong, mapping: { category: "category", value: "value", error: "", group: "group", secondary: "", target: "", pValue: "", facet: "facet" } },
-      { label: "Example 3", description: "Category counts or proportions without uncertainty.", data: samples.barCount, mapping: { category: "category", value: "value", error: "", group: "group", secondary: "", target: "", pValue: "", facet: "" } },
+      { label: "Example 1", description: "Summary values for visualization; optional upstream P values can be displayed without recalculation.", data: samples.barVariants, mapping: { category: "category", value: "value", error: "sd", sd: "sd", sem: "", n: "", subject: "", analysisValue: "", group: "group", secondary: "secondary", target: "target", pValue: "p_value", facet: "facet" }, settings: { barInputMode: "summary", barAnalysisMode: "none", showSignificance: false } },
+      { label: "Example 2", description: "Independent biological observations; Welch tests compare each category with the reference within each group.", data: samples.barRawIndependent, mapping: { category: "category", value: "value", error: "", sd: "", sem: "", n: "", subject: "sample_id", analysisValue: "", group: "group", secondary: "", target: "", pValue: "", facet: "" }, settings: { barInputMode: "long", barAnalysisMode: "raw-independent", barReferenceCategory: "Control", barPAdjustment: "bh", showSignificance: true, barErrorType: "sem" } },
+      { label: "Example 3", description: "Means with SD or SEM and explicit biological n; inference uses a summary-statistics Welch test.", data: samples.barSummaryInference, mapping: { category: "category", value: "value", error: "sd", sd: "sd", sem: "sem", n: "n", subject: "", analysisValue: "", group: "group", secondary: "", target: "", pValue: "", facet: "" }, settings: { barInputMode: "summary", barAnalysisMode: "summary-independent", barReferenceCategory: "Control", barPAdjustment: "bh", showSignificance: true, barErrorType: "sd" } },
+      { label: "Example 4", description: "Matched observations with exact subject IDs; incomplete pairs block the paired t-test.", data: samples.barPaired, mapping: { category: "category", value: "value", error: "", sd: "", sem: "", n: "", subject: "subject_id", analysisValue: "", group: "group", secondary: "", target: "", pValue: "", facet: "" }, settings: { barInputMode: "long", barAnalysisMode: "raw-paired", barReferenceCategory: "Before", barPAdjustment: "holm", showSignificance: true, barErrorType: "sem" } },
+      { label: "Example 5", description: "qPCR displays relative expression but performs the Welch test on biological-replicate ΔCt values.", data: samples.barQpcr, mapping: { category: "category", value: "relative_expression", error: "", sd: "", sem: "", n: "", subject: "sample_id", analysisValue: "delta_ct", group: "group", secondary: "", target: "", pValue: "", facet: "" }, settings: { barInputMode: "long", barAnalysisMode: "qpcr-delta-ct", barReferenceCategory: "Control", barPAdjustment: "bh", showSignificance: true, barErrorType: "sem" } },
     ],
   },
   {
@@ -3485,7 +3543,7 @@ const commonSettingKeys: Array<keyof VisualizationSettings> = [
 ];
 const hiddenLegendIds = new Set<PlotType>(["box", "violin", "beeswarm", "raincloud", "histogram", "density", "ridge", "heatmap", "clustered-heatmap", "correlation-heatmap", "venn", "upset", "sankey", "alluvial", "chord", "ligand-receptor", "circos", "manhattan", "qq", "chromosome-ideogram", "snp-density", "genome-tracks", "waterfall", "oncoplot", "motif-logo", "treemap", "funnel", "precision-recall", "calibration", "decision-curve", "nomogram", "lasso-path", "km-cutoff", "risk-score", "go-circle", "kegg-circle", "go-chord", "pathway-impact", "nes-fdr", "multi-gsea", "enrichment-ridge", "sankey-bubble", "geographic-map", "petal", "word-cloud"]);
 const specializedSettingKeys: Partial<Record<PlotType, Array<keyof VisualizationSettings>>> = {
-  bar: ["swapAxes", "barErrorType", "barVariant", "barInputMode", "barOverlayType", "secondaryAxisLabel", "showSignificance", "significanceThreshold", "axisBreakStart", "axisBreakEnd", "barGap", "barBorderWidth", "barBorderColor", "errorBarLineWidth", "errorBarCapSize"],
+  bar: ["swapAxes", "barErrorType", "barVariant", "barInputMode", "barAnalysisMode", "barReferenceCategory", "barPAdjustment", "barOverlayType", "secondaryAxisLabel", "showSignificance", "significanceThreshold", "axisBreakStart", "axisBreakEnd", "barGap", "barBorderWidth", "barBorderColor", "errorBarLineWidth", "errorBarCapSize"],
   line: ["swapAxes", "showPoints", "lineErrorType", "lineUncertaintyStyle", "lineBandOpacity", "errorBarLineWidth", "errorBarCapSize"],
   scatter: ["swapAxes", "showLabels", "correlationMethod", "associationVariant", "associationFit", "associationPolynomialDegree", "associationLoessSpan", "associationShowConfidenceBand", "associationShowPValue", "associationGroupMode", "associationHexbinSize", "associationDensityBandwidth"],
   correlation: ["showLabels", "correlationMethod", "associationVariant", "associationFit", "associationPolynomialDegree", "associationLoessSpan", "associationShowConfidenceBand", "associationShowPValue", "associationGroupMode", "associationHexbinSize", "associationDensityBandwidth"],
@@ -3649,7 +3707,10 @@ export function isPlotRoleActive(type: PlotType, roleKey: string, settings: Visu
   if (type !== "bar") return true;
   if (roleKey === "secondary") return ["dual-axis", "overlay"].includes(settings.barVariant);
   if (roleKey === "target") return settings.barVariant === "bullet";
-  if (roleKey === "pValue") return settings.showSignificance && settings.barVariant !== "polar";
+  if (roleKey === "pValue") return settings.showSignificance && settings.barVariant !== "polar" && settings.barAnalysisMode === "supplied";
+  if (roleKey === "sd" || roleKey === "sem" || roleKey === "n") return settings.barAnalysisMode === "summary-independent";
+  if (roleKey === "subject") return ["raw-independent", "raw-paired", "qpcr-delta-ct"].includes(settings.barAnalysisMode);
+  if (roleKey === "analysisValue") return settings.barAnalysisMode === "qpcr-delta-ct";
   if (roleKey === "facet") return settings.barVariant === "faceted";
   if (roleKey === "error") return settings.barErrorType !== "none" && !["stacked", "percentage", "polar"].includes(settings.barVariant);
   return true;
@@ -3943,7 +4004,7 @@ export function parseRatioValue(value: string | undefined) {
 
 const mappingAliases: Record<string, string[]> = {
   category: ["category", "condition", "sample", "name", "term"],
-  value: ["value", "weight", "mean", "expression", "score", "points", "abundance", "count", "variantcount", "density"],
+  value: ["value", "weight", "mean", "relativeexpression", "expression", "score", "points", "abundance", "count", "variantcount", "density"],
   secondary: ["secondary", "secondaryvalue", "comparison", "overlay", "value2"],
   target: ["target", "reference", "goal", "benchmark", "to", "receiver"],
   facet: ["facet", "panel", "stratum", "cohort"],
@@ -3955,6 +4016,10 @@ const mappingAliases: Record<string, string[]> = {
   z: ["z", "pc3", "dim3", "dimension3", "umap3", "tsne3", "nmds3"],
   shape: ["shape", "batch", "cohort", "site", "sex"],
   error: ["error", "sd", "sem", "se", "stderr", "standarddeviation", "standarderror"],
+  sd: ["sd", "standarddeviation"],
+  sem: ["sem", "se", "stderr", "standarderror"],
+  n: ["n", "samplesize", "biologicaln", "replicates"],
+  analysisValue: ["deltact", "delta_ct", "dct", "analysisvalue"],
   label: ["label", "gene", "feature", "id", "name", "study", "sample", "site", "level", "term", "category"],
   effect: ["log2fc", "logfc", "effect", "estimate"],
   pValue: ["padj", "fdr", "adjustedpvalue", "pvalue", "p"],
@@ -4831,11 +4896,13 @@ export function validatePlotDataset(
     if (needsSecondary && !mapping.secondary) errors.push(`${settings.barVariant === "dual-axis" ? "Dual-axis" : "Overlay"} bars require a mapped secondary value column.`);
     if (needsTarget && !mapping.target) errors.push("Bullet charts require a mapped target value column.");
     if (needsFacet && !mapping.facet) errors.push("Faceted bars require a mapped facet column.");
-    if (settings.showSignificance && settings.barVariant !== "polar" && !mapping.pValue) errors.push("Map a P value column before displaying significance annotations.");
+    if (settings.showSignificance && settings.barVariant !== "polar" && settings.barAnalysisMode === "supplied" && !mapping.pValue) errors.push("Map a supplied P value column before displaying significance annotations.");
     if (mapping.pValue && isPlotRoleActive("bar", "pValue", settings)) {
       const invalidP = dataset.rows.filter((row) => {
         const value = parseNumericValue(row[mapping.pValue]);
-        return value === null || value <= 0 || value > 1;
+        const raw = row[mapping.pValue]?.trim();
+        if (!raw) return false;
+        return value === null || value < 0 || value > 1;
       }).length;
       if (invalidP > 0) errors.push(`P value contains ${invalidP} value${invalidP === 1 ? "" : "s"} outside (0, 1].`);
     }

@@ -139,7 +139,7 @@ describe("Visualization Studio data contracts", () => {
       expect(examples.length).toBeGreaterThan(0);
       expect(examples.every((example) => example.label.startsWith("Example ") && example.data.length > 20)).toBe(true);
     });
-    expect(getPlotExamples(getPlotDefinition("bar"))).toHaveLength(3);
+    expect(getPlotExamples(getPlotDefinition("bar"))).toHaveLength(5);
     expect(getPlotExamples(getPlotDefinition("line"))).toHaveLength(2);
     const pcaExamples = getPlotExamples(getPlotDefinition("pca"));
     expect(pcaExamples).toHaveLength(2);

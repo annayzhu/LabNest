@@ -172,6 +172,41 @@ test.describe("Visualization Studio browser acceptance", () => {
     expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#3F6F9D", "#6686A4", "#879DB3", "#A8B4C0"]);
   });
 
+  test("keeps every sample category in a dense grouped summary bar chart", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop grouped-bar regression");
+    await page.goto("/");
+    const genes = ["CCND1", "EGR1", "FBN2", "FOS", "MMP9", "MYC", "S100A4"];
+    const samples = ["A549-Mock", "A549-NC-FAM", "A549-siFBN2-2", "A549-siFBN2-3", "A549-siFBN2-4"];
+    const rows = genes.flatMap((gene, geneIndex) => samples.map((sample, sampleIndex) =>
+      `${sample}\t${(0.1 + geneIndex * 0.1 + sampleIndex * 0.01).toFixed(3)}\t0.02\t0.01\t${gene}`,
+    ));
+    await page.getByRole("textbox", { name: "CSV or TSV data" }).fill([
+      "category\tvalue\tsd\tsem\tgroup",
+      ...rows,
+    ].join("\n"));
+    await page.getByRole("button", { name: "Auto-map" }).click();
+    await page.getByRole("combobox", { name: "Error representation" }).selectOption("sd");
+    await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+
+    const svg = page.locator("svg[aria-label='Bar scientific figure preview']");
+    const bars = svg.locator("[data-plot-element='bar']");
+    await expect(bars).toHaveCount(35);
+    expect(new Set(await bars.evaluateAll((marks) => marks.map((mark) => mark.getAttribute("fill")))).size).toBe(7);
+    for (const sample of samples) await expect(svg.getByText(sample, { exact: true })).toHaveCount(1);
+    for (const gene of genes) await expect(svg.getByText(gene, { exact: true })).toHaveCount(1);
+    const clippedSampleLabels = await svg.evaluate((element, expectedSamples) => {
+      const canvas = element.getBoundingClientRect();
+      return [...element.querySelectorAll("text")].flatMap((label) => {
+        if (!expectedSamples.includes(label.textContent ?? "")) return [];
+        const box = label.getBoundingClientRect();
+        return box.left < canvas.left - 1 || box.top < canvas.top - 1 || box.right > canvas.right + 1 || box.bottom > canvas.bottom + 1
+          ? [label.textContent]
+          : [];
+      });
+    }, samples);
+    expect(clippedSampleLabels).toEqual([]);
+  });
+
   test("keeps default, Chinese red, and heatmap palette renderings stable", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop palette visual baselines");
     await page.goto("/");

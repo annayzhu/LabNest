@@ -23,13 +23,14 @@ type DatasetView = {
 
 type ValidationView = { errors?: string[]; warnings?: string[]; checkedAt?: string };
 
-export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets, includeEmptyFields = false }: {
+export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets, includeEmptyFields = false, compactDocument = false }: {
   template: unknown;
   values: unknown;
   validationStatus: string;
   validation: unknown;
   datasets: DatasetView[];
   includeEmptyFields?: boolean;
+  compactDocument?: boolean;
 }) {
   if (!rawTemplate || typeof rawTemplate !== "object" || Array.isArray(rawTemplate) || !Object.keys(rawTemplate as object).length) return null;
   const template = normalizeResultTemplate(rawTemplate);
@@ -39,16 +40,19 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
   const hasValue = (key: string) => values[key] !== undefined && values[key] !== "";
   const metrics = template.fields.filter((field) => fieldSemanticRole(field) === "measurement" || fieldSemanticRole(field) === "qc").filter((field) => includeEmptyFields || hasValue(field.key ?? ""));
   const remainingFields = template.fields.filter((field) => !metrics.includes(field)).filter((field) => includeEmptyFields || hasValue(field.key ?? ""));
+  const documentFields = template.fields.filter((field) => includeEmptyFields || hasValue(field.key ?? ""));
   const charts = resolveCharts(template, datasets);
 
-  return <div className="space-y-5">
+  return <div className={compactDocument ? "result-template-view space-y-2" : "result-template-view space-y-5"}>
     {validation.errors?.length || validation.warnings?.length ? <ValidationSummary errors={validation.errors} warnings={validation.warnings} status={validationStatus} /> : null}
 
-    {metrics.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((field) => { const key = field.key ?? ""; return <Card key={key}><CardHeader title={field.label ?? field.name ?? key} eyebrow={fieldSemanticRole(field)} /><CardBody><p className="font-serif text-3xl text-ink">{formatValue(values[key], fieldDataType(field))} {field.unit ? <span className="text-base text-muted">{field.unit}</span> : null}</p>{field.description ? <p className="mt-2 text-xs leading-5 text-muted">{field.description}</p> : null}</CardBody></Card>; })}</div> : null}
+    {compactDocument && documentFields.length ? <dl className="result-document-fields grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">{documentFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="min-w-0"><dt className="text-[9px] font-semibold uppercase leading-3 tracking-[0.06em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-0.5 break-words text-xs leading-4 text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl> : null}
 
-    {remainingFields.length ? <Card><CardHeader title="Structured fields" eyebrow="Template values" /><CardBody><dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">{remainingFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="border-b border-hairline pb-3"><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl></CardBody></Card> : null}
+    {!compactDocument && metrics.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((field) => { const key = field.key ?? ""; return <Card key={key}><CardHeader title={field.label ?? field.name ?? key} eyebrow={fieldSemanticRole(field)} /><CardBody><p className="font-serif text-3xl text-ink">{formatValue(values[key], fieldDataType(field))} {field.unit ? <span className="text-base text-muted">{field.unit}</span> : null}</p>{field.description ? <p className="mt-2 text-xs leading-5 text-muted">{field.description}</p> : null}</CardBody></Card>; })}</div> : null}
 
-    {template.datasets?.length ? <ResultDatasetTableView datasets={template.datasets} values={inlineDatasets} /> : null}
+    {!compactDocument && remainingFields.length ? <Card><CardHeader title="Structured fields" eyebrow="Template values" /><CardBody><dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">{remainingFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="border-b border-hairline pb-3"><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl></CardBody></Card> : null}
+
+    {template.datasets?.length ? <ResultDatasetTableView datasets={template.datasets} values={inlineDatasets} showHeading={!compactDocument} compactDocument={compactDocument} /> : null}
 
     {charts.length ? <div className="grid gap-4 xl:grid-cols-2">{charts.map(({ chart, dataset }) => <Card key={`${dataset.id}-${chart.key}`}><CardHeader title={chart.label} eyebrow={`${chart.type} · ${dataset.name}`} /><CardBody><DatasetPreviewChart chart={chart} dataset={dataset} /></CardBody></Card>)}</div> : null}
 

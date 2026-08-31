@@ -571,7 +571,24 @@ textarea {
 }
 
 .result-record-document .document-a4-paper {
+  --ln-result-dataset-cell-padding-x: 0.3rem;
+  --ln-result-dataset-cell-padding-y: 0.2rem;
+  --ln-result-dataset-font-size: 10.5px;
+  --ln-result-dataset-min-col-width: 2.75rem;
+  --ln-result-dataset-view-number-col-width: 4.75rem;
+  --ln-result-dataset-view-text-col-width: 5.25rem;
   min-height: 0;
+  padding: 12mm 12mm 14mm;
+}
+
+.result-record-document .document-page-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+}
+
+.result-record-document .result-document-fields {
+  border-bottom: 1px solid var(--hairline);
+  padding: 0 0 0.5rem;
 }
 
 .experiment-detail-sidebar {
@@ -1300,6 +1317,43 @@ table :where(td) {
     padding: 0 !important;
   }
 
+  .app-shell {
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-shell > :not(.app-shell-layout),
+  .app-shell-layout > :not(.app-shell-content),
+  .app-shell-content > :not(.app-shell-main) {
+    display: none !important;
+  }
+
+  .app-shell-layout,
+  .app-shell-content,
+  .app-shell-main {
+    display: block !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-shell-main > :has(.document-print-root) > :not(:has(.document-print-root)),
+  .document-editor-layout:has(.document-print-root) > :not(.document-editor-main),
+  .document-editor-main:has(.document-print-root) > :not(.document-print-root) {
+    display: none !important;
+  }
+
+  .app-shell-main > :has(.document-print-root),
+  .document-editor-layout:has(.document-print-root),
+  .document-editor-main:has(.document-print-root) {
+    display: block !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
   body * {
     visibility: hidden !important;
   }
@@ -1310,9 +1364,8 @@ table :where(td) {
   }
 
   .document-print-root {
-    inset: 0 auto auto 0;
     margin: 0 !important;
-    position: absolute;
+    position: static !important;
     max-width: 100% !important;
     min-width: 0 !important;
     width: 100% !important;
@@ -1344,6 +1397,10 @@ table :where(td) {
     min-height: auto !important;
     padding: var(--ln-document-print-paper-padding-top) var(--ln-document-print-paper-padding-x) var(--ln-document-print-paper-padding-bottom) !important;
     width: 100% !important;
+  }
+
+  .result-record-document .document-a4-paper {
+    padding-inline: 2mm !important;
   }
 
   .document-section + .document-section {

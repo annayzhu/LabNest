@@ -25,7 +25,6 @@ type ResultAttachmentDocumentItem = {
 
 export function ResultRecordDocument({
   title,
-  resultType,
   qualityStatus,
   template,
   values,
@@ -40,7 +39,6 @@ export function ResultRecordDocument({
   notes,
 }: {
   title: string;
-  resultType: string;
   qualityStatus: string;
   template?: unknown;
   values: unknown;
@@ -69,12 +67,11 @@ export function ResultRecordDocument({
     label={title}
   >
     <header className="document-page-header">
-      <p className="document-page-kicker text-xs font-semibold uppercase tracking-[0.12em] text-muted">{resultType}</p>
-      <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
-      <p className="mt-2 text-xs text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p>
+      <h1 className="document-page-title font-serif font-medium leading-tight text-ink">{title}</h1>
+      {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-[10px] text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
     </header>
 
-    {normalizedTemplate ? <ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields /> : null}
+    {normalizedTemplate ? <ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields compactDocument /> : null}
 
     {hasSupplementalValues ? <section className="document-section">
       <header><h2 className="document-section-title font-serif font-medium text-ink">Additional result values</h2></header>

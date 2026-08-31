@@ -75,7 +75,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
 
     <div className="document-editor-layout">
       <main className="document-editor-main space-y-6">
-        <ResultRecordDocument title={result.title} resultType={result.resultType} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} />
+        <ResultRecordDocument title={result.title} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} />
 
         <Card className="scroll-mt-24"><div id="result-files" className="scroll-mt-24" /><CardHeader title="Result files" eyebrow="One place for instrument exports and supporting evidence" /><CardBody className="space-y-5">
           <div className="rounded-[8px] border border-hairline bg-warm/55 px-3 py-2.5 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">Where instrument exports go</strong><span className="mt-0.5 block">Use <b>Table data</b> for CSV, TSV, TXT or XLSX files when preview and schema checks are useful. Use <b>Original & supporting files</b> for proprietary instrument formats, PDF, images or video. Store each file once.</span></div>

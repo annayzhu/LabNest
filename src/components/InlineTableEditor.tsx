@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
+import { isRectangularSpreadsheetPaste } from "@/lib/result-dataset-paste";
 
 const tableToolbarButtonClass = "focus-ring inline-flex h-[var(--ln-inline-table-button-height)] min-h-0 shrink-0 items-center gap-0.5 rounded-[4px] px-[var(--ln-inline-table-button-padding-x)] text-[length:var(--ln-inline-table-button-font-size)] text-graphite hover:bg-surface";
 const tableToolbarDangerButtonClass = "focus-ring inline-flex h-[var(--ln-inline-table-button-height)] min-h-0 shrink-0 items-center gap-0.5 rounded-[4px] px-[var(--ln-inline-table-button-padding-x)] text-[length:var(--ln-inline-table-button-font-size)] text-error hover:bg-error-surface disabled:opacity-35";
@@ -24,6 +25,7 @@ function AutoGrowingTableCell({
   columnIndex,
   onChange,
   onPaste,
+  onUndoTableChange,
 }: {
   value: string;
   header: boolean;
@@ -31,6 +33,7 @@ function AutoGrowingTableCell({
   columnIndex: number;
   onChange: (value: string) => void;
   onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  onUndoTableChange: () => boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -47,6 +50,12 @@ function AutoGrowingTableCell({
     value={value}
     onChange={(event) => onChange(event.target.value)}
     onPaste={onPaste}
+    onKeyDown={(event) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z" || event.shiftKey) return;
+      event.stopPropagation();
+      if (!onUndoTableChange()) return;
+      event.preventDefault();
+    }}
     className={`focus-ring field-sizing-content min-h-[var(--ln-inline-table-cell-height)] max-h-48 w-full resize-y overflow-y-auto whitespace-pre-wrap break-words border-0 bg-transparent px-[var(--ln-inline-table-cell-padding-x)] py-[var(--ln-inline-table-cell-padding-y)] text-[length:var(--ln-inline-table-font-size)] leading-[var(--ln-inline-table-line-height)] outline-none ${header ? "font-medium text-graphite" : "text-graphite"}`}
     aria-label={`Table row ${rowIndex + 1}, column ${columnIndex + 1}`}
   />;
@@ -65,25 +74,43 @@ export function InlineTableEditor({
 }) {
   const normalized = rectangular(rows);
   const columnCount = widthOf(normalized);
+  const tableHistoryRef = useRef<string[][][]>([]);
+
+  const commitTableChange = (next: string[][]) => {
+    tableHistoryRef.current = [...tableHistoryRef.current.slice(-19), normalized.map((row) => [...row])];
+    onChange(next);
+  };
+  const undoTableChange = () => {
+    const previous = tableHistoryRef.current.at(-1);
+    if (!previous) return false;
+    tableHistoryRef.current = tableHistoryRef.current.slice(0, -1);
+    onChange(previous);
+    return true;
+  };
 
   const updateCell = (rowIndex: number, columnIndex: number, value: string) => {
+    // Once the user types again, the browser's per-textarea undo stack is the
+    // most recent history. Do not jump back to an older structural table edit.
+    tableHistoryRef.current = [];
     onChange(normalized.map((row, currentRow) => row.map((cell, currentColumn) => currentRow === rowIndex && currentColumn === columnIndex ? value : cell)));
   };
   const pasteCells = (event: React.ClipboardEvent<HTMLTextAreaElement>, startRow: number, startColumn: number) => {
     const value = event.clipboardData.getData("text/plain");
-    if (!value.includes("\t") && !value.includes("\n")) return;
+    // Plain or multiline prose belongs in the active cell at the caret. Only a
+    // tab-delimited clipboard payload is treated as a spreadsheet rectangle.
+    if (!isRectangularSpreadsheetPaste(value)) return;
     event.preventDefault();
     const pasted = value.replaceAll("\r\n", "\n").replace(/\n$/, "").split("\n").map((line) => line.split("\t"));
     const requiredRows = Math.max(normalized.length, startRow + pasted.length);
     const requiredColumns = Math.max(columnCount, startColumn + Math.max(1, ...pasted.map((row) => row.length)));
     const next = Array.from({ length: requiredRows }, (_, rowIndex) => Array.from({ length: requiredColumns }, (_, columnIndex) => normalized[rowIndex]?.[columnIndex] ?? ""));
     pasted.forEach((row, rowOffset) => row.forEach((cell, columnOffset) => { next[startRow + rowOffset][startColumn + columnOffset] = cell; }));
-    onChange(next);
+    commitTableChange(next);
   };
-  const addRow = () => onChange([...normalized, Array.from({ length: columnCount }, () => "")]);
-  const addColumn = () => onChange(normalized.map((row) => [...row, ""]));
-  const removeRow = () => onChange(normalized.length > 1 ? normalized.slice(0, -1) : normalized);
-  const removeColumn = () => onChange(columnCount > 1 ? normalized.map((row) => row.slice(0, -1)) : normalized);
+  const addRow = () => commitTableChange([...normalized, Array.from({ length: columnCount }, () => "")]);
+  const addColumn = () => commitTableChange(normalized.map((row) => [...row, ""]));
+  const removeRow = () => normalized.length > 1 && commitTableChange(normalized.slice(0, -1));
+  const removeColumn = () => columnCount > 1 && commitTableChange(normalized.map((row) => row.slice(0, -1)));
 
   return <figure className="mt-0.5 overflow-hidden rounded-[7px] border border-hairline bg-surface">
     <div className="flex flex-wrap items-center gap-[var(--ln-inline-table-toolbar-gap)] border-b border-hairline bg-stone/35 px-[var(--ln-inline-table-toolbar-padding-x)] py-[var(--ln-inline-table-toolbar-padding-y)]" data-print-hidden>
@@ -108,6 +135,7 @@ export function InlineTableEditor({
                   columnIndex={columnIndex}
                   onChange={(value) => updateCell(rowIndex, columnIndex, value)}
                   onPaste={(event) => pasteCells(event, rowIndex, columnIndex)}
+                  onUndoTableChange={undoTableChange}
                 />
                 {rowIndex === 0 ? <span data-column-resize-handle={columnIndex} data-min-width="var(--ln-inline-table-cell-min-width)" aria-hidden /> : null}
               </Cell>;

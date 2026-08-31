@@ -2,6 +2,7 @@ import { ArrowLeft, Camera, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { formInputClass, formLabelClass } from "@/components/forms";
@@ -99,7 +100,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           <section className="rounded-[12px] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Photos and files</h2></div>
             <AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" />
-            {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
+            {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
           <section className="rounded-[12px] border border-hairline bg-surface p-4">

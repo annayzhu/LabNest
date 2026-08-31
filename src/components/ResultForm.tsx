@@ -1,17 +1,16 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
-import { ProtocolRichTextContent } from "@/components/ProtocolDocumentView";
 import { ResultDatasetTableEditor } from "@/components/ResultDatasetTable";
 import { ResultTypePicker } from "@/components/ResultTypePicker";
 import type { ResultTypeDefinitionItem } from "@/app/results/result-type-actions";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnterSubmit } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
-import { richTextPlainText } from "@/lib/protocol-document";
+import { buildExperimentResultReportTemplate, type ExperimentResultModule } from "@/lib/experiment-results";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
   fieldDataType,
@@ -19,21 +18,24 @@ import {
   normalizeResultTemplate,
   normalizeResultValues,
   resultDatasetValuesFromResultValues,
-  resultTemplateCardinalityLabel,
   stableResultKey,
+  validateResultRecord,
   withResultDatasetValues,
 } from "@/lib/result-templates";
 import { recordStatusOptions, resultQualityStatusOptions } from "@/lib/status-options";
 import type { ResultTemplate, ResultTemplateField } from "@/lib/types";
 
 type ExperimentOption = { id: string; runCode: string | null; title: string; researchPlan: { code: string | null; title: string } | null; project: { name: string } | null };
+type QuickEntryOption = { id: string; title: string; occurredAt: string; projectName?: string | null };
 type ResultValidationSnapshot = { errors?: string[]; warnings?: string[] };
 const initialState: FormActionState = {};
 
-export function ResultForm({ action, experiments, resultTypes, initial, lockedExperiment = false }: {
+export function ResultForm({ action, experiments, resultTypes, quickEntries = [], availableModules = [], initial, lockedExperiment = false }: {
   action: FormAction;
   experiments: ExperimentOption[];
   resultTypes: ResultTypeDefinitionItem[];
+  quickEntries?: QuickEntryOption[];
+  availableModules?: ExperimentResultModule[];
   lockedExperiment?: boolean;
   initial: {
     id?: string;
@@ -53,6 +55,7 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
     templateProtocolVersionId?: string | null;
     templateInstanceKey?: string | null;
     templateInstanceLabel?: string | null;
+    sourceEntryId?: string | null;
     templateSnapshotJson?: unknown;
     valuesJson?: unknown;
     validationJson?: unknown;
@@ -60,6 +63,8 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
   };
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [experimentId, setExperimentId] = useState(initial.experimentId ?? "");
   const [title, setTitle] = useState(initial.title ?? "");
   const [resultType, setResultType] = useState(initial.resultType ?? resultTypes[0]?.label ?? "");
@@ -67,22 +72,31 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
   const [recordStatus, setRecordStatus] = useState(initial.recordStatus ?? "draft");
   const [qualityStatus, setQualityStatus] = useState(initial.qualityStatus ?? "not_assessed");
   const experiment = experiments.find((item) => item.id === experimentId);
-  const hasTemplate = Boolean(initial.templateKey && initial.templateSnapshotJson && typeof initial.templateSnapshotJson === "object" && Object.keys(initial.templateSnapshotJson as object).length);
-  const template = useMemo(() => hasTemplate ? normalizeResultTemplate(initial.templateSnapshotJson) : undefined, [hasTemplate, initial.templateSnapshotJson]);
+  const [selectedModuleIds, setSelectedModuleIds] = useState(() => availableModules.map((module) => module.id));
+  const initialTemplate = useMemo(() => initial.templateKey && initial.templateSnapshotJson && typeof initial.templateSnapshotJson === "object" && Object.keys(initial.templateSnapshotJson as object).length ? normalizeResultTemplate(initial.templateSnapshotJson) : undefined, [initial.templateKey, initial.templateSnapshotJson]);
+  const template = useMemo(() => availableModules.length ? buildExperimentResultReportTemplate(availableModules, selectedModuleIds) : initialTemplate, [availableModules, initialTemplate, selectedModuleIds]);
+  const hasTemplate = Boolean(template);
   const [templateValues, setTemplateValues] = useState<Record<string, unknown>>(() => normalizeResultValues(initial.valuesJson));
   const [datasetValues, setDatasetValues] = useState(() => resultDatasetValuesFromResultValues(initial.valuesJson));
   const serializedValues = useMemo(() => JSON.stringify(withResultDatasetValues(templateValues, datasetValues)), [datasetValues, templateValues]);
-  const validation = initial.validationJson && typeof initial.validationJson === "object" ? initial.validationJson as ResultValidationSnapshot : {};
+  const validation = useMemo<ResultValidationSnapshot>(() => initial.validationJson && typeof initial.validationJson === "object" ? initial.validationJson as ResultValidationSnapshot : {}, [initial.validationJson]);
+  const liveValidation = useMemo(() => template ? validateResultRecord({ template, values: withResultDatasetValues(templateValues, datasetValues) }) : validation, [datasetValues, template, templateValues, validation]);
+  const visibleValidation = template && (!initial.id || availableModules.length) ? liveValidation : validation;
   const hiddenSectionKeys = initial.document.sections.filter((section) => ["summary", "data_media"].includes(section.key) && !section.blocks.length).map((section) => section.key);
 
-  return <form action={formAction} className="space-y-5">
+  const missingModuleSelection = availableModules.length > 0 && selectedModuleIds.length === 0;
+
+  return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {lockedExperiment ? <input type="hidden" name="experimentId" value={initial.experimentId ?? ""} /> : null}
     <input type="hidden" name="templateValuesJson" value={serializedValues} />
+    {availableModules.length ? <input type="hidden" name="resultModuleIdsJson" value={JSON.stringify(selectedModuleIds)} /> : null}
     {template ? <input type="hidden" name="templateKey" value={template.templateKey ?? ""} /> : null}
     {template && initial.templateProtocolVersionId ? <input type="hidden" name="templateProtocolVersionId" value={initial.templateProtocolVersionId} /> : null}
     <div className="document-editor-layout">
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Result" title={title} titlePlaceholder="Untitled Result" headerFacts={[
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Result" title={title} titlePlaceholder="Untitled Result" headerFacts={availableModules.length ? [
+        { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
+      ] : [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
         { label: "Result type", value: resultType },
         { label: "Source", value: sourceType.replaceAll("_", " ") },
@@ -94,7 +108,7 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
         onTemplateValuesChange={setTemplateValues}
         datasetValues={datasetValues}
         onDatasetValuesChange={setDatasetValues}
-        validation={validation}
+        validation={visibleValidation}
         validationStatus={initial.validationStatus}
         resultId={initial.id}
         templateInstanceKey={initial.templateInstanceKey}
@@ -103,9 +117,13 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
         numericValue={initial.numericValue}
         unit={initial.unit}
         notes={initial.notes}
+        availableModules={availableModules}
+        selectedModuleIds={selectedModuleIds}
+        onSelectedModuleIdsChange={setSelectedModuleIds}
       />} /></div>
       <aside className="document-editor-sidebar" aria-label="Result properties">
-        <Card><CardHeader title="结果信息" eyebrow="Result properties" /><CardBody className="grid min-w-0 gap-4">
+        <details className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface" open={!hasTemplate ? true : undefined}><summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-ink">报告设置 <span className="ml-1 text-xs font-normal text-muted">状态与来源</span></summary><div className="grid min-w-0 gap-3 border-t border-hairline p-3">
+          {quickEntries.length ? <label className="min-w-0"><span className={formLabelClass}>从快速实验记录导入 · 可选</span><select name="sourceEntryId" value={initial.sourceEntryId ?? ""} onChange={(event) => { const params = new URLSearchParams(searchParams.toString()); params.set("manual", "1"); if (event.target.value) params.set("entry", event.target.value); else params.delete("entry"); if (experimentId) params.set("experiment", experimentId); router.replace(`/results/new?${params.toString()}`); }} className={formInputClass}><option value="">不导入快速记录</option>{quickEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.title} · {entry.occurredAt.slice(0, 10)}{entry.projectName ? ` · ${entry.projectName}` : ""}</option>)}</select><span className="mt-1 block text-xs leading-5 text-muted">导入正文、来源链接和附件引用；分析与解释仍由你确认填写。</span></label> : null}
           <label className="min-w-0"><span className={formLabelClass}>实验</span>{lockedExperiment ? <div className={`${formInputClass} flex h-auto min-h-10 items-center break-words bg-stone/50 py-2`}>{experiment?.project?.name} · {experiment?.researchPlan?.code ?? experiment?.researchPlan?.title} · {experiment?.runCode ?? experiment?.title}</div> : <select required name="experimentId" value={experimentId} onChange={(event) => setExperimentId(event.target.value)} className={formInputClass}><option value="" disabled>Select Experiment</option>{experiments.map((item) => <option key={item.id} value={item.id}>{item.project?.name} · {item.researchPlan?.code ?? item.researchPlan?.title ?? "No plan"} · {item.runCode ?? item.title}</option>)}</select>}</label>
           <label className="min-w-0"><span className={formLabelClass}>标题</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
           {hasTemplate ? <label className="min-w-0"><span className={formLabelClass}>结果类型 · 由模板锁定</span><input readOnly name="resultType" value={resultType || template?.result_type || "measurement"} className={`${formInputClass} bg-stone/50`} /></label> : <ResultTypePicker initialTypes={resultTypes} value={resultType} onChange={setResultType} />}
@@ -113,12 +131,13 @@ export function ResultForm({ action, experiments, resultTypes, initial, lockedEx
           <StatusRadioGroup label="记录状态" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required optionsClassName="grid grid-cols-2 gap-2 [&>label]:min-w-0 [&>label]:px-2 [&>label>span]:min-w-0 [&>label>span]:break-words" />
           <StatusRadioGroup label="质控状态" name="qualityStatus" options={resultQualityStatusOptions} value={qualityStatus} onValueChange={setQualityStatus} required optionsClassName="grid grid-cols-2 gap-2 [&>label]:min-w-0 [&>label]:px-2 [&>label>span]:min-w-0 [&>label>span]:break-words" />
           <label className="min-w-0"><span className={formLabelClass}>分析方法 / 软件</span><input name="analysisMethod" defaultValue={initial.analysisMethod ?? ""} placeholder="方法、版本、参数或工具" className={formInputClass} /></label>
-        </CardBody></Card>
+        </div></details>
       </aside>
     </div>
-    <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
-      {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : "Save Result"}</Button>
+    <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
+      {state.error ? <FormErrorSummary message={state.error} /> : null}
+      {missingModuleSelection ? <p role="alert" className="text-xs font-medium text-warning">请至少选择一个报告模块。</p> : null}
+      <Button type="submit" variant="primary" size="lg" disabled={pending || missingModuleSelection} className="shadow-soft">{pending ? "Saving…" : "Save Result"}</Button>
     </div>
   </form>;
 }
@@ -138,6 +157,9 @@ function ResultCaptureEditor({
   numericValue,
   unit,
   notes,
+  availableModules,
+  selectedModuleIds,
+  onSelectedModuleIdsChange,
 }: {
   template?: ResultTemplate;
   templateValues: Record<string, unknown>;
@@ -153,21 +175,22 @@ function ResultCaptureEditor({
   numericValue?: number | null;
   unit?: string | null;
   notes?: string | null;
+  availableModules: ExperimentResultModule[];
+  selectedModuleIds: string[];
+  onSelectedModuleIdsChange: (ids: string[]) => void;
 }) {
   const cleanNotes = notes === "Template registered; no measurement has been entered." ? "" : notes ?? "";
   const hasSupplement = numericValue !== null && numericValue !== undefined || Boolean(unit || textValue || cleanNotes);
   return <section className="document-section" data-testid="result-capture-editor">
-    <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div><h2 className="document-section-title font-serif font-medium text-ink">实验结果 / Result record</h2>{template ? <p className="mt-1 text-xs text-muted">按照实验规程中已锁定的 {template.title ?? template.result_type} 模板填写</p> : <p className="mt-1 text-xs text-muted">先记录直接结果；分析与解释在下方填写。</p>}</div>
+    <header className="mb-3 flex flex-wrap items-start justify-between gap-3">
+      <h2 className="document-section-title font-serif font-medium text-ink">实验结果 / Result record</h2>
       {template ? <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${validationStatus === "valid" ? "bg-success-surface text-success" : validationStatus === "warning" ? "bg-warning-surface text-warning" : "bg-stone text-muted"}`}>{validationStatus?.replaceAll("_", " ") ?? "incomplete"}</span> : null}
     </header>
 
-    {template ? <div className="space-y-5">
-      <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-[9px] border border-hairline bg-warm/70 px-3 py-2.5 text-xs text-muted"><span><strong className="font-medium text-ink">记录方式：</strong>{resultTemplateCardinalityLabel(template.cardinality)}</span><span><strong className="font-medium text-ink">模板内容：</strong>{template.fields.length} 个字段 · {template.datasets?.length ?? 0} 个结果表 · {template.artifacts?.length ?? 0} 个文件槽</span></div>
-      {template.description ? <p className="text-sm leading-6 text-graphite">{template.description}</p> : null}
-      {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="rounded-[9px] border border-sage/35 bg-sage-surface/45 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-moss">填写说明 / Instructions</p><ProtocolRichTextContent nodes={template.instructions} /></div> : null}
+    {template ? <div className="space-y-4">
+      {availableModules.length ? <details open className="rounded-[8px] border border-hairline bg-warm/45"><summary className="cursor-pointer px-3 py-2 text-xs font-medium text-graphite">报告内容 <span className="ml-1 text-muted">{selectedModuleIds.length}/{availableModules.length}</span></summary><div className="grid gap-1 border-t border-hairline px-3 py-2 sm:grid-cols-2">{availableModules.map((module) => <label key={module.id} className="flex min-w-0 cursor-pointer items-start gap-2 rounded-[6px] px-1.5 py-1.5 hover:bg-surface"><input type="checkbox" checked={selectedModuleIds.includes(module.id)} onChange={(event) => onSelectedModuleIdsChange(event.target.checked ? [...selectedModuleIds, module.id] : selectedModuleIds.filter((id) => id !== module.id))} className="mt-0.5 h-3.5 w-3.5 accent-moss" /><span className="min-w-0"><span className="block truncate text-xs font-medium text-ink">{module.template.title}</span><span className="block truncate text-[11px] text-muted">{module.protocolLabel}</span></span></label>)}</div></details> : null}
       {["per_sample", "per_timepoint", "repeatable"].includes(template.cardinality ?? "per_run") ? <div className="grid gap-4 rounded-[9px] border border-hairline bg-warm/70 p-3 md:grid-cols-2"><label><span className={formLabelClass}>{template.cardinality === "per_sample" ? "样本" : template.cardinality === "per_timepoint" ? "时间点" : "重复"}标识 · 必填</span><input required name="templateInstanceKey" defaultValue={templateInstanceKey ?? ""} className={formInputClass} placeholder={template.cardinality === "per_sample" ? "SAMPLE-001" : template.cardinality === "per_timepoint" ? "24h" : "replicate-1"} /></label><label><span className={formLabelClass}>显示名称</span><input name="templateInstanceLabel" defaultValue={templateInstanceLabel ?? ""} className={formInputClass} placeholder="便于阅读的名称" /></label></div> : <><input type="hidden" name="templateInstanceKey" value={templateInstanceKey ?? ""} /><input type="hidden" name="templateInstanceLabel" value={templateInstanceLabel ?? ""} /></>}
-      {validation.errors?.length || validation.warnings?.length ? <div className="rounded-[9px] border border-warning/40 bg-warning-surface p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-warning">当前完整性检查</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-graphite">{[...(validation.errors ?? []), ...(validation.warnings ?? [])].map((message) => <li key={message}>{message}</li>)}</ul></div> : null}
+      {validation.errors?.length || validation.warnings?.length ? <CompactValidationSummary errors={validation.errors} warnings={validation.warnings} /> : null}
       {template.fields.length ? <div><h3 className="mb-3 text-sm font-semibold text-ink">直接结果字段</h3><div className="grid gap-4 md:grid-cols-2">{template.fields.map((field, index) => <TemplateFieldInput key={field.key ?? index} field={field} value={templateValues[field.key ?? stableResultKey(field.name ?? field.label ?? `field_${index + 1}`)]} onChange={(value) => { const key = field.key ?? stableResultKey(field.name ?? field.label ?? `field_${index + 1}`); onTemplateValuesChange({ ...templateValues, [key]: value }); }} />)}</div></div> : null}
       {template.datasets?.length ? <div><h3 className="mb-3 text-sm font-semibold text-ink">结果数据表</h3><ResultDatasetTableEditor datasets={template.datasets} values={datasetValues} onChange={onDatasetValuesChange} /></div> : null}
       {template.artifacts?.length ? <div className="rounded-[9px] border border-hairline p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">数据与媒体文件槽</p><ul className="mt-2 grid gap-2 sm:grid-cols-2">{template.artifacts.map((artifact) => <li key={artifact.key} className="rounded-[7px] bg-warm/70 px-3 py-2 text-sm text-graphite"><span className="font-medium text-ink">{artifact.label}</span><span className="ml-2 text-xs text-muted">{artifact.kind}{artifact.required ? " · 必填" : " · 可选"}</span></li>)}</ul><p className="mt-3 text-xs leading-5 text-muted">文件使用固定槽位管理，不再作为自由文本块添加。{resultId ? <a href={`/results/${resultId}#result-files`} className="ml-1 font-medium text-moss hover:underline">保存后前往结果页上传</a> : "首次保存后即可上传。"}</p></div> : null}
@@ -175,6 +198,27 @@ function ResultCaptureEditor({
 
     {template ? <details className="mt-5 rounded-[9px] border border-hairline bg-warm/35" open={hasSupplement || undefined}><summary className="cursor-pointer px-4 py-3 text-sm font-medium text-graphite">补充摘要与备注 · 可选</summary><div className="grid gap-4 border-t border-hairline px-4 py-4 md:grid-cols-2"><label><span className={formLabelClass}>单一代表数值</span><input name="numericValue" type="number" step="any" defaultValue={numericValue ?? ""} className={formInputClass} placeholder="仅当一个数值可概括本结果时填写" /></label><label><span className={formLabelClass}>单位</span><input name="unit" defaultValue={unit ?? ""} className={formInputClass} /></label><label className="md:col-span-2"><span className={formLabelClass}>简短摘要</span><textarea name="textValue" defaultValue={textValue ?? ""} className={formTextareaClass} /></label><label className="md:col-span-2"><span className={formLabelClass}>补充备注</span><textarea name="notes" defaultValue={cleanNotes} className={formTextareaClass} /></label></div></details> : null}
   </section>;
+}
+
+function compactMessages(messages: string[] = []) {
+  const grouped = new Map<string, number>();
+  messages.forEach((message) => {
+    const compact = message.replace(/Row \d+:/g, "Rows:").replace(/ · /g, ": ");
+    grouped.set(compact, (grouped.get(compact) ?? 0) + 1);
+  });
+  return [...grouped].map(([message, count]) => count > 1 ? `${message} (${count})` : message).slice(0, 6);
+}
+
+function CompactValidationSummary({ errors = [], warnings = [] }: { errors?: string[]; warnings?: string[] }) {
+  const messages = compactMessages([...errors, ...warnings]);
+  return <details className="rounded-[8px] border border-warning/35 bg-warning-surface/70" open>
+    <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-warning">还需填写 {errors.length + warnings.length} 项</summary>
+    <ul className="grid gap-1 border-t border-warning/20 px-3 py-2 text-xs leading-5 text-graphite sm:grid-cols-2">{messages.map((message) => <li key={message}>{message}</li>)}</ul>
+  </details>;
+}
+
+function FormErrorSummary({ message }: { message: string }) {
+  return <div role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-xs leading-5 text-error shadow-soft"><strong className="font-semibold">暂未保存。</strong> {message}</div>;
 }
 
 function TemplateFieldInput({ field, value, onChange }: { field: ResultTemplateField; value: unknown; onChange: (value: unknown) => void }) {

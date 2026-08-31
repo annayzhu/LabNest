@@ -3,12 +3,7 @@ import { prisma } from "@/lib/db";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { buildProtocolExperimentSteps } from "@/lib/experiment-planning";
 import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
-import {
-  createScientificDocument,
-  resultSections,
-} from "@/lib/scientific-document";
-import { normalizeResultTemplates, validateResultRecord } from "@/lib/result-templates";
-import type { ProtocolStep, ResultTemplate } from "@/lib/types";
+import type { ProtocolStep } from "@/lib/types";
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -31,7 +26,6 @@ export type ExperimentSnapshotInput = {
   methodMode: "protocol" | "custom";
   protocolVersionIds: string[];
   customSteps: ProtocolStep[];
-  createResultTemplates: boolean;
 };
 
 export async function createExperimentWithProtocolSnapshotInTransaction(
@@ -155,35 +149,6 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       });
     }
 
-    const resultTemplateRegistrations = orderedVersions.flatMap((version) => normalizeResultTemplates(asArray<ResultTemplate>(version.resultTemplatesJson)).map((template) => ({ version, template })));
-    if (input.createResultTemplates && resultTemplateRegistrations.length) {
-      await tx.result.createMany({
-        data: resultTemplateRegistrations.map(({ version, template }) => {
-          const content = createScientificDocument(resultSections);
-          const validation = validateResultRecord({ template, values: {} });
-          return {
-            experimentId: experiment.id,
-            projectId: plan.projectId,
-            researchPlanId: plan.id,
-            resultType: template.result_type,
-            title: `${input.title} · ${template.result_type}`,
-            recordStatus: "draft" as const,
-            sourceType: "protocol_template" as const,
-            qualityStatus: "not_assessed" as const,
-            validationStatus: validation.status,
-            protocolVersionId: version.id,
-            templateKey: template.templateKey,
-            templateSnapshotJson: cloneJson(template),
-            valuesJson: {},
-            validationJson: cloneJson(validation),
-            viewSpecJson: cloneJson(template.view ?? {}),
-            contentJson: content,
-            metadataJson: { protocolVersionId: version.id, templateKey: template.templateKey, templateFields: template.fields, cardinality: template.cardinality, viewPreset: template.view?.preset },
-            provenanceJson: { experimentId: experiment.id, protocolVersionId: version.id },
-          };
-        }),
-      });
-    }
     await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
   return experiment;
 }

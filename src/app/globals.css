@@ -117,12 +117,12 @@
 
   /* 富文本/Protocol 内嵌普通表格编辑器：控制表格标题栏、列宽、输入框和按钮。 */
   --ln-inline-table-col-width: 6.5rem; /* 内嵌普通表格每列默认宽度。 */
-  --ln-inline-table-cell-height: 2rem; /* 内嵌普通表格单元格编辑区的最小高度；长内容会自动增高。 */
+  --ln-inline-table-cell-height: 1.75rem; /* 内嵌普通表格单元格编辑区的最小高度；长内容会自动增高。 */
   --ln-inline-table-cell-min-width: 5rem; /* 内嵌普通表格列调整时允许的最小列宽。 */
   --ln-inline-table-cell-padding-x: 0.5rem; /* 内嵌普通表格单元格左右内边距。 */
-  --ln-inline-table-cell-padding-y: 0.35rem; /* 内嵌普通表格单元格上下内边距。 */
-  --ln-inline-table-font-size: 12.5px; /* 内嵌普通表格单元格字号。 */
-  --ln-inline-table-line-height: 1.4; /* 内嵌普通表格多行内容行距。 */
+  --ln-inline-table-cell-padding-y: 0.22rem; /* 内嵌普通表格单元格上下内边距。 */
+  --ln-inline-table-font-size: 12px; /* 内嵌普通表格单元格字号。 */
+  --ln-inline-table-line-height: 1.3; /* 内嵌普通表格多行内容行距。 */
   --ln-inline-table-head-bg: color-mix(in srgb, var(--stone) 32%, var(--surface)); /* 内嵌普通表格的轻量表头背景。 */
   --ln-inline-table-toolbar-gap: 0.35rem; /* 内嵌普通表格标题栏中控件之间的间距。 */
   --ln-inline-table-toolbar-padding-x: 0.45rem; /* 内嵌普通表格标题栏左右内边距。 */
@@ -150,7 +150,8 @@
   --ln-document-rich-flow-gap: 0.45rem; /* 富文本段落、列表、引用之间距离。 */
   --ln-document-list-item-gap: 0.36rem; /* checklist 或列表项之间距离。 */
   --ln-document-heading-follow-gap: 0.58rem; /* 标题块后面第一个内容块的距离。 */
-  --ln-rich-text-default-line-height: 1.5; /* 富文本编辑器和未单独设置行距的富文本块默认行高。 */
+  --ln-rich-text-editor-font-size: 10pt; /* 富文本编辑态与 A4 文档正文同为 10pt，保持所见即所得。 */
+  --ln-rich-text-default-line-height: 1.35; /* 富文本编辑器和未单独设置行距的富文本块默认行高。 */
   --ln-document-block-drag-opacity: 0.48; /* 正在拖动的内容块透明度。 */
   --ln-document-block-drop-line-width: 2px; /* 内容块拖拽落点提示线粗细。 */
   --ln-document-block-drop-line-offset: -0.34rem; /* 内容块拖拽落点提示线与内容块的距离。 */
@@ -969,11 +970,11 @@ table :where(td) {
     position: static;
   }
 
-  .document-editor-sidebar .grid {
+  .document-editor-sidebar > section > div.grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .document-editor-sidebar [class*="col-span"] {
+  .document-editor-sidebar > section > div.grid > [class*="col-span"] {
     grid-column: auto !important;
   }
 
@@ -1089,6 +1090,73 @@ table :where(td) {
     min-height: 5rem;
   }
 
+  .ln-result-dataset-editor {
+    overflow: visible !important;
+  }
+
+  .ln-result-dataset-editor colgroup,
+  .ln-result-dataset-editor thead {
+    display: none;
+  }
+
+  .ln-result-dataset-editor table,
+  .ln-result-dataset-editor tbody {
+    display: block;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .ln-result-dataset-editor tbody {
+    background: var(--warm);
+    padding: 0.45rem;
+  }
+
+  .ln-result-dataset-editor tr {
+    background: var(--surface);
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--ln-radius-control-lg);
+    display: grid;
+    gap: 0.3rem;
+    overflow: hidden;
+    padding: 0.5rem;
+  }
+
+  .ln-result-dataset-editor tr + tr {
+    margin-top: 0.45rem;
+  }
+
+  .ln-result-dataset-editor td[data-label] {
+    align-items: center;
+    border: 0 !important;
+    display: grid;
+    gap: 0.35rem;
+    grid-template-columns: minmax(6.5rem, 0.42fr) minmax(0, 1fr);
+    padding: 0 !important;
+  }
+
+  .ln-result-dataset-editor td[data-label]::before {
+    color: var(--muted);
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .ln-result-dataset-editor td[data-row-actions] {
+    border: 0 !important;
+    border-top: 1px solid var(--hairline) !important;
+    margin-top: 0.15rem;
+    padding: 0.35rem 0 0 !important;
+    position: static;
+  }
+
+  .ln-result-dataset-editor input,
+  .ln-result-dataset-editor select {
+    min-width: 0;
+  }
+
   label .mt-2 {
     margin-top: 0.35rem !important;
   }
@@ -1104,6 +1172,29 @@ table :where(td) {
 
   .entry-editor-save-bar {
     bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  .document-editor-save-bar {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  .document-section-editor-header {
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .document-block-type-strip {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 0;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+  }
+
+  .document-block-type-strip::-webkit-scrollbar {
+    display: none;
   }
 
   .document-editor-sidebar {

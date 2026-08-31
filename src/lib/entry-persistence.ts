@@ -13,8 +13,9 @@ import type { EntryMutationInput } from "@/lib/entry-mutations";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { experimentSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
+import { createResultInTransaction } from "@/lib/result-creation";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolParameter, ProtocolStep, ResultTemplate } from "@/lib/types";
-import { normalizeResultTemplates, validateResultRecord } from "@/lib/result-templates";
+import { normalizeResultTemplates } from "@/lib/result-templates";
 
 type PersistedAttachment = {
   id: string;
@@ -236,49 +237,20 @@ async function formalizeProtocolEntry(
     });
   }
 
-  const templateResults = resultTemplates.map((template) => {
-    const validation = validateResultRecord({ template, values: {} });
-    return {
-    experimentId: experiment.id,
-    projectId,
-    researchPlanId,
-    resultType: template.result_type,
-    title: `${experimentTitle} - ${template.result_type}`,
-    textValue: null,
-    status: "active" as const,
-    recordStatus: "draft" as const,
-    sourceType: "protocol_template" as const,
-    qualityStatus: "not_assessed" as const,
-    validationStatus: validation.status,
-    protocolVersionId: version.id,
-    templateKey: template.templateKey,
-    templateSnapshotJson: template,
-    valuesJson: {},
-    validationJson: validation,
-    viewSpecJson: template.view ?? {},
-    notes: "Result registration created from Protocol template; no measurement recorded yet.",
-    provenanceJson: { experimentId: experiment.id, researchPlanId, projectId, protocolVersionId: version.id },
-    metadataJson: { source_entry_id: entryId, protocol_version_id: version.id, template_key: template.templateKey, template_fields: template.fields, cardinality: template.cardinality, view_preset: template.view?.preset },
-  };
-  });
-  const manualResults = input.resultTitle || input.resultType || input.resultTextValue || input.resultNotes
-    ? [{
-        experimentId: experiment.id,
-        projectId,
-        researchPlanId,
-        resultType: input.resultType || "manual_result",
-        title: input.resultTitle || `${experimentTitle} result`,
-        textValue: input.resultTextValue,
-        status: "active" as const,
-        recordStatus: "recorded" as const,
-        sourceType: "manual" as const,
-        qualityStatus: "not_assessed" as const,
-        notes: input.resultNotes || "Initial result field created during Entry capture.",
-        provenanceJson: { experimentId: experiment.id, researchPlanId, projectId, protocolVersionId: version.id },
-        metadataJson: { source_entry_id: entryId, protocol_version_id: version.id },
-      }]
-    : [];
-  if (templateResults.length || manualResults.length) await tx.result.createMany({ data: [...templateResults, ...manualResults] });
+  if (input.resultTitle || input.resultType || input.resultTextValue || input.resultNotes) {
+    await createResultInTransaction(tx, {
+      experimentId: experiment.id,
+      title: input.resultTitle || `${experimentTitle} result`,
+      resultType: input.resultType || "manual_result",
+      recordStatus: "recorded",
+      sourceType: "manual",
+      qualityStatus: "not_assessed",
+      origin: { kind: "entry", entryId, includeAttachments: true },
+      templateProtocolVersionId: version.id,
+      textValue: input.resultTextValue,
+      notes: input.resultNotes || "Initial result field created during Entry capture.",
+    });
+  }
 }
 
 export async function createEntryWithFiles(input: EntryMutationInput, files: File[]) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExperimentResultRecording, preferredResultRecordingHref } from "./experiment-results";
+import { buildExperimentResultRecording, buildExperimentResultReportTemplate, preferredResultRecordingHref } from "./experiment-results";
 
 const sources = [{
   protocolVersionId: "pv-1",
@@ -23,11 +23,12 @@ const result = {
 };
 
 describe("experiment result recording", () => {
-  it("matches an existing template draft to its locked ProtocolVersion slot", () => {
+  it("keeps legacy template drafts readable without using them as the experiment report", () => {
     const recording = buildExperimentResultRecording(sources, [result]);
     expect(recording.slots[0].records).toEqual([result]);
     expect(recording.additionalResults).toEqual([]);
-    expect(preferredResultRecordingHref("experiment-1", recording)).toBe("/results/result-1/edit");
+    expect(recording.legacyTemplateResults).toEqual([result]);
+    expect(preferredResultRecordingHref("experiment-1", recording)).toBe("/results/new?experiment=experiment-1&report=1");
   });
 
   it("keeps manual and unmatched evidence in the additional-results group", () => {
@@ -42,8 +43,40 @@ describe("experiment result recording", () => {
     expect(recording.additionalResults).toEqual([]);
   });
 
-  it("opens the locked template when a per-run draft has not been created yet", () => {
+  it("opens one experiment report instead of a Protocol-specific record", () => {
     const recording = buildExperimentResultRecording(sources, []);
-    expect(preferredResultRecordingHref("experiment-1", recording)).toBe("/results/new?experiment=experiment-1&template=rna_record&protocolVersionId=pv-1");
+    expect(preferredResultRecordingHref("experiment-1", recording)).toBe("/results/new?experiment=experiment-1&report=1");
+  });
+
+  it("merges semantically identical measurements from multiple Protocol modules", () => {
+    const recording = buildExperimentResultRecording([
+      { ...sources[0], resultTemplatesJson: [{ result_type: "RNA extraction", templateKey: "rna_extraction", fields: [{ key: "rna_concentration", label: "RNA concentration", dataType: "number", unit: "ng/µL", required: true }] }] },
+      { ...sources[0], protocolVersionId: "pv-2", protocolCode: "PRT-100009", protocolTitle: "NanoDrop", resultTemplatesJson: [{ result_type: "NanoDrop", templateKey: "nanodrop", fields: [{ key: "concentration", label: "Concentration", dataType: "number", unit: "ng/µL" }] }] },
+    ], []);
+    const report = buildExperimentResultReportTemplate(recording.modules);
+    expect(report.fields).toHaveLength(1);
+    expect(report.fields[0]).toMatchObject({ unit: "ng/µL", required: true });
+  });
+
+  it("merges per-sample tables and removes a duplicate direct measurement", () => {
+    const modules = buildExperimentResultRecording([
+      { ...sources[0], resultTemplatesJson: [{ result_type: "RNA extraction", templateKey: "rna_extraction", fields: [{ key: "rna_concentration", label: "RNA concentration", dataType: "number", unit: "ng/µL", required: true }], datasets: [{ key: "extraction_qc", label: "Extraction QC", columns: [{ key: "sample_id", label: "Sample ID", dataType: "text", semanticRole: "identifier", required: true }] }] }] },
+      { ...sources[0], protocolVersionId: "pv-2", protocolCode: "PRT-100009", protocolTitle: "NanoDrop", resultTemplatesJson: [{ result_type: "NanoDrop", templateKey: "nanodrop", fields: [], datasets: [{ key: "nanodrop_qc", label: "NanoDrop QC", columns: [{ key: "sample", label: "Sample ID", dataType: "text", semanticRole: "identifier", required: true }, { key: "concentration", label: "Concentration", dataType: "number", unit: "ng/µL" }] }] }] },
+    ], []).modules;
+
+    const report = buildExperimentResultReportTemplate(modules);
+    expect(report.fields).toEqual([]);
+    expect(report.datasets).toHaveLength(1);
+    expect(report.datasets?.[0].columns).toHaveLength(2);
+    expect(report.datasets?.[0].columns.find((column) => column.key === "concentration")).toMatchObject({ required: true, unit: "ng/µL" });
+  });
+
+  it("does not merge distinct analytes that happen to share a unit", () => {
+    const modules = buildExperimentResultRecording([
+      { ...sources[0], resultTemplatesJson: [{ result_type: "RNA", templateKey: "rna", fields: [{ key: "rna_concentration", label: "RNA concentration", dataType: "number", unit: "ng/µL" }] }] },
+      { ...sources[0], protocolVersionId: "pv-2", resultTemplatesJson: [{ result_type: "DNA", templateKey: "dna", fields: [{ key: "dna_concentration", label: "DNA concentration", dataType: "number", unit: "ng/µL" }] }] },
+    ], []).modules;
+
+    expect(buildExperimentResultReportTemplate(modules).fields).toHaveLength(2);
   });
 });

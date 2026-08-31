@@ -91,7 +91,7 @@ export async function structuredExportRecords(
     return rows.map((row) => {
       const document = normalizeScientificDocument(row.contentJson, experimentSections);
       const narrative = experimentNarrativeFromDocument(document);
-      return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags, createResultTemplates: false };
+      return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags };
     });
   }
   if (module === "results") {

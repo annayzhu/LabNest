@@ -213,6 +213,7 @@ export type ResearchPlan = {
 
 export type EntryAttachment = {
   id: string;
+  linkId?: string;
   originalFilename: string;
   mimeType: string;
   size: number;

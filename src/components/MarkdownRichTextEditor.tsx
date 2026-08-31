@@ -277,9 +277,12 @@ export function MarkdownRichTextEditor({
       onBlur={sync}
       onSelect={rememberSelection}
       onKeyUp={rememberSelection}
+      onKeyDown={(event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") event.stopPropagation();
+      }}
       onMouseUp={rememberSelection}
       onPaste={normalizePaste}
-      className={cn("protocol-rich-editor wysiwyg-placeholder px-2 py-2 text-[15px] leading-[var(--ln-rich-text-default-line-height)] text-graphite outline-none", minHeightClass)}
+      className={cn("protocol-rich-editor wysiwyg-placeholder px-2 py-1.5 text-[length:var(--ln-rich-text-editor-font-size)] leading-[var(--ln-rich-text-default-line-height)] text-graphite outline-none", minHeightClass)}
     />
   </div>;
 }

@@ -6,7 +6,7 @@ import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
-import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
+import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnterSubmit } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
@@ -58,7 +58,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       : "Select ProtocolVersion(s)";
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
-  return <form action={formAction} className="space-y-5">
+  return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
@@ -78,7 +78,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       </fieldset>
         {methodMode === "protocol" ? <>
         <ExperimentProtocolPicker versions={protocolVersions} initialSelectedIds={initialSelectedIds} onSelectionChange={(ids) => setSelectedProtocolCount(ids.length)} />
-        <div className="rounded-[8px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">Result Templates are registered automatically</strong><span className="mt-1 block text-xs leading-5 text-muted">Each selected ProtocolVersion creates its empty Result template record. You will fill that draft after execution; no measurement is fabricated.</span></div>
+        <div className="rounded-[8px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result report per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional report modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
       </> : <>
         <label className="flex items-start gap-3 rounded-[9px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
           <input
@@ -114,7 +114,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </Card> : null}
       </aside>
     </div>
-    <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
+    <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
       <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>

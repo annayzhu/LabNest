@@ -11,6 +11,7 @@ import {
 } from "@/lib/protocol-document";
 import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
 import { collectReportSources } from "@/lib/reports";
+import { createResultInTransaction } from "@/lib/result-creation";
 import { checkResultTemplate, normalizeResultTemplate, normalizeResultValues, validateResultRecord } from "@/lib/result-templates";
 import {
   documentPlainText,
@@ -196,13 +197,6 @@ function enumValue<const T extends readonly string[]>(value: unknown, allowed: T
     return fallback;
   }
   return normalized as T[number];
-}
-
-function booleanValue(value: unknown, fallback = false) {
-  if (typeof value === "boolean") return value;
-  const text = optionalText(value)?.toLowerCase();
-  if (!text) return fallback;
-  return ["true", "yes", "1", "是", "y"].includes(text);
 }
 
 function lower(value: string | null | undefined) {
@@ -401,7 +395,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       if (declaredStatus !== "planned" || declaredRecordStatus !== "draft") warnings.push(`Declared state ${declaredStatus} / ${declaredRecordStatus} is retained in the source file; imported Experiments start as Planned / Draft.`);
       if (planMatch.value && date) {
         const protocolVersionIds = primaryVersion ? [primaryVersion.id, ...supportingVersions.map((version) => version.id)] : [];
-        data = { kind: "experiments", input: { researchPlanId: planMatch.value.id, runCode, title, date, status: "planned", recordStatus: "draft", purpose: optionalText(record.purpose), tags: parseTags(record.tags), contentJson: document as Prisma.InputJsonValue, methodMode: protocolVersionIds.length ? "protocol" : "custom", protocolVersionIds, customSteps: protocolVersionIds.length ? [] : parseCustomExperimentSteps(optionalText(record.steps) ?? ""), createResultTemplates: protocolVersionIds.length ? booleanValue(record.createResultTemplates, true) : false } };
+        data = { kind: "experiments", input: { researchPlanId: planMatch.value.id, runCode, title, date, status: "planned", recordStatus: "draft", purpose: optionalText(record.purpose), tags: parseTags(record.tags), contentJson: document as Prisma.InputJsonValue, methodMode: protocolVersionIds.length ? "protocol" : "custom", protocolVersionIds, customSteps: protocolVersionIds.length ? [] : parseCustomExperimentSteps(optionalText(record.steps) ?? "") } };
       }
     }
 
@@ -531,10 +525,28 @@ export async function commitStructuredImport(
         createdTargets.push({ targetType: "experiment", targetId: record.id, href: `/experiments/${record.id}` });
       }
       if (data.kind === "results") {
-        const record = await tx.result.create({ data: { experimentId: data.experimentId, projectId: data.projectId, researchPlanId: data.researchPlanId, protocolVersionId: data.protocolVersionId, title: data.title, resultType: data.resultType, templateKey: data.templateKey, templateInstanceKey: data.templateInstanceKey, templateInstanceLabel: data.templateInstanceLabel, templateSnapshotJson: data.templateSnapshotJson, valuesJson: data.valuesJson, validationStatus: data.validationStatus, validationJson: data.validationJson, viewSpecJson: data.viewSpecJson, recordStatus: data.recordStatus, sourceType: data.sourceType, qualityStatus: data.qualityStatus, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, contentJson: data.contentJson, provenanceJson: { ...(data.provenanceJson as object), ...sourceMetadata } } });
-        await tx.itemLink.create({ data: { sourceType: "result", sourceId: record.id, targetType: "experiment", targetId: data.experimentId, linkType: "produced_by", createdBy: "user" } });
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "result", targetId: record.id, metadataJson: sourceMetadata } });
-        createdTargets.push({ targetType: "result", targetId: record.id, href: `/results/${record.id}` });
+        const record = await createResultInTransaction(tx, {
+          experimentId: data.experimentId,
+          title: data.title,
+          resultType: data.resultType,
+          recordStatus: data.recordStatus,
+          sourceType: data.sourceType,
+          qualityStatus: data.qualityStatus,
+          origin: { kind: "structured_import", sourceMetadata },
+          templateKey: data.templateKey,
+          templateProtocolVersionId: data.protocolVersionId,
+          templateInstanceKey: data.templateInstanceKey,
+          templateInstanceLabel: data.templateInstanceLabel,
+          valuesJson: data.valuesJson,
+          contentJson: data.contentJson,
+          textValue: data.textValue,
+          numericValue: data.numericValue,
+          unit: data.unit,
+          analysisMethod: data.analysisMethod,
+          notes: data.notes,
+          provenanceJson: data.provenanceJson as Record<string, unknown>,
+        });
+        createdTargets.push({ targetType: "result", targetId: record.resultId, href: `/results/${record.resultId}` });
       }
       if (data.kind === "inventory") {
         const record = await tx.inventoryItem.create({ data: { name: data.name, englishName: data.englishName, category: data.category, brand: data.brand, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });

@@ -1,6 +1,5 @@
-import { AlertTriangle, BarChart3, CheckCircle2, Database, FileCheck2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { ProtocolRichTextContent } from "@/components/ProtocolDocumentView";
 import { ResultDatasetTableView } from "@/components/ResultDatasetTable";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import {
@@ -9,12 +8,9 @@ import {
   normalizeResultTemplate,
   normalizeResultValues,
   resultDatasetValuesFromResultValues,
-  resultTemplateCardinalityLabel,
   stableResultKey,
-  validateResultDatasetRows,
 } from "@/lib/result-templates";
 import type { ResultChartSpec, ResultTemplate } from "@/lib/types";
-import { richTextPlainText } from "@/lib/protocol-document";
 
 type DatasetView = {
   id: string;
@@ -25,16 +21,14 @@ type DatasetView = {
   previewJson: unknown;
 };
 
-type AttachmentView = { linkType: string; attachment: { id: string; originalFilename: string; mimeType: string } };
 type ValidationView = { errors?: string[]; warnings?: string[]; checkedAt?: string };
 
-export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets, attachments }: {
+export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets }: {
   template: unknown;
   values: unknown;
   validationStatus: string;
   validation: unknown;
   datasets: DatasetView[];
-  attachments: AttachmentView[];
 }) {
   if (!rawTemplate || typeof rawTemplate !== "object" || Array.isArray(rawTemplate) || !Object.keys(rawTemplate as object).length) return null;
   const template = normalizeResultTemplate(rawTemplate);
@@ -43,16 +37,10 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
   const validation = rawValidation && typeof rawValidation === "object" ? rawValidation as ValidationView : {};
   const metrics = template.fields.filter((field) => fieldSemanticRole(field) === "measurement" || fieldSemanticRole(field) === "qc").filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
   const remainingFields = template.fields.filter((field) => !metrics.includes(field)).filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
-  const artifactLinks = new Map(attachments.flatMap((link) => link.linkType.startsWith("template_artifact:") ? [[link.linkType.slice("template_artifact:".length), link]] as const : []));
   const charts = resolveCharts(template, datasets);
 
   return <div className="space-y-5">
-    <Card><CardHeader title="实验结果 / Result record" eyebrow={template.title ?? template.result_type} action={<ValidationBadge status={validationStatus} />} /><CardBody className="space-y-4">
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted"><span className="font-medium text-ink">{template.title ?? template.result_type}</span><span>{resultTemplateCardinalityLabel(template.cardinality)}</span></div>
-      {template.description ? <p className="text-sm leading-6 text-graphite">{template.description}</p> : null}
-      {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="rounded-[9px] border border-sage/35 bg-sage-surface/45 p-3"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-moss">填写说明 / Instructions</p><ProtocolRichTextContent nodes={template.instructions} /></div> : null}
-      {validation.errors?.length || validation.warnings?.length ? <div className="rounded-[9px] border border-warning/40 bg-warning-surface p-3"><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-warning"><AlertTriangle className="h-4 w-4" />Validation findings</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-graphite">{[...(validation.errors ?? []), ...(validation.warnings ?? [])].map((message) => <li key={message}>{message}</li>)}</ul></div> : null}
-    </CardBody></Card>
+    {validation.errors?.length || validation.warnings?.length ? <ValidationSummary errors={validation.errors} warnings={validation.warnings} status={validationStatus} /> : null}
 
     {metrics.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((field) => { const key = field.key ?? ""; return <Card key={key}><CardHeader title={field.label ?? field.name ?? key} eyebrow={fieldSemanticRole(field)} /><CardBody><p className="font-serif text-3xl text-ink">{formatValue(values[key], fieldDataType(field))} {field.unit ? <span className="text-base text-muted">{field.unit}</span> : null}</p>{field.description ? <p className="mt-2 text-xs leading-5 text-muted">{field.description}</p> : null}</CardBody></Card>; })}</div> : null}
 
@@ -62,11 +50,28 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
 
     {charts.length ? <div className="grid gap-4 xl:grid-cols-2">{charts.map(({ chart, dataset }) => <Card key={`${dataset.id}-${chart.key}`}><CardHeader title={chart.label} eyebrow={`${chart.type} · ${dataset.name}`} /><CardBody><DatasetPreviewChart chart={chart} dataset={dataset} /></CardBody></Card>)}</div> : null}
 
-    {(template.datasets?.length || template.artifacts?.length) ? <div className="grid gap-4 xl:grid-cols-2">
-      <Card><CardHeader title="Dataset requirements" eyebrow="Structured table or original data file" /><CardBody className="space-y-3">{(template.datasets ?? []).map((expected) => { const matches = datasets.filter((dataset) => dataset.templateDatasetKey === expected.key); const inline = validateResultDatasetRows(expected, inlineDatasets[expected.key]); const status = inline.status === "invalid" || matches.some((item) => item.validationStatus === "invalid") ? "invalid" : inline.rowCount || matches.some((item) => item.validationStatus === "valid") ? "complete" : matches.some((item) => item.validationStatus === "warning") ? "warning" : "missing"; const detail = inline.rowCount ? `${inline.rowCount} manually recorded rows` : matches.length ? `${matches.length} registered data file${matches.length === 1 ? "" : "s"}` : `${expected.columns.length} expected columns${expected.required ? " · required" : ""}`; return <Requirement key={expected.key} icon={<Database className="h-4 w-4" />} label={expected.label} detail={detail} status={status} />; })}{!template.datasets?.length ? <p className="text-sm text-muted">No Dataset requirements.</p> : null}</CardBody></Card>
-      <Card><CardHeader title="Artifact requirements" eyebrow="Raw and visual evidence" /><CardBody className="space-y-3">{(template.artifacts ?? []).map((expected) => { const link = artifactLinks.get(expected.key); return <Requirement key={expected.key} icon={<FileCheck2 className="h-4 w-4" />} label={expected.label} detail={link?.attachment.originalFilename ?? `${expected.kind}${expected.required ? " · required" : ""}`} status={link ? "complete" : "missing"} />; })}{!template.artifacts?.length ? <p className="text-sm text-muted">No artifact requirements.</p> : null}</CardBody></Card>
-    </div> : null}
   </div>;
+}
+
+function groupedValidationMessages(messages: string[]) {
+  const grouped = new Map<string, number[]>();
+  messages.forEach((message) => {
+    const rowMatch = message.match(/^(.*?)(?: · )?Row (\d+):\s*(.+)$/);
+    const key = rowMatch ? `${rowMatch[1]}${rowMatch[1] ? ": " : ""}${rowMatch[3]}` : message;
+    const rows = grouped.get(key) ?? [];
+    if (rowMatch) rows.push(Number(rowMatch[2]));
+    grouped.set(key, rows);
+  });
+  return [...grouped].map(([message, rows]) => rows.length ? `${message} · rows ${rows.join(", ")}` : message);
+}
+
+function ValidationSummary({ errors = [], warnings = [], status }: { errors?: string[]; warnings?: string[]; status: string }) {
+  const messages = groupedValidationMessages([...errors, ...warnings]);
+  const shown = messages.slice(0, 8);
+  return <details open className="rounded-[8px] border border-warning/35 bg-warning-surface/75">
+    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-warning marker:hidden"><span>还需填写 {errors.length + warnings.length} 项</span><span className="ml-auto"><ValidationBadge status={status} /></span></summary>
+    <ul className="grid max-h-48 gap-1 overflow-y-auto border-t border-warning/20 px-3 py-2 text-xs leading-5 text-graphite sm:grid-cols-2">{shown.map((message) => <li key={message}>{message}</li>)}{messages.length > shown.length ? <li className="text-muted">另有 {messages.length - shown.length} 组问题</li> : null}</ul>
+  </details>;
 }
 
 function resolveCharts(template: ResultTemplate, datasets: DatasetView[]) {
@@ -115,4 +120,3 @@ function ValidationBadge({ status }: { status: string }) {
 }
 
 function formatValue(value: unknown, type: string) { if (Array.isArray(value)) return value.join(", "); if (type === "boolean") return value === true ? "Yes" : "No"; return String(value ?? "—"); }
-function Requirement({ icon, label, detail, status }: { icon: React.ReactNode; label: string; detail: string; status: "complete" | "warning" | "invalid" | "missing" }) { return <div className="flex items-start gap-3 rounded-[8px] border border-hairline p-3"><span className={status === "complete" ? "text-success" : status === "warning" ? "text-warning" : "text-error"}>{status === "complete" ? <CheckCircle2 className="h-4 w-4" /> : icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium text-ink">{label}</p><p className="mt-1 truncate text-xs text-muted">{detail}</p></div><span className="text-xs font-semibold capitalize text-muted">{status}</span></div>; }

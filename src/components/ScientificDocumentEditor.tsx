@@ -10,7 +10,7 @@ import { InlineTableEditor } from "@/components/InlineTableEditor";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { reorderBlocks, type BlockDropEdge } from "@/lib/block-reorder";
-import { isCellRenderShortcut, scientificBlockHasContent } from "@/lib/cell-editor";
+import { scientificBlockHasContent } from "@/lib/cell-editor";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 
 const inputClass = "focus-ring mt-1 h-10 w-full rounded-[7px] border border-hairline bg-surface px-3 text-sm text-ink";
@@ -180,9 +180,9 @@ export function ScientificDocumentEditor({
         {leadingContent}
         {document.sections.map((section, sectionIndex) => hiddenSectionKeys.includes(section.key) ? null : (
           <section key={section.key} className="document-section">
-            <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <header className="document-section-editor-header mb-3 flex flex-wrap items-start justify-between gap-2">
               <h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2>
-              <div className="flex flex-wrap justify-end gap-1" data-print-hidden>
+              <div className="document-block-type-strip flex flex-wrap justify-end gap-1" aria-label={`Add content to ${section.title}`} data-print-hidden>
                 {(allowedBlockTypes ?? (["heading", "text", "checklist", "table", "metric", "callout", "media"] as const)).map((type) => (
                   <button key={type} type="button" onClick={() => addBlock(sectionIndex, type)} className="focus-ring inline-flex h-6 items-center gap-0.5 rounded-[5px] border border-hairline/70 bg-transparent px-1.5 text-[10.5px] font-normal capitalize text-muted transition-colors hover:border-hairline hover:bg-warm/55 hover:text-graphite">
                     <Plus className="h-3 w-3" strokeWidth={1.75} />{type}
@@ -208,7 +208,7 @@ export function ScientificDocumentEditor({
                   onDragOver={(event) => dragBlockOver(event, { sectionIndex, blockIndex })}
                   onDrop={(event) => dropBlock(event, { sectionIndex, blockIndex })}
                 />
-              )) : <p className="border-y border-dashed border-hairline px-3 py-3 text-center text-sm text-muted" data-print-hidden>No content blocks yet. Choose a content type above to begin.</p>}
+              )) : null}
             </div>
           </section>
         ))}
@@ -232,13 +232,6 @@ function BlockEditor({ block, compact, editing, dragging, dropEdge, onEditingCha
   onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
 }) {
-  function handleEditorKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!isCellRenderShortcut(event)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    onEditingChange(false);
-  }
-
   return (
     <div
       className="group document-block document-editor-control rounded-[7px] border border-transparent px-1 py-0.5"
@@ -251,19 +244,18 @@ function BlockEditor({ block, compact, editing, dragging, dropEdge, onEditingCha
         {scientificBlockHasContent(block) ? <ScientificBlockView block={block} /> : null}
       </div>
       {editing ? (
-        <div onKeyDown={handleEditorKeyDown} data-print-hidden>
+        <div data-print-hidden>
           <div className="mb-0.5 flex items-center justify-end gap-1">
             <BlockActions editing onEditingChange={onEditingChange} onRemove={onRemove} onMove={onMove} onDragStart={onDragStart} onDragEnd={onDragEnd} />
           </div>
-          {block.type === "heading" ? <input autoFocus value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} onKeyDown={(event) => { if (event.key !== "Enter") return; event.preventDefault(); event.stopPropagation(); onEditingChange(false); }} className={inputClass} placeholder="Section subheading" /> : null}
-          {block.type === "text" ? <MarkdownRichTextEditor autoFocus value={block.text} onChange={(text) => onChange({ ...block, text })} minHeightClass={compact ? "min-h-16" : "min-h-24"} placeholder="Record narrative, interpretation, or context…" /> : null}
+          {block.type === "heading" ? <input autoFocus value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} className={inputClass} placeholder="Section subheading" /> : null}
+          {block.type === "text" ? <MarkdownRichTextEditor autoFocus value={block.text} onChange={(text) => onChange({ ...block, text })} minHeightClass={compact ? "min-h-12" : "min-h-16"} placeholder="Record narrative, interpretation, or context…" /> : null}
           {block.type === "checklist" ? <div><div className="mb-1 flex justify-end"><button type="button" onClick={() => onChange({ id: block.id, type: "text", text: block.items.join("\n") })} className="focus-ring inline-flex h-7 items-center gap-1 rounded-[6px] border border-hairline px-2 text-[11px] font-normal text-muted hover:bg-stone hover:text-graphite"><ListX className="h-3.5 w-3.5" />Remove bullets</button></div><textarea autoFocus value={block.items.join("\n")} onChange={(event) => onChange({ ...block, items: event.target.value.split("\n") })} className={`${textareaClass} min-h-16`} placeholder="One item per line" /></div> : null}
           {block.type === "table" ? <InlineTableEditor rows={block.rows} onChange={(rows) => onChange({ ...block, rows })} caption={block.caption} onCaptionChange={(caption) => onChange({ ...block, caption })} /> : null}
           {block.type === "callout" ? <div className="grid gap-2 md:grid-cols-[0.25fr_1fr]"><select autoFocus value={block.tone} onChange={(event) => onChange({ ...block, tone: event.target.value as typeof block.tone })} className={inputClass}><option value="note">Note</option><option value="warning">Warning</option><option value="critical">Critical</option></select><textarea value={block.text} onChange={(event) => onChange({ ...block, text: event.target.value })} className={`${textareaClass} min-h-16`} placeholder="Important qualification or warning" /></div> : null}
           {block.type === "metric" ? <div className="grid gap-2 md:grid-cols-[1fr_0.6fr_0.35fr]"><input autoFocus value={block.label} onChange={(event) => onChange({ ...block, label: event.target.value })} className={inputClass} placeholder="Metric" /><input value={block.value} onChange={(event) => onChange({ ...block, value: event.target.value })} className={inputClass} placeholder="Value" /><input value={block.unit ?? ""} onChange={(event) => onChange({ ...block, unit: event.target.value })} className={inputClass} placeholder="Unit" /></div> : null}
           {block.type === "media" ? <div className="grid gap-2 md:grid-cols-[0.25fr_1fr_0.8fr]"><select autoFocus value={block.mediaType} onChange={(event) => onChange({ ...block, mediaType: event.target.value as typeof block.mediaType })} className={inputClass}><option value="image">Image</option><option value="video">Video</option><option value="file">File</option></select><input value={block.url} onChange={(event) => onChange({ ...block, url: event.target.value })} className={inputClass} placeholder="Attachment or external URL" /><input value={block.caption ?? ""} onChange={(event) => onChange({ ...block, caption: event.target.value })} className={inputClass} placeholder="Caption" /></div> : null}
           {block.type === "dataset" ? <div className="grid gap-2 md:grid-cols-2"><input autoFocus value={block.datasetId} onChange={(event) => onChange({ ...block, datasetId: event.target.value })} className={inputClass} placeholder="Dataset ID" /><input value={block.label} onChange={(event) => onChange({ ...block, label: event.target.value })} className={inputClass} placeholder="Label" /></div> : null}
-          {block.type !== "heading" ? <p className="mt-1 text-right text-[10.5px] text-muted">⌘ / Ctrl + Enter to render</p> : null}
         </div>
       ) : (
         <div className="relative min-w-0" data-print-hidden>
@@ -291,7 +283,7 @@ function BlockActions({ editing, onEditingChange, onRemove, onMove, onDragStart,
     <div className="flex shrink-0 gap-1">
       <BlockDragHandle onDragStart={onDragStart} onDragEnd={onDragEnd} />
       {editing ? (
-        <button type="button" title="Render block (Command/Ctrl + Enter)" onClick={() => onEditingChange(false)} className="focus-ring inline-flex h-6 items-center gap-1 rounded-[5px] border border-hairline px-1.5 text-[10.5px] font-medium text-moss hover:bg-sage-surface"><Check className="h-3.5 w-3.5" /><span className="block-action-label">Render</span></button>
+        <button type="button" title="Finish editing" onClick={() => onEditingChange(false)} className="focus-ring inline-flex h-6 items-center gap-1 rounded-[5px] border border-hairline px-1.5 text-[10.5px] font-medium text-moss hover:bg-sage-surface"><Check className="h-3.5 w-3.5" /><span className="block-action-label">Done</span></button>
       ) : (
         <button type="button" title="Edit block" onClick={() => onEditingChange(true)} className="focus-ring inline-flex h-6 items-center gap-1 rounded-[5px] border border-hairline px-1.5 text-[10.5px] font-medium text-graphite hover:bg-stone"><Pencil className="h-3.5 w-3.5" /><span className="block-action-label">Edit</span></button>
       )}

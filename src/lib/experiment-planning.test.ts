@@ -47,12 +47,12 @@ describe("experiment planning", () => {
 
   it("presents legacy duplicate snapshot headings as one title plus version detail", () => {
     expect(experimentStepGroupHeading("PRT-100008 · 细胞RNA提取（Vazyme FastPure） · 细胞RNA提取（Vazyme FastPure） v0.2 · v0.2")).toEqual({
-      title: "PRT-100008 · 细胞RNA提取（Vazyme FastPure）",
-      detail: "v0.2",
+      title: "细胞RNA提取（Vazyme FastPure）",
+      detail: "PRT-100008 · v0.2",
     });
     expect(experimentStepGroupHeading("PRT-002 · RNA extraction · Low-input variant · v1.2")).toEqual({
-      title: "PRT-002 · RNA extraction",
-      detail: "Low-input variant · v1.2",
+      title: "RNA extraction",
+      detail: "PRT-002 · Low-input variant · v1.2",
     });
   });
 

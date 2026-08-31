@@ -6,16 +6,15 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DatasetUploadForm } from "@/components/DatasetUploadForm";
 import { DatasetDeleteButton } from "@/components/DatasetDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
-import { ResultTemplateView } from "@/components/ResultTemplateView";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
+import { ResultRecordDocument } from "@/components/ResultRecordDocument";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
-import { ScientificDocumentView } from "@/components/ScientificDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
-import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { prisma } from "@/lib/db";
 import { EXPERIMENT_RESULT_REPORT_KEY } from "@/lib/experiment-results";
 import { normalizeResultTemplate } from "@/lib/result-templates";
@@ -46,7 +45,6 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
   ]);
   if (!result) notFound();
   const document = normalizeResultDocument(result.contentJson);
-  const hasNarrative = document.sections.some((section) => section.blocks.some(scientificBlockHasContent));
   const resultNotes = result.notes === "Template registered; no measurement has been entered." ? null : result.notes;
   const hasTemplate = result.templateKey && result.templateSnapshotJson && typeof result.templateSnapshotJson === "object" && !Array.isArray(result.templateSnapshotJson) && Object.keys(result.templateSnapshotJson as object).length;
   const template = hasTemplate ? normalizeResultTemplate(result.templateSnapshotJson) : undefined;
@@ -77,11 +75,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
 
     <div className="document-editor-layout">
       <main className="document-editor-main space-y-6">
-        {template ? <ResultTemplateView template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} /> : null}
-
-        {(result.numericValue !== null || result.textValue || resultNotes) ? <div className="grid gap-4 md:grid-cols-3">{result.numericValue !== null ? <Card><CardHeader title="Primary numeric outcome" /><CardBody><p className="font-serif text-3xl text-ink">{result.numericValue} <span className="text-base text-muted">{result.unit}</span></p></CardBody></Card> : null}{result.textValue ? <Card className="md:col-span-2"><CardHeader title="Short summary" /><CardBody><p className="whitespace-pre-wrap text-sm leading-7 text-graphite">{result.textValue}</p></CardBody></Card> : null}{resultNotes ? <Card className="md:col-span-3"><CardHeader title="Notes" /><CardBody><p className="whitespace-pre-wrap text-sm leading-7 text-graphite">{resultNotes}</p></CardBody></Card> : null}</div> : null}
-
-        {hasNarrative ? <ScientificDocumentView document={document} title={result.title} subtitle={isExperimentReport ? result.qualityStatus.replaceAll("_", " ") : `${result.resultType} · ${result.qualityStatus.replaceAll("_", " ")}`} /> : null}
+        <ResultRecordDocument title={result.title} resultType={result.resultType} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} />
 
         <Card className="scroll-mt-24"><div id="result-files" className="scroll-mt-24" /><CardHeader title="Result files" eyebrow="One place for instrument exports and supporting evidence" /><CardBody className="space-y-5">
           <div className="rounded-[8px] border border-hairline bg-warm/55 px-3 py-2.5 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">Where instrument exports go</strong><span className="mt-0.5 block">Use <b>Table data</b> for CSV, TSV, TXT or XLSX files when preview and schema checks are useful. Use <b>Original & supporting files</b> for proprietary instrument formats, PDF, images or video. Store each file once.</span></div>
@@ -109,7 +103,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
             <Control label="Result files">{result.datasets.length + attachmentLinks.length}</Control>
             <Control label={result.templateInstanceKey ? "Template instance" : "Reports"}>{result.templateInstanceKey ? result.templateInstanceLabel ? `${result.templateInstanceLabel} · ${result.templateInstanceKey}` : result.templateInstanceKey : result.reportSources.length}</Control>
           </div>
-          <div className="flex flex-wrap gap-2 border-t border-hairline pt-3"><Badge>{result.sourceType.replaceAll("_", " ")}</Badge>{isExperimentReport ? <Badge tone="sage">experiment result</Badge> : result.templateKey ? <Badge tone="sage">template · {result.templateKey}</Badge> : null}{result.analysisMethod ? <Badge tone="info">{result.analysisMethod}</Badge> : null}{protocolVersion ? <Link href={`/protocols/${protocolVersion.protocolId}?version=${protocolVersion.id}`} className="text-xs font-medium text-moss hover:underline">Protocol source: {protocolVersion.protocol.humanCode ?? protocolVersion.protocol.title} · {protocolVersion.displayVersion}</Link> : null}</div>
+          <div className="flex flex-wrap gap-2 border-t border-hairline pt-3"><Badge>{result.sourceType.replaceAll("_", " ")}</Badge>{isExperimentReport ? <Badge tone="sage">experiment result</Badge> : result.templateKey ? <Badge tone="sage">template · {result.templateKey}</Badge> : null}{result.analysisMethod ? <Badge tone="info">{result.analysisMethod}</Badge> : null}{protocolVersion ? <Link href={`/protocols/${protocolVersion.protocolId}?version=${protocolVersion.id}`} className="block w-full text-moss hover:underline"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Protocol source</span><ProtocolIdentity compact title={protocolVersion.protocol.canonicalTitle ?? protocolVersion.protocol.title} code={protocolVersion.protocol.humanCode} version={protocolVersion.displayVersion} /></Link> : null}</div>
         </CardBody></Card>
 
         {result.reportSources.length ? <Card><CardHeader title="Used in Reports" eyebrow="Downstream synthesis" /><CardBody><DataTable rows={result.reportSources} getRowKey={(row) => row.id} columns={[{ key: "report", header: "Report", render: (row) => <Link href={`/reports/${row.report.id}`} className="font-medium text-moss hover:underline">{row.report.title}</Link> }, { key: "status", header: "Status", render: (row) => <StatusPill status={row.report.status} /> }]} /></CardBody></Card> : null}

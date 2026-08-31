@@ -30,7 +30,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
         <EntryComposer
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({ id: plan.id, title: plan.title, code: plan.code ?? undefined, projectId: plan.projectId, projectName: plan.project.name }))}
-          protocols={protocols.flatMap((protocol) => protocol.versions.map((version) => ({ id: version.id, label: `${protocol.humanCode ?? protocol.title} / ${version.displayVersion} / ${version.reviewStage}` })))}
+          protocols={protocols.flatMap((protocol) => protocol.versions.map((version) => ({ id: version.id, label: `${protocol.canonicalTitle ?? protocol.title}${protocol.humanCode ? ` / ${protocol.humanCode}` : ""} / ${version.displayVersion} / ${version.reviewStage}` })))}
           defaultOccurredAt={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
           defaultSource={defaultSource}
           defaultProtocolVersionId={protocolVersionId}

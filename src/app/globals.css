@@ -570,6 +570,14 @@ textarea {
   order: 1;
 }
 
+.result-record-document .document-a4-paper {
+  min-height: 0;
+}
+
+.experiment-detail-sidebar {
+  gap: 0.6rem;
+}
+
 .entry-editor-layout {
   display: flex;
   flex-direction: column;
@@ -1345,13 +1353,13 @@ table :where(td) {
   .document-block,
   .document-section > header,
   figure,
-  table,
   tr,
   img {
     break-inside: avoid;
   }
 
   .document-a4-paper table {
+    break-inside: auto;
     border-bottom: var(--ln-document-print-table-border-width) solid var(--ln-document-print-table-border-color) !important;
     border-collapse: collapse !important;
     border-left: 0 !important;
@@ -1361,6 +1369,14 @@ table :where(td) {
     min-width: 0 !important;
     table-layout: fixed !important;
     width: 100% !important;
+  }
+
+  .document-a4-paper thead {
+    display: table-header-group;
+  }
+
+  .document-a4-paper tfoot {
+    display: table-footer-group;
   }
 
   .document-a4-paper colgroup,

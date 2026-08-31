@@ -4,6 +4,7 @@ import { ChevronDown, Search, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { useI18n } from "@/components/I18nProvider";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { filterProtocolPickerOptions, type ResearchPlanProtocolOption } from "@/lib/research-plan-protocol-picker";
 
 export function ResearchPlanProtocolPicker({
@@ -79,7 +80,7 @@ export function ResearchPlanProtocolPicker({
                 document.getElementById(`${listboxId}-option-0`)?.focus();
               }
             }}
-            placeholder={t("Search protocol code or title…")}
+            placeholder={t("Search protocol title or code…")}
             className={`${formInputClass} pl-9`}
           />
           {isOpen ? <div id={listboxId} role="listbox" className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-[9px] border border-hairline bg-surface p-1.5 shadow-soft">
@@ -108,7 +109,7 @@ export function ResearchPlanProtocolPicker({
                 }}
                 className="focus-ring flex w-full items-start justify-between gap-3 rounded-[7px] px-3 py-2 text-left hover:bg-sage-surface"
               >
-                <span className="min-w-0"><strong className="block truncate text-sm font-medium text-ink">{protocol.humanCode ?? protocol.title}</strong><span className="block truncate text-xs text-muted">{protocol.humanCode ? `${protocol.title} · ` : ""}{protocol.scope}</span></span>
+                <ProtocolIdentity className="min-w-0 flex-1 text-ink" title={protocol.title} code={protocol.humanCode} meta={protocol.scope} />
                 <span className="shrink-0 text-xs font-medium text-moss">{t("Add")}</span>
               </button>
             )) : <p className="px-3 py-4 text-center text-sm text-muted">{t(protocols.length === selectedProtocols.length ? "All available Protocols are already selected." : "No matching Protocols.")}</p>}
@@ -120,13 +121,13 @@ export function ResearchPlanProtocolPicker({
           {selectedProtocols.length ? <div className="mt-2 grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
             {selectedProtocols.map((protocol) => <div key={protocol.id} className="flex min-h-10 items-start gap-2 rounded-[7px] border border-hairline bg-warm/70 px-2.5 py-2 text-xs text-graphite">
               <input type="hidden" name="protocolIds" value={protocol.id} />
-              <span className="min-w-0 flex-1"><strong className="block truncate font-medium text-ink">{protocol.humanCode ?? protocol.title}</strong><span className="block truncate text-[11px] text-muted">{protocol.humanCode ? `${protocol.title} · ` : ""}{protocol.scope}</span></span>
-              <button type="button" onClick={() => removeProtocol(protocol.id)} aria-label={`${t("Remove protocol")}: ${protocol.humanCode ?? protocol.title}`} title={t("Remove protocol")} className="focus-ring rounded p-0.5 text-muted hover:bg-error-surface hover:text-error"><X className="h-3.5 w-3.5" /></button>
+              <ProtocolIdentity className="min-w-0 flex-1 text-ink" compact title={protocol.title} code={protocol.humanCode} meta={protocol.scope} />
+              <button type="button" onClick={() => removeProtocol(protocol.id)} aria-label={`${t("Remove protocol")}: ${protocol.title}`} title={t("Remove protocol")} className="focus-ring rounded p-0.5 text-muted hover:bg-error-surface hover:text-error"><X className="h-3.5 w-3.5" /></button>
             </div>)}
           </div> : <p className="mt-2 rounded-[7px] border border-dashed border-hairline px-3 py-3 text-sm text-muted">{t("No Protocols selected yet.")}</p>}
         </div>
 
-        <label className="block max-w-2xl"><span className={formLabelClass}>{t("Primary protocol")}</span><select name="primaryProtocolId" value={primaryProtocolId} onChange={(event) => setPrimaryProtocolId(event.target.value)} disabled={!selectedProtocols.length} className={formInputClass}><option value="">{t("No primary protocol")}</option>{selectedProtocols.map((protocol) => <option key={protocol.id} value={protocol.id}>{protocol.humanCode ?? protocol.title} · {protocol.title}</option>)}</select></label>
+        <label className="block max-w-2xl"><span className={formLabelClass}>{t("Primary protocol")}</span><select name="primaryProtocolId" value={primaryProtocolId} onChange={(event) => setPrimaryProtocolId(event.target.value)} disabled={!selectedProtocols.length} className={formInputClass}><option value="">{t("No primary protocol")}</option>{selectedProtocols.map((protocol) => <option key={protocol.id} value={protocol.id}>{protocol.title}{protocol.humanCode ? ` · ${protocol.humanCode}` : ""}</option>)}</select></label>
       </div>
     </details>
   );

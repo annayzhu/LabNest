@@ -23,20 +23,22 @@ type DatasetView = {
 
 type ValidationView = { errors?: string[]; warnings?: string[]; checkedAt?: string };
 
-export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets }: {
+export function ResultTemplateView({ template: rawTemplate, values: rawValues, validationStatus, validation: rawValidation, datasets, includeEmptyFields = false }: {
   template: unknown;
   values: unknown;
   validationStatus: string;
   validation: unknown;
   datasets: DatasetView[];
+  includeEmptyFields?: boolean;
 }) {
   if (!rawTemplate || typeof rawTemplate !== "object" || Array.isArray(rawTemplate) || !Object.keys(rawTemplate as object).length) return null;
   const template = normalizeResultTemplate(rawTemplate);
   const values = normalizeResultValues(rawValues);
   const inlineDatasets = resultDatasetValuesFromResultValues(values);
   const validation = rawValidation && typeof rawValidation === "object" ? rawValidation as ValidationView : {};
-  const metrics = template.fields.filter((field) => fieldSemanticRole(field) === "measurement" || fieldSemanticRole(field) === "qc").filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
-  const remainingFields = template.fields.filter((field) => !metrics.includes(field)).filter((field) => values[field.key ?? ""] !== undefined && values[field.key ?? ""] !== "");
+  const hasValue = (key: string) => values[key] !== undefined && values[key] !== "";
+  const metrics = template.fields.filter((field) => fieldSemanticRole(field) === "measurement" || fieldSemanticRole(field) === "qc").filter((field) => includeEmptyFields || hasValue(field.key ?? ""));
+  const remainingFields = template.fields.filter((field) => !metrics.includes(field)).filter((field) => includeEmptyFields || hasValue(field.key ?? ""));
   const charts = resolveCharts(template, datasets);
 
   return <div className="space-y-5">

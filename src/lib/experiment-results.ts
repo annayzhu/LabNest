@@ -36,7 +36,8 @@ export type ExperimentResultTemplateSlot = {
 export type ExperimentResultModule = {
   id: string;
   protocolVersionId: string;
-  protocolLabel: string;
+  protocolCode?: string | null;
+  protocolTitle: string;
   displayVersion: string;
   template: ResultTemplate;
 };
@@ -84,7 +85,8 @@ export function experimentResultModules(sources: ExperimentResultTemplateSource[
   return sources.flatMap((source) => normalizeResultTemplates(source.resultTemplatesJson).map((template) => ({
     id: `${source.protocolVersionId}:${template.templateKey}`,
     protocolVersionId: source.protocolVersionId,
-    protocolLabel: source.protocolCode?.trim() || source.protocolTitle,
+    protocolCode: source.protocolCode,
+    protocolTitle: source.protocolTitle,
     displayVersion: source.displayVersion,
     template,
   })));

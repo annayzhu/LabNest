@@ -4,7 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, StatusPill } from "@/components/ui/Badge";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
+import { StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
@@ -63,7 +64,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
       <DataTable rows={plans} getRowKey={(row) => row.id} emptyMessage="No Research Plans match this view." selection={{ exportPath: "/research-plans/export" }} columns={[
         { key: "plan", header: "Research Plan", render: (row) => <div><div className="flex items-center gap-2">{row.code ? <span className="font-mono text-xs text-muted">{row.code}</span> : null}<Link href={`/research-plans/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link></div><p className="mt-1 max-w-xl text-xs leading-5 text-muted">{row.objective ?? "Objective not recorded."}</p></div> },
         { key: "project", header: "Project", render: (row) => <Link href={`/projects/${row.projectId}`} className="text-moss hover:underline">{row.project.name}</Link> },
-        { key: "protocols", header: "Protocols", render: (row) => <div className="flex max-w-sm flex-wrap gap-1">{row.protocols.length ? row.protocols.map(({ protocol, isPrimary }) => <Badge key={protocol.id} tone={isPrimary ? "sage" : "neutral"}>{protocol.humanCode ?? protocol.title}</Badge>) : <span className="text-muted">None linked</span>}</div> },
+        { key: "protocols", header: "Protocols", render: (row) => <div className="grid max-w-sm gap-1">{row.protocols.length ? row.protocols.map(({ protocol, isPrimary }) => <div key={protocol.id} className={`rounded-[6px] px-2 py-1 ${isPrimary ? "bg-sage-surface" : "bg-stone"}`}><ProtocolIdentity compact title={protocol.canonicalTitle ?? protocol.title} code={protocol.humanCode} /></div>) : <span className="text-muted">None linked</span>}</div> },
         { key: "records", header: "Records", render: (row) => `${row._count.experiments} experiments · ${row._count.entries} entries` },
         { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} href={filterHref("/research-plans", { status: row.status })} /> },
       ]} />

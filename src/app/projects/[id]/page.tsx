@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { ControlKeyInformationForm } from "@/components/ControlKeyInformationForm";
 import { PageHeader } from "@/components/PageHeader";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { ResearchPlanSortControl } from "@/components/ResearchPlanSortControl";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -62,7 +63,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
             { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
           ]} /></CardBody></Card>
           {projectProtocols.length ? <Card><CardHeader title="Project-associated Protocols" /><CardBody><DataTable rows={projectProtocols} getRowKey={(row) => row.id} columns={[
-            { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="font-semibold text-moss hover:underline">{row.humanCode ?? row.canonicalTitle ?? row.title}</Link> },
+            { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="block text-moss hover:underline"><ProtocolIdentity title={row.canonicalTitle ?? row.title} code={row.humanCode} /></Link> },
             { key: "version", header: "Current version", render: (row) => row.versions[0]?.displayVersion ?? "—" },
             { key: "availability", header: "Availability", render: (row) => <StatusPill status={row.availability} /> },
           ]} /></CardBody></Card> : null}

@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
@@ -72,7 +73,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
         { key: "experiment", header: "Experiment", render: (row) => <Link href={`/experiments/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link> },
         { key: "project", header: "Project", render: (row) => row.project ? <Link href={`/projects/${row.project.id}`} className="text-moss hover:underline">{row.project.name}</Link> : "—" },
         { key: "plan", header: "Research Plan", render: (row) => row.researchPlan ? <BadgeLink href={filterHref("/experiments", { plan: row.researchPlan.id })}>{row.researchPlan.code ?? row.researchPlan.title}</BadgeLink> : <span className="text-warning">Unassigned</span> },
-        { key: "protocol", header: "Primary Protocol", render: (row) => row.primaryProtocolVersion ? `${row.primaryProtocolVersion.protocol.humanCode ?? row.primaryProtocolVersion.protocol.title} · ${row.primaryProtocolVersion.displayVersion}` : "—" },
+        { key: "protocol", header: "Primary Protocol", render: (row) => row.primaryProtocolVersion ? <ProtocolIdentity compact title={row.primaryProtocolVersion.protocol.canonicalTitle ?? row.primaryProtocolVersion.protocol.title} code={row.primaryProtocolVersion.protocol.humanCode} version={row.primaryProtocolVersion.displayVersion} /> : "—" },
         { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} href={filterHref("/experiments", { status: row.status })} /> },
         { key: "date", header: "Date", render: (row) => row.date.toLocaleDateString() },
       ]} />

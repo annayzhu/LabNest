@@ -85,7 +85,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             <div>
               <div className="flex flex-wrap items-center gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>
               <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "Unassigned plan"} · {experiment.project?.name ?? "Unassigned project"}</p>
-              <p className="mt-1 text-xs text-muted">{lockedProtocol ? `${lockedProtocol.protocol.humanCode ?? lockedProtocol.protocol.title} · ${lockedProtocol.displayVersion}` : "No locked ProtocolVersion"}</p>
+              <p className="mt-1 text-xs text-muted">{lockedProtocol ? `${lockedProtocol.protocol.canonicalTitle ?? lockedProtocol.protocol.title} · ${lockedProtocol.protocol.humanCode ?? "Uncoded"} · ${lockedProtocol.displayVersion}` : "No locked ProtocolVersion"}</p>
             </div>
             <div className="min-w-52">
               <div className="flex items-center justify-between text-xs text-muted"><span>Run progress</span><span>{completed}/{total}</span></div>

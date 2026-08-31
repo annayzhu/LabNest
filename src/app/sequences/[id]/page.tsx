@@ -58,7 +58,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
   const targetMaps: Record<string, Map<string, string>> = {
     project: new Map(projects.map((item) => [item.id, item.name])),
     research_plan: new Map(plans.map((item) => [item.id, `${item.code} · ${item.title}`])),
-    protocol: new Map(protocols.map((item) => [item.id, `${item.humanCode} · ${item.title}`])),
+    protocol: new Map(protocols.map((item) => [item.id, `${item.title} · ${item.humanCode}`])),
     experiment: new Map(experiments.map((item) => [item.id, `${item.runCode} · ${item.title}`])),
     result: new Map(results.map((item) => [item.id, item.title])),
   };

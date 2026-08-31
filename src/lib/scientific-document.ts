@@ -171,7 +171,7 @@ export const resultSections: ScientificSectionDefinition[] = [
   { key: "data_media", title: "Data & media" },
   { key: "analysis", title: "Analysis" },
   { key: "interpretation", title: "Interpretation" },
-  { key: "quality_limitations", title: "QC & limitations" },
+  { key: "quality_limitations", title: "Deviations & limitations" },
 ];
 
 const legacyTemplateSummary = "Result record created from a selected ProtocolVersion template. Measurement pending.";

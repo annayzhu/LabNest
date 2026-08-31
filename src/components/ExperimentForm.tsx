@@ -78,7 +78,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       </fieldset>
         {methodMode === "protocol" ? <>
         <ExperimentProtocolPicker versions={protocolVersions} initialSelectedIds={initialSelectedIds} onSelectionChange={(ids) => setSelectedProtocolCount(ids.length)} />
-        <div className="rounded-[8px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result report per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional report modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
+        <div className="rounded-[8px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional result modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
       </> : <>
         <label className="flex items-start gap-3 rounded-[9px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
           <input

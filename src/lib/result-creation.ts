@@ -86,7 +86,7 @@ export async function createResultInTransaction(
 
   if (reportTemplate) {
     const existingReport = await tx.result.findFirst({ where: { experimentId: experiment.id, templateKey: EXPERIMENT_RESULT_REPORT_KEY, status: { not: "archived" } }, select: { id: true, title: true } });
-    if (existingReport) throw new Error(`This Experiment already has a Result report (${existingReport.title}). Open the existing report instead.`);
+    if (existingReport) throw new Error(`This Experiment already has a Result (${existingReport.title}). Open the existing Result instead.`);
   }
 
   if (template && templateVersionLink && isSingleResultTemplate(template)) {

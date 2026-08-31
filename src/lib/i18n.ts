@@ -691,6 +691,7 @@ export const zhUi: Record<string, string> = {
   "Data & media": "数据与媒体",
   "Interpretation": "解释",
   "QC & limitations": "质控与局限",
+  "Deviations & limitations": "异常与局限",
 
   "Traceable synthesis": "可追溯汇总",
   "Reports are editable documents with a separate, refreshable source snapshot covering plans, exact ProtocolVersions, Experiments, Results and Entries.": "报告是可编辑文档，并维护可单独刷新的来源快照，覆盖研究方案、准确实验规程版本、实验、结果和记录。",

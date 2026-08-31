@@ -2,6 +2,7 @@ import { normalizeResultTemplate, normalizeResultTemplates, stableResultKey } fr
 import type { ResultTemplate } from "./types";
 
 export const EXPERIMENT_RESULT_REPORT_KEY = "experiment_result_report";
+export const EXPERIMENT_RESULT_TYPE = "Experiment result";
 
 export type ExperimentResultTemplateSource = {
   protocolVersionId: string;
@@ -164,9 +165,9 @@ export function buildExperimentResultReportTemplate(
   });
 
   return normalizeResultTemplate({
-    result_type: "experiment_result_report",
+    result_type: EXPERIMENT_RESULT_TYPE,
     templateKey: EXPERIMENT_RESULT_REPORT_KEY,
-    title: "Experiment result report",
+    title: EXPERIMENT_RESULT_TYPE,
     cardinality: "per_run",
     fields: reportFields,
     datasets: [...datasets.values()],

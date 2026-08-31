@@ -104,8 +104,8 @@ describe("Result creation provenance module", () => {
 
     await createResultInTransaction(fake.tx as never, {
       experimentId: "experiment-1",
-      title: "RNA extraction · Result report",
-      resultType: "experiment_result_report",
+      title: "RNA extraction · Result",
+      resultType: "Experiment result",
       recordStatus: "draft",
       sourceType: "protocol_template",
       qualityStatus: "not_assessed",

@@ -54,6 +54,8 @@ describe("experiment result recording", () => {
       { ...sources[0], protocolVersionId: "pv-2", protocolCode: "PRT-100009", protocolTitle: "NanoDrop", resultTemplatesJson: [{ result_type: "NanoDrop", templateKey: "nanodrop", fields: [{ key: "concentration", label: "Concentration", dataType: "number", unit: "ng/µL" }] }] },
     ], []);
     const report = buildExperimentResultReportTemplate(recording.modules);
+    expect(report.result_type).toBe("Experiment result");
+    expect(report.title).toBe("Experiment result");
     expect(report.fields).toHaveLength(1);
     expect(report.fields[0]).toMatchObject({ unit: "ng/µL", required: true });
   });

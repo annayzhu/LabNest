@@ -566,6 +566,10 @@ textarea {
   width: 100%;
 }
 
+.result-detail-sidebar {
+  order: 1;
+}
+
 .entry-editor-layout {
   display: flex;
   flex-direction: column;
@@ -968,6 +972,10 @@ table :where(td) {
     overflow: visible;
     padding-right: 0;
     position: static;
+  }
+
+  .result-detail-sidebar {
+    order: 0;
   }
 
   .document-editor-sidebar > section > div.grid {

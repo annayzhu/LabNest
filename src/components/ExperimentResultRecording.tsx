@@ -25,10 +25,10 @@ export function ExperimentResultRecordingCard({ experimentId, recording }: {
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-action-surface text-moss"><FileText className="h-4 w-4" aria-hidden /></span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-semibold text-ink">Result report</p>
+              <p className="font-semibold text-ink">Result</p>
               {recording.report ? <><StatusPill status={recording.report.recordStatus} /><StatusPill status={recording.report.validationStatus} /></> : null}
             </div>
-            <p className="mt-0.5 text-xs leading-5 text-muted">一个实验一份报告。可从 {recording.modules.length} 个预设模块中选择内容，相同结果字段自动合并。</p>
+            <p className="mt-0.5 text-xs leading-5 text-muted">一个实验一份结果。可从 {recording.modules.length} 个预设模块中选择内容，相同结果字段自动合并。</p>
           </div>
           <Link href={reportHref} className={`${recording.report ? secondaryButton : primaryButton} w-full sm:w-auto`}>
             {recording.report ? "继续填写" : "填写结果"}
@@ -37,7 +37,7 @@ export function ExperimentResultRecordingCard({ experimentId, recording }: {
 
         {recording.modules.length ? <details className="rounded-[8px] border border-hairline bg-surface">
           <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-medium text-graphite marker:hidden">
-            <Layers3 className="h-3.5 w-3.5 text-muted" aria-hidden />报告模块
+            <Layers3 className="h-3.5 w-3.5 text-muted" aria-hidden />结果模块
             <span className="ml-auto text-muted">{recording.modules.length}</span>
           </summary>
           <ul className="grid gap-1 border-t border-hairline px-3 py-2 sm:grid-cols-2">{recording.modules.map((module) => <li key={module.id} className="min-w-0 truncate text-xs text-muted" title={`${module.template.title} · ${module.protocolLabel}`}><span className="font-medium text-graphite">{module.template.title}</span> · {module.protocolLabel}</li>)}</ul>

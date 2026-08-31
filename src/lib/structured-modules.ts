@@ -208,7 +208,7 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "summary", label: "Summary" },
       { key: "analysis", label: "Analysis" },
       { key: "interpretation", label: "Interpretation" },
-      { key: "qualityLimitations", label: "QC & limitations" },
+      { key: "qualityLimitations", label: "Deviations & limitations" },
     ],
   },
   inventory: {

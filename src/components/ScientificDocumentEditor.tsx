@@ -181,7 +181,10 @@ export function ScientificDocumentEditor({
         {document.sections.map((section, sectionIndex) => hiddenSectionKeys.includes(section.key) ? null : (
           <section key={section.key} className="document-section">
             <header className="document-section-editor-header mb-3 flex flex-wrap items-start justify-between gap-2">
-              <h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2>
+              <div>
+                <h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2>
+                {section.key === "quality_limitations" ? <p className="mt-1 max-w-2xl text-xs leading-5 text-muted">Only record deviations, failed QC, missing data, detection limits, or other factors that change interpretation. Leave blank when none.</p> : null}
+              </div>
               <div className="document-block-type-strip flex flex-wrap justify-end gap-1" aria-label={`Add content to ${section.title}`} data-print-hidden>
                 {(allowedBlockTypes ?? (["heading", "text", "checklist", "table", "metric", "callout", "media"] as const)).map((type) => (
                   <button key={type} type="button" onClick={() => addBlock(sectionIndex, type)} className="focus-ring inline-flex h-6 items-center gap-0.5 rounded-[5px] border border-hairline/70 bg-transparent px-1.5 text-[10.5px] font-normal capitalize text-muted transition-colors hover:border-hairline hover:bg-warm/55 hover:text-graphite">

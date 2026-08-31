@@ -22,11 +22,11 @@ export function DatasetUploadForm({ resultId, expectedDatasets = [] }: { resultI
     finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="grid gap-3 md:grid-cols-2 xl:grid-cols-[0.6fr_0.9fr_0.9fr_1.4fr_auto]">
-    <label><span className={formLabelClass}>Storage</span><select name="storageMode" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)} className={formInputClass}><option value="managed_file">Managed file</option><option value="external_reference">External reference</option></select></label>
-    <label><span className={formLabelClass}>Template Dataset slot</span><select name="templateDatasetKey" className={formInputClass}><option value="">Additional / untyped</option>{expectedDatasets.map((dataset) => <option key={dataset.key} value={dataset.key}>{dataset.label}{dataset.required ? " · required" : ""}</option>)}</select></label>
-    <label><span className={formLabelClass}>Dataset name</span><input required name="name" className={formInputClass} placeholder="Normalized Cq table" /></label>
+    <label><span className={formLabelClass}>Source</span><select name="storageMode" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)} className={formInputClass}><option value="managed_file">Upload a file</option><option value="external_reference">Link existing data</option></select></label>
+    <label><span className={formLabelClass}>Expected table</span><select name="templateDatasetKey" className={formInputClass}><option value="">Additional table</option>{expectedDatasets.map((dataset) => <option key={dataset.key} value={dataset.key}>{dataset.label}{dataset.required ? " · required" : ""}</option>)}</select></label>
+    <label><span className={formLabelClass}>Table name</span><input required name="name" className={formInputClass} placeholder="Normalized Cq table" /></label>
     {mode === "managed_file" ? <label><span className={formLabelClass}>CSV / TSV / TXT / XLSX · max 25 MB</span><input required name="file" type="file" accept=".csv,.tsv,.txt,.xlsx" className={`${formInputClass} py-2`} /></label> : <label><span className={formLabelClass}>External URI or server path</span><input required name="externalUri" className={formInputClass} placeholder="s3://…, smb://…, /data/…" /></label>}
-    <div className="flex items-end"><Button type="submit" variant="primary" disabled={busy}><FileUp className="h-4 w-4" />{busy ? "Registering…" : "Register"}</Button></div>
+    <div className="flex items-end"><Button type="submit" variant="primary" disabled={busy}><FileUp className="h-4 w-4" />{busy ? "Adding…" : "Add data"}</Button></div>
     {status ? <p className="text-sm text-graphite md:col-span-2 xl:col-span-5">{status}</p> : null}
   </form>;
 }

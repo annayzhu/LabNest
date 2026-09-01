@@ -151,6 +151,7 @@ export type SequencePairMetadataFieldDefinition = {
   label: string;
   placeholder: string;
   type?: "number";
+  min?: number;
   unit?: string;
   pairTypes: readonly SequencePairTypeValue[];
 };
@@ -158,7 +159,7 @@ export type SequencePairMetadataFieldDefinition = {
 export const sequencePairMetadataFieldDefinitions = [
   { key: "application", label: "Application", placeholder: "qPCR, genotyping, cloning…", pairTypes: ["primer_pair"] },
   { key: "transcriptAccession", label: "Template / transcript accession", placeholder: "NM_… / ENST…", pairTypes: ["primer_pair", "sirna_duplex"] },
-  { key: "ampliconLengthBp", label: "Expected amplicon (bp)", placeholder: "120", type: "number", unit: "bp", pairTypes: ["primer_pair"] },
+  { key: "ampliconLengthBp", label: "Expected amplicon (bp)", placeholder: "120", type: "number", min: 1, unit: "bp", pairTypes: ["primer_pair"] },
   { key: "exonJunction", label: "Exon-junction strategy", placeholder: "Spans exon 5–6 junction", pairTypes: ["primer_pair"] },
   { key: "targetRegion", label: "Target region", placeholder: "CDS position or exon", pairTypes: ["sirna_duplex"] },
   { key: "designSource", label: "Design source", placeholder: "Supplier, publication, or design tool", pairTypes: ["primer_pair", "sirna_duplex"] },
@@ -166,6 +167,20 @@ export const sequencePairMetadataFieldDefinitions = [
 
 export function sequencePairMetadataFields(type: SequencePairTypeValue): readonly SequencePairMetadataFieldDefinition[] {
   return sequencePairMetadataFieldDefinitions.filter((field) => (field.pairTypes as readonly SequencePairTypeValue[]).includes(type));
+}
+
+export function normalizeSequencePairMetadata(type: SequencePairTypeValue, values: Record<string, unknown>) {
+  const entries: Array<[string, string | number]> = [];
+  for (const field of sequencePairMetadataFields(type)) {
+    const raw = String(values[field.key] ?? "").trim();
+    if (!raw) continue;
+    if (field.type === "number") {
+      const number = Number(raw);
+      if (!Number.isFinite(number) || (field.min !== undefined && number < field.min)) throw new Error(`${field.label} must be ${field.min !== undefined ? `at least ${field.min}` : "a number"}.`);
+      entries.push([field.key, number]);
+    } else entries.push([field.key, raw]);
+  }
+  return Object.fromEntries(entries);
 }
 
 export function sequenceWorkflowLabel(type: string) {

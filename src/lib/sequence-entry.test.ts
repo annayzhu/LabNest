@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   collectionTypeIsPair,
   normalizeSequenceOwnership,
+  normalizeSequencePairMetadata,
   sequenceCreationPreset,
   sequencePairDefinition,
   sequencePairTypeForDesignType,
@@ -76,6 +77,12 @@ describe("sequence creation presets", () => {
     expect(sequencePairTypeForDesignType("primer")).toBe("primer_pair");
     expect(sequencePairTypeForDesignType("siRNA")).toBe("sirna_duplex");
     expect(sequencePairTypeForDesignType("plasmid")).toBeUndefined();
+  });
+
+  it("applies the same scientific metadata constraints to every pair input channel", () => {
+    expect(normalizeSequencePairMetadata("primer_pair", { application: "qPCR", ampliconLengthBp: "120" })).toEqual({ application: "qPCR", ampliconLengthBp: 120 });
+    expect(() => normalizeSequencePairMetadata("primer_pair", { ampliconLengthBp: "0" })).toThrow("at least 1");
+    expect(normalizeSequencePairMetadata("sirna_duplex", { ampliconLengthBp: "120", targetRegion: "CDS 450" })).toEqual({ targetRegion: "CDS 450" });
   });
 });
 

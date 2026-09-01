@@ -29,7 +29,14 @@ async function verify(viewport, name) {
   await page.goto(`${baseUrl}${firstPairHref}`, { waitUntil: "networkidle" });
   const pairPanels = await page.getByText(/Forward primer|Sense strand/, { exact: true }).count();
   if (pairPanels !== 1) throw new Error(`${name}: paired detail did not expose exactly one first-member panel`);
+  if (!await page.getByRole("link", { name: "Edit", exact: true }).count()) throw new Error(`${name}: paired entry has no maintenance path`);
+  if (!await page.getByRole("heading", { name: "Activity" }).count()) throw new Error(`${name}: paired entry audit trail is missing`);
   await page.screenshot({ path: `${outputDir}/${name}-pair-detail.png`, fullPage: true });
+  await page.getByRole("link", { name: "Edit", exact: true }).click();
+  await page.waitForURL(/\/edit$/);
+  if (!await page.getByRole("button", { name: "Save paired entry" }).count()) throw new Error(`${name}: paired metadata edit form is missing`);
+  if (!await page.getByLabel(/Application|Target region/).count()) throw new Error(`${name}: paired metadata cannot be maintained after creation`);
+  await page.screenshot({ path: `${outputDir}/${name}-pair-edit.png`, fullPage: true });
   await page.goto(`${baseUrl}/sequences/new`, { waitUntil: "networkidle" });
   if (!await page.getByRole("heading", { name: "What are you recording?" }).count()) throw new Error(`${name}: sequence type chooser is missing`);
   if (!await page.getByRole("link", { name: /Primer/ }).count()) throw new Error(`${name}: Primer is not a first-class category`);

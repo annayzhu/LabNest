@@ -169,5 +169,5 @@ function pairInputPrompt(pairType: SequencePairTypeValue) {
 }
 
 function PairMetadataField({ field }: { field: ReturnType<typeof sequencePairMetadataFields>[number] }) {
-  return <label><span className={formLabelClass}>{field.label}</span><input name={`meta_${field.key}`} type={field.type === "number" ? "number" : "text"} min={field.type === "number" ? "1" : undefined} step={field.type === "number" ? "1" : undefined} maxLength={field.type === "number" ? undefined : 180} className={formInputClass} placeholder={field.placeholder} /></label>;
+  return <label><span className={formLabelClass}>{field.label}</span><input name={`meta_${field.key}`} type={field.type === "number" ? "number" : "text"} min={field.min} step={field.type === "number" ? "1" : undefined} maxLength={field.type === "number" ? undefined : 180} className={formInputClass} placeholder={field.placeholder} /></label>;
 }

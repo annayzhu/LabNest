@@ -9,7 +9,9 @@ import {
   type TypographySettings,
 } from "./typography-settings";
 
-const loadedFaces = new Map<string, FontFace>();
+const loadedFaces = new Map<string, FontFace[]>();
+const latinUnicodeRange = "U+0000-024F, U+1E00-1EFF, U+2000-206F";
+const cjkUnicodeRange = "U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -52,18 +54,21 @@ export function saveCustomFont(record: CustomFontRecord): Promise<IDBValidKey> {
 
 export async function deleteCustomFont(id: string): Promise<void> {
   await withStore("readwrite", (store) => store.delete(id));
-  const face = loadedFaces.get(id);
-  if (face) {
-    document.fonts.delete(face);
+  const faces = loadedFaces.get(id);
+  if (faces) {
+    faces.forEach((face) => document.fonts.delete(face));
     loadedFaces.delete(id);
   }
 }
 
 export async function loadCustomFont(record: CustomFontRecord): Promise<void> {
   if (loadedFaces.has(record.id)) return;
-  const face = new FontFace(record.family, record.data);
-  const loaded = await face.load();
-  document.fonts.add(loaded);
+  const faces = [
+    new FontFace(`${record.family} Latin`, record.data.slice(0), { unicodeRange: latinUnicodeRange }),
+    new FontFace(`${record.family} CJK`, record.data.slice(0), { unicodeRange: cjkUnicodeRange }),
+  ];
+  const loaded = await Promise.all(faces.map((face) => face.load()));
+  loaded.forEach((face) => document.fonts.add(face));
   loadedFaces.set(record.id, loaded);
 }
 

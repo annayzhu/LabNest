@@ -9,28 +9,48 @@ import {
 } from "./typography-settings";
 
 describe("typography settings", () => {
-  it("restores valid role selections and falls back only invalid roles", () => {
+  it("migrates the previous three roles into Chinese roles and gives English independent defaults", () => {
     expect(parseTypographySettings(JSON.stringify({
       ui: { kind: "preset", id: "pingfang" },
       documentBody: { kind: "preset", id: "not-a-font" },
       documentHeading: { kind: "custom", id: "font-1", family: "LabNest Custom font-1", name: "My Song" },
     }))).toEqual({
-      ui: { kind: "preset", id: "pingfang" },
-      documentBody: defaultTypographySettings.documentBody,
-      documentHeading: { kind: "custom", id: "font-1", family: "LabNest Custom font-1", name: "My Song" },
+      cjkUi: { kind: "preset", id: "pingfang" },
+      cjkDocumentBody: defaultTypographySettings.cjkDocumentBody,
+      cjkDocumentHeading: { kind: "custom", id: "font-1", family: "LabNest Custom font-1", name: "My Song" },
+      latinUi: { kind: "preset", id: "arial" },
+      latinDocumentBody: { kind: "preset", id: "times-new-roman" },
+      latinDocumentHeading: { kind: "preset", id: "times-new-roman" },
     });
   });
 
-  it("maps each role to its public CSS variable while keeping data type fixed", () => {
+  it("maps Chinese and English roles to separate public CSS variables", () => {
     expect(typographyCssVariables({
-      ui: { kind: "preset", id: "pingfang" },
-      documentBody: { kind: "preset", id: "songti" },
-      documentHeading: { kind: "preset", id: "source-han-serif" },
+      cjkUi: { kind: "preset", id: "pingfang" },
+      cjkDocumentBody: { kind: "preset", id: "songti" },
+      cjkDocumentHeading: { kind: "preset", id: "source-han-serif" },
+      latinUi: { kind: "preset", id: "arial" },
+      latinDocumentBody: { kind: "preset", id: "times-new-roman" },
+      latinDocumentHeading: { kind: "preset", id: "arial" },
     })).toEqual({
-      "--font-ui": '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
-      "--font-document-body": '"Songti SC", STSong, SimSun, serif',
-      "--font-document-heading": '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      "--font-cjk-ui": '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
+      "--font-cjk-document-body": '"Songti SC", STSong, SimSun, serif',
+      "--font-cjk-document-heading": '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      "--font-latin-ui": 'Arial, "Helvetica Neue", Helvetica',
+      "--font-latin-document-body": '"Times New Roman", Times',
+      "--font-latin-document-heading": 'Arial, "Helvetica Neue", Helvetica',
     });
+  });
+
+  it("uses script-scoped aliases for imported fonts so an English font cannot replace Chinese glyphs", () => {
+    const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Font" };
+    const variables = typographyCssVariables({
+      ...defaultTypographySettings,
+      cjkDocumentBody: custom,
+      latinDocumentBody: custom,
+    });
+    expect(variables["--font-cjk-document-body"]).toContain('"LabNest Custom font-1 CJK"');
+    expect(variables["--font-latin-document-body"]).toContain('"LabNest Custom font-1 Latin"');
   });
 
   it("accepts local web fonts within the limit and explains recoverable failures", () => {
@@ -44,18 +64,18 @@ describe("typography settings", () => {
   it("resets only roles that use a deleted local font", () => {
     const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Song" };
     expect(settingsWithoutCustomFont({
-      ui: { kind: "preset", id: "pingfang" },
-      documentBody: custom,
-      documentHeading: custom,
+      ...defaultTypographySettings,
+      cjkUi: { kind: "preset", id: "pingfang" },
+      cjkDocumentBody: custom,
+      latinDocumentHeading: custom,
     }, "font-1")).toEqual({
-      ui: { kind: "preset", id: "pingfang" },
-      documentBody: defaultTypographySettings.documentBody,
-      documentHeading: defaultTypographySettings.documentHeading,
+      ...defaultTypographySettings,
+      cjkUi: { kind: "preset", id: "pingfang" },
     });
   });
 
   it("reconciles saved selections with fonts that still exist in this browser", () => {
     const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Song" };
-    expect(reconcileTypographySettings({ ...defaultTypographySettings, documentBody: custom }, new Set())).toEqual(defaultTypographySettings);
+    expect(reconcileTypographySettings({ ...defaultTypographySettings, cjkDocumentBody: custom }, new Set())).toEqual(defaultTypographySettings);
   });
 });

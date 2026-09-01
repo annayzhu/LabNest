@@ -16,6 +16,7 @@ import {
   maxCustomFontCount,
   settingsWithoutCustomFont,
   typographyPresets,
+  typographyRoleGroups,
   type CustomFontRecord,
   type FontSelection,
   type TypographyRole,
@@ -24,10 +25,28 @@ import {
 } from "@/lib/typography-settings";
 
 const roleCopy: Record<TypographyRole, { zh: string; en: string; noteZh: string; noteEn: string }> = {
-  ui: { zh: "界面字体", en: "Interface", noteZh: "导航、按钮与表单", noteEn: "Navigation, buttons, and forms" },
-  documentBody: { zh: "文档正文", en: "Document body", noteZh: "实验记录与长文阅读", noteEn: "Experiment records and long reading" },
-  documentHeading: { zh: "标题字体", en: "Headings", noteZh: "页面与文档标题", noteEn: "Page and document headings" },
+  cjkUi: { zh: "中文界面", en: "Chinese interface", noteZh: "导航、按钮与表单中的中文", noteEn: "Chinese in navigation, buttons, and forms" },
+  cjkDocumentBody: { zh: "中文正文", en: "Chinese document body", noteZh: "实验记录与长文中的中文", noteEn: "Chinese in records and long-form documents" },
+  cjkDocumentHeading: { zh: "中文标题", en: "Chinese headings", noteZh: "页面与文档标题中的中文", noteEn: "Chinese page and document headings" },
+  latinUi: { zh: "英文界面", en: "English interface", noteZh: "导航、按钮与表单中的英文", noteEn: "English in navigation, buttons, and forms" },
+  latinDocumentBody: { zh: "英文正文", en: "English document body", noteZh: "实验记录与长文中的英文", noteEn: "English in records and long-form documents" },
+  latinDocumentHeading: { zh: "英文标题", en: "English headings", noteZh: "页面与文档标题中的英文", noteEn: "English page and document headings" },
 };
+
+const groupCopy = {
+  cjk: {
+    zh: "中文字体",
+    en: "Chinese fonts",
+    noteZh: "中文按界面、正文和标题分别设置；英文字符不会再沿用宋体。",
+    noteEn: "Choose Chinese fonts separately for interface, body, and headings. Latin text no longer inherits a Chinese serif.",
+  },
+  latin: {
+    zh: "英文字体",
+    en: "English fonts",
+    noteZh: "默认仅提供 Arial 与 Times New Roman；其他英文字体可从下方导入。",
+    noteEn: "Arial and Times New Roman are the built-in defaults. Import any additional Latin fonts below.",
+  },
+} as const;
 
 function selectionValue(selection: FontSelection) {
   return `${selection.kind}:${selection.id}`;
@@ -101,7 +120,7 @@ export function TypographySettingsPanel() {
       await loadCustomFont(record);
       await saveCustomFont(record);
       setCustomFonts((fonts) => [record, ...fonts]);
-      setMessage(copy(`“${record.name}”已导入，可在上方三个字体选项中使用。`, `“${record.name}” was imported and is now available in all three selectors.`));
+      setMessage(copy(`“${record.name}”已导入，可在上方中英文选项中使用。`, `“${record.name}” was imported and is now available in the Chinese and English selectors.`));
     } catch {
       setError(copy("无法读取这个字体文件。请确认文件完整且为有效的 WOFF2、TTF 或 OTF 字体。", "This font could not be read. Confirm it is a complete, valid WOFF2, TTF, or OTF file."));
     } finally {
@@ -125,33 +144,48 @@ export function TypographySettingsPanel() {
 
   return (
     <div className="typography-settings-panel">
-      <div className="typography-role-grid">
-        {(Object.keys(roleCopy) as TypographyRole[]).map((role) => (
-          <label key={role} className="typography-role-field">
-            <span className="typography-role-label">{zh ? roleCopy[role].zh : roleCopy[role].en}</span>
-            <span className="typography-role-note">{zh ? roleCopy[role].noteZh : roleCopy[role].noteEn}</span>
-            <select
-              className="focus-ring typography-role-select"
-              value={selectionValue(settings[role])}
-              onChange={(event) => selectFont(role, event.target.value)}
-            >
-              <optgroup label={copy("预设字体", "Preset fonts")}>
-                {typographyPresets[role].map((preset) => <option key={preset.id} value={`preset:${preset.id}`}>{zh ? preset.name : preset.nameEn} · {zh ? preset.description : preset.descriptionEn}</option>)}
-              </optgroup>
-              {customFonts.length ? (
-                <optgroup label={copy("我的字体", "My fonts")}>
-                  {customFonts.map((font) => <option key={font.id} value={`custom:${font.id}`}>{font.name}</option>)}
-                </optgroup>
-              ) : null}
-            </select>
-          </label>
+      <div className="typography-language-groups">
+        {(Object.keys(typographyRoleGroups) as Array<keyof typeof typographyRoleGroups>).map((group) => (
+          <fieldset key={group} className="typography-language-group" data-typography-script={group}>
+            <legend>{zh ? groupCopy[group].zh : groupCopy[group].en}</legend>
+            <p className="typography-language-note">{zh ? groupCopy[group].noteZh : groupCopy[group].noteEn}</p>
+            <div className="typography-role-grid">
+              {typographyRoleGroups[group].map((role) => (
+                <label key={role} className="typography-role-field">
+                  <span className="typography-role-label">{zh ? roleCopy[role].zh : roleCopy[role].en}</span>
+                  <span className="typography-role-note">{zh ? roleCopy[role].noteZh : roleCopy[role].noteEn}</span>
+                  <select
+                    className="focus-ring typography-role-select"
+                    data-typography-role={role}
+                    value={selectionValue(settings[role])}
+                    onChange={(event) => selectFont(role, event.target.value)}
+                  >
+                    <optgroup label={copy("预设字体", "Preset fonts")}>
+                      {typographyPresets[role].map((preset) => <option key={preset.id} value={`preset:${preset.id}`}>{zh ? preset.name : preset.nameEn} · {zh ? preset.description : preset.descriptionEn}</option>)}
+                    </optgroup>
+                    {customFonts.length ? (
+                      <optgroup label={copy("我的字体", "My fonts")}>
+                        {customFonts.map((font) => <option key={font.id} value={`custom:${font.id}`}>{font.name}</option>)}
+                      </optgroup>
+                    ) : null}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         ))}
       </div>
 
       <div className="typography-preview" aria-label={copy("字体预览", "Font preview")}>
-        <div className="typography-preview-copy">
-          <p className="typography-preview-heading">{copy("细胞增殖实验记录", "Cell proliferation record")}</p>
-          <p className="typography-preview-body">{copy("今日完成 CCK-8 检测，实验条件与原始观察均已记录。The quick brown fox jumps over 13 wells.", "CCK-8 detection completed. Conditions and raw observations were recorded. 细胞增殖实验。")}</p>
+        <div className="typography-preview-samples">
+          <div className="typography-preview-copy" data-typography-preview="cjk" lang="zh-CN">
+            <p className="typography-preview-heading">细胞增殖实验记录</p>
+            <p className="typography-preview-body">今日完成 CCK-8 检测，实验条件与原始观察均已记录。</p>
+          </div>
+          <div className="typography-preview-copy" data-typography-preview="latin" lang="en">
+            <p className="typography-preview-heading">Cell proliferation record</p>
+            <p className="typography-preview-body">The quick brown fox jumps over 13 wells.</p>
+          </div>
         </div>
         <button type="button" className="focus-ring typography-reset-button" onClick={() => updateSettings(defaultTypographySettings, copy("已恢复默认字体。", "Default typography restored."))}>
           <RotateCcw aria-hidden />{copy("恢复默认", "Reset")}
@@ -182,7 +216,7 @@ export function TypographySettingsPanel() {
           {customFonts.map((font) => (
             <li key={font.id}>
               <span className="min-w-0">
-                <span className="block truncate text-sm text-ink" style={{ fontFamily: `"${font.family}"` }}>{font.name}</span>
+                <span className="block truncate text-sm text-ink" style={{ fontFamily: `"${font.family} Latin", "${font.family} CJK"` }}>{font.name}</span>
                 <span className="block truncate text-[10px] text-muted">{font.fileName} · {formatFileSize(font.size)}</span>
               </span>
               <button type="button" className="focus-ring" onClick={() => void removeFont(font)} aria-label={copy(`删除字体 ${font.name}`, `Delete font ${font.name}`)}>

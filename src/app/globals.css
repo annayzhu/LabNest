@@ -39,10 +39,16 @@
   --brand-mark-border: #34534f; /* 品牌纹样边框。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
-  --font-ui: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif; /* 系统界面、按钮和表单字体。 */
+  --font-cjk-ui: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif; /* 界面中的中文字符。 */
+  --font-cjk-document-body: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 文档正文中的中文字符。 */
+  --font-cjk-document-heading: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 页面与文档标题中的中文字符。 */
+  --font-latin-ui: Arial, "Helvetica Neue", Helvetica; /* 界面中的拉丁字符，默认使用 Arial。 */
+  --font-latin-document-body: "Times New Roman", Times; /* 文档正文中的拉丁字符。 */
+  --font-latin-document-heading: "Times New Roman", Times; /* 页面与文档标题中的拉丁字符。 */
+  --font-ui: var(--font-latin-ui), var(--font-cjk-ui); /* 按字符覆盖范围组合英文与中文界面字体。 */
   --font-ui-base-weight: 350; /* 思源黑体 Normal；缺少该字重时由浏览器选择最接近的可用字重。 */
-  --font-document-body: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* A4 文档正文与长篇阅读字体。 */
-  --font-document-heading: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 页面与文档标题字体。 */
+  --font-document-body: var(--font-latin-document-body), var(--font-cjk-document-body); /* A4 文档正文按字符分别使用中英文字体。 */
+  --font-document-heading: var(--font-latin-document-heading), var(--font-cjk-document-heading); /* 页面与文档标题按字符分别使用中英文字体。 */
   --font-editorial: var(--font-document-heading); /* 保持既有 font-serif 语义，并由标题字体设置统一驱动。 */
   --font-data: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* 编号、字段键、代码和数据字体。 */
 
@@ -1017,13 +1023,45 @@ textarea {
 }
 
 .typography-settings-panel {
-  max-width: 68rem;
+  max-width: 76rem;
+}
+
+.typography-language-groups {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.typography-language-group {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.typography-language-group + .typography-language-group {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.8rem;
+}
+
+.typography-language-group legend {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.typography-language-note {
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+  margin-top: 0.18rem;
 }
 
 .typography-role-grid {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.55rem;
 }
 
 .typography-role-field {
@@ -1069,6 +1107,14 @@ textarea {
 }
 
 .typography-preview-copy {
+  min-width: 0;
+}
+
+.typography-preview-samples {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 0.9rem 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
 }
 
@@ -1208,6 +1254,10 @@ textarea {
   }
 
   .typography-role-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .typography-preview-samples {
     grid-template-columns: minmax(0, 1fr);
   }
 

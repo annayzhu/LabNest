@@ -2697,7 +2697,9 @@ textarea {
 @media (max-width: 767px) {
   .protocol-density-slice {
     --ln-protocol-density-page-gap: 0.4rem;
-    --ln-protocol-density-title-size: 17px;
+    --ln-protocol-density-title-size: 15px;
+    --ln-protocol-density-action-font-size: 11px;
+    --ln-protocol-density-tool-font-size: 11.5px;
   }
 
   .protocol-density-slice .document-canvas-toolbar {
@@ -2714,6 +2716,8 @@ textarea {
 
   .protocol-density-slice > header h1 {
     flex: 1 1 12rem;
+    font-size: var(--ln-protocol-density-title-size) !important;
+    line-height: 1.22 !important;
     min-width: 0;
   }
 

@@ -158,9 +158,13 @@ async function assertMobileSlice(page, routes) {
   const mobileDetailState = await detailRoot.evaluate((slice) => ({
     actionOverflow: getComputedStyle(slice.querySelector(".page-actions")).overflowX,
     primaryActionHeight: slice.querySelector(".protocol-density-primary-action")?.getBoundingClientRect().height ?? 0,
+    titleFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(":scope > header h1")).fontSize),
+    actionFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".page-actions a, .page-actions button")).fontSize),
   }));
   assert(["auto", "scroll"].includes(mobileDetailState.actionOverflow), `Mobile detail actions must scroll safely, got ${mobileDetailState.actionOverflow}.`);
   assert(mobileDetailState.primaryActionHeight >= 36 && mobileDetailState.primaryActionHeight <= 40, `Mobile primary Protocol action must remain touch-friendly: ${mobileDetailState.primaryActionHeight}px.`);
+  assert(mobileDetailState.titleFontSize >= 14 && mobileDetailState.titleFontSize <= 16, `Mobile Protocol title should stay within the compact 14–16px range: ${mobileDetailState.titleFontSize}px.`);
+  assert(mobileDetailState.actionFontSize >= 10.5 && mobileDetailState.actionFontSize <= 11.5, `Mobile Protocol action labels should stay within the compact 10.5–11.5px range: ${mobileDetailState.actionFontSize}px.`);
   await assertNoPageOverflow(page, "Protocol detail mobile");
 
   if (screenshotDir) {
@@ -176,11 +180,13 @@ async function assertMobileSlice(page, routes) {
     outlineDisplay: getComputedStyle(slice.querySelector(".document-editor-outline")).display,
     contextDisplay: getComputedStyle(slice.querySelector(".document-editor-context-rail")).display,
     toolbarOverflow: getComputedStyle(slice.querySelector(".document-canvas-toolbar")).overflowX,
+    toolbarFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".ln-wysiwyg-toolbar select")).fontSize),
     tabCount: slice.querySelectorAll('[role="tab"]').length,
   }));
   assert(mobileState.outlineDisplay === "none", `Mobile outline should be hidden, got ${mobileState.outlineDisplay}.`);
   assert(mobileState.contextDisplay === "none", `Mobile inspector should be hidden, got ${mobileState.contextDisplay}.`);
   assert(["auto", "scroll"].includes(mobileState.toolbarOverflow), `Mobile toolbar must scroll instead of clipping, got ${mobileState.toolbarOverflow}.`);
+  assert(mobileState.toolbarFontSize >= 11 && mobileState.toolbarFontSize <= 12, `Mobile editor toolbar labels should stay within the compact 11–12px range: ${mobileState.toolbarFontSize}px.`);
   assert(mobileState.tabCount === 3, `Expected three accessible editor tabs, found ${mobileState.tabCount}.`);
   await assertNoPageOverflow(page, "Protocol editor mobile");
 

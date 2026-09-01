@@ -120,9 +120,9 @@ export function Sidebar() {
                   aria-label={collapsed ? item.label : undefined}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
+                    "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
                     collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                    active ? "bg-action-surface/55 font-medium text-moss" : "text-muted hover:bg-stone/75 hover:text-ink",
+                    active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/75 hover:text-ink",
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -144,9 +144,9 @@ export function Sidebar() {
                 aria-label={collapsed ? item.label : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
+                  "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
                   collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                  active ? "bg-action-surface/55 font-medium text-moss" : "text-muted hover:bg-stone/70 hover:text-ink",
+                  active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/70 hover:text-ink",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />

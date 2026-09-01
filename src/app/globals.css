@@ -57,27 +57,27 @@
 
 :root {
   /* 基础色板：控制全站背景、文字、边框和状态颜色。 */
-  --paper: #f5f7f4; /* 月白：页面最外层的安静底色。 */
-  --warm: #fafbf8; /* 宣纸白：卡片、输入框等近白背景。 */
-  --stone: #eef1ec; /* 青灰：表头、工具栏、弱强调区域背景。 */
-  --sand-panel: #e6ebe7; /* 较深的青灰面板底色。 */
+  --paper: #f7f9fb; /* 月白：页面最外层的冷白底色。 */
+  --warm: #fbfcfd; /* 宣纸白：卡片、输入框等近白背景。 */
+  --stone: #eef2f5; /* 月影蓝灰：表头、工具栏、弱强调区域背景。 */
+  --sand-panel: #e1e8ed; /* 较深的黛青灰面板底色。 */
   --surface: #ffffff; /* 主卡片和文档纸张白色背景。 */
-  --ink: #202825; /* 墨色：主要文字颜色。 */
-  --graphite: #4d5955; /* 松烟灰：正文和次级正文颜色。 */
-  --muted: #5f6d68; /* 竹灰：标签、说明、弱信息文字颜色。 */
+  --ink: #20282f; /* 墨色：主要文字颜色。 */
+  --graphite: #475863; /* 松烟灰：正文和次级正文颜色。 */
+  --muted: #5b6a73; /* 竹灰：标签、说明、弱信息文字颜色。 */
   --disabled: #a5ada9; /* 禁用状态文字或图标颜色。 */
-  --moss: #3f625d; /* 黛青：品牌主色，用于重点按钮、图标和链接。 */
-  --action: #3f625d; /* 可点击主操作默认色。 */
-  --action-hover: #34534f; /* 可点击主操作悬停色。 */
-  --action-surface: #eaf1ef; /* 黛青浅染背景。 */
-  --action-surface-hover: #e1ebe8; /* 主操作浅色按钮悬停背景。 */
-  --action-border: #cadbd6; /* 主操作相关边框颜色。 */
-  --sage: #7f9992; /* 竹青，用于边框、图标和弱强调。 */
-  --sage-surface: #edf3f0; /* 竹青浅背景。 */
-  --fog: #607873; /* 远山青灰文字或图标色。 */
-  --fog-surface: #eef3f1; /* 远山青灰浅背景。 */
-  --clay: #9a6257; /* 朱砂灰：低剂量暖色强调。 */
-  --pale-sand: #f3e8e3; /* 朱砂浅染背景。 */
+  --moss: #2a475f; /* 黛青：品牌主色，用于重点按钮、图标和链接。 */
+  --action: #2a475f; /* 可点击主操作默认色。 */
+  --action-hover: #213a4e; /* 可点击主操作悬停色。 */
+  --action-surface: #e6eef4; /* 黛青浅染背景。 */
+  --action-surface-hover: #dce7ef; /* 主操作浅色按钮悬停背景。 */
+  --action-border: #bdcfdd; /* 主操作相关边框颜色。 */
+  --sage: #607f93; /* 竹青，用于边框、图标和弱强调。 */
+  --sage-surface: #eaf1f5; /* 竹青浅背景。 */
+  --fog: #526f83; /* 远山青灰文字或图标色。 */
+  --fog-surface: #edf2f6; /* 远山青灰浅背景。 */
+  --clay: #a5441b; /* 韎韐暖红：与黛青形成冷暖撞色。 */
+  --pale-sand: #f6e9e2; /* 韎韐浅染背景。 */
   --success: #526f60; /* 成功状态文字或图标色。 */
   --success-surface: #e8f1ec; /* 成功状态浅背景。 */
   --warning: #805b24; /* 警告状态文字或图标色。 */
@@ -86,12 +86,15 @@
   --error-surface: #f7e7e7; /* 错误、删除、风险提示浅背景。 */
   --info: #526d73; /* 信息提示文字或图标色。 */
   --info-surface: #eaf1f2; /* 信息提示浅背景。 */
-  --hairline: #dfe5e1; /* 默认细边框颜色。 */
-  --border-strong: #c8d2cd; /* 较明显边框颜色。 */
+  --hairline: #dce4e9; /* 默认细边框颜色。 */
+  --border-strong: #c4d0d8; /* 较明显边框颜色。 */
   --divider: rgba(32, 40, 37, 0.075); /* 弱分割线颜色。 */
-  --brand-mark-bg: #3f625d; /* 品牌纹样底色。 */
+  --brand-mark-bg: #2a475f; /* 品牌纹样底色。 */
   --brand-mark-fg: #ffffff; /* 品牌纹样前景色。 */
-  --brand-mark-border: #34534f; /* 品牌纹样边框。 */
+  --brand-mark-border: #213a4e; /* 品牌纹样边框。 */
+  --nav-active-bg: #a5441b; /* 当前导航项使用与主色相撞的暖色。 */
+  --nav-active-fg: #ffffff; /* 当前导航项文字。 */
+  --nav-active-border: #8d3716; /* 当前导航项边界。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
   --font-cjk-ui: "LabNest CJK Source Han Sans", sans-serif; /* 界面中的中文字符；别名仅覆盖中日韩字符。 */
@@ -387,6 +390,9 @@ html[data-labnest-theme="azure-coral"] {
   --brand-mark-bg: #147d99;
   --brand-mark-fg: #ffffff;
   --brand-mark-border: #116b83;
+  --nav-active-bg: #de7565;
+  --nav-active-fg: #2b1815;
+  --nav-active-border: #bd5d50;
 }
 
 html[data-labnest-theme="celadon-pine"] {
@@ -398,23 +404,26 @@ html[data-labnest-theme="celadon-pine"] {
   --graphite: #4b5a51;
   --muted: #5d6d63;
   --disabled: #a6afa9;
-  --moss: #397568;
-  --action: #397568;
-  --action-hover: #2f6257;
-  --action-surface: #e5f1ec;
-  --action-surface-hover: #dbeae4;
-  --action-border: #c4d9cf;
-  --sage: #6f9c88;
-  --sage-surface: #eaf3ee;
-  --fog: #5f7c70;
+  --moss: #397978;
+  --action: #397978;
+  --action-hover: #2e6665;
+  --action-surface: #e2f1ef;
+  --action-surface-hover: #d5eae7;
+  --action-border: #b8d8d4;
+  --sage: #4a9d9c;
+  --sage-surface: #e5f3f1;
+  --fog: #5c7d78;
   --fog-surface: #edf3ef;
-  --clay: #b17859;
-  --pale-sand: #f3e8df;
+  --clay: #c1651a;
+  --pale-sand: #f8eadb;
   --hairline: #dde5da;
   --border-strong: #c7d2c3;
-  --brand-mark-bg: #397568;
+  --brand-mark-bg: #397978;
   --brand-mark-fg: #ffffff;
-  --brand-mark-border: #2f6257;
+  --brand-mark-border: #2e6665;
+  --nav-active-bg: #986524;
+  --nav-active-fg: #ffffff;
+  --nav-active-border: #7c5019;
 }
 
 html[data-labnest-theme="lotus-ink"] {
@@ -436,13 +445,109 @@ html[data-labnest-theme="lotus-ink"] {
   --sage-surface: #f3ebf0;
   --fog: #796674;
   --fog-surface: #f3edef;
-  --clay: #c06f5d;
-  --pale-sand: #f7e6e1;
+  --clay: #7aa35a;
+  --pale-sand: #edf3e6;
   --hairline: #e8dedf;
   --border-strong: #d5c7ca;
   --brand-mark-bg: #75556b;
   --brand-mark-fg: #ffffff;
   --brand-mark-border: #624659;
+  --nav-active-bg: #7aa35a;
+  --nav-active-fg: #15210f;
+  --nav-active-border: #638948;
+}
+
+html[data-labnest-theme="indigo-xiangqi"] {
+  --paper: #f6f8fc;
+  --warm: #fbfcff;
+  --stone: #eaf0f8;
+  --sand-panel: #dce5f1;
+  --ink: #1f2937;
+  --graphite: #46566b;
+  --muted: #5c6b7e;
+  --disabled: #a4afbd;
+  --moss: #1661ab;
+  --action: #1661ab;
+  --action-hover: #0f4f91;
+  --action-surface: #e4eefb;
+  --action-surface-hover: #d7e6f8;
+  --action-border: #b8d0ee;
+  --sage: #4a8dda;
+  --sage-surface: #eaf2fc;
+  --fog: #526b89;
+  --fog-surface: #edf2f8;
+  --clay: #f8c471;
+  --pale-sand: #fcf0dc;
+  --hairline: #d9e2ef;
+  --border-strong: #bdcbe0;
+  --brand-mark-bg: #1661ab;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #0f4f91;
+  --nav-active-bg: #f8c471;
+  --nav-active-fg: #2f240e;
+  --nav-active-border: #d29b42;
+}
+
+html[data-labnest-theme="palace-jasmine"] {
+  --paper: #f7faf5;
+  --warm: #fbfdf9;
+  --stone: #edf4ea;
+  --sand-panel: #dfead9;
+  --ink: #202b23;
+  --graphite: #46584b;
+  --muted: #5c6d60;
+  --disabled: #a5b0a7;
+  --moss: #20894d;
+  --action: #20894d;
+  --action-hover: #176b3b;
+  --action-surface: #e4f3e9;
+  --action-surface-hover: #d7ebdf;
+  --action-border: #b9d9c5;
+  --sage: #7aa35a;
+  --sage-surface: #edf4e7;
+  --fog: #5c7b63;
+  --fog-surface: #edf3ee;
+  --clay: #ef475d;
+  --pale-sand: #fde9ed;
+  --hairline: #dce6d8;
+  --border-strong: #c4d2bf;
+  --brand-mark-bg: #20894d;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #176b3b;
+  --nav-active-bg: #ef475d;
+  --nav-active-fg: #2c1015;
+  --nav-active-border: #ca3347;
+}
+
+html[data-labnest-theme="ganqing-buddha"] {
+  --paper: #f7f9ff;
+  --warm: #fcfdff;
+  --stone: #edf1fb;
+  --sand-panel: #dfe6f5;
+  --ink: #202a3a;
+  --graphite: #495a72;
+  --muted: #5d6d84;
+  --disabled: #a5afbe;
+  --moss: #356fdc;
+  --action: #356fdc;
+  --action-hover: #285bb9;
+  --action-surface: #e6edff;
+  --action-surface-hover: #d9e4ff;
+  --action-border: #bdcdf5;
+  --sage: #4f84ff;
+  --sage-surface: #edf2ff;
+  --fog: #5a7199;
+  --fog-surface: #eff2f8;
+  --clay: #fed71a;
+  --pale-sand: #fff8cf;
+  --hairline: #dce3f0;
+  --border-strong: #c5cede;
+  --brand-mark-bg: #356fdc;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #285bb9;
+  --nav-active-bg: #fed71a;
+  --nav-active-fg: #1f2a44;
+  --nav-active-border: #d8b400;
 }
 
 @theme inline {
@@ -1016,7 +1121,7 @@ textarea {
 .system-theme-grid {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .system-theme-option {
@@ -1301,6 +1406,28 @@ textarea {
   border-color: var(--brand-mark-border);
   color: var(--brand-mark-fg);
   transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out;
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .system-theme-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.sidebar-nav-item-active {
+  background: var(--nav-active-bg);
+  box-shadow: inset 0 0 0 1px var(--nav-active-border);
+  color: var(--nav-active-fg);
+  font-weight: 650;
+}
+
+.sidebar-nav-item-active:hover {
+  color: var(--nav-active-fg);
+  filter: saturate(1.04) brightness(0.98);
+}
+
+.sidebar-nav-item-active svg {
+  stroke-width: 2.25;
 }
 
 @media (max-width: 760px) {

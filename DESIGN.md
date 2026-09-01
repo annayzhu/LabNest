@@ -2,29 +2,29 @@
 name: LabNest
 description: A restrained scientific editorial workspace for trustworthy laboratory operations.
 colors:
-  paper: "#f7f8fb"
-  warm: "#fbfcfe"
-  stone: "#f1f3f7"
+  paper: "#f5f7f4"
+  warm: "#fafbf8"
+  stone: "#eef1ec"
   surface: "#ffffff"
-  ink: "#20232c"
-  graphite: "#515765"
-  muted: "#767c8b"
-  disabled: "#a9aeba"
-  primary: "#59618b"
-  primary-hover: "#4d557b"
-  primary-surface: "#eff1f8"
-  primary-surface-hover: "#e7eaf4"
-  primary-border: "#d5d9e8"
-  info: "#5d627f"
-  info-surface: "#eceef7"
+  ink: "#202825"
+  graphite: "#4d5955"
+  muted: "#6f7a76"
+  disabled: "#a5ada9"
+  primary: "#3f625d"
+  primary-hover: "#34534f"
+  primary-surface: "#eaf1ef"
+  primary-surface-hover: "#e1ebe8"
+  primary-border: "#cadbd6"
+  info: "#526d73"
+  info-surface: "#eaf1f2"
   success: "#526f60"
   success-surface: "#e8f1ec"
   warning: "#805b24"
   warning-surface: "#faf0dc"
   error: "#8f4e52"
   error-surface: "#f7e7e7"
-  hairline: "#e1e4eb"
-  border-strong: "#cbd0dc"
+  hairline: "#dfe5e1"
+  border-strong: "#c8d2cd"
 typography:
   display:
     fontFamily: "Source Serif 4, Iowan Old Style, Palatino Linotype, Georgia, serif"
@@ -106,13 +106,13 @@ components:
 
 **Creative North Star: "The Scientific Workbench"**
 
-LabNest is a calm, precise operating surface for laboratory work. Its cool violet-gray palette, white instrument-like panels, editorial serif headings, and compact data typography make dense scientific tasks legible without making them feel administrative or clinical.
+LabNest is a calm, precise operating surface for laboratory work. Its moon-white canvas, ink-dark typography, restrained dai-cyan actions, white instrument-like panels, editorial serif headings, and compact data typography make dense scientific tasks legible without making them feel administrative or clinical.
 
 Calculator extends this world with a deliberate sequence: discover a narrowly named tool, enter values with visible units, calculate, inspect the result and method, then explicitly save or send it onward. Visual emphasis follows scientific responsibility rather than novelty.
 
 **Key Characteristics:**
 
-- Cool, low-saturation neutrals with one restrained violet-gray action color.
+- Moon-white and blue-green neutrals with one restrained dai-cyan action color and low-dose cinnabar semantics.
 - Flat, bordered panels and compact controls optimized for repeated work.
 - Editorial headings paired with utilitarian UI copy and monospaced measurements.
 - State changes expressed through color, text, icons, and explicit confirmation.
@@ -123,7 +123,7 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 ### Primary
 
-- **Bench Violet:** Use the primary family for the main action, active selections, links, and focused control borders. The lighter surfaces support selected chips and low-intensity hover states.
+- **Dai Cyan:** Use the primary family for the main action, active selections, links, and focused control borders. The lighter surfaces support selected chips and low-intensity hover states.
 
 ### Secondary
 
@@ -167,6 +167,8 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 The application shell constrains content to a wide working canvas with 16–20px page padding. Calculator uses a 16px panel gap and collapses naturally to a single column: field pairs begin stacking on small screens, catalog shortcuts split at large screens, and the input/result workbench becomes asymmetric only at extra-wide widths. Primary submit actions become full-width on mobile.
 
 Cards own local grouping. Within a card, use a compact header separated by a hairline and a 16px body inset; use 12px gaps inside forms and 16px between major task regions. Preserve `min-width: 0`, truncation, wrapping, and scroll containers for bilingual labels, long methods, tables, and data values.
+
+Document creation and editing opens in focus mode: the paper canvas receives the full working width, while record properties stay hidden behind a compact Settings control. Each document family remembers whether its property panel was opened; mobile keeps the same content-first order rather than forcing a permanent side column.
 
 **The Task-Order Rule.** Responsive collapse must preserve input → validation → result → method → reuse/history order; do not rearrange for visual symmetry.
 

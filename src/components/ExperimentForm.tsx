@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
+import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnterSubmit } from "@/components/forms";
@@ -62,7 +63,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
-    <div className="document-editor-layout">
+    <DocumentEditorLayout storageKey="labnest.experiment.settings-open">
       <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "Research Plan", value: plan ? `${plan.code ?? plan.title} · ${plan.project.name}` : "Not selected" },
         { label: "Method", value: activeMethodMode === "protocol" ? protocolMethodSummary : "Fully custom" },
@@ -113,7 +114,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       <CardBody className="space-y-2 text-sm leading-6 text-graphite">{completedStepCount}/{initial.steps.length} executed steps · {initial.steps.filter((step) => Boolean(step.deviationNote)).length} deviations</CardBody>
     </Card> : null}
       </aside>
-    </div>
+    </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
       <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>

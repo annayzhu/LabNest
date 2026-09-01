@@ -16,6 +16,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass } from "@/components/forms";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
@@ -376,7 +377,7 @@ export function EntryComposer({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <div className="entry-editor-layout">
+      <DocumentEditorLayout className="entry-editor-layout" storageKey="labnest.entry.settings-open">
       <div className="entry-editor-main-column">
       <DocumentCanvas
         className="entry-editor-document"
@@ -396,7 +397,6 @@ export function EntryComposer({
         }
       >
         <header className="document-page-header">
-          <p className="document-page-kicker">Entry</p>
           <input
             required
             value={fields.title}
@@ -548,7 +548,7 @@ export function EntryComposer({
         </details>
       ) : null}
       </div>
-      </div>
+      </DocumentEditorLayout>
 
       {submitStatus ? <div role="alert" className="rounded-[12px] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">

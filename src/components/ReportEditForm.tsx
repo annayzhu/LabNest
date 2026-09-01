@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
+import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -22,7 +23,7 @@ export function ReportEditForm({ action, initial }: { action: FormAction; initia
   const scope = `${initial.projectName}${initial.researchPlanTitle ? ` · ${initial.researchPlanTitle}` : " · Entire Project"}`;
   const period = [periodStart, periodEnd].filter(Boolean).join(" – ") || "Not specified";
   return <form action={formAction} className="space-y-5"><input type="hidden" name="id" value={initial.id} /><input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
-    <div className="document-editor-layout"><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" headerFacts={[
+    <DocumentEditorLayout storageKey="labnest.report.settings-open"><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" headerFacts={[
       { label: "Scope", value: scope },
       { label: "Status", value: status.replaceAll("_", " ") },
       { label: "Period", value: period },
@@ -32,6 +33,6 @@ export function ReportEditForm({ action, initial }: { action: FormAction; initia
       <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
       <label><span className={formLabelClass}>Period start</span><input name="periodStart" type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input name="periodEnd" type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className={formInputClass} /></label>
       <label><TagFieldLabel /><input name="tags" defaultValue={initial.tags.join(", ")} placeholder="monthly, internal-review" className={formInputClass} /></label>
-    </CardBody></Card></aside></div><div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}<Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : "Save Report"}</Button></div>
+    </CardBody></Card></aside></DocumentEditorLayout><div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}<Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : "Save Report"}</Button></div>
   </form>;
 }

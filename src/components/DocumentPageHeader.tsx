@@ -19,12 +19,13 @@ export function DocumentPageHeader({
   subtitle?: string | null;
   facts?: DocumentPageHeaderFact[];
 }) {
-  const visibleFacts = facts.filter((fact) => fact.value?.trim());
-  const kicker = [documentType, identifier].filter(Boolean).join(" · ");
+  const visibleFacts = [
+    ...(identifier ? [{ label: documentType ? `${documentType} ID` : "ID", value: identifier, mono: true }] : []),
+    ...facts,
+  ].filter((fact) => fact.value?.trim());
 
   return (
     <header className="document-page-header">
-      {kicker ? <p className="document-page-kicker">{kicker}</p> : null}
       <h1 className={`document-page-title font-serif font-bold leading-tight ${title?.trim() ? "text-ink" : "text-muted"}`}>
         {title?.trim() || titlePlaceholder}
       </h1>

@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
+import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { ResultDatasetTableEditor } from "@/components/ResultDatasetTable";
 import { ResultTypePicker } from "@/components/ResultTypePicker";
 import type { ResultTypeDefinitionItem } from "@/app/results/result-type-actions";
@@ -93,7 +94,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     {availableModules.length ? <input type="hidden" name="resultModuleIdsJson" value={JSON.stringify(selectedModuleIds)} /> : null}
     {template ? <input type="hidden" name="templateKey" value={template.templateKey ?? ""} /> : null}
     {template && initial.templateProtocolVersionId ? <input type="hidden" name="templateProtocolVersionId" value={initial.templateProtocolVersionId} /> : null}
-    <div className="document-editor-layout">
+    <DocumentEditorLayout storageKey="labnest.result.settings-open">
       <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Result" title={title} titlePlaceholder="Untitled Result" headerFacts={availableModules.length ? [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
       ] : [
@@ -133,7 +134,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
           <label className="min-w-0"><span className={formLabelClass}>分析方法 / 软件</span><input name="analysisMethod" defaultValue={initial.analysisMethod ?? ""} placeholder="方法、版本、参数或工具" className={formInputClass} /></label>
         </div></details>
       </aside>
-    </div>
+    </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <FormErrorSummary message={state.error} /> : null}
       {missingModuleSelection ? <p role="alert" className="text-xs font-medium text-warning">请至少选择一个结果模块。</p> : null}

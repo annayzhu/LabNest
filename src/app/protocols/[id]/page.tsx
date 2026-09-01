@@ -25,7 +25,7 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
 }
 
-const primaryButton = buttonStyles({ variant: "primary", size: "md" });
+const primaryButton = buttonStyles({ variant: "primary", size: "md", className: "protocol-density-primary-action" });
 const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
 
 export default async function ProtocolDetailPage({

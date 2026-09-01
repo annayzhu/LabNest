@@ -343,6 +343,9 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}
     ><EditorContent editor={editor} />{draggingFiles ? <div className="ln-protocol-drop-overlay"><Paperclip aria-hidden />Drop images or files into the Protocol</div> : null}</div>
     </section>
-    {inspectorHost && inspectorTarget ? createPortal(<ProtocolContextInspector editor={editor} target={inspectorTarget} onClose={() => editor.chain().focus().setTextSelection(editor.state.doc.content.size).run()} />, inspectorHost) : null}
+    {inspectorHost && inspectorTarget ? createPortal(<ProtocolContextInspector editor={editor} target={inspectorTarget} onClose={() => {
+      setInspectorTarget(null);
+      editor.chain().setTextSelection(1).blur().run();
+    }} />, inspectorHost) : null}
   </></DocumentToolbarTargetContext.Provider>;
 }

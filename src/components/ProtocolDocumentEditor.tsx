@@ -139,7 +139,7 @@ export function ProtocolDocumentEditor({
       />
 
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      <div className="protocol-density-actionbar" data-print-hidden><span>Changes remain local until saved.</span><Button type="submit" variant="primary" size="sm" disabled={pending}>{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
+      <div className="protocol-density-actionbar" data-print-hidden><span>Changes remain local until saved.</span><Button type="submit" variant="primary" size="md" disabled={pending} className="protocol-density-primary-action">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
     </form>
   );
 }

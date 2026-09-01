@@ -45,6 +45,7 @@ async function assertDesktopSlice(page, routes) {
     const actions = header?.querySelector(".page-actions");
     const paper = root.querySelector(".document-a4-paper");
     const title = header?.querySelector("h1");
+    const primaryAction = header?.querySelector(".protocol-density-primary-action");
     const headerRect = header?.getBoundingClientRect();
     const actionsRect = actions?.getBoundingClientRect();
     const paperRect = paper?.getBoundingClientRect();
@@ -54,10 +55,12 @@ async function assertDesktopSlice(page, routes) {
       actionsHeight: actionsRect?.height ?? 0,
       documentGap: headerRect && paperRect ? paperRect.top - headerRect.bottom : Infinity,
       paperWidth: paperRect?.width ?? 0,
+      primaryActionHeight: primaryAction?.getBoundingClientRect().height ?? 0,
     };
   });
   assert(detailMetrics.titleSize >= 17 && detailMetrics.titleSize <= 20, `Protocol title is outside the 17–20px slice target: ${detailMetrics.titleSize}px.`);
-  assert(detailMetrics.actionsHeight <= 34, `Protocol actions wrapped or became too tall: ${detailMetrics.actionsHeight}px.`);
+  assert(detailMetrics.actionsHeight <= 40, `Protocol actions wrapped or became too tall: ${detailMetrics.actionsHeight}px.`);
+  assert(detailMetrics.primaryActionHeight >= 36 && detailMetrics.primaryActionHeight <= 40, `Primary Protocol action must remain 36–40px: ${detailMetrics.primaryActionHeight}px.`);
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
   assert(detailMetrics.paperWidth >= 790 && detailMetrics.paperWidth <= 798, `The 100% A4 width changed: ${detailMetrics.paperWidth}px.`);
   await page.locator(".protocol-export-menu > summary").click();
@@ -67,25 +70,32 @@ async function assertDesktopSlice(page, routes) {
   if (screenshotDir) {
     await mkdir(screenshotDir, { recursive: true });
     await page.locator(".protocol-export-menu > summary").click();
+    await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: path.join(screenshotDir, "protocol-density-slice-detail-desktop.png"), fullPage: true });
   }
 
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const editRoot = page.locator('[data-density-slice="protocol"]');
   await editRoot.waitFor();
+  await page.locator(".ln-wysiwyg-toolbar select").first().waitFor();
   const editMetrics = await editRoot.evaluate((root) => {
     const header = root.querySelector(":scope > header");
     const viewbar = root.querySelector(".document-editor-viewbar");
     const toolbar = root.querySelector(".document-canvas-toolbar");
     const paper = root.querySelector(".document-a4-paper");
     const saveBar = root.querySelector(".protocol-density-actionbar");
+    const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar select");
+    const contextRail = root.querySelector(".document-editor-context-rail");
     return {
       headerHeight: header?.getBoundingClientRect().height ?? 0,
       viewbarHeight: viewbar?.getBoundingClientRect().height ?? 0,
       toolbarHeight: toolbar?.getBoundingClientRect().height ?? 0,
       paperWidth: paper?.getBoundingClientRect().width ?? 0,
       saveBarHeight: saveBar?.getBoundingClientRect().height ?? 0,
+      saveActionHeight: saveBar?.querySelector("button")?.getBoundingClientRect().height ?? 0,
+      toolbarFontSize: toolbarControl ? Number.parseFloat(getComputedStyle(toolbarControl).fontSize) : 0,
       outlineVisible: Boolean(root.querySelector(".document-editor-outline")) && getComputedStyle(root.querySelector(".document-editor-outline")).display !== "none",
+      contextHidden: Boolean(contextRail) && getComputedStyle(contextRail).display === "none",
     };
   });
   assert(editMetrics.headerHeight <= 34, `Editor page header is too tall: ${editMetrics.headerHeight}px.`);
@@ -93,22 +103,66 @@ async function assertDesktopSlice(page, routes) {
   assert(editMetrics.toolbarHeight <= 42, `Editor toolbar is too tall: ${editMetrics.toolbarHeight}px.`);
   assert(editMetrics.paperWidth >= 790 && editMetrics.paperWidth <= 798, `Editor A4 width changed: ${editMetrics.paperWidth}px.`);
   assert(editMetrics.saveBarHeight > 0 && editMetrics.saveBarHeight <= 48, `Editor save action bar is missing or too tall: ${editMetrics.saveBarHeight}px.`);
+  assert(editMetrics.saveActionHeight >= 36 && editMetrics.saveActionHeight <= 40, `Primary save action must remain 36–40px: ${editMetrics.saveActionHeight}px.`);
+  assert(editMetrics.toolbarFontSize >= 12 && editMetrics.toolbarFontSize <= 14, `Editor toolbar text is outside the readable 12–14px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
+  assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
   const documentTab = page.getByRole("tab", { name: "Document" });
   await documentTab.focus();
   await documentTab.press("ArrowRight");
   await page.waitForFunction(() => document.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.includes("Metadata"));
   await documentTab.click();
+  const editableTableCell = page.locator(".ProseMirror table :is(th, td)").first();
+  await editableTableCell.click();
+  await page.locator('.document-editor-context-card[aria-label="Table settings"]').waitFor();
+  assert(await page.locator(".document-editor-context-rail").evaluate((rail) => getComputedStyle(rail).display === "block"), "Selecting an editable table did not reveal the desktop contextual inspector.");
+  await page.getByRole("button", { name: "Close selected block settings" }).click();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".document-editor-context-rail")).display === "none");
   await assertNoPageOverflow(page, "Protocol editor desktop");
 
   if (screenshotDir) {
     await mkdir(screenshotDir, { recursive: true });
+    await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: path.join(screenshotDir, "protocol-density-slice-desktop.png"), fullPage: true });
   }
+
+  await page.emulateMedia({ media: "print" });
+  const printContract = await editRoot.evaluate((root) => ({
+    hiddenChrome: [...root.querySelectorAll("[data-print-hidden]")].every((element) => {
+      const style = getComputedStyle(element);
+      return style.display === "none" || style.visibility === "hidden" || element.getClientRects().length === 0;
+    }),
+    viewScale: getComputedStyle(root.querySelector(".document-editor-document-stage")).zoom,
+  }));
+  assert(printContract.hiddenChrome, "Editor chrome marked data-print-hidden is still visible in print media.");
+  assert(["1", "normal"].includes(printContract.viewScale), `Print media did not reset the editor scale: ${printContract.viewScale}.`);
+  const pdfBuffer = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  const mediaBox = pdfBuffer.toString("latin1").match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/);
+  assert(mediaBox, "The printed Protocol PDF did not expose a page MediaBox.");
+  const [, pdfWidth, pdfHeight] = mediaBox.map(Number);
+  assert(Math.abs(pdfWidth - 595.28) < 2 && Math.abs(pdfHeight - 841.89) < 2, `Printed page is not A4: ${pdfWidth} × ${pdfHeight} pt.`);
+  await page.emulateMedia({ media: "screen" });
 }
 
 async function assertMobileSlice(page, routes) {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}${routes.detailHref}`, { waitUntil: "domcontentloaded" });
+  const detailRoot = page.locator('[data-density-slice="protocol"]');
+  await detailRoot.waitFor();
+  const mobileDetailState = await detailRoot.evaluate((slice) => ({
+    actionOverflow: getComputedStyle(slice.querySelector(".page-actions")).overflowX,
+    primaryActionHeight: slice.querySelector(".protocol-density-primary-action")?.getBoundingClientRect().height ?? 0,
+  }));
+  assert(["auto", "scroll"].includes(mobileDetailState.actionOverflow), `Mobile detail actions must scroll safely, got ${mobileDetailState.actionOverflow}.`);
+  assert(mobileDetailState.primaryActionHeight >= 36 && mobileDetailState.primaryActionHeight <= 40, `Mobile primary Protocol action must remain touch-friendly: ${mobileDetailState.primaryActionHeight}px.`);
+  await assertNoPageOverflow(page, "Protocol detail mobile");
+
+  if (screenshotDir) {
+    await mkdir(screenshotDir, { recursive: true });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({ path: path.join(screenshotDir, "protocol-density-slice-detail-mobile.png"), fullPage: true });
+  }
+
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const root = page.locator('[data-density-slice="protocol"]');
   await root.waitFor();
@@ -126,6 +180,7 @@ async function assertMobileSlice(page, routes) {
 
   if (screenshotDir) {
     await mkdir(screenshotDir, { recursive: true });
+    await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: path.join(screenshotDir, "protocol-density-slice-mobile.png"), fullPage: true });
   }
 }

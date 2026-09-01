@@ -68,7 +68,9 @@
   --ln-protocol-density-page-gap: 0.55rem; /* 页面标题、提示和文档工作区之间距离。 */
   --ln-protocol-density-title-size: 18px; /* Protocol 工作区外层标题字号。 */
   --ln-protocol-density-action-height: 1.875rem; /* 页头与保存区动作高度。 */
-  --ln-protocol-density-action-font-size: 12px; /* 页头与保存区动作字号。 */
+  --ln-protocol-density-primary-height: 2.25rem; /* 主操作保留 36px 的键盘与触控目标。 */
+  --ln-protocol-density-action-font-size: 13px; /* 页头与保存区动作字号。 */
+  --ln-protocol-density-tool-font-size: 12.5px; /* 文档工具条文字字号。 */
   --ln-protocol-density-toolbar-height: 2.25rem; /* A4 上方工具条高度。 */
   --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
   --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
@@ -516,6 +518,7 @@ textarea {
 .protocol-density-slice {
   --ln-document-outline-width: var(--ln-protocol-density-outline-width);
   --ln-document-workbench-gap: var(--ln-protocol-density-workbench-gap);
+  --ln-wysiwyg-toolbar-font-size: var(--ln-protocol-density-tool-font-size);
   display: grid;
   gap: var(--ln-protocol-density-page-gap);
   min-width: 0;
@@ -523,6 +526,14 @@ textarea {
 
 .protocol-density-slice > header h1 {
   font-size: var(--ln-protocol-density-title-size);
+  min-width: 0;
+}
+
+.protocol-density-slice > header,
+.protocol-density-slice > header > div,
+.protocol-density-slice > header > div > div {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .protocol-density-slice .page-actions {
@@ -534,6 +545,12 @@ textarea {
   font-size: var(--ln-protocol-density-action-font-size);
   height: var(--ln-protocol-density-action-height);
   min-height: var(--ln-protocol-density-action-height);
+}
+
+.protocol-density-slice .page-actions .protocol-density-primary-action,
+.protocol-density-slice .protocol-density-actionbar .protocol-density-primary-action {
+  height: var(--ln-protocol-density-primary-height);
+  min-height: var(--ln-protocol-density-primary-height);
 }
 
 .protocol-density-notice {
@@ -665,6 +682,10 @@ textarea {
   padding: 0.22rem 0.35rem;
 }
 
+.protocol-density-slice .document-canvas-toolbar > a {
+  font-size: var(--ln-protocol-density-tool-font-size);
+}
+
 .protocol-density-slice .document-editor-tabs,
 .protocol-density-slice .document-editor-zoom {
   border-radius: var(--ln-radius-control-md);
@@ -702,8 +723,6 @@ textarea {
 
 .protocol-density-actionbar button {
   font-size: var(--ln-protocol-density-action-font-size);
-  height: var(--ln-protocol-density-action-height);
-  min-height: var(--ln-protocol-density-action-height);
 }
 
 @media (max-width: 1023px) {
@@ -2681,6 +2700,17 @@ textarea {
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scrollbar-width: thin;
+  }
+
+  .protocol-density-slice > header > div,
+  .protocol-density-slice > header > div > div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .protocol-density-slice > header h1 {
+    flex: 1 1 12rem;
+    min-width: 0;
   }
 
   .protocol-density-actionbar {

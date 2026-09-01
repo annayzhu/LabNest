@@ -75,6 +75,8 @@
   --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
   --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
   --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
+  --ln-protocol-density-copy-line-height: 1.48; /* Protocol 详情与编辑正文保持紧凑，但为中文宋体增加呼吸感。 */
+  --ln-protocol-density-heading-line-height: 1.25; /* Protocol 文档内小标题稍微放松，避免衬线字上下拥挤。 */
 
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
@@ -516,6 +518,8 @@ textarea {
 }
 
 .protocol-density-slice {
+  --ln-document-copy-line-height: var(--ln-protocol-density-copy-line-height);
+  --ln-document-heading-line-height: var(--ln-protocol-density-heading-line-height);
   --ln-document-outline-width: var(--ln-protocol-density-outline-width);
   --ln-document-workbench-gap: var(--ln-protocol-density-workbench-gap);
   --ln-wysiwyg-toolbar-font-size: var(--ln-protocol-density-tool-font-size);

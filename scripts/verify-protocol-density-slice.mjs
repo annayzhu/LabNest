@@ -46,6 +46,7 @@ async function assertDesktopSlice(page, routes) {
     const paper = root.querySelector(".document-a4-paper");
     const title = header?.querySelector("h1");
     const primaryAction = header?.querySelector(".protocol-density-primary-action");
+    const documentCopy = root.querySelector(".document-copy");
     const headerRect = header?.getBoundingClientRect();
     const actionsRect = actions?.getBoundingClientRect();
     const paperRect = paper?.getBoundingClientRect();
@@ -56,6 +57,7 @@ async function assertDesktopSlice(page, routes) {
       documentGap: headerRect && paperRect ? paperRect.top - headerRect.bottom : Infinity,
       paperWidth: paperRect?.width ?? 0,
       primaryActionHeight: primaryAction?.getBoundingClientRect().height ?? 0,
+      copyLineHeightRatio: documentCopy ? Number.parseFloat(getComputedStyle(documentCopy).lineHeight) / Number.parseFloat(getComputedStyle(documentCopy).fontSize) : 0,
     };
   });
   assert(detailMetrics.titleSize >= 17 && detailMetrics.titleSize <= 20, `Protocol title is outside the 17–20px slice target: ${detailMetrics.titleSize}px.`);
@@ -63,6 +65,7 @@ async function assertDesktopSlice(page, routes) {
   assert(detailMetrics.primaryActionHeight >= 36 && detailMetrics.primaryActionHeight <= 40, `Primary Protocol action must remain 36–40px: ${detailMetrics.primaryActionHeight}px.`);
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
   assert(detailMetrics.paperWidth >= 790 && detailMetrics.paperWidth <= 798, `The 100% A4 width changed: ${detailMetrics.paperWidth}px.`);
+  assert(detailMetrics.copyLineHeightRatio >= 1.45 && detailMetrics.copyLineHeightRatio <= 1.55, `Protocol detail copy should use a relaxed 1.45–1.55 line-height ratio: ${detailMetrics.copyLineHeightRatio}.`);
   await page.locator(".protocol-export-menu > summary").click();
   assert(await page.locator(".protocol-export-menu-popover a").count() === 2, "The compact Export menu must expose both DOCX and JSON.");
   await assertNoPageOverflow(page, "Protocol detail desktop");
@@ -86,6 +89,7 @@ async function assertDesktopSlice(page, routes) {
     const saveBar = root.querySelector(".protocol-density-actionbar");
     const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar select");
     const contextRail = root.querySelector(".document-editor-context-rail");
+    const editableBody = root.querySelector('.document-a4-paper [contenteditable="true"]');
     return {
       headerHeight: header?.getBoundingClientRect().height ?? 0,
       viewbarHeight: viewbar?.getBoundingClientRect().height ?? 0,
@@ -96,6 +100,7 @@ async function assertDesktopSlice(page, routes) {
       toolbarFontSize: toolbarControl ? Number.parseFloat(getComputedStyle(toolbarControl).fontSize) : 0,
       outlineVisible: Boolean(root.querySelector(".document-editor-outline")) && getComputedStyle(root.querySelector(".document-editor-outline")).display !== "none",
       contextHidden: Boolean(contextRail) && getComputedStyle(contextRail).display === "none",
+      copyLineHeightRatio: editableBody ? Number.parseFloat(getComputedStyle(editableBody).lineHeight) / Number.parseFloat(getComputedStyle(editableBody).fontSize) : 0,
     };
   });
   assert(editMetrics.headerHeight <= 34, `Editor page header is too tall: ${editMetrics.headerHeight}px.`);
@@ -107,6 +112,7 @@ async function assertDesktopSlice(page, routes) {
   assert(editMetrics.toolbarFontSize >= 12 && editMetrics.toolbarFontSize <= 14, `Editor toolbar text is outside the readable 12–14px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
   assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
+  assert(editMetrics.copyLineHeightRatio >= 1.45 && editMetrics.copyLineHeightRatio <= 1.55, `Protocol editor copy should use a relaxed 1.45–1.55 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
   const documentTab = page.getByRole("tab", { name: "Document" });
   await documentTab.focus();
   await documentTab.press("ArrowRight");

@@ -170,18 +170,25 @@ async function assertSharedDocumentDensity(page) {
     metricProbe.className = "text-2xl";
     node.append(smallProbe, metricProbe);
     const utilityFontSizes = [smallProbe, metricProbe].map((probe) => Number.parseFloat(getComputedStyle(probe).fontSize));
+    const workspaceProbe = document.createElement("span");
+    workspaceProbe.className = "text-xs";
+    node.parentElement.append(workspaceProbe);
+    const workspaceUtilityFontSize = Number.parseFloat(getComputedStyle(workspaceProbe).fontSize);
     smallProbe.remove();
     metricProbe.remove();
+    workspaceProbe.remove();
     return {
       width: node.getBoundingClientRect().width,
       copyFontSize: Number.parseFloat(style.fontSize),
       copyLineHeightRatio: Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize),
       utilityFontSizes,
+      workspaceUtilityFontSize,
     };
   });
   assert(desktopMetrics.width >= 760 && desktopMetrics.width <= 798, `Shared document paper left its existing A4-constrained range: ${desktopMetrics.width}px.`);
   assert(desktopMetrics.copyLineHeightRatio >= 1.58 && desktopMetrics.copyLineHeightRatio <= 1.62, `Shared document copy should use 1.6 line height: ${desktopMetrics.copyLineHeightRatio}.`);
   assert.deepEqual(desktopMetrics.utilityFontSizes, [14, 24], `A4 Tailwind utility sizes must retain their document scale, got ${desktopMetrics.utilityFontSizes.join("/")}px.`);
+  assert.equal(desktopMetrics.workspaceUtilityFontSize, 11, `Screen-only document toolbar chrome should retain the compact UI scale, got ${desktopMetrics.workspaceUtilityFontSize}px.`);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}${detailHref}`, { waitUntil: "domcontentloaded" });

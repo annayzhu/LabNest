@@ -152,6 +152,15 @@ export async function saveProtocolDocument(
           },
         });
         savedVersionId = createdVersion.id;
+        const inheritedAttachmentLinks = await transaction.attachmentLink.findMany({
+          where: { targetType: "protocol_version", targetId: sourceVersion.id },
+          select: { attachmentId: true, linkType: true, order: true },
+        });
+        if (inheritedAttachmentLinks.length) {
+          await transaction.attachmentLink.createMany({
+            data: inheritedAttachmentLinks.map((link) => ({ ...link, targetType: "protocol_version", targetId: savedVersionId })),
+          });
+        }
       } else {
         await transaction.protocolVersion.update({ where: { id: sourceVersion.id }, data: versionData });
       }

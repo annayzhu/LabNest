@@ -67,6 +67,19 @@ describe("Protocol document structured projections", () => {
     ]);
   });
 
+  it("attaches a bullet after a checklist to the nearest execution step", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections.find((section) => section.key === "steps")!.blocks = [
+      { id: "steps-checklist", type: "checklist", items: ["Wash cells", "Collect pellet"] },
+      { id: "steps-detail", type: "rich_text", nodes: [{ type: "bullet", content: [{ text: "Keep the tube on ice" }] }] },
+    ];
+
+    expect(projectProtocolDocument(document).steps).toEqual([
+      expect.objectContaining({ order: 1, title: "Wash cells", description: "" }),
+      expect.objectContaining({ order: 2, title: "Collect pellet", description: "• Keep the tube on ice" }),
+    ]);
+  });
+
   it("uses the wider authoring line height without changing explicit saved line heights", () => {
     expect(DEFAULT_RICH_TEXT_LINE_HEIGHT).toBe(1.6);
   });

@@ -444,6 +444,12 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     currentHeading = undefined;
     currentDescription = [];
   };
+  const appendToLastProjectedStep = (text: string) => {
+    const lastStep = steps.at(-1);
+    if (!lastStep) return false;
+    lastStep.description = [lastStep.description, text].filter(Boolean).join("\n");
+    return true;
+  };
   for (const block of stepSection?.blocks ?? []) {
     if (block.type === "heading") { flushStep(); currentHeading = block.text; }
     if (block.type === "text") {
@@ -458,6 +464,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
           flushStep();
           currentHeading = text;
         } else if (currentHeading) currentDescription.push(node.type === "bullet" ? `• ${text}` : text);
+        else if (node.type === "bullet" && appendToLastProjectedStep(`• ${text}`)) continue;
         else { currentDescription.push(text); flushStep(); }
       }
     }

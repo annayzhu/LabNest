@@ -131,6 +131,7 @@ export function ProtocolDocumentEditor({
           onTogglePlan={togglePlan}
           onTogglePrimary={togglePrimary}
           initialManualLinks={initialManualRelevantLinks}
+          researchPlanProjectId={scope === "project" ? projectId : undefined}
         />}
       />
 

@@ -2,7 +2,7 @@
 
 import { Link2, LockKeyhole, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import {
   filterRelevantItemCatalog,
@@ -41,6 +41,7 @@ export function ProtocolRelevantItemsEditor({
   onTogglePlan,
   onTogglePrimary,
   initialManualLinks = [],
+  researchPlanProjectId,
 }: {
   plans: PlanOption[];
   catalog: RelevantCatalogItem[];
@@ -50,13 +51,42 @@ export function ProtocolRelevantItemsEditor({
   onTogglePlan: (id: string, checked: boolean) => void;
   onTogglePrimary: (id: string, checked: boolean) => void;
   initialManualLinks?: ManualRelevantLink[];
+  researchPlanProjectId?: string;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<RelevantCatalogType | "all">("all");
   const [manualLinks, setManualLinks] = useState<ManualRelevantLink[]>(initialManualLinks);
-  const planMap = useMemo(() => new Map(plans.map((item) => [item.id, item])), [plans]);
-  const catalogMap = useMemo(() => new Map(catalog.map((item) => [`${item.type}:${item.id}`, item])), [catalog]);
-  const filtered = useMemo(() => filterRelevantItemCatalog([...plans, ...catalog], query, type), [catalog, plans, query, type]);
+  const [remoteResults, setRemoteResults] = useState<RelevantCatalogItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  useEffect(() => {
+    const needle = query.trim();
+    if (!needle) return;
+    const controller = new AbortController();
+    const timeout = globalThis.setTimeout(async () => {
+      setSearching(true);
+      try {
+        const params = new URLSearchParams({ q: needle, type });
+        if (researchPlanProjectId) params.set("projectId", researchPlanProjectId);
+        const response = await fetch(`/api/protocols/relevant-items?${params}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Search failed");
+        const payload = await response.json() as { items?: RelevantCatalogItem[] };
+        setRemoteResults(payload.items ?? []);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setRemoteResults([]);
+      } finally {
+        if (!controller.signal.aborted) setSearching(false);
+      }
+    }, 180);
+    return () => { globalThis.clearTimeout(timeout); controller.abort(); };
+  }, [query, researchPlanProjectId, type]);
+  const combinedCatalog = useMemo(() => {
+    const unique = new Map<string, RelevantCatalogItem>();
+    for (const item of [...plans, ...catalog, ...(query.trim() ? remoteResults : [])]) unique.set(`${item.type}:${item.id}`, item);
+    return [...unique.values()];
+  }, [catalog, plans, query, remoteResults]);
+  const planMap = useMemo(() => new Map(combinedCatalog.filter((item): item is PlanOption => item.type === "research_plan" && Boolean(item.projectId && item.projectName)).map((item) => [item.id, item])), [combinedCatalog]);
+  const catalogMap = useMemo(() => new Map(combinedCatalog.map((item) => [`${item.type}:${item.id}`, item])), [combinedCatalog]);
+  const filtered = useMemo(() => filterRelevantItemCatalog(combinedCatalog, query, type), [combinedCatalog, query, type]);
   const selectedManualKeys = new Set(manualLinks.map((item) => `${item.type}:${item.id}`));
 
   const addManual = (item: RelevantCatalogItem) => {
@@ -89,7 +119,7 @@ export function ProtocolRelevantItemsEditor({
     </div>
 
     <div className="document-editor-relation-results" aria-live="polite">
-      <h3>{query ? "Search results" : "Available items"}<span>{filtered.length}</span></h3>
+      <h3>{query ? "Search results" : "Available items"}<span>{query.trim() && searching ? "Searching…" : filtered.length}</span></h3>
       {filtered.map((item) => {
         const selected = item.type === "research_plan" ? selectedPlanIds.includes(item.id) : selectedManualKeys.has(`${item.type}:${item.id}`);
         const locked = item.type === "version";

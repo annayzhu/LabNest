@@ -1,8 +1,10 @@
 "use client";
 
-import { FileText, Link2, ListTree, Maximize2, SlidersHorizontal } from "lucide-react";
+import { FileText, Link2, Maximize2, SlidersHorizontal } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { DocumentOutlinePanel } from "@/components/DocumentOutlinePanel";
+import type { DocumentOutlineItem } from "@/lib/document-outline";
 
 type WorkspaceTab = "document" | "metadata" | "relations";
 type ZoomMode = "100" | "110" | "fit";
@@ -20,12 +22,11 @@ export function DocumentEditorWorkspace({
   document: ReactNode;
   metadata: ReactNode;
   relations: ReactNode;
-  outline?: Array<{ id: string; label: string }>;
+  outline?: DocumentOutlineItem[];
   inspectorHostId?: string;
   className?: string;
 }) {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("document");
-  const [activeOutlineId, setActiveOutlineId] = useState(outline[0]?.id ?? "");
   const [zoomMode, setZoomMode] = useState<ZoomMode>("100");
   const [fitScale, setFitScale] = useState(1);
   const documentPanelRef = useRef<HTMLElement>(null);
@@ -51,29 +52,8 @@ export function DocumentEditorWorkspace({
     return () => observer.disconnect();
   }, [updateFitScale]);
 
-  useEffect(() => {
-    if (activeTab !== "document" || !outline.length) return;
-    const sections = outline
-      .map((item) => globalThis.document.getElementById(item.id))
-      .filter((element): element is HTMLElement => Boolean(element));
-    if (!sections.length) return;
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (visible?.target.id) setActiveOutlineId(visible.target.id);
-    }, { rootMargin: "-18% 0px -68% 0px", threshold: 0 });
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, [activeTab, outline]);
-
   const viewScale = zoomMode === "110" ? 1.1 : zoomMode === "fit" ? fitScale : 1;
   const viewStyle = { "--ln-document-view-scale": String(viewScale) } as CSSProperties;
-
-  function openOutlineItem(id: string) {
-    setActiveOutlineId(id);
-    globalThis.document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -101,12 +81,7 @@ export function DocumentEditorWorkspace({
     </div>
 
     <div className="document-editor-workbench" hidden={activeTab !== "document"}>
-      <aside className="document-editor-outline" aria-label="Document outline" data-print-hidden>
-        <div className="document-editor-outline-heading"><ListTree aria-hidden /><span>Outline</span></div>
-        <nav>
-          {outline.map((item) => <button key={item.id} type="button" className="focus-ring" data-active={activeOutlineId === item.id ? "true" : undefined} aria-current={activeOutlineId === item.id ? "location" : undefined} onClick={() => openOutlineItem(item.id)}>{item.label}</button>)}
-        </nav>
-      </aside>
+      <DocumentOutlinePanel items={outline} />
       <section id="document-editor-panel-document" aria-labelledby="document-editor-tab-document" ref={documentPanelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
         <div className="document-editor-document-stage">{document}</div>
       </section>

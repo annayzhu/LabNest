@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:protocol-density:e2e": "node scripts/verify-protocol-density-slice.mjs",
     "test:global-density:e2e": "node scripts/verify-global-density-rollout.mjs",
+    "test:document-outline:e2e": "node scripts/verify-document-outline-rollout.mjs",
     "test:typography:e2e": "node scripts/verify-typography-settings.mjs",
     "test:system-themes:e2e": "node scripts/verify-system-themes.mjs",
     "docker:up": "docker compose up -d --build app",

@@ -1404,6 +1404,10 @@ textarea {
   zoom: var(--ln-document-view-scale, 1);
 }
 
+.document-editor-document-stage :is(.ln-protocol-section, #entry-document-overview, #entry-document-content) {
+  scroll-margin-top: 5rem;
+}
+
 .document-editor-outline,
 .document-editor-context-rail {
   display: none;
@@ -1607,6 +1611,10 @@ textarea {
 
   .document-editor-document-panel {
     grid-column: 2;
+  }
+
+  .document-editor-document-stage {
+    min-width: 210mm;
   }
 
   .document-editor-document-stage > .document-workspace,
@@ -3722,14 +3730,26 @@ table :where(td) {
   }
 
   .app-shell-main > :has(.document-print-root) > :not(:has(.document-print-root)),
-  .document-editor-layout:has(.document-print-root) > :not(.document-editor-main),
-  .document-editor-main:has(.document-print-root) > :not(.document-print-root) {
+  .document-editor-layout:has(.document-print-root) > :not(.document-editor-main):not(:has(.document-print-root)),
+  .document-editor-main:has(.document-print-root) > :not(.document-print-root):not(.document-editor-workbench) {
+    display: none !important;
+  }
+
+  .entry-editor-main-column:has(.document-print-root) > :not(.document-editor-workbench),
+  .entry-editor-layout:has(.document-print-root) .entry-editor-sidebar-column {
     display: none !important;
   }
 
   .app-shell-main > :has(.document-print-root),
   .document-editor-layout:has(.document-print-root),
   .document-editor-main:has(.document-print-root) {
+    display: block !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .entry-editor-main-column:has(.document-print-root) {
     display: block !important;
     margin: 0 !important;
     max-width: none !important;
@@ -3776,6 +3796,7 @@ table :where(td) {
   }
 
   .document-editor-document-stage {
+    min-width: 0 !important;
     zoom: 1 !important;
   }
 

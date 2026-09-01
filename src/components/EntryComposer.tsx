@@ -139,6 +139,7 @@ export function EntryComposer({
 }) {
   const router = useRouter();
   const mediaInputPrefix = useId();
+  const toolbarHostId = `${mediaInputPrefix}-document-toolbar`;
   const imageInputId = `${mediaInputPrefix}-photos`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
   const fileInputId = `${mediaInputPrefix}-files`;
@@ -384,6 +385,7 @@ export function EntryComposer({
         label={fields.title || "Entry editor"}
         toolbar={
           <>
+            <div id={toolbarHostId} className="ln-document-toolbar-host" />
             <span className="mr-auto flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
               <Cloud className="h-3.5 w-3.5 shrink-0 text-moss" aria-hidden />
               <span className="max-w-48 truncate sm:max-w-72">{draftStatus || "Draft recovery is ready"}</span>
@@ -419,6 +421,7 @@ export function EntryComposer({
           onChange={(value) => updateField("contentMarkdown", value)}
           placeholder="Observation, decision, deviation, or follow-up…"
           minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
+          toolbarHostId={toolbarHostId}
         />
       </DocumentCanvas>
 

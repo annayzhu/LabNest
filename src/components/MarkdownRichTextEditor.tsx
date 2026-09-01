@@ -11,6 +11,7 @@ export function MarkdownRichTextEditor({
   placeholder = "Start writing…",
   minHeightClass = "min-h-48",
   autoFocus = false,
+  toolbarHostId,
   className,
 }: {
   value: string;
@@ -18,6 +19,7 @@ export function MarkdownRichTextEditor({
   placeholder?: string;
   minHeightClass?: string;
   autoFocus?: boolean;
+  toolbarHostId?: string;
   className?: string;
 }) {
   const content = useMemo(() => markdownRichTextToTiptap(value), [value]);
@@ -27,6 +29,7 @@ export function MarkdownRichTextEditor({
     placeholder={placeholder}
     minHeightClass={minHeightClass}
     autoFocus={autoFocus}
+    toolbarHostId={toolbarHostId}
     className={className}
   />;
 }

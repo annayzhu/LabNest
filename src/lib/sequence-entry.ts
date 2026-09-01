@@ -5,6 +5,15 @@ export type SequencePairTypeValue = "primer_pair" | "sirna_duplex";
 export type SequencePairRoleValue = "forward" | "reverse" | "sense" | "antisense";
 export type SequenceCreateCategory = "dna-rna" | "amino-acid" | "oligo" | "primer-pair" | "sirna-duplex";
 
+const pairDefinitions = {
+  primer_pair: { designType: "primer", moleculeType: "DNA", roles: ["forward", "reverse"], label: "Primer pair" },
+  sirna_duplex: { designType: "siRNA", moleculeType: "RNA", roles: ["sense", "antisense"], label: "siRNA duplex" },
+} as const satisfies Record<SequencePairTypeValue, { designType: "primer" | "siRNA"; moleculeType: "DNA" | "RNA"; roles: readonly [SequencePairRoleValue, SequencePairRoleValue]; label: string }>;
+
+export function sequencePairDefinition(type: SequencePairTypeValue) {
+  return pairDefinitions[type];
+}
+
 type SequenceCreationPreset = {
   recordKind: SequenceRecordKindValue;
   entryClass: SequenceEntryClassValue;
@@ -75,7 +84,7 @@ export function collectionTypeIsPair(value: string): value is SequencePairTypeVa
 }
 
 export function sequencePairRoles(type: SequencePairTypeValue): readonly [SequencePairRoleValue, SequencePairRoleValue] {
-  return type === "primer_pair" ? ["forward", "reverse"] : ["sense", "antisense"];
+  return sequencePairDefinition(type).roles;
 }
 
 export function sequenceWorkflowLabel(type: string) {

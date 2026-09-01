@@ -22,7 +22,7 @@ import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
-import { normalizeSequenceOwnership, sequencePairRoles } from "@/lib/sequence-entry";
+import { normalizeSequenceOwnership, sequencePairDefinition, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
 
 const featureSchema = z.object({
@@ -312,7 +312,7 @@ function preparePairInput(value: unknown) {
   const roleMap = new Map(parsed.members.map((member) => [member.role, member.sequence]));
   const orderedMembers = roles.map((role) => ({ role, sequence: roleMap.get(role) ?? "" }));
   const ownership = normalizeSequenceOwnership(parsed.ownershipScope, parsed.projectId);
-  const moleculeType: MoleculeType = pairType === "primer_pair" ? "DNA" : "RNA";
+  const moleculeType: MoleculeType = sequencePairDefinition(pairType).moleculeType;
   const members = orderedMembers.map((member) => {
     const validation = validateSequence(member.sequence, moleculeType, { allowTerminalDeoxythymidineOverhang: pairType === "sirna_duplex" });
     if (validation.errors.length) throw new Error(`${member.role}: ${validation.errors.join(" ")}`);
@@ -369,7 +369,7 @@ async function createPairInTransaction(tx: Prisma.TransactionClient, input: Pair
         name: `${input.name} · ${member.role}`,
         entryClass: "oligo",
         ownershipScope: input.ownershipScope,
-        designType: input.pairType === "primer_pair" ? "primer" : "siRNA",
+        designType: sequencePairDefinition(input.pairType).designType,
         status: input.status,
         description: input.description,
         projectId: input.projectId,
@@ -876,7 +876,7 @@ export async function importSequences(_previousState: SequenceManageState, formD
         if (item.kind === "pair") await createPairInTransaction(tx, item.input, { type: sourceType, fileName: file.name });
         else await createSequenceInTransaction(tx, item.input, { type: sourceType, fileName: file.name });
       }
-    });
+    }, { maxWait: 15_000, timeout: 120_000 });
     revalidatePath("/sequences");
     return { success: `${prepared.length} sequence ${prepared.length === 1 ? "entry" : "entries"} imported.` };
   } catch (error) {
@@ -891,7 +891,7 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
     await prisma.$transaction(async (tx) => {
       const [singleRecords, pairRecords] = await Promise.all([
         tx.sequence.findMany({ where: { id: { in: ids }, pairMembership: { is: null } }, select: { id: true } }),
-        tx.sequencePair.findMany({ where: { id: { in: ids } }, select: { id: true, members: { select: { sequenceId: true }, orderBy: { order: "asc" } } } }),
+        tx.sequencePair.findMany({ where: { id: { in: ids } }, select: { id: true, type: true, members: { select: { sequenceId: true }, orderBy: { order: "asc" } } } }),
       ]);
       const singleIds = singleRecords.map((record) => record.id);
       const pairIds = pairRecords.map((record) => record.id);
@@ -945,19 +945,9 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
       }
       if (intent === "set_type") {
         const designType = z.enum(SequenceDesignType).parse(formData.get("type"));
-        if (pairIds.length && designType !== "primer" && designType !== "siRNA") throw new Error("Paired entries can only be changed between Primer pair and siRNA duplex.");
+        if (pairIds.length && designType !== "primer" && designType !== "siRNA") throw new Error("Paired entries can only keep their Primer pair or siRNA duplex type.");
+        if (pairRecords.some((pair) => sequencePairDefinition(pair.type).designType !== designType)) throw new Error("Primer pairs and siRNA duplexes cannot be converted into each other because their DNA/RNA member versions are immutable. Create a new paired entry instead.");
         if (singleIds.length) await tx.sequence.updateMany({ where: { id: { in: singleIds } }, data: { designType } });
-        if (pairIds.length) {
-          const pairType = designType === "primer" ? "primer_pair" : "sirna_duplex";
-          const roles = sequencePairRoles(pairType);
-          await tx.sequencePair.updateMany({ where: { id: { in: pairIds } }, data: { type: pairType } });
-          for (const pair of pairRecords) {
-            for (const [order, member] of pair.members.entries()) {
-              await tx.sequencePairMember.update({ where: { sequenceId: member.sequenceId }, data: { role: roles[order], order } });
-              await tx.sequence.update({ where: { id: member.sequenceId }, data: { designType, entryClass: "oligo" } });
-            }
-          }
-        }
         await tx.activityLog.create({
           data: {
             action: "update",

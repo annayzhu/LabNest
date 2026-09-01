@@ -3,6 +3,7 @@ import {
   collectionTypeIsPair,
   normalizeSequenceOwnership,
   sequenceCreationPreset,
+  sequencePairDefinition,
 } from "./sequence-entry";
 
 describe("sequence creation presets", () => {
@@ -37,6 +38,11 @@ describe("sequence creation presets", () => {
       roles: ["sense", "antisense"],
       moleculeType: "RNA",
     });
+  });
+
+  it("keeps molecule and design semantics tied to the pair type", () => {
+    expect(sequencePairDefinition("primer_pair")).toMatchObject({ designType: "primer", moleculeType: "DNA", roles: ["forward", "reverse"] });
+    expect(sequencePairDefinition("sirna_duplex")).toMatchObject({ designType: "siRNA", moleculeType: "RNA", roles: ["sense", "antisense"] });
   });
 });
 

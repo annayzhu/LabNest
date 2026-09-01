@@ -42,6 +42,9 @@ export const sequenceValidationStatuses = [
 ] as const;
 
 export const sequenceCollectionTypes = [
+  { value: "primer_panel", label: "Primer panel", roles: ["member"] },
+  { value: "sirna_series", label: "siRNA series", roles: ["member"] },
+  { value: "sequence_series", label: "Sequence series", roles: ["member"] },
   { value: "shrna_construct", label: "shRNA construct", roles: ["guide", "loop", "antisense", "full_hairpin"] },
   { value: "probe_panel", label: "Probe panel", roles: ["probe"] },
   { value: "plasmid_construct", label: "Plasmid construct", roles: ["backbone", "insert", "full_construct"] },

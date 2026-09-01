@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Filter, Layers3, Plus, Search, Upload, X } from "lucide-react";
+import { Filter, Layers3, Plus, Search, Upload } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
@@ -64,7 +64,6 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
   }).sort((a, b) => sort === "name_asc" ? a.name.localeCompare(b.name) : sort === "code_asc" ? a.code.localeCompare(b.code) : b.updatedAt.getTime() - a.updatedAt.getTime());
   const totalCount = singleTotal + pairTotal;
   const activeFilterCount = [query, designType, moleculeType, status, validationStatus].filter(Boolean).length;
-  const hasActiveView = activeFilterCount > 0 || sort !== "updated_desc";
   const filterFormId = "sequence-table-filters";
   const exportHref = filterHref("/sequences/export", { exportScope: "filtered", q: query, designType, moleculeType, status, validationStatus, sort });
 
@@ -80,11 +79,6 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
               <SequenceMobileFilters query={query} designType={designType} moleculeType={moleculeType} status={status} validationStatus={validationStatus} sort={sort} activeFilterCount={activeFilterCount} />
               <span className="whitespace-nowrap font-mono text-xs text-muted">{sequences.length === totalCount ? `${totalCount} records` : `${sequences.length} of ${totalCount}`}</span>
               <span className="hidden whitespace-nowrap text-xs text-muted sm:inline">{`${collectionCount} ${collectionCount === 1 ? "collection" : "collections"}`}</span>
-              <div className="hidden items-center gap-1.5 md:flex">
-                <select form={filterFormId} name="sort" defaultValue={sort} aria-label="Sort Sequences" className={`${tableFilterClass} w-36`}><option value="updated_desc">Recently updated</option><option value="name_asc">Name A–Z</option><option value="code_asc">Sequence code</option></select>
-                <button form={filterFormId} type="submit" className={filterApplyButtonClass}><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button>
-                {hasActiveView ? <Link href="/sequences" className={filterClearButtonClass}><X className="h-3.5 w-3.5" aria-hidden />Clear</Link> : null}
-              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link href="/sequences/collections" className={collectionSecondaryActionClass}><Layers3 className="h-4 w-4" aria-hidden />Collections</Link>
@@ -134,7 +128,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
                 {
                   key: "status",
                   className: "hidden md:table-cell",
-                  header: <SequenceColumnFilter label="Lifecycle" className="md:min-w-28"><select form={filterFormId} name="status" defaultValue={status ?? ""} aria-label="Filter Sequences by lifecycle" className={tableFilterClass}><option value="">All lifecycle</option>{sequenceLifecycleStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></SequenceColumnFilter>,
+                  header: <SequenceColumnFilter label="Lifecycle / apply" className="md:min-w-52"><div className="grid grid-cols-[1fr_auto] gap-1.5"><select form={filterFormId} name="status" defaultValue={status ?? ""} aria-label="Filter Sequences by lifecycle" className={tableFilterClass}><option value="">All lifecycle</option>{sequenceLifecycleStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select><button form={filterFormId} type="submit" className={filterApplyButtonClass}><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button><select form={filterFormId} name="sort" defaultValue={sort} aria-label="Sort Sequences" className={`${tableFilterClass} col-span-2`}><option value="updated_desc">Recently updated</option><option value="name_asc">Name A–Z</option><option value="code_asc">Sequence code</option></select>{activeFilterCount > 0 || sort !== "updated_desc" ? <Link href="/sequences" className={`${filterClearButtonClass} col-span-2 justify-center`}>Clear filters</Link> : null}</div></SequenceColumnFilter>,
                   render: (row) => <div className="space-y-1"><StatusPill status={row.status} /><p className="text-xs text-muted">{row.kind === "paired" ? "1 paired entry" : `${row.entityLinkCount} design ${row.entityLinkCount === 1 ? "link" : "links"}`}</p></div>,
                 },
               ]}

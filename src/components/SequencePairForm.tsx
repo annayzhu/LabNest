@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { sequenceLifecycleStatuses, sequenceValidationStatuses } from "@/lib/sequence-registry";
-import { sequencePairRoles, type SequencePairTypeValue } from "@/lib/sequence-entry";
+import { sequencePairDefinition, type SequencePairTypeValue } from "@/lib/sequence-entry";
 import { estimatedMeltingTemperature, gcPercent, sequenceLength } from "@/lib/sequence";
 
 const initialState: FormActionState = {};
@@ -23,8 +23,9 @@ export function SequencePairForm({
   initialProjectId?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
-  const roles = sequencePairRoles(pairType);
-  const moleculeType = pairType === "primer_pair" ? "DNA" : "RNA";
+  const definition = sequencePairDefinition(pairType);
+  const roles = definition.roles;
+  const moleculeType = definition.moleculeType;
   const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initialProjectId ? "project" : "library");
   const [sequences, setSequences] = useState<Record<string, string>>(Object.fromEntries(roles.map((role) => [role, ""])));
   const metrics = useMemo(() => Object.fromEntries(roles.map((role) => [role, {
@@ -37,7 +38,7 @@ export function SequencePairForm({
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="pairType" value={pairType} />
       <Card>
-        <CardHeader title={pairType === "primer_pair" ? "Primer pair" : "siRNA duplex"} />
+        <CardHeader title={definition.label} />
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="md:col-span-2">
             <span className={formLabelClass}>Pair name *</span>

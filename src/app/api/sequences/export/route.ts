@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const status = exportScope === "all" ? undefined : search.get("status") || undefined;
   const moleculeType = exportScope === "all" ? undefined : search.get("moleculeType") || undefined;
   const validationStatus = exportScope === "all" ? undefined : search.get("validationStatus") || undefined;
-  const textFilter = q ? { OR: [{ code: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { targetName: { contains: q, mode: "insensitive" as const } }, { organism: { contains: q, mode: "insensitive" as const } }] } : {};
+  const textFilter = q ? { OR: [{ code: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { targetName: { contains: q, mode: "insensitive" as const } }, { organism: { contains: q, mode: "insensitive" as const } }, { description: { contains: q, mode: "insensitive" as const } }] } : {};
 
   const [records, pairs] = await Promise.all([
     prisma.sequence.findMany({

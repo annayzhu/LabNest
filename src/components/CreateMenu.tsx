@@ -81,6 +81,12 @@ const mobileItems = [
   { label: "Oligo", href: "/sequences/new?category=oligo" },
   { label: "Primer pair", href: "/sequences/new?category=primer-pair" },
   { label: "siRNA duplex", href: "/sequences/new?category=sirna-duplex" },
+  { label: "Alignment", href: "/sequences/workflows/new?type=alignment" },
+  { label: "Assembly", href: "/sequences/workflows/new?type=assembly" },
+  { label: "CRISPR", href: "/sequences/workflows/new?type=crispr" },
+  { label: "Entity from schema", href: "/entities/new" },
+  { label: "Mixture recipe", href: "/entities/new?type=mixture&mixtureKind=recipe" },
+  { label: "Mixture preparation", href: "/entities/new?type=mixture&mixtureKind=preparation" },
   { label: "Add Sample", href: "/samples" },
 ];
 

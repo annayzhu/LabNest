@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Editor } from "@tiptap/core";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Plus, Quote, Redo2, Strikethrough, Table2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { RICH_TEXT_FONT_SIZES_PT } from "@/lib/rich-text-font-size";
 import { RICH_TEXT_LINE_HEIGHTS } from "@/lib/rich-text-line-height";
 
@@ -90,7 +91,7 @@ export function DocumentWysiwygToolbar({
         <button type="button" data-active={editor.isActive("link") || undefined} onClick={setLink}><Link2 aria-hidden />Add / edit link</button>
         <button type="button" disabled={!editor.isActive("link")} onClick={() => editor.chain().focus().unsetLink().run()}><Unlink aria-hidden />Remove link</button>
         <button type="button" onClick={() => editor.chain().focus().unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
-        <button type="button" onClick={() => editor.chain().focus().setColor("#9c4848").run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
+        <button type="button" onClick={() => editor.chain().focus().setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
       </div>
     </details>
     {insertActions.length ? <details className="ln-wysiwyg-insert-menu">

@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Extension, mergeAttributes, Node, type Editor, type JSONContent } from "@tiptap/core";
+import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { TableKit } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import TextAlign from "@tiptap/extension-text-align";
@@ -33,6 +32,8 @@ import {
 } from "@/lib/protocol-document";
 import { protocolDocumentToTiptap, tiptapToProtocolDocument } from "@/lib/protocol-tiptap";
 import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/result-templates";
+import { labToolManifest } from "@/lib/tool-manifest";
+import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
 type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "table" }>;
 
@@ -91,87 +92,17 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
   </NodeViewWrapper>;
 }
 
-const ProtocolSection = Node.create({
-  name: "protocolSection",
-  group: "block",
-  content: "block*",
-  defining: true,
-  isolating: true,
-  addAttributes() {
-    return { sectionKey: { default: "description" } };
-  },
-  parseHTML() {
-    return [{ tag: "section[data-protocol-section]", getAttrs: (element) => ({ sectionKey: (element as HTMLElement).dataset.protocolSection }) }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["section", mergeAttributes(HTMLAttributes, { "data-protocol-section": HTMLAttributes.sectionKey }), 0];
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(ProtocolSectionNodeView);
-  },
-});
+const ProtocolSection = createDocumentSectionExtension({ name: "protocolSection", tag: "section[data-protocol-section]", attributes: { sectionKey: { default: "description", htmlAttribute: "data-protocol-section" } }, nodeView: ReactNodeViewRenderer(ProtocolSectionNodeView) });
+const ProtocolWidget = createDocumentWidgetExtension({ name: "protocolWidget", htmlAttribute: "data-protocol-widget", nodeView: ReactNodeViewRenderer(ProtocolWidgetNodeView) });
+const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "protocolLegacyAttributes", attributes: [
+  { name: "protocolBlockId", htmlAttribute: "data-protocol-block-id" },
+  { name: "protocolBlockType", htmlAttribute: "data-protocol-block-type" },
+  { name: "protocolLineHeight", htmlAttribute: "data-labnest-line-height" },
+  { name: "protocolFontFamily", htmlAttribute: "data-labnest-font-family" },
+  { name: "protocolCaption", htmlAttribute: "data-protocol-caption" },
+] });
 
-const ProtocolWidget = Node.create({
-  name: "protocolWidget",
-  group: "block",
-  atom: true,
-  draggable: true,
-  isolating: true,
-  addAttributes() {
-    return { block: { default: null } };
-  },
-  parseHTML() {
-    return [{
-      tag: "div[data-protocol-widget]",
-      getAttrs: (element) => {
-        try { return { block: JSON.parse((element as HTMLElement).dataset.protocolWidget ?? "null") }; }
-        catch { return { block: null }; }
-      },
-    }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["div", { "data-protocol-widget": JSON.stringify(HTMLAttributes.block) }];
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(ProtocolWidgetNodeView);
-  },
-});
-
-const ProtocolLegacyAttributes = Extension.create({
-  name: "protocolLegacyAttributes",
-  addGlobalAttributes() {
-    return [{
-      types: ["paragraph", "heading", "blockquote", "bulletList", "orderedList", "taskList", "table"],
-      attributes: {
-        protocolBlockId: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-protocol-block-id"),
-          renderHTML: (attributes) => attributes.protocolBlockId ? { "data-protocol-block-id": attributes.protocolBlockId } : {},
-        },
-        protocolBlockType: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-protocol-block-type"),
-          renderHTML: (attributes) => attributes.protocolBlockType ? { "data-protocol-block-type": attributes.protocolBlockType } : {},
-        },
-        protocolLineHeight: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-labnest-line-height"),
-          renderHTML: (attributes) => attributes.protocolLineHeight ? { "data-labnest-line-height": attributes.protocolLineHeight } : {},
-        },
-        protocolFontFamily: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-labnest-font-family"),
-          renderHTML: (attributes) => attributes.protocolFontFamily ? { "data-labnest-font-family": attributes.protocolFontFamily } : {},
-        },
-        protocolCaption: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-protocol-caption"),
-          renderHTML: (attributes) => attributes.protocolCaption ? { "data-protocol-caption": attributes.protocolCaption } : {},
-        },
-      },
-    }];
-  },
-});
+const plateMapPlannerUrl = labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl ?? "/tools";
 
 function insertWidget(editor: Editor, block: WidgetBlock) {
   editor.chain().focus().insertContent({ type: "protocolWidget", attrs: { block } }).run();
@@ -187,7 +118,7 @@ function protocolInsertActions(): WysiwygInsertAction[] {
       const resultTemplate = createDefaultResultTemplate("measurement");
       insertWidget(editor, { id: uniqueBlockId("result-template"), type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
     } },
-    { id: "plate-map", icon: <FlaskConical aria-hidden />, label: "Plate Map Planner", description: "Persistent link to the tool", run: (editor) => insertWidget(editor, { id: uniqueBlockId("plate-map"), type: "media", mediaType: "file", url: "/tools/free-plate-layout/index.html?v=20260826-2", caption: "Plate Map Planner" }) },
+    { id: "plate-map", icon: <FlaskConical aria-hidden />, label: "Plate Map Planner", description: "Persistent link to the tool", run: (editor) => insertWidget(editor, { id: uniqueBlockId("plate-map"), type: "media", mediaType: "file", url: plateMapPlannerUrl, caption: "Plate Map Planner" }) },
   ];
 }
 
@@ -204,7 +135,7 @@ export function ProtocolWysiwygEditor({ document, onChange }: { document: Protoc
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TableKit.configure({ table: { resizable: true, cellMinWidth: 54, allowTableNodeSelection: true } }),
+      createResizableDocumentTableExtension(),
       TaskList,
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder: "Write the protocol here…" }),

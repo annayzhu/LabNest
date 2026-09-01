@@ -100,8 +100,16 @@ export function buildExperimentResultReportTemplate(
   const fields = new Map<string, ResultTemplate["fields"][number]>();
   const datasets = new Map<string, NonNullable<ResultTemplate["datasets"]>[number]>();
   const artifacts = new Map<string, NonNullable<ResultTemplate["artifacts"]>[number]>();
+  const instructions: NonNullable<ResultTemplate["instructions"]> = [];
 
-  selected.forEach(({ template }) => {
+  selected.forEach(({ protocolCode, protocolTitle, displayVersion, template }) => {
+    const templateInstructions = (template.instructions ?? []).filter((node) => node.content.some((run) => run.text.trim()));
+    if (templateInstructions.length) {
+      instructions.push({
+        type: "heading3",
+        content: [{ text: `${template.title ?? template.result_type} · ${protocolCode?.trim() || protocolTitle} · v${displayVersion}`, bold: true }],
+      }, ...templateInstructions);
+    }
     template.fields.forEach((field) => {
       const key = evidenceKey(field.key, field.label ?? field.name, field.unit);
       const existing = fields.get(key);
@@ -171,6 +179,7 @@ export function buildExperimentResultReportTemplate(
     templateKey: EXPERIMENT_RESULT_REPORT_KEY,
     title: EXPERIMENT_RESULT_TYPE,
     cardinality: "per_run",
+    instructions: instructions.length ? instructions : undefined,
     fields: reportFields,
     datasets: [...datasets.values()],
     artifacts: [...artifacts.values()],

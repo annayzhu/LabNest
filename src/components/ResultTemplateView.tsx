@@ -1,5 +1,6 @@
 import { BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ProtocolRichTextContent } from "@/components/ProtocolDocumentView";
 import { ResultDatasetTableView } from "@/components/ResultDatasetTable";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import {
@@ -45,6 +46,8 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
 
   return <div className={compactDocument ? "result-template-view space-y-2" : "result-template-view space-y-5"}>
     {validation.errors?.length || validation.warnings?.length ? <ValidationSummary errors={validation.errors} warnings={validation.warnings} status={validationStatus} /> : null}
+
+    {template.instructions?.length ? <section className="rounded-[8px] border border-sage/35 bg-sage-surface/35 px-3 py-2.5"><p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p><div className="text-xs leading-5 text-graphite"><ProtocolRichTextContent nodes={template.instructions} /></div></section> : null}
 
     {compactDocument && documentFields.length ? <dl className="result-document-fields grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">{documentFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="min-w-0"><dt className="text-[9px] font-semibold uppercase leading-3 tracking-[0.06em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-0.5 break-words text-xs leading-4 text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl> : null}
 

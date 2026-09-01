@@ -9,6 +9,7 @@ import {
   type ProtocolRichTextRun,
   type ProtocolSectionKey,
 } from "@/lib/protocol-document";
+import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
@@ -35,7 +36,11 @@ function marksFromRun(run: ProtocolRichTextRun): TiptapMark[] | undefined {
   if (run.strike) marks.push({ type: "strike" });
   if (run.code) marks.push({ type: "code" });
   if (run.link) marks.push({ type: "link", attrs: { href: run.link } });
-  if (run.fontSizePt) marks.push({ type: "textStyle", attrs: { fontSize: `${run.fontSizePt}pt` } });
+  const textStyle = {
+    ...(run.fontSizePt ? { fontSize: `${run.fontSizePt}pt` } : {}),
+    ...(run.color === "risk" ? { color: RICH_TEXT_RISK_COLOR_HEX } : {}),
+  };
+  if (Object.keys(textStyle).length) marks.push({ type: "textStyle", attrs: textStyle });
   return marks.length ? marks : undefined;
 }
 
@@ -106,10 +111,16 @@ export function protocolRichTextToTiptap(nodes: ProtocolRichTextNode[]): JSONCon
   return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text") };
 }
 
-function tableCell(text: string, header: boolean): JSONContent {
+function tableCell(text: string, header: boolean, width?: number | null, fontSizePt?: number | null): JSONContent {
+  const marks = fontSizePt ? [{ type: "textStyle", attrs: { fontSize: `${fontSizePt}pt` } }] : undefined;
+  const content = text.split("\n").flatMap((line, index) => [
+    ...(index ? [{ type: "hardBreak" } satisfies JSONContent] : []),
+    ...(line ? [{ type: "text", text: line, marks } satisfies JSONContent] : []),
+  ]);
   return {
     type: header ? "tableHeader" : "tableCell",
-    content: [{ type: "paragraph", content: textContent(text) }],
+    attrs: width ? { colwidth: [Math.round(width)] } : undefined,
+    content: [{ type: "paragraph", content }],
   };
 }
 
@@ -124,7 +135,7 @@ function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>):
     },
     content: rows.map((row, rowIndex) => ({
       type: "tableRow",
-      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0)),
+      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0, block.columnWidths?.[columnIndex], block.cellFontSizesPt?.[rowIndex]?.[columnIndex])),
     })),
   };
 }
@@ -200,6 +211,7 @@ function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRich
     if (node.type === "text") {
       const marks = node.marks ?? [];
       const link = marks.find((mark) => mark.type === "link")?.attrs?.href;
+      const textStyle = marks.find((mark) => mark.type === "textStyle");
       append({
         text: node.text ?? "",
         bold: marks.some((mark) => mark.type === "bold") || undefined,
@@ -208,7 +220,8 @@ function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRich
         strike: marks.some((mark) => mark.type === "strike") || undefined,
         code: marks.some((mark) => mark.type === "code") || undefined,
         link: typeof link === "string" ? link : undefined,
-        fontSizePt: fontSizeFromMark(marks.find((mark) => mark.type === "textStyle")),
+        color: parseRichTextColor(textStyle?.attrs?.color),
+        fontSizePt: fontSizeFromMark(textStyle),
       });
       return;
     }
@@ -266,6 +279,33 @@ function rowsFromTable(node: JSONContent): string[][] {
   return (node.content ?? []).map((row) => (row.content ?? []).map((cell) => plainText(cell)));
 }
 
+function tableColumnWidths(node: JSONContent) {
+  const widths = (node.content?.[0]?.content ?? []).map((cell) => {
+    const value = Array.isArray(cell.attrs?.colwidth) ? Number(cell.attrs.colwidth[0]) : NaN;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  });
+  return widths.some((value) => value !== null) ? widths : undefined;
+}
+
+function cellFontSizePt(cell: JSONContent) {
+  const sizes = new Set<number>();
+  const visit = (node: JSONContent) => {
+    if (node.type === "text") {
+      const value = node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
+      const size = typeof value === "string" ? Number.parseFloat(value) : Number(value);
+      if ([8, 9, 10, 11, 12, 14].includes(size)) sizes.add(size);
+    }
+    node.content?.forEach(visit);
+  };
+  visit(cell);
+  return sizes.size === 1 ? [...sizes][0] as 8 | 9 | 10 | 11 | 12 | 14 : null;
+}
+
+function tableCellFontSizes(node: JSONContent) {
+  const sizes = (node.content ?? []).map((row) => (row.content ?? []).map(cellFontSizePt));
+  return sizes.some((row) => row.some((value) => value !== null)) ? sizes : undefined;
+}
+
 function taskItems(node: JSONContent): string[] {
   return (node.content ?? []).map((item) => plainText(item));
 }
@@ -295,7 +335,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     const identity = blockIdentity(node);
     if (node.type === "table") {
-      blocks.push({ id: identity.id, type: "table", caption: node.attrs?.protocolCaption ?? "", rows: rowsFromTable(node) });
+      blocks.push({ id: identity.id, type: "table", caption: node.attrs?.protocolCaption ?? "", rows: rowsFromTable(node), columnWidths: tableColumnWidths(node), cellFontSizesPt: tableCellFontSizes(node) });
       index += 1;
       continue;
     }

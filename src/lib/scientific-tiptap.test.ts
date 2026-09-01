@@ -11,9 +11,9 @@ describe("scientific Tiptap compatibility boundary", () => {
         title: "Analysis",
         blocks: [
           { id: "heading-1", type: "heading", text: "Primary analysis" },
-          { id: "text-1", type: "text", text: "<!--labnest-line-height:2-->**Signal** with ++underlining++\n- first\n- second" },
+          { id: "text-1", type: "text", text: "<!--labnest-line-height:2-->**Signal** with <mark data-labnest-color=\"risk\"><span data-labnest-size=\"12\">++underlining++</span></mark>\n- first\n- second" },
           { id: "check-1", type: "checklist", items: ["Confirm QC", "Review outlier"] },
-          { id: "table-1", type: "table", caption: "Measurements", rows: [["Sample", "Value"], ["A", "1.2"]] },
+          { id: "table-1", type: "table", caption: "Measurements", rows: [["Sample", "Value"], ["A", "1.2"]], columnWidths: [160, 100], cellFontSizesPt: [[10, 10], [9, 9]] },
           { id: "metric-1", type: "metric", label: "Mean", value: "1.2", unit: "ng/µL" },
         ],
       }],

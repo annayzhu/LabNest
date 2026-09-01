@@ -119,6 +119,7 @@ export type ResultTemplateInstructionRun = {
   strike?: boolean;
   code?: boolean;
   link?: string;
+  color?: "risk";
   fontSizePt?: 8 | 9 | 10 | 11 | 12 | 14;
 };
 

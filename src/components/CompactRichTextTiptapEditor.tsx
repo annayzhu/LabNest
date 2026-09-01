@@ -12,12 +12,13 @@ import Typography from "@tiptap/extension-typography";
 import { DocumentWysiwygToolbar } from "@/components/DocumentWysiwygToolbar";
 import { cn } from "@/lib/cn";
 
-export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, className }: {
+export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, className }: {
   content: JSONContent;
   onChange: (content: JSONContent) => void;
   placeholder?: string;
   minHeightClass?: string;
   autoFocus?: boolean;
+  showToolbar?: boolean;
   className?: string;
 }) {
   const onChangeRef = useRef(onChange);
@@ -45,7 +46,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
   return <div className={cn("ln-compact-rich-editor", className)}>
-    <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" />
+    {showToolbar ? <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" /> : null}
     <EditorContent editor={editor} />
   </div>;
 }

@@ -2,6 +2,7 @@ import { unlink } from "node:fs/promises";
 import { readManagedDataset, resolveDatasetPath } from "@/lib/result-datasets";
 import { prisma } from "@/lib/db";
 import { refreshResultValidation } from "@/lib/result-validation";
+import { cleanupErrorMessage, runPostCommitCleanup } from "@/lib/post-commit-cleanup";
 
 export const runtime = "nodejs";
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -22,7 +23,18 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     prisma.activityLog.create({ data: { action: "delete_dataset", targetType: "result", targetId: dataset.resultId, metadataJson: { datasetId: dataset.id, name: dataset.name, checksum: dataset.checksum } } }),
     prisma.resultDataset.delete({ where: { id: dataset.id } }),
   ]);
-  if (dataset.storagePath) await unlink(resolveDatasetPath(dataset.storagePath)).catch((error: NodeJS.ErrnoException) => { if (error.code !== "ENOENT") throw error; });
-  await refreshResultValidation(dataset.resultId);
-  return Response.json({ removed: true });
+  const cleanupWarnings = await runPostCommitCleanup([
+    ...(dataset.storagePath ? [{ name: "remove dataset storage", run: async () => {
+      await unlink(resolveDatasetPath(dataset.storagePath!)).catch((error: NodeJS.ErrnoException) => { if (error.code !== "ENOENT") throw error; });
+    } }] : []),
+    { name: "refresh result validation", run: async () => { await refreshResultValidation(dataset.resultId); } },
+  ], async (taskName, error) => {
+    await prisma.activityLog.create({ data: {
+      action: "dataset_cleanup_pending",
+      targetType: "result",
+      targetId: dataset.resultId,
+      metadataJson: { datasetId: dataset.id, taskName, error: cleanupErrorMessage(error) },
+    } });
+  });
+  return Response.json({ removed: true, cleanupWarnings });
 }

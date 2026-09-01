@@ -1,5 +1,6 @@
 import type { JSONContent } from "@tiptap/core";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
+import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
 import { parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
@@ -7,13 +8,20 @@ import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/ric
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
-const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
+const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
 
 function uniqueId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function mergeMarks(base: TiptapMark[] | undefined, mark: TiptapMark): TiptapMark[] {
+  if (mark.type === "textStyle") {
+    const current = base?.find((item) => item.type === "textStyle");
+    return [...(base ?? []).filter((item) => item.type !== "textStyle"), {
+      type: "textStyle",
+      attrs: { ...(current?.attrs ?? {}), ...(mark.attrs ?? {}) },
+    }];
+  }
   return [...(base ?? []).filter((item) => item.type !== mark.type), mark];
 }
 
@@ -21,6 +29,8 @@ function inlineMarkdownToTiptap(value: string, inheritedMarks?: TiptapMark[]): J
   const content = value.split(inlinePattern).filter(Boolean).flatMap((part): JSONContent[] => {
     const sized = parseLabNestFontSizeToken(part);
     if (sized) return inlineMarkdownToTiptap(sized.content, mergeMarks(inheritedMarks, { type: "textStyle", attrs: { fontSize: `${sized.size}pt` } })) ?? [];
+    const colored = parseLabNestColorToken(part);
+    if (colored) return inlineMarkdownToTiptap(colored.content, mergeMarks(inheritedMarks, { type: "textStyle", attrs: { color: RICH_TEXT_RISK_COLOR_HEX } })) ?? [];
     if (part.startsWith("**") && part.endsWith("**")) return inlineMarkdownToTiptap(part.slice(2, -2), mergeMarks(inheritedMarks, { type: "bold" })) ?? [];
     if (part.startsWith("~~") && part.endsWith("~~")) return inlineMarkdownToTiptap(part.slice(2, -2), mergeMarks(inheritedMarks, { type: "strike" })) ?? [];
     if (part.startsWith("++") && part.endsWith("++")) return inlineMarkdownToTiptap(part.slice(2, -2), mergeMarks(inheritedMarks, { type: "underline" })) ?? [];
@@ -98,12 +108,13 @@ export function markdownRichTextToTiptap(value: string): JSONContent {
   return { type: "doc", content: markdownToTiptap(value, "standalone-rich-text") };
 }
 
-function tableCell(value: string, header: boolean): JSONContent {
+function tableCell(value: string, header: boolean, width?: number | null, fontSizePt?: number | null): JSONContent {
+  const marks = fontSizePt ? [{ type: "textStyle", attrs: { fontSize: `${fontSizePt}pt` } }] : undefined;
   const content = value.split("\n").flatMap((line, index) => [
     ...(index ? [{ type: "hardBreak" } satisfies JSONContent] : []),
-    ...(line ? [{ type: "text", text: line } satisfies JSONContent] : []),
+    ...(line ? [{ type: "text", text: line, marks } satisfies JSONContent] : []),
   ]);
-  return { type: header ? "tableHeader" : "tableCell", content: [{ type: "paragraph", content }] };
+  return { type: header ? "tableHeader" : "tableCell", attrs: width ? { colwidth: [Math.round(width)] } : undefined, content: [{ type: "paragraph", content }] };
 }
 
 function tableToTiptap(block: Extract<ScientificContentBlock, { type: "table" }>): JSONContent {
@@ -114,7 +125,7 @@ function tableToTiptap(block: Extract<ScientificContentBlock, { type: "table" }>
     attrs: { ...legacyAttrs(block.id, "table"), scientificCaption: block.caption ?? "" },
     content: rows.map((row, rowIndex) => ({
       type: "tableRow",
-      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0)),
+      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0, block.columnWidths?.[columnIndex], block.cellFontSizesPt?.[rowIndex]?.[columnIndex])),
     })),
   };
 }
@@ -162,8 +173,10 @@ function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
     if (marks.some((mark) => mark.type === "bold")) value = `**${value}**`;
     const link = marks.find((mark) => mark.type === "link")?.attrs?.href;
     if (typeof link === "string" && /^https?:\/\//i.test(link)) value = `[${value}](${link})`;
-    const fontSize = marks.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
+    const textStyle = marks.find((mark) => mark.type === "textStyle");
+    const fontSize = textStyle?.attrs?.fontSize;
     if (typeof fontSize === "string" && [8, 9, 10, 11, 12, 14].includes(Number.parseFloat(fontSize))) value = `<span data-labnest-size="${Number.parseFloat(fontSize)}">${value}</span>`;
+    if (parseRichTextColor(textStyle?.attrs?.color) === "risk") value = `<mark data-labnest-color="risk">${value}</mark>`;
     return value;
   }).join("");
 }
@@ -207,6 +220,33 @@ function rowsFromTable(node: JSONContent) {
   return (node.content ?? []).map((row) => (row.content ?? []).map((cell) => plainText(cell)));
 }
 
+function tableColumnWidths(node: JSONContent) {
+  const widths = (node.content?.[0]?.content ?? []).map((cell) => {
+    const value = Array.isArray(cell.attrs?.colwidth) ? Number(cell.attrs.colwidth[0]) : NaN;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  });
+  return widths.some((value) => value !== null) ? widths : undefined;
+}
+
+function cellFontSizePt(cell: JSONContent) {
+  const sizes = new Set<number>();
+  const visit = (node: JSONContent) => {
+    if (node.type === "text") {
+      const value = node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
+      const size = typeof value === "string" ? Number.parseFloat(value) : Number(value);
+      if ([8, 9, 10, 11, 12, 14].includes(size)) sizes.add(size);
+    }
+    node.content?.forEach(visit);
+  };
+  visit(cell);
+  return sizes.size === 1 ? [...sizes][0] as 8 | 9 | 10 | 11 | 12 | 14 : null;
+}
+
+function tableCellFontSizes(node: JSONContent) {
+  const sizes = (node.content ?? []).map((row) => (row.content ?? []).map(cellFontSizePt));
+  return sizes.some((row) => row.some((value) => value !== null)) ? sizes : undefined;
+}
+
 function safeWidget(node: JSONContent) {
   const parsed = scientificContentBlockSchema.safeParse(node.attrs?.block);
   return parsed.success ? parsed.data : undefined;
@@ -232,7 +272,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     }
     const nodeIdentity = identity(node);
     if (node.type === "table") {
-      blocks.push({ id: nodeIdentity.id ?? uniqueId("table"), type: "table", caption: node.attrs?.scientificCaption ?? "", rows: rowsFromTable(node) });
+      blocks.push({ id: nodeIdentity.id ?? uniqueId("table"), type: "table", caption: node.attrs?.scientificCaption ?? "", rows: rowsFromTable(node), columnWidths: tableColumnWidths(node), cellFontSizesPt: tableCellFontSizes(node) });
       index += 1;
       continue;
     }

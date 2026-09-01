@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Extension, mergeAttributes, Node, type Editor, type JSONContent } from "@tiptap/core";
+import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { TableKit } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import TextAlign from "@tiptap/extension-text-align";
@@ -25,6 +24,7 @@ import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
+import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
 type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" }>;
 
@@ -79,87 +79,18 @@ function ScientificWidgetNodeView({ node, updateAttributes, deleteNode, selected
   </NodeViewWrapper>;
 }
 
-const ScientificSection = Node.create({
-  name: "scientificSection",
-  group: "block",
-  content: "block*",
-  defining: true,
-  isolating: true,
-  addAttributes() {
-    return { sectionKey: { default: "section" }, sectionTitle: { default: "Section" } };
-  },
-  parseHTML() {
-    return [{ tag: "section[data-scientific-section]", getAttrs: (element) => ({ sectionKey: (element as HTMLElement).dataset.scientificSection, sectionTitle: (element as HTMLElement).dataset.sectionTitle }) }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["section", mergeAttributes(HTMLAttributes, { "data-scientific-section": HTMLAttributes.sectionKey, "data-section-title": HTMLAttributes.sectionTitle }), 0];
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(ScientificSectionNodeView);
-  },
-});
-
-const ScientificWidget = Node.create({
-  name: "scientificWidget",
-  group: "block",
-  atom: true,
-  draggable: true,
-  isolating: true,
-  addAttributes() {
-    return { block: { default: null } };
-  },
-  parseHTML() {
-    return [{
-      tag: "div[data-scientific-widget]",
-      getAttrs: (element) => {
-        try { return { block: JSON.parse((element as HTMLElement).dataset.scientificWidget ?? "null") }; }
-        catch { return { block: null }; }
-      },
-    }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["div", { "data-scientific-widget": JSON.stringify(HTMLAttributes.block) }];
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(ScientificWidgetNodeView);
-  },
-});
-
-const ScientificLegacyAttributes = Extension.create({
-  name: "scientificLegacyAttributes",
-  addGlobalAttributes() {
-    return [{
-      types: ["paragraph", "heading", "blockquote", "bulletList", "orderedList", "taskList", "table"],
-      attributes: {
-        scientificBlockId: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-scientific-block-id"),
-          renderHTML: (attributes) => attributes.scientificBlockId ? { "data-scientific-block-id": attributes.scientificBlockId } : {},
-        },
-        scientificBlockType: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-scientific-block-type"),
-          renderHTML: (attributes) => attributes.scientificBlockType ? { "data-scientific-block-type": attributes.scientificBlockType } : {},
-        },
-        scientificLineHeight: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-labnest-line-height"),
-          renderHTML: (attributes) => attributes.scientificLineHeight ? { "data-labnest-line-height": attributes.scientificLineHeight } : {},
-        },
-        scientificFontFamily: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-labnest-font-family"),
-          renderHTML: (attributes) => attributes.scientificFontFamily ? { "data-labnest-font-family": attributes.scientificFontFamily } : {},
-        },
-        scientificCaption: {
-          default: null,
-          parseHTML: (element) => element.getAttribute("data-scientific-caption"),
-          renderHTML: (attributes) => attributes.scientificCaption ? { "data-scientific-caption": attributes.scientificCaption } : {},
-        },
-      },
-    }];
-  },
-});
+const ScientificSection = createDocumentSectionExtension({ name: "scientificSection", tag: "section[data-scientific-section]", attributes: {
+  sectionKey: { default: "section", htmlAttribute: "data-scientific-section" },
+  sectionTitle: { default: "Section", htmlAttribute: "data-section-title" },
+}, nodeView: ReactNodeViewRenderer(ScientificSectionNodeView) });
+const ScientificWidget = createDocumentWidgetExtension({ name: "scientificWidget", htmlAttribute: "data-scientific-widget", nodeView: ReactNodeViewRenderer(ScientificWidgetNodeView) });
+const ScientificLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "scientificLegacyAttributes", attributes: [
+  { name: "scientificBlockId", htmlAttribute: "data-scientific-block-id" },
+  { name: "scientificBlockType", htmlAttribute: "data-scientific-block-type" },
+  { name: "scientificLineHeight", htmlAttribute: "data-labnest-line-height" },
+  { name: "scientificFontFamily", htmlAttribute: "data-labnest-font-family" },
+  { name: "scientificCaption", htmlAttribute: "data-scientific-caption" },
+] });
 
 function insertWidget(editor: Editor, block: ScientificWidgetBlock) {
   editor.chain().focus().insertContent({ type: "scientificWidget", attrs: { block } }).run();
@@ -225,7 +156,7 @@ export function ScientificWysiwygEditor({ document, hiddenSectionKeys = [], allo
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TableKit.configure({ table: { resizable: true, cellMinWidth: 54, allowTableNodeSelection: true } }),
+      createResizableDocumentTableExtension(),
       TaskList,
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder: "Write directly in the document…" }),

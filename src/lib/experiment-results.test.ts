@@ -81,4 +81,19 @@ describe("experiment result recording", () => {
 
     expect(buildExperimentResultReportTemplate(modules).fields).toHaveLength(2);
   });
+
+  it("keeps each selected Protocol template instruction in the experiment report snapshot", () => {
+    const modules = buildExperimentResultRecording([
+      { ...sources[0], resultTemplatesJson: [{ result_type: "RNA", templateKey: "rna", instructions: [{ type: "paragraph", content: [{ text: "Record the extraction batch." }] }], fields: [] }] },
+      { ...sources[0], protocolVersionId: "pv-2", protocolCode: "PRT-100009", protocolTitle: "NanoDrop", displayVersion: "0.1", resultTemplatesJson: [{ result_type: "QC", templateKey: "qc", instructions: [{ type: "paragraph", content: [{ text: "Keep the raw instrument export." }] }], fields: [] }] },
+    ], []).modules;
+
+    const report = buildExperimentResultReportTemplate(modules);
+    expect(report.instructions?.map((node) => node.content.map((run) => run.text).join(""))).toEqual([
+      "RNA · PRT-100008 · v0.2",
+      "Record the extraction batch.",
+      "QC · PRT-100009 · v0.1",
+      "Keep the raw instrument export.",
+    ]);
+  });
 });

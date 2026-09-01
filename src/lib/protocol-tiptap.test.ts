@@ -12,7 +12,7 @@ describe("Protocol Tiptap compatibility layer", () => {
       type: "rich_text",
       nodes: [
         { type: "heading2", content: [{ text: "RNA extraction", bold: true, fontSizePt: 12 }], lineHeight: 1.5, fontFamily: "serif" },
-        { type: "paragraph", content: [{ text: "Keep samples cold.", italic: true }] },
+        { type: "paragraph", content: [{ text: "Keep samples cold.", italic: true, color: "risk", fontSizePt: 11 }] },
       ],
     }];
     document.sections.find((section) => section.key === "material")!.blocks = [{
@@ -20,6 +20,8 @@ describe("Protocol Tiptap compatibility layer", () => {
       type: "table",
       caption: "Materials",
       rows: [["Name", "Unit"], ["Buffer", "mL"]],
+      columnWidths: [180, 90],
+      cellFontSizesPt: [[10, 10], [9, 9]],
     }];
     document.sections.find((section) => section.key === "steps")!.blocks = [
       { id: "step-heading", type: "heading", text: "1. Prepare sample" },

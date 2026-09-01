@@ -1,6 +1,7 @@
 import { readFile, unlink } from "node:fs/promises";
 import { resolveAttachmentPath } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
+import { cleanupErrorMessage, runPostCommitCleanup } from "@/lib/post-commit-cleanup";
 
 export const runtime = "nodejs";
 
@@ -51,12 +52,23 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (!remainingLinks.length) await tx.attachment.delete({ where: { id: attachment.id } });
   });
 
-  if (!remainingLinks.length) await unlink(resolveAttachmentPath(attachment.storagePath)).catch((error: NodeJS.ErrnoException) => {
-    if (error.code !== "ENOENT") throw error;
+  const cleanupWarnings = await runPostCommitCleanup([
+    ...(!remainingLinks.length ? [{ name: "remove attachment storage", run: async () => {
+      await unlink(resolveAttachmentPath(attachment.storagePath)).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") throw error;
+      });
+    } }] : []),
+    ...(link?.targetType === "result" ? [{ name: "refresh result validation", run: async () => {
+      const { refreshResultValidation } = await import("@/lib/result-validation");
+      await refreshResultValidation(link.targetId);
+    } }] : []),
+  ], async (taskName, error) => {
+    await prisma.activityLog.create({ data: {
+      action: "attachment_cleanup_pending",
+      targetType: link?.targetType ?? "attachment",
+      targetId: link?.targetId ?? attachment.id,
+      metadataJson: { attachmentId: attachment.id, taskName, error: cleanupErrorMessage(error) },
+    } });
   });
-  if (link?.targetType === "result") {
-    const { refreshResultValidation } = await import("@/lib/result-validation");
-    await refreshResultValidation(link.targetId);
-  }
-  return Response.json({ removed: true, deletedOriginal: !remainingLinks.length });
+  return Response.json({ removed: true, deletedOriginal: !remainingLinks.length, cleanupWarnings });
 }

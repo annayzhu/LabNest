@@ -84,6 +84,7 @@ const resultTemplateInstructionRunSchema = z.object({
   strike: z.boolean().optional(),
   code: z.boolean().optional(),
   link: z.string().optional(),
+  color: z.literal("risk").optional(),
   fontSizePt: z.union([z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(14)]).optional(),
 });
 

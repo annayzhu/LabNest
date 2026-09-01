@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { Download } from "lucide-react";
+import Link from "next/link";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorWorkspace } from "@/components/DocumentEditorWorkspace";
 import { DocumentPageHeader } from "@/components/DocumentPageHeader";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ProtocolDocument } from "@/lib/protocol-document";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
+import { labToolManifest } from "@/lib/tool-manifest";
 
 export type ProtocolEditorState = { error?: string };
 export type ProtocolEditorAction = (
@@ -23,6 +25,14 @@ export type ProtocolEditorAction = (
 
 type ProjectOption = { id: string; name: string };
 type ResearchPlanOption = { id: string; code?: string | null; title: string; projectId: string; projectName: string };
+type RelevantLink = { id: string; label: string; meta?: string; href: string };
+type ProtocolRelevantItems = {
+  projects?: RelevantLink[];
+  experiments?: RelevantLink[];
+  results?: RelevantLink[];
+  attachments?: RelevantLink[];
+  versions?: RelevantLink[];
+};
 
 const initialState: ProtocolEditorState = {};
 const textareaClass = `${formTextareaClass} min-h-16 resize-y leading-[var(--ln-rich-text-default-line-height)]`;
@@ -38,6 +48,7 @@ export function ProtocolDocumentEditor({
   researchPlans,
   initialResearchPlanIds = [],
   initialPrimaryResearchPlanIds = [],
+  relevantItems = {},
 }: {
   action: ProtocolEditorAction;
   mode: "create" | "edit";
@@ -49,6 +60,7 @@ export function ProtocolDocumentEditor({
   researchPlans: ResearchPlanOption[];
   initialResearchPlanIds?: string[];
   initialPrimaryResearchPlanIds?: string[];
+  relevantItems?: ProtocolRelevantItems;
 }) {
   const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const [document, setDocument] = useState(initialDocument);
@@ -114,7 +126,8 @@ export function ProtocolDocumentEditor({
           </div>
         </section>}
         relations={<section className="document-editor-properties-card" aria-label="Protocol relevant items">
-          <header><p>Workflow relationship</p><h2>Research plans</h2><span>A Protocol can support multiple Research Plans. Mark the principal method for each relevant plan.</span></header>
+          <header><p>Workflow relationship</p><h2>Relevant items</h2><span>Manage plans here; linked records remain compact, traceable, and one click away.</span></header>
+          <div className="border-b border-hairline px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Research plans</p></div>
           <div className="document-editor-relation-list editorial-scrollbar">
             {visiblePlans.length ? visiblePlans.map((plan) => {
               const checked = selectedPlanIds.includes(plan.id);
@@ -125,6 +138,10 @@ export function ProtocolDocumentEditor({
               </div>;
             }) : <p className="px-3 py-6 text-center text-sm text-muted">No Research Plans are available for this scope.</p>}
           </div>
+          <div className="grid gap-1.5 border-t border-hairline p-2.5">
+            {(["projects", "experiments", "results", "attachments", "versions"] as const).map((group) => <ProtocolRelevantLinkGroup key={group} label={group === "versions" ? "Version history" : group[0].toUpperCase() + group.slice(1)} items={relevantItems[group] ?? []} />)}
+            <ProtocolRelevantLinkGroup label="Tools" items={[{ id: "plate-planner", label: "Plate Map Planner", meta: "Open planning tool", href: plateMapPlannerUrl }]} />
+          </div>
         </section>}
       />
 
@@ -132,4 +149,13 @@ export function ProtocolDocumentEditor({
       <div className="sticky bottom-4 z-20 flex justify-end"><Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
     </form>
   );
+}
+
+const plateMapPlannerUrl = labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl ?? "/tools";
+
+function ProtocolRelevantLinkGroup({ label, items }: { label: string; items: RelevantLink[] }) {
+  return <details className="rounded-[7px] border border-hairline bg-warm/35" open={items.length > 0 && items.length <= 3 ? true : undefined}>
+    <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-graphite marker:hidden"><span>{label}</span><span className="ml-auto font-mono text-[10px] text-muted">{items.length}</span></summary>
+    <div className="grid gap-px border-t border-hairline bg-hairline">{items.length ? items.map((item) => <Link key={item.id} href={item.href} className="flex min-w-0 items-center gap-2 bg-surface px-2.5 py-1.5 text-xs hover:bg-stone"><span className="min-w-0 flex-1 truncate font-medium text-ink">{item.label}</span>{item.meta ? <span className="shrink-0 text-[10px] text-muted">{item.meta}</span> : null}</Link>) : <p className="bg-surface px-2.5 py-1.5 text-[11px] text-muted">None linked</p>}</div>
+  </details>;
 }

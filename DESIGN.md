@@ -141,6 +141,12 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 **The Semantic Pair Rule.** Success, warning, error, and info foregrounds always travel with their matching pale surface and a textual or iconic cue.
 
+### Selectable system styles
+
+Settings exposes four browser-local system styles. Each style remaps the same semantic roles rather than changing component behavior: 月白黛青 is the restrained default; 法蓝赪霞 is the brighter cyan-coral option; 青瓷松石 is a soft green work surface; 藕荷砚墨 is a warmer editorial option. Theme selection applies immediately, persists in the current browser, and never changes scientific chart palettes or exported figure colors.
+
+Traditional motifs are a small identity layer, not a replacement for functional iconography. The LabNest brand mark uses an authored 回纹-style geometry; theme previews may use 回纹、祥云、莲瓣 or linked-diamond motifs in one consistent monoline SVG grammar. Navigation, saving, deleting, search, status, and scientific actions retain familiar Lucide icons so cultural character never weakens operational clarity.
+
 ## Typography
 
 **Display Font:** Source Serif 4 with editorial serif fallbacks
@@ -156,7 +162,7 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 - **Body:** Regular sans-serif for descriptions and instructions, normally at the body token or the smaller label scale.
 - **Label:** Medium sans-serif for fields, controls, and section-level microcopy.
 - **Data:** Monospace for numeric results and provenance metadata; units may be smaller but remain adjacent to their values.
-- **Responsive display:** Existing LabNest working surfaces use a 21px mobile title that steps to the 24px display token at medium widths.
+- **Working page title:** Repeated operational pages use the 20px title token at every viewport; reserve the 24px display token for true module identity or editorial reading surfaces.
 
 ### Named Rules
 

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { AppShell } from "@/components/AppShell";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
+import { SystemThemePicker } from "@/components/SystemThemePicker";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -53,10 +54,14 @@ export default async function SettingsPage() {
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Configuration"
           title="Settings"
-          description="AI is optional and disabled by default. The switch only permits AI workflows; users must still choose the exact text or files sent to an external model."
+          description="Choose how LabNest looks and manage optional system capabilities."
         />
+
+        <Card>
+          <CardHeader title="System style" />
+          <CardBody><SystemThemePicker /></CardBody>
+        </Card>
 
         <Card>
           <CardHeader

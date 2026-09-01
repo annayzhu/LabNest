@@ -24,6 +24,9 @@ export default async function RootLayout({
 
   return (
     <html lang={locale === "zh" ? "zh-CN" : "en"} data-locale={locale} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('labnest.system-theme');if(t)document.documentElement.dataset.labnestTheme=t}catch(e){}})()` }} />
+      </head>
       <body className="overflow-x-hidden">
         <MobileBackGestureGuard />
         <I18nProvider initialLocale={locale}>{children}</I18nProvider>

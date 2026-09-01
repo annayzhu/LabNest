@@ -9,7 +9,7 @@
   --surface: #ffffff; /* 主卡片和文档纸张白色背景。 */
   --ink: #202825; /* 墨色：主要文字颜色。 */
   --graphite: #4d5955; /* 松烟灰：正文和次级正文颜色。 */
-  --muted: #6f7a76; /* 竹灰：标签、说明、弱信息文字颜色。 */
+  --muted: #5f6d68; /* 竹灰：标签、说明、弱信息文字颜色。 */
   --disabled: #a5ada9; /* 禁用状态文字或图标颜色。 */
   --moss: #3f625d; /* 黛青：品牌主色，用于重点按钮、图标和链接。 */
   --action: #3f625d; /* 可点击主操作默认色。 */
@@ -34,6 +34,9 @@
   --hairline: #dfe5e1; /* 默认细边框颜色。 */
   --border-strong: #c8d2cd; /* 较明显边框颜色。 */
   --divider: rgba(32, 40, 37, 0.075); /* 弱分割线颜色。 */
+  --brand-mark-bg: #3f625d; /* 品牌纹样底色。 */
+  --brand-mark-fg: #ffffff; /* 品牌纹样前景色。 */
+  --brand-mark-border: #34534f; /* 品牌纹样边框。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
   --font-editorial: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif; /* 文档标题和纸面排版的衬线字体。 */
@@ -279,6 +282,90 @@
   --ln-experiment-protocol-picker-badge-size: 10.5px; /* 最新版本/历史版本标签字号。 */
 }
 
+html[data-labnest-theme="azure-coral"] {
+  --paper: #f5fafb;
+  --warm: #fbfdfe;
+  --stone: #eaf5f7;
+  --sand-panel: #dceef2;
+  --ink: #20282b;
+  --graphite: #47595e;
+  --muted: #586c72;
+  --disabled: #a3b0b3;
+  --moss: #147d99;
+  --action: #147d99;
+  --action-hover: #106b84;
+  --action-surface: #def3f7;
+  --action-surface-hover: #d2edf3;
+  --action-border: #a9dbe6;
+  --sage: #30aecf;
+  --sage-surface: #e4f6fa;
+  --fog: #4a7f8c;
+  --fog-surface: #e8f4f6;
+  --clay: #de7565;
+  --pale-sand: #f9e7e3;
+  --hairline: #d8e6e9;
+  --border-strong: #bdd3d8;
+  --brand-mark-bg: #147d99;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #116b83;
+}
+
+html[data-labnest-theme="celadon-pine"] {
+  --paper: #f5f8f2;
+  --warm: #fbfcf8;
+  --stone: #edf2e8;
+  --sand-panel: #e1e9dc;
+  --ink: #222a25;
+  --graphite: #4b5a51;
+  --muted: #5d6d63;
+  --disabled: #a6afa9;
+  --moss: #397568;
+  --action: #397568;
+  --action-hover: #2f6257;
+  --action-surface: #e5f1ec;
+  --action-surface-hover: #dbeae4;
+  --action-border: #c4d9cf;
+  --sage: #6f9c88;
+  --sage-surface: #eaf3ee;
+  --fog: #5f7c70;
+  --fog-surface: #edf3ef;
+  --clay: #b17859;
+  --pale-sand: #f3e8df;
+  --hairline: #dde5da;
+  --border-strong: #c7d2c3;
+  --brand-mark-bg: #397568;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #2f6257;
+}
+
+html[data-labnest-theme="lotus-ink"] {
+  --paper: #faf6f4;
+  --warm: #fdfaf8;
+  --stone: #f3ecec;
+  --sand-panel: #ebe1e3;
+  --ink: #2a2528;
+  --graphite: #5a4e54;
+  --muted: #6d5d65;
+  --disabled: #aea4a9;
+  --moss: #75556b;
+  --action: #75556b;
+  --action-hover: #624659;
+  --action-surface: #f1e8ee;
+  --action-surface-hover: #eadee6;
+  --action-border: #ddcbd7;
+  --sage: #9a7a90;
+  --sage-surface: #f3ebf0;
+  --fog: #796674;
+  --fog-surface: #f3edef;
+  --clay: #c06f5d;
+  --pale-sand: #f7e6e1;
+  --hairline: #e8dedf;
+  --border-strong: #d5c7ca;
+  --brand-mark-bg: #75556b;
+  --brand-mark-fg: #ffffff;
+  --brand-mark-border: #624659;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-warm: var(--warm);
@@ -398,12 +485,12 @@ textarea {
 }
 
 .page-actions :where(a, button) {
-  height: 2rem;
-  min-height: 2rem;
-  border-radius: 7px;
+  height: 1.875rem;
+  min-height: 1.875rem;
+  border-radius: 6px;
   box-shadow: none;
-  padding-inline: 0.65rem;
-  font-size: 13px;
+  padding-inline: 0.6rem;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.005em;
   line-height: 1;
@@ -648,6 +735,79 @@ textarea {
 .document-editor-settings-toggle svg {
   height: 0.875rem;
   width: 0.875rem;
+}
+
+.system-theme-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.system-theme-option {
+  align-items: center;
+  background: var(--warm);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-panel-inner);
+  display: flex;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  padding: 0.75rem;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.system-theme-option:focus-within {
+  outline: 2px solid var(--fog);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 15%, transparent);
+}
+
+.system-theme-option:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.system-theme-option[data-selected="true"] {
+  background: var(--action-surface);
+  border-color: var(--action-border);
+}
+
+.system-theme-preview {
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: var(--ln-radius-control-md);
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-rows: 1fr 1fr;
+  height: 2.8rem;
+  overflow: hidden;
+  position: relative;
+  width: 4.25rem;
+}
+
+.system-theme-preview > :first-child {
+  grid-row: 1 / -1;
+}
+
+.system-theme-preview-motif {
+  color: #ffffff;
+  height: 1.55rem;
+  position: absolute;
+  right: 0.28rem;
+  top: 0.62rem;
+  width: 1.55rem;
+}
+
+.brand-mark {
+  background: var(--brand-mark-bg);
+  border-color: var(--brand-mark-border);
+  color: var(--brand-mark-fg);
+  transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out;
+}
+
+@media (max-width: 760px) {
+  .system-theme-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .document-editor-main {
@@ -1091,6 +1251,13 @@ textarea {
   flex: 1 1 auto;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.ln-document-toolbar-host::-webkit-scrollbar {
+  display: none;
 }
 
 .ln-document-toolbar-host .ln-wysiwyg-toolbar-sticky {
@@ -1104,7 +1271,8 @@ textarea {
 
 .ln-document-toolbar-host .ln-wysiwyg-toolbar {
   flex-wrap: nowrap;
-  overflow-x: auto;
+  min-width: max-content;
+  overflow: visible;
   padding: 0;
 }
 
@@ -1964,12 +2132,12 @@ textarea {
   border-bottom: 0;
   border-radius: 10px 10px 0 0;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
   justify-content: flex-start;
   margin-inline: auto;
   max-width: 210mm;
-  min-height: 3.25rem;
-  padding: 0.5rem 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.5rem;
   position: sticky;
   top: 0.75rem;
   z-index: 25;
@@ -2438,7 +2606,8 @@ table :where(td) {
   }
 
   .document-canvas-toolbar {
-    overflow-x: auto;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   main > .space-y-6,

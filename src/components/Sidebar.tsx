@@ -13,7 +13,6 @@ import {
   Dna,
   FolderKanban,
   Home,
-  Link2,
   Lightbulb,
   Menu,
   PanelLeftClose,
@@ -25,6 +24,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+import { TraditionalMotif } from "@/components/TraditionalMotif";
 import { cn } from "@/lib/cn";
 
 const sidebarStorageKey = "labnest.sidebar.collapsed";
@@ -101,8 +101,8 @@ export function Sidebar() {
             collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
           )}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-action-border bg-action-surface text-moss">
-            <Link2 className="h-4 w-4" aria-hidden />
+          <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border">
+            <TraditionalMotif motif="huiwen" className="h-[18px] w-[18px]" aria-hidden />
           </span>
           <span className={cn("text-[15px] font-semibold tracking-[-0.02em] text-ink", collapsed && "sr-only")}>LabNest</span>
         </Link>

@@ -17,16 +17,16 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("flex flex-col gap-2 md:min-h-9 md:flex-row md:items-center md:justify-between", className)}>
+    <header className={cn("flex flex-col gap-2 md:min-h-8 md:flex-row md:items-center md:justify-between", className)}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {identifier ? <span className="font-mono text-[11px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}
-          <h1 className="break-words font-serif text-[21px] font-medium leading-tight tracking-[-0.015em] text-ink md:text-[24px]">
+          {identifier ? <span className="font-mono text-[10px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}
+          <h1 className="break-words font-serif text-[20px] font-medium leading-[1.25] tracking-[-0.012em] text-ink">
             {title}
           </h1>
         </div>
       </div>
-      {actions ? <div className="page-actions flex flex-wrap gap-2">{actions}</div> : null}
+      {actions ? <div className="page-actions flex flex-wrap gap-1.5">{actions}</div> : null}
     </header>
   );
 }

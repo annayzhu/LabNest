@@ -62,6 +62,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
   const [features, setFeatures] = useState<FeatureDraft[]>(initial.latestVersion?.features ?? []);
   const [modifications, setModifications] = useState<ModificationDraft[]>(initial.latestVersion?.modifications ?? []);
   const metadataFields = designMetadataFields[designType] ?? [];
+  const availableDesignTypes = initial.id ? sequenceDesignTypes : sequenceDesignTypes.filter((item) => item.value !== "primer" && item.value !== "siRNA");
   const metrics = useMemo(() => ({
     length: sequenceLength(sequence),
     gc: moleculeType === "Protein" ? undefined : gcPercent(sequence),
@@ -89,7 +90,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="md:col-span-2">
             <span className={formLabelClass}>Name *</span>
-            <input required name="name" defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder="FBN2 qPCR forward primer" />
+            <input required name="name" defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder="FBN2 sequence" />
           </label>
           <label>
             <span className={formLabelClass}>Design type *</span>
@@ -104,7 +105,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
               }}
               className={formInputClass}
             >
-              {sequenceDesignTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+              {availableDesignTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </label>
           <label>

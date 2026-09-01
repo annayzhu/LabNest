@@ -73,20 +73,8 @@
   --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
   --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
 
-  /* Protocol 保留兼容别名；新页面直接使用上面的全站变量。 */
-  --ln-protocol-density-page-gap: var(--ln-page-density-gap);
-  --ln-protocol-density-title-size: var(--ln-page-title-size);
-  --ln-protocol-density-action-height: var(--ln-page-action-height);
-  --ln-protocol-density-primary-height: 2.25rem; /* 主操作保留 36px 的键盘与触控目标。 */
-  --ln-protocol-density-action-font-size: var(--ln-page-action-font-size);
-  --ln-protocol-density-tool-font-size: 12.5px; /* 文档工具条文字字号。 */
-  --ln-protocol-density-toolbar-height: var(--ln-document-toolbar-height);
-  --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
-  --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
+  /* Protocol 保存条仍有独立的视口偏移，其余密度全部复用全站变量。 */
   --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
-  --ln-protocol-density-copy-line-height: 1.6; /* Protocol 详情与编辑正文采用更舒展的阅读行距。 */
-  --ln-protocol-density-heading-line-height: 1.25; /* Protocol 文档内小标题稍微放松，避免衬线字上下拥挤。 */
-  --ln-protocol-density-mobile-copy-size: var(--ln-document-mobile-copy-size);
 
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
@@ -553,43 +541,20 @@ textarea {
 }
 
 .protocol-density-slice {
-  --ln-document-copy-line-height: var(--ln-protocol-density-copy-line-height);
-  --ln-document-heading-line-height: var(--ln-protocol-density-heading-line-height);
-  --ln-document-outline-width: var(--ln-protocol-density-outline-width);
-  --ln-document-workbench-gap: var(--ln-protocol-density-workbench-gap);
-  --ln-wysiwyg-toolbar-font-size: var(--ln-protocol-density-tool-font-size);
   display: grid;
-  gap: var(--ln-protocol-density-page-gap);
+  gap: var(--ln-page-density-gap);
   min-width: 0;
 }
 
-.protocol-density-slice > header h1 {
-  font-size: var(--ln-protocol-density-title-size);
-  min-width: 0;
-}
-
-.protocol-density-slice > header,
-.protocol-density-slice > header > div,
-.protocol-density-slice > header > div > div {
-  max-width: 100%;
-  min-width: 0;
-}
-
-.protocol-density-slice .page-actions {
-  align-items: center;
-}
-
-.protocol-density-slice .page-actions :where(a, button),
 .protocol-export-menu > summary {
-  font-size: var(--ln-protocol-density-action-font-size);
-  height: var(--ln-protocol-density-action-height);
-  min-height: var(--ln-protocol-density-action-height);
+  font-size: var(--ln-page-action-font-size);
+  height: var(--ln-page-action-height);
+  min-height: var(--ln-page-action-height);
 }
 
-.protocol-density-slice .page-actions .protocol-density-primary-action,
 .protocol-density-slice .protocol-density-actionbar .protocol-density-primary-action {
-  height: var(--ln-protocol-density-primary-height);
-  min-height: var(--ln-protocol-density-primary-height);
+  height: var(--ln-page-primary-action-height);
+  min-height: var(--ln-page-primary-action-height);
 }
 
 .protocol-density-notice {
@@ -707,33 +672,8 @@ textarea {
   min-width: 0;
 }
 
-.protocol-density-slice .document-editor-viewbar {
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-}
-
 .protocol-density-slice > .document-editor-layout {
   padding-top: 0;
-}
-
-.protocol-density-slice .document-canvas-toolbar {
-  min-height: var(--ln-protocol-density-toolbar-height);
-  padding: 0.22rem 0.35rem;
-}
-
-.protocol-density-slice .document-canvas-toolbar > a {
-  font-size: var(--ln-protocol-density-tool-font-size);
-}
-
-.protocol-density-slice .document-editor-tabs,
-.protocol-density-slice .document-editor-zoom {
-  border-radius: var(--ln-radius-control-md);
-  padding: 0.12rem;
-}
-
-.protocol-density-slice .document-editor-tab,
-.protocol-density-slice .document-editor-zoom button {
-  height: 1.75rem;
 }
 
 .protocol-density-actionbar {
@@ -747,11 +687,11 @@ textarea {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  margin-left: calc(var(--ln-protocol-density-outline-width) + var(--ln-protocol-density-workbench-gap));
+  margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
   max-width: 210mm;
   padding: 0.25rem;
   position: sticky;
-  width: min(210mm, calc(100% - var(--ln-protocol-density-outline-width) - var(--ln-protocol-density-workbench-gap)));
+  width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
   z-index: 30;
 }
 
@@ -761,7 +701,7 @@ textarea {
 }
 
 .protocol-density-actionbar button {
-  font-size: var(--ln-protocol-density-action-font-size);
+  font-size: var(--ln-page-action-font-size);
 }
 
 @media (max-width: 1023px) {
@@ -1323,10 +1263,10 @@ textarea {
   align-items: center;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-lg);
+  border-radius: var(--ln-radius-control-md);
   display: inline-flex;
   gap: 0.16rem;
-  padding: 0.2rem;
+  padding: 0.12rem;
 }
 
 .document-editor-tab {
@@ -1363,10 +1303,10 @@ textarea {
   align-items: center;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-lg);
+  border-radius: var(--ln-radius-control-md);
   display: inline-flex;
   gap: 0.14rem;
-  padding: 0.2rem;
+  padding: 0.12rem;
 }
 
 .document-editor-zoom button {
@@ -2714,52 +2654,75 @@ textarea {
 }
 
 @media (max-width: 767px) {
-  .protocol-density-slice {
-    --ln-protocol-density-page-gap: 0.4rem;
-    --ln-protocol-density-title-size: 15px;
-    --ln-protocol-density-action-font-size: 11px;
-    --ln-protocol-density-tool-font-size: 11.5px;
+  :root {
+    --ln-page-action-font-size: 11px;
+    --ln-page-title-size: 15px;
+    --ln-wysiwyg-toolbar-font-size: 11.5px;
   }
 
-  .protocol-density-slice .document-canvas-toolbar {
+  .protocol-density-slice {
+    gap: 0.4rem;
+  }
+
+  .document-canvas-toolbar {
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
     scrollbar-width: thin;
   }
 
-  .protocol-density-slice > header > div,
-  .protocol-density-slice > header > div > div {
-    min-width: 0;
-    width: 100%;
+  .page-header {
+    gap: 0.45rem !important;
   }
 
-  .protocol-density-slice > header h1 {
+  .page-header-title {
     flex: 0 1 auto;
-    font-size: var(--ln-protocol-density-title-size) !important;
+    font-size: var(--ln-page-title-size) !important;
     line-height: 1.22 !important;
-    min-width: 0;
+    order: 1;
   }
 
-  .protocol-density-slice > header .page-header-copy {
+  .page-header-copy {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.12rem;
   }
 
-  .protocol-density-slice > header .page-header-title {
-    order: 1;
-  }
-
-  .protocol-density-slice > header .page-header-identifier {
-    font-size: 9px;
+  .page-header-identifier {
+    font-size: 9px !important;
     order: 2;
   }
 
-  .protocol-density-slice .document-copy,
-  .protocol-density-slice .document-a4-paper .entry-content,
-  .protocol-density-slice .document-a4-paper [contenteditable="true"],
-  .protocol-density-slice .document-block :where(p, li, td, th, input, textarea, select) {
-    font-size: var(--ln-protocol-density-mobile-copy-size) !important;
+  .page-actions {
+    display: flex;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+    scrollbar-width: none;
+  }
+
+  .page-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-actions :where(a, button),
+  :where(a, button).bg-moss.text-warm,
+  :where(a, button).bg-surface.text-moss.text-sm {
+    height: 2rem;
+    min-height: 2rem;
+    padding-inline: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .page-header .page-actions :where(a, button) {
+    font-size: var(--ln-page-action-font-size);
+  }
+
+  .page-header .page-actions :where(.bg-action, .bg-moss) {
+    height: var(--ln-page-primary-action-height);
+    min-height: var(--ln-page-primary-action-height);
   }
 
   .protocol-density-actionbar {
@@ -2977,6 +2940,10 @@ textarea {
   z-index: 25;
 }
 
+.document-canvas-toolbar > a {
+  font-size: var(--ln-wysiwyg-toolbar-font-size);
+}
+
 .document-a4-paper {
   background: var(--surface);
   border: 1px solid var(--hairline);
@@ -3154,6 +3121,15 @@ body.labnest-column-resizing {
 .document-block :where(p, li, td, th, input, textarea, select) {
   font-size: 10pt !important;
   line-height: var(--ln-document-copy-line-height) !important;
+}
+
+@media (max-width: 767px) {
+  .document-copy,
+  .document-a4-paper .entry-content,
+  .document-a4-paper [contenteditable="true"],
+  .document-block :where(p, li, td, th, input, textarea, select) {
+    font-size: var(--ln-document-mobile-copy-size) !important;
+  }
 }
 
 [data-result-template-fields-preview] [data-result-template-field-name] {
@@ -3426,9 +3402,6 @@ table :where(td) {
   :root {
     --ln-entry-editor-paper-min-height: 0px;
     --ln-entry-editor-body-min-height: 18rem;
-    --ln-page-action-font-size: 11px;
-    --ln-page-title-size: 15px;
-    --ln-wysiwyg-toolbar-font-size: 11.5px;
   }
 
   main {
@@ -3446,12 +3419,6 @@ table :where(td) {
     width: 100% !important;
   }
 
-  .document-canvas-toolbar {
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-inline: contain;
-  }
-
   main > .space-y-6,
   main > .space-y-5,
   main > .space-y-4,
@@ -3462,67 +3429,6 @@ table :where(td) {
 
   main :is(.space-y-6, .space-y-5, .space-y-4, .space-y-3, form.space-y-5, form.space-y-4) > :not([hidden]) ~ :not([hidden]) {
     margin-top: 0.6rem !important;
-  }
-
-  .page-header {
-    gap: 0.45rem !important;
-  }
-
-  .page-header-title {
-    flex: 0 1 auto;
-    font-size: var(--ln-page-title-size) !important;
-    line-height: 1.22 !important;
-    order: 1;
-  }
-
-  .page-header-copy {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.12rem;
-  }
-
-  .page-header-identifier {
-    font-size: 9px !important;
-    order: 2;
-  }
-
-  .page-actions {
-    display: flex;
-    flex-wrap: nowrap !important;
-    gap: 0.35rem !important;
-    max-width: 100%;
-    overflow-x: auto;
-    padding-bottom: 0.1rem;
-    scrollbar-width: none;
-  }
-
-  .page-actions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .page-actions :where(a, button),
-  :where(a, button).bg-moss.text-warm,
-  :where(a, button).bg-surface.text-moss.text-sm {
-    height: 2rem;
-    min-height: 2rem;
-    padding-inline: 0.6rem;
-    white-space: nowrap;
-  }
-
-  .page-header .page-actions :where(a, button) {
-    font-size: var(--ln-page-action-font-size);
-  }
-
-  .page-header .page-actions :where(.bg-action, .bg-moss) {
-    height: var(--ln-page-primary-action-height);
-    min-height: var(--ln-page-primary-action-height);
-  }
-
-  .document-copy,
-  .document-a4-paper .entry-content,
-  .document-a4-paper [contenteditable="true"],
-  .document-block :where(p, li, td, th, input, textarea, select) {
-    font-size: var(--ln-document-mobile-copy-size) !important;
   }
 
   section.rounded-\[12px\] {

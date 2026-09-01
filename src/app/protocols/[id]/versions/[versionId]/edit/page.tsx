@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
 import { saveProtocolDocument } from "./actions";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
+import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
@@ -129,12 +130,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             attachments: attachmentLinks.map((link) => ({ id: link.id, label: link.attachment.originalFilename, meta: `${Math.max(1, Math.round(link.attachment.size / 1024))} KB`, href: `/api/attachments/${link.attachment.id}` })),
             versions: version.protocol.versions.map((protocolVersion) => ({ id: protocolVersion.id, label: `v${protocolVersion.displayVersion}`, meta: protocolVersion.reviewStage, href: `/protocols/${version.protocol.id}?version=${protocolVersion.id}` })),
           }}
-          relevantCatalog={[
-            ...projects.map((project) => ({ id: project.id, type: "project" as const, label: project.name, href: `/projects/${project.id}` })),
-            ...experimentCatalog.map((experiment) => ({ id: experiment.id, type: "experiment" as const, label: `${experiment.runCode} · ${experiment.title}`, meta: experiment.status, href: `/experiments/${experiment.id}` })),
-            ...resultCatalog.map((result) => ({ id: result.id, type: "result" as const, label: result.title, meta: result.recordStatus, href: `/results/${result.id}` })),
-            ...attachmentCatalog.map((attachment) => ({ id: attachment.id, type: "attachment" as const, label: attachment.originalFilename, meta: `${attachment.mimeType} · ${Math.max(1, Math.round(attachment.size / 1024))} KB`, href: `/api/attachments/${attachment.id}` })),
-          ]}
+          relevantCatalog={buildProtocolRelevantCatalog({ projects, experiments: experimentCatalog, results: resultCatalog, attachments: attachmentCatalog })}
           initialManualRelevantLinks={manualItemLinks.flatMap((link) => ["project", "experiment", "result", "attachment"].includes(link.targetType) ? [{ type: link.targetType as "project" | "experiment" | "result" | "attachment", id: link.targetId }] : [])}
         />
       </div>

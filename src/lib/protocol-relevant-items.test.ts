@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterRelevantItemCatalog, normalizeManualRelevantLinks } from "./protocol-relevant-items";
+import { buildProtocolRelevantCatalog, filterRelevantItemCatalog, normalizeManualRelevantLinks } from "./protocol-relevant-items";
 
 describe("Protocol relevant item helpers", () => {
   const catalog = [
@@ -19,5 +19,15 @@ describe("Protocol relevant item helpers", () => {
       { type: "experiment", id: "exp-1" },
       { type: "version", id: "version-1" },
     ])).toEqual([{ type: "experiment", id: "exp-1" }]);
+  });
+
+  it("builds one shared catalog shape for create and edit pages", () => {
+    expect(buildProtocolRelevantCatalog({
+      projects: [{ id: "p1", name: "RNA Project" }],
+      attachments: [{ id: "a1", originalFilename: "raw.csv", mimeType: "text/csv", size: 2048 }],
+    })).toEqual([
+      expect.objectContaining({ id: "p1", type: "project", label: "RNA Project" }),
+      expect.objectContaining({ id: "a1", type: "attachment", meta: "text/csv · 2 KB" }),
+    ]);
   });
 });

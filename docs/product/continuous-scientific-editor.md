@@ -36,7 +36,7 @@ Experiment results are recorded at experiment level. One report may aggregate th
 
 - Desktop and mobile layouts avoid a narrow document section followed by an unrelated full-width section.
 - Toolbar controls, metadata, relevant items, tables, and scientific widgets use centralized `--ln-*` tokens and the LabNest design system instead of component-local hard-coded dimensions.
-- Default rich-text line spacing is 1.5; printed Protocol pages retain safe top and side margins and do not inherit editor-only overflow.
+- Default rich-text line spacing is 1.6; printed Protocol pages retain safe top and side margins and do not inherit editor-only overflow.
 - The editor remains usable at 390 px without document-level horizontal overflow.
 
 ## Verification

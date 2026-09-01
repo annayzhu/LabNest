@@ -190,6 +190,17 @@
   --ln-wysiwyg-relevant-row-padding-y: 0.375rem; /* Relevant items 单行上下内边距。 */
   --ln-wysiwyg-relevant-font-size: 12px; /* Relevant items 主要文字字号。 */
   --ln-wysiwyg-relevant-meta-font-size: 10px; /* Relevant items 数量与元数据字号。 */
+  --ln-wysiwyg-relevant-control-radius: 6px; /* Relevant items 搜索与筛选控件圆角。 */
+  --ln-wysiwyg-relevant-filter-width: 9rem; /* Relevant items 类型筛选器宽度。 */
+  --ln-wysiwyg-relevant-heading-height: 1.5rem; /* Relevant items 小标题最小高度。 */
+  --ln-wysiwyg-relevant-result-row-height: 2.4rem; /* 检索结果和已关联项单行高度。 */
+  --ln-wysiwyg-relevant-result-row-padding: 0.3rem 0.15rem; /* 检索结果单行内边距。 */
+  --ln-wysiwyg-relevant-action-height: 1.65rem; /* Link、Unlink 等行内操作高度。 */
+  --ln-wysiwyg-relevant-action-radius: 5px; /* Relevant items 行内操作圆角。 */
+  --ln-wysiwyg-relevant-action-font-size: 10.5px; /* Relevant items 行内操作字号。 */
+  --ln-wysiwyg-relevant-search-padding-y: 0.48rem; /* Relevant items 搜索区上下内边距。 */
+  --ln-wysiwyg-relevant-results-padding-y: 0.35rem; /* 已关联项和搜索结果区域上下内边距。 */
+  --ln-wysiwyg-relevant-result-gap: 0.5rem; /* 搜索结果主信息和操作之间距离。 */
   --ln-wysiwyg-premise-control-min-height: 3.1rem; /* 研究方案 premise 文本框最小高度。 */
   --ln-wysiwyg-premise-control-padding-x: 0.58rem; /* premise 文本框左右内边距。 */
   --ln-wysiwyg-premise-control-padding-y: 0.42rem; /* premise 文本框上下内边距。 */
@@ -912,14 +923,14 @@ textarea {
   border-bottom: 1px solid var(--hairline);
   display: grid;
   gap: 0.4rem;
-  grid-template-columns: minmax(0, 1fr) 9rem;
-  padding: 0.48rem var(--ln-wysiwyg-properties-padding-x);
+  grid-template-columns: minmax(0, 1fr) var(--ln-wysiwyg-relevant-filter-width);
+  padding: var(--ln-wysiwyg-relevant-search-padding-y) var(--ln-wysiwyg-properties-padding-x);
 }
 
 .document-editor-relevant-search label {
   align-items: center;
   border: 1px solid var(--hairline);
-  border-radius: 6px;
+  border-radius: var(--ln-wysiwyg-relevant-control-radius);
   display: flex;
   height: var(--ln-wysiwyg-properties-control-height);
   min-width: 0;
@@ -946,7 +957,7 @@ textarea {
 
 .document-editor-relevant-search select {
   border: 1px solid var(--hairline);
-  border-radius: 6px;
+  border-radius: var(--ln-wysiwyg-relevant-control-radius);
   font-size: var(--ln-wysiwyg-properties-value-size);
   height: var(--ln-wysiwyg-properties-control-height);
   padding-inline: 0.45rem;
@@ -956,7 +967,7 @@ textarea {
 .document-editor-relation-results {
   display: grid;
   gap: 1px;
-  padding: 0.35rem var(--ln-wysiwyg-properties-padding-x);
+  padding: var(--ln-wysiwyg-relevant-results-padding-y) var(--ln-wysiwyg-properties-padding-x);
 }
 
 .document-editor-linked-items > h3,
@@ -964,11 +975,11 @@ textarea {
   align-items: center;
   color: var(--muted);
   display: flex;
-  font-size: 10px;
+  font-size: var(--ln-wysiwyg-relevant-meta-font-size);
   font-weight: 650;
   justify-content: space-between;
   letter-spacing: 0.06em;
-  min-height: 1.5rem;
+  min-height: var(--ln-wysiwyg-relevant-heading-height);
   text-transform: uppercase;
 }
 
@@ -977,9 +988,9 @@ textarea {
   align-items: center;
   border-top: 1px solid var(--hairline);
   display: flex;
-  gap: 0.5rem;
-  min-height: 2.4rem;
-  padding: 0.3rem 0.15rem;
+  gap: var(--ln-wysiwyg-relevant-result-gap);
+  min-height: var(--ln-wysiwyg-relevant-result-row-height);
+  padding: var(--ln-wysiwyg-relevant-result-row-padding);
 }
 
 .document-editor-linked-row > span,
@@ -1017,13 +1028,13 @@ textarea {
 .document-editor-system-lock {
   align-items: center;
   border: 1px solid var(--hairline);
-  border-radius: 5px;
+  border-radius: var(--ln-wysiwyg-relevant-action-radius);
   color: var(--moss);
   display: inline-flex;
-  font-size: 10.5px;
+  font-size: var(--ln-wysiwyg-relevant-action-font-size);
   font-weight: 600;
   gap: 0.25rem;
-  height: 1.65rem;
+  height: var(--ln-wysiwyg-relevant-action-height);
   padding-inline: 0.42rem;
   white-space: nowrap;
 }
@@ -1805,6 +1816,14 @@ textarea {
   }
 
   .ln-protocol-media-editor .ln-protocol-widget-link {
+    grid-column: 2 / -1;
+  }
+
+  .ln-protocol-tool-editor {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ln-protocol-tool-editor > :nth-child(n + 3) {
     grid-column: 2 / -1;
   }
 

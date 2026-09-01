@@ -155,10 +155,12 @@ export function protocolDocumentToTiptap(document: ProtocolDocument): JSONConten
     content: protocolSectionKeys.map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
       const rawContent = section?.blocks.flatMap(blockToTiptap) ?? [];
-      // Imported documents occasionally contain a synthetic empty paragraph
-      // before real section content. It is not user-authored content and makes
-      // Backspace appear to delete the protected following section.
-      const content = rawContent.length > 1 && rawContent[0]?.type === "paragraph" && !plainText(rawContent[0])
+      const firstBlock = section?.blocks[0];
+      // The original empty template placeholder has a stable id. Remove only
+      // that placeholder once real content follows; intentional blank content
+      // must survive a schema round trip.
+      const isTemplatePlaceholder = firstBlock?.id === `${sectionKey}-rich-1`;
+      const content = rawContent.length > 1 && isTemplatePlaceholder && rawContent[0]?.type === "paragraph" && !plainText(rawContent[0])
         ? rawContent.slice(1)
         : rawContent;
       return {

@@ -75,7 +75,7 @@ describe("Protocol Tiptap compatibility layer", () => {
   it("removes a synthetic leading blank while keeping every required section shell", () => {
     const document = createEmptyProtocolDocument();
     document.sections.find((section) => section.key === "purpose")!.blocks = [
-      { id: "blank", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }] },
+      { id: "purpose-rich-1", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }] },
       { id: "purpose", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Measure RNA quality." }] }] },
     ];
 
@@ -85,5 +85,17 @@ describe("Protocol Tiptap compatibility layer", () => {
 
     const restored = tiptapToProtocolDocument({ type: "doc", content: tiptap.content?.filter((node) => node.attrs?.sectionKey !== "background") });
     expect(restored.sections.map((section) => section.key)).toEqual(["description", "purpose", "background", "material", "steps", "result_templates", "consumption_rules"]);
+  });
+
+  it("preserves an intentional leading blank that is not the template placeholder", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections.find((section) => section.key === "purpose")!.blocks = [
+      { id: "purpose-user-blank", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }] },
+      { id: "purpose-content", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Keep this after the blank" }] }] },
+    ];
+
+    const purpose = protocolDocumentToTiptap(document).content?.find((node) => node.attrs?.sectionKey === "purpose");
+    expect(purpose?.content).toHaveLength(2);
+    expect(purpose?.content?.[0]?.attrs?.protocolBlockId).toBe("purpose-user-blank");
   });
 });

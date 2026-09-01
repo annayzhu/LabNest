@@ -8,6 +8,8 @@ export type RelevantCatalogItem = {
   label: string;
   meta?: string;
   href?: string;
+  projectId?: string;
+  projectName?: string;
 };
 
 export type ManualRelevantLink = { type: UserManagedRelevantType; id: string };

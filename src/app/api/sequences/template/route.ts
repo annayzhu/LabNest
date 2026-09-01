@@ -1,60 +1,48 @@
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
-import { sequencePairMetadataFieldDefinitions } from "@/lib/sequence-entry";
 
-const headers = [
-  "name", "entryClass", "ownershipScope", "projectId", "designType", "moleculeType", "sequence", "pairType", "forwardSequence", "reverseSequence", "senseSequence", "antisenseSequence", "status", "validationStatus",
-  "validationSummary", "targetName", "organism", "description", "topology",
-  "strandedness", "displayVersion", "featuresJson", "modificationsJson",
-  ...sequencePairMetadataFieldDefinitions.map((field) => field.key),
-];
+type TemplateType = "primer_pair" | "sirna_duplex" | "single";
 
-const singleSample: Record<string, string> = {
-  name: "Example DNA sequence",
-  entryClass: "nucleic_acid",
-  ownershipScope: "library",
-  designType: "fragment",
-  moleculeType: "DNA",
-  sequence: "ATGCTGACCTGAACTG",
-  status: "draft",
-  validationStatus: "unverified",
-  validationSummary: "",
-  targetName: "FBN2",
-  organism: "Homo sapiens",
-  description: "Replace or remove this example row before importing.",
-  topology: "linear",
-  strandedness: "single",
-  displayVersion: "1.0",
-  featuresJson: "[]",
-  modificationsJson: "[]",
-};
-
-const pairSample: Record<string, string> = {
-  name: "FBN2 qPCR primer pair",
-  entryClass: "oligo",
-  ownershipScope: "project",
-  projectId: "replace-with-project-id",
-  designType: "primer",
-  moleculeType: "DNA",
-  sequence: "",
-  pairType: "primer_pair",
-  forwardSequence: "ATGCTGACCTGAACTG",
-  reverseSequence: "TCAGGTTCAGGTCAGT",
-  status: "draft",
-  validationStatus: "unverified",
-  targetName: "FBN2",
-  organism: "Homo sapiens",
-  description: "One row is one paired entry. Replace or remove this example row.",
-  topology: "linear",
-  strandedness: "single",
-  displayVersion: "1.0",
-  featuresJson: "[]",
-  modificationsJson: "[]",
-  application: "qPCR",
-  transcriptAccession: "NM_000138.5",
-  ampliconLengthBp: "120",
-  exonJunction: "Spans exon junction",
-  designSource: "Primer-BLAST",
+const templates: Record<TemplateType, { fileLabel: string; sheet: string; headers: string[]; sample: Record<string, string> }> = {
+  primer_pair: {
+    fileLabel: "Primer_Pairs",
+    sheet: "Primer pairs",
+    headers: ["name", "forwardSequence", "reverseSequence", "organism", "description", "pairType"],
+    sample: {
+      name: "FBN2",
+      forwardSequence: "GCAGGACCAAGCCAGGAAT",
+      reverseSequence: "GCTGTGCTCCATGTTGTAGC",
+      organism: "Homo sapiens",
+      description: "Replace or delete this example row.",
+      pairType: "primer_pair",
+    },
+  },
+  sirna_duplex: {
+    fileLabel: "siRNA_Duplexes",
+    sheet: "siRNA duplexes",
+    headers: ["name", "senseSequence", "antisenseSequence", "organism", "description", "pairType"],
+    sample: {
+      name: "FBN2-siRNA-1",
+      senseSequence: "GCAUGUUGCUACCUAAAUUTT",
+      antisenseSequence: "AAUUUAGGUAGCAACAUGCTT",
+      organism: "Homo sapiens",
+      description: "Replace or delete this example row.",
+      pairType: "sirna_duplex",
+    },
+  },
+  single: {
+    fileLabel: "Single_Sequences",
+    sheet: "Single sequences",
+    headers: ["name", "sequence", "designType", "moleculeType", "organism", "description"],
+    sample: {
+      name: "FBN2 fragment",
+      sequence: "ATGCTGACCTGAACTG",
+      designType: "fragment",
+      moleculeType: "DNA",
+      organism: "Homo sapiens",
+      description: "Replace or delete this example row.",
+    },
+  },
 };
 
 function csvValue(value: unknown) {
@@ -62,34 +50,35 @@ function csvValue(value: unknown) {
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
+function sheetData(template: (typeof templates)[TemplateType]): SheetData {
+  return [
+    template.headers.map((header) => ({ value: header, type: String, fontWeight: "bold", backgroundColor: "#DDE8EA", wrap: true })),
+    template.headers.map((header) => ({ value: template.sample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
+  ];
+}
+
 export async function GET(request: Request) {
-  const format = new URL(request.url).searchParams.get("format") === "csv" ? "csv" : "xlsx";
+  const search = new URL(request.url).searchParams;
+  const type = (["primer_pair", "sirna_duplex", "single"].includes(search.get("type") ?? "") ? search.get("type") : "single") as TemplateType;
+  const format = search.get("format") === "csv" ? "csv" : "xlsx";
   if (format === "csv") {
-    const body = `${headers.map(csvValue).join(",")}\n${headers.map((header) => csvValue(singleSample[header])).join(",")}\n${headers.map((header) => csvValue(pairSample[header])).join(",")}\n`;
-    return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="LabNest_Sequence_Import_Template.csv"' } });
+    const template = templates[type];
+    const body = `${template.headers.map(csvValue).join(",")}\n${template.headers.map((header) => csvValue(template.sample[header])).join(",")}\n`;
+    return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="LabNest_${template.fileLabel}_Import_Template.csv"` } });
   }
 
-  const data: SheetData = [
-    headers.map((header) => ({ value: header, type: String, fontWeight: "bold", backgroundColor: "#DDE8EA", wrap: true })),
-    headers.map((header) => ({ value: singleSample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
-    headers.map((header) => ({ value: pairSample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
-  ];
   const instructions: SheetData = [
-    [{ value: "LabNest Sequence structured import", type: String, fontWeight: "bold" }],
-    ["Keep header names unchanged and add one top-level Sequence entry per row."],
-    ["Delete or replace the example row before importing."],
-    ["designType: plasmid, primer, probe, siRNA, shRNA, gRNA, oligo, peptide, protein, fragment, other"],
-    ["moleculeType: DNA, RNA, Protein"],
-    ["ownershipScope: library or project. Project-owned rows require projectId."],
-    ["pairType: primer_pair uses forwardSequence + reverseSequence; sirna_duplex uses senseSequence + antisenseSequence. A pair is one entry."],
-    ["siRNA convention: RNA sequences may end in T or TT to record a 3′ dT overhang; T remains invalid elsewhere in an RNA sequence."],
-    ["status: draft, active, inactive, archived"],
-    ["validationStatus: unverified, validation_in_progress, validated_recommended, validated_limited, validated_not_recommended, inconclusive"],
-    ["featuresJson example: [{\"name\":\"CDS\",\"type\":\"CDS\",\"start\":1,\"end\":120,\"strand\":\"+\"}]"],
-    ["modificationsJson example: [{\"position\":\"5′\",\"modification\":\"FAM\",\"note\":\"reporter\"}]"],
+    [{ value: "LabNest Sequence import — compact template", type: String, fontWeight: "bold", fontSize: 14 }],
+    ["Use one sheet for the matching entry type. Delete the pale example row before entering final data."],
+    ["You may upload this workbook, or copy filled cells directly into Sequence > Import."],
+    ["Primer pair: one row is one entry containing Forward and Reverse sequences."],
+    ["Alternatively, copied supplier rows named -F/-R, -F1/-R1, qF/qR, Forward/Reverse, 上游/下游, or 正向/反向 can be paired in the paste preview."],
+    ["siRNA duplex: one row is one entry containing sense and antisense sequences. A terminal T or TT may record a 3′ dT overhang."],
+    ["Only key scientific fields are imported. Purchasing quantities, price, tube count, purification, contact, invoice, and shipping fields are ignored."],
+    ["All imports create Draft / Unverified entries. Review them in LabNest before changing lifecycle or validation status."],
   ];
   const buffer = await writeXlsxFile([
-    { sheet: "Import", data, columns: headers.map((header) => ({ width: header === "sequence" ? 45 : 22 })) },
+    ...Object.values(templates).map((template) => ({ sheet: template.sheet, data: sheetData(template), columns: template.headers.map((header) => ({ width: header.toLowerCase().includes("sequence") ? 34 : header === "description" ? 36 : 22 })) })),
     { sheet: "Instructions", data: instructions, columns: [{ width: 120 }] },
   ], { fontFamily: "Arial", fontSize: 10 }).toBuffer();
   return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": 'attachment; filename="LabNest_Sequence_Import_Template.xlsx"' } });

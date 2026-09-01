@@ -104,7 +104,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
                   render: (row) => (
                     <div>
                       <p className="font-semibold text-ink">{row.name}</p>
-                      <p className="mt-1 font-mono text-xs text-muted">{row.sampleCode}</p>
+                      <p className="record-identifier mt-1 text-xs text-muted">{row.sampleCode}</p>
                     </div>
                   ),
                 },
@@ -268,7 +268,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
                     <Badge tone={warningTone[warning.severity]}>{warning.severity}</Badge>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-graphite">{warning.message}</p>
-                  <p className="mt-2 font-mono text-xs text-muted">{sample.sampleCode}</p>
+                  <p className="record-identifier mt-2 text-xs text-muted">{sample.sampleCode}</p>
                 </div>
               )),
             )}

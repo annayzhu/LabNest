@@ -46,7 +46,7 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
             <span className="text-sm text-graphite">{pair.project ? <Link href={`/projects/${pair.project.id}`} className="text-moss hover:underline">{pair.project.name}</Link> : "Sequence library"}</span>
             {pair.targetName ? <span className="text-sm text-graphite">Target: <strong className="font-medium text-ink">{pair.targetName}</strong></span> : null}
             {pair.organism ? <span className="text-sm text-graphite">{pair.organism}</span> : null}
-            <span className="ml-auto font-mono text-[10px] text-muted/70" title="Internal Sequence pair code">{pair.code}</span>
+            <span className="record-identifier ml-auto text-[10px] text-muted/70" title="Internal Sequence pair code">{pair.code}</span>
           </CardBody>
         </Card>
         <section className="grid gap-4 lg:grid-cols-2">
@@ -85,7 +85,7 @@ function PairMemberCard({ member }: { member: {
   const tm = estimatedMeltingTemperature(version.sequence, molecule);
   return (
     <Card>
-      <CardHeader title={roleLabel(member.role)} action={<span className="font-mono text-[10px] text-muted/70">v{version.displayVersion} · {member.sequenceRecord.code}</span>} />
+      <CardHeader title={roleLabel(member.role)} action={<span className="record-identifier text-[10px] text-muted/70">v{version.displayVersion} · {member.sequenceRecord.code}</span>} />
       <CardBody className="space-y-3">
         <div className="flex flex-wrap gap-x-5 gap-y-1 border-y border-hairline py-2 font-mono text-xs text-muted">
           <span>Length <strong className="text-ink">{sequenceLength(version.sequence)} nt</strong></span>

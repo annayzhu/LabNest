@@ -118,7 +118,7 @@ export function RecordLifecycleControl({
               <form action={deleteFormAction} className="mt-4 space-y-4">
                 <input type="hidden" name="id" value={id} />
                 <label className="block">
-                  <span className="text-xs font-semibold text-graphite">{locale === "zh" ? "输入" : "Enter"} <strong className="font-mono text-error">{identifier}</strong> {locale === "zh" ? "以确认移入回收站" : "to confirm moving it to the Recycle Bin"}</span>
+                  <span className="text-xs font-semibold text-graphite">{locale === "zh" ? "输入" : "Enter"} <strong className="record-identifier text-error">{identifier}</strong> {locale === "zh" ? "以确认移入回收站" : "to confirm moving it to the Recycle Bin"}</span>
                   <input autoFocus required autoComplete="off" name="confirmation" className={formInputClass} />
                 </label>
                 {deleteState.error ? <ErrorMessage message={deleteState.error} /> : null}

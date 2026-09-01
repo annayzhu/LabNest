@@ -192,7 +192,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
   return <DocumentCanvas toolbar={<DocumentPrintButton />} label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
+      <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">

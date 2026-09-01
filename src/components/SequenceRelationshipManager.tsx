@@ -85,7 +85,7 @@ export function SequenceRelationshipManager({
             {entityLinks.length ? entityLinks.map((link) => (
               <div key={link.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm">
                 <div>
-                  <p className="font-medium text-ink">{link.entityName} <span className="font-mono text-xs text-muted">{link.entityCode}</span></p>
+                  <p className="font-medium text-ink">{link.entityName} <span className="record-identifier text-xs text-muted">{link.entityCode}</span></p>
                   <p className="mt-0.5 text-xs text-muted">{link.entityType} · {link.role} · v{link.versionLabel}{link.isPrimary ? " · primary" : ""} · {link.inventoryCount} Inventory {link.inventoryCount === 1 ? "item" : "items"}</p>
                 </div>
                 <form action={unlinkEntityAction}>

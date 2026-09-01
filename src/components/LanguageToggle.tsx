@@ -1,15 +1,12 @@
 "use client";
 
 import { Languages } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
 export function LanguageToggle() {
   const { locale, setLocale } = useI18n();
-  const router = useRouter();
   const selectLocale = (nextLocale: "en" | "zh") => {
     setLocale(nextLocale);
-    router.refresh();
   };
   return <div className="flex h-9 shrink-0 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-stone/45 p-1" role="group" aria-label="Switch language">
     <Languages className="mx-1 h-4 w-4 text-muted" aria-hidden />

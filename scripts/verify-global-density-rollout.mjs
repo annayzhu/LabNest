@@ -122,6 +122,25 @@ async function assertOperationalTypography(page) {
   assert.equal(tableMetrics.body, 13, `Shared table copy should be 13px, got ${tableMetrics.body}px.`);
   assert(tableMetrics.heading >= 11 && tableMetrics.heading <= 12, `Shared table headings should be 11–12px, got ${tableMetrics.heading}px.`);
 
+  await openRoute(page, "/protocols");
+  const identifierMetrics = await page.evaluate(() => {
+    const identifier = document.querySelector(".ln-data-table .record-identifier");
+    const dataProbe = document.createElement("span");
+    dataProbe.className = "font-mono";
+    document.body.append(dataProbe);
+    const metrics = {
+      found: Boolean(identifier),
+      identifierFamily: identifier ? getComputedStyle(identifier).fontFamily : "",
+      interfaceFamily: getComputedStyle(document.body).fontFamily,
+      dataFamily: getComputedStyle(dataProbe).fontFamily,
+    };
+    dataProbe.remove();
+    return metrics;
+  });
+  assert(identifierMetrics.found, "Protocols should render version identifiers with the shared identifier style.");
+  assert.equal(identifierMetrics.identifierFamily, identifierMetrics.interfaceFamily, "Record identifiers should use the configured interface font.");
+  assert.notEqual(identifierMetrics.identifierFamily, identifierMetrics.dataFamily, "Record identifiers should not use the monospace data font.");
+
   await page.goto(`${baseUrl}/projects/new`, { waitUntil: "domcontentloaded" });
   const formMetrics = await page.evaluate(() => {
     const input = document.querySelector("main input:not([type='hidden'])");

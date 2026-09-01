@@ -175,7 +175,7 @@ export default async function OverviewPage({
                         className="focus-ring group block px-3 py-2.5 transition hover:bg-warm/60"
                       >
                         <span className="flex items-center justify-between gap-2">
-                          <span className="truncate font-mono text-[10px] text-muted">{plan.code}</span>
+                          <span className="record-identifier truncate text-[10px] text-muted">{plan.code}</span>
                           <span className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted" aria-label={`${plan._count.experiments} experiments`}>
                             <Beaker className="h-3 w-3" aria-hidden />
                             <span data-i18n-ignore>{plan._count.experiments}</span>

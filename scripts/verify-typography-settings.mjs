@@ -7,6 +7,13 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(`${baseUrl}/settings`);
+  let navigationRequests = 0;
+  page.on("request", (request) => { if (request.isNavigationRequest()) navigationRequests += 1; });
+  await page.getByRole("button", { name: "中文" }).click();
+  await page.waitForFunction(() => document.documentElement.lang === "zh-CN" && document.documentElement.dataset.locale === "zh");
+  await page.getByRole("button", { name: "EN" }).click();
+  await page.waitForFunction(() => document.documentElement.lang === "en" && document.documentElement.dataset.locale === "en");
+  if (navigationRequests !== 0) throw new Error(`Language switching should not refresh the page; observed ${navigationRequests} navigation requests.`);
   const selector = (role) => page.locator(`[data-typography-role="${role}"]`);
   const selectors = page.locator(".typography-role-select");
   if (await selectors.count() !== 6) throw new Error(`Expected six independent Chinese/English selectors, found ${await selectors.count()}.`);

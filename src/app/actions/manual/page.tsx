@@ -25,9 +25,9 @@ export default async function ManualAiPage() {
             {enabled ? (
               <ManualAiWorkbench />
             ) : (
-              <div className="rounded-[10px] border border-hairline bg-warm p-5">
+              <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-5">
                 <p className="text-sm leading-6 text-graphite">AI workflows are currently disabled. Manual records, protocols, experiments, inventory, and results remain fully available.</p>
-                <Link href="/settings" className="focus-ring mt-4 inline-flex h-9 items-center rounded-[8px] border border-moss px-3 text-sm font-medium text-moss">Review AI settings</Link>
+                <Link href="/settings" className="focus-ring mt-4 inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-moss px-3 text-sm font-medium text-moss">Review AI settings</Link>
               </div>
             )}
           </CardBody>

@@ -31,7 +31,7 @@ export default async function ActionsPage({ searchParams }: { searchParams?: Pag
           actions={
             <Link
               href="/actions/manual"
-              className="focus-ring inline-flex h-10 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss shadow-paper transition hover:bg-sage-surface"
+              className="focus-ring inline-flex h-10 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-moss shadow-paper transition hover:bg-sage-surface"
             >
               Manual AI
             </Link>
@@ -48,7 +48,7 @@ export default async function ActionsPage({ searchParams }: { searchParams?: Pag
             <ProposedActionCard key={action.id} action={action} />
           ))}
           {filteredActions.length === 0 ? (
-            <div className="rounded-[12px] border border-hairline bg-surface p-6 text-sm text-muted shadow-paper">
+            <div className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-6 text-sm text-muted shadow-paper">
               No proposed actions match the current filters.
             </div>
           ) : null}

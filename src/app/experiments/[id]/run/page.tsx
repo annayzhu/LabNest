@@ -80,7 +80,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </>}
         />
 
-        <section className="rounded-[12px] border border-hairline bg-surface px-4 py-4">
+        <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-4 py-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>
@@ -97,13 +97,13 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         <ProtocolRunProgressForm experimentId={experiment.id} status={experiment.status} steps={experiment.steps} editable={editable} />
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <section className="rounded-[12px] border border-hairline bg-surface p-4">
+          <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Photos and files</h2></div>
             <AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" />
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
-          <section className="rounded-[12px] border border-hairline bg-surface p-4">
+          <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><PackageMinus className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Inventory consumption</h2></div>
             {editable && inventoryItems.length ? (
               <form action={recordProtocolRunConsumption} className="grid gap-3 sm:grid-cols-2">

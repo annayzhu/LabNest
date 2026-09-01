@@ -28,7 +28,7 @@ export function AttachmentDeleteButton({ attachmentId, linkId, filename }: { att
   }
 
   return <span className="inline-flex items-center gap-1">
-    <button type="button" onClick={remove} disabled={pending} className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-error hover:bg-error-surface disabled:opacity-50" aria-label={`Remove ${filename}`} title="Remove file"><Trash2 className="h-3.5 w-3.5" /></button>
+    <button type="button" onClick={remove} disabled={pending} className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-error hover:bg-error-surface disabled:opacity-50" aria-label={`Remove ${filename}`} title="Remove file"><Trash2 className="h-3.5 w-3.5" /></button>
     {error ? <span role="alert" className="max-w-44 text-[11px] leading-4 text-error">{error}</span> : null}
   </span>;
 }

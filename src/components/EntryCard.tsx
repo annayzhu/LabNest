@@ -29,7 +29,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
               {formatEntryCardTimestamp(entry.occurredAt, locale)}
             </time>
             <h3 className={cn("mt-2 line-clamp-2 font-semibold leading-snug tracking-[-0.02em] text-ink", featured ? "text-[20px] sm:text-[22px]" : "text-[16px] sm:text-[17px]")}>
-              <Link href={entryHref} className="focus-ring rounded-[6px] transition hover:text-moss">
+              <Link href={entryHref} className="focus-ring rounded-[var(--ln-radius-control-sm)] transition hover:text-moss">
                 {entry.title}
               </Link>
             </h3>
@@ -71,7 +71,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
           {entry.projectId && entry.projectName ? (
             <Link
               href={filterHref("/entries", { project: entry.projectId })}
-              className="focus-ring max-w-60 truncate rounded-[6px] font-medium text-moss hover:underline"
+              className="focus-ring max-w-60 truncate rounded-[var(--ln-radius-control-sm)] font-medium text-moss hover:underline"
             >
               {entry.projectName}
             </Link>
@@ -93,7 +93,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
               {entry.pendingActionCount} pending {entry.pendingActionCount === 1 ? "action" : "actions"}
             </BadgeLink>
           ) : null}
-          <Link href={entryHref} className="focus-ring ml-auto inline-flex items-center justify-end gap-1 rounded-[6px] font-medium text-moss hover:underline">
+          <Link href={entryHref} className="focus-ring ml-auto inline-flex items-center justify-end gap-1 rounded-[var(--ln-radius-control-sm)] font-medium text-moss hover:underline">
             View
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
           </Link>

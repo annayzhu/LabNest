@@ -154,7 +154,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
   );
 }
 
-const tableFilterClass = "focus-ring h-8 w-full rounded-[6px] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
+const tableFilterClass = "focus-ring h-8 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
 const filterApplyButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
 const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", className: "font-medium text-muted" });
 
@@ -165,8 +165,8 @@ function SequenceColumnFilter({ label, children, className = "" }: { label: stri
 function SequenceMobileFilters({ query, designType, moleculeType, status, validationStatus, sort, activeFilterCount }: { query?: string; designType?: string; moleculeType?: string; status?: string; validationStatus?: string; sort: string; activeFilterCount: number }) {
   return (
     <details className="relative md:hidden">
-      <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite"><Filter className="h-3.5 w-3.5" aria-hidden />Filters{activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-[10px] text-moss">{activeFilterCount}</span> : null}</summary>
-      <div className="absolute left-0 z-30 mt-2 w-[min(88vw,360px)] rounded-[10px] border border-hairline bg-surface p-3 shadow-soft">
+      <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite"><Filter className="h-3.5 w-3.5" aria-hidden />Filters{activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-[10px] text-moss">{activeFilterCount}</span> : null}</summary>
+      <div className="absolute left-0 z-30 mt-2 w-[min(88vw,360px)] rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 shadow-soft">
         <form action="/sequences" className="grid gap-2">
           <input name="q" defaultValue={query ?? ""} placeholder="Name, code, target…" className={tableFilterClass} />
           <select name="designType" defaultValue={designType ?? ""} className={tableFilterClass}><option value="">All design types</option>{sequenceDesignTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>

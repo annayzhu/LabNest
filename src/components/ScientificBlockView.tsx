@@ -22,8 +22,8 @@ export function ScientificBlockView({ block }: { block: ScientificContentBlock }
       </table>
     </ResizableTableFrame>;
   }
-  if (block.type === "callout") return <div className={`rounded-[9px] border px-4 py-3 ${block.tone === "critical" ? "border-error/30 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/30 bg-warning-surface text-warning" : "border-hairline bg-sage-surface text-graphite"}`}><EntryContentView markdown={block.text} compact /></div>;
+  if (block.type === "callout") return <div className={`rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 ${block.tone === "critical" ? "border-error/30 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/30 bg-warning-surface text-warning" : "border-hairline bg-sage-surface text-graphite"}`}><EntryContentView markdown={block.text} compact /></div>;
   if (block.type === "metric") return <div className="inline-flex min-w-40 flex-col border-l-2 border-moss pl-3"><span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{block.label}</span><span className="mt-1 font-serif text-2xl text-ink">{block.value} <small className="text-sm text-muted">{block.unit}</small></span></div>;
-  if (block.type === "media") return <div className="rounded-[9px] border border-hairline bg-warm p-3"><div className="flex items-center gap-2"><Badge>{block.mediaType}</Badge><Link href={block.url || "#"} className="break-all text-sm font-medium text-moss hover:underline">{block.caption || block.url || "Media reference not set"}</Link></div></div>;
+  if (block.type === "media") return <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3"><div className="flex items-center gap-2"><Badge>{block.mediaType}</Badge><Link href={block.url || "#"} className="break-all text-sm font-medium text-moss hover:underline">{block.caption || block.url || "Media reference not set"}</Link></div></div>;
   return <Link href={`/api/results/datasets/${block.datasetId}`} className="text-sm font-medium text-moss hover:underline">Dataset: {block.label}</Link>;
 }

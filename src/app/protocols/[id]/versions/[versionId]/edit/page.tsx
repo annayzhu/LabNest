@@ -76,7 +76,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
           description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
         />
         {version.reviewStage === "reviewed" ? (
-          <div className="flex items-start gap-3 rounded-[10px] border border-sage/45 bg-sage-surface/55 px-4 py-3">
+          <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-sage/45 bg-sage-surface/55 px-4 py-3">
             <GitBranchPlus className="mt-0.5 h-5 w-5 shrink-0 text-moss" aria-hidden />
             <div>
               <h2 className="text-sm font-semibold text-ink">All fields remain editable</h2>

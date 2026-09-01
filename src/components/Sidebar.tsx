@@ -122,7 +122,7 @@ export function Sidebar() {
                   className={cn(
                     "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
                     collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                    active ? "bg-action-surface text-moss" : "text-muted hover:bg-stone/75 hover:text-ink",
+                    active ? "bg-action-surface/55 font-medium text-moss" : "text-muted hover:bg-stone/75 hover:text-ink",
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -146,7 +146,7 @@ export function Sidebar() {
                 className={cn(
                   "focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
                   collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                  active ? "bg-stone text-ink" : "text-muted hover:bg-stone/70 hover:text-ink",
+                  active ? "bg-action-surface/55 font-medium text-moss" : "text-muted hover:bg-stone/70 hover:text-ink",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -207,8 +207,8 @@ export function MobileBottomNav() {
               href={item.href}
               aria-current={isCurrent ? "page" : undefined}
               className={cn(
-                "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[8px] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
-                isCurrent ? "bg-sage-surface/70 text-moss" : "text-muted",
+                "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
+                isCurrent ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -224,8 +224,8 @@ export function MobileBottomNav() {
           aria-controls="mobile-more-navigation"
           onClick={() => setMoreOpen(true)}
           className={cn(
-            "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[8px] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
-            moreOpen || moreActive ? "bg-sage-surface/70 text-moss" : "text-muted",
+            "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
+            moreOpen || moreActive ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
           )}
         >
           <Menu className="h-4 w-4 shrink-0" aria-hidden />
@@ -241,7 +241,7 @@ export function MobileBottomNav() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="mobile-more-navigation-title"
-            className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[18px] border-t border-hairline bg-surface px-4 pt-4 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface px-4 pt-4 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -264,8 +264,8 @@ export function MobileBottomNav() {
                     onClick={() => closeMoreMenu()}
                     aria-current={isCurrent ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex min-h-12 items-center gap-3 rounded-[10px] border px-3 py-2.5 text-sm",
-                      isCurrent ? "border-sage bg-sage-surface text-moss" : "border-hairline bg-warm text-graphite",
+                      "focus-ring flex min-h-12 items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-2.5 text-sm",
+                      isCurrent ? "border-action-border bg-action-surface/55 font-semibold text-moss" : "border-hairline bg-warm text-graphite",
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -287,8 +287,8 @@ export function MobileBottomNav() {
                     onClick={() => closeMoreMenu()}
                     aria-current={isCurrent ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex min-h-12 items-center gap-3 rounded-[10px] border px-3 py-2.5 text-sm",
-                      isCurrent ? "border-sage bg-sage-surface text-moss" : "border-hairline bg-warm text-graphite",
+                      "focus-ring flex min-h-12 items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-2.5 text-sm",
+                      isCurrent ? "border-action-border bg-action-surface/55 font-semibold text-moss" : "border-hairline bg-warm text-graphite",
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />

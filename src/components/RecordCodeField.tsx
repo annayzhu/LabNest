@@ -36,7 +36,7 @@ export function RecordCodeField({
   return (
     <div>
       <label htmlFor={inputId} className={formLabelClass}>{label}</label>
-      <div className="mt-2 flex h-11 w-full overflow-hidden rounded-[8px] border border-hairline bg-warm text-sm text-ink focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/15">
+      <div className="mt-2 flex h-11 w-full overflow-hidden rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm text-sm text-ink focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/15">
         <span className="flex shrink-0 items-center border-r border-hairline bg-stone/50 px-3 font-mono font-semibold text-graphite">
           {prefix}
         </span>

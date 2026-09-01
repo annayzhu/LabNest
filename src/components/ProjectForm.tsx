@@ -54,7 +54,7 @@ export function ProjectForm({
         </CardBody>
       </Card>
       <div className="flex flex-wrap items-center justify-end gap-3">
-        {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
         <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : "Save Project"}
         </Button>

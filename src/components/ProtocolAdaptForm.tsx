@@ -33,7 +33,7 @@ export function ProtocolAdaptForm({
       <label><span className={formLabelClass}>Research Plan</span><select required name="researchPlanId" className={formInputClass}><option value="">Select a plan</option>{availablePlans.map((plan) => <option key={plan.id} value={plan.id}>{plan.code ? `${plan.code} · ` : ""}{plan.title}</option>)}</select></label>
       <label><span className={formLabelClass}>Initial version</span><input required name="displayVersion" defaultValue="0.1" className={formInputClass} /></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Adaptation rationale</span><textarea required name="adaptationRationale" className={`${formTextareaClass} min-h-28 resize-y`} placeholder="State the project objective and exactly why the General Protocol needs adaptation." /></label>
-      {state.error ? <p role="alert" className="md:col-span-2 rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+      {state.error ? <p role="alert" className="md:col-span-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       <div className="md:col-span-2 flex justify-end"><Button type="submit" variant="primary" size="lg" disabled={pending || !projects.length}>{pending ? "Creating…" : "Create project Protocol"}</Button></div>
     </form>
   );

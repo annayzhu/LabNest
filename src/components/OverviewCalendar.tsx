@@ -76,7 +76,7 @@ export function OverviewCalendar({
                 href={monthHref(addMonths(viewMonth, -1))}
                 aria-label={t("Previous month")}
                 title={t("Previous month")}
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[7px] text-muted transition hover:bg-stone/70 hover:text-ink"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden />
               </Link>
@@ -87,13 +87,13 @@ export function OverviewCalendar({
                 href={monthHref(addMonths(viewMonth, 1))}
                 aria-label={t("Next month")}
                 title={t("Next month")}
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[7px] text-muted transition hover:bg-stone/70 hover:text-ink"
+                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </Link>
               <Link
                 href="/"
-                className="focus-ring ml-1 hidden h-8 items-center rounded-[7px] border border-hairline px-2.5 text-xs text-moss transition hover:border-border-strong hover:bg-warm sm:inline-flex"
+                className="focus-ring ml-1 hidden h-8 items-center rounded-[var(--ln-radius-control-md)] border border-hairline px-2.5 text-xs text-moss transition hover:border-border-strong hover:bg-warm sm:inline-flex"
               >
                 {t("Today")}
               </Link>
@@ -120,7 +120,7 @@ export function OverviewCalendar({
                   ? `${format(day, "yyyy")}年${format(day, "M")}月${format(day, "d")}日 ${format(day, "EEEE", { locale: dateLocale })}`
                   : format(day, "EEEE, MMMM d, yyyy", { locale: dateLocale });
                 const sharedClass = cn(
-                  "focus-ring relative flex min-h-11 min-w-0 flex-col rounded-[7px] border p-1.5 text-left transition sm:min-h-14",
+                  "focus-ring relative flex min-h-11 min-w-0 flex-col rounded-[var(--ln-radius-control-md)] border p-1.5 text-left transition sm:min-h-14",
                   inCurrentMonth ? "border-transparent hover:border-hairline hover:bg-warm" : "border-transparent text-disabled hover:bg-warm/70",
                   isSelected && "border-sage bg-sage-surface/70 hover:border-sage hover:bg-sage-surface/70",
                   isToday && !isSelected && "border-hairline bg-warm",
@@ -194,7 +194,7 @@ export function OverviewCalendar({
                   <span className="flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-muted">
                       <span className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-[7px]",
+                        "flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-md)]",
                         activity.kind === "entry" ? "bg-info-surface text-info" : "bg-sage-surface text-moss",
                       )}>
                         <Icon className="h-3.5 w-3.5" aria-hidden />

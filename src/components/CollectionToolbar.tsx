@@ -118,7 +118,7 @@ export function CollectionToolbar({
             </span>
           ))}
           {hasNonDefaultSort ? <span className="rounded-full bg-stone px-2.5 py-1 text-xs text-graphite">sorted: {sortOptions.find((option) => option.value === sort)?.label ?? sort}</span> : null}
-          <Link href={path} className="focus-ring ml-auto inline-flex h-7 items-center gap-1 rounded-[6px] px-2 text-xs font-medium text-muted hover:bg-warm hover:text-ink">
+          <Link href={path} className="focus-ring ml-auto inline-flex h-7 items-center gap-1 rounded-[var(--ln-radius-control-sm)] px-2 text-xs font-medium text-muted hover:bg-warm hover:text-ink">
             <X className="h-3.5 w-3.5" aria-hidden />
             Clear all
           </Link>

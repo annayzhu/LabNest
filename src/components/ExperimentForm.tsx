@@ -74,14 +74,14 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       <aside className="document-editor-sidebar" aria-label="Experiment properties">
     {!initial.id ? <Card><CardHeader title="Protocol association & method source" eyebrow="Choose in execution order; Protocol Steps become the on-bench checklist" /><CardBody className="space-y-5">
       <fieldset className="grid gap-3 md:grid-cols-2"><legend className={formLabelClass}>Planning mode</legend>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[9px] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[9px] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Fully custom Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">No Protocol dependency. Enter your own execution steps instead.</span></span></label>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Fully custom Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">No Protocol dependency. Enter your own execution steps instead.</span></span></label>
       </fieldset>
         {methodMode === "protocol" ? <>
         <ExperimentProtocolPicker versions={protocolVersions} initialSelectedIds={initialSelectedIds} onSelectionChange={(ids) => setSelectedProtocolCount(ids.length)} />
-        <div className="rounded-[8px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional result modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
+        <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional result modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
       </> : <>
-        <label className="flex items-start gap-3 rounded-[9px] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
+        <label className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
           <input
             type="checkbox"
             checked={customChecklistEnabled}
@@ -93,7 +93,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
         {customChecklistEnabled ? (
           <label className="block"><span className={formLabelClass}>Custom execution steps · one step per line</span><textarea name="customSteps" className={`${formTextareaClass} min-h-36`} placeholder={"Seed cells | 2.0 × 10^5 cells per well\nIncubate overnight\nAcquire images | 20× objective"} /><span className="mt-1 block text-xs leading-5 text-muted">Optional detail follows a vertical bar. These lines become the checkable on-bench execution block.</span></label>
         ) : (
-          <p className="rounded-[8px] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-muted">No step-by-step checklist for this custom protocol. Run notes will be recorded in a freeform execution log.</p>
+          <p className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-muted">No step-by-step checklist for this custom protocol. Run notes will be recorded in a freeform execution log.</p>
         )}
       </>}
     </CardBody></Card> : null}
@@ -110,13 +110,13 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </CardBody></Card>
 
     {initial.id && initial.steps?.length ? <Card>
-      <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[8px] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />
+      <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />
       <CardBody className="space-y-2 text-sm leading-6 text-graphite">{completedStepCount}/{initial.steps.length} executed steps · {initial.steps.filter((step) => Boolean(step.deviationNote)).length} deviations</CardBody>
     </Card> : null}
       </aside>
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
-      {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
+      {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
       <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;

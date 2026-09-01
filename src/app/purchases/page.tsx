@@ -121,14 +121,14 @@ export default async function PurchasesPage() {
             <CardHeader title="School Import Groups" eyebrow="One supplier per file" />
             <CardBody className="space-y-3">
               {selectedGroups.map((group) => (
-                <div key={group.supplierName} className="rounded-[10px] border border-hairline bg-warm p-3">
+                <div key={group.supplierName} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-semibold text-ink">{group.supplierName}</p>
                     <div className="flex items-center gap-2">
                       <Badge tone="success">{group.quoteLines.length} rows</Badge>
                       <a
                         href={`/purchases/school-template?supplier=${encodeURIComponent(group.supplierName)}`}
-                        className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-hairline bg-surface text-moss transition hover:bg-sage-surface"
+                        className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface text-moss transition hover:bg-sage-surface"
                         title={`Download ${group.supplierName} self-purchase .xlsx`}
                       >
                         <Download className="h-4 w-4" />
@@ -212,7 +212,7 @@ export default async function PurchasesPage() {
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[10px] border border-hairline bg-surface p-4 shadow-paper">
+    <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper">
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
       <p className="mt-2 font-serif text-2xl font-medium leading-none text-ink">{value}</p>
     </div>

@@ -95,11 +95,11 @@ export function SequenceCollectionForm({
       </Card>
 
       <Card>
-        <CardHeader title="Exact version members" action={<button type="button" onClick={addMember} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add member</button>} />
+        <CardHeader title="Exact version members" action={<button type="button" onClick={addMember} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add member</button>} />
         <CardBody className="space-y-2">
           <p className="text-xs text-muted">Collections pin exact versions. Updating a Sequence later does not silently rewrite a primer pair, duplex, or panel.</p>
           {members.length ? members.map((member, index) => (
-            <div key={`member-${index}`} className="grid gap-2 rounded-[8px] border border-hairline bg-warm/50 p-2 md:grid-cols-[minmax(260px,1.6fr)_160px_1fr_34px]">
+            <div key={`member-${index}`} className="grid gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-2 md:grid-cols-[minmax(260px,1.6fr)_160px_1fr_34px]">
               <select aria-label="Sequence version" value={member.sequenceVersionId} onChange={(event) => setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, sequenceVersionId: event.target.value } : item))} className={compactInputClass}>
                 <option value="">Choose a sequence version…</option>
                 {versions.map((version) => <option key={version.id} value={version.id}>{version.label}</option>)}
@@ -107,14 +107,14 @@ export function SequenceCollectionForm({
               <input aria-label="Member role" value={member.role} onChange={(event) => setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, role: event.target.value } : item))} list={`roles-${index}`} placeholder="role" className={compactInputClass} />
               <datalist id={`roles-${index}`}>{suggestedRoles.map((role) => <option key={role} value={role} />)}</datalist>
               <input aria-label="Member note" value={member.note ?? ""} onChange={(event) => setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, note: event.target.value } : item))} placeholder="Member note" className={compactInputClass} />
-              <button type="button" aria-label="Remove member" onClick={() => setMembers((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
+              <button type="button" aria-label="Remove member" onClick={() => setMembers((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
             </div>
-          )) : <p className="rounded-[8px] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No sequence versions selected.</p>}
+          )) : <p className="rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No sequence versions selected.</p>}
         </CardBody>
       </Card>
 
       <div className="flex flex-wrap items-center justify-end gap-3">
-        {state.error ? <p role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        {state.error ? <p role="alert" className="max-w-2xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
         <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : initial.id ? "Save Collection" : "Create Collection"}
         </Button>
@@ -123,4 +123,4 @@ export function SequenceCollectionForm({
   );
 }
 
-const compactInputClass = "focus-ring h-8 min-w-0 w-full rounded-[6px] border border-hairline bg-surface px-2 text-xs text-ink";
+const compactInputClass = "focus-ring h-8 min-w-0 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs text-ink";

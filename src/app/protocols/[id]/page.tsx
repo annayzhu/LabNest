@@ -161,7 +161,7 @@ export default async function ProtocolDetailPage({
                     </div>
                     <p className="text-xs text-muted">{row.sourceType.replaceAll("_", " ")} · {row.createdAt.toLocaleDateString()}</p>
                     <p className="text-sm leading-6 text-graphite">{row.changeSummary ?? "No change summary."}</p>
-                    <Link href={`/protocols/${protocol.id}/versions/${row.id}/edit`} className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-[7px] border border-hairline bg-surface px-2.5 py-1.5 text-xs font-medium text-moss hover:bg-warm"><PencilLine className="h-3.5 w-3.5" aria-hidden />{row.reviewStage === "reviewed" ? "Edit as new revision" : "Edit version"}</Link>
+                    <Link href={`/protocols/${protocol.id}/versions/${row.id}/edit`} className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 py-1.5 text-xs font-medium text-moss hover:bg-warm"><PencilLine className="h-3.5 w-3.5" aria-hidden />{row.reviewStage === "reviewed" ? "Edit as new revision" : "Edit version"}</Link>
                   </li>)}
                 </ul>
               </CardBody>

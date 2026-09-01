@@ -49,7 +49,7 @@ export function StatusRadioGroup({
               "focus-within:ring-2 focus-within:ring-moss/30 flex cursor-pointer items-start border border-hairline bg-surface text-graphite transition hover:border-border-strong hover:bg-warm",
               density === "compact"
                 ? "min-h-8 gap-1.5 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs"
-                : "min-h-10 gap-2 rounded-[8px] px-3 py-2 text-sm",
+                : "min-h-10 gap-2 rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-sm",
               disabled && "cursor-not-allowed opacity-55",
             )}
           >

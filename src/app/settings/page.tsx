@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { SystemThemePicker } from "@/components/SystemThemePicker";
+import { TypographySettingsPanel } from "@/components/TypographySettingsPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -64,6 +65,11 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
+          <CardHeader title="Typography / 字体排版" />
+          <CardBody><TypographySettingsPanel /></CardBody>
+        </Card>
+
+        <Card>
           <CardHeader
             title="AI access"
             eyebrow="Explicit opt-in"
@@ -71,7 +77,7 @@ export default async function SettingsPage() {
           />
           <CardBody>
             <form action={updateAISettings} className="space-y-5">
-              <label className="flex items-start gap-3 rounded-[10px] border border-hairline bg-warm p-4">
+              <label className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-4">
                 <input name="enabled" type="checkbox" defaultChecked={settings.enabled} className="mt-1 h-4 w-4 accent-[var(--moss)]" />
                 <span>
                   <span className="block text-sm font-semibold text-ink">Allow AI-assisted workflows</span>
@@ -87,7 +93,7 @@ export default async function SettingsPage() {
                     {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
                   </select>
                 </label>
-                <label className="flex items-center gap-3 self-end rounded-[8px] border border-hairline bg-warm px-3 py-3 text-sm text-graphite">
+                <label className="flex items-center gap-3 self-end rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-sm text-graphite">
                   <input name="attachmentsEnabled" type="checkbox" defaultChecked={settings.attachmentsEnabled} className="h-4 w-4 accent-[var(--moss)]" />
                   Permit attachments selected by the user
                 </label>
@@ -128,7 +134,7 @@ export default async function SettingsPage() {
               </p>
               <a
                 href="/api/exports/backup.json"
-                className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss transition hover:bg-warm"
+                className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-moss transition hover:bg-warm"
               >
                 Download backup.json
               </a>

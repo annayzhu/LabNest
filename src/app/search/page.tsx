@@ -35,7 +35,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: Page
                   name="q"
                   defaultValue={query}
                   placeholder="Project, plan code, protocol, sample, reagent, result..."
-                  className="focus-ring h-11 w-full rounded-[8px] border border-hairline bg-warm px-3 text-sm text-ink"
+                  className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink"
                 />
               </label>
               <Button type="submit" variant="primary" size="lg" className="shadow-paper">

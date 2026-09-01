@@ -30,7 +30,11 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   const contentHash = useMemo(() => JSON.stringify(content), [content]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => {
-    setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+    });
+    return () => { active = false; };
   }, [toolbarHostId]);
   const editor = useEditor({
     immediatelyRender: false,

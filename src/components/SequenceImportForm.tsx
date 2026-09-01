@@ -61,7 +61,7 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
                       if (mode.value === "primer_pair") setMoleculeType("DNA");
                       if (mode.value === "sirna_duplex") setMoleculeType("RNA");
                     }}
-                    className={`focus-ring rounded-[8px] border p-2.5 text-left transition md:p-3 ${pasteMode === mode.value ? "border-moss bg-moss/5" : "border-hairline bg-surface hover:bg-warm/50"}`}
+                    className={`focus-ring rounded-[var(--ln-radius-control-lg)] border p-2.5 text-left transition md:p-3 ${pasteMode === mode.value ? "border-moss bg-moss/5" : "border-hairline bg-surface hover:bg-warm/50"}`}
                   >
                     <span className="block text-[13px] font-semibold text-ink">{mode.label}</span>
                     <span className="mt-1 hidden text-xs leading-4 text-muted md:block">{mode.help}</span>
@@ -85,7 +85,7 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
                 <span className="mt-1.5 block text-xs text-muted">Headers are optional. Extra purchasing, price, tube, purification, and shipping columns are ignored.</span>
               </label>
 
-              <section aria-label="Import preview" className="rounded-[9px] border border-hairline bg-warm/35 p-3">
+              <section aria-label="Import preview" className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/35 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-[13px] font-semibold text-ink">Preview</h3>
                   {canImport ? <span className="inline-flex items-center gap-1 text-xs font-medium text-success"><CheckCircle2 className="h-3.5 w-3.5" />Ready · {preview.entries.length}</span> : <span className="text-xs text-muted">{hasPastedData ? `${preview.entries.length} complete` : "Waiting for paste"}</span>}
@@ -94,9 +94,9 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
                   <div className="mt-6 text-center text-xs leading-5 text-muted"><ClipboardPaste className="mx-auto mb-2 h-5 w-5" />Copy cells in Excel, then paste them into the box.</div>
                 ) : (
                   <div className="mt-3 space-y-2">
-                    {preview.errors.slice(0, 4).map((error) => <p key={error} className="rounded-[7px] bg-error/5 px-2.5 py-2 text-xs leading-4 text-error">{error}</p>)}
+                    {preview.errors.slice(0, 4).map((error) => <p key={error} className="rounded-[var(--ln-radius-control-md)] bg-error/5 px-2.5 py-2 text-xs leading-4 text-error">{error}</p>)}
                     {preview.entries.slice(0, 6).map((entry) => (
-                      <div key={`${entry.sourceRows.join("-")}-${entry.name}`} className="rounded-[7px] border border-hairline bg-surface px-2.5 py-2">
+                      <div key={`${entry.sourceRows.join("-")}-${entry.name}`} className="rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 py-2">
                         <div className="flex items-start justify-between gap-2"><span className="truncate text-xs font-medium text-ink">{entry.name}</span><span className="shrink-0 text-[10px] text-muted">row {entry.sourceRows.join("+")}</span></div>
                         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted">{entry.members.map((member) => <span key={member.role}>{member.role} · {member.sequence.length} {entry.kind === "pair" && entry.pairType === "sirna_duplex" ? "nt" : pasteMode === "single" && moleculeType === "Protein" ? "aa" : "nt"}</span>)}</div>
                       </div>
@@ -126,7 +126,7 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
                   <label><span className={formLabelClass}>Molecule</span><select name="defaultMoleculeType" value={moleculeType} onChange={(event) => setMoleculeType(event.target.value as MoleculeType)} className={formInputClass}><option value="DNA">DNA</option><option value="RNA">RNA</option><option value="Protein">Amino acid</option></select></label>
                   <label><span className={formLabelClass}>Type</span><select name="defaultDesignType" defaultValue="fragment" className={formInputClass}>{singleDesignTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
                 </div>
-              ) : <div className="rounded-[8px] border border-hairline px-3 py-2 text-xs leading-5 text-muted"><span className="block font-medium text-ink">Created as one entry</span>{pasteMode === "primer_pair" ? "Forward + Reverse primer" : "sense + antisense siRNA"}</div>}
+              ) : <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 py-2 text-xs leading-5 text-muted"><span className="block font-medium text-ink">Created as one entry</span>{pasteMode === "primer_pair" ? "Forward + Reverse primer" : "sense + antisense siRNA"}</div>}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
@@ -143,9 +143,9 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
             <summary className="focus-ring flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] font-semibold text-ink"><FileSpreadsheet className="h-4 w-4 text-muted" />Advanced file upload</summary>
             <CardBody className="border-t border-hairline">
               <form action={fileAction} className="space-y-4">
-                <label className="block rounded-[10px] border border-dashed border-hairline bg-warm/50 p-4">
+                <label className="block rounded-[var(--ln-radius-panel-inner)] border border-dashed border-hairline bg-warm/50 p-4">
                   <span className={formLabelClass}>FASTA, CSV, TSV, or XLSX file *</span>
-                  <input required type="file" name="file" accept=".fa,.fasta,.fna,.faa,.csv,.tsv,.xlsx,text/plain,text/csv" className="mt-3 block w-full text-sm text-graphite file:mr-3 file:rounded-[6px] file:border file:border-hairline file:bg-surface file:px-3 file:py-2 file:text-xs file:text-moss" />
+                  <input required type="file" name="file" accept=".fa,.fasta,.fna,.faa,.csv,.tsv,.xlsx,text/plain,text/csv" className="mt-3 block w-full text-sm text-graphite file:mr-3 file:rounded-[var(--ln-radius-control-sm)] file:border file:border-hairline file:bg-surface file:px-3 file:py-2 file:text-xs file:text-moss" />
                 </label>
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={formLabelClass}>Default location</span><select name="ownershipScope" defaultValue="library" className={formInputClass}><option value="library">Sequence library</option><option value="project">Project</option></select></label>
@@ -164,8 +164,8 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
           <CardBody className="space-y-3 text-sm text-graphite">
             <p className="text-xs leading-5 text-muted">The workbook contains compact sheets for primer pairs, siRNA duplexes, and single sequences. You can fill it, upload it, or copy its cells into the box above.</p>
             <div className="flex flex-wrap gap-2">
-              <Link href="/api/sequences/template?format=xlsx" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Download XLSX template</Link>
-              <Link href="/api/sequences/template?format=csv&type=primer_pair" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Primer CSV</Link>
+              <Link href="/api/sequences/template?format=xlsx" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Download XLSX template</Link>
+              <Link href="/api/sequences/template?format=csv&type=primer_pair" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Primer CSV</Link>
             </div>
           </CardBody>
         </Card>

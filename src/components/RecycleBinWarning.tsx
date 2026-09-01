@@ -17,7 +17,7 @@ export function RecycleBinWarning({
   const self = kind === "self";
 
   return (
-    <div className="flex items-start gap-3 rounded-[9px] border border-warning/35 bg-warning-surface px-4 py-3 text-sm text-graphite">
+    <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-warning/35 bg-warning-surface px-4 py-3 text-sm text-graphite">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
       <div className="min-w-0">
         <p className="font-semibold text-warning">

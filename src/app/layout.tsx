@@ -4,7 +4,10 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { MobileBackGestureGuard } from "@/components/MobileBackGestureGuard";
 import { TypographyBoot } from "@/components/TypographyBoot";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
+import { typographyCssProperties, typographyCssStorageKey } from "@/lib/typography-settings";
 import "./globals.css";
+
+const typographyBootstrapScript = `(function(){try{var v=JSON.parse(localStorage.getItem(${JSON.stringify(typographyCssStorageKey)})||'{}');${JSON.stringify(typographyCssProperties)}.forEach(function(k){if(typeof v[k]==='string'&&v[k].length<500)document.documentElement.style.setProperty(k,v[k])})}catch(e){}})()`;
 
 export const metadata: Metadata = {
   title: "LabNest",
@@ -27,7 +30,7 @@ export default async function RootLayout({
     <html lang={locale === "zh" ? "zh-CN" : "en"} data-locale={locale} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('labnest.system-theme');if(t)document.documentElement.dataset.labnestTheme=t}catch(e){}})()` }} />
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var v=JSON.parse(localStorage.getItem('labnest.typography-css.v2')||'{}');['--font-cjk-ui','--font-cjk-document-body','--font-cjk-document-heading','--font-latin-ui','--font-latin-document-body','--font-latin-document-heading'].forEach(function(k){if(typeof v[k]==='string'&&v[k].length<500)document.documentElement.style.setProperty(k,v[k])})}catch(e){}})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: typographyBootstrapScript }} />
       </head>
       <body className="overflow-x-hidden">
         <MobileBackGestureGuard />

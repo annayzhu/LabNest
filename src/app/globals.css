@@ -1,5 +1,60 @@
 @import "tailwindcss";
 
+/* 内置中文字体以字符区间隔离，避免字体栈回退时由宋体接管英文字形。 */
+@font-face {
+  font-family: "LabNest CJK Source Han Sans";
+  src: local("Source Han Sans SC"), local("Noto Sans CJK SC"), local("PingFang SC"), local("Microsoft YaHei");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK PingFang";
+  src: local("PingFang SC"), local("Hiragino Sans GB"), local("Microsoft YaHei");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK System Sans";
+  src: local("PingFang SC"), local("Microsoft YaHei"), local("Hiragino Sans GB"), local("Noto Sans CJK SC");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK Source Han Serif";
+  src: local("Source Han Serif SC"), local("Noto Serif CJK SC"), local("Songti SC"), local("STSong"), local("SimSun");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK Songti";
+  src: local("Songti SC"), local("STSong"), local("SimSun");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK SimSun";
+  src: local("SimSun"), local("Songti SC"), local("STSong");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
 :root {
   /* 基础色板：控制全站背景、文字、边框和状态颜色。 */
   --paper: #f5f7f4; /* 月白：页面最外层的安静底色。 */
@@ -39,9 +94,9 @@
   --brand-mark-border: #34534f; /* 品牌纹样边框。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
-  --font-cjk-ui: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif; /* 界面中的中文字符。 */
-  --font-cjk-document-body: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 文档正文中的中文字符。 */
-  --font-cjk-document-heading: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 页面与文档标题中的中文字符。 */
+  --font-cjk-ui: "LabNest CJK Source Han Sans", sans-serif; /* 界面中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-cjk-document-body: "LabNest CJK Source Han Serif", serif; /* 文档正文中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-cjk-document-heading: "LabNest CJK Source Han Serif", serif; /* 页面与文档标题中的中文字符；别名仅覆盖中日韩字符。 */
   --font-latin-ui: Arial, "Helvetica Neue", Helvetica; /* 界面中的拉丁字符，默认使用 Arial。 */
   --font-latin-document-body: "Times New Roman", Times; /* 文档正文中的拉丁字符。 */
   --font-latin-document-heading: "Times New Roman", Times; /* 页面与文档标题中的拉丁字符。 */

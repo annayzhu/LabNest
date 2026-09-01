@@ -33,13 +33,20 @@ describe("typography settings", () => {
       latinDocumentBody: { kind: "preset", id: "times-new-roman" },
       latinDocumentHeading: { kind: "preset", id: "arial" },
     })).toEqual({
-      "--font-cjk-ui": '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
-      "--font-cjk-document-body": '"Songti SC", STSong, SimSun, serif',
-      "--font-cjk-document-heading": '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      "--font-cjk-ui": '"LabNest CJK PingFang", sans-serif',
+      "--font-cjk-document-body": '"LabNest CJK Songti", serif',
+      "--font-cjk-document-heading": '"LabNest CJK Source Han Serif", serif',
       "--font-latin-ui": 'Arial, "Helvetica Neue", Helvetica',
       "--font-latin-document-body": '"Times New Roman", Times',
       "--font-latin-document-heading": 'Arial, "Helvetica Neue", Helvetica',
     });
+  });
+
+  it("keeps built-in Chinese preset stacks behind CJK-only aliases", () => {
+    const variables = typographyCssVariables(defaultTypographySettings);
+    expect(variables["--font-cjk-document-body"]).toBe('"LabNest CJK Source Han Serif", serif');
+    expect(variables["--font-cjk-document-body"]).not.toContain('"Songti SC"');
+    expect(variables["--font-latin-document-body"]).toBe('"Times New Roman", Times');
   });
 
   it("uses script-scoped aliases for imported fonts so an English font cannot replace Chinese glyphs", () => {

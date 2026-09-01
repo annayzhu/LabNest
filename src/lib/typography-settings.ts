@@ -14,7 +14,7 @@ export const typographyPresets = {
       nameEn: "Source Han Sans",
       description: "清晰、克制，适合导航与表单",
       descriptionEn: "Clear and restrained for navigation and forms",
-      family: '"Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
+      family: '"LabNest CJK Source Han Sans", sans-serif',
     },
     {
       id: "pingfang",
@@ -22,7 +22,7 @@ export const typographyPresets = {
       nameEn: "PingFang SC",
       description: "轻盈现代，适合 macOS",
       descriptionEn: "Light and modern on macOS",
-      family: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
+      family: '"LabNest CJK PingFang", sans-serif',
     },
     {
       id: "system-sans",
@@ -30,7 +30,7 @@ export const typographyPresets = {
       nameEn: "System sans",
       description: "跟随当前设备，加载最稳定",
       descriptionEn: "Uses the most stable font on this device",
-      family: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+      family: '"LabNest CJK System Sans", sans-serif',
     },
   ],
   cjkDocumentBody: [
@@ -40,7 +40,7 @@ export const typographyPresets = {
       nameEn: "Source Han Serif",
       description: "清楚舒展，适合长文阅读",
       descriptionEn: "Open and readable for long documents",
-      family: '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Source Han Serif", serif',
     },
     {
       id: "songti",
@@ -48,7 +48,7 @@ export const typographyPresets = {
       nameEn: "Songti SC",
       description: "温润传统，适合中文文档",
       descriptionEn: "A warm, traditional Chinese serif",
-      family: '"Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Songti", serif',
     },
     {
       id: "simsun",
@@ -56,7 +56,7 @@ export const typographyPresets = {
       nameEn: "SimSun",
       description: "兼容性好，接近传统科研文稿",
       descriptionEn: "Compatible with traditional research documents",
-      family: 'SimSun, "Songti SC", STSong, serif',
+      family: '"LabNest CJK SimSun", serif',
     },
   ],
   cjkDocumentHeading: [
@@ -66,7 +66,7 @@ export const typographyPresets = {
       nameEn: "Source Han Serif",
       description: "端正但不过分厚重",
       descriptionEn: "Structured without feeling heavy",
-      family: '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Source Han Serif", serif',
     },
     {
       id: "songti",
@@ -74,7 +74,7 @@ export const typographyPresets = {
       nameEn: "Songti SC",
       description: "更具中文书卷气",
       descriptionEn: "A more literary Chinese heading",
-      family: '"Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Songti", serif',
     },
   ],
   latinUi: [
@@ -170,6 +170,8 @@ const cssVariableByRole: Record<TypographyRole, string> = {
   latinDocumentBody: "--font-latin-document-body",
   latinDocumentHeading: "--font-latin-document-heading",
 };
+
+export const typographyCssProperties = Object.values(cssVariableByRole);
 
 export const typographyRoleGroups = {
   cjk: ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading"],

@@ -15,13 +15,27 @@ try {
   if (JSON.stringify(latinPresetValues) !== JSON.stringify(["preset:arial", "preset:times-new-roman"])) {
     throw new Error(`English presets must be limited to Arial and Times New Roman: ${latinPresetValues.join(", ")}`);
   }
+  const cjkFontFaceIsolation = await page.evaluate(() => Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter((rule) => rule instanceof CSSFontFaceRule && rule.style.fontFamily.includes("LabNest CJK"))
+    .map((rule) => ({ family: rule.style.fontFamily, unicodeRange: rule.style.unicodeRange })));
+  if (cjkFontFaceIsolation.length < 6 || cjkFontFaceIsolation.some((face) => !face.unicodeRange.includes("U+4E00-9FFF") || face.unicodeRange.includes("U+0000"))) {
+    throw new Error(`Built-in Chinese fonts are not isolated from Latin glyphs: ${JSON.stringify(cjkFontFaceIsolation)}`);
+  }
+  await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkUi"]')?.disabled);
 
   await selector("cjkUi").selectOption("preset:pingfang");
   await selector("cjkDocumentBody").selectOption("preset:songti");
   await selector("latinDocumentBody").selectOption("preset:arial");
+  await page.waitForFunction(() => {
+    const style = getComputedStyle(document.documentElement);
+    return style.getPropertyValue("--font-cjk-ui").includes("LabNest CJK PingFang")
+      && style.getPropertyValue("--font-cjk-document-body").includes("LabNest CJK Songti")
+      && style.getPropertyValue("--font-latin-document-body").includes("Arial");
+  });
   await page.reload();
   const interfaceFamily = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
-  if (!interfaceFamily.includes("Arial") || !interfaceFamily.includes("PingFang SC")) throw new Error(`Independent UI fonts did not persist: ${interfaceFamily}`);
+  if (!interfaceFamily.includes("Arial") || !interfaceFamily.includes("LabNest CJK PingFang")) throw new Error(`Independent UI fonts did not persist: ${interfaceFamily}`);
   const interfaceWeight = await page.evaluate(() => getComputedStyle(document.body).fontWeight);
   if (interfaceWeight !== "350") throw new Error(`Interface Normal weight was not applied: ${interfaceWeight}`);
   const documentVariables = await page.evaluate(() => {
@@ -31,7 +45,7 @@ try {
       latin: style.getPropertyValue("--font-latin-document-body"),
     };
   });
-  if (!documentVariables.cjk.includes("Songti SC")) throw new Error(`Chinese document font did not persist: ${documentVariables.cjk}`);
+  if (!documentVariables.cjk.includes("LabNest CJK Songti")) throw new Error(`Chinese document font did not persist: ${documentVariables.cjk}`);
   if (!documentVariables.latin.includes("Arial")) throw new Error(`English document font did not persist: ${documentVariables.latin}`);
 
   await page.locator("input[type=file][accept*=woff2]").setInputFiles(fontFixture);

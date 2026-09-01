@@ -157,6 +157,7 @@ export function TypographySettingsPanel() {
                   <select
                     className="focus-ring typography-role-select"
                     data-typography-role={role}
+                    disabled={loadingFonts}
                     value={selectionValue(settings[role])}
                     onChange={(event) => selectFont(role, event.target.value)}
                   >

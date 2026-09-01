@@ -4,7 +4,13 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { MobileBackGestureGuard } from "@/components/MobileBackGestureGuard";
 import { TypographyBoot } from "@/components/TypographyBoot";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
+import { systemThemeCssText, systemThemes, systemThemeStorageKey } from "@/lib/system-theme";
+import { typographyCssProperties, typographyCssStorageKey } from "@/lib/typography-settings";
 import "./globals.css";
+
+const typographyBootstrapScript = `(function(){try{var v=JSON.parse(localStorage.getItem(${JSON.stringify(typographyCssStorageKey)})||'{}');${JSON.stringify(typographyCssProperties)}.forEach(function(k){if(typeof v[k]==='string'&&v[k].length<500)document.documentElement.style.setProperty(k,v[k])})}catch(e){}})()`;
+const systemThemeStyles = systemThemeCssText();
+const systemThemeBootstrapScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify(systemThemeStorageKey)});if(${JSON.stringify(systemThemes.map((theme) => theme.id))}.includes(t))document.documentElement.dataset.labnestTheme=t}catch(e){}})()`;
 
 export const metadata: Metadata = {
   title: "LabNest",
@@ -26,8 +32,9 @@ export default async function RootLayout({
   return (
     <html lang={locale === "zh" ? "zh-CN" : "en"} data-locale={locale} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('labnest.system-theme');if(t)document.documentElement.dataset.labnestTheme=t}catch(e){}})()` }} />
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var v=JSON.parse(localStorage.getItem('labnest.typography-css.v1')||'{}');['--font-ui','--font-document-body','--font-document-heading'].forEach(function(k){if(typeof v[k]==='string'&&v[k].length<500)document.documentElement.style.setProperty(k,v[k])})}catch(e){}})()` }} />
+        <style dangerouslySetInnerHTML={{ __html: systemThemeStyles }} />
+        <script dangerouslySetInnerHTML={{ __html: systemThemeBootstrapScript }} />
+        <script dangerouslySetInnerHTML={{ __html: typographyBootstrapScript }} />
       </head>
       <body className="overflow-x-hidden">
         <MobileBackGestureGuard />

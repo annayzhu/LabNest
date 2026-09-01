@@ -17,7 +17,7 @@ const variants: Record<ButtonVariant, string> = {
 const sizes: Record<ButtonSize, string> = {
   sm: "h-[var(--ln-control-height-sm)] px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-control-font-size-xs)]",
   md: "h-[var(--ln-control-height-md)] px-[var(--ln-control-padding-x-md)] text-[length:var(--ln-control-font-size-sm)]",
-  lg: "h-[var(--ln-control-height-lg)] px-[var(--ln-control-padding-x-lg)] text-[length:var(--ln-control-font-size-md)]",
+  lg: "h-[var(--ln-control-height-lg)] px-[var(--ln-control-padding-x-lg)] text-[length:var(--ln-control-font-size-lg)]",
   icon: "h-[var(--ln-control-height-md)] w-[var(--ln-control-height-md)] p-0",
 };
 

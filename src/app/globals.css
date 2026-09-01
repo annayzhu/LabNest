@@ -1,28 +1,63 @@
 @import "tailwindcss";
 
+/* 内置中文字体以字符区间隔离，避免字体栈回退时由宋体接管英文字形。 */
+@font-face {
+  font-family: "LabNest CJK Source Han Sans";
+  src: local("Source Han Sans SC"), local("Noto Sans CJK SC"), local("PingFang SC"), local("Microsoft YaHei");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK PingFang";
+  src: local("PingFang SC"), local("Hiragino Sans GB"), local("Microsoft YaHei");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK System Sans";
+  src: local("PingFang SC"), local("Microsoft YaHei"), local("Hiragino Sans GB"), local("Noto Sans CJK SC");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK Source Han Serif";
+  src: local("Source Han Serif SC"), local("Noto Serif CJK SC"), local("Songti SC"), local("STSong"), local("SimSun");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK Songti";
+  src: local("Songti SC"), local("STSong"), local("SimSun");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LabNest CJK SimSun";
+  src: local("SimSun"), local("Songti SC"), local("STSong");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
 :root {
-  /* 基础色板：控制全站背景、文字、边框和状态颜色。 */
-  --paper: #f5f7f4; /* 月白：页面最外层的安静底色。 */
-  --warm: #fafbf8; /* 宣纸白：卡片、输入框等近白背景。 */
-  --stone: #eef1ec; /* 青灰：表头、工具栏、弱强调区域背景。 */
-  --sand-panel: #e6ebe7; /* 较深的青灰面板底色。 */
+  /* 各系统风格的语义色板由 system-theme.ts 注入；这里仅保留跨主题不变的状态色。 */
   --surface: #ffffff; /* 主卡片和文档纸张白色背景。 */
-  --ink: #202825; /* 墨色：主要文字颜色。 */
-  --graphite: #4d5955; /* 松烟灰：正文和次级正文颜色。 */
-  --muted: #5f6d68; /* 竹灰：标签、说明、弱信息文字颜色。 */
-  --disabled: #a5ada9; /* 禁用状态文字或图标颜色。 */
-  --moss: #3f625d; /* 黛青：品牌主色，用于重点按钮、图标和链接。 */
-  --action: #3f625d; /* 可点击主操作默认色。 */
-  --action-hover: #34534f; /* 可点击主操作悬停色。 */
-  --action-surface: #eaf1ef; /* 黛青浅染背景。 */
-  --action-surface-hover: #e1ebe8; /* 主操作浅色按钮悬停背景。 */
-  --action-border: #cadbd6; /* 主操作相关边框颜色。 */
-  --sage: #7f9992; /* 竹青，用于边框、图标和弱强调。 */
-  --sage-surface: #edf3f0; /* 竹青浅背景。 */
-  --fog: #607873; /* 远山青灰文字或图标色。 */
-  --fog-surface: #eef3f1; /* 远山青灰浅背景。 */
-  --clay: #9a6257; /* 朱砂灰：低剂量暖色强调。 */
-  --pale-sand: #f3e8e3; /* 朱砂浅染背景。 */
   --success: #526f60; /* 成功状态文字或图标色。 */
   --success-surface: #e8f1ec; /* 成功状态浅背景。 */
   --warning: #805b24; /* 警告状态文字或图标色。 */
@@ -31,20 +66,22 @@
   --error-surface: #f7e7e7; /* 错误、删除、风险提示浅背景。 */
   --info: #526d73; /* 信息提示文字或图标色。 */
   --info-surface: #eaf1f2; /* 信息提示浅背景。 */
-  --hairline: #dfe5e1; /* 默认细边框颜色。 */
-  --border-strong: #c8d2cd; /* 较明显边框颜色。 */
   --divider: rgba(32, 40, 37, 0.075); /* 弱分割线颜色。 */
-  --brand-mark-bg: #3f625d; /* 品牌纹样底色。 */
-  --brand-mark-fg: #ffffff; /* 品牌纹样前景色。 */
-  --brand-mark-border: #34534f; /* 品牌纹样边框。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
-  --font-ui: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif; /* 系统界面、按钮和表单字体。 */
+  --font-cjk-ui: "LabNest CJK Source Han Sans", sans-serif; /* 界面中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-cjk-document-body: "LabNest CJK Source Han Serif", serif; /* 文档正文中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-cjk-document-heading: "LabNest CJK Source Han Serif", serif; /* 页面与文档标题中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-latin-ui: Arial, "Helvetica Neue", Helvetica; /* 界面中的拉丁字符，默认使用 Arial。 */
+  --font-latin-document-body: "Times New Roman", Times; /* 文档正文中的拉丁字符。 */
+  --font-latin-document-heading: "Times New Roman", Times; /* 页面与文档标题中的拉丁字符。 */
+  --font-ui: var(--font-latin-ui), var(--font-cjk-ui); /* 按字符覆盖范围组合英文与中文界面字体。 */
   --font-ui-base-weight: 350; /* 思源黑体 Normal；缺少该字重时由浏览器选择最接近的可用字重。 */
-  --font-document-body: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* A4 文档正文与长篇阅读字体。 */
-  --font-document-heading: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 页面与文档标题字体。 */
+  --font-document-body: var(--font-latin-document-body), var(--font-cjk-document-body); /* A4 文档正文按字符分别使用中英文字体。 */
+  --font-document-heading: var(--font-latin-document-heading), var(--font-cjk-document-heading); /* 页面与文档标题按字符分别使用中英文字体。 */
   --font-editorial: var(--font-document-heading); /* 保持既有 font-serif 语义，并由标题字体设置统一驱动。 */
   --font-data: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* 编号、字段键、代码和数据字体。 */
+  --font-identifier: var(--font-ui); /* 记录编号、版本号和业务标识使用界面字体，避免代码字体过细。 */
 
   /* 全局控件基元：控制按钮、筛选器和表单输入框的共同尺寸。 */
   --ln-radius-control-sm: 4px; /* 小型图标按钮、紧凑筛选器圆角。 */
@@ -59,17 +96,25 @@
   --ln-control-padding-x-sm: 0.625rem; /* 小按钮左右内边距。 */
   --ln-control-padding-x-md: 0.75rem; /* 默认按钮和筛选器左右内边距。 */
   --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
-  --ln-control-font-size-xs: 0.75rem; /* 小按钮和紧凑工具按钮字号。 */
-  --ln-control-font-size-sm: 0.8125rem; /* 默认按钮、筛选器、辅助操作字号。 */
-  --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
+  --ln-ui-body-font-size: 13px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
+  --ln-ui-nav-font-size: 12px; /* 桌面侧栏与紧凑导航字号。 */
+  --ln-ui-section-title-font-size: 13px; /* 卡片和工作区 section 标题字号。 */
+  --ln-ui-label-font-size: 11px; /* 表单标签与低层级标题字号。 */
+  --ln-ui-table-font-size: 13px; /* 共享数据表正文与记录字号。 */
+  --ln-ui-search-font-size: 13px; /* 顶部全局搜索字号。 */
+  --ln-ui-brand-font-size: 15px; /* 品牌名称保持足够识别度。 */
+  --ln-control-font-size-xs: 11px; /* 小按钮和紧凑工具按钮字号。 */
+  --ln-control-font-size-sm: 12px; /* 默认按钮、筛选器、辅助操作字号。 */
+  --ln-control-font-size-md: 13px; /* 表单输入框和较大按钮字号。 */
+  --ln-control-font-size-lg: 12px; /* 大尺寸主按钮保留热区但使用紧凑字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
   /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
   --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
-  --ln-page-title-size: 18px; /* 全站工作页外层标题字号。 */
+  --ln-page-title-size: 17px; /* 全站工作页外层标题字号。 */
   --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
   --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
-  --ln-page-action-font-size: 13px; /* 页头动作字号。 */
+  --ln-page-action-font-size: 12px; /* 页头动作字号。 */
   --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
   --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
 
@@ -95,7 +140,7 @@
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
   --ln-list-table-shadow: none; /* 列表表格保持平面层级，减少视觉重量。 */
   --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
-  --ln-list-table-head-font-size: 12.5px; /* 列表表头字号。 */
+  --ln-list-table-head-font-size: 11.5px; /* 列表表头字号。 */
   --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
   --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
   --ln-list-table-head-padding-y: 0.68rem; /* 列表表头上下内边距。 */
@@ -106,7 +151,7 @@
   --ln-list-table-selection-col-width: 3rem; /* 列表表格最左侧 checkbox 选择列宽度。 */
 
   /* Result 数据表：控制结果记录页面中可填写/查看的数据表。 */
-  --ln-result-dataset-font-size: 13px; /* Result 数据表正文和表头字号。 */
+  --ln-result-dataset-font-size: 12px; /* Result 数据表正文和表头字号。 */
   --ln-result-dataset-key-font-size: 9.5px; /* Result 数据表字段 key 的小号字体。 */
   --ln-result-dataset-input-height: 2rem; /* Result 数据表编辑输入框高度。 */
   --ln-result-dataset-input-min-width: 6rem; /* Result 数据表编辑输入框最小宽度。 */
@@ -139,7 +184,7 @@
   --ln-inline-table-cell-min-width: 5rem; /* 内嵌普通表格列调整时允许的最小列宽。 */
   --ln-inline-table-cell-padding-x: 0.5rem; /* 内嵌普通表格单元格左右内边距。 */
   --ln-inline-table-cell-padding-y: 0.22rem; /* 内嵌普通表格单元格上下内边距。 */
-  --ln-inline-table-font-size: 12px; /* 内嵌普通表格单元格字号。 */
+  --ln-inline-table-font-size: 11.5px; /* 内嵌普通表格单元格字号。 */
   --ln-inline-table-line-height: 1.3; /* 内嵌普通表格多行内容行距。 */
   --ln-inline-table-head-bg: color-mix(in srgb, var(--stone) 32%, var(--surface)); /* 内嵌普通表格的轻量表头背景。 */
   --ln-inline-table-toolbar-gap: 0.35rem; /* 内嵌普通表格标题栏中控件之间的间距。 */
@@ -149,10 +194,10 @@
   --ln-inline-table-caption-min-width: 18rem; /* 内嵌普通表格标题输入框最小宽度。 */
   --ln-inline-table-caption-basis: 28rem; /* 内嵌普通表格标题输入框优先占用宽度。 */
   --ln-inline-table-caption-padding-x: 0.65rem; /* 内嵌普通表格标题输入框左右内边距。 */
-  --ln-inline-table-caption-font-size: 13px; /* 内嵌普通表格标题输入框字号。 */
+  --ln-inline-table-caption-font-size: 12px; /* 内嵌普通表格标题输入框字号。 */
   --ln-inline-table-button-height: 1.65rem; /* 内嵌普通表格标题栏按钮高度。 */
   --ln-inline-table-button-padding-x: 0.45rem; /* 内嵌普通表格标题栏按钮左右内边距。 */
-  --ln-inline-table-button-font-size: 12px; /* 内嵌普通表格标题栏按钮字号。 */
+  --ln-inline-table-button-font-size: 11px; /* 内嵌普通表格标题栏按钮字号。 */
 
   /* 文档显示和打印前的普通表格：控制 Protocol/Entry 文档中的三线表。 */
   --ln-document-table-col-width: 7rem; /* 文档普通表格每列默认宽度。 */
@@ -181,7 +226,7 @@
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
   --ln-wysiwyg-toolbar-button-padding-x: 0.3rem; /* 纯图标和插入按钮左右内边距。 */
   --ln-wysiwyg-toolbar-select-padding-x: 0.34rem; /* 字体、字号、行距等选择器左右内边距。 */
-  --ln-wysiwyg-toolbar-font-size: 12.5px; /* 工具条选择器与文字按钮字号。 */
+  --ln-wysiwyg-toolbar-font-size: 11.5px; /* 工具条选择器与文字按钮字号。 */
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.18rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.34rem; /* 工具条整体内边距。 */
@@ -190,7 +235,7 @@
   --ln-wysiwyg-paragraph-gap: 0.32rem; /* 连续文档段落、列表和表格之间距离。 */
   --ln-wysiwyg-widget-control-height: 1.8rem; /* Timer、提示框和媒体行内控件高度。 */
   --ln-wysiwyg-widget-control-padding-x: 0.5rem; /* 科研节点输入框左右内边距。 */
-  --ln-wysiwyg-widget-font-size: 11.5px; /* 科研节点输入框和单位字号。 */
+  --ln-wysiwyg-widget-font-size: 11px; /* 科研节点输入框和单位字号。 */
   --ln-wysiwyg-widget-padding-x: 0.5rem; /* 科研节点左右内边距。 */
   --ln-wysiwyg-widget-padding-y: 0.38rem; /* 科研节点上下内边距。 */
   --ln-wysiwyg-table-font-size: 9pt; /* 连续编辑器内表格默认字号，可再用工具条覆盖所选文字。 */
@@ -209,8 +254,8 @@
   --ln-wysiwyg-relevant-row-gap: 0.5rem; /* Relevant items 单行文字与右侧元数据间距。 */
   --ln-wysiwyg-relevant-row-padding-x: 0.625rem; /* Relevant items 单行左右内边距。 */
   --ln-wysiwyg-relevant-row-padding-y: 0.375rem; /* Relevant items 单行上下内边距。 */
-  --ln-wysiwyg-relevant-font-size: 12px; /* Relevant items 主要文字字号。 */
-  --ln-wysiwyg-relevant-meta-font-size: 10px; /* Relevant items 数量与元数据字号。 */
+  --ln-wysiwyg-relevant-font-size: 11.5px; /* Relevant items 主要文字字号。 */
+  --ln-wysiwyg-relevant-meta-font-size: 9.5px; /* Relevant items 数量与元数据字号。 */
   --ln-wysiwyg-relevant-control-radius: 4px; /* Relevant items 搜索与筛选控件圆角。 */
   --ln-wysiwyg-relevant-filter-width: 9rem; /* Relevant items 类型筛选器宽度。 */
   --ln-wysiwyg-relevant-heading-height: 1.5rem; /* Relevant items 小标题最小高度。 */
@@ -218,7 +263,7 @@
   --ln-wysiwyg-relevant-result-row-padding: 0.3rem 0.15rem; /* 检索结果单行内边距。 */
   --ln-wysiwyg-relevant-action-height: 1.65rem; /* Link、Unlink 等行内操作高度。 */
   --ln-wysiwyg-relevant-action-radius: 4px; /* Relevant items 行内操作圆角。 */
-  --ln-wysiwyg-relevant-action-font-size: 10.5px; /* Relevant items 行内操作字号。 */
+  --ln-wysiwyg-relevant-action-font-size: 10px; /* Relevant items 行内操作字号。 */
   --ln-wysiwyg-relevant-search-padding-y: 0.48rem; /* Relevant items 搜索区上下内边距。 */
   --ln-wysiwyg-relevant-results-padding-y: 0.35rem; /* 已关联项和搜索结果区域上下内边距。 */
   --ln-wysiwyg-relevant-result-gap: 0.5rem; /* 搜索结果主信息和操作之间距离。 */
@@ -257,7 +302,7 @@
   --ln-template-dataset-row-padding-y: 0.25rem; /* Dataset 设计器每行上下内边距，也影响行高。 */
   --ln-template-dataset-input-height: 1.75rem; /* Dataset 设计器输入框高度。 */
   --ln-template-dataset-input-padding-x: 0.5rem; /* Dataset 设计器输入框左右内边距。 */
-  --ln-template-dataset-font-size: 12.5px; /* Dataset 设计器输入框和内容字号。 */
+  --ln-template-dataset-font-size: 11.5px; /* Dataset 设计器输入框和内容字号。 */
   --ln-template-dataset-checkbox-size: 0.875rem; /* Dataset 设计器 checkbox 尺寸。 */
 
   /* Protocol 结果模板编辑器：控制“需要记录什么”区域的卡片、输入框和高级设置密度。 */
@@ -275,7 +320,7 @@
   --ln-result-template-input-height: 2rem; /* 结果模板编辑器输入框和选择框高度。 */
   --ln-result-template-input-padding-x: 0.55rem; /* 结果模板编辑器输入框左右内边距。 */
   --ln-result-template-control-radius: 5px; /* 结果模板编辑器输入框、按钮圆角。 */
-  --ln-result-template-font-size: 12.5px; /* 结果模板编辑器输入框和按钮字号。 */
+  --ln-result-template-font-size: 11.5px; /* 结果模板编辑器输入框和按钮字号。 */
   --ln-result-template-checkbox-offset: 0.38rem; /* checkbox 行底部偏移，用于和输入框视觉对齐。 */
   --ln-result-template-icon-button-padding: 0.25rem; /* 上移、下移、删除图标按钮内边距。 */
   --ln-result-template-advanced-margin-top: 0.5rem; /* 高级设置区域顶部距离。 */
@@ -298,90 +343,6 @@
   --ln-experiment-protocol-picker-title-size: 13px; /* Protocol 选择列表主标题字号。 */
   --ln-experiment-protocol-picker-meta-size: 11px; /* Protocol 选择列表版本、状态和步骤信息字号。 */
   --ln-experiment-protocol-picker-badge-size: 10.5px; /* 最新版本/历史版本标签字号。 */
-}
-
-html[data-labnest-theme="azure-coral"] {
-  --paper: #f5fafb;
-  --warm: #fbfdfe;
-  --stone: #eaf5f7;
-  --sand-panel: #dceef2;
-  --ink: #20282b;
-  --graphite: #47595e;
-  --muted: #586c72;
-  --disabled: #a3b0b3;
-  --moss: #147d99;
-  --action: #147d99;
-  --action-hover: #106b84;
-  --action-surface: #def3f7;
-  --action-surface-hover: #d2edf3;
-  --action-border: #a9dbe6;
-  --sage: #30aecf;
-  --sage-surface: #e4f6fa;
-  --fog: #4a7f8c;
-  --fog-surface: #e8f4f6;
-  --clay: #de7565;
-  --pale-sand: #f9e7e3;
-  --hairline: #d8e6e9;
-  --border-strong: #bdd3d8;
-  --brand-mark-bg: #147d99;
-  --brand-mark-fg: #ffffff;
-  --brand-mark-border: #116b83;
-}
-
-html[data-labnest-theme="celadon-pine"] {
-  --paper: #f5f8f2;
-  --warm: #fbfcf8;
-  --stone: #edf2e8;
-  --sand-panel: #e1e9dc;
-  --ink: #222a25;
-  --graphite: #4b5a51;
-  --muted: #5d6d63;
-  --disabled: #a6afa9;
-  --moss: #397568;
-  --action: #397568;
-  --action-hover: #2f6257;
-  --action-surface: #e5f1ec;
-  --action-surface-hover: #dbeae4;
-  --action-border: #c4d9cf;
-  --sage: #6f9c88;
-  --sage-surface: #eaf3ee;
-  --fog: #5f7c70;
-  --fog-surface: #edf3ef;
-  --clay: #b17859;
-  --pale-sand: #f3e8df;
-  --hairline: #dde5da;
-  --border-strong: #c7d2c3;
-  --brand-mark-bg: #397568;
-  --brand-mark-fg: #ffffff;
-  --brand-mark-border: #2f6257;
-}
-
-html[data-labnest-theme="lotus-ink"] {
-  --paper: #faf6f4;
-  --warm: #fdfaf8;
-  --stone: #f3ecec;
-  --sand-panel: #ebe1e3;
-  --ink: #2a2528;
-  --graphite: #5a4e54;
-  --muted: #6d5d65;
-  --disabled: #aea4a9;
-  --moss: #75556b;
-  --action: #75556b;
-  --action-hover: #624659;
-  --action-surface: #f1e8ee;
-  --action-surface-hover: #eadee6;
-  --action-border: #ddcbd7;
-  --sage: #9a7a90;
-  --sage-surface: #f3ebf0;
-  --fog: #796674;
-  --fog-surface: #f3edef;
-  --clay: #c06f5d;
-  --pale-sand: #f7e6e1;
-  --hairline: #e8dedf;
-  --border-strong: #d5c7ca;
-  --brand-mark-bg: #75556b;
-  --brand-mark-fg: #ffffff;
-  --brand-mark-border: #624659;
 }
 
 @theme inline {
@@ -427,6 +388,27 @@ html[data-labnest-theme="lotus-ink"] {
   box-sizing: border-box;
 }
 
+/* 工作区使用紧凑字号；A4 与打印根节点在下方显式恢复文档尺度。 */
+.app-shell {
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.1875rem;
+  --text-2xl: 1.375rem;
+  --text-3xl: 1.625rem;
+}
+
+.document-a4-paper {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+}
+
 html {
   background: var(--paper);
   max-width: 100%;
@@ -440,7 +422,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--ln-ui-body-font-size);
   font-weight: var(--font-ui-base-weight);
   line-height: 1.5;
   overflow-x: clip;
@@ -704,6 +686,27 @@ textarea {
   font-size: var(--ln-page-action-font-size);
 }
 
+.protocol-density-actionbar[data-active-tab="metadata"],
+.protocol-density-actionbar[data-active-tab="relations"] {
+  backdrop-filter: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  bottom: auto;
+  margin-inline: auto;
+  max-width: var(--ln-wysiwyg-properties-max-width);
+  padding: 0.15rem 0;
+  position: static;
+  width: 100%;
+}
+
+.protocol-density-slice .page-header-identifier {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+}
+
 @media (max-width: 1023px) {
   .protocol-density-actionbar {
     margin-left: 0;
@@ -718,6 +721,12 @@ textarea {
 
 ::selection {
   background: rgba(98, 94, 126, 0.2);
+}
+
+.record-identifier {
+  font-family: var(--font-identifier);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
 .editorial-scrollbar {
@@ -735,7 +744,7 @@ textarea {
 .ln-data-table {
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.875rem;
+  font-size: var(--ln-ui-table-font-size);
   min-width: 100%;
   text-align: left;
 }
@@ -955,7 +964,7 @@ textarea {
 .system-theme-grid {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .system-theme-option {
@@ -1017,13 +1026,45 @@ textarea {
 }
 
 .typography-settings-panel {
-  max-width: 68rem;
+  max-width: 76rem;
+}
+
+.typography-language-groups {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.typography-language-group {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.typography-language-group + .typography-language-group {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.8rem;
+}
+
+.typography-language-group legend {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+
+.typography-language-note {
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+  margin-top: 0.18rem;
 }
 
 .typography-role-grid {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.55rem;
 }
 
 .typography-role-field {
@@ -1045,16 +1086,174 @@ textarea {
 }
 
 .typography-role-select {
+  align-items: center;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--ln-radius-control-lg);
   color: var(--graphite);
+  display: flex;
   font-size: 12px;
+  gap: 0.5rem;
   height: 2.25rem;
+  justify-content: space-between;
   margin-top: 0.18rem;
   min-width: 0;
-  padding-inline: 0.6rem 1.8rem;
+  padding-inline: 0.65rem 0.5rem;
+  text-align: left;
   width: 100%;
+}
+
+.typography-role-select > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typography-role-select > svg {
+  flex: 0 0 auto;
+  height: 0.8rem;
+  transition: transform 140ms ease;
+  width: 0.8rem;
+}
+
+.typography-font-picker {
+  min-width: 0;
+  position: relative;
+}
+
+.typography-font-picker[data-open="true"] {
+  z-index: 40;
+}
+
+.typography-font-picker[data-open="true"] .typography-role-select > svg {
+  transform: rotate(180deg);
+}
+
+.typography-font-menu {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  box-shadow: 0 16px 40px rgba(31, 39, 46, 0.13);
+  left: 0;
+  margin-top: 0.28rem;
+  min-width: min(19rem, calc(100vw - 2rem));
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+}
+
+.typography-font-search {
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  gap: 0.45rem;
+  margin-inline: 0.55rem;
+  min-height: 2.3rem;
+}
+
+.typography-font-search > svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.typography-font-search input {
+  background: transparent;
+  color: var(--ink);
+  font-size: 11.5px;
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.typography-font-search input::placeholder {
+  color: var(--muted);
+}
+
+.typography-font-options {
+  max-height: 17rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.28rem;
+  scrollbar-width: thin;
+}
+
+.typography-font-option-group + .typography-font-option-group {
+  border-top: 1px solid var(--divider);
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.typography-font-option-group > p {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  padding: 0.3rem 0.45rem 0.2rem 1.8rem;
+  text-transform: uppercase;
+}
+
+.typography-font-option-group > button {
+  align-items: center;
+  border-radius: var(--ln-radius-control-md);
+  color: var(--graphite);
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  min-height: 2.35rem;
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  width: 100%;
+}
+
+.typography-font-option-group > button:hover,
+.typography-font-option-group > button:focus-visible {
+  background: var(--stone);
+  color: var(--ink);
+  outline: 0;
+}
+
+.typography-font-option-group > button > svg {
+  height: 0.75rem;
+  opacity: 0;
+  width: 0.75rem;
+}
+
+.typography-font-option-group > button[aria-selected="true"] {
+  background: var(--action-surface);
+  color: var(--action);
+}
+
+.typography-font-option-group > button[aria-selected="true"] > svg {
+  opacity: 1;
+}
+
+.typography-font-option-group strong,
+.typography-font-option-group small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typography-font-option-group strong {
+  font-size: 11.5px;
+  font-weight: 550;
+}
+
+.typography-font-option-group small {
+  color: var(--muted);
+  font-size: 9.5px;
+  margin-top: 0.06rem;
+}
+
+.typography-font-empty {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 1rem 0.7rem;
+  text-align: center;
 }
 
 .typography-preview {
@@ -1069,6 +1268,14 @@ textarea {
 }
 
 .typography-preview-copy {
+  min-width: 0;
+}
+
+.typography-preview-samples {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 0.9rem 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
 }
 
@@ -1202,12 +1409,38 @@ textarea {
   transition: background-color 180ms ease-out, border-color 180ms ease-out, color 180ms ease-out;
 }
 
+@media (max-width: 1100px) and (min-width: 761px) {
+  .system-theme-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.sidebar-nav-item-active {
+  background: var(--nav-active-bg);
+  box-shadow: inset 0 0 0 1px var(--nav-active-border);
+  color: var(--nav-active-fg);
+  font-weight: 650;
+}
+
+.sidebar-nav-item-active:hover {
+  color: var(--nav-active-fg);
+  filter: saturate(1.04) brightness(0.98);
+}
+
+.sidebar-nav-item-active svg {
+  stroke-width: 2.25;
+}
+
 @media (max-width: 760px) {
   .system-theme-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .typography-role-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .typography-preview-samples {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1355,6 +1588,10 @@ textarea {
   min-width: 0;
   transform-origin: top left;
   zoom: var(--ln-document-view-scale, 1);
+}
+
+.document-editor-document-stage :is(.ln-protocol-section, #entry-document-overview, #entry-document-content) {
+  scroll-margin-top: 5rem;
 }
 
 .document-editor-outline,
@@ -1562,6 +1799,10 @@ textarea {
     grid-column: 2;
   }
 
+  .document-editor-document-stage {
+    min-width: 210mm;
+  }
+
   .document-editor-document-stage > .document-workspace,
   .document-editor-document-stage .document-canvas-toolbar,
   .document-editor-document-stage .document-a4-paper {
@@ -1616,7 +1857,7 @@ textarea {
 
 .document-editor-properties-card > header h2 {
   color: var(--ink);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -1630,6 +1871,87 @@ textarea {
   display: grid;
   gap: var(--ln-wysiwyg-properties-gap);
   padding: var(--ln-wysiwyg-properties-padding-y) var(--ln-wysiwyg-properties-padding-x);
+}
+
+.protocol-metadata-sections {
+  display: grid;
+}
+
+.protocol-metadata-group {
+  border: 0;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  min-width: 0;
+  padding: 0.58rem var(--ln-wysiwyg-properties-padding-x) 0.65rem;
+}
+
+.protocol-metadata-group + .protocol-metadata-group {
+  border-top: 1px solid var(--hairline);
+}
+
+.protocol-metadata-group > legend {
+  color: var(--graphite);
+  font-size: 10.5px;
+  font-weight: 650;
+  padding: 0;
+}
+
+.protocol-metadata-grid {
+  display: grid;
+  gap: 0.5rem 0.65rem;
+  min-width: 0;
+}
+
+.protocol-metadata-grid :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  font-size: var(--ln-wysiwyg-properties-value-size);
+  height: var(--ln-wysiwyg-properties-control-height);
+}
+
+.protocol-metadata-grid textarea {
+  font-size: var(--ln-wysiwyg-properties-value-size);
+  min-height: 3.5rem;
+  padding-block: 0.42rem;
+}
+
+.protocol-metadata-grid :is(label, fieldset) > :first-child,
+.protocol-metadata-readonly > :first-child {
+  font-size: var(--ln-wysiwyg-properties-label-size);
+}
+
+.protocol-metadata-readonly {
+  align-content: start;
+  display: grid;
+  gap: 0.16rem;
+  min-width: 0;
+}
+
+.protocol-metadata-readonly strong {
+  align-items: center;
+  background: color-mix(in srgb, var(--stone) 50%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  display: flex;
+  font-size: var(--ln-wysiwyg-properties-value-size);
+  font-weight: 500;
+  min-height: var(--ln-wysiwyg-properties-control-height);
+  padding-inline: 0.7rem;
+}
+
+.protocol-metadata-readonly small {
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+@media (min-width: 768px) {
+  .protocol-metadata-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .protocol-metadata-span-full {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1692,6 +2014,18 @@ textarea {
   padding: var(--ln-wysiwyg-relevant-panel-padding);
 }
 
+.document-editor-relevant-groups > h3 {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: var(--ln-wysiwyg-relevant-meta-font-size);
+  font-weight: 650;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  min-height: var(--ln-wysiwyg-relevant-heading-height);
+  text-transform: uppercase;
+}
+
 .document-editor-relevant-group {
   overflow: hidden;
   border: 1px solid var(--hairline);
@@ -1721,6 +2055,14 @@ textarea {
   flex-shrink: 0;
   color: var(--muted);
   font-size: var(--ln-wysiwyg-relevant-meta-font-size);
+}
+
+.document-editor-relevant-meta {
+  max-width: min(40%, 16rem);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .document-editor-relevant-count {
@@ -1881,6 +2223,19 @@ textarea {
   padding: var(--ln-wysiwyg-relevant-result-row-padding);
 }
 
+.document-editor-linked-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.document-editor-linked-row:has(.document-editor-primary-toggle) {
+  display: grid;
+}
+
+.document-editor-linked-row:not(:has(.document-editor-primary-toggle)) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .document-editor-linked-row > span,
 .document-editor-relation-result > span:first-child {
   flex: 1;
@@ -1945,6 +2300,30 @@ textarea {
   display: flex;
   gap: var(--ln-wysiwyg-relevant-primary-gap);
   white-space: nowrap;
+}
+
+@media (max-width: 479px) {
+  .document-editor-relevant-search {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .document-editor-relevant-search select {
+    width: 100%;
+  }
+
+  .document-editor-linked-row:has(.document-editor-primary-toggle) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .document-editor-linked-row .document-editor-primary-toggle {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .document-editor-linked-row > button {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
 }
 
 .ln-wysiwyg-editor {
@@ -2655,9 +3034,9 @@ textarea {
 
 @media (max-width: 767px) {
   :root {
-    --ln-page-action-font-size: 11px;
-    --ln-page-title-size: 15px;
-    --ln-wysiwyg-toolbar-font-size: 11.5px;
+    --ln-page-action-font-size: 10.5px;
+    --ln-page-title-size: 14px;
+    --ln-wysiwyg-toolbar-font-size: 11px;
   }
 
   .protocol-density-slice {
@@ -3675,14 +4054,26 @@ table :where(td) {
   }
 
   .app-shell-main > :has(.document-print-root) > :not(:has(.document-print-root)),
-  .document-editor-layout:has(.document-print-root) > :not(.document-editor-main),
-  .document-editor-main:has(.document-print-root) > :not(.document-print-root) {
+  .document-editor-layout:has(.document-print-root) > :not(.document-editor-main):not(:has(.document-print-root)),
+  .document-editor-main:has(.document-print-root) > :not(.document-print-root):not(.document-editor-workbench) {
+    display: none !important;
+  }
+
+  .entry-editor-main-column:has(.document-print-root) > :not(.document-editor-workbench),
+  .entry-editor-layout:has(.document-print-root) .entry-editor-sidebar-column {
     display: none !important;
   }
 
   .app-shell-main > :has(.document-print-root),
   .document-editor-layout:has(.document-print-root),
   .document-editor-main:has(.document-print-root) {
+    display: block !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .entry-editor-main-column:has(.document-print-root) {
     display: block !important;
     margin: 0 !important;
     max-width: none !important;
@@ -3729,6 +4120,7 @@ table :where(td) {
   }
 
   .document-editor-document-stage {
+    min-width: 0 !important;
     zoom: 1 !important;
   }
 

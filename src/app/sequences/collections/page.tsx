@@ -51,7 +51,7 @@ export default async function SequenceCollectionsPage({ searchParams }: { search
               emptyMessage="No Sequence Collections match this view."
               selection={{ exportPath: "/sequences/collections/export" }}
               columns={[
-                { key: "name", header: "Collection", render: (row) => <div><Link href={`/sequences/collections/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="font-mono text-xs text-muted">{row.code}</p></div> },
+                { key: "name", header: "Collection", render: (row) => <div><Link href={`/sequences/collections/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="record-identifier text-xs text-muted">{row.code}</p></div> },
                 { key: "type", header: "Type", render: (row) => <Badge tone="sage">{collectionTypeLabel(row.type)}</Badge> },
                 { key: "members", header: "Exact members", render: (row) => <div><p>{row.members.length} {row.members.length === 1 ? "member" : "members"}</p><p className="max-w-96 truncate text-xs text-muted">{row.members.map((member) => `${member.role}: ${member.sequenceVersion.sequenceRecord.name} v${member.sequenceVersion.displayVersion}`).join(" · ") || "—"}</p></div> },
                 { key: "project", header: "Project", render: (row) => row.project?.name ?? "Sequence library" },

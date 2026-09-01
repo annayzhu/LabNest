@@ -3,9 +3,11 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
+import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ScientificWysiwygEditor } from "@/components/ScientificWysiwygEditor";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
+import { scientificDocumentOutline } from "@/lib/document-outline";
 
 /**
  * One continuous scientific document editor. The hidden field intentionally
@@ -40,30 +42,33 @@ export function ScientificDocumentEditor({
 }) {
   const [document, setDocument] = useState(initialDocument);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
+  const outline = useMemo(() => scientificDocumentOutline(document, hiddenSectionKeys), [document, hiddenSectionKeys]);
   const toolbarHostId = `${useId()}-scientific-document-toolbar`;
 
   return <>
     <input type="hidden" name={name} value={serialized} />
-    <DocumentCanvas
-      label={title?.trim() || "Structured scientific document editor"}
-      toolbar={<><div id={toolbarHostId} className="ln-document-toolbar-host" /><DocumentPrintButton /></>}
-    >
-      <DocumentPageHeader
-        documentType={documentType}
-        identifier={identifier}
-        title={title}
-        titlePlaceholder={titlePlaceholder}
-        subtitle={subtitle}
-        facts={headerFacts}
-      />
-      {leadingContent}
-      <ScientificWysiwygEditor
-        document={document}
-        toolbarHostId={toolbarHostId}
-        hiddenSectionKeys={hiddenSectionKeys}
-        allowedBlockTypes={allowedBlockTypes}
-        onChange={setDocument}
-      />
-    </DocumentCanvas>
+    <DocumentOutlineWorkbench items={outline}>
+      <DocumentCanvas
+        label={title?.trim() || "Structured scientific document editor"}
+        toolbar={<><div id={toolbarHostId} className="ln-document-toolbar-host" /><DocumentPrintButton /></>}
+      >
+        <DocumentPageHeader
+          documentType={documentType}
+          identifier={identifier}
+          title={title}
+          titlePlaceholder={titlePlaceholder}
+          subtitle={subtitle}
+          facts={headerFacts}
+        />
+        {leadingContent}
+        <ScientificWysiwygEditor
+          document={document}
+          toolbarHostId={toolbarHostId}
+          hiddenSectionKeys={hiddenSectionKeys}
+          allowedBlockTypes={allowedBlockTypes}
+          onChange={setDocument}
+        />
+      </DocumentCanvas>
+    </DocumentOutlineWorkbench>
   </>;
 }

@@ -34,7 +34,7 @@ export function CardHeader({
   return (
     <div className={cn("flex min-h-11 items-center justify-between gap-3 border-b border-hairline/70 px-4 py-2.5", className)}>
       <div className="min-w-0">
-        <h2 className="text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">{title}</h2>
+        <h2 className="text-[length:var(--ln-ui-section-title-font-size)] font-semibold leading-snug tracking-[-0.01em] text-ink">{title}</h2>
       </div>
       {action ? <div className="card-action">{action}</div> : null}
     </div>

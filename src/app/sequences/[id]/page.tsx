@@ -150,7 +150,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
         <Card>
           <CardHeader title="Version history" />
           <CardBody><DataTable rows={record.versions} getRowKey={(row) => row.id} columns={[
-            { key: "version", header: "Version", render: (row) => <Link href={`/sequences/${record.id}?version=${row.id}`} className={`font-mono text-xs ${row.id === selectedVersion.id ? "font-semibold text-moss" : "text-ink hover:text-moss"}`}>v{row.displayVersion}{row.id === record.versions[0].id ? " · latest" : ""}</Link> },
+            { key: "version", header: "Version", render: (row) => <Link href={`/sequences/${record.id}?version=${row.id}`} className={`record-identifier text-xs ${row.id === selectedVersion.id ? "font-semibold text-moss" : "text-ink hover:text-moss"}`}>v{row.displayVersion}{row.id === record.versions[0].id ? " · latest" : ""}</Link> },
             { key: "created", header: "Created", render: (row) => <span className="whitespace-nowrap text-xs">{row.createdAt.toLocaleString()}</span> },
             { key: "molecule", header: "Molecule", render: (row) => `${row.moleculeType === "Protein" ? "Amino acid" : row.moleculeType} · ${row.sequence.length} ${row.moleculeType === "Protein" ? "aa" : "nt"}` },
             { key: "validation", header: "Validation", render: (row) => <StatusPill status={row.validationStatus} /> },

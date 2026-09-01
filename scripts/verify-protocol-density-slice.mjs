@@ -66,6 +66,9 @@ async function assertDesktopSlice(page, routes) {
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
   assert(detailMetrics.paperWidth >= 790 && detailMetrics.paperWidth <= 798, `The 100% A4 width changed: ${detailMetrics.paperWidth}px.`);
   assert(detailMetrics.copyLineHeightRatio >= 1.58 && detailMetrics.copyLineHeightRatio <= 1.62, `Protocol detail copy should use the requested 1.6 line-height ratio: ${detailMetrics.copyLineHeightRatio}.`);
+  const sectionHeaders = page.locator(".document-section > header");
+  assert(await sectionHeaders.count() > 0, "The Protocol document needs at least one visible section heading for the heading seam.");
+  assert(await sectionHeaders.locator("svg").count() === 0, "Protocol section headings should not include decorative icons.");
   await page.locator(".protocol-export-menu > summary").click();
   assert(await page.locator(".protocol-export-menu-popover a").count() === 2, "The compact Export menu must expose both DOCX and JSON.");
   await assertNoPageOverflow(page, "Protocol detail desktop");

@@ -37,7 +37,7 @@ export function DocumentPageHeader({
           {visibleFacts.map((fact) => (
             <div key={`${fact.label}-${fact.value}`} className="min-w-0">
               <dt>{fact.label}</dt>
-              <dd className={fact.mono ? "font-mono" : undefined}>{fact.value}</dd>
+              <dd className={fact.mono ? "record-identifier" : undefined}>{fact.value}</dd>
             </div>
           ))}
         </dl>

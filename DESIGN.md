@@ -33,22 +33,22 @@ typography:
     lineHeight: 1.25
   title:
     fontFamily: "Source Serif 4, Iowan Old Style, Palatino Linotype, Georgia, serif"
-    fontSize: "20px"
+    fontSize: "17px"
     fontWeight: 500
     lineHeight: 1.25
   body:
     fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "14px"
+    fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.5
   label:
     fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "12px"
+    fontSize: "11px"
     fontWeight: 500
     lineHeight: 1.35
   caption:
     fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "11px"
+    fontSize: "10px"
     fontWeight: 400
     lineHeight: 1.4
   micro:
@@ -164,7 +164,7 @@ Typography is user-configurable by role from Settings. Interface text, document 
 - **Body:** Regular sans-serif for descriptions and instructions, normally at the body token or the smaller label scale.
 - **Label:** Medium sans-serif for fields, controls, and section-level microcopy.
 - **Data:** Monospace for numeric results and provenance metadata; units may be smaller but remain adjacent to their values.
-- **Working page title:** Repeated operational pages use the 20px title token at every viewport; reserve the 24px display token for true module identity or editorial reading surfaces.
+- **Working page title:** Repeated operational pages use a compact 17px desktop / 14px mobile title token; reserve the 24px display token for true module identity or editorial reading surfaces.
 
 ### Named Rules
 

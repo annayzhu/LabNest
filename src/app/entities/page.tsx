@@ -54,7 +54,7 @@ export default async function EntitiesPage({ searchParams }: { searchParams?: Pa
                     </BadgeLink>
                   ),
                 },
-                { key: "code", header: "Code", render: (row) => <span className="font-mono text-xs">{row.code}</span> },
+                { key: "code", header: "Code", render: (row) => <span className="record-identifier text-xs font-medium">{row.code}</span> },
                 { key: "project", header: "Project", render: (row) => row.projectName },
                 { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} href={filterHref("/entities", { status: row.status })} /> },
               ]}

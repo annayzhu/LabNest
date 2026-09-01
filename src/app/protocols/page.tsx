@@ -73,7 +73,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
       />
       <DataTable rows={protocols} getRowKey={(row) => row.id} emptyMessage="No Protocols match this view." selection={{ exportPath: "/protocols/export" }} columns={[
         { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="block text-ink hover:text-moss"><ProtocolIdentity title={row.canonicalTitle ?? row.title} code={row.humanCode} /></Link> },
-        { key: "version", header: "Current version", render: (row) => row.versions[0] ? <span className="font-mono">{row.versions[0].displayVersion}</span> : "—" },
+        { key: "version", header: "Current version", render: (row) => row.versions[0] ? <span className="record-identifier font-medium">{row.versions[0].displayVersion}</span> : "—" },
         { key: "review", header: "Review", render: (row) => row.versions[0] ? <StatusPill status={row.versions[0].reviewStage} href={filterHref("/protocols", { review: row.versions[0].reviewStage })} /> : "—" },
         { key: "availability", header: "Availability", render: (row) => <StatusPill status={row.availability} href={filterHref("/protocols", { availability: row.availability })} /> },
         { key: "scope", header: "Scope", render: (row) => <BadgeLink href={filterHref("/protocols", { scope: row.scope })} tone={row.scope === "general" ? "info" : "sage"}>{row.scope}</BadgeLink> },

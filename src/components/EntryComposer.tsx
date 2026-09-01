@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
+import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass } from "@/components/forms";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
@@ -26,6 +27,7 @@ import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { deleteEntryDraft, loadEntryDraft, saveEntryDraft, type StoredEntryDraft } from "@/lib/entry-draft-store";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { cn } from "@/lib/cn";
+import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 
 export type EntryComposerProject = { id: string; name: string };
@@ -80,6 +82,10 @@ export type EntryComposerInitialEntry = {
 };
 
 const maxFileBytes = 25 * 1024 * 1024;
+const entryDocumentOutline: DocumentOutlineItem[] = [
+  { id: "entry-document-overview", label: "Entry details" },
+  { id: "entry-document-content", label: "Record content" },
+];
 
 function formatBytes(size: number) {
   if (size < 1024) return `${size} B`;
@@ -380,6 +386,7 @@ export function EntryComposer({
     <form onSubmit={submit} className="space-y-5">
       <DocumentEditorLayout className="entry-editor-layout" storageKey="labnest.entry.settings-open">
       <div className="entry-editor-main-column">
+      <DocumentOutlineWorkbench items={entryDocumentOutline}>
       <DocumentCanvas
         className="entry-editor-document"
         label={fields.title || "Entry editor"}
@@ -398,7 +405,7 @@ export function EntryComposer({
           </>
         }
       >
-        <header className="document-page-header">
+        <header id="entry-document-overview" className="document-page-header">
           <input
             required
             value={fields.title}
@@ -416,14 +423,17 @@ export function EntryComposer({
             {selectedProtocol ? <div><dt>Protocol</dt><dd>{selectedProtocol.label}</dd></div> : null}
           </dl>
         </header>
-        <MarkdownRichTextEditor
-          value={fields.contentMarkdown}
-          onChange={(value) => updateField("contentMarkdown", value)}
-          placeholder="Observation, decision, deviation, or follow-up…"
-          minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
-          toolbarHostId={toolbarHostId}
-        />
+        <div id="entry-document-content">
+          <MarkdownRichTextEditor
+            value={fields.contentMarkdown}
+            onChange={(value) => updateField("contentMarkdown", value)}
+            placeholder="Observation, decision, deviation, or follow-up…"
+            minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
+            toolbarHostId={toolbarHostId}
+          />
+        </div>
       </DocumentCanvas>
+      </DocumentOutlineWorkbench>
 
       <section
         className={cn(

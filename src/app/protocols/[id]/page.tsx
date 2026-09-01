@@ -156,7 +156,7 @@ export default async function ProtocolDetailPage({
                 <ul className="divide-y divide-hairline">
                   {protocol.versions.map((row) => <li key={row.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
-                      <Link href={`/protocols/${protocol.id}?version=${row.id}`} className="font-mono font-semibold text-moss hover:underline">{row.displayVersion}</Link>
+                      <Link href={`/protocols/${protocol.id}?version=${row.id}`} className="record-identifier font-semibold text-moss hover:underline">{row.displayVersion}</Link>
                       <StatusPill status={row.reviewStage} />
                     </div>
                     <p className="text-xs text-muted">{row.sourceType.replaceAll("_", " ")} · {row.createdAt.toLocaleDateString()}</p>

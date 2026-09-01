@@ -90,6 +90,10 @@ export function ProtocolRelevantItemsEditor({
   const catalogMap = useMemo(() => new Map(combinedCatalog.map((item) => [`${item.type}:${item.id}`, item])), [combinedCatalog]);
   const filtered = useMemo(() => hasSearchQuery ? filterRelevantItemCatalog(combinedCatalog, query, type) : [], [combinedCatalog, hasSearchQuery, query, type]);
   const selectedManualKeys = new Set(manualLinks.map((item) => `${item.type}:${item.id}`));
+  const systemGroups = (["projects", "experiments", "results", "attachments", "versions"] as const)
+    .map((group) => ({ group, items: relevantItems[group] ?? [] }))
+    .filter(({ items }) => items.length > 0);
+  const systemLinkCount = systemGroups.reduce((total, { items }) => total + items.length, 0);
 
   const addManual = (item: RelevantCatalogItem) => {
     if (item.type === "research_plan" || item.type === "version") return;
@@ -98,26 +102,12 @@ export function ProtocolRelevantItemsEditor({
   };
   const removeManual = (typeToRemove: ManualRelevantLink["type"], id: string) => setManualLinks((current) => current.filter((item) => item.type !== typeToRemove || item.id !== id));
 
-  return <section className="document-editor-properties-card" aria-label="Protocol relevant items">
+  return <section className="document-editor-properties-card" aria-label="Protocol related records">
     <input type="hidden" name="relevantItemLinksJson" value={JSON.stringify(manualLinks)} />
-    <header><p>Workflow relationship</p><h2>Relevant items</h2><span>Search and link records without deleting their source data. System provenance stays locked.</span></header>
+    <header><h2>Related records</h2><span>Search, select, and review the records connected to this protocol.</span></header>
     <div className="document-editor-relevant-search">
       <label><Search aria-hidden /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search plans, experiments, results, or files…" aria-label="Search relevant items" /></label>
       <select value={type} onChange={(event) => setType(event.target.value as typeof type)} aria-label="Relevant item type">{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-    </div>
-
-    <div className="document-editor-linked-items">
-      <h3>Linked <span>{selectedPlanIds.length + manualLinks.length}</span></h3>
-      {!selectedPlanIds.length && !manualLinks.length ? <p className="document-editor-relevant-empty-message">No user-managed links yet.</p> : null}
-      {selectedPlanIds.map((id) => {
-        const item = planMap.get(id);
-        if (!item) return null;
-        return <div key={`research_plan:${id}`} className="document-editor-linked-row"><span><strong>{item.label}</strong><small>{item.projectName}</small></span><label className="document-editor-primary-toggle"><input type="checkbox" name="primaryResearchPlanIds" value={id} checked={primaryPlanIds.includes(id)} onChange={(event) => onTogglePrimary(id, event.target.checked)} />Primary</label><button type="button" onClick={() => onTogglePlan(id, false)} aria-label={`Unlink ${item.label}`}><X aria-hidden /></button><input type="hidden" name="researchPlanIds" value={id} /></div>;
-      })}
-      {manualLinks.map((link) => {
-        const item = catalogMap.get(`${link.type}:${link.id}`);
-        return <div key={`${link.type}:${link.id}`} className="document-editor-linked-row"><span><strong>{item?.label ?? link.id}</strong><small>{typeLabels[link.type]}{item?.meta ? ` · ${item.meta}` : ""}</small></span><button type="button" onClick={() => removeManual(link.type, link.id)} aria-label={`Unlink ${item?.label ?? link.id}`}><X aria-hidden /></button></div>;
-      })}
     </div>
 
     {hasSearchQuery ? <div className="document-editor-relation-results" aria-live="polite">
@@ -130,15 +120,29 @@ export function ProtocolRelevantItemsEditor({
       {!filtered.length && !searching ? <p className="document-editor-relevant-empty-message">No matching records.</p> : null}
     </div> : <p className="document-editor-relevant-search-hint">{searchNeedle ? "Type at least 2 characters to search." : "Search by name or code to add a related item."}</p>}
 
-    <div className="document-editor-relevant-groups">
-      {(["projects", "experiments", "results", "attachments", "versions"] as const).map((group) => <SystemRelevantGroup key={group} label={group === "versions" ? "Version history" : typeLabels[group === "projects" ? "project" : group === "experiments" ? "experiment" : group === "results" ? "result" : group === "attachments" ? "attachment" : "version"]} items={relevantItems[group] ?? []} />)}
+    <div className="document-editor-linked-items">
+      <h3>Selected links <span>{selectedPlanIds.length + manualLinks.length}</span></h3>
+      {!selectedPlanIds.length && !manualLinks.length ? <p className="document-editor-relevant-empty-message">No editable links selected.</p> : null}
+      {selectedPlanIds.map((id) => {
+        const item = planMap.get(id);
+        if (!item) return null;
+        return <div key={`research_plan:${id}`} className="document-editor-linked-row"><span><strong title={item.label}>{item.label}</strong><small>{item.projectName}</small></span><label className="document-editor-primary-toggle"><input type="checkbox" name="primaryResearchPlanIds" value={id} checked={primaryPlanIds.includes(id)} onChange={(event) => onTogglePrimary(id, event.target.checked)} />Primary</label><button type="button" onClick={() => onTogglePlan(id, false)} aria-label={`Unlink ${item.label}`}><X aria-hidden /></button><input type="hidden" name="researchPlanIds" value={id} /></div>;
+      })}
+      {manualLinks.map((link) => {
+        const item = catalogMap.get(`${link.type}:${link.id}`);
+        return <div key={`${link.type}:${link.id}`} className="document-editor-linked-row"><span><strong title={item?.label ?? link.id}>{item?.label ?? link.id}</strong><small>{typeLabels[link.type]}{item?.meta ? ` · ${item.meta}` : ""}</small></span><button type="button" onClick={() => removeManual(link.type, link.id)} aria-label={`Unlink ${item?.label ?? link.id}`}><X aria-hidden /></button></div>;
+      })}
     </div>
+
+    {systemGroups.length ? <div className="document-editor-relevant-groups"><h3>System links <span>{systemLinkCount}</span></h3>
+      {systemGroups.map(({ group, items }) => <SystemRelevantGroup key={group} label={group === "versions" ? "Version history" : typeLabels[group === "projects" ? "project" : group === "experiments" ? "experiment" : group === "results" ? "result" : group === "attachments" ? "attachment" : "version"]} items={items} />)}
+    </div> : null}
   </section>;
 }
 
 function SystemRelevantGroup({ label, items }: { label: string; items: ProtocolRelevantLink[] }) {
-  return <details className="document-editor-relevant-group" open={items.length > 0 && items.length <= 3 ? true : undefined}>
+  return <details className="document-editor-relevant-group" open={items.length <= 3 ? true : undefined}>
     <summary><span>{label}</span><span className="document-editor-relevant-count">{items.length}</span></summary>
-    <div className="document-editor-relevant-group-body">{items.length ? items.map((item) => <Link key={item.id} href={item.href} className="document-editor-relevant-row"><Link2 aria-hidden /><span className="min-w-0 flex-1 truncate font-medium text-ink">{item.label}</span>{item.meta ? <span className="document-editor-relevant-meta">{item.meta}</span> : null}<LockKeyhole aria-label="System provenance" /></Link>) : <p className="document-editor-relevant-row document-editor-relevant-empty">None linked</p>}</div>
+    <div className="document-editor-relevant-group-body">{items.map((item) => <Link key={item.id} href={item.href} className="document-editor-relevant-row"><Link2 aria-hidden /><span className="min-w-0 flex-1 truncate font-medium text-ink" title={item.label}>{item.label}</span>{item.meta ? <span className="document-editor-relevant-meta" title={item.meta}>{item.meta}</span> : null}<LockKeyhole className="shrink-0" aria-label="System provenance" /></Link>)}</div>
   </details>;
 }

@@ -51,7 +51,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-muted">{experiment.runCode}</span>
+                      <span className="record-identifier text-xs text-muted">{experiment.runCode}</span>
                       <StatusPill status={experiment.status} />
                     </div>
                     <h2 className="mt-2 truncate font-serif text-lg font-medium text-ink">{experiment.title}</h2>

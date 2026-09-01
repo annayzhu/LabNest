@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, FileText, Link2, Table2, Wrench } from "lucide-react";
+import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, Link2, Table2, Wrench } from "lucide-react";
 import Image from "next/image";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -192,12 +192,12 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
   return <DocumentCanvas toolbar={<DocumentPrintButton />} label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
+      <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
       {document.importWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{document.importWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
-      {document.sections.map((section) => <section key={section.key} id={section.key} className="document-section scroll-mt-24"><header className="mb-5 flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-moss" aria-hidden /><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block"><ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
+      {document.sections.map((section) => <section key={section.key} id={section.key} className="document-section scroll-mt-24"><header className="mb-5"><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block"><ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
     </div>
   </DocumentCanvas>;
 }

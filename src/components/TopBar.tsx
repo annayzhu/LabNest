@@ -19,7 +19,7 @@ export function TopBar() {
           </Link>
         ) : null}
         <form action="/search" className="min-w-0 flex-1">
-          <label className="flex h-9 max-w-xl items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-xs text-muted transition focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/10 md:text-sm">
+          <label className="flex h-9 max-w-xl items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-[length:var(--ln-ui-search-font-size)] text-muted transition focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/10">
             <Search className="h-4 w-4" aria-hidden />
             <span className="sr-only">Search LabNest</span>
             <input

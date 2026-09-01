@@ -24,6 +24,7 @@ import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertActi
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
+import { scientificSectionAnchorId } from "@/lib/document-outline";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
 import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
@@ -34,7 +35,7 @@ function uniqueBlockId(prefix: string) {
 }
 
 function ScientificSectionNodeView({ node }: NodeViewProps) {
-  return <NodeViewWrapper as="section" className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
+  return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
       <h2>{node.attrs.sectionTitle}</h2>
@@ -148,8 +149,13 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
 }) {
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
   const originalRef = useRef(document);
+  const hiddenSectionKeysRef = useRef(hiddenSectionKeys);
+  const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
+  const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
   const onChangeRef = useRef(onChange);
   const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
+  useEffect(() => { originalRef.current = document; }, [document]);
+  useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => {
     let active = true;
@@ -180,6 +186,16 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
     },
     onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
   });
+
+  useEffect(() => {
+    if (!editor || previousHiddenSectionSignatureRef.current === hiddenSectionSignature) return;
+    previousHiddenSectionSignatureRef.current = hiddenSectionSignature;
+    let active = true;
+    queueMicrotask(() => {
+      if (active && !editor.isDestroyed) editor.commands.setContent(scientificDocumentToTiptap(originalRef.current, hiddenSectionKeysRef.current), { emitUpdate: false });
+    });
+    return () => { active = false; };
+  }, [editor, hiddenSectionSignature]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
   const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden>

@@ -123,7 +123,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                 getRowKey={(row) => row.id}
                 columns={[
                   { key: "name", header: "Item", render: (row) => <Link className="font-semibold text-moss" href={`/inventory/${row.id}`}>{row.name}</Link> },
-                  { key: "code", header: "Aliquot", render: (row) => <span className="font-mono text-xs">{row.aliquotCode ?? "—"}</span> },
+                  { key: "code", header: "Aliquot", render: (row) => <span className="record-identifier text-xs">{row.aliquotCode ?? "—"}</span> },
                   { key: "quantity", header: "Stock", render: (row) => <span className="font-mono">{row.currentQuantity} {row.unit}</span> },
                 ]}
               />

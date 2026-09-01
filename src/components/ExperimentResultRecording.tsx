@@ -26,7 +26,7 @@ export function ExperimentResultRecordingCard({ experimentId, recording }: {
             <Layers3 className="h-3.5 w-3.5 text-muted" aria-hidden />结果模块
             <span className="ml-auto text-muted">{recording.modules.length}</span>
           </summary>
-          <ul className="divide-y divide-hairline border-t border-hairline px-3">{recording.modules.map((module) => <li key={module.id} className="min-w-0 py-2"><p className="break-words text-xs font-medium leading-5 text-graphite">{module.template.title}</p><p className="mt-0.5 break-words text-[11px] leading-4 text-muted">{module.protocolTitle}<span className="ml-1 font-mono text-[10px]">{module.protocolCode ? `· ${module.protocolCode} ` : ""}· v{module.displayVersion}</span></p></li>)}</ul>
+          <ul className="divide-y divide-hairline border-t border-hairline px-3">{recording.modules.map((module) => <li key={module.id} className="min-w-0 py-2"><p className="break-words text-xs font-medium leading-5 text-graphite">{module.template.title}</p><p className="mt-0.5 break-words text-[11px] leading-4 text-muted">{module.protocolTitle}<span className="record-identifier ml-1 text-[10px]">{module.protocolCode ? `· ${module.protocolCode} ` : ""}· v{module.displayVersion}</span></p></li>)}</ul>
         </details> : null}
 
         {legacyCount ? <details className="border-t border-hairline bg-surface">

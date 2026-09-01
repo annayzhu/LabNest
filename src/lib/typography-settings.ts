@@ -1,19 +1,20 @@
 export const typographySettingsStorageKey = "labnest.typography-settings.v1";
-export const typographyCssStorageKey = "labnest.typography-css.v1";
+export const typographyCssStorageKey = "labnest.typography-css.v2";
+export const legacyTypographyCssStorageKey = "labnest.typography-css.v1";
 export const customFontDatabaseName = "labnest-custom-fonts";
 export const customFontStoreName = "fonts";
 export const maxCustomFontBytes = 10_000_000;
 export const maxCustomFontCount = 8;
 
 export const typographyPresets = {
-  ui: [
+  cjkUi: [
     {
       id: "source-han-sans",
       name: "思源黑体",
       nameEn: "Source Han Sans",
       description: "清晰、克制，适合导航与表单",
       descriptionEn: "Clear and restrained for navigation and forms",
-      family: '"Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
+      family: '"LabNest CJK Source Han Sans", sans-serif',
     },
     {
       id: "pingfang",
@@ -21,7 +22,7 @@ export const typographyPresets = {
       nameEn: "PingFang SC",
       description: "轻盈现代，适合 macOS",
       descriptionEn: "Light and modern on macOS",
-      family: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif',
+      family: '"LabNest CJK PingFang", sans-serif',
     },
     {
       id: "system-sans",
@@ -29,17 +30,17 @@ export const typographyPresets = {
       nameEn: "System sans",
       description: "跟随当前设备，加载最稳定",
       descriptionEn: "Uses the most stable font on this device",
-      family: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+      family: '"LabNest CJK System Sans", sans-serif',
     },
   ],
-  documentBody: [
+  cjkDocumentBody: [
     {
       id: "source-han-serif",
       name: "思源宋体",
       nameEn: "Source Han Serif",
       description: "清楚舒展，适合长文阅读",
       descriptionEn: "Open and readable for long documents",
-      family: '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Source Han Serif", serif',
     },
     {
       id: "songti",
@@ -47,7 +48,7 @@ export const typographyPresets = {
       nameEn: "Songti SC",
       description: "温润传统，适合中文文档",
       descriptionEn: "A warm, traditional Chinese serif",
-      family: '"Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Songti", serif',
     },
     {
       id: "simsun",
@@ -55,17 +56,17 @@ export const typographyPresets = {
       nameEn: "SimSun",
       description: "兼容性好，接近传统科研文稿",
       descriptionEn: "Compatible with traditional research documents",
-      family: 'SimSun, "Songti SC", STSong, serif',
+      family: '"LabNest CJK SimSun", serif',
     },
   ],
-  documentHeading: [
+  cjkDocumentHeading: [
     {
       id: "source-han-serif",
       name: "思源宋体",
       nameEn: "Source Han Serif",
       description: "端正但不过分厚重",
       descriptionEn: "Structured without feeling heavy",
-      family: '"Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Source Han Serif", serif',
     },
     {
       id: "songti",
@@ -73,15 +74,61 @@ export const typographyPresets = {
       nameEn: "Songti SC",
       description: "更具中文书卷气",
       descriptionEn: "A more literary Chinese heading",
-      family: '"Songti SC", STSong, SimSun, serif',
+      family: '"LabNest CJK Songti", serif',
+    },
+  ],
+  latinUi: [
+    {
+      id: "arial",
+      name: "Arial",
+      nameEn: "Arial",
+      description: "英文无衬线，适合界面与表单",
+      descriptionEn: "Sans serif for interface text and forms",
+      family: 'Arial, "Helvetica Neue", Helvetica',
     },
     {
-      id: "source-serif",
-      name: "Source Serif",
-      nameEn: "Source Serif",
-      description: "适合英文标题，中文自动回退",
-      descriptionEn: "English-led headings with Chinese fallback",
-      family: '"Source Serif 4", "Songti SC", STSong, SimSun, Georgia, serif',
+      id: "times-new-roman",
+      name: "Times New Roman",
+      nameEn: "Times New Roman",
+      description: "经典英文衬线字体",
+      descriptionEn: "Classic serif for English text",
+      family: '"Times New Roman", Times',
+    },
+  ],
+  latinDocumentBody: [
+    {
+      id: "times-new-roman",
+      name: "Times New Roman",
+      nameEn: "Times New Roman",
+      description: "英文论文与长文默认",
+      descriptionEn: "Default for papers and long-form English",
+      family: '"Times New Roman", Times',
+    },
+    {
+      id: "arial",
+      name: "Arial",
+      nameEn: "Arial",
+      description: "清晰紧凑的英文无衬线",
+      descriptionEn: "Compact sans serif for English documents",
+      family: 'Arial, "Helvetica Neue", Helvetica',
+    },
+  ],
+  latinDocumentHeading: [
+    {
+      id: "times-new-roman",
+      name: "Times New Roman",
+      nameEn: "Times New Roman",
+      description: "经典英文标题字体",
+      descriptionEn: "Classic serif for English headings",
+      family: '"Times New Roman", Times',
+    },
+    {
+      id: "arial",
+      name: "Arial",
+      nameEn: "Arial",
+      description: "现代简洁的英文标题",
+      descriptionEn: "Clean modern English headings",
+      family: 'Arial, "Helvetica Neue", Helvetica',
     },
   ],
 } as const;
@@ -107,15 +154,34 @@ export type CustomFontRecord = {
 };
 
 export const defaultTypographySettings: TypographySettings = {
-  ui: { kind: "preset", id: "source-han-sans" },
-  documentBody: { kind: "preset", id: "source-han-serif" },
-  documentHeading: { kind: "preset", id: "source-han-serif" },
+  cjkUi: { kind: "preset", id: "source-han-sans" },
+  cjkDocumentBody: { kind: "preset", id: "source-han-serif" },
+  cjkDocumentHeading: { kind: "preset", id: "source-han-serif" },
+  latinUi: { kind: "preset", id: "arial" },
+  latinDocumentBody: { kind: "preset", id: "times-new-roman" },
+  latinDocumentHeading: { kind: "preset", id: "times-new-roman" },
 };
 
 const cssVariableByRole: Record<TypographyRole, string> = {
-  ui: "--font-ui",
-  documentBody: "--font-document-body",
-  documentHeading: "--font-document-heading",
+  cjkUi: "--font-cjk-ui",
+  cjkDocumentBody: "--font-cjk-document-body",
+  cjkDocumentHeading: "--font-cjk-document-heading",
+  latinUi: "--font-latin-ui",
+  latinDocumentBody: "--font-latin-document-body",
+  latinDocumentHeading: "--font-latin-document-heading",
+};
+
+export const typographyCssProperties = Object.values(cssVariableByRole);
+
+export const typographyRoleGroups = {
+  cjk: ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading"],
+  latin: ["latinUi", "latinDocumentBody", "latinDocumentHeading"],
+} as const satisfies Record<"cjk" | "latin", readonly TypographyRole[]>;
+
+const legacyRoleByRole: Partial<Record<TypographyRole, "ui" | "documentBody" | "documentHeading">> = {
+  cjkUi: "ui",
+  cjkDocumentBody: "documentBody",
+  cjkDocumentHeading: "documentHeading",
 };
 
 function isRolePreset(role: TypographyRole, id: unknown): id is TypographyPresetId {
@@ -143,12 +209,12 @@ function parseSelection(role: TypographyRole, value: unknown): FontSelection {
 export function parseTypographySettings(serialized: string | null): TypographySettings {
   if (!serialized) return defaultTypographySettings;
   try {
-    const value = JSON.parse(serialized) as Partial<Record<TypographyRole, unknown>>;
-    return {
-      ui: parseSelection("ui", value.ui),
-      documentBody: parseSelection("documentBody", value.documentBody),
-      documentHeading: parseSelection("documentHeading", value.documentHeading),
-    };
+    const value = JSON.parse(serialized) as Partial<Record<TypographyRole | "ui" | "documentBody" | "documentHeading", unknown>>;
+    return (Object.keys(defaultTypographySettings) as TypographyRole[]).reduce<TypographySettings>((settings, role) => {
+      const legacyRole = legacyRoleByRole[role];
+      settings[role] = parseSelection(role, value[role] ?? (legacyRole ? value[legacyRole] : undefined));
+      return settings;
+    }, { ...defaultTypographySettings });
   } catch {
     return defaultTypographySettings;
   }
@@ -157,7 +223,8 @@ export function parseTypographySettings(serialized: string | null): TypographySe
 function familyForSelection(role: TypographyRole, selection: FontSelection): string {
   if (selection.kind === "custom") {
     const fallback = typographyPresets[role].find((preset) => preset.id === defaultTypographySettings[role].id)?.family;
-    return `"${selection.family}", ${fallback}`;
+    const script = role.startsWith("latin") ? "Latin" : "CJK";
+    return `"${selection.family} ${script}", ${fallback}`;
   }
   return typographyPresets[role].find((preset) => preset.id === selection.id)?.family
     ?? typographyPresets[role][0].family;
@@ -172,9 +239,11 @@ export function typographyCssVariables(settings: TypographySettings): Record<str
 
 export function applyTypographySettings(settings: TypographySettings, root: HTMLElement = document.documentElement) {
   const variables = typographyCssVariables(settings);
+  ["--font-ui", "--font-document-body", "--font-document-heading"].forEach((property) => root.style.removeProperty(property));
   Object.entries(variables).forEach(([property, value]) => root.style.setProperty(property, value));
   window.localStorage.setItem(typographySettingsStorageKey, JSON.stringify(settings));
   window.localStorage.setItem(typographyCssStorageKey, JSON.stringify(variables));
+  window.localStorage.removeItem(legacyTypographyCssStorageKey);
 }
 
 export function validateCustomFontFile(file: Pick<File, "name" | "size" | "type">, locale: "zh" | "en" = "zh"): string | null {

@@ -30,13 +30,15 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
     gc: gcPercent(sequences[role] ?? ""),
     tm: estimatedMeltingTemperature(sequences[role] ?? "", moleculeType),
   }]));
+  const pairTmValues = roles.map((role) => metrics[role]?.tm).filter((value): value is number => value !== undefined);
+  const tmDifference = pairTmValues.length === 2 ? Math.abs(pairTmValues[0] - pairTmValues[1]) : undefined;
 
   return (
     <form action={formAction} className="space-y-3 pb-20 md:pb-0">
       <input type="hidden" name="pairType" value={pairType} />
       <Card>
         <CardBody className="space-y-5 p-4 sm:p-5">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className={`grid gap-3 ${pairType === "primer_pair" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
             <label>
               <span className={formLabelClass}>{inputPrompt.geneLabel}</span>
               <input required name="geneName" maxLength={180} className={formInputClass} placeholder={inputPrompt.genePlaceholder} autoFocus />
@@ -45,6 +47,10 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               <span className={formLabelClass}>{inputPrompt.organismLabel}</span>
               <input name="organism" maxLength={180} className={formInputClass} placeholder={inputPrompt.organismPlaceholder} />
             </label>
+            {pairType === "primer_pair" ? <label>
+              <span className={formLabelClass}>Application</span>
+              <input name="meta_application" maxLength={180} className={formInputClass} placeholder="qPCR, genotyping, cloning…" />
+            </label> : null}
           </div>
 
           <section className="grid gap-3 lg:grid-cols-2" aria-label={`${definition.label} sequences`}>
@@ -73,12 +79,28 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
             ))}
           </section>
 
+          {pairType === "primer_pair" ? <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-[8px] bg-sage-surface/35 px-3 py-2 text-xs text-graphite">
+            <span className="font-medium text-ink">Pair check</span>
+            <span>Tm difference <strong className="font-mono text-ink">{tmDifference === undefined ? "—" : `${tmDifference.toFixed(1)} °C`}</strong></span>
+            <span className="text-muted">Estimated values are entry checks, not experimental validation.</span>
+          </div> : null}
+
           <details className="group rounded-[9px] border border-hairline">
             <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm font-medium text-graphite">
               More details
               <ChevronDown className="h-4 w-4 text-muted transition group-open:rotate-180" aria-hidden />
             </summary>
             <div className="grid gap-3 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-4">
+              {pairType === "primer_pair" ? <>
+                <label><span className={formLabelClass}>Template / transcript accession</span><input name="meta_transcriptAccession" maxLength={180} className={formInputClass} placeholder="NM_… / ENST…" /></label>
+                <label><span className={formLabelClass}>Expected amplicon (bp)</span><input name="meta_ampliconLengthBp" type="number" min="1" step="1" className={formInputClass} placeholder="120" /></label>
+                <label><span className={formLabelClass}>Exon-junction strategy</span><input name="meta_exonJunction" maxLength={180} className={formInputClass} placeholder="Spans exon 5–6 junction" /></label>
+                <label><span className={formLabelClass}>Design source</span><input name="meta_designSource" maxLength={180} className={formInputClass} placeholder="Primer-BLAST, publication, supplier…" /></label>
+              </> : <>
+                <label><span className={formLabelClass}>Transcript accession</span><input name="meta_transcriptAccession" maxLength={180} className={formInputClass} placeholder="NM_… / ENST…" /></label>
+                <label><span className={formLabelClass}>Target region</span><input name="meta_targetRegion" maxLength={180} className={formInputClass} placeholder="CDS position or exon" /></label>
+                <label><span className={formLabelClass}>Design source</span><input name="meta_designSource" maxLength={180} className={formInputClass} placeholder="Supplier, publication, or design tool" /></label>
+              </>}
               <label>
                 <span className={formLabelClass}>Location *</span>
                 <select name="ownershipScope" value={ownershipScope} onChange={(event) => setOwnershipScope(event.target.value as typeof ownershipScope)} className={formInputClass}>

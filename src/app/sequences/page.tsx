@@ -87,7 +87,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
               <Link href="/sequences/workflows" className={collectionSecondaryActionClass}>Workflows</Link>
               <Link href="/sequences/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
               <CollectionExportMenu filteredHref={exportHref} exportPath="/sequences/export" />
-              <Link href="/sequences/new?category=dna-rna" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Sequence</Link>
+              <Link href="/sequences/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Sequence</Link>
             </div>
           </div>
         </section>

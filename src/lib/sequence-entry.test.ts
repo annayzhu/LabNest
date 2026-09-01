@@ -24,9 +24,30 @@ describe("sequence creation presets", () => {
       entryClass: "oligo",
       designType: "oligo",
     });
+    expect(sequenceCreationPreset("single-primer")).toMatchObject({
+      recordKind: "single",
+      entryClass: "oligo",
+      designType: "primer",
+      allowedDesignTypes: ["primer"],
+    });
+    expect(sequenceCreationPreset("crispr-guide")).toMatchObject({
+      recordKind: "single",
+      designType: "gRNA",
+      allowedDesignTypes: ["gRNA"],
+    });
+    expect(sequenceCreationPreset("shrna")).toMatchObject({
+      recordKind: "single",
+      designType: "shRNA",
+      allowedDesignTypes: ["shRNA"],
+    });
   });
 
   it("treats primer pairs and siRNA duplexes as one paired entry", () => {
+    expect(sequenceCreationPreset("primer")).toMatchObject({
+      recordKind: "paired",
+      pairType: "primer_pair",
+      roles: ["forward", "reverse"],
+    });
     expect(sequenceCreationPreset("primer-pair")).toMatchObject({
       recordKind: "paired",
       pairType: "primer_pair",
@@ -39,6 +60,11 @@ describe("sequence creation presets", () => {
       roles: ["sense", "antisense"],
       moleculeType: "RNA",
     });
+  });
+
+  it("does not silently turn an absent or unknown category into a DNA fragment", () => {
+    expect(sequenceCreationPreset(undefined)).toBeUndefined();
+    expect(sequenceCreationPreset("unknown-category")).toBeUndefined();
   });
 
   it("keeps molecule and design semantics tied to the pair type", () => {

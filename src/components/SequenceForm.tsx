@@ -54,7 +54,7 @@ function nextVersionLabel(current?: string) {
   return match ? `${match[1]}.${Number(match[2]) + 1}` : `${current}.1`;
 }
 
-export function SequenceForm({ action, projects, initial = {} }: { action: FormAction; projects: ProjectOption[]; initial?: SequenceFormInitial }) {
+export function SequenceForm({ action, projects, initial = {}, allowedDesignTypes }: { action: FormAction; projects: ProjectOption[]; initial?: SequenceFormInitial; allowedDesignTypes?: readonly SequenceDesignTypeValue[] }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const initialDesign = initial.designType ?? "other";
   const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initial.ownershipScope ?? (initial.projectId ? "project" : "library"));
@@ -64,7 +64,11 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
   const [features, setFeatures] = useState<FeatureDraft[]>(initial.latestVersion?.features ?? []);
   const [modifications, setModifications] = useState<ModificationDraft[]>(initial.latestVersion?.modifications ?? []);
   const metadataFields = designMetadataFields[designType] ?? [];
-  const availableDesignTypes = initial.id ? sequenceDesignTypes : sequenceDesignTypesForEntryClass(initial.entryClass ?? "nucleic_acid");
+  const availableDesignTypes = initial.id
+    ? sequenceDesignTypes
+    : allowedDesignTypes
+      ? sequenceDesignTypes.filter((item) => allowedDesignTypes.includes(item.value))
+      : sequenceDesignTypesForEntryClass(initial.entryClass ?? "nucleic_acid");
   const inputPrompt = sequenceInputPrompt(designType, moleculeType);
   const metrics = useMemo(() => ({
     length: sequenceLength(sequence),
@@ -174,8 +178,8 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
             </label>
             <label>
               <span className={formLabelClass}>{initial.id ? "New version label" : "Version label"} *</span>
-              <input required name="displayVersion" defaultValue={nextVersionLabel(initial.latestVersion?.displayVersion)} maxLength={30} className={formInputClass} />
-              {initial.latestVersion ? <span className="mt-1 block text-[11px] text-muted">Current version: {initial.latestVersion.displayVersion}. Used only if sequence content changes.</span> : null}
+              <input required name="displayVersion" defaultValue={initial.id ? nextVersionLabel(initial.latestVersion?.displayVersion) : initial.latestVersion?.displayVersion ?? "1.0"} maxLength={30} className={formInputClass} />
+              {initial.id && initial.latestVersion ? <span className="mt-1 block text-[11px] text-muted">Current version: {initial.latestVersion.displayVersion}. Used only if sequence content changes.</span> : null}
             </label>
             <label>
               <span className={formLabelClass}>Topology *</span>

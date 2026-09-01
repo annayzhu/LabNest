@@ -3,7 +3,17 @@ export type SequenceEntryClassValue = "nucleic_acid" | "amino_acid" | "oligo";
 export type SequenceRecordKindValue = "single" | "paired";
 export type SequencePairTypeValue = "primer_pair" | "sirna_duplex";
 export type SequencePairRoleValue = "forward" | "reverse" | "sense" | "antisense";
-export type SequenceCreateCategory = "dna-rna" | "amino-acid" | "oligo" | "primer-pair" | "sirna-duplex";
+export type SequenceCreateCategory =
+  | "primer"
+  | "single-primer"
+  | "primer-pair"
+  | "sirna-duplex"
+  | "dna-rna"
+  | "probe-oligo"
+  | "oligo"
+  | "crispr-guide"
+  | "shrna"
+  | "amino-acid";
 
 const pairDefinitions = {
   primer_pair: { designType: "primer", moleculeType: "DNA", roles: ["forward", "reverse"], label: "Primer pair" },
@@ -22,7 +32,8 @@ type SequenceCreationPreset = {
   recordKind: SequenceRecordKindValue;
   entryClass: SequenceEntryClassValue;
   moleculeType: "DNA" | "RNA" | "Protein";
-  designType: "primer" | "siRNA" | "oligo" | "protein" | "fragment";
+  designType: "primer" | "siRNA" | "probe" | "oligo" | "gRNA" | "shRNA" | "protein" | "fragment";
+  allowedDesignTypes?: readonly ("plasmid" | "primer" | "probe" | "siRNA" | "shRNA" | "gRNA" | "oligo" | "peptide" | "protein" | "fragment" | "other")[];
   pairType?: SequencePairTypeValue;
   roles?: readonly [SequencePairRoleValue, SequencePairRoleValue];
   title: string;
@@ -35,6 +46,7 @@ const presets: Record<SequenceCreateCategory, SequenceCreationPreset> = {
     moleculeType: "DNA",
     designType: "fragment",
     title: "New DNA / RNA sequence",
+    allowedDesignTypes: ["plasmid", "fragment", "other"],
   },
   "amino-acid": {
     recordKind: "single",
@@ -42,6 +54,7 @@ const presets: Record<SequenceCreateCategory, SequenceCreationPreset> = {
     moleculeType: "Protein",
     designType: "protein",
     title: "New amino acid sequence",
+    allowedDesignTypes: ["peptide", "protein", "other"],
   },
   oligo: {
     recordKind: "single",
@@ -49,6 +62,48 @@ const presets: Record<SequenceCreateCategory, SequenceCreationPreset> = {
     moleculeType: "DNA",
     designType: "oligo",
     title: "New oligo",
+    allowedDesignTypes: ["probe", "oligo", "other"],
+  },
+  "probe-oligo": {
+    recordKind: "single",
+    entryClass: "oligo",
+    moleculeType: "DNA",
+    designType: "probe",
+    title: "New probe / oligo",
+    allowedDesignTypes: ["probe", "oligo", "other"],
+  },
+  "single-primer": {
+    recordKind: "single",
+    entryClass: "oligo",
+    moleculeType: "DNA",
+    designType: "primer",
+    title: "New single primer",
+    allowedDesignTypes: ["primer"],
+  },
+  "crispr-guide": {
+    recordKind: "single",
+    entryClass: "oligo",
+    moleculeType: "RNA",
+    designType: "gRNA",
+    title: "New CRISPR guide",
+    allowedDesignTypes: ["gRNA"],
+  },
+  shrna: {
+    recordKind: "single",
+    entryClass: "oligo",
+    moleculeType: "RNA",
+    designType: "shRNA",
+    title: "New shRNA",
+    allowedDesignTypes: ["shRNA"],
+  },
+  primer: {
+    recordKind: "paired",
+    entryClass: "oligo",
+    moleculeType: "DNA",
+    designType: "primer",
+    pairType: "primer_pair",
+    roles: ["forward", "reverse"],
+    title: "New primer pair",
   },
   "primer-pair": {
     recordKind: "paired",
@@ -70,8 +125,8 @@ const presets: Record<SequenceCreateCategory, SequenceCreationPreset> = {
   },
 };
 
-export function sequenceCreationPreset(value: string | undefined): SequenceCreationPreset {
-  return presets[value as SequenceCreateCategory] ?? presets["dna-rna"];
+export function sequenceCreationPreset(value: string | undefined): SequenceCreationPreset | undefined {
+  return presets[value as SequenceCreateCategory];
 }
 
 export function normalizeSequenceOwnership(scope: unknown, projectId: unknown) {

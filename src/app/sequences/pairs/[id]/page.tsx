@@ -30,6 +30,7 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
     },
   });
   if (!pair || pair.members.length !== 2) notFound();
+  const metadata = pair.metadataJson && typeof pair.metadataJson === "object" && !Array.isArray(pair.metadataJson) ? pair.metadataJson as Record<string, unknown> : {};
   const exportBase = new URLSearchParams({ exportScope: "selected", id: pair.id, versions: "latest" });
 
   return (
@@ -49,11 +50,26 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
         <section className="grid gap-4 lg:grid-cols-2">
           {pair.members.map((member) => <PairMemberCard key={member.id} member={member} />)}
         </section>
+        {Object.keys(metadata).some((key) => !["sourceType", "sourceFileName"].includes(key) && metadata[key]) ? <Card><CardHeader title="Design details" /><CardBody className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+          {pairMetadataRows(metadata).map((item) => <div key={item.label}><p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{item.label}</p><p className="mt-1 text-sm text-ink">{item.value}</p></div>)}
+        </CardBody></Card> : null}
         {pair.description ? <Card><CardHeader title="Notes" /><CardBody><p className="whitespace-pre-wrap text-sm leading-6 text-graphite">{pair.description}</p></CardBody></Card> : null}
         <p className="rounded-[8px] border border-hairline bg-warm/50 px-3 py-2 text-xs leading-5 text-muted">This pair is one Sequence entry. Its two exact member versions remain available for provenance and FASTA export, but are not listed as separate library entries.</p>
       </div>
     </AppShell>
   );
+}
+
+function pairMetadataRows(metadata: Record<string, unknown>) {
+  const labels: Record<string, string> = {
+    application: "Application",
+    transcriptAccession: "Template / transcript",
+    ampliconLengthBp: "Expected amplicon",
+    exonJunction: "Exon-junction strategy",
+    targetRegion: "Target region",
+    designSource: "Design source",
+  };
+  return Object.entries(labels).flatMap(([key, label]) => metadata[key] === undefined || metadata[key] === "" ? [] : [{ label, value: key === "ampliconLengthBp" ? `${String(metadata[key])} bp` : String(metadata[key]) }]);
 }
 
 function PairMemberCard({ member }: { member: {

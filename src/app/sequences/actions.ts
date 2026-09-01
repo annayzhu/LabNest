@@ -300,6 +300,7 @@ const pairInputSchema = z.object({
   organism: z.string().trim().max(180).optional(),
   validationStatus: z.enum(SequenceValidationStatus),
   validationSummary: z.string().trim().max(5000).optional(),
+  metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
   members: z.array(z.object({
     role: z.string().trim().min(1).max(40),
     sequence: z.string().max(10_000_000),
@@ -329,6 +330,18 @@ function parsePairForm(formData: FormData) {
   const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
   const roles = sequencePairRoles(pairType);
   const geneName = String(formData.get("geneName") ?? "").trim();
+  const metadataEntries: Array<[string, string | number]> = [];
+  for (const key of ["application", "transcriptAccession", "ampliconLengthBp", "exonJunction", "targetRegion", "designSource"] as const) {
+    const value = optionalText(formData.get(`meta_${key}`));
+    if (value === undefined) continue;
+    if (key === "ampliconLengthBp") {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < 1) throw new Error("Expected amplicon must be a positive number.");
+      metadataEntries.push([key, number]);
+    } else {
+      metadataEntries.push([key, value]);
+    }
+  }
   return preparePairInput({
     name: geneName,
     pairType,
@@ -340,6 +353,7 @@ function parsePairForm(formData: FormData) {
     organism: optionalText(formData.get("organism")),
     validationStatus: formData.get("validationStatus") ?? "unverified",
     validationSummary: optionalText(formData.get("validationSummary")),
+    metadata: Object.fromEntries(metadataEntries),
     members: roles.map((role) => ({ role, sequence: formData.get(`sequence_${role}`) ?? "" })),
   });
 }
@@ -359,7 +373,7 @@ async function createPairInTransaction(tx: Prisma.TransactionClient, input: Pair
       projectId: input.projectId,
       targetName: input.targetName,
       organism: input.organism,
-      metadataJson: { sourceType: source.type ?? "manual", sourceFileName: source.fileName },
+      metadataJson: { ...input.metadata, sourceType: source.type ?? "manual", sourceFileName: source.fileName },
     },
   });
 

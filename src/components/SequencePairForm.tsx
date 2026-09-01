@@ -20,6 +20,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const definition = sequencePairDefinition(pairType);
+  const inputPrompt = pairInputPrompt(pairType);
   const roles = definition.roles;
   const moleculeType = definition.moleculeType;
   const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initialProjectId ? "project" : "library");
@@ -37,12 +38,12 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
         <CardBody className="space-y-5 p-4 sm:p-5">
           <div className="grid gap-3 md:grid-cols-2">
             <label>
-              <span className={formLabelClass}>Gene / target name *</span>
-              <input required name="geneName" maxLength={180} className={formInputClass} placeholder="FBN2" autoFocus />
+              <span className={formLabelClass}>{inputPrompt.geneLabel}</span>
+              <input required name="geneName" maxLength={180} className={formInputClass} placeholder={inputPrompt.genePlaceholder} autoFocus />
             </label>
             <label>
-              <span className={formLabelClass}>Species</span>
-              <input name="organism" maxLength={180} className={formInputClass} placeholder="Homo sapiens" />
+              <span className={formLabelClass}>{inputPrompt.organismLabel}</span>
+              <input name="organism" maxLength={180} className={formInputClass} placeholder={inputPrompt.organismPlaceholder} />
             </label>
           </div>
 
@@ -50,7 +51,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
             {roles.map((role) => (
               <label key={role} className="rounded-[9px] border border-hairline bg-warm/35 p-3">
                 <span className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-ink">{roleLabel(role)}</span>
+                  <span className="text-sm font-semibold text-ink">{inputPrompt.roleLabels[role]}</span>
                   <span className="font-mono text-[10px] text-muted">5′ → 3′ · {moleculeType}</span>
                 </span>
                 <textarea
@@ -61,7 +62,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
                   spellCheck={false}
                   data-i18n-ignore
                   className={`${formMonoTextareaClass} mt-2 min-h-28`}
-                  placeholder={moleculeType === "RNA" ? "AUGCUU…TT" : "ATGCTT…"}
+                  placeholder={inputPrompt.sequencePlaceholders[role]}
                 />
                 <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-hairline pt-2 font-mono text-[11px] text-muted">
                   <span>{metrics[role]?.length ?? 0} nt</span>
@@ -102,11 +103,11 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               </label>
               <label className="md:col-span-2">
                 <span className={formLabelClass}>Description</span>
-                <textarea name="description" maxLength={5000} className={`${formTextareaClass} min-h-20`} />
+                <textarea name="description" maxLength={5000} className={`${formTextareaClass} min-h-20`} placeholder={inputPrompt.descriptionPlaceholder} />
               </label>
               <label className="md:col-span-2">
                 <span className={formLabelClass}>Validation summary</span>
-                <textarea name="validationSummary" maxLength={5000} className={`${formTextareaClass} min-h-20`} placeholder="Evidence, conditions, limitations, and decision…" />
+                <textarea name="validationSummary" maxLength={5000} className={`${formTextareaClass} min-h-20`} placeholder={inputPrompt.validationPlaceholder} />
               </label>
             </div>
           </details>
@@ -121,10 +122,37 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
   );
 }
 
-function roleLabel(role: string) {
-  if (role === "forward") return "Forward primer sequence (upstream)";
-  if (role === "reverse") return "Reverse primer sequence (downstream)";
-  if (role === "sense") return "Sense strand sequence";
-  if (role === "antisense") return "Antisense strand sequence";
-  return role;
+function pairInputPrompt(pairType: SequencePairTypeValue) {
+  if (pairType === "sirna_duplex") return {
+    geneLabel: "Target gene *",
+    genePlaceholder: "FBN2",
+    organismLabel: "Target species",
+    organismPlaceholder: "Homo sapiens",
+    roleLabels: {
+      sense: "Sense strand sequence",
+      antisense: "Antisense strand sequence",
+    } as Record<string, string>,
+    sequencePlaceholders: {
+      sense: "GCUACU…dTdT",
+      antisense: "AGUAGC…dTdT",
+    } as Record<string, string>,
+    descriptionPlaceholder: "Duplex number, transcript or target position, supplier, and intended assay…",
+    validationPlaceholder: "Knockdown conditions, measured effect, off-target observations, and decision…",
+  };
+  return {
+    geneLabel: "Gene name *",
+    genePlaceholder: "FBN2",
+    organismLabel: "Species",
+    organismPlaceholder: "Homo sapiens",
+    roleLabels: {
+      forward: "Upstream primer sequence (Forward)",
+      reverse: "Downstream primer sequence (Reverse)",
+    } as Record<string, string>,
+    sequencePlaceholders: {
+      forward: "ATGCTT…",
+      reverse: "GCTAAC…",
+    } as Record<string, string>,
+    descriptionPlaceholder: "Application, expected amplicon, transcript, and design source…",
+    validationPlaceholder: "Efficiency, specificity, assay conditions, and decision…",
+  };
 }

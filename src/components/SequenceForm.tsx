@@ -8,7 +8,9 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
   designMetadataFields,
+  sequenceInputPrompt,
   sequenceDesignTypes,
+  sequenceDesignTypesForEntryClass,
   sequenceLifecycleStatuses,
   sequenceValidationStatuses,
   type SequenceDesignTypeValue,
@@ -62,7 +64,8 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
   const [features, setFeatures] = useState<FeatureDraft[]>(initial.latestVersion?.features ?? []);
   const [modifications, setModifications] = useState<ModificationDraft[]>(initial.latestVersion?.modifications ?? []);
   const metadataFields = designMetadataFields[designType] ?? [];
-  const availableDesignTypes = initial.id ? sequenceDesignTypes : sequenceDesignTypes.filter((item) => item.value !== "primer" && item.value !== "siRNA");
+  const availableDesignTypes = initial.id ? sequenceDesignTypes : sequenceDesignTypesForEntryClass(initial.entryClass ?? "nucleic_acid");
+  const inputPrompt = sequenceInputPrompt(designType, moleculeType);
   const metrics = useMemo(() => ({
     length: sequenceLength(sequence),
     gc: moleculeType === "Protein" ? undefined : gcPercent(sequence),
@@ -89,8 +92,8 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
         <CardHeader title="Sequence identity" />
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="md:col-span-2">
-            <span className={formLabelClass}>Name *</span>
-            <input required name="name" defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder="FBN2 sequence" />
+            <span className={formLabelClass}>{inputPrompt.nameLabel}</span>
+            <input required name="name" defaultValue={initial.name ?? ""} maxLength={180} className={formInputClass} placeholder={inputPrompt.namePlaceholder} />
           </label>
           <label>
             <span className={formLabelClass}>Design type *</span>
@@ -129,12 +132,12 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
             </select>
           </label>
           <label>
-            <span className={formLabelClass}>Target / gene</span>
-            <input name="targetName" defaultValue={initial.targetName ?? ""} maxLength={180} className={formInputClass} placeholder="FBN2 / transcript / epitope" />
+            <span className={formLabelClass}>{inputPrompt.targetLabel}</span>
+            <input name="targetName" defaultValue={initial.targetName ?? ""} maxLength={180} className={formInputClass} placeholder={inputPrompt.targetPlaceholder} />
           </label>
           <label>
-            <span className={formLabelClass}>Organism</span>
-            <input name="organism" defaultValue={initial.organism ?? ""} maxLength={180} className={formInputClass} placeholder="Homo sapiens" />
+            <span className={formLabelClass}>{inputPrompt.organismLabel}</span>
+            <input name="organism" defaultValue={initial.organism ?? ""} maxLength={180} className={formInputClass} placeholder={inputPrompt.organismPlaceholder} />
           </label>
           {metadataFields.map((field) => (
             <label key={field.key}>
@@ -151,7 +154,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
           ))}
           <label className="md:col-span-2 xl:col-span-4">
             <span className={formLabelClass}>Description</span>
-            <textarea name="description" defaultValue={initial.description ?? ""} maxLength={5000} className={`${formTextareaClass} min-h-20`} />
+            <textarea name="description" defaultValue={initial.description ?? ""} maxLength={5000} className={`${formTextareaClass} min-h-20`} placeholder={inputPrompt.descriptionPlaceholder} />
           </label>
           {!initial.id ? <label className="flex items-start gap-2 md:col-span-2 xl:col-span-4"><input type="checkbox" name="autoCreateEntity" defaultChecked className="mt-0.5 h-4 w-4 accent-moss" /><span className="text-xs leading-5 text-graphite"><strong className="font-medium text-ink">Create a linked scientific design object</strong><br />Recommended when this Sequence will have physical Inventory. Clear this only when you plan to link an existing Entity after creation.</span></label> : null}
         </CardBody>
@@ -198,7 +201,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
           </div>
 
           <label className="block">
-            <span className={formLabelClass}>Sequence (5′ → 3′) *</span>
+            <span className={formLabelClass}>{inputPrompt.sequenceLabel}</span>
             <textarea
               required
               name="sequence"
@@ -207,7 +210,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
               spellCheck={false}
               data-i18n-ignore
               className={`${formMonoTextareaClass} min-h-44`}
-              placeholder={moleculeType === "Protein" ? "MKWVTFISLL..." : moleculeType === "RNA" ? "AUGCUU..." : "ATGCTT..."}
+              placeholder={inputPrompt.sequencePlaceholder}
             />
           </label>
 
@@ -221,11 +224,11 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
           <div className="grid gap-3 md:grid-cols-2">
             <label>
               <span className={formLabelClass}>Validation summary</span>
-              <textarea name="validationSummary" defaultValue={initial.latestVersion?.validationSummary ?? ""} maxLength={5000} className={`${formTextareaClass} min-h-24`} placeholder="Evidence, experiment references, conditions, limitations, and decision…" />
+              <textarea name="validationSummary" defaultValue={initial.latestVersion?.validationSummary ?? ""} maxLength={5000} className={`${formTextareaClass} min-h-24`} placeholder={inputPrompt.validationPlaceholder} />
             </label>
             <label>
               <span className={formLabelClass}>Version change summary</span>
-              <textarea name="changeSummary" maxLength={1000} className={`${formTextareaClass} min-h-24`} placeholder={initial.id ? "Required when sequence content, features, or modifications change." : "Initial design or source."} />
+              <textarea name="changeSummary" maxLength={1000} className={`${formTextareaClass} min-h-24`} placeholder={initial.id ? "Required when sequence content, features, or modifications change." : inputPrompt.changeSummaryPlaceholder} />
             </label>
           </div>
         </CardBody>

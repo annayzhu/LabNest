@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Pencil } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -8,6 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
 import { pairTypeLabel } from "@/lib/sequence-registry";
+import { sequencePairMetadataFields } from "@/lib/sequence-entry";
 import { estimatedMeltingTemperature, gcPercent, sequenceLength } from "@/lib/sequence";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ const actionClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[7px]
 
 export default async function SequencePairDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const pair = await prisma.sequencePair.findUnique({
+  const [pair, activityLogs] = await Promise.all([prisma.sequencePair.findUnique({
     where: { id },
     include: {
       project: { select: { id: true, name: true } },
@@ -28,14 +29,16 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
         orderBy: { order: "asc" },
       },
     },
-  });
+  }), prisma.activityLog.findMany({ where: { targetType: "sequence_pair", targetId: id }, orderBy: { createdAt: "desc" }, take: 20 })]);
   if (!pair || pair.members.length !== 2) notFound();
+  const metadata = pair.metadataJson && typeof pair.metadataJson === "object" && !Array.isArray(pair.metadataJson) ? pair.metadataJson as Record<string, unknown> : {};
+  const metadataRows = pairMetadataRows(pair.type, metadata);
   const exportBase = new URLSearchParams({ exportScope: "selected", id: pair.id, versions: "latest" });
 
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader title={pair.name} actions={<><Link href="/sequences" className={actionClass}><ArrowLeft className="h-4 w-4" aria-hidden />Sequences</Link><Link href={`/api/sequences/export?${exportBase.toString()}&format=fasta`} className={actionClass}><Download className="h-4 w-4" aria-hidden />FASTA</Link></>} />
+        <PageHeader title={pair.name} actions={<><Link href="/sequences" className={actionClass}><ArrowLeft className="h-4 w-4" aria-hidden />Sequences</Link><Link href={`/sequences/pairs/${pair.id}/edit`} className={actionClass}><Pencil className="h-4 w-4" aria-hidden />Edit</Link><Link href={`/api/sequences/export?${exportBase.toString()}&format=fasta`} className={actionClass}><Download className="h-4 w-4" aria-hidden />FASTA</Link></>} />
         <Card>
           <CardBody className="flex flex-wrap items-center gap-x-6 gap-y-2 py-3">
             <Badge tone="sage">{pairTypeLabel(pair.type)}</Badge>
@@ -49,11 +52,19 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
         <section className="grid gap-4 lg:grid-cols-2">
           {pair.members.map((member) => <PairMemberCard key={member.id} member={member} />)}
         </section>
+        {metadataRows.length ? <Card><CardHeader title="Design details" /><CardBody className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+          {metadataRows.map((item) => <div key={item.label}><p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{item.label}</p><p className="mt-1 text-sm text-ink">{item.value}</p></div>)}
+        </CardBody></Card> : null}
         {pair.description ? <Card><CardHeader title="Notes" /><CardBody><p className="whitespace-pre-wrap text-sm leading-6 text-graphite">{pair.description}</p></CardBody></Card> : null}
+        <Card><CardHeader title="Activity" eyebrow="Audit trail" /><CardBody><p className="pb-2 text-xs text-muted">Created {pair.createdAt.toLocaleString()} · Updated {pair.updatedAt.toLocaleString()}</p>{activityLogs.length ? <ul className="divide-y divide-hairline border-t border-hairline">{activityLogs.map((log) => <li key={log.id} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="font-medium capitalize text-ink">{log.action.replaceAll("_", " ")}</span><time className="text-xs text-muted">{log.createdAt.toLocaleString()}</time></li>)}</ul> : <p className="border-t border-hairline pt-2 text-sm text-muted">No activity recorded.</p>}</CardBody></Card>
         <p className="rounded-[8px] border border-hairline bg-warm/50 px-3 py-2 text-xs leading-5 text-muted">This pair is one Sequence entry. Its two exact member versions remain available for provenance and FASTA export, but are not listed as separate library entries.</p>
       </div>
     </AppShell>
   );
+}
+
+function pairMetadataRows(type: "primer_pair" | "sirna_duplex", metadata: Record<string, unknown>) {
+  return sequencePairMetadataFields(type).flatMap((field) => metadata[field.key] === undefined || metadata[field.key] === "" ? [] : [{ label: field.label.replace(" (bp)", ""), value: `${String(metadata[field.key])}${field.unit ? ` ${field.unit}` : ""}` }]);
 }
 
 function PairMemberCard({ member }: { member: {

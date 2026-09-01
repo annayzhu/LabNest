@@ -22,7 +22,7 @@ import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { reserveRecordCode, reserveRecordCodes } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
-import { normalizeSequenceOwnership, sequencePairDefinition, sequencePairRoles } from "@/lib/sequence-entry";
+import { normalizeSequenceOwnership, normalizeSequencePairMetadata, sequencePairDefinition, sequencePairMetadataFields, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
 
 const featureSchema = z.object({
@@ -300,6 +300,7 @@ const pairInputSchema = z.object({
   organism: z.string().trim().max(180).optional(),
   validationStatus: z.enum(SequenceValidationStatus),
   validationSummary: z.string().trim().max(5000).optional(),
+  metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
   members: z.array(z.object({
     role: z.string().trim().min(1).max(40),
     sequence: z.string().max(10_000_000),
@@ -329,6 +330,7 @@ function parsePairForm(formData: FormData) {
   const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
   const roles = sequencePairRoles(pairType);
   const geneName = String(formData.get("geneName") ?? "").trim();
+  const metadata = normalizeSequencePairMetadata(pairType, Object.fromEntries(sequencePairMetadataFields(pairType).map((field) => [field.key, formData.get(`meta_${field.key}`)])));
   return preparePairInput({
     name: geneName,
     pairType,
@@ -340,6 +342,7 @@ function parsePairForm(formData: FormData) {
     organism: optionalText(formData.get("organism")),
     validationStatus: formData.get("validationStatus") ?? "unverified",
     validationSummary: optionalText(formData.get("validationSummary")),
+    metadata,
     members: roles.map((role) => ({ role, sequence: formData.get(`sequence_${role}`) ?? "" })),
   });
 }
@@ -359,7 +362,7 @@ async function createPairInTransaction(tx: Prisma.TransactionClient, input: Pair
       projectId: input.projectId,
       targetName: input.targetName,
       organism: input.organism,
-      metadataJson: { sourceType: source.type ?? "manual", sourceFileName: source.fileName },
+      metadataJson: { ...input.metadata, sourceType: source.type ?? "manual", sourceFileName: source.fileName },
     },
   });
 
@@ -416,6 +419,35 @@ export async function createSequencePair(_previousState: FormActionState, formDa
     return { error: formActionErrorMessage(error, "The paired Sequence entry could not be created.") };
   }
   revalidatePath("/sequences");
+  redirect(`/sequences/pairs/${id}`);
+}
+
+export async function updateSequencePair(_previousState: FormActionState, formData: FormData): Promise<FormActionState> {
+  let id = "";
+  try {
+    id = z.string().min(1).parse(formData.get("id"));
+    const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
+    const name = z.string().trim().min(1).max(180).parse(formData.get("geneName"));
+    const ownership = normalizeSequenceOwnership(formData.get("ownershipScope") ?? "library", optionalText(formData.get("projectId")));
+    const status = z.enum(SequenceLifecycleStatus).parse(formData.get("status") ?? "draft");
+    const metadata = normalizeSequencePairMetadata(pairType, Object.fromEntries(sequencePairMetadataFields(pairType).map((field) => [field.key, formData.get(`meta_${field.key}`)])));
+    const organism = optionalText(formData.get("organism"));
+    const description = optionalText(formData.get("description"));
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.sequencePair.findUnique({ where: { id }, include: { members: true } });
+      if (!current || current.type !== pairType) throw new Error("This paired Sequence entry no longer exists or changed type.");
+      const sourceMetadata = current.metadataJson && typeof current.metadataJson === "object" && !Array.isArray(current.metadataJson) ? current.metadataJson as Record<string, unknown> : {};
+      await tx.sequencePair.update({ where: { id }, data: { name, targetName: name, organism, description, status, ...ownership, metadataJson: { sourceType: sourceMetadata.sourceType ?? "manual", sourceFileName: sourceMetadata.sourceFileName ?? null, ...metadata } } });
+      for (const member of current.members) {
+        await tx.sequence.update({ where: { id: member.sequenceId }, data: { name: `${name} · ${member.role}`, targetName: name, organism, description, status, ...ownership } });
+      }
+      await tx.activityLog.create({ data: { action: "update", targetType: "sequence_pair", targetId: id, metadataJson: { previousName: current.name, name, previousStatus: current.status, status, ownershipScope: ownership.ownershipScope, projectId: ownership.projectId } } });
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The paired Sequence entry could not be updated.") };
+  }
+  revalidatePath("/sequences");
+  revalidatePath(`/sequences/pairs/${id}`);
   redirect(`/sequences/pairs/${id}`);
 }
 
@@ -840,6 +872,7 @@ export async function importSequences(_previousState: SequenceManageState, formD
             organism: importField(record, "organism"),
             validationStatus: importField(record, "validationStatus") ?? "unverified",
             validationSummary: importField(record, "validationSummary"),
+            metadata: normalizeSequencePairMetadata(importedPairType, Object.fromEntries(sequencePairMetadataFields(importedPairType).map((field) => [field.key, importField(record, field.key)]))),
             members: roles.map((role) => ({ role, sequence: importField(record, `${role}Sequence`) ?? "" })),
           }) };
         }

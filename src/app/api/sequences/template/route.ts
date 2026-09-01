@@ -1,10 +1,12 @@
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
+import { sequencePairMetadataFieldDefinitions } from "@/lib/sequence-entry";
 
 const headers = [
   "name", "entryClass", "ownershipScope", "projectId", "designType", "moleculeType", "sequence", "pairType", "forwardSequence", "reverseSequence", "senseSequence", "antisenseSequence", "status", "validationStatus",
   "validationSummary", "targetName", "organism", "description", "topology",
   "strandedness", "displayVersion", "featuresJson", "modificationsJson",
+  ...sequencePairMetadataFieldDefinitions.map((field) => field.key),
 ];
 
 const singleSample: Record<string, string> = {
@@ -48,6 +50,11 @@ const pairSample: Record<string, string> = {
   displayVersion: "1.0",
   featuresJson: "[]",
   modificationsJson: "[]",
+  application: "qPCR",
+  transcriptAccession: "NM_000138.5",
+  ampliconLengthBp: "120",
+  exonJunction: "Spans exon junction",
+  designSource: "Primer-BLAST",
 };
 
 function csvValue(value: unknown) {

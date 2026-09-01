@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { sequenceLifecycleStatuses, sequenceValidationStatuses } from "@/lib/sequence-registry";
-import { sequencePairDefinition, type SequencePairTypeValue } from "@/lib/sequence-entry";
+import { sequencePairDefinition, sequencePairMetadataFields, type SequencePairTypeValue } from "@/lib/sequence-entry";
 import { estimatedMeltingTemperature, gcPercent, sequenceLength } from "@/lib/sequence";
 
 const initialState: FormActionState = {};
@@ -23,6 +23,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
   const inputPrompt = pairInputPrompt(pairType);
   const roles = definition.roles;
   const moleculeType = definition.moleculeType;
+  const metadataFields = sequencePairMetadataFields(pairType);
   const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initialProjectId ? "project" : "library");
   const [sequences, setSequences] = useState<Record<string, string>>(Object.fromEntries(roles.map((role) => [role, ""])));
   const metrics = Object.fromEntries(roles.map((role) => [role, {
@@ -30,13 +31,15 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
     gc: gcPercent(sequences[role] ?? ""),
     tm: estimatedMeltingTemperature(sequences[role] ?? "", moleculeType),
   }]));
+  const pairTmValues = roles.map((role) => metrics[role]?.tm).filter((value): value is number => value !== undefined);
+  const tmDifference = pairTmValues.length === 2 ? Math.abs(pairTmValues[0] - pairTmValues[1]) : undefined;
 
   return (
     <form action={formAction} className="space-y-3 pb-20 md:pb-0">
       <input type="hidden" name="pairType" value={pairType} />
       <Card>
         <CardBody className="space-y-5 p-4 sm:p-5">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className={`grid gap-3 ${pairType === "primer_pair" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
             <label>
               <span className={formLabelClass}>{inputPrompt.geneLabel}</span>
               <input required name="geneName" maxLength={180} className={formInputClass} placeholder={inputPrompt.genePlaceholder} autoFocus />
@@ -45,6 +48,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               <span className={formLabelClass}>{inputPrompt.organismLabel}</span>
               <input name="organism" maxLength={180} className={formInputClass} placeholder={inputPrompt.organismPlaceholder} />
             </label>
+            {pairType === "primer_pair" ? <PairMetadataField field={metadataFields.find((field) => field.key === "application")!} /> : null}
           </div>
 
           <section className="grid gap-3 lg:grid-cols-2" aria-label={`${definition.label} sequences`}>
@@ -73,12 +77,19 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
             ))}
           </section>
 
+          {pairType === "primer_pair" ? <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-[8px] bg-sage-surface/35 px-3 py-2 text-xs text-graphite">
+            <span className="font-medium text-ink">Pair check</span>
+            <span>Tm difference <strong className="font-mono text-ink">{tmDifference === undefined ? "—" : `${tmDifference.toFixed(1)} °C`}</strong></span>
+            <span className="text-muted">Estimated values are entry checks, not experimental validation.</span>
+          </div> : null}
+
           <details className="group rounded-[9px] border border-hairline">
             <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm font-medium text-graphite">
               More details
               <ChevronDown className="h-4 w-4 text-muted transition group-open:rotate-180" aria-hidden />
             </summary>
             <div className="grid gap-3 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-4">
+              {metadataFields.filter((field) => field.key !== "application").map((field) => <PairMetadataField key={field.key} field={field} />)}
               <label>
                 <span className={formLabelClass}>Location *</span>
                 <select name="ownershipScope" value={ownershipScope} onChange={(event) => setOwnershipScope(event.target.value as typeof ownershipScope)} className={formInputClass}>
@@ -133,8 +144,8 @@ function pairInputPrompt(pairType: SequencePairTypeValue) {
       antisense: "Antisense strand sequence",
     } as Record<string, string>,
     sequencePlaceholders: {
-      sense: "GCUACU…dTdT",
-      antisense: "AGUAGC…dTdT",
+      sense: "GCUACU…TT",
+      antisense: "AGUAGC…TT",
     } as Record<string, string>,
     descriptionPlaceholder: "Duplex number, transcript or target position, supplier, and intended assay…",
     validationPlaceholder: "Knockdown conditions, measured effect, off-target observations, and decision…",
@@ -155,4 +166,8 @@ function pairInputPrompt(pairType: SequencePairTypeValue) {
     descriptionPlaceholder: "Application, expected amplicon, transcript, and design source…",
     validationPlaceholder: "Efficiency, specificity, assay conditions, and decision…",
   };
+}
+
+function PairMetadataField({ field }: { field: ReturnType<typeof sequencePairMetadataFields>[number] }) {
+  return <label><span className={formLabelClass}>{field.label}</span><input name={`meta_${field.key}`} type={field.type === "number" ? "number" : "text"} min={field.min} step={field.type === "number" ? "1" : undefined} maxLength={field.type === "number" ? undefined : 180} className={formInputClass} placeholder={field.placeholder} /></label>;
 }

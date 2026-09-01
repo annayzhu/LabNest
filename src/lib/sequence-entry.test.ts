@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   collectionTypeIsPair,
   normalizeSequenceOwnership,
+  normalizeSequencePairMetadata,
   sequenceCreationPreset,
   sequencePairDefinition,
   sequencePairTypeForDesignType,
@@ -24,9 +25,30 @@ describe("sequence creation presets", () => {
       entryClass: "oligo",
       designType: "oligo",
     });
+    expect(sequenceCreationPreset("single-primer")).toMatchObject({
+      recordKind: "single",
+      entryClass: "oligo",
+      designType: "primer",
+      allowedDesignTypes: ["primer"],
+    });
+    expect(sequenceCreationPreset("crispr-guide")).toMatchObject({
+      recordKind: "single",
+      designType: "gRNA",
+      allowedDesignTypes: ["gRNA"],
+    });
+    expect(sequenceCreationPreset("shrna")).toMatchObject({
+      recordKind: "single",
+      designType: "shRNA",
+      allowedDesignTypes: ["shRNA"],
+    });
   });
 
   it("treats primer pairs and siRNA duplexes as one paired entry", () => {
+    expect(sequenceCreationPreset("primer")).toMatchObject({
+      recordKind: "paired",
+      pairType: "primer_pair",
+      roles: ["forward", "reverse"],
+    });
     expect(sequenceCreationPreset("primer-pair")).toMatchObject({
       recordKind: "paired",
       pairType: "primer_pair",
@@ -41,6 +63,11 @@ describe("sequence creation presets", () => {
     });
   });
 
+  it("does not silently turn an absent or unknown category into a DNA fragment", () => {
+    expect(sequenceCreationPreset(undefined)).toBeUndefined();
+    expect(sequenceCreationPreset("unknown-category")).toBeUndefined();
+  });
+
   it("keeps molecule and design semantics tied to the pair type", () => {
     expect(sequencePairDefinition("primer_pair")).toMatchObject({ designType: "primer", moleculeType: "DNA", roles: ["forward", "reverse"] });
     expect(sequencePairDefinition("sirna_duplex")).toMatchObject({ designType: "siRNA", moleculeType: "RNA", roles: ["sense", "antisense"] });
@@ -50,6 +77,12 @@ describe("sequence creation presets", () => {
     expect(sequencePairTypeForDesignType("primer")).toBe("primer_pair");
     expect(sequencePairTypeForDesignType("siRNA")).toBe("sirna_duplex");
     expect(sequencePairTypeForDesignType("plasmid")).toBeUndefined();
+  });
+
+  it("applies the same scientific metadata constraints to every pair input channel", () => {
+    expect(normalizeSequencePairMetadata("primer_pair", { application: "qPCR", ampliconLengthBp: "120" })).toEqual({ application: "qPCR", ampliconLengthBp: 120 });
+    expect(() => normalizeSequencePairMetadata("primer_pair", { ampliconLengthBp: "0" })).toThrow("at least 1");
+    expect(normalizeSequencePairMetadata("sirna_duplex", { ampliconLengthBp: "120", targetRegion: "CDS 450" })).toEqual({ targetRegion: "CDS 450" });
   });
 });
 

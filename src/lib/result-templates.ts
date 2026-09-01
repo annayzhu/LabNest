@@ -92,7 +92,7 @@ const resultTemplateInstructionRunSchema = z.object({
 const resultTemplateInstructionNodeSchema = z.object({
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(resultTemplateInstructionRunSchema),
-  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(2)]).optional(),
+  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),
   fontFamily: z.enum(["sans", "serif", "mono"]).optional(),
 });
 

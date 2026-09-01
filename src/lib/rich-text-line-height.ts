@@ -1,10 +1,10 @@
-export const RICH_TEXT_LINE_HEIGHTS = [1, 1.15, 1.3, 1.5, 2] as const;
+export const RICH_TEXT_LINE_HEIGHTS = [1, 1.15, 1.3, 1.5, 1.6, 2] as const;
 
 export type RichTextLineHeight = (typeof RICH_TEXT_LINE_HEIGHTS)[number];
 
 // CSS `line-height: 1` leaves almost no visual leading around Chinese glyphs.
-// 1.5 is the default authoring line height for rich-text modules.
-export const DEFAULT_RICH_TEXT_LINE_HEIGHT: RichTextLineHeight = 1.5;
+// 1.6 gives Chinese and mixed scientific copy enough leading for sustained editing.
+export const DEFAULT_RICH_TEXT_LINE_HEIGHT: RichTextLineHeight = 1.6;
 
 const LINE_HEIGHT_VALUES_SOURCE = RICH_TEXT_LINE_HEIGHTS.map((value) => String(value).replace(".", "\\.")).join("|");
 

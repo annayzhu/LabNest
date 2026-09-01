@@ -56,7 +56,7 @@ export const protocolRichTextRunSchema = z.object({
 export const protocolRichTextNodeSchema = z.object({
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(protocolRichTextRunSchema),
-  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(2)]).optional(),
+  lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),
   fontFamily: z.enum(RICH_TEXT_FONT_FAMILIES).optional(),
 });
 
@@ -79,6 +79,17 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     mediaType: z.enum(["image", "video", "file"]),
     url: z.string(),
     caption: z.string().optional(),
+    attachmentId: z.string().optional(),
+    filename: z.string().optional(),
+    mimeType: z.string().optional(),
+    size: z.number().int().nonnegative().optional(),
+  }),
+  baseBlockSchema.extend({
+    type: z.literal("embedded_tool"),
+    sourceKind: z.enum(["manifest", "url", "path"]),
+    label: z.string(),
+    url: z.string(),
+    toolId: z.string().optional(),
   }),
   baseBlockSchema.extend({
     type: z.literal("timer"),
@@ -280,6 +291,7 @@ export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectio
       if (block.type === "checklist") return block.items;
       if (block.type === "table") return block.rows.flat();
       if (block.type === "media") return [block.caption ?? block.url];
+      if (block.type === "embedded_tool") return [block.label || block.url];
       return [`${block.label}: ${block.durationMinutes} min`, block.notes ?? ""];
     })
     .filter(Boolean)
@@ -450,14 +462,12 @@ export function projectProtocolDocument(document: ProtocolDocument) {
       }
     }
     if (block.type === "checklist") {
-      if (currentHeading) {
-        currentDescription.push(...block.items.filter((item) => item.trim()));
-      } else {
-        flushStep();
-        for (const item of block.items) {
-          if (!item.trim()) continue;
-          steps.push({ order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
-        }
+      // A checklist is an explicit execution contract: every item must remain
+      // independently confirmable in run mode, even when it follows a heading.
+      flushStep();
+      for (const item of block.items) {
+        if (!item.trim()) continue;
+        steps.push({ order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
       }
     }
   }

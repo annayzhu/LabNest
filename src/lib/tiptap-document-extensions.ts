@@ -51,6 +51,24 @@ export function createDocumentSectionExtension({
     addNodeView() {
       return nodeView;
     },
+    addKeyboardShortcuts() {
+      const atProtectedBoundary = (edge: "start" | "end") => {
+        const { selection } = this.editor.state;
+        if (!selection.empty) return false;
+        const position = selection.$from;
+        let sectionDepth = -1;
+        for (let depth = position.depth; depth > 0; depth -= 1) {
+          if (position.node(depth).type.name === name) { sectionDepth = depth; break; }
+        }
+        if (sectionDepth < 0) return false;
+        if (edge === "start") return position.parentOffset === 0 && position.index(sectionDepth) === 0;
+        return position.parentOffset === position.parent.content.size && position.indexAfter(sectionDepth) === position.node(sectionDepth).childCount;
+      };
+      return {
+        Backspace: () => atProtectedBoundary("start"),
+        Delete: () => atProtectedBoundary("end"),
+      };
+    },
   });
 }
 

@@ -10,6 +10,8 @@ import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { checkResultTemplate } from "@/lib/result-templates";
 import { parseTags } from "@/lib/tags";
+import { normalizeManualRelevantLinks } from "@/lib/protocol-relevant-items";
+import { assertManualRelevantLinksExist } from "@/lib/protocol-relevant-items.server";
 
 const createSchema = z.object({
   canonicalTitle: z.string().trim().min(1).max(180),
@@ -23,6 +25,8 @@ const createSchema = z.object({
   changeSummary: z.string().trim().optional(),
   tags: z.array(z.string().trim().min(1).max(48)),
   contentJson: z.string().min(1),
+  uploadDraftId: z.string().trim().min(1).max(160),
+  relevantItemLinksJson: z.string().default("[]"),
   researchPlanIds: z.array(z.string().min(1)),
   primaryResearchPlanIds: z.array(z.string().min(1)),
 }).superRefine((value, context) => {
@@ -54,11 +58,15 @@ export async function createProtocolDocument(
       changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
       tags: parseTags(formData.get("tags")),
       contentJson: formData.get("contentJson"),
+      uploadDraftId: formData.get("uploadDraftId"),
+      relevantItemLinksJson: String(formData.get("relevantItemLinksJson") ?? "[]"),
       researchPlanIds: formData.getAll("researchPlanIds").map(String),
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
     const humanCode = recordCodeFromSuffix("protocol", String(formData.get("humanCodeSuffix") ?? ""));
     const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
+    const manualRelevantLinks = normalizeManualRelevantLinks(JSON.parse(parsed.relevantItemLinksJson));
+    await assertManualRelevantLinksExist(manualRelevantLinks);
     const projection = projectProtocolDocument(document);
     if (parsed.reviewStage !== "draft") {
       const templateErrors = projection.resultTemplates.flatMap((template) => checkResultTemplate(template).errors);
@@ -130,6 +138,16 @@ export async function createProtocolDocument(
         await transaction.projectProtocol.createMany({
           data: associatedProjectIds.map((projectId) => ({ projectId, protocolId: created.id })),
           skipDuplicates: true,
+        });
+      }
+      if (manualRelevantLinks.length) {
+        await transaction.itemLink.createMany({ data: manualRelevantLinks.map((link) => ({ sourceType: "protocol", sourceId: created.id, targetType: link.type, targetId: link.id, linkType: "manually_related", createdBy: "user" })) });
+      }
+      const savedVersionId = created.versions[0]?.id;
+      if (savedVersionId) {
+        await transaction.attachmentLink.updateMany({
+          where: { targetType: "protocol_upload_draft", targetId: parsed.uploadDraftId },
+          data: { targetType: "protocol_version", targetId: savedVersionId },
         });
       }
       await transaction.activityLog.create({

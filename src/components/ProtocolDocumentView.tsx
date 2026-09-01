@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, FileText, Link2, Table2 } from "lucide-react";
+import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, FileText, Link2, Table2, Wrench } from "lucide-react";
+import Image from "next/image";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolTimer } from "@/components/ProtocolTimer";
@@ -154,7 +155,12 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   }
   if (block.type === "media") {
     const href = safeLink(block.url);
-    return <div className="flex items-start gap-3 rounded-[9px] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium capitalize text-ink">{block.caption || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
+    if (block.mediaType === "image" && href) return <figure className="ln-protocol-media-preview"><Image src={href} alt={block.caption || block.filename || "Protocol image"} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized />{block.caption ? <figcaption>{block.caption}</figcaption> : null}</figure>;
+    return <div className="flex items-start gap-3 rounded-[9px] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium text-ink">{block.caption || block.filename || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
+  }
+  if (block.type === "embedded_tool") {
+    const href = safeLink(block.url);
+    return <div className="ln-protocol-tool-card"><Wrench aria-hidden /><div><p>{block.label || "Embedded tool"}</p><small>{block.sourceKind === "manifest" ? "LabNest tool" : block.sourceKind === "path" ? "Application path" : "External URL"}</small></div>{href ? <a href={href} target="_blank" rel="noreferrer">Open tool</a> : <span>Invalid location</span>}</div>;
   }
   if (block.type === "timer") return <ProtocolTimer label={block.label} durationMinutes={block.durationMinutes} notes={block.notes} />;
 

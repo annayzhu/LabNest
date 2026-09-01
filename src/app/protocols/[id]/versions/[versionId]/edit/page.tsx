@@ -21,7 +21,7 @@ function nextDisplayVersion(value: string) {
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await params;
-  const [version, projects, researchPlans, attachmentLinks] = await Promise.all([
+  const [version, projects, researchPlans, attachmentLinks, experimentCatalog, resultCatalog, attachmentCatalog, manualItemLinks] = await Promise.all([
     prisma.protocolVersion.findUnique({
       where: { id: versionId },
       include: { protocol: { include: {
@@ -48,6 +48,10 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
       include: { attachment: true },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.experiment.findMany({ orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, runCode: true, title: true, status: true } }),
+    prisma.result.findMany({ orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, title: true, recordStatus: true } }),
+    prisma.attachment.findMany({ orderBy: { uploadedAt: "desc" }, take: 200, select: { id: true, originalFilename: true, mimeType: true, size: true } }),
+    prisma.itemLink.findMany({ where: { sourceType: "protocol", sourceId: id, linkType: "manually_related", createdBy: "user" }, select: { targetType: true, targetId: true } }),
   ]);
   if (!version || version.protocolId !== id) notFound();
 
@@ -125,6 +129,13 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             attachments: attachmentLinks.map((link) => ({ id: link.id, label: link.attachment.originalFilename, meta: `${Math.max(1, Math.round(link.attachment.size / 1024))} KB`, href: `/api/attachments/${link.attachment.id}` })),
             versions: version.protocol.versions.map((protocolVersion) => ({ id: protocolVersion.id, label: `v${protocolVersion.displayVersion}`, meta: protocolVersion.reviewStage, href: `/protocols/${version.protocol.id}?version=${protocolVersion.id}` })),
           }}
+          relevantCatalog={[
+            ...projects.map((project) => ({ id: project.id, type: "project" as const, label: project.name, href: `/projects/${project.id}` })),
+            ...experimentCatalog.map((experiment) => ({ id: experiment.id, type: "experiment" as const, label: `${experiment.runCode} · ${experiment.title}`, meta: experiment.status, href: `/experiments/${experiment.id}` })),
+            ...resultCatalog.map((result) => ({ id: result.id, type: "result" as const, label: result.title, meta: result.recordStatus, href: `/results/${result.id}` })),
+            ...attachmentCatalog.map((attachment) => ({ id: attachment.id, type: "attachment" as const, label: attachment.originalFilename, meta: `${attachment.mimeType} · ${Math.max(1, Math.round(attachment.size / 1024))} KB`, href: `/api/attachments/${attachment.id}` })),
+          ]}
+          initialManualRelevantLinks={manualItemLinks.flatMap((link) => ["project", "experiment", "result", "attachment"].includes(link.targetType) ? [{ type: link.targetType as "project" | "experiment" | "result" | "attachment", id: link.targetId }] : [])}
         />
       </div>
     </AppShell>

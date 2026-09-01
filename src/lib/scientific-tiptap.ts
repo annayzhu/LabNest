@@ -171,7 +171,7 @@ function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
 function typographyPrefix(node: JSONContent) {
   const textStyle = node.content?.flatMap((item) => item.marks ?? []).find((mark) => mark.type === "textStyle");
   const lineHeightValue = node.attrs?.scientificLineHeight ?? textStyle?.attrs?.lineHeight;
-  const lineHeight = [1, 1.15, 1.3, 1.5, 2].includes(Number(lineHeightValue)) ? Number(lineHeightValue) as 1 | 1.15 | 1.3 | 1.5 | 2 : undefined;
+  const lineHeight = [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeightValue)) ? Number(lineHeightValue) as 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2 : undefined;
   const fontValue = node.attrs?.scientificFontFamily ?? textStyle?.attrs?.fontFamily;
   const fontFamily = ["sans", "serif", "mono"].includes(fontValue) ? fontValue as "sans" | "serif" | "mono" : undefined;
   return `${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;

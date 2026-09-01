@@ -167,6 +167,7 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }) {
     return table([[`${prefix}${block.text}`]], undefined, { kind: "callout", tone: block.tone });
   }
   if (block.type === "media") return paragraph(run(`${block.caption || block.mediaType}: ${block.url}`));
+  if (block.type === "embedded_tool") return paragraph(run(`${block.label}: ${block.url}`));
   return paragraph(run(`${block.label} · ${block.durationMinutes} min${block.notes ? ` · ${block.notes}` : ""}`, { bold: true }));
 }
 

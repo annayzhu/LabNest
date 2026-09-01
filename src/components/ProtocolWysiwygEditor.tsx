@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -16,8 +17,10 @@ import {
   FlaskConical,
   GripVertical,
   ImagePlus,
+  Paperclip,
   Table2,
   Trash2,
+  Wrench,
 } from "lucide-react";
 import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { DocumentToolbarTargetContext } from "@/components/DocumentToolbarTargetContext";
@@ -36,10 +39,15 @@ import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/r
 import { labToolManifest } from "@/lib/tool-manifest";
 import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
-type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "table" }>;
+type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "embedded_tool" | "table" }>;
 
 function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function embeddableToolUrl(value: string) {
+  const trimmed = value.trim();
+  return /^(https:\/\/|\/)/i.test(trimmed) ? trimmed : undefined;
 }
 
 function ProtocolSectionNodeView({ node }: NodeViewProps) {
@@ -79,11 +87,23 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
       </div> : null}
       {block.type === "media" ? <div className="ln-protocol-media-editor">
         <ImagePlus className="ln-protocol-widget-icon" aria-hidden />
-        <select value={block.mediaType} onChange={(event) => updateBlock({ ...block, mediaType: event.target.value as typeof block.mediaType })} className={wysiwygWidgetInputClass} aria-label="Media type"><option value="image">Image</option><option value="video">Video</option><option value="file">Link / file</option></select>
         <input value={block.caption ?? ""} onChange={(event) => updateBlock({ ...block, caption: event.target.value })} className={wysiwygWidgetInputClass} placeholder="Caption" aria-label="Media caption" />
-        <input value={block.url} onChange={(event) => updateBlock({ ...block, url: event.target.value })} className={wysiwygWidgetInputClass} placeholder="URL or attachment path" aria-label="Media URL" />
+        <span className="ln-protocol-media-filename">{block.filename || block.mediaType}</span>
         {block.url ? <a href={block.url} target="_blank" rel="noreferrer" className="ln-protocol-widget-link">Open</a> : null}
       </div> : null}
+      {block.type === "embedded_tool" ? <div className="ln-protocol-tool-editor">
+        <Wrench className="ln-protocol-widget-icon" aria-hidden />
+        <select value={block.sourceKind} onChange={(event) => {
+          const sourceKind = event.target.value as typeof block.sourceKind;
+          if (sourceKind === "manifest") {
+            const tool = labToolManifest.find((item) => item.id === block.toolId) ?? labToolManifest[0];
+            updateBlock({ ...block, sourceKind, toolId: tool?.id, label: tool?.name ?? "LabNest tool", url: tool?.launchUrl ?? "/tools" });
+          } else updateBlock({ ...block, sourceKind, toolId: undefined });
+        }} className={wysiwygWidgetInputClass} aria-label="Embedded tool source"><option value="manifest">Existing tool</option><option value="path">App path</option><option value="url">URL</option></select>
+        {block.sourceKind === "manifest" ? <select value={block.toolId ?? ""} onChange={(event) => { const tool = labToolManifest.find((item) => item.id === event.target.value); if (tool) updateBlock({ ...block, toolId: tool.id, label: tool.name, url: tool.launchUrl ?? "/tools" }); }} className={wysiwygWidgetInputClass} aria-label="LabNest tool">{labToolManifest.map((tool) => <option key={tool.id} value={tool.id}>{tool.name}</option>)}</select> : <><input value={block.label} onChange={(event) => updateBlock({ ...block, label: event.target.value })} className={wysiwygWidgetInputClass} placeholder="Tool name" aria-label="Embedded tool name" /><input value={block.url} onChange={(event) => updateBlock({ ...block, url: event.target.value })} className={wysiwygWidgetInputClass} placeholder={block.sourceKind === "path" ? "/tools/..." : "https://..."} aria-label="Embedded tool location" /></>}
+        {block.url ? <a href={block.url} target="_blank" rel="noreferrer" className="ln-protocol-widget-link">Open</a> : null}
+      </div> : null}
+      {block.type === "embedded_tool" && embeddableToolUrl(block.url) ? <details className="ln-protocol-tool-preview"><summary>Embedded preview</summary><iframe src={embeddableToolUrl(block.url)} title={block.label || "Embedded laboratory tool"} sandbox={block.url.startsWith("/") ? "allow-scripts allow-same-origin allow-forms allow-downloads allow-popups" : "allow-scripts allow-forms allow-downloads allow-popups"} loading="lazy" /></details> : null}
       {block.type === "table" && !isResultTemplate ? <InlineTableEditor rows={block.rows} onChange={(rows) => updateBlock({ ...block, rows })} caption={block.caption} onCaptionChange={(caption) => updateBlock({ ...block, caption })} /> : null}
       {block.type === "table" && isResultTemplate ? <details className="ln-protocol-result-template-editor">
         <summary><span><FlaskConical aria-hidden /><strong>{resultTemplate?.title ?? resultTemplate?.result_type ?? "Result template"}</strong></span><small>{resultTemplate?.fields.length ?? 0} fields · {resultTemplate?.datasets?.length ?? 0} data tables · {resultTemplate?.artifacts?.length ?? 0} files</small><em>Edit</em></summary>
@@ -109,24 +129,33 @@ function insertWidget(editor: Editor, block: WidgetBlock) {
   editor.chain().focus().insertContent({ type: "protocolWidget", attrs: { block } }).run();
 }
 
-function protocolInsertActions(): WysiwygInsertAction[] {
+function protocolInsertActions({ openImagePicker, openFilePicker }: { openImagePicker: () => void; openFilePicker: () => void }): WysiwygInsertAction[] {
+  const defaultTool = labToolManifest.find((tool) => tool.id === "free-plate-layout") ?? labToolManifest[0];
   return [
     { id: "table", icon: <Table2 aria-hidden />, label: "Table", description: "Editable and resizable", run: (editor) => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { id: "timer", icon: <AlarmClock aria-hidden />, label: "Timer", description: "Duration shown with unit", run: (editor) => insertWidget(editor, { id: uniqueBlockId("timer"), type: "timer", label: "Timer", durationMinutes: 5, notes: "" }) },
     { id: "callout", icon: <AlertTriangle aria-hidden />, label: "Callout", description: "Operation or risk", run: (editor) => insertWidget(editor, { id: uniqueBlockId("callout"), type: "callout", tone: "warning", text: "" }) },
-    { id: "media", icon: <ImagePlus aria-hidden />, label: "Media", description: "Image, video, or file", run: (editor) => insertWidget(editor, { id: uniqueBlockId("media"), type: "media", mediaType: "image", url: "", caption: "" }) },
+    { id: "image", icon: <ImagePlus aria-hidden />, label: "Image", description: "Choose or drag an image", run: openImagePicker },
+    { id: "file", icon: <Paperclip aria-hidden />, label: "File", description: "Choose or drag a file", run: openFilePicker },
     { id: "result-template", icon: <FlaskConical aria-hidden />, label: "Result template", description: "Fields, dataset, and files", run: (editor) => {
       const resultTemplate = createDefaultResultTemplate("measurement");
       insertWidget(editor, { id: uniqueBlockId("result-template"), type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
     } },
-    { id: "plate-map", icon: <FlaskConical aria-hidden />, label: "Plate Map Planner", description: "Persistent link to the tool", run: (editor) => insertWidget(editor, { id: uniqueBlockId("plate-map"), type: "media", mediaType: "file", url: plateMapPlannerUrl, caption: "Plate Map Planner" }) },
+    { id: "embedded-tool", icon: <Wrench aria-hidden />, label: "Embedded tool", description: "Existing tool, URL, or app path", run: (editor) => insertWidget(editor, { id: uniqueBlockId("embedded-tool"), type: "embedded_tool", sourceKind: "manifest", toolId: defaultTool?.id, label: defaultTool?.name ?? "Plate Map Planner", url: defaultTool?.launchUrl ?? plateMapPlannerUrl }) },
   ];
 }
 
-export function ProtocolWysiwygEditor({ document, onChange }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void }) {
+export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploadDraftId }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; toolbarHostId?: string; uploadDraftId: string }) {
   const [initialContent] = useState(() => protocolDocumentToTiptap(document)); // The form owns one document for the lifetime of this editor.
   const onChangeRef = useRef(onChange);
   const importWarningsRef = useRef(document.importWarnings);
+  const inputPrefix = useId();
+  const imageInputId = `${inputPrefix}-protocol-images`;
+  const fileInputId = `${inputPrefix}-protocol-files`;
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [draggingFiles, setDraggingFiles] = useState(false);
+  const openImagePicker = useCallback(() => globalThis.document.getElementById(imageInputId)?.click(), [imageInputId]);
+  const openFilePicker = useCallback(() => globalThis.document.getElementById(fileInputId)?.click(), [fileInputId]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   const editor = useEditor({
@@ -162,9 +191,54 @@ export function ProtocolWysiwygEditor({ document, onChange }: { document: Protoc
   const releaseToolbarEditor = useCallback((target: Editor) => setToolbarEditor((current) => current === target ? editor : current), [editor]);
   const toolbarTarget = useMemo(() => ({ activate: activateToolbarEditor, release: releaseToolbarEditor }), [activateToolbarEditor, releaseToolbarEditor]);
 
+  const addFiles = useCallback(async (files: File[]) => {
+    if (!editor || !files.length) return;
+    setUploadStatus(`Uploading ${files.length} file${files.length === 1 ? "" : "s"}…`);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.set("file", file, file.name);
+        formData.set("targetType", "protocol_upload_draft");
+        formData.set("targetId", uploadDraftId);
+        formData.set("linkType", "embedded_protocol_media");
+        const response = await fetch("/api/attachments", { method: "POST", body: formData });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error ?? `Could not upload ${file.name}.`);
+        const attachment = payload.attachment as { id: string; originalFilename: string; mimeType: string; size: number };
+        const mediaType = attachment.mimeType.startsWith("image/") ? "image" as const : attachment.mimeType.startsWith("video/") ? "video" as const : "file" as const;
+        insertWidget(editor, {
+          id: uniqueBlockId(mediaType),
+          type: "media",
+          mediaType,
+          attachmentId: attachment.id,
+          filename: attachment.originalFilename,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+          url: `/api/attachments/${attachment.id}${mediaType === "image" ? "?inline=1" : ""}`,
+          caption: attachment.originalFilename,
+        });
+      }
+      setUploadStatus("File added. Save the Protocol to keep the attachment link.");
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "Upload failed.");
+    }
+  }, [editor, uploadDraftId]);
+
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><section className="ln-wysiwyg-editor" data-print-hidden={undefined}>
-    <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? [] : protocolInsertActions()} /></div>
-    <div onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}><EditorContent editor={editor} /></div>
+  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? [] : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
+  const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
+  return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><section className={cn("ln-wysiwyg-editor", draggingFiles && "is-dragging-files")} data-print-hidden={undefined}>
+    {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
+    <input id={imageInputId} type="file" accept="image/*" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
+    <input id={fileInputId} type="file" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
+    {uploadStatus ? <p className="ln-protocol-upload-status" role="status">{uploadStatus}</p> : null}
+    <div
+      className="ln-protocol-editor-drop-zone"
+      onDragEnter={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) { event.preventDefault(); setDraggingFiles(true); } }}
+      onDragOver={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }}
+      onDragLeave={(event) => { const target = event.relatedTarget; if (!target || !(target instanceof Node) || !event.currentTarget.contains(target)) setDraggingFiles(false); }}
+      onDrop={(event) => { if (!event.dataTransfer.files.length) return; event.preventDefault(); event.stopPropagation(); setDraggingFiles(false); void addFiles(Array.from(event.dataTransfer.files)); }}
+      onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}
+    ><EditorContent editor={editor} />{draggingFiles ? <div className="ln-protocol-drop-overlay"><Paperclip aria-hidden />Drop images or files into the Protocol</div> : null}</div>
   </section></DocumentToolbarTargetContext.Provider>;
 }

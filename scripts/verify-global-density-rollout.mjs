@@ -135,6 +135,14 @@ async function assertOperationalTypography(page) {
   assert.equal(formMetrics.field, 13, `Shared form fields should be 13px, got ${formMetrics.field}px.`);
   assert.equal(formMetrics.label, 11, `Shared form labels should be 11px, got ${formMetrics.label}px.`);
   assert.equal(formMetrics.height, 40, `Field hit area must remain 40px, got ${formMetrics.height}px.`);
+
+  await page.goto(`${baseUrl}/research-plans/new`, { waitUntil: "domcontentloaded" });
+  const largeButtonMetrics = await page.locator("main button[type='submit']").evaluate((button) => ({
+    button: Number.parseFloat(getComputedStyle(button).fontSize),
+    buttonHeight: button.getBoundingClientRect().height,
+  }));
+  assert.equal(largeButtonMetrics.button, 12, `Large shared buttons should be 12px, got ${largeButtonMetrics.button}px.`);
+  assert.equal(largeButtonMetrics.buttonHeight, 40, `Large button hit area must remain 40px, got ${largeButtonMetrics.buttonHeight}px.`);
 }
 
 async function findSharedDocumentDetailRoute(page) {
@@ -156,14 +164,24 @@ async function assertSharedDocumentDensity(page) {
   const desktopMetrics = await paper.evaluate((node) => {
     const copy = node.querySelector(".document-copy, .entry-content, .document-block p");
     const style = getComputedStyle(copy);
+    const smallProbe = document.createElement("span");
+    smallProbe.className = "text-sm";
+    const metricProbe = document.createElement("span");
+    metricProbe.className = "text-2xl";
+    node.append(smallProbe, metricProbe);
+    const utilityFontSizes = [smallProbe, metricProbe].map((probe) => Number.parseFloat(getComputedStyle(probe).fontSize));
+    smallProbe.remove();
+    metricProbe.remove();
     return {
       width: node.getBoundingClientRect().width,
       copyFontSize: Number.parseFloat(style.fontSize),
       copyLineHeightRatio: Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize),
+      utilityFontSizes,
     };
   });
   assert(desktopMetrics.width >= 760 && desktopMetrics.width <= 798, `Shared document paper left its existing A4-constrained range: ${desktopMetrics.width}px.`);
   assert(desktopMetrics.copyLineHeightRatio >= 1.58 && desktopMetrics.copyLineHeightRatio <= 1.62, `Shared document copy should use 1.6 line height: ${desktopMetrics.copyLineHeightRatio}.`);
+  assert.deepEqual(desktopMetrics.utilityFontSizes, [14, 24], `A4 Tailwind utility sizes must retain their document scale, got ${desktopMetrics.utilityFontSizes.join("/")}px.`);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}${detailHref}`, { waitUntil: "domcontentloaded" });

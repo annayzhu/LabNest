@@ -17,7 +17,9 @@ export function DocumentCanvas({
   return (
     <section className={cn("document-workspace document-print-root", className)} aria-label={label}>
       {toolbar ? <div className="document-canvas-toolbar" data-print-hidden>{toolbar}</div> : null}
-      <article className={cn("document-a4-paper", paperClassName)}>{children}</article>
+      <div className="document-canvas-paper-scroll">
+        <article className={cn("document-a4-paper", paperClassName)}>{children}</article>
+      </div>
     </section>
   );
 }

@@ -138,7 +138,7 @@ export function DocumentWysiwygToolbar({
         <button type="button" onClick={() => editor.chain().focus().unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
         <button type="button" onClick={() => editor.chain().focus().setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
     </ToolbarMenu>
-    {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover">
+    {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover" triggerClassName="ln-wysiwyg-insert-menu-trigger">
         {insertActions.map((action) => <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
     </ToolbarMenu> : null}
     {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}

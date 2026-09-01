@@ -64,6 +64,18 @@
   --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
+  /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
+  --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
+  --ln-page-title-size: 18px; /* 全站工作页外层标题字号。 */
+  --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
+  --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
+  --ln-page-action-font-size: 13px; /* 页头动作字号。 */
+  --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
+  --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
+
+  /* Protocol 保存条仍有独立的视口偏移，其余密度全部复用全站变量。 */
+  --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
+
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
   --ln-entry-editor-body-min-height: 20rem; /* Entry 富文本正文的初始书写高度。 */
@@ -148,9 +160,9 @@
   --ln-document-table-cell-padding-x: 0.5rem; /* 文档普通表格单元格左右内边距。 */
   --ln-document-table-cell-padding-y: 0.375rem; /* 文档普通表格单元格上下内边距，也影响行高。 */
 
-  /* 文档正文密度：控制 Protocol/Entry 文档阅读和打印的文字行距、段距、模块间距。 */
-  --ln-document-copy-line-height: 1.32; /* 文档正文默认行高。 */
-  --ln-document-heading-line-height: 1.18; /* 文档小标题默认行高。 */
+  /* 文档正文密度：控制 Protocol/Entry/Research Plan/Result/Report 文档阅读和打印的文字行距、段距、模块间距。 */
+  --ln-document-copy-line-height: 1.6; /* 全站文档正文默认行高。 */
+  --ln-document-heading-line-height: 1.25; /* 全站文档小标题默认行高。 */
   --ln-document-section-heading-gap: 0.55rem; /* 文档 section 标题与正文之间距离。 */
   --ln-document-block-gap: 0.58rem; /* 文档内容块之间距离。 */
   --ln-document-rich-flow-gap: 0.45rem; /* 富文本段落、列表、引用之间距离。 */
@@ -161,15 +173,15 @@
   --ln-document-block-drag-opacity: 0.48; /* 正在拖动的内容块透明度。 */
   --ln-document-block-drop-line-width: 2px; /* 内容块拖拽落点提示线粗细。 */
   --ln-document-block-drop-line-offset: -0.34rem; /* 内容块拖拽落点提示线与内容块的距离。 */
-  --ln-document-outline-width: 8.5rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
+  --ln-document-outline-width: 7.75rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
   --ln-document-context-width: 15rem; /* 选中表格、图片或模块后出现的右侧设置宽度。 */
-  --ln-document-workbench-gap: 0.75rem; /* 目录、A4 画布和上下文设置之间的间距。 */
+  --ln-document-workbench-gap: 0.625rem; /* 目录、A4 画布和上下文设置之间的间距。 */
 
   /* 连续所见即所得编辑器：所有界面密度和科研节点尺寸集中在这里调整。 */
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
   --ln-wysiwyg-toolbar-button-padding-x: 0.3rem; /* 纯图标和插入按钮左右内边距。 */
   --ln-wysiwyg-toolbar-select-padding-x: 0.34rem; /* 字体、字号、行距等选择器左右内边距。 */
-  --ln-wysiwyg-toolbar-font-size: 10.5px; /* 工具条选择器与文字按钮字号。 */
+  --ln-wysiwyg-toolbar-font-size: 12.5px; /* 工具条选择器与文字按钮字号。 */
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.18rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.34rem; /* 工具条整体内边距。 */
@@ -492,15 +504,211 @@ textarea {
 }
 
 .page-actions :where(a, button) {
-  height: 1.875rem;
-  min-height: 1.875rem;
+  height: var(--ln-page-action-height);
+  min-height: var(--ln-page-action-height);
   border-radius: var(--ln-radius-control-md);
   box-shadow: none;
   padding-inline: 0.6rem;
-  font-size: 12px;
+  font-size: var(--ln-page-action-font-size);
   font-weight: 500;
   letter-spacing: -0.005em;
   line-height: 1;
+}
+
+.page-header {
+  gap: var(--ln-page-density-gap);
+  min-width: 0;
+}
+
+.page-header,
+.page-header > div,
+.page-header-copy {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.page-header-title {
+  font-size: var(--ln-page-title-size) !important;
+}
+
+.page-header .page-actions {
+  align-items: center;
+}
+
+.page-header .page-actions :where(.bg-action, .bg-moss) {
+  height: var(--ln-page-primary-action-height);
+  min-height: var(--ln-page-primary-action-height);
+}
+
+.protocol-density-slice {
+  display: grid;
+  gap: var(--ln-page-density-gap);
+  min-width: 0;
+}
+
+.protocol-export-menu > summary {
+  font-size: var(--ln-page-action-font-size);
+  height: var(--ln-page-action-height);
+  min-height: var(--ln-page-action-height);
+}
+
+.protocol-density-slice .protocol-density-actionbar .protocol-density-primary-action {
+  height: var(--ln-page-primary-action-height);
+  min-height: var(--ln-page-primary-action-height);
+}
+
+.protocol-density-notice {
+  border-radius: var(--ln-radius-control-lg);
+}
+
+.protocol-density-notice h2,
+.protocol-density-notice p {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.protocol-density-notice p {
+  margin-top: 0.1rem;
+}
+
+.protocol-export-menu {
+  position: relative;
+}
+
+.protocol-export-menu > summary {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-md);
+  color: var(--moss);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 500;
+  gap: 0.35rem;
+  list-style: none;
+  padding-inline: 0.6rem;
+  white-space: nowrap;
+}
+
+.protocol-export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.protocol-export-menu > summary:hover,
+.protocol-export-menu[open] > summary {
+  background: var(--warm);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+.protocol-export-menu > summary svg {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.protocol-export-menu-chevron {
+  transition: transform 140ms ease;
+}
+
+.protocol-export-menu[open] .protocol-export-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.protocol-export-menu-popover {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  min-width: 11.5rem;
+  padding: 0.25rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.3rem);
+  z-index: 40;
+}
+
+.protocol-export-menu-popover a {
+  align-items: center;
+  border-radius: var(--ln-radius-control-sm);
+  color: var(--graphite);
+  display: flex;
+  gap: 0.55rem;
+  height: auto !important;
+  min-height: 2.6rem !important;
+  padding: 0.35rem 0.5rem !important;
+}
+
+.protocol-export-menu-popover a:hover {
+  background: var(--stone);
+  color: var(--ink);
+}
+
+.protocol-export-menu-popover svg {
+  color: var(--moss);
+  height: 0.9rem;
+  width: 0.9rem;
+}
+
+.protocol-export-menu-popover span {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.protocol-export-menu-popover strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.protocol-export-menu-popover small {
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 400;
+}
+
+.protocol-density-form {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.protocol-density-slice > .document-editor-layout {
+  padding-top: 0;
+}
+
+.protocol-density-actionbar {
+  align-items: center;
+  align-self: start;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  bottom: var(--ln-protocol-density-save-offset);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+  max-width: 210mm;
+  padding: 0.25rem;
+  position: sticky;
+  width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
+  z-index: 30;
+}
+
+.protocol-density-actionbar > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.protocol-density-actionbar button {
+  font-size: var(--ln-page-action-font-size);
+}
+
+@media (max-width: 1023px) {
+  .protocol-density-actionbar {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 :where(nav a, nav button, .card-action a, .card-action button) {
@@ -1043,9 +1251,9 @@ textarea {
 .document-editor-viewbar {
   align-items: center;
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   justify-content: space-between;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.4rem;
   position: sticky;
   top: 0.6rem;
   z-index: 28;
@@ -1055,10 +1263,10 @@ textarea {
   align-items: center;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-lg);
+  border-radius: var(--ln-radius-control-md);
   display: inline-flex;
   gap: 0.16rem;
-  padding: 0.2rem;
+  padding: 0.12rem;
 }
 
 .document-editor-tab {
@@ -1069,7 +1277,7 @@ textarea {
   font-size: 11.5px;
   font-weight: 550;
   gap: 0.35rem;
-  height: 1.9rem;
+  height: 1.75rem;
   padding-inline: 0.58rem;
   transition: background-color 140ms ease, color 140ms ease;
 }
@@ -1095,10 +1303,10 @@ textarea {
   align-items: center;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-lg);
+  border-radius: var(--ln-radius-control-md);
   display: inline-flex;
   gap: 0.14rem;
-  padding: 0.2rem;
+  padding: 0.12rem;
 }
 
 .document-editor-zoom button {
@@ -1110,7 +1318,7 @@ textarea {
   font-variant-numeric: tabular-nums;
   font-weight: 550;
   gap: 0.3rem;
-  height: 1.9rem;
+  height: 1.75rem;
   padding-inline: 0.52rem;
   transition: background-color 140ms ease, color 140ms ease;
 }
@@ -1286,6 +1494,10 @@ textarea {
 }
 
 @media (min-width: 1024px) {
+  .page-header .page-actions {
+    flex-wrap: nowrap;
+  }
+
   .document-editor-workbench {
     display: grid;
     gap: var(--ln-document-workbench-gap);
@@ -1294,10 +1506,12 @@ textarea {
 
   .document-editor-outline {
     align-self: start;
+    border-right: 1px solid var(--hairline);
     display: block;
     grid-column: 1;
     max-height: calc(100dvh - 7rem);
     overflow-y: auto;
+    padding-right: 0.45rem;
     position: sticky;
     top: 4.2rem;
   }
@@ -1306,7 +1520,7 @@ textarea {
     align-items: center;
     display: flex;
     gap: 0.35rem;
-    padding: 0.35rem 0.5rem 0.42rem;
+    padding: 0.35rem 0.5rem 0.42rem 0.35rem;
   }
 
   .document-editor-outline-heading svg {
@@ -1320,12 +1534,13 @@ textarea {
   }
 
   .document-editor-outline nav button {
-    border-radius: var(--ln-radius-control-sm);
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--ln-radius-control-sm) var(--ln-radius-control-sm) 0;
     color: var(--muted);
     font-size: 10.5px;
     line-height: 1.3;
     min-height: 1.85rem;
-    padding: 0.34rem 0.5rem;
+    padding: 0.34rem 0.5rem 0.34rem 0.42rem;
     text-align: left;
     transition: background-color 140ms ease, color 140ms ease;
     width: 100%;
@@ -1337,7 +1552,8 @@ textarea {
   }
 
   .document-editor-outline nav button[data-active="true"] {
-    background: color-mix(in srgb, var(--action-surface) 55%, transparent);
+    background: transparent;
+    border-left-color: var(--action);
     color: var(--action);
     font-weight: 650;
   }
@@ -2438,6 +2654,87 @@ textarea {
 }
 
 @media (max-width: 767px) {
+  :root {
+    --ln-page-action-font-size: 11px;
+    --ln-page-title-size: 15px;
+    --ln-wysiwyg-toolbar-font-size: 11.5px;
+  }
+
+  .protocol-density-slice {
+    gap: 0.4rem;
+  }
+
+  .document-canvas-toolbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  .page-header {
+    gap: 0.45rem !important;
+  }
+
+  .page-header-title {
+    flex: 0 1 auto;
+    font-size: var(--ln-page-title-size) !important;
+    line-height: 1.22 !important;
+    order: 1;
+  }
+
+  .page-header-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+
+  .page-header-identifier {
+    font-size: 9px !important;
+    order: 2;
+  }
+
+  .page-actions {
+    display: flex;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+    scrollbar-width: none;
+  }
+
+  .page-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-actions :where(a, button),
+  :where(a, button).bg-moss.text-warm,
+  :where(a, button).bg-surface.text-moss.text-sm {
+    height: 2rem;
+    min-height: 2rem;
+    padding-inline: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .page-header .page-actions :where(a, button) {
+    font-size: var(--ln-page-action-font-size);
+  }
+
+  .page-header .page-actions :where(.bg-action, .bg-moss) {
+    height: var(--ln-page-primary-action-height);
+    min-height: var(--ln-page-primary-action-height);
+  }
+
+  .protocol-density-actionbar {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .protocol-density-actionbar > span {
+    display: none;
+  }
+
   .document-editor-viewbar {
     position: static;
   }
@@ -2636,11 +2933,15 @@ textarea {
   justify-content: flex-start;
   margin-inline: auto;
   max-width: 210mm;
-  min-height: 2.75rem;
-  padding: 0.35rem 0.5rem;
+  min-height: var(--ln-document-toolbar-height);
+  padding: 0.22rem 0.35rem;
   position: sticky;
   top: 0.75rem;
   z-index: 25;
+}
+
+.document-canvas-toolbar > a {
+  font-size: var(--ln-wysiwyg-toolbar-font-size);
 }
 
 .document-a4-paper {
@@ -2820,6 +3121,15 @@ body.labnest-column-resizing {
 .document-block :where(p, li, td, th, input, textarea, select) {
   font-size: 10pt !important;
   line-height: var(--ln-document-copy-line-height) !important;
+}
+
+@media (max-width: 767px) {
+  .document-copy,
+  .document-a4-paper .entry-content,
+  .document-a4-paper [contenteditable="true"],
+  .document-block :where(p, li, td, th, input, textarea, select) {
+    font-size: var(--ln-document-mobile-copy-size) !important;
+  }
 }
 
 [data-result-template-fields-preview] [data-result-template-field-name] {
@@ -3109,11 +3419,6 @@ table :where(td) {
     width: 100% !important;
   }
 
-  .document-canvas-toolbar {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
-
   main > .space-y-6,
   main > .space-y-5,
   main > .space-y-4,
@@ -3124,38 +3429,6 @@ table :where(td) {
 
   main :is(.space-y-6, .space-y-5, .space-y-4, .space-y-3, form.space-y-5, form.space-y-4) > :not([hidden]) ~ :not([hidden]) {
     margin-top: 0.6rem !important;
-  }
-
-  header:has(.page-actions) {
-    gap: 0.45rem !important;
-  }
-
-  header h1 {
-    font-size: 1.15rem !important;
-    line-height: 1.15 !important;
-  }
-
-  .page-actions {
-    display: flex;
-    flex-wrap: nowrap !important;
-    gap: 0.35rem !important;
-    max-width: 100%;
-    overflow-x: auto;
-    padding-bottom: 0.1rem;
-    scrollbar-width: none;
-  }
-
-  .page-actions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .page-actions :where(a, button),
-  :where(a, button).bg-moss.text-warm,
-  :where(a, button).bg-surface.text-moss.text-sm {
-    height: 2rem;
-    min-height: 2rem;
-    padding-inline: 0.6rem;
-    white-space: nowrap;
   }
 
   section.rounded-\[12px\] {

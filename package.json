@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:protocol-density:e2e": "node scripts/verify-protocol-density-slice.mjs",
+    "test:global-density:e2e": "node scripts/verify-global-density-rollout.mjs",
     "test:typography:e2e": "node scripts/verify-typography-settings.mjs",
     "docker:up": "docker compose up -d --build app",
     "docker:status": "docker compose ps",

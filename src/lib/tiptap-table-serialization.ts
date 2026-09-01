@@ -7,6 +7,7 @@ export type PersistedTiptapTable = {
   columnWidths?: Array<number | null>;
   cellFontSizesPt?: Array<Array<RichTextFontSizePt | null>>;
   cellColors?: Array<Array<RichTextColor | null>>;
+  cellRichContent?: Array<Array<JSONContent[] | null>>;
 };
 
 function plainText(node: JSONContent | undefined): string {
@@ -16,7 +17,11 @@ function plainText(node: JSONContent | undefined): string {
   return (node.content ?? []).map(plainText).join("");
 }
 
-export function tiptapTableCell(value: string, header: boolean, width?: number | null, fontSizePt?: RichTextFontSizePt | null, color?: RichTextColor | null): JSONContent {
+function cloneContent(content: JSONContent[]) {
+  return structuredClone(content);
+}
+
+export function tiptapTableCell(value: string, header: boolean, width?: number | null, fontSizePt?: RichTextFontSizePt | null, color?: RichTextColor | null, richContent?: JSONContent[] | null): JSONContent {
   const textStyle = { ...(fontSizePt ? { fontSize: `${fontSizePt}pt` } : {}), ...(color === "risk" ? { color: RICH_TEXT_RISK_COLOR_HEX } : {}) };
   const marks = Object.keys(textStyle).length ? [{ type: "textStyle", attrs: textStyle }] : undefined;
   const content = value.split("\n").flatMap((line, index) => [
@@ -26,7 +31,7 @@ export function tiptapTableCell(value: string, header: boolean, width?: number |
   return {
     type: header ? "tableHeader" : "tableCell",
     attrs: width ? { colwidth: [Math.round(width)] } : undefined,
-    content: [{ type: "paragraph", content }],
+    content: richContent ? cloneContent(richContent) : [{ type: "paragraph", content }],
   };
 }
 
@@ -35,8 +40,28 @@ export function tiptapTableRows(table: PersistedTiptapTable): JSONContent[] {
   const width = Math.max(1, ...rows.map((row) => row.length));
   return rows.map((row, rowIndex) => ({
     type: "tableRow",
-    content: Array.from({ length: width }, (_, columnIndex) => tiptapTableCell(row[columnIndex] ?? "", rowIndex === 0, table.columnWidths?.[columnIndex], table.cellFontSizesPt?.[rowIndex]?.[columnIndex], table.cellColors?.[rowIndex]?.[columnIndex])),
+    content: Array.from({ length: width }, (_, columnIndex) => tiptapTableCell(row[columnIndex] ?? "", rowIndex === 0, table.columnWidths?.[columnIndex], table.cellFontSizesPt?.[rowIndex]?.[columnIndex], table.cellColors?.[rowIndex]?.[columnIndex], table.cellRichContent?.[rowIndex]?.[columnIndex])),
   }));
+}
+
+function needsRichPersistence(cell: JSONContent) {
+  const fontSizes = new Set<string>();
+  const colors = new Set<string>();
+  let lossyMark = false;
+  let richStructure = false;
+  const visit = (node: JSONContent, isRoot = false) => {
+    if (!isRoot && !["paragraph", "text", "hardBreak"].includes(node.type ?? "")) richStructure = true;
+    for (const mark of node.marks ?? []) {
+      if (mark.type !== "textStyle") lossyMark = true;
+      const fontSize = mark.attrs?.fontSize;
+      const color = mark.attrs?.color;
+      if (fontSize !== undefined) fontSizes.add(String(fontSize));
+      if (color !== undefined) colors.add(String(color));
+    }
+    node.content?.forEach((child) => visit(child));
+  };
+  visit(cell, true);
+  return lossyMark || richStructure || fontSizes.size > 1 || colors.size > 1;
 }
 
 function cellFontSizePt(cell: JSONContent) {
@@ -74,10 +99,12 @@ export function persistedTableFromTiptap(node: JSONContent): PersistedTiptapTabl
   });
   const cellFontSizesPt = (node.content ?? []).map((row) => (row.content ?? []).map(cellFontSizePt));
   const cellColors = (node.content ?? []).map((row) => (row.content ?? []).map(cellColor));
+  const cellRichContent = (node.content ?? []).map((row) => (row.content ?? []).map((cell) => needsRichPersistence(cell) ? cloneContent(cell.content ?? []) : null));
   return {
     rows,
     columnWidths: columnWidths.some((value) => value !== null) ? columnWidths : undefined,
     cellFontSizesPt: cellFontSizesPt.some((row) => row.some((value) => value !== null)) ? cellFontSizesPt : undefined,
     cellColors: cellColors.some((row) => row.some((value) => value !== null)) ? cellColors : undefined,
+    cellRichContent: cellRichContent.some((row) => row.some((value) => value !== null)) ? cellRichContent : undefined,
   };
 }

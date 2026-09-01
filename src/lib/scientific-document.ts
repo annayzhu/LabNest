@@ -4,6 +4,7 @@ import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
+import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
 const baseBlockSchema = z.object({ id: z.string().min(1) });
 
@@ -18,6 +19,7 @@ export const scientificContentBlockSchema = z.discriminatedUnion("type", [
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
     cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
     cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
+    cellRichContent: z.array(z.array(tiptapCellRichContentSchema.nullable())).optional(),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),

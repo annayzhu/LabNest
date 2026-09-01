@@ -15,6 +15,7 @@ import {
 import { RICH_TEXT_FONT_FAMILIES } from "./rich-text-font-family";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
+import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
 export const protocolSectionKeys = [
   "description",
@@ -92,6 +93,7 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
     cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
     cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
+    cellRichContent: z.array(z.array(tiptapCellRichContentSchema.nullable())).optional(),
     resultTemplate: resultTemplateInputSchema.optional(),
   }),
   baseBlockSchema.extend({

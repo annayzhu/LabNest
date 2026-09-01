@@ -65,7 +65,7 @@ async function assertDesktopSlice(page, routes) {
   assert(detailMetrics.primaryActionHeight >= 36 && detailMetrics.primaryActionHeight <= 40, `Primary Protocol action must remain 36–40px: ${detailMetrics.primaryActionHeight}px.`);
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
   assert(detailMetrics.paperWidth >= 790 && detailMetrics.paperWidth <= 798, `The 100% A4 width changed: ${detailMetrics.paperWidth}px.`);
-  assert(detailMetrics.copyLineHeightRatio >= 1.45 && detailMetrics.copyLineHeightRatio <= 1.55, `Protocol detail copy should use a relaxed 1.45–1.55 line-height ratio: ${detailMetrics.copyLineHeightRatio}.`);
+  assert(detailMetrics.copyLineHeightRatio >= 1.58 && detailMetrics.copyLineHeightRatio <= 1.62, `Protocol detail copy should use the requested 1.6 line-height ratio: ${detailMetrics.copyLineHeightRatio}.`);
   await page.locator(".protocol-export-menu > summary").click();
   assert(await page.locator(".protocol-export-menu-popover a").count() === 2, "The compact Export menu must expose both DOCX and JSON.");
   await assertNoPageOverflow(page, "Protocol detail desktop");
@@ -112,7 +112,7 @@ async function assertDesktopSlice(page, routes) {
   assert(editMetrics.toolbarFontSize >= 12 && editMetrics.toolbarFontSize <= 14, `Editor toolbar text is outside the readable 12–14px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
   assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
-  assert(editMetrics.copyLineHeightRatio >= 1.45 && editMetrics.copyLineHeightRatio <= 1.55, `Protocol editor copy should use a relaxed 1.45–1.55 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
+  assert(editMetrics.copyLineHeightRatio >= 1.58 && editMetrics.copyLineHeightRatio <= 1.62, `Protocol editor copy should use the requested 1.6 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
   const documentTab = page.getByRole("tab", { name: "Document" });
   await documentTab.focus();
   await documentTab.press("ArrowRight");
@@ -155,16 +155,36 @@ async function assertMobileSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.detailHref}`, { waitUntil: "domcontentloaded" });
   const detailRoot = page.locator('[data-density-slice="protocol"]');
   await detailRoot.waitFor();
-  const mobileDetailState = await detailRoot.evaluate((slice) => ({
-    actionOverflow: getComputedStyle(slice.querySelector(".page-actions")).overflowX,
-    primaryActionHeight: slice.querySelector(".protocol-density-primary-action")?.getBoundingClientRect().height ?? 0,
-    titleFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(":scope > header h1")).fontSize),
-    actionFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".page-actions a, .page-actions button")).fontSize),
-  }));
+  const mobileDetailState = await detailRoot.evaluate((slice) => {
+    const title = slice.querySelector(":scope > header .page-header-title");
+    const identifier = slice.querySelector(":scope > header .page-header-identifier");
+    const copy = slice.querySelector(".document-copy");
+    const header = slice.querySelector(":scope > header");
+    const titleRect = title.getBoundingClientRect();
+    const identifierRect = identifier.getBoundingClientRect();
+    return {
+      actionOverflow: getComputedStyle(slice.querySelector(".page-actions")).overflowX,
+      primaryActionHeight: slice.querySelector(".protocol-density-primary-action")?.getBoundingClientRect().height ?? 0,
+      titleFontSize: Number.parseFloat(getComputedStyle(title).fontSize),
+      actionFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".page-actions a, .page-actions button")).fontSize),
+      titleBeforeIdentifier: titleRect.top < identifierRect.top,
+      titleIdentifierGap: identifierRect.top - titleRect.bottom,
+      headerHeight: header.getBoundingClientRect().height,
+      identifierFontSize: Number.parseFloat(getComputedStyle(identifier).fontSize),
+      copyFontSize: Number.parseFloat(getComputedStyle(copy).fontSize),
+      copyLineHeightRatio: Number.parseFloat(getComputedStyle(copy).lineHeight) / Number.parseFloat(getComputedStyle(copy).fontSize),
+    };
+  });
   assert(["auto", "scroll"].includes(mobileDetailState.actionOverflow), `Mobile detail actions must scroll safely, got ${mobileDetailState.actionOverflow}.`);
   assert(mobileDetailState.primaryActionHeight >= 36 && mobileDetailState.primaryActionHeight <= 40, `Mobile primary Protocol action must remain touch-friendly: ${mobileDetailState.primaryActionHeight}px.`);
   assert(mobileDetailState.titleFontSize >= 14 && mobileDetailState.titleFontSize <= 16, `Mobile Protocol title should stay within the compact 14–16px range: ${mobileDetailState.titleFontSize}px.`);
   assert(mobileDetailState.actionFontSize >= 10.5 && mobileDetailState.actionFontSize <= 11.5, `Mobile Protocol action labels should stay within the compact 10.5–11.5px range: ${mobileDetailState.actionFontSize}px.`);
+  assert(mobileDetailState.titleBeforeIdentifier, "Mobile Protocol header should place the title above the identifier and version.");
+  assert(mobileDetailState.titleIdentifierGap >= 0 && mobileDetailState.titleIdentifierGap <= 8, `Mobile title and identifier should stay visually grouped: ${mobileDetailState.titleIdentifierGap}px.`);
+  assert(mobileDetailState.headerHeight <= 96, `Mobile Protocol header should not contain a large empty height: ${mobileDetailState.headerHeight}px.`);
+  assert(mobileDetailState.identifierFontSize >= 8.5 && mobileDetailState.identifierFontSize <= 9.5, `Mobile Protocol identifier should be small supporting text: ${mobileDetailState.identifierFontSize}px.`);
+  assert(mobileDetailState.copyFontSize >= 11.5 && mobileDetailState.copyFontSize <= 12.5, `Mobile Protocol body should use the compact 12px reading size: ${mobileDetailState.copyFontSize}px.`);
+  assert(mobileDetailState.copyLineHeightRatio >= 1.58 && mobileDetailState.copyLineHeightRatio <= 1.62, `Mobile Protocol body should preserve the requested 1.6 line-height ratio: ${mobileDetailState.copyLineHeightRatio}.`);
   await assertNoPageOverflow(page, "Protocol detail mobile");
 
   if (screenshotDir) {
@@ -176,6 +196,7 @@ async function assertMobileSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const root = page.locator('[data-density-slice="protocol"]');
   await root.waitFor();
+  await page.locator(".ln-wysiwyg-toolbar select").first().waitFor();
   const mobileState = await root.evaluate((slice) => ({
     outlineDisplay: getComputedStyle(slice.querySelector(".document-editor-outline")).display,
     contextDisplay: getComputedStyle(slice.querySelector(".document-editor-context-rail")).display,

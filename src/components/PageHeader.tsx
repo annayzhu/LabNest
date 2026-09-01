@@ -19,9 +19,9 @@ export function PageHeader({
   return (
     <header className={cn("flex flex-col gap-2 md:min-h-8 md:flex-row md:items-center md:justify-between", className)}>
       <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          {identifier ? <span className="font-mono text-[10px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}
-          <h1 className="break-words font-serif text-[20px] font-medium leading-[1.25] tracking-[-0.012em] text-ink">
+        <div className="page-header-copy flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          {identifier ? <span className="page-header-identifier font-mono text-[10px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}
+          <h1 className="page-header-title break-words font-serif text-[20px] font-medium leading-[1.25] tracking-[-0.012em] text-ink">
             {title}
           </h1>
         </div>

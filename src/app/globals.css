@@ -75,8 +75,9 @@
   --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
   --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
   --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
-  --ln-protocol-density-copy-line-height: 1.48; /* Protocol 详情与编辑正文保持紧凑，但为中文宋体增加呼吸感。 */
+  --ln-protocol-density-copy-line-height: 1.6; /* Protocol 详情与编辑正文采用更舒展的阅读行距。 */
   --ln-protocol-density-heading-line-height: 1.25; /* Protocol 文档内小标题稍微放松，避免衬线字上下拥挤。 */
+  --ln-protocol-density-mobile-copy-size: 9pt; /* 手机版 Protocol 正文缩小一级，配合 1.6 行距保持清晰。 */
 
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
@@ -2715,10 +2716,32 @@ textarea {
   }
 
   .protocol-density-slice > header h1 {
-    flex: 1 1 12rem;
+    flex: 0 1 auto;
     font-size: var(--ln-protocol-density-title-size) !important;
     line-height: 1.22 !important;
     min-width: 0;
+  }
+
+  .protocol-density-slice > header .page-header-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+
+  .protocol-density-slice > header .page-header-title {
+    order: 1;
+  }
+
+  .protocol-density-slice > header .page-header-identifier {
+    font-size: 9px;
+    order: 2;
+  }
+
+  .protocol-density-slice .document-copy,
+  .protocol-density-slice .document-a4-paper .entry-content,
+  .protocol-density-slice .document-a4-paper [contenteditable="true"],
+  .protocol-density-slice .document-block :where(p, li, td, th, input, textarea, select) {
+    font-size: var(--ln-protocol-density-mobile-copy-size) !important;
   }
 
   .protocol-density-actionbar {

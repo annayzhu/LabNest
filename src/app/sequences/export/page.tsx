@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
+import { ArrowLeft, Eye, FileSpreadsheet, FileText } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { buttonStyles } from "@/components/ui/Button";
@@ -15,7 +15,7 @@ export default async function SequenceExportPage({ searchParams }: { searchParam
     if (Array.isArray(value)) value.forEach((item) => base.append(key, item));
     else if (value) base.set(key, value);
   }
-  const exportHref = (format: "csv" | "fasta", versions: "latest" | "all") => {
+  const exportHref = (format: "xlsx" | "csv" | "fasta", versions: "latest" | "all" = "latest") => {
     const next = new URLSearchParams(base);
     next.set("format", format);
     next.set("versions", versions);
@@ -31,7 +31,8 @@ export default async function SequenceExportPage({ searchParams }: { searchParam
           <CardHeader title="Export scope" />
           <CardBody><p className="text-sm text-graphite">This export includes {scopeLabel}. Choose whether to export only the latest version or the complete immutable version history.</p></CardBody>
         </Card>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Card><CardHeader title="Current view · XLSX" /><CardBody className="space-y-3"><p className="text-sm text-muted">Matches the current scope and row order. Paired primers and siRNAs stay together as one entry, with a second sheet for exact sequence details.</p><Link href={exportHref("xlsx")} className={exportButtonClass}><Eye className="h-4 w-4" aria-hidden />Export what I see</Link></CardBody></Card>
           <Card><CardHeader title="Structured CSV" /><CardBody className="space-y-3"><p className="text-sm text-muted">Includes identity, status, validation, exact sequence, checksum, Features, and modifications.</p><div className="flex flex-wrap gap-2"><Link href={exportHref("csv", "latest")} className={exportButtonClass}><FileSpreadsheet className="h-4 w-4" aria-hidden />Latest versions</Link><Link href={exportHref("csv", "all")} className={exportButtonClass}><FileSpreadsheet className="h-4 w-4" aria-hidden />All versions</Link></div></CardBody></Card>
           <Card><CardHeader title="FASTA" /><CardBody className="space-y-3"><p className="text-sm text-muted">Canonical sequence content with code, record name, version, and molecule type in each header.</p><div className="flex flex-wrap gap-2"><Link href={exportHref("fasta", "latest")} className={exportButtonClass}><FileText className="h-4 w-4" aria-hidden />Latest versions</Link><Link href={exportHref("fasta", "all")} className={exportButtonClass}><FileText className="h-4 w-4" aria-hidden />All versions</Link></div></CardBody></Card>
         </div>

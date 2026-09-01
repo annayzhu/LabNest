@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { readSheet } from "read-excel-file/node";
+import readExcelFile from "read-excel-file/node";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -24,6 +24,7 @@ import { reserveRecordCode, reserveRecordCodes } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
 import { normalizeSequenceOwnership, normalizeSequencePairMetadata, sequencePairDefinition, sequencePairMetadataFields, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
+import { parseSequencePaste } from "@/lib/sequence-paste";
 
 const featureSchema = z.object({
   name: z.string().trim().min(1, "Feature name is required.").max(160),
@@ -803,6 +804,12 @@ function rowsFromMatrix(rows: unknown[][]) {
   return rows.slice(headerIndex + 1).map((row) => Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""]))).filter((row) => Object.values(row).some((value) => String(value).trim()));
 }
 
+function isStructuredImportMatrix(rows: unknown[][]) {
+  const firstNonEmpty = rows.find((row) => row.some((cell) => String(cell ?? "").trim()));
+  if (!firstNonEmpty) return false;
+  return firstNonEmpty.some((cell) => String(cell ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") === "name");
+}
+
 function parseCsv(text: string) {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
   if (!lines.length) return [];
@@ -851,7 +858,8 @@ export async function importSequences(_previousState: SequenceManageState, formD
       rows = parseCsv(buffer.toString("utf8"));
     } else if (extension === "xlsx") {
       sourceType = "xlsx_import";
-      rows = rowsFromMatrix(await readSheet(buffer, { trim: true }) as unknown[][]);
+      const sheets = await readExcelFile(buffer, { trim: true });
+      rows = sheets.flatMap((sheet) => isStructuredImportMatrix(sheet.data as unknown[][]) ? rowsFromMatrix(sheet.data as unknown[][]) : []);
     } else throw new Error("Supported formats are FASTA, CSV, TSV, and XLSX.");
     if (!rows.length) throw new Error("No sequence records were found in this file.");
     if (rows.length > 500) throw new Error("A single import is limited to 500 sequences.");
@@ -930,6 +938,88 @@ export async function importSequences(_previousState: SequenceManageState, formD
     return { success: `${prepared.length} sequence ${prepared.length === 1 ? "entry" : "entries"} imported.` };
   } catch (error) {
     return { error: formActionErrorMessage(error, "The Sequence import could not be completed.") };
+  }
+}
+
+export async function importPastedSequences(_previousState: SequenceManageState, formData: FormData): Promise<SequenceManageState> {
+  try {
+    const pastedData = z.string().trim().min(1, "Paste one or more rows copied from Excel.").max(2_000_000, "Pasted data is too large.").parse(formData.get("pastedData"));
+    const pasteMode = z.enum(["primer_pair", "sirna_duplex", "single"]).parse(formData.get("pasteMode"));
+    const defaultMoleculeType = z.enum(SequenceType).parse(formData.get("defaultMoleculeType") ?? "DNA");
+    const defaultDesignType = z.enum(SequenceDesignType).parse(formData.get("defaultDesignType") ?? "fragment");
+    const defaultOwnershipScope = z.enum(SequenceOwnershipScope).parse(formData.get("ownershipScope") ?? "library");
+    const defaultProjectId = optionalText(formData.get("projectId"));
+    const defaultOrganism = optionalText(formData.get("defaultOrganism"));
+    normalizeSequenceOwnership(defaultOwnershipScope, defaultProjectId);
+
+    const preview = parseSequencePaste(pastedData, pasteMode, defaultMoleculeType as MoleculeType);
+    if (preview.errors.length) throw new Error(preview.errors.slice(0, 5).join(" "));
+    if (!preview.entries.length) throw new Error("No complete Sequence entries were found in the pasted cells.");
+
+    const prepared = preview.entries.map((entry) => {
+      if (entry.kind === "pair" && entry.pairType) {
+        return { kind: "pair" as const, input: preparePairInput({
+          name: entry.name,
+          pairType: entry.pairType,
+          ownershipScope: defaultOwnershipScope,
+          projectId: defaultProjectId,
+          status: "draft",
+          description: entry.description,
+          targetName: entry.targetName ?? entry.name,
+          organism: entry.organism ?? defaultOrganism,
+          validationStatus: "unverified",
+          metadata: {},
+          members: entry.members.map((member) => ({ role: member.role, sequence: member.sequence })),
+        }) };
+      }
+      const sequence = entry.members[0]?.sequence ?? "";
+      return { kind: "single" as const, input: prepareSequenceInput({
+        name: entry.name,
+        entryClass: defaultMoleculeType === "Protein" ? "amino_acid" : ["primer", "probe", "siRNA", "shRNA", "gRNA", "oligo"].includes(defaultDesignType) ? "oligo" : "nucleic_acid",
+        ownershipScope: defaultOwnershipScope,
+        projectId: defaultProjectId,
+        designType: defaultDesignType,
+        status: "draft",
+        description: entry.description,
+        targetName: entry.targetName ?? entry.name,
+        organism: entry.organism ?? defaultOrganism,
+        moleculeType: defaultMoleculeType,
+        sequence,
+        topology: defaultDesignType === "plasmid" ? "circular" : "linear",
+        strandedness: "unknown",
+        displayVersion: "1.0",
+        validationStatus: "unverified",
+        changeSummary: "Initial version created by Excel clipboard import",
+        features: [],
+        modifications: [],
+        metadata: {},
+      }) };
+    });
+
+    await prisma.$transaction(async (tx) => {
+      const pairCount = prepared.filter((item) => item.kind === "pair").length;
+      const sequenceCodes = await reserveRecordCodes(tx, "sequence", prepared.length + pairCount);
+      const pairCodes = pairCount ? await reserveRecordCodes(tx, "sequencePair", pairCount) : [];
+      let sequenceCodeIndex = 0;
+      let pairCodeIndex = 0;
+      for (const item of prepared) {
+        if (item.kind === "pair") {
+          const pairCode = pairCodes[pairCodeIndex++];
+          const firstMemberCode = sequenceCodes[sequenceCodeIndex++];
+          const secondMemberCode = sequenceCodes[sequenceCodeIndex++];
+          if (!pairCode || !firstMemberCode || !secondMemberCode) throw new Error("Import code reservation was incomplete.");
+          await createPairInTransaction(tx, item.input, { type: "csv_import", fileName: "Excel clipboard paste.tsv" }, { pair: pairCode, members: [firstMemberCode, secondMemberCode] });
+        } else {
+          const sequenceCode = sequenceCodes[sequenceCodeIndex++];
+          if (!sequenceCode) throw new Error("Import code reservation was incomplete.");
+          await createSequenceInTransaction(tx, item.input, { type: "csv_import", fileName: "Excel clipboard paste.tsv" }, sequenceCode);
+        }
+      }
+    }, { maxWait: 15_000, timeout: 120_000 });
+    revalidatePath("/sequences");
+    return { success: `${prepared.length} sequence ${prepared.length === 1 ? "entry" : "entries"} imported from pasted cells.` };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The pasted Sequence import could not be completed.") };
   }
 }
 

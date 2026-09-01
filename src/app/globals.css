@@ -211,6 +211,7 @@
   --ln-wysiwyg-relevant-action-padding-x: 0.42rem; /* 行内操作左右内边距。 */
   --ln-wysiwyg-relevant-empty-padding: 0.45rem 0.15rem; /* 空状态提示内边距。 */
   --ln-wysiwyg-relevant-primary-gap: 0.35rem; /* Primary checkbox 与文字间距。 */
+  --ln-wysiwyg-relevant-results-max-height: 18rem; /* 搜索结果区域最大高度，超出后内部滚动。 */
   --ln-wysiwyg-premise-control-min-height: 3.1rem; /* 研究方案 premise 文本框最小高度。 */
   --ln-wysiwyg-premise-control-padding-x: 0.58rem; /* premise 文本框左右内边距。 */
   --ln-wysiwyg-premise-control-padding-y: 0.42rem; /* premise 文本框上下内边距。 */
@@ -980,6 +981,19 @@ textarea {
   padding: var(--ln-wysiwyg-relevant-results-padding-y) var(--ln-wysiwyg-properties-padding-x);
 }
 
+.document-editor-relation-results {
+  max-height: var(--ln-wysiwyg-relevant-results-max-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.document-editor-relation-results > h3 {
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .document-editor-linked-items > h3,
 .document-editor-relation-results > h3 {
   align-items: center;
@@ -1053,6 +1067,14 @@ textarea {
 .document-editor-relation-result > button:disabled { color: var(--muted); opacity: 0.55; }
 .document-editor-system-lock { border-color: transparent; color: var(--muted); }
 .document-editor-relevant-empty-message { padding: var(--ln-wysiwyg-relevant-empty-padding); }
+
+.document-editor-relevant-search-hint {
+  border-bottom: 1px solid var(--hairline);
+  color: var(--muted);
+  font-size: var(--ln-wysiwyg-relevant-meta-font-size);
+  min-height: var(--ln-wysiwyg-relevant-result-row-height);
+  padding: var(--ln-wysiwyg-relevant-search-padding-y) var(--ln-wysiwyg-properties-padding-x);
+}
 
 .document-editor-primary-toggle {
   align-items: center;

@@ -64,20 +64,29 @@
   --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
-  /* Protocol 密度切片：仅控制详情与文档编辑工作区外壳，不改变 A4 正文或打印尺寸。 */
-  --ln-protocol-density-page-gap: 0.55rem; /* 页面标题、提示和文档工作区之间距离。 */
-  --ln-protocol-density-title-size: 18px; /* Protocol 工作区外层标题字号。 */
-  --ln-protocol-density-action-height: 1.875rem; /* 页头与保存区动作高度。 */
+  /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
+  --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
+  --ln-page-title-size: 18px; /* 全站工作页外层标题字号。 */
+  --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
+  --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
+  --ln-page-action-font-size: 13px; /* 页头动作字号。 */
+  --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
+  --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
+
+  /* Protocol 保留兼容别名；新页面直接使用上面的全站变量。 */
+  --ln-protocol-density-page-gap: var(--ln-page-density-gap);
+  --ln-protocol-density-title-size: var(--ln-page-title-size);
+  --ln-protocol-density-action-height: var(--ln-page-action-height);
   --ln-protocol-density-primary-height: 2.25rem; /* 主操作保留 36px 的键盘与触控目标。 */
-  --ln-protocol-density-action-font-size: 13px; /* 页头与保存区动作字号。 */
+  --ln-protocol-density-action-font-size: var(--ln-page-action-font-size);
   --ln-protocol-density-tool-font-size: 12.5px; /* 文档工具条文字字号。 */
-  --ln-protocol-density-toolbar-height: 2.25rem; /* A4 上方工具条高度。 */
+  --ln-protocol-density-toolbar-height: var(--ln-document-toolbar-height);
   --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
   --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
   --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
   --ln-protocol-density-copy-line-height: 1.6; /* Protocol 详情与编辑正文采用更舒展的阅读行距。 */
   --ln-protocol-density-heading-line-height: 1.25; /* Protocol 文档内小标题稍微放松，避免衬线字上下拥挤。 */
-  --ln-protocol-density-mobile-copy-size: 9pt; /* 手机版 Protocol 正文缩小一级，配合 1.6 行距保持清晰。 */
+  --ln-protocol-density-mobile-copy-size: var(--ln-document-mobile-copy-size);
 
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
@@ -163,9 +172,9 @@
   --ln-document-table-cell-padding-x: 0.5rem; /* 文档普通表格单元格左右内边距。 */
   --ln-document-table-cell-padding-y: 0.375rem; /* 文档普通表格单元格上下内边距，也影响行高。 */
 
-  /* 文档正文密度：控制 Protocol/Entry 文档阅读和打印的文字行距、段距、模块间距。 */
-  --ln-document-copy-line-height: 1.32; /* 文档正文默认行高。 */
-  --ln-document-heading-line-height: 1.18; /* 文档小标题默认行高。 */
+  /* 文档正文密度：控制 Protocol/Entry/Research Plan/Result/Report 文档阅读和打印的文字行距、段距、模块间距。 */
+  --ln-document-copy-line-height: 1.6; /* 全站文档正文默认行高。 */
+  --ln-document-heading-line-height: 1.25; /* 全站文档小标题默认行高。 */
   --ln-document-section-heading-gap: 0.55rem; /* 文档 section 标题与正文之间距离。 */
   --ln-document-block-gap: 0.58rem; /* 文档内容块之间距离。 */
   --ln-document-rich-flow-gap: 0.45rem; /* 富文本段落、列表、引用之间距离。 */
@@ -176,15 +185,15 @@
   --ln-document-block-drag-opacity: 0.48; /* 正在拖动的内容块透明度。 */
   --ln-document-block-drop-line-width: 2px; /* 内容块拖拽落点提示线粗细。 */
   --ln-document-block-drop-line-offset: -0.34rem; /* 内容块拖拽落点提示线与内容块的距离。 */
-  --ln-document-outline-width: 8.5rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
+  --ln-document-outline-width: 7.75rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
   --ln-document-context-width: 15rem; /* 选中表格、图片或模块后出现的右侧设置宽度。 */
-  --ln-document-workbench-gap: 0.75rem; /* 目录、A4 画布和上下文设置之间的间距。 */
+  --ln-document-workbench-gap: 0.625rem; /* 目录、A4 画布和上下文设置之间的间距。 */
 
   /* 连续所见即所得编辑器：所有界面密度和科研节点尺寸集中在这里调整。 */
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
   --ln-wysiwyg-toolbar-button-padding-x: 0.3rem; /* 纯图标和插入按钮左右内边距。 */
   --ln-wysiwyg-toolbar-select-padding-x: 0.34rem; /* 字体、字号、行距等选择器左右内边距。 */
-  --ln-wysiwyg-toolbar-font-size: 10.5px; /* 工具条选择器与文字按钮字号。 */
+  --ln-wysiwyg-toolbar-font-size: 12.5px; /* 工具条选择器与文字按钮字号。 */
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.18rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.34rem; /* 工具条整体内边距。 */
@@ -507,15 +516,40 @@ textarea {
 }
 
 .page-actions :where(a, button) {
-  height: 1.875rem;
-  min-height: 1.875rem;
+  height: var(--ln-page-action-height);
+  min-height: var(--ln-page-action-height);
   border-radius: var(--ln-radius-control-md);
   box-shadow: none;
   padding-inline: 0.6rem;
-  font-size: 12px;
+  font-size: var(--ln-page-action-font-size);
   font-weight: 500;
   letter-spacing: -0.005em;
   line-height: 1;
+}
+
+.page-header {
+  gap: var(--ln-page-density-gap);
+  min-width: 0;
+}
+
+.page-header,
+.page-header > div,
+.page-header-copy {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.page-header-title {
+  font-size: var(--ln-page-title-size) !important;
+}
+
+.page-header .page-actions {
+  align-items: center;
+}
+
+.page-header .page-actions :where(.bg-action, .bg-moss) {
+  height: var(--ln-page-primary-action-height);
+  min-height: var(--ln-page-primary-action-height);
 }
 
 .protocol-density-slice {
@@ -1277,9 +1311,9 @@ textarea {
 .document-editor-viewbar {
   align-items: center;
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   justify-content: space-between;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.4rem;
   position: sticky;
   top: 0.6rem;
   z-index: 28;
@@ -1303,7 +1337,7 @@ textarea {
   font-size: 11.5px;
   font-weight: 550;
   gap: 0.35rem;
-  height: 1.9rem;
+  height: 1.75rem;
   padding-inline: 0.58rem;
   transition: background-color 140ms ease, color 140ms ease;
 }
@@ -1344,7 +1378,7 @@ textarea {
   font-variant-numeric: tabular-nums;
   font-weight: 550;
   gap: 0.3rem;
-  height: 1.9rem;
+  height: 1.75rem;
   padding-inline: 0.52rem;
   transition: background-color 140ms ease, color 140ms ease;
 }
@@ -1520,28 +1554,8 @@ textarea {
 }
 
 @media (min-width: 1024px) {
-  .protocol-density-slice .page-actions {
+  .page-header .page-actions {
     flex-wrap: nowrap;
-  }
-
-  .protocol-density-slice .document-editor-outline {
-    border-right: 1px solid var(--hairline);
-    padding-right: 0.45rem;
-  }
-
-  .protocol-density-slice .document-editor-outline-heading {
-    padding-left: 0.35rem;
-  }
-
-  .protocol-density-slice .document-editor-outline nav button {
-    border-left: 2px solid transparent;
-    border-radius: 0 var(--ln-radius-control-sm) var(--ln-radius-control-sm) 0;
-    padding-left: 0.42rem;
-  }
-
-  .protocol-density-slice .document-editor-outline nav button[data-active="true"] {
-    background: transparent;
-    border-left-color: var(--action);
   }
 
   .document-editor-workbench {
@@ -1552,10 +1566,12 @@ textarea {
 
   .document-editor-outline {
     align-self: start;
+    border-right: 1px solid var(--hairline);
     display: block;
     grid-column: 1;
     max-height: calc(100dvh - 7rem);
     overflow-y: auto;
+    padding-right: 0.45rem;
     position: sticky;
     top: 4.2rem;
   }
@@ -1564,7 +1580,7 @@ textarea {
     align-items: center;
     display: flex;
     gap: 0.35rem;
-    padding: 0.35rem 0.5rem 0.42rem;
+    padding: 0.35rem 0.5rem 0.42rem 0.35rem;
   }
 
   .document-editor-outline-heading svg {
@@ -1578,12 +1594,13 @@ textarea {
   }
 
   .document-editor-outline nav button {
-    border-radius: var(--ln-radius-control-sm);
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--ln-radius-control-sm) var(--ln-radius-control-sm) 0;
     color: var(--muted);
     font-size: 10.5px;
     line-height: 1.3;
     min-height: 1.85rem;
-    padding: 0.34rem 0.5rem;
+    padding: 0.34rem 0.5rem 0.34rem 0.42rem;
     text-align: left;
     transition: background-color 140ms ease, color 140ms ease;
     width: 100%;
@@ -1595,7 +1612,8 @@ textarea {
   }
 
   .document-editor-outline nav button[data-active="true"] {
-    background: color-mix(in srgb, var(--action-surface) 55%, transparent);
+    background: transparent;
+    border-left-color: var(--action);
     color: var(--action);
     font-weight: 650;
   }
@@ -2952,8 +2970,8 @@ textarea {
   justify-content: flex-start;
   margin-inline: auto;
   max-width: 210mm;
-  min-height: 2.75rem;
-  padding: 0.35rem 0.5rem;
+  min-height: var(--ln-document-toolbar-height);
+  padding: 0.22rem 0.35rem;
   position: sticky;
   top: 0.75rem;
   z-index: 25;
@@ -3408,6 +3426,9 @@ table :where(td) {
   :root {
     --ln-entry-editor-paper-min-height: 0px;
     --ln-entry-editor-body-min-height: 18rem;
+    --ln-page-action-font-size: 11px;
+    --ln-page-title-size: 15px;
+    --ln-wysiwyg-toolbar-font-size: 11.5px;
   }
 
   main {
@@ -3426,8 +3447,9 @@ table :where(td) {
   }
 
   .document-canvas-toolbar {
-    overflow-x: clip;
-    overflow-y: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
   }
 
   main > .space-y-6,
@@ -3442,13 +3464,26 @@ table :where(td) {
     margin-top: 0.6rem !important;
   }
 
-  header:has(.page-actions) {
+  .page-header {
     gap: 0.45rem !important;
   }
 
-  header h1 {
-    font-size: 1.15rem !important;
-    line-height: 1.15 !important;
+  .page-header-title {
+    flex: 0 1 auto;
+    font-size: var(--ln-page-title-size) !important;
+    line-height: 1.22 !important;
+    order: 1;
+  }
+
+  .page-header-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+
+  .page-header-identifier {
+    font-size: 9px !important;
+    order: 2;
   }
 
   .page-actions {
@@ -3472,6 +3507,22 @@ table :where(td) {
     min-height: 2rem;
     padding-inline: 0.6rem;
     white-space: nowrap;
+  }
+
+  .page-header .page-actions :where(a, button) {
+    font-size: var(--ln-page-action-font-size);
+  }
+
+  .page-header .page-actions :where(.bg-action, .bg-moss) {
+    height: var(--ln-page-primary-action-height);
+    min-height: var(--ln-page-primary-action-height);
+  }
+
+  .document-copy,
+  .document-a4-paper .entry-content,
+  .document-a4-paper [contenteditable="true"],
+  .document-block :where(p, li, td, th, input, textarea, select) {
+    font-size: var(--ln-document-mobile-copy-size) !important;
   }
 
   section.rounded-\[12px\] {

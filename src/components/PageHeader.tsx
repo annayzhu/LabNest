@@ -17,7 +17,7 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("flex flex-col gap-2 md:min-h-8 md:flex-row md:items-center md:justify-between", className)}>
+    <header className={cn("page-header flex flex-col gap-2 md:min-h-8 md:flex-row md:items-center md:justify-between", className)}>
       <div className="min-w-0">
         <div className="page-header-copy flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {identifier ? <span className="page-header-identifier font-mono text-[10px] font-normal tracking-[0.025em] text-muted">{identifier}</span> : null}

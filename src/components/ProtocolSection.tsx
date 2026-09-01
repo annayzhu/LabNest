@@ -5,7 +5,7 @@ import { Badge } from "./ui/Badge";
 
 export function VariableBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-[6px] border border-hairline bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">
+    <span className="rounded-[var(--ln-radius-control-sm)] border border-hairline bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">
       {children}
     </span>
   );
@@ -13,9 +13,9 @@ export function VariableBadge({ children }: { children: ReactNode }) {
 
 export function ProtocolStepCard({ step }: { step: ProtocolStep }) {
   return (
-    <div className="rounded-[10px] border border-hairline bg-surface p-4">
+    <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4">
       <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-stone font-mono text-xs text-moss">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] bg-stone font-mono text-xs text-moss">
           {step.order}
         </span>
         <div>
@@ -33,7 +33,7 @@ export function ProtocolStepCard({ step }: { step: ProtocolStep }) {
 
 export function ProtocolRunStep({ step }: { step: ExperimentStepRecord }) {
   return (
-    <div className="rounded-[10px] border border-hairline bg-surface p-4">
+    <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4">
       <div className="flex items-start gap-3">
         {step.completed ? (
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden />
@@ -48,7 +48,7 @@ export function ProtocolRunStep({ step }: { step: ExperimentStepRecord }) {
           <h4 className="mt-2 font-semibold text-ink">{step.title}</h4>
           <p className="mt-1 text-sm leading-6 text-graphite">{step.description}</p>
           {step.deviationNote ? (
-            <p className="mt-3 rounded-[8px] border border-hairline bg-warning-surface px-3 py-2 text-sm text-graphite">
+            <p className="mt-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warning-surface px-3 py-2 text-sm text-graphite">
               {step.deviationNote}
             </p>
           ) : null}
@@ -66,7 +66,7 @@ export function ProtocolMetric({
   value: ReactNode;
 }) {
   return (
-    <div className="rounded-[10px] border border-hairline bg-warm p-3">
+    <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
       <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-ink">
         <FlaskConical className="h-4 w-4 text-moss" aria-hidden />

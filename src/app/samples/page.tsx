@@ -262,7 +262,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
           <CardBody className="grid gap-3 md:grid-cols-2">
             {sampleProfiles.flatMap((sample) =>
               sample.warnings.map((warning) => (
-                <div key={`${sample.id}-${warning.type}`} className="rounded-[10px] border border-hairline bg-warm p-3">
+                <div key={`${sample.id}-${warning.type}`} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold text-ink">{sample.name}</p>
                     <Badge tone={warningTone[warning.severity]}>{warning.severity}</Badge>
@@ -273,7 +273,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
               )),
             )}
             {countActionableSampleWarnings(sampleProfiles) === 0 ? (
-              <div className="rounded-[10px] border border-hairline bg-warm p-3">
+              <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
                 <p className="font-semibold text-ink">No action-level sample flags</p>
                 <p className="mt-2 text-sm leading-6 text-graphite">Watch-level flags remain visible in the profile table.</p>
               </div>
@@ -295,7 +295,7 @@ function SampleMetric({
   value: number;
 }) {
   return (
-    <div className="flex min-h-[94px] min-w-0 flex-col justify-between rounded-[10px] border border-hairline bg-surface p-4 shadow-paper">
+    <div className="flex min-h-[94px] min-w-0 flex-col justify-between rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper">
       <Icon className="h-4 w-4 shrink-0 text-moss" aria-hidden />
       <div>
         <p className="font-serif text-2xl font-medium leading-none text-ink">{value}</p>

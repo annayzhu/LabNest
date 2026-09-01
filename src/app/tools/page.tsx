@@ -137,7 +137,7 @@ export default function ToolsPage() {
                         className={`group focus-ring flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] ${presentation.iconClassName}`}>
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}>
                             <Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden />
                           </div>
                           <span className="font-mono text-[10px] leading-none tabular-nums text-muted">

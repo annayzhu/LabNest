@@ -28,7 +28,7 @@ function ToolbarButton({ editor, active, disabled, label, onClick, children }: {
   onClick: () => void;
   children: ReactNode;
 }) {
-  return <button type="button" className={cn(wysiwygToolbarButtonClass, active && "bg-sage-surface text-moss")} aria-label={label} title={label} aria-pressed={active || undefined} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { onClick(); editor.commands.focus(); }}>{children}</button>;
+  return <button type="button" className={cn(wysiwygToolbarButtonClass, active && "bg-action-surface/65 font-semibold text-moss")} aria-label={label} title={label} aria-pressed={active || undefined} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { onClick(); editor.commands.focus(); }}>{children}</button>;
 }
 
 function ToolbarMenu({

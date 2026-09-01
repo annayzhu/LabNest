@@ -50,7 +50,7 @@ export function SequenceRelationshipManager({
       <Card>
         <CardHeader title="Design objects and Inventory" />
         <CardBody className="space-y-4">
-          <form action={entityAction} className="grid gap-2 rounded-[8px] border border-hairline bg-warm/50 p-3 md:grid-cols-2">
+          <form action={entityAction} className="grid gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3 md:grid-cols-2">
             <input type="hidden" name="sequenceId" value={sequenceId} />
             <label>
               <span className={formLabelClass}>Entity / design object *</span>
@@ -81,7 +81,7 @@ export function SequenceRelationshipManager({
             </div>
           </form>
 
-          <div className="divide-y divide-hairline rounded-[8px] border border-hairline">
+          <div className="divide-y divide-hairline rounded-[var(--ln-radius-control-lg)] border border-hairline">
             {entityLinks.length ? entityLinks.map((link) => (
               <div key={link.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm">
                 <div>
@@ -103,7 +103,7 @@ export function SequenceRelationshipManager({
       <Card>
         <CardHeader title="Research workflow links" />
         <CardBody className="space-y-4">
-          <form action={researchAction} className="grid gap-2 rounded-[8px] border border-hairline bg-warm/50 p-3 md:grid-cols-2">
+          <form action={researchAction} className="grid gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3 md:grid-cols-2">
             <input type="hidden" name="sequenceId" value={sequenceId} />
             <label>
               <span className={formLabelClass}>Exact version *</span>
@@ -138,7 +138,7 @@ export function SequenceRelationshipManager({
             </div>
           </form>
 
-          <div className="divide-y divide-hairline rounded-[8px] border border-hairline">
+          <div className="divide-y divide-hairline rounded-[var(--ln-radius-control-lg)] border border-hairline">
             {researchLinks.length ? researchLinks.map((link) => (
               <div key={link.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm">
                 <div>
@@ -175,4 +175,4 @@ function ActionMessage({ state }: { state: SequenceManageState }) {
 }
 
 const saveButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
-const removeButtonClass = "focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-error hover:bg-error-surface disabled:opacity-55";
+const removeButtonClass = "focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-error hover:bg-error-surface disabled:opacity-55";

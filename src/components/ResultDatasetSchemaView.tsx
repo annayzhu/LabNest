@@ -30,7 +30,7 @@ export function ResultDatasetSchemaView({ datasets, showHeading = true }: {
 
   return <section className="space-y-3" aria-label="数据表结构 / Dataset schemas" data-testid="result-dataset-schemas">
     {showHeading ? <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />数据表结构 / Dataset schemas</header> : null}
-    {datasets.map((dataset) => <div key={dataset.key} className="overflow-hidden rounded-[9px] border border-hairline bg-surface" data-testid={`result-dataset-schema-${dataset.key}`}>
+    {datasets.map((dataset) => <div key={dataset.key} className="overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface" data-testid={`result-dataset-schema-${dataset.key}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-warm/60 px-3 py-2.5">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink">{dataset.label}</p>

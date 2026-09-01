@@ -39,7 +39,7 @@ export function SystemThemePicker() {
                 <TraditionalMotif motif={theme.motif as TraditionalMotifName} className="system-theme-preview-motif" />
               </span>
               <span className="min-w-0 flex-1 text-left">
-                <span className="flex items-center gap-2 text-[13px] font-semibold text-ink">
+                <span className="system-theme-option-name flex items-center gap-2 text-[13px] font-semibold text-ink">
                   {theme.name}
                   {selected ? <Check className="h-3.5 w-3.5 text-moss" aria-hidden /> : null}
                 </span>

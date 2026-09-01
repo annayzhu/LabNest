@@ -14,12 +14,15 @@ import Typography from "@tiptap/extension-typography";
 import {
   AlarmClock,
   AlertTriangle,
+  Columns3,
   FlaskConical,
   GripVertical,
   ImagePlus,
   Paperclip,
+  Rows3,
   Table2,
   Trash2,
+  X,
   Wrench,
 } from "lucide-react";
 import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
@@ -52,7 +55,7 @@ function embeddableToolUrl(value: string) {
 
 function ProtocolSectionNodeView({ node }: NodeViewProps) {
   const sectionKey = node.attrs.sectionKey as ProtocolSectionKey;
-  return <NodeViewWrapper as="section" className="ln-protocol-section" data-section-key={sectionKey}>
+  return <NodeViewWrapper as="section" id={`protocol-section-${sectionKey}`} className="ln-protocol-section" data-section-key={sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
       <h2>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
@@ -145,7 +148,92 @@ function protocolInsertActions({ openImagePicker, openFilePicker }: { openImageP
   ];
 }
 
-export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploadDraftId }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; toolbarHostId?: string; uploadDraftId: string }) {
+type InspectorTarget =
+  | { kind: "widget"; position: number; nodeSize: number; block: WidgetBlock }
+  | { kind: "table" };
+
+function findInspectorTarget(editor: Editor): InspectorTarget | null {
+  const { selection } = editor.state;
+  const selectedNode = (selection as typeof selection & { node?: { type: { name: string }; attrs: Record<string, unknown>; nodeSize: number } }).node;
+  if (selectedNode?.type.name === "protocolWidget") {
+    return { kind: "widget", position: selection.from, nodeSize: selectedNode.nodeSize, block: selectedNode.attrs.block as WidgetBlock };
+  }
+
+  for (let depth = selection.$from.depth; depth > 0; depth -= 1) {
+    const node = selection.$from.node(depth);
+    if (node.type.name === "protocolWidget") {
+      return { kind: "widget", position: selection.$from.before(depth), nodeSize: node.nodeSize, block: node.attrs.block as WidgetBlock };
+    }
+    if (node.type.name === "table") return { kind: "table" };
+  }
+  return null;
+}
+
+function ProtocolContextInspector({ editor, target, onClose }: { editor: Editor; target: InspectorTarget; onClose: () => void }) {
+  if (target.kind === "table") {
+    return <section className="document-editor-context-card" aria-label="Table settings">
+      <header><div><p>Selected block</p><h2>Table settings</h2></div><button type="button" onClick={onClose} aria-label="Close selected block settings"><X aria-hidden /></button></header>
+      <div className="document-editor-context-body">
+        <p className="document-editor-context-note">Adjust the selected table without leaving the document.</p>
+        <div className="document-editor-context-actions">
+          <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}><Rows3 aria-hidden />Add row</button>
+          <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}><Columns3 aria-hidden />Add column</button>
+          <button type="button" className="is-danger" onClick={() => editor.chain().focus().deleteTable().run()}><Trash2 aria-hidden />Delete table</button>
+        </div>
+      </div>
+    </section>;
+  }
+
+  const block = target.block;
+  const updateWidget = (nextBlock: WidgetBlock) => {
+    const node = editor.state.doc.nodeAt(target.position);
+    if (!node || node.type.name !== "protocolWidget") return;
+    editor.view.dispatch(editor.state.tr.setNodeMarkup(target.position, undefined, { ...node.attrs, block: nextBlock }));
+  };
+  const deleteWidget = () => {
+    editor.chain().focus().setNodeSelection(target.position).deleteSelection().run();
+  };
+
+  const title = block.type === "media"
+      ? block.mediaType === "image" ? "Image settings" : "File settings"
+      : block.type === "embedded_tool"
+        ? "Tool settings"
+        : block.type === "callout"
+          ? "Callout settings"
+          : block.type === "timer"
+            ? "Timer settings"
+            : block.resultTemplate ? "Result template" : "Table settings";
+
+  return <section className="document-editor-context-card" aria-label={title}>
+    <header><div><p>Selected block</p><h2>{title}</h2></div><button type="button" onClick={onClose} aria-label="Close selected block settings"><X aria-hidden /></button></header>
+    <div className="document-editor-context-body">
+      {block.type === "media" ? <>
+        <label><span>Caption</span><input value={block.caption ?? ""} onChange={(event) => updateWidget({ ...block, caption: event.target.value })} /></label>
+        <p className="document-editor-context-note">{block.filename ?? block.mediaType}</p>
+      </> : null}
+      {block.type === "timer" ? <>
+        <label><span>Timer name</span><input value={block.label} onChange={(event) => updateWidget({ ...block, label: event.target.value })} /></label>
+        <label><span>Duration · minutes</span><input type="number" min="0.1" step="0.1" value={block.durationMinutes} onChange={(event) => updateWidget({ ...block, durationMinutes: Number(event.target.value) || 0.1 })} /></label>
+        <label><span>Notes</span><textarea value={block.notes ?? ""} onChange={(event) => updateWidget({ ...block, notes: event.target.value })} /></label>
+      </> : null}
+      {block.type === "callout" ? <>
+        <label><span>Level</span><select value={block.tone} onChange={(event) => updateWidget({ ...block, tone: event.target.value as typeof block.tone })}><option value="note">Note</option><option value="warning">Warning</option><option value="critical">Critical</option></select></label>
+        <label><span>Message</span><textarea value={block.text} onChange={(event) => updateWidget({ ...block, text: event.target.value })} /></label>
+      </> : null}
+      {block.type === "embedded_tool" ? <>
+        <label><span>Tool name</span><input value={block.label} onChange={(event) => updateWidget({ ...block, label: event.target.value })} /></label>
+        <label><span>Location</span><input value={block.url} onChange={(event) => updateWidget({ ...block, url: event.target.value })} /></label>
+      </> : null}
+      {block.type === "table" ? <>
+        <label><span>Caption</span><input value={block.caption ?? ""} onChange={(event) => updateWidget({ ...block, caption: event.target.value })} /></label>
+        <p className="document-editor-context-note">{block.rows.length} rows · {Math.max(0, ...block.rows.map((row) => row.length))} columns</p>
+      </> : null}
+      <button type="button" className="document-editor-context-delete" onClick={deleteWidget}><Trash2 aria-hidden />Remove block</button>
+    </div>
+  </section>;
+}
+
+export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspectorHostId, uploadDraftId }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; toolbarHostId?: string; inspectorHostId?: string; uploadDraftId: string }) {
   const [initialContent] = useState(() => protocolDocumentToTiptap(document)); // The form owns one document for the lifetime of this editor.
   const onChangeRef = useRef(onChange);
   const importWarningsRef = useRef(document.importWarnings);
@@ -154,6 +242,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
   const fileInputId = `${inputPrefix}-protocol-files`;
   const [uploadStatus, setUploadStatus] = useState("");
   const [draggingFiles, setDraggingFiles] = useState(false);
+  const [inspectorTarget, setInspectorTarget] = useState<InspectorTarget | null>(null);
   const openImagePicker = useCallback(() => globalThis.document.getElementById(imageInputId)?.click(), [imageInputId]);
   const openFilePicker = useCallback(() => globalThis.document.getElementById(fileInputId)?.click(), [fileInputId]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -191,6 +280,17 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
   const releaseToolbarEditor = useCallback((target: Editor) => setToolbarEditor((current) => current === target ? editor : current), [editor]);
   const toolbarTarget = useMemo(() => ({ activate: activateToolbarEditor, release: releaseToolbarEditor }), [activateToolbarEditor, releaseToolbarEditor]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const syncInspector = () => setInspectorTarget(findInspectorTarget(editor));
+    editor.on("selectionUpdate", syncInspector);
+    editor.on("transaction", syncInspector);
+    return () => {
+      editor.off("selectionUpdate", syncInspector);
+      editor.off("transaction", syncInspector);
+    };
+  }, [editor]);
+
   const addFiles = useCallback(async (files: File[]) => {
     if (!editor || !files.length) return;
     setUploadStatus(`Uploading ${files.length} file${files.length === 1 ? "" : "s"}…`);
@@ -227,7 +327,9 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
   const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? [] : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
   const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
-  return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><section className={cn("ln-wysiwyg-editor", draggingFiles && "is-dragging-files")} data-print-hidden={undefined}>
+  const inspectorHost = inspectorHostId ? globalThis.document?.getElementById(inspectorHostId) : null;
+  return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><>
+    <section className={cn("ln-wysiwyg-editor", draggingFiles && "is-dragging-files")} data-print-hidden={undefined}>
     {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
     <input id={imageInputId} type="file" accept="image/*" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
     <input id={fileInputId} type="file" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
@@ -240,5 +342,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
       onDrop={(event) => { if (!event.dataTransfer.files.length) return; event.preventDefault(); event.stopPropagation(); setDraggingFiles(false); void addFiles(Array.from(event.dataTransfer.files)); }}
       onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}
     ><EditorContent editor={editor} />{draggingFiles ? <div className="ln-protocol-drop-overlay"><Paperclip aria-hidden />Drop images or files into the Protocol</div> : null}</div>
-  </section></DocumentToolbarTargetContext.Provider>;
+    </section>
+    {inspectorHost && inspectorTarget ? createPortal(<ProtocolContextInspector editor={editor} target={inspectorTarget} onClose={() => editor.chain().focus().setTextSelection(editor.state.doc.content.size).run()} />, inspectorHost) : null}
+  </></DocumentToolbarTargetContext.Provider>;
 }

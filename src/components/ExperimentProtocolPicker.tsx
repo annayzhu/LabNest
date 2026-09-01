@@ -157,7 +157,7 @@ export function ExperimentProtocolPicker({
         {selectedIds.length ? <ol className="mt-2 space-y-2">
           {selectedIds.map((id, index) => {
             const version = versionMap.get(id)!;
-            return <li key={id} className="grid gap-3 rounded-[9px] border border-hairline bg-warm/70 px-3 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:items-center">
+            return <li key={id} className="grid gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/70 px-3 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:items-center">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm">{index + 1}</span>
               <span className="min-w-0">
                 <ProtocolIdentity title={version.protocol.title} code={version.protocol.humanCode} />
@@ -170,12 +170,12 @@ export function ExperimentProtocolPicker({
               </span>
             </li>;
           })}
-        </ol> : <p className="mt-2 rounded-[8px] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No ProtocolVersion selected. Add versions below in the order you will perform them; their Steps will become the on-bench checklist.</p>}
+        </ol> : <p className="mt-2 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No ProtocolVersion selected. Add versions below in the order you will perform them; their Steps will become the on-bench checklist.</p>}
       </div>
 
       <div>
         <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Protocol title, version or code…" className={`${formInputClass} pl-9`} /></span></label>
-        <div className="mt-2 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[9px] border border-hairline bg-surface">
+        <div className="mt-2 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface">
           {protocolGroups.length ? protocolGroups.map((group) => {
             const expanded = group.searchMode || expandedProtocolIds.has(group.protocolId);
             const visibleHistory = expanded ? group.history : [];
@@ -185,7 +185,7 @@ export function ExperimentProtocolPicker({
                 <span className="mt-1 block text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">最新版本 v{group.latest.displayVersion} 已选择；如确实需要，可展开历史版本。</span>
               </div>}
               {group.history.length ? <div className="border-t border-hairline bg-warm/45 px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-1.5">
-                {group.searchMode ? <span className="text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-medium text-muted">匹配到 {group.history.length + (group.primary ? 1 : 0)} 个版本</span> : <button type="button" onClick={() => toggleHistory(group.protocolId)} className="focus-ring inline-flex items-center gap-1 rounded-[6px] px-1.5 py-1 text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-semibold text-moss hover:bg-sage-surface">{expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}{expanded ? "收起历史版本" : `显示历史版本（${group.history.length}）`}</button>}
+                {group.searchMode ? <span className="text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-medium text-muted">匹配到 {group.history.length + (group.primary ? 1 : 0)} 个版本</span> : <button type="button" onClick={() => toggleHistory(group.protocolId)} className="focus-ring inline-flex items-center gap-1 rounded-[var(--ln-radius-control-sm)] px-1.5 py-1 text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-semibold text-moss hover:bg-sage-surface">{expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}{expanded ? "收起历史版本" : `显示历史版本（${group.history.length}）`}</button>}
               </div> : null}
               {visibleHistory.length ? <div className="divide-y divide-hairline border-t border-hairline bg-stone/25 pl-[var(--ln-experiment-protocol-picker-history-padding-left)]">
                 {visibleHistory.map((version) => <ProtocolVersionAddButton key={version.id} version={version} latestId={group.latest.id} onAdd={add} />)}
@@ -194,7 +194,7 @@ export function ExperimentProtocolPicker({
           }) : <p className="px-3 py-6 text-center text-sm text-muted">{versions.length === selectedIds.length ? "All ProtocolVersions are selected." : "No matching ProtocolVersion."}</p>}
         </div>
       </div>
-      <p className="rounded-[8px] border border-hairline bg-sage-surface/55 px-3 py-2 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">What happens after Save:</strong> the selected versions are frozen in this order, each version becomes one execution block, and its Steps become individually and whole-block checkable items in On-bench Run.</p>
+      <p className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-sage-surface/55 px-3 py-2 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">What happens after Save:</strong> the selected versions are frozen in this order, each version becomes one execution block, and its Steps become individually and whole-block checkable items in On-bench Run.</p>
     </div>
   );
 }

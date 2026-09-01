@@ -48,7 +48,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
 
   return (
     <AppShell><div className="space-y-5">
-      <PageHeader title={project.name} actions={<><Link href={`/projects/${project.id}/edit`} className="focus-ring inline-flex h-10 items-center rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-moss hover:bg-warm">Edit Project</Link><RecordLifecycleControl id={project.id} identifier={project.name} title="Project record" recordLabel="Project" recordLabelZh="项目" blockers={deletionBlockers} archived={project.status === "archived"} deleteAction={deleteProject} archiveAction={archiveProject} editHref={`/projects/${project.id}/edit`} /></>} />
+      <PageHeader title={project.name} actions={<><Link href={`/projects/${project.id}/edit`} className="focus-ring inline-flex h-10 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-moss hover:bg-warm">Edit Project</Link><RecordLifecycleControl id={project.id} identifier={project.name} title="Project record" recordLabel="Project" recordLabelZh="项目" blockers={deletionBlockers} archived={project.status === "archived"} deleteAction={deleteProject} archiveAction={archiveProject} editHref={`/projects/${project.id}/edit`} /></>} />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="order-2 min-w-0 space-y-5 xl:order-1">
           <Card><CardHeader title="Research Plans" action={<div className="flex flex-wrap items-center justify-end gap-2">

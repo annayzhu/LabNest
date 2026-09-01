@@ -79,7 +79,7 @@ export function InventoryLocationManager({ locations }: { locations: InventoryLo
         <CardBody className="space-y-3">
           {locations.length ? locations.map((location) => (
             <InventoryLocationEditor key={location.id} location={location} locations={activeLocations} />
-          )) : <p className="rounded-[8px] border border-dashed border-hairline px-4 py-8 text-center text-sm text-muted">No inventory locations have been created.</p>}
+          )) : <p className="rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-4 py-8 text-center text-sm text-muted">No inventory locations have been created.</p>}
         </CardBody>
       </Card>
     </div>
@@ -99,7 +99,7 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
   const pending = updating || archiving || restoring || deleting;
 
   return (
-    <section className="rounded-[10px] border border-hairline bg-warm/35 p-4">
+    <section className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/35 p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -128,7 +128,7 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
         </div>
       </div>
 
-      {blockers.length ? <p className="mt-3 rounded-[7px] border border-warning/25 bg-warning-surface px-3 py-2 text-xs leading-5 text-graphite">Permanent deletion is blocked by {blockers.join(", ")}. Archive the location to remove it from new selections while preserving history.</p> : null}
+      {blockers.length ? <p className="mt-3 rounded-[var(--ln-radius-control-md)] border border-warning/25 bg-warning-surface px-3 py-2 text-xs leading-5 text-graphite">Permanent deletion is blocked by {blockers.join(", ")}. Archive the location to remove it from new selections while preserving history.</p> : null}
       <ActionMessage state={archiveState.error || archiveState.success ? archiveState : restoreState} />
 
       {editing ? (
@@ -146,8 +146,8 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
 
       {deleteOpen ? (
         <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteOpen(false); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="w-full max-w-lg rounded-[12px] border border-hairline bg-surface p-5 shadow-soft">
-            <div className="flex items-start justify-between gap-4"><div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">Irreversible</p><h2 id={`delete-location-${location.id}`} className="mt-1 font-serif text-xl font-medium text-ink">Delete unused location forever?</h2></div><button type="button" aria-label="Close" disabled={deleting} onClick={() => setDeleteOpen(false)} className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone"><X className="h-4 w-4" /></button></div>
+          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
+            <div className="flex items-start justify-between gap-4"><div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">Irreversible</p><h2 id={`delete-location-${location.id}`} className="mt-1 font-serif text-xl font-medium text-ink">Delete unused location forever?</h2></div><button type="button" aria-label="Close" disabled={deleting} onClick={() => setDeleteOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone"><X className="h-4 w-4" /></button></div>
             <p className="mt-4 text-sm leading-6 text-graphite">This location has no inventory or historical references. Enter <strong className="font-mono text-error">{location.name}</strong> to confirm permanent deletion.</p>
             <form action={deleteAction} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={location.id} />
@@ -172,5 +172,5 @@ function ParentLocationField({ locations, defaultValue }: { locations: Inventory
 
 function ActionMessage({ state, className = "" }: { state: InventoryLocationActionState; className?: string }) {
   if (!state.error && !state.success) return null;
-  return <p role={state.error ? "alert" : "status"} className={`${className} rounded-[7px] border px-3 py-2 text-sm ${state.error ? "border-error/30 bg-error-surface text-error" : "border-success/25 bg-success-surface text-success"}`}>{state.error ?? state.success}</p>;
+  return <p role={state.error ? "alert" : "status"} className={`${className} rounded-[var(--ln-radius-control-md)] border px-3 py-2 text-sm ${state.error ? "border-error/30 bg-error-surface text-error" : "border-success/25 bg-success-surface text-success"}`}>{state.error ?? state.success}</p>;
 }

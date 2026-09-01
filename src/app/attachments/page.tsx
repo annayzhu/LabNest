@@ -96,7 +96,7 @@ export default async function AttachmentsPage() {
                   render: (row) => (
                     <div className="flex items-center gap-1"><a
                       href={`/api/attachments/${row.id}`}
-                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-hairline bg-surface text-moss transition hover:bg-sage-surface"
+                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface text-moss transition hover:bg-sage-surface"
                       title={`Download ${row.originalFilename}`}
                     >
                       <Download className="h-4 w-4" aria-hidden />

@@ -152,7 +152,11 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => {
-    setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+    });
+    return () => { active = false; };
   }, [toolbarHostId]);
 
   const editor = useEditor({

@@ -58,19 +58,19 @@ export function SequenceCollectionBatchActions({
   }, [selectionGroup, refreshSelection]);
 
   return (
-    <section className="space-y-2 rounded-[10px] border border-hairline bg-surface p-3">
+    <section className="space-y-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-sm font-semibold text-ink">{targetName} batch edit</h2>
         <span className="rounded-full bg-sage-surface px-2.5 py-0.5 text-xs text-moss">已选 {selectedIds.length}</span>
         {pending ? <span className="text-xs text-muted">处理中…</span> : null}
       </div>
       {state.error ? (
-        <div className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">
+        <div className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">
           <p className="flex items-start gap-1"><AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{state.error}</p>
         </div>
       ) : null}
       {state.success ? (
-        <div className="rounded-[8px] border border-sage/30 bg-sage-surface px-3 py-2 text-sm text-moss">
+        <div className="rounded-[var(--ln-radius-control-lg)] border border-sage/30 bg-sage-surface px-3 py-2 text-sm text-moss">
           <p>{state.success}</p>
         </div>
       ) : null}
@@ -85,7 +85,7 @@ export function SequenceCollectionBatchActions({
       >
         <input type="hidden" name="intent" value="delete" />
         {selectedIds.map((id) => <input key={`delete-${id}`} type="hidden" name="ids" value={id} />)}
-        <button type="submit" disabled={pending || !hasSelection} className={cn("focus-ring inline-flex h-8 items-center justify-center gap-1.5 rounded-[7px] border border-error bg-error px-3 text-xs font-medium text-white disabled:opacity-60", isSidebar && "w-full")}>
+        <button type="submit" disabled={pending || !hasSelection} className={cn("focus-ring inline-flex h-8 items-center justify-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-error bg-error px-3 text-xs font-medium text-white disabled:opacity-60", isSidebar && "w-full")}>
           <Trash2 className="h-3.5 w-3.5" aria-hidden />
           批量删除
         </button>

@@ -77,6 +77,7 @@ export function ProtocolDocumentEditor({
   const docxExportHref = mode === "edit" && protocol.id && version.id
     ? `/api/protocols/${protocol.id}/versions/${version.id}/docx`
     : undefined;
+  const inspectorHostId = "protocol-document-context-inspector";
 
   const togglePlan = (planId: string, checked: boolean) => {
     setSelectedPlanIds((current) => checked ? [...new Set([...current, planId])] : current.filter((id) => id !== planId));
@@ -96,7 +97,9 @@ export function ProtocolDocumentEditor({
       {mode === "edit" ? <><input type="hidden" name="protocolScope" value={protocol.scope} /><input type="hidden" name="projectId" value={protocol.projectId ?? ""} /></> : null}
 
       <DocumentEditorWorkspace
-        document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[6px] border border-hairline bg-surface px-2 text-[11px] font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}>
+        outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
+        inspectorHostId={inspectorHostId}
+        document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-[11px] font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}>
           <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" titleEditor={<input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Protocol" aria-label="Protocol title" />} facts={[
             { label: "Version", value: displayVersion, mono: true },
             { label: "Scope", value: scope === "general" ? "General library" : "Project-adapted" },
@@ -104,7 +107,7 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          <ProtocolWysiwygEditor document={initialDocument} onChange={setDocument} toolbarHostId="protocol-document-toolbar" uploadDraftId={uploadDraftId} />
+          <ProtocolWysiwygEditor document={initialDocument} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card" aria-label="Protocol metadata">
           <header><p>Identity and governance</p><h2>Protocol record</h2></header>
@@ -135,7 +138,7 @@ export function ProtocolDocumentEditor({
         />}
       />
 
-      {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+      {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       <div className="sticky bottom-4 z-20 flex justify-end"><Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
     </form>
   );

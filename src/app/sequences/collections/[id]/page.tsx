@@ -12,7 +12,7 @@ import { gcPercent, sequenceLength } from "@/lib/sequence";
 
 export const dynamic = "force-dynamic";
 
-const actionClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
+const actionClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
 
 export default async function SequenceCollectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -9,7 +9,7 @@ export function ResearchPlanSortControl({ path, value }: { path: string; value?:
     <Form action={path} className="flex items-center gap-2">
       <label>
         <span className="sr-only">Sort Research Plans</span>
-        <select name="planSort" defaultValue={sort} className="focus-ring h-9 max-w-52 rounded-[7px] border border-hairline bg-surface px-2 text-[13px] text-graphite">
+        <select name="planSort" defaultValue={sort} className="focus-ring h-9 max-w-52 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-[13px] text-graphite">
           {researchPlanSortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </label>

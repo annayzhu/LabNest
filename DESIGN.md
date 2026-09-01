@@ -62,11 +62,11 @@ typography:
     fontWeight: 500
     lineHeight: 1.4
 rounded:
-  control-sm: "6px"
-  control-md: "7px"
-  control-lg: "8px"
-  panel-inner: "8px"
-  panel: "12px"
+  control-sm: "4px"
+  control-md: "5px"
+  control-lg: "6px"
+  panel-inner: "6px"
+  panel: "8px"
   pill: "9999px"
 spacing:
   xs: "4px"
@@ -149,8 +149,10 @@ Traditional motifs are a small identity layer, not a replacement for functional 
 
 ## Typography
 
-**Display Font:** Source Serif 4 with editorial serif fallbacks
-**Body Font:** Source Sans 3 with neutral sans-serif fallbacks
+Typography is user-configurable by role from Settings. Interface text, document body copy, and headings remain separate roles so a researcher can lighten Chinese body text without weakening navigation or data scanning. The defaults are Source Han Sans SC at its Normal 350 weight for interface text and Source Han Serif SC for document body and headings, with system-safe Chinese fallbacks. Imported WOFF2, TTF, and OTF fonts remain browser-local; the fixed monospace data role is never changed by typography preferences.
+
+**Display Font:** The selected heading role, defaulting to Source Han Serif SC with Chinese serif fallbacks
+**Body Font:** The selected interface role for product UI and the selected document-body role for A4 reading, defaulting to Source Han Sans SC and Source Han Serif SC respectively
 **Label/Mono Font:** IBM Plex Mono with technical monospace fallbacks
 
 **Character:** Serif type marks page and tool identity; sans-serif carries interaction and explanation; monospace is reserved for values, units, method versions, timestamps, and other exact data.
@@ -168,13 +170,15 @@ Traditional motifs are a small identity layer, not a replacement for functional 
 
 **The Data Is Data Rule.** Do not use monospace decoratively; use it only where fixed-width scanning improves scientific interpretation or provenance.
 
+**The Active Label Rule.** Selected navigation items, document tabs, filters, and palette choices emphasize the label in the current theme action color, with only a low-dose tint or a thin underline behind it. Do not rely on a large rounded color block as the primary selected-state signal.
+
 ## Layout
 
 The application shell constrains content to a wide working canvas with 16–20px page padding. Calculator uses a 16px panel gap and collapses naturally to a single column: field pairs begin stacking on small screens, catalog shortcuts split at large screens, and the input/result workbench becomes asymmetric only at extra-wide widths. Primary submit actions become full-width on mobile.
 
 Cards own local grouping. Within a card, use a compact header separated by a hairline and a 16px body inset; use 12px gaps inside forms and 16px between major task regions. Preserve `min-width: 0`, truncation, wrapping, and scroll containers for bilingual labels, long methods, tables, and data values.
 
-Document creation and editing opens in focus mode: the paper canvas receives the full working width, while record properties stay hidden behind a compact Settings control. Each document family remembers whether its property panel was opened; mobile keeps the same content-first order rather than forcing a permanent side column.
+Document creation and editing keeps the A4 paper at its true screen measure instead of stretching it to fill the application. On desktop, the otherwise-unused left margin carries a lightweight sticky outline; selecting a table, image, timer, callout, result template, or embedded tool reveals a contextual settings rail in the right margin. Metadata and relevant items remain explicit tabs rather than permanent sidebars. The screen view offers 100%, 110%, and fit-width modes, defaults to 100%, and resets to true size for printing. Both side rails are absent from print and hidden below desktop width so mobile preserves a single content-first reading order.
 
 **The Task-Order Rule.** Responsive collapse must preserve input → validation → result → method → reuse/history order; do not rearrange for visual symmetry.
 
@@ -186,13 +190,13 @@ Calculator is flat by default. Hierarchy comes from white surfaces, hairline bor
 
 ## Shapes
 
-The shape language is gently technical: 12px outer panels, 8px inputs and primary controls, 6–7px compact actions, and occasional 9–10px feature wells. Full pills are limited to tags, presets, and small categorical states. Borders are one-pixel hairlines; dashed borders indicate upload or empty drop zones.
+The shape language is gently technical: 8px outer panels, 6px inputs and primary controls, and 4–5px compact actions. Full pills are limited to tags, presets, and small categorical states. Borders are one-pixel hairlines; dashed borders indicate upload or empty drop zones.
 
 ## Components
 
 ### Buttons
 
-- **Primary:** Filled primary color, high-contrast label, 36–40px height, and 8px corners. Use for Calculate, Confirm, Detect, or Send.
+- **Primary:** Filled primary color, high-contrast label, 36–40px height, and 6px corners. Use for Calculate, Confirm, Detect, or Send.
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
 
@@ -211,7 +215,7 @@ The shape language is gently technical: 12px outer panels, 8px inputs and primar
 
 ### Inputs / Fields
 
-- **Style:** 40px controls, 8px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
+- **Style:** 40px controls, 6px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
 - **Focus:** Border changes to the primary color; standalone controls also use the shared focus outline and halo.
 - **Error / Disabled:** Errors use the semantic error pair and `role="alert"`; disabled actions remain visible with reduced opacity.
 

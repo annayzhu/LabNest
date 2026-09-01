@@ -15,7 +15,7 @@ import { recordInventoryTransaction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-const actionLinkClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
+const actionLinkClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
 
 export default async function InventoryItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -163,7 +163,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
 function Metric({ label, value, detail }: { label: string; value: React.ReactNode; detail: string }) {
   return (
-    <div className="rounded-[12px] border border-hairline bg-surface p-4 shadow-paper">
+    <div className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4 shadow-paper">
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
       <div className="mt-2 min-h-7 font-serif text-xl font-medium text-ink">{value}</div>
       <p className="mt-1 text-xs text-muted">{detail}</p>

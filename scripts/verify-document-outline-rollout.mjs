@@ -130,19 +130,87 @@ async function assertExperimentModeOutlineSync(page) {
   assert.equal(await page.locator('#scientific-section-background').count(), 0, "Protocol planning mode should remove the hidden Background section from the editor.");
 }
 
+async function assertProtocolWorkspaceTabs(page, route) {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+
+  await page.getByRole("tab", { name: "Metadata" }).click();
+  const metadataPanel = page.locator("#document-editor-panel-metadata");
+  const metadataCard = metadataPanel.locator(".protocol-metadata-card");
+  await metadataCard.waitFor();
+  assert.equal(await metadataCard.locator(".protocol-metadata-group").count(), 3, "Protocol metadata should be grouped into Identity, Governance, and Revision.");
+  assert.equal(await metadataCard.locator("header > p").count(), 0, "Protocol metadata should not render a redundant eyebrow.");
+  assert.equal(await page.locator(".protocol-density-primary-action").textContent(), "Save metadata", "Metadata should expose a contextual save action.");
+  const metadataGeometry = await page.evaluate(() => {
+    const panel = document.querySelector("#document-editor-panel-metadata");
+    const bar = document.querySelector('.protocol-density-actionbar[data-active-tab="metadata"]');
+    const identifier = document.querySelector(".protocol-density-slice .page-header-identifier");
+    if (!panel || !bar || !identifier) return null;
+    const panelRect = panel.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    return {
+      panelLeft: panelRect.left,
+      panelWidth: panelRect.width,
+      barLeft: barRect.left,
+      barWidth: barRect.width,
+      identifierFamily: getComputedStyle(identifier).fontFamily,
+    };
+  });
+  assert(metadataGeometry, "Protocol metadata geometry is unavailable.");
+  assert(Math.abs(metadataGeometry.panelLeft - metadataGeometry.barLeft) <= 2, "Metadata save bar should align with the metadata panel.");
+  assert(Math.abs(metadataGeometry.panelWidth - metadataGeometry.barWidth) <= 2, "Metadata save bar should match the metadata panel width.");
+  assert(!metadataGeometry.identifierFamily.toLowerCase().includes("mono"), "Protocol identifier should use the UI font, not a monospace face.");
+  await page.screenshot({ path: ".impeccable/review/protocol-metadata-desktop.png", fullPage: true });
+
+  await page.getByRole("tab", { name: "Links" }).click();
+  const linksPanel = page.locator("#document-editor-panel-relations");
+  await linksPanel.waitFor();
+  assert.equal(await page.locator(".protocol-density-primary-action").textContent(), "Save links", "Links should expose a contextual save action.");
+  const linkOrder = await linksPanel.evaluate((panel) => {
+    const search = panel.querySelector(".document-editor-relevant-search");
+    const selected = panel.querySelector(".document-editor-linked-items");
+    const system = panel.querySelector(".document-editor-relevant-groups");
+    return { search: search?.getBoundingClientRect().top ?? 0, selected: selected?.getBoundingClientRect().top ?? 0, system: system?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY };
+  });
+  assert(linkOrder.search < linkOrder.selected, "Related-record search should appear before selected links.");
+  assert(linkOrder.selected < linkOrder.system, "Selected links should appear before system provenance.");
+  const emptySystemGroups = await linksPanel.locator(".document-editor-relevant-group").evaluateAll((groups) => groups.filter((group) => group.querySelectorAll(".document-editor-relevant-row").length === 0).length);
+  assert.equal(emptySystemGroups, 0, "Empty system provenance groups should stay hidden.");
+  await page.screenshot({ path: ".impeccable/review/protocol-links-desktop.png", fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("tab", { name: "Metadata" }).click();
+  const columnCount = await page.locator(".protocol-metadata-grid").first().evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(" ").length);
+  assert.equal(columnCount, 1, "Protocol metadata should use one column on mobile.");
+  await page.getByRole("tab", { name: "Links" }).click();
+  const searchLayout = await linksPanel.locator(".document-editor-relevant-search").evaluate((search) => {
+    const input = search.querySelector("label")?.getBoundingClientRect();
+    const select = search.querySelector("select")?.getBoundingClientRect();
+    return { inputTop: input?.top ?? 0, selectTop: select?.top ?? 0 };
+  });
+  assert(searchLayout.selectTop > searchLayout.inputTop, "Related-record type filter should stack below search on mobile.");
+  const dimensions = await page.evaluate(() => ({ clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth }));
+  assert(dimensions.scrollWidth <= dimensions.clientWidth + 1, "Protocol workspace tabs should not create mobile horizontal overflow.");
+}
+
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
   const verifiedRoutes = [];
+  let protocolRoute = null;
   for (const area of documentAreas) {
     const route = await findEditorRoute(page, area);
     if (!route) continue;
     await assertDesktopOutline(page, route);
     await assertResponsiveAndPrintOutline(page, route);
     verifiedRoutes.push(route);
+    if (area === "protocols") protocolRoute = route;
     console.log(`Verified ${route}`);
   }
   await assertExperimentModeOutlineSync(page);
+  assert(protocolRoute, "No Protocol editor route was verified.");
+  await assertProtocolWorkspaceTabs(page, protocolRoute);
   assert(verifiedRoutes.length >= 5, `Expected at least five document editor routes, found ${verifiedRoutes.length}.`);
   console.log(`Document outline rollout passed: ${verifiedRoutes.join(", ")}`);
 } finally {

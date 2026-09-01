@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { DocumentOutlinePanel } from "@/components/DocumentOutlinePanel";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
 
-type WorkspaceTab = "document" | "metadata" | "relations";
+export type DocumentEditorWorkspaceTab = "document" | "metadata" | "relations";
 type ZoomMode = "100" | "110" | "fit";
 
 const A4_WIDTH_CSS_PX = (210 / 25.4) * 96;
@@ -17,6 +17,7 @@ export function DocumentEditorWorkspace({
   relations,
   outline = [],
   inspectorHostId,
+  onActiveTabChange,
   className,
 }: {
   document: ReactNode;
@@ -24,17 +25,23 @@ export function DocumentEditorWorkspace({
   relations: ReactNode;
   outline?: DocumentOutlineItem[];
   inspectorHostId?: string;
+  onActiveTabChange?: (tab: DocumentEditorWorkspaceTab) => void;
   className?: string;
 }) {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("document");
+  const [activeTab, setActiveTab] = useState<DocumentEditorWorkspaceTab>("document");
   const [zoomMode, setZoomMode] = useState<ZoomMode>("100");
   const [fitScale, setFitScale] = useState(1);
   const documentPanelRef = useRef<HTMLElement>(null);
-  const tabs: Array<{ id: WorkspaceTab; label: string; icon: typeof FileText }> = [
+  const tabs: Array<{ id: DocumentEditorWorkspaceTab; label: string; icon: typeof FileText }> = [
     { id: "document", label: "Document", icon: FileText },
     { id: "metadata", label: "Metadata", icon: SlidersHorizontal },
-    { id: "relations", label: "Relevant items", icon: Link2 },
+    { id: "relations", label: "Links", icon: Link2 },
   ];
+
+  function selectTab(tab: DocumentEditorWorkspaceTab) {
+    setActiveTab(tab);
+    onActiveTabChange?.(tab);
+  }
 
   const updateFitScale = useCallback(() => {
     const panelWidth = documentPanelRef.current?.clientWidth ?? 0;
@@ -62,7 +69,7 @@ export function DocumentEditorWorkspace({
       : event.key === "End" ? tabs.length - 1
         : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
     const nextTab = tabs[nextIndex];
-    setActiveTab(nextTab.id);
+    selectTab(nextTab.id);
     globalThis.document.getElementById(`document-editor-tab-${nextTab.id}`)?.focus();
   }
 
@@ -71,7 +78,7 @@ export function DocumentEditorWorkspace({
       <nav className="document-editor-tabs" aria-label="Protocol editor areas" role="tablist">
         {tabs.map((tab, index) => {
           const Icon = tab.icon;
-          return <button key={tab.id} id={`document-editor-tab-${tab.id}`} type="button" className="focus-ring document-editor-tab" data-active={activeTab === tab.id ? "true" : undefined} aria-controls={`document-editor-panel-${tab.id}`} aria-selected={activeTab === tab.id} tabIndex={activeTab === tab.id ? 0 : -1} role="tab" onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><Icon aria-hidden /><span>{tab.label}</span></button>;
+          return <button key={tab.id} id={`document-editor-tab-${tab.id}`} type="button" className="focus-ring document-editor-tab" data-active={activeTab === tab.id ? "true" : undefined} aria-controls={`document-editor-panel-${tab.id}`} aria-selected={activeTab === tab.id} tabIndex={activeTab === tab.id ? 0 : -1} role="tab" onClick={() => selectTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><Icon aria-hidden /><span>{tab.label}</span></button>;
         })}
       </nav>
       {activeTab === "document" ? <div className="document-editor-zoom" role="group" aria-label="Document view zoom">

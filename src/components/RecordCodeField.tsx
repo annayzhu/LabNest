@@ -25,7 +25,7 @@ export function RecordCodeField({
     return (
       <div>
         <span className={formLabelClass}>{label}</span>
-        <div className={`${formInputClass} flex items-center bg-stone/50 font-mono text-xs`}>
+        <div className={`${formInputClass} flex items-center bg-stone/50 text-xs font-medium tabular-nums tracking-[0.01em]`}>
           {existingCode}
         </div>
       </div>
@@ -37,7 +37,7 @@ export function RecordCodeField({
     <div>
       <label htmlFor={inputId} className={formLabelClass}>{label}</label>
       <div className="mt-2 flex h-11 w-full overflow-hidden rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm text-sm text-ink focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/15">
-        <span className="flex shrink-0 items-center border-r border-hairline bg-stone/50 px-3 font-mono font-semibold text-graphite">
+        <span className="flex shrink-0 items-center border-r border-hairline bg-stone/50 px-3 font-medium tabular-nums text-graphite">
           {prefix}
         </span>
         <input
@@ -54,7 +54,7 @@ export function RecordCodeField({
           defaultValue={value === undefined ? defaultValue : undefined}
           onChange={(event) => onValueChange?.(event.target.value)}
           aria-label={`${label} suffix after ${prefix}`}
-          className="min-w-0 flex-1 bg-transparent px-3 font-mono outline-none placeholder:text-muted/70"
+          className="min-w-0 flex-1 bg-transparent px-3 font-medium tabular-nums outline-none placeholder:text-muted/70"
         />
       </div>
     </div>

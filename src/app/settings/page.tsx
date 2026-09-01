@@ -65,7 +65,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="字体与排版" />
+          <CardHeader title="Typography / 字体排版" />
           <CardBody><TypographySettingsPanel /></CardBody>
         </Card>
 

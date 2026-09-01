@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, Link2, ListTree, Maximize2, SlidersHorizontal } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 type WorkspaceTab = "document" | "metadata" | "relations";
@@ -38,8 +38,7 @@ export function DocumentEditorWorkspace({
   const updateFitScale = useCallback(() => {
     const panelWidth = documentPanelRef.current?.clientWidth ?? 0;
     if (!panelWidth) return;
-    const reservedInspectorSpace = window.matchMedia("(min-width: 1280px)").matches ? 252 : 0;
-    const availableWidth = Math.max(320, panelWidth - reservedInspectorSpace);
+    const availableWidth = Math.max(320, panelWidth);
     setFitScale(Math.min(1.2, Math.max(0.72, availableWidth / A4_WIDTH_CSS_PX)));
   }, []);
 
@@ -76,17 +75,28 @@ export function DocumentEditorWorkspace({
     globalThis.document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const nextIndex = event.key === "Home" ? 0
+      : event.key === "End" ? tabs.length - 1
+        : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    const nextTab = tabs[nextIndex];
+    setActiveTab(nextTab.id);
+    globalThis.document.getElementById(`document-editor-tab-${nextTab.id}`)?.focus();
+  }
+
   return <div className={cn("document-editor-workspace", className)} data-active-tab={activeTab} data-zoom-mode={zoomMode}>
     <div className="document-editor-viewbar" data-print-hidden>
       <nav className="document-editor-tabs" aria-label="Protocol editor areas" role="tablist">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
-          return <button key={tab.id} type="button" className="document-editor-tab" data-active={activeTab === tab.id ? "true" : undefined} aria-selected={activeTab === tab.id} role="tab" onClick={() => setActiveTab(tab.id)}><Icon aria-hidden /><span>{tab.label}</span></button>;
+          return <button key={tab.id} id={`document-editor-tab-${tab.id}`} type="button" className="focus-ring document-editor-tab" data-active={activeTab === tab.id ? "true" : undefined} aria-controls={`document-editor-panel-${tab.id}`} aria-selected={activeTab === tab.id} tabIndex={activeTab === tab.id ? 0 : -1} role="tab" onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><Icon aria-hidden /><span>{tab.label}</span></button>;
         })}
       </nav>
       {activeTab === "document" ? <div className="document-editor-zoom" role="group" aria-label="Document view zoom">
-        {(["100", "110"] as const).map((mode) => <button key={mode} type="button" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
-        <button type="button" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
+        {(["100", "110"] as const).map((mode) => <button key={mode} type="button" className="focus-ring" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
+        <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
       </div> : null}
     </div>
 
@@ -94,16 +104,16 @@ export function DocumentEditorWorkspace({
       <aside className="document-editor-outline" aria-label="Document outline" data-print-hidden>
         <div className="document-editor-outline-heading"><ListTree aria-hidden /><span>Outline</span></div>
         <nav>
-          {outline.map((item) => <button key={item.id} type="button" data-active={activeOutlineId === item.id ? "true" : undefined} aria-current={activeOutlineId === item.id ? "location" : undefined} onClick={() => openOutlineItem(item.id)}>{item.label}</button>)}
+          {outline.map((item) => <button key={item.id} type="button" className="focus-ring" data-active={activeOutlineId === item.id ? "true" : undefined} aria-current={activeOutlineId === item.id ? "location" : undefined} onClick={() => openOutlineItem(item.id)}>{item.label}</button>)}
         </nav>
       </aside>
-      <section ref={documentPanelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
+      <section id="document-editor-panel-document" aria-labelledby="document-editor-tab-document" ref={documentPanelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
         <div className="document-editor-document-stage">{document}</div>
       </section>
       {inspectorHostId ? <aside className="document-editor-context-rail" aria-label="Selected block settings" data-print-hidden><div id={inspectorHostId} /></aside> : null}
     </div>
 
-    <section className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "metadata"}>{metadata}</section>
-    <section className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "relations"}>{relations}</section>
+    <section id="document-editor-panel-metadata" aria-labelledby="document-editor-tab-metadata" className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "metadata"}>{metadata}</section>
+    <section id="document-editor-panel-relations" aria-labelledby="document-editor-tab-relations" className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "relations"}>{relations}</section>
   </div>;
 }

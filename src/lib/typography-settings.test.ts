@@ -4,6 +4,7 @@ import {
   parseTypographySettings,
   typographyCssVariables,
   settingsWithoutCustomFont,
+  reconcileTypographySettings,
   validateCustomFontFile,
 } from "./typography-settings";
 
@@ -34,7 +35,9 @@ describe("typography settings", () => {
 
   it("accepts local web fonts within the limit and explains recoverable failures", () => {
     expect(validateCustomFontFile({ name: "lab-song.woff2", size: 2_000_000, type: "font/woff2" })).toBeNull();
+    expect(validateCustomFontFile({ name: "legacy-name.ttf", size: 2_000_000, type: "application/x-font-ttf" })).toBeNull();
     expect(validateCustomFontFile({ name: "notes.pdf", size: 2_000, type: "application/pdf" })).toBe("请选择 WOFF2、TTF 或 OTF 字体文件。");
+    expect(validateCustomFontFile({ name: "notes.woff2", size: 2_000, type: "application/pdf" })).toBe("请选择 WOFF2、TTF 或 OTF 字体文件。");
     expect(validateCustomFontFile({ name: "large.otf", size: 10_000_001, type: "font/otf" })).toBe("单个字体文件不能超过 10 MB。");
   });
 
@@ -49,5 +52,10 @@ describe("typography settings", () => {
       documentBody: defaultTypographySettings.documentBody,
       documentHeading: defaultTypographySettings.documentHeading,
     });
+  });
+
+  it("reconciles saved selections with fonts that still exist in this browser", () => {
+    const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Song" };
+    expect(reconcileTypographySettings({ ...defaultTypographySettings, documentBody: custom }, new Set())).toEqual(defaultTypographySettings);
   });
 });

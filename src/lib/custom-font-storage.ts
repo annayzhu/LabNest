@@ -1,7 +1,12 @@
 import {
+  applyTypographySettings,
   customFontDatabaseName,
   customFontStoreName,
+  parseTypographySettings,
+  reconcileTypographySettings,
+  typographySettingsStorageKey,
   type CustomFontRecord,
+  type TypographySettings,
 } from "./typography-settings";
 
 const loadedFaces = new Map<string, FontFace>();
@@ -75,4 +80,16 @@ export async function createCustomFontRecord(file: File): Promise<CustomFontReco
     data: await file.arrayBuffer(),
     createdAt: new Date().toISOString(),
   };
+}
+
+export async function hydrateTypographyPreferences({ loadAllFonts = false } = {}): Promise<{ settings: TypographySettings; fonts: CustomFontRecord[] }> {
+  const storedSettings = parseTypographySettings(window.localStorage.getItem(typographySettingsStorageKey));
+  applyTypographySettings(storedSettings);
+  const fonts = await listCustomFonts();
+  const settings = reconcileTypographySettings(storedSettings, new Set(fonts.map((font) => font.id)));
+  if (settings !== storedSettings) applyTypographySettings(settings);
+  const selectedIds = new Set(Object.values(settings).flatMap((selection) => selection.kind === "custom" ? [selection.id] : []));
+  const fontsToLoad = loadAllFonts ? fonts : fonts.filter((font) => selectedIds.has(font.id));
+  await Promise.allSettled(fontsToLoad.map(loadCustomFont));
+  return { settings, fonts };
 }

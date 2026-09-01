@@ -40,6 +40,7 @@
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
   --font-ui: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif; /* 系统界面、按钮和表单字体。 */
+  --font-ui-base-weight: 350; /* 思源黑体 Normal；缺少该字重时由浏览器选择最接近的可用字重。 */
   --font-document-body: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* A4 文档正文与长篇阅读字体。 */
   --font-document-heading: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", STSong, SimSun, serif; /* 页面与文档标题字体。 */
   --font-editorial: var(--font-document-heading); /* 保持既有 font-serif 语义，并由标题字体设置统一驱动。 */
@@ -428,6 +429,7 @@ body {
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: 14px;
+  font-weight: var(--font-ui-base-weight);
   line-height: 1.5;
   overflow-x: clip;
   overscroll-behavior-x: none;
@@ -502,7 +504,7 @@ textarea {
 }
 
 :where(nav a, nav button, .card-action a, .card-action button) {
-  font-weight: 400;
+  font-weight: var(--font-ui-base-weight);
   letter-spacing: 0.005em;
 }
 
@@ -964,6 +966,27 @@ textarea {
   max-width: 78ch;
 }
 
+.typography-feedback {
+  border: 1px solid transparent;
+  border-radius: var(--ln-radius-control-md);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.typography-feedback[data-tone="error"] {
+  background: var(--error-surface);
+  border-color: color-mix(in srgb, var(--error) 24%, var(--hairline));
+  color: var(--error);
+}
+
+.typography-feedback[data-tone="success"] {
+  background: var(--success-surface);
+  border-color: color-mix(in srgb, var(--success) 22%, var(--hairline));
+  color: var(--success);
+}
+
 .brand-mark {
   background: var(--brand-mark-bg);
   border-color: var(--brand-mark-border);
@@ -1180,6 +1203,11 @@ textarea {
 }
 
 .document-editor-context-card > header button:hover { background: var(--stone); color: var(--ink); }
+.document-editor-context-card :is(button, input, select, textarea):focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 15%, transparent);
+  outline: 2px solid var(--fog);
+  outline-offset: 2px;
+}
 .document-editor-context-card > header svg { height: 0.8rem; width: 0.8rem; }
 
 .document-editor-context-body {
@@ -1325,23 +1353,21 @@ textarea {
     margin-right: auto;
   }
 
-  .document-editor-context-rail {
-    bottom: 0;
-    display: block;
-    pointer-events: none;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: var(--ln-document-context-width);
-    z-index: 27;
+}
+
+@media (min-width: 1280px) {
+  .document-editor-workbench:has(.document-editor-context-rail > div:not(:empty)) {
+    grid-template-columns: var(--ln-document-outline-width) minmax(0, 1fr) var(--ln-document-context-width);
   }
 
-  .document-editor-context-rail > div:empty {
-    display: none;
+  .document-editor-workbench:has(.document-editor-context-rail > div:not(:empty)) .document-editor-context-rail {
+    align-self: stretch;
+    display: block;
+    grid-column: 3;
+    min-width: 0;
   }
 
   .document-editor-context-rail > div:not(:empty) {
-    pointer-events: auto;
     position: sticky;
     top: 4.2rem;
   }

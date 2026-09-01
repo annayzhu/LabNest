@@ -1,11 +1,12 @@
 "use client";
 
 import { RotateCcw, Trash2, Upload } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useI18n } from "@/components/I18nProvider";
 import {
   createCustomFontRecord,
   deleteCustomFont,
-  listCustomFonts,
+  hydrateTypographyPreferences,
   loadCustomFont,
   saveCustomFont,
 } from "@/lib/custom-font-storage";
@@ -13,10 +14,8 @@ import {
   applyTypographySettings,
   defaultTypographySettings,
   maxCustomFontCount,
-  parseTypographySettings,
   settingsWithoutCustomFont,
   typographyPresets,
-  typographySettingsStorageKey,
   type CustomFontRecord,
   type FontSelection,
   type TypographyRole,
@@ -24,10 +23,10 @@ import {
   validateCustomFontFile,
 } from "@/lib/typography-settings";
 
-const roleCopy: Record<TypographyRole, { label: string; note: string }> = {
-  ui: { label: "界面字体", note: "导航、按钮与表单" },
-  documentBody: { label: "文档正文", note: "实验记录与长文阅读" },
-  documentHeading: { label: "标题字体", note: "页面与文档标题" },
+const roleCopy: Record<TypographyRole, { zh: string; en: string; noteZh: string; noteEn: string }> = {
+  ui: { zh: "界面字体", en: "Interface", noteZh: "导航、按钮与表单", noteEn: "Navigation, buttons, and forms" },
+  documentBody: { zh: "文档正文", en: "Document body", noteZh: "实验记录与长文阅读", noteEn: "Experiment records and long reading" },
+  documentHeading: { zh: "标题字体", en: "Headings", noteZh: "页面与文档标题", noteEn: "Page and document headings" },
 };
 
 function selectionValue(selection: FontSelection) {
@@ -39,6 +38,9 @@ function formatFileSize(size: number) {
 }
 
 export function TypographySettingsPanel() {
+  const { locale } = useI18n();
+  const zh = locale === "zh";
+  const copy = useCallback((zhText: string, enText: string) => zh ? zhText : enText, [zh]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [settings, setSettings] = useState<TypographySettings>(defaultTypographySettings);
   const [customFonts, setCustomFonts] = useState<CustomFontRecord[]>([]);
@@ -48,30 +50,16 @@ export function TypographySettingsPanel() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const storedSettings = parseTypographySettings(window.localStorage.getItem(typographySettingsStorageKey));
-    queueMicrotask(() => setSettings(storedSettings));
-    applyTypographySettings(storedSettings);
-    void listCustomFonts()
-      .then(async (fonts) => {
-        const availableIds = new Set(fonts.map((font) => font.id));
-        let resolvedSettings = storedSettings;
-        Object.values(storedSettings).forEach((selection) => {
-          if (selection.kind === "custom" && !availableIds.has(selection.id)) {
-            resolvedSettings = settingsWithoutCustomFont(resolvedSettings, selection.id);
-          }
-        });
-        if (resolvedSettings !== storedSettings) {
-          setSettings(resolvedSettings);
-          applyTypographySettings(resolvedSettings);
-        }
+    void hydrateTypographyPreferences({ loadAllFonts: true })
+      .then(({ settings: resolvedSettings, fonts }) => {
+        setSettings(resolvedSettings);
         setCustomFonts(fonts);
-        await Promise.allSettled(fonts.map(loadCustomFont));
       })
-      .catch(() => setError("当前浏览器无法访问本地字体库，仍可使用预设字体。"))
+      .catch(() => setError(copy("当前浏览器无法访问本地字体库，仍可使用预设字体。", "This browser cannot access the local font library. Preset fonts remain available.")))
       .finally(() => setLoadingFonts(false));
-  }, []);
+  }, [copy]);
 
-  function updateSettings(next: TypographySettings, confirmation = "字体设置已应用。") {
+  function updateSettings(next: TypographySettings, confirmation = copy("字体设置已应用。", "Typography settings applied.")) {
     setSettings(next);
     applyTypographySettings(next);
     setError("");
@@ -95,14 +83,14 @@ export function TypographySettingsPanel() {
     if (!file) return;
     setMessage("");
     setError("");
-    const validationError = validateCustomFontFile(file);
+    const validationError = validateCustomFontFile(file, locale);
     if (validationError) {
       setError(validationError);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     if (customFonts.length >= maxCustomFontCount) {
-      setError(`当前浏览器最多保存 ${maxCustomFontCount} 个自定义字体，请先删除不再使用的字体。`);
+      setError(copy(`当前浏览器最多保存 ${maxCustomFontCount} 个自定义字体，请先删除不再使用的字体。`, `This browser can store up to ${maxCustomFontCount} custom fonts. Delete an unused font first.`));
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -113,9 +101,9 @@ export function TypographySettingsPanel() {
       await loadCustomFont(record);
       await saveCustomFont(record);
       setCustomFonts((fonts) => [record, ...fonts]);
-      setMessage(`“${record.name}”已导入，可在上方三个字体选项中使用。`);
+      setMessage(copy(`“${record.name}”已导入，可在上方三个字体选项中使用。`, `“${record.name}” was imported and is now available in all three selectors.`));
     } catch {
-      setError("无法读取这个字体文件。请确认文件完整且为有效的 WOFF2、TTF 或 OTF 字体。");
+      setError(copy("无法读取这个字体文件。请确认文件完整且为有效的 WOFF2、TTF 或 OTF 字体。", "This font could not be read. Confirm it is a complete, valid WOFF2, TTF, or OTF file."));
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -123,15 +111,15 @@ export function TypographySettingsPanel() {
   }
 
   async function removeFont(font: CustomFontRecord) {
-    if (!window.confirm(`删除本地字体“${font.name}”？使用它的排版角色将恢复默认字体。`)) return;
+    if (!window.confirm(copy(`删除本地字体“${font.name}”？使用它的排版角色将恢复默认字体。`, `Delete the local font “${font.name}”? Roles using it will return to their defaults.`))) return;
     setMessage("");
     setError("");
     try {
       await deleteCustomFont(font.id);
       setCustomFonts((fonts) => fonts.filter((item) => item.id !== font.id));
-      updateSettings(settingsWithoutCustomFont(settings, font.id), `“${font.name}”已从当前浏览器删除。`);
+      updateSettings(settingsWithoutCustomFont(settings, font.id), copy(`“${font.name}”已从当前浏览器删除。`, `“${font.name}” was removed from this browser.`));
     } catch {
-      setError("未能删除这个字体，请刷新页面后重试。");
+      setError(copy("未能删除这个字体，请刷新页面后重试。", "This font could not be deleted. Refresh and try again."));
     }
   }
 
@@ -140,18 +128,18 @@ export function TypographySettingsPanel() {
       <div className="typography-role-grid">
         {(Object.keys(roleCopy) as TypographyRole[]).map((role) => (
           <label key={role} className="typography-role-field">
-            <span className="typography-role-label">{roleCopy[role].label}</span>
-            <span className="typography-role-note">{roleCopy[role].note}</span>
+            <span className="typography-role-label">{zh ? roleCopy[role].zh : roleCopy[role].en}</span>
+            <span className="typography-role-note">{zh ? roleCopy[role].noteZh : roleCopy[role].noteEn}</span>
             <select
               className="focus-ring typography-role-select"
               value={selectionValue(settings[role])}
               onChange={(event) => selectFont(role, event.target.value)}
             >
-              <optgroup label="预设字体">
-                {typographyPresets[role].map((preset) => <option key={preset.id} value={`preset:${preset.id}`}>{preset.name} · {preset.description}</option>)}
+              <optgroup label={copy("预设字体", "Preset fonts")}>
+                {typographyPresets[role].map((preset) => <option key={preset.id} value={`preset:${preset.id}`}>{zh ? preset.name : preset.nameEn} · {zh ? preset.description : preset.descriptionEn}</option>)}
               </optgroup>
               {customFonts.length ? (
-                <optgroup label="我的字体">
+                <optgroup label={copy("我的字体", "My fonts")}>
                   {customFonts.map((font) => <option key={font.id} value={`custom:${font.id}`}>{font.name}</option>)}
                 </optgroup>
               ) : null}
@@ -160,23 +148,23 @@ export function TypographySettingsPanel() {
         ))}
       </div>
 
-      <div className="typography-preview" aria-label="字体预览">
+      <div className="typography-preview" aria-label={copy("字体预览", "Font preview")}>
         <div className="typography-preview-copy">
-          <p className="typography-preview-heading">细胞增殖实验记录</p>
-          <p className="typography-preview-body">今日完成 CCK-8 检测，实验条件与原始观察均已记录。The quick brown fox jumps over 13 wells.</p>
+          <p className="typography-preview-heading">{copy("细胞增殖实验记录", "Cell proliferation record")}</p>
+          <p className="typography-preview-body">{copy("今日完成 CCK-8 检测，实验条件与原始观察均已记录。The quick brown fox jumps over 13 wells.", "CCK-8 detection completed. Conditions and raw observations were recorded. 细胞增殖实验。")}</p>
         </div>
-        <button type="button" className="focus-ring typography-reset-button" onClick={() => updateSettings(defaultTypographySettings, "已恢复默认字体。") }>
-          <RotateCcw aria-hidden />恢复默认
+        <button type="button" className="focus-ring typography-reset-button" onClick={() => updateSettings(defaultTypographySettings, copy("已恢复默认字体。", "Default typography restored."))}>
+          <RotateCcw aria-hidden />{copy("恢复默认", "Reset")}
         </button>
       </div>
 
       <div className="typography-import-row">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink">我的字体</p>
-          <p className="mt-0.5 text-[11px] leading-5 text-muted">仅保存在当前浏览器；支持 WOFF2、TTF、OTF，单个不超过 10 MB，最多 {maxCustomFontCount} 个。</p>
+          <p className="text-sm font-medium text-ink">{copy("我的字体", "My fonts")}</p>
+          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy(`仅保存在当前浏览器；支持 WOFF2、TTF、OTF，单个不超过 10 MB，最多 ${maxCustomFontCount} 个。`, `Stored only in this browser. WOFF2, TTF, and OTF; 10 MB each; up to ${maxCustomFontCount}.`)}</p>
         </div>
         <label className="focus-ring typography-import-button" aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
-          <Upload aria-hidden />{importing ? "正在导入…" : "导入字体"}
+          <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体", "Import font")}
           <input
             ref={fileInputRef}
             className="sr-only"
@@ -188,16 +176,16 @@ export function TypographySettingsPanel() {
         </label>
       </div>
 
-      {loadingFonts ? <p className="mt-2 text-xs text-muted">正在读取当前浏览器的字体…</p> : null}
+      {loadingFonts ? <p className="mt-2 text-xs text-muted">{copy("正在读取当前浏览器的字体…", "Reading fonts stored in this browser…")}</p> : null}
       {customFonts.length ? (
-        <ul className="typography-custom-font-list" aria-label="已导入字体">
+        <ul className="typography-custom-font-list" aria-label={copy("已导入字体", "Imported fonts")}>
           {customFonts.map((font) => (
             <li key={font.id}>
               <span className="min-w-0">
                 <span className="block truncate text-sm text-ink" style={{ fontFamily: `"${font.family}"` }}>{font.name}</span>
                 <span className="block truncate text-[10px] text-muted">{font.fileName} · {formatFileSize(font.size)}</span>
               </span>
-              <button type="button" className="focus-ring" onClick={() => void removeFont(font)} aria-label={`删除字体 ${font.name}`}>
+              <button type="button" className="focus-ring" onClick={() => void removeFont(font)} aria-label={copy(`删除字体 ${font.name}`, `Delete font ${font.name}`)}>
                 <Trash2 aria-hidden />
               </button>
             </li>
@@ -206,9 +194,9 @@ export function TypographySettingsPanel() {
       ) : null}
 
       <div className="typography-portability-note">
-        网页显示与浏览器打印会使用所选字体。导出 DOCX 后，其他设备仍需安装该字体，否则会自动回退；请仅导入你有权使用的字体文件。
+        {copy("网页显示与浏览器打印会使用所选字体。导出 DOCX 后，其他设备仍需安装该字体，否则会自动回退；请仅导入你有权使用的字体文件。", "The selected font is used on screen and in browser printing. DOCX recipients still need the font installed or it will fall back. Import only fonts you are licensed to use.")}
       </div>
-      <p className={error ? "mt-2 text-xs text-error" : "mt-2 text-xs text-success"} role="status" aria-live="polite">{error || message}</p>
+      {error || message ? <p className="typography-feedback" data-tone={error ? "error" : "success"} role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>{error || message}</p> : null}
     </div>
   );
 }

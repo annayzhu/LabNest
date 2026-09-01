@@ -149,7 +149,7 @@ Traditional motifs are a small identity layer, not a replacement for functional 
 
 ## Typography
 
-Typography is user-configurable by role from Settings. Interface text, document body copy, and headings remain separate roles so a researcher can lighten Chinese body text without weakening navigation or data scanning. The defaults are Source Han Sans SC for interface text and Source Han Serif SC for document body and headings, with system-safe Chinese fallbacks. Imported WOFF2, TTF, and OTF fonts remain browser-local; the fixed monospace data role is never changed by typography preferences.
+Typography is user-configurable by role from Settings. Interface text, document body copy, and headings remain separate roles so a researcher can lighten Chinese body text without weakening navigation or data scanning. The defaults are Source Han Sans SC at its Normal 350 weight for interface text and Source Han Serif SC for document body and headings, with system-safe Chinese fallbacks. Imported WOFF2, TTF, and OTF fonts remain browser-local; the fixed monospace data role is never changed by typography preferences.
 
 **Display Font:** The selected heading role, defaulting to Source Han Serif SC with Chinese serif fallbacks
 **Body Font:** The selected interface role for product UI and the selected document-body role for A4 reading, defaulting to Source Han Sans SC and Source Han Serif SC respectively
@@ -190,13 +190,13 @@ Calculator is flat by default. Hierarchy comes from white surfaces, hairline bor
 
 ## Shapes
 
-The shape language is gently technical: 12px outer panels, 8px inputs and primary controls, 6–7px compact actions, and occasional 9–10px feature wells. Full pills are limited to tags, presets, and small categorical states. Borders are one-pixel hairlines; dashed borders indicate upload or empty drop zones.
+The shape language is gently technical: 8px outer panels, 6px inputs and primary controls, and 4–5px compact actions. Full pills are limited to tags, presets, and small categorical states. Borders are one-pixel hairlines; dashed borders indicate upload or empty drop zones.
 
 ## Components
 
 ### Buttons
 
-- **Primary:** Filled primary color, high-contrast label, 36–40px height, and 8px corners. Use for Calculate, Confirm, Detect, or Send.
+- **Primary:** Filled primary color, high-contrast label, 36–40px height, and 6px corners. Use for Calculate, Confirm, Detect, or Send.
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
 
@@ -215,7 +215,7 @@ The shape language is gently technical: 12px outer panels, 8px inputs and primar
 
 ### Inputs / Fields
 
-- **Style:** 40px controls, 8px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
+- **Style:** 40px controls, 6px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
 - **Focus:** Border changes to the primary color; standalone controls also use the shared focus outline and halo.
 - **Error / Disabled:** Errors use the semantic error pair and `role="alert"`; disabled actions remain visible with reduced opacity.
 

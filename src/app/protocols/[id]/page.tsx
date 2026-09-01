@@ -6,6 +6,7 @@ import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
+import { ProtocolExportMenu } from "@/components/ProtocolExportMenu";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -98,7 +99,7 @@ export default async function ProtocolDetailPage({
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="protocol-density-slice" data-density-slice="protocol">
         <PageHeader
           identifier={`${protocol.humanCode ?? "Uncoded"} · v${version.displayVersion}`}
           title={protocol.canonicalTitle ?? protocol.title}
@@ -108,9 +109,8 @@ export default async function ProtocolDetailPage({
               <Link href={editHref} className={primaryButton}><PencilLine className="h-4 w-4" aria-hidden />Edit Protocol</Link>
               {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={secondaryButton}>Use in experiment</Link> : <Link href={editHref} className={secondaryButton}>Link Research Plan</Link>}
               {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
-              <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} className={secondaryButton}>Export DOCX</Link>
-              <Link href={`/api/protocols/${protocol.id}/versions/${version.id}/json`} className={secondaryButton}>Export JSON</Link>
-              <RecordLifecycleControl id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} allowLinkedRecycle />
+              <ProtocolExportMenu docxHref={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} jsonHref={`/api/protocols/${protocol.id}/versions/${version.id}/json`} />
+              <RecordLifecycleControl id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} allowLinkedRecycle triggerSize="md" />
             </>
           }
         />

@@ -64,6 +64,16 @@
   --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
+  /* Protocol 密度切片：仅控制详情与文档编辑工作区外壳，不改变 A4 正文或打印尺寸。 */
+  --ln-protocol-density-page-gap: 0.55rem; /* 页面标题、提示和文档工作区之间距离。 */
+  --ln-protocol-density-title-size: 18px; /* Protocol 工作区外层标题字号。 */
+  --ln-protocol-density-action-height: 1.875rem; /* 页头与保存区动作高度。 */
+  --ln-protocol-density-action-font-size: 12px; /* 页头与保存区动作字号。 */
+  --ln-protocol-density-toolbar-height: 2.25rem; /* A4 上方工具条高度。 */
+  --ln-protocol-density-outline-width: 7.75rem; /* 编辑态章节目录宽度。 */
+  --ln-protocol-density-workbench-gap: 0.625rem; /* 目录、A4 和上下文栏之间距离。 */
+  --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
+
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
   --ln-entry-editor-body-min-height: 20rem; /* Entry 富文本正文的初始书写高度。 */
@@ -501,6 +511,206 @@ textarea {
   font-weight: 500;
   letter-spacing: -0.005em;
   line-height: 1;
+}
+
+.protocol-density-slice {
+  --ln-document-outline-width: var(--ln-protocol-density-outline-width);
+  --ln-document-workbench-gap: var(--ln-protocol-density-workbench-gap);
+  display: grid;
+  gap: var(--ln-protocol-density-page-gap);
+  min-width: 0;
+}
+
+.protocol-density-slice > header h1 {
+  font-size: var(--ln-protocol-density-title-size);
+}
+
+.protocol-density-slice .page-actions {
+  align-items: center;
+}
+
+.protocol-density-slice .page-actions :where(a, button),
+.protocol-export-menu > summary {
+  font-size: var(--ln-protocol-density-action-font-size);
+  height: var(--ln-protocol-density-action-height);
+  min-height: var(--ln-protocol-density-action-height);
+}
+
+.protocol-density-notice {
+  border-radius: var(--ln-radius-control-lg);
+}
+
+.protocol-density-notice h2,
+.protocol-density-notice p {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.protocol-density-notice p {
+  margin-top: 0.1rem;
+}
+
+.protocol-export-menu {
+  position: relative;
+}
+
+.protocol-export-menu > summary {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-md);
+  color: var(--moss);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 500;
+  gap: 0.35rem;
+  list-style: none;
+  padding-inline: 0.6rem;
+  white-space: nowrap;
+}
+
+.protocol-export-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.protocol-export-menu > summary:hover,
+.protocol-export-menu[open] > summary {
+  background: var(--warm);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+.protocol-export-menu > summary svg {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.protocol-export-menu-chevron {
+  transition: transform 140ms ease;
+}
+
+.protocol-export-menu[open] .protocol-export-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.protocol-export-menu-popover {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  min-width: 11.5rem;
+  padding: 0.25rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.3rem);
+  z-index: 40;
+}
+
+.protocol-export-menu-popover a {
+  align-items: center;
+  border-radius: var(--ln-radius-control-sm);
+  color: var(--graphite);
+  display: flex;
+  gap: 0.55rem;
+  height: auto !important;
+  min-height: 2.6rem !important;
+  padding: 0.35rem 0.5rem !important;
+}
+
+.protocol-export-menu-popover a:hover {
+  background: var(--stone);
+  color: var(--ink);
+}
+
+.protocol-export-menu-popover svg {
+  color: var(--moss);
+  height: 0.9rem;
+  width: 0.9rem;
+}
+
+.protocol-export-menu-popover span {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.protocol-export-menu-popover strong {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.protocol-export-menu-popover small {
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 400;
+}
+
+.protocol-density-form {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.protocol-density-slice .document-editor-viewbar {
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.protocol-density-slice > .document-editor-layout {
+  padding-top: 0;
+}
+
+.protocol-density-slice .document-canvas-toolbar {
+  min-height: var(--ln-protocol-density-toolbar-height);
+  padding: 0.22rem 0.35rem;
+}
+
+.protocol-density-slice .document-editor-tabs,
+.protocol-density-slice .document-editor-zoom {
+  border-radius: var(--ln-radius-control-md);
+  padding: 0.12rem;
+}
+
+.protocol-density-slice .document-editor-tab,
+.protocol-density-slice .document-editor-zoom button {
+  height: 1.75rem;
+}
+
+.protocol-density-actionbar {
+  align-items: center;
+  align-self: start;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  bottom: var(--ln-protocol-density-save-offset);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-left: calc(var(--ln-protocol-density-outline-width) + var(--ln-protocol-density-workbench-gap));
+  max-width: 210mm;
+  padding: 0.25rem;
+  position: sticky;
+  width: min(210mm, calc(100% - var(--ln-protocol-density-outline-width) - var(--ln-protocol-density-workbench-gap)));
+  z-index: 30;
+}
+
+.protocol-density-actionbar > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.protocol-density-actionbar button {
+  font-size: var(--ln-protocol-density-action-font-size);
+  height: var(--ln-protocol-density-action-height);
+  min-height: var(--ln-protocol-density-action-height);
+}
+
+@media (max-width: 1023px) {
+  .protocol-density-actionbar {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 :where(nav a, nav button, .card-action a, .card-action button) {
@@ -1286,6 +1496,30 @@ textarea {
 }
 
 @media (min-width: 1024px) {
+  .protocol-density-slice .page-actions {
+    flex-wrap: nowrap;
+  }
+
+  .protocol-density-slice .document-editor-outline {
+    border-right: 1px solid var(--hairline);
+    padding-right: 0.45rem;
+  }
+
+  .protocol-density-slice .document-editor-outline-heading {
+    padding-left: 0.35rem;
+  }
+
+  .protocol-density-slice .document-editor-outline nav button {
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--ln-radius-control-sm) var(--ln-radius-control-sm) 0;
+    padding-left: 0.42rem;
+  }
+
+  .protocol-density-slice .document-editor-outline nav button[data-active="true"] {
+    background: transparent;
+    border-left-color: var(--action);
+  }
+
   .document-editor-workbench {
     display: grid;
     gap: var(--ln-document-workbench-gap);
@@ -2438,6 +2672,27 @@ textarea {
 }
 
 @media (max-width: 767px) {
+  .protocol-density-slice {
+    --ln-protocol-density-page-gap: 0.4rem;
+    --ln-protocol-density-title-size: 17px;
+  }
+
+  .protocol-density-slice .document-canvas-toolbar {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  .protocol-density-actionbar {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .protocol-density-actionbar > span {
+    display: none;
+  }
+
   .document-editor-viewbar {
     position: static;
   }

@@ -69,14 +69,14 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="protocol-density-slice" data-density-slice="protocol">
         <PageHeader
           identifier={`${version.protocol.humanCode ?? "Protocol"} · v${version.displayVersion}`}
           title={version.reviewStage === "reviewed" ? "Edit Protocol as New Revision" : "Edit Protocol"}
           description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
         />
         {version.reviewStage === "reviewed" ? (
-          <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-sage/45 bg-sage-surface/55 px-4 py-3">
+          <div className="protocol-density-notice flex items-start gap-2.5 border border-sage/45 bg-sage-surface/55 px-3 py-2">
             <GitBranchPlus className="mt-0.5 h-5 w-5 shrink-0 text-moss" aria-hidden />
             <div>
               <h2 className="text-sm font-semibold text-ink">All fields remain editable</h2>

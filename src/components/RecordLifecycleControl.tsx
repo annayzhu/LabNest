@@ -5,7 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { AlertTriangle, Archive, RotateCcw, Trash2, X } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { formInputClass } from "@/components/forms";
-import { Button } from "@/components/ui/Button";
+import { Button, type ButtonSize } from "@/components/ui/Button";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import type { RecordLifecycleBlocker } from "@/lib/record-lifecycle";
 
@@ -24,6 +24,7 @@ export function RecordLifecycleControl({
   restoreAction,
   editHref,
   allowLinkedRecycle = false,
+  triggerSize = "lg",
 }: {
   id: string;
   identifier: string;
@@ -37,6 +38,7 @@ export function RecordLifecycleControl({
   restoreAction?: FormAction;
   editHref?: string;
   allowLinkedRecycle?: boolean;
+  triggerSize?: ButtonSize;
 }) {
   const { locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -57,7 +59,7 @@ export function RecordLifecycleControl({
 
   return (
     <>
-      <Button type="button" size="lg" variant="destructive" onClick={() => setOpen(true)}>
+      <Button type="button" size={triggerSize} variant="destructive" onClick={() => setOpen(true)}>
         <Trash2 className="h-4 w-4" aria-hidden />
         {locale === "zh" ? "删除 / 归档" : "Delete / archive"}
       </Button>

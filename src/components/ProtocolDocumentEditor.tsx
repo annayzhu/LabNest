@@ -89,7 +89,7 @@ export function ProtocolDocumentEditor({
   };
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="protocol-density-form">
       {protocol.id ? <input type="hidden" name="protocolId" value={protocol.id} /> : null}
       {version.id ? <input type="hidden" name="versionId" value={version.id} /> : null}
       <input type="hidden" name="contentJson" value={serialized} />
@@ -139,7 +139,7 @@ export function ProtocolDocumentEditor({
       />
 
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      <div className="sticky bottom-4 z-20 flex justify-end"><Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
+      <div className="protocol-density-actionbar" data-print-hidden><span>Changes remain local until saved.</span><Button type="submit" variant="primary" size="sm" disabled={pending}>{pending ? "Saving…" : mode === "create" ? "Create Protocol" : reviewed ? "Save as new revision" : "Save Protocol"}</Button></div>
     </form>
   );
 }

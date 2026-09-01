@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import { sequenceLifecycleStatuses, sequenceValidationStatuses } from "@/lib/sequence-registry";
-import { sequencePairDefinition, type SequencePairTypeValue } from "@/lib/sequence-entry";
+import { sequencePairDefinition, sequencePairMetadataFields, type SequencePairTypeValue } from "@/lib/sequence-entry";
 import { estimatedMeltingTemperature, gcPercent, sequenceLength } from "@/lib/sequence";
 
 const initialState: FormActionState = {};
@@ -23,6 +23,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
   const inputPrompt = pairInputPrompt(pairType);
   const roles = definition.roles;
   const moleculeType = definition.moleculeType;
+  const metadataFields = sequencePairMetadataFields(pairType);
   const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initialProjectId ? "project" : "library");
   const [sequences, setSequences] = useState<Record<string, string>>(Object.fromEntries(roles.map((role) => [role, ""])));
   const metrics = Object.fromEntries(roles.map((role) => [role, {
@@ -47,10 +48,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               <span className={formLabelClass}>{inputPrompt.organismLabel}</span>
               <input name="organism" maxLength={180} className={formInputClass} placeholder={inputPrompt.organismPlaceholder} />
             </label>
-            {pairType === "primer_pair" ? <label>
-              <span className={formLabelClass}>Application</span>
-              <input name="meta_application" maxLength={180} className={formInputClass} placeholder="qPCR, genotyping, cloning…" />
-            </label> : null}
+            {pairType === "primer_pair" ? <PairMetadataField field={metadataFields.find((field) => field.key === "application")!} /> : null}
           </div>
 
           <section className="grid gap-3 lg:grid-cols-2" aria-label={`${definition.label} sequences`}>
@@ -91,16 +89,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               <ChevronDown className="h-4 w-4 text-muted transition group-open:rotate-180" aria-hidden />
             </summary>
             <div className="grid gap-3 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-4">
-              {pairType === "primer_pair" ? <>
-                <label><span className={formLabelClass}>Template / transcript accession</span><input name="meta_transcriptAccession" maxLength={180} className={formInputClass} placeholder="NM_… / ENST…" /></label>
-                <label><span className={formLabelClass}>Expected amplicon (bp)</span><input name="meta_ampliconLengthBp" type="number" min="1" step="1" className={formInputClass} placeholder="120" /></label>
-                <label><span className={formLabelClass}>Exon-junction strategy</span><input name="meta_exonJunction" maxLength={180} className={formInputClass} placeholder="Spans exon 5–6 junction" /></label>
-                <label><span className={formLabelClass}>Design source</span><input name="meta_designSource" maxLength={180} className={formInputClass} placeholder="Primer-BLAST, publication, supplier…" /></label>
-              </> : <>
-                <label><span className={formLabelClass}>Transcript accession</span><input name="meta_transcriptAccession" maxLength={180} className={formInputClass} placeholder="NM_… / ENST…" /></label>
-                <label><span className={formLabelClass}>Target region</span><input name="meta_targetRegion" maxLength={180} className={formInputClass} placeholder="CDS position or exon" /></label>
-                <label><span className={formLabelClass}>Design source</span><input name="meta_designSource" maxLength={180} className={formInputClass} placeholder="Supplier, publication, or design tool" /></label>
-              </>}
+              {metadataFields.filter((field) => field.key !== "application").map((field) => <PairMetadataField key={field.key} field={field} />)}
               <label>
                 <span className={formLabelClass}>Location *</span>
                 <select name="ownershipScope" value={ownershipScope} onChange={(event) => setOwnershipScope(event.target.value as typeof ownershipScope)} className={formInputClass}>
@@ -155,8 +144,8 @@ function pairInputPrompt(pairType: SequencePairTypeValue) {
       antisense: "Antisense strand sequence",
     } as Record<string, string>,
     sequencePlaceholders: {
-      sense: "GCUACU…dTdT",
-      antisense: "AGUAGC…dTdT",
+      sense: "GCUACU…TT",
+      antisense: "AGUAGC…TT",
     } as Record<string, string>,
     descriptionPlaceholder: "Duplex number, transcript or target position, supplier, and intended assay…",
     validationPlaceholder: "Knockdown conditions, measured effect, off-target observations, and decision…",
@@ -177,4 +166,8 @@ function pairInputPrompt(pairType: SequencePairTypeValue) {
     descriptionPlaceholder: "Application, expected amplicon, transcript, and design source…",
     validationPlaceholder: "Efficiency, specificity, assay conditions, and decision…",
   };
+}
+
+function PairMetadataField({ field }: { field: ReturnType<typeof sequencePairMetadataFields>[number] }) {
+  return <label><span className={formLabelClass}>{field.label}</span><input name={`meta_${field.key}`} type={field.type === "number" ? "number" : "text"} min={field.type === "number" ? "1" : undefined} step={field.type === "number" ? "1" : undefined} maxLength={field.type === "number" ? undefined : 180} className={formInputClass} placeholder={field.placeholder} /></label>;
 }

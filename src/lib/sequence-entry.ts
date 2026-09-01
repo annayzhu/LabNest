@@ -146,6 +146,28 @@ export function sequencePairRoles(type: SequencePairTypeValue): readonly [Sequen
   return sequencePairDefinition(type).roles;
 }
 
+export type SequencePairMetadataFieldDefinition = {
+  key: "application" | "transcriptAccession" | "ampliconLengthBp" | "exonJunction" | "targetRegion" | "designSource";
+  label: string;
+  placeholder: string;
+  type?: "number";
+  unit?: string;
+  pairTypes: readonly SequencePairTypeValue[];
+};
+
+export const sequencePairMetadataFieldDefinitions = [
+  { key: "application", label: "Application", placeholder: "qPCR, genotyping, cloning…", pairTypes: ["primer_pair"] },
+  { key: "transcriptAccession", label: "Template / transcript accession", placeholder: "NM_… / ENST…", pairTypes: ["primer_pair", "sirna_duplex"] },
+  { key: "ampliconLengthBp", label: "Expected amplicon (bp)", placeholder: "120", type: "number", unit: "bp", pairTypes: ["primer_pair"] },
+  { key: "exonJunction", label: "Exon-junction strategy", placeholder: "Spans exon 5–6 junction", pairTypes: ["primer_pair"] },
+  { key: "targetRegion", label: "Target region", placeholder: "CDS position or exon", pairTypes: ["sirna_duplex"] },
+  { key: "designSource", label: "Design source", placeholder: "Supplier, publication, or design tool", pairTypes: ["primer_pair", "sirna_duplex"] },
+] as const satisfies readonly SequencePairMetadataFieldDefinition[];
+
+export function sequencePairMetadataFields(type: SequencePairTypeValue): readonly SequencePairMetadataFieldDefinition[] {
+  return sequencePairMetadataFieldDefinitions.filter((field) => (field.pairTypes as readonly SequencePairTypeValue[]).includes(type));
+}
+
 export function sequenceWorkflowLabel(type: string) {
   if (type === "alignment") return "Alignment";
   if (type === "assembly") return "Assembly";

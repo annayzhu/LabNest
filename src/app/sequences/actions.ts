@@ -22,7 +22,7 @@ import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { reserveRecordCode, reserveRecordCodes } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
-import { normalizeSequenceOwnership, sequencePairDefinition, sequencePairRoles } from "@/lib/sequence-entry";
+import { normalizeSequenceOwnership, sequencePairDefinition, sequencePairMetadataFields, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
 
 const featureSchema = z.object({
@@ -331,15 +331,15 @@ function parsePairForm(formData: FormData) {
   const roles = sequencePairRoles(pairType);
   const geneName = String(formData.get("geneName") ?? "").trim();
   const metadataEntries: Array<[string, string | number]> = [];
-  for (const key of ["application", "transcriptAccession", "ampliconLengthBp", "exonJunction", "targetRegion", "designSource"] as const) {
-    const value = optionalText(formData.get(`meta_${key}`));
+  for (const field of sequencePairMetadataFields(pairType)) {
+    const value = optionalText(formData.get(`meta_${field.key}`));
     if (value === undefined) continue;
-    if (key === "ampliconLengthBp") {
+    if (field.type === "number") {
       const number = Number(value);
-      if (!Number.isFinite(number) || number < 1) throw new Error("Expected amplicon must be a positive number.");
-      metadataEntries.push([key, number]);
+      if (!Number.isFinite(number) || number < 1) throw new Error(`${field.label} must be a positive number.`);
+      metadataEntries.push([field.key, number]);
     } else {
-      metadataEntries.push([key, value]);
+      metadataEntries.push([field.key, value]);
     }
   }
   return preparePairInput({
@@ -854,6 +854,10 @@ export async function importSequences(_previousState: SequenceManageState, formD
             organism: importField(record, "organism"),
             validationStatus: importField(record, "validationStatus") ?? "unverified",
             validationSummary: importField(record, "validationSummary"),
+            metadata: Object.fromEntries(sequencePairMetadataFields(importedPairType).flatMap((field) => {
+              const value = importField(record, field.key);
+              return value === undefined ? [] : [[field.key, field.type === "number" ? Number(value) : value]];
+            })),
             members: roles.map((role) => ({ role, sequence: importField(record, `${role}Sequence`) ?? "" })),
           }) };
         }

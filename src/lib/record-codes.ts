@@ -57,7 +57,7 @@ export function suggestNextRecordCode(kind: RecordCodeKind, existingCodes: strin
   return formatRecordCode(kind, nextRecordCodeValue(kind, existingCodes, lastReservedValue));
 }
 
-export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
+async function existingRecordCodes(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
   let existingCodes: string[];
   if (kind === "researchPlan") {
     existingCodes = (await tx.researchPlan.findMany({ select: { code: true } })).map((item) => item.code);
@@ -75,18 +75,31 @@ export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: Reco
     existingCodes = (await tx.sequenceWorkflow.findMany({ select: { code: true } })).map((item) => item.code);
   }
 
+  return existingCodes;
+}
+
+export async function reserveRecordCodes(tx: Prisma.TransactionClient, kind: RecordCodeKind, count: number) {
+  if (!Number.isSafeInteger(count) || count < 1 || count > 5000) throw new Error("Record code reservation count must be between 1 and 5000.");
+  const existingCodes = await existingRecordCodes(tx, kind);
   const rule = recordCodeRules[kind];
   const baseline = nextRecordCodeValue(kind, existingCodes);
+  const requestedEnd = baseline + count - 1;
 
   const rows = await tx.$queryRaw<Array<{ value: number }>>(Prisma.sql`
     INSERT INTO "RecordCodeCounter" ("key", "value", "updatedAt")
-    VALUES (${rule.counterKey}, ${baseline}, CURRENT_TIMESTAMP)
+    VALUES (${rule.counterKey}, ${requestedEnd}, CURRENT_TIMESTAMP)
     ON CONFLICT ("key") DO UPDATE
-    SET "value" = GREATEST("RecordCodeCounter"."value" + 1, EXCLUDED."value"),
+    SET "value" = GREATEST("RecordCodeCounter"."value" + ${count}, EXCLUDED."value"),
         "updatedAt" = CURRENT_TIMESTAMP
     RETURNING "value"
   `);
-  const value = rows[0]?.value;
-  if (!Number.isSafeInteger(value)) throw new Error(`Could not reserve the next ${rule.prefix} code.`);
-  return formatRecordCode(kind, value);
+  const endValue = rows[0]?.value;
+  if (!Number.isSafeInteger(endValue)) throw new Error(`Could not reserve the next ${rule.prefix} codes.`);
+  return Array.from({ length: count }, (_, index) => formatRecordCode(kind, endValue - count + index + 1));
+}
+
+export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
+  const [code] = await reserveRecordCodes(tx, kind, 1);
+  if (!code) throw new Error(`Could not reserve the next ${recordCodeRules[kind].prefix} code.`);
+  return code;
 }

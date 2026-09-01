@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db";
 import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { designTypeLabel, pairTypeLabel, sequenceDesignTypes, sequenceLifecycleStatuses, sequenceValidationStatuses } from "@/lib/sequence-registry";
 import { gcPercent, sequenceLength } from "@/lib/sequence";
+import { sequencePairDefinition, sequencePairTypeForDesignType } from "@/lib/sequence-entry";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
   const status = firstSearchParam(params, "status");
   const validationStatus = firstSearchParam(params, "validationStatus");
   const sort = firstSearchParam(params, "sort") ?? "updated_desc";
+  const pairTypeFilter = designType ? sequencePairTypeForDesignType(designType) : undefined;
 
   const [records, pairs, singleTotal, pairTotal, collectionCount, projects] = await Promise.all([
     prisma.sequence.findMany({
@@ -43,7 +45,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
     }),
     prisma.sequencePair.findMany({
       where: {
-        ...(designType === "primer" ? { type: "primer_pair" as const } : designType === "siRNA" ? { type: "sirna_duplex" as const } : designType ? { id: "__no_pair_matches__" } : {}),
+        ...(pairTypeFilter ? { type: pairTypeFilter } : designType ? { id: "__no_pair_matches__" } : {}),
         ...(status ? { status: status as never } : { status: { not: "archived" as const } }),
         ...(query ? { OR: [{ code: { contains: query, mode: "insensitive" } }, { name: { contains: query, mode: "insensitive" } }, { targetName: { contains: query, mode: "insensitive" } }, { organism: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] } : {}),
       },
@@ -56,7 +58,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
     prisma.project.findMany({ where: { status: { not: "archived" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const singleRows = records.map((record) => ({ ...record, kind: "single" as const, href: `/sequences/${record.id}`, pairType: null, pairMembers: [] as typeof pairs[number]["members"], entityLinkCount: record._count.entityLinks }));
-  const pairRows = pairs.map((pair) => ({ ...pair, kind: "paired" as const, href: `/sequences/pairs/${pair.id}`, pairType: pair.type, designType: pair.type === "primer_pair" ? "primer" as const : "siRNA" as const, versions: [] as typeof records[number]["versions"], pairMembers: pair.members, entityLinkCount: 0 }));
+  const pairRows = pairs.map((pair) => ({ ...pair, kind: "paired" as const, href: `/sequences/pairs/${pair.id}`, pairType: pair.type, designType: sequencePairDefinition(pair.type).designType, versions: [] as typeof records[number]["versions"], pairMembers: pair.members, entityLinkCount: 0 }));
   const sequences = [...singleRows, ...pairRows].filter((record) => {
     const latest = record.versions[0];
     const versions = record.kind === "paired" ? record.pairMembers.map((member) => member.sequenceVersion) : latest ? [latest] : [];
@@ -140,6 +142,7 @@ export default async function SequencesPage({ searchParams }: { searchParams?: P
               targetName="序列条目"
               typeLabel="设计类型"
               typeOptions={sequenceDesignTypes}
+              typeDisabledIds={pairRows.map((pair) => pair.id)}
               projects={projects}
               action={bulkUpdateSequences}
               layout="sidebar"

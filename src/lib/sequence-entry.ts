@@ -14,6 +14,10 @@ export function sequencePairDefinition(type: SequencePairTypeValue) {
   return pairDefinitions[type];
 }
 
+export function sequencePairTypeForDesignType(designType: string): SequencePairTypeValue | undefined {
+  return designType === "primer" ? "primer_pair" : designType === "siRNA" ? "sirna_duplex" : undefined;
+}
+
 type SequenceCreationPreset = {
   recordKind: SequenceRecordKindValue;
   entryClass: SequenceEntryClassValue;

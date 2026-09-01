@@ -4,6 +4,7 @@ import {
   normalizeSequenceOwnership,
   sequenceCreationPreset,
   sequencePairDefinition,
+  sequencePairTypeForDesignType,
 } from "./sequence-entry";
 
 describe("sequence creation presets", () => {
@@ -43,6 +44,12 @@ describe("sequence creation presets", () => {
   it("keeps molecule and design semantics tied to the pair type", () => {
     expect(sequencePairDefinition("primer_pair")).toMatchObject({ designType: "primer", moleculeType: "DNA", roles: ["forward", "reverse"] });
     expect(sequencePairDefinition("sirna_duplex")).toMatchObject({ designType: "siRNA", moleculeType: "RNA", roles: ["sense", "antisense"] });
+  });
+
+  it("maps only pair-capable design types back to pair types", () => {
+    expect(sequencePairTypeForDesignType("primer")).toBe("primer_pair");
+    expect(sequencePairTypeForDesignType("siRNA")).toBe("sirna_duplex");
+    expect(sequencePairTypeForDesignType("plasmid")).toBeUndefined();
   });
 });
 

@@ -20,7 +20,7 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { reserveRecordCode } from "@/lib/record-codes";
+import { reserveRecordCode, reserveRecordCodes } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
 import { normalizeSequenceOwnership, sequencePairDefinition, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
@@ -215,8 +215,9 @@ async function createSequenceInTransaction(
   tx: Prisma.TransactionClient,
   input: SequenceInput,
   source: { type?: "manual" | "fasta_import" | "csv_import" | "xlsx_import"; fileName?: string } = {},
+  reservedCode?: string,
 ) {
-  const code = await reserveRecordCode(tx, "sequence");
+  const code = reservedCode ?? await reserveRecordCode(tx, "sequence");
   const record = await tx.sequence.create({
     data: {
       code,
@@ -344,8 +345,8 @@ function parsePairForm(formData: FormData) {
 
 type PairInput = ReturnType<typeof preparePairInput>;
 
-async function createPairInTransaction(tx: Prisma.TransactionClient, input: PairInput, source: { type?: string; fileName?: string } = {}) {
-  const pairCode = await reserveRecordCode(tx, "sequencePair");
+async function createPairInTransaction(tx: Prisma.TransactionClient, input: PairInput, source: { type?: string; fileName?: string } = {}, reservedCodes?: { pair: string; members: readonly [string, string] }) {
+  const pairCode = reservedCodes?.pair ?? await reserveRecordCode(tx, "sequencePair");
   const pair = await tx.sequencePair.create({
     data: {
       code: pairCode,
@@ -362,7 +363,7 @@ async function createPairInTransaction(tx: Prisma.TransactionClient, input: Pair
   });
 
   for (const [order, member] of input.members.entries()) {
-    const memberCode = await reserveRecordCode(tx, "sequence");
+    const memberCode = reservedCodes?.members[order] ?? await reserveRecordCode(tx, "sequence");
     const component = await tx.sequence.create({
       data: {
         code: memberCode,
@@ -872,9 +873,23 @@ export async function importSequences(_previousState: SequenceManageState, formD
     });
 
     await prisma.$transaction(async (tx) => {
+      const pairCount = prepared.filter((item) => item.kind === "pair").length;
+      const sequenceCodes = await reserveRecordCodes(tx, "sequence", prepared.length + pairCount);
+      const pairCodes = pairCount ? await reserveRecordCodes(tx, "sequencePair", pairCount) : [];
+      let sequenceCodeIndex = 0;
+      let pairCodeIndex = 0;
       for (const item of prepared) {
-        if (item.kind === "pair") await createPairInTransaction(tx, item.input, { type: sourceType, fileName: file.name });
-        else await createSequenceInTransaction(tx, item.input, { type: sourceType, fileName: file.name });
+        if (item.kind === "pair") {
+          const pairCode = pairCodes[pairCodeIndex++];
+          const firstMemberCode = sequenceCodes[sequenceCodeIndex++];
+          const secondMemberCode = sequenceCodes[sequenceCodeIndex++];
+          if (!pairCode || !firstMemberCode || !secondMemberCode) throw new Error("Import code reservation was incomplete.");
+          await createPairInTransaction(tx, item.input, { type: sourceType, fileName: file.name }, { pair: pairCode, members: [firstMemberCode, secondMemberCode] });
+        } else {
+          const sequenceCode = sequenceCodes[sequenceCodeIndex++];
+          if (!sequenceCode) throw new Error("Import code reservation was incomplete.");
+          await createSequenceInTransaction(tx, item.input, { type: sourceType, fileName: file.name }, sequenceCode);
+        }
       }
     }, { maxWait: 15_000, timeout: 120_000 });
     revalidatePath("/sequences");

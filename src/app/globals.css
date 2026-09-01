@@ -201,6 +201,16 @@
   --ln-wysiwyg-relevant-search-padding-y: 0.48rem; /* Relevant items 搜索区上下内边距。 */
   --ln-wysiwyg-relevant-results-padding-y: 0.35rem; /* 已关联项和搜索结果区域上下内边距。 */
   --ln-wysiwyg-relevant-result-gap: 0.5rem; /* 搜索结果主信息和操作之间距离。 */
+  --ln-wysiwyg-relevant-search-gap: 0.4rem; /* 搜索框与类型筛选器间距。 */
+  --ln-wysiwyg-relevant-control-padding-x: 0.5rem; /* Relevant items 搜索控件左右内边距。 */
+  --ln-wysiwyg-relevant-input-gap: 0.4rem; /* 搜索图标与输入文字间距。 */
+  --ln-wysiwyg-relevant-filter-padding-x: 0.45rem; /* 类型筛选器左右内边距。 */
+  --ln-wysiwyg-relevant-icon-size: 0.75rem; /* Relevant items 行内图标尺寸。 */
+  --ln-wysiwyg-relevant-list-gap: 1px; /* 已关联项和检索结果行间分隔。 */
+  --ln-wysiwyg-relevant-action-gap: 0.25rem; /* 行内操作图标与文字间距。 */
+  --ln-wysiwyg-relevant-action-padding-x: 0.42rem; /* 行内操作左右内边距。 */
+  --ln-wysiwyg-relevant-empty-padding: 0.45rem 0.15rem; /* 空状态提示内边距。 */
+  --ln-wysiwyg-relevant-primary-gap: 0.35rem; /* Primary checkbox 与文字间距。 */
   --ln-wysiwyg-premise-control-min-height: 3.1rem; /* 研究方案 premise 文本框最小高度。 */
   --ln-wysiwyg-premise-control-padding-x: 0.58rem; /* premise 文本框左右内边距。 */
   --ln-wysiwyg-premise-control-padding-y: 0.42rem; /* premise 文本框上下内边距。 */
@@ -922,7 +932,7 @@ textarea {
   align-items: center;
   border-bottom: 1px solid var(--hairline);
   display: grid;
-  gap: 0.4rem;
+  gap: var(--ln-wysiwyg-relevant-search-gap);
   grid-template-columns: minmax(0, 1fr) var(--ln-wysiwyg-relevant-filter-width);
   padding: var(--ln-wysiwyg-relevant-search-padding-y) var(--ln-wysiwyg-properties-padding-x);
 }
@@ -934,7 +944,7 @@ textarea {
   display: flex;
   height: var(--ln-wysiwyg-properties-control-height);
   min-width: 0;
-  padding-inline: 0.5rem;
+  padding-inline: var(--ln-wysiwyg-relevant-control-padding-x);
 }
 
 .document-editor-relevant-search svg,
@@ -942,8 +952,8 @@ textarea {
 .document-editor-relation-result button svg,
 .document-editor-linked-row button svg,
 .document-editor-relevant-row > svg {
-  height: 0.75rem;
-  width: 0.75rem;
+  height: var(--ln-wysiwyg-relevant-icon-size);
+  width: var(--ln-wysiwyg-relevant-icon-size);
 }
 
 .document-editor-relevant-search input {
@@ -952,7 +962,7 @@ textarea {
   height: 100%;
   min-width: 0;
   outline: 0;
-  padding-left: 0.4rem;
+  padding-left: var(--ln-wysiwyg-relevant-input-gap);
 }
 
 .document-editor-relevant-search select {
@@ -960,13 +970,13 @@ textarea {
   border-radius: var(--ln-wysiwyg-relevant-control-radius);
   font-size: var(--ln-wysiwyg-properties-value-size);
   height: var(--ln-wysiwyg-properties-control-height);
-  padding-inline: 0.45rem;
+  padding-inline: var(--ln-wysiwyg-relevant-filter-padding-x);
 }
 
 .document-editor-linked-items,
 .document-editor-relation-results {
   display: grid;
-  gap: 1px;
+  gap: var(--ln-wysiwyg-relevant-list-gap);
   padding: var(--ln-wysiwyg-relevant-results-padding-y) var(--ln-wysiwyg-properties-padding-x);
 }
 
@@ -1033,21 +1043,21 @@ textarea {
   display: inline-flex;
   font-size: var(--ln-wysiwyg-relevant-action-font-size);
   font-weight: 600;
-  gap: 0.25rem;
+  gap: var(--ln-wysiwyg-relevant-action-gap);
   height: var(--ln-wysiwyg-relevant-action-height);
-  padding-inline: 0.42rem;
+  padding-inline: var(--ln-wysiwyg-relevant-action-padding-x);
   white-space: nowrap;
 }
 
 .document-editor-linked-row > button { color: var(--error); }
 .document-editor-relation-result > button:disabled { color: var(--muted); opacity: 0.55; }
 .document-editor-system-lock { border-color: transparent; color: var(--muted); }
-.document-editor-relevant-empty-message { padding: 0.45rem 0.15rem; }
+.document-editor-relevant-empty-message { padding: var(--ln-wysiwyg-relevant-empty-padding); }
 
 .document-editor-primary-toggle {
   align-items: center;
   display: flex;
-  gap: 0.35rem;
+  gap: var(--ln-wysiwyg-relevant-primary-gap);
   white-space: nowrap;
 }
 

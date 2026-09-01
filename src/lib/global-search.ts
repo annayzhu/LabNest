@@ -124,6 +124,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
       procurementInquiries,
       procurementQuoteLines,
       sequences,
+      sequencePairs,
       attachments,
       referenceConnectors,
     ] = await Promise.all([
@@ -394,6 +395,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
       }),
       prisma.sequence.findMany({
         where: {
+          pairMembership: { is: null },
           OR: [
             { code: textFilter(normalizedQuery) },
             { name: textFilter(normalizedQuery) },
@@ -406,6 +408,23 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
           ],
         },
         include: { project: true, versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
+        take: perSourceLimit,
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.sequencePair.findMany({
+        where: {
+          OR: [
+            { code: textFilter(normalizedQuery) },
+            { name: textFilter(normalizedQuery) },
+            { targetName: textFilter(normalizedQuery) },
+            { organism: textFilter(normalizedQuery) },
+            { description: textFilter(normalizedQuery) },
+            { project: { name: textFilter(normalizedQuery) } },
+            { members: { some: { sequenceVersion: { sequence: textFilter(normalizedQuery) } } } },
+            { members: { some: { sequenceVersion: { validationSummary: textFilter(normalizedQuery) } } } },
+          ],
+        },
+        include: { project: true, members: { include: { sequenceVersion: true }, orderBy: { order: "asc" } } },
         take: perSourceLimit,
         orderBy: { updatedAt: "desc" },
       }),
@@ -579,6 +598,15 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
         location: `${sequence.project?.name ? `Projects / ${sequence.project.name} / ` : ""}Sequences`,
         href: `/sequences/${sequence.id}`,
         matchedText: firstMatch(normalizedQuery, [sequence.targetName, sequence.organism, sequence.description, sequence.versions[0]?.validationSummary, sequence.versions[0]?.sequence]),
+      })),
+      ...sequencePairs.map((pair) => ({
+        id: pair.id,
+        type: "sequence" as const,
+        title: pair.name,
+        subtitle: `${pair.code} · ${pair.type.replaceAll("_", " ")} · 2 members`,
+        location: `${pair.project?.name ? `Projects / ${pair.project.name} / ` : ""}Sequences`,
+        href: `/sequences/pairs/${pair.id}`,
+        matchedText: firstMatch(normalizedQuery, [pair.targetName, pair.organism, pair.description, ...pair.members.flatMap((member) => [member.sequenceVersion.validationSummary, member.sequenceVersion.sequence])]),
       })),
       ...attachments.map((attachment) => ({
         id: attachment.id,

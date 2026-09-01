@@ -1,15 +1,19 @@
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
+import { sequencePairMetadataFieldDefinitions } from "@/lib/sequence-entry";
 
 const headers = [
-  "name", "designType", "moleculeType", "sequence", "status", "validationStatus",
+  "name", "entryClass", "ownershipScope", "projectId", "designType", "moleculeType", "sequence", "pairType", "forwardSequence", "reverseSequence", "senseSequence", "antisenseSequence", "status", "validationStatus",
   "validationSummary", "targetName", "organism", "description", "topology",
   "strandedness", "displayVersion", "featuresJson", "modificationsJson",
+  ...sequencePairMetadataFieldDefinitions.map((field) => field.key),
 ];
 
-const sample: Record<string, string> = {
-  name: "FBN2 qPCR forward primer",
-  designType: "primer",
+const singleSample: Record<string, string> = {
+  name: "Example DNA sequence",
+  entryClass: "nucleic_acid",
+  ownershipScope: "library",
+  designType: "fragment",
   moleculeType: "DNA",
   sequence: "ATGCTGACCTGAACTG",
   status: "draft",
@@ -25,6 +29,34 @@ const sample: Record<string, string> = {
   modificationsJson: "[]",
 };
 
+const pairSample: Record<string, string> = {
+  name: "FBN2 qPCR primer pair",
+  entryClass: "oligo",
+  ownershipScope: "project",
+  projectId: "replace-with-project-id",
+  designType: "primer",
+  moleculeType: "DNA",
+  sequence: "",
+  pairType: "primer_pair",
+  forwardSequence: "ATGCTGACCTGAACTG",
+  reverseSequence: "TCAGGTTCAGGTCAGT",
+  status: "draft",
+  validationStatus: "unverified",
+  targetName: "FBN2",
+  organism: "Homo sapiens",
+  description: "One row is one paired entry. Replace or remove this example row.",
+  topology: "linear",
+  strandedness: "single",
+  displayVersion: "1.0",
+  featuresJson: "[]",
+  modificationsJson: "[]",
+  application: "qPCR",
+  transcriptAccession: "NM_000138.5",
+  ampliconLengthBp: "120",
+  exonJunction: "Spans exon junction",
+  designSource: "Primer-BLAST",
+};
+
 function csvValue(value: unknown) {
   const text = String(value ?? "");
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -33,20 +65,23 @@ function csvValue(value: unknown) {
 export async function GET(request: Request) {
   const format = new URL(request.url).searchParams.get("format") === "csv" ? "csv" : "xlsx";
   if (format === "csv") {
-    const body = `${headers.map(csvValue).join(",")}\n${headers.map((header) => csvValue(sample[header])).join(",")}\n`;
+    const body = `${headers.map(csvValue).join(",")}\n${headers.map((header) => csvValue(singleSample[header])).join(",")}\n${headers.map((header) => csvValue(pairSample[header])).join(",")}\n`;
     return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="LabNest_Sequence_Import_Template.csv"' } });
   }
 
   const data: SheetData = [
     headers.map((header) => ({ value: header, type: String, fontWeight: "bold", backgroundColor: "#DDE8EA", wrap: true })),
-    headers.map((header) => ({ value: sample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
+    headers.map((header) => ({ value: singleSample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
+    headers.map((header) => ({ value: pairSample[header] ?? "", type: String, backgroundColor: "#F7F4ED", fontStyle: "italic", textColor: "#6B6B63", wrap: true })),
   ];
   const instructions: SheetData = [
     [{ value: "LabNest Sequence structured import", type: String, fontWeight: "bold" }],
-    ["Keep header names unchanged and add one Sequence record per row."],
+    ["Keep header names unchanged and add one top-level Sequence entry per row."],
     ["Delete or replace the example row before importing."],
     ["designType: plasmid, primer, probe, siRNA, shRNA, gRNA, oligo, peptide, protein, fragment, other"],
     ["moleculeType: DNA, RNA, Protein"],
+    ["ownershipScope: library or project. Project-owned rows require projectId."],
+    ["pairType: primer_pair uses forwardSequence + reverseSequence; sirna_duplex uses senseSequence + antisenseSequence. A pair is one entry."],
     ["siRNA convention: RNA sequences may end in T or TT to record a 3′ dT overhang; T remains invalid elsewhere in an RNA sequence."],
     ["status: draft, active, inactive, archived"],
     ["validationStatus: unverified, validation_in_progress, validated_recommended, validated_limited, validated_not_recommended, inconclusive"],

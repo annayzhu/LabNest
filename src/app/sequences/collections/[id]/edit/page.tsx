@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SequenceCollectionForm } from "@/components/SequenceCollectionForm";
 import { prisma } from "@/lib/db";
 import { updateSequenceCollection } from "../../../actions";
+import { sequenceCollectionTypes } from "@/lib/sequence-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function EditSequenceCollectionPage({ params }: { params: P
     prisma.sequence.findMany({ include: { versions: { orderBy: { versionNumber: "desc" } } }, orderBy: { name: "asc" } }),
   ]);
   if (!collection) notFound();
+  const editableType = sequenceCollectionTypes.find((item) => item.value === collection.type)?.value ?? "other";
   const versions = sequences.flatMap((record) => record.versions.map((version) => ({ id: version.id, sequenceId: record.id, label: `${record.code} · ${record.name} · v${version.displayVersion}`, moleculeType: version.moleculeType, designType: record.designType })));
-  return <AppShell><div className="space-y-4"><PageHeader title={`Edit ${collection.name}`} /><SequenceCollectionForm action={updateSequenceCollection} projects={projects} versions={versions} initial={{ id: collection.id, name: collection.name, type: collection.type, status: collection.status, description: collection.description, projectId: collection.projectId, members: collection.members.map((member) => ({ sequenceVersionId: member.sequenceVersionId, role: member.role, note: member.note ?? "" })) }} /></div></AppShell>;
+  return <AppShell><div className="space-y-4"><PageHeader title={`Edit ${collection.name}`} /><SequenceCollectionForm action={updateSequenceCollection} projects={projects} versions={versions} initial={{ id: collection.id, name: collection.name, type: editableType, status: collection.status, description: collection.description, ownershipScope: collection.ownershipScope, projectId: collection.projectId, members: collection.members.map((member) => ({ sequenceVersionId: member.sequenceVersionId, role: member.role, note: member.note ?? "" })) }} /></div></AppShell>;
 }

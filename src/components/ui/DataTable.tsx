@@ -49,7 +49,7 @@ export function DataTable<T>({
           <colgroup>
             {selection ? <col style={{ width: "var(--ln-list-table-selection-col-width)" }} /> : null}
             {columns.map((column, index) => (
-              <col key={column.key} data-resizable-column-index={selection ? index + 1 : index} style={{ width: columnWidth(column.width) }} />
+              <col key={column.key} data-resizable-column-index={selection ? index + 1 : index} className={column.className} style={{ width: columnWidth(column.width) }} />
             ))}
           </colgroup>
           <thead>

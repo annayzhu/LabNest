@@ -9,7 +9,10 @@ import type { Prisma } from "@/generated/prisma/client";
 import {
   SequenceCollectionType,
   SequenceDesignType,
+  SequenceEntryClass,
   SequenceLifecycleStatus,
+  SequenceOwnershipScope,
+  SequencePairType,
   SequenceStrandedness,
   SequenceTopology,
   SequenceType,
@@ -17,8 +20,9 @@ import {
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-import { reserveRecordCode } from "@/lib/record-codes";
+import { reserveRecordCode, reserveRecordCodes } from "@/lib/record-codes";
 import { designMetadataFields } from "@/lib/sequence-registry";
+import { normalizeSequenceOwnership, normalizeSequencePairMetadata, sequencePairDefinition, sequencePairMetadataFields, sequencePairRoles } from "@/lib/sequence-entry";
 import { parseFasta, validateSequence, type MoleculeType } from "@/lib/sequence";
 
 const featureSchema = z.object({
@@ -39,10 +43,12 @@ const modificationSchema = z.object({
 const sequenceInputSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Sequence name is required.").max(180),
+  entryClass: z.enum(SequenceEntryClass).default("nucleic_acid"),
+  ownershipScope: z.enum(SequenceOwnershipScope).default("library"),
   designType: z.enum(SequenceDesignType),
   status: z.enum(SequenceLifecycleStatus),
   description: z.string().trim().max(5000).optional(),
-  projectId: z.string().trim().optional(),
+  projectId: z.string().trim().nullable().optional(),
   targetName: z.string().trim().max(180).optional(),
   organism: z.string().trim().max(180).optional(),
   moleculeType: z.enum(SequenceType),
@@ -99,6 +105,8 @@ function parseSequenceForm(formData: FormData) {
   return prepareSequenceInput({
     id: optionalText(formData.get("id")),
     name: formData.get("name"),
+    entryClass: formData.get("entryClass") ?? "nucleic_acid",
+    ownershipScope: formData.get("ownershipScope") ?? "library",
     designType: formData.get("designType") ?? "other",
     status: formData.get("status") ?? "draft",
     description: optionalText(formData.get("description")),
@@ -121,6 +129,7 @@ function parseSequenceForm(formData: FormData) {
 
 function prepareSequenceInput(value: unknown): SequenceInput {
   const parsed = sequenceInputSchema.parse(value);
+  const ownership = normalizeSequenceOwnership(parsed.ownershipScope, parsed.projectId);
   const validation = validateSequence(parsed.sequence, parsed.moleculeType as MoleculeType, {
     allowTerminalDeoxythymidineOverhang: parsed.designType === "siRNA",
   });
@@ -135,7 +144,7 @@ function prepareSequenceInput(value: unknown): SequenceInput {
   if (["validated_recommended", "validated_limited", "validated_not_recommended", "inconclusive"].includes(parsed.validationStatus) && !parsed.validationSummary) {
     throw new Error("Record a validation summary for this validation conclusion.");
   }
-  return { ...parsed, sequence: validation.normalized };
+  return { ...parsed, ...ownership, sequence: validation.normalized };
 }
 
 function checksum(sequence: string) {
@@ -206,12 +215,15 @@ async function createSequenceInTransaction(
   tx: Prisma.TransactionClient,
   input: SequenceInput,
   source: { type?: "manual" | "fasta_import" | "csv_import" | "xlsx_import"; fileName?: string } = {},
+  reservedCode?: string,
 ) {
-  const code = await reserveRecordCode(tx, "sequence");
+  const code = reservedCode ?? await reserveRecordCode(tx, "sequence");
   const record = await tx.sequence.create({
     data: {
       code,
       name: input.name,
+      entryClass: input.entryClass,
+      ownershipScope: input.ownershipScope,
       designType: input.designType,
       status: input.status,
       description: input.description,
@@ -277,6 +289,168 @@ export async function createSequence(_previousState: FormActionState, formData: 
   redirect(`/sequences/${id}`);
 }
 
+const pairInputSchema = z.object({
+  name: z.string().trim().min(1, "Pair name is required.").max(180),
+  pairType: z.enum(SequencePairType),
+  ownershipScope: z.enum(SequenceOwnershipScope),
+  projectId: z.string().trim().optional(),
+  status: z.enum(SequenceLifecycleStatus),
+  description: z.string().trim().max(5000).optional(),
+  targetName: z.string().trim().max(180).optional(),
+  organism: z.string().trim().max(180).optional(),
+  validationStatus: z.enum(SequenceValidationStatus),
+  validationSummary: z.string().trim().max(5000).optional(),
+  metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
+  members: z.array(z.object({
+    role: z.string().trim().min(1).max(40),
+    sequence: z.string().max(10_000_000),
+  })).length(2),
+});
+
+function preparePairInput(value: unknown) {
+  const parsed = pairInputSchema.parse(value);
+  const pairType = parsed.pairType;
+  const roles = sequencePairRoles(pairType);
+  const roleMap = new Map(parsed.members.map((member) => [member.role, member.sequence]));
+  const orderedMembers = roles.map((role) => ({ role, sequence: roleMap.get(role) ?? "" }));
+  const ownership = normalizeSequenceOwnership(parsed.ownershipScope, parsed.projectId);
+  const moleculeType: MoleculeType = sequencePairDefinition(pairType).moleculeType;
+  const members = orderedMembers.map((member) => {
+    const validation = validateSequence(member.sequence, moleculeType, { allowTerminalDeoxythymidineOverhang: pairType === "sirna_duplex" });
+    if (validation.errors.length) throw new Error(`${member.role}: ${validation.errors.join(" ")}`);
+    return { ...member, sequence: validation.normalized };
+  });
+  if (["validated_recommended", "validated_limited", "validated_not_recommended", "inconclusive"].includes(parsed.validationStatus) && !parsed.validationSummary) {
+    throw new Error("Record a validation summary for this validation conclusion.");
+  }
+  return { ...parsed, ...ownership, moleculeType, members };
+}
+
+function parsePairForm(formData: FormData) {
+  const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
+  const roles = sequencePairRoles(pairType);
+  const geneName = String(formData.get("geneName") ?? "").trim();
+  const metadata = normalizeSequencePairMetadata(pairType, Object.fromEntries(sequencePairMetadataFields(pairType).map((field) => [field.key, formData.get(`meta_${field.key}`)])));
+  return preparePairInput({
+    name: geneName,
+    pairType,
+    ownershipScope: formData.get("ownershipScope") ?? "library",
+    projectId: optionalText(formData.get("projectId")),
+    status: formData.get("status") ?? "draft",
+    description: optionalText(formData.get("description")),
+    targetName: geneName,
+    organism: optionalText(formData.get("organism")),
+    validationStatus: formData.get("validationStatus") ?? "unverified",
+    validationSummary: optionalText(formData.get("validationSummary")),
+    metadata,
+    members: roles.map((role) => ({ role, sequence: formData.get(`sequence_${role}`) ?? "" })),
+  });
+}
+
+type PairInput = ReturnType<typeof preparePairInput>;
+
+async function createPairInTransaction(tx: Prisma.TransactionClient, input: PairInput, source: { type?: string; fileName?: string } = {}, reservedCodes?: { pair: string; members: readonly [string, string] }) {
+  const pairCode = reservedCodes?.pair ?? await reserveRecordCode(tx, "sequencePair");
+  const pair = await tx.sequencePair.create({
+    data: {
+      code: pairCode,
+      name: input.name,
+      type: input.pairType,
+      ownershipScope: input.ownershipScope,
+      status: input.status,
+      description: input.description,
+      projectId: input.projectId,
+      targetName: input.targetName,
+      organism: input.organism,
+      metadataJson: { ...input.metadata, sourceType: source.type ?? "manual", sourceFileName: source.fileName },
+    },
+  });
+
+  for (const [order, member] of input.members.entries()) {
+    const memberCode = reservedCodes?.members[order] ?? await reserveRecordCode(tx, "sequence");
+    const component = await tx.sequence.create({
+      data: {
+        code: memberCode,
+        name: `${input.name} · ${member.role}`,
+        entryClass: "oligo",
+        ownershipScope: input.ownershipScope,
+        designType: sequencePairDefinition(input.pairType).designType,
+        status: input.status,
+        description: input.description,
+        projectId: input.projectId,
+        targetName: input.targetName,
+        organism: input.organism,
+        metadataJson: { pairId: pair.id, pairRole: member.role },
+        versions: {
+          create: {
+            versionNumber: 1,
+            displayVersion: "1.0",
+            moleculeType: input.moleculeType,
+            sequence: member.sequence,
+            checksum: checksum(member.sequence),
+            topology: "linear",
+            strandedness: "single",
+            validationStatus: input.validationStatus,
+            validationSummary: input.validationSummary,
+            validatedAt: ["validated_recommended", "validated_limited", "validated_not_recommended", "inconclusive"].includes(input.validationStatus) ? new Date() : undefined,
+            changeSummary: "Initial paired sequence member",
+            sourceType: source.type === "xlsx_import" ? "xlsx_import" : source.type === "csv_import" ? "csv_import" : "manual",
+            sourceFileName: source.fileName,
+          },
+        },
+      },
+      include: { versions: true },
+    });
+    const version = component.versions[0];
+    if (!version) throw new Error(`The ${member.role} member version could not be created.`);
+    await tx.sequencePairMember.create({ data: { pairId: pair.id, sequenceId: component.id, sequenceVersionId: version.id, role: member.role as "forward" | "reverse" | "sense" | "antisense", order } });
+  }
+  await tx.activityLog.create({ data: { action: "create", targetType: "sequence_pair", targetId: pair.id, metadataJson: { code: pairCode, pairType: input.pairType, memberCount: 2, ownershipScope: input.ownershipScope, projectId: input.projectId, sourceType: source.type ?? "manual" } } });
+  return pair;
+}
+
+export async function createSequencePair(_previousState: FormActionState, formData: FormData): Promise<FormActionState> {
+  let id: string;
+  try {
+    const input = parsePairForm(formData);
+    const record = await prisma.$transaction((tx) => createPairInTransaction(tx, input));
+    id = record.id;
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The paired Sequence entry could not be created.") };
+  }
+  revalidatePath("/sequences");
+  redirect(`/sequences/pairs/${id}`);
+}
+
+export async function updateSequencePair(_previousState: FormActionState, formData: FormData): Promise<FormActionState> {
+  let id = "";
+  try {
+    id = z.string().min(1).parse(formData.get("id"));
+    const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
+    const name = z.string().trim().min(1).max(180).parse(formData.get("geneName"));
+    const ownership = normalizeSequenceOwnership(formData.get("ownershipScope") ?? "library", optionalText(formData.get("projectId")));
+    const status = z.enum(SequenceLifecycleStatus).parse(formData.get("status") ?? "draft");
+    const metadata = normalizeSequencePairMetadata(pairType, Object.fromEntries(sequencePairMetadataFields(pairType).map((field) => [field.key, formData.get(`meta_${field.key}`)])));
+    const organism = optionalText(formData.get("organism"));
+    const description = optionalText(formData.get("description"));
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.sequencePair.findUnique({ where: { id }, include: { members: true } });
+      if (!current || current.type !== pairType) throw new Error("This paired Sequence entry no longer exists or changed type.");
+      const sourceMetadata = current.metadataJson && typeof current.metadataJson === "object" && !Array.isArray(current.metadataJson) ? current.metadataJson as Record<string, unknown> : {};
+      await tx.sequencePair.update({ where: { id }, data: { name, targetName: name, organism, description, status, ...ownership, metadataJson: { sourceType: sourceMetadata.sourceType ?? "manual", sourceFileName: sourceMetadata.sourceFileName ?? null, ...metadata } } });
+      for (const member of current.members) {
+        await tx.sequence.update({ where: { id: member.sequenceId }, data: { name: `${name} · ${member.role}`, targetName: name, organism, description, status, ...ownership } });
+      }
+      await tx.activityLog.create({ data: { action: "update", targetType: "sequence_pair", targetId: id, metadataJson: { previousName: current.name, name, previousStatus: current.status, status, ownershipScope: ownership.ownershipScope, projectId: ownership.projectId } } });
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The paired Sequence entry could not be updated.") };
+  }
+  revalidatePath("/sequences");
+  revalidatePath(`/sequences/pairs/${id}`);
+  redirect(`/sequences/pairs/${id}`);
+}
+
 function entityTypeForDesign(designType: SequenceInput["designType"]): "plasmid" | "primer" | "oligo" | "protein" | "other" {
   if (designType === "plasmid") return "plasmid";
   if (designType === "primer") return "primer";
@@ -307,6 +481,8 @@ export async function updateSequence(_previousState: FormActionState, formData: 
         where: { id },
         data: {
           name: input.name,
+          entryClass: input.entryClass,
+          ownershipScope: input.ownershipScope,
           designType: input.designType,
           status: input.status,
           description: input.description,
@@ -486,6 +662,7 @@ const collectionSchema = z.object({
   type: z.enum(SequenceCollectionType),
   status: z.enum(SequenceLifecycleStatus),
   description: z.string().trim().max(5000).optional(),
+  ownershipScope: z.enum(SequenceOwnershipScope).default("library"),
   projectId: z.string().trim().optional(),
   members: z.array(collectionMemberSchema).min(1, "Add at least one sequence version.").max(500),
 });
@@ -521,15 +698,18 @@ async function validateProjectIfProvided(tx: Prisma.TransactionClient, projectId
 }
 
 function parseCollectionForm(formData: FormData) {
-  return collectionSchema.parse({
+  const parsed = collectionSchema.parse({
     id: optionalText(formData.get("id")),
     name: formData.get("name"),
     type: formData.get("type"),
     status: formData.get("status") ?? "draft",
     description: optionalText(formData.get("description")),
+    ownershipScope: formData.get("ownershipScope") ?? "library",
     projectId: optionalText(formData.get("projectId")),
     members: parseJsonArray(formData.get("membersJson"), "Collection member"),
   });
+  if (parsed.type === "primer_pair" || parsed.type === "sirna_duplex") throw new Error("Create primer pairs and siRNA duplexes as paired Sequence entries, not Collections.");
+  return { ...parsed, ...normalizeSequenceOwnership(parsed.ownershipScope, parsed.projectId) };
 }
 
 function ensureDistinctMembers(members: Array<{ sequenceVersionId: string; role: string }>) {
@@ -551,6 +731,7 @@ export async function createSequenceCollection(_previousState: FormActionState, 
           type: parsed.type,
           status: parsed.status,
           description: parsed.description,
+          ownershipScope: parsed.ownershipScope,
           projectId: parsed.projectId,
           members: { create: parsed.members.map((member, order) => ({ ...member, note: member.note || null, order })) },
         },
@@ -584,6 +765,7 @@ export async function updateSequenceCollection(_previousState: FormActionState, 
           type: parsed.type,
           status: parsed.status,
           description: parsed.description,
+          ownershipScope: parsed.ownershipScope,
           projectId: parsed.projectId || null,
           members: { create: parsed.members.map((member, order) => ({ ...member, note: member.note || null, order })) },
         },
@@ -655,6 +837,9 @@ export async function importSequences(_previousState: SequenceManageState, formD
     const extension = file.name.toLowerCase().split(".").pop();
     const defaultDesignType = z.enum(SequenceDesignType).parse(formData.get("defaultDesignType") ?? "other");
     const defaultMoleculeType = z.enum(SequenceType).parse(formData.get("defaultMoleculeType") ?? "DNA");
+    const defaultOwnershipScope = z.enum(SequenceOwnershipScope).parse(formData.get("ownershipScope") ?? "library");
+    const defaultProjectId = optionalText(formData.get("projectId"));
+    normalizeSequenceOwnership(defaultOwnershipScope, defaultProjectId);
     const buffer = Buffer.from(await file.arrayBuffer());
     let rows: Record<string, unknown>[];
     let sourceType: "fasta_import" | "csv_import" | "xlsx_import";
@@ -673,14 +858,34 @@ export async function importSequences(_previousState: SequenceManageState, formD
 
     const prepared = rows.map((record, index) => {
       try {
+        const importedPairType = importField(record, "pairType");
+        if (importedPairType === "primer_pair" || importedPairType === "sirna_duplex") {
+          const roles = sequencePairRoles(importedPairType);
+          return { kind: "pair" as const, input: preparePairInput({
+            name: importField(record, "name") ?? `Imported pair ${index + 1}`,
+            pairType: importedPairType,
+            ownershipScope: importField(record, "ownershipScope") ?? defaultOwnershipScope,
+            projectId: importField(record, "projectId") ?? defaultProjectId,
+            status: importField(record, "status") ?? "draft",
+            description: importField(record, "description"),
+            targetName: importField(record, "targetName"),
+            organism: importField(record, "organism"),
+            validationStatus: importField(record, "validationStatus") ?? "unverified",
+            validationSummary: importField(record, "validationSummary"),
+            metadata: normalizeSequencePairMetadata(importedPairType, Object.fromEntries(sequencePairMetadataFields(importedPairType).map((field) => [field.key, importField(record, field.key)]))),
+            members: roles.map((role) => ({ role, sequence: importField(record, `${role}Sequence`) ?? "" })),
+          }) };
+        }
         const moleculeType = (importField(record, "moleculeType") ?? defaultMoleculeType) as MoleculeType;
         const designType = importField(record, "designType") ?? defaultDesignType;
-        return prepareSequenceInput({
+        return { kind: "single" as const, input: prepareSequenceInput({
           name: importField(record, "name") ?? `Imported sequence ${index + 1}`,
+          entryClass: importField(record, "entryClass") ?? (moleculeType === "Protein" ? "amino_acid" : ["primer", "probe", "siRNA", "shRNA", "gRNA", "oligo"].includes(designType) ? "oligo" : "nucleic_acid"),
+          ownershipScope: importField(record, "ownershipScope") ?? defaultOwnershipScope,
           designType,
           status: importField(record, "status") ?? "draft",
           description: importField(record, "description"),
-          projectId: undefined,
+          projectId: importField(record, "projectId") ?? defaultProjectId,
           targetName: importField(record, "targetName"),
           organism: importField(record, "organism"),
           moleculeType,
@@ -694,7 +899,7 @@ export async function importSequences(_previousState: SequenceManageState, formD
           features: jsonImportArray(record, "featuresJson"),
           modifications: jsonImportArray(record, "modificationsJson"),
           metadata: {},
-        });
+        }) };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Invalid sequence record.";
         throw new Error(`Row ${index + 1}: ${message}`);
@@ -702,10 +907,27 @@ export async function importSequences(_previousState: SequenceManageState, formD
     });
 
     await prisma.$transaction(async (tx) => {
-      for (const input of prepared) await createSequenceInTransaction(tx, input, { type: sourceType, fileName: file.name });
-    });
+      const pairCount = prepared.filter((item) => item.kind === "pair").length;
+      const sequenceCodes = await reserveRecordCodes(tx, "sequence", prepared.length + pairCount);
+      const pairCodes = pairCount ? await reserveRecordCodes(tx, "sequencePair", pairCount) : [];
+      let sequenceCodeIndex = 0;
+      let pairCodeIndex = 0;
+      for (const item of prepared) {
+        if (item.kind === "pair") {
+          const pairCode = pairCodes[pairCodeIndex++];
+          const firstMemberCode = sequenceCodes[sequenceCodeIndex++];
+          const secondMemberCode = sequenceCodes[sequenceCodeIndex++];
+          if (!pairCode || !firstMemberCode || !secondMemberCode) throw new Error("Import code reservation was incomplete.");
+          await createPairInTransaction(tx, item.input, { type: sourceType, fileName: file.name }, { pair: pairCode, members: [firstMemberCode, secondMemberCode] });
+        } else {
+          const sequenceCode = sequenceCodes[sequenceCodeIndex++];
+          if (!sequenceCode) throw new Error("Import code reservation was incomplete.");
+          await createSequenceInTransaction(tx, item.input, { type: sourceType, fileName: file.name }, sequenceCode);
+        }
+      }
+    }, { maxWait: 15_000, timeout: 120_000 });
     revalidatePath("/sequences");
-    return { success: `${prepared.length} sequence${prepared.length === 1 ? "" : "s"} imported.` };
+    return { success: `${prepared.length} sequence ${prepared.length === 1 ? "entry" : "entries"} imported.` };
   } catch (error) {
     return { error: formActionErrorMessage(error, "The Sequence import could not be completed.") };
   }
@@ -716,10 +938,16 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
     const intent = sequenceBatchIntentSchema.parse(formData.get("intent"));
     const ids = parseBulkIds(formData);
     await prisma.$transaction(async (tx) => {
-      const existing = await tx.sequence.count({ where: { id: { in: ids } } });
-      if (existing !== ids.length) throw new Error("Some selected Sequence records could not be found.");
+      const [singleRecords, pairRecords] = await Promise.all([
+        tx.sequence.findMany({ where: { id: { in: ids }, pairMembership: { is: null } }, select: { id: true } }),
+        tx.sequencePair.findMany({ where: { id: { in: ids } }, select: { id: true, type: true, members: { select: { sequenceId: true }, orderBy: { order: "asc" } } } }),
+      ]);
+      const singleIds = singleRecords.map((record) => record.id);
+      const pairIds = pairRecords.map((record) => record.id);
+      if (singleIds.length + pairIds.length !== ids.length) throw new Error("Some selected Sequence entries could not be found.");
       if (intent === "delete") {
-        await tx.sequence.deleteMany({ where: { id: { in: ids } } });
+        if (singleIds.length) await tx.sequence.deleteMany({ where: { id: { in: singleIds } } });
+        if (pairIds.length) await tx.sequencePair.updateMany({ where: { id: { in: pairIds } }, data: { status: "archived" } });
         await tx.activityLog.create({
           data: {
             action: "delete",
@@ -736,7 +964,8 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
       if (intent === "set_project") {
         const projectId = optionalText(formData.get("projectId"));
         const normalizedProjectId = await validateProjectIfProvided(tx, projectId);
-        await tx.sequence.updateMany({ where: { id: { in: ids } }, data: { projectId: normalizedProjectId } });
+        if (singleIds.length) await tx.sequence.updateMany({ where: { id: { in: singleIds } }, data: { projectId: normalizedProjectId, ownershipScope: normalizedProjectId ? "project" : "library" } });
+        if (pairIds.length) await tx.sequencePair.updateMany({ where: { id: { in: pairIds } }, data: { projectId: normalizedProjectId, ownershipScope: normalizedProjectId ? "project" : "library" } });
         await tx.activityLog.create({
           data: {
             action: "update",
@@ -750,7 +979,8 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
       }
       if (intent === "set_description") {
         const description = parseBatchTextField(formData, "description", "Description", 5000, { allowEmpty: true });
-        await tx.sequence.updateMany({ where: { id: { in: ids } }, data: { description: description || null } });
+        if (singleIds.length) await tx.sequence.updateMany({ where: { id: { in: singleIds } }, data: { description: description || null } });
+        if (pairIds.length) await tx.sequencePair.updateMany({ where: { id: { in: pairIds } }, data: { description: description || null } });
         await tx.activityLog.create({
           data: {
             action: "update",
@@ -764,7 +994,9 @@ export async function bulkUpdateSequences(_previousState: BulkActionState, formD
       }
       if (intent === "set_type") {
         const designType = z.enum(SequenceDesignType).parse(formData.get("type"));
-        await tx.sequence.updateMany({ where: { id: { in: ids } }, data: { designType } });
+        if (pairIds.length && designType !== "primer" && designType !== "siRNA") throw new Error("Paired entries can only keep their Primer pair or siRNA duplex type.");
+        if (pairRecords.some((pair) => sequencePairDefinition(pair.type).designType !== designType)) throw new Error("Primer pairs and siRNA duplexes cannot be converted into each other because their DNA/RNA member versions are immutable. Create a new paired entry instead.");
+        if (singleIds.length) await tx.sequence.updateMany({ where: { id: { in: singleIds } }, data: { designType } });
         await tx.activityLog.create({
           data: {
             action: "update",
@@ -806,7 +1038,7 @@ export async function bulkUpdateSequenceCollections(_previousState: BulkActionSt
       if (intent === "set_project") {
         const projectId = optionalText(formData.get("projectId"));
         const normalizedProjectId = await validateProjectIfProvided(tx, projectId);
-        await tx.sequenceCollection.updateMany({ where: { id: { in: ids } }, data: { projectId: normalizedProjectId } });
+        await tx.sequenceCollection.updateMany({ where: { id: { in: ids } }, data: { projectId: normalizedProjectId, ownershipScope: normalizedProjectId ? "project" : "library" } });
         await tx.activityLog.create({
           data: {
             action: "update",

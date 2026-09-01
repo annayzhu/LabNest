@@ -92,7 +92,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
             <Field label="Lifecycle" value={<StatusPill status={record.status} />} />
             <Field label="Version shown" value={`v${selectedVersion.displayVersion}`} mono />
             <Field label="Validation" value={<StatusPill status={selectedVersion.validationStatus} />} />
-            <Field label="Project" value={record.project ? <Link href={`/projects/${record.project.id}`} className="text-moss hover:underline">{record.project.name}</Link> : "Shared library"} />
+            <Field label="Project" value={record.project ? <Link href={`/projects/${record.project.id}`} className="text-moss hover:underline">{record.project.name}</Link> : "Sequence library"} />
           </CardBody>
         </Card>
 

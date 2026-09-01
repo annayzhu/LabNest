@@ -1,13 +1,15 @@
 import { Prisma } from "../generated/prisma/client";
 
-export type RecordCodeKind = "researchPlan" | "protocol" | "experiment" | "sequence" | "sequenceCollection";
+export type RecordCodeKind = "researchPlan" | "protocol" | "experiment" | "sequence" | "sequencePair" | "sequenceCollection" | "sequenceWorkflow";
 
 const recordCodeRules = {
   researchPlan: { counterKey: "research-plan", prefix: "RP-", width: 3, firstValue: 1 },
   protocol: { counterKey: "protocol", prefix: "PRT-", width: 6, firstValue: 100001 },
   experiment: { counterKey: "experiment", prefix: "EXP-", width: 3, firstValue: 1 },
   sequence: { counterKey: "sequence", prefix: "SEQ-", width: 6, firstValue: 1 },
+  sequencePair: { counterKey: "sequence-pair", prefix: "PAI-", width: 6, firstValue: 1 },
   sequenceCollection: { counterKey: "sequence-collection", prefix: "SET-", width: 6, firstValue: 1 },
+  sequenceWorkflow: { counterKey: "sequence-workflow", prefix: "WF-", width: 6, firstValue: 1 },
 } as const;
 
 export function formatRecordCode(kind: RecordCodeKind, value: number) {
@@ -55,7 +57,7 @@ export function suggestNextRecordCode(kind: RecordCodeKind, existingCodes: strin
   return formatRecordCode(kind, nextRecordCodeValue(kind, existingCodes, lastReservedValue));
 }
 
-export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
+async function existingRecordCodes(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
   let existingCodes: string[];
   if (kind === "researchPlan") {
     existingCodes = (await tx.researchPlan.findMany({ select: { code: true } })).map((item) => item.code);
@@ -65,22 +67,39 @@ export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: Reco
     existingCodes = (await tx.experiment.findMany({ select: { runCode: true } })).map((item) => item.runCode);
   } else if (kind === "sequence") {
     existingCodes = (await tx.sequence.findMany({ select: { code: true } })).map((item) => item.code);
-  } else {
+  } else if (kind === "sequencePair") {
+    existingCodes = (await tx.sequencePair.findMany({ select: { code: true } })).map((item) => item.code);
+  } else if (kind === "sequenceCollection") {
     existingCodes = (await tx.sequenceCollection.findMany({ select: { code: true } })).map((item) => item.code);
+  } else {
+    existingCodes = (await tx.sequenceWorkflow.findMany({ select: { code: true } })).map((item) => item.code);
   }
 
+  return existingCodes;
+}
+
+export async function reserveRecordCodes(tx: Prisma.TransactionClient, kind: RecordCodeKind, count: number) {
+  if (!Number.isSafeInteger(count) || count < 1 || count > 5000) throw new Error("Record code reservation count must be between 1 and 5000.");
+  const existingCodes = await existingRecordCodes(tx, kind);
   const rule = recordCodeRules[kind];
   const baseline = nextRecordCodeValue(kind, existingCodes);
+  const requestedEnd = baseline + count - 1;
 
   const rows = await tx.$queryRaw<Array<{ value: number }>>(Prisma.sql`
     INSERT INTO "RecordCodeCounter" ("key", "value", "updatedAt")
-    VALUES (${rule.counterKey}, ${baseline}, CURRENT_TIMESTAMP)
+    VALUES (${rule.counterKey}, ${requestedEnd}, CURRENT_TIMESTAMP)
     ON CONFLICT ("key") DO UPDATE
-    SET "value" = GREATEST("RecordCodeCounter"."value" + 1, EXCLUDED."value"),
+    SET "value" = GREATEST("RecordCodeCounter"."value" + ${count}, EXCLUDED."value"),
         "updatedAt" = CURRENT_TIMESTAMP
     RETURNING "value"
   `);
-  const value = rows[0]?.value;
-  if (!Number.isSafeInteger(value)) throw new Error(`Could not reserve the next ${rule.prefix} code.`);
-  return formatRecordCode(kind, value);
+  const endValue = rows[0]?.value;
+  if (!Number.isSafeInteger(endValue)) throw new Error(`Could not reserve the next ${rule.prefix} codes.`);
+  return Array.from({ length: count }, (_, index) => formatRecordCode(kind, endValue - count + index + 1));
+}
+
+export async function reserveRecordCode(tx: Prisma.TransactionClient, kind: RecordCodeKind) {
+  const [code] = await reserveRecordCodes(tx, kind, 1);
+  if (!code) throw new Error(`Could not reserve the next ${recordCodeRules[kind].prefix} code.`);
+  return code;
 }

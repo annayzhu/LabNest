@@ -13,6 +13,7 @@ import {
   resultTemplateInputSchema,
 } from "./result-templates";
 import { RICH_TEXT_FONT_FAMILIES } from "./rich-text-font-family";
+import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 
 export const protocolSectionKeys = [
@@ -38,7 +39,6 @@ export const protocolSectionLabels: Record<ProtocolSectionKey, string> = {
 };
 
 const baseBlockSchema = z.object({ id: z.string().min(1) });
-const tableFontSizeSchema = z.union([z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(14)]);
 
 export const protocolRichTextRunSchema = z.object({
   text: z.string(),
@@ -49,14 +49,7 @@ export const protocolRichTextRunSchema = z.object({
   code: z.boolean().optional(),
   link: z.string().optional(),
   color: z.enum(RICH_TEXT_COLORS).optional(),
-  fontSizePt: z.union([
-    z.literal(8),
-    z.literal(9),
-    z.literal(10),
-    z.literal(11),
-    z.literal(12),
-    z.literal(14),
-  ]).optional(),
+  fontSizePt: richTextFontSizeSchema.optional(),
 });
 
 export const protocolRichTextNodeSchema = z.object({
@@ -97,7 +90,8 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
-    cellFontSizesPt: z.array(z.array(tableFontSizeSchema.nullable())).optional(),
+    cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
+    cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
     resultTemplate: resultTemplateInputSchema.optional(),
   }),
   baseBlockSchema.extend({

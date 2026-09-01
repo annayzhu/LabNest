@@ -5,6 +5,7 @@ import { scientificContentBlockSchema, type ScientificContentBlock, type Scienti
 import { parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
+import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
@@ -108,25 +109,11 @@ export function markdownRichTextToTiptap(value: string): JSONContent {
   return { type: "doc", content: markdownToTiptap(value, "standalone-rich-text") };
 }
 
-function tableCell(value: string, header: boolean, width?: number | null, fontSizePt?: number | null): JSONContent {
-  const marks = fontSizePt ? [{ type: "textStyle", attrs: { fontSize: `${fontSizePt}pt` } }] : undefined;
-  const content = value.split("\n").flatMap((line, index) => [
-    ...(index ? [{ type: "hardBreak" } satisfies JSONContent] : []),
-    ...(line ? [{ type: "text", text: line, marks } satisfies JSONContent] : []),
-  ]);
-  return { type: header ? "tableHeader" : "tableCell", attrs: width ? { colwidth: [Math.round(width)] } : undefined, content: [{ type: "paragraph", content }] };
-}
-
 function tableToTiptap(block: Extract<ScientificContentBlock, { type: "table" }>): JSONContent {
-  const rows = block.rows.length ? block.rows : [[""]];
-  const width = Math.max(1, ...rows.map((row) => row.length));
   return {
     type: "table",
     attrs: { ...legacyAttrs(block.id, "table"), scientificCaption: block.caption ?? "" },
-    content: rows.map((row, rowIndex) => ({
-      type: "tableRow",
-      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0, block.columnWidths?.[columnIndex], block.cellFontSizesPt?.[rowIndex]?.[columnIndex])),
-    })),
+    content: tiptapTableRows(block),
   };
 }
 
@@ -216,37 +203,6 @@ export function tiptapToMarkdownRichText(json: JSONContent): string {
   return tiptapNodesToMarkdown(json.content ?? []);
 }
 
-function rowsFromTable(node: JSONContent) {
-  return (node.content ?? []).map((row) => (row.content ?? []).map((cell) => plainText(cell)));
-}
-
-function tableColumnWidths(node: JSONContent) {
-  const widths = (node.content?.[0]?.content ?? []).map((cell) => {
-    const value = Array.isArray(cell.attrs?.colwidth) ? Number(cell.attrs.colwidth[0]) : NaN;
-    return Number.isFinite(value) && value > 0 ? value : null;
-  });
-  return widths.some((value) => value !== null) ? widths : undefined;
-}
-
-function cellFontSizePt(cell: JSONContent) {
-  const sizes = new Set<number>();
-  const visit = (node: JSONContent) => {
-    if (node.type === "text") {
-      const value = node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
-      const size = typeof value === "string" ? Number.parseFloat(value) : Number(value);
-      if ([8, 9, 10, 11, 12, 14].includes(size)) sizes.add(size);
-    }
-    node.content?.forEach(visit);
-  };
-  visit(cell);
-  return sizes.size === 1 ? [...sizes][0] as 8 | 9 | 10 | 11 | 12 | 14 : null;
-}
-
-function tableCellFontSizes(node: JSONContent) {
-  const sizes = (node.content ?? []).map((row) => (row.content ?? []).map(cellFontSizePt));
-  return sizes.some((row) => row.some((value) => value !== null)) ? sizes : undefined;
-}
-
 function safeWidget(node: JSONContent) {
   const parsed = scientificContentBlockSchema.safeParse(node.attrs?.block);
   return parsed.success ? parsed.data : undefined;
@@ -272,7 +228,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     }
     const nodeIdentity = identity(node);
     if (node.type === "table") {
-      blocks.push({ id: nodeIdentity.id ?? uniqueId("table"), type: "table", caption: node.attrs?.scientificCaption ?? "", rows: rowsFromTable(node), columnWidths: tableColumnWidths(node), cellFontSizesPt: tableCellFontSizes(node) });
+      blocks.push({ id: nodeIdentity.id ?? uniqueId("table"), type: "table", caption: node.attrs?.scientificCaption ?? "", ...persistedTableFromTiptap(node) });
       index += 1;
       continue;
     }

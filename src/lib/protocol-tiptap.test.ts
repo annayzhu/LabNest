@@ -22,6 +22,7 @@ describe("Protocol Tiptap compatibility layer", () => {
       rows: [["Name", "Unit"], ["Buffer", "mL"]],
       columnWidths: [180, 90],
       cellFontSizesPt: [[10, 10], [9, 9]],
+      cellColors: [[null, null], ["risk", null]],
     }];
     document.sections.find((section) => section.key === "steps")!.blocks = [
       { id: "step-heading", type: "heading", text: "1. Prepare sample" },

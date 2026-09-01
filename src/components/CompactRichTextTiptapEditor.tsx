@@ -10,6 +10,7 @@ import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import { DocumentWysiwygToolbar } from "@/components/DocumentWysiwygToolbar";
+import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
 
 export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, className }: {
@@ -22,6 +23,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   className?: string;
 }) {
   const onChangeRef = useRef(onChange);
+  const toolbarTarget = useDocumentToolbarTarget();
   const contentHash = useMemo(() => JSON.stringify(content), [content]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   const editor = useEditor({
@@ -43,9 +45,13 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
     if (!editor || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash) return;
     editor.commands.setContent(content);
   }, [content, contentHash, editor]);
+  useEffect(() => {
+    if (!editor || !toolbarTarget) return;
+    return () => toolbarTarget.release(editor);
+  }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
-  return <div className={cn("ln-compact-rich-editor", className)}>
+  return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
     {showToolbar ? <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" /> : null}
     <EditorContent editor={editor} />
   </div>;

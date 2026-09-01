@@ -11,15 +11,27 @@ export type PostCommitCleanupTask = {
 export async function runPostCommitCleanup(
   tasks: PostCommitCleanupTask[],
   onFailure: (taskName: string, error: unknown) => Promise<void>,
+  options: { attempts?: number; retryDelayMs?: number } = {},
 ) {
+  const attempts = Math.max(1, options.attempts ?? 3);
+  const retryDelayMs = Math.max(0, options.retryDelayMs ?? 40);
   const warnings: string[] = [];
   for (const task of tasks) {
-    try {
-      await task.run();
-    } catch (error) {
-      warnings.push(`${task.name} is pending retry.`);
-      console.error(`[post-commit cleanup] ${task.name} failed`, error);
-      await onFailure(task.name, error).catch((logError) => {
+    let unresolved: unknown;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        await task.run();
+        unresolved = undefined;
+        break;
+      } catch (error) {
+        unresolved = error;
+        if (attempt < attempts && retryDelayMs) await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
+      }
+    }
+    if (unresolved !== undefined) {
+      warnings.push(`${task.name} failed after ${attempts} attempts; manual cleanup is required.`);
+      console.error(`[post-commit cleanup] ${task.name} failed after ${attempts} attempts`, unresolved);
+      await onFailure(task.name, unresolved).catch((logError) => {
         console.error(`[post-commit cleanup] failed to log ${task.name}`, logError);
       });
     }

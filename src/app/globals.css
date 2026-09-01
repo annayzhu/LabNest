@@ -177,6 +177,14 @@
   --ln-wysiwyg-table-cell-padding-y: 0.24rem; /* 连续编辑器表格单元格上下内边距。 */
   --ln-wysiwyg-properties-max-width: 72rem; /* Metadata 和 Relevant items 面板最大宽度。 */
   --ln-wysiwyg-properties-gap: 0.65rem; /* 属性表单字段之间距离。 */
+  --ln-wysiwyg-relevant-group-gap: 0.375rem; /* Relevant items 折叠组之间距离。 */
+  --ln-wysiwyg-relevant-panel-padding: 0.625rem; /* Relevant items 分组区域内边距。 */
+  --ln-wysiwyg-relevant-group-radius: 7px; /* Relevant items 折叠组圆角。 */
+  --ln-wysiwyg-relevant-row-gap: 0.5rem; /* Relevant items 单行文字与右侧元数据间距。 */
+  --ln-wysiwyg-relevant-row-padding-x: 0.625rem; /* Relevant items 单行左右内边距。 */
+  --ln-wysiwyg-relevant-row-padding-y: 0.375rem; /* Relevant items 单行上下内边距。 */
+  --ln-wysiwyg-relevant-font-size: 12px; /* Relevant items 主要文字字号。 */
+  --ln-wysiwyg-relevant-meta-font-size: 10px; /* Relevant items 数量与元数据字号。 */
   --ln-wysiwyg-premise-control-min-height: 3.1rem; /* 研究方案 premise 文本框最小高度。 */
   --ln-wysiwyg-premise-control-padding-x: 0.58rem; /* premise 文本框左右内边距。 */
   --ln-wysiwyg-premise-control-padding-y: 0.42rem; /* premise 文本框上下内边距。 */
@@ -737,6 +745,79 @@ textarea {
   max-height: min(60vh, 32rem);
   overflow: auto;
   padding: 0.28rem 0.7rem;
+}
+
+.document-editor-relevant-heading {
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--ln-wysiwyg-relevant-row-padding-y) var(--ln-wysiwyg-relevant-row-padding-x);
+  color: var(--muted);
+  font-size: var(--ln-wysiwyg-relevant-meta-font-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.document-editor-relevant-groups {
+  display: grid;
+  gap: var(--ln-wysiwyg-relevant-group-gap);
+  border-top: 1px solid var(--hairline);
+  padding: var(--ln-wysiwyg-relevant-panel-padding);
+}
+
+.document-editor-relevant-group {
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-wysiwyg-relevant-group-radius);
+  background: color-mix(in srgb, var(--warm) 35%, transparent);
+}
+
+.document-editor-relevant-group summary,
+.document-editor-relevant-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--ln-wysiwyg-relevant-row-gap);
+  padding: var(--ln-wysiwyg-relevant-row-padding-y) var(--ln-wysiwyg-relevant-row-padding-x);
+  font-size: var(--ln-wysiwyg-relevant-font-size);
+}
+
+.document-editor-relevant-group summary {
+  cursor: pointer;
+  color: var(--graphite);
+  font-weight: 500;
+  list-style: none;
+}
+
+.document-editor-relevant-count,
+.document-editor-relevant-meta {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--ln-wysiwyg-relevant-meta-font-size);
+}
+
+.document-editor-relevant-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+}
+
+.document-editor-relevant-group-body {
+  display: grid;
+  gap: 1px;
+  border-top: 1px solid var(--hairline);
+  background: var(--hairline);
+}
+
+.document-editor-relevant-row {
+  background: var(--surface);
+}
+
+.document-editor-relevant-row:hover {
+  background: var(--stone);
+}
+
+.document-editor-relevant-empty {
+  background: var(--surface);
+  color: var(--muted);
 }
 
 .document-editor-relation-row {

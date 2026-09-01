@@ -67,7 +67,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       action: "attachment_cleanup_pending",
       targetType: link?.targetType ?? "attachment",
       targetId: link?.targetId ?? attachment.id,
-      metadataJson: { attachmentId: attachment.id, taskName, error: cleanupErrorMessage(error) },
+      metadataJson: { attachmentId: attachment.id, storagePath: attachment.storagePath, taskName, error: cleanupErrorMessage(error) },
     } });
   });
   return Response.json({ removed: true, deletedOriginal: !remainingLinks.length, cleanupWarnings });

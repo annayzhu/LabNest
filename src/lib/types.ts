@@ -120,7 +120,7 @@ export type ResultTemplateInstructionRun = {
   code?: boolean;
   link?: string;
   color?: "risk";
-  fontSizePt?: 8 | 9 | 10 | 11 | 12 | 14;
+  fontSizePt?: RichTextFontSizePt;
 };
 
 export type ResultTemplateInstructionNode = {
@@ -599,3 +599,4 @@ export type ReferenceConnectorRecord = {
   lastSyncedAt?: string;
   notes?: string;
 };
+import type { RichTextFontSizePt } from "./rich-text-font-size";

@@ -10,6 +10,8 @@ import {
   type ProtocolSectionKey,
 } from "@/lib/protocol-document";
 import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
+import { isRichTextFontSizePt } from "@/lib/rich-text-font-size";
+import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
 
@@ -111,32 +113,14 @@ export function protocolRichTextToTiptap(nodes: ProtocolRichTextNode[]): JSONCon
   return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text") };
 }
 
-function tableCell(text: string, header: boolean, width?: number | null, fontSizePt?: number | null): JSONContent {
-  const marks = fontSizePt ? [{ type: "textStyle", attrs: { fontSize: `${fontSizePt}pt` } }] : undefined;
-  const content = text.split("\n").flatMap((line, index) => [
-    ...(index ? [{ type: "hardBreak" } satisfies JSONContent] : []),
-    ...(line ? [{ type: "text", text: line, marks } satisfies JSONContent] : []),
-  ]);
-  return {
-    type: header ? "tableHeader" : "tableCell",
-    attrs: width ? { colwidth: [Math.round(width)] } : undefined,
-    content: [{ type: "paragraph", content }],
-  };
-}
-
 function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>): JSONContent {
-  const width = Math.max(1, ...block.rows.map((row) => row.length));
-  const rows = block.rows.length ? block.rows : [[""]];
   return {
     type: "table",
     attrs: {
       ...legacyAttrs(block.id, "table"),
       protocolCaption: block.caption ?? "",
     },
-    content: rows.map((row, rowIndex) => ({
-      type: "tableRow",
-      content: Array.from({ length: width }, (_, columnIndex) => tableCell(row[columnIndex] ?? "", rowIndex === 0, block.columnWidths?.[columnIndex], block.cellFontSizesPt?.[rowIndex]?.[columnIndex])),
-    })),
+    content: tiptapTableRows(block),
   };
 }
 
@@ -193,7 +177,7 @@ function plainText(node: JSONContent | undefined): string {
 function fontSizeFromMark(mark: TiptapMark | undefined): ProtocolRichTextRun["fontSizePt"] {
   const value = mark?.attrs?.fontSize;
   const parsed = typeof value === "string" ? Number.parseFloat(value) : Number.NaN;
-  return [8, 9, 10, 11, 12, 14].includes(parsed) ? parsed as ProtocolRichTextRun["fontSizePt"] : undefined;
+  return isRichTextFontSizePt(parsed) ? parsed : undefined;
 }
 
 function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRichTextRun[] {
@@ -275,37 +259,6 @@ export function tiptapToProtocolRichText(json: JSONContent): ProtocolRichTextNod
   return (json.content ?? []).flatMap(tiptapNodeToRichNodes);
 }
 
-function rowsFromTable(node: JSONContent): string[][] {
-  return (node.content ?? []).map((row) => (row.content ?? []).map((cell) => plainText(cell)));
-}
-
-function tableColumnWidths(node: JSONContent) {
-  const widths = (node.content?.[0]?.content ?? []).map((cell) => {
-    const value = Array.isArray(cell.attrs?.colwidth) ? Number(cell.attrs.colwidth[0]) : NaN;
-    return Number.isFinite(value) && value > 0 ? value : null;
-  });
-  return widths.some((value) => value !== null) ? widths : undefined;
-}
-
-function cellFontSizePt(cell: JSONContent) {
-  const sizes = new Set<number>();
-  const visit = (node: JSONContent) => {
-    if (node.type === "text") {
-      const value = node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
-      const size = typeof value === "string" ? Number.parseFloat(value) : Number(value);
-      if ([8, 9, 10, 11, 12, 14].includes(size)) sizes.add(size);
-    }
-    node.content?.forEach(visit);
-  };
-  visit(cell);
-  return sizes.size === 1 ? [...sizes][0] as 8 | 9 | 10 | 11 | 12 | 14 : null;
-}
-
-function tableCellFontSizes(node: JSONContent) {
-  const sizes = (node.content ?? []).map((row) => (row.content ?? []).map(cellFontSizePt));
-  return sizes.some((row) => row.some((value) => value !== null)) ? sizes : undefined;
-}
-
 function taskItems(node: JSONContent): string[] {
   return (node.content ?? []).map((item) => plainText(item));
 }
@@ -335,7 +288,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     const identity = blockIdentity(node);
     if (node.type === "table") {
-      blocks.push({ id: identity.id, type: "table", caption: node.attrs?.protocolCaption ?? "", rows: rowsFromTable(node), columnWidths: tableColumnWidths(node), cellFontSizesPt: tableCellFontSizes(node) });
+      blocks.push({ id: identity.id, type: "table", caption: node.attrs?.protocolCaption ?? "", ...persistedTableFromTiptap(node) });
       index += 1;
       continue;
     }

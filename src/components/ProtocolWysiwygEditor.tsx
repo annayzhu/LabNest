@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
+import { DocumentToolbarTargetContext } from "@/components/DocumentToolbarTargetContext";
 import { InlineTableEditor } from "@/components/InlineTableEditor";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEditor";
@@ -156,9 +157,14 @@ export function ProtocolWysiwygEditor({ document, onChange }: { document: Protoc
     },
   });
 
+  const [toolbarEditor, setToolbarEditor] = useState<Editor | null>(null);
+  const activateToolbarEditor = useCallback((target: Editor) => setToolbarEditor(target), []);
+  const releaseToolbarEditor = useCallback((target: Editor) => setToolbarEditor((current) => current === target ? editor : current), [editor]);
+  const toolbarTarget = useMemo(() => ({ activate: activateToolbarEditor, release: releaseToolbarEditor }), [activateToolbarEditor, releaseToolbarEditor]);
+
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  return <section className="ln-wysiwyg-editor" data-print-hidden={undefined}>
-    <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={editor} ariaLabel="Protocol formatting" insertActions={protocolInsertActions()} /></div>
-    <EditorContent editor={editor} />
-  </section>;
+  return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><section className="ln-wysiwyg-editor" data-print-hidden={undefined}>
+    <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? [] : protocolInsertActions()} /></div>
+    <div onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}><EditorContent editor={editor} /></div>
+  </section></DocumentToolbarTargetContext.Provider>;
 }

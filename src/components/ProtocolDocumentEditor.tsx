@@ -127,7 +127,7 @@ export function ProtocolDocumentEditor({
         </section>}
         relations={<section className="document-editor-properties-card" aria-label="Protocol relevant items">
           <header><p>Workflow relationship</p><h2>Relevant items</h2><span>Manage plans here; linked records remain compact, traceable, and one click away.</span></header>
-          <div className="border-b border-hairline px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Research plans</p></div>
+          <div className="document-editor-relevant-heading">Research plans</div>
           <div className="document-editor-relation-list editorial-scrollbar">
             {visiblePlans.length ? visiblePlans.map((plan) => {
               const checked = selectedPlanIds.includes(plan.id);
@@ -138,7 +138,7 @@ export function ProtocolDocumentEditor({
               </div>;
             }) : <p className="px-3 py-6 text-center text-sm text-muted">No Research Plans are available for this scope.</p>}
           </div>
-          <div className="grid gap-1.5 border-t border-hairline p-2.5">
+          <div className="document-editor-relevant-groups">
             {(["projects", "experiments", "results", "attachments", "versions"] as const).map((group) => <ProtocolRelevantLinkGroup key={group} label={group === "versions" ? "Version history" : group[0].toUpperCase() + group.slice(1)} items={relevantItems[group] ?? []} />)}
             <ProtocolRelevantLinkGroup label="Tools" items={[{ id: "plate-planner", label: "Plate Map Planner", meta: "Open planning tool", href: plateMapPlannerUrl }]} />
           </div>
@@ -154,8 +154,8 @@ export function ProtocolDocumentEditor({
 const plateMapPlannerUrl = labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl ?? "/tools";
 
 function ProtocolRelevantLinkGroup({ label, items }: { label: string; items: RelevantLink[] }) {
-  return <details className="rounded-[7px] border border-hairline bg-warm/35" open={items.length > 0 && items.length <= 3 ? true : undefined}>
-    <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-graphite marker:hidden"><span>{label}</span><span className="ml-auto font-mono text-[10px] text-muted">{items.length}</span></summary>
-    <div className="grid gap-px border-t border-hairline bg-hairline">{items.length ? items.map((item) => <Link key={item.id} href={item.href} className="flex min-w-0 items-center gap-2 bg-surface px-2.5 py-1.5 text-xs hover:bg-stone"><span className="min-w-0 flex-1 truncate font-medium text-ink">{item.label}</span>{item.meta ? <span className="shrink-0 text-[10px] text-muted">{item.meta}</span> : null}</Link>) : <p className="bg-surface px-2.5 py-1.5 text-[11px] text-muted">None linked</p>}</div>
+  return <details className="document-editor-relevant-group" open={items.length > 0 && items.length <= 3 ? true : undefined}>
+    <summary><span>{label}</span><span className="document-editor-relevant-count">{items.length}</span></summary>
+    <div className="document-editor-relevant-group-body">{items.length ? items.map((item) => <Link key={item.id} href={item.href} className="document-editor-relevant-row"><span className="min-w-0 flex-1 truncate font-medium text-ink">{item.label}</span>{item.meta ? <span className="document-editor-relevant-meta">{item.meta}</span> : null}</Link>) : <p className="document-editor-relevant-row document-editor-relevant-empty">None linked</p>}</div>
   </details>;
 }

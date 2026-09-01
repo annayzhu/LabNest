@@ -33,7 +33,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
       action: "dataset_cleanup_pending",
       targetType: "result",
       targetId: dataset.resultId,
-      metadataJson: { datasetId: dataset.id, taskName, error: cleanupErrorMessage(error) },
+      metadataJson: { datasetId: dataset.id, storagePath: dataset.storagePath, resultId: dataset.resultId, taskName, error: cleanupErrorMessage(error) },
     } });
   });
   return Response.json({ removed: true, cleanupWarnings });

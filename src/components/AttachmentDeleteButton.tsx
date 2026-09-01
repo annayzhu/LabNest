@@ -18,6 +18,7 @@ export function AttachmentDeleteButton({ attachmentId, linkId, filename }: { att
       const response = await fetch(`/api/attachments/${attachmentId}${query}`, { method: "DELETE" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "File could not be removed.");
+      if (Array.isArray(payload.cleanupWarnings) && payload.cleanupWarnings.length) window.alert(`The file record was removed, but cleanup needs attention:\n\n${payload.cleanupWarnings.join("\n")}`);
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "File could not be removed.");

@@ -15,6 +15,7 @@ export function DatasetDeleteButton({ datasetId, name }: { datasetId: string; na
       const response = await fetch(`/api/results/datasets/${datasetId}`, { method: "DELETE" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "Dataset could not be removed.");
+      if (Array.isArray(payload.cleanupWarnings) && payload.cleanupWarnings.length) window.alert(`The Dataset record was removed, but cleanup needs attention:\n\n${payload.cleanupWarnings.join("\n")}`);
       router.refresh();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Dataset could not be removed."); }
     finally { setPending(false); }

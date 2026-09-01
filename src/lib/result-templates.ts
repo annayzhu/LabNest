@@ -13,6 +13,7 @@ import type {
   ResultTemplateField,
   ResultViewPreset,
 } from "./types";
+import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 
 const fieldDataTypes = ["text", "number", "select", "attachment[]", "boolean", "date", "datetime"] as const;
 const datasetColumnTypes = ["text", "number", "category", "boolean", "date", "datetime"] as const;
@@ -85,7 +86,7 @@ const resultTemplateInstructionRunSchema = z.object({
   code: z.boolean().optional(),
   link: z.string().optional(),
   color: z.literal("risk").optional(),
-  fontSizePt: z.union([z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(14)]).optional(),
+  fontSizePt: richTextFontSizeSchema.optional(),
 });
 
 const resultTemplateInstructionNodeSchema = z.object({

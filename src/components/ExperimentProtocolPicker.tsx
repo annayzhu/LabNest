@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 
 export type ExperimentProtocolVersionOption = {
   id: string;
@@ -70,8 +71,8 @@ function ProtocolVersionAddButton({ latestId, onAdd, version }: { latestId: stri
   const isLatest = version.id === latestId;
   return <button type="button" onClick={() => onAdd(version.id)} className="focus-ring grid w-full gap-2 px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-[var(--ln-experiment-protocol-picker-row-padding-y)] text-left hover:bg-sage-surface sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
     <span className="min-w-0">
-      <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-        <strong className="min-w-0 truncate text-[length:var(--ln-experiment-protocol-picker-title-size)] font-semibold leading-tight text-ink">{version.protocol.humanCode} · {version.protocol.title}</strong>
+      <span className="flex min-w-0 items-start gap-1.5">
+        <ProtocolIdentity className="min-w-0 flex-1 text-ink" compact title={version.protocol.title} code={version.protocol.humanCode} />
         <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[length:var(--ln-experiment-protocol-picker-badge-size)] font-semibold ${isLatest ? "bg-success-surface text-success" : "bg-stone text-muted"}`}>{isLatest ? "最新版本" : "历史版本"}</span>
       </span>
       <span className="mt-1 block truncate text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">{protocolVersionMeta(version)}</span>
@@ -101,7 +102,7 @@ function buildProtocolVersionGroups(versions: ExperimentProtocolVersionOption[],
     const primary = selectedSet.has(latest.id) ? undefined : latest;
     if (!primary && !history.length) return [];
     return [{ protocolId, latest, primary, history, searchMode: false }];
-  }).sort((a, b) => `${a.latest.protocol.humanCode} ${a.latest.protocol.title}`.localeCompare(`${b.latest.protocol.humanCode} ${b.latest.protocol.title}`, undefined, { numeric: true, sensitivity: "base" }));
+  }).sort((a, b) => `${a.latest.protocol.title} ${a.latest.protocol.humanCode}`.localeCompare(`${b.latest.protocol.title} ${b.latest.protocol.humanCode}`, undefined, { numeric: true, sensitivity: "base" }));
 }
 
 export function ExperimentProtocolPicker({
@@ -159,7 +160,7 @@ export function ExperimentProtocolPicker({
             return <li key={id} className="grid gap-3 rounded-[9px] border border-hairline bg-warm/70 px-3 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:items-center">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm">{index + 1}</span>
               <span className="min-w-0">
-                <strong className="block text-sm font-medium text-ink">{version.protocol.humanCode} · {version.protocol.title}</strong>
+                <ProtocolIdentity title={version.protocol.title} code={version.protocol.humanCode} />
                 <span className="mt-0.5 block text-xs text-muted">{protocolVersionMeta(version)} · checkable</span>
               </span>
               <span className="flex items-center justify-end gap-1">
@@ -173,14 +174,14 @@ export function ExperimentProtocolPicker({
       </div>
 
       <div>
-        <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search code, Protocol title or version title…" className={`${formInputClass} pl-9`} /></span></label>
+        <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Protocol title, version or code…" className={`${formInputClass} pl-9`} /></span></label>
         <div className="mt-2 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[9px] border border-hairline bg-surface">
           {protocolGroups.length ? protocolGroups.map((group) => {
             const expanded = group.searchMode || expandedProtocolIds.has(group.protocolId);
             const visibleHistory = expanded ? group.history : [];
             return <div key={group.protocolId} className="bg-surface">
               {group.primary ? <ProtocolVersionAddButton version={group.primary} latestId={group.latest.id} onAdd={add} /> : <div className="px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-[var(--ln-experiment-protocol-picker-row-padding-y)]">
-                <strong className="block truncate text-[length:var(--ln-experiment-protocol-picker-title-size)] font-semibold leading-tight text-ink">{group.latest.protocol.humanCode} · {group.latest.protocol.title}</strong>
+                <ProtocolIdentity compact title={group.latest.protocol.title} code={group.latest.protocol.humanCode} />
                 <span className="mt-1 block text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">最新版本 v{group.latest.displayVersion} 已选择；如确实需要，可展开历史版本。</span>
               </div>}
               {group.history.length ? <div className="border-t border-hairline bg-warm/45 px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-1.5">

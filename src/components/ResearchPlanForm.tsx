@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
+import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { ResearchPlanPremiseView } from "@/components/ResearchPlanPremiseView";
 import { ResearchPlanProtocolPicker } from "@/components/ResearchPlanProtocolPicker";
@@ -62,12 +63,16 @@ export function ResearchPlanForm({
   return (
     <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
-      <div className="document-editor-layout">
+      <DocumentEditorLayout storageKey="labnest.research-plan.settings-open">
         <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" headerFacts={[
           { label: "Project", value: project?.name ?? "Not selected" },
           { label: "Status", value: status.replaceAll("_", " ") },
-        ]} leadingContent={<ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} />} /></div>
+        ]} leadingContent={<div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>} /></div>
         <aside className="document-editor-sidebar" aria-label="Research Plan properties">
+          <Card>
+            <CardHeader title="Scientific premise" eyebrow="Objective, hypothesis, and rationale" />
+            <CardBody><ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} /></CardBody>
+          </Card>
           <Card>
             <CardHeader title="Plan identity" eyebrow="Project-level scientific design" />
             <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -80,7 +85,7 @@ export function ResearchPlanForm({
           </Card>
           <ResearchPlanProtocolPicker protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
         </aside>
-      </div>
+      </DocumentEditorLayout>
       <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
         {state.error ? <p role="alert" className="max-w-xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
         <Button type="submit" variant="primary" size="lg" disabled={pending} className="shadow-soft">{pending ? "Saving…" : "Save Research Plan"}</Button>
@@ -110,20 +115,12 @@ function ResearchPlanPremiseEditor({
     { label: "Rationale", name: "rationale", value: rationale, onChange: onRationaleChange, placeholder: "Why is this design appropriate?" },
   ];
 
-  return (
-    <>
-      <section className="document-section research-plan-premise" data-print-hidden>
-        <header className="mb-5"><h2 className="document-section-title font-serif font-medium text-ink">Scientific premise</h2></header>
-        <div className="space-y-4">
-          {fields.map((field) => (
-            <label key={field.name} className="block">
-              <span className="document-premise-label">{field.label}</span>
-              <textarea name={field.name} value={field.value} onChange={(event) => field.onChange(event.target.value)} placeholder={field.placeholder} className="document-premise-editor focus-ring" />
-            </label>
-          ))}
-        </div>
-      </section>
-      <div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>
-    </>
-  );
+  return <div className="document-premise-fields">
+    {fields.map((field) => (
+      <label key={field.name} className="block">
+        <span className="document-premise-label">{field.label}</span>
+        <textarea name={field.name} value={field.value} onChange={(event) => field.onChange(event.target.value)} placeholder={field.placeholder} className="document-premise-editor focus-ring" />
+      </label>
+    ))}
+  </div>;
 }

@@ -57,7 +57,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
                     <h2 className="mt-2 truncate font-serif text-lg font-medium text-ink">{experiment.title}</h2>
                     <p className="mt-1 text-xs text-muted">
                       {experiment.researchPlan?.code ?? "Unassigned plan"}
-                      {experiment.primaryProtocolVersion ? ` · ${experiment.primaryProtocolVersion.protocol.humanCode ?? experiment.primaryProtocolVersion.protocol.title} · ${experiment.primaryProtocolVersion.displayVersion}` : ""}
+                      {experiment.primaryProtocolVersion ? ` · ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} · ${experiment.primaryProtocolVersion.protocol.humanCode ?? "Uncoded"} · ${experiment.primaryProtocolVersion.displayVersion}` : ""}
                     </p>
                     <div className="mt-3 flex items-center gap-3">
                       <div className="h-1.5 max-w-72 flex-1 overflow-hidden rounded-full bg-stone">

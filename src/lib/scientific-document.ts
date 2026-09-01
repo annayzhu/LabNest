@@ -2,6 +2,9 @@ import { z } from "zod";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
+import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
+import { RICH_TEXT_COLORS } from "./rich-text-color";
+import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
 const baseBlockSchema = z.object({ id: z.string().min(1) });
 
@@ -13,6 +16,10 @@ export const scientificContentBlockSchema = z.discriminatedUnion("type", [
     type: z.literal("table"),
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
+    columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
+    cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
+    cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
+    cellRichContent: z.array(z.array(tiptapCellRichContentSchema.nullable())).optional(),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),
@@ -171,7 +178,7 @@ export const resultSections: ScientificSectionDefinition[] = [
   { key: "data_media", title: "Data & media" },
   { key: "analysis", title: "Analysis" },
   { key: "interpretation", title: "Interpretation" },
-  { key: "quality_limitations", title: "QC & limitations" },
+  { key: "quality_limitations", title: "Deviations & limitations" },
 ];
 
 const legacyTemplateSummary = "Result record created from a selected ProtocolVersion template. Measurement pending.";

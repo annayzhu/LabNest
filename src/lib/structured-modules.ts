@@ -170,7 +170,6 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "deviations", label: "Deviations" },
       { key: "conclusion", label: "Summary & conclusion", aliases: ["resultSummary", "result summary", "结论"] },
       { key: "tags", label: "Tags" },
-      { key: "createResultTemplates", label: "Create Result templates", example: true },
     ],
     markdownSections: [
       { field: "purpose", title: "Purpose" },
@@ -209,7 +208,7 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "summary", label: "Summary" },
       { key: "analysis", label: "Analysis" },
       { key: "interpretation", label: "Interpretation" },
-      { key: "qualityLimitations", label: "QC & limitations" },
+      { key: "qualityLimitations", label: "Deviations & limitations" },
     ],
   },
   inventory: {

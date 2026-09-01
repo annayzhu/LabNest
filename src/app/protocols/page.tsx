@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { prisma } from "@/lib/db";
@@ -49,7 +50,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
       <CollectionToolbar
         path="/protocols"
         query={query}
-        searchPlaceholder="Search protocol code, title, tags…"
+        searchPlaceholder="Search protocol title, code, tags…"
         resultCount={protocols.length}
         totalCount={totalCount}
         sort={sort}
@@ -61,8 +62,8 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         ]}
         sortOptions={[
           { value: "updated_desc", label: "Recently updated" },
-          { value: "code_asc", label: "Protocol code" },
           { value: "title_asc", label: "Title A–Z" },
+          { value: "code_asc", label: "Protocol code" },
         ]}
         actions={<>
           <Link href="/protocols/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
@@ -71,7 +72,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         </>}
       />
       <DataTable rows={protocols} getRowKey={(row) => row.id} emptyMessage="No Protocols match this view." selection={{ exportPath: "/protocols/export" }} columns={[
-        { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="block"><span className="font-mono text-xs text-muted">{row.humanCode ?? "—"}</span><span className="ml-2 font-semibold text-ink hover:text-moss">{row.canonicalTitle ?? row.title}</span></Link> },
+        { key: "protocol", header: "Protocol", render: (row) => <Link href={`/protocols/${row.id}`} className="block text-ink hover:text-moss"><ProtocolIdentity title={row.canonicalTitle ?? row.title} code={row.humanCode} /></Link> },
         { key: "version", header: "Current version", render: (row) => row.versions[0] ? <span className="font-mono">{row.versions[0].displayVersion}</span> : "—" },
         { key: "review", header: "Review", render: (row) => row.versions[0] ? <StatusPill status={row.versions[0].reviewStage} href={filterHref("/protocols", { review: row.versions[0].reviewStage })} /> : "—" },
         { key: "availability", header: "Availability", render: (row) => <StatusPill status={row.availability} href={filterHref("/protocols", { availability: row.availability })} /> },

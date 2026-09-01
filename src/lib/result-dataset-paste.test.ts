@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ResultDatasetColumn } from "./types";
-import { applySpreadsheetPaste, parseSpreadsheetClipboard } from "./result-dataset-paste";
+import { applySpreadsheetPaste, isRectangularSpreadsheetPaste, parseSpreadsheetClipboard } from "./result-dataset-paste";
 
 const columns: ResultDatasetColumn[] = [
   { key: "sample_id", label: "Sample ID", dataType: "text" },
@@ -11,6 +11,12 @@ const columns: ResultDatasetColumn[] = [
 ];
 
 describe("spreadsheet clipboard parsing", () => {
+  it("leaves an ordinary single-cell paste to the active input", () => {
+    expect(isRectangularSpreadsheetPaste("insert at the caret")).toBe(false);
+    expect(isRectangularSpreadsheetPaste("S1\t12.5")).toBe(true);
+    expect(isRectangularSpreadsheetPaste("S1\nS2")).toBe(true);
+  });
+
   it("parses a rectangular TSV payload and preserves empty cells", () => {
     expect(parseSpreadsheetClipboard("S1\t12.5\t\nS2\t\tYes\n")).toEqual([
       ["S1", "12.5", ""],
@@ -61,6 +67,18 @@ describe("result dataset spreadsheet paste", () => {
       run_date: "2026-08-14",
       recorded_at: "2026-08-14T09:05:06",
     });
+  });
+
+  it("preserves cells outside the pasted rectangle", () => {
+    const result = applySpreadsheetPaste({
+      text: "S2\t20",
+      columns,
+      rows: [{ sample_id: "S1", concentration: 10, accepted: true, run_date: "2026-08-30" }],
+      startRow: 0,
+      startColumn: 0,
+    });
+
+    expect(result.rows[0]).toEqual({ sample_id: "S2", concentration: 20, accepted: true, run_date: "2026-08-30" });
   });
 
   it("does not overwrite an existing typed value when pasted input is invalid", () => {

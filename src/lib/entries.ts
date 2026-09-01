@@ -175,7 +175,10 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
         orderBy: { createdAt: "desc" },
       }),
     ]);
-    const attachments = orderAttachments(attachmentLinks.map((link) => serializeAttachment(link.attachment)), entry.contentJson);
+    const attachments = orderAttachments(attachmentLinks.map((link) => ({
+      ...serializeAttachment(link.attachment),
+      linkId: link.id,
+    })), entry.contentJson);
 
     return {
       id: entry.id,

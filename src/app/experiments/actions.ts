@@ -75,7 +75,6 @@ export async function createExperiment(
       methodMode: data.parsed.methodMode,
       protocolVersionIds,
       customSteps: data.parsed.methodMode === "custom" ? parseCustomExperimentSteps(String(formData.get("customSteps") ?? "")) : [],
-      createResultTemplates: data.parsed.methodMode === "protocol",
     });
     experimentId = experiment.id;
     researchPlanId = data.parsed.researchPlanId;

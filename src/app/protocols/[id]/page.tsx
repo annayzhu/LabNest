@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PencilLine } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
@@ -13,8 +14,8 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
-import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { protocolDeleteBlockers } from "@/lib/record-lifecycle";
+import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { archiveProtocol, deleteProtocol } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -133,7 +134,7 @@ export default async function ProtocolDetailPage({
                 <Control label="Updated">{protocol.updatedAt.toLocaleDateString()}</Control>
                 <div className="sm:col-span-2 flex flex-wrap gap-2 border-t border-hairline pt-3">
                   {protocol.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
-                  {version.derivedFromVersion ? <Link href={`/protocols/${version.derivedFromVersion.protocol.id}?version=${version.derivedFromVersion.id}`} className="text-xs font-medium text-moss hover:underline">Derived from {version.derivedFromVersion.protocol.humanCode ?? version.derivedFromVersion.protocol.title} · {version.derivedFromVersion.displayVersion}</Link> : null}
+                  {version.derivedFromVersion ? <Link href={`/protocols/${version.derivedFromVersion.protocol.id}?version=${version.derivedFromVersion.id}`} className="text-xs font-medium text-moss hover:underline">Derived from {version.derivedFromVersion.protocol.canonicalTitle ?? version.derivedFromVersion.protocol.title} · {version.derivedFromVersion.protocol.humanCode ?? "Uncoded"} · {version.derivedFromVersion.displayVersion}</Link> : null}
                   {version.previousVersion ? <Link href={`/protocols/${protocol.id}?version=${version.previousVersion.id}`} className="text-xs font-medium text-moss hover:underline">Previous revision {version.previousVersion.displayVersion}</Link> : null}
                   {version.sourceFileName ? <span className="break-all font-mono text-xs text-muted">Source: {version.sourceFileName}</span> : null}
                   {protocol.researchPlans.map((link) => <Link key={link.researchPlanId} href={`/research-plans/${link.researchPlanId}`} className="text-xs font-medium text-moss hover:underline">{link.isPrimary ? "Primary · " : ""}{link.researchPlan.code} · {link.researchPlan.title}</Link>)}
@@ -145,7 +146,7 @@ export default async function ProtocolDetailPage({
               <CardHeader title="Attachments" eyebrow="Version-specific files" />
               <CardBody className="space-y-4">
                 {!recycleEntry ? <AttachmentUploadForm targetType="protocol_version" targetId={version.id} hideTargetFields /> : null}
-                {attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id}><Link href={`/api/attachments/${link.attachment.id}`} className="break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link> <span className="text-xs text-muted">· {(link.attachment.size / 1024).toFixed(1)} KB</span></li>)}</ul> : <p className="border-t border-hairline pt-4 text-sm text-muted">No files attached to this exact version.</p>}
+                {attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="border-t border-hairline pt-4 text-sm text-muted">No files attached to this exact version.</p>}
               </CardBody>
             </Card>
 

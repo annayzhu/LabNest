@@ -1,6 +1,7 @@
 import { Download, Paperclip } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -93,14 +94,14 @@ export default async function AttachmentsPage() {
                   key: "download",
                   header: "",
                   render: (row) => (
-                    <a
+                    <div className="flex items-center gap-1"><a
                       href={`/api/attachments/${row.id}`}
                       className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-hairline bg-surface text-moss transition hover:bg-sage-surface"
                       title={`Download ${row.originalFilename}`}
                     >
                       <Download className="h-4 w-4" aria-hidden />
                       <span className="sr-only">Download {row.originalFilename}</span>
-                    </a>
+                    </a><AttachmentDeleteButton attachmentId={row.id} filename={row.originalFilename} /></div>
                   ),
                 },
               ]}

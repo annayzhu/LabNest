@@ -54,7 +54,7 @@ function richRuns(runs: ProtocolRichTextRun[]) {
     underline: item.underline,
     strike: item.strike,
     code: item.code,
-    color: item.link ? palette.secondaryText : undefined,
+    color: item.color === "risk" ? palette.risk : item.link ? palette.secondaryText : undefined,
     size: item.fontSizePt ? item.fontSizePt * 2 : undefined,
   })).join("");
 }

@@ -16,6 +16,10 @@ export type ResultDatasetPasteResult = {
   invalidCells: ResultDatasetPasteIssue[];
 };
 
+export function isRectangularSpreadsheetPaste(text: string) {
+  return /[\t\r\n]/.test(text);
+}
+
 /** Parse the tab-separated clipboard format produced by Excel and similar spreadsheet apps. */
 export function parseSpreadsheetClipboard(text: string): string[][] {
   const normalized = text.replaceAll("\r\n", "\n").replaceAll("\r", "\n");

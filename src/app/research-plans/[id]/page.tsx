@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ControlKeyInformationForm } from "@/components/ControlKeyInformationForm";
 import { PageHeader } from "@/components/PageHeader";
+import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { ResearchPlanPremiseView } from "@/components/ResearchPlanPremiseView";
@@ -71,11 +72,11 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
             {plan.tags.length ? <div className="flex flex-wrap gap-2 border-t border-hairline pt-4">{plan.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}</div> : null}
           </CardBody></Card>
           <Card><CardHeader title="Associated Protocols" eyebrow="Reusable methods" /><CardBody><DataTable rows={plan.protocols} getRowKey={(row) => row.protocolId} emptyMessage="No protocols are associated with this plan." columns={[
-            { key: "protocol", header: "Protocol", render: (row) => <div><div className="flex flex-wrap items-center gap-2"><Link href={`/protocols/${row.protocolId}`} className="font-semibold text-moss hover:underline">{row.protocol.humanCode ?? row.protocol.title}</Link>{recycledKeys.has(`protocol:${row.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div><div className="mt-2 flex flex-wrap items-center gap-2"><Badge tone={row.protocol.scope === "project" ? "sage" : "info"}>{row.protocol.scope}</Badge><span className="font-mono text-xs text-muted">v{row.protocol.versions[0]?.displayVersion ?? "—"}</span></div></div> },
+            { key: "protocol", header: "Protocol", render: (row) => <div><div className="flex items-start gap-2"><Link href={`/protocols/${row.protocolId}`} className="min-w-0 flex-1 text-moss hover:underline"><ProtocolIdentity compact title={row.protocol.canonicalTitle ?? row.protocol.title} code={row.protocol.humanCode} version={row.protocol.versions[0]?.displayVersion} meta={row.protocol.scope} /></Link>{recycledKeys.has(`protocol:${row.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div></div> },
             { key: "role", header: "Role", render: (row) => row.isPrimary ? <Badge tone="sage">primary</Badge> : <Badge>supporting</Badge> },
           ]} /></CardBody></Card>
           <Card><CardHeader title="Experiments" eyebrow="Repeated executions" action={<Link href={`/experiments/new?plan=${plan.id}`} className="text-sm font-medium text-moss hover:underline">Create</Link>} /><CardBody><DataTable rows={plan.experiments} getRowKey={(row) => row.id} emptyMessage="No experiments have been created for this plan." columns={[
-            { key: "experiment", header: "Experiment", render: (row) => <div><Link href={`/experiments/${row.id}`} className="font-semibold text-moss hover:underline">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link><p className="mt-1 text-xs leading-5 text-muted">{row.primaryProtocolVersion ? `${row.primaryProtocolVersion.protocol.humanCode ?? row.primaryProtocolVersion.protocol.title} · ${row.primaryProtocolVersion.displayVersion}` : "No primary ProtocolVersion"}</p><p className="mt-1 font-mono text-xs text-muted">{row.date.toLocaleDateString()} · {row._count.results} results</p></div> },
+            { key: "experiment", header: "Experiment", render: (row) => <div><Link href={`/experiments/${row.id}`} className="font-semibold text-moss hover:underline">{row.runCode ? `${row.runCode} · ` : ""}{row.title}</Link>{row.primaryProtocolVersion ? <ProtocolIdentity className="mt-1" compact title={row.primaryProtocolVersion.protocol.canonicalTitle ?? row.primaryProtocolVersion.protocol.title} code={row.primaryProtocolVersion.protocol.humanCode} version={row.primaryProtocolVersion.displayVersion} /> : <p className="mt-1 text-xs text-muted">No primary ProtocolVersion</p>}<p className="mt-1 font-mono text-xs text-muted">{row.date.toLocaleDateString()} · {row._count.results} results</p></div> },
             { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
           ]} /></CardBody></Card>
         </aside>

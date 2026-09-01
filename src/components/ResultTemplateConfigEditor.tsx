@@ -290,7 +290,7 @@ export function ResultTemplateConfigEditor({ block, onChange }: { block: TableBl
         <h4 className="text-sm font-semibold text-ink">填写说明 / Instructions</h4>
         <p className="mt-1 text-xs leading-5 text-muted">This guidance follows the frozen template into the Experiment and final Result record.</p>
       </div>
-      <ProtocolRichTextEditor nodes={instructionNodes} onChange={(instructions) => update({ ...template, instructions })} />
+      <ProtocolRichTextEditor nodes={instructionNodes} onChange={(instructions) => update({ ...template, instructions })} showToolbar={false} />
     </section>
 
     <section className={`space-y-[var(--ln-result-template-section-item-gap)] ${panelClass}`}>

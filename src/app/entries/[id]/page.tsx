@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
@@ -127,6 +128,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                         <Download className="h-4 w-4" aria-hidden />
                         <span className="sr-only">Download {attachment.originalFilename}</span>
                       </a>
+                      <AttachmentDeleteButton attachmentId={attachment.id} linkId={attachment.linkId} filename={attachment.originalFilename} />
                     </div>
                   ))}
                 </div>

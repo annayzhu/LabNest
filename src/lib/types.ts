@@ -119,7 +119,8 @@ export type ResultTemplateInstructionRun = {
   strike?: boolean;
   code?: boolean;
   link?: string;
-  fontSizePt?: 8 | 9 | 10 | 11 | 12 | 14;
+  color?: "risk";
+  fontSizePt?: RichTextFontSizePt;
 };
 
 export type ResultTemplateInstructionNode = {
@@ -213,6 +214,7 @@ export type ResearchPlan = {
 
 export type EntryAttachment = {
   id: string;
+  linkId?: string;
   originalFilename: string;
   mimeType: string;
   size: number;
@@ -597,3 +599,4 @@ export type ReferenceConnectorRecord = {
   lastSyncedAt?: string;
   notes?: string;
 };
+import type { RichTextFontSizePt } from "./rich-text-font-size";

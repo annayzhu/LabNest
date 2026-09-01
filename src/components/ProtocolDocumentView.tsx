@@ -4,6 +4,7 @@ import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolTimer } from "@/components/ProtocolTimer";
 import { ResultDatasetSchemaView } from "@/components/ResultDatasetSchemaView";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
+import { TiptapCellContentView } from "@/components/TiptapCellContentView";
 import { cn } from "@/lib/cn";
 import { richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
 import { checkResultTemplate, fieldDataType, fieldSemanticRole, normalizeResultTemplate, resultTemplateCardinalityLabel, type ResultTemplateCheck } from "@/lib/result-templates";
@@ -111,6 +112,7 @@ function RichRun({ run }: { run: ProtocolRichTextRun }) {
   const href = safeLink(run.link);
   if (href) content = <a href={href} className="font-medium text-moss underline decoration-moss/40 underline-offset-2">{content}</a>;
   if (run.fontSizePt) content = <span data-labnest-size={run.fontSizePt} style={{ fontSize: `${run.fontSizePt}pt` }}>{content}</span>;
+  if (run.color === "risk") content = <span data-labnest-color="risk" className="text-error">{content}</span>;
   return content;
 }
 
@@ -170,7 +172,14 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
   const [headerRow = [], ...bodyRows] = block.rows;
   return <figure className="space-y-2">
-    {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}<ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar"><table className="document-three-line-table min-w-full table-fixed text-left text-sm"><colgroup>{Array.from({ length: columnCount }).map((_, columnIndex) => <col key={columnIndex} data-resizable-column-index={columnIndex} style={{ width: "var(--ln-document-table-col-width)" }} />)}</colgroup>{headerRow.length ? <thead><tr>{Array.from({ length: columnCount }).map((_, columnIndex) => <th key={columnIndex} data-resizable-column-cell={columnIndex} scope="col" className="min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] pr-4 align-top font-semibold">{headerRow[columnIndex] ?? ""}<span data-column-resize-handle={columnIndex} data-min-width="var(--ln-document-table-min-col-width)" aria-hidden /></th>)}</tr></thead> : null}<tbody>{bodyRows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex + 1}`}>{Array.from({ length: columnCount }).map((_, columnIndex) => <td key={columnIndex} className="min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] align-top">{row[columnIndex] ?? ""}</td>)}</tr>)}</tbody></table></ResizableTableFrame>
+    {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}
+    <ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar">
+      <table className="document-three-line-table min-w-full table-fixed text-left text-sm">
+        <colgroup>{Array.from({ length: columnCount }).map((_, columnIndex) => <col key={columnIndex} data-resizable-column-index={columnIndex} style={{ width: block.columnWidths?.[columnIndex] ? `${block.columnWidths[columnIndex]}px` : "var(--ln-document-table-col-width)" }} />)}</colgroup>
+        {headerRow.length ? <thead><tr>{Array.from({ length: columnCount }).map((_, columnIndex) => <th key={columnIndex} data-resizable-column-cell={columnIndex} scope="col" className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] pr-4 align-top font-semibold", !block.cellRichContent?.[0]?.[columnIndex] && block.cellColors?.[0]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[0]?.[columnIndex] && block.cellFontSizesPt?.[0]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[0][columnIndex]}pt` } : undefined}><TiptapCellContentView content={block.cellRichContent?.[0]?.[columnIndex]} fallback={headerRow[columnIndex] ?? ""} /><span data-column-resize-handle={columnIndex} data-min-width="var(--ln-document-table-min-col-width)" aria-hidden /></th>)}</tr></thead> : null}
+        <tbody>{bodyRows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex + 1}`}>{Array.from({ length: columnCount }).map((_, columnIndex) => <td key={columnIndex} className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] align-top", !block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellColors?.[rowIndex + 1]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellFontSizesPt?.[rowIndex + 1]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[rowIndex + 1][columnIndex]}pt` } : undefined}><TiptapCellContentView content={block.cellRichContent?.[rowIndex + 1]?.[columnIndex]} fallback={row[columnIndex] ?? ""} /></td>)}</tr>)}</tbody>
+      </table>
+    </ResizableTableFrame>
   </figure>;
 }
 

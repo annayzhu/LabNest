@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
+import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
@@ -65,7 +66,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
       { key: "version", header: "Version / status", render: (row) => row.versionSnapshot ?? "—" },
       { key: "included", header: "Included", render: (row) => row.includedAt.toLocaleDateString() },
     ]} /></CardBody></Card>
-    <Card><CardHeader title="Attachments" eyebrow="Rendered exports and supporting documents" /><CardBody className="space-y-4"><AttachmentUploadForm targetType="report" targetId={report.id} hideTargetFields />{attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id}><Link href={`/api/attachments/${link.attachment.id}`} className="text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link></li>)}</ul> : null}</CardBody></Card>
+    <Card><CardHeader title="Attachments" eyebrow="Rendered exports and supporting documents" /><CardBody className="space-y-4"><AttachmentUploadForm targetType="report" targetId={report.id} hideTargetFields />{attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : null}</CardBody></Card>
   </div></AppShell>;
 }
 function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }

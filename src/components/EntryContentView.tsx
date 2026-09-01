@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
+import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken } from "@/lib/rich-text-color";
 import { parseRichTextFontFamilyLine } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
 
-const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
+const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
 
 function inlineContent(text: string): ReactNode[] {
   return text.split(inlinePattern).filter(Boolean).map((part, index) => {
     const key = `${index}-${part.slice(0, 8)}`;
     const sized = parseLabNestFontSizeToken(part);
     if (sized) return <span key={key} data-labnest-size={sized.size} style={{ fontSize: `${sized.size}pt` }}>{inlineContent(sized.content)}</span>;
+    const colored = parseLabNestColorToken(part);
+    if (colored) return <span key={key} data-labnest-color={colored.color} className="text-error">{inlineContent(colored.content)}</span>;
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={key} className="font-semibold text-ink">{inlineContent(part.slice(2, -2))}</strong>;
     if (part.startsWith("~~") && part.endsWith("~~")) return <s key={key}>{inlineContent(part.slice(2, -2))}</s>;
     if (part.startsWith("++") && part.endsWith("++")) return <u key={key} className="decoration-moss/60 underline-offset-2">{inlineContent(part.slice(2, -2))}</u>;

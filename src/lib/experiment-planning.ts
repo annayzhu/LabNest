@@ -82,8 +82,8 @@ export function experimentStepGroupHeading(groupTitle: string): ExperimentStepGr
     });
 
   return {
-    title: (hasProtocolCode ? [parts[0], protocolTitle] : [protocolTitle]).filter(Boolean).join(" · "),
-    detail: [...meaningfulDetails, version].filter(Boolean).join(" · ") || undefined,
+    title: protocolTitle || groupTitle,
+    detail: [...(hasProtocolCode ? [parts[0]] : []), ...meaningfulDetails, version].filter(Boolean).join(" · ") || undefined,
   };
 }
 

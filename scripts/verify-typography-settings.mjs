@@ -10,11 +10,17 @@ try {
   const selector = (role) => page.locator(`[data-typography-role="${role}"]`);
   const selectors = page.locator(".typography-role-select");
   if (await selectors.count() !== 6) throw new Error(`Expected six independent Chinese/English selectors, found ${await selectors.count()}.`);
+  const selectFont = async (role, value) => {
+    await selector(role).click();
+    await page.locator(`[data-font-option="${value}"]`).click();
+  };
 
-  const latinPresetValues = await selector("latinDocumentBody").locator("optgroup:first-of-type option").evaluateAll((options) => options.map((option) => option.value).sort());
+  await selector("latinDocumentBody").click();
+  const latinPresetValues = await page.locator('.typography-font-menu [data-font-option^="preset:"]').evaluateAll((options) => options.map((option) => option.getAttribute("data-font-option")).sort());
   if (JSON.stringify(latinPresetValues) !== JSON.stringify(["preset:arial", "preset:times-new-roman"])) {
     throw new Error(`English presets must be limited to Arial and Times New Roman: ${latinPresetValues.join(", ")}`);
   }
+  await page.keyboard.press("Escape");
   const cjkFontFaceIsolation = await page.evaluate(() => Array.from(document.styleSheets)
     .flatMap((sheet) => Array.from(sheet.cssRules))
     .filter((rule) => rule instanceof CSSFontFaceRule && rule.style.fontFamily.includes("LabNest CJK"))
@@ -24,9 +30,9 @@ try {
   }
   await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkUi"]')?.disabled);
 
-  await selector("cjkUi").selectOption("preset:pingfang");
-  await selector("cjkDocumentBody").selectOption("preset:songti");
-  await selector("latinDocumentBody").selectOption("preset:arial");
+  await selectFont("cjkUi", "preset:pingfang");
+  await selectFont("cjkDocumentBody", "preset:songti");
+  await selectFont("latinDocumentBody", "preset:arial");
   await page.waitForFunction(() => {
     const style = getComputedStyle(document.documentElement);
     return style.getPropertyValue("--font-cjk-ui").includes("LabNest CJK PingFang")
@@ -50,11 +56,13 @@ try {
 
   await page.locator("input[type=file][accept*=woff2]").setInputFiles(fontFixture);
   await page.getByText(/was imported|已导入/).waitFor();
-  const customOption = selector("latinDocumentBody").locator("optgroup:last-of-type option").last();
-  const customValue = await customOption.getAttribute("value");
+  await selector("latinDocumentBody").click();
+  const customOption = page.locator('.typography-font-menu [data-font-option^="custom:"]').last();
+  const customValue = await customOption.getAttribute("data-font-option");
   if (!customValue?.startsWith("custom:")) throw new Error("Imported font was not added to the role selectors.");
+  await page.keyboard.press("Escape");
 
-  await selector("latinDocumentBody").selectOption(customValue);
+  await selectFont("latinDocumentBody", customValue);
   await page.reload();
   const documentFamily = await page.locator('[data-typography-preview="latin"] .typography-preview-body').evaluate((element) => getComputedStyle(element).fontFamily);
   if (!documentFamily.includes("LabNest Custom") || !documentFamily.includes("Latin")) throw new Error(`Script-scoped custom font did not persist: ${documentFamily}`);
@@ -62,7 +70,25 @@ try {
   page.once("dialog", (dialog) => void dialog.accept());
   await page.locator(".typography-custom-font-list button").last().click();
   await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
-  if ((await selector("latinDocumentBody").inputValue()).startsWith("custom:")) throw new Error("Deleting a selected font did not restore the default English role.");
+  if ((await selector("latinDocumentBody").getAttribute("data-font-value"))?.startsWith("custom:")) throw new Error("Deleting a selected font did not restore the default English role.");
+
+  await selector("cjkUi").click();
+  await page.locator(".typography-font-search input").fill("PingFang");
+  if (await page.locator('.typography-font-menu [data-font-option="preset:pingfang"]').count() !== 1) throw new Error("Font search did not retain the matching preset.");
+  await page.screenshot({ path: ".impeccable/review/typography-searchable-menu.png", fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await selector("cjkUi").click();
+  const mobileMenu = await page.locator(".typography-font-menu").evaluate((menu) => {
+    const rect = menu.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, width: rect.width };
+  });
+  if (mobileMenu.left < 0 || mobileMenu.right > 390 || mobileMenu.width <= 0) throw new Error(`Font menu escaped the mobile viewport: ${JSON.stringify(mobileMenu)}`);
+  await page.keyboard.press("Escape");
+  if (await page.locator(".typography-font-menu").count()) throw new Error("Escape did not close the font menu.");
+  const mobileWidths = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
+  if (mobileWidths.scroll > mobileWidths.client + 1) throw new Error(`Typography settings overflow on mobile: ${JSON.stringify(mobileWidths)}`);
 
   console.log("Typography settings browser seam passed: independent CJK/Latin presets, import, apply, reload, delete, and fallback.");
 } finally {

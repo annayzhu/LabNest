@@ -1,7 +1,7 @@
 "use client";
 
-import { RotateCcw, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, RotateCcw, Search, Trash2, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import {
   createCustomFontRecord,
@@ -54,6 +54,78 @@ function selectionValue(selection: FontSelection) {
 
 function formatFileSize(size: number) {
   return size >= 1_000_000 ? `${(size / 1_000_000).toFixed(1)} MB` : `${Math.ceil(size / 1_000)} KB`;
+}
+
+function TypographyFontPicker({
+  role,
+  selection,
+  customFonts,
+  loading,
+  zh,
+  onSelect,
+}: {
+  role: TypographyRole;
+  selection: FontSelection;
+  customFonts: CustomFontRecord[];
+  loading: boolean;
+  zh: boolean;
+  onSelect: (value: string) => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selectedValue = selectionValue(selection);
+  const presets = typographyPresets[role];
+  const selectedLabel = selection.kind === "custom"
+    ? selection.name
+    : (() => {
+        const preset = presets.find((item) => item.id === selection.id);
+        return preset ? zh ? preset.name : preset.nameEn : zh ? "默认" : "Default";
+      })();
+  const needle = query.trim().toLocaleLowerCase();
+  const filteredPresets = useMemo(() => presets.filter((preset) => !needle || [preset.name, preset.nameEn, preset.description, preset.descriptionEn].some((value) => value.toLocaleLowerCase().includes(needle))), [needle, presets]);
+  const filteredCustomFonts = useMemo(() => customFonts.filter((font) => !needle || `${font.name} ${font.fileName}`.toLocaleLowerCase().includes(needle)), [customFonts, needle]);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    searchRef.current?.focus();
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [open]);
+
+  function choose(value: string) {
+    onSelect(value);
+    setOpen(false);
+    setQuery("");
+  }
+
+  return <div ref={rootRef} className="typography-font-picker" data-open={open ? "true" : undefined} onKeyDown={(event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    setOpen(false);
+  }}>
+    <button type="button" className="focus-ring typography-role-select" data-typography-role={role} data-font-value={selectedValue} disabled={loading} aria-haspopup="listbox" aria-expanded={open} aria-label={zh ? `选择${roleCopy[role].zh}字体` : `Choose ${roleCopy[role].en} font`} onClick={() => { setOpen((current) => !current); setQuery(""); }}>
+      <span>{selectedLabel}</span><ChevronDown aria-hidden />
+    </button>
+    {open ? <div className="typography-font-menu">
+      <label className="typography-font-search"><Search aria-hidden /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={zh ? "搜索字体" : "Search fonts"} aria-label={zh ? "搜索字体" : "Search fonts"} /></label>
+      <div className="typography-font-options" role="listbox" aria-label={zh ? roleCopy[role].zh : roleCopy[role].en}>
+        {filteredPresets.length ? <div className="typography-font-option-group"><p>{zh ? "预设字体" : "Preset fonts"}</p>{filteredPresets.map((preset) => {
+          const value = `preset:${preset.id}`;
+          return <button key={preset.id} type="button" role="option" aria-selected={selectedValue === value} data-font-option={value} onClick={() => choose(value)}><Check aria-hidden /><span><strong>{zh ? preset.name : preset.nameEn}</strong><small>{zh ? preset.description : preset.descriptionEn}</small></span></button>;
+        })}</div> : null}
+        {filteredCustomFonts.length ? <div className="typography-font-option-group"><p>{zh ? "我的字体" : "My fonts"}</p>{filteredCustomFonts.map((font) => {
+          const value = `custom:${font.id}`;
+          return <button key={font.id} type="button" role="option" aria-selected={selectedValue === value} data-font-option={value} onClick={() => choose(value)}><Check aria-hidden /><span><strong>{font.name}</strong><small>{font.fileName}</small></span></button>;
+        })}</div> : null}
+        {!filteredPresets.length && !filteredCustomFonts.length ? <p className="typography-font-empty">{zh ? "没有匹配的字体" : "No matching fonts"}</p> : null}
+      </div>
+    </div> : null}
+  </div>;
 }
 
 export function TypographySettingsPanel() {
@@ -151,26 +223,11 @@ export function TypographySettingsPanel() {
             <p className="typography-language-note">{zh ? groupCopy[group].noteZh : groupCopy[group].noteEn}</p>
             <div className="typography-role-grid">
               {typographyRoleGroups[group].map((role) => (
-                <label key={role} className="typography-role-field">
+                <div key={role} className="typography-role-field">
                   <span className="typography-role-label">{zh ? roleCopy[role].zh : roleCopy[role].en}</span>
                   <span className="typography-role-note">{zh ? roleCopy[role].noteZh : roleCopy[role].noteEn}</span>
-                  <select
-                    className="focus-ring typography-role-select"
-                    data-typography-role={role}
-                    disabled={loadingFonts}
-                    value={selectionValue(settings[role])}
-                    onChange={(event) => selectFont(role, event.target.value)}
-                  >
-                    <optgroup label={copy("预设字体", "Preset fonts")}>
-                      {typographyPresets[role].map((preset) => <option key={preset.id} value={`preset:${preset.id}`}>{zh ? preset.name : preset.nameEn} · {zh ? preset.description : preset.descriptionEn}</option>)}
-                    </optgroup>
-                    {customFonts.length ? (
-                      <optgroup label={copy("我的字体", "My fonts")}>
-                        {customFonts.map((font) => <option key={font.id} value={`custom:${font.id}`}>{font.name}</option>)}
-                      </optgroup>
-                    ) : null}
-                  </select>
-                </label>
+                  <TypographyFontPicker role={role} selection={settings[role]} customFonts={customFonts} loading={loadingFonts} zh={zh} onSelect={(value) => selectFont(role, value)} />
+                </div>
               ))}
             </div>
           </fieldset>

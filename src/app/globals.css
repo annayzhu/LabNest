@@ -1079,16 +1079,174 @@ textarea {
 }
 
 .typography-role-select {
+  align-items: center;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--ln-radius-control-lg);
   color: var(--graphite);
+  display: flex;
   font-size: 12px;
+  gap: 0.5rem;
   height: 2.25rem;
+  justify-content: space-between;
   margin-top: 0.18rem;
   min-width: 0;
-  padding-inline: 0.6rem 1.8rem;
+  padding-inline: 0.65rem 0.5rem;
+  text-align: left;
   width: 100%;
+}
+
+.typography-role-select > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typography-role-select > svg {
+  flex: 0 0 auto;
+  height: 0.8rem;
+  transition: transform 140ms ease;
+  width: 0.8rem;
+}
+
+.typography-font-picker {
+  min-width: 0;
+  position: relative;
+}
+
+.typography-font-picker[data-open="true"] {
+  z-index: 40;
+}
+
+.typography-font-picker[data-open="true"] .typography-role-select > svg {
+  transform: rotate(180deg);
+}
+
+.typography-font-menu {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-lg);
+  box-shadow: 0 16px 40px rgba(31, 39, 46, 0.13);
+  left: 0;
+  margin-top: 0.28rem;
+  min-width: min(19rem, calc(100vw - 2rem));
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+}
+
+.typography-font-search {
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  gap: 0.45rem;
+  margin-inline: 0.55rem;
+  min-height: 2.3rem;
+}
+
+.typography-font-search > svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.typography-font-search input {
+  background: transparent;
+  color: var(--ink);
+  font-size: 11.5px;
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.typography-font-search input::placeholder {
+  color: var(--muted);
+}
+
+.typography-font-options {
+  max-height: 17rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.28rem;
+  scrollbar-width: thin;
+}
+
+.typography-font-option-group + .typography-font-option-group {
+  border-top: 1px solid var(--divider);
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.typography-font-option-group > p {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  padding: 0.3rem 0.45rem 0.2rem 1.8rem;
+  text-transform: uppercase;
+}
+
+.typography-font-option-group > button {
+  align-items: center;
+  border-radius: var(--ln-radius-control-md);
+  color: var(--graphite);
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  min-height: 2.35rem;
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  width: 100%;
+}
+
+.typography-font-option-group > button:hover,
+.typography-font-option-group > button:focus-visible {
+  background: var(--stone);
+  color: var(--ink);
+  outline: 0;
+}
+
+.typography-font-option-group > button > svg {
+  height: 0.75rem;
+  opacity: 0;
+  width: 0.75rem;
+}
+
+.typography-font-option-group > button[aria-selected="true"] {
+  background: var(--action-surface);
+  color: var(--action);
+}
+
+.typography-font-option-group > button[aria-selected="true"] > svg {
+  opacity: 1;
+}
+
+.typography-font-option-group strong,
+.typography-font-option-group small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typography-font-option-group strong {
+  font-size: 11.5px;
+  font-weight: 550;
+}
+
+.typography-font-option-group small {
+  color: var(--muted);
+  font-size: 9.5px;
+  margin-top: 0.06rem;
+}
+
+.typography-font-empty {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 1rem 0.7rem;
+  text-align: center;
 }
 
 .typography-preview {

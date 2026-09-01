@@ -58,9 +58,11 @@ export function ProtocolRelevantItemsEditor({
   const [manualLinks, setManualLinks] = useState<ManualRelevantLink[]>(initialManualLinks);
   const [remoteResults, setRemoteResults] = useState<RelevantCatalogItem[]>([]);
   const [searching, setSearching] = useState(false);
+  const searchNeedle = query.trim();
+  const hasSearchQuery = searchNeedle.length >= 2;
   useEffect(() => {
     const needle = query.trim();
-    if (!needle) return;
+    if (needle.length < 2) return;
     const controller = new AbortController();
     const timeout = globalThis.setTimeout(async () => {
       setSearching(true);
@@ -81,12 +83,12 @@ export function ProtocolRelevantItemsEditor({
   }, [query, researchPlanProjectId, type]);
   const combinedCatalog = useMemo(() => {
     const unique = new Map<string, RelevantCatalogItem>();
-    for (const item of [...plans, ...catalog, ...(query.trim() ? remoteResults : [])]) unique.set(`${item.type}:${item.id}`, item);
+    for (const item of [...plans, ...catalog, ...(hasSearchQuery ? remoteResults : [])]) unique.set(`${item.type}:${item.id}`, item);
     return [...unique.values()];
-  }, [catalog, plans, query, remoteResults]);
+  }, [catalog, hasSearchQuery, plans, remoteResults]);
   const planMap = useMemo(() => new Map(combinedCatalog.filter((item): item is PlanOption => item.type === "research_plan" && Boolean(item.projectId && item.projectName)).map((item) => [item.id, item])), [combinedCatalog]);
   const catalogMap = useMemo(() => new Map(combinedCatalog.map((item) => [`${item.type}:${item.id}`, item])), [combinedCatalog]);
-  const filtered = useMemo(() => filterRelevantItemCatalog(combinedCatalog, query, type), [combinedCatalog, query, type]);
+  const filtered = useMemo(() => hasSearchQuery ? filterRelevantItemCatalog(combinedCatalog, query, type) : [], [combinedCatalog, hasSearchQuery, query, type]);
   const selectedManualKeys = new Set(manualLinks.map((item) => `${item.type}:${item.id}`));
 
   const addManual = (item: RelevantCatalogItem) => {
@@ -118,15 +120,15 @@ export function ProtocolRelevantItemsEditor({
       })}
     </div>
 
-    <div className="document-editor-relation-results" aria-live="polite">
-      <h3>{query ? "Search results" : "Available items"}<span>{query.trim() && searching ? "Searching…" : filtered.length}</span></h3>
+    {hasSearchQuery ? <div className="document-editor-relation-results" aria-live="polite">
+      <h3>Search results <span>{searching ? "Searching…" : filtered.length}</span></h3>
       {filtered.map((item) => {
         const selected = item.type === "research_plan" ? selectedPlanIds.includes(item.id) : selectedManualKeys.has(`${item.type}:${item.id}`);
         const locked = item.type === "version";
         return <div key={`${item.type}:${item.id}`} className={cn("document-editor-relation-result", selected && "is-selected")}><span><strong>{item.label}</strong><small>{typeLabels[item.type]}{item.meta ? ` · ${item.meta}` : ""}</small></span>{locked ? <span className="document-editor-system-lock"><LockKeyhole aria-hidden />History</span> : <button type="button" disabled={selected} onClick={() => item.type === "research_plan" ? onTogglePlan(item.id, true) : addManual(item)}><Plus aria-hidden />{selected ? "Linked" : "Link"}</button>}</div>;
       })}
-      {!filtered.length ? <p className="document-editor-relevant-empty-message">No matching records.</p> : null}
-    </div>
+      {!filtered.length && !searching ? <p className="document-editor-relevant-empty-message">No matching records.</p> : null}
+    </div> : <p className="document-editor-relevant-search-hint">{searchNeedle ? "Type at least 2 characters to search." : "Search by name or code to add a related item."}</p>}
 
     <div className="document-editor-relevant-groups">
       {(["projects", "experiments", "results", "attachments", "versions"] as const).map((group) => <SystemRelevantGroup key={group} label={group === "versions" ? "Version history" : typeLabels[group === "projects" ? "project" : group === "experiments" ? "experiment" : group === "results" ? "result" : group === "attachments" ? "attachment" : "version"]} items={relevantItems[group] ?? []} />)}

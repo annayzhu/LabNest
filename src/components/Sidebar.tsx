@@ -50,6 +50,14 @@ const utilityItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+function desktopNavItemClass(active: boolean, collapsed: boolean) {
+  return cn(
+    "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
+    collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
+    active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/75 hover:text-ink",
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -119,11 +127,7 @@ export function Sidebar() {
                   aria-current={active ? "page" : undefined}
                   aria-label={collapsed ? item.label : undefined}
                   title={collapsed ? item.label : undefined}
-                  className={cn(
-                    "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
-                    collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                    active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/75 hover:text-ink",
-                  )}
+                  className={desktopNavItemClass(active, collapsed)}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
                   <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
@@ -143,11 +147,7 @@ export function Sidebar() {
                 aria-current={active ? "page" : undefined}
                 aria-label={collapsed ? item.label : undefined}
                 title={collapsed ? item.label : undefined}
-                className={cn(
-                  "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
-                  collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
-                  active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/70 hover:text-ink",
-                )}
+                className={desktopNavItemClass(active, collapsed)}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden />
                 <span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>

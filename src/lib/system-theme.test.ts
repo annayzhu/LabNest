@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { systemThemes } from "./system-theme";
+import { systemThemeCssText, systemThemes } from "./system-theme";
 
 function relativeLuminance(hex: string) {
   const [red, green, blue] = hex.match(/[\da-f]{2}/gi)!.map((part) => {
@@ -37,5 +37,13 @@ describe("system themes", () => {
     const moonDai = systemThemes.find((theme) => theme.id === "moon-dai")!;
     const celadonPine = systemThemes.find((theme) => theme.id === "celadon-pine")!;
     expect(rgbDistance(moonDai.colors[1], celadonPine.colors[1])).toBeGreaterThan(75);
+  });
+
+  it("generates every runtime theme selector from the typed theme manifest", () => {
+    const css = systemThemeCssText();
+    systemThemes.forEach((theme) => {
+      expect(css).toContain(`data-labnest-theme="${theme.id}"`);
+      expect(css).toContain(`--nav-active-bg:${theme.navigation.background}`);
+    });
   });
 });

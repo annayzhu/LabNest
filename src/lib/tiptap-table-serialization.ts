@@ -51,12 +51,13 @@ function needsRichPersistence(cell: JSONContent) {
   let richStructure = false;
   const visit = (node: JSONContent, isRoot = false) => {
     if (!isRoot && !["paragraph", "text", "hardBreak"].includes(node.type ?? "")) richStructure = true;
+    if (node.type === "text") {
+      const textStyle = node.marks?.find((mark) => mark.type === "textStyle");
+      fontSizes.add(textStyle?.attrs?.fontSize === undefined ? "default" : String(textStyle.attrs.fontSize));
+      colors.add(textStyle?.attrs?.color === undefined ? "default" : String(textStyle.attrs.color));
+    }
     for (const mark of node.marks ?? []) {
       if (mark.type !== "textStyle") lossyMark = true;
-      const fontSize = mark.attrs?.fontSize;
-      const color = mark.attrs?.color;
-      if (fontSize !== undefined) fontSizes.add(String(fontSize));
-      if (color !== undefined) colors.add(String(color));
     }
     node.content?.forEach((child) => visit(child));
   };
@@ -65,12 +66,12 @@ function needsRichPersistence(cell: JSONContent) {
 }
 
 function cellFontSizePt(cell: JSONContent) {
-  const sizes = new Set<RichTextFontSizePt>();
+  const sizes = new Set<RichTextFontSizePt | null>();
   const visit = (node: JSONContent) => {
     if (node.type === "text") {
       const raw = node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.fontSize;
       const size = parseRichTextFontSizePt(typeof raw === "string" ? String(Number.parseFloat(raw)) : raw === undefined ? undefined : String(raw));
-      if (size !== undefined) sizes.add(size);
+      sizes.add(size ?? null);
     }
     node.content?.forEach(visit);
   };
@@ -79,11 +80,11 @@ function cellFontSizePt(cell: JSONContent) {
 }
 
 function cellColor(cell: JSONContent) {
-  const colors = new Set<RichTextColor>();
+  const colors = new Set<RichTextColor | null>();
   const visit = (node: JSONContent) => {
     if (node.type === "text") {
       const color = parseRichTextColor(node.marks?.find((mark) => mark.type === "textStyle")?.attrs?.color);
-      if (color) colors.add(color);
+      colors.add(color ?? null);
     }
     node.content?.forEach(visit);
   };

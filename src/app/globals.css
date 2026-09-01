@@ -95,17 +95,25 @@
   --ln-control-padding-x-sm: 0.625rem; /* 小按钮左右内边距。 */
   --ln-control-padding-x-md: 0.75rem; /* 默认按钮和筛选器左右内边距。 */
   --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
-  --ln-control-font-size-xs: 0.75rem; /* 小按钮和紧凑工具按钮字号。 */
-  --ln-control-font-size-sm: 0.8125rem; /* 默认按钮、筛选器、辅助操作字号。 */
-  --ln-control-font-size-md: 0.875rem; /* 表单输入框和较大按钮字号。 */
+  --ln-ui-body-font-size: 13px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
+  --ln-ui-nav-font-size: 12px; /* 桌面侧栏与紧凑导航字号。 */
+  --ln-ui-section-title-font-size: 13px; /* 卡片和工作区 section 标题字号。 */
+  --ln-ui-label-font-size: 11px; /* 表单标签与低层级标题字号。 */
+  --ln-ui-meta-font-size: 10px; /* 时间、版本和辅助元数据字号。 */
+  --ln-ui-table-font-size: 13px; /* 共享数据表正文与记录字号。 */
+  --ln-ui-search-font-size: 13px; /* 顶部全局搜索字号。 */
+  --ln-ui-brand-font-size: 15px; /* 品牌名称保持足够识别度。 */
+  --ln-control-font-size-xs: 11px; /* 小按钮和紧凑工具按钮字号。 */
+  --ln-control-font-size-sm: 12px; /* 默认按钮、筛选器、辅助操作字号。 */
+  --ln-control-font-size-md: 13px; /* 表单输入框和较大按钮字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
   /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
   --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
-  --ln-page-title-size: 18px; /* 全站工作页外层标题字号。 */
+  --ln-page-title-size: 17px; /* 全站工作页外层标题字号。 */
   --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
   --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
-  --ln-page-action-font-size: 13px; /* 页头动作字号。 */
+  --ln-page-action-font-size: 12px; /* 页头动作字号。 */
   --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
   --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
 
@@ -131,7 +139,7 @@
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
   --ln-list-table-shadow: none; /* 列表表格保持平面层级，减少视觉重量。 */
   --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
-  --ln-list-table-head-font-size: 12.5px; /* 列表表头字号。 */
+  --ln-list-table-head-font-size: 11.5px; /* 列表表头字号。 */
   --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
   --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
   --ln-list-table-head-padding-y: 0.68rem; /* 列表表头上下内边距。 */
@@ -142,7 +150,7 @@
   --ln-list-table-selection-col-width: 3rem; /* 列表表格最左侧 checkbox 选择列宽度。 */
 
   /* Result 数据表：控制结果记录页面中可填写/查看的数据表。 */
-  --ln-result-dataset-font-size: 13px; /* Result 数据表正文和表头字号。 */
+  --ln-result-dataset-font-size: 12px; /* Result 数据表正文和表头字号。 */
   --ln-result-dataset-key-font-size: 9.5px; /* Result 数据表字段 key 的小号字体。 */
   --ln-result-dataset-input-height: 2rem; /* Result 数据表编辑输入框高度。 */
   --ln-result-dataset-input-min-width: 6rem; /* Result 数据表编辑输入框最小宽度。 */
@@ -175,7 +183,7 @@
   --ln-inline-table-cell-min-width: 5rem; /* 内嵌普通表格列调整时允许的最小列宽。 */
   --ln-inline-table-cell-padding-x: 0.5rem; /* 内嵌普通表格单元格左右内边距。 */
   --ln-inline-table-cell-padding-y: 0.22rem; /* 内嵌普通表格单元格上下内边距。 */
-  --ln-inline-table-font-size: 12px; /* 内嵌普通表格单元格字号。 */
+  --ln-inline-table-font-size: 11.5px; /* 内嵌普通表格单元格字号。 */
   --ln-inline-table-line-height: 1.3; /* 内嵌普通表格多行内容行距。 */
   --ln-inline-table-head-bg: color-mix(in srgb, var(--stone) 32%, var(--surface)); /* 内嵌普通表格的轻量表头背景。 */
   --ln-inline-table-toolbar-gap: 0.35rem; /* 内嵌普通表格标题栏中控件之间的间距。 */
@@ -185,10 +193,10 @@
   --ln-inline-table-caption-min-width: 18rem; /* 内嵌普通表格标题输入框最小宽度。 */
   --ln-inline-table-caption-basis: 28rem; /* 内嵌普通表格标题输入框优先占用宽度。 */
   --ln-inline-table-caption-padding-x: 0.65rem; /* 内嵌普通表格标题输入框左右内边距。 */
-  --ln-inline-table-caption-font-size: 13px; /* 内嵌普通表格标题输入框字号。 */
+  --ln-inline-table-caption-font-size: 12px; /* 内嵌普通表格标题输入框字号。 */
   --ln-inline-table-button-height: 1.65rem; /* 内嵌普通表格标题栏按钮高度。 */
   --ln-inline-table-button-padding-x: 0.45rem; /* 内嵌普通表格标题栏按钮左右内边距。 */
-  --ln-inline-table-button-font-size: 12px; /* 内嵌普通表格标题栏按钮字号。 */
+  --ln-inline-table-button-font-size: 11px; /* 内嵌普通表格标题栏按钮字号。 */
 
   /* 文档显示和打印前的普通表格：控制 Protocol/Entry 文档中的三线表。 */
   --ln-document-table-col-width: 7rem; /* 文档普通表格每列默认宽度。 */
@@ -217,7 +225,7 @@
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
   --ln-wysiwyg-toolbar-button-padding-x: 0.3rem; /* 纯图标和插入按钮左右内边距。 */
   --ln-wysiwyg-toolbar-select-padding-x: 0.34rem; /* 字体、字号、行距等选择器左右内边距。 */
-  --ln-wysiwyg-toolbar-font-size: 12.5px; /* 工具条选择器与文字按钮字号。 */
+  --ln-wysiwyg-toolbar-font-size: 11.5px; /* 工具条选择器与文字按钮字号。 */
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.18rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.34rem; /* 工具条整体内边距。 */
@@ -226,7 +234,7 @@
   --ln-wysiwyg-paragraph-gap: 0.32rem; /* 连续文档段落、列表和表格之间距离。 */
   --ln-wysiwyg-widget-control-height: 1.8rem; /* Timer、提示框和媒体行内控件高度。 */
   --ln-wysiwyg-widget-control-padding-x: 0.5rem; /* 科研节点输入框左右内边距。 */
-  --ln-wysiwyg-widget-font-size: 11.5px; /* 科研节点输入框和单位字号。 */
+  --ln-wysiwyg-widget-font-size: 11px; /* 科研节点输入框和单位字号。 */
   --ln-wysiwyg-widget-padding-x: 0.5rem; /* 科研节点左右内边距。 */
   --ln-wysiwyg-widget-padding-y: 0.38rem; /* 科研节点上下内边距。 */
   --ln-wysiwyg-table-font-size: 9pt; /* 连续编辑器内表格默认字号，可再用工具条覆盖所选文字。 */
@@ -245,8 +253,8 @@
   --ln-wysiwyg-relevant-row-gap: 0.5rem; /* Relevant items 单行文字与右侧元数据间距。 */
   --ln-wysiwyg-relevant-row-padding-x: 0.625rem; /* Relevant items 单行左右内边距。 */
   --ln-wysiwyg-relevant-row-padding-y: 0.375rem; /* Relevant items 单行上下内边距。 */
-  --ln-wysiwyg-relevant-font-size: 12px; /* Relevant items 主要文字字号。 */
-  --ln-wysiwyg-relevant-meta-font-size: 10px; /* Relevant items 数量与元数据字号。 */
+  --ln-wysiwyg-relevant-font-size: 11.5px; /* Relevant items 主要文字字号。 */
+  --ln-wysiwyg-relevant-meta-font-size: 9.5px; /* Relevant items 数量与元数据字号。 */
   --ln-wysiwyg-relevant-control-radius: 4px; /* Relevant items 搜索与筛选控件圆角。 */
   --ln-wysiwyg-relevant-filter-width: 9rem; /* Relevant items 类型筛选器宽度。 */
   --ln-wysiwyg-relevant-heading-height: 1.5rem; /* Relevant items 小标题最小高度。 */
@@ -254,7 +262,7 @@
   --ln-wysiwyg-relevant-result-row-padding: 0.3rem 0.15rem; /* 检索结果单行内边距。 */
   --ln-wysiwyg-relevant-action-height: 1.65rem; /* Link、Unlink 等行内操作高度。 */
   --ln-wysiwyg-relevant-action-radius: 4px; /* Relevant items 行内操作圆角。 */
-  --ln-wysiwyg-relevant-action-font-size: 10.5px; /* Relevant items 行内操作字号。 */
+  --ln-wysiwyg-relevant-action-font-size: 10px; /* Relevant items 行内操作字号。 */
   --ln-wysiwyg-relevant-search-padding-y: 0.48rem; /* Relevant items 搜索区上下内边距。 */
   --ln-wysiwyg-relevant-results-padding-y: 0.35rem; /* 已关联项和搜索结果区域上下内边距。 */
   --ln-wysiwyg-relevant-result-gap: 0.5rem; /* 搜索结果主信息和操作之间距离。 */
@@ -293,7 +301,7 @@
   --ln-template-dataset-row-padding-y: 0.25rem; /* Dataset 设计器每行上下内边距，也影响行高。 */
   --ln-template-dataset-input-height: 1.75rem; /* Dataset 设计器输入框高度。 */
   --ln-template-dataset-input-padding-x: 0.5rem; /* Dataset 设计器输入框左右内边距。 */
-  --ln-template-dataset-font-size: 12.5px; /* Dataset 设计器输入框和内容字号。 */
+  --ln-template-dataset-font-size: 11.5px; /* Dataset 设计器输入框和内容字号。 */
   --ln-template-dataset-checkbox-size: 0.875rem; /* Dataset 设计器 checkbox 尺寸。 */
 
   /* Protocol 结果模板编辑器：控制“需要记录什么”区域的卡片、输入框和高级设置密度。 */
@@ -311,7 +319,7 @@
   --ln-result-template-input-height: 2rem; /* 结果模板编辑器输入框和选择框高度。 */
   --ln-result-template-input-padding-x: 0.55rem; /* 结果模板编辑器输入框左右内边距。 */
   --ln-result-template-control-radius: 5px; /* 结果模板编辑器输入框、按钮圆角。 */
-  --ln-result-template-font-size: 12.5px; /* 结果模板编辑器输入框和按钮字号。 */
+  --ln-result-template-font-size: 11.5px; /* 结果模板编辑器输入框和按钮字号。 */
   --ln-result-template-checkbox-offset: 0.38rem; /* checkbox 行底部偏移，用于和输入框视觉对齐。 */
   --ln-result-template-icon-button-padding: 0.25rem; /* 上移、下移、删除图标按钮内边距。 */
   --ln-result-template-advanced-margin-top: 0.5rem; /* 高级设置区域顶部距离。 */
@@ -337,6 +345,14 @@
 }
 
 @theme inline {
+  /* Tailwind typography utilities follow the compact operational UI scale. */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.1875rem;
+  --text-2xl: 1.375rem;
+  --text-3xl: 1.625rem;
   --color-paper: var(--paper);
   --color-warm: var(--warm);
   --color-stone: var(--stone);
@@ -392,7 +408,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--ln-ui-body-font-size);
   font-weight: var(--font-ui-base-weight);
   line-height: 1.5;
   overflow-x: clip;
@@ -687,7 +703,7 @@ textarea {
 .ln-data-table {
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.875rem;
+  font-size: var(--ln-ui-table-font-size);
   min-width: 100%;
   text-align: left;
 }
@@ -2673,9 +2689,9 @@ textarea {
 
 @media (max-width: 767px) {
   :root {
-    --ln-page-action-font-size: 11px;
-    --ln-page-title-size: 15px;
-    --ln-wysiwyg-toolbar-font-size: 11.5px;
+    --ln-page-action-font-size: 10.5px;
+    --ln-page-title-size: 14px;
+    --ln-wysiwyg-toolbar-font-size: 11px;
   }
 
   .protocol-density-slice {

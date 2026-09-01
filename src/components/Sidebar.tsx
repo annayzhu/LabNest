@@ -52,7 +52,7 @@ const utilityItems = [
 
 function desktopNavItemClass(active: boolean, collapsed: boolean) {
   return cn(
-    "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[13px] font-normal tracking-[-0.005em] transition",
+    "sidebar-nav-item focus-ring flex items-center rounded-[var(--ln-radius-control-lg)] py-2 text-[length:var(--ln-ui-nav-font-size)] font-normal tracking-[-0.005em] transition",
     collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
     active ? "sidebar-nav-item-active font-semibold" : "text-muted hover:bg-stone/75 hover:text-ink",
   );
@@ -112,7 +112,7 @@ export function Sidebar() {
           <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border">
             <TraditionalMotif motif="huiwen" className="h-[18px] w-[18px]" aria-hidden />
           </span>
-          <span className={cn("text-[15px] font-semibold tracking-[-0.02em] text-ink", collapsed && "sr-only")}>LabNest</span>
+          <span className={cn("text-[length:var(--ln-ui-brand-font-size)] font-semibold tracking-[-0.02em] text-ink", collapsed && "sr-only")}>LabNest</span>
         </Link>
         <nav id="primary-sidebar-navigation" aria-label="Primary navigation" className="space-y-1">
           {navItems.map((item) => {

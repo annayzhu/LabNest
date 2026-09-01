@@ -20,7 +20,12 @@ async function verify(viewport, name) {
   await page.screenshot({ path: `${outputDir}/${name}-pair-detail.png`, fullPage: true });
   await page.goto(`${baseUrl}/sequences/new?category=primer-pair`, { waitUntil: "networkidle" });
   if (!await page.getByRole("heading", { name: "New primer pair" }).count()) throw new Error(`${name}: primer-pair creation form is missing`);
+  if (!await page.getByLabel("Gene / target name *").count()) throw new Error(`${name}: gene-first pair identity field is missing`);
+  if (await page.getByText("Pair name *", { exact: true }).count()) throw new Error(`${name}: the old pair-name field is still visible`);
   await page.screenshot({ path: `${outputDir}/${name}-pair-create.png`, fullPage: true });
+  await page.goto(`${baseUrl}/sequences/new?category=dna-rna`, { waitUntil: "networkidle" });
+  if (await page.locator('input[placeholder="FBN2 qPCR forward primer"]').count()) throw new Error(`${name}: the old forward-primer name suggestion is still visible`);
+  if (await page.locator('select[name="designType"] option[value="primer"]').count()) throw new Error(`${name}: the single-sequence form still offers Primer instead of the paired flow`);
   await page.close();
   return { name, pairCount, firstPairHref };
 }

@@ -328,14 +328,15 @@ function preparePairInput(value: unknown) {
 function parsePairForm(formData: FormData) {
   const pairType = z.enum(SequencePairType).parse(formData.get("pairType"));
   const roles = sequencePairRoles(pairType);
+  const geneName = String(formData.get("geneName") ?? "").trim();
   return preparePairInput({
-    name: formData.get("name"),
+    name: geneName,
     pairType,
     ownershipScope: formData.get("ownershipScope") ?? "library",
     projectId: optionalText(formData.get("projectId")),
     status: formData.get("status") ?? "draft",
     description: optionalText(formData.get("description")),
-    targetName: optionalText(formData.get("targetName")),
+    targetName: geneName,
     organism: optionalText(formData.get("organism")),
     validationStatus: formData.get("validationStatus") ?? "unverified",
     validationSummary: optionalText(formData.get("validationSummary")),

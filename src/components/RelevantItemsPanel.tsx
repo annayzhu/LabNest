@@ -70,9 +70,9 @@ export function RelevantItemsPanel({ items }: { items: RelevantItem[] }) {
           const Icon = icons[item.type] ?? Link2;
           const href = collectionHref[item.type];
           return (
-            <div key={item.id} className="rounded-[10px] border border-hairline bg-warm p-3">
+            <div key={item.id} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
               <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-sage-surface text-moss">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] bg-sage-surface text-moss">
                   <Icon className="h-4 w-4" aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">

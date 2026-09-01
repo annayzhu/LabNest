@@ -38,7 +38,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
           actions={<Link href="/experiments/new" className={primaryButton}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>}
         />
         {experiments.length ? (
-          <div className="divide-y divide-hairline overflow-hidden rounded-[12px] border border-hairline bg-surface">
+          <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
             {experiments.map((experiment) => {
               const completed = experiment.steps.filter((step) => step.completed).length;
               const total = experiment.steps.length;
@@ -74,7 +74,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
             })}
           </div>
         ) : (
-          <div className="rounded-[12px] border border-dashed border-hairline bg-surface px-5 py-12 text-center">
+          <div className="rounded-[var(--ln-radius-panel)] border border-dashed border-hairline bg-surface px-5 py-12 text-center">
             <p className="text-sm text-muted">No planned or running Experiments are available.</p>
             <Link href="/experiments/new" className="mt-4 inline-flex text-sm font-medium text-moss hover:underline">Create an Experiment</Link>
           </div>

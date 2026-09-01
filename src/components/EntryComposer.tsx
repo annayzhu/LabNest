@@ -139,6 +139,7 @@ export function EntryComposer({
 }) {
   const router = useRouter();
   const mediaInputPrefix = useId();
+  const toolbarHostId = `${mediaInputPrefix}-document-toolbar`;
   const imageInputId = `${mediaInputPrefix}-photos`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
   const fileInputId = `${mediaInputPrefix}-files`;
@@ -384,6 +385,7 @@ export function EntryComposer({
         label={fields.title || "Entry editor"}
         toolbar={
           <>
+            <div id={toolbarHostId} className="ln-document-toolbar-host" />
             <span className="mr-auto flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
               <Cloud className="h-3.5 w-3.5 shrink-0 text-moss" aria-hidden />
               <span className="max-w-48 truncate sm:max-w-72">{draftStatus || "Draft recovery is ready"}</span>
@@ -419,6 +421,7 @@ export function EntryComposer({
           onChange={(value) => updateField("contentMarkdown", value)}
           placeholder="Observation, decision, deviation, or follow-up…"
           minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
+          toolbarHostId={toolbarHostId}
         />
       </DocumentCanvas>
 
@@ -477,7 +480,7 @@ export function EntryComposer({
                   event.preventDefault();
                   if (draggedMediaId) moveMediaBefore(draggedMediaId, item.id);
                 }}
-                className={cn("overflow-hidden rounded-[12px] border bg-warm", item.kind === "new" && item.status === "error" ? "border-error/50" : "border-hairline")}
+                className={cn("overflow-hidden rounded-[var(--ln-radius-panel)] border bg-warm", item.kind === "new" && item.status === "error" ? "border-error/50" : "border-hairline")}
               >
                 <div className="relative flex h-36 items-center justify-center overflow-hidden bg-stone">
                   {item.previewUrl ? (
@@ -550,7 +553,7 @@ export function EntryComposer({
       </div>
       </DocumentEditorLayout>
 
-      {submitStatus ? <div role="alert" className="rounded-[12px] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
+      {submitStatus ? <div role="alert" className="rounded-[var(--ln-radius-panel)] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
         {submitStatus && !isSubmitting ? <Button type="submit" size="lg"><RotateCcw className="h-4 w-4" />Try again</Button> : null}
         <Button type="submit" size="lg" variant="primary" disabled={isSubmitting}>

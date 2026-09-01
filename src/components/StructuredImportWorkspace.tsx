@@ -217,7 +217,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
           {definition.importFormats.map((format) => {
             const showCompactGuidance = (format === "csv" || format === "tsv") && controlledFields.length > 0;
             return (
-              <div key={format} className="flex items-start justify-between gap-3 rounded-[8px] border border-hairline bg-warm px-3 py-3">
+              <div key={format} className="flex items-start justify-between gap-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">{formatLabel(format)}</p>
                   <p className="mt-1 text-xs text-muted">Structured {definition.singular} input</p>
@@ -227,7 +227,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
                     </p>
                   )) : null}
                 </div>
-                <Link href={`/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`} className="focus-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[6px] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-sage-surface">
+                <Link href={`/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`} className="focus-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-sage-surface">
                   <Download className="h-3.5 w-3.5" aria-hidden />Template
                 </Link>
               </div>
@@ -241,7 +241,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
         <CardBody className="space-y-4">
           <div
             className={cn(
-              "rounded-[9px] border border-dashed p-5 text-center transition-colors",
+              "rounded-[var(--ln-radius-panel-inner)] border border-dashed p-5 text-center transition-colors",
               dragActive ? "border-moss bg-sage-surface/70" : "border-border-strong bg-warm",
               pending && "cursor-not-allowed opacity-60",
             )}
@@ -267,7 +267,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
             </Button>
             <p className="mt-3 text-[11px] text-muted">Accepted: {definition.importFormats.map(formatLabel).join(" · ")} · Maximum 25 MB and 500 records</p>
             {file ? (
-              <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-[7px] border border-moss/25 bg-sage-surface px-3 py-2 text-left" aria-live="polite">
+              <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-moss/25 bg-sage-surface px-3 py-2 text-left" aria-live="polite">
                 <FileCheck2 className="h-4 w-4 shrink-0 text-moss" aria-hidden />
                 <span className="min-w-0 truncate text-xs font-medium text-ink">{file.name}</span>
                 <span className="shrink-0 text-[11px] text-muted">{formatFileSize(file.size)}</span>
@@ -281,7 +281,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
               Preview mapping
             </Button>
           </div>
-          {error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{error}</p> : null}
+          {error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{error}</p> : null}
         </CardBody>
       </Card>
 
@@ -308,16 +308,16 @@ function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImpo
           <PreviewMetric label="Warnings / errors" value={`${rowWarningCount}/${rowErrorCount}`} tone={rowErrorCount ? "error" : rowWarningCount ? "warning" : "neutral"} />
         </div>
 
-        {[...preview.errors, ...preview.warnings].map((message) => <p key={message} className="flex items-start gap-2 rounded-[8px] border border-warning/30 bg-warning-surface px-3 py-2 text-sm text-warning"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{message}</p>)}
+        {[...preview.errors, ...preview.warnings].map((message) => <p key={message} className="flex items-start gap-2 rounded-[var(--ln-radius-control-lg)] border border-warning/30 bg-warning-surface px-3 py-2 text-sm text-warning"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{message}</p>)}
 
-        <details className="rounded-[9px] border border-hairline bg-warm/50">
-          <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-[9px] px-3 py-2 text-sm font-medium text-ink">
+        <details className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/50">
+          <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-[var(--ln-radius-panel-inner)] px-3 py-2 text-sm font-medium text-ink">
             <span>Field recognition details</span>
             <span className="text-xs font-normal text-muted">{mappedCount} mapped · {ignoredCount} ignored</span>
           </summary>
           <div className="grid gap-2 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-3">
             {preview.mapping.map((mapping) => (
-              <div key={mapping.source} className="grid gap-1 rounded-[7px] border border-hairline bg-surface px-3 py-2 text-xs">
+              <div key={mapping.source} className="grid gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 py-2 text-xs">
                 <span className="text-[11px] uppercase tracking-[0.06em] text-muted">Source column</span>
                 <span className="truncate font-mono text-graphite" title={mapping.source}>{mapping.source}</span>
                 <span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "Not imported"}</span>
@@ -346,7 +346,7 @@ function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImpo
 function PreviewMetric({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "success" | "warning" | "error" }) {
   const toneClass = tone === "success" ? "text-moss" : tone === "warning" ? "text-warning" : tone === "error" ? "text-error" : "text-ink";
   return (
-    <div className="rounded-[9px] border border-hairline bg-surface px-3 py-2">
+    <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-3 py-2">
       <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</p>
       <p className={`mt-1 text-sm font-semibold ${toneClass}`}>{value}</p>
     </div>
@@ -357,7 +357,7 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
   const grouped = groupPreviewFields(module, row.values);
   const title = recordPreviewTitle(module, row.values, row.index);
   return (
-    <section className={`rounded-[10px] border ${row.errors.length ? "border-error/30 bg-error-surface/40" : "border-hairline bg-surface"}`}>
+    <section className={`rounded-[var(--ln-radius-panel-inner)] border ${row.errors.length ? "border-error/30 bg-error-surface/40" : "border-hairline bg-surface"}`}>
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline px-3 py-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Record {row.index}</p>
@@ -386,16 +386,16 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
         ) : null}
 
         {grouped.technical.length ? (
-          <details className="rounded-[8px] border border-hairline bg-warm/50">
-            <summary className="focus-ring cursor-pointer list-none rounded-[8px] px-3 py-2 text-xs font-medium text-muted">Advanced raw/system fields · {grouped.technical.length}</summary>
+          <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50">
+            <summary className="focus-ring cursor-pointer list-none rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-xs font-medium text-muted">Advanced raw/system fields · {grouped.technical.length}</summary>
             <div className="grid gap-2 border-t border-hairline p-3 md:grid-cols-2">
               {grouped.technical.map((field) => <PreviewFieldValue key={field.label} field={field} />)}
             </div>
           </details>
         ) : null}
 
-        {row.errors.map((message) => <p key={message} className="rounded-[7px] bg-error-surface px-3 py-2 text-xs text-error">{message}</p>)}
-        {row.warnings.map((message) => <p key={message} className="rounded-[7px] bg-warning-surface px-3 py-2 text-xs text-warning">{message}</p>)}
+        {row.errors.map((message) => <p key={message} className="rounded-[var(--ln-radius-control-md)] bg-error-surface px-3 py-2 text-xs text-error">{message}</p>)}
+        {row.warnings.map((message) => <p key={message} className="rounded-[var(--ln-radius-control-md)] bg-warning-surface px-3 py-2 text-xs text-warning">{message}</p>)}
       </div>
     </section>
   );
@@ -403,7 +403,7 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
 
 function PreviewFieldValue({ field, compact = false }: { field: PreviewField; compact?: boolean }) {
   return (
-    <div className="min-w-0 rounded-[7px] border border-hairline/70 bg-warm/35 px-3 py-2">
+    <div className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline/70 bg-warm/35 px-3 py-2">
       <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{field.label}</p>
       <p className={`mt-1 break-words text-xs leading-5 text-graphite ${compact ? "" : "max-h-28 overflow-auto pr-1 editorial-scrollbar"}`}>{field.value || "—"}</p>
     </div>

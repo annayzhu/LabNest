@@ -31,21 +31,21 @@ export function RecycleBinActions({ id, identifier, title, associationsPreserved
         <input type="hidden" name="id" value={id} />
         <Button type="submit" variant="primary" disabled={restoring || purging}><RotateCcw className="h-4 w-4" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复" : "Restore"}</Button>
       </form>
-      {associationsPreserved ? <span className="inline-flex min-h-9 items-center gap-1.5 rounded-[7px] border border-warning/30 bg-warning-surface px-2.5 text-xs font-medium text-warning"><Link2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "关联保留中，不可永久删除" : "Protected while linked"}</span> : <Button type="button" variant="destructive" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>}
+      {associationsPreserved ? <span className="inline-flex min-h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-warning/30 bg-warning-surface px-2.5 text-xs font-medium text-warning"><Link2 className="h-3.5 w-3.5" aria-hidden />{locale === "zh" ? "关联保留中，不可永久删除" : "Protected while linked"}</span> : <Button type="button" variant="destructive" disabled={restoring || purging} onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "永久删除" : "Delete forever"}</Button>}
       {restoreState.error ? <p role="alert" className="w-full text-right text-xs text-error">{restoreState.error}</p> : null}
 
       {open && !associationsPreserved ? (
         <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget && !purging) setOpen(false); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="w-full max-w-lg rounded-[12px] border border-hairline bg-surface p-5 shadow-soft">
+          <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">{locale === "zh" ? "不可撤销" : "Irreversible"}</p><h2 id={`purge-${id}`} className="mt-1 font-serif text-xl font-medium text-ink">{locale === "zh" ? "从回收站永久删除？" : "Delete from the Recycle Bin forever?"}</h2></div>
-              <button type="button" aria-label="Close permanent deletion dialog" disabled={purging} onClick={() => setOpen(false)} className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
+              <button type="button" aria-label="Close permanent deletion dialog" disabled={purging} onClick={() => setOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
             </div>
-            <div className="mt-4 rounded-[8px] border border-error/25 bg-error-surface px-3 py-3"><p className="font-medium text-error">{identifier} · {title}</p><p className="mt-1 text-sm leading-6 text-graphite">{locale === "zh" ? "这会删除最后一份恢复快照，之后无法找回。" : "This removes the final recovery snapshot and cannot be undone."}</p></div>
+            <div className="mt-4 rounded-[var(--ln-radius-control-lg)] border border-error/25 bg-error-surface px-3 py-3"><p className="font-medium text-error">{identifier} · {title}</p><p className="mt-1 text-sm leading-6 text-graphite">{locale === "zh" ? "这会删除最后一份恢复快照，之后无法找回。" : "This removes the final recovery snapshot and cannot be undone."}</p></div>
             <form action={purgeAction} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={id} />
               <label className="block"><span className="text-xs font-semibold text-graphite">{locale === "zh" ? "输入" : "Enter"} <strong className="font-mono text-error">{identifier}</strong> {locale === "zh" ? "以确认" : "to confirm"}</span><input autoFocus required autoComplete="off" name="confirmation" className={formInputClass} /></label>
-              {purgeState.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{purgeState.error}</p> : null}
+              {purgeState.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{purgeState.error}</p> : null}
               <div className="flex justify-end gap-2 border-t border-hairline pt-4"><Button type="button" disabled={purging} onClick={() => setOpen(false)}>{locale === "zh" ? "取消" : "Cancel"}</Button><Button type="submit" variant="destructive" disabled={purging}><Trash2 className="h-4 w-4" aria-hidden />{purging ? locale === "zh" ? "删除中…" : "Deleting…" : locale === "zh" ? "永久删除" : "Delete forever"}</Button></div>
             </form>
           </section>

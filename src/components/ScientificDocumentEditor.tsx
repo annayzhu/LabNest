@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -40,12 +40,13 @@ export function ScientificDocumentEditor({
 }) {
   const [document, setDocument] = useState(initialDocument);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
+  const toolbarHostId = `${useId()}-scientific-document-toolbar`;
 
   return <>
     <input type="hidden" name={name} value={serialized} />
     <DocumentCanvas
       label={title?.trim() || "Structured scientific document editor"}
-      toolbar={<><span className="mr-auto hidden text-xs text-muted sm:inline">Edit on the page · the printed A4 keeps this layout</span><DocumentPrintButton /></>}
+      toolbar={<><div id={toolbarHostId} className="ln-document-toolbar-host" /><DocumentPrintButton /></>}
     >
       <DocumentPageHeader
         documentType={documentType}
@@ -58,6 +59,7 @@ export function ScientificDocumentEditor({
       {leadingContent}
       <ScientificWysiwygEditor
         document={document}
+        toolbarHostId={toolbarHostId}
         hiddenSectionKeys={hiddenSectionKeys}
         allowedBlockTypes={allowedBlockTypes}
         onChange={setDocument}

@@ -112,7 +112,7 @@ export function InlineTableEditor({
   const removeRow = () => normalized.length > 1 && commitTableChange(normalized.slice(0, -1));
   const removeColumn = () => columnCount > 1 && commitTableChange(normalized.map((row) => row.slice(0, -1)));
 
-  return <figure className="mt-0.5 overflow-hidden rounded-[7px] border border-hairline bg-surface">
+  return <figure className="mt-0.5 overflow-hidden rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface">
     <div className="flex flex-wrap items-center gap-[var(--ln-inline-table-toolbar-gap)] border-b border-hairline bg-stone/35 px-[var(--ln-inline-table-toolbar-padding-x)] py-[var(--ln-inline-table-toolbar-padding-y)]" data-print-hidden>
       {onCaptionChange ? <input value={caption ?? ""} onChange={(event) => onCaptionChange(event.target.value)} className="focus-ring mr-auto h-[var(--ln-inline-table-caption-height)] min-h-0 min-w-[var(--ln-inline-table-caption-min-width)] flex-[1_1_var(--ln-inline-table-caption-basis)] border-0 bg-transparent px-[var(--ln-inline-table-caption-padding-x)] text-[length:var(--ln-inline-table-caption-font-size)] font-semibold leading-none text-ink outline-none" placeholder="Table caption" /> : <span className="mr-auto min-w-[var(--ln-inline-table-caption-min-width)] flex-[1_1_var(--ln-inline-table-caption-basis)] px-[var(--ln-inline-table-caption-padding-x)] text-[length:var(--ln-inline-table-caption-font-size)] font-semibold text-muted">Table</span>}
       <button type="button" onClick={addRow} className={tableToolbarButtonClass}><Plus className="h-3 w-3" />Row</button>

@@ -64,7 +64,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
 
   return <form action={formAction} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
-    <section className="overflow-hidden rounded-[12px] border border-hairline bg-surface">
+    <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
         <h2 className="font-serif text-lg font-medium text-ink">Execution record</h2>
         <span className="text-xs text-muted">{hasSteps ? "Check planned execution steps or log deviations by step." : "No fixed steps configured; use freeform execution notes."}</span>
@@ -97,9 +97,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
       <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
     </section>
 
-    {editable ? <div className="sticky bottom-20 z-30 space-y-2 rounded-[12px] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur md:bottom-4">
-      {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      {state.message ? <p role="status" className="rounded-[8px] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
+    {editable ? <div className="sticky bottom-20 z-30 space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur md:bottom-4">
+      {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+      {state.message ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <span className="mr-auto text-xs text-muted">{hasSteps ? (remaining ? `${remaining} step${remaining === 1 ? "" : "s"} remaining` : "All planned steps checked") : "No checklist steps configured"}</span>
         {status === "planned" || status === "failed" ? <button type="submit" name="intent" value="start" disabled={pending} className={secondaryButton}><Play className="h-4 w-4" aria-hidden />{pending ? "Working…" : status === "failed" ? "Resume run" : "Start run"}</button> : null}

@@ -112,12 +112,12 @@ export function CreateMenu() {
         <div
           role="menu"
           className={cn(
-            "fixed inset-x-3 bottom-20 z-50 rounded-[16px] border border-hairline bg-surface p-3 shadow-soft sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-[520px]",
+            "fixed inset-x-3 bottom-20 z-50 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 shadow-soft sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-[520px]",
           )}
         >
           <div className="hidden grid-cols-3 gap-3 sm:grid">
             {groups.map((group) => (
-              <div key={group.title} className="rounded-[10px] bg-warm p-2">
+              <div key={group.title} className="rounded-[var(--ln-radius-panel-inner)] bg-warm p-2">
                 <p className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
                   {group.title}
                 </p>
@@ -128,7 +128,7 @@ export function CreateMenu() {
                       <Link
                         key={item.label}
                         href={item.href}
-                        className="focus-ring flex w-full items-center gap-2 rounded-[8px] px-2 py-2 text-left text-sm text-graphite transition hover:bg-sage-surface/70 hover:text-ink"
+                        className="focus-ring flex w-full items-center gap-2 rounded-[var(--ln-radius-control-lg)] px-2 py-2 text-left text-sm text-graphite transition hover:bg-sage-surface/70 hover:text-ink"
                         role="menuitem"
                         onClick={() => setOpen(false)}
                       >
@@ -147,7 +147,7 @@ export function CreateMenu() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="focus-ring rounded-[10px] border border-hairline bg-warm px-3 py-3 text-left text-sm font-medium text-ink"
+                className="focus-ring rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-3 py-3 text-left text-sm font-medium text-ink"
                 role="menuitem"
                 onClick={() => setOpen(false)}
               >

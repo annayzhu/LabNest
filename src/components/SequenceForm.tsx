@@ -222,44 +222,44 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
       <Card>
         <CardHeader
           title="Features"
-          action={<button type="button" onClick={() => setFeatures((current) => [...current, { name: "", type: "feature", start: 1, end: Math.max(1, metrics.length), strand: "+", note: "" }])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add feature</button>}
+          action={<button type="button" onClick={() => setFeatures((current) => [...current, { name: "", type: "feature", start: 1, end: Math.max(1, metrics.length), strand: "+", note: "" }])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add feature</button>}
         />
         <CardBody className="space-y-2">
           <p className="text-xs text-muted">Coordinates are 1-based and inclusive. Features provide annotation without requiring a plasmid map editor.</p>
           {features.length ? features.map((feature, index) => (
-            <div key={`feature-${index}`} className="grid gap-2 rounded-[8px] border border-hairline bg-warm/50 p-2 md:grid-cols-[1.2fr_0.8fr_90px_90px_90px_1.4fr_34px]">
+            <div key={`feature-${index}`} className="grid gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-2 md:grid-cols-[1.2fr_0.8fr_90px_90px_90px_1.4fr_34px]">
               <input aria-label="Feature name" value={feature.name} onChange={(event) => setFeature(index, { name: event.target.value })} placeholder="Feature name" className={compactInputClass} />
               <input aria-label="Feature type" value={feature.type} onChange={(event) => setFeature(index, { type: event.target.value })} placeholder="CDS, promoter…" className={compactInputClass} />
               <input aria-label="Feature start" type="number" min="1" value={feature.start} onChange={(event) => setFeature(index, { start: event.target.value })} className={compactInputClass} />
               <input aria-label="Feature end" type="number" min="1" value={feature.end} onChange={(event) => setFeature(index, { end: event.target.value })} className={compactInputClass} />
               <select aria-label="Feature strand" value={feature.strand ?? ""} onChange={(event) => setFeature(index, { strand: event.target.value })} className={compactInputClass}><option value="">None</option><option value="+">+</option><option value="-">−</option></select>
               <input aria-label="Feature note" value={feature.note ?? ""} onChange={(event) => setFeature(index, { note: event.target.value })} placeholder="Note" className={compactInputClass} />
-              <button type="button" aria-label="Remove feature" onClick={() => setFeatures((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
+              <button type="button" aria-label="Remove feature" onClick={() => setFeatures((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
             </div>
-          )) : <p className="rounded-[8px] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No annotated features.</p>}
+          )) : <p className="rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No annotated features.</p>}
         </CardBody>
       </Card>
 
       <Card>
         <CardHeader
           title="Chemical modifications"
-          action={<button type="button" onClick={() => setModifications((current) => [...current, { position: "", modification: "", note: "" }])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add modification</button>}
+          action={<button type="button" onClick={() => setModifications((current) => [...current, { position: "", modification: "", note: "" }])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline px-2.5 text-xs text-moss hover:bg-warm"><Plus className="h-3.5 w-3.5" aria-hidden />Add modification</button>}
         />
         <CardBody className="space-y-2">
           <p className="text-xs text-muted">Record 5′/3′ and internal modifications separately from the canonical sequence letters.</p>
           {modifications.length ? modifications.map((modification, index) => (
-            <div key={`modification-${index}`} className="grid gap-2 rounded-[8px] border border-hairline bg-warm/50 p-2 md:grid-cols-[150px_1fr_1.4fr_34px]">
+            <div key={`modification-${index}`} className="grid gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-2 md:grid-cols-[150px_1fr_1.4fr_34px]">
               <input aria-label="Modification position" value={modification.position} onChange={(event) => setModification(index, { position: event.target.value })} placeholder="5′, 3′, base 12" className={compactInputClass} />
               <input aria-label="Modification name" value={modification.modification} onChange={(event) => setModification(index, { modification: event.target.value })} placeholder="FAM, BHQ1, 2′-OMe…" className={compactInputClass} />
               <input aria-label="Modification note" value={modification.note ?? ""} onChange={(event) => setModification(index, { note: event.target.value })} placeholder="Purpose or supplier notation" className={compactInputClass} />
-              <button type="button" aria-label="Remove modification" onClick={() => setModifications((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[6px] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
+              <button type="button" aria-label="Remove modification" onClick={() => setModifications((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-error hover:bg-error-surface"><Trash2 className="h-3.5 w-3.5" aria-hidden /></button>
             </div>
-          )) : <p className="rounded-[8px] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No chemical modifications recorded.</p>}
+          )) : <p className="rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No chemical modifications recorded.</p>}
         </CardBody>
       </Card>
 
       <div className="flex flex-wrap items-center justify-end gap-3">
-        {state.error ? <p role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
+        {state.error ? <p role="alert" className="max-w-2xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
         <Button type="submit" variant="primary" size="md" disabled={pending}>
           {pending ? "Saving…" : initial.id ? "Save Sequence" : "Create Sequence"}
         </Button>
@@ -268,4 +268,4 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
   );
 }
 
-const compactInputClass = "focus-ring h-8 min-w-0 w-full rounded-[6px] border border-hairline bg-surface px-2 text-xs text-ink";
+const compactInputClass = "focus-ring h-8 min-w-0 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs text-ink";

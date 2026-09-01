@@ -67,14 +67,14 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
-            <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[8px] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
-            <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
+            <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
+            <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
             <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
           </div>}
         />
 
         {imageAttachments.length ? (
-          <div className="overflow-hidden rounded-[18px] border border-hairline bg-surface shadow-paper">
+          <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
             <EntryMediaGrid attachments={imageAttachments} detail />
           </div>
         ) : null}
@@ -98,7 +98,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               ) : null}
             </DocumentCanvas>
 
-            <section className="rounded-[18px] border border-hairline bg-surface shadow-paper">
+            <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Source files</p>
@@ -110,7 +110,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 <div className="divide-y divide-hairline">
                   {entry.attachments.map((attachment) => (
                     <div key={attachment.id} className="flex items-center gap-3 px-5 py-4 sm:px-6">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-sage-surface text-moss">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-sage-surface text-moss">
                         {attachment.mimeType.startsWith("image/") ? <Paperclip className="h-4 w-4" aria-hidden /> : <FileText className="h-4 w-4" aria-hidden />}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -122,7 +122,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                       </div>
                       <a
                         href={`/api/attachments/${attachment.id}`}
-                        className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] border border-hairline bg-warm text-moss transition hover:bg-sage-surface"
+                        className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm text-moss transition hover:bg-sage-surface"
                         title={`Download ${attachment.originalFilename}`}
                       >
                         <Download className="h-4 w-4" aria-hidden />
@@ -137,7 +137,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               )}
             </section>
 
-            <section className="rounded-[18px] border border-hairline bg-surface shadow-paper">
+            <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Backlinks</p>
@@ -152,7 +152,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                     const label = `${item.counterpartType.replaceAll("_", " ")} · ${item.counterpartId}`;
                     return (
                       <div key={item.id} className="flex items-start gap-3 px-5 py-4 sm:px-6">
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-sage-surface text-moss">
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] bg-sage-surface text-moss">
                           <Link2 className="h-4 w-4" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -171,7 +171,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </main>
 
           <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-            <section className="rounded-[14px] border border-hairline bg-surface p-5 shadow-paper">
+            <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Entry context</p>
               <dl className="mt-4 space-y-4 text-sm">
                 <div>
@@ -199,7 +199,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               </dl>
             </section>
 
-            <section className="rounded-[14px] border border-hairline bg-surface p-5 shadow-paper">
+            <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
               <div className="flex items-center gap-2 text-moss">
                 <ListChecks className="h-4 w-4" aria-hidden />
                 <p className="text-xs font-semibold uppercase tracking-[0.1em]">Proposed actions</p>
@@ -207,7 +207,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
               {entry.pendingActions.length ? (
                 <div className="mt-4 space-y-3">
                   {entry.pendingActions.map((action) => (
-                    <div key={action.id} className="rounded-[10px] border border-hairline bg-warm p-3">
+                    <div key={action.id} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge tone={action.status === "pending" ? "warning" : "neutral"}>{action.status}</Badge>
                         <span className="text-xs font-semibold text-ink">{action.actionType.replaceAll("_", " ")}</span>
@@ -215,7 +215,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                       {action.reason ? <p className="mt-2 text-xs leading-5 text-graphite">{action.reason}</p> : null}
                     </div>
                   ))}
-                  <Link href="/actions?status=pending" className="focus-ring inline-flex rounded-[6px] text-sm font-semibold text-moss hover:underline">Review actions</Link>
+                  <Link href="/actions?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>

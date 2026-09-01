@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -13,19 +14,24 @@ import { DocumentWysiwygToolbar } from "@/components/DocumentWysiwygToolbar";
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
 
-export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, className }: {
+export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, className }: {
   content: JSONContent;
   onChange: (content: JSONContent) => void;
   placeholder?: string;
   minHeightClass?: string;
   autoFocus?: boolean;
   showToolbar?: boolean;
+  toolbarHostId?: string;
   className?: string;
 }) {
   const onChangeRef = useRef(onChange);
   const toolbarTarget = useDocumentToolbarTarget();
+  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
   const contentHash = useMemo(() => JSON.stringify(content), [content]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  useEffect(() => {
+    setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+  }, [toolbarHostId]);
   const editor = useEditor({
     immediatelyRender: false,
     content,
@@ -51,8 +57,9 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
+  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" />;
   return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
-    {showToolbar ? <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" /> : null}
+    {showToolbar ? (toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar) : null}
     <EditorContent editor={editor} />
   </div>;
 }

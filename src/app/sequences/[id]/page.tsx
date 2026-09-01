@@ -14,7 +14,7 @@ import { estimatedMeltingTemperature, estimatedMolecularWeight, gcPercent, rever
 
 export const dynamic = "force-dynamic";
 
-const actionClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
+const actionClass = "focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-moss hover:bg-warm";
 
 export default async function SequenceDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: PageSearchParams }) {
   const { id } = await params;
@@ -107,7 +107,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
               <span>Checksum <strong className="text-ink">{selectedVersion.checksum.slice(0, 12)}…</strong></span>
             </div>
             <SequenceText sequence={selectedVersion.sequence} />
-            {isNucleicAcid ? <details className="rounded-[8px] border border-hairline"><summary className="cursor-pointer px-3 py-2 text-xs font-medium text-moss">Derived views</summary><div className="space-y-3 border-t border-hairline p-3"><DerivedSequence label="Reverse complement" value={reverseComplement(selectedVersion.sequence, nucleicMolecule)} />{selectedVersion.moleculeType === "DNA" ? <DerivedSequence label="Translation from base 1" value={translateDna(selectedVersion.sequence)} /> : null}<p className="text-[11px] text-muted">Derived values are convenience calculations; they do not create or replace an immutable Sequence version.</p></div></details> : null}
+            {isNucleicAcid ? <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline"><summary className="cursor-pointer px-3 py-2 text-xs font-medium text-moss">Derived views</summary><div className="space-y-3 border-t border-hairline p-3"><DerivedSequence label="Reverse complement" value={reverseComplement(selectedVersion.sequence, nucleicMolecule)} />{selectedVersion.moleculeType === "DNA" ? <DerivedSequence label="Translation from base 1" value={translateDna(selectedVersion.sequence)} /> : null}<p className="text-[11px] text-muted">Derived values are convenience calculations; they do not create or replace an immutable Sequence version.</p></div></details> : null}
           </CardBody>
         </Card>
 
@@ -127,7 +127,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
           <Card>
             <CardHeader title="Validation and modifications" />
             <CardBody className="space-y-4">
-              <div className="rounded-[8px] border border-hairline bg-warm/50 p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{currentValidationLabel}</p><p className="mt-2 text-sm leading-6 text-graphite">{selectedVersion.validationSummary ?? "No validation evidence has been recorded."}</p>{selectedVersion.validatedAt ? <p className="mt-2 text-xs text-muted">Conclusion recorded {selectedVersion.validatedAt.toLocaleDateString()}</p> : null}</div>
+              <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{currentValidationLabel}</p><p className="mt-2 text-sm leading-6 text-graphite">{selectedVersion.validationSummary ?? "No validation evidence has been recorded."}</p>{selectedVersion.validatedAt ? <p className="mt-2 text-xs text-muted">Conclusion recorded {selectedVersion.validatedAt.toLocaleDateString()}</p> : null}</div>
               <DataTable rows={selectedVersion.modifications} getRowKey={(row) => row.id} emptyMessage="No chemical modifications recorded." columns={[
                 { key: "position", header: "Position", render: (row) => <span className="font-mono text-xs">{row.position}</span> },
                 { key: "modification", header: "Modification", render: (row) => row.modification },
@@ -196,16 +196,16 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
 function SequenceText({ sequence }: { sequence: string }) {
   const lineWidth = 60;
   const lines = Array.from({ length: Math.ceil(sequence.length / lineWidth) }, (_, index) => ({ start: index * lineWidth + 1, value: sequence.slice(index * lineWidth, (index + 1) * lineWidth) }));
-  return <pre data-i18n-ignore className="max-h-[420px] overflow-auto rounded-[8px] bg-warm p-3 font-mono text-xs leading-6 text-graphite">{lines.map((line) => `${String(line.start).padStart(8, " ")}  ${line.value.match(/.{1,10}/g)?.join(" ") ?? ""}`).join("\n")}</pre>;
+  return <pre data-i18n-ignore className="max-h-[420px] overflow-auto rounded-[var(--ln-radius-control-lg)] bg-warm p-3 font-mono text-xs leading-6 text-graphite">{lines.map((line) => `${String(line.start).padStart(8, " ")}  ${line.value.match(/.{1,10}/g)?.join(" ") ?? ""}`).join("\n")}</pre>;
 }
 
 function DerivedSequence({ label, value }: { label: string; value: string }) {
-  return <div><p className="mb-1 text-xs font-medium text-muted">{label}</p><pre data-i18n-ignore className="overflow-x-auto rounded-[6px] bg-warm px-2 py-1.5 font-mono text-xs text-graphite">{value || "—"}</pre></div>;
+  return <div><p className="mb-1 text-xs font-medium text-muted">{label}</p><pre data-i18n-ignore className="overflow-x-auto rounded-[var(--ln-radius-control-sm)] bg-warm px-2 py-1.5 font-mono text-xs text-graphite">{value || "—"}</pre></div>;
 }
 
 function FeatureStrip({ length, features }: { length: number; features: Array<{ id: string; name: string; start: number; end: number; strand: string | null }> }) {
   if (!features.length || !length) return null;
-  return <div className="space-y-1.5 rounded-[8px] border border-hairline bg-warm/50 p-3" aria-label="Read-only Feature overview">{features.map((feature, index) => { const left = Math.max(0, ((feature.start - 1) / length) * 100); const width = Math.max(1.5, ((feature.end - feature.start + 1) / length) * 100); return <div key={feature.id} className="grid grid-cols-[120px_1fr] items-center gap-3"><span className="truncate text-[11px] text-muted" title={feature.name}>{feature.name}</span><div className="relative h-4 rounded-full bg-stone"><span className="absolute top-0.5 h-3 rounded-full bg-moss/70" style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }} title={`${feature.name}: ${feature.start}–${feature.end} ${feature.strand ?? ""}`} /><span className="sr-only">{index + 1}</span></div></div>; })}<div className="grid grid-cols-[120px_1fr] gap-3"><span /><div className="flex justify-between font-mono text-[10px] text-muted"><span>1</span><span>{length}</span></div></div></div>;
+  return <div className="space-y-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3" aria-label="Read-only Feature overview">{features.map((feature, index) => { const left = Math.max(0, ((feature.start - 1) / length) * 100); const width = Math.max(1.5, ((feature.end - feature.start + 1) / length) * 100); return <div key={feature.id} className="grid grid-cols-[120px_1fr] items-center gap-3"><span className="truncate text-[11px] text-muted" title={feature.name}>{feature.name}</span><div className="relative h-4 rounded-full bg-stone"><span className="absolute top-0.5 h-3 rounded-full bg-moss/70" style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }} title={`${feature.name}: ${feature.start}–${feature.end} ${feature.strand ?? ""}`} /><span className="sr-only">{index + 1}</span></div></div>; })}<div className="grid grid-cols-[120px_1fr] gap-3"><span /><div className="flex justify-between font-mono text-[10px] text-muted"><span>1</span><span>{length}</span></div></div></div>;
 }
 
 function Field({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {

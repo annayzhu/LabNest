@@ -164,13 +164,13 @@ export function ManualAiWorkbench() {
           <div
             className={
               parseResult.status === "valid"
-                ? "rounded-[10px] border border-success/30 bg-success-surface p-3 text-sm text-ink"
-                : "rounded-[10px] border border-error/30 bg-error-surface p-3 text-sm text-ink"
+                ? "rounded-[var(--ln-radius-panel-inner)] border border-success/30 bg-success-surface p-3 text-sm text-ink"
+                : "rounded-[var(--ln-radius-panel-inner)] border border-error/30 bg-error-surface p-3 text-sm text-ink"
             }
           >
             <p className="font-semibold">{parseResult.message}</p>
             {parseResult.json ? (
-              <pre className="mt-3 max-h-72 overflow-auto rounded-[8px] border border-hairline bg-surface p-3 font-mono text-xs leading-5 text-graphite editorial-scrollbar">
+              <pre className="mt-3 max-h-72 overflow-auto rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface p-3 font-mono text-xs leading-5 text-graphite editorial-scrollbar">
                 {parseResult.json}
               </pre>
             ) : null}

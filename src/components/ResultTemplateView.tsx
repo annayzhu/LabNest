@@ -47,7 +47,7 @@ export function ResultTemplateView({ template: rawTemplate, values: rawValues, v
   return <div className={compactDocument ? "result-template-view space-y-2" : "result-template-view space-y-5"}>
     {validation.errors?.length || validation.warnings?.length ? <ValidationSummary errors={validation.errors} warnings={validation.warnings} status={validationStatus} /> : null}
 
-    {template.instructions?.length ? <section className="rounded-[8px] border border-sage/35 bg-sage-surface/35 px-3 py-2.5"><p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p><div className="text-xs leading-5 text-graphite"><ProtocolRichTextContent nodes={template.instructions} /></div></section> : null}
+    {template.instructions?.length ? <section className="rounded-[var(--ln-radius-control-lg)] border border-sage/35 bg-sage-surface/35 px-3 py-2.5"><p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p><div className="text-xs leading-5 text-graphite"><ProtocolRichTextContent nodes={template.instructions} /></div></section> : null}
 
     {compactDocument && documentFields.length ? <dl className="result-document-fields grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">{documentFields.map((field) => { const key = field.key ?? ""; return <div key={key} className="min-w-0"><dt className="text-[9px] font-semibold uppercase leading-3 tracking-[0.06em] text-muted">{field.label ?? field.name ?? key}</dt><dd className="mt-0.5 break-words text-xs leading-4 text-ink">{formatValue(values[key], fieldDataType(field))}{field.unit ? ` ${field.unit}` : ""}</dd></div>; })}</dl> : null}
 
@@ -77,7 +77,7 @@ function groupedValidationMessages(messages: string[]) {
 function ValidationSummary({ errors = [], warnings = [], status }: { errors?: string[]; warnings?: string[]; status: string }) {
   const messages = groupedValidationMessages([...errors, ...warnings]);
   const shown = messages.slice(0, 8);
-  return <details open className="rounded-[8px] border border-warning/35 bg-warning-surface/75">
+  return <details open className="rounded-[var(--ln-radius-control-lg)] border border-warning/35 bg-warning-surface/75">
     <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-warning marker:hidden"><span>还需填写 {errors.length + warnings.length} 项</span><span className="ml-auto"><ValidationBadge status={status} /></span></summary>
     <ul className="grid max-h-48 gap-1 overflow-y-auto border-t border-warning/20 px-3 py-2 text-xs leading-5 text-graphite sm:grid-cols-2">{shown.map((message) => <li key={message}>{message}</li>)}{messages.length > shown.length ? <li className="text-muted">另有 {messages.length - shown.length} 组问题</li> : null}</ul>
   </details>;

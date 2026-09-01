@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -138,8 +139,9 @@ function scientificInsertActions(allowedBlockTypes?: readonly ScientificContentB
   return actions.filter((action) => allowed.has(action.id as ScientificContentBlock["type"]));
 }
 
-export function ScientificWysiwygEditor({ document, hiddenSectionKeys = [], allowedBlockTypes, onChange }: {
+export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], allowedBlockTypes, onChange }: {
   document: ScientificDocument;
+  toolbarHostId?: string;
   hiddenSectionKeys?: string[];
   allowedBlockTypes?: readonly ScientificContentBlock["type"][];
   onChange: (document: ScientificDocument) => void;
@@ -147,7 +149,11 @@ export function ScientificWysiwygEditor({ document, hiddenSectionKeys = [], allo
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
   const originalRef = useRef(document);
   const onChangeRef = useRef(onChange);
+  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+  useEffect(() => {
+    setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
+  }, [toolbarHostId]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -172,15 +178,16 @@ export function ScientificWysiwygEditor({ document, hiddenSectionKeys = [], allo
   });
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
+  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden>
+    <DocumentWysiwygToolbar
+      editor={editor}
+      ariaLabel="Scientific document formatting"
+      checklist={!allowedBlockTypes || allowedBlockTypes.includes("checklist")}
+      insertActions={scientificInsertActions(allowedBlockTypes)}
+    />
+  </div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
-    <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden>
-      <DocumentWysiwygToolbar
-        editor={editor}
-        ariaLabel="Scientific document formatting"
-        checklist={!allowedBlockTypes || allowedBlockTypes.includes("checklist")}
-        insertActions={scientificInsertActions(allowedBlockTypes)}
-      />
-    </div>
+    {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
     <EditorContent editor={editor} />
   </section>;
 }

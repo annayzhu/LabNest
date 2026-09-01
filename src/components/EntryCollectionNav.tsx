@@ -31,7 +31,7 @@ export function EntryCollectionNav({
   const itemClass = (active: boolean) =>
     cn(
       "focus-ring flex shrink-0 items-center gap-2 rounded-[var(--ln-radius-panel-inner)] px-3 py-2 text-[13px] transition lg:w-full",
-      active ? "bg-action-surface text-moss" : "bg-transparent text-muted hover:bg-stone/75 hover:text-ink",
+      active ? "bg-action-surface/55 font-medium text-moss" : "bg-transparent text-muted hover:bg-stone/75 hover:text-ink",
     );
   const collectionHref = (project?: string) => filterHref("/entries", { ...preservedFilters, project });
 

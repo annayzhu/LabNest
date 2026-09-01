@@ -69,7 +69,7 @@ export function RecordLifecycleControl({
             if (event.target === event.currentTarget && !pending) setOpen(false);
           }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="w-full max-w-lg rounded-[12px] border border-hairline bg-surface p-5 shadow-soft">
+          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">
@@ -79,10 +79,10 @@ export function RecordLifecycleControl({
                   {locale === "zh" ? `移入回收站或归档${label}` : `Recycle or archive this ${label}?`}
                 </h2>
               </div>
-              <button type="button" aria-label="Close record lifecycle dialog" disabled={pending} onClick={() => setOpen(false)} className="focus-ring rounded-[6px] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
+              <button type="button" aria-label="Close record lifecycle dialog" disabled={pending} onClick={() => setOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
             </div>
 
-            <div className="mt-4 rounded-[8px] border border-error/25 bg-error-surface px-3 py-3">
+            <div className="mt-4 rounded-[var(--ln-radius-control-lg)] border border-error/25 bg-error-surface px-3 py-3">
               <p className="font-medium text-error">{identifier} · {title}</p>
               <p className="mt-1 text-sm leading-6 text-graphite">
                 {locale === "zh"
@@ -140,7 +140,7 @@ export function RecordLifecycleControl({
                   <Button type="submit" variant="primary" disabled={pending}><Archive className="h-4 w-4" aria-hidden />{archiving ? locale === "zh" ? "归档中…" : "Archiving…" : locale === "zh" ? "归档记录" : "Archive record"}</Button>
                 </form>
               ) : null}
-              {archived && editHref && !restoreAction ? <Link href={editHref} className="focus-ring inline-flex h-9 items-center justify-center rounded-[7px] border border-moss bg-moss px-3 text-[13px] text-warm">{locale === "zh" ? "修改状态" : "Change status"}</Link> : null}
+              {archived && editHref && !restoreAction ? <Link href={editHref} className="focus-ring inline-flex h-9 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-moss bg-moss px-3 text-[13px] text-warm">{locale === "zh" ? "修改状态" : "Change status"}</Link> : null}
             </div>
             {archiveState.error ? <ErrorMessage message={archiveState.error} /> : null}
             {restoreState.error ? <ErrorMessage message={restoreState.error} /> : null}
@@ -156,5 +156,5 @@ async function passthroughAction(previousState: FormActionState) {
 }
 
 function ErrorMessage({ message }: { message: string }) {
-  return <p role="alert" className="mt-3 rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{message}</p>;
+  return <p role="alert" className="mt-3 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{message}</p>;
 }

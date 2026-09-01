@@ -52,7 +52,7 @@ function TemplateCheckBadge({ status }: { status: ResultTemplateCheck["status"] 
 }
 
 function ResultTemplateSummaryCard({ template, templateCheck }: { template: ResultTemplate; templateCheck: ResultTemplateCheck | undefined }) {
-  return <div className="rounded-[8px] border border-sage/40 bg-sage-surface/50 p-3">
+  return <div className="rounded-[var(--ln-radius-control-lg)] border border-sage/40 bg-sage-surface/50 p-3">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div>
         <p className="text-sm font-semibold text-ink">{template.title ?? template.result_type}</p>
@@ -71,7 +71,7 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
 
 function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[] }) {
   if (!fields.length) return null;
-  return <section data-result-template-fields-preview className="rounded-[8px] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
+  return <section data-result-template-fields-preview className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
     <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
     <div className="mt-2 grid gap-[var(--ln-result-template-preview-grid-gap)] md:grid-cols-2">
       {fields.map((field) => {
@@ -80,7 +80,7 @@ function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[]
         const label = field.label ?? field.name ?? field.key ?? "Field";
         const metadata = [field.key, resultFieldTypeLabel[dataType], field.unit, requiredLabel(field.required), resultSemanticRoleLabel[semanticRole]].filter(Boolean).join(" · ");
         const title = field.description ? `${label}\n${metadata}\n${field.description}` : `${label}\n${metadata}`;
-        return <div key={field.key ?? label} title={title} className="flex min-w-0 items-center justify-between gap-[var(--ln-result-template-preview-field-meta-gap)] rounded-[7px] border border-hairline bg-warm/60 px-[var(--ln-result-template-preview-field-padding-x)] py-[var(--ln-result-template-preview-field-padding-y)]">
+        return <div key={field.key ?? label} title={title} className="flex min-w-0 items-center justify-between gap-[var(--ln-result-template-preview-field-meta-gap)] rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-[var(--ln-result-template-preview-field-padding-x)] py-[var(--ln-result-template-preview-field-padding-y)]">
           <p data-result-template-field-name className="min-w-0 flex-1 truncate font-medium leading-tight text-ink">{label}</p>
           <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{resultFieldTypeLabel[dataType]}{field.unit ? ` · ${field.unit}` : ""} · {requiredLabel(field.required)} · {resultSemanticRoleLabel[semanticRole]}</p>
         </div>;
@@ -91,10 +91,10 @@ function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[]
 
 function ResultTemplateArtifactPreview({ artifacts }: { artifacts: ResultTemplateArtifact[] | undefined }) {
   if (!artifacts?.length) return null;
-  return <section className="rounded-[8px] border border-hairline bg-surface/70 p-3">
+  return <section className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-3">
     <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />文件要求 / File requirements</p>
     <div className="mt-2 grid gap-2 md:grid-cols-2">
-      {artifacts.map((artifact) => <div key={artifact.key} className="min-w-0 rounded-[7px] border border-hairline bg-warm/60 px-3 py-2">
+      {artifacts.map((artifact) => <div key={artifact.key} className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-3 py-2">
         <p className="truncate text-sm font-medium text-ink">{artifact.label}</p>
         <p className="mt-1 text-xs text-muted"><span className="font-mono">{artifact.key}</span> · {artifactKindLabel[artifact.kind]} · {requiredLabel(artifact.required)}</p>
       </div>)}
@@ -151,12 +151,12 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
     return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite"><CheckSquare2 className="document-checklist-icon h-4 w-4 text-moss" aria-hidden /><span>{item}</span></li>)}</ul>;
   }
   if (block.type === "callout") {
-    return <div className={cn("flex gap-3 rounded-[9px] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span>{block.text}</span></div>;
+    return <div className={cn("flex gap-3 rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span>{block.text}</span></div>;
   }
   if (block.type === "media") {
     const href = safeLink(block.url);
     if (block.mediaType === "image" && href) return <figure className="ln-protocol-media-preview"><Image src={href} alt={block.caption || block.filename || "Protocol image"} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized />{block.caption ? <figcaption>{block.caption}</figcaption> : null}</figure>;
-    return <div className="flex items-start gap-3 rounded-[9px] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium text-ink">{block.caption || block.filename || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
+    return <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium text-ink">{block.caption || block.filename || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
   }
   if (block.type === "embedded_tool") {
     const href = safeLink(block.url);
@@ -196,7 +196,7 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
-      {document.importWarnings.length ? <div className="rounded-[10px] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{document.importWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
+      {document.importWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{document.importWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       {document.sections.map((section) => <section key={section.key} id={section.key} className="document-section scroll-mt-24"><header className="mb-5 flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-moss" aria-hidden /><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block"><ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
     </div>
   </DocumentCanvas>;

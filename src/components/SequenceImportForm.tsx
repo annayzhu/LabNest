@@ -19,9 +19,9 @@ export function SequenceImportForm() {
         <CardHeader title="Import sequence records" />
         <CardBody>
           <form action={action} className="space-y-4">
-            <label className="block rounded-[10px] border border-dashed border-hairline bg-warm/50 p-5">
+            <label className="block rounded-[var(--ln-radius-panel-inner)] border border-dashed border-hairline bg-warm/50 p-5">
               <span className={formLabelClass}>FASTA, CSV, TSV, or XLSX file *</span>
-              <input required type="file" name="file" accept=".fa,.fasta,.fna,.faa,.csv,.tsv,.xlsx,text/plain,text/csv" className="mt-3 block w-full text-sm text-graphite file:mr-3 file:rounded-[6px] file:border file:border-hairline file:bg-surface file:px-3 file:py-2 file:text-xs file:text-moss" />
+              <input required type="file" name="file" accept=".fa,.fasta,.fna,.faa,.csv,.tsv,.xlsx,text/plain,text/csv" className="mt-3 block w-full text-sm text-graphite file:mr-3 file:rounded-[var(--ln-radius-control-sm)] file:border file:border-hairline file:bg-surface file:px-3 file:py-2 file:text-xs file:text-moss" />
               <span className="mt-2 block text-xs text-muted">Up to 500 records and 25 MB per import. The import is atomic: invalid rows prevent the entire file from being saved.</span>
             </label>
             <div className="grid gap-3 md:grid-cols-2">
@@ -49,9 +49,9 @@ export function SequenceImportForm() {
         <CardBody className="space-y-4 text-sm text-graphite">
           <p>FASTA headers become record names. Choose default type values for fields that FASTA cannot carry.</p>
           <p>CSV/XLSX can provide per-row type, status, validation, target, organism, topology, Features, and modifications.</p>
-          <Link href="/api/sequences/template?format=xlsx" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Download XLSX template</Link>
-          <Link href="/api/sequences/template?format=csv" className="focus-ring ml-2 inline-flex h-9 items-center gap-2 rounded-[7px] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />CSV</Link>
-          <div className="rounded-[8px] bg-warm p-3 text-xs leading-5 text-muted">
+          <Link href="/api/sequences/template?format=xlsx" className="focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />Download XLSX template</Link>
+          <Link href="/api/sequences/template?format=csv" className="focus-ring ml-2 inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-[13px] font-medium text-moss hover:bg-warm"><Download className="h-4 w-4" aria-hidden />CSV</Link>
+          <div className="rounded-[var(--ln-radius-control-lg)] bg-warm p-3 text-xs leading-5 text-muted">
             <strong className="text-ink">Scientific safeguards</strong><br />Sequence alphabets are validated by molecule type. siRNA records may use one or two terminal T bases to represent a 3′ dT overhang. Feature coordinates use 1-based inclusive positions. Validation conclusions require a written summary.
           </div>
         </CardBody>

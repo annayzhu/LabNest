@@ -26,7 +26,7 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
           eyebrow="Edit entry"
           title={entry.title}
           description="Revise the structured note, add or reorder original media, and preserve removed originals in the attachment archive."
-          actions={<Link href={`/entries/${entry.id}`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[8px] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" />Cancel</Link>}
+          actions={<Link href={`/entries/${entry.id}`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" />Cancel</Link>}
         />
         <EntryComposer
           projects={projects}

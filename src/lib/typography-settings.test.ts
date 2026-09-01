@@ -61,11 +61,14 @@ describe("typography settings", () => {
   });
 
   it("accepts local web fonts within the limit and explains recoverable failures", () => {
-    expect(validateCustomFontFile({ name: "lab-song.woff2", size: 2_000_000, type: "font/woff2" })).toBeNull();
-    expect(validateCustomFontFile({ name: "legacy-name.ttf", size: 2_000_000, type: "application/x-font-ttf" })).toBeNull();
-    expect(validateCustomFontFile({ name: "notes.pdf", size: 2_000, type: "application/pdf" })).toBe("请选择 WOFF2、TTF 或 OTF 字体文件。");
-    expect(validateCustomFontFile({ name: "notes.woff2", size: 2_000, type: "application/pdf" })).toBe("请选择 WOFF2、TTF 或 OTF 字体文件。");
-    expect(validateCustomFontFile({ name: "large.otf", size: 10_000_001, type: "font/otf" })).toBe("单个字体文件不能超过 10 MB。");
+    expect(validateCustomFontFile({ name: "lab-song.woff2", size: 2_000_000 })).toBeNull();
+    expect(validateCustomFontFile({ name: "legacy-name.ttf", size: 2_000_000 })).toBeNull();
+    expect(validateCustomFontFile({ name: "editorial.otf", size: 2_000_000 })).toBeNull();
+    expect(validateCustomFontFile({ name: "notes.pdf", size: 2_000 })).toBe("请选择 WOFF2、TTF 或 OTF 字体文件。");
+    expect(validateCustomFontFile({ name: "notes.pdf", size: 2_000 }, "en")).toBe("Choose a WOFF2, TTF, or OTF font file.");
+    expect(validateCustomFontFile({ name: "empty.ttf", size: 0 })).toBe("字体文件为空，请选择其他文件。");
+    expect(validateCustomFontFile({ name: "large.otf", size: 10_000_001 })).toBe("单个字体文件不能超过 10 MB。");
+    expect(validateCustomFontFile({ name: "large.otf", size: 10_000_001 }, "en")).toBe("A font file cannot exceed 10 MB.");
   });
 
   it("resets only roles that use a deleted local font", () => {

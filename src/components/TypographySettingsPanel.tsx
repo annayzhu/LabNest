@@ -4,11 +4,10 @@ import { Check, ChevronDown, RotateCcw, Search, Trash2, Upload } from "lucide-re
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import {
-  createCustomFontRecord,
+  CustomFontImportError,
   deleteCustomFont,
   hydrateTypographyPreferences,
-  loadCustomFont,
-  saveCustomFont,
+  importCustomFont,
 } from "@/lib/custom-font-storage";
 import {
   applyTypographySettings,
@@ -188,13 +187,21 @@ export function TypographySettingsPanel() {
 
     setImporting(true);
     try {
-      const record = await createCustomFontRecord(file);
-      await loadCustomFont(record);
-      await saveCustomFont(record);
-      setCustomFonts((fonts) => [record, ...fonts]);
-      setMessage(copy(`“${record.name}”已导入，可在上方中英文选项中使用。`, `“${record.name}” was imported and is now available in the Chinese and English selectors.`));
-    } catch {
-      setError(copy("无法读取这个字体文件。请确认文件完整且为有效的 WOFF2、TTF 或 OTF 字体。", "This font could not be read. Confirm it is a complete, valid WOFF2, TTF, or OTF file."));
+      try {
+        const record = await importCustomFont(file);
+        setCustomFonts((fonts) => [record, ...fonts]);
+        setMessage(copy(`“${record.name}”已导入，可在上方中英文选项中使用。`, `“${record.name}” was imported and is now available in the Chinese and English selectors.`));
+      } catch (error) {
+        const stage = error instanceof CustomFontImportError ? error.stage : "persist";
+        if (stage === "read") {
+          setError(copy("无法读取这个字体文件，请重新下载后再试。", "This font file could not be read. Download it again and retry."));
+        } else if (stage === "parse") {
+          setError(copy("浏览器无法解析这个字体，请尝试该字体的 WOFF2 版本或其他字体文件。", "This browser could not parse the font. Try a WOFF2 build or another font file."));
+        } else {
+          setError(copy("无法将字体保存到当前浏览器，请检查浏览器存储权限后重试。", "The font could not be saved in this browser. Check browser storage permissions and retry."));
+        }
+        return;
+      }
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

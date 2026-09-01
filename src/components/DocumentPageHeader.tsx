@@ -11,6 +11,7 @@ export function DocumentPageHeader({
   titlePlaceholder = "Untitled document",
   subtitle,
   facts = [],
+  titleEditor,
 }: {
   documentType?: string;
   identifier?: string | null;
@@ -18,6 +19,7 @@ export function DocumentPageHeader({
   titlePlaceholder?: string;
   subtitle?: string | null;
   facts?: DocumentPageHeaderFact[];
+  titleEditor?: ReactNode;
 }) {
   const visibleFacts = [
     ...(identifier ? [{ label: documentType ? `${documentType} ID` : "ID", value: identifier, mono: true }] : []),
@@ -27,7 +29,7 @@ export function DocumentPageHeader({
   return (
     <header className="document-page-header">
       <h1 className={`document-page-title font-serif font-bold leading-tight ${title?.trim() ? "text-ink" : "text-muted"}`}>
-        {title?.trim() || titlePlaceholder}
+        {titleEditor ?? (title?.trim() || titlePlaceholder)}
       </h1>
       {subtitle?.trim() ? <p className="document-page-subtitle">{subtitle}</p> : null}
       {visibleFacts.length ? (
@@ -43,3 +45,4 @@ export function DocumentPageHeader({
     </header>
   );
 }
+import type { ReactNode } from "react";

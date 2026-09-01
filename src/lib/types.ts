@@ -126,7 +126,7 @@ export type ResultTemplateInstructionRun = {
 export type ResultTemplateInstructionNode = {
   type: "paragraph" | "heading2" | "heading3" | "bullet" | "numbered" | "quote";
   content: ResultTemplateInstructionRun[];
-  lineHeight?: 1 | 1.15 | 1.3 | 1.5 | 2;
+  lineHeight?: 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2;
   fontFamily?: "sans" | "serif" | "mono";
 };
 

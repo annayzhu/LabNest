@@ -154,7 +154,13 @@ export function protocolDocumentToTiptap(document: ProtocolDocument): JSONConten
     type: "doc",
     content: protocolSectionKeys.map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
-      const content = section?.blocks.flatMap(blockToTiptap) ?? [];
+      const rawContent = section?.blocks.flatMap(blockToTiptap) ?? [];
+      // Imported documents occasionally contain a synthetic empty paragraph
+      // before real section content. It is not user-authored content and makes
+      // Backspace appear to delete the protected following section.
+      const content = rawContent.length > 1 && rawContent[0]?.type === "paragraph" && !plainText(rawContent[0])
+        ? rawContent.slice(1)
+        : rawContent;
       return {
         type: "protocolSection",
         attrs: { sectionKey },
@@ -220,7 +226,7 @@ function nodeTypography(node: JSONContent) {
   const lineHeight = node.attrs?.protocolLineHeight ?? textStyle?.attrs?.lineHeight;
   const fontFamily = node.attrs?.protocolFontFamily ?? textStyle?.attrs?.fontFamily;
   return {
-    lineHeight: [1, 1.15, 1.3, 1.5, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,
+    lineHeight: [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,
     fontFamily: ["sans", "serif", "mono"].includes(fontFamily) ? fontFamily as ProtocolRichTextNode["fontFamily"] : undefined,
   };
 }

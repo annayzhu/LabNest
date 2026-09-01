@@ -45,4 +45,45 @@ describe("Protocol Tiptap compatibility layer", () => {
     expect(roundTrip.sections.find((section) => section.key === "steps")!.blocks).toEqual(document.sections.find((section) => section.key === "steps")!.blocks);
     expect(roundTrip.sections.find((section) => section.key === "result_templates")!.blocks).toEqual(document.sections.find((section) => section.key === "result_templates")!.blocks);
   });
+
+  it("round-trips managed attachments and embedded laboratory tools", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections.find((section) => section.key === "material")!.blocks = [
+      {
+        id: "image-1",
+        type: "media",
+        mediaType: "image",
+        url: "/api/attachments/attachment-1?inline=1",
+        attachmentId: "attachment-1",
+        filename: "plate.png",
+        caption: "Plate before treatment",
+      },
+      {
+        id: "planner-1",
+        type: "embedded_tool",
+        sourceKind: "manifest",
+        toolId: "free-plate-layout",
+        url: "/tools/plate-layout",
+        label: "Plate Map Planner",
+      },
+    ];
+
+    const roundTrip = tiptapToProtocolDocument(protocolDocumentToTiptap(document));
+    expect(roundTrip.sections.find((section) => section.key === "material")!.blocks).toEqual(document.sections.find((section) => section.key === "material")!.blocks);
+  });
+
+  it("removes a synthetic leading blank while keeping every required section shell", () => {
+    const document = createEmptyProtocolDocument();
+    document.sections.find((section) => section.key === "purpose")!.blocks = [
+      { id: "blank", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }] },
+      { id: "purpose", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "Measure RNA quality." }] }] },
+    ];
+
+    const tiptap = protocolDocumentToTiptap(document);
+    const purpose = tiptap.content?.find((node) => node.attrs?.sectionKey === "purpose");
+    expect(purpose?.content?.[0]?.attrs?.protocolBlockId).toBe("purpose");
+
+    const restored = tiptapToProtocolDocument({ type: "doc", content: tiptap.content?.filter((node) => node.attrs?.sectionKey !== "background") });
+    expect(restored.sections.map((section) => section.key)).toEqual(["description", "purpose", "background", "material", "steps", "result_templates", "consumption_rules"]);
+  });
 });

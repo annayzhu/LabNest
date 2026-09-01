@@ -9,6 +9,8 @@ import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { parseTags } from "@/lib/tags";
 import { checkResultTemplate } from "@/lib/result-templates";
+import { normalizeManualRelevantLinks } from "@/lib/protocol-relevant-items";
+import { assertManualRelevantLinksExist } from "@/lib/protocol-relevant-items.server";
 
 export type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 
@@ -24,6 +26,8 @@ const editorSchema = z.object({
   changeSummary: z.string().trim().optional(),
   tags: z.array(z.string().trim().min(1).max(48)),
   contentJson: z.string().min(1),
+  uploadDraftId: z.string().trim().min(1).max(160),
+  relevantItemLinksJson: z.string().default("[]"),
   researchPlanIds: z.array(z.string().min(1)),
   primaryResearchPlanIds: z.array(z.string().min(1)),
 });
@@ -55,10 +59,14 @@ export async function saveProtocolDocument(
       changeSummary: String(formData.get("changeSummary") ?? "").trim() || undefined,
       tags: parseTags(formData.get("tags")),
       contentJson: formData.get("contentJson"),
+      uploadDraftId: formData.get("uploadDraftId"),
+      relevantItemLinksJson: String(formData.get("relevantItemLinksJson") ?? "[]"),
       researchPlanIds: formData.getAll("researchPlanIds").map(String),
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
     const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
+    const manualRelevantLinks = normalizeManualRelevantLinks(JSON.parse(parsed.relevantItemLinksJson));
+    await assertManualRelevantLinksExist(manualRelevantLinks);
     const projection = projectProtocolDocument(document);
     if (parsed.reviewStage !== "draft") {
       const templateErrors = projection.resultTemplates.flatMap((template) => checkResultTemplate(template).errors);
@@ -157,6 +165,14 @@ export async function saveProtocolDocument(
             isPrimary: parsed.primaryResearchPlanIds.includes(researchPlanId),
           })),
         });
+      }
+      await transaction.attachmentLink.updateMany({
+        where: { targetType: "protocol_upload_draft", targetId: parsed.uploadDraftId },
+        data: { targetType: "protocol_version", targetId: savedVersionId },
+      });
+      await transaction.itemLink.deleteMany({ where: { sourceType: "protocol", sourceId: parsed.protocolId, linkType: "manually_related", createdBy: "user" } });
+      if (manualRelevantLinks.length) {
+        await transaction.itemLink.createMany({ data: manualRelevantLinks.map((link) => ({ sourceType: "protocol", sourceId: parsed.protocolId, targetType: link.type, targetId: link.id, linkType: "manually_related", createdBy: "user" })) });
       }
       await transaction.activityLog.create({
         data: {

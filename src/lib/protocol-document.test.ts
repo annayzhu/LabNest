@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyProtocolDocument, normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
+import { DEFAULT_RICH_TEXT_LINE_HEIGHT } from "./rich-text-line-height";
 
 describe("Protocol document structured projections", () => {
   it("preserves controlled inline font sizes while normalizing saved content", () => {
@@ -27,11 +28,47 @@ describe("Protocol document structured projections", () => {
       { id: "step-check", type: "checklist", items: ["Confirm the tube is labeled."] },
     ];
 
-    expect(projectProtocolDocument(document).steps).toEqual([expect.objectContaining({
-      order: 1,
-      title: "Prepare reaction",
-      description: "Mix gently and keep on ice.\nConfirm the tube is labeled.",
-    })]);
+    expect(projectProtocolDocument(document).steps).toEqual([
+      expect.objectContaining({
+        order: 1,
+        title: "Prepare reaction",
+        description: "Mix gently and keep on ice.",
+      }),
+      expect.objectContaining({
+        order: 2,
+        title: "Confirm the tube is labeled.",
+        description: "",
+      }),
+    ]);
+  });
+
+  it("keeps bullet details inside a numbered execution step while projecting every checklist item independently", () => {
+    const document = createEmptyProtocolDocument();
+    const steps = document.sections.find((section) => section.key === "steps")!;
+    steps.blocks = [{
+      id: "steps-rich",
+      type: "rich_text",
+      nodes: [
+        { type: "numbered", content: [{ text: "Prepare cells" }] },
+        { type: "bullet", content: [{ text: "Keep the plate on ice." }] },
+        { type: "numbered", content: [{ text: "Add buffer" }] },
+      ],
+    }, {
+      id: "steps-checklist",
+      type: "checklist",
+      items: ["Confirm tube label", "Record lot number"],
+    }];
+
+    expect(projectProtocolDocument(document).steps).toEqual([
+      expect.objectContaining({ order: 1, title: "Prepare cells", description: "• Keep the plate on ice." }),
+      expect.objectContaining({ order: 2, title: "Add buffer", description: "" }),
+      expect.objectContaining({ order: 3, title: "Confirm tube label", description: "" }),
+      expect.objectContaining({ order: 4, title: "Record lot number", description: "" }),
+    ]);
+  });
+
+  it("uses the wider authoring line height without changing explicit saved line heights", () => {
+    expect(DEFAULT_RICH_TEXT_LINE_HEIGHT).toBe(1.6);
   });
 
   it("projects materials, equipment, result fields and consumption columns by header", () => {

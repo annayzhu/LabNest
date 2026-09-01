@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { Editor } from "@tiptap/core";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Plus, Quote, Redo2, Strikethrough, Table2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -31,6 +31,52 @@ function ToolbarButton({ editor, active, disabled, label, onClick, children }: {
   return <button type="button" className={cn(wysiwygToolbarButtonClass, active && "bg-sage-surface text-moss")} aria-label={label} title={label} aria-pressed={active || undefined} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { onClick(); editor.commands.focus(); }}>{children}</button>;
 }
 
+function ToolbarMenu({
+  id,
+  label,
+  icon,
+  openMenu,
+  setOpenMenu,
+  children,
+  menuClassName,
+  triggerClassName,
+}: {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  openMenu: string | null;
+  setOpenMenu: Dispatch<SetStateAction<string | null>>;
+  children: ReactNode;
+  menuClassName: string;
+  triggerClassName?: string;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const open = openMenu === id;
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpenMenu(null);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+        rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus();
+      }
+    };
+    globalThis.document.addEventListener("pointerdown", dismiss);
+    globalThis.document.addEventListener("keydown", escape);
+    return () => {
+      globalThis.document.removeEventListener("pointerdown", dismiss);
+      globalThis.document.removeEventListener("keydown", escape);
+    };
+  }, [open, setOpenMenu]);
+
+  return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
+    <button type="button" aria-haspopup="menu" aria-expanded={open} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
+    {open ? <div role="menu" className={menuClassName} onClick={() => setOpenMenu(null)}>{children}</div> : null}
+  </div>;
+}
+
 /**
  * Deep formatting Module shared by every LabNest Tiptap adapter. Callers only
  * provide domain-specific insert actions; formatting behaviour stays local.
@@ -49,6 +95,7 @@ export function DocumentWysiwygToolbar({
   className?: string;
 }) {
   const [, setRevision] = useState(0);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   useEffect(() => {
     const refresh = () => setRevision((value) => value + 1);
     editor.on("selectionUpdate", refresh);
@@ -78,29 +125,23 @@ export function DocumentWysiwygToolbar({
     <ToolbarButton editor={editor} label="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}><Underline aria-hidden /></ToolbarButton>
     <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-font-select`} value={textStyle.fontFamily ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setFontFamily(event.target.value).run() : editor.chain().focus().unsetFontFamily().run()} aria-label="Font"><option value="">Font</option><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
     <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-size-select`} value={textStyle.fontSize ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setFontSize(event.target.value).run() : editor.chain().focus().unsetFontSize().run()} aria-label="Font size"><option value="">Size</option>{RICH_TEXT_FONT_SIZES_PT.map((size) => <option key={size} value={`${size}pt`}>{size}</option>)}</select>
-    <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-line-height-select`} value={textStyle.lineHeight ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setLineHeight(event.target.value).run() : editor.chain().focus().unsetLineHeight().run()} aria-label="Line spacing"><option value="">1.5×</option>{RICH_TEXT_LINE_HEIGHTS.map((height) => <option key={height} value={String(height)}>{height}×</option>)}</select>
+    <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-line-height-select`} value={textStyle.lineHeight ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setLineHeight(event.target.value).run() : editor.chain().focus().unsetLineHeight().run()} aria-label="Line spacing"><option value="">1.6×</option>{RICH_TEXT_LINE_HEIGHTS.map((height) => <option key={height} value={String(height)}>{height}×</option>)}</select>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
     <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><List aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
     {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
-    <details className="ln-wysiwyg-insert-menu ln-wysiwyg-more-menu">
-      <summary className={`${wysiwygToolbarButtonClass} border-hairline bg-surface text-graphite`}><span>More</span><ChevronDown aria-hidden /></summary>
-      <div className="ln-wysiwyg-compact-menu">
+    <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger">
         <button type="button" data-active={editor.isActive("strike") || undefined} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough aria-hidden />Strikethrough</button>
         <button type="button" data-active={editor.isActive("blockquote") || undefined} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote aria-hidden />Quote</button>
         <button type="button" data-active={editor.isActive("link") || undefined} onClick={setLink}><Link2 aria-hidden />Add / edit link</button>
         <button type="button" disabled={!editor.isActive("link")} onClick={() => editor.chain().focus().unsetLink().run()}><Unlink aria-hidden />Remove link</button>
         <button type="button" onClick={() => editor.chain().focus().unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
         <button type="button" onClick={() => editor.chain().focus().setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
-      </div>
-    </details>
-    {insertActions.length ? <details className="ln-wysiwyg-insert-menu">
-      <summary className={`${wysiwygToolbarButtonClass} border-hairline bg-surface text-graphite`}><Plus aria-hidden /><span>Insert</span><ChevronDown aria-hidden /></summary>
-      <div className="ln-wysiwyg-insert-popover">
+    </ToolbarMenu>
+    {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover">
         {insertActions.map((action) => <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
-      </div>
-    </details> : null}
-    {editor.isActive("table") ? <details className="ln-wysiwyg-insert-menu ln-wysiwyg-table-menu"><summary className={`${wysiwygToolbarButtonClass} border-hairline bg-surface text-graphite`}><Table2 aria-hidden /><span>Table</span><ChevronDown aria-hidden /></summary><div className="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></div></details> : null}
+    </ToolbarMenu> : null}
+    {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
     <span className="ln-wysiwyg-toolbar-spacer" />
     <ToolbarButton editor={editor} label="Undo" disabled={!editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><Undo2 aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Redo" disabled={!editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><Redo2 aria-hidden /></ToolbarButton>

@@ -229,6 +229,35 @@ enum SequenceType {
   Protein
 }
 
+enum SequenceOwnershipScope {
+  library
+  project
+}
+
+enum SequenceEntryClass {
+  nucleic_acid
+  amino_acid
+  oligo
+}
+
+enum SequencePairType {
+  primer_pair
+  sirna_duplex
+}
+
+enum SequencePairRole {
+  forward
+  reverse
+  sense
+  antisense
+}
+
+enum SequenceWorkflowType {
+  alignment
+  assembly
+  crispr
+}
+
 enum SequenceDesignType {
   plasmid
   primer
@@ -280,6 +309,9 @@ enum SequenceSourceType {
 enum SequenceCollectionType {
   primer_pair
   sirna_duplex
+  primer_panel
+  sirna_series
+  sequence_series
   shrna_construct
   probe_panel
   plasmid_construct
@@ -353,7 +385,9 @@ model Project {
   protocolAssociations ProjectProtocol[]
   entities             Entity[]
   sequences            Sequence[]
+  sequencePairs        SequencePair[]
   sequenceCollections  SequenceCollection[]
+  sequenceWorkflows    SequenceWorkflow[]
   results              Result[]
   reports              Report[]
   procurementInquiries ProcurementInquiry[]
@@ -858,6 +892,23 @@ model ResultTypeDefinition {
   @@index([sortOrder, label])
 }
 
+model ScientificSchemaDefinition {
+  id               String     @id @default(cuid())
+  key              String     @unique
+  label            String
+  entityType       EntityType
+  objectKind       String     @default("entity")
+  prefix           String?
+  fieldDefinitions Json       @default("[]")
+  defaultSettings  Json       @default("{}")
+  enabled          Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([enabled, label])
+  @@index([entityType])
+}
+
 model ResultDataset {
   id                 String                   @id @default(cuid())
   resultId           String
@@ -1054,24 +1105,29 @@ model AttachmentLink {
 }
 
 model Sequence {
-  id           String                  @id @default(cuid())
-  code         String                  @unique
-  name         String
-  designType   SequenceDesignType      @default(other)
-  status       SequenceLifecycleStatus @default(draft)
-  description  String?
-  projectId    String?
-  project      Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  targetName   String?
-  organism     String?
-  metadataJson Json                    @default("{}")
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
+  id             String                  @id @default(cuid())
+  code           String                  @unique
+  name           String
+  entryClass     SequenceEntryClass      @default(nucleic_acid)
+  ownershipScope SequenceOwnershipScope  @default(library)
+  designType     SequenceDesignType      @default(other)
+  status         SequenceLifecycleStatus @default(draft)
+  description    String?
+  projectId      String?
+  project        Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  targetName     String?
+  organism       String?
+  metadataJson   Json                    @default("{}")
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
 
-  entities    Entity[]
-  versions    SequenceVersion[]
-  entityLinks EntitySequenceLink[]
+  entities       Entity[]
+  versions       SequenceVersion[]
+  entityLinks    EntitySequenceLink[]
+  pairMembership SequencePairMember?
 
+  @@index([entryClass])
+  @@index([ownershipScope])
   @@index([designType])
   @@index([status])
   @@index([projectId])
@@ -1102,12 +1158,94 @@ model SequenceVersion {
   modifications     SequenceModification[]
   entityLinks       EntitySequenceLink[]
   collectionMembers SequenceCollectionMember[]
+  pairMembership    SequencePairMember?
+  workflowInputs    SequenceWorkflowInput[]
 
   @@unique([sequenceId, versionNumber])
   @@index([sequenceId, checksum])
   @@index([moleculeType])
   @@index([validationStatus])
   @@index([checksum])
+}
+
+model SequencePairMember {
+  id                String           @id @default(cuid())
+  pairId            String
+  pair              SequencePair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  sequenceId        String           @unique
+  sequenceRecord    Sequence         @relation(fields: [sequenceId], references: [id], onDelete: Restrict)
+  sequenceVersionId String           @unique
+  sequenceVersion   SequenceVersion  @relation(fields: [sequenceVersionId], references: [id], onDelete: Restrict)
+  role              SequencePairRole
+  order             Int              @default(0)
+  note              String?
+
+  @@unique([pairId, role])
+  @@unique([pairId, sequenceId])
+  @@index([pairId, order])
+}
+
+model SequencePair {
+  id             String                  @id @default(cuid())
+  code           String                  @unique
+  name           String
+  type           SequencePairType
+  status         SequenceLifecycleStatus @default(draft)
+  description    String?
+  ownershipScope SequenceOwnershipScope  @default(library)
+  projectId      String?
+  project        Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  targetName     String?
+  organism       String?
+  metadataJson   Json                    @default("{}")
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  members     SequencePairMember[]
+  collections SequenceCollectionPairMember[]
+
+  @@index([type])
+  @@index([status])
+  @@index([ownershipScope])
+  @@index([projectId])
+  @@index([targetName])
+}
+
+model SequenceWorkflow {
+  id           String                  @id @default(cuid())
+  code         String                  @unique
+  type         SequenceWorkflowType
+  name         String
+  projectId    String
+  project      Project                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  status       SequenceLifecycleStatus @default(draft)
+  method       String
+  reference    String?
+  pam          String?
+  description  String?
+  metadataJson Json                    @default("{}")
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  inputs SequenceWorkflowInput[]
+
+  @@index([type])
+  @@index([projectId])
+  @@index([status])
+}
+
+model SequenceWorkflowInput {
+  id                String           @id @default(cuid())
+  workflowId        String
+  workflow          SequenceWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  sequenceVersionId String
+  sequenceVersion   SequenceVersion  @relation(fields: [sequenceVersionId], references: [id], onDelete: Restrict)
+  role              String           @default("input")
+  order             Int              @default(0)
+
+  @@unique([workflowId, sequenceVersionId, role])
+  @@index([workflowId, order])
+  @@index([sequenceVersionId])
 }
 
 model SequenceFeature {
@@ -1157,22 +1295,25 @@ model EntitySequenceLink {
 }
 
 model SequenceCollection {
-  id           String                  @id @default(cuid())
-  code         String                  @unique
-  name         String
-  type         SequenceCollectionType
-  status       SequenceLifecycleStatus @default(draft)
-  description  String?
-  projectId    String?
-  project      Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  metadataJson Json                    @default("{}")
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
+  id             String                  @id @default(cuid())
+  code           String                  @unique
+  name           String
+  type           SequenceCollectionType
+  status         SequenceLifecycleStatus @default(draft)
+  description    String?
+  ownershipScope SequenceOwnershipScope  @default(library)
+  projectId      String?
+  project        Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  metadataJson   Json                    @default("{}")
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
 
-  members SequenceCollectionMember[]
+  members     SequenceCollectionMember[]
+  pairMembers SequenceCollectionPairMember[]
 
   @@index([type])
   @@index([status])
+  @@index([ownershipScope])
   @@index([projectId])
 }
 
@@ -1189,6 +1330,21 @@ model SequenceCollectionMember {
   @@unique([collectionId, sequenceVersionId, role])
   @@index([collectionId, order])
   @@index([sequenceVersionId])
+}
+
+model SequenceCollectionPairMember {
+  id           String             @id @default(cuid())
+  collectionId String
+  collection   SequenceCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  pairId       String
+  pair         SequencePair       @relation(fields: [pairId], references: [id], onDelete: Restrict)
+  role         String             @default("member")
+  order        Int                @default(0)
+  note         String?
+
+  @@unique([collectionId, pairId, role])
+  @@index([collectionId, order])
+  @@index([pairId])
 }
 
 model ItemLink {

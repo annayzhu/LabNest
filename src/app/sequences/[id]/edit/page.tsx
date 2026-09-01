@@ -22,6 +22,8 @@ export default async function EditSequencePage({ params }: { params: Promise<{ i
   const initial: SequenceFormInitial = {
     id: record.id,
     name: record.name,
+    entryClass: record.entryClass,
+    ownershipScope: record.ownershipScope,
     designType: record.designType,
     status: record.status,
     description: record.description,

@@ -42,13 +42,27 @@ const groups = [
     ],
   },
   {
+    title: "Sequences",
+    items: [
+      { label: "DNA / RNA sequence", icon: Dna, href: "/sequences/new?category=dna-rna" },
+      { label: "AA sequence", icon: Dna, href: "/sequences/new?category=amino-acid" },
+      { label: "Oligo", icon: Dna, href: "/sequences/new?category=oligo" },
+      { label: "Primer pair", icon: Dna, href: "/sequences/new?category=primer-pair" },
+      { label: "siRNA duplex", icon: Dna, href: "/sequences/new?category=sirna-duplex" },
+      { label: "Alignment", icon: Dna, href: "/sequences/workflows/new?type=alignment" },
+      { label: "Assembly", icon: FlaskConical, href: "/sequences/workflows/new?type=assembly" },
+      { label: "CRISPR", icon: Sparkles, href: "/sequences/workflows/new?type=crispr" },
+    ],
+  },
+  {
     title: "Lab Objects",
     items: [
       { label: "Blank Protocol", icon: FlaskConical, href: "/protocols/new" },
       { label: "Project", icon: FolderKanban, href: "/projects" },
-      { label: "Entity / Sample", icon: TestTube2, href: "/entities" },
+      { label: "Entity from schema", icon: TestTube2, href: "/entities/new" },
+      { label: "Mixture recipe", icon: FlaskConical, href: "/entities/new?type=mixture&mixtureKind=recipe" },
+      { label: "Mixture preparation", icon: FlaskConical, href: "/entities/new?type=mixture&mixtureKind=preparation" },
       { label: "Inventory Item", icon: Boxes, href: "/inventory" },
-      { label: "Sequence", icon: Dna, href: "/sequences/new" },
       { label: "Result", icon: Database, href: "/results" },
       { label: "Purchase", icon: ShoppingCart, href: "/purchases" },
       { label: "Import / Attachment", icon: Upload, href: "/attachments" },
@@ -62,7 +76,17 @@ const mobileItems = [
   { label: "Photo Entry", href: "/entries/new?source=photo" },
   { label: "Add Result", href: "/results" },
   { label: "Add Inventory", href: "/inventory" },
-  { label: "Add Sequence", href: "/sequences/new" },
+  { label: "DNA / RNA", href: "/sequences/new?category=dna-rna" },
+  { label: "AA sequence", href: "/sequences/new?category=amino-acid" },
+  { label: "Oligo", href: "/sequences/new?category=oligo" },
+  { label: "Primer pair", href: "/sequences/new?category=primer-pair" },
+  { label: "siRNA duplex", href: "/sequences/new?category=sirna-duplex" },
+  { label: "Alignment", href: "/sequences/workflows/new?type=alignment" },
+  { label: "Assembly", href: "/sequences/workflows/new?type=assembly" },
+  { label: "CRISPR", href: "/sequences/workflows/new?type=crispr" },
+  { label: "Entity from schema", href: "/entities/new" },
+  { label: "Mixture recipe", href: "/entities/new?type=mixture&mixtureKind=recipe" },
+  { label: "Mixture preparation", href: "/entities/new?type=mixture&mixtureKind=preparation" },
   { label: "Add Sample", href: "/samples" },
 ];
 
@@ -112,10 +136,10 @@ export function CreateMenu() {
         <div
           role="menu"
           className={cn(
-            "fixed inset-x-3 bottom-20 z-50 rounded-[16px] border border-hairline bg-surface p-3 shadow-soft sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-[520px]",
+            "fixed inset-x-3 bottom-20 z-50 max-h-[72vh] overflow-y-auto rounded-[16px] border border-hairline bg-surface p-3 shadow-soft sm:absolute sm:inset-auto sm:right-0 sm:top-12 sm:w-[760px] sm:max-w-[calc(100vw-2rem)]",
           )}
         >
-          <div className="hidden grid-cols-3 gap-3 sm:grid">
+          <div className="hidden grid-cols-4 gap-3 sm:grid">
             {groups.map((group) => (
               <div key={group.title} className="rounded-[10px] bg-warm p-2">
                 <p className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-muted">

@@ -12,6 +12,17 @@ export const sequenceDesignTypes = [
   { value: "other", label: "Other", defaultMolecule: "DNA" },
 ] as const;
 
+export const sequenceEntryClasses = [
+  { value: "nucleic_acid", label: "DNA / RNA sequence" },
+  { value: "amino_acid", label: "Amino acid sequence" },
+  { value: "oligo", label: "Oligo" },
+] as const;
+
+export const sequencePairTypes = [
+  { value: "primer_pair", label: "Primer pair", roles: ["forward", "reverse"] },
+  { value: "sirna_duplex", label: "siRNA duplex", roles: ["sense", "antisense"] },
+] as const;
+
 export type SequenceDesignTypeValue = typeof sequenceDesignTypes[number]["value"];
 
 export const sequenceLifecycleStatuses = [
@@ -31,8 +42,9 @@ export const sequenceValidationStatuses = [
 ] as const;
 
 export const sequenceCollectionTypes = [
-  { value: "primer_pair", label: "Primer pair", roles: ["forward", "reverse"] },
-  { value: "sirna_duplex", label: "siRNA duplex", roles: ["sense", "antisense"] },
+  { value: "primer_panel", label: "Primer panel", roles: ["member"] },
+  { value: "sirna_series", label: "siRNA series", roles: ["member"] },
+  { value: "sequence_series", label: "Sequence series", roles: ["member"] },
   { value: "shrna_construct", label: "shRNA construct", roles: ["guide", "loop", "antisense", "full_hairpin"] },
   { value: "probe_panel", label: "Probe panel", roles: ["probe"] },
   { value: "plasmid_construct", label: "Plasmid construct", roles: ["backbone", "insert", "full_construct"] },
@@ -101,5 +113,13 @@ export function designTypeLabel(value: string) {
 }
 
 export function collectionTypeLabel(value: string) {
-  return sequenceCollectionTypes.find((type) => type.value === value)?.label ?? value.replaceAll("_", " ");
+  return sequenceCollectionTypes.find((type) => type.value === value)?.label ?? sequencePairTypes.find((type) => type.value === value)?.label ?? value.replaceAll("_", " ");
+}
+
+export function entryClassLabel(value: string) {
+  return sequenceEntryClasses.find((type) => type.value === value)?.label ?? value.replaceAll("_", " ");
+}
+
+export function pairTypeLabel(value: string) {
+  return sequencePairTypes.find((type) => type.value === value)?.label ?? value.replaceAll("_", " ");
 }

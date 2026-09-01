@@ -18,6 +18,7 @@ export function SequenceCollectionBatchActions({
   targetName,
   typeLabel,
   typeOptions,
+  typeDisabledIds = [],
   projects,
   action,
   layout = "full",
@@ -26,6 +27,7 @@ export function SequenceCollectionBatchActions({
   targetName: string;
   typeLabel: string;
   typeOptions: ReadonlyArray<Option>;
+  typeDisabledIds?: string[];
   projects: ProjectOption[];
   action: SequenceBatchAction;
   layout?: "full" | "sidebar";
@@ -34,6 +36,7 @@ export function SequenceCollectionBatchActions({
   const [state, formAction, pending] = useActionState(action, initialState);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
+  const typeEditDisabled = selectedIds.some((id) => typeDisabledIds.includes(id));
   const isSidebar = layout === "sidebar";
   const primaryButtonClass = cn(buttonStyles({ variant: "primary", size: "sm", className: "font-medium" }), isSidebar && "w-full");
 
@@ -93,11 +96,11 @@ export function SequenceCollectionBatchActions({
         <label className="space-y-1">
           <span className={formLabelClass}>批量修改项目</span>
           <select name="projectId" defaultValue="" className={`${formInputClass} w-full`}>
-            <option value="">共享库</option>
+            <option value="">Sequence library</option>
             {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
           </select>
         </label>
-        <p className={cn("text-xs text-muted", !isSidebar && "md:pb-1")}>空选项表示移动到共享库</p>
+        <p className={cn("text-xs text-muted", !isSidebar && "md:pb-1")}>空选项表示移动到 Sequence library</p>
         <button type="submit" disabled={pending || !hasSelection} className={primaryButtonClass}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           应用项目修改
@@ -120,12 +123,13 @@ export function SequenceCollectionBatchActions({
         {selectedIds.map((id) => <input key={`type-${id}`} type="hidden" name="ids" value={id} />)}
         <label className="space-y-1">
           <span className={formLabelClass}>批量修改{typeLabel}</span>
-          <select name="type" defaultValue="" required className={`${formInputClass} w-full`}>
+          <select name="type" defaultValue="" required disabled={typeEditDisabled} className={`${formInputClass} w-full`}>
             <option value="" disabled>选择{typeLabel}</option>
             {typeOptions.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
         </label>
-        <button type="submit" disabled={pending || !hasSelection} className={cn(primaryButtonClass, !isSidebar && "md:self-end")}>
+        {typeEditDisabled ? <p className="text-xs leading-5 text-muted">配对引物与 siRNA 的 DNA/RNA 成员版本不可互转；请新建新的配对条目。</p> : null}
+        <button type="submit" disabled={pending || !hasSelection || typeEditDisabled} className={cn(primaryButtonClass, !isSidebar && "md:self-end")}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           应用类型修改
         </button>

@@ -25,6 +25,7 @@ export type SequenceCollectionInitial = {
   type?: SequenceCollectionTypeValue;
   status?: "draft" | "active" | "inactive" | "archived";
   description?: string | null;
+  ownershipScope?: "library" | "project";
   projectId?: string | null;
   members?: MemberDraft[];
 };
@@ -41,7 +42,8 @@ export function SequenceCollectionForm({
   initial?: SequenceCollectionInitial;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [type, setType] = useState<SequenceCollectionTypeValue>(initial.type ?? "primer_pair");
+  const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initial.ownershipScope ?? (initial.projectId ? "project" : "library"));
+  const [type, setType] = useState<SequenceCollectionTypeValue>(initial.type ?? "shrna_construct");
   const [members, setMembers] = useState<MemberDraft[]>(initial.members ?? []);
   const suggestedRoles = useMemo(() => sequenceCollectionTypes.find((item) => item.value === type)?.roles ?? ["member"], [type]);
 
@@ -75,9 +77,13 @@ export function SequenceCollectionForm({
             </select>
           </label>
           <label>
-            <span className={formLabelClass}>Project</span>
-            <select name="projectId" defaultValue={initial.projectId ?? ""} className={formInputClass}>
-              <option value="">Shared sequence library</option>
+            <span className={formLabelClass}>Location *</span>
+            <select name="ownershipScope" value={ownershipScope} onChange={(event) => setOwnershipScope(event.target.value as typeof ownershipScope)} className={formInputClass}><option value="library">Sequence library</option><option value="project">Project</option></select>
+          </label>
+          <label>
+            <span className={formLabelClass}>Project{ownershipScope === "project" ? " *" : ""}</span>
+            <select name="projectId" required={ownershipScope === "project"} disabled={ownershipScope !== "project"} defaultValue={initial.projectId ?? ""} className={formInputClass}>
+              <option value="">Choose a Project…</option>
               {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
             </select>
           </label>

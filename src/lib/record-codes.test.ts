@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRecordCode, isValidRecordCode, recordCodeExample, recordCodeFromSuffix, suggestNextRecordCode } from "./record-codes";
+import { formatRecordCode, isValidRecordCode, recordCodeExample, recordCodeFromSuffix, reserveRecordCodes, suggestNextRecordCode } from "./record-codes";
 
 describe("record code rules", () => {
   it("uses the fixed prefixes and starting formats", () => {
@@ -41,5 +41,13 @@ describe("record code rules", () => {
     expect(suggestNextRecordCode("protocol", [])).toBe("PRT-100001");
     expect(suggestNextRecordCode("protocol", ["PRT-100008"], 100008)).toBe("PRT-100009");
     expect(suggestNextRecordCode("experiment", ["EXP-001"], 1)).toBe("EXP-002");
+  });
+
+  it("reserves a contiguous code range with one counter operation", async () => {
+    const tx = {
+      sequence: { findMany: async () => [{ code: "SEQ-000004" }] },
+      $queryRaw: async () => [{ value: 7 }],
+    };
+    await expect(reserveRecordCodes(tx as never, "sequence", 3)).resolves.toEqual(["SEQ-000005", "SEQ-000006", "SEQ-000007"]);
   });
 });

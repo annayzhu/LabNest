@@ -24,6 +24,8 @@ type ProjectOption = { id: string; name: string };
 export type SequenceFormInitial = {
   id?: string;
   name?: string;
+  entryClass?: "nucleic_acid" | "amino_acid" | "oligo";
+  ownershipScope?: "library" | "project";
   designType?: SequenceDesignTypeValue;
   status?: "draft" | "active" | "inactive" | "archived";
   description?: string | null;
@@ -53,6 +55,7 @@ function nextVersionLabel(current?: string) {
 export function SequenceForm({ action, projects, initial = {} }: { action: FormAction; projects: ProjectOption[]; initial?: SequenceFormInitial }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const initialDesign = initial.designType ?? "other";
+  const [ownershipScope, setOwnershipScope] = useState<"library" | "project">(initial.ownershipScope ?? (initial.projectId ? "project" : "library"));
   const [designType, setDesignType] = useState<SequenceDesignTypeValue>(initialDesign);
   const [moleculeType, setMoleculeType] = useState<"DNA" | "RNA" | "Protein">(initial.latestVersion?.moleculeType ?? sequenceDesignTypes.find((item) => item.value === initialDesign)?.defaultMolecule ?? "DNA");
   const [sequence, setSequence] = useState(initial.latestVersion?.sequence ?? "");
@@ -77,6 +80,7 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
   return (
     <form action={formAction} className="space-y-4">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+      <input type="hidden" name="entryClass" value={initial.entryClass ?? "nucleic_acid"} />
       <input type="hidden" name="featuresJson" value={JSON.stringify(features)} />
       <input type="hidden" name="modificationsJson" value={JSON.stringify(modifications)} />
 
@@ -110,9 +114,16 @@ export function SequenceForm({ action, projects, initial = {} }: { action: FormA
             </select>
           </label>
           <label>
-            <span className={formLabelClass}>Project</span>
-            <select name="projectId" defaultValue={initial.projectId ?? ""} className={formInputClass}>
-              <option value="">Shared sequence library</option>
+            <span className={formLabelClass}>Location *</span>
+            <select name="ownershipScope" value={ownershipScope} onChange={(event) => setOwnershipScope(event.target.value as typeof ownershipScope)} className={formInputClass}>
+              <option value="library">Sequence library</option>
+              <option value="project">Project</option>
+            </select>
+          </label>
+          <label>
+            <span className={formLabelClass}>Project{ownershipScope === "project" ? " *" : ""}</span>
+            <select name="projectId" required={ownershipScope === "project"} disabled={ownershipScope !== "project"} defaultValue={initial.projectId ?? ""} className={formInputClass}>
+              <option value="">Choose a Project…</option>
               {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
             </select>
           </label>

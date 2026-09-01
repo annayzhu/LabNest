@@ -20,11 +20,11 @@ export default async function SequenceCollectionsPage({ searchParams }: { search
   const status = firstSearchParam(params, "status");
   const [collections, totalCount, projects] = await Promise.all([
     prisma.sequenceCollection.findMany({
-      where: { ...(type ? { type: type as never } : {}), ...(status ? { status: status as never } : {}), ...(query ? { OR: [{ code: { contains: query, mode: "insensitive" } }, { name: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] } : {}) },
+      where: { type: type ? type as never : { notIn: ["primer_pair", "sirna_duplex"] }, ...(status ? { status: status as never } : {}), ...(query ? { OR: [{ code: { contains: query, mode: "insensitive" } }, { name: { contains: query, mode: "insensitive" } }, { description: { contains: query, mode: "insensitive" } }] } : {}) },
       include: { project: { select: { name: true } }, members: { include: { sequenceVersion: { include: { sequenceRecord: { select: { name: true } } } } }, orderBy: { order: "asc" } } },
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.sequenceCollection.count(),
+    prisma.sequenceCollection.count({ where: { type: { notIn: ["primer_pair", "sirna_duplex"] } } }),
     prisma.project.findMany({ where: { status: { not: "archived" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   return (
@@ -54,7 +54,7 @@ export default async function SequenceCollectionsPage({ searchParams }: { search
                 { key: "name", header: "Collection", render: (row) => <div><Link href={`/sequences/collections/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="font-mono text-xs text-muted">{row.code}</p></div> },
                 { key: "type", header: "Type", render: (row) => <Badge tone="sage">{collectionTypeLabel(row.type)}</Badge> },
                 { key: "members", header: "Exact members", render: (row) => <div><p>{row.members.length} {row.members.length === 1 ? "member" : "members"}</p><p className="max-w-96 truncate text-xs text-muted">{row.members.map((member) => `${member.role}: ${member.sequenceVersion.sequenceRecord.name} v${member.sequenceVersion.displayVersion}`).join(" · ") || "—"}</p></div> },
-                { key: "project", header: "Project", render: (row) => row.project?.name ?? "Shared library" },
+                { key: "project", header: "Project", render: (row) => row.project?.name ?? "Sequence library" },
                 { key: "status", header: "Lifecycle", render: (row) => <StatusPill status={row.status} /> },
               ]}
             />

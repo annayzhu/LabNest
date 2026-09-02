@@ -104,7 +104,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
         { label: "Source", value: sourceType.replaceAll("_", " ") },
         { label: "Record", value: recordStatus.replaceAll("_", " ") },
         { label: "QC", value: qualityStatus.replaceAll("_", " ") },
-      ]} hiddenSectionKeys={hiddenSectionKeys} allowedBlockTypes={["heading", "text", "checklist", "callout"]} leadingContent={<ResultCaptureEditor
+      ]} hiddenSectionKeys={hiddenSectionKeys} insertProfile="scientific-result" leadingContent={<ResultCaptureEditor
         template={template}
         templateValues={templateValues}
         onTemplateValuesChange={setTemplateValues}

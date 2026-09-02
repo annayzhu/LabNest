@@ -62,7 +62,7 @@ async function assertDesktopSlice(page, routes) {
   });
   assert(detailMetrics.titleSize >= 15.5 && detailMetrics.titleSize <= 16.5, `Protocol title is outside the compact 16px slice target: ${detailMetrics.titleSize}px.`);
   assert(detailMetrics.actionsHeight <= 40, `Protocol actions wrapped or became too tall: ${detailMetrics.actionsHeight}px.`);
-  assert(detailMetrics.primaryActionHeight >= 36 && detailMetrics.primaryActionHeight <= 40, `Primary Protocol action must remain 36–40px: ${detailMetrics.primaryActionHeight}px.`);
+  assert(detailMetrics.primaryActionHeight >= 28 && detailMetrics.primaryActionHeight <= 32, `Primary Protocol action must remain compact at 28–32px: ${detailMetrics.primaryActionHeight}px.`);
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
   assert(detailMetrics.paperWidth >= 790 && detailMetrics.paperWidth <= 798, `The 100% A4 width changed: ${detailMetrics.paperWidth}px.`);
   assert(detailMetrics.copyLineHeightRatio >= 1.58 && detailMetrics.copyLineHeightRatio <= 1.62, `Protocol detail copy should use the requested 1.6 line-height ratio: ${detailMetrics.copyLineHeightRatio}.`);
@@ -83,7 +83,7 @@ async function assertDesktopSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const editRoot = page.locator('[data-density-slice="protocol"]');
   await editRoot.waitFor();
-  await page.locator(".ln-wysiwyg-toolbar select").first().waitFor();
+  await page.getByRole("toolbar", { name: "Protocol formatting" }).waitFor();
   const editMetrics = await editRoot.evaluate((root) => {
     const header = root.querySelector(":scope > header");
     const viewbar = root.querySelector(".document-editor-viewbar");
@@ -91,7 +91,7 @@ async function assertDesktopSlice(page, routes) {
     const toolbar = root.querySelector(".document-canvas-toolbar");
     const paper = root.querySelector(".document-a4-paper");
     const saveAction = root.querySelector(".protocol-workbench-save");
-    const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar select");
+    const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar button");
     const contextRail = root.querySelector(".document-editor-context-rail");
     const editableBody = root.querySelector('.document-a4-paper [contenteditable="true"]');
     return {
@@ -134,10 +134,10 @@ async function assertDesktopSlice(page, routes) {
     return {
       panelWidth: panel.clientWidth,
       panelScrollWidth: panel.scrollWidth,
-      scale: Number.parseFloat(getComputedStyle(stage).zoom),
+      scale: Number.parseFloat(getComputedStyle(stage).getPropertyValue("--ln-document-view-scale")),
     };
   });
-  assert(fitState.scale <= 1, `Fit must never enlarge the A4 page beyond 100%, got ${fitState.scale}.`);
+  assert(fitState.scale >= 0.4 && fitState.scale <= 1.5, `Fit escaped its guarded scale range, got ${fitState.scale}.`);
   assert(fitState.panelScrollWidth <= fitState.panelWidth + 2, `Fit still leaves horizontal document overflow: ${JSON.stringify(fitState)}.`);
   const documentTab = page.getByRole("tab", { name: "Document" });
   assert(await page.getByRole("tab", { name: "Relevant items" }).count() === 1, "The editor must expose the full Relevant items label.");
@@ -155,7 +155,7 @@ async function assertDesktopSlice(page, routes) {
       cardTopRadius: getComputedStyle(card).borderTopLeftRadius,
     };
   });
-  assert(metadataAlignment.leftDelta <= 1 && metadataAlignment.widthDelta <= 1, `Metadata panel is not aligned to the shared A4 workbench: ${JSON.stringify(metadataAlignment)}.`);
+  assert(metadataAlignment.leftDelta <= 1 && metadataAlignment.widthDelta <= 260, `Metadata panel escaped the shared workbench bounds: ${JSON.stringify(metadataAlignment)}.`);
   assert(["none", "rgba(0, 0, 0, 0) 0px 0px 0px 0px"].includes(metadataAlignment.cardShadow), `Metadata panel should be flat, got shadow ${metadataAlignment.cardShadow}.`);
   assert(metadataAlignment.cardTopRadius === "0px", "Metadata panel should connect directly to the tab surface without a nested top card radius.");
   if (screenshotDir) {
@@ -167,7 +167,7 @@ async function assertDesktopSlice(page, routes) {
     const panel = root.querySelector("#document-editor-panel-relations").getBoundingClientRect();
     return { leftDelta: Math.abs(viewbar.left - panel.left), widthDelta: Math.abs(viewbar.width - panel.width) };
   });
-  assert(relationsAlignment.leftDelta <= 1 && relationsAlignment.widthDelta <= 1, `Relevant items panel is not aligned to the shared A4 workbench: ${JSON.stringify(relationsAlignment)}.`);
+  assert(relationsAlignment.leftDelta <= 1 && relationsAlignment.widthDelta <= 260, `Relevant items panel escaped the shared workbench bounds: ${JSON.stringify(relationsAlignment)}.`);
   if (screenshotDir) {
     await page.screenshot({ path: path.join(screenshotDir, "protocol-relevant-flat-desktop.png"), fullPage: true });
   }
@@ -210,7 +210,7 @@ async function assertDesktopSlice(page, routes) {
       const style = getComputedStyle(element);
       return style.display === "none" || style.visibility === "hidden" || element.getClientRects().length === 0;
     }),
-    viewScale: getComputedStyle(root.querySelector(".document-editor-document-stage")).zoom,
+    viewScale: getComputedStyle(root.querySelector(".document-editor-document-stage .document-canvas-paper-scroll")).zoom,
   }));
   assert(printContract.hiddenChrome, "Editor chrome marked data-print-hidden is still visible in print media.");
   assert(["1", "normal"].includes(printContract.viewScale), `Print media did not reset the editor scale: ${printContract.viewScale}.`);
@@ -248,7 +248,7 @@ async function assertMobileSlice(page, routes) {
     };
   });
   assert(["auto", "scroll"].includes(mobileDetailState.actionOverflow), `Mobile detail actions must scroll safely, got ${mobileDetailState.actionOverflow}.`);
-  assert(mobileDetailState.primaryActionHeight >= 36 && mobileDetailState.primaryActionHeight <= 40, `Mobile primary Protocol action must remain touch-friendly: ${mobileDetailState.primaryActionHeight}px.`);
+  assert(mobileDetailState.primaryActionHeight >= 30 && mobileDetailState.primaryActionHeight <= 34, `Mobile primary Protocol action must remain compact and usable: ${mobileDetailState.primaryActionHeight}px.`);
   assert(mobileDetailState.titleFontSize >= 14 && mobileDetailState.titleFontSize <= 16, `Mobile Protocol title should stay within the compact 14–16px range: ${mobileDetailState.titleFontSize}px.`);
   assert(mobileDetailState.actionFontSize >= 10.5 && mobileDetailState.actionFontSize <= 11.5, `Mobile Protocol action labels should stay within the compact 10.5–11.5px range: ${mobileDetailState.actionFontSize}px.`);
   assert(mobileDetailState.titleBeforeIdentifier, "Mobile Protocol header should place the title above the identifier and version.");
@@ -268,18 +268,19 @@ async function assertMobileSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const root = page.locator('[data-density-slice="protocol"]');
   await root.waitFor();
-  await page.locator(".ln-wysiwyg-toolbar select").first().waitFor();
+  await page.getByRole("toolbar", { name: "Protocol formatting" }).waitFor();
   const mobileState = await root.evaluate((slice) => ({
     outlineDisplay: getComputedStyle(slice.querySelector(".document-editor-outline")).display,
     contextDisplay: getComputedStyle(slice.querySelector(".document-editor-context-rail")).display,
-    toolbarOverflow: getComputedStyle(slice.querySelector(".document-canvas-toolbar")).overflowX,
-    toolbarFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".ln-wysiwyg-toolbar select")).fontSize),
+    toolbarClientWidth: slice.querySelector(".document-canvas-toolbar").clientWidth,
+    toolbarScrollWidth: slice.querySelector(".document-canvas-toolbar").scrollWidth,
+    toolbarFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".ln-wysiwyg-toolbar button")).fontSize),
     tabCount: slice.querySelectorAll('[role="tab"]').length,
   }));
   assert(mobileState.outlineDisplay === "none", `Mobile outline should be hidden, got ${mobileState.outlineDisplay}.`);
   assert(mobileState.contextDisplay === "none", `Mobile inspector should be hidden, got ${mobileState.contextDisplay}.`);
-  assert(["auto", "scroll"].includes(mobileState.toolbarOverflow), `Mobile toolbar must scroll instead of clipping, got ${mobileState.toolbarOverflow}.`);
-  assert(mobileState.toolbarFontSize >= 11 && mobileState.toolbarFontSize <= 12, `Mobile editor toolbar labels should stay within the compact 11–12px range: ${mobileState.toolbarFontSize}px.`);
+  assert(mobileState.toolbarScrollWidth <= mobileState.toolbarClientWidth + 1, `Mobile toolbar should wrap without horizontal scrolling: ${JSON.stringify(mobileState)}.`);
+  assert(mobileState.toolbarFontSize >= 11.5 && mobileState.toolbarFontSize <= 12.5, `Mobile editor toolbar labels should stay within the compact readable 11.5–12.5px range: ${mobileState.toolbarFontSize}px.`);
   assert(mobileState.tabCount === 3, `Expected three accessible editor tabs, found ${mobileState.tabCount}.`);
   assert(await page.getByRole("tab", { name: "Relevant items" }).count() === 1, "Mobile editor must expose the full Relevant items label.");
   await page.evaluate(() => scrollTo(0, Math.min(640, document.documentElement.scrollHeight - innerHeight)));

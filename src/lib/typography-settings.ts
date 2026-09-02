@@ -1,3 +1,5 @@
+import { cjkFontCatalog, latinFontCatalog } from "@/lib/font-catalog";
+
 export const typographySettingsStorageKey = "labnest.typography-settings.v1";
 export const typographyCssStorageKey = "labnest.typography-css.v2";
 export const legacyTypographyCssStorageKey = "labnest.typography-css.v1";
@@ -6,83 +8,10 @@ export const customFontStoreName = "fonts";
 export const maxCustomFontBytes = 10_000_000;
 export const maxCustomFontCount = 8;
 
-const cjkTypographyCatalog = [
-    {
-      id: "source-han-sans",
-      name: "思源黑体",
-      nameEn: "Source Han Sans",
-      description: "清晰、克制，适合导航与表单",
-      descriptionEn: "Clear and restrained for navigation and forms",
-      family: '"LabNest CJK Source Han Sans", sans-serif',
-    },
-    {
-      id: "pingfang",
-      name: "苹方",
-      nameEn: "PingFang SC",
-      description: "轻盈现代，适合 macOS",
-      descriptionEn: "Light and modern on macOS",
-      family: '"LabNest CJK PingFang", sans-serif',
-    },
-    {
-      id: "system-sans",
-      name: "系统黑体",
-      nameEn: "System sans",
-      description: "跟随当前设备，加载最稳定",
-      descriptionEn: "Uses the most stable font on this device",
-      family: '"LabNest CJK System Sans", sans-serif',
-    },
-    {
-      id: "source-han-serif",
-      name: "思源宋体",
-      nameEn: "Source Han Serif",
-      description: "清楚舒展，适合长文与标题",
-      descriptionEn: "Open and readable for body text and headings",
-      family: '"LabNest CJK Source Han Serif", serif',
-    },
-    {
-      id: "songti",
-      name: "华文宋体",
-      nameEn: "Songti SC",
-      description: "温润传统，适合中文文档",
-      descriptionEn: "A warm, traditional Chinese serif",
-      family: '"LabNest CJK Songti", serif',
-    },
-    {
-      id: "simsun",
-      name: "中易宋体",
-      nameEn: "SimSun",
-      description: "兼容性好，接近传统科研文稿",
-      descriptionEn: "Compatible with traditional research documents",
-      family: '"LabNest CJK SimSun", serif',
-    },
-] as const;
+/* The selectable families live in one catalog shared by Settings and every editor toolbar. */
+const cjkTypographyCatalog = cjkFontCatalog;
 
-const latinTypographyCatalog = [
-    {
-      id: "arial",
-      name: "Arial",
-      nameEn: "Arial",
-      description: "英文无衬线，适合界面与表单",
-      descriptionEn: "Sans serif for interface text and forms",
-      family: 'Arial, "Helvetica Neue", Helvetica',
-    },
-    {
-      id: "times-new-roman",
-      name: "Times New Roman",
-      nameEn: "Times New Roman",
-      description: "经典英文衬线字体",
-      descriptionEn: "Classic serif for English text",
-      family: '"Times New Roman", Times',
-    },
-    {
-      id: "courier-new",
-      name: "Courier New",
-      nameEn: "Courier New",
-      description: "等宽字体，适合编号与原始数据",
-      descriptionEn: "Monospaced type for identifiers and raw data",
-      family: '"Courier New", Courier, monospace',
-    },
-] as const;
+const latinTypographyCatalog = latinFontCatalog;
 
 export const typographyPresets = {
   cjkUi: cjkTypographyCatalog,

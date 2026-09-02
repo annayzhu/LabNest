@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
+import { insertActionIdsForProfile, type DocumentInsertProfile } from "@/lib/document-editor-workbench";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
@@ -98,8 +99,8 @@ function insertWidget(editor: Editor, block: ScientificWidgetBlock) {
   editor.chain().focus().insertContent({ type: "scientificWidget", attrs: { block } }).run();
 }
 
-function scientificInsertActions(allowedBlockTypes?: readonly ScientificContentBlock["type"][]): WysiwygInsertAction[] {
-  const allowed = new Set(allowedBlockTypes ?? ["heading", "text", "checklist", "table", "metric", "callout", "media", "dataset"]);
+function scientificInsertActions(profile: DocumentInsertProfile): WysiwygInsertAction[] {
+  const allowed = new Set(insertActionIdsForProfile(profile));
   const actions: WysiwygInsertAction[] = [
     {
       id: "table",
@@ -137,14 +138,15 @@ function scientificInsertActions(allowedBlockTypes?: readonly ScientificContentB
       run: (editor) => insertWidget(editor, { id: uniqueBlockId("dataset"), type: "dataset", datasetId: "", label: "" }),
     },
   ];
-  return actions.filter((action) => allowed.has(action.id as ScientificContentBlock["type"]));
+  return actions.filter((action) => allowed.has(action.id));
 }
 
-export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], allowedBlockTypes, onChange }: {
+export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
   document: ScientificDocument;
   toolbarHostId?: string;
   hiddenSectionKeys?: string[];
-  allowedBlockTypes?: readonly ScientificContentBlock["type"][];
+  insertProfile?: DocumentInsertProfile;
+  checklist?: boolean;
   onChange: (document: ScientificDocument) => void;
 }) {
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
@@ -202,8 +204,8 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
     <DocumentWysiwygToolbar
       editor={editor}
       ariaLabel="Scientific document formatting"
-      checklist={!allowedBlockTypes || allowedBlockTypes.includes("checklist")}
-      insertActions={scientificInsertActions(allowedBlockTypes)}
+      checklist={checklist}
+      insertActions={scientificInsertActions(insertProfile)}
     />
   </div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">

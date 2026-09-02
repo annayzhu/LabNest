@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { manageResultTypeDefinition, type ResultTypeActionState, type ResultTypeDefinitionItem } from "@/app/results/result-type-actions";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 
 const saveTypeButtonClass = buttonStyles({
   variant: "primary",
@@ -24,6 +25,7 @@ export function ResultTypePicker({ initialTypes, value, onChange }: {
   const [description, setDescription] = useState("");
   const [state, setState] = useState<ResultTypeActionState>({});
   const [pending, startTransition] = useTransition();
+  const dialog = useModalDialog();
 
   function beginCreate() {
     setEditingId(null);
@@ -58,8 +60,8 @@ export function ResultTypePicker({ initialTypes, value, onChange }: {
     });
   }
 
-  function remove(item: ResultTypeDefinitionItem) {
-    if (!window.confirm(`Delete the Result type “${item.label}”? Existing Results keep their saved type text.`)) return;
+  async function remove(item: ResultTypeDefinitionItem) {
+    if (!await dialog.confirm({ title: `Delete “${item.label}”?`, description: "Existing Results keep their saved type text.", confirmLabel: "Delete type", tone: "destructive" })) return;
     const formData = new FormData();
     formData.set("intent", "delete");
     formData.set("id", item.id);

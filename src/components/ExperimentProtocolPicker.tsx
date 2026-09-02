@@ -174,7 +174,7 @@ export function ExperimentProtocolPicker({
       </div>
 
       <div>
-        <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Protocol title, version or code…" className={`${formInputClass} pl-9`} /></span></label>
+        <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Protocol title, version or code…" className={`${formInputClass} pl-9`} /></span></label>
         <div className="mt-2 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface">
           {protocolGroups.length ? protocolGroups.map((group) => {
             const expanded = group.searchMode || expandedProtocolIds.has(group.protocolId);

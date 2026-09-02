@@ -67,7 +67,7 @@ export function InventoryLocationManager({ locations }: { locations: InventoryLo
               <textarea name="description" maxLength={1000} className={formTextareaClass} placeholder="Room, access notes, shelf scope…" />
             </label>
             <div className="flex items-end justify-end">
-              <Button type="submit" size="lg" variant="primary" disabled={pending}><MapPin className="h-4 w-4" />{pending ? "Adding…" : "Add location"}</Button>
+              <Button type="submit" size="lg" variant="primary" disabled={pending} aria-busy={pending}><MapPin className="h-4 w-4" />{pending ? "Adding…" : "Add location"}</Button>
             </div>
             <ActionMessage state={state} className="md:col-span-2 xl:col-span-5" />
           </form>
@@ -120,9 +120,9 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={() => setEditing((value) => !value)} disabled={pending}><Pencil className="h-4 w-4" />Rename / edit</Button>
           {location.status === "active" ? (
-            <form action={archiveAction}><input type="hidden" name="id" value={location.id} /><Button type="submit" disabled={pending}><Archive className="h-4 w-4" />{archiving ? "Archiving…" : "Archive"}</Button></form>
+            <form action={archiveAction}><input type="hidden" name="id" value={location.id} /><Button type="submit" disabled={pending} aria-busy={archiving}><Archive className="h-4 w-4" />{archiving ? "Archiving…" : "Archive"}</Button></form>
           ) : (
-            <form action={restoreAction}><input type="hidden" name="id" value={location.id} /><Button type="submit" disabled={pending}><RotateCcw className="h-4 w-4" />{restoring ? "Restoring…" : "Restore"}</Button></form>
+            <form action={restoreAction}><input type="hidden" name="id" value={location.id} /><Button type="submit" disabled={pending} aria-busy={restoring}><RotateCcw className="h-4 w-4" />{restoring ? "Restoring…" : "Restore"}</Button></form>
           )}
           <Button type="button" variant="destructive" onClick={() => setDeleteOpen(true)} disabled={pending || blockers.length > 0} title={blockers.length ? `Archive instead: ${blockers.join(", ")}.` : "Permanently delete unused location"}><Trash2 className="h-4 w-4" />Delete</Button>
         </div>

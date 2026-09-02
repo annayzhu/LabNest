@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { SystemThemePicker } from "@/components/SystemThemePicker";
+import { InterfaceScalePicker } from "@/components/InterfaceScalePicker";
 import { TypographySettingsPanel } from "@/components/TypographySettingsPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -61,7 +62,7 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader title="System style" />
-          <CardBody><SystemThemePicker /></CardBody>
+          <CardBody className="space-y-5"><SystemThemePicker /><InterfaceScalePicker /></CardBody>
         </Card>
 
         <Card>

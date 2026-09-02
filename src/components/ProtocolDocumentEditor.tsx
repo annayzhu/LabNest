@@ -108,7 +108,9 @@ export function ProtocolDocumentEditor({
         outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
         inspectorHostId={inspectorHostId}
         onActiveTabChange={setActiveWorkspaceTab}
-        document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"} toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-[11px] font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}>
+        actions={<div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div>}
+        toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-[11px] font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}
+        document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"}>
           <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" titleEditor={<input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Protocol" aria-label="Protocol title" />} facts={[
             { label: "Version", value: displayVersion, mono: true },
             { label: "Scope", value: scope === "general" ? "General library" : "Project-adapted" },
@@ -154,7 +156,6 @@ export function ProtocolDocumentEditor({
       />
 
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-      <div className="protocol-density-actionbar" data-active-tab={activeWorkspaceTab} data-print-hidden><span>{saveHint}</span><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : "Ready to save"}</span><Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending} className="protocol-density-primary-action">{pending ? "Saving…" : saveLabel}</Button></div>
     </form>
   );
 }

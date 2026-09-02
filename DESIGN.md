@@ -166,6 +166,10 @@ Typography is user-configurable by role from Settings. Interface text, document 
 - **Data:** Monospace for numeric results and provenance metadata; units may be smaller but remain adjacent to their values.
 - **Working page title:** Repeated operational pages use a compact 17px desktop / 14px mobile title token; reserve the 24px display token for true module identity or editorial reading surfaces.
 
+### Interface size
+
+Settings exposes Compact, Standard, and Comfortable interface scales. Compact is the default working density. Each choice remaps the shared `--ln-*` hierarchy for navigation, global search, local search, table text, labels, controls, and operational titles; feature pages must not hard-code a competing scale. Global search remains one step more prominent than in-page search, navigation remains more prominent than table rows, and labels remain quieter than the values they describe. Interface scaling never changes A4 document typography, physical page dimensions, exports, or print output.
+
 ### Named Rules
 
 **The Data Is Data Rule.** Do not use monospace decoratively; use it only where fixed-width scanning improves scientific interpretation or provenance.
@@ -178,7 +182,7 @@ The application shell constrains content to a wide working canvas with 16–20px
 
 Cards own local grouping. Within a card, use a compact header separated by a hairline and a 16px body inset; use 12px gaps inside forms and 16px between major task regions. Preserve `min-width: 0`, truncation, wrapping, and scroll containers for bilingual labels, long methods, tables, and data values.
 
-Document creation and editing keeps the A4 paper at its true screen measure instead of stretching it to fill the application. On desktop, the otherwise-unused left margin carries a lightweight sticky outline; selecting a table, image, timer, callout, result template, or embedded tool reveals a contextual settings rail in the right margin. Metadata and relevant items remain explicit tabs rather than permanent sidebars. The screen view offers 100%, 110%, and fit-width modes, defaults to 100%, and resets to true size for printing. Both side rails are absent from print and hidden below desktop width so mobile preserves a single content-first reading order.
+Document creation and editing keeps the A4 paper at its true screen measure instead of stretching it to fill the application. On desktop, the otherwise-unused left margin carries a lightweight sticky outline; selecting a table, image, timer, callout, result template, or embedded tool reveals a contextual settings rail in the right margin. Document, Metadata, and Relevant items form the first row of an A4-aligned sticky workbench, with the active document toolbar directly below it; both rows stay below the global search bar and move as one chrome layer. Save and other state-changing actions live in that same sticky workbench instead of a detached footer. Metadata and related-record panels share the A4 width and leading edge, use hairlines rather than nested cards, and remain left-aligned. The screen view offers 100%, 110%, and fit-width modes, defaults to 100%, and resets to true size for printing; fit-width may reduce the page but never enlarge it or create horizontal overflow. Both side rails are absent from print and hidden below desktop width so mobile preserves a single content-first reading order.
 
 **The Task-Order Rule.** Responsive collapse must preserve input → validation → result → method → reuse/history order; do not rearrange for visual symmetry.
 

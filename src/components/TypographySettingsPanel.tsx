@@ -111,7 +111,7 @@ function TypographyFontPicker({
       <span>{selectedLabel}</span><ChevronDown aria-hidden />
     </button>
     {open ? <div className="typography-font-menu">
-      <label className="typography-font-search"><Search aria-hidden /><input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={zh ? "搜索字体" : "Search fonts"} aria-label={zh ? "搜索字体" : "Search fonts"} /></label>
+      <label className="typography-font-search"><Search aria-hidden /><input ref={searchRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={zh ? "搜索字体" : "Search fonts"} aria-label={zh ? "搜索字体" : "Search fonts"} /></label>
       <div className="typography-font-options" role="listbox" aria-label={zh ? roleCopy[role].zh : roleCopy[role].en}>
         {filteredPresets.length ? <div className="typography-font-option-group"><p>{zh ? "预设字体" : "Preset fonts"}</p>{filteredPresets.map((preset) => {
           const value = `preset:${preset.id}`;
@@ -262,7 +262,7 @@ export function TypographySettingsPanel() {
           <p className="text-sm font-medium text-ink">{copy("我的字体", "My fonts")}</p>
           <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy(`仅保存在当前浏览器；支持 WOFF2、TTF、OTF，单个不超过 10 MB，最多 ${maxCustomFontCount} 个。`, `Stored only in this browser. WOFF2, TTF, and OTF; 10 MB each; up to ${maxCustomFontCount}.`)}</p>
         </div>
-        <label className="focus-ring typography-import-button" aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
+        <label className="focus-ring typography-import-button" data-busy={importing ? "true" : undefined} aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
           <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体", "Import font")}
           <input
             ref={fileInputRef}

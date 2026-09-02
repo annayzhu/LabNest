@@ -106,12 +106,12 @@ export function ProtocolRelevantItemsEditor({
     <input type="hidden" name="relevantItemLinksJson" value={JSON.stringify(manualLinks)} />
     <header><h2>Related records</h2><span>Search, select, and review the records connected to this protocol.</span></header>
     <div className="document-editor-relevant-search">
-      <label><Search aria-hidden /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search plans, experiments, results, or files…" aria-label="Search relevant items" /></label>
+      <label><Search aria-hidden /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search plans, experiments, results, or files…" aria-label="Search relevant items" /></label>
       <select value={type} onChange={(event) => setType(event.target.value as typeof type)} aria-label="Relevant item type">{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
     </div>
 
     {hasSearchQuery ? <div className="document-editor-relation-results" aria-live="polite">
-      <h3>Search results <span>{searching ? "Searching…" : filtered.length}</span></h3>
+      <h3>Search results <span className={searching ? "ln-inline-loading" : undefined}>{searching ? "Searching…" : filtered.length}</span></h3>
       {filtered.map((item) => {
         const selected = item.type === "research_plan" ? selectedPlanIds.includes(item.id) : selectedManualKeys.has(`${item.type}:${item.id}`);
         const locked = item.type === "version";

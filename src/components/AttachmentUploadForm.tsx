@@ -84,7 +84,7 @@ export function AttachmentUploadForm({
         />
       </label></>}
       <div className="flex items-end">
-        <Button type="submit" disabled={isUploading} variant="primary">
+        <Button type="submit" disabled={isUploading} aria-busy={isUploading} variant="primary">
           <FileUp className="h-4 w-4" aria-hidden />
           Upload
         </Button>

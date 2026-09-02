@@ -46,7 +46,7 @@ export function SequenceWorkflowForm({ action, type, projects, versions, initial
           </div>
           <p className="text-xs leading-5 text-muted">Inputs are pinned to exact versions. CRISPR scores are not fabricated: this first workflow records manual or external designs and their provenance only.</p>
           {state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-          <Button type="submit" variant="primary" size="md" disabled={pending} className="w-full">{pending ? "Creating…" : `Create ${sequenceWorkflowLabel(type)}`}</Button>
+          <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending} className="w-full">{pending ? "Creating…" : `Create ${sequenceWorkflowLabel(type)}`}</Button>
         </CardBody>
       </Card>
     </form>

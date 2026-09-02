@@ -31,7 +31,7 @@ export function buttonStyles({
   className?: string;
 } = {}) {
   return cn(
-    "focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0",
+    "ui-motion-button focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0",
     variants[variant],
     sizes[size],
     className,
@@ -49,11 +49,15 @@ export function Button({
   size?: ButtonSize;
   children: ReactNode;
 }) {
+  const busy = props["aria-busy"] === true || props["aria-busy"] === "true";
   return (
     <button
+      data-ui-button
+      data-variant={variant}
       className={buttonStyles({ variant, size, className })}
       {...props}
     >
+      {busy ? <span className="ln-button-loading-mark" aria-hidden /> : null}
       {children}
     </button>
   );

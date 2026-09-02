@@ -45,7 +45,7 @@ export function ControlKeyInformationForm({
           {state.error ? <p role="alert" className="text-error">{state.error}</p> : null}
           {state.saved ? <p role="status" className="text-moss">{locale === "zh" ? "已保存" : "Saved"}</p> : null}
         </div>
-        <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+        <Button type="submit" size="sm" variant="secondary" disabled={pending} aria-busy={pending}>
           <Save className="h-3.5 w-3.5" aria-hidden />
           {pending ? locale === "zh" ? "保存中…" : "Saving…" : locale === "zh" ? "保存" : "Save"}
         </Button>

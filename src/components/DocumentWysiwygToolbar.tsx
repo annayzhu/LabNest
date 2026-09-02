@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Pencil, Plus, Quote, Redo2, Save, Strikethrough, Table2, Trash2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -94,11 +95,47 @@ function ToolbarMenu({
   triggerClassName?: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  const [menuPosition, setMenuPosition] = useState<CSSProperties>();
   const open = openMenu === id;
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    const menu = menuRef.current;
+    if (!trigger || !menu) return;
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const viewportMargin = 8;
+    const availableBelow = window.innerHeight - triggerRect.bottom - viewportMargin;
+    const availableAbove = triggerRect.top - viewportMargin;
+    const placeAbove = availableBelow < Math.min(menuRect.height, 240) && availableAbove > availableBelow;
+    const top = placeAbove
+      ? Math.max(viewportMargin, triggerRect.top - menuRect.height - 6)
+      : Math.min(window.innerHeight - viewportMargin, triggerRect.bottom + 6);
+    const preferredLeft = id === "more" || id === "table"
+      ? triggerRect.right - menuRect.width
+      : triggerRect.left;
+    const left = Math.min(
+      Math.max(viewportMargin, preferredLeft),
+      Math.max(viewportMargin, window.innerWidth - menuRect.width - viewportMargin),
+    );
+    setMenuPosition({
+      left,
+      maxHeight: Math.max(120, placeAbove ? availableAbove - 6 : availableBelow),
+      maxWidth: `calc(100vw - ${viewportMargin * 2}px)`,
+      overflowY: "auto",
+      position: "fixed",
+      right: "auto",
+      top,
+      zIndex: 80,
+    });
+  }, [id]);
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpenMenu(null);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpenMenu(null);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -106,17 +143,23 @@ function ToolbarMenu({
         rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus();
       }
     };
+    const animationFrame = window.requestAnimationFrame(updateMenuPosition);
     globalThis.document.addEventListener("pointerdown", dismiss);
     globalThis.document.addEventListener("keydown", escape);
+    globalThis.addEventListener("resize", updateMenuPosition);
+    globalThis.addEventListener("scroll", updateMenuPosition, true);
     return () => {
+      window.cancelAnimationFrame(animationFrame);
       globalThis.document.removeEventListener("pointerdown", dismiss);
       globalThis.document.removeEventListener("keydown", escape);
+      globalThis.removeEventListener("resize", updateMenuPosition);
+      globalThis.removeEventListener("scroll", updateMenuPosition, true);
     };
-  }, [open, setOpenMenu]);
+  }, [open, setOpenMenu, updateMenuPosition]);
 
   return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
-    <button type="button" aria-haspopup="menu" aria-expanded={open} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
-    {open ? <div role="menu" className={menuClassName} onMouseDown={(event) => event.preventDefault()} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{children}</div> : null}
+    <button ref={triggerRef} type="button" aria-haspopup="menu" aria-controls={menuId} aria-expanded={open} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
+    {open && typeof document !== "undefined" ? createPortal(<div ref={menuRef} id={menuId} role="menu" className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{children}</div>, document.body) : null}
   </div>;
 }
 

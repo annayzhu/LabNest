@@ -26,9 +26,22 @@ async function assertToolbar(page, route, ariaLabel) {
     await trigger.focus();
     await page.keyboard.press("Enter");
     assert.equal(await trigger.getAttribute("aria-expanded"), "true", `${name} did not open from the keyboard.`);
+    const menuId = await trigger.getAttribute("aria-controls");
+    assert(menuId, `${name} does not identify its menu.`);
+    const menu = page.locator(`#${menuId}`);
+    await menu.waitFor({ state: "visible" });
+    const menuBox = await menu.boundingBox();
+    assert(menuBox && menuBox.width > 40 && menuBox.height > 20, `${name} opened but its menu is clipped.`);
     await page.keyboard.press("Escape");
     assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} did not close with Escape.`);
     await trigger.click();
+    await menu.waitFor({ state: "visible" });
+    const firstAction = menu.getByRole("button").filter({ hasNot: page.locator(":disabled") }).first();
+    assert(await firstAction.count(), `${name} has no actionable menu item.`);
+    await firstAction.click();
+    assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} action did not close the menu.`);
+    await trigger.click();
+    await menu.waitFor({ state: "visible" });
     await page.mouse.click(8, 8);
     assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} did not close after an outside click.`);
   }

@@ -33,6 +33,14 @@ describe("system themes", () => {
     });
   });
 
+  it("reserves a readable collision color for decisive actions", () => {
+    systemThemes.forEach((theme) => {
+      const tokens = theme.tokens;
+      expect(rgbDistance(tokens["--action"], tokens["--contrast-action"]), theme.name).toBeGreaterThan(65);
+      expect(contrastRatio(tokens["--contrast-action"], tokens["--contrast-action-fg"]), theme.name).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
   it("separates moon-dai from celadon-pine instead of offering two near-identical green themes", () => {
     const moonDai = systemThemes.find((theme) => theme.id === "moon-dai")!;
     const celadonPine = systemThemes.find((theme) => theme.id === "celadon-pine")!;

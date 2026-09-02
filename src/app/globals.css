@@ -515,6 +515,124 @@ textarea {
   transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.ln-key-action {
+  background:
+    linear-gradient(var(--contrast-action), var(--contrast-action)) padding-box,
+    linear-gradient(105deg, var(--contrast-action-border), var(--clay), var(--sage), var(--contrast-action-border)) border-box;
+  background-size: 100% 100%, 220% 100%;
+  border-color: transparent;
+  color: var(--contrast-action-fg);
+  overflow: hidden;
+  position: relative;
+  transition: background-color 160ms ease, box-shadow 180ms ease, transform 160ms ease;
+}
+
+.ln-key-action:hover {
+  background:
+    linear-gradient(var(--contrast-action-hover), var(--contrast-action-hover)) padding-box,
+    linear-gradient(105deg, var(--contrast-action-border), var(--clay), var(--sage), var(--contrast-action-border)) border-box;
+  background-size: 100% 100%, 220% 100%;
+}
+
+.ln-button-content {
+  align-items: center;
+  display: inline-flex;
+  gap: inherit;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.ln-button-progress {
+  animation: ln-button-progress-travel 900ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  background: color-mix(in srgb, var(--contrast-action-fg) 88%, transparent);
+  bottom: 0;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  transform-origin: left;
+  width: 42%;
+}
+
+@keyframes ln-button-progress-travel {
+  0% { transform: translateX(-110%) scaleX(0.65); }
+  50% { transform: translateX(115%) scaleX(1); }
+  100% { transform: translateX(280%) scaleX(0.72); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ln-key-action:not(:disabled):hover {
+    animation: ln-spectrum-border 900ms linear infinite;
+  }
+}
+
+@keyframes ln-spectrum-border {
+  to { background-position: 0 0, -220% 0; }
+}
+
+.ln-quick-action {
+  background: color-mix(in srgb, var(--contrast-action-soft) 62%, var(--surface));
+  border-color: color-mix(in srgb, var(--contrast-action-border) 32%, var(--hairline));
+  color: var(--ink);
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.ln-quick-action-icon {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ln-quick-action:hover {
+    background: var(--contrast-action-soft);
+    border-color: var(--contrast-action-border);
+  }
+
+  .ln-quick-action:hover .ln-quick-action-icon {
+    transform: rotate(-4deg) scale(1.08);
+  }
+}
+
+.ln-dropdown-motion-icon {
+  transition: transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ln-dropdown-motion-item:hover .ln-dropdown-motion-icon {
+    color: var(--contrast-action);
+    transform: translateX(2px) rotate(-5deg) scale(1.08);
+  }
+}
+
+.ln-staggered-word {
+  animation: ln-staggered-reveal 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--ln-stagger-index) * 34ms);
+  display: inline-block;
+}
+
+@keyframes ln-staggered-reveal {
+  from { filter: blur(3px); opacity: 0.2; transform: translateY(0.28em); }
+  to { filter: blur(0); opacity: 1; transform: translateY(0); }
+}
+
+.ln-tool-card-icon,
+.ln-tool-preview-trigger svg {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .ln-tool-card-icon { transform: rotate(-3deg) scale(1.06); }
+  .ln-tool-preview-trigger:hover svg { transform: scale(1.12) rotate(-8deg); }
+}
+
+.ln-tool-modal-backdrop { animation: ln-tool-backdrop-in 220ms ease both; }
+.ln-tool-modal-card { animation: ln-tool-modal-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: center 62%; }
+
+@keyframes ln-tool-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ln-tool-modal-in {
+  from { clip-path: inset(7% 5% 7% 5% round var(--ln-radius-panel)); opacity: 0; transform: translateY(14px) scale(0.965); }
+  to { clip-path: inset(0 round var(--ln-radius-panel)); opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .ui-motion-button:not(:disabled):hover,
   [data-ui-button]:not(:disabled):hover {
@@ -4354,10 +4472,22 @@ table :where(td) {
   }
 
   .ln-button-loading-mark,
+  .ln-button-progress,
+  .ln-staggered-word,
+  .ln-tool-modal-backdrop,
+  .ln-tool-modal-card,
   .ln-wysiwyg-loading::before,
   .ln-inline-loading::before,
   .typography-import-button[data-busy="true"]::before {
     animation: none !important;
+  }
+
+  .ln-quick-action-icon,
+  .ln-dropdown-motion-icon,
+  .ln-tool-card-icon,
+  .ln-tool-preview-trigger svg {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
   }
 
   .interface-scale-options > label,

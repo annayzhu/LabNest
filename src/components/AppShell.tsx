@@ -2,10 +2,11 @@ import type { ReactNode } from "react";
 import { MobileBottomNav, Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { OfflineCompanion } from "./OfflineCompanion";
+import { ModalDialogProvider } from "./ui/ModalDialogProvider";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="app-shell min-h-[100dvh] overflow-x-clip text-ink">
+    <ModalDialogProvider><div className="app-shell min-h-[100dvh] overflow-x-clip text-ink">
       <div className="app-shell-layout flex">
         <Sidebar />
         <div className="app-shell-content min-w-0 flex-1 pb-28 lg:pb-0">
@@ -17,6 +18,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <MobileBottomNav />
       <OfflineCompanion />
-    </div>
+    </div></ModalDialogProvider>
   );
 }

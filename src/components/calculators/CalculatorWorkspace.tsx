@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Calculator, Check, Clock3, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Search, Trash2, Upload, X } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import { calculate, getCalculatorCatalog, getCalculatorDefinition, type CalculatorDefinition, type CalculatorResult } from "@/lib/calculators/calculator-engine";
 import { addHistoryEntry, addPreset, clearHistory, deleteHistoryEntry, deletePreset, getCalculatorStorageIssue, loadCalculatorState, saveCalculatorState, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
 
@@ -39,6 +40,7 @@ export function CalculatorCatalog() {
   const zh = locale === "zh";
   const [query, setQuery] = useState("");
   const { state, update, persistenceWarning } = useCalculatorState();
+  const dialog = useModalDialog();
   const catalog = getCalculatorCatalog();
   const normalized = query.trim().toLocaleLowerCase();
   const filtered = catalog.filter((tool) => !normalized || [tool.name, tool.nameZh, tool.shortDescription, tool.shortDescriptionZh, ...tool.aliases].join(" ").toLocaleLowerCase().includes(normalized));
@@ -107,7 +109,7 @@ export function CalculatorCatalog() {
         );
       })}
       {!filtered.length ? <Card><CardBody><p className="text-sm text-muted">{zh ? "没有找到匹配的计算工具。" : "No calculators match this search."}</p></CardBody></Card> : null}
-      {state?.history.length ? <Card><CardHeader title={zh ? "本机计算历史" : "Local calculation history"} action={<button type="button" onClick={() => { if (window.confirm(zh ? "清空全部计算历史？此操作无法撤销。" : "Clear all calculation history? This cannot be undone.")) update(clearHistory(state)); }} className="text-xs font-medium text-muted hover:text-danger">{zh ? "清空" : "Clear"}</button>} /><CardBody className="divide-y divide-hairline p-0">{state.history.slice(0, 10).map((item) => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5"><Link href={`/tools/calculator/${item.calculatorId}`} className="min-w-0"><p className="truncate text-xs font-semibold text-graphite">{zh ? item.calculatorNameZh : item.calculatorName}</p><p className="mt-0.5 truncate font-mono text-[10px] text-muted">{new Date(item.createdAt).toLocaleString(locale)} · {item.methodVersion}</p></Link><button type="button" onClick={() => update(deleteHistoryEntry(state, item.id))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除此条历史" : "Delete history entry"}><Trash2 className="h-3.5 w-3.5" /></button></div>)}</CardBody></Card> : null}
+      {state?.history.length ? <Card><CardHeader title={zh ? "本机计算历史" : "Local calculation history"} action={<button type="button" onClick={async () => { if (await dialog.confirm({ title: zh ? "清空全部计算历史？" : "Clear all calculation history?", description: zh ? "此操作无法撤销。" : "This action cannot be undone.", confirmLabel: zh ? "清空" : "Clear history", cancelLabel: zh ? "取消" : "Cancel", tone: "destructive" })) update(clearHistory(state)); }} className="text-xs font-medium text-muted hover:text-danger">{zh ? "清空" : "Clear"}</button>} /><CardBody className="divide-y divide-hairline p-0">{state.history.slice(0, 10).map((item) => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5"><Link href={`/tools/calculator/${item.calculatorId}`} className="min-w-0"><p className="truncate text-xs font-semibold text-graphite">{zh ? item.calculatorNameZh : item.calculatorName}</p><p className="mt-0.5 truncate font-mono text-[10px] text-muted">{new Date(item.createdAt).toLocaleString(locale)} · {item.methodVersion}</p></Link><button type="button" onClick={() => update(deleteHistoryEntry(state, item.id))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除此条历史" : "Delete history entry"}><Trash2 className="h-3.5 w-3.5" /></button></div>)}</CardBody></Card> : null}
     </div>
   );
 }

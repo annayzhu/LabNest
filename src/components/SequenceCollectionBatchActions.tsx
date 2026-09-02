@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Save, Trash2 } from "lucide-react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import { cn } from "@/lib/cn";
 import type { FormActionState } from "@/lib/form-actions";
 
@@ -35,6 +36,8 @@ export function SequenceCollectionBatchActions({
   const initialState: BulkActionState = {};
   const [state, formAction, pending] = useActionState(action, initialState);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const dialog = useModalDialog();
+  const deleteConfirmedRef = useRef(false);
   const hasSelection = selectedIds.length > 0;
   const typeEditDisabled = selectedIds.some((id) => typeDisabledIds.includes(id));
   const isSidebar = layout === "sidebar";
@@ -76,10 +79,13 @@ export function SequenceCollectionBatchActions({
       ) : null}
       <form
         action={formAction}
-        onSubmit={(event) => {
-          if (!hasSelection || !window.confirm(`确认删除 ${selectedIds.length} 个 ${targetName}？`)) {
-            event.preventDefault();
-          }
+        onSubmit={async (event) => {
+          if (!hasSelection) { event.preventDefault(); return; }
+          if (deleteConfirmedRef.current) { deleteConfirmedRef.current = false; return; }
+          event.preventDefault();
+          const form = event.currentTarget;
+          const confirmed = await dialog.confirm({ title: `确认删除 ${selectedIds.length} 个${targetName}？`, description: "删除后无法撤销，请确认当前选择范围。", confirmLabel: "批量删除", cancelLabel: "取消", tone: "destructive" });
+          if (confirmed) { deleteConfirmedRef.current = true; form.requestSubmit(); }
         }}
         className="space-y-2"
       >

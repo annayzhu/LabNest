@@ -66,12 +66,13 @@ export function RecordLifecycleControl({
       {open ? (
         <div
           role="presentation"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]"
+          className="ln-modal-layer fixed inset-0 z-50 flex items-center justify-center p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !pending) setOpen(false);
           }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
+          <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
+          <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">

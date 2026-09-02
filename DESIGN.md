@@ -206,6 +206,7 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
 - **Motion:** Decisive buttons may reveal a thin theme-spectrum edge on hover and show a bottom progress tracer only while a real action is pending. Dropdown icons use a short, directional micro-motion. Tool cards may expand into a focused preview modal; routine content never animates merely for decoration. All spatial motion is removed by `prefers-reduced-motion`.
+- **Shared motion grammar:** Dialogs use one 340ms card-and-backdrop entrance; selection surfaces use a 220ms trigger-connected reveal; disclosures use a 240ms spring response; and the sidebar icon crossfades while the rail changes width. These patterns preserve focus, document flow, and reduced-motion preferences.
 
 ### Chips
 
@@ -229,6 +230,8 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 ### Navigation
 
 Back, catalog, favorites, and history links remain compact and understated. Icon-only actions require an accessible name; current context is shown with label text or selected-state styling rather than icon color alone.
+
+The Overview quick-entry row is a 40px compact target with unboxed line icons. Its label reveals once per pointer hover rather than animating on page load. Offline status appears only when the browser reports a lost connection and offers a small keyboard-operable dinosaur diversion without blocking locally available work.
 
 ### Result & Method Panels
 

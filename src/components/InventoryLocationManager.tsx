@@ -145,8 +145,9 @@ function InventoryLocationEditor({ location, locations }: { location: InventoryL
       ) : null}
 
       {deleteOpen ? (
-        <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteOpen(false); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
+        <div role="presentation" className="ln-modal-layer fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !deleting) setDeleteOpen(false); }}>
+          <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
+          <section role="dialog" aria-modal="true" aria-labelledby={`delete-location-${location.id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4"><div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">Irreversible</p><h2 id={`delete-location-${location.id}`} className="mt-1 font-serif text-xl font-medium text-ink">Delete unused location forever?</h2></div><button type="button" aria-label="Close" disabled={deleting} onClick={() => setDeleteOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone"><X className="h-4 w-4" /></button></div>
             <p className="mt-4 text-sm leading-6 text-graphite">This location has no inventory or historical references. Enter <strong className="font-mono text-error">{location.name}</strong> to confirm permanent deletion.</p>
             <form action={deleteAction} className="mt-4 space-y-4">

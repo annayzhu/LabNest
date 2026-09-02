@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
 
-export function StaggeredText({ text, className }: { text: string; className?: string }) {
+export function StaggeredText({ text, className, trigger = "enter" }: { text: string; className?: string; trigger?: "enter" | "hover" }) {
   const segments = [...text];
   return (
-    <span className={className} aria-label={text}>
+    <span className={className} data-stagger-trigger={trigger} aria-label={text}>
       {segments.map((character, index) => (
         <span
           key={`${character}-${index}`}

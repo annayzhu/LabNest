@@ -1,5 +1,4 @@
 import { AppShell } from "@/components/AppShell";
-import { StaggeredText } from "@/components/StaggeredText";
 import { ToolsCatalog } from "@/components/ToolsCatalog";
 import { labToolManifest, type LabToolManifestItem } from "@/lib/tool-manifest";
 
@@ -29,7 +28,7 @@ export default function ToolsPage() {
       <div className="space-y-5">
         <div className="flex flex-col gap-3 border-b border-hairline pb-4 md:flex-row md:items-end md:justify-between">
           <h1 className="tools-page-title font-serif text-[length:var(--ln-page-title-size)] font-medium leading-[1.25] tracking-[-0.012em] text-ink">
-            <StaggeredText text="Tools" />
+            Tools
           </h1>
           <p className="max-w-[68ch] text-sm leading-6 text-graphite md:text-right">
             Planning, calculation, and analysis tools in one compact workspace.

@@ -3,6 +3,7 @@
 import { Check, ChevronDown, RotateCcw, Search, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import {
   CustomFontImportError,
   deleteCustomFont,
@@ -132,6 +133,7 @@ export function TypographySettingsPanel() {
   const zh = locale === "zh";
   const copy = useCallback((zhText: string, enText: string) => zh ? zhText : enText, [zh]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dialog = useModalDialog();
   const [settings, setSettings] = useState<TypographySettings>(defaultTypographySettings);
   const [customFonts, setCustomFonts] = useState<CustomFontRecord[]>([]);
   const [loadingFonts, setLoadingFonts] = useState(true);
@@ -209,7 +211,13 @@ export function TypographySettingsPanel() {
   }
 
   async function removeFont(font: CustomFontRecord) {
-    if (!window.confirm(copy(`删除本地字体“${font.name}”？使用它的排版角色将恢复默认字体。`, `Delete the local font “${font.name}”? Roles using it will return to their defaults.`))) return;
+    if (!await dialog.confirm({
+      title: copy(`删除“${font.name}”？`, `Delete “${font.name}”?`),
+      description: copy("使用它的排版角色将恢复默认字体。", "Roles using it will return to their default fonts."),
+      confirmLabel: copy("删除字体", "Delete font"),
+      cancelLabel: copy("取消", "Cancel"),
+      tone: "destructive",
+    })) return;
     setMessage("");
     setError("");
     try {

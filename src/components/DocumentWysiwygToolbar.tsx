@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { RICH_TEXT_FONT_SIZES_PT } from "@/lib/rich-text-font-size";
 import { RICH_TEXT_LINE_HEIGHTS } from "@/lib/rich-text-line-height";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 
 export const wysiwygToolbarButtonClass = "focus-ring inline-flex h-[var(--ln-wysiwyg-toolbar-control-height)] min-w-[var(--ln-wysiwyg-toolbar-control-height)] items-center justify-center rounded-[var(--ln-wysiwyg-toolbar-radius)] border border-transparent px-[var(--ln-wysiwyg-toolbar-button-padding-x)] text-muted transition-colors hover:bg-stone hover:text-ink disabled:opacity-35";
 export const wysiwygToolbarSelectClass = "focus-ring h-[var(--ln-wysiwyg-toolbar-control-height)] min-w-0 rounded-[var(--ln-wysiwyg-toolbar-radius)] border border-hairline bg-surface px-[var(--ln-wysiwyg-toolbar-select-padding-x)] text-[length:var(--ln-wysiwyg-toolbar-font-size)] text-graphite";
@@ -94,6 +95,7 @@ export function DocumentWysiwygToolbar({
   checklist?: boolean;
   className?: string;
 }) {
+  const dialog = useModalDialog();
   const [, setRevision] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   useEffect(() => {
@@ -105,9 +107,9 @@ export function DocumentWysiwygToolbar({
 
   const paragraphType = editor.isActive("heading", { level: 2 }) ? "heading2" : editor.isActive("heading", { level: 3 }) ? "heading3" : "paragraph";
   const textStyle = editor.getAttributes("textStyle");
-  const setLink = () => {
+  const setLink = async () => {
     const current = editor.getAttributes("link").href as string | undefined;
-    const href = window.prompt("Link URL", current ?? "https://");
+    const href = await dialog.prompt({ title: "Insert link", inputLabel: "Link URL", defaultValue: current ?? "https://", confirmLabel: "Apply link" });
     if (href === null) return;
     if (!href.trim()) editor.chain().focus().extendMarkRange("link").unsetLink().run();
     else editor.chain().focus().extendMarkRange("link").setLink({ href: href.trim() }).run();

@@ -127,7 +127,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
 
       <div className="sticky bottom-16 z-20 flex flex-wrap items-center justify-end gap-3 bg-canvas/95 py-2 backdrop-blur md:static md:bg-transparent md:py-0 md:backdrop-blur-none">
         {state.error ? <p role="alert" className="max-w-2xl rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
-        <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto" disabled={pending}>{pending ? "Creating…" : `Create ${definition.label.toLowerCase()}`}</Button>
+        <Button type="submit" variant="primary" size="md" className="w-full sm:w-auto" disabled={pending} aria-busy={pending}>{pending ? "Creating…" : `Create ${definition.label.toLowerCase()}`}</Button>
       </div>
     </form>
   );

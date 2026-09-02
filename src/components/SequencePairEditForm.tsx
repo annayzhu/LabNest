@@ -42,7 +42,7 @@ export function SequencePairEditForm({ action, projects, initial }: {
       <label><span className={formLabelClass}>Lifecycle</span><select name="status" defaultValue={initial.status} className={formInputClass}>{sequenceLifecycleStatuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
       <label className="sm:col-span-2 lg:col-span-3"><span className={formLabelClass}>Description</span><textarea name="description" defaultValue={initial.description ?? ""} maxLength={5000} className={`${formTextareaClass} min-h-24`} /></label>
     </CardBody></Card>
-    <div className="flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}<Button type="submit" variant="primary" disabled={pending}>{pending ? "Saving…" : "Save paired entry"}</Button></div>
+    <div className="flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="rounded-[8px] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}<Button type="submit" variant="primary" disabled={pending} aria-busy={pending}>{pending ? "Saving…" : "Save paired entry"}</Button></div>
   </form>;
 }
 

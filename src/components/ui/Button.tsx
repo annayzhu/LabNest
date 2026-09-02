@@ -49,11 +49,15 @@ export function Button({
   size?: ButtonSize;
   children: ReactNode;
 }) {
+  const busy = props["aria-busy"] === true || props["aria-busy"] === "true";
   return (
     <button
+      data-ui-button
+      data-variant={variant}
       className={buttonStyles({ variant, size, className })}
       {...props}
     >
+      {busy ? <span className="ln-button-loading-mark" aria-hidden /> : null}
       {children}
     </button>
   );

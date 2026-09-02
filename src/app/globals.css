@@ -221,6 +221,9 @@
   --ln-document-outline-width: 7.75rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
   --ln-document-context-width: 15rem; /* 选中表格、图片或模块后出现的右侧设置宽度。 */
   --ln-document-workbench-gap: 0.625rem; /* 目录、A4 画布和上下文设置之间的间距。 */
+  --ln-app-topbar-height: 3.3rem; /* 固定搜索栏高度，文档吸顶层从其下方开始。 */
+  --ln-document-viewbar-height: 2.1rem; /* Document / Metadata / Relevant items 吸顶层高度。 */
+  --ln-document-editor-chrome-height: calc(var(--ln-document-viewbar-height) + var(--ln-document-toolbar-height)); /* 标签层与格式工具栏的总吸顶高度。 */
 
   /* 连续所见即所得编辑器：所有界面密度和科研节点尺寸集中在这里调整。 */
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
@@ -434,6 +437,39 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+[data-ui-button] {
+  will-change: transform;
+  transition-duration: 150ms;
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-ui-button]:not(:disabled):hover {
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--ink) 9%, transparent);
+    transform: translateY(-1px);
+  }
+}
+
+[data-ui-button]:not(:disabled):active {
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  transform: translateY(0) scale(0.985);
+}
+
+.ln-button-loading-mark {
+  animation: ln-loading-orbit 720ms linear infinite;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  height: 0.8rem;
+  opacity: 0.78;
+  width: 0.8rem;
+}
+
+@keyframes ln-loading-orbit {
+  to { transform: rotate(360deg); }
 }
 
 :where(a, button).bg-moss.text-warm {
@@ -1482,24 +1518,46 @@ textarea {
 }
 
 .document-editor-viewbar {
+  backdrop-filter: blur(12px);
+  margin-bottom: 0;
+  position: sticky;
+  top: var(--ln-app-topbar-height);
+  z-index: 28;
+}
+
+.document-editor-viewbar .document-editor-toolbar-row {
+  border-radius: 0;
+  margin-left: auto;
+  margin-right: auto;
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+.document-editor-viewbar-inner {
   align-items: center;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border: 1px solid var(--hairline);
+  border-bottom: 0;
+  border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0;
   display: flex;
   gap: 0.5rem;
+  height: var(--ln-document-viewbar-height);
   justify-content: space-between;
-  margin-bottom: 0.4rem;
-  position: sticky;
-  top: 0.6rem;
-  z-index: 28;
+  margin-inline: auto;
+  max-width: 210mm;
+  padding: 0.2rem 0.35rem;
+  width: 100%;
 }
 
 .document-editor-tabs {
   align-items: center;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-md);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   display: inline-flex;
   gap: 0.16rem;
-  padding: 0.12rem;
+  padding: 0;
 }
 
 .document-editor-tab {
@@ -1741,6 +1799,17 @@ textarea {
     grid-template-columns: var(--ln-document-outline-width) minmax(0, 1fr);
   }
 
+  .document-editor-viewbar-inner {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: auto;
+    width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
+  }
+
+  .document-editor-viewbar .document-editor-toolbar-row {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: auto;
+  }
+
   .document-editor-outline {
     align-self: start;
     border-right: 1px solid var(--hairline);
@@ -1750,7 +1819,7 @@ textarea {
     overflow-y: auto;
     padding-right: 0.45rem;
     position: sticky;
-    top: 4.2rem;
+    top: calc(var(--ln-app-topbar-height) + var(--ln-document-editor-chrome-height) + 0.45rem);
   }
 
   .document-editor-outline-heading {
@@ -1826,7 +1895,7 @@ textarea {
 
   .document-editor-context-rail > div:not(:empty) {
     position: sticky;
-    top: 4.2rem;
+    top: calc(var(--ln-app-topbar-height) + var(--ln-document-editor-chrome-height) + 0.45rem);
   }
 }
 
@@ -2920,12 +2989,26 @@ textarea {
 }
 
 .ln-wysiwyg-loading {
+  align-items: center;
   border: 1px dashed var(--hairline);
   border-radius: var(--ln-radius-control-md);
   color: var(--muted);
+  display: flex;
   font-size: 12px;
+  gap: 0.55rem;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
+}
+
+.ln-wysiwyg-loading::before {
+  animation: ln-loading-orbit 720ms linear infinite;
+  border: 1.5px solid var(--action);
+  border-right-color: transparent;
+  border-radius: 999px;
+  content: "";
+  height: 0.9rem;
+  width: 0.9rem;
 }
 
 .ln-protocol-upload-status {
@@ -3115,7 +3198,7 @@ textarea {
   }
 
   .document-editor-viewbar {
-    position: static;
+    top: var(--ln-app-topbar-height);
   }
 
   .document-editor-tabs {
@@ -3318,6 +3401,7 @@ textarea {
   top: 0.75rem;
   z-index: 25;
 }
+
 
 .document-canvas-toolbar > a {
   font-size: var(--ln-wysiwyg-toolbar-font-size);
@@ -4008,11 +4092,26 @@ table :where(td) {
     top: 0;
   }
 
+
   .document-a4-paper {
     border-inline: 0;
     box-shadow: none;
     min-height: 0;
     padding: 0.85rem 0.75rem 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ui-button],
+  [data-ui-button]:not(:disabled):hover,
+  [data-ui-button]:not(:disabled):active {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
+  .ln-button-loading-mark,
+  .ln-wysiwyg-loading::before {
+    animation: none !important;
   }
 }
 

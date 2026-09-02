@@ -2,7 +2,7 @@
 
 import { Link2, LockKeyhole, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import {
   filterRelevantItemCatalog,
@@ -42,6 +42,7 @@ export function ProtocolRelevantItemsEditor({
   onTogglePrimary,
   initialManualLinks = [],
   researchPlanProjectId,
+  saveControl,
 }: {
   plans: PlanOption[];
   catalog: RelevantCatalogItem[];
@@ -52,6 +53,7 @@ export function ProtocolRelevantItemsEditor({
   onTogglePrimary: (id: string, checked: boolean) => void;
   initialManualLinks?: ManualRelevantLink[];
   researchPlanProjectId?: string;
+  saveControl?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<RelevantCatalogType | "all">("all");
@@ -104,7 +106,7 @@ export function ProtocolRelevantItemsEditor({
 
   return <section className="document-editor-properties-card" aria-label="Protocol related records">
     <input type="hidden" name="relevantItemLinksJson" value={JSON.stringify(manualLinks)} />
-    <header><h2>Related records</h2><span>Search, select, and review the records connected to this protocol.</span></header>
+    <header><h2>Related records</h2>{saveControl}<span>Search, select, and review the records connected to this protocol.</span></header>
     <div className="document-editor-relevant-search">
       <label><Search aria-hidden /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search plans, experiments, results, or files…" aria-label="Search relevant items" /></label>
       <select value={type} onChange={(event) => setType(event.target.value as typeof type)} aria-label="Relevant item type">{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>

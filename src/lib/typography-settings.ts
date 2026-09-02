@@ -6,8 +6,7 @@ export const customFontStoreName = "fonts";
 export const maxCustomFontBytes = 10_000_000;
 export const maxCustomFontCount = 8;
 
-export const typographyPresets = {
-  cjkUi: [
+const cjkTypographyCatalog = [
     {
       id: "source-han-sans",
       name: "思源黑体",
@@ -32,14 +31,12 @@ export const typographyPresets = {
       descriptionEn: "Uses the most stable font on this device",
       family: '"LabNest CJK System Sans", sans-serif',
     },
-  ],
-  cjkDocumentBody: [
     {
       id: "source-han-serif",
       name: "思源宋体",
       nameEn: "Source Han Serif",
-      description: "清楚舒展，适合长文阅读",
-      descriptionEn: "Open and readable for long documents",
+      description: "清楚舒展，适合长文与标题",
+      descriptionEn: "Open and readable for body text and headings",
       family: '"LabNest CJK Source Han Serif", serif',
     },
     {
@@ -58,26 +55,9 @@ export const typographyPresets = {
       descriptionEn: "Compatible with traditional research documents",
       family: '"LabNest CJK SimSun", serif',
     },
-  ],
-  cjkDocumentHeading: [
-    {
-      id: "source-han-serif",
-      name: "思源宋体",
-      nameEn: "Source Han Serif",
-      description: "端正但不过分厚重",
-      descriptionEn: "Structured without feeling heavy",
-      family: '"LabNest CJK Source Han Serif", serif',
-    },
-    {
-      id: "songti",
-      name: "华文宋体",
-      nameEn: "Songti SC",
-      description: "更具中文书卷气",
-      descriptionEn: "A more literary Chinese heading",
-      family: '"LabNest CJK Songti", serif',
-    },
-  ],
-  latinUi: [
+] as const;
+
+const latinTypographyCatalog = [
     {
       id: "arial",
       name: "Arial",
@@ -94,43 +74,23 @@ export const typographyPresets = {
       descriptionEn: "Classic serif for English text",
       family: '"Times New Roman", Times',
     },
-  ],
-  latinDocumentBody: [
     {
-      id: "times-new-roman",
-      name: "Times New Roman",
-      nameEn: "Times New Roman",
-      description: "英文论文与长文默认",
-      descriptionEn: "Default for papers and long-form English",
-      family: '"Times New Roman", Times',
+      id: "courier-new",
+      name: "Courier New",
+      nameEn: "Courier New",
+      description: "等宽字体，适合编号与原始数据",
+      descriptionEn: "Monospaced type for identifiers and raw data",
+      family: '"Courier New", Courier, monospace',
     },
-    {
-      id: "arial",
-      name: "Arial",
-      nameEn: "Arial",
-      description: "清晰紧凑的英文无衬线",
-      descriptionEn: "Compact sans serif for English documents",
-      family: 'Arial, "Helvetica Neue", Helvetica',
-    },
-  ],
-  latinDocumentHeading: [
-    {
-      id: "times-new-roman",
-      name: "Times New Roman",
-      nameEn: "Times New Roman",
-      description: "经典英文标题字体",
-      descriptionEn: "Classic serif for English headings",
-      family: '"Times New Roman", Times',
-    },
-    {
-      id: "arial",
-      name: "Arial",
-      nameEn: "Arial",
-      description: "现代简洁的英文标题",
-      descriptionEn: "Clean modern English headings",
-      family: 'Arial, "Helvetica Neue", Helvetica',
-    },
-  ],
+] as const;
+
+export const typographyPresets = {
+  cjkUi: cjkTypographyCatalog,
+  cjkDocumentBody: cjkTypographyCatalog,
+  cjkDocumentHeading: cjkTypographyCatalog,
+  latinUi: latinTypographyCatalog,
+  latinDocumentBody: latinTypographyCatalog,
+  latinDocumentHeading: latinTypographyCatalog,
 } as const;
 
 export type TypographyRole = keyof typeof typographyPresets;
@@ -142,6 +102,10 @@ export type FontSelection = PresetFontSelection | CustomFontSelection;
 
 export type TypographySettings = Record<TypographyRole, FontSelection>;
 
+export function typographyCatalogForRole(role: TypographyRole) {
+  return typographyPresets[role];
+}
+
 export type CustomFontRecord = {
   id: string;
   family: string;
@@ -149,8 +113,19 @@ export type CustomFontRecord = {
   fileName: string;
   mimeType: string;
   size: number;
-  data: ArrayBuffer;
+  data?: ArrayBuffer;
+  faces?: CustomFontFaceRecord[];
   createdAt: string;
+};
+
+export type CustomFontFaceRecord = {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  data: ArrayBuffer;
+  weight: string;
+  style: "normal" | "italic";
 };
 
 export const defaultTypographySettings: TypographySettings = {
@@ -223,8 +198,7 @@ export function parseTypographySettings(serialized: string | null): TypographySe
 function familyForSelection(role: TypographyRole, selection: FontSelection): string {
   if (selection.kind === "custom") {
     const fallback = typographyPresets[role].find((preset) => preset.id === defaultTypographySettings[role].id)?.family;
-    const script = role.startsWith("latin") ? "Latin" : "CJK";
-    return `"${selection.family} ${script}", ${fallback}`;
+    return `"labnest-custom-${selection.id}", ${fallback}`;
   }
   return typographyPresets[role].find((preset) => preset.id === selection.id)?.family
     ?? typographyPresets[role][0].family;

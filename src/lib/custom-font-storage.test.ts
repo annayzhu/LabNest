@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CustomFontImportError, importCustomFont } from "./custom-font-storage";
+import { CustomFontImportError, importCustomFont, inferCustomFontFace, validateCustomFontFamily } from "./custom-font-storage";
 
 describe("custom font import", () => {
   afterEach(() => {
@@ -55,5 +55,33 @@ describe("custom font import", () => {
     expect(add).toHaveBeenCalledTimes(2);
     expect(remove).toHaveBeenCalledTimes(2);
     expect(database.close).toHaveBeenCalledOnce();
+  });
+
+  it("groups common font face filenames into one family with weight and style", () => {
+    expect(inferCustomFontFace("NotoSansSC-BoldItalic.woff2")).toEqual({
+      familyName: "Noto Sans SC",
+      style: "italic",
+      weight: "700",
+    });
+    expect(inferCustomFontFace("NotoSansSC-Regular.ttf")).toEqual({
+      familyName: "Noto Sans SC",
+      style: "normal",
+      weight: "400",
+    });
+  });
+
+  it("rejects mixed families and duplicate faces before loading or persistence", () => {
+    expect(validateCustomFontFamily([
+      { name: "NotoSansSC-Regular.ttf", size: 4 },
+      { name: "OtherSans-Bold.ttf", size: 4 },
+    ])).toContain("同一个字体族");
+    expect(validateCustomFontFamily([
+      { name: "NotoSansSC-Bold.ttf", size: 4 },
+      { name: "NotoSansSC-Bold.woff2", size: 4 },
+    ])).toContain("重复");
+  });
+
+  it("represents variable font weight ranges", () => {
+    expect(inferCustomFontFace("NotoSansSC-VariableFont_wght.ttf")).toMatchObject({ weight: "100 900" });
   });
 });

@@ -11,7 +11,7 @@ describe("Protocol Tiptap compatibility layer", () => {
       id: "description-rich",
       type: "rich_text",
       nodes: [
-        { type: "heading2", content: [{ text: "RNA extraction", bold: true, fontSizePt: 12 }], lineHeight: 1.5, fontFamily: "serif" },
+        { type: "heading2", content: [{ text: "RNA extraction", bold: true, fontSizePt: 12 }], lineHeight: 1.5, fontFamily: "times-new-roman" },
         { type: "paragraph", content: [{ text: "Keep samples cold.", italic: true, color: "risk", fontSizePt: 11 }] },
       ],
     }];

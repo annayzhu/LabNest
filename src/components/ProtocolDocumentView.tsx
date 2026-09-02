@@ -8,6 +8,7 @@ import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 import { TiptapCellContentView } from "@/components/TiptapCellContentView";
 import { cn } from "@/lib/cn";
 import { richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
+import { richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { checkResultTemplate, fieldDataType, fieldSemanticRole, normalizeResultTemplate, resultTemplateCardinalityLabel, type ResultTemplateCheck } from "@/lib/result-templates";
 import type { ResultTemplate, ResultTemplateArtifact, ResultTemplateField } from "@/lib/types";
 
@@ -130,10 +131,10 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
       const items: ProtocolRichTextNode[] = [];
       while (nodes[index]?.type === type) { items.push(nodes[index]); index += 1; }
       const List = type === "bullet" ? "ul" : "ol";
-      rendered.push(<List key={`list-${index}`} className={type === "bullet" ? "document-rich-list list-disc pl-6" : "document-rich-list list-decimal pl-6"}>{items.map((item, itemIndex) => <li key={itemIndex} data-labnest-line-height={item.lineHeight} data-labnest-font-family={item.fontFamily} style={item.lineHeight ? { lineHeight: item.lineHeight } : undefined}><NodeContent node={item} /></li>)}</List>);
+      rendered.push(<List key={`list-${index}`} className={type === "bullet" ? "document-rich-list list-disc pl-6" : "document-rich-list list-decimal pl-6"}>{items.map((item, itemIndex) => <li key={itemIndex} data-labnest-line-height={item.lineHeight} data-labnest-font-family={item.fontFamily} style={{ ...(item.lineHeight ? { lineHeight: item.lineHeight } : {}), ...(item.fontFamily ? { fontFamily: richTextFontFamilyCss(item.fontFamily) } : {}) }}><NodeContent node={item} /></li>)}</List>);
       continue;
     }
-    const lineProps = { ...(node.lineHeight ? { "data-labnest-line-height": node.lineHeight, style: { lineHeight: node.lineHeight } } : {}), ...(node.fontFamily ? { "data-labnest-font-family": node.fontFamily } : {}) };
+    const lineProps = { ...(node.lineHeight ? { "data-labnest-line-height": node.lineHeight } : {}), ...(node.fontFamily ? { "data-labnest-font-family": node.fontFamily } : {}), style: { ...(node.lineHeight ? { lineHeight: node.lineHeight } : {}), ...(node.fontFamily ? { fontFamily: richTextFontFamilyCss(node.fontFamily) } : {}) } };
     if (node.type === "heading2") rendered.push(<h3 key={index} {...lineProps} className="document-content-heading font-serif font-medium text-ink"><NodeContent node={node} /></h3>);
     else if (node.type === "heading3") rendered.push(<h4 key={index} {...lineProps} className="document-content-heading font-semibold text-ink"><NodeContent node={node} /></h4>);
     else if (node.type === "quote") rendered.push(<blockquote key={index} {...lineProps} className="border-l-2 border-sage pl-4 italic text-muted"><NodeContent node={node} /></blockquote>);

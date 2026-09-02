@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken } from "@/lib/rich-text-color";
-import { parseRichTextFontFamilyLine } from "@/lib/rich-text-font-family";
+import { parseRichTextFontFamilyLine, richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
 
@@ -33,7 +33,7 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
         const parsedLine = parseRichTextLineHeightLine(rawLine);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
         const line = parsedFontFamily.content;
-        const lineProps = { ...(parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight, style: { lineHeight: parsedLine.lineHeight } } : {}), ...(parsedFontFamily.fontFamily ? { "data-labnest-font-family": parsedFontFamily.fontFamily } : {}) };
+        const lineProps = { ...(parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { "data-labnest-font-family": parsedFontFamily.fontFamily } : {}), style: { ...(parsedLine.lineHeight ? { lineHeight: parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { fontFamily: richTextFontFamilyCss(parsedFontFamily.fontFamily) } : {}) } };
         const key = `${index}-${line.slice(0, 12)}`;
         if (!line.trim()) return <div key={key} {...lineProps} className="h-1" aria-hidden />;
         const heading = line.match(/^(#{1,3})\s+(.+)$/);

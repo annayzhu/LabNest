@@ -121,11 +121,11 @@ export function ProtocolDocumentEditor({
           <ProtocolWysiwygEditor document={initialDocument} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
-          <header><h2>Protocol metadata</h2><span>Identity, governance, and revision details.</span></header>
+          <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>
           <div className="protocol-metadata-sections">
-            <fieldset className="protocol-metadata-group"><legend>Identity</legend><div className="protocol-metadata-grid">
+            <fieldset className="protocol-metadata-group"><legend className="sr-only">Identity</legend><div className="protocol-metadata-grid">
               <label className="protocol-metadata-span-full"><span className={formLabelClass}>Protocol title</span><input value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className={formInputClass} aria-label="Protocol metadata title" /></label>
-              <RecordCodeField label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={mode === "edit" ? protocol.humanCode : undefined} />
+              <RecordCodeField className="protocol-metadata-code-field" label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={mode === "edit" ? protocol.humanCode : undefined} />
               <label><span className={formLabelClass}>Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={formInputClass} /></label>
               <label><span className={formLabelClass}>English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={formInputClass} /></label>
               {mode === "create" ? <label><span className={formLabelClass}>Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={formInputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div className="protocol-metadata-readonly"><span className={formLabelClass}>Scope</span><strong>{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</strong><small>Use Adapt to project to preserve lineage.</small></div>}
@@ -152,6 +152,7 @@ export function ProtocolDocumentEditor({
           onTogglePrimary={togglePrimary}
           initialManualLinks={initialManualRelevantLinks}
           researchPlanProjectId={scope === "project" ? projectId : undefined}
+          saveControl={<Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button>}
         />}
       />
 

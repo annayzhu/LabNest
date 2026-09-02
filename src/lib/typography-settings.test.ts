@@ -6,6 +6,7 @@ import {
   settingsWithoutCustomFont,
   reconcileTypographySettings,
   validateCustomFontFile,
+  typographyCatalogForRole,
 } from "./typography-settings";
 
 describe("typography settings", () => {
@@ -56,8 +57,8 @@ describe("typography settings", () => {
       cjkDocumentBody: custom,
       latinDocumentBody: custom,
     });
-    expect(variables["--font-cjk-document-body"]).toContain('"LabNest Custom font-1 CJK"');
-    expect(variables["--font-latin-document-body"]).toContain('"LabNest Custom font-1 Latin"');
+    expect(variables["--font-cjk-document-body"]).toContain('"labnest-custom-font-1"');
+    expect(variables["--font-latin-document-body"]).toContain('"labnest-custom-font-1"');
   });
 
   it("accepts local web fonts within the limit and explains recoverable failures", () => {
@@ -87,5 +88,14 @@ describe("typography settings", () => {
   it("reconciles saved selections with fonts that still exist in this browser", () => {
     const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Song" };
     expect(reconcileTypographySettings({ ...defaultTypographySettings, cjkDocumentBody: custom }, new Set())).toEqual(defaultTypographySettings);
+  });
+
+  it("offers the complete language catalog to interface, body, and heading roles", () => {
+    expect(typographyCatalogForRole("cjkUi").map((font) => font.id)).toEqual(
+      typographyCatalogForRole("cjkDocumentHeading").map((font) => font.id),
+    );
+    expect(typographyCatalogForRole("latinUi").map((font) => font.id)).toEqual(
+      typographyCatalogForRole("latinDocumentBody").map((font) => font.id),
+    );
   });
 });

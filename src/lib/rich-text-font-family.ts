@@ -1,13 +1,47 @@
-export const RICH_TEXT_FONT_FAMILIES = ["sans", "serif", "mono"] as const;
+export const RICH_TEXT_FONT_FAMILIES = [
+  "sans", "serif", "mono",
+  "source-han-sans", "pingfang", "system-sans", "source-han-serif", "songti", "simsun",
+  "arial", "times-new-roman", "courier-new",
+] as const;
 
-export type RichTextFontFamily = (typeof RICH_TEXT_FONT_FAMILIES)[number];
+export type BuiltInRichTextFontFamily = (typeof RICH_TEXT_FONT_FAMILIES)[number];
+export type RichTextFontFamily = BuiltInRichTextFontFamily | `labnest-custom-${string}`;
 
 export const DEFAULT_RICH_TEXT_FONT_FAMILY: RichTextFontFamily = "sans";
 
-const FONT_FAMILY_VALUES_SOURCE = RICH_TEXT_FONT_FAMILIES.join("|");
+export const richTextFontOptions: ReadonlyArray<{ value: RichTextFontFamily; label: string }> = [
+  { value: "source-han-sans", label: "Source Han Sans / 思源黑体" },
+  { value: "source-han-serif", label: "Source Han Serif / 思源宋体" },
+  { value: "pingfang", label: "PingFang SC / 苹方" },
+  { value: "system-sans", label: "System Sans / 系统黑体" },
+  { value: "songti", label: "Songti SC / 华文宋体" },
+  { value: "simsun", label: "SimSun / 中易宋体" },
+  { value: "arial", label: "Arial" },
+  { value: "times-new-roman", label: "Times New Roman" },
+  { value: "courier-new", label: "Courier New" },
+];
+
+const richTextFontCss: Partial<Record<BuiltInRichTextFontFamily, string>> = {
+  sans: "var(--font-ui)", serif: "var(--font-editorial)", mono: "var(--font-data)",
+  "source-han-sans": '"LabNest CJK Source Han Sans", sans-serif',
+  "source-han-serif": '"LabNest CJK Source Han Serif", serif',
+  pingfang: '"LabNest CJK PingFang", sans-serif',
+  "system-sans": '"LabNest CJK System Sans", sans-serif',
+  songti: '"LabNest CJK Songti", serif', simsun: '"LabNest CJK SimSun", serif',
+  arial: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+  "times-new-roman": '"Times New Roman", Times, serif',
+  "courier-new": '"Courier New", Courier, monospace',
+};
+
+export function richTextFontFamilyCss(value: RichTextFontFamily | string | undefined) {
+  if (!value) return undefined;
+  return value.startsWith("labnest-custom-") ? value : richTextFontCss[value as BuiltInRichTextFontFamily];
+}
+
+const FONT_FAMILY_VALUES_SOURCE = `(?:${RICH_TEXT_FONT_FAMILIES.join("|")}|labnest-custom-[a-zA-Z0-9-]+)`;
 
 export function parseRichTextFontFamily(value: string | null | undefined): RichTextFontFamily | undefined {
-  return value && RICH_TEXT_FONT_FAMILIES.includes(value as RichTextFontFamily)
+  return value && (RICH_TEXT_FONT_FAMILIES.includes(value as BuiltInRichTextFontFamily) || /^labnest-custom-[a-zA-Z0-9-]+$/.test(value))
     ? value as RichTextFontFamily
     : undefined;
 }

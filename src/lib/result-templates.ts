@@ -14,6 +14,7 @@ import type {
   ResultViewPreset,
 } from "./types";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
+import { parseRichTextFontFamily, type RichTextFontFamily } from "./rich-text-font-family";
 
 const fieldDataTypes = ["text", "number", "select", "attachment[]", "boolean", "date", "datetime"] as const;
 const datasetColumnTypes = ["text", "number", "category", "boolean", "date", "datetime"] as const;
@@ -93,7 +94,7 @@ const resultTemplateInstructionNodeSchema = z.object({
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(resultTemplateInstructionRunSchema),
   lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),
-  fontFamily: z.enum(["sans", "serif", "mono"]).optional(),
+  fontFamily: z.custom<RichTextFontFamily>((value) => typeof value === "string" && Boolean(parseRichTextFontFamily(value))).optional(),
 });
 
 export const resultTemplateInputSchema = z.object({

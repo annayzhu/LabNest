@@ -11,6 +11,7 @@ import {
 } from "@/lib/protocol-document";
 import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { isRichTextFontSizePt } from "@/lib/rich-text-font-size";
+import { parseRichTextFontFamily } from "@/lib/rich-text-font-family";
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
 
 type TiptapMark = NonNullable<JSONContent["marks"]>[number];
@@ -229,7 +230,7 @@ function nodeTypography(node: JSONContent) {
   const fontFamily = node.attrs?.protocolFontFamily ?? textStyle?.attrs?.fontFamily;
   return {
     lineHeight: [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,
-    fontFamily: ["sans", "serif", "mono"].includes(fontFamily) ? fontFamily as ProtocolRichTextNode["fontFamily"] : undefined,
+    fontFamily: parseRichTextFontFamily(fontFamily),
   };
 }
 

@@ -1,3 +1,5 @@
+import type { RichTextFontFamily } from "./rich-text-font-family";
+
 export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info" | "sage";
 
 export type RecordLifecycleStatus = "draft" | "recorded" | "submitted" | "reviewed";
@@ -127,7 +129,7 @@ export type ResultTemplateInstructionNode = {
   type: "paragraph" | "heading2" | "heading3" | "bullet" | "numbered" | "quote";
   content: ResultTemplateInstructionRun[];
   lineHeight?: 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2;
-  fontFamily?: "sans" | "serif" | "mono";
+  fontFamily?: RichTextFontFamily;
 };
 
 export type ResultTemplate = {

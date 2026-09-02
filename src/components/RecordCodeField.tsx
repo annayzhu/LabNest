@@ -10,6 +10,7 @@ export function RecordCodeField({
   existingCode,
   value,
   onValueChange,
+  className,
 }: {
   label: string;
   prefix: string;
@@ -20,10 +21,11 @@ export function RecordCodeField({
   existingCode?: string | null;
   value?: string;
   onValueChange?: (value: string) => void;
+  className?: string;
 }) {
   if (existingCode) {
     return (
-      <div>
+      <div className={className}>
         <span className={formLabelClass}>{label}</span>
         <div className={`${formInputClass} flex items-center bg-stone/50 text-xs font-medium tabular-nums tracking-[0.01em]`}>
           {existingCode}
@@ -34,7 +36,7 @@ export function RecordCodeField({
 
   const inputId = `${name}-input`;
   return (
-    <div>
+    <div className={className}>
       <label htmlFor={inputId} className={formLabelClass}>{label}</label>
       <div className="mt-2 flex h-11 w-full overflow-hidden rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm text-sm text-ink focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/15">
         <span className="flex shrink-0 items-center border-r border-hairline bg-stone/50 px-3 font-medium tabular-nums text-graphite">

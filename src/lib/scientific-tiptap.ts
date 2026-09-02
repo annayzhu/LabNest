@@ -2,7 +2,7 @@ import type { JSONContent } from "@tiptap/core";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
-import { parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
+import { parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
@@ -173,7 +173,7 @@ function typographyPrefix(node: JSONContent) {
   const lineHeightValue = node.attrs?.scientificLineHeight ?? textStyle?.attrs?.lineHeight;
   const lineHeight = [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeightValue)) ? Number(lineHeightValue) as 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2 : undefined;
   const fontValue = node.attrs?.scientificFontFamily ?? textStyle?.attrs?.fontFamily;
-  const fontFamily = ["sans", "serif", "mono"].includes(fontValue) ? fontValue as "sans" | "serif" | "mono" : undefined;
+  const fontFamily = parseRichTextFontFamily(fontValue);
   return `${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
 }
 

@@ -8,7 +8,9 @@ import {
   CustomFontImportError,
   deleteCustomFont,
   hydrateTypographyPreferences,
-  importCustomFont,
+  importCustomFontFamily,
+  inferCustomFontFace,
+  validateCustomFontFamily,
 } from "@/lib/custom-font-storage";
 import {
   applyTypographySettings,
@@ -171,13 +173,20 @@ export function TypographySettingsPanel() {
     if (selection) updateSettings({ ...settings, [role]: selection });
   }
 
-  async function importFont(file: File | undefined) {
-    if (!file) return;
+  async function importFont(files: FileList | null) {
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) return;
     setMessage("");
     setError("");
-    const validationError = validateCustomFontFile(file, locale);
+    const validationError = selectedFiles.map((file) => validateCustomFontFile(file, locale)).find(Boolean);
     if (validationError) {
       setError(validationError);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    const familyValidationError = validateCustomFontFamily(selectedFiles, locale);
+    if (familyValidationError) {
+      setError(familyValidationError);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -190,9 +199,28 @@ export function TypographySettingsPanel() {
     setImporting(true);
     try {
       try {
-        const record = await importCustomFont(file);
+        const proposedFamily = inferCustomFontFace(selectedFiles[0].name).familyName;
+        const familyName = (await dialog.prompt({
+          title: copy("确认字体族", "Confirm font family"),
+          description: copy("可以在导入前修正自动识别的字体族名称。", "Correct the detected family name before importing if needed."),
+          inputLabel: copy("字体族名称", "Font family name"),
+          defaultValue: proposedFamily,
+          confirmLabel: copy("继续", "Continue"),
+        }))?.trim();
+        if (!familyName) return;
+        const mapping = selectedFiles.map((file) => {
+          const face = inferCustomFontFace(file.name);
+          return `${file.name}: ${face.weight} / ${face.style}`;
+        }).join("\n");
+        if (!await dialog.confirm({
+          title: copy("确认字体字形映射", "Confirm font face mappings"),
+          description: mapping,
+          confirmLabel: copy("导入字体族", "Import family"),
+          cancelLabel: copy("取消", "Cancel"),
+        })) return;
+        const record = await importCustomFontFamily(selectedFiles, { familyName });
         setCustomFonts((fonts) => [record, ...fonts]);
-        setMessage(copy(`“${record.name}”已导入，可在上方中英文选项中使用。`, `“${record.name}” was imported and is now available in the Chinese and English selectors.`));
+        setMessage(copy(`“${record.name}”字体族（${selectedFiles.length} 个字形）已导入。`, `“${record.name}” (${selectedFiles.length} faces) was imported.`));
       } catch (error) {
         const stage = error instanceof CustomFontImportError ? error.stage : "persist";
         if (stage === "read") {
@@ -268,17 +296,18 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("我的字体", "My fonts")}</p>
-          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy(`仅保存在当前浏览器；支持 WOFF2、TTF、OTF，单个不超过 10 MB，最多 ${maxCustomFontCount} 个。`, `Stored only in this browser. WOFF2, TTF, and OTF; 10 MB each; up to ${maxCustomFontCount}.`)}</p>
+          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy(`按字体族同时选择 Regular、Bold、Italic 等文件；单个文件不超过 10 MB，最多 ${maxCustomFontCount} 个字体族。`, `Select Regular, Bold, Italic, and other faces together; 10 MB per file and up to ${maxCustomFontCount} families.`)}</p>
         </div>
         <label className="focus-ring typography-import-button" data-busy={importing ? "true" : undefined} aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
-          <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体", "Import font")}
+          <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体族", "Import family")}
           <input
             ref={fileInputRef}
             className="sr-only"
             type="file"
+            multiple
             accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
             disabled={importing || customFonts.length >= maxCustomFontCount}
-            onChange={(event) => void importFont(event.target.files?.[0])}
+            onChange={(event) => void importFont(event.target.files)}
           />
         </label>
       </div>
@@ -290,7 +319,7 @@ export function TypographySettingsPanel() {
             <li key={font.id}>
               <span className="min-w-0">
                 <span className="block truncate text-sm text-ink" style={{ fontFamily: `"${font.family} Latin", "${font.family} CJK"` }}>{font.name}</span>
-                <span className="block truncate text-[10px] text-muted">{font.fileName} · {formatFileSize(font.size)}</span>
+                <span className="block truncate text-[10px] text-muted">{font.faces?.length ?? 1} faces · {font.fileName} · {formatFileSize(font.size)}</span>
               </span>
               <button type="button" className="focus-ring" onClick={() => void removeFont(font)} aria-label={copy(`删除字体 ${font.name}`, `Delete font ${font.name}`)}>
                 <Trash2 aria-hidden />

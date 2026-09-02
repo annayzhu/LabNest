@@ -46,10 +46,10 @@ export function StatusRadioGroup({
           <label
             key={option.value}
             className={cn(
-              "focus-within:ring-2 focus-within:ring-moss/30 flex cursor-pointer items-start border border-hairline bg-surface text-graphite transition hover:border-border-strong hover:bg-warm",
+              "focus-within:ring-2 focus-within:ring-moss/30 flex cursor-pointer border border-hairline bg-surface text-graphite transition hover:border-border-strong hover:bg-warm",
               density === "compact"
-                ? "min-h-8 gap-1.5 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs"
-                : "min-h-10 gap-2 rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-sm",
+                ? "min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs"
+                : "min-h-10 items-start gap-2 rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-sm",
               disabled && "cursor-not-allowed opacity-55",
             )}
           >
@@ -61,7 +61,7 @@ export function StatusRadioGroup({
               checked={controlled ? value === option.value : undefined}
               defaultChecked={!controlled ? defaultValue === option.value : undefined}
               onChange={() => onValueChange?.(option.value)}
-              className={cn("mt-0.5 shrink-0 accent-moss", density === "compact" ? "h-3.5 w-3.5" : "h-4 w-4")}
+              className={cn("shrink-0 accent-moss", density === "compact" ? "m-0 h-3.5 w-3.5" : "mt-0.5 h-4 w-4")}
             />
             <span>
               <span className="block font-medium text-ink">{option.label}</span>

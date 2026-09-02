@@ -48,20 +48,23 @@ export function listCustomFonts(): Promise<CustomFontRecord[]> {
   return withStore("readonly", (store) => store.getAll()).then((records) => records.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 }
 
-export function saveCustomFont(record: CustomFontRecord): Promise<IDBValidKey> {
+function saveCustomFont(record: CustomFontRecord): Promise<IDBValidKey> {
   return withStore("readwrite", (store) => store.put(record));
+}
+
+function unloadCustomFont(id: string): void {
+  const faces = loadedFaces.get(id);
+  if (!faces) return;
+  faces.forEach((face) => document.fonts.delete(face));
+  loadedFaces.delete(id);
 }
 
 export async function deleteCustomFont(id: string): Promise<void> {
   await withStore("readwrite", (store) => store.delete(id));
-  const faces = loadedFaces.get(id);
-  if (faces) {
-    faces.forEach((face) => document.fonts.delete(face));
-    loadedFaces.delete(id);
-  }
+  unloadCustomFont(id);
 }
 
-export async function loadCustomFont(record: CustomFontRecord): Promise<void> {
+async function loadCustomFont(record: CustomFontRecord): Promise<void> {
   if (loadedFaces.has(record.id)) return;
   const faces = [
     new FontFace(`${record.family} Latin`, record.data.slice(0), { unicodeRange: latinUnicodeRange }),
@@ -72,7 +75,7 @@ export async function loadCustomFont(record: CustomFontRecord): Promise<void> {
   loadedFaces.set(record.id, loaded);
 }
 
-export async function createCustomFontRecord(file: File): Promise<CustomFontRecord> {
+async function createCustomFontRecord(file: File): Promise<CustomFontRecord> {
   const id = crypto.randomUUID().replaceAll("-", "");
   const name = file.name.replace(/\.(woff2|ttf|otf)$/i, "").trim().slice(0, 80) || "自定义字体";
   return {
@@ -85,6 +88,38 @@ export async function createCustomFontRecord(file: File): Promise<CustomFontReco
     data: await file.arrayBuffer(),
     createdAt: new Date().toISOString(),
   };
+}
+
+export type CustomFontImportStage = "read" | "parse" | "persist";
+
+export class CustomFontImportError extends Error {
+  constructor(public readonly stage: CustomFontImportStage) {
+    super(`Custom font import failed during ${stage}.`);
+    this.name = "CustomFontImportError";
+  }
+}
+
+export async function importCustomFont(file: File): Promise<CustomFontRecord> {
+  let record: CustomFontRecord;
+  try {
+    record = await createCustomFontRecord(file);
+  } catch {
+    throw new CustomFontImportError("read");
+  }
+
+  try {
+    await loadCustomFont(record);
+  } catch {
+    throw new CustomFontImportError("parse");
+  }
+
+  try {
+    await saveCustomFont(record);
+  } catch {
+    unloadCustomFont(record.id);
+    throw new CustomFontImportError("persist");
+  }
+  return record;
 }
 
 export async function hydrateTypographyPreferences({ loadAllFonts = false } = {}): Promise<{ settings: TypographySettings; fonts: CustomFontRecord[] }> {

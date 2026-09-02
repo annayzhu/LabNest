@@ -139,6 +139,8 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 **The One-Action Rule.** A panel has one visually filled primary action; secondary actions remain bordered, quiet, or textual.
 
+**The Collision-Action Rule.** Each system theme supplies a second, deliberately contrasting action family. It is reserved for one decisive create, save, run, or confirm action per region and for compact quick-entry shortcuts. Links, tabs, selection, and focus continue to use the quieter primary family; destructive actions always keep the semantic error family.
+
 **The Semantic Pair Rule.** Success, warning, error, and info foregrounds always travel with their matching pale surface and a textual or iconic cue.
 
 ### Selectable system styles
@@ -203,6 +205,7 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 - **Primary:** Filled primary color, high-contrast label, 36–40px height, and 6px corners. Use for Calculate, Confirm, Detect, or Send.
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
+- **Motion:** Decisive buttons may reveal a thin theme-spectrum edge on hover and show a bottom progress tracer only while a real action is pending. Dropdown icons use a short, directional micro-motion. Tool cards may expand into a focused preview modal; routine content never animates merely for decoration. All spatial motion is removed by `prefers-reduced-motion`.
 
 ### Chips
 

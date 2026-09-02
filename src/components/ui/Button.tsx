@@ -6,7 +6,7 @@ export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "border-action bg-action text-white hover:border-action-hover hover:bg-action-hover",
+    "ln-key-action",
   secondary:
     "border-hairline bg-surface text-graphite hover:border-border-strong hover:bg-warm hover:text-ink",
   ghost: "border-transparent bg-transparent text-graphite hover:bg-stone/75 hover:text-ink",
@@ -58,7 +58,8 @@ export function Button({
       {...props}
     >
       {busy ? <span className="ln-button-loading-mark" aria-hidden /> : null}
-      {children}
+      <span className="ln-button-content">{children}</span>
+      {busy ? <span className="ln-button-progress" aria-hidden /> : null}
     </button>
   );
 }

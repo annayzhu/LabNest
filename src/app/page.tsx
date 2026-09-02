@@ -147,9 +147,9 @@ export default async function OverviewPage({
                     <Link
                       key={action.href}
                       href={action.href}
-                      className="focus-ring group flex h-14 items-center gap-2.5 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/45 px-2.5 transition hover:border-sage hover:bg-sage-surface/35"
+                      className="ln-quick-action focus-ring group flex h-14 items-center gap-2.5 rounded-[var(--ln-radius-control-lg)] border px-2.5"
                     >
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-md)] ${action.iconClass}`}>
+                      <span className={`ln-quick-action-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-md)] ${action.iconClass}`}>
                         <Icon className="h-4 w-4" aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{action.label}</span>

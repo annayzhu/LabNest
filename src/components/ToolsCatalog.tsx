@@ -76,9 +76,9 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
   }, [onClose]);
 
   return (
-    <div className="ln-tool-modal-layer fixed inset-0 z-[70] grid place-items-center p-3 sm:p-6">
-      <button type="button" aria-label="Close tool preview" className="ln-tool-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[2px]" onClick={onClose} />
-      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={`tool-preview-${tool.id}`} className="ln-tool-modal-card relative z-10 w-full max-w-2xl overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft">
+    <div className="ln-modal-layer fixed inset-0 z-[70] grid place-items-center p-3 sm:p-6">
+      <button type="button" aria-label="Close tool preview" className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[2px]" onClick={onClose} />
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={`tool-preview-${tool.id}`} className="ln-modal-card relative z-10 w-full max-w-2xl overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft">
         <div className="flex items-start justify-between gap-4 border-b border-hairline p-4 sm:p-5">
           <div className="flex min-w-0 items-start gap-3">
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}>

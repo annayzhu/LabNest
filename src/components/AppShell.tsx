@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { MobileBottomNav, Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { OfflineCompanion } from "./OfflineCompanion";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <MobileBottomNav />
+      <OfflineCompanion />
     </div>
   );
 }

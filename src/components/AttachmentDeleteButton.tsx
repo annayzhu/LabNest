@@ -3,14 +3,16 @@
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 
 export function AttachmentDeleteButton({ attachmentId, linkId, filename }: { attachmentId: string; linkId?: string; filename: string }) {
   const router = useRouter();
+  const dialog = useModalDialog();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
   async function remove() {
-    if (!window.confirm(`Remove ${filename}?`)) return;
+    if (!await dialog.confirm({ title: `Remove ${filename}?`, description: "The file record and its current link will be removed. This action cannot be undone.", confirmLabel: "Remove file", tone: "destructive" })) return;
     setPending(true);
     setError("");
     try {
@@ -18,7 +20,7 @@ export function AttachmentDeleteButton({ attachmentId, linkId, filename }: { att
       const response = await fetch(`/api/attachments/${attachmentId}${query}`, { method: "DELETE" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "File could not be removed.");
-      if (Array.isArray(payload.cleanupWarnings) && payload.cleanupWarnings.length) window.alert(`The file record was removed, but cleanup needs attention:\n\n${payload.cleanupWarnings.join("\n")}`);
+      if (Array.isArray(payload.cleanupWarnings) && payload.cleanupWarnings.length) await dialog.alert({ title: "Cleanup needs attention", description: `The file record was removed.\n\n${payload.cleanupWarnings.join("\n")}` });
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "File could not be removed.");

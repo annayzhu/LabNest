@@ -96,30 +96,28 @@
   --ln-control-padding-x-sm: 0.625rem; /* 小按钮左右内边距。 */
   --ln-control-padding-x-md: 0.75rem; /* 默认按钮和筛选器左右内边距。 */
   --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
-  --ln-ui-body-font-size: 13px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
+  --ln-ui-body-font-size: 12.5px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
   --ln-ui-nav-font-size: 12px; /* 桌面侧栏与紧凑导航字号。 */
-  --ln-ui-section-title-font-size: 13px; /* 卡片和工作区 section 标题字号。 */
-  --ln-ui-label-font-size: 11px; /* 表单标签与低层级标题字号。 */
-  --ln-ui-table-font-size: 13px; /* 共享数据表正文与记录字号。 */
-  --ln-ui-search-font-size: 13px; /* 顶部全局搜索字号。 */
+  --ln-ui-section-title-font-size: 12.5px; /* 卡片和工作区 section 标题字号。 */
+  --ln-ui-label-font-size: 10.5px; /* 表单标签与低层级标题字号。 */
+  --ln-ui-table-font-size: 11.5px; /* 共享数据表正文低于侧栏导航，避免内容反客为主。 */
+  --ln-ui-search-font-size: 12.5px; /* 顶部全局搜索字号。 */
+  --ln-ui-local-search-font-size: 11.5px; /* 页面内搜索低于顶部全局搜索。 */
   --ln-ui-brand-font-size: 15px; /* 品牌名称保持足够识别度。 */
-  --ln-control-font-size-xs: 11px; /* 小按钮和紧凑工具按钮字号。 */
-  --ln-control-font-size-sm: 12px; /* 默认按钮、筛选器、辅助操作字号。 */
-  --ln-control-font-size-md: 13px; /* 表单输入框和较大按钮字号。 */
-  --ln-control-font-size-lg: 12px; /* 大尺寸主按钮保留热区但使用紧凑字号。 */
+  --ln-control-font-size-xs: 10.5px; /* 小按钮和紧凑工具按钮字号。 */
+  --ln-control-font-size-sm: 11.5px; /* 默认按钮、筛选器、辅助操作字号。 */
+  --ln-control-font-size-md: 12px; /* 表单输入框和较大按钮字号。 */
+  --ln-control-font-size-lg: 11.5px; /* 大尺寸主按钮保留热区但使用紧凑字号。 */
   --ln-form-field-gap: 0.375rem; /* 表单标签与控件之间的默认距离。 */
 
   /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
   --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
-  --ln-page-title-size: 17px; /* 全站工作页外层标题字号。 */
+  --ln-page-title-size: 16px; /* 全站工作页外层标题字号。 */
   --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
   --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
-  --ln-page-action-font-size: 12px; /* 页头动作字号。 */
+  --ln-page-action-font-size: 11.5px; /* 页头动作字号。 */
   --ln-document-toolbar-height: 2.25rem; /* A4 上方共享工具条高度。 */
   --ln-document-mobile-copy-size: 9pt; /* 手机版文档正文缩小一级，配合 1.6 行距保持清晰。 */
-
-  /* Protocol 保存条仍有独立的视口偏移，其余密度全部复用全站变量。 */
-  --ln-protocol-density-save-offset: 0.75rem; /* 保存条离视口底部的距离。 */
 
   /* Entry 编辑器：空白记录保持足够书写空间，但不再强制占满一张 A4。 */
   --ln-entry-editor-paper-min-height: 42rem; /* 桌面端空白 Entry 纸张的最小高度。 */
@@ -140,7 +138,7 @@
   --ln-list-table-border-color: color-mix(in srgb, var(--hairline) 88%, var(--surface)); /* 列表表格外框和行边框颜色。 */
   --ln-list-table-shadow: none; /* 列表表格保持平面层级，减少视觉重量。 */
   --ln-list-table-head-bg: color-mix(in srgb, var(--stone) 46%, var(--surface)); /* 列表表头背景色。 */
-  --ln-list-table-head-font-size: 11.5px; /* 列表表头字号。 */
+  --ln-list-table-head-font-size: 10.5px; /* 列表表头字号。 */
   --ln-list-table-head-line-height: 1.35; /* 列表表头行高。 */
   --ln-list-table-head-padding-x: 1rem; /* 列表表头左右内边距。 */
   --ln-list-table-head-padding-y: 0.68rem; /* 列表表头上下内边距。 */
@@ -221,6 +219,9 @@
   --ln-document-outline-width: 7.75rem; /* 桌面文档编辑器左侧轻量目录宽度。 */
   --ln-document-context-width: 15rem; /* 选中表格、图片或模块后出现的右侧设置宽度。 */
   --ln-document-workbench-gap: 0.625rem; /* 目录、A4 画布和上下文设置之间的间距。 */
+  --ln-app-topbar-height: 3.3rem; /* 固定搜索栏高度，文档吸顶层从其下方开始。 */
+  --ln-document-viewbar-height: 2.1rem; /* Document / Metadata / Relevant items 吸顶层高度。 */
+  --ln-document-editor-chrome-height: calc(var(--ln-document-viewbar-height) + var(--ln-document-toolbar-height)); /* 标签层与格式工具栏的总吸顶高度。 */
 
   /* 连续所见即所得编辑器：所有界面密度和科研节点尺寸集中在这里调整。 */
   --ln-wysiwyg-toolbar-control-height: 1.68rem; /* 顶部格式工具条按钮、选择器统一高度。 */
@@ -361,6 +362,41 @@
   --ln-experiment-protocol-picker-badge-size: 10.5px; /* 最新版本/历史版本标签字号。 */
 }
 
+/* 界面字号只作用于应用 chrome；A4 文档在 .document-a4-paper 中保持固定排版。 */
+html[data-labnest-ui-scale="standard"] {
+  --ln-ui-body-font-size: 13px;
+  --ln-ui-nav-font-size: 12.5px;
+  --ln-ui-section-title-font-size: 13px;
+  --ln-ui-label-font-size: 11px;
+  --ln-ui-table-font-size: 12.5px;
+  --ln-ui-search-font-size: 13px;
+  --ln-ui-local-search-font-size: 12px;
+  --ln-control-font-size-xs: 11px;
+  --ln-control-font-size-sm: 12px;
+  --ln-control-font-size-md: 13px;
+  --ln-control-font-size-lg: 12px;
+  --ln-page-title-size: 17px;
+  --ln-page-action-font-size: 12px;
+  --ln-list-table-head-font-size: 11.5px;
+}
+
+html[data-labnest-ui-scale="comfortable"] {
+  --ln-ui-body-font-size: 14px;
+  --ln-ui-nav-font-size: 13px;
+  --ln-ui-section-title-font-size: 14px;
+  --ln-ui-label-font-size: 12px;
+  --ln-ui-table-font-size: 13px;
+  --ln-ui-search-font-size: 14px;
+  --ln-ui-local-search-font-size: 13px;
+  --ln-control-font-size-xs: 12px;
+  --ln-control-font-size-sm: 13px;
+  --ln-control-font-size-md: 14px;
+  --ln-control-font-size-lg: 13px;
+  --ln-page-title-size: 18px;
+  --ln-page-action-font-size: 13px;
+  --ln-list-table-head-font-size: 12px;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-warm: var(--warm);
@@ -406,6 +442,16 @@
 
 /* 工作区使用紧凑字号；A4 与打印根节点在下方显式恢复文档尺度。 */
 .app-shell {
+  --text-xs: 0.65625rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.84375rem;
+  --text-lg: 0.9375rem;
+  --text-xl: 1.0625rem;
+  --text-2xl: 1.1875rem;
+  --text-3xl: 1.4375rem;
+}
+
+html[data-labnest-ui-scale="standard"] .app-shell {
   --text-xs: 0.6875rem;
   --text-sm: 0.8125rem;
   --text-base: 0.9375rem;
@@ -413,6 +459,16 @@
   --text-xl: 1.1875rem;
   --text-2xl: 1.375rem;
   --text-3xl: 1.625rem;
+}
+
+html[data-labnest-ui-scale="comfortable"] .app-shell {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.75rem;
 }
 
 .document-a4-paper {
@@ -450,6 +506,68 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+.ui-motion-button,
+[data-ui-button] {
+  transition-duration: 150ms;
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-motion-button:not(:disabled):hover,
+  [data-ui-button]:not(:disabled):hover {
+    box-shadow: 0 7px 18px color-mix(in srgb, var(--ink) 11%, transparent);
+    transform: translateY(-2px);
+  }
+}
+
+.ui-motion-button:not(:disabled):active,
+[data-ui-button]:not(:disabled):active {
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  transform: translateY(0) scale(0.97);
+}
+
+.ln-button-loading-mark {
+  animation: ln-loading-orbit 720ms linear infinite;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  height: 0.8rem;
+  opacity: 0.78;
+  width: 0.8rem;
+}
+
+@keyframes ln-loading-orbit {
+  to { transform: rotate(360deg); }
+}
+
+.ln-inline-loading {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.ln-inline-loading::before,
+.typography-import-button[data-busy="true"]::before {
+  animation: ln-loading-orbit 720ms linear infinite;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  content: "";
+  height: 0.7rem;
+  opacity: 0.72;
+  width: 0.7rem;
+}
+
+.app-shell-main input[type="search"] {
+  font-size: var(--ln-ui-local-search-font-size);
+}
+
+.ln-global-search input[type="search"],
+.ln-global-search input {
+  font-size: var(--ln-ui-search-font-size);
 }
 
 :where(a, button).bg-moss.text-warm {
@@ -548,11 +666,6 @@ textarea {
   font-size: var(--ln-page-action-font-size);
   height: var(--ln-page-action-height);
   min-height: var(--ln-page-action-height);
-}
-
-.protocol-density-slice .protocol-density-actionbar .protocol-density-primary-action {
-  height: var(--ln-page-primary-action-height);
-  min-height: var(--ln-page-primary-action-height);
 }
 
 .protocol-density-notice {
@@ -674,60 +787,11 @@ textarea {
   padding-top: 0;
 }
 
-.protocol-density-actionbar {
-  align-items: center;
-  align-self: start;
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-lg);
-  bottom: var(--ln-protocol-density-save-offset);
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
-  max-width: 210mm;
-  padding: 0.25rem;
-  position: sticky;
-  width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
-  z-index: 30;
-}
-
-.protocol-density-actionbar > span {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.protocol-density-actionbar button {
-  font-size: var(--ln-page-action-font-size);
-}
-
-.protocol-density-actionbar[data-active-tab="metadata"],
-.protocol-density-actionbar[data-active-tab="relations"] {
-  backdrop-filter: none;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  bottom: auto;
-  margin-inline: auto;
-  max-width: var(--ln-wysiwyg-properties-max-width);
-  padding: 0.15rem 0;
-  position: static;
-  width: 100%;
-}
-
 .protocol-density-slice .page-header-identifier {
   font-family: var(--font-ui);
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   letter-spacing: 0.015em;
-}
-
-@media (max-width: 1023px) {
-  .protocol-density-actionbar {
-    margin-left: 0;
-    width: 100%;
-  }
 }
 
 :where(nav a, nav button, .card-action a, .card-action button) {
@@ -1039,6 +1103,116 @@ textarea {
   right: 0.28rem;
   top: 0.62rem;
   width: 1.55rem;
+}
+
+.interface-scale-picker {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 0;
+  padding: 1rem 0 0;
+}
+
+.interface-scale-picker > legend {
+  color: var(--ink);
+  font-size: var(--ln-ui-section-title-font-size);
+  font-weight: 600;
+  padding: 0;
+}
+
+.interface-scale-picker > p {
+  color: var(--muted);
+  font-size: var(--ln-ui-label-font-size);
+  line-height: 1.5;
+  margin-top: 0.2rem;
+}
+
+.interface-scale-options {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.65rem;
+}
+
+.interface-scale-options > label {
+  align-items: center;
+  background: var(--warm);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-panel-inner);
+  display: flex;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.65rem;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.interface-scale-options > label:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.interface-scale-options > label:focus-within {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 15%, transparent);
+  outline: 2px solid var(--fog);
+  outline-offset: 2px;
+}
+
+.interface-scale-options > label[data-selected="true"] {
+  background: color-mix(in srgb, var(--action-surface) 58%, var(--surface));
+  border-color: var(--action-border);
+}
+
+.interface-scale-options strong,
+.interface-scale-options small {
+  display: block;
+}
+
+.interface-scale-options strong {
+  color: var(--ink);
+  font-size: var(--ln-control-font-size-sm);
+  font-weight: 600;
+}
+
+.interface-scale-options small {
+  color: var(--muted);
+  font-size: var(--ln-ui-label-font-size);
+  line-height: 1.35;
+  margin-top: 0.12rem;
+}
+
+.interface-scale-options > label > svg {
+  color: var(--action);
+  flex: 0 0 auto;
+  height: 0.85rem;
+  width: 0.85rem;
+}
+
+.interface-scale-preview {
+  align-content: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--ln-radius-control-md);
+  display: grid;
+  flex: 0 0 4.25rem;
+  gap: 0.18rem;
+  height: 2.8rem;
+  padding: 0.4rem;
+}
+
+.interface-scale-preview > span:first-child { color: var(--ink); font-weight: 600; }
+.interface-scale-preview > span:nth-child(2) { color: var(--muted); }
+.interface-scale-preview > span:last-child { background: var(--action-surface); border-radius: 2px; height: 0.22rem; width: 70%; }
+.interface-scale-preview[data-scale-preview="compact"] > span:first-child { font-size: 8px; }
+.interface-scale-preview[data-scale-preview="compact"] > span:nth-child(2) { font-size: 6px; }
+.interface-scale-preview[data-scale-preview="standard"] > span:first-child { font-size: 9px; }
+.interface-scale-preview[data-scale-preview="standard"] > span:nth-child(2) { font-size: 7px; }
+.interface-scale-preview[data-scale-preview="comfortable"] > span:first-child { font-size: 10px; }
+.interface-scale-preview[data-scale-preview="comfortable"] > span:nth-child(2) { font-size: 8px; }
+
+@media (max-width: 767px) {
+  .interface-scale-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 .typography-settings-panel {
@@ -1498,24 +1672,67 @@ textarea {
 }
 
 .document-editor-viewbar {
+  backdrop-filter: blur(12px);
+  margin-bottom: 0;
+  position: sticky;
+  top: var(--ln-app-topbar-height);
+  z-index: 28;
+}
+
+.document-editor-viewbar .document-editor-toolbar-row {
+  border-radius: 0;
+  margin-left: auto;
+  margin-right: auto;
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+.document-editor-viewbar-inner {
   align-items: center;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border: 1px solid var(--hairline);
+  border-bottom: 0;
+  border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0;
   display: flex;
   gap: 0.5rem;
+  height: var(--ln-document-viewbar-height);
   justify-content: space-between;
-  margin-bottom: 0.4rem;
-  position: sticky;
-  top: var(--ln-shell-topbar-height);
-  z-index: 28;
+  margin-inline: auto;
+  max-width: 210mm;
+  padding: 0.2rem 0.35rem;
+  width: 100%;
+}
+
+.document-editor-viewbar-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
+
+.protocol-workbench-save {
+  align-items: center;
+  display: flex;
+}
+
+.protocol-workbench-save .protocol-density-primary-action {
+  height: 1.75rem;
+  min-height: 1.75rem;
+}
+
+.protocol-save-label-compact {
+  display: none;
 }
 
 .document-editor-tabs {
   align-items: center;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-control-md);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   display: inline-flex;
   gap: 0.16rem;
-  padding: 0.12rem;
+  padding: 0;
 }
 
 .document-editor-tab {
@@ -1745,7 +1962,8 @@ textarea {
 
 .document-editor-properties-panel {
   margin-inline: auto;
-  max-width: var(--ln-wysiwyg-properties-max-width);
+  max-width: 210mm;
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -1759,6 +1977,23 @@ textarea {
     grid-template-columns: var(--ln-document-outline-width) minmax(0, 1fr);
   }
 
+  .document-editor-viewbar-inner {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: auto;
+    width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
+  }
+
+  .document-editor-viewbar .document-editor-toolbar-row {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: auto;
+  }
+
+  .document-editor-properties-panel {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: auto;
+    width: min(210mm, calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)));
+  }
+
   .document-editor-outline {
     align-self: start;
     border-right: 1px solid var(--hairline);
@@ -1768,7 +2003,7 @@ textarea {
     overflow-y: auto;
     padding-right: 0.45rem;
     position: sticky;
-    top: 4.2rem;
+    top: calc(var(--ln-app-topbar-height) + var(--ln-document-editor-chrome-height) + 0.45rem);
   }
 
   .document-editor-outline-heading {
@@ -1844,15 +2079,16 @@ textarea {
 
   .document-editor-context-rail > div:not(:empty) {
     position: sticky;
-    top: 4.2rem;
+    top: calc(var(--ln-app-topbar-height) + var(--ln-document-editor-chrome-height) + 0.45rem);
   }
 }
 
 .document-editor-properties-card {
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-radius: var(--ln-radius-panel);
-  box-shadow: var(--ln-shadow-panel);
+  border-radius: 0 0 var(--ln-radius-panel) var(--ln-radius-panel);
+  border-top: 0;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -2046,9 +2282,10 @@ textarea {
 
 .document-editor-relevant-group {
   overflow: hidden;
-  border: 1px solid var(--hairline);
-  border-radius: var(--ln-wysiwyg-relevant-group-radius);
-  background: color-mix(in srgb, var(--warm) 35%, transparent);
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  border-radius: 0;
+  background: transparent;
 }
 
 .document-editor-relevant-group summary,
@@ -2974,12 +3211,26 @@ textarea {
 }
 
 .ln-wysiwyg-loading {
+  align-items: center;
   border: 1px dashed var(--hairline);
   border-radius: var(--ln-radius-control-md);
   color: var(--muted);
+  display: flex;
   font-size: 12px;
+  gap: 0.55rem;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
+}
+
+.ln-wysiwyg-loading::before {
+  animation: ln-loading-orbit 720ms linear infinite;
+  border: 1.5px solid var(--action);
+  border-right-color: transparent;
+  border-radius: 999px;
+  content: "";
+  height: 0.9rem;
+  width: 0.9rem;
 }
 
 .ln-protocol-upload-status {
@@ -3093,6 +3344,16 @@ textarea {
     --ln-wysiwyg-toolbar-font-size: 11px;
   }
 
+  html[data-labnest-ui-scale="standard"] {
+    --ln-page-action-font-size: 11px;
+    --ln-page-title-size: 15px;
+  }
+
+  html[data-labnest-ui-scale="comfortable"] {
+    --ln-page-action-font-size: 12px;
+    --ln-page-title-size: 16px;
+  }
+
   .protocol-density-slice {
     gap: 0.4rem;
   }
@@ -3158,41 +3419,42 @@ textarea {
     min-height: var(--ln-page-primary-action-height);
   }
 
-  .protocol-density-actionbar {
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .protocol-density-actionbar > span {
-    display: none;
-  }
-
   .document-editor-viewbar {
-    position: static;
+    top: var(--ln-app-topbar-height);
+  }
+
+  .document-editor-viewbar-inner {
+    gap: 0.3rem;
+    overflow: hidden;
   }
 
   .document-editor-tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    width: auto;
   }
+
+  .document-editor-tabs::-webkit-scrollbar { display: none; }
 
   .document-editor-zoom {
     display: none;
   }
 
   .document-editor-tab {
-    justify-content: center;
-    min-width: 0;
-    padding-inline: 0.3rem;
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    padding-inline: 0.4rem;
   }
 
   .document-editor-tab span {
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .protocol-save-label-full { display: none; }
+  .protocol-save-label-compact { display: inline; }
 
   .ln-wysiwyg-toolbar {
     flex-wrap: nowrap;
@@ -3380,6 +3642,7 @@ textarea {
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
 }
+
 
 .document-canvas-toolbar > a {
   font-size: var(--ln-wysiwyg-toolbar-font-size);
@@ -4070,11 +4333,36 @@ table :where(td) {
     top: var(--ln-document-toolbar-sticky-top);
   }
 
+
   .document-a4-paper {
     border-inline: 0;
     box-shadow: none;
     min-height: 0;
     padding: 0.85rem 0.75rem 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-motion-button,
+  .ui-motion-button:not(:disabled):hover,
+  .ui-motion-button:not(:disabled):active,
+  [data-ui-button],
+  [data-ui-button]:not(:disabled):hover,
+  [data-ui-button]:not(:disabled):active {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
+  .ln-button-loading-mark,
+  .ln-wysiwyg-loading::before,
+  .ln-inline-loading::before,
+  .typography-import-button[data-busy="true"]::before {
+    animation: none !important;
+  }
+
+  .interface-scale-options > label,
+  .interface-scale-options > label:hover {
+    transform: none !important;
   }
 }
 
@@ -4179,6 +4467,10 @@ table :where(td) {
   .document-editor-outline,
   .document-editor-context-rail {
     display: none !important;
+  }
+
+  .document-editor-document-stage {
+    min-width: 0 !important;
   }
 
   .document-editor-document-stage .document-canvas-paper-scroll {

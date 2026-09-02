@@ -48,8 +48,8 @@ async function assertDesktopPageHeaders(page) {
         height: node.getBoundingClientRect().height,
       };
     });
-    assert(metrics.titleFontSize >= 16.5 && metrics.titleFontSize <= 17.5, `${route} desktop title should use the shared compact 17px scale: ${metrics.titleFontSize}px.`);
-    if (metrics.actionFontSize !== null) assert(metrics.actionFontSize >= 11.5 && metrics.actionFontSize <= 12.5, `${route} desktop action labels should use the shared 12px scale: ${metrics.actionFontSize}px.`);
+    assert(metrics.titleFontSize >= 15.5 && metrics.titleFontSize <= 16.5, `${route} desktop title should use the shared compact 16px scale: ${metrics.titleFontSize}px.`);
+    if (metrics.actionFontSize !== null) assert(metrics.actionFontSize >= 11 && metrics.actionFontSize <= 12, `${route} desktop action labels should use the shared compact scale: ${metrics.actionFontSize}px.`);
     assert(metrics.height <= 88, `${route} desktop page header is too tall: ${metrics.height}px.`);
     await assertNoPageOverflow(page, `${route} desktop`);
   }
@@ -105,22 +105,27 @@ async function assertOperationalTypography(page) {
       cardTitle: Number.parseFloat(getComputedStyle(cardTitle).fontSize),
     };
   });
-  assert.equal(shellMetrics.body, 13, `Operational body copy should be 13px, got ${shellMetrics.body}px.`);
+  assert.equal(shellMetrics.body, 12.5, `Operational body copy should be 12.5px, got ${shellMetrics.body}px.`);
   assert.equal(shellMetrics.nav, 12, `Desktop navigation should be 12px, got ${shellMetrics.nav}px.`);
-  assert.equal(shellMetrics.search, 13, `Top search copy should be 13px, got ${shellMetrics.search}px.`);
-  assert.equal(shellMetrics.cardTitle, 13, `Card headings should be 13px, got ${shellMetrics.cardTitle}px.`);
+  assert.equal(shellMetrics.search, 12.5, `Top search copy should be 12.5px, got ${shellMetrics.search}px.`);
+  assert.equal(shellMetrics.cardTitle, 12.5, `Card headings should be 12.5px, got ${shellMetrics.cardTitle}px.`);
 
   await openRoute(page, "/projects");
   const tableMetrics = await page.evaluate(() => {
     const table = document.querySelector(".ln-data-table");
     const heading = table?.querySelector("thead");
+    const localSearch = document.querySelector("main input[type='search']");
     return {
       body: Number.parseFloat(getComputedStyle(table).fontSize),
       heading: Number.parseFloat(getComputedStyle(heading).fontSize),
+      localSearch: Number.parseFloat(getComputedStyle(localSearch).fontSize),
     };
   });
-  assert.equal(tableMetrics.body, 13, `Shared table copy should be 13px, got ${tableMetrics.body}px.`);
-  assert(tableMetrics.heading >= 11 && tableMetrics.heading <= 12, `Shared table headings should be 11–12px, got ${tableMetrics.heading}px.`);
+  assert.equal(tableMetrics.body, 11.5, `Shared table copy should be 11.5px, got ${tableMetrics.body}px.`);
+  assert.equal(tableMetrics.heading, 10.5, `Shared table headings should be 10.5px, got ${tableMetrics.heading}px.`);
+  assert.equal(tableMetrics.localSearch, 11.5, `Local collection search should be 11.5px, got ${tableMetrics.localSearch}px.`);
+  assert(shellMetrics.search > tableMetrics.localSearch, "The global search must remain visually above local collection search.");
+  assert(shellMetrics.nav > tableMetrics.body, "Navigation must remain visually above table records.");
 
   await openRoute(page, "/protocols");
   const identifierMetrics = await page.evaluate(() => {
@@ -151,8 +156,8 @@ async function assertOperationalTypography(page) {
       height: input.getBoundingClientRect().height,
     };
   });
-  assert.equal(formMetrics.field, 13, `Shared form fields should be 13px, got ${formMetrics.field}px.`);
-  assert.equal(formMetrics.label, 11, `Shared form labels should be 11px, got ${formMetrics.label}px.`);
+  assert.equal(formMetrics.field, 12, `Shared form fields should be 12px, got ${formMetrics.field}px.`);
+  assert.equal(formMetrics.label, 10.5, `Shared form labels should be 10.5px, got ${formMetrics.label}px.`);
   assert.equal(formMetrics.height, 40, `Field hit area must remain 40px, got ${formMetrics.height}px.`);
 
   await page.goto(`${baseUrl}/research-plans/new`, { waitUntil: "domcontentloaded" });
@@ -160,8 +165,34 @@ async function assertOperationalTypography(page) {
     button: Number.parseFloat(getComputedStyle(button).fontSize),
     buttonHeight: button.getBoundingClientRect().height,
   }));
-  assert.equal(largeButtonMetrics.button, 12, `Large shared buttons should be 12px, got ${largeButtonMetrics.button}px.`);
+  assert.equal(largeButtonMetrics.button, 11.5, `Large shared buttons should be 11.5px, got ${largeButtonMetrics.button}px.`);
   assert.equal(largeButtonMetrics.buttonHeight, 40, `Large button hit area must remain 40px, got ${largeButtonMetrics.buttonHeight}px.`);
+}
+
+async function assertInterfaceScaleSetting(page) {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openRoute(page, "/settings");
+  const standard = page.locator('.interface-scale-options label:has(input[value="standard"])');
+  await standard.click();
+  await page.waitForFunction(() => document.documentElement.dataset.labnestUiScale === "standard");
+  const stored = await page.evaluate(() => localStorage.getItem("labnest.ui-scale"));
+  assert.equal(stored, "standard", "Interface scale selection should persist in localStorage.");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.labnestUiScale), "standard", "Interface scale should survive reload without resetting.");
+  assert.equal(await page.evaluate(() => Number.parseFloat(getComputedStyle(document.body).fontSize)), 13, "Standard scale should restore the 13px interface body size.");
+  await page.locator('.interface-scale-options label:has(input[value="compact"])').click();
+  await page.waitForFunction(() => document.documentElement.dataset.labnestUiScale === "compact");
+}
+
+async function assertButtonMotion(page) {
+  await openRoute(page, "/projects");
+  const button = page.locator("main .ui-motion-button").first();
+  await button.waitFor();
+  const before = await button.evaluate((node) => getComputedStyle(node).transform);
+  await button.hover();
+  await page.waitForTimeout(180);
+  const after = await button.evaluate((node) => getComputedStyle(node).transform);
+  assert.notEqual(after, before, "Shared buttons should visibly lift on pointer hover.");
 }
 
 async function findSharedDocumentDetailRoute(page) {
@@ -207,7 +238,7 @@ async function assertSharedDocumentDensity(page) {
   assert(desktopMetrics.width >= 760 && desktopMetrics.width <= 798, `Shared document paper left its existing A4-constrained range: ${desktopMetrics.width}px.`);
   assert(desktopMetrics.copyLineHeightRatio >= 1.58 && desktopMetrics.copyLineHeightRatio <= 1.62, `Shared document copy should use 1.6 line height: ${desktopMetrics.copyLineHeightRatio}.`);
   assert.deepEqual(desktopMetrics.utilityFontSizes, [14, 24], `A4 Tailwind utility sizes must retain their document scale, got ${desktopMetrics.utilityFontSizes.join("/")}px.`);
-  assert.equal(desktopMetrics.workspaceUtilityFontSize, 11, `Screen-only document toolbar chrome should retain the compact UI scale, got ${desktopMetrics.workspaceUtilityFontSize}px.`);
+    assert.equal(desktopMetrics.workspaceUtilityFontSize, 10.5, `Screen-only document toolbar chrome should retain the compact UI scale, got ${desktopMetrics.workspaceUtilityFontSize}px.`);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}${detailHref}`, { waitUntil: "domcontentloaded" });
@@ -246,6 +277,8 @@ try {
   const context = await browser.newContext();
   const page = await context.newPage();
   await assertOperationalTypography(page);
+  await assertInterfaceScaleSetting(page);
+  await assertButtonMotion(page);
   await assertDesktopPageHeaders(page);
   await assertMobilePageHeaders(page);
   await assertSharedDocumentDensity(page);

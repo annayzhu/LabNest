@@ -64,6 +64,7 @@ export function ResearchPlanProtocolPicker({
           <label htmlFor={`${listboxId}-search`} className={formLabelClass}>{t("Add from Protocol library")}</label>
           <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-muted" />
           <input
+            type="search"
             id={`${listboxId}-search`}
             role="combobox"
             aria-autocomplete="list"

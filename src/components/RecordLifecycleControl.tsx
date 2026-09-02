@@ -124,7 +124,7 @@ export function RecordLifecycleControl({
                 {deleteState.error ? <ErrorMessage message={deleteState.error} /> : null}
                 <div className="flex justify-end gap-2 border-t border-hairline pt-4">
                   <Button type="button" disabled={pending} onClick={() => setOpen(false)}>{locale === "zh" ? "取消" : "Cancel"}</Button>
-                  <Button type="submit" variant="destructive" disabled={pending}><Trash2 className="h-4 w-4" aria-hidden />{deleting ? locale === "zh" ? "处理中…" : "Moving…" : locale === "zh" ? "移入回收站" : "Move to Recycle Bin"}</Button>
+                  <Button type="submit" variant="destructive" disabled={pending} aria-busy={deleting}><Trash2 className="h-4 w-4" aria-hidden />{deleting ? locale === "zh" ? "处理中…" : "Moving…" : locale === "zh" ? "移入回收站" : "Move to Recycle Bin"}</Button>
                 </div>
               </form>
             ) : null}
@@ -133,13 +133,13 @@ export function RecordLifecycleControl({
               {restoreAction && archived ? (
                 <form action={restoreFormAction}>
                   <input type="hidden" name="id" value={id} />
-                  <Button type="submit" disabled={pending}><RotateCcw className="h-4 w-4" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复记录" : "Restore record"}</Button>
+                  <Button type="submit" disabled={pending} aria-busy={restoring}><RotateCcw className="h-4 w-4" aria-hidden />{restoring ? locale === "zh" ? "恢复中…" : "Restoring…" : locale === "zh" ? "恢复记录" : "Restore record"}</Button>
                 </form>
               ) : null}
               {archiveAction && !archived ? (
                 <form action={archiveFormAction}>
                   <input type="hidden" name="id" value={id} />
-                  <Button type="submit" variant="primary" disabled={pending}><Archive className="h-4 w-4" aria-hidden />{archiving ? locale === "zh" ? "归档中…" : "Archiving…" : locale === "zh" ? "归档记录" : "Archive record"}</Button>
+                  <Button type="submit" variant="primary" disabled={pending} aria-busy={archiving}><Archive className="h-4 w-4" aria-hidden />{archiving ? locale === "zh" ? "归档中…" : "Archiving…" : locale === "zh" ? "归档记录" : "Archive record"}</Button>
                 </form>
               ) : null}
               {archived && editHref && !restoreAction ? <Link href={editHref} className="focus-ring inline-flex h-9 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-moss bg-moss px-3 text-[13px] text-warm">{locale === "zh" ? "修改状态" : "Change status"}</Link> : null}

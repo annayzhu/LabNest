@@ -28,7 +28,7 @@ export function ProtocolImportForm() {
       </label>
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       <div className="flex justify-end">
-        <Button type="submit" variant="primary" size="md" disabled={pending}>
+        <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>
           {pending ? "Reading document…" : "Import Protocol"}
         </Button>
       </div>

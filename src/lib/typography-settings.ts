@@ -246,16 +246,10 @@ export function applyTypographySettings(settings: TypographySettings, root: HTML
   window.localStorage.removeItem(legacyTypographyCssStorageKey);
 }
 
-export function validateCustomFontFile(file: Pick<File, "name" | "size" | "type">, locale: "zh" | "en" = "zh"): string | null {
+export function validateCustomFontFile(file: Pick<File, "name" | "size">, locale: "zh" | "en" = "zh"): string | null {
   const message = (zh: string, en: string) => locale === "zh" ? zh : en;
   const extension = file.name.split(".").pop()?.toLowerCase();
-  const allowedMimeTypes = new Set([
-    "font/woff2", "font/ttf", "font/otf", "font/sfnt",
-    "application/font-sfnt", "application/font-woff", "application/octet-stream",
-    "application/x-font-woff", "application/x-font-ttf", "application/x-font-truetype",
-    "application/x-font-otf", "application/x-font-opentype", "application/vnd.ms-opentype",
-  ]);
-  if (!extension || !["woff2", "ttf", "otf"].includes(extension) || (file.type && !allowedMimeTypes.has(file.type.toLowerCase()))) {
+  if (!extension || !["woff2", "ttf", "otf"].includes(extension)) {
     return message("请选择 WOFF2、TTF 或 OTF 字体文件。", "Choose a WOFF2, TTF, or OTF font file.");
   }
   if (file.size > maxCustomFontBytes) return message("单个字体文件不能超过 10 MB。", "A font file cannot exceed 10 MB.");

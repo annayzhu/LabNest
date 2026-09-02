@@ -1,7 +1,16 @@
 import { chromium } from "playwright";
+import { readFile } from "node:fs/promises";
 
 const baseUrl = process.env.LABNEST_E2E_BASE_URL ?? "http://127.0.0.1:3100";
-const fontFixture = "node_modules/next/dist/next-devtools/server/font/geist-latin.woff2";
+const ttfFixture = "node_modules/next/dist/compiled/@vercel/og/Geist-Regular.ttf";
+const woff2Fixture = "node_modules/next/dist/next-devtools/server/font/geist-latin.woff2";
+const fullMatrixRequired = process.env.LABNEST_E2E_REQUIRE_FULL_FONT_MATRIX === "1";
+const variableTtfFixture = process.env.LABNEST_E2E_VARIABLE_TTF;
+const otfFixture = process.env.LABNEST_E2E_OTF;
+// Release checks fail closed unless approved local fixtures cover variable TTF and OTF.
+if (fullMatrixRequired && (!variableTtfFixture || !otfFixture)) {
+  throw new Error("Full font matrix requires LABNEST_E2E_VARIABLE_TTF and LABNEST_E2E_OTF.");
+}
 const browser = await chromium.launch({ headless: true });
 
 try {
@@ -11,7 +20,7 @@ try {
   page.on("request", (request) => { if (request.isNavigationRequest()) navigationRequests += 1; });
   await page.getByRole("button", { name: "中文" }).click();
   await page.waitForFunction(() => document.documentElement.lang === "zh-CN" && document.documentElement.dataset.locale === "zh");
-  await page.getByRole("button", { name: "EN" }).click();
+  await page.getByRole("button", { name: "EN", exact: true }).click();
   await page.waitForFunction(() => document.documentElement.lang === "en" && document.documentElement.dataset.locale === "en");
   if (navigationRequests !== 0) throw new Error(`Language switching should not refresh the page; observed ${navigationRequests} navigation requests.`);
   const selector = (role) => page.locator(`[data-typography-role="${role}"]`);
@@ -61,7 +70,26 @@ try {
   if (!documentVariables.cjk.includes("LabNest CJK Songti")) throw new Error(`Chinese document font did not persist: ${documentVariables.cjk}`);
   if (!documentVariables.latin.includes("Arial")) throw new Error(`English document font did not persist: ${documentVariables.latin}`);
 
-  await page.locator("input[type=file][accept*=woff2]").setInputFiles(fontFixture);
+  const fontInput = page.locator("input[type=file][accept*=woff2]");
+  const transientFonts = [
+    { path: woff2Fixture, name: "Geist-Latin.woff2", mimeType: "application/x-font-woff2" },
+    // ponytail: keep licensed font binaries out of git; release checks supply these two paths when approved fixtures are available.
+    variableTtfFixture ? { path: variableTtfFixture, name: "Variable-Font.ttf", mimeType: "application/x-font-sfnt" } : null,
+    otfFixture ? { path: otfFixture, name: "OpenType-Font.otf", mimeType: "application/x-apple-font" } : null,
+  ].filter(Boolean);
+  for (const font of transientFonts) {
+    await fontInput.setInputFiles({ name: font.name, mimeType: font.mimeType, buffer: await readFile(font.path) });
+    await page.getByText(/was imported|已导入/).waitFor();
+    page.once("dialog", (dialog) => void dialog.accept());
+    await page.locator(".typography-custom-font-list button").last().click();
+    await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
+  }
+
+  await fontInput.setInputFiles({ name: "broken.otf", mimeType: "application/x-apple-font", buffer: Buffer.from("not a font") });
+  await page.getByText(/could not parse the font|无法解析这个字体/).waitFor();
+  if (await page.locator(".typography-custom-font-list li").count()) throw new Error("A font that failed browser parsing was persisted.");
+
+  await fontInput.setInputFiles({ name: "Geist-Regular.ttf", mimeType: "application/x-font-sfnt", buffer: await readFile(ttfFixture) });
   await page.getByText(/was imported|已导入/).waitFor();
   await selector("latinDocumentBody").click();
   const customOption = page.locator('.typography-font-menu [data-font-option^="custom:"]').last();
@@ -97,7 +125,7 @@ try {
   const mobileWidths = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
   if (mobileWidths.scroll > mobileWidths.client + 1) throw new Error(`Typography settings overflow on mobile: ${JSON.stringify(mobileWidths)}`);
 
-  console.log("Typography settings browser seam passed: independent CJK/Latin presets, import, apply, reload, delete, and fallback.");
+  console.log(`Typography settings ${fullMatrixRequired ? "release matrix" : "browser seam"} passed: independent CJK/Latin presets, import, apply, reload, delete, and fallback.`);
 } finally {
   await browser.close();
 }

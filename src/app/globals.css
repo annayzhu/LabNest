@@ -230,6 +230,22 @@
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.18rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.34rem; /* 工具条整体内边距。 */
+  --ln-shell-topbar-height: 3.3rem; /* 应用顶部搜索栏的占位高度，供页面内固定控件避让。 */
+  --ln-document-viewbar-stack-height: 2.4rem; /* 桌面端 Document、Metadata、Relevant items 标签栏占位高度。 */
+  --ln-document-toolbar-sticky-top: var(--ln-shell-topbar-height); /* 无标签栏页面的文档工具条固定位置。 */
+  --ln-document-workspace-toolbar-sticky-top: calc(var(--ln-shell-topbar-height) + var(--ln-document-viewbar-stack-height)); /* 连续文档编辑页工具条固定位置。 */
+  --ln-wysiwyg-toolbar-surface: color-mix(in srgb, var(--info-surface) 74%, var(--surface)); /* 顶部工具条冷色材质底色，与白色文档纸形成轻微层级。 */
+  --ln-wysiwyg-toolbar-border-color: color-mix(in srgb, var(--info) 24%, var(--hairline)); /* 工具条冷色描边，避免整条工具栏发灰。 */
+  --ln-wysiwyg-menu-trigger-height: 1.5rem; /* More、Insert 等文字菜单按钮单独缩小后的高度。 */
+  --ln-wysiwyg-menu-trigger-padding-x: 0.42rem; /* 文字菜单按钮左右内边距。 */
+  --ln-wysiwyg-menu-trigger-font-size: 11px; /* More、Insert、Table 等文字菜单按钮字号。 */
+  --ln-wysiwyg-more-surface: color-mix(in srgb, var(--pale-sand) 82%, var(--surface)); /* More 使用低饱和暖色，与冷色工具条形成撞色。 */
+  --ln-wysiwyg-more-border: color-mix(in srgb, var(--clay) 34%, var(--hairline)); /* More 暖色边线。 */
+  --ln-wysiwyg-more-text: var(--clay); /* More 暖色文字。 */
+  --ln-wysiwyg-insert-surface: var(--action); /* Insert 使用品牌深色，作为科研模块插入的主入口。 */
+  --ln-wysiwyg-insert-surface-hover: var(--action-hover); /* Insert 悬停与展开状态背景。 */
+  --ln-wysiwyg-insert-border: var(--action-hover); /* Insert 深色边线。 */
+  --ln-wysiwyg-insert-text: var(--surface); /* Insert 深色背景上的高对比文字和图标。 */
   --ln-wysiwyg-section-gap: 0.42rem; /* 连续文档大 section 之间距离。 */
   --ln-wysiwyg-section-heading-gap: 0.34rem; /* section 标题与正文距离。 */
   --ln-wysiwyg-paragraph-gap: 0.32rem; /* 连续文档段落、列表和表格之间距离。 */
@@ -1488,7 +1504,7 @@ textarea {
   justify-content: space-between;
   margin-bottom: 0.4rem;
   position: sticky;
-  top: 0.6rem;
+  top: var(--ln-shell-topbar-height);
   z-index: 28;
 }
 
@@ -1580,12 +1596,14 @@ textarea {
 
 .document-editor-document-panel {
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  overflow: visible;
 }
 
 .document-editor-document-stage {
   min-width: 0;
+}
+
+.document-editor-document-stage .document-canvas-paper-scroll {
   transform-origin: top left;
   zoom: var(--ln-document-view-scale, 1);
 }
@@ -2410,6 +2428,42 @@ textarea {
   cursor: pointer;
   gap: 0.2rem;
   min-width: auto;
+}
+
+.ln-wysiwyg-insert-menu > button:is(.ln-wysiwyg-more-menu-trigger, .ln-wysiwyg-insert-menu-trigger) {
+  font-size: var(--ln-wysiwyg-menu-trigger-font-size);
+  font-weight: 620;
+  height: var(--ln-wysiwyg-menu-trigger-height);
+  min-height: var(--ln-wysiwyg-menu-trigger-height);
+  padding-inline: var(--ln-wysiwyg-menu-trigger-padding-x);
+}
+
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-more-menu-trigger {
+  background: var(--ln-wysiwyg-more-surface);
+  border-color: var(--ln-wysiwyg-more-border);
+  color: var(--ln-wysiwyg-more-text);
+}
+
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-more-menu-trigger:hover,
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-more-menu-trigger[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--pale-sand) 66%, var(--clay));
+  color: var(--ink);
+}
+
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-insert-menu-trigger {
+  background: var(--ln-wysiwyg-insert-surface);
+  border-color: var(--ln-wysiwyg-insert-border);
+  color: var(--ln-wysiwyg-insert-text);
+}
+
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-insert-menu-trigger:hover,
+.ln-wysiwyg-insert-menu > button.ln-wysiwyg-insert-menu-trigger[aria-expanded="true"] {
+  background: var(--ln-wysiwyg-insert-surface-hover);
+  color: var(--ln-wysiwyg-insert-text);
+}
+
+.ln-wysiwyg-insert-menu > button:is(.ln-wysiwyg-more-menu-trigger, .ln-wysiwyg-insert-menu-trigger):active {
+  transform: scale(0.97);
 }
 
 .ln-wysiwyg-insert-popover {
@@ -3297,14 +3351,11 @@ textarea {
   padding: 12mm 14mm 14mm;
 }
 
-.entry-editor-document .document-canvas-toolbar {
-  top: 4.1rem;
-}
-
 .document-canvas-toolbar {
   align-items: center;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  border: 1px solid var(--hairline);
+  backdrop-filter: blur(18px) saturate(132%);
+  background: color-mix(in srgb, var(--ln-wysiwyg-toolbar-surface) 94%, transparent);
+  border: 1px solid var(--ln-wysiwyg-toolbar-border-color);
   border-bottom: 0;
   border-radius: var(--ln-radius-panel) var(--ln-radius-panel) 0 0;
   display: flex;
@@ -3315,8 +3366,19 @@ textarea {
   min-height: var(--ln-document-toolbar-height);
   padding: 0.22rem 0.35rem;
   position: sticky;
-  top: 0.75rem;
-  z-index: 25;
+  top: var(--ln-document-toolbar-sticky-top);
+  z-index: 29;
+}
+
+.document-editor-workspace .document-canvas-toolbar {
+  top: var(--ln-document-workspace-toolbar-sticky-top);
+}
+
+.document-canvas-paper-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .document-canvas-toolbar > a {
@@ -3913,10 +3975,6 @@ table :where(td) {
     gap: 0.55rem;
   }
 
-  .entry-editor-document .document-canvas-toolbar {
-    top: 3.75rem;
-  }
-
   .entry-editor-save-bar {
     bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
@@ -4005,7 +4063,11 @@ table :where(td) {
   .document-canvas-toolbar {
     border-inline: 0;
     border-radius: 0;
-    top: 0;
+    top: var(--ln-document-toolbar-sticky-top);
+  }
+
+  .document-editor-workspace .document-canvas-toolbar {
+    top: var(--ln-document-toolbar-sticky-top);
   }
 
   .document-a4-paper {
@@ -4119,9 +4181,12 @@ table :where(td) {
     display: none !important;
   }
 
-  .document-editor-document-stage {
-    min-width: 0 !important;
+  .document-editor-document-stage .document-canvas-paper-scroll {
     zoom: 1 !important;
+  }
+
+  .document-canvas-paper-scroll {
+    overflow: visible !important;
   }
 
   .document-a4-paper {

@@ -16,6 +16,7 @@ export function DocumentEditorWorkspace({
   metadata,
   relations,
   toolbar,
+  actions,
   outline = [],
   inspectorHostId,
   onActiveTabChange,
@@ -25,6 +26,7 @@ export function DocumentEditorWorkspace({
   metadata: ReactNode;
   relations: ReactNode;
   toolbar?: ReactNode;
+  actions?: ReactNode;
   outline?: DocumentOutlineItem[];
   inspectorHostId?: string;
   onActiveTabChange?: (tab: DocumentEditorWorkspaceTab) => void;
@@ -48,8 +50,8 @@ export function DocumentEditorWorkspace({
   const updateFitScale = useCallback(() => {
     const panelWidth = documentPanelRef.current?.clientWidth ?? 0;
     if (!panelWidth) return;
-    const availableWidth = Math.max(320, panelWidth);
-    setFitScale(Math.min(1.2, Math.max(0.72, availableWidth / A4_WIDTH_CSS_PX)));
+    const availableWidth = Math.max(240, panelWidth - 2);
+    setFitScale(Math.min(1, Math.max(0.4, availableWidth / A4_WIDTH_CSS_PX)));
   }, []);
 
   useEffect(() => {
@@ -84,10 +86,13 @@ export function DocumentEditorWorkspace({
             return <button key={tab.id} id={`document-editor-tab-${tab.id}`} type="button" className="focus-ring document-editor-tab" data-active={activeTab === tab.id ? "true" : undefined} aria-controls={`document-editor-panel-${tab.id}`} aria-selected={activeTab === tab.id} tabIndex={activeTab === tab.id ? 0 : -1} role="tab" onClick={() => selectTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)}><Icon aria-hidden /><span>{tab.label}</span></button>;
           })}
         </nav>
-        {activeTab === "document" ? <div className="document-editor-zoom" role="group" aria-label="Document view zoom">
-          {(["100", "110"] as const).map((mode) => <button key={mode} type="button" className="focus-ring" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
-          <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
-        </div> : null}
+        <div className="document-editor-viewbar-actions">
+          {activeTab === "document" ? <div className="document-editor-zoom" role="group" aria-label="Document view zoom">
+            {(["100", "110"] as const).map((mode) => <button key={mode} type="button" className="focus-ring" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
+            <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
+          </div> : null}
+          {actions}
+        </div>
       </div>
       {activeTab === "document" && toolbar ? <div className="document-editor-toolbar-row document-canvas-toolbar">{toolbar}</div> : null}
     </div>

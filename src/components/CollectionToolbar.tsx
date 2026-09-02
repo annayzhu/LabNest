@@ -65,10 +65,11 @@ export function CollectionToolbar({
             <span className="sr-only">Search</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
             <input
+              type="search"
               name="q"
               defaultValue={query ?? ""}
               placeholder={searchPlaceholder}
-              className="focus-ring h-[var(--ln-control-height-md)] w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm pl-9 pr-[var(--ln-control-padding-x-md)] text-[length:var(--ln-control-font-size-md)] text-ink placeholder:text-muted"
+              className="focus-ring h-[var(--ln-control-height-md)] w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm pl-9 pr-[var(--ln-control-padding-x-md)] text-[length:var(--ln-ui-local-search-font-size)] text-ink placeholder:text-muted"
             />
           </label>
           {filters.map((filter) => (

@@ -60,7 +60,7 @@ async function assertDesktopSlice(page, routes) {
       copyLineHeightRatio: documentCopy ? Number.parseFloat(getComputedStyle(documentCopy).lineHeight) / Number.parseFloat(getComputedStyle(documentCopy).fontSize) : 0,
     };
   });
-  assert(detailMetrics.titleSize >= 17 && detailMetrics.titleSize <= 20, `Protocol title is outside the 17–20px slice target: ${detailMetrics.titleSize}px.`);
+  assert(detailMetrics.titleSize >= 15.5 && detailMetrics.titleSize <= 16.5, `Protocol title is outside the compact 16px slice target: ${detailMetrics.titleSize}px.`);
   assert(detailMetrics.actionsHeight <= 40, `Protocol actions wrapped or became too tall: ${detailMetrics.actionsHeight}px.`);
   assert(detailMetrics.primaryActionHeight >= 36 && detailMetrics.primaryActionHeight <= 40, `Primary Protocol action must remain 36–40px: ${detailMetrics.primaryActionHeight}px.`);
   assert(detailMetrics.documentGap <= 48, `Protocol shell leaves too much space before the A4 page: ${detailMetrics.documentGap}px.`);
@@ -90,7 +90,7 @@ async function assertDesktopSlice(page, routes) {
     const viewbarInner = root.querySelector(".document-editor-viewbar-inner");
     const toolbar = root.querySelector(".document-canvas-toolbar");
     const paper = root.querySelector(".document-a4-paper");
-    const saveBar = root.querySelector(".protocol-density-actionbar");
+    const saveAction = root.querySelector(".protocol-workbench-save");
     const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar select");
     const contextRail = root.querySelector(".document-editor-context-rail");
     const editableBody = root.querySelector('.document-a4-paper [contenteditable="true"]');
@@ -104,8 +104,10 @@ async function assertDesktopSlice(page, routes) {
       toolbarLeft: toolbar?.getBoundingClientRect().left ?? 0,
       toolbarWidth: toolbar?.getBoundingClientRect().width ?? 0,
       paperLeft: paper?.getBoundingClientRect().left ?? 0,
-      saveBarHeight: saveBar?.getBoundingClientRect().height ?? 0,
-      saveActionHeight: saveBar?.querySelector("button")?.getBoundingClientRect().height ?? 0,
+      saveActionTop: saveAction?.getBoundingClientRect().top ?? 0,
+      saveActionHeight: saveAction?.querySelector("button")?.getBoundingClientRect().height ?? 0,
+      viewbarTop: viewbarInner?.getBoundingClientRect().top ?? 0,
+      viewbarBottom: viewbarInner?.getBoundingClientRect().bottom ?? 0,
       toolbarFontSize: toolbarControl ? Number.parseFloat(getComputedStyle(toolbarControl).fontSize) : 0,
       outlineVisible: Boolean(root.querySelector(".document-editor-outline")) && getComputedStyle(root.querySelector(".document-editor-outline")).display !== "none",
       contextHidden: Boolean(contextRail) && getComputedStyle(contextRail).display === "none",
@@ -119,17 +121,56 @@ async function assertDesktopSlice(page, routes) {
   assert(Math.abs(editMetrics.viewbarLeft - editMetrics.paperLeft) <= 1, `Editor tabs are not aligned with the A4 page: ${editMetrics.viewbarLeft}px vs ${editMetrics.paperLeft}px.`);
   assert(Math.abs(editMetrics.toolbarLeft - editMetrics.paperLeft) <= 1, `Editor toolbar is not aligned with the A4 page: ${editMetrics.toolbarLeft}px vs ${editMetrics.paperLeft}px.`);
   assert(Math.abs(editMetrics.viewbarWidth - editMetrics.toolbarWidth) <= 1, `Editor tabs and toolbar use different widths: ${editMetrics.viewbarWidth}px vs ${editMetrics.toolbarWidth}px.`);
-  assert(editMetrics.saveBarHeight > 0 && editMetrics.saveBarHeight <= 48, `Editor save action bar is missing or too tall: ${editMetrics.saveBarHeight}px.`);
-  assert(editMetrics.saveActionHeight >= 36 && editMetrics.saveActionHeight <= 40, `Primary save action must remain 36–40px: ${editMetrics.saveActionHeight}px.`);
+  assert(editMetrics.saveActionHeight >= 28 && editMetrics.saveActionHeight <= 32, `Top workbench save action should stay compact: ${editMetrics.saveActionHeight}px.`);
+  assert(editMetrics.saveActionTop >= editMetrics.viewbarTop - 1 && editMetrics.saveActionTop + editMetrics.saveActionHeight <= editMetrics.viewbarBottom + 1, "Save action is not contained in the sticky top workbench.");
   assert(editMetrics.toolbarFontSize >= 11.5 && editMetrics.toolbarFontSize <= 12.5, `Editor toolbar text is outside the compact readable 11.5–12.5px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
   assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
   assert(editMetrics.copyLineHeightRatio >= 1.58 && editMetrics.copyLineHeightRatio <= 1.62, `Protocol editor copy should use the requested 1.6 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
+  await page.getByRole("button", { name: "Fit" }).click();
+  const fitState = await editRoot.evaluate((root) => {
+    const panel = root.querySelector(".document-editor-document-panel");
+    const stage = root.querySelector(".document-editor-document-stage");
+    return {
+      panelWidth: panel.clientWidth,
+      panelScrollWidth: panel.scrollWidth,
+      scale: Number.parseFloat(getComputedStyle(stage).zoom),
+    };
+  });
+  assert(fitState.scale <= 1, `Fit must never enlarge the A4 page beyond 100%, got ${fitState.scale}.`);
+  assert(fitState.panelScrollWidth <= fitState.panelWidth + 2, `Fit still leaves horizontal document overflow: ${JSON.stringify(fitState)}.`);
   const documentTab = page.getByRole("tab", { name: "Document" });
   assert(await page.getByRole("tab", { name: "Relevant items" }).count() === 1, "The editor must expose the full Relevant items label.");
   await documentTab.focus();
   await documentTab.press("ArrowRight");
   await page.waitForFunction(() => document.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.includes("Metadata"));
+  const metadataAlignment = await editRoot.evaluate((root) => {
+    const viewbar = root.querySelector(".document-editor-viewbar-inner").getBoundingClientRect();
+    const panel = root.querySelector("#document-editor-panel-metadata").getBoundingClientRect();
+    const card = root.querySelector("#document-editor-panel-metadata .document-editor-properties-card");
+    return {
+      leftDelta: Math.abs(viewbar.left - panel.left),
+      widthDelta: Math.abs(viewbar.width - panel.width),
+      cardShadow: getComputedStyle(card).boxShadow,
+      cardTopRadius: getComputedStyle(card).borderTopLeftRadius,
+    };
+  });
+  assert(metadataAlignment.leftDelta <= 1 && metadataAlignment.widthDelta <= 1, `Metadata panel is not aligned to the shared A4 workbench: ${JSON.stringify(metadataAlignment)}.`);
+  assert(["none", "rgba(0, 0, 0, 0) 0px 0px 0px 0px"].includes(metadataAlignment.cardShadow), `Metadata panel should be flat, got shadow ${metadataAlignment.cardShadow}.`);
+  assert(metadataAlignment.cardTopRadius === "0px", "Metadata panel should connect directly to the tab surface without a nested top card radius.");
+  if (screenshotDir) {
+    await page.screenshot({ path: path.join(screenshotDir, "protocol-metadata-flat-desktop.png"), fullPage: true });
+  }
+  await page.getByRole("tab", { name: "Relevant items" }).click();
+  const relationsAlignment = await editRoot.evaluate((root) => {
+    const viewbar = root.querySelector(".document-editor-viewbar-inner").getBoundingClientRect();
+    const panel = root.querySelector("#document-editor-panel-relations").getBoundingClientRect();
+    return { leftDelta: Math.abs(viewbar.left - panel.left), widthDelta: Math.abs(viewbar.width - panel.width) };
+  });
+  assert(relationsAlignment.leftDelta <= 1 && relationsAlignment.widthDelta <= 1, `Relevant items panel is not aligned to the shared A4 workbench: ${JSON.stringify(relationsAlignment)}.`);
+  if (screenshotDir) {
+    await page.screenshot({ path: path.join(screenshotDir, "protocol-relevant-flat-desktop.png"), fullPage: true });
+  }
   await documentTab.click();
   const editableTableCell = page.locator(".ProseMirror table :is(th, td)").first();
   await editableTableCell.click();

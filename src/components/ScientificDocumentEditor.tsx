@@ -1,12 +1,12 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentPageHeader, type DocumentPageHeaderFact } from "@/components/DocumentPageHeader";
-import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ScientificWysiwygEditor } from "@/components/ScientificWysiwygEditor";
-import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
+import type { ScientificDocument } from "@/lib/scientific-document";
+import type { DocumentInsertProfile } from "@/lib/document-editor-workbench";
 import { scientificDocumentOutline } from "@/lib/document-outline";
 
 /**
@@ -25,7 +25,8 @@ export function ScientificDocumentEditor({
   headerFacts,
   leadingContent,
   hiddenSectionKeys = [],
-  allowedBlockTypes,
+  insertProfile,
+  checklist,
 }: {
   initialDocument: ScientificDocument;
   name?: string;
@@ -38,7 +39,8 @@ export function ScientificDocumentEditor({
   headerFacts?: DocumentPageHeaderFact[];
   leadingContent?: ReactNode;
   hiddenSectionKeys?: string[];
-  allowedBlockTypes?: readonly ScientificContentBlock["type"][];
+  insertProfile?: DocumentInsertProfile;
+  checklist?: boolean;
 }) {
   const [document, setDocument] = useState(initialDocument);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
@@ -47,9 +49,9 @@ export function ScientificDocumentEditor({
 
   return <>
     <input type="hidden" name={name} value={serialized} />
-    <DocumentOutlineWorkbench items={outline}>
-      <DocumentCanvas
+    <StandaloneDocumentEditorViewport
         label={title?.trim() || "Structured scientific document editor"}
+        outline={outline}
         toolbar={<><div id={toolbarHostId} className="ln-document-toolbar-host" /><DocumentPrintButton /></>}
       >
         <DocumentPageHeader
@@ -65,10 +67,10 @@ export function ScientificDocumentEditor({
           document={document}
           toolbarHostId={toolbarHostId}
           hiddenSectionKeys={hiddenSectionKeys}
-          allowedBlockTypes={allowedBlockTypes}
+          insertProfile={insertProfile}
+          checklist={checklist}
           onChange={setDocument}
         />
-      </DocumentCanvas>
-    </DocumentOutlineWorkbench>
+    </StandaloneDocumentEditorViewport>
   </>;
 }

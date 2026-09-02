@@ -39,4 +39,27 @@ describe("scientific Tiptap compatibility boundary", () => {
     const document: ScientificDocument = { schemaVersion: 1, sections: [{ key: "summary", title: "Summary", blocks: [] }] };
     expect(tiptapToScientificDocument(scientificDocumentToTiptap(document), document)).toEqual(document);
   });
+
+  it("round-trips a local font change without expanding it to the whole paragraph", () => {
+    const document: ScientificDocument = {
+      schemaVersion: 1,
+      sections: [{ key: "analysis", title: "Analysis", blocks: [{
+        id: "mixed-fonts",
+        type: "text",
+        text: 'Default <font data-labnest-family="arial">Arial **bold**</font> default',
+      }] }],
+    };
+    const json = scientificDocumentToTiptap(document);
+    const roundTrip = tiptapToScientificDocument(json, document);
+    expect(roundTrip.sections[0].blocks[0]).toEqual(expect.objectContaining({
+      id: "mixed-fonts",
+      type: "text",
+      text: 'Default <font data-labnest-family="arial">Arial </font><font data-labnest-family="arial">**bold**</font> default',
+    }));
+    const inline = json.content?.[0]?.content?.[0]?.content ?? [];
+    expect(inline[0]?.marks).toBeUndefined();
+    expect(inline[1]?.marks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "textStyle", attrs: expect.objectContaining({ fontFamily: "arial" }) }),
+    ]));
+  });
 });

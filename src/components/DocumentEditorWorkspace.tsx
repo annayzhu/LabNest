@@ -1,15 +1,13 @@
 "use client";
 
-import { FileText, Link2, Maximize2, SlidersHorizontal } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { FileText, Link2, SlidersHorizontal } from "lucide-react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { DocumentOutlinePanel } from "@/components/DocumentOutlinePanel";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
+import { DocumentZoomControls, useDocumentViewport } from "@/components/DocumentEditorViewport";
 
 export type DocumentEditorWorkspaceTab = "document" | "metadata" | "relations";
-type ZoomMode = "100" | "110" | "fit";
-
-const A4_WIDTH_CSS_PX = (210 / 25.4) * 96;
 
 export function DocumentEditorWorkspace({
   document,
@@ -33,9 +31,7 @@ export function DocumentEditorWorkspace({
   className?: string;
 }) {
   const [activeTab, setActiveTab] = useState<DocumentEditorWorkspaceTab>("document");
-  const [zoomMode, setZoomMode] = useState<ZoomMode>("100");
-  const [fitScale, setFitScale] = useState(1);
-  const documentPanelRef = useRef<HTMLElement>(null);
+  const { panelRef, stageRef, zoomMode, setZoomMode, updateFitScale, viewStyle } = useDocumentViewport();
   const tabs: Array<{ id: DocumentEditorWorkspaceTab; label: string; icon: typeof FileText }> = [
     { id: "document", label: "Document", icon: FileText },
     { id: "metadata", label: "Metadata", icon: SlidersHorizontal },
@@ -46,25 +42,6 @@ export function DocumentEditorWorkspace({
     setActiveTab(tab);
     onActiveTabChange?.(tab);
   }
-
-  const updateFitScale = useCallback(() => {
-    const panelWidth = documentPanelRef.current?.clientWidth ?? 0;
-    if (!panelWidth) return;
-    const availableWidth = Math.max(240, panelWidth - 2);
-    setFitScale(Math.min(1, Math.max(0.4, availableWidth / A4_WIDTH_CSS_PX)));
-  }, []);
-
-  useEffect(() => {
-    const panel = documentPanelRef.current;
-    if (!panel) return;
-    const observer = new ResizeObserver(updateFitScale);
-    observer.observe(panel);
-    updateFitScale();
-    return () => observer.disconnect();
-  }, [updateFitScale]);
-
-  const viewScale = zoomMode === "110" ? 1.1 : zoomMode === "fit" ? fitScale : 1;
-  const viewStyle = { "--ln-document-view-scale": String(viewScale) } as CSSProperties;
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -87,10 +64,7 @@ export function DocumentEditorWorkspace({
           })}
         </nav>
         <div className="document-editor-viewbar-actions">
-          {activeTab === "document" ? <div className="document-editor-zoom" role="group" aria-label="Document view zoom">
-            {(["100", "110"] as const).map((mode) => <button key={mode} type="button" className="focus-ring" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
-            <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
-          </div> : null}
+          {activeTab === "document" ? <DocumentZoomControls zoomMode={zoomMode} setZoomMode={setZoomMode} updateFitScale={updateFitScale} /> : null}
           {actions}
         </div>
       </div>
@@ -99,8 +73,8 @@ export function DocumentEditorWorkspace({
 
     <div className="document-editor-workbench" hidden={activeTab !== "document"}>
       <DocumentOutlinePanel items={outline} />
-      <section id="document-editor-panel-document" aria-labelledby="document-editor-tab-document" ref={documentPanelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
-        <div className="document-editor-document-stage">{document}</div>
+      <section id="document-editor-panel-document" aria-labelledby="document-editor-tab-document" ref={panelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
+        <div ref={stageRef} className="document-editor-document-stage">{document}</div>
       </section>
       {inspectorHostId ? <aside className="document-editor-context-rail" aria-label="Selected block settings" data-print-hidden><div id={inspectorHostId} /></aside> : null}
     </div>

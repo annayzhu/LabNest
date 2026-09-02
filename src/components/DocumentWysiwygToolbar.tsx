@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Children, cloneElement, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type ReactElement, type ReactNode, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Pencil, Plus, Quote, Redo2, Save, Strikethrough, Table2, Trash2, Underline, Undo2, Unlink } from "lucide-react";
@@ -9,7 +9,7 @@ import { RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { RICH_TEXT_FONT_SIZES_PT } from "@/lib/rich-text-font-size";
 import { RICH_TEXT_LINE_HEIGHTS } from "@/lib/rich-text-line-height";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
-import { richTextFontOptions } from "@/lib/rich-text-font-family";
+import { richTextFontFamilyCss, richTextFontOptions } from "@/lib/rich-text-font-family";
 import { editorNamedStylesStorageKey, editorStyleNameExists, parseEditorNamedStyles, upsertEditorNamedStyle, type EditorNamedStyle } from "@/lib/editor-named-styles";
 import { listCustomFonts, loadCustomFont } from "@/lib/custom-font-storage";
 import type { CustomFontRecord } from "@/lib/typography-settings";
@@ -49,35 +49,10 @@ function selectedFontFamily(editor: Editor): string {
   return families.size > 1 ? "__mixed__" : [...families][0] ?? "";
 }
 
-function FontFamilyCombobox({ editor, options, value }: { editor: Editor; options: Array<{ value: string; label: string }>; value: string }) {
-  const listId = useId();
-  const defaultLabel = "Times New Roman / 思源宋体";
-  const selectedLabel = value === "__mixed__" ? "Mixed fonts" : options.find((option) => option.value === value)?.label ?? defaultLabel;
-  const [editing, setEditing] = useState(false);
-  const [query, setQuery] = useState("");
-  const apply = () => {
-    const normalized = query.trim().toLocaleLowerCase();
-    const option = options.find((item) => item.label.toLocaleLowerCase() === normalized || item.value.toLocaleLowerCase() === normalized);
-    if (option) editor.chain().focus().setFontFamily(option.value).run();
-    else if (!normalized || normalized === defaultLabel.toLocaleLowerCase()) editor.chain().focus().unsetFontFamily().run();
-    setEditing(false);
-  };
-  return <><input
-    className={`${wysiwygToolbarSelectClass} ln-wysiwyg-font-select`}
-    aria-label="Font"
-    title="Search font family"
-    list={listId}
-    value={editing ? query : selectedLabel}
-    onFocus={() => { setEditing(true); setQuery(value === "__mixed__" ? "" : selectedLabel); }}
-    onChange={(event) => setQuery(event.target.value)}
-    onBlur={apply}
-    onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); apply(); } }}
-  /><datalist id={listId}>{options.map((option) => <option key={option.value} value={option.label}>{option.value}</option>)}</datalist></>;
-}
-
 function ToolbarMenu({
   id,
   label,
+  ariaLabel,
   icon,
   openMenu,
   setOpenMenu,
@@ -87,6 +62,7 @@ function ToolbarMenu({
 }: {
   id: string;
   label: string;
+  ariaLabel?: string;
   icon?: ReactNode;
   openMenu: string | null;
   setOpenMenu: Dispatch<SetStateAction<string | null>>;
@@ -98,8 +74,12 @@ function ToolbarMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
-  const [menuPosition, setMenuPosition] = useState<CSSProperties>();
+  const [menuPosition, setMenuPosition] = useState<CSSProperties>({ position: "fixed", visibility: "hidden", zIndex: 120 });
   const open = openMenu === id;
+  const assignMenuRef = useCallback((node: HTMLDivElement | null) => {
+    menuRef.current = node;
+    if (node) window.requestAnimationFrame(() => node.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus());
+  }, []);
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
     const menu = menuRef.current;
@@ -129,8 +109,13 @@ function ToolbarMenu({
       right: "auto",
       top,
       zIndex: 80,
+      visibility: "visible",
     });
   }, [id]);
+  useLayoutEffect(() => {
+    if (!open) return;
+    updateMenuPosition();
+  }, [open, updateMenuPosition]);
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => {
@@ -143,13 +128,11 @@ function ToolbarMenu({
         rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus();
       }
     };
-    const animationFrame = window.requestAnimationFrame(updateMenuPosition);
     globalThis.document.addEventListener("pointerdown", dismiss);
     globalThis.document.addEventListener("keydown", escape);
     globalThis.addEventListener("resize", updateMenuPosition);
     globalThis.addEventListener("scroll", updateMenuPosition, true);
     return () => {
-      window.cancelAnimationFrame(animationFrame);
       globalThis.document.removeEventListener("pointerdown", dismiss);
       globalThis.document.removeEventListener("keydown", escape);
       globalThis.removeEventListener("resize", updateMenuPosition);
@@ -157,9 +140,40 @@ function ToolbarMenu({
     };
   }, [open, setOpenMenu, updateMenuPosition]);
 
+  const menuItems = Children.map(children, (child) => isValidElement(child)
+    ? cloneElement(child as ReactElement<{ role?: string; tabIndex?: number }>, { role: "menuitem", tabIndex: -1 })
+    : child);
+
+  const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const buttons = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])];
+    if (!buttons.length) return;
+    const currentIndex = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
+    if (["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"].includes(event.key)) {
+      event.preventDefault();
+      const nextIndex = event.key === "Home" ? 0
+        : event.key === "End" ? buttons.length - 1
+          : (currentIndex + (["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[nextIndex]?.focus();
+      return;
+    }
+    if (event.key === "Tab") {
+      setOpenMenu(null);
+      const toolbar = rootRef.current?.closest('[role="toolbar"]');
+      const controls = [...(toolbar?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]') ?? [])];
+      const triggerIndex = controls.indexOf(triggerRef.current as HTMLButtonElement);
+      const nextIndex = triggerIndex + (event.shiftKey ? -1 : 1);
+      if (nextIndex >= 0 && nextIndex < controls.length) {
+        event.preventDefault();
+        controls[nextIndex]?.focus();
+      } else {
+        triggerRef.current?.focus();
+      }
+    }
+  };
+
   return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
-    <button ref={triggerRef} type="button" aria-haspopup="menu" aria-controls={menuId} aria-expanded={open} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
-    {open && typeof document !== "undefined" ? createPortal(<div ref={menuRef} id={menuId} role="menu" className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{children}</div>, document.body) : null}
+    <button ref={triggerRef} type="button" aria-haspopup="menu" aria-controls={menuId} aria-expanded={open} aria-label={ariaLabel ?? label} title={ariaLabel ?? label} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
+    {open && typeof document !== "undefined" ? createPortal(<div ref={assignMenuRef} id={menuId} role="menu" data-toolbar-menu={id} className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onKeyDown={handleMenuKeyDown} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{menuItems}</div>, document.body) : null}
   </div>;
 }
 
@@ -206,6 +220,9 @@ export function DocumentWysiwygToolbar({
     ...richTextFontOptions,
     ...customFonts.map((font) => ({ value: `labnest-custom-${font.id}`, label: font.name })),
   ];
+  const paragraphLabel = paragraphType === "heading2" ? "Heading 2" : paragraphType === "heading3" ? "Heading 3" : "Body";
+  const selectedFont = selectedFontFamily(editor);
+  const fontLabel = selectedFont === "__mixed__" ? "Mixed fonts" : fontOptions.find((option) => option.value === selectedFont)?.label ?? "Times New Roman / 思源宋体";
   const setLink = async () => {
     const current = editor.getAttributes("link").href as string | undefined;
     const href = await dialog.prompt({ title: "Insert link", inputLabel: "Link URL", defaultValue: current ?? "https://", confirmLabel: "Apply link" });
@@ -241,7 +258,7 @@ export function DocumentWysiwygToolbar({
       await dialog.alert({ title: "Style name already exists", description: "Choose a different name for this text style." });
       return;
     }
-    const id = `style-${crypto.randomUUID?.() ?? Date.now()}`;
+    const id = `style-${globalThis.crypto?.randomUUID?.() ?? `${new Date().toISOString()}-${namedStyles.length}`}`;
     const now = new Date().toISOString();
     persistNamedStyles(upsertEditorNamedStyle(namedStyles, {
       schemaVersion: 1,
@@ -271,21 +288,27 @@ export function DocumentWysiwygToolbar({
   };
 
   return <div className={cn("ln-wysiwyg-toolbar", className)} role="toolbar" aria-label={ariaLabel}>
-    <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-style-select`} value={paragraphType} onChange={(event) => {
-      if (event.target.value.startsWith("named:")) {
-        const style = namedStyles.find((item) => item.id === event.target.value.slice(6));
-        if (style) applyNamedStyle(style);
-      } else if (event.target.value === "heading2") editor.chain().focus().setHeading({ level: 2 }).run();
-      else if (event.target.value === "heading3") editor.chain().focus().setHeading({ level: 3 }).run();
-      else editor.chain().focus().setParagraph().run();
-    }} aria-label="Paragraph style"><option value="paragraph">Body</option><option value="heading2">Heading 2</option><option value="heading3">Heading 3</option>{namedStyles.length ? <optgroup label="My styles">{namedStyles.map((style) => <option key={style.id} value={`named:${style.id}`}>{style.name}</option>)}</optgroup> : null}</select>
+    <ToolbarMenu id="style" label={paragraphLabel} ariaLabel="Paragraph style" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-style-select">
+      <button type="button" data-active={paragraphType === "paragraph" || undefined} onClick={() => editor.chain().focus().setParagraph().run()}>Body</button>
+      <button type="button" data-active={paragraphType === "heading2" || undefined} onClick={() => editor.chain().focus().setHeading({ level: 2 }).run()}>Heading 2</button>
+      <button type="button" data-active={paragraphType === "heading3" || undefined} onClick={() => editor.chain().focus().setHeading({ level: 3 }).run()}>Heading 3</button>
+      {namedStyles.map((style) => <button key={style.id} type="button" onClick={() => applyNamedStyle(style)}>{style.name}</button>)}
+    </ToolbarMenu>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
     <ToolbarButton editor={editor} label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><Bold aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}><Underline aria-hidden /></ToolbarButton>
-    <FontFamilyCombobox editor={editor} options={fontOptions} value={selectedFontFamily(editor)} />
-    <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-size-select`} value={textStyle.fontSize ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setFontSize(event.target.value).run() : editor.chain().focus().unsetFontSize().run()} aria-label="Font size"><option value="">Size</option>{RICH_TEXT_FONT_SIZES_PT.map((size) => <option key={size} value={`${size}pt`}>{size}</option>)}</select>
-    <select className={`${wysiwygToolbarSelectClass} ln-wysiwyg-line-height-select`} value={textStyle.lineHeight ?? ""} onChange={(event) => event.target.value ? editor.chain().focus().setLineHeight(event.target.value).run() : editor.chain().focus().unsetLineHeight().run()} aria-label="Line spacing"><option value="">1.6×</option>{RICH_TEXT_LINE_HEIGHTS.map((height) => <option key={height} value={String(height)}>{height}×</option>)}</select>
+    <ToolbarMenu id="font" label={fontLabel} ariaLabel="Font" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-font-menu" triggerClassName="ln-wysiwyg-font-select">
+      <button type="button" data-active={!selectedFont || undefined} onClick={() => editor.chain().focus().unsetFontFamily().run()}>Document default</button>
+      {fontOptions.map((option) => <button key={option.value} type="button" data-active={selectedFont === option.value || undefined} style={{ fontFamily: richTextFontFamilyCss(option.value) }} onClick={() => editor.chain().focus().setFontFamily(option.value).run()}>{option.label}</button>)}
+    </ToolbarMenu>
+    <ToolbarMenu id="size" label={textStyle.fontSize?.replace("pt", " pt") ?? "Size"} ariaLabel="Font size" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-size-select">
+      <button type="button" data-active={!textStyle.fontSize || undefined} onClick={() => editor.chain().focus().unsetFontSize().run()}>Default</button>
+      {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={textStyle.fontSize === `${size}pt` || undefined} onClick={() => editor.chain().focus().setFontSize(`${size}pt`).run()}>{size} pt</button>)}
+    </ToolbarMenu>
+    <ToolbarMenu id="spacing" label={`${textStyle.lineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
+      {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(textStyle.lineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setLineHeight(String(height)).run()}>{height}×</button>)}
+    </ToolbarMenu>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
     <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><List aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>

@@ -1,12 +1,21 @@
 import type { ReactNode } from "react";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken } from "@/lib/rich-text-color";
-import { parseRichTextFontFamilyLine, richTextFontFamilyCss } from "@/lib/rich-text-font-family";
+import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamilyLine, richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine } from "@/lib/rich-text-line-height";
 
 const inlinePattern = new RegExp(`(${LABNEST_FONT_SIZE_TOKEN_SOURCE}|${LABNEST_COLOR_TOKEN_SOURCE}|\\*\\*[^*\\n]+\\*\\*|~~[^~\\n]+~~|\\+\\+[^+\\n]+\\+\\+|\`[^\`\\n]+\`|\\*[^*\\n]+\\*|\\[[^\\]\\n]+\\]\\(https?:\\/\\/[^)\\n]+\\))`, "g");
 
 function inlineContent(text: string): ReactNode[] {
+  const fontParts = text.split(new RegExp(`(${LABNEST_FONT_FAMILY_TOKEN_SOURCE})`, "g")).filter(Boolean);
+  if (fontParts.length > 1 || parseLabNestFontFamilyToken(fontParts[0])) {
+    return fontParts.flatMap((part, index) => {
+      const token = parseLabNestFontFamilyToken(part);
+      return token
+        ? <span key={`font-${index}`} data-labnest-font-family={token.fontFamily} style={{ fontFamily: richTextFontFamilyCss(token.fontFamily) }}>{inlineContent(token.content)}</span>
+        : inlineContent(part);
+    });
+  }
   return text.split(inlinePattern).filter(Boolean).map((part, index) => {
     const key = `${index}-${part.slice(0, 8)}`;
     const sized = parseLabNestFontSizeToken(part);

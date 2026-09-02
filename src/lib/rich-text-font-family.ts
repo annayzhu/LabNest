@@ -1,7 +1,8 @@
+import { documentFontCatalog } from "@/lib/font-catalog";
+
 export const RICH_TEXT_FONT_FAMILIES = [
   "sans", "serif", "mono",
-  "source-han-sans", "pingfang", "system-sans", "source-han-serif", "songti", "simsun",
-  "arial", "times-new-roman", "courier-new",
+  ...documentFontCatalog.map((font) => font.id),
 ] as const;
 
 export type BuiltInRichTextFontFamily = (typeof RICH_TEXT_FONT_FAMILIES)[number];
@@ -10,27 +11,12 @@ export type RichTextFontFamily = BuiltInRichTextFontFamily | `labnest-custom-${s
 export const DEFAULT_RICH_TEXT_FONT_FAMILY: RichTextFontFamily = "sans";
 
 export const richTextFontOptions: ReadonlyArray<{ value: RichTextFontFamily; label: string }> = [
-  { value: "source-han-sans", label: "Source Han Sans / 思源黑体" },
-  { value: "source-han-serif", label: "Source Han Serif / 思源宋体" },
-  { value: "pingfang", label: "PingFang SC / 苹方" },
-  { value: "system-sans", label: "System Sans / 系统黑体" },
-  { value: "songti", label: "Songti SC / 华文宋体" },
-  { value: "simsun", label: "SimSun / 中易宋体" },
-  { value: "arial", label: "Arial" },
-  { value: "times-new-roman", label: "Times New Roman" },
-  { value: "courier-new", label: "Courier New" },
+  ...documentFontCatalog.map((font) => ({ value: font.id, label: font.name === font.nameEn ? font.name : `${font.nameEn} / ${font.name}` })),
 ];
 
 const richTextFontCss: Partial<Record<BuiltInRichTextFontFamily, string>> = {
   sans: "var(--font-ui)", serif: "var(--font-editorial)", mono: "var(--font-data)",
-  "source-han-sans": '"LabNest CJK Source Han Sans", sans-serif',
-  "source-han-serif": '"LabNest CJK Source Han Serif", serif',
-  pingfang: '"LabNest CJK PingFang", sans-serif',
-  "system-sans": '"LabNest CJK System Sans", sans-serif',
-  songti: '"LabNest CJK Songti", serif', simsun: '"LabNest CJK SimSun", serif',
-  arial: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
-  "times-new-roman": '"Times New Roman", Times, serif',
-  "courier-new": '"Courier New", Courier, monospace',
+  ...Object.fromEntries(documentFontCatalog.map((font) => [font.id, font.family])),
 };
 
 export function richTextFontFamilyCss(value: RichTextFontFamily | string | undefined) {
@@ -39,6 +25,7 @@ export function richTextFontFamilyCss(value: RichTextFontFamily | string | undef
 }
 
 const FONT_FAMILY_VALUES_SOURCE = `(?:${RICH_TEXT_FONT_FAMILIES.join("|")}|labnest-custom-[a-zA-Z0-9-]+)`;
+export const LABNEST_FONT_FAMILY_TOKEN_SOURCE = `<font data-labnest-family="${FONT_FAMILY_VALUES_SOURCE}">[^\\n]*?<\\/font>`;
 
 export function parseRichTextFontFamily(value: string | null | undefined): RichTextFontFamily | undefined {
   return value && (RICH_TEXT_FONT_FAMILIES.includes(value as BuiltInRichTextFontFamily) || /^labnest-custom-[a-zA-Z0-9-]+$/.test(value))
@@ -58,8 +45,18 @@ export function parseRichTextFontFamilyLine(value: string) {
   return fontFamily && match ? { fontFamily, content: match[2] } : { content: value };
 }
 
+export function parseLabNestFontFamilyToken(value: string | undefined) {
+  if (!value) return undefined;
+  const match = value.match(new RegExp(`^<font data-labnest-family="(${FONT_FAMILY_VALUES_SOURCE})">([^\\n]*?)<\\/font>$`));
+  const fontFamily = parseRichTextFontFamily(match?.[1]);
+  return fontFamily && match?.[2] !== undefined ? { fontFamily, content: match[2] } : undefined;
+}
+
 export function stripLabNestFontFamilyMarkup(value: string) {
-  return value.replace(new RegExp(`<!--labnest-font-family:(?:${FONT_FAMILY_VALUES_SOURCE})-->`, "g"), "");
+  return value
+    .replace(new RegExp(`<!--labnest-font-family:(?:${FONT_FAMILY_VALUES_SOURCE})-->`, "g"), "")
+    .replace(new RegExp(`<font data-labnest-family="${FONT_FAMILY_VALUES_SOURCE}">`, "g"), "")
+    .replaceAll("</font>", "");
 }
 
 function selectedLeafBlocks(root: HTMLElement) {

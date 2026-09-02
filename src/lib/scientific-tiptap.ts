@@ -2,7 +2,7 @@ import type { JSONContent } from "@tiptap/core";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
-import { parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
+import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
@@ -27,6 +27,14 @@ function mergeMarks(base: TiptapMark[] | undefined, mark: TiptapMark): TiptapMar
 }
 
 function inlineMarkdownToTiptap(value: string, inheritedMarks?: TiptapMark[]): JSONContent[] | undefined {
+  const fontParts = value.split(new RegExp(`(${LABNEST_FONT_FAMILY_TOKEN_SOURCE})`, "g")).filter(Boolean);
+  if (fontParts.length > 1 || parseLabNestFontFamilyToken(fontParts[0])) {
+    const nodes = fontParts.flatMap((part) => {
+      const token = parseLabNestFontFamilyToken(part);
+      return inlineMarkdownToTiptap(token?.content ?? part, token ? mergeMarks(inheritedMarks, { type: "textStyle", attrs: { fontFamily: token.fontFamily } }) : inheritedMarks) ?? [];
+    });
+    return nodes.length ? nodes : undefined;
+  }
   const content = value.split(inlinePattern).filter(Boolean).flatMap((part): JSONContent[] => {
     const sized = parseLabNestFontSizeToken(part);
     if (sized) return inlineMarkdownToTiptap(sized.content, mergeMarks(inheritedMarks, { type: "textStyle", attrs: { fontSize: `${sized.size}pt` } })) ?? [];
@@ -53,6 +61,14 @@ function legacyAttrs(blockId: string, blockType: ScientificContentBlock["type"],
   };
 }
 
+function typographyMarks(lineHeight?: number, fontFamily?: string): TiptapMark[] | undefined {
+  const attrs = {
+    ...(lineHeight ? { lineHeight: String(lineHeight) } : {}),
+    ...(fontFamily ? { fontFamily } : {}),
+  };
+  return Object.keys(attrs).length ? [{ type: "textStyle", attrs }] : undefined;
+}
+
 function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   const nodes: JSONContent[] = [];
   const lines = value.replaceAll("\r\n", "\n").split("\n");
@@ -61,6 +77,7 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
     const line = parsedFontFamily.content;
     const attrs = legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily);
+    const inheritedMarks = typographyMarks(parsedLine.lineHeight, parsedFontFamily.fontFamily);
     const checklist = line.match(/^\s*-\s+\[([ xX])\]\s+(.*)$/);
     const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
     const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
@@ -74,7 +91,7 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
         items.push({
           type: "taskItem",
           attrs: { checked: match[1].toLowerCase() === "x" },
-          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[2]) }],
+          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[2], typographyMarks(nextLineHeight.lineHeight, nextFont.fontFamily)) }],
         });
         index += 1;
       }
@@ -89,7 +106,7 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
         const nextFont = parseRichTextFontFamilyLine(nextLineHeight.content);
         const match = ordered ? nextFont.content.match(/^\s*\d+\.\s+(.+)$/) : nextFont.content.match(/^\s*[-*+]\s+(.+)$/);
         if (!match) break;
-        items.push({ type: "listItem", content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[1]) }] });
+        items.push({ type: "listItem", content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[1], typographyMarks(nextLineHeight.lineHeight, nextFont.fontFamily)) }] });
         index += 1;
       }
       nodes.push({ type: ordered ? "orderedList" : "bulletList", attrs, content: items });
@@ -97,9 +114,9 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
     }
     const heading = line.match(/^(#{1,3})\s+(.+)$/);
     const quote = line.match(/^\s*>\s?(.*)$/);
-    if (heading) nodes.push({ type: "heading", attrs: { ...attrs, level: heading[1].length === 1 ? 2 : 3 }, content: inlineMarkdownToTiptap(heading[2]) });
-    else if (quote) nodes.push({ type: "blockquote", attrs, content: [{ type: "paragraph", attrs, content: inlineMarkdownToTiptap(quote[1]) }] });
-    else nodes.push({ type: "paragraph", attrs, content: inlineMarkdownToTiptap(line) });
+    if (heading) nodes.push({ type: "heading", attrs: { ...attrs, level: heading[1].length === 1 ? 2 : 3 }, content: inlineMarkdownToTiptap(heading[2], inheritedMarks) });
+    else if (quote) nodes.push({ type: "blockquote", attrs, content: [{ type: "paragraph", attrs, content: inlineMarkdownToTiptap(quote[1], inheritedMarks) }] });
+    else nodes.push({ type: "paragraph", attrs, content: inlineMarkdownToTiptap(line, inheritedMarks) });
     index += 1;
   }
   return nodes.length ? nodes : [{ type: "paragraph", attrs: legacyAttrs(blockId, "text") }];
@@ -164,6 +181,8 @@ function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
     const fontSize = textStyle?.attrs?.fontSize;
     if (typeof fontSize === "string" && [8, 9, 10, 11, 12, 14].includes(Number.parseFloat(fontSize))) value = `<span data-labnest-size="${Number.parseFloat(fontSize)}">${value}</span>`;
     if (parseRichTextColor(textStyle?.attrs?.color) === "risk") value = `<mark data-labnest-color="risk">${value}</mark>`;
+    const fontFamily = parseRichTextFontFamily(textStyle?.attrs?.fontFamily);
+    if (fontFamily) value = `<font data-labnest-family="${fontFamily}">${value}</font>`;
     return value;
   }).join("");
 }
@@ -172,7 +191,9 @@ function typographyPrefix(node: JSONContent) {
   const textStyle = node.content?.flatMap((item) => item.marks ?? []).find((mark) => mark.type === "textStyle");
   const lineHeightValue = node.attrs?.scientificLineHeight ?? textStyle?.attrs?.lineHeight;
   const lineHeight = [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeightValue)) ? Number(lineHeightValue) as 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2 : undefined;
-  const fontValue = node.attrs?.scientificFontFamily ?? textStyle?.attrs?.fontFamily;
+  // Paragraph-level families are a legacy compatibility path. New edits are
+  // persisted as inline marks so mixed-font paragraphs round-trip exactly.
+  const fontValue = node.attrs?.scientificFontFamily;
   const fontFamily = parseRichTextFontFamily(fontValue);
   return `${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
 }

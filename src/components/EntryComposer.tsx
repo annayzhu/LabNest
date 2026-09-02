@@ -15,9 +15,8 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
-import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass } from "@/components/forms";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
@@ -386,10 +385,10 @@ export function EntryComposer({
     <form onSubmit={submit} className="space-y-5">
       <DocumentEditorLayout className="entry-editor-layout" storageKey="labnest.entry.settings-open">
       <div className="entry-editor-main-column">
-      <DocumentOutlineWorkbench items={entryDocumentOutline}>
-      <DocumentCanvas
-        className="entry-editor-document"
+      <StandaloneDocumentEditorViewport
         label={fields.title || "Entry editor"}
+        outline={entryDocumentOutline}
+        className="entry-editor-document"
         toolbar={
           <>
             <div id={toolbarHostId} className="ln-document-toolbar-host" />
@@ -432,8 +431,7 @@ export function EntryComposer({
             toolbarHostId={toolbarHostId}
           />
         </div>
-      </DocumentCanvas>
-      </DocumentOutlineWorkbench>
+      </StandaloneDocumentEditorViewport>
 
       <section
         className={cn(

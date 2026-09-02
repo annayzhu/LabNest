@@ -35,8 +35,9 @@ export function RecycleBinActions({ id, identifier, title, associationsPreserved
       {restoreState.error ? <p role="alert" className="w-full text-right text-xs text-error">{restoreState.error}</p> : null}
 
       {open && !associationsPreserved ? (
-        <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget && !purging) setOpen(false); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
+        <div role="presentation" className="ln-modal-layer fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !purging) setOpen(false); }}>
+          <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
+          <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div><p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">{locale === "zh" ? "不可撤销" : "Irreversible"}</p><h2 id={`purge-${id}`} className="mt-1 font-serif text-xl font-medium text-ink">{locale === "zh" ? "从回收站永久删除？" : "Delete from the Recycle Bin forever?"}</h2></div>
               <button type="button" aria-label="Close permanent deletion dialog" disabled={purging} onClick={() => setOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>

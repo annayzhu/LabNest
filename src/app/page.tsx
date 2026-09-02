@@ -4,6 +4,7 @@ import { ArrowUpRight, Beaker, BookOpen, Calculator, Database, FlaskConical } fr
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
+import { StaggeredText } from "@/components/StaggeredText";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import {
@@ -20,25 +21,21 @@ const quickActions = [
     label: "Quick entry",
     href: "/entries/new?source=text",
     icon: BookOpen,
-    iconClass: "bg-info-surface text-info",
   },
   {
     label: "Experiment run mode",
     href: "/protocol-run",
     icon: FlaskConical,
-    iconClass: "bg-sage-surface text-moss",
   },
   {
     label: "New experiment result",
     href: "/results/new",
     icon: Database,
-    iconClass: "bg-stone text-graphite",
   },
   {
     label: "Calculator",
     href: "/tools/calculator",
     icon: Calculator,
-    iconClass: "bg-sage-surface text-moss",
   },
 ] as const;
 
@@ -147,13 +144,13 @@ export default async function OverviewPage({
                     <Link
                       key={action.href}
                       href={action.href}
-                      className="focus-ring group flex h-14 items-center gap-2.5 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/45 px-2.5 transition hover:border-sage hover:bg-sage-surface/35"
+                      className="ln-quick-action focus-ring group flex h-10 items-center gap-2 rounded-[var(--ln-radius-control-md)] border px-2"
                     >
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-md)] ${action.iconClass}`}>
-                        <Icon className="h-4 w-4" aria-hidden />
+                      <span className="ln-quick-action-icon flex h-5 w-5 shrink-0 items-center justify-center text-action">
+                        <Icon className="h-[15px] w-[15px]" strokeWidth={1.7} aria-hidden />
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{action.label}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-moss" aria-hidden />
+                      <StaggeredText text={action.label} trigger="hover" className="min-w-0 flex-1 truncate text-xs font-semibold text-ink" />
+                      <ArrowUpRight className="h-3 w-3 shrink-0 text-muted transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-action" aria-hidden />
                     </Link>
                   );
                 })}

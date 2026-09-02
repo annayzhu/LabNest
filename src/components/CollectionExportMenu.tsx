@@ -66,8 +66,8 @@ export function CollectionExportMenu({ filteredHref, exportPath }: { filteredHre
       {open ? (
         <div role="menu" className="absolute right-0 z-30 mt-2 w-72 overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-1.5 shadow-soft">
           {selectedIds.length ? (
-            <Link role="menuitem" href={selectedHref} onClick={() => setOpen(false)} className="focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-sage-surface/60">
-              <CheckSquare2 className="mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
+            <Link role="menuitem" href={selectedHref} onClick={() => setOpen(false)} className="ln-dropdown-motion-item focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-sage-surface/60">
+              <CheckSquare2 className="ln-dropdown-motion-icon mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
               <span><strong className="block text-sm text-ink">{locale === "zh" ? `导出已选 ${selectedIds.length} 项` : `Export ${selectedIds.length} selected`}</strong><span className="mt-0.5 block text-xs leading-5 text-muted">{locale === "zh" ? "只导出表格中已勾选的记录" : "Only the records checked in the table"}</span></span>
             </Link>
           ) : (
@@ -76,12 +76,12 @@ export function CollectionExportMenu({ filteredHref, exportPath }: { filteredHre
               <span><strong className="block text-sm text-ink">{locale === "zh" ? "导出已选项" : "Export selected"}</strong><span className="mt-0.5 block text-xs leading-5 text-muted">{locale === "zh" ? "请先勾选表格记录" : "Select records in the table first"}</span></span>
             </div>
           )}
-          <Link role="menuitem" href={filteredHref} onClick={() => setOpen(false)} className="focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-warm">
-            <ListFilter className="mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
+          <Link role="menuitem" href={filteredHref} onClick={() => setOpen(false)} className="ln-dropdown-motion-item focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-warm">
+            <ListFilter className="ln-dropdown-motion-icon mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
             <span><strong className="block text-sm text-ink">{locale === "zh" ? "导出当前筛选结果" : "Export filtered view"}</strong><span className="mt-0.5 block text-xs leading-5 text-muted">{locale === "zh" ? "保留当前搜索和筛选范围" : "Keep the current search and filters"}</span></span>
           </Link>
-          <Link role="menuitem" href={allHref} onClick={() => setOpen(false)} className="focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-warm">
-            <Rows3 className="mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
+          <Link role="menuitem" href={allHref} onClick={() => setOpen(false)} className="ln-dropdown-motion-item focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-warm">
+            <Rows3 className="ln-dropdown-motion-icon mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
             <span><strong className="block text-sm text-ink">{locale === "zh" ? "导出全部记录" : "Export all records"}</strong><span className="mt-0.5 block text-xs leading-5 text-muted">{locale === "zh" ? "忽略当前筛选条件" : "Ignore the current filters"}</span></span>
           </Link>
         </div>

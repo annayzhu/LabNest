@@ -156,11 +156,11 @@ export function CreateMenu() {
                       <Link
                         key={item.label}
                         href={item.href}
-                        className="focus-ring flex w-full items-center gap-2 rounded-[var(--ln-radius-control-lg)] px-2 py-2 text-left text-sm text-graphite transition hover:bg-sage-surface/70 hover:text-ink"
+                        className="ln-dropdown-motion-item focus-ring flex w-full items-center gap-2 rounded-[var(--ln-radius-control-lg)] px-2 py-2 text-left text-sm text-graphite transition hover:bg-sage-surface/70 hover:text-ink"
                         role="menuitem"
                         onClick={() => setOpen(false)}
                       >
-                        <Icon className="h-4 w-4 text-moss" aria-hidden />
+                        <Icon className="ln-dropdown-motion-icon h-4 w-4 text-moss" aria-hidden />
                         <span>{item.label}</span>
                       </Link>
                     );

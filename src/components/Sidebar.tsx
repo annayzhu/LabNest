@@ -79,9 +79,10 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "sticky top-0 z-50 hidden h-screen shrink-0 border-r border-hairline/80 bg-surface transition-[width,padding] duration-200 ease-out lg:block",
+        "sidebar-shell sticky top-0 z-50 hidden h-screen shrink-0 border-r border-hairline/80 bg-surface lg:block",
         collapsed ? "w-[72px] px-2" : "w-56 px-3",
       )}
+      data-collapsed={collapsed ? "true" : "false"}
     >
       <button
         type="button"
@@ -90,13 +91,12 @@ export function Sidebar() {
         aria-expanded={!collapsed}
         aria-controls="primary-sidebar-navigation"
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="focus-ring absolute -right-3 top-5 z-[60] flex h-6 w-6 items-center justify-center rounded-full border border-hairline bg-surface text-muted shadow-[0_2px_8px_rgba(56,62,86,0.08)] transition hover:border-sage hover:text-ink active:scale-[0.96]"
+        className="sidebar-toggle focus-ring absolute -right-3 top-5 z-[60] flex h-6 w-6 items-center justify-center rounded-full border border-hairline bg-surface text-muted shadow-[0_2px_8px_rgba(56,62,86,0.08)] hover:border-sage hover:text-ink active:scale-[0.96]"
       >
-        {collapsed ? (
-          <PanelLeftOpen className="h-3.5 w-3.5" aria-hidden />
-        ) : (
-          <PanelLeftClose className="h-3.5 w-3.5" aria-hidden />
-        )}
+        <span className="sidebar-toggle-icon-stage" aria-hidden>
+          <PanelLeftClose className="sidebar-toggle-icon sidebar-toggle-icon-close" />
+          <PanelLeftOpen className="sidebar-toggle-icon sidebar-toggle-icon-open" />
+        </span>
       </button>
 
       <div className="h-full overflow-y-auto py-4 [scrollbar-gutter:stable]">
@@ -234,14 +234,14 @@ export function MobileBottomNav() {
       </nav>
 
       {moreOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button type="button" aria-label="Close menu" onClick={() => closeMoreMenu(true)} className="absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
+        <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
+          <button type="button" aria-label="Close menu" onClick={() => closeMoreMenu(true)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
           <section
             id="mobile-more-navigation"
             role="dialog"
             aria-modal="true"
             aria-labelledby="mobile-more-navigation-title"
-            className="absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface px-4 pt-4 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface px-4 pt-4 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>

@@ -1,4 +1,5 @@
 import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ResultTemplateView } from "@/components/ResultTemplateView";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
@@ -63,20 +64,25 @@ export function ResultRecordDocument({
   const expectedArtifacts = normalizedTemplate?.artifacts ?? [];
   const hasFileIndex = datasets.length > 0 || attachments.length > 0 || expectedArtifacts.length > 0;
 
-  return <DocumentCanvas className="result-record-document" label={title}>
+  const outline = [
+    ...(normalizedTemplate ? [{ id: "section-result-template", label: "Result template" }] : []),
+    ...narrativeSections.map((section) => ({ id: `section-${section.key}`, label: section.title })),
+    ...(hasFileIndex ? [{ id: "section-result-files", label: "Result files" }] : []),
+  ];
+  const canvas = <DocumentCanvas className="result-record-document" label={title}>
     <header className="document-page-header">
       <h1 className="document-page-title font-serif font-medium leading-tight text-ink">{title}</h1>
       {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-[10px] text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
     </header>
 
-    {normalizedTemplate ? <ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields compactDocument /> : null}
+    {normalizedTemplate ? <section id="section-result-template"><ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields compactDocument /></section> : null}
 
-    {narrativeSections.map((section) => <section key={section.key} className="document-section">
+    {narrativeSections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section">
       <header><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header>
       <div>{section.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)}</div>
     </section>)}
 
-    {hasFileIndex ? <section className="document-section">
+    {hasFileIndex ? <section id="section-result-files" className="document-section">
       <header><h2 className="document-section-title font-serif font-medium text-ink">Result files</h2></header>
       <ul className="divide-y divide-hairline text-xs">
         {datasets.map((dataset) => <li key={dataset.id} className="grid gap-1 py-2 sm:grid-cols-[minmax(0,1fr)_auto]"><span><strong className="font-medium text-ink">{dataset.name}</strong><span className="ml-2 text-muted">{dataset.sourceFileName ?? dataset.storageMode.replaceAll("_", " ")}</span></span><span className="text-muted">table data · {dataset.validationStatus.replaceAll("_", " ")}</span></li>)}
@@ -85,4 +91,5 @@ export function ResultRecordDocument({
       </ul>
     </section> : null}
   </DocumentCanvas>;
+  return outline.length ? <DocumentOutlineWorkbench items={outline} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench> : canvas;
 }

@@ -231,14 +231,14 @@
   --ln-wysiwyg-toolbar-control-height: 1.7rem; /* 顶部格式工具条按钮、选择器统一高度。 */
   --ln-wysiwyg-toolbar-button-padding-x: 0.2rem; /* 纯图标和插入按钮左右内边距。 */
   --ln-wysiwyg-toolbar-select-padding-x: 0.34rem; /* 字体、字号、行距等选择器左右内边距。 */
-  --ln-wysiwyg-toolbar-font-size: 11.5px; /* 工具条选择器与文字按钮字号。 */
+  --ln-wysiwyg-toolbar-font-size: 10.5px; /* 工具条选择器与文字按钮字号。 */
   --ln-wysiwyg-toolbar-radius: 4px; /* 工具条控件圆角。 */
   --ln-wysiwyg-toolbar-gap: 0.08rem; /* 工具条相邻控件的间距。 */
   --ln-wysiwyg-toolbar-padding: 0.22rem; /* 工具条整体内边距。 */
-  --ln-wysiwyg-style-select-width: 5.5rem; /* 段落样式选择器宽度，需容纳用户命名样式。 */
-  --ln-wysiwyg-font-select-width: 9.4rem; /* 字体选择器宽度，完整显示具体字体名称。 */
-  --ln-wysiwyg-size-select-width: 3.6rem; /* 字号选择器宽度。 */
-  --ln-wysiwyg-line-height-select-width: 3.75rem; /* 行距选择器宽度。 */
+  --ln-wysiwyg-style-select-width: 4.8rem; /* 段落样式选择器宽度，需容纳用户命名样式。 */
+  --ln-wysiwyg-font-select-width: 8.6rem; /* 字体选择器宽度，完整显示具体字体名称。 */
+  --ln-wysiwyg-size-select-width: 3.15rem; /* 字号选择器宽度。 */
+  --ln-wysiwyg-line-height-select-width: 3.25rem; /* 行距选择器宽度。 */
   --ln-shell-topbar-height: 3.3rem; /* 应用顶部搜索栏的占位高度，供页面内固定控件避让。 */
   --ln-document-viewbar-stack-height: 2.4rem; /* 桌面端 Document、Metadata、Relevant items 标签栏占位高度。 */
   --ln-document-toolbar-sticky-top: var(--ln-shell-topbar-height); /* 无标签栏页面的文档工具条固定位置。 */
@@ -3042,7 +3042,9 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
 .ln-wysiwyg-insert-menu > button[aria-haspopup] {
   cursor: pointer;
+  font-size: var(--ln-wysiwyg-toolbar-font-size);
   gap: 0.2rem;
+  line-height: 1.2;
   min-width: auto;
 }
 
@@ -4124,10 +4126,53 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
 .document-page-facts dd {
   color: var(--graphite);
+  font-family: var(--font-document-body);
   font-size: 8.5pt;
   line-height: 1.25;
   margin-top: 0.18rem;
   overflow-wrap: anywhere;
+}
+
+/* Read-only document pages keep their metadata visible beside the paper.
+   Editor drawers use a separate class so they cannot hide preview metadata. */
+.document-preview-layout {
+  align-items: start;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.document-preview-sidebar {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.document-preview-main { min-width: 0; }
+
+.document-preview-workbench .document-editor-document-stage,
+.document-preview-workbench .document-editor-document-stage > .document-workspace,
+.document-preview-workbench .document-editor-document-stage .document-canvas-paper-scroll,
+.document-preview-workbench .document-editor-document-stage .document-a4-paper {
+  max-width: 210mm;
+  width: 100%;
+}
+
+.document-preview-workbench [id^="section-"],
+.document-preview-workbench #entry-preview-content {
+  scroll-margin-top: calc(var(--ln-app-topbar-height) + 0.75rem);
+}
+
+@media (min-width: 1280px) {
+  .document-preview-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem);
+  }
+
+  .document-preview-sidebar {
+    position: sticky;
+    top: calc(var(--ln-app-topbar-height) + 0.75rem);
+  }
 }
 
 .document-premise-label {
@@ -4814,15 +4859,30 @@ table :where(td) {
   justify-content: space-between;
 }
 
-.document-editor-toolbar-format { flex: 1 1 auto; min-width: 0; }
+.document-editor-toolbar-format { align-items: center; display: flex; flex: 1 1 auto; gap: 0.3rem; min-width: 0; }
+.document-editor-toolbar-format > button { flex-shrink: 0; }
 .document-editor-toolbar-format .ln-wysiwyg-toolbar-sticky { margin: 0; }
-.document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: wrap; padding: 0; }
+.document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: nowrap; padding: 0; }
 
 .document-editor-layout,
 .document-editor-layout[data-settings-open="true"] {
   display: block;
   gap: 0;
-  padding-top: 2.35rem;
+  padding-top: 0;
+}
+
+.document-editor-layout-tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  height: var(--ln-document-viewbar-height);
+  position: sticky;
+  top: var(--ln-app-topbar-height);
+  z-index: 31;
+}
+
+.document-editor-layout .standalone-document-editor-toolbar {
+  top: calc(var(--ln-app-topbar-height) + var(--ln-document-viewbar-height));
 }
 
 .document-editor-sidebar,
@@ -4957,7 +5017,17 @@ table :where(td) {
   .document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: nowrap; }
 }
 
+@media (min-width: 761px) {
+  .ln-document-toolbar-host .ln-wysiwyg-toolbar { flex-wrap: nowrap; }
+  .standalone-document-editor-toolbar { overflow: visible; }
+}
+
 @media (min-width: 1024px) {
+  .document-editor-layout-tabs {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap));
+  }
+
   .standalone-document-editor-toolbar {
     margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
     margin-right: 0;
@@ -4976,6 +5046,9 @@ table :where(td) {
   .document-context-toggle span { display: none; }
   .standalone-document-editor-toolbar { align-items: flex-start; flex-wrap: wrap; }
   .document-editor-toolbar-format { flex-basis: 100%; order: 2; }
+  .document-editor-toolbar-format { flex-wrap: wrap; }
+  .document-editor-toolbar-format .ln-document-toolbar-host { flex-basis: 100%; }
+  .document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5025,6 +5098,8 @@ table :where(td) {
   }
 
   .app-shell-main > :has(.document-print-root) > :not(:has(.document-print-root)),
+  .document-preview-layout > .document-preview-sidebar,
+  .document-preview-main:has(.document-print-root) > :not(.document-print-root):not(.document-editor-workbench),
   .document-editor-layout:has(.document-print-root) > :not(.document-editor-main):not(:has(.document-print-root)),
   .document-editor-main:has(.document-print-root) > :not(.document-print-root):not(.document-editor-workbench) {
     display: none !important;
@@ -5036,6 +5111,9 @@ table :where(td) {
   }
 
   .app-shell-main > :has(.document-print-root),
+  .document-preview-layout,
+  .document-preview-main,
+  .document-editor-workbench,
   .document-editor-layout:has(.document-print-root),
   .document-editor-main:has(.document-print-root) {
     display: block !important;
@@ -5069,6 +5147,7 @@ table :where(td) {
   }
 
   .document-workspace,
+  .document-preview-main,
   .document-editor-main,
   .entry-editor-document {
     max-width: 100% !important;

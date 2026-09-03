@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ControlKeyInformationForm } from "@/components/ControlKeyInformationForm";
 import { PageHeader } from "@/components/PageHeader";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
@@ -49,11 +50,11 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
   const document = normalizeResearchPlanDocument(plan.contentJson, plan.design);
   return (
     <AppShell><div className="space-y-6">
-      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={recycledKeys.has(`research_plan:${plan.id}`) ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><RecordLifecycleControl id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></>} />
+      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={recycledKeys.has(`research_plan:${plan.id}`) ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <><DocumentPrintButton showLabel /><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><RecordLifecycleControl id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></>} />
       {recycledKeys.has(`research_plan:${plan.id}`) ? <RecycleBinWarning kind="self" label="Research Plan" labelZh="研究方案" /> : null}
       {recycledRecords.some((row) => row.targetType !== "research_plan") ? <RecycleBinWarning label="record" labelZh="记录" /> : null}
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
-        <div className="order-2 min-w-0 space-y-5 xl:order-1">
+      <div className="document-preview-layout">
+        <div className="document-preview-main space-y-5">
           <ScientificDocumentView document={document} showEmptySections title={plan.title} identifier={plan.code} subtitle={plan.project.name} leadingContent={<ResearchPlanPremiseView objective={plan.objective} hypothesis={plan.hypothesis} rationale={plan.rationale} />} />
           {plan.results.length ? <Card><CardHeader title="Recent Results" eyebrow="Evidence produced by this plan" /><CardBody><DataTable rows={plan.results} getRowKey={(row) => row.id} columns={[
             { key: "result", header: "Result", render: (row) => <div className="flex flex-wrap items-center gap-2"><Link href={`/results/${row.id}`} className="font-semibold text-moss hover:underline">{row.title}</Link>{recycledKeys.has(`result:${row.id}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div> },
@@ -62,7 +63,7 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
             { key: "record", header: "Record", render: (row) => <StatusPill status={row.recordStatus} /> },
           ]} /></CardBody></Card> : null}
         </div>
-        <aside className="order-1 space-y-5 xl:order-2">
+        <aside className="document-preview-sidebar">
           <Card><CardHeader title="Plan control" eyebrow="Compact source map" action={<StatusPill status={plan.status} />} /><CardBody className="space-y-4">
             <Control label="Project"><Link href={`/projects/${plan.projectId}`} className="text-moss hover:underline">{plan.project.name}</Link></Control>
             {!recycledKeys.has(`research_plan:${plan.id}`) ? <ControlKeyInformationForm id={plan.id} initialValue={plan.keyInformation} scope="research_plan" action={updateResearchPlanKeyInformation} /> : null}

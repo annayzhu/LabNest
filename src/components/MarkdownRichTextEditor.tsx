@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { CompactRichTextTiptapEditor } from "@/components/CompactRichTextTiptapEditor";
+import type { WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { markdownRichTextToTiptap, tiptapToMarkdownRichText } from "@/lib/scientific-tiptap";
 
 /** Compatibility adapter for legacy fields that still persist LabNest Markdown. */
@@ -12,6 +13,7 @@ export function MarkdownRichTextEditor({
   minHeightClass = "min-h-48",
   autoFocus = false,
   toolbarHostId,
+  insertActions,
   className,
 }: {
   value: string;
@@ -20,6 +22,7 @@ export function MarkdownRichTextEditor({
   minHeightClass?: string;
   autoFocus?: boolean;
   toolbarHostId?: string;
+  insertActions?: WysiwygInsertAction[];
   className?: string;
 }) {
   const content = useMemo(() => markdownRichTextToTiptap(value), [value]);
@@ -30,6 +33,7 @@ export function MarkdownRichTextEditor({
     minHeightClass={minHeightClass}
     autoFocus={autoFocus}
     toolbarHostId={toolbarHostId}
+    insertActions={insertActions}
     className={className}
   />;
 }

@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
 import { ProtocolExportMenu } from "@/components/ProtocolExportMenu";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
@@ -106,6 +107,7 @@ export default async function ProtocolDetailPage({
           description={protocol.englishTitle ?? protocol.description ?? undefined}
           actions={
             recycleEntry ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <>
+              <DocumentPrintButton />
               <Link href={editHref} className={primaryButton}><PencilLine className="h-4 w-4" aria-hidden />Edit Protocol</Link>
               {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={secondaryButton}>Use in experiment</Link> : <Link href={editHref} className={secondaryButton}>Link Research Plan</Link>}
               {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
@@ -117,12 +119,12 @@ export default async function ProtocolDetailPage({
 
         {recycleEntry ? <RecycleBinWarning kind="self" label="Protocol" labelZh="实验规程" /> : null}
 
-        <div className="document-editor-layout">
-          <main className="document-editor-main">
+        <div className="document-preview-layout">
+          <main className="document-preview-main">
             <ProtocolDocumentView document={document} title={protocol.canonicalTitle ?? protocol.title} identifier={protocol.humanCode} version={version.displayVersion} />
           </main>
 
-          <aside className="document-editor-sidebar" aria-label="Protocol controls and history">
+          <aside className="document-preview-sidebar" aria-label="Protocol controls and history">
             <Card>
               <CardHeader title="Protocol control" eyebrow="Identity and provenance" />
               <CardBody className="grid gap-4 sm:grid-cols-2">

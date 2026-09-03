@@ -16,10 +16,15 @@ const entryMutationSchema = entrySchema.omit({ body: true }).extend({
   protocolVersionId: z.string().trim().optional(),
   experimentTitle: z.string().trim().optional(),
   experimentStatus: z.enum(entryExperimentStatuses).default("running"),
+  createInitialResult: z.boolean().default(false),
   resultTitle: z.string().trim().optional(),
   resultType: z.string().trim().optional(),
   resultTextValue: z.string().trim().optional(),
   resultNotes: z.string().trim().optional(),
+}).superRefine((value, context) => {
+  if (value.createInitialResult && !value.protocolVersionId) {
+    context.addIssue({ code: "custom", path: ["protocolVersionId"], message: "Choose a Protocol version before creating an initial Result." });
+  }
 });
 
 export type EntryMutationInput = z.infer<typeof entryMutationSchema> & { body: string };
@@ -43,6 +48,7 @@ export function parseEntryMutationFormData(formData: FormData): EntryMutationInp
     protocolVersionId: optionalString(formData.get("protocolVersionId")),
     experimentTitle: optionalString(formData.get("experimentTitle")),
     experimentStatus: formData.get("experimentStatus") || "running",
+    createInitialResult: formData.get("createInitialResult") === "true",
     resultTitle: optionalString(formData.get("resultTitle")),
     resultType: optionalString(formData.get("resultType")),
     resultTextValue: optionalString(formData.get("resultTextValue")),

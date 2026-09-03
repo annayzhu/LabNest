@@ -63,12 +63,12 @@ export function ResearchPlanForm({
   return (
     <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
-      <DocumentEditorLayout storageKey="labnest.research-plan.settings-open">
+      <DocumentEditorLayout>
         <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
           { label: "Project", value: project?.name ?? "Not selected" },
           { label: "Status", value: status.replaceAll("_", " ") },
         ]} leadingContent={<div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>} /></div>
-        <aside className="document-editor-sidebar" aria-label="Research Plan information">
+        <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Research Plan metadata">
           <Card>
             <CardHeader title="Scientific premise" eyebrow="Objective, hypothesis, and rationale" />
             <CardBody><ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} /></CardBody>

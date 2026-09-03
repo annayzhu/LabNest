@@ -177,23 +177,14 @@ async function assertSharedDocumentShell(page, route, titleName) {
   await shell.getByRole("tab", { name: "Document", exact: true }).click();
 }
 
-async function assertOverlaySettingsDrawer(page) {
+async function assertMetadataIsTheOnlyRecordPropertiesPath(page) {
   await page.goto(`${baseUrl}/experiments/new`, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  const paper = page.locator(".document-a4-paper").first();
-  const zoom = page.getByRole("group", { name: "Document view zoom" });
-  await zoom.getByRole("button", { name: "Fit" }).click();
-  const before = await paper.boundingBox();
-  const toggle = page.getByRole("button", { name: "Show information" });
-  await toggle.click();
-  const drawer = page.getByRole("complementary", { name: "Experiment information" });
-  await drawer.waitFor({ state: "visible" });
-  await page.waitForTimeout(220);
-  const after = await paper.boundingBox();
-  assert(before && after && Math.abs(before.width - after.width) < 0.75 && Math.abs(before.x - after.x) < 0.75,
-    `Opening the experiment drawer changed Fit geometry: ${JSON.stringify({ before, after })}`);
-  await page.keyboard.press("Escape");
-  await page.waitForFunction((element) => element?.getAttribute("aria-expanded") === "false", await toggle.elementHandle());
+  const shell = page.locator(".document-editor-layout").first();
+  assert.equal(await shell.getByRole("button", { name: /information/i }).count(), 0, "The duplicate record-information drawer toggle remains.");
+  assert.equal(await shell.getByRole("complementary", { name: /information/i }).count(), 0, "The duplicate record-information drawer remains.");
+  await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
+  assert.equal(await shell.locator('[data-document-metadata="true"]').count(), 1, "Experiment properties do not have exactly one Metadata region.");
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -261,7 +252,7 @@ try {
   await assertSharedDocumentShell(page, "/results/new", "Result title");
   await assertSharedDocumentShell(page, "/entries/new", "Entry title");
   if (reportEditor) await assertSharedDocumentShell(page, reportEditor, "Report title");
-  await assertOverlaySettingsDrawer(page);
+  await assertMetadataIsTheOnlyRecordPropertiesPath(page);
 
   await page.goto(`${baseUrl}/research-plans`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(350);

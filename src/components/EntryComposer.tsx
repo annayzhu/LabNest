@@ -19,11 +19,13 @@ import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorVie
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass } from "@/components/forms";
+import { useI18n } from "@/components/I18nProvider";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { deleteEntryDraft, loadEntryDraft, saveEntryDraft, type StoredEntryDraft } from "@/lib/entry-draft-store";
+import { migrateEntryDraftFields } from "@/lib/entry-draft-migration";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
@@ -47,10 +49,9 @@ type EntryComposerFields = {
   protocolVersionId: string;
   experimentTitle: string;
   experimentStatus: string;
+  createInitialResult: string;
   resultTitle: string;
   resultType: string;
-  resultTextValue: string;
-  resultNotes: string;
 };
 
 type ExistingMedia = EntryComposerAttachment & { kind: "existing"; previewUrl?: string };
@@ -118,10 +119,9 @@ function initialFields(defaultOccurredAt: string, defaultSource: string, default
     protocolVersionId: defaultProtocolVersionId,
     experimentTitle: "",
     experimentStatus: "running",
+    createInitialResult: "false",
     resultTitle: "",
     resultType: "",
-    resultTextValue: "",
-    resultNotes: "",
   };
 }
 
@@ -143,6 +143,7 @@ export function EntryComposer({
   entry?: EntryComposerInitialEntry;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const mediaInputPrefix = useId();
   const toolbarHostId = `${mediaInputPrefix}-document-toolbar`;
   const imageInputId = `${mediaInputPrefix}-photos`;
@@ -192,16 +193,17 @@ export function EntryComposer({
           const item = token.kind === "existing" ? existingMap.get(token.id) : newMap.get(token.id);
           return item ? [item] : [];
         });
-        setFields(draft.fields);
+        const restored = migrateEntryDraftFields(baselineFields, draft.fields);
+        setFields(restored.fields);
         setMedia(restoredMedia);
-        setDraftStatus(`Recovered local draft from ${new Date(draft.savedAt).toLocaleString()}.`);
+        setDraftStatus(restored.migratedLegacyResult ? t("Recovered legacy initial Result fields into the rich document.") : `Recovered local draft from ${new Date(draft.savedAt).toLocaleString()}.`);
       })
       .catch(() => setDraftStatus("Local draft recovery is unavailable in this browser."))
       .finally(() => {
         if (!cancelled) setHydrated(true);
       });
     return () => { cancelled = true; };
-  }, [baselineMedia, draftKey]);
+  }, [baselineFields, baselineMedia, draftKey, t]);
 
   useEffect(() => {
     if (!hydrated || isSubmitting) return;
@@ -383,7 +385,7 @@ export function EntryComposer({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <DocumentEditorLayout className="entry-editor-layout" storageKey="labnest.entry.settings-open">
+      <DocumentEditorLayout className="entry-editor-layout">
       <div className="entry-editor-main-column">
       <StandaloneDocumentEditorViewport
         label={fields.title || "Entry editor"}
@@ -518,9 +520,9 @@ export function EntryComposer({
       </section>
       </div>
 
-      <div className="entry-editor-sidebar-column" role="complementary" aria-label="Entry information">
-      <section className="entry-editor-context rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
-        <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Research context</h2>
+      <div className="entry-editor-sidebar-column" role="region" data-document-metadata="true" aria-label={t("Entry metadata")}>
+      <section className="entry-editor-context">
+        <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Entry metadata")}</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => {
             updateField("projectId", value);
@@ -545,16 +547,14 @@ export function EntryComposer({
       </section>
 
       {!entry ? (
-        <details className="entry-editor-experiment rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
-          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">Protocol-based experiment <span className="ml-1.5 text-[11px] font-normal text-muted">Optional</span></summary>
+        <details className="entry-editor-experiment">
+          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Protocol-based experiment")} <span className="ml-1.5 text-[11px] font-normal text-muted">{t("Optional")}</span></summary>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => updateField("protocolVersionId", value)} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
+            <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => setFields((current) => value ? { ...current, protocolVersionId: value } : { ...current, protocolVersionId: "", createInitialResult: "false", resultTitle: "", resultType: "" })} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
             <ComposerInput label="Experiment title" value={fields.experimentTitle} onChange={(value) => updateField("experimentTitle", value)} placeholder="Defaults to Entry title" />
             <StatusRadioGroup label="Experiment status" value={fields.experimentStatus} onValueChange={(value) => updateField("experimentStatus", value)} options={experimentStatusOptions} density="compact" className="md:col-span-2" />
-            <ComposerInput label="Result title" value={fields.resultTitle} onChange={(value) => updateField("resultTitle", value)} placeholder="Optional first result" />
-            <ComposerInput label="Result type" value={fields.resultType} onChange={(value) => updateField("resultType", value)} placeholder="fluorescence_expression" />
-            <div className="md:col-span-2"><ComposerTextarea label="Initial result text" value={fields.resultTextValue} onChange={(value) => updateField("resultTextValue", value)} /></div>
-            <div className="md:col-span-2"><ComposerTextarea label="Result notes" value={fields.resultNotes} onChange={(value) => updateField("resultNotes", value)} /></div>
+            <label className="md:col-span-2 flex items-start gap-2 border-t border-hairline pt-3 text-xs text-graphite"><input type="checkbox" disabled={!fields.protocolVersionId} checked={fields.createInitialResult === "true"} onChange={(event) => setFields((current) => event.target.checked ? { ...current, createInitialResult: "true" } : { ...current, createInitialResult: "false", resultTitle: "", resultType: "" })} className="mt-0.5 h-3.5 w-3.5 accent-moss disabled:cursor-not-allowed disabled:opacity-45" /><span><strong className="font-medium text-ink">{t("Create an initial Result from this Entry")}</strong><span className="mt-0.5 block leading-5 text-muted">{t(fields.protocolVersionId ? "The rich Entry content becomes the Result summary; tables, media, and datasets remain editable in the Result document." : "Choose a Protocol version first; a Result must belong to an Experiment.")}</span></span></label>
+            {fields.createInitialResult === "true" ? <><ComposerInput label="Result title" value={fields.resultTitle} onChange={(value) => updateField("resultTitle", value)} placeholder="Defaults to Experiment title" /><ComposerInput label="Result type" value={fields.resultType} onChange={(value) => updateField("resultType", value)} placeholder="manual_result" /></> : null}
           </div>
         </details>
       ) : null}
@@ -575,10 +575,6 @@ export function EntryComposer({
 
 function ComposerInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
   return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
-}
-
-function ComposerTextarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><textarea value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 min-h-20 w-full resize-y rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 py-1.5 text-xs leading-5 text-ink" /></label>;
 }
 
 function ComposerSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {

@@ -12,7 +12,7 @@ import { prisma } from "@/lib/db";
 import type { EntryMutationInput } from "@/lib/entry-mutations";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { experimentSearchText } from "@/lib/experiment-document";
-import { experimentSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
+import { experimentSections, resultSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
 import { createResultInTransaction } from "@/lib/result-creation";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolParameter, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { normalizeResultTemplates } from "@/lib/result-templates";
@@ -237,7 +237,7 @@ async function formalizeProtocolEntry(
     });
   }
 
-  if (input.resultTitle || input.resultType || input.resultTextValue || input.resultNotes) {
+  if (input.createInitialResult) {
     await createResultInTransaction(tx, {
       experimentId: experiment.id,
       title: input.resultTitle || `${experimentTitle} result`,
@@ -247,8 +247,9 @@ async function formalizeProtocolEntry(
       qualityStatus: "not_assessed",
       origin: { kind: "entry", entryId, includeAttachments: true },
       templateProtocolVersionId: version.id,
+      contentJson: jsonValue(scientificDocumentFromSectionText(resultSections, { summary: input.contentMarkdown }, `entry-${entryId}`)),
       textValue: input.resultTextValue,
-      notes: input.resultNotes || "Initial result field created during Entry capture.",
+      notes: input.resultNotes,
     });
   }
 }

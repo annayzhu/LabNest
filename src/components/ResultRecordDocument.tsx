@@ -1,10 +1,10 @@
 import { DocumentCanvas } from "@/components/DocumentCanvas";
-import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ResultTemplateView } from "@/components/ResultTemplateView";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { normalizeResultTemplate } from "@/lib/result-templates";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import { resultDocumentWithLegacyValues } from "@/lib/result-document";
 
 type ResultDatasetDocumentItem = {
   id: string;
@@ -37,6 +37,7 @@ export function ResultRecordDocument({
   unit,
   textValue,
   notes,
+  legacyValuesPromoted = false,
 }: {
   title: string;
   qualityStatus: string;
@@ -51,36 +52,24 @@ export function ResultRecordDocument({
   unit?: string | null;
   textValue?: string | null;
   notes?: string | null;
+  legacyValuesPromoted?: boolean;
 }) {
   const normalizedTemplate = template ? normalizeResultTemplate(template) : undefined;
-  const narrativeSections = document.sections.map((section) => ({
+  const displayDocument = legacyValuesPromoted ? document : resultDocumentWithLegacyValues(document, { numericValue, unit, textValue, notes });
+  const narrativeSections = displayDocument.sections.map((section) => ({
     ...section,
     blocks: section.blocks.filter(scientificBlockHasContent),
   })).filter((section) => section.blocks.length);
-  const hasSupplementalValues = numericValue !== null && numericValue !== undefined || Boolean(textValue || notes);
   const expectedArtifacts = normalizedTemplate?.artifacts ?? [];
   const hasFileIndex = datasets.length > 0 || attachments.length > 0 || expectedArtifacts.length > 0;
 
-  return <DocumentCanvas
-    className="result-record-document"
-    toolbar={<><span className="mr-auto text-xs text-muted">完整结果 · 打印或另存为 PDF</span><DocumentPrintButton label="Print / PDF" showLabel /></>}
-    label={title}
-  >
+  return <DocumentCanvas className="result-record-document" label={title}>
     <header className="document-page-header">
       <h1 className="document-page-title font-serif font-medium leading-tight text-ink">{title}</h1>
       {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-[10px] text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
     </header>
 
     {normalizedTemplate ? <ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields compactDocument /> : null}
-
-    {hasSupplementalValues ? <section className="document-section">
-      <header><h2 className="document-section-title font-serif font-medium text-ink">Additional result values</h2></header>
-      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-        {numericValue !== null && numericValue !== undefined ? <div><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Primary numeric outcome</dt><dd className="mt-1 text-sm text-ink">{numericValue}{unit ? ` ${unit}` : ""}</dd></div> : null}
-        {textValue ? <div><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Summary</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-ink">{textValue}</dd></div> : null}
-        {notes ? <div className="sm:col-span-2"><dt className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Notes</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-ink">{notes}</dd></div> : null}
-      </dl>
-    </section> : null}
 
     {narrativeSections.map((section) => <section key={section.key} className="document-section">
       <header><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header>

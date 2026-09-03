@@ -1,58 +1,36 @@
 "use client";
 
-import { FileText, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { FileText, SlidersHorizontal } from "lucide-react";
+import { Children, useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
 
-export function DocumentEditorLayout({ children, className, storageKey = "labnest.document-editor.settings-open" }: {
+export function DocumentEditorLayout({ children, className }: {
   children: ReactNode;
   className?: string;
-  storageKey?: string;
 }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeView, setActiveView] = useState<"document" | "metadata">("document");
   const { t } = useI18n();
-
-  useEffect(() => {
-    if (window.localStorage.getItem(storageKey) === "true") {
-      queueMicrotask(() => setSettingsOpen(true));
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!settingsOpen) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") toggleSettings(false); };
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  // toggleSettings only closes local UI state and persists the same storage key.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsOpen, storageKey]);
-
-  function toggleSettings(force?: boolean) {
-    setSettingsOpen((current) => {
-      const next = force ?? !current;
-      window.localStorage.setItem(storageKey, String(next));
-      return next;
-    });
-  }
-
-  const panelId = `${storageKey.replace(/[^a-z0-9-]/gi, "-")}-panel`;
+  const id = useId();
+  const panels = Children.toArray(children);
+  const selectAdjacentTab = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const order = ["document", "metadata"] as const;
+    const current = order.indexOf(activeView);
+    const next = event.key === "Home" ? 0 : event.key === "End" ? order.length - 1 : event.key === "ArrowRight" ? (current + 1) % order.length : event.key === "ArrowLeft" ? (current - 1 + order.length) % order.length : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    setActiveView(order[next]);
+    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+  };
 
   return (
-    <div className={cn("document-editor-layout", className)} data-settings-open={settingsOpen ? "true" : "false"} data-active-view={activeView}>
+    <div className={cn("document-editor-layout", className)} data-active-view={activeView}>
       <nav className="document-editor-layout-tabs" aria-label={t("Document editor areas")} role="tablist" data-print-hidden>
-        <button type="button" className="focus-ring document-editor-tab" data-active={activeView === "document" ? "true" : undefined} aria-selected={activeView === "document"} role="tab" onClick={() => setActiveView("document")}><FileText aria-hidden /><span>{t("Document")}</span></button>
-        <button type="button" className="focus-ring document-editor-tab" data-active={activeView === "metadata" ? "true" : undefined} aria-selected={activeView === "metadata"} role="tab" onClick={() => { setActiveView("metadata"); toggleSettings(false); }}><SlidersHorizontal aria-hidden /><span>{t("Metadata")}</span></button>
+        <button id={`${id}-tab-document`} type="button" className="focus-ring document-editor-tab" data-active={activeView === "document" ? "true" : undefined} aria-controls={`${id}-panel-document`} aria-selected={activeView === "document"} tabIndex={activeView === "document" ? 0 : -1} role="tab" onClick={() => setActiveView("document")} onKeyDown={selectAdjacentTab}><FileText aria-hidden /><span>{t("Document")}</span></button>
+        <button id={`${id}-tab-metadata`} type="button" className="focus-ring document-editor-tab" data-active={activeView === "metadata" ? "true" : undefined} aria-controls={`${id}-panel-metadata`} aria-selected={activeView === "metadata"} tabIndex={activeView === "metadata" ? 0 : -1} role="tab" onClick={() => setActiveView("metadata")} onKeyDown={selectAdjacentTab}><SlidersHorizontal aria-hidden /><span>{t("Metadata")}</span></button>
       </nav>
-      <div className="document-editor-settings-rail" data-print-hidden>
-        <button type="button" className="focus-ring document-editor-settings-toggle" aria-expanded={settingsOpen} aria-controls={panelId} aria-label={t(settingsOpen ? "Hide information" : "Show information")} onClick={() => toggleSettings()} title={t(settingsOpen ? "Hide information" : "Show information")} hidden={activeView !== "document"}>
-          {settingsOpen ? <PanelRightClose aria-hidden /> : <PanelRightOpen aria-hidden />}
-          <span>{t(settingsOpen ? "Hide information" : "Information")}</span>
-        </button>
-      </div>
-      <button type="button" className="document-editor-drawer-scrim" aria-label={t("Close information")} tabIndex={settingsOpen ? 0 : -1} onClick={() => toggleSettings(false)} data-print-hidden />
-      <div id={panelId} className="contents">{children}</div>
+      <section id={`${id}-panel-document`} className="contents" role="tabpanel" aria-labelledby={`${id}-tab-document`} aria-hidden={activeView !== "document"}>{panels[0]}</section>
+      <section id={`${id}-panel-metadata`} className="contents" role="tabpanel" aria-labelledby={`${id}-tab-metadata`} aria-hidden={activeView !== "metadata"}>{panels[1]}</section>
     </div>
   );
 }

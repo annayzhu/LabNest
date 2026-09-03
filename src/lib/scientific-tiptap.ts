@@ -56,6 +56,7 @@ function legacyAttrs(blockId: string, blockType: ScientificContentBlock["type"],
   return {
     scientificBlockId: blockId,
     scientificBlockType: blockType,
+    documentLineHeight: lineHeight ?? null,
     scientificLineHeight: lineHeight ?? null,
     scientificFontFamily: fontFamily ?? null,
   };
@@ -63,7 +64,6 @@ function legacyAttrs(blockId: string, blockType: ScientificContentBlock["type"],
 
 function typographyMarks(lineHeight?: number, fontFamily?: string): TiptapMark[] | undefined {
   const attrs = {
-    ...(lineHeight ? { lineHeight: String(lineHeight) } : {}),
     ...(fontFamily ? { fontFamily } : {}),
   };
   return Object.keys(attrs).length ? [{ type: "textStyle", attrs }] : undefined;
@@ -189,7 +189,7 @@ function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
 
 function typographyPrefix(node: JSONContent) {
   const textStyle = node.content?.flatMap((item) => item.marks ?? []).find((mark) => mark.type === "textStyle");
-  const lineHeightValue = node.attrs?.scientificLineHeight ?? textStyle?.attrs?.lineHeight;
+  const lineHeightValue = node.attrs?.documentLineHeight ?? node.attrs?.scientificLineHeight ?? textStyle?.attrs?.lineHeight;
   const lineHeight = [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeightValue)) ? Number(lineHeightValue) as 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2 : undefined;
   // Paragraph-level families are a legacy compatibility path. New edits are
   // persisted as inline marks so mixed-font paragraphs round-trip exactly.

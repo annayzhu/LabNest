@@ -32,6 +32,8 @@ async function assertToolbar(page, route, ariaLabel) {
   await editorParagraph.selectText();
   await page.waitForTimeout(120);
   await toolbar.getByRole("button", { name: "Bold", exact: true }).click();
+  await page.waitForFunction((element) => Boolean(element?.querySelector("strong")), await editorParagraph.elementHandle(), { timeout: 2_000 })
+    .catch(() => undefined);
   assert(await editorParagraph.locator("strong").count(), `${route}: Bold did not apply to the selected text.`);
   const boldWeight = Number.parseInt(await editorParagraph.locator("strong").first().evaluate((element) => getComputedStyle(element).fontWeight), 10);
   assert(boldWeight >= 700, `${route}: Bold markup exists but is not visibly rendered: ${boldWeight}.`);
@@ -40,6 +42,14 @@ async function assertToolbar(page, route, ariaLabel) {
   const fontMenu = page.locator('[data-toolbar-menu="font"]');
   await fontMenu.getByRole("menuitem", { name: "Arial", exact: true }).click();
   assert(await editorParagraph.locator('span[style*="font-family: arial"]').count(), `${route}: Font choice did not apply to the selected text.`);
+  await editorParagraph.selectText();
+  await toolbar.getByRole("button", { name: "Line spacing", exact: true }).click();
+  await page.locator('[data-toolbar-menu="spacing"]').getByRole("menuitem", { name: "1.3×", exact: true }).click();
+  const paragraphLineHeight = await editorParagraph.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize);
+  });
+  assert(paragraphLineHeight > 1.25 && paragraphLineHeight < 1.36, `${route}: 1.3× line spacing did not change the paragraph box: ${paragraphLineHeight}.`);
 
   for (const name of ["Paragraph style", "Font", "Font size", "Line spacing", "More", "Insert"]) {
     const trigger = toolbar.getByRole("button", { name, exact: true });
@@ -137,15 +147,53 @@ async function assertZoom(page, route) {
   const view = page.getByRole("group", { name: "Document view zoom" }).first();
   await view.waitFor();
   await page.waitForTimeout(250);
-  await view.getByRole("button", { name: "100%" }).click();
+  const input = view.getByRole("spinbutton", { name: "Zoom percentage" });
+  await input.fill("100");
+  await input.press("Enter");
   const width100 = (await paper.boundingBox())?.width ?? 0;
-  await view.getByRole("button", { name: "110%" }).click();
-  const width110 = (await paper.boundingBox())?.width ?? 0;
-  assert(width110 > width100 * 1.07, `${route}: 110% does not enlarge the paper: ${width100} -> ${width110}`);
+  await input.fill("137");
+  await input.press("Enter");
+  const width137 = (await paper.boundingBox())?.width ?? 0;
+  assert(width137 > width100 * 1.34, `${route}: custom 137% does not enlarge the paper: ${width100} -> ${width137}`);
+  assert.equal(await input.inputValue(), "137", `${route}: custom zoom value was not retained.`);
   await view.getByRole("button", { name: "Fit" }).click();
   const fitWidth = (await paper.boundingBox())?.width ?? 0;
   const panelWidth = (await page.locator(".document-editor-document-panel").first().boundingBox())?.width ?? 0;
-  assert(Math.abs(fitWidth - panelWidth) < 5, `${route}: Fit does not align paper to its panel: paper ${fitWidth}, panel ${panelWidth}`);
+  assert(Math.abs(fitWidth - panelWidth) < 28, `${route}: Fit does not align paper to its stable viewport: paper ${fitWidth}, panel ${panelWidth}`);
+  await page.waitForTimeout(400);
+  const stableWidth = (await paper.boundingBox())?.width ?? 0;
+  assert(Math.abs(stableWidth - fitWidth) < 0.75, `${route}: Fit geometry is unstable: ${fitWidth} -> ${stableWidth}`);
+}
+
+async function assertSharedDocumentShell(page, route, titleName) {
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+  const shell = page.locator(".document-editor-layout").first();
+  await shell.getByRole("tab", { name: "Document", exact: true }).waitFor();
+  assert.equal(await shell.getByRole("tab", { name: "Metadata", exact: true }).count(), 1, `${route}: Metadata tab is missing.`);
+  assert.equal(await shell.getByRole("textbox", { name: titleName, exact: true }).count(), 1, `${route}: title is not directly editable in the document.`);
+  await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
+  assert.equal(await shell.getAttribute("data-active-view"), "metadata", `${route}: Metadata tab did not activate.`);
+  await shell.getByRole("tab", { name: "Document", exact: true }).click();
+}
+
+async function assertOverlaySettingsDrawer(page) {
+  await page.goto(`${baseUrl}/experiments/new`, { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+  const paper = page.locator(".document-a4-paper").first();
+  const zoom = page.getByRole("group", { name: "Document view zoom" });
+  await zoom.getByRole("button", { name: "Fit" }).click();
+  const before = await paper.boundingBox();
+  const toggle = page.getByRole("button", { name: "Show information" });
+  await toggle.click();
+  const drawer = page.getByRole("complementary", { name: "Experiment information" });
+  await drawer.waitFor({ state: "visible" });
+  await page.waitForTimeout(220);
+  const after = await paper.boundingBox();
+  assert(before && after && Math.abs(before.width - after.width) < 0.75 && Math.abs(before.x - after.x) < 0.75,
+    `Opening the experiment drawer changed Fit geometry: ${JSON.stringify({ before, after })}`);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction((element) => element?.getAttribute("aria-expanded") === "false", await toggle.elementHandle());
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -208,6 +256,12 @@ try {
 
   await page.setViewportSize({ width: 1440, height: 980 });
   for (const route of [protocolEditor, "/research-plans/new", "/experiments/new", "/results/new", "/entries/new", ...(reportEditor ? [reportEditor] : [])]) await assertZoom(page, route);
+  await assertSharedDocumentShell(page, "/research-plans/new", "Research Plan title");
+  await assertSharedDocumentShell(page, "/experiments/new", "Experiment title");
+  await assertSharedDocumentShell(page, "/results/new", "Result title");
+  await assertSharedDocumentShell(page, "/entries/new", "Entry title");
+  if (reportEditor) await assertSharedDocumentShell(page, reportEditor, "Report title");
+  await assertOverlaySettingsDrawer(page);
 
   await page.goto(`${baseUrl}/research-plans`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(350);

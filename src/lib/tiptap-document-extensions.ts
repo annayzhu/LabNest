@@ -2,6 +2,16 @@ import { Extension, mergeAttributes, Node, type NodeViewRenderer } from "@tiptap
 import { TableKit } from "@tiptap/extension-table";
 
 const documentBlockTypes = ["paragraph", "heading", "blockquote", "bulletList", "orderedList", "taskList", "table"];
+const documentTextBlockTypes = ["paragraph", "heading", "blockquote"];
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    documentBlockLineHeight: {
+      setDocumentBlockLineHeight: (lineHeight: string) => ReturnType;
+      unsetDocumentBlockLineHeight: () => ReturnType;
+    };
+  }
+}
 
 type SectionAttribute = {
   default: string;
@@ -100,6 +110,41 @@ export function createDocumentWidgetExtension({ name, htmlAttribute, nodeView }:
     },
     addNodeView() {
       return nodeView;
+    },
+  });
+}
+
+/** Line spacing belongs to the paragraph box, rather than an inline text mark. */
+export function createDocumentBlockLineHeightExtension() {
+  return Extension.create({
+    name: "documentBlockLineHeight",
+    addGlobalAttributes() {
+      return [{
+        types: documentTextBlockTypes,
+        attributes: {
+          documentLineHeight: {
+            default: null,
+            parseHTML: (element: HTMLElement) => element.getAttribute("data-labnest-line-height") ?? element.style.lineHeight ?? null,
+            renderHTML: (attributes: Record<string, unknown>) => attributes.documentLineHeight
+              ? { "data-labnest-line-height": attributes.documentLineHeight, style: `line-height: ${attributes.documentLineHeight}` }
+              : {},
+          },
+        },
+      }];
+    },
+    addCommands() {
+      return {
+        setDocumentBlockLineHeight: (lineHeight: string) => ({ chain }) => {
+          let next = chain();
+          for (const type of documentTextBlockTypes) next = next.updateAttributes(type, { documentLineHeight: lineHeight });
+          return next.run();
+        },
+        unsetDocumentBlockLineHeight: () => ({ chain }) => {
+          let next = chain();
+          for (const type of documentTextBlockTypes) next = next.resetAttributes(type, "documentLineHeight");
+          return next.run();
+        },
+      };
     },
   });
 }

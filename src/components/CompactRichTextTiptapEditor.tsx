@@ -10,12 +10,12 @@ import TaskList from "@tiptap/extension-task-list";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
-import { DocumentWysiwygToolbar } from "@/components/DocumentWysiwygToolbar";
+import { DocumentWysiwygToolbar, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
 import { createDocumentBlockLineHeightExtension } from "@/lib/tiptap-document-extensions";
 
-export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, className }: {
+export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, insertActions = [], className }: {
   content: JSONContent;
   onChange: (content: JSONContent) => void;
   placeholder?: string;
@@ -23,6 +23,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   autoFocus?: boolean;
   showToolbar?: boolean;
   toolbarHostId?: string;
+  insertActions?: WysiwygInsertAction[];
   className?: string;
 }) {
   const onChangeRef = useRef(onChange);
@@ -63,7 +64,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
-  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" className="ln-compact-rich-toolbar" />;
+  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={insertActions} className="ln-compact-rich-toolbar" />;
   return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
     {showToolbar ? (toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar) : null}
     <EditorContent editor={editor} />

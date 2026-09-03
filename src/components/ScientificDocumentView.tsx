@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
-import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import type { ScientificDocument } from "@/lib/scientific-document";
 
@@ -22,8 +22,7 @@ export function ScientificDocumentView({
   const populatedSections = document.sections.filter((section) => section.blocks.length > 0);
   const displayedSections = showEmptySections ? document.sections : populatedSections;
 
-  return (
-    <DocumentCanvas toolbar={<DocumentPrintButton />} label={title ?? "Scientific document"}>
+  const canvas = <DocumentCanvas label={title ?? "Scientific document"}>
       {title ? <header className="document-page-header">
         {identifier ? <p className="record-identifier text-xs font-semibold uppercase text-muted">{identifier}</p> : null}
         <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
@@ -31,7 +30,7 @@ export function ScientificDocumentView({
       </header> : null}
       {leadingContent}
       {displayedSections.length ? displayedSections.map((section) => (
-        <section key={section.key} className="document-section">
+        <section key={section.key} id={`section-${section.key}`} className="document-section">
           <header className="mb-5">
             <h2 className={`document-section-title font-serif font-medium ${section.key === "constraints" ? "text-error" : "text-ink"}`}>{section.title}</h2>
           </header>
@@ -42,6 +41,7 @@ export function ScientificDocumentView({
           </div>
         </section>
       )) : <p className="text-sm text-muted">No structured sections have been recorded yet.</p>}
-    </DocumentCanvas>
-  );
+    </DocumentCanvas>;
+  const outline = displayedSections.map((section) => ({ id: `section-${section.key}`, label: section.title }));
+  return outline.length ? <DocumentOutlineWorkbench items={outline} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench> : canvas;
 }

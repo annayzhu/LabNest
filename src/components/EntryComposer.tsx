@@ -18,6 +18,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import type { WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { formInputClass } from "@/components/forms";
 import { useI18n } from "@/components/I18nProvider";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
@@ -226,6 +227,10 @@ export function EntryComposer({
   const selectedProject = projects.find((project) => project.id === fields.projectId);
   const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
   const selectedProtocol = protocols.find((protocol) => protocol.id === fields.protocolVersionId);
+  const entryInsertActions: WysiwygInsertAction[] = [
+    { id: "entry-image", icon: <ImagePlus aria-hidden />, label: "Image", description: "Choose one or more image files", run: () => document.getElementById(imageInputId)?.click() },
+    { id: "entry-file", icon: <Paperclip aria-hidden />, label: "File", description: "Attach a supporting file", run: () => document.getElementById(fileInputId)?.click() },
+  ];
 
   function updateField<K extends keyof EntryComposerFields>(key: K, value: EntryComposerFields[K]) {
     setFields((current) => ({ ...current, [key]: value }));
@@ -265,7 +270,7 @@ export function EntryComposer({
       };
     });
     setMedia((current) => [...current, ...next]);
-    if (fields.sourceType === "text") updateField("sourceType", files.some((file) => file.type.startsWith("image/")) ? "photo" : "file");
+    // Attachments are evidence, not the Entry's source classification.
   }
 
   function containsDraggedFiles(event: React.DragEvent<HTMLElement>) {
@@ -394,14 +399,6 @@ export function EntryComposer({
         toolbar={
           <>
             <div id={toolbarHostId} className="ln-document-toolbar-host" />
-            <span className="mr-auto flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
-              <Cloud className="h-3.5 w-3.5 shrink-0 text-moss" aria-hidden />
-              <span className="max-w-48 truncate sm:max-w-72">{draftStatus || "Draft recovery is ready"}</span>
-            </span>
-            <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting} className="hidden sm:inline-flex">
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-              Discard draft
-            </Button>
             <DocumentPrintButton />
           </>
         }
@@ -431,9 +428,15 @@ export function EntryComposer({
             placeholder="Observation, decision, deviation, or follow-up…"
             minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
             toolbarHostId={toolbarHostId}
+            insertActions={entryInsertActions}
           />
         </div>
       </StandaloneDocumentEditorViewport>
+
+      <div className="flex items-center justify-between gap-2 text-[11px] text-muted" data-print-hidden>
+        <span className="flex min-w-0 items-center gap-1.5"><Cloud className="h-3.5 w-3.5 shrink-0" aria-hidden /><span>{draftStatus || "Draft recovery is ready"}</span></span>
+        <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting}><RotateCcw className="h-3.5 w-3.5" aria-hidden />Discard draft</Button>
+      </div>
 
       <section
         className={cn(

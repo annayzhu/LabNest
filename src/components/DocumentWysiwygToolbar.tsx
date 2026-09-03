@@ -240,7 +240,8 @@ export function DocumentWysiwygToolbar({
   ];
   const paragraphLabel = paragraphType === "heading2" ? "Heading 2" : paragraphType === "heading3" ? "Heading 3" : "Body";
   const selectedFont = selectedFontFamily(editor);
-  const fontLabel = selectedFont === "__mixed__" ? "Mixed fonts" : fontOptions.find((option) => option.value === selectedFont)?.label ?? "Times New Roman / 思源宋体";
+  const defaultFontLabel = globalThis.getComputedStyle(editor.view.dom).fontFamily.split(",")[0].replaceAll('"', "").trim();
+  const fontLabel = selectedFont === "__mixed__" ? "Mixed fonts" : fontOptions.find((option) => option.value === selectedFont)?.label ?? defaultFontLabel;
   const setLink = async () => {
     const current = editor.getAttributes("link").href as string | undefined;
     const href = await dialog.prompt({ title: "Insert link", inputLabel: "Link URL", defaultValue: current ?? "https://", confirmLabel: "Apply link" });

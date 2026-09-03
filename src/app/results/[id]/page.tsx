@@ -75,8 +75,8 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
     {result.researchPlanId && recycledKeys.has(`research_plan:${result.researchPlanId}`) ? <RecycleBinWarning label="Research Plan" labelZh="研究方案" /> : null}
     {protocolVersion && recycledKeys.has(`protocol:${protocolVersion.protocolId}`) ? <RecycleBinWarning label="Protocol" labelZh="实验规程" /> : null}
 
-    <div className="document-editor-layout">
-      <main className="document-editor-main space-y-6">
+    <div className="document-preview-layout">
+      <main className="document-preview-main space-y-6">
         <ResultRecordDocument title={result.title} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} legacyValuesPromoted={resultLegacyValuesArePromoted(result.metadataJson)} />
 
         <Card className="scroll-mt-24"><div id="result-files" className="scroll-mt-24" /><CardHeader title="Result files" eyebrow="One place for instrument exports and supporting evidence" /><CardBody className="space-y-5">
@@ -95,7 +95,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
         </CardBody></Card>
       </main>
 
-      <aside className="document-editor-sidebar result-detail-sidebar" aria-label="Result controls and provenance">
+      <aside className="document-preview-sidebar result-detail-sidebar" aria-label="Result controls and provenance">
         <Card><CardHeader title="Evidence control" eyebrow="Provenance and quality" /><CardBody className="space-y-4">
           <div className="flex flex-wrap gap-2"><StatusPill status={result.status} /><StatusPill status={result.recordStatus} /><StatusPill status={result.qualityStatus} /><StatusPill status={result.validationStatus} /></div>
           <div className="grid gap-4 border-t border-hairline pt-4 sm:grid-cols-2">

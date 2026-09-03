@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { ScientificDocumentView } from "@/components/ScientificDocumentView";
@@ -47,14 +48,18 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const recycledKeys = new Set(recycledRecords.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = reportDeleteBlockers(report.status, { externalReferences: itemReferences + reportSourceReferences });
   return <AppShell><div className="space-y-6">
-    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><Link href={`/api/reports/${report.id}/markdown`} className={secondaryButton}>Export Markdown</Link><RecordLifecycleControl id={report.id} identifier={report.title} title="Report record" recordLabel="Report" recordLabelZh="报告" blockers={deletionBlockers} archived={report.status === "archived"} deleteAction={deleteReport} archiveAction={archiveReport} editHref={`/reports/${report.id}/edit`} /></>} />
+    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><DocumentPrintButton showLabel /><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><Link href={`/api/reports/${report.id}/markdown`} className={secondaryButton}>Export Markdown</Link><RecordLifecycleControl id={report.id} identifier={report.title} title="Report record" recordLabel="Report" recordLabelZh="报告" blockers={deletionBlockers} archived={report.status === "archived"} deleteAction={deleteReport} archiveAction={archiveReport} editHref={`/reports/${report.id}/edit`} /></>} />
     {recycledRecords.length ? <RecycleBinWarning label="source record" labelZh="来源记录" /> : null}
-    <Card><CardHeader title="Report control" eyebrow="Status and source coverage" action={<StatusPill status={report.status} />} /><CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-      <Control label="Scope">{report.researchPlan ? <Link href={`/research-plans/${report.researchPlan.id}`} className="text-moss hover:underline">{report.researchPlan.code ?? report.researchPlan.title}</Link> : "Entire Project"}</Control>
-      <Control label="Plans">{counts.researchPlans ?? 0}</Control><Control label="Protocol versions">{counts.protocolVersions ?? 0}</Control><Control label="Experiments">{counts.experiments ?? 0}</Control><Control label="Results">{counts.results ?? 0}</Control><Control label="Entries">{counts.entries ?? 0}</Control>
-      <div className="sm:col-span-2 xl:col-span-6 flex flex-wrap items-center gap-2 border-t border-hairline pt-3">{report.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}<span className="text-xs text-muted">Source snapshot {generatedAt && !Number.isNaN(generatedAt.valueOf()) ? generatedAt.toLocaleString() : "not dated"}</span><form action={refreshReportSources} className="ml-auto"><input type="hidden" name="id" value={report.id} /><button className="text-xs font-semibold text-moss hover:underline">Refresh source index</button></form></div>
-    </CardBody></Card>
-    <ScientificDocumentView document={document} title={report.title} subtitle={`${report.project.name}${report.researchPlan ? ` · ${report.researchPlan.title}` : " · Entire Project"}`} />
+    <div className="document-preview-layout">
+      <main className="document-preview-main"><ScientificDocumentView document={document} title={report.title} subtitle={`${report.project.name}${report.researchPlan ? ` · ${report.researchPlan.title}` : " · Entire Project"}`} /></main>
+      <aside className="document-preview-sidebar" aria-label="Report metadata">
+        <Card><CardHeader title="Report metadata" action={<StatusPill status={report.status} />} /><CardBody className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+          <Control label="Scope">{report.researchPlan ? <Link href={`/research-plans/${report.researchPlan.id}`} className="text-moss hover:underline">{report.researchPlan.code ?? report.researchPlan.title}</Link> : "Entire Project"}</Control>
+          <Control label="Plans">{counts.researchPlans ?? 0}</Control><Control label="Protocol versions">{counts.protocolVersions ?? 0}</Control><Control label="Experiments">{counts.experiments ?? 0}</Control><Control label="Results">{counts.results ?? 0}</Control><Control label="Entries">{counts.entries ?? 0}</Control>
+          <div className="flex flex-wrap items-center gap-2 border-t border-hairline pt-3">{report.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}<span className="text-xs text-muted">Source snapshot {generatedAt && !Number.isNaN(generatedAt.valueOf()) ? generatedAt.toLocaleString() : "not dated"}</span><form action={refreshReportSources} className="ml-auto"><input type="hidden" name="id" value={report.id} /><button className="text-xs font-semibold text-moss hover:underline">Refresh source index</button></form></div>
+        </CardBody></Card>
+      </aside>
+    </div>
     <Card><CardHeader title="Source index" eyebrow="Titles and versions frozen at inclusion" /><CardBody><DataTable rows={report.sources} getRowKey={(row) => row.id} columns={[
       { key: "type", header: "Type", render: (row) => <Badge>{row.sourceType.replaceAll("_", " ")}</Badge> },
       { key: "source", header: "Source", render: (row) => {

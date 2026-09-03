@@ -12,7 +12,7 @@ export type RichTextFontFamily = BuiltInRichTextFontFamily | `labnest-custom-${s
 export const DEFAULT_RICH_TEXT_FONT_FAMILY: RichTextFontFamily = "sans";
 
 export const richTextFontOptions: ReadonlyArray<{ value: RichTextFontFamily; label: string }> = [
-  ...documentFontCatalog.map((font) => ({ value: font.id, label: font.name === font.nameEn ? font.name : `${font.nameEn} / ${font.name}` })),
+  ...documentFontCatalog.map((font) => ({ value: font.id, label: font.name })),
 ];
 
 const richTextFontCss: Partial<Record<BuiltInRichTextFontFamily, string>> = {

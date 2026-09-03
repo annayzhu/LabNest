@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
+import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
 import { PageHeader } from "@/components/PageHeader";
@@ -67,6 +68,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
+            <DocumentPrintButton showLabel />
             <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
             <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
             <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
@@ -79,10 +81,11 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <main className="min-w-0 space-y-6">
-            <DocumentCanvas label={entry.title} toolbar={<DocumentPrintButton />}>
-              <header className="mb-8 border-b border-hairline pb-6">
+        <div className="document-preview-layout">
+          <main className="document-preview-main space-y-6">
+            <DocumentOutlineWorkbench items={[{ id: "entry-preview-content", label: "Record content" }]} className="document-preview-workbench">
+            <DocumentCanvas label={entry.title}>
+              <header id="entry-preview-content" className="mb-8 border-b border-hairline pb-6">
                 <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(entry.occurredAt), "yyyy-MM-dd HH:mm")}</p>
                 <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{entry.title}</h1>
               </header>
@@ -97,6 +100,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 </div>
               ) : null}
             </DocumentCanvas>
+            </DocumentOutlineWorkbench>
 
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
@@ -170,7 +174,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             </section>
           </main>
 
-          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <aside className="document-preview-sidebar">
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Entry context</p>
               <dl className="mt-4 space-y-4 text-sm">

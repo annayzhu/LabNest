@@ -12,7 +12,7 @@ describe("Protocol Tiptap compatibility layer", () => {
       type: "rich_text",
       nodes: [
         { type: "heading2", content: [{ text: "RNA extraction", bold: true, fontSizePt: 12 }], lineHeight: 1.5, fontFamily: "times-new-roman" },
-        { type: "paragraph", content: [{ text: "Keep samples cold.", italic: true, color: "risk", fontSizePt: 11 }] },
+        { type: "paragraph", content: [{ text: "Keep ", italic: true, color: "risk", fontSizePt: 11 }, { text: "samples", bold: true, fontFamily: "arial" }, { text: " cold.", fontFamily: "labnest-local-fdevice" }] },
       ],
     }];
     document.sections.find((section) => section.key === "material")!.blocks = [{

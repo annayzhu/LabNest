@@ -51,6 +51,7 @@ export const protocolRichTextRunSchema = z.object({
   link: z.string().optional(),
   color: z.enum(RICH_TEXT_COLORS).optional(),
   fontSizePt: richTextFontSizeSchema.optional(),
+  fontFamily: z.custom<RichTextFontFamily>((value) => typeof value === "string" && Boolean(parseRichTextFontFamily(value))).optional(),
 });
 
 export const protocolRichTextNodeSchema = z.object({

@@ -61,6 +61,14 @@ describe("typography settings", () => {
     expect(variables["--font-latin-document-body"]).toContain('"labnest-custom-font-1"');
   });
 
+  it("keeps a browser-discovered family available for every typography role", () => {
+    const settings = parseTypographySettings(JSON.stringify(Object.fromEntries(
+      Object.keys(defaultTypographySettings).map((role) => [role, { kind: "local", id: "fdevice", name: "Device Font" }]),
+    )));
+    expect(Object.values(settings).every((selection) => selection.kind === "local" && selection.name === "Device Font")).toBe(true);
+    expect(Object.values(typographyCssVariables(settings)).every((value) => value.includes("--ln-local-font-fdevice"))).toBe(true);
+  });
+
   it("accepts local web fonts within the limit and explains recoverable failures", () => {
     expect(validateCustomFontFile({ name: "lab-song.woff2", size: 2_000_000 })).toBeNull();
     expect(validateCustomFontFile({ name: "legacy-name.ttf", size: 2_000_000 })).toBeNull();

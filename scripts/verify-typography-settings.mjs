@@ -15,6 +15,15 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "queryLocalFonts", {
+      configurable: true,
+      value: async () => [
+        { family: "Device Sans", fullName: "Device Sans Regular", postscriptName: "DeviceSans-Regular", style: "Regular" },
+        { family: "Device Sans", fullName: "Device Sans Bold", postscriptName: "DeviceSans-Bold", style: "Bold" },
+      ],
+    });
+  });
   await page.goto(`${baseUrl}/settings`);
   let navigationRequests = 0;
   page.on("request", (request) => { if (request.isNavigationRequest()) navigationRequests += 1; });
@@ -31,12 +40,22 @@ try {
     await page.locator(`[data-font-option="${value}"]`).click();
   };
 
-  await selector("latinDocumentBody").click();
-  const latinPresetValues = await page.locator('.typography-font-menu [data-font-option^="preset:"]').evaluateAll((options) => options.map((option) => option.getAttribute("data-font-option")).sort());
-  if (JSON.stringify(latinPresetValues) !== JSON.stringify(["preset:arial", "preset:times-new-roman"])) {
-    throw new Error(`English presets must be limited to Arial and Times New Roman: ${latinPresetValues.join(", ")}`);
+  const presetValues = async (role) => {
+    await selector(role).click();
+    const values = await page.locator('.typography-font-menu [data-font-option^="preset:"]').evaluateAll((options) => options.map((option) => option.getAttribute("data-font-option")).sort());
+    await page.keyboard.press("Escape");
+    return values;
+  };
+  const latinRolePresets = [];
+  for (const role of ["latinUi", "latinDocumentBody", "latinDocumentHeading"]) latinRolePresets.push(await presetValues(role));
+  if (latinRolePresets.some((values) => JSON.stringify(values) !== JSON.stringify(latinRolePresets[0])) || !latinRolePresets[0].includes("preset:arial") || !latinRolePresets[0].includes("preset:times-new-roman") || latinRolePresets[0].length < 8) {
+    throw new Error(`Every English role must expose the complete shared font catalog: ${JSON.stringify(latinRolePresets)}`);
   }
-  await page.keyboard.press("Escape");
+  const cjkRolePresets = [];
+  for (const role of ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading"]) cjkRolePresets.push(await presetValues(role));
+  if (cjkRolePresets.some((values) => JSON.stringify(values) !== JSON.stringify(cjkRolePresets[0])) || !cjkRolePresets[0].includes("preset:pingfang") || cjkRolePresets[0].length < 8) {
+    throw new Error(`Every Chinese role must expose the complete shared font catalog: ${JSON.stringify(cjkRolePresets)}`);
+  }
   const cjkFontFaceIsolation = await page.evaluate(() => Array.from(document.styleSheets)
     .flatMap((sheet) => Array.from(sheet.cssRules))
     .filter((rule) => rule instanceof CSSFontFaceRule && rule.style.fontFamily.includes("LabNest CJK"))
@@ -45,6 +64,21 @@ try {
     throw new Error(`Built-in Chinese fonts are not isolated from Latin glyphs: ${JSON.stringify(cjkFontFaceIsolation)}`);
   }
   await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkUi"]')?.disabled);
+
+  await page.getByRole("button", { name: /Find device fonts|扫描本机字体/ }).click();
+  await page.getByText(/Found 1 device font famil(?:y|ies)|已发现 1 个本机字体族/).waitFor();
+  for (const role of ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading", "latinUi", "latinDocumentBody", "latinDocumentHeading"]) {
+    await selector(role).click();
+    if (await page.locator('.typography-font-menu [data-font-option^="local:"]', { hasText: "Device Sans" }).count() !== 1) throw new Error(`${role} does not expose discovered device fonts.`);
+    await page.keyboard.press("Escape");
+  }
+  await selector("latinDocumentHeading").click();
+  const deviceFontValue = await page.locator('.typography-font-menu [data-font-option^="local:"]', { hasText: "Device Sans" }).getAttribute("data-font-option");
+  await page.keyboard.press("Escape");
+  await selectFont("latinDocumentHeading", deviceFontValue);
+  await page.reload();
+  await page.waitForFunction(() => !document.querySelector('[data-typography-role="latinDocumentHeading"]')?.disabled);
+  if ((await selector("latinDocumentHeading").getAttribute("data-font-value")) !== deviceFontValue) throw new Error("A discovered device font did not persist after reload.");
 
   await selectFont("cjkUi", "preset:pingfang");
   await selectFont("cjkDocumentBody", "preset:songti");
@@ -71,6 +105,12 @@ try {
   if (!documentVariables.latin.includes("Arial")) throw new Error(`English document font did not persist: ${documentVariables.latin}`);
 
   const fontInput = page.locator("input[type=file][accept*=woff2]");
+  const submitFontFiles = async (files) => {
+    await fontInput.setInputFiles(files);
+    const familyDialog = page.getByRole("dialog");
+    await familyDialog.getByRole("button", { name: /Continue|继续/ }).click();
+    await page.getByRole("dialog").getByRole("button", { name: /Import family|导入字体族/ }).click();
+  };
   const transientFonts = [
     { path: woff2Fixture, name: "Geist-Latin.woff2", mimeType: "application/x-font-woff2" },
     // ponytail: keep licensed font binaries out of git; release checks supply these two paths when approved fixtures are available.
@@ -78,18 +118,29 @@ try {
     otfFixture ? { path: otfFixture, name: "OpenType-Font.otf", mimeType: "application/x-apple-font" } : null,
   ].filter(Boolean);
   for (const font of transientFonts) {
-    await fontInput.setInputFiles({ name: font.name, mimeType: font.mimeType, buffer: await readFile(font.path) });
+    await submitFontFiles({ name: font.name, mimeType: font.mimeType, buffer: await readFile(font.path) });
     await page.getByText(/was imported|已导入/).waitFor();
-    page.once("dialog", (dialog) => void dialog.accept());
     await page.locator(".typography-custom-font-list button").last().click();
+    await page.getByRole("dialog").getByRole("button", { name: /Delete font|删除字体/ }).click();
     await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
   }
 
-  await fontInput.setInputFiles({ name: "broken.otf", mimeType: "application/x-apple-font", buffer: Buffer.from("not a font") });
+  const regularBuffer = await readFile(woff2Fixture);
+  await submitFontFiles([
+    { name: "Geist-Grouped-Regular.woff2", mimeType: "application/x-font-woff2", buffer: regularBuffer },
+    { name: "Geist-Grouped-Bold.woff2", mimeType: "application/x-font-woff2", buffer: regularBuffer },
+  ]);
+  await page.getByText(/2 faces.*was imported|2 个字形.*已导入/).waitFor();
+  if (!await page.locator(".typography-custom-font-list li", { hasText: "2 faces" }).count()) throw new Error("Regular and Bold files were not grouped into one family entry.");
+  await page.locator(".typography-custom-font-list button").last().click();
+  await page.getByRole("dialog").getByRole("button", { name: /Delete font|删除字体/ }).click();
+  await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
+
+  await submitFontFiles({ name: "broken.otf", mimeType: "application/x-apple-font", buffer: Buffer.from("not a font") });
   await page.getByText(/could not parse the font|无法解析这个字体/).waitFor();
   if (await page.locator(".typography-custom-font-list li").count()) throw new Error("A font that failed browser parsing was persisted.");
 
-  await fontInput.setInputFiles({ name: "Geist-Regular.ttf", mimeType: "application/x-font-sfnt", buffer: await readFile(ttfFixture) });
+  await submitFontFiles({ name: "Geist-Regular.ttf", mimeType: "application/x-font-sfnt", buffer: await readFile(ttfFixture) });
   await page.getByText(/was imported|已导入/).waitFor();
   await selector("latinDocumentBody").click();
   const customOption = page.locator('.typography-font-menu [data-font-option^="custom:"]').last();
@@ -100,10 +151,10 @@ try {
   await selectFont("latinDocumentBody", customValue);
   await page.reload();
   const documentFamily = await page.locator('[data-typography-preview="latin"] .typography-preview-body').evaluate((element) => getComputedStyle(element).fontFamily);
-  if (!documentFamily.includes("LabNest Custom") || !documentFamily.includes("Latin")) throw new Error(`Script-scoped custom font did not persist: ${documentFamily}`);
+  if (!documentFamily.includes("labnest-custom-") || !documentFamily.includes("Times New Roman")) throw new Error(`Script-scoped custom font did not persist: ${documentFamily}`);
 
-  page.once("dialog", (dialog) => void dialog.accept());
   await page.locator(".typography-custom-font-list button").last().click();
+  await page.getByRole("dialog").getByRole("button", { name: /Delete font|删除字体/ }).click();
   await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
   if ((await selector("latinDocumentBody").getAttribute("data-font-value"))?.startsWith("custom:")) throw new Error("Deleting a selected font did not restore the default English role.");
 

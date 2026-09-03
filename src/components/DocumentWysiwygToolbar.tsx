@@ -13,6 +13,7 @@ import { richTextFontFamilyCss, richTextFontOptions } from "@/lib/rich-text-font
 import { editorNamedStylesStorageKey, editorStyleNameExists, parseEditorNamedStyles, upsertEditorNamedStyle, type EditorNamedStyle } from "@/lib/editor-named-styles";
 import { listCustomFonts, loadCustomFont } from "@/lib/custom-font-storage";
 import type { CustomFontRecord } from "@/lib/typography-settings";
+import { loadStoredLocalFontFamilies, type LocalFontFamilyRecord } from "@/lib/local-font-catalog";
 
 export const wysiwygToolbarButtonClass = "focus-ring inline-flex h-[var(--ln-wysiwyg-toolbar-control-height)] min-w-[var(--ln-wysiwyg-toolbar-control-height)] items-center justify-center rounded-[var(--ln-wysiwyg-toolbar-radius)] border border-transparent px-[var(--ln-wysiwyg-toolbar-button-padding-x)] text-muted transition-colors hover:bg-stone hover:text-ink disabled:opacity-35";
 export const wysiwygToolbarSelectClass = "focus-ring h-[var(--ln-wysiwyg-toolbar-control-height)] min-w-0 rounded-[var(--ln-wysiwyg-toolbar-radius)] border border-hairline bg-surface px-[var(--ln-wysiwyg-toolbar-select-padding-x)] text-[length:var(--ln-wysiwyg-toolbar-font-size)] text-graphite";
@@ -199,6 +200,7 @@ export function DocumentWysiwygToolbar({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [namedStyles, setNamedStyles] = useState<EditorNamedStyle[]>(() => typeof window === "undefined" ? [] : parseEditorNamedStyles(window.localStorage.getItem(editorNamedStylesStorageKey)));
   const [customFonts, setCustomFonts] = useState<CustomFontRecord[]>([]);
+  const [localFonts, setLocalFonts] = useState<LocalFontFamilyRecord[]>(() => typeof window === "undefined" ? [] : loadStoredLocalFontFamilies());
   useEffect(() => {
     let active = true;
     void listCustomFonts().then(async (fonts) => {
@@ -206,6 +208,15 @@ export function DocumentWysiwygToolbar({
       if (active) setCustomFonts(fonts);
     }).catch(() => undefined);
     return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    const refresh = () => setLocalFonts(loadStoredLocalFontFamilies());
+    window.addEventListener("storage", refresh);
+    window.addEventListener("labnest:local-fonts-changed", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("labnest:local-fonts-changed", refresh);
+    };
   }, []);
   useEffect(() => {
     const refresh = () => setRevision((value) => value + 1);
@@ -219,6 +230,7 @@ export function DocumentWysiwygToolbar({
   const fontOptions = [
     ...richTextFontOptions,
     ...customFonts.map((font) => ({ value: `labnest-custom-${font.id}`, label: font.name })),
+    ...localFonts.map((font) => ({ value: `labnest-local-${font.id}`, label: font.name })),
   ];
   const paragraphLabel = paragraphType === "heading2" ? "Heading 2" : paragraphType === "heading3" ? "Heading 3" : "Body";
   const selectedFont = selectedFontFamily(editor);

@@ -5,7 +5,7 @@
   font-family: "LabNest CJK Source Han Sans";
   src: local("Source Han Sans SC"), local("Noto Sans CJK SC"), local("PingFang SC"), local("Microsoft YaHei");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -14,7 +14,7 @@
   font-family: "LabNest CJK PingFang";
   src: local("PingFang SC"), local("Hiragino Sans GB"), local("Microsoft YaHei");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -23,7 +23,7 @@
   font-family: "LabNest CJK System Sans";
   src: local("PingFang SC"), local("Microsoft YaHei"), local("Hiragino Sans GB"), local("Noto Sans CJK SC");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -32,7 +32,7 @@
   font-family: "LabNest CJK Source Han Serif";
   src: local("Source Han Serif SC"), local("Noto Serif CJK SC"), local("Songti SC"), local("STSong"), local("SimSun");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -41,7 +41,7 @@
   font-family: "LabNest CJK Songti";
   src: local("Songti SC"), local("STSong"), local("SimSun");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -50,7 +50,7 @@
   font-family: "LabNest CJK SimSun";
   src: local("SimSun"), local("Songti SC"), local("STSong");
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400;
   font-display: swap;
   unicode-range: U+2E80-2EFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
@@ -2847,6 +2847,13 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
 .ln-wysiwyg-editor {
   min-width: 0;
+}
+
+.ln-wysiwyg-editor .ProseMirror,
+.ln-compact-rich-tiptap {
+  /* Built-in system families may expose only a Regular face. Keep semantic
+     Bold/Italic visibly distinct while imported families use their real faces. */
+  font-synthesis: weight style;
 }
 
 .ln-document-toolbar-host {

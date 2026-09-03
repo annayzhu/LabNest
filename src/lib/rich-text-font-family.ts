@@ -1,4 +1,5 @@
 import { documentFontCatalog } from "@/lib/font-catalog";
+import { localFontCssVariable } from "@/lib/local-font-catalog";
 
 export const RICH_TEXT_FONT_FAMILIES = [
   "sans", "serif", "mono",
@@ -6,7 +7,7 @@ export const RICH_TEXT_FONT_FAMILIES = [
 ] as const;
 
 export type BuiltInRichTextFontFamily = (typeof RICH_TEXT_FONT_FAMILIES)[number];
-export type RichTextFontFamily = BuiltInRichTextFontFamily | `labnest-custom-${string}`;
+export type RichTextFontFamily = BuiltInRichTextFontFamily | `labnest-custom-${string}` | `labnest-local-${string}`;
 
 export const DEFAULT_RICH_TEXT_FONT_FAMILY: RichTextFontFamily = "sans";
 
@@ -21,14 +22,19 @@ const richTextFontCss: Partial<Record<BuiltInRichTextFontFamily, string>> = {
 
 export function richTextFontFamilyCss(value: RichTextFontFamily | string | undefined) {
   if (!value) return undefined;
-  return value.startsWith("labnest-custom-") ? value : richTextFontCss[value as BuiltInRichTextFontFamily];
+  if (value.startsWith("labnest-custom-")) return value;
+  if (value.startsWith("labnest-local-")) {
+    const id = value.replace(/^labnest-local-/, "");
+    return `var(${localFontCssVariable(id)}, var(--font-document-body))`;
+  }
+  return richTextFontCss[value as BuiltInRichTextFontFamily];
 }
 
-const FONT_FAMILY_VALUES_SOURCE = `(?:${RICH_TEXT_FONT_FAMILIES.join("|")}|labnest-custom-[a-zA-Z0-9-]+)`;
+const FONT_FAMILY_VALUES_SOURCE = `(?:${RICH_TEXT_FONT_FAMILIES.join("|")}|labnest-(?:custom|local)-[a-zA-Z0-9-]+)`;
 export const LABNEST_FONT_FAMILY_TOKEN_SOURCE = `<font data-labnest-family="${FONT_FAMILY_VALUES_SOURCE}">[^\\n]*?<\\/font>`;
 
 export function parseRichTextFontFamily(value: string | null | undefined): RichTextFontFamily | undefined {
-  return value && (RICH_TEXT_FONT_FAMILIES.includes(value as BuiltInRichTextFontFamily) || /^labnest-custom-[a-zA-Z0-9-]+$/.test(value))
+  return value && (RICH_TEXT_FONT_FAMILIES.includes(value as BuiltInRichTextFontFamily) || /^labnest-(?:custom|local)-[a-zA-Z0-9-]+$/.test(value))
     ? value as RichTextFontFamily
     : undefined;
 }

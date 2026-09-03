@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, RotateCcw, Search, Trash2, Upload } from "lucide-react";
+import { Check, ChevronDown, Laptop, RotateCcw, Search, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
@@ -12,6 +12,12 @@ import {
   inferCustomFontFace,
   validateCustomFontFamily,
 } from "@/lib/custom-font-storage";
+import {
+  canDiscoverLocalFonts,
+  discoverLocalFontFamilies,
+  loadStoredLocalFontFamilies,
+  type LocalFontFamilyRecord,
+} from "@/lib/local-font-catalog";
 import {
   applyTypographySettings,
   defaultTypographySettings,
@@ -45,8 +51,8 @@ const groupCopy = {
   latin: {
     zh: "英文字体",
     en: "English fonts",
-    noteZh: "默认仅提供 Arial 与 Times New Roman；其他英文字体可从下方导入。",
-    noteEn: "Arial and Times New Roman are the built-in defaults. Import any additional Latin fonts below.",
+    noteZh: "可为界面、正文和标题使用完整的英文字体目录，也可扫描本机字体或导入字体族。",
+    noteEn: "Use the complete Latin catalog for interface, body, and headings, or discover/import additional families.",
   },
 } as const;
 
@@ -62,6 +68,7 @@ function TypographyFontPicker({
   role,
   selection,
   customFonts,
+  localFonts,
   loading,
   zh,
   onSelect,
@@ -69,6 +76,7 @@ function TypographyFontPicker({
   role: TypographyRole;
   selection: FontSelection;
   customFonts: CustomFontRecord[];
+  localFonts: LocalFontFamilyRecord[];
   loading: boolean;
   zh: boolean;
   onSelect: (value: string) => void;
@@ -79,7 +87,7 @@ function TypographyFontPicker({
   const [query, setQuery] = useState("");
   const selectedValue = selectionValue(selection);
   const presets = typographyPresets[role];
-  const selectedLabel = selection.kind === "custom"
+  const selectedLabel = selection.kind === "custom" || selection.kind === "local"
     ? selection.name
     : (() => {
         const preset = presets.find((item) => item.id === selection.id);
@@ -88,6 +96,7 @@ function TypographyFontPicker({
   const needle = query.trim().toLocaleLowerCase();
   const filteredPresets = useMemo(() => presets.filter((preset) => !needle || [preset.name, preset.nameEn, preset.description, preset.descriptionEn].some((value) => value.toLocaleLowerCase().includes(needle))), [needle, presets]);
   const filteredCustomFonts = useMemo(() => customFonts.filter((font) => !needle || `${font.name} ${font.fileName}`.toLocaleLowerCase().includes(needle)), [customFonts, needle]);
+  const filteredLocalFonts = useMemo(() => localFonts.filter((font) => !needle || `${font.name} ${font.styles.join(" ")}`.toLocaleLowerCase().includes(needle)), [localFonts, needle]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,7 +133,11 @@ function TypographyFontPicker({
           const value = `custom:${font.id}`;
           return <button key={font.id} type="button" role="option" aria-selected={selectedValue === value} data-font-option={value} onClick={() => choose(value)}><Check aria-hidden /><span><strong>{font.name}</strong><small>{font.fileName}</small></span></button>;
         })}</div> : null}
-        {!filteredPresets.length && !filteredCustomFonts.length ? <p className="typography-font-empty">{zh ? "没有匹配的字体" : "No matching fonts"}</p> : null}
+        {filteredLocalFonts.length ? <div className="typography-font-option-group"><p>{zh ? "本机字体" : "Device fonts"}</p>{filteredLocalFonts.map((font) => {
+          const value = `local:${font.id}`;
+          return <button key={font.id} type="button" role="option" aria-selected={selectedValue === value} data-font-option={value} onClick={() => choose(value)}><Check aria-hidden /><span><strong style={{ fontFamily: font.name }}>{font.name}</strong><small>{font.styles.length ? font.styles.join(" · ") : zh ? "系统字体" : "System font"}</small></span></button>;
+        })}</div> : null}
+        {!filteredPresets.length && !filteredCustomFonts.length && !filteredLocalFonts.length ? <p className="typography-font-empty">{zh ? "没有匹配的字体" : "No matching fonts"}</p> : null}
       </div>
     </div> : null}
   </div>;
@@ -138,7 +151,9 @@ export function TypographySettingsPanel() {
   const dialog = useModalDialog();
   const [settings, setSettings] = useState<TypographySettings>(defaultTypographySettings);
   const [customFonts, setCustomFonts] = useState<CustomFontRecord[]>([]);
+  const [localFonts, setLocalFonts] = useState<LocalFontFamilyRecord[]>(() => typeof window === "undefined" ? [] : loadStoredLocalFontFamilies());
   const [loadingFonts, setLoadingFonts] = useState(true);
+  const [discoveringFonts, setDiscoveringFonts] = useState(false);
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -169,8 +184,32 @@ export function TypographySettingsPanel() {
     } else if (kind === "custom") {
       const font = customFonts.find((item) => item.id === id);
       if (font) selection = { kind: "custom", id: font.id, family: font.family, name: font.name };
+    } else if (kind === "local") {
+      const font = localFonts.find((item) => item.id === id);
+      if (font) selection = { kind: "local", id: font.id, name: font.name };
     }
     if (selection) updateSettings({ ...settings, [role]: selection });
+  }
+
+  async function discoverFonts() {
+    setMessage("");
+    setError("");
+    if (!canDiscoverLocalFonts()) {
+      setError(copy("当前浏览器不支持读取本机字体；仍可使用内置字体或导入字体族。建议使用最新版 Chrome 或 Edge，并通过 HTTPS 或 localhost 打开。", "This browser cannot enumerate device fonts. Built-in and imported families remain available. Use current Chrome or Edge over HTTPS or localhost."));
+      return;
+    }
+    setDiscoveringFonts(true);
+    try {
+      const families = await discoverLocalFontFamilies();
+      setLocalFonts(families);
+      setMessage(copy(`已发现 ${families.length} 个本机字体族，可用于界面、正文和标题。`, `Found ${families.length} device font families for interface, body, and headings.`));
+    } catch (error) {
+      setError(error instanceof DOMException && error.name === "NotAllowedError"
+        ? copy("未获得本机字体访问权限。你可以重新点击并允许访问，或继续使用内置/导入字体。", "Device-font access was not granted. Retry and allow access, or keep using built-in/imported fonts.")
+        : copy("无法读取本机字体；内置和已导入字体仍可正常使用。", "Device fonts could not be read. Built-in and imported fonts remain available."));
+    } finally {
+      setDiscoveringFonts(false);
+    }
   }
 
   async function importFont(files: FileList | null) {
@@ -269,7 +308,7 @@ export function TypographySettingsPanel() {
                 <div key={role} className="typography-role-field">
                   <span className="typography-role-label">{zh ? roleCopy[role].zh : roleCopy[role].en}</span>
                   <span className="typography-role-note">{zh ? roleCopy[role].noteZh : roleCopy[role].noteEn}</span>
-                  <TypographyFontPicker role={role} selection={settings[role]} customFonts={customFonts} loading={loadingFonts} zh={zh} onSelect={(value) => selectFont(role, value)} />
+                  <TypographyFontPicker role={role} selection={settings[role]} customFonts={customFonts} localFonts={localFonts} loading={loadingFonts} zh={zh} onSelect={(value) => selectFont(role, value)} />
                 </div>
               ))}
             </div>
@@ -290,6 +329,16 @@ export function TypographySettingsPanel() {
         </div>
         <button type="button" className="focus-ring typography-reset-button" onClick={() => updateSettings(defaultTypographySettings, copy("已恢复默认字体。", "Default typography restored."))}>
           <RotateCcw aria-hidden />{copy("恢复默认", "Reset")}
+        </button>
+      </div>
+
+      <div className="typography-import-row">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">{copy("本机字体", "Device fonts")}</p>
+          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的界面、正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English interface, body, and headings.")}</p>
+        </div>
+        <button type="button" className="focus-ring typography-import-button" disabled={discoveringFonts} onClick={() => void discoverFonts()}>
+          <Laptop aria-hidden />{discoveringFonts ? copy("正在读取…", "Discovering…") : localFonts.length ? copy("重新扫描", "Scan again") : copy("扫描本机字体", "Find device fonts")}
         </button>
       </div>
 

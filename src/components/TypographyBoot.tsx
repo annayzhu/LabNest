@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import { hydrateReferencedCustomFonts, hydrateTypographyPreferences } from "@/lib/custom-font-storage";
+import { loadStoredLocalFontFamilies } from "@/lib/local-font-catalog";
 
 export function TypographyBoot() {
   useEffect(() => {
+    loadStoredLocalFontFamilies();
     let scheduled = false;
     const hydrate = () => void hydrateReferencedCustomFonts().catch(() => {
       // A missing local font falls back to the document's configured base face.

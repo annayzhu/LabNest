@@ -114,6 +114,7 @@ function RichRun({ run }: { run: ProtocolRichTextRun }) {
   const href = safeLink(run.link);
   if (href) content = <a href={href} className="font-medium text-moss underline decoration-moss/40 underline-offset-2">{content}</a>;
   if (run.fontSizePt) content = <span data-labnest-size={run.fontSizePt} style={{ fontSize: `${run.fontSizePt}pt` }}>{content}</span>;
+  if (run.fontFamily) content = <span data-labnest-font-family={run.fontFamily} style={{ fontFamily: richTextFontFamilyCss(run.fontFamily) }}>{content}</span>;
   if (run.color === "risk") content = <span data-labnest-color="risk" className="text-error">{content}</span>;
   return content;
 }

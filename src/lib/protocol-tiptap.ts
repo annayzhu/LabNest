@@ -42,6 +42,7 @@ function marksFromRun(run: ProtocolRichTextRun): TiptapMark[] | undefined {
   const textStyle = {
     ...(run.fontSizePt ? { fontSize: `${run.fontSizePt}pt` } : {}),
     ...(run.color === "risk" ? { color: RICH_TEXT_RISK_COLOR_HEX } : {}),
+    ...(run.fontFamily ? { fontFamily: run.fontFamily } : {}),
   };
   if (Object.keys(textStyle).length) marks.push({ type: "textStyle", attrs: textStyle });
   return marks.length ? marks : undefined;
@@ -215,6 +216,7 @@ function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRich
         link: typeof link === "string" ? link : undefined,
         color: parseRichTextColor(textStyle?.attrs?.color),
         fontSizePt: fontSizeFromMark(textStyle),
+        fontFamily: parseRichTextFontFamily(textStyle?.attrs?.fontFamily),
       });
       return;
     }

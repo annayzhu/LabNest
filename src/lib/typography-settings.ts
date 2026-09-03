@@ -1,4 +1,5 @@
 import { cjkFontCatalog, latinFontCatalog } from "@/lib/font-catalog";
+import { localFontCssVariable } from "@/lib/local-font-catalog";
 
 export const typographySettingsStorageKey = "labnest.typography-settings.v1";
 export const typographyCssStorageKey = "labnest.typography-css.v2";
@@ -27,7 +28,8 @@ export type TypographyPresetId = (typeof typographyPresets)[TypographyRole][numb
 
 export type PresetFontSelection = { kind: "preset"; id: TypographyPresetId };
 export type CustomFontSelection = { kind: "custom"; id: string; family: string; name: string };
-export type FontSelection = PresetFontSelection | CustomFontSelection;
+export type LocalFontSelection = { kind: "local"; id: string; name: string };
+export type FontSelection = PresetFontSelection | CustomFontSelection | LocalFontSelection;
 
 export type TypographySettings = Record<TypographyRole, FontSelection>;
 
@@ -107,6 +109,15 @@ function parseSelection(role: TypographyRole, value: unknown): FontSelection {
   ) {
     return { kind: "custom", id: candidate.id, family: candidate.family, name: candidate.name.trim().slice(0, 80) };
   }
+  if (
+    candidate.kind === "local"
+    && typeof candidate.id === "string"
+    && /^[a-z0-9-]{1,80}$/.test(candidate.id)
+    && typeof candidate.name === "string"
+    && candidate.name.trim().length > 0
+  ) {
+    return { kind: "local", id: candidate.id, name: candidate.name.trim().slice(0, 120) };
+  }
   return defaultTypographySettings[role];
 }
 
@@ -128,6 +139,10 @@ function familyForSelection(role: TypographyRole, selection: FontSelection): str
   if (selection.kind === "custom") {
     const fallback = typographyPresets[role].find((preset) => preset.id === defaultTypographySettings[role].id)?.family;
     return `"labnest-custom-${selection.id}", ${fallback}`;
+  }
+  if (selection.kind === "local") {
+    const fallback = typographyPresets[role].find((preset) => preset.id === defaultTypographySettings[role].id)?.family;
+    return `var(${localFontCssVariable(selection.id)}), ${fallback}`;
   }
   return typographyPresets[role].find((preset) => preset.id === selection.id)?.family
     ?? typographyPresets[role][0].family;

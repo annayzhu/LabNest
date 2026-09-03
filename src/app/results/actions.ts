@@ -10,6 +10,7 @@ import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions
 import { createResultInTransaction } from "@/lib/result-creation";
 import { parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
 import { resultRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
+import { withResultLegacyPromotionMarker } from "@/lib/result-document";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
 import { normalizeResultDocument, parseScientificDocumentJson, resultSections } from "@/lib/scientific-document";
 
@@ -28,7 +29,7 @@ function optionalStringArray(value: FormDataEntryValue | null) {
 }
 function fields(formData: FormData) {
   const parsed = resultSchema.parse({ id: optionalText(formData.get("id")), experimentId: formData.get("experimentId"), title: formData.get("title"), resultType: formData.get("resultType"), recordStatus: formData.get("recordStatus"), sourceType: formData.get("sourceType"), qualityStatus: formData.get("qualityStatus") });
-  return { parsed, sourceEntryId: optionalText(formData.get("sourceEntryId")), templateKey: optionalText(formData.get("templateKey")), templateProtocolVersionId: optionalText(formData.get("templateProtocolVersionId")), templateModuleIds: optionalStringArray(formData.get("resultModuleIdsJson")), templateInstanceKey: optionalText(formData.get("templateInstanceKey")), templateInstanceLabel: optionalText(formData.get("templateInstanceLabel")), textValue: optionalText(formData.get("textValue")), numericValue: optionalNumber(formData.get("numericValue")), unit: optionalText(formData.get("unit")), analysisMethod: optionalText(formData.get("analysisMethod")), notes: optionalText(formData.get("notes")), valuesJson: parseResultValuesJson(formData.get("templateValuesJson")), contentJson: normalizeResultDocument(parseScientificDocumentJson(formData.get("contentJson"), resultSections)) };
+  return { parsed, sourceEntryId: optionalText(formData.get("sourceEntryId")), templateKey: optionalText(formData.get("templateKey")), templateProtocolVersionId: optionalText(formData.get("templateProtocolVersionId")), templateModuleIds: optionalStringArray(formData.get("resultModuleIdsJson")), templateInstanceKey: optionalText(formData.get("templateInstanceKey")), templateInstanceLabel: optionalText(formData.get("templateInstanceLabel")), legacyValuesPromoted: formData.get("legacyValuesPromoted") === "true", textValue: optionalText(formData.get("textValue")), numericValue: optionalNumber(formData.get("numericValue")), unit: optionalText(formData.get("unit")), analysisMethod: optionalText(formData.get("analysisMethod")), notes: optionalText(formData.get("notes")), valuesJson: parseResultValuesJson(formData.get("templateValuesJson")), contentJson: normalizeResultDocument(parseScientificDocumentJson(formData.get("contentJson"), resultSections)) };
 }
 
 async function persistNewResult(formData: FormData) {
@@ -55,6 +56,7 @@ async function persistNewResult(formData: FormData) {
     unit: data.unit,
     analysisMethod: data.analysisMethod,
     notes: data.notes,
+    metadataJson: data.legacyValuesPromoted ? withResultLegacyPromotionMarker({}) : undefined,
   }));
 }
 
@@ -100,7 +102,7 @@ async function persistResultUpdate(formData: FormData) {
     throw new Error(`This Result cannot be ${data.parsed.recordStatus}: ${validation.errors.join(" ")}`);
   }
   await prisma.$transaction([
-    prisma.result.update({ where: { id: current.id }, data: { title: data.parsed.title, resultType: data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, templateInstanceKey: current.templateKey ? data.templateInstanceKey : current.templateInstanceKey, templateInstanceLabel: current.templateKey ? data.templateInstanceLabel : current.templateInstanceLabel, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, valuesJson: data.valuesJson as Prisma.InputJsonValue, contentJson: data.contentJson } }),
+    prisma.result.update({ where: { id: current.id }, data: { title: data.parsed.title, resultType: data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, templateInstanceKey: current.templateKey ? data.templateInstanceKey : current.templateInstanceKey, templateInstanceLabel: current.templateKey ? data.templateInstanceLabel : current.templateInstanceLabel, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, valuesJson: data.valuesJson as Prisma.InputJsonValue, contentJson: data.contentJson, ...(data.legacyValuesPromoted ? { metadataJson: withResultLegacyPromotionMarker(current.metadataJson) as Prisma.InputJsonValue } : {}) } }),
     prisma.activityLog.create({ data: { action: "update", targetType: "result", targetId: current.id, metadataJson: { recordStatus: data.parsed.recordStatus, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status } } }),
   ]);
   return { resultId: current.id, experimentId: current.experimentId };

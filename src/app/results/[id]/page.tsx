@@ -6,6 +6,7 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DatasetUploadForm } from "@/components/DatasetUploadForm";
 import { DatasetDeleteButton } from "@/components/DatasetDeleteButton";
 import { PageHeader } from "@/components/PageHeader";
+import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { ResultRecordDocument } from "@/components/ResultRecordDocument";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
@@ -20,6 +21,7 @@ import { EXPERIMENT_RESULT_REPORT_KEY } from "@/lib/experiment-results";
 import { normalizeResultTemplate } from "@/lib/result-templates";
 import { normalizeResultDocument } from "@/lib/scientific-document";
 import { resultDeleteBlockers } from "@/lib/record-lifecycle";
+import { resultLegacyValuesArePromoted } from "@/lib/result-document";
 import { archiveResult, deleteResult, restoreResult } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -68,14 +70,14 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ i
   });
 
   return <AppShell><div className="space-y-6">
-    <PageHeader eyebrow={isExperimentReport ? undefined : `${result.resultType} · ${result.sourceType.replaceAll("_", " ")}`} title={result.title} description={isExperimentReport ? undefined : result.textValue ?? resultNotes ?? "Structured Result record."} actions={recycledKeys.has(`result:${result.id}`) ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <>{template && result.experimentId && ["per_sample", "per_timepoint", "repeatable"].includes(template.cardinality ?? "per_run") ? <Link href={`/results/new?experiment=${encodeURIComponent(result.experimentId)}&template=${encodeURIComponent(template.templateKey ?? "")}${result.protocolVersionId ? `&protocolVersionId=${encodeURIComponent(result.protocolVersionId)}` : ""}`} className={secondaryButton}>New template instance</Link> : null}<Link href={`/results/${result.id}/edit`} className={primaryButton}>Edit Result</Link><RecordLifecycleControl id={result.id} identifier={result.title} title={result.resultType} recordLabel="Result" recordLabelZh="结果" blockers={deletionBlockers} archived={result.status === "archived"} deleteAction={deleteResult} archiveAction={archiveResult} restoreAction={restoreResult} allowLinkedRecycle /></>} />
+    <PageHeader eyebrow={isExperimentReport ? undefined : `${result.resultType} · ${result.sourceType.replaceAll("_", " ")}`} title={result.title} description={isExperimentReport ? undefined : resultLegacyValuesArePromoted(result.metadataJson) ? "Structured Result record." : result.textValue ?? resultNotes ?? "Structured Result record."} actions={recycledKeys.has(`result:${result.id}`) ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <><DocumentPrintButton label="Print / PDF" showLabel />{template && result.experimentId && ["per_sample", "per_timepoint", "repeatable"].includes(template.cardinality ?? "per_run") ? <Link href={`/results/new?experiment=${encodeURIComponent(result.experimentId)}&template=${encodeURIComponent(template.templateKey ?? "")}${result.protocolVersionId ? `&protocolVersionId=${encodeURIComponent(result.protocolVersionId)}` : ""}`} className={secondaryButton}>New template instance</Link> : null}<Link href={`/results/${result.id}/edit`} className={primaryButton}>Edit Result</Link><RecordLifecycleControl id={result.id} identifier={result.title} title={result.resultType} recordLabel="Result" recordLabelZh="结果" blockers={deletionBlockers} archived={result.status === "archived"} deleteAction={deleteResult} archiveAction={archiveResult} restoreAction={restoreResult} allowLinkedRecycle /></>} />
     {recycledKeys.has(`result:${result.id}`) ? <RecycleBinWarning kind="self" label="Result" labelZh="结果" /> : null}
     {result.researchPlanId && recycledKeys.has(`research_plan:${result.researchPlanId}`) ? <RecycleBinWarning label="Research Plan" labelZh="研究方案" /> : null}
     {protocolVersion && recycledKeys.has(`protocol:${protocolVersion.protocolId}`) ? <RecycleBinWarning label="Protocol" labelZh="实验规程" /> : null}
 
     <div className="document-editor-layout">
       <main className="document-editor-main space-y-6">
-        <ResultRecordDocument title={result.title} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} />
+        <ResultRecordDocument title={result.title} qualityStatus={result.qualityStatus} template={template} values={result.valuesJson} validationStatus={result.validationStatus} validation={result.validationJson} datasets={result.datasets} attachments={attachmentLinks} document={document} numericValue={result.numericValue} unit={result.unit} textValue={result.textValue} notes={resultNotes} legacyValuesPromoted={resultLegacyValuesArePromoted(result.metadataJson)} />
 
         <Card className="scroll-mt-24"><div id="result-files" className="scroll-mt-24" /><CardHeader title="Result files" eyebrow="One place for instrument exports and supporting evidence" /><CardBody className="space-y-5">
           <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/55 px-3 py-2.5 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">Where instrument exports go</strong><span className="mt-0.5 block">Use <b>Table data</b> for CSV, TSV, TXT or XLSX files when preview and schema checks are useful. Use <b>Original & supporting files</b> for proprietary instrument formats, PDF, images or video. Store each file once.</span></div>

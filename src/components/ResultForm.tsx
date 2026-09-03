@@ -12,6 +12,7 @@ import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnter
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import { resultDocumentWithLegacyValues } from "@/lib/result-document";
 import { buildExperimentResultReportTemplate, type ExperimentResultModule } from "@/lib/experiment-results";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
@@ -61,6 +62,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     templateSnapshotJson?: unknown;
     valuesJson?: unknown;
     validationJson?: unknown;
+    legacyValuesPromoted?: boolean;
     document: ScientificDocument;
   };
 }) {
@@ -84,7 +86,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   const validation = useMemo<ResultValidationSnapshot>(() => initial.validationJson && typeof initial.validationJson === "object" ? initial.validationJson as ResultValidationSnapshot : {}, [initial.validationJson]);
   const liveValidation = useMemo(() => template ? validateResultRecord({ template, values: withResultDatasetValues(templateValues, datasetValues) }) : validation, [datasetValues, template, templateValues, validation]);
   const visibleValidation = template && (!initial.id || availableModules.length) ? liveValidation : validation;
-  const hiddenSectionKeys = initial.document.sections.filter((section) => ["summary", "data_media"].includes(section.key) && !section.blocks.length).map((section) => section.key);
+  const document = useMemo(() => initial.legacyValuesPromoted ? initial.document : resultDocumentWithLegacyValues(initial.document, initial), [initial]);
 
   const missingModuleSelection = availableModules.length > 0 && selectedModuleIds.length === 0;
 
@@ -92,11 +94,17 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {lockedExperiment ? <input type="hidden" name="experimentId" value={initial.experimentId ?? ""} /> : null}
     <input type="hidden" name="templateValuesJson" value={serializedValues} />
+    <input type="hidden" name="legacyValuesPromoted" value="true" />
+    <input type="hidden" name="textValue" value={initial.textValue ?? ""} />
+    <input type="hidden" name="numericValue" value={initial.numericValue ?? ""} />
+    <input type="hidden" name="unit" value={initial.unit ?? ""} />
+    <input type="hidden" name="notes" value={initial.notes ?? ""} />
     {availableModules.length ? <input type="hidden" name="resultModuleIdsJson" value={JSON.stringify(selectedModuleIds)} /> : null}
     {template ? <input type="hidden" name="templateKey" value={template.templateKey ?? ""} /> : null}
     {template && initial.templateProtocolVersionId ? <input type="hidden" name="templateProtocolVersionId" value={initial.templateProtocolVersionId} /> : null}
-    <DocumentEditorLayout storageKey="labnest.result.settings-open">
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Result" title={title} titlePlaceholder="Untitled Result" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Result" aria-label="Result title" />} headerFacts={availableModules.length ? [
+    {!template ? <><input type="hidden" name="templateInstanceKey" value="" /><input type="hidden" name="templateInstanceLabel" value="" /></> : null}
+    <DocumentEditorLayout>
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={document} documentType="Result" title={title} titlePlaceholder="Untitled Result" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Result" aria-label="Result title" />} headerFacts={availableModules.length ? [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
       ] : [
         { label: "Experiment", value: experiment ? `${experiment.runCode ?? experiment.title} · ${experiment.project?.name ?? "No project"}` : "Not selected" },
@@ -104,7 +112,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
         { label: "Source", value: sourceType.replaceAll("_", " ") },
         { label: "Record", value: recordStatus.replaceAll("_", " ") },
         { label: "QC", value: qualityStatus.replaceAll("_", " ") },
-      ]} hiddenSectionKeys={hiddenSectionKeys} insertProfile="scientific-result" leadingContent={<ResultCaptureEditor
+      ]} insertProfile="scientific-result" leadingContent={template ? <ResultCaptureEditor
         template={template}
         templateValues={templateValues}
         onTemplateValuesChange={setTemplateValues}
@@ -115,15 +123,11 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
         resultId={initial.id}
         templateInstanceKey={initial.templateInstanceKey}
         templateInstanceLabel={initial.templateInstanceLabel}
-        textValue={initial.textValue}
-        numericValue={initial.numericValue}
-        unit={initial.unit}
-        notes={initial.notes}
         availableModules={availableModules}
         selectedModuleIds={selectedModuleIds}
         onSelectedModuleIdsChange={setSelectedModuleIds}
-      />} /></div>
-      <aside className="document-editor-sidebar" aria-label="Result information">
+      /> : undefined} /></div>
+      <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Result metadata">
         <details className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface" open={!hasTemplate ? true : undefined}><summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-ink">报告设置 <span className="ml-1 text-xs font-normal text-muted">状态与来源</span></summary><div className="grid min-w-0 gap-3 border-t border-hairline p-3">
           {quickEntries.length ? <label className="min-w-0"><span className={formLabelClass}>从快速实验记录导入 · 可选</span><select name="sourceEntryId" value={initial.sourceEntryId ?? ""} onChange={(event) => { const params = new URLSearchParams(searchParams.toString()); params.set("manual", "1"); if (event.target.value) params.set("entry", event.target.value); else params.delete("entry"); if (experimentId) params.set("experiment", experimentId); router.replace(`/results/new?${params.toString()}`); }} className={formInputClass}><option value="">不导入快速记录</option>{quickEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.title} · {entry.occurredAt.slice(0, 10)}{entry.projectName ? ` · ${entry.projectName}` : ""}</option>)}</select><span className="mt-1 block text-xs leading-5 text-muted">导入正文、来源链接和附件引用；分析与解释仍由你确认填写。</span></label> : null}
           <label className="min-w-0"><span className={formLabelClass}>实验</span>{lockedExperiment ? <div className={`${formInputClass} flex h-auto min-h-10 items-center break-words bg-stone/50 py-2`}>{experiment?.project?.name} · {experiment?.researchPlan?.code ?? experiment?.researchPlan?.title} · {experiment?.runCode ?? experiment?.title}</div> : <select required name="experimentId" value={experimentId} onChange={(event) => setExperimentId(event.target.value)} className={formInputClass}><option value="" disabled>Select Experiment</option>{experiments.map((item) => <option key={item.id} value={item.id}>{item.project?.name} · {item.researchPlan?.code ?? item.researchPlan?.title ?? "No plan"} · {item.runCode ?? item.title}</option>)}</select>}</label>
@@ -155,15 +159,11 @@ function ResultCaptureEditor({
   resultId,
   templateInstanceKey,
   templateInstanceLabel,
-  textValue,
-  numericValue,
-  unit,
-  notes,
   availableModules,
   selectedModuleIds,
   onSelectedModuleIdsChange,
 }: {
-  template?: ResultTemplate;
+  template: ResultTemplate;
   templateValues: Record<string, unknown>;
   onTemplateValuesChange: (values: Record<string, unknown>) => void;
   datasetValues: ReturnType<typeof resultDatasetValuesFromResultValues>;
@@ -173,23 +173,17 @@ function ResultCaptureEditor({
   resultId?: string;
   templateInstanceKey?: string | null;
   templateInstanceLabel?: string | null;
-  textValue?: string | null;
-  numericValue?: number | null;
-  unit?: string | null;
-  notes?: string | null;
   availableModules: ExperimentResultModule[];
   selectedModuleIds: string[];
   onSelectedModuleIdsChange: (ids: string[]) => void;
 }) {
-  const cleanNotes = notes === "Template registered; no measurement has been entered." ? "" : notes ?? "";
-  const hasSupplement = numericValue !== null && numericValue !== undefined || Boolean(unit || textValue || cleanNotes);
   return <section className="document-section" data-testid="result-capture-editor">
     <header className="mb-3 flex flex-wrap items-start justify-between gap-3">
       <h2 className="document-section-title font-serif font-medium text-ink">实验结果 / Result record</h2>
-      {template ? <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${validationStatus === "valid" ? "bg-success-surface text-success" : validationStatus === "warning" ? "bg-warning-surface text-warning" : "bg-stone text-muted"}`}>{validationStatus?.replaceAll("_", " ") ?? "incomplete"}</span> : null}
+      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${validationStatus === "valid" ? "bg-success-surface text-success" : validationStatus === "warning" ? "bg-warning-surface text-warning" : "bg-stone text-muted"}`}>{validationStatus?.replaceAll("_", " ") ?? "incomplete"}</span>
     </header>
 
-    {template ? <div className="space-y-4">
+    <div className="space-y-4">
       {availableModules.length ? <details open className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/45"><summary className="cursor-pointer px-3 py-2 text-xs font-medium text-graphite">结果内容 <span className="ml-1 text-muted">{selectedModuleIds.length}/{availableModules.length}</span></summary><div className="grid gap-1 border-t border-hairline px-3 py-2 sm:grid-cols-2">{availableModules.map((module) => <label key={module.id} className="flex min-w-0 cursor-pointer items-start gap-2 rounded-[var(--ln-radius-control-sm)] px-1.5 py-1.5 hover:bg-surface"><input type="checkbox" checked={selectedModuleIds.includes(module.id)} onChange={(event) => onSelectedModuleIdsChange(event.target.checked ? [...selectedModuleIds, module.id] : selectedModuleIds.filter((id) => id !== module.id))} className="mt-0.5 h-3.5 w-3.5 accent-moss" /><span className="min-w-0"><span className="block break-words text-xs font-medium leading-5 text-ink">{module.template.title}</span><span className="block break-words text-[11px] leading-4 text-muted">{module.protocolTitle}{module.protocolCode ? <span className="record-identifier ml-1 text-[10px]">· {module.protocolCode} · v{module.displayVersion}</span> : null}</span></span></label>)}</div></details> : null}
       {template.instructions?.length ? <aside className="rounded-[var(--ln-radius-control-lg)] border border-sage/35 bg-sage-surface/35 px-3 py-2.5" aria-label="Result template instructions"><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p><div className="text-xs leading-5 text-graphite"><ProtocolRichTextContent nodes={template.instructions} /></div></aside> : null}
       {["per_sample", "per_timepoint", "repeatable"].includes(template.cardinality ?? "per_run") ? <div className="grid gap-4 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/70 p-3 md:grid-cols-2"><label><span className={formLabelClass}>{template.cardinality === "per_sample" ? "样本" : template.cardinality === "per_timepoint" ? "时间点" : "重复"}标识 · 必填</span><input required name="templateInstanceKey" defaultValue={templateInstanceKey ?? ""} className={formInputClass} placeholder={template.cardinality === "per_sample" ? "SAMPLE-001" : template.cardinality === "per_timepoint" ? "24h" : "replicate-1"} /></label><label><span className={formLabelClass}>显示名称</span><input name="templateInstanceLabel" defaultValue={templateInstanceLabel ?? ""} className={formInputClass} placeholder="便于阅读的名称" /></label></div> : <><input type="hidden" name="templateInstanceKey" value={templateInstanceKey ?? ""} /><input type="hidden" name="templateInstanceLabel" value={templateInstanceLabel ?? ""} /></>}
@@ -197,9 +191,7 @@ function ResultCaptureEditor({
       {template.fields.length ? <div><h3 className="mb-3 text-sm font-semibold text-ink">直接结果字段</h3><div className="grid gap-4 md:grid-cols-2">{template.fields.map((field, index) => <TemplateFieldInput key={field.key ?? index} field={field} value={templateValues[field.key ?? stableResultKey(field.name ?? field.label ?? `field_${index + 1}`)]} onChange={(value) => { const key = field.key ?? stableResultKey(field.name ?? field.label ?? `field_${index + 1}`); onTemplateValuesChange({ ...templateValues, [key]: value }); }} />)}</div></div> : null}
       {template.datasets?.length ? <div><h3 className="mb-3 text-sm font-semibold text-ink">结果数据表</h3><ResultDatasetTableEditor datasets={template.datasets} values={datasetValues} onChange={onDatasetValuesChange} /></div> : null}
       {template.artifacts?.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">数据与媒体文件槽</p><ul className="mt-2 grid gap-2 sm:grid-cols-2">{template.artifacts.map((artifact) => <li key={artifact.key} className="rounded-[var(--ln-radius-control-md)] bg-warm/70 px-3 py-2 text-sm text-graphite"><span className="font-medium text-ink">{artifact.label}</span><span className="ml-2 text-xs text-muted">{artifact.kind}{artifact.required ? " · 必填" : " · 可选"}</span></li>)}</ul><p className="mt-3 text-xs leading-5 text-muted">文件使用固定槽位管理，不再作为自由文本块添加。{resultId ? <a href={`/results/${resultId}#result-files`} className="ml-1 font-medium text-moss hover:underline">保存后前往结果页上传</a> : "首次保存后即可上传。"}</p></div> : null}
-    </div> : <div className="grid gap-4 md:grid-cols-2"><label className="md:col-span-2"><span className={formLabelClass}>直接结果</span><textarea name="textValue" defaultValue={textValue ?? ""} className={`${formTextareaClass} min-h-24`} placeholder="直接记录观察结果、判断或主要发现" /></label><label><span className={formLabelClass}>主要数值 · 可选</span><input name="numericValue" type="number" step="any" defaultValue={numericValue ?? ""} className={formInputClass} placeholder="例如 1.42" /></label><label><span className={formLabelClass}>单位</span><input name="unit" defaultValue={unit ?? ""} className={formInputClass} placeholder="%、ng/µL、fold…" /></label><label className="md:col-span-2"><span className={formLabelClass}>补充备注 · 可选</span><textarea name="notes" defaultValue={cleanNotes} className={formTextareaClass} /></label><input type="hidden" name="templateInstanceKey" value="" /><input type="hidden" name="templateInstanceLabel" value="" /></div>}
-
-    {template ? <details className="mt-5 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/35" open={hasSupplement || undefined}><summary className="cursor-pointer px-4 py-3 text-sm font-medium text-graphite">补充摘要与备注 · 可选</summary><div className="grid gap-4 border-t border-hairline px-4 py-4 md:grid-cols-2"><label><span className={formLabelClass}>单一代表数值</span><input name="numericValue" type="number" step="any" defaultValue={numericValue ?? ""} className={formInputClass} placeholder="仅当一个数值可概括本结果时填写" /></label><label><span className={formLabelClass}>单位</span><input name="unit" defaultValue={unit ?? ""} className={formInputClass} /></label><label className="md:col-span-2"><span className={formLabelClass}>简短摘要</span><textarea name="textValue" defaultValue={textValue ?? ""} className={formTextareaClass} /></label><label className="md:col-span-2"><span className={formLabelClass}>补充备注</span><textarea name="notes" defaultValue={cleanNotes} className={formTextareaClass} /></label></div></details> : null}
+    </div>
   </section>;
 }
 

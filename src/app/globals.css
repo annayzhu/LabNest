@@ -225,6 +225,7 @@
   --ln-app-topbar-height: 3.3rem; /* 固定搜索栏高度，文档吸顶层从其下方开始。 */
   --ln-document-viewbar-height: 2.1rem; /* Document / Metadata / Relevant items 吸顶层高度。 */
   --ln-document-editor-chrome-height: calc(var(--ln-document-viewbar-height) + var(--ln-document-toolbar-height)); /* 标签层与格式工具栏的总吸顶高度。 */
+  --ln-document-outline-scroll-offset: calc(var(--ln-app-topbar-height) + var(--ln-document-editor-chrome-height) + 0.75rem); /* 目录跳转后标题停在吸顶工具条下方。 */
 
   /* 连续所见即所得编辑器：所有界面密度和科研节点尺寸集中在这里调整。 */
   --ln-wysiwyg-toolbar-control-height: 1.7rem; /* 顶部格式工具条按钮、选择器统一高度。 */
@@ -2136,7 +2137,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 }
 
 .document-editor-document-stage :is(.ln-protocol-section, #entry-document-overview, #entry-document-content) {
-  scroll-margin-top: 5rem;
+  scroll-margin-top: var(--ln-document-outline-scroll-offset);
 }
 
 .document-editor-outline,
@@ -4875,6 +4876,34 @@ table :where(td) {
   width: 100%;
 }
 
+[data-document-metadata="true"] {
+  margin-inline: auto;
+  max-width: 64rem;
+}
+
+[data-document-metadata="true"] > :is(section, details) {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-document-metadata="true"] > :is(section, details) + :is(section, details) {
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.6rem;
+}
+
+[data-document-metadata="true"] > section > :first-child,
+[data-document-metadata="true"] > details > summary {
+  min-height: 0;
+  padding: 0.4rem 0.15rem;
+}
+
+[data-document-metadata="true"] > section > :last-child,
+[data-document-metadata="true"] > details > :last-child {
+  padding: 0.55rem 0.15rem;
+}
+
 .document-editor-layout[data-active-view="metadata"] .document-editor-settings-rail { display: none; }
 
 .document-editor-drawer-scrim {
@@ -4929,6 +4958,12 @@ table :where(td) {
 }
 
 @media (min-width: 1024px) {
+  .standalone-document-editor-toolbar {
+    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
+    margin-right: 0;
+    width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap));
+  }
+
   .document-editor-workbench:has(.document-editor-context-rail > div:not(:empty)) {
     grid-template-columns: var(--ln-document-outline-width) minmax(0, 1fr);
   }

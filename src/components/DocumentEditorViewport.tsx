@@ -4,24 +4,45 @@ import { Maximize2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentOutlinePanel } from "@/components/DocumentOutlinePanel";
+import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
-import { documentFitScale } from "@/lib/document-editor-workbench";
+import { DOCUMENT_ZOOM_MAX, DOCUMENT_ZOOM_MIN, documentFitScale, normalizeDocumentZoom } from "@/lib/document-editor-workbench";
 
-export type DocumentZoomMode = "100" | "110" | "fit";
+export type DocumentZoomMode = "custom" | "fit";
 
 const A4_WIDTH_CSS_PX = (210 / 25.4) * 96;
+const DOCUMENT_ZOOM_STORAGE_KEY = "labnest.document-editor.zoom";
 
 export function useDocumentViewport() {
-  const [zoomMode, setZoomMode] = useState<DocumentZoomMode>("100");
+  const [zoomMode, setZoomMode] = useState<DocumentZoomMode>("custom");
+  const [zoomPercent, setZoomPercentState] = useState(100);
   const [fitScale, setFitScale] = useState(1);
   const [documentHeight, setDocumentHeight] = useState(0);
   const panelRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const stored = window.localStorage.getItem(DOCUMENT_ZOOM_STORAGE_KEY);
+    if (stored) queueMicrotask(() => setZoomPercentState(normalizeDocumentZoom(stored)));
+  }, []);
+
+  const setZoomPercent = useCallback((value: unknown) => {
+    const next = normalizeDocumentZoom(value, zoomPercent);
+    setZoomPercentState(next);
+    setZoomMode("custom");
+    window.localStorage.setItem(DOCUMENT_ZOOM_STORAGE_KEY, String(next));
+  }, [zoomPercent]);
+
   const updateFitScale = useCallback(() => {
-    const panelWidth = panelRef.current?.clientWidth ?? 0;
-    if (panelWidth) setFitScale(documentFitScale(panelWidth, A4_WIDTH_CSS_PX));
+    const panel = panelRef.current;
+    const panelWidth = panel?.clientWidth ?? 0;
+    if (!panelWidth) return;
+    const configuredInset = panel
+      ? Number.parseFloat(getComputedStyle(panel).getPropertyValue("--ln-document-fit-inline-inset"))
+      : Number.NaN;
+    const next = documentFitScale(panelWidth, A4_WIDTH_CSS_PX, Number.isFinite(configuredInset) ? configuredInset : 0);
+    setFitScale((current) => Math.abs(current - next) < 0.001 ? current : next);
   }, []);
 
   useEffect(() => {
@@ -43,29 +64,36 @@ export function useDocumentViewport() {
     return () => observer.disconnect();
   }, []);
 
-  const viewScale = zoomMode === "110" ? 1.1 : zoomMode === "fit" ? fitScale : 1;
+  const viewScale = zoomMode === "fit" ? fitScale : zoomPercent / 100;
   const viewStyle = {
     "--ln-document-view-scale": String(viewScale),
     "--ln-document-view-height": documentHeight ? `${documentHeight * viewScale}px` : undefined,
     overflowX: zoomMode === "fit" ? "hidden" : undefined,
   } as CSSProperties;
 
-  return { panelRef, stageRef, zoomMode, setZoomMode, updateFitScale, viewStyle };
+  return { panelRef, stageRef, zoomMode, setZoomMode, zoomPercent, setZoomPercent, updateFitScale, viewStyle };
 }
 
-export function DocumentZoomControls({ zoomMode, setZoomMode, updateFitScale }: Pick<ReturnType<typeof useDocumentViewport>, "zoomMode" | "setZoomMode" | "updateFitScale">) {
-  return <div className="document-editor-zoom" role="group" aria-label="Document view zoom">
-    {(["100", "110"] as const).map((mode) => <button key={mode} type="button" className="focus-ring" data-active={zoomMode === mode ? "true" : undefined} aria-pressed={zoomMode === mode} onClick={() => setZoomMode(mode)}>{mode}%</button>)}
-    <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }}><Maximize2 aria-hidden /><span>Fit</span></button>
+export function DocumentZoomControls({ zoomMode, setZoomMode, zoomPercent, setZoomPercent, updateFitScale }: Pick<ReturnType<typeof useDocumentViewport>, "zoomMode" | "setZoomMode" | "zoomPercent" | "setZoomPercent" | "updateFitScale">) {
+  const { t } = useI18n();
+  const [draft, setDraft] = useState(String(zoomPercent));
+  const [editing, setEditing] = useState(false);
+  const commit = () => { const next = normalizeDocumentZoom(draft, zoomPercent); setDraft(String(next)); setEditing(false); setZoomPercent(next); };
+  return <div className="document-editor-zoom" role="group" aria-label={t("Document view zoom")}>
+    <label className="document-editor-zoom-input" data-active={zoomMode === "custom" ? "true" : undefined}>
+      <input type="number" min={DOCUMENT_ZOOM_MIN} max={DOCUMENT_ZOOM_MAX} step="5" value={editing ? draft : String(zoomPercent)} aria-label={t("Zoom percentage")} onFocus={() => { setDraft(String(zoomPercent)); setEditing(true); }} onChange={(event) => setDraft(event.target.value)} onBlur={commit} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.blur(); } }} />
+      <span aria-hidden>%</span>
+    </label>
+    <button type="button" className="focus-ring" data-active={zoomMode === "fit" ? "true" : undefined} aria-pressed={zoomMode === "fit"} onClick={() => { updateFitScale(); setZoomMode("fit"); }} title={t("Fit document to available width")}><Maximize2 aria-hidden /><span>{t("Fit")}</span></button>
   </div>;
 }
 
 export function StandaloneDocumentEditorViewport({ children, toolbar, label, outline, className, paperClassName }: { children: ReactNode; toolbar: ReactNode; label: string; outline?: DocumentOutlineItem[]; className?: string; paperClassName?: string }) {
-  const { panelRef, stageRef, zoomMode, setZoomMode, updateFitScale, viewStyle } = useDocumentViewport();
+  const { panelRef, stageRef, zoomMode, setZoomMode, zoomPercent, setZoomPercent, updateFitScale, viewStyle } = useDocumentViewport();
   return <section className={cn("standalone-document-editor-viewport", className)} data-zoom-mode={zoomMode}>
     <div className="document-canvas-toolbar standalone-document-editor-toolbar" data-print-hidden>
-      {toolbar}
-      <DocumentZoomControls zoomMode={zoomMode} setZoomMode={setZoomMode} updateFitScale={updateFitScale} />
+      <div className="document-editor-toolbar-format">{toolbar}</div>
+      <DocumentZoomControls zoomMode={zoomMode} setZoomMode={setZoomMode} zoomPercent={zoomPercent} setZoomPercent={setZoomPercent} updateFitScale={updateFitScale} />
     </div>
     <div className="document-editor-workbench">
       <DocumentOutlinePanel items={outline ?? []} />

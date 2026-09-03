@@ -79,7 +79,10 @@ function ToolbarMenu({
   const open = openMenu === id;
   const assignMenuRef = useCallback((node: HTMLDivElement | null) => {
     menuRef.current = node;
-    if (node) window.requestAnimationFrame(() => node.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus());
+    // Wait until the opening Enter/Space key has been released. Moving focus
+    // during the same key gesture can activate the first menu item and close
+    // the menu immediately in Chromium.
+    if (node) window.setTimeout(() => node.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus(), 32);
   }, []);
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -227,6 +230,9 @@ export function DocumentWysiwygToolbar({
 
   const paragraphType = editor.isActive("heading", { level: 2 }) ? "heading2" : editor.isActive("heading", { level: 3 }) ? "heading3" : "paragraph";
   const textStyle = editor.getAttributes("textStyle");
+  const blockAttributes = editor.getAttributes(editor.isActive("heading") ? "heading" : editor.isActive("blockquote") ? "blockquote" : "paragraph");
+  const blockLineHeight = (blockAttributes.documentLineHeight ?? blockAttributes.protocolLineHeight ?? blockAttributes.scientificLineHeight) as string | number | undefined;
+  const activeLineHeight = blockLineHeight ? String(blockLineHeight) : textStyle.lineHeight as string | undefined;
   const fontOptions = [
     ...richTextFontOptions,
     ...customFonts.map((font) => ({ value: `labnest-custom-${font.id}`, label: font.name })),
@@ -247,7 +253,7 @@ export function DocumentWysiwygToolbar({
     chain = style.paragraphType === "heading2" ? chain.setHeading({ level: 2 }) : style.paragraphType === "heading3" ? chain.setHeading({ level: 3 }) : chain.setParagraph();
     chain = style.fontFamily ? chain.setFontFamily(style.fontFamily) : chain.unsetFontFamily();
     chain = style.fontSize ? chain.setFontSize(style.fontSize) : chain.unsetFontSize();
-    chain = style.lineHeight ? chain.setLineHeight(style.lineHeight) : chain.unsetLineHeight();
+    chain = style.lineHeight ? chain.setDocumentBlockLineHeight(style.lineHeight) : chain.unsetDocumentBlockLineHeight();
     chain = style.color ? chain.setColor(style.color) : chain.unsetColor();
     chain.run();
     const mark = (name: "bold" | "italic" | "underline", enabled?: boolean) => {
@@ -279,7 +285,7 @@ export function DocumentWysiwygToolbar({
       paragraphType,
       fontFamily: textStyle.fontFamily || undefined,
       fontSize: textStyle.fontSize || undefined,
-      lineHeight: textStyle.lineHeight || undefined,
+      lineHeight: activeLineHeight || undefined,
       bold: editor.isActive("bold") || undefined,
       italic: editor.isActive("italic") || undefined,
       underline: editor.isActive("underline") || undefined,
@@ -318,8 +324,8 @@ export function DocumentWysiwygToolbar({
       <button type="button" data-active={!textStyle.fontSize || undefined} onClick={() => editor.chain().focus().unsetFontSize().run()}>Default</button>
       {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={textStyle.fontSize === `${size}pt` || undefined} onClick={() => editor.chain().focus().setFontSize(`${size}pt`).run()}>{size} pt</button>)}
     </ToolbarMenu>
-    <ToolbarMenu id="spacing" label={`${textStyle.lineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
-      {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(textStyle.lineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setLineHeight(String(height)).run()}>{height}×</button>)}
+    <ToolbarMenu id="spacing" label={`${activeLineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
+      {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}
     </ToolbarMenu>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
     <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><List aria-hidden /></ToolbarButton>

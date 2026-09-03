@@ -64,6 +64,7 @@ function legacyAttrs(blockId: string, blockType: ProtocolContentBlock["type"], n
   return {
     protocolBlockId: blockId,
     protocolBlockType: blockType,
+    documentLineHeight: node?.lineHeight ?? null,
     protocolLineHeight: node?.lineHeight ?? null,
     protocolFontFamily: node?.fontFamily ?? null,
   };
@@ -228,7 +229,7 @@ function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRich
 
 function nodeTypography(node: JSONContent) {
   const textStyle = node.content?.flatMap((item) => item.marks ?? []).find((mark) => mark.type === "textStyle");
-  const lineHeight = node.attrs?.protocolLineHeight ?? textStyle?.attrs?.lineHeight;
+  const lineHeight = node.attrs?.documentLineHeight ?? node.attrs?.protocolLineHeight ?? textStyle?.attrs?.lineHeight;
   const fontFamily = node.attrs?.protocolFontFamily ?? textStyle?.attrs?.fontFamily;
   return {
     lineHeight: [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,

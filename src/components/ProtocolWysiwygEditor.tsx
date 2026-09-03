@@ -40,7 +40,7 @@ import {
 import { protocolDocumentToTiptap, tiptapToProtocolDocument } from "@/lib/protocol-tiptap";
 import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/result-templates";
 import { labToolManifest } from "@/lib/tool-manifest";
-import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
+import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
 type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "embedded_tool" | "table" }>;
 
@@ -253,6 +253,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
     extensions: [
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
+      createDocumentBlockLineHeightExtension(),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       createResizableDocumentTableExtension(),
       TaskList,

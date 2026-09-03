@@ -27,7 +27,7 @@ import { cn } from "@/lib/cn";
 import type { ScientificContentBlock, ScientificDocument } from "@/lib/scientific-document";
 import { scientificSectionAnchorId } from "@/lib/document-outline";
 import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
-import { createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
+import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
 type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" }>;
 
@@ -173,6 +173,7 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
     extensions: [
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
+      createDocumentBlockLineHeightExtension(),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       createResizableDocumentTableExtension(),
       TaskList,

@@ -64,14 +64,14 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout storageKey="labnest.experiment.settings-open">
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "Research Plan", value: plan ? `${plan.code ?? plan.title} · ${plan.project.name}` : "Not selected" },
         { label: "Method", value: activeMethodMode === "protocol" ? protocolMethodSummary : "Fully custom" },
         { label: "Date", value: date },
         { label: "Execution", value: status.replaceAll("_", " ") },
         { label: "Record", value: recordStatus.replaceAll("_", " ") },
       ]} /></div>
-      <aside className="document-editor-sidebar" aria-label="Experiment properties">
+      <aside className="document-editor-sidebar" aria-label="Experiment information">
     {!initial.id ? <Card><CardHeader title="Protocol association & method source" eyebrow="Choose in execution order; Protocol Steps become the on-bench checklist" /><CardBody className="space-y-5">
       <fieldset className="grid gap-3 md:grid-cols-2"><legend className={formLabelClass}>Planning mode</legend>
         <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>

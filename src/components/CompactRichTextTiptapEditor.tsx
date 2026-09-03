@@ -13,6 +13,7 @@ import Typography from "@tiptap/extension-typography";
 import { DocumentWysiwygToolbar } from "@/components/DocumentWysiwygToolbar";
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
+import { createDocumentBlockLineHeightExtension } from "@/lib/tiptap-document-extensions";
 
 export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, className }: {
   content: JSONContent;
@@ -43,6 +44,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
     extensions: [
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
+      createDocumentBlockLineHeightExtension(),
       TaskList,
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder }),

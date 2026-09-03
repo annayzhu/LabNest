@@ -23,11 +23,11 @@ export function ReportEditForm({ action, initial }: { action: FormAction; initia
   const scope = `${initial.projectName}${initial.researchPlanTitle ? ` · ${initial.researchPlanTitle}` : " · Entire Project"}`;
   const period = [periodStart, periodEnd].filter(Boolean).join(" – ") || "Not specified";
   return <form action={formAction} className="space-y-5"><input type="hidden" name="id" value={initial.id} /><input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
-    <DocumentEditorLayout storageKey="labnest.report.settings-open"><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" headerFacts={[
+    <DocumentEditorLayout storageKey="labnest.report.settings-open"><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Report" aria-label="Report title" />} headerFacts={[
       { label: "Scope", value: scope },
       { label: "Status", value: status.replaceAll("_", " ") },
       { label: "Period", value: period },
-    ]} /></div><aside className="document-editor-sidebar" aria-label="Report properties"><Card><CardHeader title="Report control" eyebrow="Scope is locked; narrative remains editable" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    ]} /></div><aside className="document-editor-sidebar" aria-label="Report information"><Card><CardHeader title="Report control" eyebrow="Scope is locked; narrative remains editable" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <label className="md:col-span-2"><span className={formLabelClass}>Scope</span><div className={`${formInputClass} flex items-center bg-stone/50`}>{scope}</div></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
       <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />

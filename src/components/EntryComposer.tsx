@@ -518,7 +518,7 @@ export function EntryComposer({
       </section>
       </div>
 
-      <div className="entry-editor-sidebar-column">
+      <div className="entry-editor-sidebar-column" role="complementary" aria-label="Entry information">
       <section className="entry-editor-context rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
         <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Research context</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">

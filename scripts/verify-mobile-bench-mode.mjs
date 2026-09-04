@@ -1,0 +1,70 @@
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+
+const baseUrl = process.env.LABNEST_E2E_BASE_URL ?? "http://127.0.0.1:3219";
+const browser = await chromium.launch({ headless: true });
+
+try {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+
+  const response = await page.goto(baseUrl, { waitUntil: "networkidle" });
+  assert(response && response.status() < 400, `Overview returned ${response?.status() ?? "no response"}.`);
+
+  const mobileNav = page.getByRole("navigation", { name: "Mobile navigation" });
+  await mobileNav.waitFor();
+  assert.deepEqual(
+    await mobileNav.locator("a, button").allTextContents(),
+    ["Today", "Runs", "Records", "Inventory", "More"],
+    "Mobile navigation must use task-oriented Bench Mode destinations.",
+  );
+
+  await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
+  await page.getByRole("link", { name: /Quick capture/i }).waitFor();
+  await page.getByRole("heading", { name: "Today’s plan" }).waitFor();
+  await page.getByRole("link", { name: /Quick capture/i }).click();
+  await page.getByRole("heading", { name: "Quick capture" }).waitFor();
+  await page.getByPlaceholder("What did you observe?").waitFor();
+  await page.getByRole("button", { name: "Take photo", exact: true }).waitFor();
+  await page.goBack({ waitUntil: "networkidle" });
+  await page.getByRole("link", { name: "Open monthly calendar" }).click();
+  await page.getByRole("heading", { name: "Calendar" }).waitFor();
+  await page.getByRole("link", { name: "Back to Today" }).click();
+  await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
+  assert.equal(await page.locator(".overview-desktop").isHidden(), true, "Desktop Overview must be hidden on a phone.");
+
+  const layout = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    smallestTarget: Math.min(...[...document.querySelectorAll("nav[aria-label='Mobile navigation'] a, nav[aria-label='Mobile navigation'] button, main a, main button")]
+      .filter((element) => element.getClientRects().length)
+      .map((element) => element.getBoundingClientRect().height)),
+  }));
+  assert(layout.scrollWidth <= layout.clientWidth + 1, `Mobile Bench page overflows: ${layout.scrollWidth}px > ${layout.clientWidth}px.`);
+  assert(layout.smallestTarget >= 44, `Visible Bench actions must be at least 44px high; found ${layout.smallestTarget}px.`);
+  assert.deepEqual(errors, [], `Browser errors: ${errors.join("\n")}`);
+
+  await page.goto(`${baseUrl}/protocol-run`, { waitUntil: "networkidle" });
+  const firstRun = page.locator('main a[href$="/run"]').first();
+  if (await firstRun.count()) {
+    await firstRun.click();
+    await page.getByRole("heading", { name: "Current step" }).waitFor();
+    await page.getByRole("button", { name: "Complete step" }).waitFor();
+    assert.equal(
+      await page.getByText("Whole block", { exact: false }).isVisible().catch(() => false),
+      false,
+      "Mobile run focus must not expose bulk group completion by default.",
+    );
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Overview" }).waitFor();
+  assert.equal(await page.locator(".bench-mobile").isHidden(), true, "Bench Mode must not replace desktop Overview.");
+
+  console.log("Mobile Bench Mode shell and Today journey passed.");
+} finally {
+  await browser.close();
+}

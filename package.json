@@ -18,6 +18,7 @@
     "test:experiment-editor-responsive:e2e": "node scripts/verify-experiment-editor-responsive.mjs",
     "test:typography:e2e": "node scripts/verify-typography-settings.mjs",
     "test:system-themes:e2e": "node scripts/verify-system-themes.mjs",
+    "test:mobile-bench:e2e": "node scripts/verify-mobile-bench-mode.mjs",
     "docker:up": "docker compose up -d --build app",
     "docker:status": "docker compose ps",
     "docker:logs": "docker compose logs -f app",

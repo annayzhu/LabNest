@@ -12,6 +12,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   const params = searchParams ? await searchParams : undefined;
   const requestedSource = firstSearchParam(params, "source");
   const protocolVersionId = firstSearchParam(params, "protocolVersionId") ?? "";
+  const captureMode = firstSearchParam(params, "mode") === "capture";
   const defaultSource = entrySourceTypes.includes(requestedSource as (typeof entrySourceTypes)[number]) ? requestedSource : "text";
   const [projects, researchPlans, protocols] = await Promise.all([
     prisma.project.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
@@ -22,11 +23,13 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader
-          eyebrow="New entry"
-          title="Add Entry"
-          description="Write a structured lab note and keep original photos or files together in one recoverable Journal-style draft."
-        />
+        <div className={captureMode ? "hidden lg:block" : undefined}>
+          <PageHeader
+            eyebrow="New entry"
+            title="Add Entry"
+            description="Write a structured lab note and keep original photos or files together in one recoverable Journal-style draft."
+          />
+        </div>
         <EntryComposer
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({ id: plan.id, title: plan.title, code: plan.code ?? undefined, projectId: plan.projectId, projectName: plan.project.name }))}
@@ -34,6 +37,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
           defaultOccurredAt={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
           defaultSource={defaultSource}
           defaultProtocolVersionId={protocolVersionId}
+          mode={captureMode ? "capture" : "document"}
         />
       </div>
     </AppShell>

@@ -28,7 +28,7 @@ import {
 } from "@/lib/overview-calendar";
 
 function monthHref(month: Date) {
-  return `/?month=${calendarMonthKey(month)}`;
+  return `/?month=${calendarMonthKey(month)}&view=calendar`;
 }
 
 function activityColor(kind: OverviewCalendarActivity["kind"]) {
@@ -76,7 +76,7 @@ export function OverviewCalendar({
                 href={monthHref(addMonths(viewMonth, -1))}
                 aria-label={t("Previous month")}
                 title={t("Previous month")}
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink sm:h-8 sm:w-8"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden />
               </Link>
@@ -87,12 +87,12 @@ export function OverviewCalendar({
                 href={monthHref(addMonths(viewMonth, 1))}
                 aria-label={t("Next month")}
                 title={t("Next month")}
-                className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink"
+                className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted transition hover:bg-stone/70 hover:text-ink sm:h-8 sm:w-8"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </Link>
               <Link
-                href="/"
+                href="/?view=calendar"
                 className="focus-ring ml-1 hidden h-8 items-center rounded-[var(--ln-radius-control-md)] border border-hairline px-2.5 text-xs text-moss transition hover:border-border-strong hover:bg-warm sm:inline-flex"
               >
                 {t("Today")}
@@ -217,7 +217,7 @@ export function OverviewCalendar({
               <div className="bg-surface px-4 py-8 text-center md:col-span-2">
                 <p className="text-sm font-medium text-ink">{t("No activities for this day.")}</p>
                 <p className="mt-1 text-xs leading-5 text-muted">{t("Entries and experiment dates will appear here automatically.")}</p>
-                <Link href="/entries/new" className="focus-ring mt-3 inline-flex text-sm font-medium text-moss hover:underline">
+                <Link href="/entries/new" className="focus-ring mt-3 inline-flex min-h-11 items-center px-2 text-sm font-medium text-moss hover:underline">
                   {t("Add an entry")}
                 </Link>
               </div>

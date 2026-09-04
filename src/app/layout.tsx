@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { I18nProvider } from "@/components/I18nProvider";
-import { MobileBackGestureGuard } from "@/components/MobileBackGestureGuard";
 import { TypographyBoot } from "@/components/TypographyBoot";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { systemThemeCssText, systemThemes, systemThemeStorageKey } from "@/lib/system-theme";
@@ -22,6 +21,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -40,7 +40,6 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: uiScaleBootstrapScript }} />
       </head>
       <body className="overflow-x-hidden">
-        <MobileBackGestureGuard />
         <TypographyBoot />
         <I18nProvider initialLocale={locale}>{children}</I18nProvider>
       </body>

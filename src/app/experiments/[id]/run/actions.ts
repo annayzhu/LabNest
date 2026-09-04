@@ -15,6 +15,7 @@ const progressSchema = z.object({
   experimentId: z.string().min(1),
   intent: z.enum(["save", "start", "complete"]),
   quickNote: z.string().trim().max(10_000).optional(),
+  completedCurrentStepId: z.string().trim().optional(),
 });
 
 const consumptionSchema = z.object({
@@ -40,8 +41,10 @@ export async function saveProtocolRunProgress(
       experimentId: formData.get("experimentId"),
       intent: optionalText(formData.get("intent")) ?? "save",
       quickNote: optionalText(formData.get("quickNote")),
+      completedCurrentStepId: optionalText(formData.get("completedCurrentStepId")),
     });
     const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
+    if (parsed.completedCurrentStepId) completedStepIds.add(parsed.completedCurrentStepId);
     const recordedAt = new Date();
 
     await prisma.$transaction(async (tx) => {

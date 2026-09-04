@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { addDays, addMonths, format, startOfDay, startOfMonth } from "date-fns";
-import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical, Timer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaggeredText } from "@/components/StaggeredText";
+import { StepTimerReadout } from "@/components/StepTimerReadout";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import { ExperimentStatus } from "@/generated/prisma/enums";
+import { remainingStepTimerSeconds } from "@/lib/step-timer";
 import {
   calendarDateKey,
   calendarMonthKey,
@@ -109,7 +111,7 @@ export default async function OverviewPage({
         researchPlan: { select: { code: true, title: true } },
         steps: {
           orderBy: [{ groupOrder: "asc" }, { order: "asc" }],
-          select: { id: true, title: true, completed: true },
+          select: { id: true, title: true, completed: true, timerStartedAt: true, timerRemainingSeconds: true },
         },
       },
     }),
@@ -181,6 +183,7 @@ export default async function OverviewPage({
           {activeRun ? (() => {
             const completedSteps = activeRun.steps.filter((step) => step.completed).length;
             const currentStep = activeRun.steps.find((step) => !step.completed);
+            const activeTimer = activeRun.steps.find((step) => step.timerStartedAt && remainingStepTimerSeconds({ remainingSeconds: step.timerRemainingSeconds ?? 0, startedAt: step.timerStartedAt, now: today }) > 0);
             const progress = activeRun.steps.length ? Math.round((completedSteps / activeRun.steps.length) * 100) : 0;
             return (
               <div className="p-4">
@@ -198,6 +201,10 @@ export default async function OverviewPage({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Current step</p>
                   <p className="mt-1 text-sm leading-5 text-graphite">{currentStep?.title ?? "All steps completed"}</p>
                 </div>
+                {activeTimer?.timerStartedAt && activeTimer.timerRemainingSeconds ? <div className="mt-3 flex min-h-11 items-center justify-between gap-3 rounded-[var(--ln-radius-control-lg)] border border-info/25 bg-info-surface px-3">
+                  <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-graphite"><Timer className="h-4 w-4 shrink-0 text-info" aria-hidden /><span className="truncate">{activeTimer.title}</span></span>
+                  <StepTimerReadout remainingSeconds={activeTimer.timerRemainingSeconds} startedAt={activeTimer.timerStartedAt.toISOString()} />
+                </div> : null}
                 <Link href={`/experiments/${activeRun.id}/run`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-white">
                   Continue run <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>

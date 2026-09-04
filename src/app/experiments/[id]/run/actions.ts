@@ -8,8 +8,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { appendExperimentObservation, experimentSearchText } from "@/lib/experiment-document";
 import { formActionErrorMessage } from "@/lib/form-actions";
+import { remainingStepTimerSeconds } from "@/lib/step-timer";
 
 export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string };
+export type StepTimerActionState = ProtocolRunProgressState;
 
 const progressSchema = z.object({
   experimentId: z.string().min(1),
@@ -24,6 +26,13 @@ const consumptionSchema = z.object({
   quantity: z.coerce.number().finite().positive(),
   performedBy: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(2_000).optional(),
+});
+
+const stepTimerSchema = z.object({
+  experimentId: z.string().min(1),
+  stepId: z.string().min(1),
+  timerIntent: z.enum(["start", "pause", "reset"]),
+  durationMinutes: z.coerce.number().finite().min(0.1).max(24 * 60).optional(),
 });
 
 function optionalText(value: FormDataEntryValue | null) {
@@ -145,6 +154,59 @@ export async function saveProtocolRunProgress(
   revalidatePath(`/experiments/${parsed.experimentId}/run`);
   const message = parsed.intent === "start" ? "Run started." : parsed.intent === "complete" ? "Run completed." : "Progress saved.";
   return { message, savedAt: new Date().toISOString() };
+}
+
+export async function updateStepTimer(
+  _previousState: StepTimerActionState,
+  formData: FormData,
+): Promise<StepTimerActionState> {
+  let parsed: z.infer<typeof stepTimerSchema>;
+  try {
+    parsed = stepTimerSchema.parse({
+      experimentId: formData.get("experimentId"),
+      stepId: formData.get("stepId"),
+      timerIntent: formData.get("timerIntent"),
+      durationMinutes: optionalText(formData.get("durationMinutes")),
+    });
+    const now = new Date();
+    await prisma.$transaction(async (tx) => {
+      const step = await tx.experimentStep.findFirst({
+        where: { id: parsed.stepId, experimentId: parsed.experimentId },
+        include: { experiment: { select: { status: true } } },
+      });
+      if (!step) throw new Error("Experiment step not found.");
+      if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot change timers.");
+
+      const submittedDuration = parsed.durationMinutes ? Math.round(parsed.durationMinutes * 60) : undefined;
+      const durationSeconds = submittedDuration ?? step.timerDurationSeconds ?? 300;
+      const currentRemaining = remainingStepTimerSeconds({
+        remainingSeconds: step.timerRemainingSeconds ?? durationSeconds,
+        startedAt: step.timerStartedAt,
+        now,
+      });
+      const timerData = parsed.timerIntent === "pause"
+        ? { timerDurationSeconds: durationSeconds, timerRemainingSeconds: currentRemaining, timerStartedAt: null, timerPausedAt: now }
+        : parsed.timerIntent === "reset"
+          ? { timerDurationSeconds: durationSeconds, timerRemainingSeconds: durationSeconds, timerStartedAt: null, timerPausedAt: null }
+          : { timerDurationSeconds: durationSeconds, timerRemainingSeconds: currentRemaining > 0 ? currentRemaining : durationSeconds, timerStartedAt: now, timerPausedAt: null };
+
+      await tx.experimentStep.update({ where: { id: step.id }, data: timerData });
+      await tx.activityLog.create({
+        data: {
+          action: `experiment_step_timer_${parsed.timerIntent}`,
+          targetType: "experiment_step",
+          targetId: step.id,
+          metadataJson: { experimentId: parsed.experimentId, durationSeconds, remainingSeconds: timerData.timerRemainingSeconds },
+        },
+      });
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "Timer could not be updated.") };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/experiments/${parsed.experimentId}/run`);
+  return { message: `Timer ${parsed.timerIntent === "start" ? "started" : parsed.timerIntent === "pause" ? "paused" : "reset"}.`, savedAt: new Date().toISOString() };
 }
 
 export async function recordProtocolRunConsumption(formData: FormData) {

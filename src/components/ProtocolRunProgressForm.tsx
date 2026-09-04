@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, ChevronDown, Circle, Play, Save } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
+import { StepTimerControls } from "@/components/StepTimerControls";
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 
 type RunStep = {
@@ -17,6 +18,10 @@ type RunStep = {
   description: string;
   completed: boolean;
   deviationNote: string | null;
+  timerDurationSeconds: number | null;
+  timerRemainingSeconds: number | null;
+  timerStartedAt: Date | null;
+  timerPausedAt: Date | null;
 };
 
 const initialState: ProtocolRunProgressState = {};
@@ -44,7 +49,10 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
-  const currentStepIndex = currentStep ? steps.findIndex((step) => step.id === currentStep.id) : -1;
+  const [selectedStepId, setSelectedStepId] = useState(() => currentStep?.id ?? steps[0]?.id ?? "");
+  const [allStepsOpen, setAllStepsOpen] = useState(false);
+  const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
+  const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
 
   function setStep(id: string, checked: boolean) {
     setCompletedIds((current) => {
@@ -72,19 +80,27 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
           <span>{hasSteps ? `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
-          <span>{currentStep ? `Step ${currentStepIndex + 1}` : "Ready to finish"}</span>
+          <span>{selectedStep ? `Step ${selectedStepIndex + 1}` : "Ready to finish"}</span>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone">
           <div className="h-full rounded-full bg-moss transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${hasSteps ? Math.round((completedIds.size / steps.length) * 100) : 0}%` }} />
         </div>
       </div>
 
-      {currentStep ? (
+      {selectedStep && currentStep ? (
         <div className="p-4">
-          <h2 className="text-sm font-semibold text-ink">Current step</h2>
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{currentStep.groupTitle} · Step {currentStep.order}</p>
-          <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{currentStep.title}</h3>
-          {currentStep.description ? <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-graphite">{currentStep.description}</p> : null}
+          <h2 className="text-sm font-semibold text-ink">{selectedStep.id === currentStep.id ? "Current step" : "Step review"}</h2>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{selectedStep.groupTitle} · Step {selectedStep.order}</p>
+          <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{selectedStep.title}</h3>
+          {selectedStep.description ? <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p> : null}
+
+          <StepTimerControls key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <button type="button" disabled={selectedStepIndex <= 0} onClick={() => setSelectedStepId(steps[selectedStepIndex - 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35"><ArrowLeft className="h-4 w-4" aria-hidden />Previous</button>
+            <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss">All steps</button>
+            <button type="button" disabled={selectedStepIndex >= steps.length - 1} onClick={() => setSelectedStepId(steps[selectedStepIndex + 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35">Next<ArrowRight className="h-4 w-4" aria-hidden /></button>
+          </div>
 
           <details className="group mt-5 border-t border-hairline pt-2">
             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
@@ -93,15 +109,11 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
             </summary>
             <label className="block pb-3">
               <span className={formLabelClass}>What differed from the planned method?</span>
-              <textarea name={`mobileDeviation:${currentStep.id}`} defaultValue={currentStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
+              <textarea name={`mobileDeviation:${selectedStep.id}`} defaultValue={selectedStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
             </label>
           </details>
 
-          {editable ? (
-            <button type="submit" name="completedCurrentStepId" value={currentStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}>
-              <CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}
-            </button>
-          ) : null}
+          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}</button> : <p className="rounded-[var(--ln-radius-control-lg)] bg-success-surface px-3 py-2 text-sm text-success">This step is complete.</p>}
         </div>
       ) : (
         <div className="p-4">
@@ -114,23 +126,26 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
       )}
 
       {state.error ? <p role="alert" className="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{state.error}</p> : null}
-      {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
+      {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}{state.savedAt ? ` Saved at ${new Date(state.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Synced` : ""}</p> : null}
 
-      {hasSteps ? <details className="group border-t border-hairline bg-warm/45">
-        <summary className="focus-ring flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
-          All steps
-          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
-        </summary>
-        <ol className="divide-y divide-hairline border-t border-hairline bg-surface">
-          {steps.map((step, index) => <li key={`mobile-step-${step.id}`} className="flex min-h-12 items-start gap-3 px-4 py-3 text-sm">
-            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${completedIds.has(step.id) ? "border-moss bg-moss text-white" : step.id === currentStep?.id ? "border-action-border bg-action-surface text-moss" : "border-hairline text-muted"}`}>
-              {completedIds.has(step.id) ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : index + 1}
-            </span>
-            <span className={completedIds.has(step.id) ? "text-muted line-through" : "text-graphite"}>{step.title}</span>
-          </li>)}
-        </ol>
-      </details> : null}
+      {hasSteps ? <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring flex min-h-12 w-full items-center justify-between border-t border-hairline bg-warm/45 px-4 text-sm font-semibold text-moss">All steps<ChevronDown className="h-4 w-4" aria-hidden /></button> : null}
     </section>
+
+    {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
+      <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
+      <section role="dialog" aria-modal="true" aria-labelledby="all-steps-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
+          <div><h2 id="all-steps-title" className="font-serif text-xl font-medium text-ink">All steps</h2><p className="mt-0.5 text-xs text-muted">{completedIds.size} of {steps.length} complete</p></div>
+          <button type="button" onClick={() => setAllStepsOpen(false)} aria-label="Close all steps" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-warm text-muted"><X className="h-4 w-4" aria-hidden /></button>
+        </div>
+        <ol className="divide-y divide-hairline">
+          {steps.map((step, index) => <li key={`sheet-step-${step.id}`}><button type="button" onClick={() => { setSelectedStepId(step.id); setAllStepsOpen(false); }} className="focus-ring flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left text-sm">
+            <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${completedIds.has(step.id) ? "border-moss bg-moss text-white" : step.id === currentStep?.id ? "border-action-border bg-action-surface text-moss" : "border-hairline text-muted"}`}>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : index + 1}</span>
+            <span className="min-w-0"><span className="block font-semibold text-ink">{step.title}</span><span className="mt-1 block text-xs text-muted">{step.groupTitle}</span></span>
+          </button></li>)}
+        </ol>
+      </section>
+    </div> : null}
 
     <section className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:block">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">

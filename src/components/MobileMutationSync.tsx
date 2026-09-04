@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { listMobileMutations, removeMobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
+import { listMobileMutations, mobileSyncRequestedEvent, removeMobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
 
 let syncInProgress = false;
 
@@ -34,7 +34,8 @@ export function MobileMutationSync() {
             }
             if (!response.ok) {
               const result = await response.json().catch(() => ({})) as { error?: string };
-              await updateMobileMutation({ ...mutation, state: response.status === 409 ? "conflict" : "pending", retryCount: mutation.retryCount + 1, lastError: result.error ?? `Sync failed (${response.status}).` });
+              const requiresReview = [400, 404, 409, 422].includes(response.status);
+              await updateMobileMutation({ ...mutation, state: requiresReview ? "conflict" : "pending", retryCount: mutation.retryCount + 1, lastError: result.error ?? `Sync failed (${response.status}).` });
               continue;
             }
             await removeMobileMutation(mutation.clientMutationId);
@@ -48,7 +49,11 @@ export function MobileMutationSync() {
     }
     void sync();
     window.addEventListener("online", sync);
-    return () => window.removeEventListener("online", sync);
+    window.addEventListener(mobileSyncRequestedEvent, sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener(mobileSyncRequestedEvent, sync);
+    };
   }, []);
   return null;
 }

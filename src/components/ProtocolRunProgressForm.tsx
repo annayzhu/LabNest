@@ -33,11 +33,12 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep }: {
   experimentId: string;
   status: string;
   steps: RunStep[];
   editable: boolean;
+  evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
   const [state, formAction, pending] = useActionState(saveProtocolRunProgress, initialState);
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
@@ -56,8 +57,17 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
   const [selectedStepId, setSelectedStepId] = useState(() => currentStep?.id ?? steps[0]?.id ?? "");
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
+  const evidence = selectedStep && evidenceByStep ? evidenceByStep[selectedStep.id] : undefined;
+  const evidenceTotals = Object.values(evidenceByStep ?? {}).reduce((total, item) => ({
+    observations: total.observations + item.observations,
+    measurements: total.measurements + item.measurements,
+    files: total.files + item.files,
+    consumptions: total.consumptions + item.consumptions,
+  }), { observations: 0, measurements: 0, files: 0, consumptions: 0 });
+  const totalEvidence = Object.values(evidenceTotals).reduce((sum, count) => sum + count, 0);
 
   function prepareMutation(event: React.FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -139,6 +149,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
 
           <StepTimerControls key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
 
+          {evidence ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">Evidence · {evidence.observations} observations · {evidence.measurements} measurements · {evidence.files} files · {evidence.consumptions} inventory records</p> : null}
+
           <div className="mt-4 grid grid-cols-3 gap-2">
             <button type="button" disabled={selectedStepIndex <= 0} onClick={() => setSelectedStepId(steps[selectedStepIndex - 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35"><ArrowLeft className="h-4 w-4" aria-hidden />Previous</button>
             <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss">All steps</button>
@@ -174,7 +186,12 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
             <div><h2 className="text-sm font-semibold">All steps complete</h2><p className="mt-1 text-xs leading-5">Review the run, then mark the experiment complete.</p></div>
           </div>
-          {editable ? <button type="submit" name="intent" value="complete" disabled={pending} className={`${primaryButton} mt-4 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button> : null}
+          <div className="mt-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-graphite" aria-label="Run evidence summary">
+            <p className="font-semibold text-ink">Evidence review</p>
+            <p className="mt-1">{evidenceTotals.observations} observations · {evidenceTotals.measurements} measurements · {evidenceTotals.files} files · {evidenceTotals.consumptions} inventory records</p>
+            {!totalEvidence ? <p className="mt-1 text-warning">No step-linked evidence has been recorded. Confirm this is appropriate before completing the run.</p> : null}
+          </div>
+          {editable ? <><label className="mt-3 flex min-h-11 items-start gap-3 text-sm text-graphite"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" /><span>I reviewed the run evidence and unresolved deviations.</span></label><button type="submit" name="intent" value="complete" disabled={pending || !reviewConfirmed} className={`${primaryButton} mt-3 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button></> : null}
         </div>
       )}
 

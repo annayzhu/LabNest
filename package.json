@@ -13,6 +13,7 @@
     "test:protocol-density:e2e": "node scripts/verify-protocol-density-slice.mjs",
     "test:global-density:e2e": "node scripts/verify-global-density-rollout.mjs",
     "test:document-outline:e2e": "node scripts/verify-document-outline-rollout.mjs",
+    "test:document-zoom:e2e": "node scripts/verify-document-zoom-containment.mjs",
     "test:typography:e2e": "node scripts/verify-typography-settings.mjs",
     "test:system-themes:e2e": "node scripts/verify-system-themes.mjs",
     "test:mobile-bench:e2e": "node scripts/verify-mobile-bench-mode.mjs",

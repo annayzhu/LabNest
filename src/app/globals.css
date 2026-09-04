@@ -1986,11 +1986,15 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
 .document-editor-document-panel {
   min-width: 0;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 .document-editor-document-stage {
   min-width: 0;
+  width: max(100%, calc(210mm * var(--ln-document-view-scale, 1)));
 }
 
 .document-editor-document-stage .document-canvas-paper-scroll {
@@ -2223,10 +2227,6 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
   .document-editor-document-panel {
     grid-column: 2;
-  }
-
-  .document-editor-document-stage {
-    min-width: 210mm;
   }
 
   .document-editor-document-stage > .document-workspace,

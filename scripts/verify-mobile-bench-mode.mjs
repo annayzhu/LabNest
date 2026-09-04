@@ -39,6 +39,10 @@ try {
   await page.getByRole("dialog", { name: "All modules" }).getByRole("button", { name: "Close menu" }).click();
   await mobileNav.getByRole("link", { name: "Records" }).click();
   await page.getByRole("heading", { name: "Records" }).waitFor();
+  const experimentRecord = page.locator('main a[href^="/experiments/"]').first();
+  assert.equal(await experimentRecord.count(), 1, "Seeded journey requires at least one Experiment record.");
+  const experimentHref = await experimentRecord.getAttribute("href");
+  assert(experimentHref, "Experiment record must have a destination.");
   assert.deepEqual(errors, [], `Browser errors after opening Records: ${errors.join("\n")}`);
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
@@ -61,12 +65,23 @@ try {
     await firstRun.click();
     await page.getByRole("heading", { name: "Current step" }).waitFor();
     await page.getByRole("button", { name: "Complete step" }).waitFor();
+    await page.getByRole("region", { name: "Step timer" }).waitFor();
+    await page.getByRole("button", { name: "All steps", exact: true }).first().click();
+    await page.getByRole("dialog", { name: "All steps" }).waitFor();
+    await page.getByRole("button", { name: "Close all steps" }).last().click();
     assert.equal(
       await page.getByText("Whole block", { exact: false }).isVisible().catch(() => false),
       false,
       "Mobile run focus must not expose bulk group completion by default.",
     );
   }
+
+  await page.goto(`${baseUrl}${experimentHref}/run`, { waitUntil: "networkidle" });
+  const allStepsButton = page.getByRole("button", { name: "All steps", exact: true }).last();
+  await allStepsButton.waitFor();
+  await allStepsButton.click();
+  await page.getByRole("dialog", { name: "All steps" }).waitFor();
+  assert.equal(await page.getByText("Whole block", { exact: false }).isVisible().catch(() => false), false, "All Steps sheet must list individual steps, not bulk group completion.");
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(baseUrl, { waitUntil: "networkidle" });

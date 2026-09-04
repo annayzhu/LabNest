@@ -636,6 +636,10 @@ model ExperimentStep {
   completed       Boolean    @default(false)
   completedAt     DateTime?
   deviationNote   String?
+  timerDurationSeconds  Int?
+  timerRemainingSeconds Int?
+  timerStartedAt        DateTime?
+  timerPausedAt         DateTime?
 
   @@index([experimentId, groupOrder, order])
 }

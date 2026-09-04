@@ -437,29 +437,35 @@ model ResearchPlanProtocol {
 }
 
 model Entry {
-  id             String                @id @default(cuid())
-  title          String
-  body           String
-  occurredAt     DateTime              @default(now())
-  projectId      String?
-  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  researchPlanId String?
-  researchPlan   ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
-  tags           String[]              @default([])
-  moodStatus     String?
-  sourceType     EntrySourceType       @default(text)
-  recordStatus   RecordLifecycleStatus @default(draft)
-  contentJson    Json                  @default("{}")
-  archivedAt     DateTime?
+  id               String                @id @default(cuid())
+  title            String
+  body             String
+  occurredAt       DateTime              @default(now())
+  projectId        String?
+  project          Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  researchPlanId   String?
+  researchPlan     ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  experimentId     String?
+  experiment       Experiment?           @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  experimentStepId String?
+  experimentStep   ExperimentStep?       @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
+  tags             String[]              @default([])
+  moodStatus       String?
+  sourceType       EntrySourceType       @default(text)
+  recordStatus     RecordLifecycleStatus @default(draft)
+  contentJson      Json                  @default("{}")
+  archivedAt       DateTime?
   clientMutationId String?               @unique
   deviceCreatedAt  DateTime?
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   @@index([recordStatus])
   @@index([occurredAt])
   @@index([projectId])
   @@index([researchPlanId])
+  @@index([experimentId])
+  @@index([experimentStepId])
   @@index([archivedAt])
 }
 
@@ -491,6 +497,7 @@ model Experiment {
   inventoryTransactions InventoryTransaction[]
   sampleEvents          SampleLifecycleEvent[]
   results               Result[]
+  entries               Entry[]
   protocolVersions      ExperimentProtocolVersion[]
 
   @@index([status])
@@ -625,25 +632,31 @@ model ProtocolRun {
 }
 
 model ExperimentStep {
-  id              String     @id @default(cuid())
-  experimentId    String
-  experiment      Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  protocolStepRef String?
-  groupKey        String     @default("manual")
-  groupTitle      String     @default("Custom experiment steps")
-  groupOrder      Int        @default(0)
-  order           Int
-  title           String
-  description     String
-  completed       Boolean    @default(false)
-  completedAt     DateTime?
-  deviationNote   String?
+  id                    String                 @id @default(cuid())
+  experimentId          String
+  experiment            Experiment             @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  protocolStepRef       String?
+  groupKey              String                 @default("manual")
+  groupTitle            String                 @default("Custom experiment steps")
+  groupOrder            Int                    @default(0)
+  order                 Int
+  title                 String
+  description           String
+  completed             Boolean                @default(false)
+  completedAt           DateTime?
+  deviationNote         String?
+  deviationType         String?
+  deviationImpact       String?
+  deviationAuthor       String?
+  deviationAt           DateTime?
   timerDurationSeconds  Int?
   timerRemainingSeconds Int?
   timerStartedAt        DateTime?
   timerPausedAt         DateTime?
   inventoryTransactions InventoryTransaction[]
   events                ExperimentStepEvent[]
+  results               Result[]
+  entries               Entry[]
 
   @@index([experimentId, groupOrder, order])
 }
@@ -776,14 +789,14 @@ model InventoryTransaction {
   experimentId     String?
   experiment       Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
   experimentStepId String?
-  experimentStep   ExperimentStep?           @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
+  experimentStep   ExperimentStep?          @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
   purchaseId       String?
   purchase         PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   proposedActionId String?
   proposedAction   ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
   performedBy      String?
   notes            String?
-  clientMutationId String?                   @unique
+  clientMutationId String?                  @unique
   deviceCreatedAt  DateTime?
   createdAt        DateTime                 @default(now())
 
@@ -855,6 +868,8 @@ model Result {
   id                    String                 @id @default(cuid())
   experimentId          String?
   experiment            Experiment?            @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  experimentStepId      String?
+  experimentStep        ExperimentStep?        @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
   researchPlanId        String?
   researchPlan          ResearchPlan?          @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
   entityId              String?
@@ -866,6 +881,10 @@ model Result {
   textValue             String?
   numericValue          Float?
   unit                  String?
+  observedAt            DateTime?
+  sampleLabel           String?
+  expectedMin           Float?
+  expectedMax           Float?
   status                ObjectStatus           @default(active)
   recordStatus          RecordLifecycleStatus  @default(draft)
   sourceType            ResultSourceType       @default(manual)
@@ -885,6 +904,8 @@ model Result {
   provenanceJson        Json                   @default("{}")
   metadataJson          Json                   @default("{}")
   notes                 String?
+  clientMutationId      String?                @unique
+  deviceCreatedAt       DateTime?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
@@ -892,6 +913,7 @@ model Result {
   reportSources ReportSource[]
 
   @@index([experimentId])
+  @@index([experimentStepId])
   @@index([entityId])
   @@index([projectId])
   @@index([researchPlanId])

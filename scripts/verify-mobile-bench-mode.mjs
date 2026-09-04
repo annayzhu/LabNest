@@ -72,6 +72,16 @@ try {
     await page.getByRole("heading", { name: "Current step" }).waitFor();
     await page.getByRole("button", { name: "Complete step" }).waitFor();
     await page.getByRole("region", { name: "Step timer" }).waitFor();
+    await page.getByText("Record a deviation", { exact: true }).click();
+    await page.getByLabel("Deviation type").waitFor();
+    await page.getByLabel("Impact assessment").waitFor();
+    await page.getByRole("button", { name: "Measurement", exact: true }).click();
+    const measurementDialog = page.getByRole("dialog", { name: "Record measurement" });
+    await measurementDialog.getByLabel("Value *").waitFor();
+    await measurementDialog.getByLabel("Unit *").waitFor();
+    await measurementDialog.getByLabel("Observed at *").waitFor();
+    await measurementDialog.getByRole("button", { name: "Close measurement" }).click();
+    await page.getByText(/Linked to Step/).first().waitFor();
     await page.getByRole("button", { name: "All steps", exact: true }).first().click();
     await page.getByRole("dialog", { name: "All steps" }).waitFor();
     await page.getByRole("button", { name: "Close all steps" }).last().click();

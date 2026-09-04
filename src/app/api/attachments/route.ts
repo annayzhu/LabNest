@@ -36,6 +36,8 @@ export async function POST(request: Request) {
   const derivedFromId = String(formData.get("derivedFromId") ?? "").trim() || undefined;
   const derivativeKind = String(formData.get("derivativeKind") ?? "").trim() || undefined;
   const order = Number.parseInt(String(formData.get("order") ?? "0"), 10);
+  const targetStep = targetType === "experiment_step" && targetId ? await prisma.experimentStep.findUnique({ where: { id: targetId }, select: { id: true, experimentId: true } }) : undefined;
+  if (targetType === "experiment_step" && !targetStep) return Response.json({ error: "Experiment step not found." }, { status: 404 });
   if (targetType === "result" && targetId && linkType.startsWith("template_artifact:")) {
     const result = await prisma.result.findUnique({ where: { id: targetId }, select: { templateSnapshotJson: true } });
     if (!result) return Response.json({ error: "Result not found." }, { status: 404 });
@@ -68,6 +70,12 @@ export async function POST(request: Request) {
       include: { links: true },
     });
     if (targetType === "result" && targetId) await refreshResultValidation(targetId);
+    if (targetStep) {
+      await prisma.$transaction([
+        prisma.experimentStepEvent.create({ data: { experimentStepId: targetStep.id, experimentId: targetStep.experimentId, eventType: "attachment", payloadJson: { attachmentId: attachment.id, filename: attachment.originalFilename, mimeType: attachment.mimeType, size: attachment.size } } }),
+        prisma.activityLog.create({ data: { action: "link_step_attachment", targetType: "experiment_step", targetId: targetStep.id, metadataJson: { experimentId: targetStep.experimentId, attachmentId: attachment.id } } }),
+      ]);
+    }
     return Response.json({ attachment }, { status: 201 });
   } catch (error) {
     await cleanupPreparedAttachmentFiles([prepared]);

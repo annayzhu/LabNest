@@ -13,11 +13,14 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   const requestedSource = firstSearchParam(params, "source");
   const protocolVersionId = firstSearchParam(params, "protocolVersionId") ?? "";
   const captureMode = firstSearchParam(params, "mode") === "capture";
+  const experimentId = firstSearchParam(params, "experiment") ?? "";
+  const experimentStepId = firstSearchParam(params, "step") ?? "";
   const defaultSource = entrySourceTypes.includes(requestedSource as (typeof entrySourceTypes)[number]) ? requestedSource : "text";
-  const [projects, researchPlans, protocols] = await Promise.all([
+  const [projects, researchPlans, protocols, experiment] = await Promise.all([
     prisma.project.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.researchPlan.findMany({ include: { project: { select: { name: true } } }, orderBy: [{ project: { name: "asc" } }, { title: "asc" }] }),
     prisma.protocol.findMany({ include: { versions: { orderBy: { revision: "desc" } } }, orderBy: { title: "asc" } }),
+    experimentId ? prisma.experiment.findUnique({ where: { id: experimentId }, select: { id: true, title: true, projectId: true, researchPlanId: true, steps: experimentStepId ? { where: { id: experimentStepId }, select: { id: true, title: true, order: true } } : false } }) : null,
   ]);
 
   return (
@@ -37,6 +40,10 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
           defaultOccurredAt={format(new Date(), "yyyy-MM-dd'T'HH:mm")}
           defaultSource={defaultSource}
           defaultProtocolVersionId={protocolVersionId}
+          defaultExperimentId={experiment?.id ?? ""}
+          defaultExperimentStepId={experiment?.steps?.[0]?.id ?? ""}
+          defaultExperimentLabel={experiment?.title}
+          defaultStepLabel={experiment?.steps?.[0] ? `${experiment.steps[0].order}. ${experiment.steps[0].title}` : undefined}
           mode={captureMode ? "capture" : "document"}
         />
       </div>

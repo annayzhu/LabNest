@@ -42,6 +42,8 @@ type EntryComposerFields = {
   occurredAt: string;
   projectId: string;
   researchPlanId: string;
+  experimentId: string;
+  experimentStepId: string;
   sourceType: string;
   recordStatus: string;
   moodStatus: string;
@@ -106,13 +108,15 @@ function existingMedia(attachment: EntryComposerAttachment): ExistingMedia {
   };
 }
 
-function initialFields(defaultOccurredAt: string, defaultSource: string, defaultProtocolVersionId: string, entry?: EntryComposerInitialEntry): EntryComposerFields {
+function initialFields(defaultOccurredAt: string, defaultSource: string, defaultProtocolVersionId: string, defaultExperimentId: string, defaultExperimentStepId: string, entry?: EntryComposerInitialEntry): EntryComposerFields {
   return {
     title: entry?.title ?? "",
     contentMarkdown: entry?.contentMarkdown ?? "",
     occurredAt: entry?.occurredAt ?? defaultOccurredAt,
     projectId: entry?.projectId ?? "",
     researchPlanId: entry?.researchPlanId ?? "",
+    experimentId: defaultExperimentId,
+    experimentStepId: defaultExperimentStepId,
     sourceType: entry?.sourceType ?? defaultSource,
     recordStatus: entry?.recordStatus ?? "recorded",
     moodStatus: entry?.moodStatus ?? "",
@@ -134,6 +138,10 @@ export function EntryComposer({
   defaultOccurredAt,
   defaultSource = "text",
   defaultProtocolVersionId = "",
+  defaultExperimentId = "",
+  defaultExperimentStepId = "",
+  defaultExperimentLabel,
+  defaultStepLabel,
   mode = "document",
   entry,
 }: {
@@ -143,6 +151,10 @@ export function EntryComposer({
   defaultOccurredAt: string;
   defaultSource?: string;
   defaultProtocolVersionId?: string;
+  defaultExperimentId?: string;
+  defaultExperimentStepId?: string;
+  defaultExperimentLabel?: string;
+  defaultStepLabel?: string;
   mode?: "capture" | "document";
   entry?: EntryComposerInitialEntry;
 }) {
@@ -154,8 +166,8 @@ export function EntryComposer({
   const fileInputId = `${mediaInputPrefix}-files`;
   const previewUrls = useRef(new Set<string>());
   const baselineFields = useMemo(
-    () => initialFields(defaultOccurredAt, defaultSource, defaultProtocolVersionId, entry),
-    [defaultOccurredAt, defaultProtocolVersionId, defaultSource, entry],
+    () => initialFields(defaultOccurredAt, defaultSource, defaultProtocolVersionId, defaultExperimentId, defaultExperimentStepId, entry),
+    [defaultOccurredAt, defaultProtocolVersionId, defaultSource, defaultExperimentId, defaultExperimentStepId, entry],
   );
   const baselineMedia = useMemo(() => entry?.attachments.map(existingMedia) ?? [], [entry]);
   const [fields, setFields] = useState<EntryComposerFields>(baselineFields);
@@ -461,6 +473,7 @@ export function EntryComposer({
               <ChevronRight className="h-4 w-4 transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none" aria-hidden />
             </summary>
             <div className="grid gap-4 border-t border-hairline p-4">
+              {defaultExperimentLabel ? <div className="rounded-[var(--ln-radius-control-lg)] bg-action-surface px-3 py-2"><p className="text-xs font-semibold text-ink">{defaultExperimentLabel}</p>{defaultStepLabel ? <p className="mt-1 text-xs text-muted">Current step · {defaultStepLabel}</p> : null}<p className="mt-1 text-[11px] text-muted">This capture will retain the Experiment and Step association.</p></div> : null}
               <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => updateField("projectId", value)} options={[{ value: "", label: "No project" }, ...projects.map((project) => ({ value: project.id, label: project.name }))]} />
               <ComposerSelect label="Research plan" value={fields.researchPlanId} onChange={(value) => {
                 updateField("researchPlanId", value);

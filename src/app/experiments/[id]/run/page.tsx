@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, FilePlus2, Gauge, PackageMinus } from "lucide-react";
+import { ArrowLeft, Camera, FilePlus2, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -8,6 +8,7 @@ import { ExperimentResultRecordingCard } from "@/components/ExperimentResultReco
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolRunProgressForm } from "@/components/ProtocolRunProgressForm";
+import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
 import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
@@ -36,7 +37,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
       },
     }),
     prisma.attachmentLink.findMany({
-      where: { targetType: "experiment", targetId: id },
+      where: { OR: [{ targetType: "experiment", targetId: id }, { targetType: "experiment_step", targetId: { in: (await prisma.experimentStep.findMany({ where: { experimentId: id }, select: { id: true } })).map((step) => step.id) } }] },
       include: { attachment: true },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     }),
@@ -59,6 +60,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const total = experiment.steps.length;
   const progress = total ? Math.round((completed / total) * 100) : 0;
   const lockedProtocol = experiment.primaryProtocolVersion;
+  const currentStep = experiment.steps.find((step) => !step.completed) ?? experiment.steps[0];
   const editable = experiment.status !== "archived";
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
@@ -103,15 +105,16 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         />
 
         <section aria-label="Current run capture actions" className="grid grid-cols-3 gap-2 lg:hidden">
-          <Link href={`/entries/new?mode=capture&experiment=${experiment.id}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Camera className="h-5 w-5" aria-hidden />Observe</Link>
-          <Link href={`/results/new?experiment=${experiment.id}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Gauge className="h-5 w-5" aria-hidden />Measurement</Link>
+          <Link href={`/entries/new?mode=capture&experiment=${experiment.id}${currentStep ? `&step=${currentStep.id}` : ""}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Camera className="h-5 w-5" aria-hidden />Observe</Link>
+          <MobileMeasurementCapture experimentId={experiment.id} step={currentStep ? { id: currentStep.id, title: currentStep.title, order: currentStep.order } : undefined} />
           <a href="#result-recording" className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><FilePlus2 className="h-5 w-5" aria-hidden />Result</a>
         </section>
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Photos and files</h2></div>
-            <AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" />
+            {currentStep ? <div className="lg:hidden"><p className="mb-2 text-xs text-muted">Linked to Step {currentStep.order} · {currentStep.title}</p><AttachmentUploadForm targetType="experiment_step" targetId={currentStep.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="step_evidence" /></div> : null}
+            <div className="hidden lg:block"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" /></div>
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
@@ -120,6 +123,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             {editable && inventoryItems.length ? (
               <form action={recordProtocolRunConsumption} className="grid gap-3 sm:grid-cols-2">
                 <input type="hidden" name="experimentId" value={experiment.id} />
+                {currentStep ? <input type="hidden" name="experimentStepId" value={currentStep.id} /> : null}
+                {currentStep ? <p className="sm:col-span-2 rounded-[var(--ln-radius-control-lg)] bg-action-surface px-3 py-2 text-xs text-graphite">Linked to Step {currentStep.order} · {currentStep.title}</p> : null}
                 <label className="sm:col-span-2"><span className={formLabelClass}>Inventory Item</span><select required name="inventoryItemId" className={fieldClass}><option value="">Select material…</option>{inventoryItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.currentQuantity} {item.unit}{item.location ? ` · ${item.location.name}` : ""}</option>)}</select></label>
                 <label><span className={formLabelClass}>Quantity used</span><input required name="quantity" type="number" min="0.000001" step="any" className={fieldClass} /></label>
                 <label><span className={formLabelClass}>Performed by</span><input name="performedBy" className={fieldClass} /></label>

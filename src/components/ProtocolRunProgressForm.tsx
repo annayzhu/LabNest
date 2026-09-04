@@ -18,6 +18,9 @@ type RunStep = {
   description: string;
   completed: boolean;
   deviationNote: string | null;
+  deviationType: string | null;
+  deviationImpact: string | null;
+  deviationAuthor: string | null;
   timerDurationSeconds: number | null;
   timerRemainingSeconds: number | null;
   timerStartedAt: Date | null;
@@ -117,10 +120,20 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
               Record a deviation
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
             </summary>
-            <label className="block pb-3">
+            <div className="grid gap-3 pb-3">
+            <label className="block">
+              <span className={formLabelClass}>Deviation type</span>
+              <select name={`mobileDeviationType:${selectedStep.id}`} defaultValue={selectedStep.deviationType ?? "method"} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink">
+                <option value="method">Method change</option><option value="timing">Timing</option><option value="material">Material or reagent</option><option value="equipment">Equipment</option><option value="incident">Incident</option><option value="other">Other</option>
+              </select>
+            </label>
+            <label className="block">
               <span className={formLabelClass}>What differed from the planned method?</span>
               <textarea name={`mobileDeviation:${selectedStep.id}`} defaultValue={selectedStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
             </label>
+            <label className="block"><span className={formLabelClass}>Impact assessment</span><textarea name={`mobileDeviationImpact:${selectedStep.id}`} defaultValue={selectedStep.deviationImpact ?? ""} disabled={!editable || pending} placeholder="Effect on samples, quality, or interpretation; write unknown if not yet assessed" className={`${fieldClass} min-h-20 resize-y`} /></label>
+            <label className="block"><span className={formLabelClass}>Recorded by</span><input name={`mobileDeviationAuthor:${selectedStep.id}`} defaultValue={selectedStep.deviationAuthor ?? ""} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" /></label>
+            </div>
           </details>
 
           {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}</button> : <p className="rounded-[var(--ln-radius-control-lg)] bg-success-surface px-3 py-2 text-sm text-success">This step is complete.</p>}

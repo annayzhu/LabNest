@@ -578,10 +578,33 @@ export const zhUi: Record<string, string> = {
   "Measurement": "测量值",
   "Waiting to sync. Stock has not been changed yet.": "等待同步，库存尚未扣减。",
   "Complete step": "完成本步骤",
+  "Confirm step completion": "确认完成本步骤",
+  "Mark step done": "标记步骤已完成",
   "All steps": "全部步骤",
   "Previous": "上一步",
   "Next": "下一步",
   "Record a deviation": "记录偏差",
+  "Deviation type": "偏差类型",
+  "Impact assessment": "影响评估",
+  "Recorded by": "记录人",
+  "Record measurement": "记录测量值",
+  "Observed at *": "观察时间 *",
+  "Sample · optional": "样本 · 可选",
+  "Expected minimum": "预期最小值",
+  "Expected maximum": "预期最大值",
+  "Save measurement": "保存测量值",
+  "Review sync issues": "检查同步问题",
+  "Your local record is kept until you retry or discard it.": "本地记录会一直保留，直到你重新同步或明确删除。",
+  "Needs review": "需要检查",
+  "Retry": "重新同步",
+  "Discard local copy": "删除本地副本",
+  "Step completion": "步骤完成记录",
+  "Inventory change": "库存变动",
+  "Evidence review": "证据复核",
+  "I reviewed the run evidence and unresolved deviations.": "我已检查本次实验的证据和未解决偏差。",
+  "This locked Protocol step does not allow a deviation record.": "锁定的实验规程规定本步骤不允许记录偏差。",
+  "Deviation recording is disabled by the locked Protocol step.": "锁定的实验规程已关闭本步骤的偏差记录。",
+  "No step-linked evidence has been recorded. Confirm this is appropriate before completing the run.": "尚未记录与步骤关联的证据；完成实验前请确认这符合实际情况。",
   "This step is complete.": "本步骤已完成。",
   "Movement *": "流水类型 *",
   "Used by / handled by": "使用人／经手人",
@@ -1770,6 +1793,18 @@ function translateDynamic(value: string): string {
   if (match) return `整块勾选 · 已勾选 ${match[1]}/${match[2]} 个步骤`;
   match = value.match(/^(\d+) steps? remaining$/);
   if (match) return `还剩 ${match[1]} 个步骤`;
+  match = value.match(/^Evidence · (\d+) observations · (\d+) measurements · (\d+) files · (\d+) inventory records$/);
+  if (match) return `证据 · ${match[1]} 条观察 · ${match[2]} 个测量值 · ${match[3]} 个文件 · ${match[4]} 条耗材记录`;
+  match = value.match(/^(\d+) observations · (\d+) measurements · (\d+) files · (\d+) inventory records$/);
+  if (match) return `${match[1]} 条观察 · ${match[2]} 个测量值 · ${match[3]} 个文件 · ${match[4]} 条耗材记录`;
+  match = value.match(/^(\d+) waiting to sync\.$/);
+  if (match) return `${match[1]} 条记录等待同步。`;
+  match = value.match(/^(\d+) sync conflicts? requiring review\.$/);
+  if (match) return `${match[1]} 条同步问题需要检查。`;
+  match = value.match(/^Recorded (.+) · retry (\d+)$/);
+  if (match) return `记录于 ${translateDynamic(match[1])} · 已重试 ${match[2]} 次`;
+  match = value.match(/^(.+) saved on this device · waiting to sync\.$/);
+  if (match) return `${match[1]} 已保存在本机 · 等待同步。`;
   match = value.match(/^(\d+) primary runs?$/);
   if (match) return `${match[1]} 次主要实验`;
   match = value.match(/^(\d+) experiments?$/);

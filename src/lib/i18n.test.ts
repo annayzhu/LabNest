@@ -44,6 +44,8 @@ describe("LabNest UI translations", () => {
     expect(translateUiText("12 rows · 4 columns · managed file", "zh")).toBe("12 行 · 4 列 · managed file");
     expect(translateUiText("3/8 steps · 2 results", "zh")).toBe("3/8 个步骤 · 2 个结果");
     expect(translateUiText("Complete run", "zh")).toBe("完成执行");
+    expect(translateUiText("Evidence · 1 observations · 2 measurements · 3 files · 4 inventory records", "zh")).toBe("证据 · 1 条观察 · 2 个测量值 · 3 个文件 · 4 条耗材记录");
+    expect(translateUiText("offline-photo.jpg saved on this device · waiting to sync.", "zh")).toBe("offline-photo.jpg 已保存在本机 · 等待同步。");
   });
 
   it("does not translate unknown scientific or user-authored content", () => {

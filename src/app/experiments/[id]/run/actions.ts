@@ -18,6 +18,8 @@ const progressSchema = z.object({
   intent: z.enum(["save", "start", "complete"]),
   quickNote: z.string().trim().max(10_000).optional(),
   completedCurrentStepId: z.string().trim().optional(),
+  clientMutationId: z.string().uuid().optional(),
+  deviceCreatedAt: z.coerce.date().optional(),
 });
 
 const consumptionSchema = z.object({
@@ -51,7 +53,13 @@ export async function saveProtocolRunProgress(
       intent: optionalText(formData.get("intent")) ?? "save",
       quickNote: optionalText(formData.get("quickNote")),
       completedCurrentStepId: optionalText(formData.get("completedCurrentStepId")),
+      clientMutationId: optionalText(formData.get("clientMutationId")),
+      deviceCreatedAt: optionalText(formData.get("deviceCreatedAt")),
     });
+    if (parsed.clientMutationId) {
+      const replay = await prisma.experimentStepEvent.findUnique({ where: { clientMutationId: parsed.clientMutationId }, select: { id: true } });
+      if (replay) return { message: "Step completion already saved.", savedAt: new Date().toISOString() };
+    }
     const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
     if (parsed.completedCurrentStepId) completedStepIds.add(parsed.completedCurrentStepId);
     const recordedAt = new Date();
@@ -114,6 +122,18 @@ export async function saveProtocolRunProgress(
             deviationNote: deviationNote ?? null,
           },
         });
+        if (parsed.completedCurrentStepId === step.id) {
+          await tx.experimentStepEvent.create({
+            data: {
+              experimentStepId: step.id,
+              experimentId: experiment.id,
+              eventType: completed ? "completed" : "reopened",
+              clientMutationId: parsed.clientMutationId,
+              deviceCreatedAt: parsed.deviceCreatedAt,
+              payloadJson: { previousCompleted: step.completed, completed, deviationNote: deviationNote ?? null },
+            },
+          });
+        }
       }
     }
 

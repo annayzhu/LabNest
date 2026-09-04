@@ -29,6 +29,7 @@ import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits"
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
+import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 export type EntryComposerProject = { id: string; name: string };
 export type EntryComposerResearchPlan = { id: string; title: string; code?: string; projectId: string; projectName: string };
@@ -353,20 +354,43 @@ export function EntryComposer({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitStatus("");
-    if (!fields.title.trim() || !fields.contentMarkdown.trim()) {
-      setSubmitStatus("Title and body are required.");
+    if (!fields.contentMarkdown.trim()) {
+      setSubmitStatus(captureMode ? "Record an observation before saving." : "Title and body are required.");
       return;
     }
+
+    const generatedTitle = fields.title.trim() || `${fields.contentMarkdown.trim().split(/\r?\n/)[0].slice(0, 72)} · ${new Date(fields.occurredAt).toLocaleDateString()}`;
 
     setIsSubmitting(true);
     setMedia((current) => current.map((item) => item.kind === "new" ? { ...item, status: "uploading" } : item));
     try {
       const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) => formData.set(key, value));
+      Object.entries({ ...fields, title: generatedTitle }).forEach(([key, value]) => formData.set(key, value));
       const newItems = media.filter((item): item is NewMedia => item.kind === "new");
       newItems.forEach((item) => formData.append("files", item.file, item.file.name));
       formData.set("newFileIds", JSON.stringify(newItems.map((item) => item.id)));
       formData.set("mediaOrder", JSON.stringify(media.map((item) => ({ kind: item.kind, id: item.id }))));
+
+      if (captureMode && !navigator.onLine) {
+        const clientMutationId = newId();
+        await enqueueMobileMutation({
+          clientMutationId,
+          actionType: "entry.create",
+          deviceCreatedAt: new Date().toISOString(),
+          state: "pending",
+          retryCount: 0,
+          payload: {
+            fields: Object.fromEntries(Object.entries({ ...fields, title: generatedTitle })),
+            newFileIds: String(formData.get("newFileIds") ?? "[]"),
+            mediaOrder: String(formData.get("mediaOrder") ?? "[]"),
+            files: newItems.map((item) => ({ name: item.file.name, file: item.file })),
+          },
+        });
+        await deleteEntryDraft(draftKey).catch(() => undefined);
+        router.push("/?queued=1");
+        router.refresh();
+        return;
+      }
 
       const response = await fetch(entry ? `/api/entries/${entry.id}` : "/api/entries", {
         method: entry ? "PATCH" : "POST",
@@ -400,11 +424,10 @@ export function EntryComposer({
           <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
             <div className="space-y-4 p-4">
               <input
-                required
                 value={fields.title}
                 onChange={(event) => updateField("title", event.target.value)}
                 className="focus-ring h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base font-semibold text-ink placeholder:text-muted"
-                placeholder="Short title"
+                placeholder="Title is generated automatically · optional"
                 aria-label="Entry title"
               />
               <textarea

@@ -109,7 +109,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           <Card>
             <CardHeader title="Record stock movement" />
             <CardBody>
-              <InventoryTransactionForm action={transactionAction} unit={item.unit} experiments={experiments} purchases={purchases} />
+              <InventoryTransactionForm action={transactionAction} inventoryItemId={item.id} unit={item.unit} experiments={experiments} purchases={purchases} />
             </CardBody>
           </Card>
         </section>

@@ -44,3 +44,7 @@ export function saveEntryDraft<TFields>(key: string, draft: StoredEntryDraft<TFi
 export function deleteEntryDraft(key: string) {
   return withDraftStore<undefined>("readwrite", (store) => store.delete(key));
 }
+
+export function countEntryDrafts() {
+  return withDraftStore<number>("readonly", (store) => store.count());
+}

@@ -20,6 +20,8 @@ const entryMutationSchema = entrySchema.omit({ body: true }).extend({
   resultType: z.string().trim().optional(),
   resultTextValue: z.string().trim().optional(),
   resultNotes: z.string().trim().optional(),
+  clientMutationId: z.string().uuid().optional(),
+  deviceCreatedAt: z.coerce.date().optional(),
 });
 
 export type EntryMutationInput = z.infer<typeof entryMutationSchema> & { body: string };
@@ -47,6 +49,8 @@ export function parseEntryMutationFormData(formData: FormData): EntryMutationInp
     resultType: optionalString(formData.get("resultType")),
     resultTextValue: optionalString(formData.get("resultTextValue")),
     resultNotes: optionalString(formData.get("resultNotes")),
+    clientMutationId: optionalString(formData.get("clientMutationId")),
+    deviceCreatedAt: optionalString(formData.get("deviceCreatedAt")),
   });
 
   const body = plainTextFromEntryMarkdown(parsed.contentMarkdown);

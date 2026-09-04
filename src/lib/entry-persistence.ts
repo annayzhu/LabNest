@@ -254,6 +254,10 @@ async function formalizeProtocolEntry(
 }
 
 export async function createEntryWithFiles(input: EntryMutationInput, files: File[]) {
+  if (input.clientMutationId) {
+    const replay = await prisma.entry.findUnique({ where: { clientMutationId: input.clientMutationId }, select: { id: true } });
+    if (replay) return replay;
+  }
   const prepared = await Promise.all(files.map((file) => prepareAttachmentFile(file)));
 
   try {
@@ -271,6 +275,8 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
           sourceType: input.sourceType,
           recordStatus: input.recordStatus,
           moodStatus: input.moodStatus,
+          clientMutationId: input.clientMutationId,
+          deviceCreatedAt: input.deviceCreatedAt,
           contentJson: jsonValue(buildEntryContent(input.contentMarkdown, [])),
         },
       });
@@ -302,6 +308,8 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
             attachmentSha256: attachments.flatMap((attachment) => attachment.sha256 ? [attachment.sha256] : []),
             sourceType: input.sourceType,
             recordStatus: input.recordStatus,
+            clientMutationId: input.clientMutationId ?? null,
+            deviceCreatedAt: input.deviceCreatedAt?.toISOString() ?? null,
           },
         },
       });
@@ -309,6 +317,10 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
     });
   } catch (error) {
     await cleanupPreparedAttachmentFiles(prepared);
+    if (input.clientMutationId && typeof error === "object" && error && "code" in error && error.code === "P2002") {
+      const replay = await prisma.entry.findUnique({ where: { clientMutationId: input.clientMutationId }, select: { id: true } });
+      if (replay) return replay;
+    }
     throw error;
   }
 }

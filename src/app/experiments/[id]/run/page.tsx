@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, PackageMinus } from "lucide-react";
+import { ArrowLeft, Camera, FilePlus2, Gauge, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -101,6 +101,12 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           steps={experiment.steps}
           editable={editable}
         />
+
+        <section aria-label="Current run capture actions" className="grid grid-cols-3 gap-2 lg:hidden">
+          <Link href={`/entries/new?mode=capture&experiment=${experiment.id}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Camera className="h-5 w-5" aria-hidden />Observe</Link>
+          <Link href={`/results/new?experiment=${experiment.id}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Gauge className="h-5 w-5" aria-hidden />Measurement</Link>
+          <a href="#result-recording" className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><FilePlus2 className="h-5 w-5" aria-hidden />Result</a>
+        </section>
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">

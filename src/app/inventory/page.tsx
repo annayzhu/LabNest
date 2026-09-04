@@ -8,6 +8,7 @@ import {
   collectionSecondaryActionClass,
 } from "@/components/CollectionToolbar";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
+import { MobileInventoryBench } from "@/components/MobileInventoryBench";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
@@ -86,9 +87,24 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
   return (
     <AppShell>
       <div className="space-y-5">
-        <PageHeader title="Inventory" />
+        <div className="hidden lg:block"><PageHeader title="Inventory" /></div>
 
-        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_220px] 2xl:grid-cols-[minmax(0,1fr)_240px]">
+        <MobileInventoryBench
+          query={query}
+          attentionCount={lowCount + depletedCount + expiryRiskCount}
+          items={items.slice(0, 12).map((item) => ({
+            id: item.id,
+            name: item.name,
+            subtitle: item.brand ?? item.vendor ?? item.category ?? "Unclassified",
+            code: item.aliquotCode ?? item.barcode ?? item.lotNumber ?? item.catalogNumber ?? "",
+            quantity: item.currentQuantity,
+            unit: item.unit,
+            location: item.location?.name ?? "Unassigned",
+            risk: item.riskFlags.length > 0,
+          }))}
+        />
+
+        <div className="hidden min-w-0 gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_220px] 2xl:grid-cols-[minmax(0,1fr)_240px]">
           <section className="min-w-0 space-y-4">
             <form id={filterFormId} action="/inventory" method="get" className="hidden" aria-hidden="true" />
 

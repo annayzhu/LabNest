@@ -34,6 +34,38 @@ async function assertNoPageOverflow(page, label) {
   assert(dimensions.scrollWidth <= dimensions.clientWidth + 1, `${label} overflows horizontally: ${JSON.stringify(dimensions)}`);
 }
 
+async function assertEditorToolbarControls(page, label) {
+  const toolbar = page.getByRole("toolbar", { name: "Protocol formatting" });
+  const controlMetrics = await toolbar.locator("select").evaluateAll((selects) => selects.map((select) => {
+    const rect = select.getBoundingClientRect();
+    return { label: select.getAttribute("aria-label"), height: rect.height, width: rect.width };
+  }));
+  assert(controlMetrics.length === 4, `${label} should expose four compact formatting selectors.`);
+  assert(controlMetrics.every(({ height }) => height >= 23 && height <= 25), `${label} formatting selectors should match the 24px More/Insert controls: ${JSON.stringify(controlMetrics)}.`);
+  assert(controlMetrics.every(({ width }) => width <= 67), `${label} formatting selectors are still too wide: ${JSON.stringify(controlMetrics)}.`);
+
+  for (const { trigger, menu, expectedItem } of [
+    { trigger: "More", menu: ".ln-wysiwyg-compact-menu", expectedItem: "Strikethrough" },
+    { trigger: "Insert", menu: ".ln-wysiwyg-insert-popover", expectedItem: "Table" },
+  ]) {
+    const button = toolbar.getByRole("button", { name: new RegExp(`^${trigger}`) });
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
+    const popover = page.locator(`${menu}[role="menu"]`);
+    await popover.waitFor({ state: "visible" });
+    const bounds = await popover.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+    });
+    const viewport = page.viewportSize();
+    assert(bounds.left >= 0 && bounds.right <= viewport.width, `${label} ${trigger} menu escapes the viewport: ${JSON.stringify(bounds)}.`);
+    assert(bounds.top >= 0 && bounds.bottom <= viewport.height, `${label} ${trigger} menu escapes the viewport vertically: ${JSON.stringify(bounds)}.`);
+    assert(await popover.getByRole("button", { name: new RegExp(expectedItem) }).count() === 1, `${label} ${trigger} menu content is unavailable.`);
+    await button.click();
+    await popover.waitFor({ state: "detached" });
+  }
+}
+
 async function assertDesktopSlice(page, routes) {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${baseUrl}${routes.detailHref}`, { waitUntil: "domcontentloaded" });
@@ -123,10 +155,11 @@ async function assertDesktopSlice(page, routes) {
   assert(Math.abs(editMetrics.viewbarWidth - editMetrics.toolbarWidth) <= 1, `Editor tabs and toolbar use different widths: ${editMetrics.viewbarWidth}px vs ${editMetrics.toolbarWidth}px.`);
   assert(editMetrics.saveActionHeight >= 28 && editMetrics.saveActionHeight <= 32, `Top workbench save action should stay compact: ${editMetrics.saveActionHeight}px.`);
   assert(editMetrics.saveActionTop >= editMetrics.viewbarTop - 1 && editMetrics.saveActionTop + editMetrics.saveActionHeight <= editMetrics.viewbarBottom + 1, "Save action is not contained in the sticky top workbench.");
-  assert(editMetrics.toolbarFontSize >= 11.5 && editMetrics.toolbarFontSize <= 12.5, `Editor toolbar text is outside the compact readable 11.5–12.5px range: ${editMetrics.toolbarFontSize}px.`);
+  assert(editMetrics.toolbarFontSize >= 10.5 && editMetrics.toolbarFontSize <= 11.5, `Editor toolbar text is outside the compact readable 10.5–11.5px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
   assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
   assert(editMetrics.copyLineHeightRatio >= 1.58 && editMetrics.copyLineHeightRatio <= 1.62, `Protocol editor copy should use the requested 1.6 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
+  await assertEditorToolbarControls(page, "Protocol editor desktop");
   await page.getByRole("button", { name: "Fit" }).click();
   const fitState = await editRoot.evaluate((root) => {
     const panel = root.querySelector(".document-editor-document-panel");
@@ -279,9 +312,10 @@ async function assertMobileSlice(page, routes) {
   assert(mobileState.outlineDisplay === "none", `Mobile outline should be hidden, got ${mobileState.outlineDisplay}.`);
   assert(mobileState.contextDisplay === "none", `Mobile inspector should be hidden, got ${mobileState.contextDisplay}.`);
   assert(["auto", "scroll"].includes(mobileState.toolbarOverflow), `Mobile toolbar must scroll instead of clipping, got ${mobileState.toolbarOverflow}.`);
-  assert(mobileState.toolbarFontSize >= 11 && mobileState.toolbarFontSize <= 12, `Mobile editor toolbar labels should stay within the compact 11–12px range: ${mobileState.toolbarFontSize}px.`);
+  assert(mobileState.toolbarFontSize >= 10.5 && mobileState.toolbarFontSize <= 11.5, `Mobile editor toolbar labels should stay within the compact 10.5–11.5px range: ${mobileState.toolbarFontSize}px.`);
   assert(mobileState.tabCount === 3, `Expected three accessible editor tabs, found ${mobileState.tabCount}.`);
   assert(await page.getByRole("tab", { name: "Relevant items" }).count() === 1, "Mobile editor must expose the full Relevant items label.");
+  await assertEditorToolbarControls(page, "Protocol editor mobile");
   await page.evaluate(() => scrollTo(0, Math.min(640, document.documentElement.scrollHeight - innerHeight)));
   await page.waitForTimeout(120);
   const mobileStickyState = await root.evaluate((slice) => {

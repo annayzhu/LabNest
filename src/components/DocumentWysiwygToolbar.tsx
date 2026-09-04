@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Plus, Quote, Redo2, Strikethrough, Table2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -41,6 +42,7 @@ function ToolbarMenu({
   children,
   menuClassName,
   triggerClassName,
+  portal = false,
 }: {
   id: string;
   label: string;
@@ -50,13 +52,17 @@ function ToolbarMenu({
   children: ReactNode;
   menuClassName: string;
   triggerClassName?: string;
+  portal?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [portalStyle, setPortalStyle] = useState<CSSProperties>();
   const open = openMenu === id;
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpenMenu(null);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpenMenu(null);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -72,9 +78,40 @@ function ToolbarMenu({
     };
   }, [open, setOpenMenu]);
 
+  useLayoutEffect(() => {
+    if (!open || !portal) return;
+    const placeMenu = () => {
+      const trigger = rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]");
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+      const triggerRect = trigger.getBoundingClientRect();
+      const margin = 10;
+      const gap = 4;
+      const menuWidth = menu.offsetWidth;
+      const menuHeight = menu.offsetHeight;
+      const left = Math.min(Math.max(margin, triggerRect.left), globalThis.innerWidth - menuWidth - margin);
+      const fitsBelow = triggerRect.bottom + gap + menuHeight <= globalThis.innerHeight - margin;
+      const top = fitsBelow
+        ? triggerRect.bottom + gap
+        : Math.max(margin, triggerRect.top - menuHeight - gap);
+      setPortalStyle({ left, right: "auto", top, position: "fixed" });
+    };
+    placeMenu();
+    globalThis.addEventListener("resize", placeMenu);
+    globalThis.addEventListener("scroll", placeMenu, true);
+    return () => {
+      globalThis.removeEventListener("resize", placeMenu);
+      globalThis.removeEventListener("scroll", placeMenu, true);
+    };
+  }, [open, portal]);
+
+  const menu = open
+    ? <div ref={menuRef} role="menu" className={menuClassName} style={portal ? portalStyle : undefined} onClick={() => setOpenMenu(null)}>{children}</div>
+    : null;
+
   return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
     <button type="button" aria-haspopup="menu" aria-expanded={open} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
-    {open ? <div role="menu" className={menuClassName} onClick={() => setOpenMenu(null)}>{children}</div> : null}
+    {portal && menu ? createPortal(menu, globalThis.document.body) : menu}
   </div>;
 }
 
@@ -132,7 +169,7 @@ export function DocumentWysiwygToolbar({
     <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><List aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
     {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
-    <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger">
+    <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger" portal>
         <button type="button" data-active={editor.isActive("strike") || undefined} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough aria-hidden />Strikethrough</button>
         <button type="button" data-active={editor.isActive("blockquote") || undefined} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote aria-hidden />Quote</button>
         <button type="button" data-active={editor.isActive("link") || undefined} onClick={setLink}><Link2 aria-hidden />Add / edit link</button>
@@ -140,10 +177,10 @@ export function DocumentWysiwygToolbar({
         <button type="button" onClick={() => editor.chain().focus().unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
         <button type="button" onClick={() => editor.chain().focus().setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
     </ToolbarMenu>
-    {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover" triggerClassName="ln-wysiwyg-insert-menu-trigger">
+    {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover" triggerClassName="ln-wysiwyg-insert-menu-trigger" portal>
         {insertActions.map((action) => <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
     </ToolbarMenu> : null}
-    {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
+    {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" portal><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
     <span className="ln-wysiwyg-toolbar-spacer" />
     <ToolbarButton editor={editor} label="Undo" disabled={!editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><Undo2 aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Redo" disabled={!editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><Redo2 aria-hidden /></ToolbarButton>

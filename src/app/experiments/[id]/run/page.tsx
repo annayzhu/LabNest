@@ -32,7 +32,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         primaryProtocolVersion: { include: { protocol: true } },
         protocolVersions: { orderBy: { order: "asc" }, include: { protocolVersion: { include: { protocol: true } } } },
         protocolRun: true,
-        steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] },
+        steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }], include: { _count: { select: { entries: true, results: true, inventoryTransactions: true } } } },
         results: { orderBy: { updatedAt: "desc" }, take: 8 },
       },
     }),
@@ -60,8 +60,14 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const total = experiment.steps.length;
   const progress = total ? Math.round((completed / total) * 100) : 0;
   const lockedProtocol = experiment.primaryProtocolVersion;
-  const currentStep = experiment.steps.find((step) => !step.completed) ?? experiment.steps[0];
+  const currentStep = experiment.steps.find((step) => !step.completed);
   const editable = experiment.status !== "archived";
+  const evidenceByStep = Object.fromEntries(experiment.steps.map((step) => [step.id, {
+    observations: step._count.entries,
+    measurements: step._count.results,
+    files: attachmentLinks.filter((link) => link.targetType === "experiment_step" && link.targetId === step.id).length,
+    consumptions: step._count.inventoryTransactions,
+  }]));
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,
@@ -102,6 +108,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           status={experiment.status}
           steps={experiment.steps}
           editable={editable}
+          evidenceByStep={evidenceByStep}
         />
 
         <section aria-label="Current run capture actions" className="grid grid-cols-3 gap-2 lg:hidden">

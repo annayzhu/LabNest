@@ -13,13 +13,21 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     return Response.json({ error: "Attachment not found." }, { status: 404 });
   }
 
-  const fileBuffer = await readFile(resolveAttachmentPath(attachment.storagePath));
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await readFile(resolveAttachmentPath(attachment.storagePath));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return Response.json({ error: "The attachment record exists, but its stored file is missing." }, { status: 410 });
+    }
+    throw error;
+  }
   const inline = new URL(request.url).searchParams.get("inline") === "1";
 
   return new Response(new Uint8Array(fileBuffer), {
     headers: {
       "content-type": attachment.mimeType,
-      "content-length": String(attachment.size),
+      "content-length": String(fileBuffer.byteLength),
       "content-disposition": inline
         ? "inline"
         : `attachment; filename="${attachment.originalFilename.replaceAll('"', "'")}"`,

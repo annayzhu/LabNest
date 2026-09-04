@@ -23,6 +23,35 @@ try {
   );
 
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
+  await page.evaluate(async () => {
+    const database = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("labnest-mobile-mutations", 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction("mutations", "readwrite");
+      transaction.objectStore("mutations").put({
+        clientMutationId: "00000000-0000-4000-8000-000000000049",
+        actionType: "step.complete",
+        deviceCreatedAt: "2026-09-04T12:00:00.000Z",
+        state: "conflict",
+        retryCount: 1,
+        lastError: "The selected experiment step is no longer available.",
+        payload: { experimentId: "missing", experimentStepId: "missing" },
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    database.close();
+    window.dispatchEvent(new CustomEvent("labnest:mobile-queue-changed"));
+  });
+  await page.getByRole("button", { name: "Review sync issues" }).click();
+  const syncDialog = page.getByRole("dialog", { name: "Review sync issues" });
+  await syncDialog.getByText("Step completion", { exact: true }).waitFor();
+  await syncDialog.getByText("The selected experiment step is no longer available.", { exact: true }).waitFor();
+  await syncDialog.getByRole("button", { name: "Discard local copy" }).click();
+  await syncDialog.waitFor({ state: "hidden" });
   await page.getByRole("link", { name: /Quick capture/i }).waitFor();
   await page.getByRole("heading", { name: "Today’s plan" }).waitFor();
   await page.getByRole("link", { name: /Quick capture/i }).click();
@@ -72,6 +101,7 @@ try {
     offlineRunHref = await firstRun.getAttribute("href");
     await firstRun.click();
     await page.getByRole("heading", { name: "Current step" }).waitFor();
+    await page.getByLabel("Current step evidence").waitFor();
     await page.getByRole("button", { name: "Complete step" }).waitFor();
     await page.getByRole("region", { name: "Step timer" }).waitFor();
     await page.getByText("Record a deviation", { exact: true }).click();

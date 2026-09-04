@@ -76,6 +76,7 @@ export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | Que
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";
 export const mobileQueueChangedEvent = "labnest:mobile-queue-changed";
+export const mobileSyncRequestedEvent = "labnest:mobile-sync-requested";
 
 function openQueueDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -123,6 +124,10 @@ export async function updateMobileMutation(mutation: MobileMutation) {
 export async function removeMobileMutation(clientMutationId: string) {
   await withQueueStore<undefined>("readwrite", (store) => store.delete(clientMutationId));
   notifyQueueChanged();
+}
+
+export function requestMobileMutationSync() {
+  window.dispatchEvent(new CustomEvent(mobileSyncRequestedEvent));
 }
 
 export function mobileMutationStatusLabel(state: MobileMutationState) {

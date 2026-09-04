@@ -133,6 +133,7 @@ export function EntryComposer({
   defaultOccurredAt,
   defaultSource = "text",
   defaultProtocolVersionId = "",
+  mode = "document",
   entry,
 }: {
   projects: EntryComposerProject[];
@@ -141,6 +142,7 @@ export function EntryComposer({
   defaultOccurredAt: string;
   defaultSource?: string;
   defaultProtocolVersionId?: string;
+  mode?: "capture" | "document";
   entry?: EntryComposerInitialEntry;
 }) {
   const router = useRouter();
@@ -225,6 +227,7 @@ export function EntryComposer({
   const selectedProject = projects.find((project) => project.id === fields.projectId);
   const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
   const selectedProtocol = protocols.find((protocol) => protocol.id === fields.protocolVersionId);
+  const captureMode = mode === "capture" && !entry;
 
   function updateField<K extends keyof EntryComposerFields>(key: K, value: EntryComposerFields[K]) {
     setFields((current) => ({ ...current, [key]: value }));
@@ -384,6 +387,71 @@ export function EntryComposer({
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <input id={imageInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+      <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+      <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+      {captureMode ? (
+        <section className="space-y-5 lg:hidden">
+          <div>
+            <h1 className="font-serif text-2xl font-medium tracking-[-0.02em] text-ink">Quick capture</h1>
+            <p className="mt-1 text-sm leading-6 text-muted">Record what happened now. You can organize the document later.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+            <div className="space-y-4 p-4">
+              <input
+                required
+                value={fields.title}
+                onChange={(event) => updateField("title", event.target.value)}
+                className="focus-ring h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base font-semibold text-ink placeholder:text-muted"
+                placeholder="Short title"
+                aria-label="Entry title"
+              />
+              <textarea
+                required
+                value={fields.contentMarkdown}
+                onChange={(event) => updateField("contentMarkdown", event.target.value)}
+                className="focus-ring min-h-40 w-full resize-y rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-base leading-7 text-ink placeholder:text-muted"
+                placeholder="What did you observe?"
+                aria-label="Observation"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-hairline p-3">
+              <MediaPickerLabel htmlFor={cameraInputId} disabled={isSubmitting} spacious><Camera className="h-5 w-5" />Take photo</MediaPickerLabel>
+              <MediaPickerLabel htmlFor={fileInputId} disabled={isSubmitting} spacious><Paperclip className="h-5 w-5" />Add files</MediaPickerLabel>
+            </div>
+            {media.length ? (
+              <ul className="divide-y divide-hairline border-t border-hairline">
+                {media.map((item) => <li key={`capture-${item.id}`} className="flex min-h-12 items-center gap-3 px-4 py-2 text-sm">
+                  <File className="h-4 w-4 shrink-0 text-moss" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate text-graphite">{item.originalFilename}</span>
+                  <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${item.originalFilename}`} onClick={() => removeMedia(item.id)}><X className="h-4 w-4" /></Button>
+                </li>)}
+              </ul>
+            ) : null}
+          </div>
+
+          <details className="group rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+            <summary className="focus-ring flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+              Add research context
+              <ChevronRight className="h-4 w-4 transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none" aria-hidden />
+            </summary>
+            <div className="grid gap-4 border-t border-hairline p-4">
+              <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => updateField("projectId", value)} options={[{ value: "", label: "No project" }, ...projects.map((project) => ({ value: project.id, label: project.name }))]} />
+              <ComposerSelect label="Research plan" value={fields.researchPlanId} onChange={(value) => {
+                updateField("researchPlanId", value);
+                const plan = researchPlans.find((candidate) => candidate.id === value);
+                if (plan) updateField("projectId", plan.projectId);
+              }} options={[{ value: "", label: "Unassigned" }, ...availablePlans.map((plan) => ({ value: plan.id, label: `${plan.projectName} · ${plan.code ?? plan.title}` }))]} />
+            </div>
+          </details>
+
+          <p className="flex items-center gap-2 text-xs leading-5 text-muted"><Cloud className="h-4 w-4 shrink-0 text-moss" aria-hidden />{draftStatus || "This capture will be kept as a recoverable local draft."}</p>
+        </section>
+      ) : null}
+
+      <div className={captureMode ? "hidden lg:block" : undefined}>
       <DocumentEditorLayout className="entry-editor-layout" storageKey="labnest.entry.settings-open">
       <div className="entry-editor-main-column">
       <DocumentOutlineWorkbench items={entryDocumentOutline}>
@@ -456,10 +524,6 @@ export function EntryComposer({
             <MediaPickerLabel htmlFor={fileInputId} disabled={isSubmitting}><Paperclip className="h-4 w-4" />Add files</MediaPickerLabel>
           </div>
         </div>
-        <input id={imageInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
-        <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
-        <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
-
         <label
           htmlFor={fileInputId}
           className={cn(
@@ -562,6 +626,7 @@ export function EntryComposer({
       ) : null}
       </div>
       </DocumentEditorLayout>
+      </div>
 
       {submitStatus ? <div role="alert" className="rounded-[var(--ln-radius-panel)] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
@@ -587,7 +652,7 @@ function ComposerSelect({ label, value, onChange, options }: { label: string; va
   return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
 }
 
-function MediaPickerLabel({ htmlFor, disabled, children }: { htmlFor: string; disabled?: boolean; children: React.ReactNode }) {
+function MediaPickerLabel({ htmlFor, disabled, spacious = false, children }: { htmlFor: string; disabled?: boolean; spacious?: boolean; children: React.ReactNode }) {
   return (
     <label
       htmlFor={htmlFor}
@@ -600,7 +665,8 @@ function MediaPickerLabel({ htmlFor, disabled, children }: { htmlFor: string; di
         document.getElementById(htmlFor)?.click();
       }}
       className={cn(
-        "focus-ring inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 text-xs font-medium tracking-[-0.005em] text-graphite transition hover:border-border-strong hover:bg-warm hover:text-ink",
+        "focus-ring inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 text-xs font-medium tracking-[-0.005em] text-graphite transition hover:border-border-strong hover:bg-warm hover:text-ink",
+        spacious ? "h-12" : "h-8",
         disabled && "pointer-events-none cursor-not-allowed opacity-55",
       )}
     >

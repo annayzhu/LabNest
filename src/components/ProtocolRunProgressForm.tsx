@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, Play, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Circle, Play, Save } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
@@ -43,6 +43,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
   }, [steps]);
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
+  const currentStep = steps.find((step) => !completedIds.has(step.id));
+  const currentStepIndex = currentStep ? steps.findIndex((step) => step.id === currentStep.id) : -1;
 
   function setStep(id: string, checked: boolean) {
     setCompletedIds((current) => {
@@ -64,7 +66,73 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
 
   return <form action={formAction} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
-    <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+    {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
+
+    <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
+      <div className="border-b border-hairline px-4 py-3">
+        <div className="flex items-center justify-between gap-3 text-xs text-muted">
+          <span>{hasSteps ? `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
+          <span>{currentStep ? `Step ${currentStepIndex + 1}` : "Ready to finish"}</span>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone">
+          <div className="h-full rounded-full bg-moss transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${hasSteps ? Math.round((completedIds.size / steps.length) * 100) : 0}%` }} />
+        </div>
+      </div>
+
+      {currentStep ? (
+        <div className="p-4">
+          <h2 className="text-sm font-semibold text-ink">Current step</h2>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{currentStep.groupTitle} · Step {currentStep.order}</p>
+          <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{currentStep.title}</h3>
+          {currentStep.description ? <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-graphite">{currentStep.description}</p> : null}
+
+          <details className="group mt-5 border-t border-hairline pt-2">
+            <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+              Record a deviation
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+            </summary>
+            <label className="block pb-3">
+              <span className={formLabelClass}>What differed from the planned method?</span>
+              <textarea name={`deviation:${currentStep.id}`} defaultValue={currentStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
+            </label>
+          </details>
+
+          {editable ? (
+            <button type="submit" name="completedCurrentStepId" value={currentStep.id} onClick={() => setStep(currentStep.id, true)} disabled={pending} className={`${primaryButton} min-h-12 w-full`}>
+              <CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="p-4">
+          <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] bg-success-surface px-3 py-3 text-success">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <div><h2 className="text-sm font-semibold">All steps complete</h2><p className="mt-1 text-xs leading-5">Review the run, then mark the experiment complete.</p></div>
+          </div>
+          {editable ? <button type="submit" name="intent" value="complete" disabled={pending} className={`${primaryButton} mt-4 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button> : null}
+        </div>
+      )}
+
+      {state.error ? <p role="alert" className="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{state.error}</p> : null}
+      {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
+
+      {hasSteps ? <details className="group border-t border-hairline bg-warm/45">
+        <summary className="focus-ring flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+          All steps
+          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+        </summary>
+        <ol className="divide-y divide-hairline border-t border-hairline bg-surface">
+          {steps.map((step, index) => <li key={`mobile-step-${step.id}`} className="flex min-h-12 items-start gap-3 px-4 py-3 text-sm">
+            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${completedIds.has(step.id) ? "border-moss bg-moss text-white" : step.id === currentStep?.id ? "border-action-border bg-action-surface text-moss" : "border-hairline text-muted"}`}>
+              {completedIds.has(step.id) ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : index + 1}
+            </span>
+            <span className={completedIds.has(step.id) ? "text-muted line-through" : "text-graphite"}>{step.title}</span>
+          </li>)}
+        </ol>
+      </details> : null}
+    </section>
+
+    <section className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:block">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
         <h2 className="font-serif text-lg font-medium text-ink">Execution record</h2>
         <span className="text-xs text-muted">{hasSteps ? "Check planned execution steps or log deviations by step." : "No fixed steps configured; use freeform execution notes."}</span>
@@ -97,7 +165,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
       <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
     </section>
 
-    {editable ? <div className="sticky bottom-20 z-30 space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur md:bottom-4">
+    {editable ? <div className="sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 lg:block">
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       {state.message ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
       <div className="flex flex-wrap items-center justify-end gap-2">

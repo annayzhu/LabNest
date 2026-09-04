@@ -8,6 +8,7 @@ import {
   BookOpen,
   Boxes,
   ClipboardList,
+  Clock3,
   FileBarChart,
   Database,
   Dna,
@@ -165,7 +166,12 @@ export function MobileBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
-  const items = [navItems[0], navItems[1], navItems[5], navItems[8]];
+  const items = [
+    { href: "/", label: "Today", icon: Home },
+    { href: "/protocol-run", label: "Runs", icon: Clock3 },
+    { href: "/entries", label: "Records", icon: BookOpen },
+    { href: "/inventory", label: "Inventory", icon: Boxes },
+  ];
   const active = (href: string) => href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
   const moreActive = !items.some((item) => active(item.href));
 

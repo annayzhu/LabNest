@@ -1,5 +1,6 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN apk add --no-cache openssl
 COPY package.json package-lock.json ./
 RUN npm ci

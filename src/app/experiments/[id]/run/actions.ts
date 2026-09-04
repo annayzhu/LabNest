@@ -25,6 +25,7 @@ const progressSchema = z.object({
 const consumptionSchema = z.object({
   experimentId: z.string().min(1),
   inventoryItemId: z.string().min(1),
+  experimentStepId: z.string().optional(),
   quantity: z.coerce.number().finite().positive(),
   performedBy: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(2_000).optional(),
@@ -112,14 +113,22 @@ export async function saveProtocolRunProgress(
           ? optionalText(formData.get(`mobileDeviation:${step.id}`))
           : step.deviationNote ?? undefined
         : optionalText(formData.get(`deviation:${step.id}`));
+      const deviationType = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationType:${step.id}`)) : step.deviationType ?? undefined;
+      const deviationImpact = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationImpact:${step.id}`)) : step.deviationImpact ?? undefined;
+      const deviationAuthor = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationAuthor:${step.id}`)) : step.deviationAuthor ?? undefined;
       if ((deviationNote?.length ?? 0) > 5_000) throw new Error(`Deviation note for step ${step.order} is too long.`);
-      if (completed !== step.completed || deviationNote !== (step.deviationNote ?? undefined)) {
+      if ((deviationImpact?.length ?? 0) > 5_000) throw new Error(`Deviation impact for step ${step.order} is too long.`);
+      if (completed !== step.completed || deviationNote !== (step.deviationNote ?? undefined) || deviationType !== (step.deviationType ?? undefined) || deviationImpact !== (step.deviationImpact ?? undefined) || deviationAuthor !== (step.deviationAuthor ?? undefined)) {
         await tx.experimentStep.update({
           where: { id: step.id },
           data: {
             completed,
             completedAt: completed ? step.completedAt ?? recordedAt : null,
             deviationNote: deviationNote ?? null,
+            deviationType: deviationNote ? deviationType ?? "other" : null,
+            deviationImpact: deviationNote ? deviationImpact ?? null : null,
+            deviationAuthor: deviationNote ? deviationAuthor ?? null : null,
+            deviationAt: deviationNote ? recordedAt : null,
           },
         });
         if (parsed.completedCurrentStepId === step.id) {
@@ -130,7 +139,7 @@ export async function saveProtocolRunProgress(
               eventType: completed ? "completed" : "reopened",
               clientMutationId: parsed.clientMutationId,
               deviceCreatedAt: parsed.deviceCreatedAt,
-              payloadJson: { previousCompleted: step.completed, completed, deviationNote: deviationNote ?? null },
+              payloadJson: { previousCompleted: step.completed, completed, deviationType: deviationType ?? null, actualExecution: deviationNote ?? null, impactAssessment: deviationImpact ?? null, author: deviationAuthor ?? null },
             },
           });
         }
@@ -233,19 +242,22 @@ export async function recordProtocolRunConsumption(formData: FormData) {
   const parsed = consumptionSchema.parse({
     experimentId: formData.get("experimentId"),
     inventoryItemId: formData.get("inventoryItemId"),
+    experimentStepId: optionalText(formData.get("experimentStepId")),
     quantity: formData.get("quantity"),
     performedBy: optionalText(formData.get("performedBy")),
     notes: optionalText(formData.get("notes")),
   });
 
   await prisma.$transaction(async (tx) => {
-    const [experiment, item] = await Promise.all([
+    const [experiment, item, step] = await Promise.all([
       tx.experiment.findUnique({ where: { id: parsed.experimentId }, select: { id: true, status: true } }),
       tx.inventoryItem.findUnique({ where: { id: parsed.inventoryItemId } }),
+      parsed.experimentStepId ? tx.experimentStep.findFirst({ where: { id: parsed.experimentStepId, experimentId: parsed.experimentId }, select: { id: true } }) : null,
     ]);
     if (!experiment) throw new Error("Experiment not found.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot consume Inventory.");
     if (!item || item.status !== "active") throw new Error("Inventory Item not found or inactive.");
+    if (parsed.experimentStepId && !step) throw new Error("The selected Step does not belong to this Experiment.");
 
     const nextQuantity = Number((item.currentQuantity - parsed.quantity).toFixed(6));
     if (nextQuantity < 0) throw new Error(`Available stock is ${item.currentQuantity} ${item.unit}.`);
@@ -258,6 +270,7 @@ export async function recordProtocolRunConsumption(formData: FormData) {
         unit: item.unit,
         fromLocationId: item.locationId ?? undefined,
         experimentId: experiment.id,
+        experimentStepId: step?.id,
         performedBy: parsed.performedBy,
         notes: parsed.notes ?? `Consumed during ${experiment.id}.`,
       },
@@ -275,6 +288,7 @@ export async function recordProtocolRunConsumption(formData: FormData) {
         targetId: item.id,
         metadataJson: {
           experimentId: experiment.id,
+          experimentStepId: step?.id ?? null,
           quantityChange: -parsed.quantity,
           unit: item.unit,
         },

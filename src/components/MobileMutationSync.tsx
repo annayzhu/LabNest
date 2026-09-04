@@ -25,8 +25,10 @@ export function MobileMutationSync() {
               formData.set("mediaOrder", mutation.payload.mediaOrder);
               mutation.payload.files.forEach(({ name, file }) => formData.append("files", file, name));
               response = await fetch("/api/entries", { method: "POST", body: formData });
-            } else {
+            } else if (mutation.actionType === "inventory.transaction") {
               response = await fetch("/api/mobile/inventory-transactions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
+            } else {
+              response = await fetch("/api/mobile/measurements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             }
             if (!response.ok) {
               const result = await response.json().catch(() => ({})) as { error?: string };

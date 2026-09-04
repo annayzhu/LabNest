@@ -265,13 +265,20 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
     await writePreparedAttachmentFiles(prepared);
     return await prisma.$transaction(async (tx) => {
       const context = await resolveContext(tx, input.projectId, input.researchPlanId);
+      const stepContext = input.experimentId ? await tx.experiment.findUnique({ where: { id: input.experimentId }, select: { id: true, projectId: true, researchPlanId: true, steps: input.experimentStepId ? { where: { id: input.experimentStepId }, select: { id: true } } : false } }) : undefined;
+      if (input.experimentId && !stepContext) throw new Error("Selected Experiment no longer exists.");
+      if (input.experimentStepId && !stepContext?.steps.length) throw new Error("Selected Step does not belong to this Experiment.");
+      if (context.projectId && stepContext?.projectId && context.projectId !== stepContext.projectId) throw new Error("The Entry and Experiment belong to different Projects.");
+      if (context.researchPlanId && stepContext?.researchPlanId && context.researchPlanId !== stepContext.researchPlanId) throw new Error("The Entry and Experiment belong to different Research Plans.");
       const entry = await tx.entry.create({
         data: {
           title: input.title,
           body: input.body,
           occurredAt: input.occurredAt,
-          projectId: context.projectId,
-          researchPlanId: context.researchPlanId,
+          projectId: context.projectId ?? stepContext?.projectId,
+          researchPlanId: context.researchPlanId ?? stepContext?.researchPlanId,
+          experimentId: stepContext?.id,
+          experimentStepId: stepContext?.steps[0]?.id,
           tags: input.tags,
           sourceType: input.sourceType,
           recordStatus: input.recordStatus,
@@ -311,6 +318,8 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
             recordStatus: input.recordStatus,
             clientMutationId: input.clientMutationId ?? null,
             deviceCreatedAt: input.deviceCreatedAt?.toISOString() ?? null,
+            experimentId: stepContext?.id ?? null,
+            experimentStepId: stepContext?.steps[0]?.id ?? null,
           },
         },
       });

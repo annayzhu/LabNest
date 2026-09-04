@@ -94,7 +94,13 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <ProtocolRunProgressForm experimentId={experiment.id} status={experiment.status} steps={experiment.steps} editable={editable} />
+        <ProtocolRunProgressForm
+          key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
+          experimentId={experiment.id}
+          status={experiment.status}
+          steps={experiment.steps}
+          editable={editable}
+        />
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addMonths, format, startOfMonth } from "date-fns";
+import { addDays, addMonths, format, startOfDay, startOfMonth } from "date-fns";
 import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
@@ -55,7 +55,8 @@ export default async function OverviewPage({
     activeResearchPlans,
     calendarEntries,
     calendarExperiments,
-    activeExperiments,
+    activeRuns,
+    todayExperiments,
   ] = await Promise.all([
     prisma.researchPlan.findMany({
       where: { status: "active" },
@@ -96,9 +97,29 @@ export default async function OverviewPage({
       },
     }),
     prisma.experiment.findMany({
-      where: { status: { in: [ExperimentStatus.running, ExperimentStatus.planned] } },
-      orderBy: [{ status: "desc" }, { date: "asc" }],
-      take: 6,
+      where: { status: ExperimentStatus.running },
+      orderBy: { updatedAt: "desc" },
+      take: 1,
+      select: {
+        id: true,
+        runCode: true,
+        title: true,
+        status: true,
+        date: true,
+        researchPlan: { select: { code: true, title: true } },
+        steps: {
+          orderBy: [{ groupOrder: "asc" }, { order: "asc" }],
+          select: { id: true, title: true, completed: true },
+        },
+      },
+    }),
+    prisma.experiment.findMany({
+      where: {
+        status: { in: [ExperimentStatus.running, ExperimentStatus.planned] },
+        date: { gte: startOfDay(today), lt: addDays(startOfDay(today), 1) },
+      },
+      orderBy: { date: "asc" },
+      take: 50,
       select: {
         id: true,
         runCode: true,
@@ -143,8 +164,7 @@ export default async function OverviewPage({
   const initialSelectedDateKey = viewMonthKey === calendarMonthKey(today)
     ? todayKey
     : calendarActivities[0]?.dateKey ?? format(viewMonth, "yyyy-MM-dd");
-  const activeRun = activeExperiments.find((experiment) => experiment.status === ExperimentStatus.running);
-  const todayExperiments = activeExperiments.filter((experiment) => calendarDateKey(experiment.date) === todayKey);
+  const activeRun = activeRuns[0];
 
   return (
     <AppShell>

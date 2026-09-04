@@ -90,7 +90,11 @@ export async function saveProtocolRunProgress(
 
     for (const step of experiment.steps) {
       const completed = completedStepIds.has(step.id);
-      const deviationNote = optionalText(formData.get(`deviation:${step.id}`));
+      const deviationNote = parsed.completedCurrentStepId
+        ? step.id === parsed.completedCurrentStepId
+          ? optionalText(formData.get(`mobileDeviation:${step.id}`))
+          : step.deviationNote ?? undefined
+        : optionalText(formData.get(`deviation:${step.id}`));
       if ((deviationNote?.length ?? 0) > 5_000) throw new Error(`Deviation note for step ${step.order} is too long.`);
       if (completed !== step.completed || deviationNote !== (step.deviationNote ?? undefined)) {
         await tx.experimentStep.update({

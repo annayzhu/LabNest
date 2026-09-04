@@ -6,6 +6,7 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  page.setDefaultTimeout(10_000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
@@ -32,6 +33,14 @@ try {
   await page.getByRole("link", { name: "Open monthly calendar" }).click();
   await page.getByRole("heading", { name: "Calendar" }).waitFor();
   await page.getByRole("link", { name: "Back to Today" }).click();
+  await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
+  await mobileNav.getByRole("button", { name: "Open more navigation" }).click();
+  await page.getByRole("group", { name: "Switch language" }).waitFor();
+  await page.getByRole("dialog", { name: "All modules" }).getByRole("button", { name: "Close menu" }).click();
+  await mobileNav.getByRole("link", { name: "Records" }).click();
+  await page.getByRole("heading", { name: "Records" }).waitFor();
+  assert.deepEqual(errors, [], `Browser errors after opening Records: ${errors.join("\n")}`);
+  await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
   assert.equal(await page.locator(".overview-desktop").isHidden(), true, "Desktop Overview must be hidden on a phone.");
 

@@ -645,13 +645,17 @@ textarea {
 .ln-modal-layer { isolation: isolate; }
 .ln-modal-backdrop { animation: ln-modal-backdrop-in 220ms ease both; }
 .ln-modal-card { animation: ln-modal-card-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: center 62%; }
+.ln-modal-layer[data-closing="true"] .ln-modal-backdrop { animation: ln-modal-backdrop-out 180ms ease both; }
+.ln-modal-layer[data-closing="true"] .ln-modal-card { animation: ln-modal-card-out 180ms cubic-bezier(0.4, 0, 1, 1) both; }
 .ln-modal-sheet { animation-name: ln-modal-sheet-in; transform-origin: bottom center; }
 
 @keyframes ln-modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ln-modal-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes ln-modal-card-in {
   from { clip-path: inset(7% 5% 7% 5% round var(--ln-radius-panel)); opacity: 0; transform: translateY(14px) scale(0.965); }
   to { clip-path: inset(0 round var(--ln-radius-panel)); opacity: 1; transform: translateY(0) scale(1); }
 }
+@keyframes ln-modal-card-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(4px) scale(0.97); } }
 
 @keyframes ln-modal-sheet-in {
   from { opacity: 0; transform: translateY(28px) scale(0.985); }

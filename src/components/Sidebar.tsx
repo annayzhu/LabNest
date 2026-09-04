@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { TraditionalMotif } from "@/components/TraditionalMotif";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { cn } from "@/lib/cn";
 
 const sidebarStorageKey = "labnest.sidebar.collapsed";
@@ -169,7 +170,7 @@ export function MobileBottomNav() {
   const items = [
     { href: "/", label: "Today", icon: Home },
     { href: "/protocol-run", label: "Runs", icon: Clock3 },
-    { href: "/entries", label: "Records", icon: BookOpen },
+    { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];
   const active = (href: string) => href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -257,6 +258,11 @@ export function MobileBottomNav() {
               <button ref={closeButtonRef} type="button" onClick={() => closeMoreMenu(true)} aria-label="Close menu" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-warm text-muted">
                 <X className="h-4 w-4" aria-hidden />
               </button>
+            </div>
+
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-3 py-2">
+              <span className="text-sm font-medium text-graphite">Language</span>
+              <LanguageToggle spacious />
             </div>
 
             <nav aria-label="All modules" className="grid grid-cols-2 gap-2">

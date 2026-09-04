@@ -93,12 +93,12 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
             </summary>
             <label className="block pb-3">
               <span className={formLabelClass}>What differed from the planned method?</span>
-              <textarea name={`deviation:${currentStep.id}`} defaultValue={currentStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
+              <textarea name={`mobileDeviation:${currentStep.id}`} defaultValue={currentStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
             </label>
           </details>
 
           {editable ? (
-            <button type="submit" name="completedCurrentStepId" value={currentStep.id} onClick={() => setStep(currentStep.id, true)} disabled={pending} className={`${primaryButton} min-h-12 w-full`}>
+            <button type="submit" name="completedCurrentStepId" value={currentStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}>
               <CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}
             </button>
           ) : null}

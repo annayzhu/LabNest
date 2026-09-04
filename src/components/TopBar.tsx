@@ -14,7 +14,7 @@ export function TopBar() {
     ? "LabNest"
     : pathname.startsWith("/protocol-run") || pathname.includes("/run")
       ? "Runs"
-      : pathname.startsWith("/entries") || pathname.startsWith("/results")
+      : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results")
         ? "Records"
         : pathname.startsWith("/inventory")
           ? "Inventory"

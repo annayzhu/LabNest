@@ -4303,6 +4303,7 @@ table :where(td) {
   .entry-editor-layout,
   .document-editor-main,
   .entry-editor-main-column,
+  .document-editor-document-stage,
   .document-workspace,
   .document-a4-paper {
     max-width: 100% !important;

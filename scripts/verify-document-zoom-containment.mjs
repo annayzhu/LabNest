@@ -57,6 +57,14 @@ try {
   assert(fitted.main.scrollWidth <= fitted.main.clientWidth + 1, `Fit widened the application main area: ${JSON.stringify(fitted)}.`);
   assert(fitted.panel.scrollWidth <= fitted.panel.clientWidth + 2, `Fit left horizontal overflow inside the document panel: ${JSON.stringify(fitted)}.`);
 
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}${editHref}`, { waitUntil: "networkidle" });
+  const mobile = await readWidths(page);
+  assert(mobile.root.scrollWidth <= mobile.root.clientWidth + 1, `The document editor widened the mobile page: ${JSON.stringify(mobile)}.`);
+  assert(mobile.main.scrollWidth <= mobile.main.clientWidth + 1, `The document editor widened the mobile main area: ${JSON.stringify(mobile)}.`);
+  assert(mobile.panel.scrollWidth <= mobile.panel.clientWidth + 1, `The A4 document remained desktop-width on mobile: ${JSON.stringify(mobile)}.`);
+  assert(mobile.paper.renderedWidth <= mobile.panel.clientWidth + 1, `The paper did not fit the mobile document panel: ${JSON.stringify(mobile)}.`);
+
   console.log(`Document zoom containment passed for ${editHref}.`);
 } finally {
   await browser.close();

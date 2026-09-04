@@ -54,6 +54,14 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
 
+  function prepareMutation(event: React.FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+    const mutationInput = form.elements.namedItem("clientMutationId") as HTMLInputElement | null;
+    const createdInput = form.elements.namedItem("deviceCreatedAt") as HTMLInputElement | null;
+    if (mutationInput) mutationInput.value = crypto.randomUUID();
+    if (createdInput) createdInput.value = new Date().toISOString();
+  }
+
   function setStep(id: string, checked: boolean) {
     setCompletedIds((current) => {
       const next = new Set(current);
@@ -72,8 +80,10 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
     });
   }
 
-  return <form action={formAction} className="space-y-4">
+  return <form action={formAction} onSubmit={prepareMutation} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
+    <input type="hidden" name="clientMutationId" />
+    <input type="hidden" name="deviceCreatedAt" />
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
     <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">

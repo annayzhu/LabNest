@@ -28,6 +28,7 @@ try {
   await page.getByRole("link", { name: /Quick capture/i }).click();
   await page.getByRole("heading", { name: "Quick capture" }).waitFor();
   await page.getByPlaceholder("What did you observe?").waitFor();
+  await page.getByPlaceholder("Title is generated automatically · optional").waitFor();
   await page.getByRole("button", { name: "Take photo", exact: true }).waitFor();
   await page.goBack({ waitUntil: "networkidle" });
   await page.getByRole("link", { name: "Open monthly calendar" }).click();
@@ -44,6 +45,11 @@ try {
   const experimentHref = await experimentRecord.getAttribute("href");
   assert(experimentHref, "Experiment record must have a destination.");
   assert.deepEqual(errors, [], `Browser errors after opening Records: ${errors.join("\n")}`);
+  await mobileNav.getByRole("link", { name: "Inventory" }).click();
+  await page.getByRole("heading", { name: "Inventory at the bench" }).waitFor();
+  await page.getByRole("button", { name: "Scan barcode" }).waitFor();
+  await page.getByRole("textbox", { name: "Search inventory" }).waitFor();
+  assert.equal(await page.getByRole("table").isVisible().catch(() => false), false, "Mobile Inventory must not expose the desktop DataTable.");
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
   assert.equal(await page.locator(".overview-desktop").isHidden(), true, "Desktop Overview must be hidden on a phone.");

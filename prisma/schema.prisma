@@ -451,6 +451,8 @@ model Entry {
   recordStatus   RecordLifecycleStatus @default(draft)
   contentJson    Json                  @default("{}")
   archivedAt     DateTime?
+  clientMutationId String?               @unique
+  deviceCreatedAt  DateTime?
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
@@ -640,8 +642,25 @@ model ExperimentStep {
   timerRemainingSeconds Int?
   timerStartedAt        DateTime?
   timerPausedAt         DateTime?
+  inventoryTransactions InventoryTransaction[]
+  events                ExperimentStepEvent[]
 
   @@index([experimentId, groupOrder, order])
+}
+
+model ExperimentStepEvent {
+  id               String         @id @default(cuid())
+  experimentStepId String
+  experimentStep   ExperimentStep @relation(fields: [experimentStepId], references: [id], onDelete: Cascade)
+  experimentId     String
+  eventType        String
+  clientMutationId String?        @unique
+  deviceCreatedAt  DateTime?
+  payloadJson      Json           @default("{}")
+  createdAt        DateTime       @default(now())
+
+  @@index([experimentStepId, createdAt])
+  @@index([experimentId, createdAt])
 }
 
 model Entity {
@@ -756,17 +775,22 @@ model InventoryTransaction {
   toLocation       InventoryLocation?       @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
   experimentId     String?
   experiment       Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  experimentStepId String?
+  experimentStep   ExperimentStep?           @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
   purchaseId       String?
   purchase         PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   proposedActionId String?
   proposedAction   ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
   performedBy      String?
   notes            String?
+  clientMutationId String?                   @unique
+  deviceCreatedAt  DateTime?
   createdAt        DateTime                 @default(now())
 
   @@index([inventoryItemId])
   @@index([type])
   @@index([experimentId])
+  @@index([experimentStepId])
   @@index([purchaseId])
 }
 

@@ -3,6 +3,7 @@ import { MobileBottomNav, Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { OfflineCompanion } from "./OfflineCompanion";
 import { ModalDialogProvider } from "./ui/ModalDialogProvider";
+import { MobileMutationSync } from "./MobileMutationSync";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <MobileBottomNav />
+      <MobileMutationSync />
       <OfflineCompanion />
     </div></ModalDialogProvider>
   );

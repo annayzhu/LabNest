@@ -64,11 +64,17 @@ export function useDocumentViewport() {
     return () => observer.disconnect();
   }, []);
 
-  const viewScale = zoomMode === "fit" ? fitScale : zoomPercent / 100;
+  const requestedScale = zoomPercent / 100;
+  const isWidthConstrained = fitScale < 1;
+  const viewScale = zoomMode === "fit"
+    ? fitScale
+    : isWidthConstrained
+      ? Math.min(requestedScale, fitScale)
+      : requestedScale;
   const viewStyle = {
     "--ln-document-view-scale": String(viewScale),
     "--ln-document-view-height": documentHeight ? `${documentHeight * viewScale}px` : undefined,
-    overflowX: zoomMode === "fit" ? "hidden" : undefined,
+    overflowX: zoomMode === "fit" || isWidthConstrained ? "hidden" : undefined,
   } as CSSProperties;
 
   return { panelRef, stageRef, zoomMode, setZoomMode, zoomPercent, setZoomPercent, updateFitScale, viewStyle };

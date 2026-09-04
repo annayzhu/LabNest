@@ -2047,6 +2047,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
   height: 1.75rem;
   padding-inline: 0.52rem;
   transition: background-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
 }
 
 .document-editor-zoom button:hover {
@@ -2298,7 +2299,9 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
   .page-header .page-actions {
     flex-wrap: nowrap;
   }
+}
 
+@media (min-width: 1400px) {
   .document-editor-workbench {
     display: grid;
     gap: var(--ln-document-workbench-gap);
@@ -2313,12 +2316,6 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
   }
 
   .document-editor-viewbar .document-editor-toolbar-row {
-    margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
-    margin-right: auto;
-    width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap));
-  }
-
-  .standalone-document-editor-toolbar {
     margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
     margin-right: auto;
     width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap));
@@ -4690,14 +4687,6 @@ table :where(td) {
     gap: 0.55rem;
   }
 
-  .entry-editor-save-bar {
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-  }
-
-  .document-editor-save-bar {
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-  }
-
   .document-section-editor-header {
     align-items: center;
     flex-wrap: nowrap;
@@ -5022,7 +5011,7 @@ table :where(td) {
   .standalone-document-editor-toolbar { overflow: visible; }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1400px) {
   .document-editor-layout-tabs {
     margin-left: calc(var(--ln-document-outline-width) + var(--ln-document-workbench-gap));
     width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap));
@@ -5036,6 +5025,34 @@ table :where(td) {
 
   .document-editor-workbench:has(.document-editor-context-rail > div:not(:empty)) {
     grid-template-columns: var(--ln-document-outline-width) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .entry-editor-save-bar,
+  .document-editor-save-bar {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .standalone-document-editor-toolbar {
+    --ln-wysiwyg-font-select-width: 6rem;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1023px) {
+  .standalone-document-editor-toolbar {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .standalone-document-editor-toolbar .document-editor-toolbar-format {
+    flex-basis: 100%;
+  }
+
+  .standalone-document-editor-toolbar .document-editor-zoom {
+    margin-left: auto;
   }
 }
 

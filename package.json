@@ -15,6 +15,7 @@
     "test:document-outline:e2e": "node scripts/verify-document-outline-rollout.mjs",
     "test:document-editor-hardening:e2e": "node scripts/verify-document-editor-hardening.mjs",
     "test:document-workspace:e2e": "node scripts/verify-document-workspace-routes.mjs",
+    "test:experiment-editor-responsive:e2e": "node scripts/verify-experiment-editor-responsive.mjs",
     "test:typography:e2e": "node scripts/verify-typography-settings.mjs",
     "test:system-themes:e2e": "node scripts/verify-system-themes.mjs",
     "docker:up": "docker compose up -d --build app",

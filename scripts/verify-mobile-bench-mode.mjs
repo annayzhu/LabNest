@@ -67,7 +67,9 @@ try {
 
   await page.goto(`${baseUrl}/protocol-run`, { waitUntil: "networkidle" });
   const firstRun = page.locator('main a[href$="/run"]').first();
+  let offlineRunHref;
   if (await firstRun.count()) {
+    offlineRunHref = await firstRun.getAttribute("href");
     await firstRun.click();
     await page.getByRole("heading", { name: "Current step" }).waitFor();
     await page.getByRole("button", { name: "Complete step" }).waitFor();
@@ -103,6 +105,14 @@ try {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Overview" }).waitFor();
   assert.equal(await page.locator(".bench-mobile").isHidden(), true, "Bench Mode must not replace desktop Overview.");
+
+  if (offlineRunHref) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${baseUrl}${offlineRunHref}`, { waitUntil: "networkidle" });
+    await page.context().setOffline(true);
+    await page.getByRole("button", { name: "Complete step" }).click();
+    await page.getByText("Step saved on this device · waiting to sync.", { exact: true }).waitFor();
+  }
 
   console.log("Mobile Bench Mode shell and Today journey passed.");
 } finally {

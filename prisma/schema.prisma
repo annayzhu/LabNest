@@ -642,6 +642,8 @@ model ExperimentStep {
   order                 Int
   title                 String
   description           String
+  requiresConfirmation  Boolean                @default(true)
+  allowsDeviation       Boolean                @default(true)
   completed             Boolean                @default(false)
   completedAt           DateTime?
   deviationNote         String?
@@ -1132,6 +1134,8 @@ model Attachment {
   derivedFrom      Attachment?  @relation("AttachmentDerivatives", fields: [derivedFromId], references: [id], onDelete: SetNull)
   derivatives      Attachment[] @relation("AttachmentDerivatives")
   derivativeKind   String?
+  clientMutationId String?      @unique
+  deviceCreatedAt  DateTime?
   uploadedAt       DateTime     @default(now())
 
   links AttachmentLink[]

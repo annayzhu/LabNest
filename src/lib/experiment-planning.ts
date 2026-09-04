@@ -19,6 +19,8 @@ export type ExperimentStepSnapshotDraft = {
   order: number;
   title: string;
   description: string;
+  requiresConfirmation: boolean;
+  allowsDeviation: boolean;
 };
 
 export type ExperimentStepGroupHeading = {
@@ -108,6 +110,8 @@ export function buildProtocolExperimentSteps(sources: ProtocolStepSnapshotSource
     order: step.order ?? index + 1,
     title: step.title || `Step ${index + 1}`,
     description: step.description ?? "",
+    requiresConfirmation: step.requires_confirmation ?? true,
+    allowsDeviation: step.allows_deviation ?? true,
   })));
 }
 

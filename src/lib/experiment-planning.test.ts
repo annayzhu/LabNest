@@ -26,9 +26,9 @@ describe("experiment planning", () => {
       },
     ]);
 
-    expect(steps.map((step) => ({ groupKey: step.groupKey, groupOrder: step.groupOrder, order: step.order, title: step.title, description: step.description }))).toEqual([
-      { groupKey: "version-b", groupOrder: 0, order: 2, title: "B2", description: "Keep source order value" },
-      { groupKey: "version-a", groupOrder: 1, order: 1, title: "A1", description: "Run after protocol B" },
+    expect(steps.map((step) => ({ groupKey: step.groupKey, groupOrder: step.groupOrder, order: step.order, title: step.title, description: step.description, requiresConfirmation: step.requiresConfirmation, allowsDeviation: step.allowsDeviation }))).toEqual([
+      { groupKey: "version-b", groupOrder: 0, order: 2, title: "B2", description: "Keep source order value", requiresConfirmation: true, allowsDeviation: true },
+      { groupKey: "version-a", groupOrder: 1, order: 1, title: "A1", description: "Run after protocol B", requiresConfirmation: true, allowsDeviation: true },
     ]);
     expect(steps.map((step) => step.groupTitle)).toEqual([
       "PRT-002 · Second protocol selected first · Active method · v1.2",

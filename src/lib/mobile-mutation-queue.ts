@@ -71,7 +71,23 @@ export type QueuedStepCompletionMutation = {
   };
 };
 
-export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation;
+export type QueuedAttachmentMutation = {
+  clientMutationId: string;
+  actionType: "attachment.upload";
+  deviceCreatedAt: string;
+  state: MobileMutationState;
+  retryCount: number;
+  lastError?: string;
+  payload: {
+    file: File;
+    targetType: string;
+    targetId: string;
+    linkType: string;
+    order?: string;
+  };
+};
+
+export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
 
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";

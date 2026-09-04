@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formFileInputClass, formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import type { ResultTemplateArtifact } from "@/lib/types";
+import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 export function AttachmentUploadForm({
   targetType = "",
@@ -33,9 +34,35 @@ export function AttachmentUploadForm({
 
     try {
       const form = event.currentTarget;
+      const formData = new FormData(form);
+      const file = formData.get("file");
+      const clientMutationId = crypto.randomUUID();
+      const deviceCreatedAt = new Date().toISOString();
+      if (!(file instanceof File)) throw new Error("Choose a photo or file first.");
+      formData.set("clientMutationId", clientMutationId);
+      formData.set("deviceCreatedAt", deviceCreatedAt);
+      if (!navigator.onLine) {
+        await enqueueMobileMutation({
+          clientMutationId,
+          actionType: "attachment.upload",
+          deviceCreatedAt,
+          state: "pending",
+          retryCount: 0,
+          payload: {
+            file,
+            targetType: String(formData.get("targetType") ?? ""),
+            targetId: String(formData.get("targetId") ?? ""),
+            linkType: String(formData.get("linkType") ?? "attached_to"),
+            order: String(formData.get("order") ?? "") || undefined,
+          },
+        });
+        setStatus(`${file.name} saved on this device · waiting to sync.`);
+        form.reset();
+        return;
+      }
       const response = await fetch("/api/attachments", {
         method: "POST",
-        body: new FormData(form),
+        body: formData,
       });
       const data = await response.json();
 

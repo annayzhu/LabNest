@@ -54,7 +54,24 @@ export type QueuedMeasurementMutation = {
   };
 };
 
-export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation;
+export type QueuedStepCompletionMutation = {
+  clientMutationId: string;
+  actionType: "step.complete";
+  deviceCreatedAt: string;
+  state: MobileMutationState;
+  retryCount: number;
+  lastError?: string;
+  payload: {
+    experimentId: string;
+    experimentStepId: string;
+    deviationType?: string;
+    deviationNote?: string;
+    deviationImpact?: string;
+    deviationAuthor?: string;
+  };
+};
+
+export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation;
 
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";

@@ -7,6 +7,7 @@ import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
 import { StepTimerControls } from "@/components/StepTimerControls";
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
+import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
   id: string;
@@ -54,6 +55,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
   const currentStep = steps.find((step) => !completedIds.has(step.id));
   const [selectedStepId, setSelectedStepId] = useState(() => currentStep?.id ?? steps[0]?.id ?? "");
   const [allStepsOpen, setAllStepsOpen] = useState(false);
+  const [offlineStatus, setOfflineStatus] = useState("");
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
 
@@ -61,8 +63,36 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
     const form = event.currentTarget;
     const mutationInput = form.elements.namedItem("clientMutationId") as HTMLInputElement | null;
     const createdInput = form.elements.namedItem("deviceCreatedAt") as HTMLInputElement | null;
-    if (mutationInput) mutationInput.value = crypto.randomUUID();
-    if (createdInput) createdInput.value = new Date().toISOString();
+    const clientMutationId = crypto.randomUUID();
+    const deviceCreatedAt = new Date().toISOString();
+    if (mutationInput) mutationInput.value = clientMutationId;
+    if (createdInput) createdInput.value = deviceCreatedAt;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const stepId = submitter?.name === "completedCurrentStepId" ? submitter.value : "";
+    if (navigator.onLine || !stepId) return;
+    event.preventDefault();
+    const data = new FormData(form);
+    const optional = (name: string) => String(data.get(name) ?? "").trim() || undefined;
+    void enqueueMobileMutation({
+      clientMutationId,
+      actionType: "step.complete",
+      deviceCreatedAt,
+      state: "pending",
+      retryCount: 0,
+      payload: {
+        experimentId,
+        experimentStepId: stepId,
+        deviationType: optional(`mobileDeviationType:${stepId}`),
+        deviationNote: optional(`mobileDeviation:${stepId}`),
+        deviationImpact: optional(`mobileDeviationImpact:${stepId}`),
+        deviationAuthor: optional(`mobileDeviationAuthor:${stepId}`),
+      },
+    }).then(() => {
+      setStep(stepId, true);
+      const nextStep = steps.find((step) => step.id !== stepId && !completedIds.has(step.id));
+      if (nextStep) setSelectedStepId(nextStep.id);
+      setOfflineStatus("Step saved on this device · waiting to sync.");
+    }).catch((error) => setOfflineStatus(error instanceof Error ? error.message : "Step could not be saved on this device."));
   }
 
   function setStep(id: string, checked: boolean) {
@@ -150,6 +180,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable 
 
       {state.error ? <p role="alert" className="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{state.error}</p> : null}
       {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}{state.savedAt ? ` Saved at ${new Date(state.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Synced` : ""}</p> : null}
+      {offlineStatus ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-action-border bg-action-surface px-3 py-2 text-sm text-moss">{offlineStatus}</p> : null}
 
       {hasSteps ? <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring flex min-h-12 w-full items-center justify-between border-t border-hairline bg-warm/45 px-4 text-sm font-semibold text-moss">All steps<ChevronDown className="h-4 w-4" aria-hidden /></button> : null}
     </section>

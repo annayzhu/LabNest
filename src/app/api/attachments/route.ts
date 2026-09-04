@@ -36,6 +36,15 @@ export async function POST(request: Request) {
   const derivedFromId = String(formData.get("derivedFromId") ?? "").trim() || undefined;
   const derivativeKind = String(formData.get("derivativeKind") ?? "").trim() || undefined;
   const order = Number.parseInt(String(formData.get("order") ?? "0"), 10);
+  const clientMutationId = String(formData.get("clientMutationId") ?? "").trim() || undefined;
+  const deviceCreatedAtText = String(formData.get("deviceCreatedAt") ?? "").trim();
+  const deviceCreatedAt = deviceCreatedAtText ? new Date(deviceCreatedAtText) : undefined;
+  if (clientMutationId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientMutationId)) return Response.json({ error: "Invalid client mutation ID." }, { status: 400 });
+  if (deviceCreatedAt && Number.isNaN(deviceCreatedAt.getTime())) return Response.json({ error: "Invalid device creation time." }, { status: 400 });
+  if (clientMutationId) {
+    const replay = await prisma.attachment.findUnique({ where: { clientMutationId }, include: { links: true } });
+    if (replay) return Response.json({ attachment: replay, replay: true });
+  }
   const targetStep = targetType === "experiment_step" && targetId ? await prisma.experimentStep.findUnique({ where: { id: targetId }, select: { id: true, experimentId: true } }) : undefined;
   if (targetType === "experiment_step" && !targetStep) return Response.json({ error: "Experiment step not found." }, { status: 404 });
   if (targetType === "result" && targetId && linkType.startsWith("template_artifact:")) {
@@ -51,31 +60,34 @@ export async function POST(request: Request) {
 
   try {
     await writePreparedAttachmentFiles([prepared]);
-    const attachment = await prisma.attachment.create({
-      data: {
-        filename: prepared.filename,
-        originalFilename: prepared.originalFilename,
-        mimeType: prepared.mimeType,
-        size: prepared.size,
-        storagePath: prepared.storagePath,
-        sha256: prepared.sha256,
-        metadataJson: prepared.metadataJson,
-        derivedFromId,
-        derivativeKind,
-        links:
-          targetType && targetId
-            ? { create: { targetType, targetId, linkType, order: Number.isFinite(order) ? order : 0 } }
-            : undefined,
-      },
-      include: { links: true },
+    const attachment = await prisma.$transaction(async (tx) => {
+      const created = await tx.attachment.create({
+        data: {
+          filename: prepared.filename,
+          originalFilename: prepared.originalFilename,
+          mimeType: prepared.mimeType,
+          size: prepared.size,
+          storagePath: prepared.storagePath,
+          sha256: prepared.sha256,
+          metadataJson: prepared.metadataJson,
+          derivedFromId,
+          derivativeKind,
+          clientMutationId,
+          deviceCreatedAt,
+          links:
+            targetType && targetId
+              ? { create: { targetType, targetId, linkType, order: Number.isFinite(order) ? order : 0 } }
+              : undefined,
+        },
+        include: { links: true },
+      });
+      if (targetStep) {
+        await tx.experimentStepEvent.create({ data: { experimentStepId: targetStep.id, experimentId: targetStep.experimentId, eventType: "attachment", clientMutationId, deviceCreatedAt, payloadJson: { attachmentId: created.id, filename: created.originalFilename, mimeType: created.mimeType, size: created.size } } });
+        await tx.activityLog.create({ data: { action: "link_step_attachment", targetType: "experiment_step", targetId: targetStep.id, metadataJson: { experimentId: targetStep.experimentId, attachmentId: created.id, clientMutationId: clientMutationId ?? null } } });
+      }
+      return created;
     });
     if (targetType === "result" && targetId) await refreshResultValidation(targetId);
-    if (targetStep) {
-      await prisma.$transaction([
-        prisma.experimentStepEvent.create({ data: { experimentStepId: targetStep.id, experimentId: targetStep.experimentId, eventType: "attachment", payloadJson: { attachmentId: attachment.id, filename: attachment.originalFilename, mimeType: attachment.mimeType, size: attachment.size } } }),
-        prisma.activityLog.create({ data: { action: "link_step_attachment", targetType: "experiment_step", targetId: targetStep.id, metadataJson: { experimentId: targetStep.experimentId, attachmentId: attachment.id } } }),
-      ]);
-    }
     return Response.json({ attachment }, { status: 201 });
   } catch (error) {
     await cleanupPreparedAttachmentFiles([prepared]);

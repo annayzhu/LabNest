@@ -10,6 +10,7 @@ const actionLabels: Record<MobileMutation["actionType"], string> = {
   "inventory.transaction": "Inventory change",
   "measurement.create": "Measurement",
   "step.complete": "Step completion",
+  "attachment.upload": "Photo or file",
 };
 
 export function MobileBenchStatus() {

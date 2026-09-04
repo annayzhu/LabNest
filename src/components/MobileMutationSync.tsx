@@ -29,8 +29,18 @@ export function MobileMutationSync() {
               response = await fetch("/api/mobile/inventory-transactions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "measurement.create") {
               response = await fetch("/api/mobile/measurements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
-            } else {
+            } else if (mutation.actionType === "step.complete") {
               response = await fetch("/api/mobile/step-completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
+            } else {
+              const formData = new FormData();
+              formData.set("file", mutation.payload.file, mutation.payload.file.name);
+              formData.set("targetType", mutation.payload.targetType);
+              formData.set("targetId", mutation.payload.targetId);
+              formData.set("linkType", mutation.payload.linkType);
+              if (mutation.payload.order) formData.set("order", mutation.payload.order);
+              formData.set("clientMutationId", mutation.clientMutationId);
+              formData.set("deviceCreatedAt", mutation.deviceCreatedAt);
+              response = await fetch("/api/attachments", { method: "POST", body: formData });
             }
             if (!response.ok) {
               const result = await response.json().catch(() => ({})) as { error?: string };

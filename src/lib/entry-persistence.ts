@@ -177,6 +177,8 @@ async function formalizeProtocolEntry(
           order: step.order,
           title: step.title,
           description: step.description,
+          requiresConfirmation: step.requires_confirmation ?? true,
+          allowsDeviation: step.allows_deviation ?? true,
         })),
       },
       protocolVersions: { create: { protocolVersionId: version.id, role: "primary", order: 0 } },

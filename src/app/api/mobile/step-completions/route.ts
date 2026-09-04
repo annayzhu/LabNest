@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, experimentId: input.experimentId }, include: { experiment: { select: { status: true, primaryProtocolVersionId: true } } } });
       if (!step) throw new Error("The selected experiment step is no longer available.");
       if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
+      if (!step.allowsDeviation && input.deviationNote) throw new Error("This locked Protocol step does not allow a deviation record.");
       const recordedAt = new Date();
       await tx.experimentStep.update({ where: { id: step.id }, data: {
         completed: true,

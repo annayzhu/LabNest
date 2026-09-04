@@ -102,7 +102,7 @@ try {
     await firstRun.click();
     await page.getByRole("heading", { name: "Current step" }).waitFor();
     await page.getByLabel("Current step evidence").waitFor();
-    await page.getByRole("button", { name: "Complete step" }).waitFor();
+    await page.getByRole("button", { name: /Confirm step completion|Mark step done/ }).waitFor();
     await page.getByRole("region", { name: "Step timer" }).waitFor();
     await page.getByText("Record a deviation", { exact: true }).click();
     await page.getByLabel("Deviation type").waitFor();
@@ -139,8 +139,13 @@ try {
   if (offlineRunHref) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${baseUrl}${offlineRunHref}`, { waitUntil: "networkidle" });
+    const offlineAttachment = page.getByLabel("Photo or file");
+    await offlineAttachment.setInputFiles({ name: "offline-step-evidence.txt", mimeType: "text/plain", buffer: Buffer.from("offline evidence") });
     await page.context().setOffline(true);
-    await page.getByRole("button", { name: "Complete step" }).click();
+    const attachmentForm = offlineAttachment.locator("xpath=ancestor::form");
+    await attachmentForm.getByRole("button", { name: "Upload" }).click();
+    await attachmentForm.getByText("offline-step-evidence.txt saved on this device · waiting to sync.", { exact: true }).waitFor();
+    await page.getByRole("button", { name: /Confirm step completion|Mark step done/ }).click();
     await page.getByText("Step saved on this device · waiting to sync.", { exact: true }).waitFor();
   }
 

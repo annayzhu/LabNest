@@ -17,6 +17,8 @@ type RunStep = {
   order: number;
   title: string;
   description: string;
+  requiresConfirmation: boolean;
+  allowsDeviation: boolean;
   completed: boolean;
   deviationNote: string | null;
   deviationType: string | null;
@@ -157,7 +159,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             <button type="button" disabled={selectedStepIndex >= steps.length - 1} onClick={() => setSelectedStepId(steps[selectedStepIndex + 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35">Next<ArrowRight className="h-4 w-4" aria-hidden /></button>
           </div>
 
-          <details className="group mt-5 border-t border-hairline pt-2">
+          {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
               Record a deviation
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
@@ -176,9 +178,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             <label className="block"><span className={formLabelClass}>Impact assessment</span><textarea name={`mobileDeviationImpact:${selectedStep.id}`} defaultValue={selectedStep.deviationImpact ?? ""} disabled={!editable || pending} placeholder="Effect on samples, quality, or interpretation; write unknown if not yet assessed" className={`${fieldClass} min-h-20 resize-y`} /></label>
             <label className="block"><span className={formLabelClass}>Recorded by</span><input name={`mobileDeviationAuthor:${selectedStep.id}`} defaultValue={selectedStep.deviationAuthor ?? ""} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" /></label>
             </div>
-          </details>
+          </details> : <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted">This locked Protocol step does not allow a deviation record.</p>}
 
-          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : "Complete step"}</button> : <p className="rounded-[var(--ln-radius-control-lg)] bg-success-surface px-3 py-2 text-sm text-success">This step is complete.</p>}
+          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : <p className="rounded-[var(--ln-radius-control-lg)] bg-success-surface px-3 py-2 text-sm text-success">This step is complete.</p>}
         </div>
       ) : (
         <div className="p-4">
@@ -240,8 +242,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
                 <div>
-                  <label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label>
-                  {editable ? <button type="submit" name="intent" value="save" disabled={pending} className={`${secondaryButton} mt-2 w-full`}>{pending ? "Saving..." : "Save execution record"}</button> : null}
+                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label>{editable ? <button type="submit" name="intent" value="save" disabled={pending} className={`${secondaryButton} mt-2 w-full`}>{pending ? "Saving..." : "Save execution record"}</button> : null}</> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>)}
             </div>

@@ -118,6 +118,7 @@ export async function saveProtocolRunProgress(
       const deviationAuthor = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationAuthor:${step.id}`)) : step.deviationAuthor ?? undefined;
       if ((deviationNote?.length ?? 0) > 5_000) throw new Error(`Deviation note for step ${step.order} is too long.`);
       if ((deviationImpact?.length ?? 0) > 5_000) throw new Error(`Deviation impact for step ${step.order} is too long.`);
+      if (!step.allowsDeviation && deviationNote) throw new Error(`Step ${step.order} does not allow a deviation record.`);
       if (completed !== step.completed || deviationNote !== (step.deviationNote ?? undefined) || deviationType !== (step.deviationType ?? undefined) || deviationImpact !== (step.deviationImpact ?? undefined) || deviationAuthor !== (step.deviationAuthor ?? undefined)) {
         await tx.experimentStep.update({
           where: { id: step.id },

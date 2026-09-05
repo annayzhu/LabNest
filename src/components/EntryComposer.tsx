@@ -191,13 +191,21 @@ export function EntryComposer({
   useEffect(() => {
     let cancelled = false;
     loadEntryDraft<EntryComposerFields>(draftKey)
-      .then((draft) => draft ?? (!entry ? loadEntryDraft<EntryComposerFields>("entry-composer:new") : undefined))
+      .then(async (draft) => {
+        if (draft || entry || cancelled) return draft;
+        const legacy = await loadEntryDraft<EntryComposerFields>("entry-composer:new");
+        if (!legacy || cancelled) return undefined;
+        if (!entryDraftMatchesContext(baselineFields, legacy.fields)) {
+          setDraftStatus("A draft from a different Experiment or Step is retained. Open its original context to recover it.");
+          return undefined;
+        }
+        // Move legacy drafts only after the scoped copy is durably committed.
+        await saveEntryDraft(draftKey, legacy);
+        await deleteEntryDraft("entry-composer:new");
+        return legacy;
+      })
       .then((draft) => {
         if (cancelled || !draft) return;
-        if (!entry && !entryDraftMatchesContext(baselineFields, draft.fields)) {
-          setDraftStatus("A draft from a different Experiment or Step is retained. Open its original context to recover it.");
-          return;
-        }
         const existingMap = new Map(baselineMedia.map((item) => [item.id, item]));
         const newMap = new Map(draft.newFiles.map(({ id, file }) => {
           const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;

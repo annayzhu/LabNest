@@ -3,6 +3,14 @@ import { markdownRichTextToTiptap, scientificDocumentToTiptap, tiptapToMarkdownR
 import type { ScientificDocument } from "@/lib/scientific-document";
 
 describe("scientific Tiptap compatibility boundary", () => {
+  it("preserves nested checked tasks added to a legacy checklist", () => {
+    const original: ScientificDocument = { schemaVersion: 1, sections: [{ key: "analysis", title: "Analysis", blocks: [{ id: "legacy", type: "checklist", items: ["Parent"] }] }] };
+    const json = scientificDocumentToTiptap(original);
+    json.content![0].content![0].content![0].content!.push({ type: "taskList", content: [{ type: "taskItem", attrs: { checked: true }, content: [{ type: "paragraph", content: [{ type: "text", text: "Critical child dose 5 ng" }] }] }] });
+    const saved = tiptapToScientificDocument(json, original);
+    expect(saved.sections[0].blocks[0]).toEqual({ id: "legacy", type: "text", text: "- [ ] Parent\n  - [x] Critical child dose 5 ng" });
+    expect(tiptapToScientificDocument(scientificDocumentToTiptap(saved), saved)).toEqual(saved);
+  });
   it("preserves nested doses, continuation paragraphs and unchecked tasks after reopening", () => {
     const paragraph = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
     const json = { type: "doc", content: [{ type: "bulletList", content: [{ type: "listItem", content: [

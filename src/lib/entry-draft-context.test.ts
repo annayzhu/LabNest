@@ -11,3 +11,7 @@ it("keeps experiment and step drafts separate and rejects unrelated legacy recov
   expect(entryDraftMatchesContext(a, recovered)).toBe(true);
   expect(entryDraftKey("existing", b)).toBe("entry-composer:existing");
 });
+
+it("allows recovery of a Protocol selection made while editing a draft", () => {
+  expect(entryDraftMatchesContext({ experimentId: "A", protocolVersionId: "" }, { experimentId: "A", protocolVersionId: "selected-in-editor" })).toBe(true);
+});

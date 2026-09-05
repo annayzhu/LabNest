@@ -7,5 +7,6 @@ export function entryDraftKey(entryId: string | undefined, context: DraftContext
 }
 
 export function entryDraftMatchesContext(context: DraftContext, draft: DraftContext) {
-  return contextKeys.every((key) => (context[key] || "") === (draft[key] || ""));
+  // Protocol selection is editable, unlike the route's Experiment/Step.
+  return (["experimentId", "experimentStepId"] as const).every((key) => (context[key] || "") === (draft[key] || ""));
 }

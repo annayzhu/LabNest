@@ -8,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { createResultInTransaction } from "@/lib/result-creation";
-import { parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
+import { duplicateResultKeysMessage, resultTemplateHasDuplicateKeys, parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
 import { resultRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { withResultLegacyPromotionMarker } from "@/lib/result-document";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
@@ -84,6 +84,7 @@ async function persistResultUpdate(formData: FormData) {
     prisma.attachmentLink.findMany({ where: { targetType: "result", targetId: data.parsed.id }, select: { linkType: true } }),
   ]);
   if (!current) throw new Error("Result not found.");
+  if (resultTemplateHasDuplicateKeys(current.templateSnapshotJson)) throw new Error(duplicateResultKeysMessage);
   if (current.experimentId !== data.parsed.experimentId) throw new Error("A Result cannot be moved to another Experiment; create a new Result to preserve provenance.");
   if (current.templateKey && current.resultType !== data.parsed.resultType) throw new Error("A template-created Result cannot change result type; create a new Result instead.");
   if (current.templateKey && current.sourceType !== data.parsed.sourceType) throw new Error("A template-created Result cannot change source type.");

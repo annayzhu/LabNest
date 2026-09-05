@@ -17,6 +17,8 @@ import { buildExperimentResultReportTemplate, type ExperimentResultModule } from
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 import {
   fieldDataType,
+  duplicateResultKeysMessage,
+  resultTemplateHasDuplicateKeys,
   fieldSemanticRole,
   normalizeResultTemplate,
   normalizeResultValues,
@@ -80,6 +82,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   const initialTemplate = useMemo(() => initial.templateKey && initial.templateSnapshotJson && typeof initial.templateSnapshotJson === "object" && Object.keys(initial.templateSnapshotJson as object).length ? normalizeResultTemplate(initial.templateSnapshotJson) : undefined, [initial.templateKey, initial.templateSnapshotJson]);
   const template = useMemo(() => availableModules.length ? buildExperimentResultReportTemplate(availableModules, selectedModuleIds) : initialTemplate, [availableModules, initialTemplate, selectedModuleIds]);
   const hasTemplate = Boolean(template);
+  const ambiguousTemplate = Boolean(template && resultTemplateHasDuplicateKeys(template));
   const [templateValues, setTemplateValues] = useState<Record<string, unknown>>(() => normalizeResultValues(initial.valuesJson));
   const [datasetValues, setDatasetValues] = useState(() => resultDatasetValuesFromResultValues(initial.valuesJson));
   const serializedValues = useMemo(() => JSON.stringify(withResultDatasetValues(templateValues, datasetValues)), [datasetValues, templateValues]);
@@ -91,6 +94,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   const missingModuleSelection = availableModules.length > 0 && selectedModuleIds.length === 0;
 
   return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
+    {ambiguousTemplate ? <p role="alert" className="text-sm text-red-700">{duplicateResultKeysMessage}</p> : null}
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {lockedExperiment ? <input type="hidden" name="experimentId" value={initial.experimentId ?? ""} /> : null}
     <input type="hidden" name="templateValuesJson" value={serializedValues} />
@@ -143,7 +147,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <FormErrorSummary message={state.error} /> : null}
       {missingModuleSelection ? <p role="alert" className="text-xs font-medium text-warning">请至少选择一个结果模块。</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending || missingModuleSelection} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Result"}</Button>
+      <Button type="submit" variant="primary" size="lg" disabled={pending || missingModuleSelection || ambiguousTemplate} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Result"}</Button>
     </div>
   </form>;
 }

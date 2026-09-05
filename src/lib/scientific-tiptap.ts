@@ -248,7 +248,10 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
       continue;
     }
     if (node.type === "taskList" && nodeIdentity.type === "checklist") {
-      blocks.push({ id: nodeIdentity.id ?? uniqueId("checklist"), type: "checklist", items: (node.content ?? []).map(plainText) });
+      // Legacy string arrays cannot represent nesting, formatting or checked state.
+      const simple = (node.content ?? []).every((item) => !item.attrs?.checked && item.content?.length === 1 && item.content[0].type === "paragraph" && !typographyPrefix(item.content[0]) && (item.content[0].content ?? []).every((child) => child.type === "text" && !child.marks?.length));
+      const id = nodeIdentity.id ?? uniqueId("checklist");
+      blocks.push(simple ? { id, type: "checklist", items: (node.content ?? []).map(plainText) } : { id, type: "text", text: tiptapNodesToMarkdown([node]) });
       index += 1;
       continue;
     }

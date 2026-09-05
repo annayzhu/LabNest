@@ -31,6 +31,10 @@ describe("experiment result recording", () => {
     const fields = buildExperimentResultReportTemplate(modules).fields;
     expect(fields).toHaveLength(2);
     expect(new Set(fields.map((field) => field.key)).size).toBe(2);
+    expect(fields.map((field) => field.sources)).toEqual([
+      [{ protocolVersionId: "pv-0", templateKey: "template_0", fieldKey: "value" }],
+      [{ protocolVersionId: "pv-1", templateKey: "template_1", fieldKey: "value" }],
+    ]);
   });
   it("keeps legacy template drafts readable without using them as the experiment report", () => {
     const recording = buildExperimentResultRecording(sources, [result]);

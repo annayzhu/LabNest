@@ -102,7 +102,7 @@ export function buildExperimentResultReportTemplate(
   const artifacts = new Map<string, NonNullable<ResultTemplate["artifacts"]>[number]>();
   const instructions: NonNullable<ResultTemplate["instructions"]> = [];
 
-  selected.forEach(({ protocolCode, protocolTitle, displayVersion, template }) => {
+  selected.forEach(({ protocolVersionId, protocolCode, protocolTitle, displayVersion, template }) => {
     const templateInstructions = (template.instructions ?? []).filter((node) => node.content.some((run) => run.text.trim()));
     if (templateInstructions.length) {
       instructions.push({
@@ -110,22 +110,24 @@ export function buildExperimentResultReportTemplate(
         content: [{ text: `${template.title ?? template.result_type} · ${protocolCode?.trim() || protocolTitle} · v${displayVersion}`, bold: true }],
       }, ...templateInstructions);
     }
-    template.fields.forEach((field) => {
+    template.fields.forEach((sourceField) => {
+      const field = { ...sourceField, sources: [{ protocolVersionId, templateKey: template.templateKey!, fieldKey: sourceField.key! }] };
       const key = evidenceKey(field.key, field.label ?? field.name, field.unit);
       const existing = fields.get(key);
       if (existing) {
-        fields.set(key, { ...existing, required: Boolean(existing.required || field.required) });
+        fields.set(key, { ...existing, sources: [...(existing.sources ?? []), ...field.sources], required: Boolean(existing.required || field.required) });
         return;
       }
       const equivalent = [...fields.entries()].filter(([candidateKey]) => equivalentEvidenceKeys(candidateKey, key));
       if (equivalent.length === 1) {
         const [candidateKey, candidate] = equivalent[0];
-        fields.set(candidateKey, { ...candidate, required: Boolean(candidate.required || field.required) });
+        fields.set(candidateKey, { ...candidate, sources: [...(candidate.sources ?? []), ...field.sources], required: Boolean(candidate.required || field.required) });
       } else {
         fields.set(key, field);
       }
     });
-    template.datasets?.forEach((dataset) => {
+    template.datasets?.forEach((sourceDataset) => {
+      const dataset = { ...sourceDataset, columns: sourceDataset.columns.map((column) => ({ ...column, sources: [{ protocolVersionId, templateKey: template.templateKey!, datasetKey: sourceDataset.key, fieldKey: column.key }] })) };
       const key = datasetIdentityKey(dataset);
       const existing = datasets.get(key);
       if (!existing) {
@@ -137,13 +139,13 @@ export function buildExperimentResultReportTemplate(
         const columnKey = evidenceKey(column.key, column.label, column.unit);
         const current = columns.get(columnKey);
         if (current) {
-          columns.set(columnKey, { ...current, required: Boolean(current.required || column.required) });
+          columns.set(columnKey, { ...current, sources: [...(current.sources ?? []), ...column.sources], required: Boolean(current.required || column.required) });
           return;
         }
         const equivalent = [...columns.entries()].filter(([candidateKey]) => equivalentEvidenceKeys(candidateKey, columnKey));
         if (equivalent.length === 1) {
           const [candidateKey, candidate] = equivalent[0];
-          columns.set(candidateKey, { ...candidate, required: Boolean(candidate.required || column.required) });
+          columns.set(candidateKey, { ...candidate, sources: [...(candidate.sources ?? []), ...column.sources], required: Boolean(candidate.required || column.required) });
         } else {
           columns.set(columnKey, column);
         }
@@ -170,7 +172,7 @@ export function buildExperimentResultReportTemplate(
     if (matches.length !== 1) return true;
     const match = matches[0];
     const dataset = datasets.get(match.datasetKey)!;
-    datasets.set(match.datasetKey, { ...dataset, columns: dataset.columns.map((column, index) => index === match.columnIndex ? { ...column, required: Boolean(column.required || field.required) } : column) });
+    datasets.set(match.datasetKey, { ...dataset, columns: dataset.columns.map((column, index) => index === match.columnIndex ? { ...column, sources: [...(column.sources ?? []), ...(field.sources ?? [])], required: Boolean(column.required || field.required) } : column) });
     return false;
   });
 

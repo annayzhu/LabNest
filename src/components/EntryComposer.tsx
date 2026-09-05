@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import {
   Camera,
   ChevronLeft,
@@ -27,6 +29,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { deleteEntryDraft, loadEntryDraft, saveEntryDraft, type StoredEntryDraft } from "@/lib/entry-draft-store";
 import { migrateEntryDraftFields } from "@/lib/entry-draft-migration";
+import { entryDraftKey, entryDraftMatchesContext } from "@/lib/entry-draft-context";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
@@ -98,7 +101,7 @@ function formatBytes(size: number) {
 }
 
 function newId() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `file-${Date.now()}-${Math.random()}`;
+  return newClientMutationId();
 }
 
 function existingMedia(attachment: EntryComposerAttachment): ExistingMedia {
@@ -179,7 +182,7 @@ export function EntryComposer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [draggedMediaId, setDraggedMediaId] = useState<string>();
-  const draftKey = `entry-composer:${entry?.id ?? "new"}`;
+  const draftKey = entryDraftKey(entry?.id, baselineFields);
 
   useEffect(() => () => {
     previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
@@ -188,8 +191,13 @@ export function EntryComposer({
   useEffect(() => {
     let cancelled = false;
     loadEntryDraft<EntryComposerFields>(draftKey)
+      .then((draft) => draft ?? (!entry ? loadEntryDraft<EntryComposerFields>("entry-composer:new") : undefined))
       .then((draft) => {
         if (cancelled || !draft) return;
+        if (!entry && !entryDraftMatchesContext(baselineFields, draft.fields)) {
+          setDraftStatus("A draft from a different Experiment or Step is retained. Open its original context to recover it.");
+          return;
+        }
         const existingMap = new Map(baselineMedia.map((item) => [item.id, item]));
         const newMap = new Map(draft.newFiles.map(({ id, file }) => {
           const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
@@ -219,7 +227,7 @@ export function EntryComposer({
         if (!cancelled) setHydrated(true);
       });
     return () => { cancelled = true; };
-  }, [baselineFields, baselineMedia, draftKey, t]);
+  }, [baselineFields, baselineMedia, draftKey, entry, t]);
 
   useEffect(() => {
     if (!hydrated || isSubmitting) return;
@@ -509,7 +517,7 @@ export function EntryComposer({
       >
         <header id="entry-document-overview" className="document-page-header">
           <input
-            required
+            required={!captureMode}
             value={fields.title}
             onChange={(event) => updateField("title", event.target.value)}
             className="document-page-title focus-ring w-full border-0 bg-transparent p-0 font-serif font-medium leading-tight text-ink outline-none placeholder:text-muted"

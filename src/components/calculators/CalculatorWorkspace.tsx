@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Calculator, Check, Clock3, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Search, Trash2, Upload, X } from "lucide-react";
@@ -7,7 +9,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import { calculate, getCalculatorCatalog, getCalculatorDefinition, type CalculatorDefinition, type CalculatorResult } from "@/lib/calculators/calculator-engine";
-import { addHistoryEntry, addPreset, clearHistory, deleteHistoryEntry, deletePreset, getCalculatorStorageIssue, loadCalculatorState, saveCalculatorState, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
+import { restoreCalculatorResult, addHistoryEntry, addPreset, clearHistory, deleteHistoryEntry, deletePreset, getCalculatorStorageIssue, loadCalculatorState, saveCalculatorState, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
 
 const categoryLabels = {
   "cell-culture": ["Cell culture", "细胞培养"],
@@ -147,13 +149,13 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   function saveResult() {
     if (!state || !result) return;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}`;
-    update(addHistoryEntry(state, { id, calculatorId, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs, inputUnits: Object.fromEntries(definition.fields.filter((field) => field.unit && field.unit !== "integer").map((field) => [field.key, field.unit!])), outputs: result.outputs, warnings: result.warnings }));
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? newClientMutationId() : `${Date.now()}`;
+    update(addHistoryEntry(state, { id, calculatorId, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs, inputUnits: Object.fromEntries(definition.fields.filter((field) => field.unit && field.unit !== "integer").map((field) => [field.key, field.unit!])), outputs: result.outputs, warnings: result.warnings, table: result.table, notes: result.notes }));
   }
 
   function savePreset() {
     if (!state || !presetName.trim()) return;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}`;
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? newClientMutationId() : `${Date.now()}`;
     update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), inputs }));
     setPresetName("");
   }
@@ -228,7 +230,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card><CardHeader title={zh ? "预设" : "Presets"} /><CardBody className="space-y-3"><div className="flex gap-2"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder={zh ? "预设名称" : "Preset name"} className="h-9 min-w-0 flex-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3 text-sm outline-none focus:border-moss" /><button type="button" onClick={savePreset} disabled={!presetName.trim()} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "保存" : "Save"}</button></div>{presets.length ? <div className="space-y-1">{presets.map((preset) => <div key={preset.id} className="flex items-center gap-1"><button type="button" onClick={() => { setInputs(preset.inputs); setResult(null); }} className="min-w-0 flex-1 truncate rounded-full bg-sage-surface px-3 py-1 text-left text-xs font-medium text-moss">{preset.name}</button><button type="button" onClick={() => state && update(deletePreset(state, preset.id))} className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除预设" : "Delete preset"}><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="text-xs text-muted">{zh ? "尚无预设。" : "No presets yet."}</p>}</CardBody></Card>
-        <Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={() => { setInputs(item.inputs); setResult({ calculatorId, methodVersion: item.methodVersion, outputs: item.outputs, outputMap: Object.fromEntries(item.outputs.map((output) => [output.key, output.value])), warnings: item.warnings, notes: [] }); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>
+        <Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={() => { setInputs(item.inputs); setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>
       </div>
     </div>
   );
@@ -356,7 +358,7 @@ function ColonyCounter({ definition, zh, state, update }: { definition: Calculat
   function saveCount() {
     if (!state || !confirmed) return;
     const result = calculate({ calculatorId: definition.id, inputs: { automaticCount: spots.length, manualAdjustment } });
-    update(addHistoryEntry(state, { id: crypto.randomUUID(), calculatorId: definition.id, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs: { automaticCount: spots.length, manualAdjustment, threshold, minimumArea }, inputUnits: {}, outputs: result.outputs, warnings: result.warnings }));
+    update(addHistoryEntry(state, { id: newClientMutationId(), calculatorId: definition.id, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs: { automaticCount: spots.length, manualAdjustment, threshold, minimumArea }, inputUnits: {}, outputs: result.outputs, warnings: result.warnings, table: result.table, notes: result.notes }));
   }
 
   const finalCount = Math.max(0, spots.length + manualAdjustment);

@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import { FileUp } from "lucide-react";
 import { useState } from "react";
 import { formFileInputClass, formInputClass, formLabelClass } from "@/components/forms";
@@ -36,7 +38,7 @@ export function AttachmentUploadForm({
       const form = event.currentTarget;
       const formData = new FormData(form);
       const file = formData.get("file");
-      const clientMutationId = crypto.randomUUID();
+      const clientMutationId = newClientMutationId();
       const deviceCreatedAt = new Date().toISOString();
       if (!(file instanceof File)) throw new Error("Choose a photo or file first.");
       formData.set("clientMutationId", clientMutationId);

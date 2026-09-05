@@ -34,6 +34,7 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
           />
         </div>
         <EntryComposer
+          key={JSON.stringify([experiment?.id, experiment?.steps?.[0]?.id, protocolVersionId, captureMode])}
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({ id: plan.id, title: plan.title, code: plan.code ?? undefined, projectId: plan.projectId, projectName: plan.project.name }))}
           protocols={protocols.flatMap((protocol) => protocol.versions.map((version) => ({ id: version.id, label: `${protocol.canonicalTitle ?? protocol.title}${protocol.humanCode ? ` / ${protocol.humanCode}` : ""} / ${version.displayVersion} / ${version.reviewStage}` })))}

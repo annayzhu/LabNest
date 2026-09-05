@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { calculate, getCalculatorCatalog } from "./calculator-engine";
 
+it("fits a descending remaining-response IC50 with known midpoint 10", () => {
+  const points = "0.1,99.00990099\n1,90.90909091\n10,50\n100,9.09090909\n1000,0.99009901";
+  const result = calculate({ calculatorId: "ic50-ec50", inputs: { mode: "inhibition", points } });
+  expect(result.outputMap.midpoint).toBeCloseTo(10, 1);
+  expect(Number(result.outputMap.rSquared)).toBeGreaterThan(0.99);
+});
+
+it.each(["0,0\n1,abc\n2,2", "0,0\n1,\n2,2", "0,0\ninvalid row\n2,2", "0,0\n1,Infinity\n2,2"])("rejects malformed protein standards: %s", (standards) => {
+  expect(() => calculate({ calculatorId: "bradford-bca", inputs: { standards, sampleAbsorbance: 1, dilutionFactor: 1 } })).toThrow(/row|finite|number/i);
+});
+
 describe("calculator module interface", () => {
   it("publishes the complete bilingual 31-calculator catalog", () => {
     const catalog = getCalculatorCatalog();

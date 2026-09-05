@@ -111,7 +111,9 @@ async function withQueueStore<T>(mode: IDBTransactionMode, operation: (store: ID
     return await new Promise<T>((resolve, reject) => {
       const transaction = database.transaction(storeName, mode);
       const request = operation(transaction.objectStore(storeName));
-      request.onsuccess = () => resolve(request.result);
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error ?? new Error("Mobile sync queue transaction aborted."));
+      transaction.onerror = () => reject(transaction.error ?? new Error("Mobile sync queue transaction failed."));
       request.onerror = () => reject(request.error ?? new Error("Mobile sync queue operation failed."));
     });
   } finally {

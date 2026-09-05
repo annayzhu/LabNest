@@ -69,6 +69,14 @@ function typographyMarks(lineHeight?: number, fontFamily?: string): TiptapMark[]
   return Object.keys(attrs).length ? [{ type: "textStyle", attrs }] : undefined;
 }
 
+function listLine(value: string) {
+  const height = parseRichTextLineHeightLine(value);
+  const font = parseRichTextFontFamilyLine(height.content);
+  const match = font.content.match(/^(\s*)(?:([-*+])\s+(?:\[([ xX])\]\s+)?|(\d+)\.\s+)(.*)$/);
+  if (!match) return undefined;
+  return { indent: match[1].length, type: match[3] !== undefined ? "taskList" : match[4] ? "orderedList" : "bulletList", checked: match[3]?.toLowerCase() === "x", start: Number(match[4] || 1), text: match[5], lineHeight: height.lineHeight, fontFamily: font.fontFamily };
+}
+
 function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   const nodes: JSONContent[] = [];
   const lines = value.replaceAll("\r\n", "\n").split("\n");
@@ -78,38 +86,26 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
     const line = parsedFontFamily.content;
     const attrs = legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily);
     const inheritedMarks = typographyMarks(parsedLine.lineHeight, parsedFontFamily.fontFamily);
-    const checklist = line.match(/^\s*-\s+\[([ xX])\]\s+(.*)$/);
-    const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
-    const numbered = line.match(/^\s*\d+\.\s+(.+)$/);
-    if (checklist) {
+    const list = listLine(lines[index]);
+    if (list) {
       const items: JSONContent[] = [];
       while (index < lines.length) {
-        const nextLineHeight = parseRichTextLineHeightLine(lines[index]);
-        const nextFont = parseRichTextFontFamilyLine(nextLineHeight.content);
-        const match = nextFont.content.match(/^\s*-\s+\[([ xX])\]\s+(.*)$/);
-        if (!match) break;
+        const item = listLine(lines[index]);
+        if (!item || item.type !== list.type || item.indent !== list.indent) break;
+        index += 1;
+        const continuation: string[] = [];
+        while (index < lines.length && lines[index].trim() && (lines[index].match(/^\s*/)?.[0].length ?? 0) > list.indent) {
+          continuation.push(lines[index].slice(list.indent + 2));
+          index += 1;
+        }
         items.push({
-          type: "taskItem",
-          attrs: { checked: match[1].toLowerCase() === "x" },
-          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[2], typographyMarks(nextLineHeight.lineHeight, nextFont.fontFamily)) }],
+          type: list.type === "taskList" ? "taskItem" : "listItem",
+          ...(list.type === "taskList" ? { attrs: { checked: item.checked } } : {}),
+          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", item.lineHeight, item.fontFamily), content: inlineMarkdownToTiptap(item.text, typographyMarks(item.lineHeight, item.fontFamily)) },
+            ...(continuation.length ? markdownToTiptap(continuation.join("\n"), blockId) : [])],
         });
-        index += 1;
       }
-      nodes.push({ type: "taskList", attrs, content: items });
-      continue;
-    }
-    if (bullet || numbered) {
-      const ordered = Boolean(numbered);
-      const items: JSONContent[] = [];
-      while (index < lines.length) {
-        const nextLineHeight = parseRichTextLineHeightLine(lines[index]);
-        const nextFont = parseRichTextFontFamilyLine(nextLineHeight.content);
-        const match = ordered ? nextFont.content.match(/^\s*\d+\.\s+(.+)$/) : nextFont.content.match(/^\s*[-*+]\s+(.+)$/);
-        if (!match) break;
-        items.push({ type: "listItem", content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", nextLineHeight.lineHeight, nextFont.fontFamily), content: inlineMarkdownToTiptap(match[1], typographyMarks(nextLineHeight.lineHeight, nextFont.fontFamily)) }] });
-        index += 1;
-      }
-      nodes.push({ type: ordered ? "orderedList" : "bulletList", attrs, content: items });
+      nodes.push({ type: list.type, attrs: { ...attrs, ...(list.type === "orderedList" ? { start: list.start } : {}) }, content: items });
       continue;
     }
     const heading = line.match(/^(#{1,3})\s+(.+)$/);
@@ -201,15 +197,13 @@ function typographyPrefix(node: JSONContent) {
 function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
   const lines: string[] = [];
   for (const node of nodes) {
-    if (node.type === "bulletList" || node.type === "orderedList") {
+    if (node.type === "bulletList" || node.type === "orderedList" || node.type === "taskList") {
       (node.content ?? []).forEach((item, index) => {
-        const paragraph = item.content?.find((child) => child.type === "paragraph") ?? item;
-        lines.push(`${typographyPrefix(paragraph)}${node.type === "orderedList" ? `${index + 1}. ` : "- "}${inlineTiptapToMarkdown(paragraph.content)}`);
-      });
-    } else if (node.type === "taskList") {
-      (node.content ?? []).forEach((item) => {
-        const paragraph = item.content?.find((child) => child.type === "paragraph") ?? item;
-        lines.push(`${typographyPrefix(paragraph)}- [${item.attrs?.checked ? "x" : ""}] ${inlineTiptapToMarkdown(paragraph.content)}`);
+        const paragraph = item.content?.[0];
+        const marker = node.type === "taskList" ? `- [${item.attrs?.checked ? "x" : " "}] ` : node.type === "orderedList" ? `${Number(node.attrs?.start ?? 1) + index}. ` : "- ";
+        lines.push(`${paragraph ? typographyPrefix(paragraph) : ""}${marker}${inlineTiptapToMarkdown(paragraph?.content)}`);
+        const rest = tiptapNodesToMarkdown(item.content?.slice(1) ?? []);
+        if (rest) lines.push(...rest.split("\n").map((line) => `  ${line}`));
       });
     } else if (node.type === "heading") lines.push(`${typographyPrefix(node)}${Number(node.attrs?.level) === 2 ? "#" : "##"} ${inlineTiptapToMarkdown(node.content)}`);
     else if (node.type === "blockquote") {

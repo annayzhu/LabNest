@@ -1,3 +1,4 @@
+import { newClientMutationId } from "./client-mutation-id";
 import {
   applyTypographySettings,
   customFontDatabaseName,
@@ -132,7 +133,7 @@ export function validateCustomFontFamily(files: ReadonlyArray<Pick<File, "name" 
 
 async function createCustomFontRecord(files: readonly File[], familyNameOverride?: string): Promise<CustomFontRecord> {
   if (!files.length) throw new Error("No font files selected.");
-  const id = crypto.randomUUID().replaceAll("-", "");
+  const id = newClientMutationId().replaceAll("-", "");
   const inferred = inferCustomFontFace(files[0].name);
   const faces = await Promise.all(files.map(async (file, index): Promise<CustomFontFaceRecord> => {
     const face = inferCustomFontFace(file.name);

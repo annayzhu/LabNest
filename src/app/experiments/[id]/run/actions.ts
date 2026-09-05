@@ -10,7 +10,7 @@ import { appendExperimentObservation, experimentSearchText } from "@/lib/experim
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
 
-export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string };
+export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string };
 export type StepTimerActionState = ProtocolRunProgressState;
 
 const progressSchema = z.object({
@@ -48,6 +48,7 @@ export async function saveProtocolRunProgress(
   formData: FormData,
 ): Promise<ProtocolRunProgressState> {
   let parsed: z.infer<typeof progressSchema>;
+  let savedCompletedStepIds: string[] = [];
   try {
     parsed = progressSchema.parse({
       experimentId: formData.get("experimentId"),
@@ -72,6 +73,13 @@ export async function saveProtocolRunProgress(
     });
     if (!experiment) throw new Error("Experiment not found.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
+
+    if (parsed.completedCurrentStepId) {
+      // A single-step command is not a replacement of the client's full snapshot.
+      completedStepIds.clear();
+      experiment.steps.filter((step) => step.completed).forEach((step) => completedStepIds.add(step.id));
+      completedStepIds.add(parsed.completedCurrentStepId);
+    }
 
     const knownStepIds = new Set(experiment.steps.map((step) => step.id));
     const unknownStep = [...completedStepIds].find((id) => !knownStepIds.has(id));
@@ -107,6 +115,7 @@ export async function saveProtocolRunProgress(
     });
 
     for (const step of experiment.steps) {
+      if (parsed.completedCurrentStepId && step.id !== parsed.completedCurrentStepId) continue;
       const completed = completedStepIds.has(step.id);
       const deviationNote = parsed.completedCurrentStepId
         ? step.id === parsed.completedCurrentStepId
@@ -173,6 +182,7 @@ export async function saveProtocolRunProgress(
         },
       },
     });
+    savedCompletedStepIds = experiment.steps.filter((step) => completedStepIds.has(step.id)).map((step) => step.id);
     });
   } catch (error) {
     return { error: formActionErrorMessage(error, "Run progress could not be saved.") };
@@ -183,7 +193,7 @@ export async function saveProtocolRunProgress(
   revalidatePath(`/experiments/${parsed.experimentId}`);
   revalidatePath(`/experiments/${parsed.experimentId}/run`);
   const message = parsed.intent === "start" ? "Run started." : parsed.intent === "complete" ? "Run completed." : "Progress saved.";
-  return { message, savedAt: new Date().toISOString() };
+  return { message, savedAt: new Date().toISOString(), completedStepIds: savedCompletedStepIds, completedCurrentStepId: parsed.completedCurrentStepId };
 }
 
 export async function updateStepTimer(

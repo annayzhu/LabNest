@@ -180,10 +180,24 @@ export function buildExperimentResultReportTemplate(
     title: EXPERIMENT_RESULT_TYPE,
     cardinality: "per_run",
     instructions: instructions.length ? instructions : undefined,
-    fields: reportFields,
-    datasets: [...datasets.values()],
-    artifacts: [...artifacts.values()],
+    fields: uniqueReportKeys(reportFields),
+    datasets: uniqueReportKeys([...datasets.values()]).map((dataset) => ({ ...dataset, columns: uniqueReportKeys(dataset.columns) })),
+    artifacts: uniqueReportKeys([...artifacts.values()]),
     view: { preset: "generic", charts: [] },
+  });
+}
+
+// Preserve unambiguous legacy keys; disambiguate collisions before controls
+// bind to them. Labels and source template snapshots retain their meaning.
+function uniqueReportKeys<T extends { key?: string; label?: string; name?: string }>(items: T[]): T[] {
+  const used = new Set(items.map((item) => item.key));
+  return items.map((item, index) => {
+    if (items.filter((candidate) => candidate.key === item.key).length < 2) return item;
+    const base = `${item.key || "value"}_${stableResultKey(item.label || item.name || String(index + 1))}`;
+    let key = base;
+    for (let suffix = 2; used.has(key); suffix += 1) key = `${base}_${suffix}`;
+    used.add(key);
+    return { ...item, key };
   });
 }
 

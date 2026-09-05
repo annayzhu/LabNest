@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { scientificDocumentToTiptap, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
+import { markdownRichTextToTiptap, scientificDocumentToTiptap, tiptapToMarkdownRichText, tiptapToScientificDocument } from "@/lib/scientific-tiptap";
 import type { ScientificDocument } from "@/lib/scientific-document";
 
 describe("scientific Tiptap compatibility boundary", () => {
+  it("preserves nested doses, continuation paragraphs and unchecked tasks after reopening", () => {
+    const paragraph = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+    const json = { type: "doc", content: [{ type: "bulletList", content: [{ type: "listItem", content: [
+      paragraph("Parent"),
+      { type: "bulletList", content: [{ type: "listItem", content: [paragraph("Critical child dose 5 ng")] }] },
+      paragraph("Keep on ice"),
+    ] }] }, { type: "taskList", content: [{ type: "taskItem", attrs: { checked: false }, content: [paragraph("Confirm QC")] }] }] };
+    const saved = tiptapToMarkdownRichText(json);
+    expect(saved).toBe("- Parent\n  - Critical child dose 5 ng\n  Keep on ice\n- [ ] Confirm QC");
+    const reopened = markdownRichTextToTiptap(saved);
+    expect(reopened.content?.[0].content?.[0].content?.map((node) => node.type)).toEqual(["paragraph", "bulletList", "paragraph"]);
+    expect(reopened.content?.[1].content?.[0].attrs?.checked).toBe(false);
+    expect(tiptapToMarkdownRichText(reopened)).toBe(saved);
+  });
   it("round-trips narrative formatting and scientific widgets", () => {
     const document: ScientificDocument = {
       schemaVersion: 1,

@@ -162,7 +162,10 @@ export async function saveProtocolDocument(
           });
         }
       } else {
-        await transaction.protocolVersion.update({ where: { id: sourceVersion.id }, data: versionData });
+        const updated = await transaction.protocolVersion.updateMany({
+          where: { id: sourceVersion.id, reviewStage: sourceVersion.reviewStage }, data: versionData,
+        });
+        if (updated.count !== 1) throw new Error("Protocol review status changed while saving. Refresh before editing this version.");
       }
 
       await transaction.researchPlanProtocol.deleteMany({ where: { protocolId: parsed.protocolId } });

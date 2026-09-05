@@ -1,4 +1,4 @@
-import type { CalculatorOutput } from "./calculator-engine";
+import type { CalculatorOutput, CalculatorResult } from "./calculator-engine";
 
 export const calculatorStorageKey = "labnest.calculators.v1";
 export const calculatorStateVersion = 1;
@@ -15,7 +15,18 @@ export type CalculatorHistoryEntry = {
   inputUnits?: Record<string, string>;
   outputs: CalculatorOutput[];
   warnings: string[];
+  table?: CalculatorResult["table"];
+  notes?: string[];
 };
+
+export function restoreCalculatorResult(entry: CalculatorHistoryEntry): CalculatorResult {
+  return {
+    calculatorId: entry.calculatorId, methodVersion: entry.methodVersion,
+    outputs: entry.outputs, outputMap: Object.fromEntries(entry.outputs.map((output) => [output.key, output.value])),
+    warnings: entry.warnings, table: entry.table,
+    notes: entry.notes ?? ["Legacy history may omit detailed tables. Recalculate from the saved inputs to produce a new result."],
+  };
+}
 
 export type CalculatorPreset = {
   id: string;

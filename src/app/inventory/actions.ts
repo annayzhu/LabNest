@@ -158,10 +158,11 @@ async function persistInventoryItemUpdate(formData: FormData) {
       if (movementCount > 0) throw new Error("Unit cannot be changed after stock movements exist. Register a separate item or conversion instead.");
     }
 
-    await tx.inventoryItem.update({
-      where: { id },
+    const updated = await tx.inventoryItem.updateMany({
+      where: { id, currentQuantity: current.currentQuantity, updatedAt: current.updatedAt },
       data: { ...updateData, principalInvestigator: parsed.principalInvestigator ?? null },
     });
+    if (updated.count !== 1) throw new Error("Inventory changed while saving. Refresh and review the current balance before retrying.");
     if (quantityChange !== 0) {
       await tx.inventoryTransaction.create({
         data: {

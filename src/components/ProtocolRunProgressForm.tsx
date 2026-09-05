@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
@@ -42,8 +44,20 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   editable: boolean;
   evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
-  const [state, formAction, pending] = useActionState(saveProtocolRunProgress, initialState);
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
+  const [selectedStepId, setSelectedStepId] = useState(() => steps.find((step) => !step.completed)?.id ?? steps[0]?.id ?? "");
+  const [state, formAction, pending] = useActionState(async (previous: ProtocolRunProgressState, data: FormData) => {
+    const result = await saveProtocolRunProgress(previous, data);
+    if (!result.error && result.completedStepIds) {
+      const saved = new Set(result.completedStepIds);
+      setCompletedIds(saved);
+      if (result.completedCurrentStepId) {
+        const next = steps.find((step) => !saved.has(step.id));
+        if (next) setSelectedStepId(next.id);
+      }
+    }
+    return result;
+  }, initialState);
   const groups = useMemo(() => {
     const grouped = new Map<string, { key: string; title: string; order: number; steps: RunStep[] }>();
     for (const step of steps) {
@@ -56,7 +70,6 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
-  const [selectedStepId, setSelectedStepId] = useState(() => currentStep?.id ?? steps[0]?.id ?? "");
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
@@ -75,7 +88,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     const form = event.currentTarget;
     const mutationInput = form.elements.namedItem("clientMutationId") as HTMLInputElement | null;
     const createdInput = form.elements.namedItem("deviceCreatedAt") as HTMLInputElement | null;
-    const clientMutationId = crypto.randomUUID();
+    let clientMutationId: string;
+    try { clientMutationId = newClientMutationId(); }
+    catch (error) { event.preventDefault(); setOfflineStatus(error instanceof Error ? error.message : "Record ID could not be created."); return; }
     const deviceCreatedAt = new Date().toISOString();
     if (mutationInput) mutationInput.value = clientMutationId;
     if (createdInput) createdInput.value = deviceCreatedAt;

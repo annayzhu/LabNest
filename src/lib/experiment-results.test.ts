@@ -23,6 +23,19 @@ const result = {
 };
 
 describe("experiment result recording", () => {
+  it("keeps distinct measurements independently addressable when source keys collide", () => {
+    const modules = buildExperimentResultRecording(["RNA yield", "Protein yield"].map((label, index) => ({
+      ...sources[0], protocolVersionId: `pv-${index}`,
+      resultTemplatesJson: [{ result_type: label, templateKey: `template-${index}`, fields: [{ key: "value", label, dataType: "number" }] }],
+    })), []).modules;
+    const fields = buildExperimentResultReportTemplate(modules).fields;
+    expect(fields).toHaveLength(2);
+    expect(new Set(fields.map((field) => field.key)).size).toBe(2);
+    expect(fields.map((field) => field.sources)).toEqual([
+      [{ protocolVersionId: "pv-0", templateKey: "template_0", fieldKey: "value" }],
+      [{ protocolVersionId: "pv-1", templateKey: "template_1", fieldKey: "value" }],
+    ]);
+  });
   it("keeps legacy template drafts readable without using them as the experiment report", () => {
     const recording = buildExperimentResultRecording(sources, [result]);
     expect(recording.slots[0].records).toEqual([result]);

@@ -31,7 +31,9 @@ export const resultKindsOptions = [...resultKinds];
 export const resultViewPresetOptions = [...viewPresets];
 
 const optionalNumberSchema = z.number().finite().optional();
+const resultFieldSourcesSchema = z.array(z.object({ protocolVersionId: z.string(), templateKey: z.string(), fieldKey: z.string(), datasetKey: z.string().optional() })).optional();
 const resultTemplateFieldInputSchema = z.object({
+  sources: resultFieldSourcesSchema,
   key: z.string().optional(),
   label: z.string().optional(),
   dataType: z.enum(fieldDataTypes).optional(),
@@ -46,6 +48,7 @@ const resultTemplateFieldInputSchema = z.object({
 });
 
 const resultDatasetColumnInputSchema = z.object({
+  sources: resultFieldSourcesSchema,
   key: z.string(),
   label: z.string().optional(),
   dataType: z.enum(datasetColumnTypes).optional(),
@@ -230,6 +233,7 @@ function normalizeField(input: z.infer<typeof resultTemplateFieldInputSchema>, i
   const key = stableResultKey(input.key ?? input.name ?? input.label ?? label, `field_${index + 1}`);
   const dataType = input.dataType ?? input.type ?? "text";
   return {
+    ...(input.sources ? { sources: input.sources } : {}),
     key,
     label,
     dataType,
@@ -247,6 +251,7 @@ function normalizeField(input: z.infer<typeof resultTemplateFieldInputSchema>, i
 function normalizeColumn(input: z.infer<typeof resultDatasetColumnInputSchema>, index: number): ResultDatasetColumn {
   const key = stableResultKey(input.key, `column_${index + 1}`);
   return {
+    ...(input.sources ? { sources: input.sources } : {}),
     key,
     label: cleanText(input.label) ?? (input.key.trim() || key),
     dataType: input.dataType ?? "text",
@@ -348,6 +353,16 @@ function duplicateKeys(values: string[]) {
   const seen = new Set<string>();
   return [...new Set(values.filter((value) => seen.has(value) || !seen.add(value)))];
 }
+
+export function resultTemplateHasDuplicateKeys(value: unknown): boolean {
+  const template = normalizeResultTemplate(value);
+  return Boolean(duplicateKeys(template.fields.map((field) => field.key ?? "")).length
+    || duplicateKeys((template.datasets ?? []).map((dataset) => dataset.key)).length
+    || duplicateKeys((template.artifacts ?? []).map((artifact) => artifact.key)).length
+    || (template.datasets ?? []).some((dataset) => duplicateKeys(dataset.columns.map((column) => column.key)).length));
+}
+
+export const duplicateResultKeysMessage = "This Result has duplicate template keys. Saving is blocked to preserve existing measurements. Review the original sources and create a corrected Result; historical values cannot be inferred automatically.";
 
 export function checkResultTemplate(value: unknown): ResultTemplateCheck {
   const template = normalizeResultTemplate(value);

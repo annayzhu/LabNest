@@ -65,7 +65,10 @@ export type ResultCardinality = "single" | "per_run" | "per_sample" | "per_timep
 export type ResultKind = "measurement" | "assay" | "imaging" | "blot" | "flow_cytometry" | "omics" | "observation";
 export type ResultViewPreset = "generic" | "qpcr" | "imaging" | "blot" | "flow" | "timeseries" | "omics";
 
+export type ResultFieldSource = { protocolVersionId: string; templateKey: string; fieldKey: string; datasetKey?: string };
+
 export type ResultTemplateField = {
+  sources?: ResultFieldSource[];
   key?: string;
   label?: string;
   dataType?: ResultFieldDataType;
@@ -81,6 +84,7 @@ export type ResultTemplateField = {
 };
 
 export type ResultDatasetColumn = {
+  sources?: ResultFieldSource[];
   key: string;
   label: string;
   dataType: ResultDatasetColumnType;

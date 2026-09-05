@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import { useState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +30,8 @@ export function InventoryTransactionForm({
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const clientMutationId = crypto.randomUUID();
+    try {
+    const clientMutationId = newClientMutationId();
     await enqueueMobileMutation({
       clientMutationId,
       actionType: "inventory.transaction",
@@ -47,6 +50,9 @@ export function InventoryTransactionForm({
     });
     form.reset();
     setLocalStatus("Waiting to sync. Stock has not been changed yet.");
+    } catch (error) {
+      setLocalStatus(error instanceof Error ? error.message : "Stock change could not be saved on this device.");
+    }
   }
   return (
     <form action={action} onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">

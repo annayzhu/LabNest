@@ -1,5 +1,7 @@
 "use client";
 
+import { newClientMutationId } from "@/lib/client-mutation-id";
+
 import { Gauge, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -26,12 +28,12 @@ export function MobileMeasurementCapture({ experimentId, step }: { experimentId:
     event.preventDefault();
     if (!step) return;
     setSaving(true); setStatus("");
+    try {
     const data = new FormData(event.currentTarget);
     const optionalNumber = (key: string) => String(data.get(key) ?? "").trim() === "" ? undefined : Number(data.get(key));
     const payload = { experimentId, experimentStepId: step.id, value: Number(data.get("value")), unit: String(data.get("unit") ?? "").trim(), observedAt: new Date(String(data.get("observedAt"))).toISOString(), sampleLabel: String(data.get("sampleLabel") ?? "").trim() || undefined, expectedMin: optionalNumber("expectedMin"), expectedMax: optionalNumber("expectedMax"), notes: String(data.get("notes") ?? "").trim() || undefined };
-    const clientMutationId = crypto.randomUUID();
+    const clientMutationId = newClientMutationId();
     const deviceCreatedAt = new Date().toISOString();
-    try {
       if (!navigator.onLine) {
         await enqueueMobileMutation({ clientMutationId, actionType: "measurement.create", deviceCreatedAt, state: "pending", retryCount: 0, payload });
         setStatus("Waiting to sync. The raw value is saved on this device.");

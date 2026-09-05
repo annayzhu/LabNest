@@ -8,9 +8,15 @@ import {
   sanitizePersistedInputs,
   saveCalculatorState,
   toggleFavorite,
+  restoreCalculatorResult,
 } from "./calculator-storage";
 
 describe("calculator local state", () => {
+  it("reopens saved component quantities without recalculating them", () => {
+    const entry = { id: "mix", calculatorId: "master-mix", calculatorName: "Master Mix", calculatorNameZh: "配液", createdAt: "2026-09-06", methodVersion: "master-mix-v1", inputs: {}, outputs: [], warnings: [], table: [{ component: "enzyme", totalUl: 12 }], notes: ["Recorded recipe"] };
+    const restored = parseCalculatorState(JSON.stringify(addHistoryEntry(createEmptyCalculatorState(), entry)));
+    expect(restoreCalculatorResult(restored.history[0])).toMatchObject({ table: [{ component: "enzyme", totalUl: 12 }], notes: ["Recorded recipe"] });
+  });
   it("keeps favorites stable without duplicates", () => {
     const first = toggleFavorite(createEmptyCalculatorState(), "dilution");
     expect(first.favorites).toEqual(["dilution"]);

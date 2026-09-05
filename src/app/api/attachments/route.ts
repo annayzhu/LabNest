@@ -3,6 +3,7 @@ import { assertUploadSize } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
 import { refreshResultValidation } from "@/lib/result-validation";
 import { normalizeResultTemplate } from "@/lib/result-templates";
+import { cleanupErrorMessage, runPostCommitCleanup } from "@/lib/post-commit-cleanup";
 
 export const runtime = "nodejs";
 
@@ -57,10 +58,11 @@ export async function POST(request: Request) {
     if (artifact.kind === "video" && !file.type.startsWith("video/")) return Response.json({ error: `${artifact.label} requires a video file.` }, { status: 400 });
   }
   const prepared = await prepareAttachmentFile(file);
+  let attachment;
 
   try {
     await writePreparedAttachmentFiles([prepared]);
-    const attachment = await prisma.$transaction(async (tx) => {
+    attachment = await prisma.$transaction(async (tx) => {
       const created = await tx.attachment.create({
         data: {
           filename: prepared.filename,
@@ -87,10 +89,19 @@ export async function POST(request: Request) {
       }
       return created;
     });
-    if (targetType === "result" && targetId) await refreshResultValidation(targetId);
-    return Response.json({ attachment }, { status: 201 });
   } catch (error) {
     await cleanupPreparedAttachmentFiles([prepared]);
     return Response.json({ error: error instanceof Error ? error.message : "Upload failed." }, { status: 400 });
   }
+  // A committed original must survive failures in derived validation.
+  const cleanupWarnings = await runPostCommitCleanup(
+    targetType === "result" && targetId ? [{ name: "refresh result validation", run: () => refreshResultValidation(targetId).then(() => undefined) }] : [],
+    async (taskName, error) => {
+      await prisma.activityLog.create({ data: {
+        action: "attachment_cleanup_pending", targetType: "attachment", targetId: attachment.id,
+        metadataJson: { taskName, error: cleanupErrorMessage(error), resultId: targetId },
+      } });
+    },
+  );
+  return Response.json({ attachment, cleanupWarnings }, { status: 201 });
 }

@@ -25,7 +25,9 @@ async function withDraftStore<T>(mode: IDBTransactionMode, operation: (store: ID
     return await new Promise<T>((resolve, reject) => {
       const transaction = database.transaction(storeName, mode);
       const request = operation(transaction.objectStore(storeName));
-      request.onsuccess = () => resolve(request.result);
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error ?? new Error("Draft storage transaction aborted."));
+      transaction.onerror = () => reject(transaction.error ?? new Error("Draft storage transaction failed."));
       request.onerror = () => reject(request.error ?? new Error("Draft storage operation failed."));
     });
   } finally {

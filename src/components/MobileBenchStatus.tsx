@@ -6,6 +6,7 @@ import { countEntryDrafts } from "@/lib/entry-draft-store";
 import { listMobileMutations, mobileMutationStatusLabel, mobileQueueChangedEvent, removeMobileMutation, requestMobileMutationSync, type MobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
 
 const actionLabels: Record<MobileMutation["actionType"], string> = {
+  "calculation.create": "Calculation",
   "entry.create": "Observation",
   "inventory.transaction": "Inventory change",
   "measurement.create": "Measurement",

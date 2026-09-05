@@ -1,3 +1,4 @@
+import { CalculationSnapshot } from "@/components/calculators/CalculationSnapshot";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ResultTemplateView } from "@/components/ResultTemplateView";
@@ -75,6 +76,7 @@ export function ResultRecordDocument({
       {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-[10px] text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
     </header>
 
+    <CalculationSnapshot value={values}/>
     {normalizedTemplate ? <section id="section-result-template"><ResultTemplateView template={normalizedTemplate} values={values} validationStatus={validationStatus} validation={validation} datasets={datasets} includeEmptyFields compactDocument /></section> : null}
 
     {narrativeSections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section">

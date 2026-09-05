@@ -1177,7 +1177,7 @@
       methodEn: "Apply overage once to total cells and final volume, then calculate stock suspension and medium volumes.",
       fields: [
         ["stockCellsPerMl", "细胞原液浓度", "Stock cell density", 1000000, "cells/mL"],
-        ["wells", "孔数", "Wells", 24, "", "scope"], ["plates", "板数", "Plates", 1, ""],
+        ["wells", "孔数", "Wells", 24, "", "scope"],
         ["cellsPerWell", "每孔细胞数", "Cells per well", 50000, "cells"],
         ["volumePerWellUl", "每孔体积", "Volume per well", 500, "µL"],
         ["overagePercent", "额外余量", "Overage", 10, "%"],
@@ -1269,53 +1269,9 @@
   function roundedPlateValue(value) { return Math.round((value + Number.EPSILON) * 1000000) / 1000000; }
 
   function calculateStandalonePlateCalculator(calculatorId, inputs) {
-    let outputs = [], warnings = [], table;
-    if (calculatorId === "seeding") {
-      const wells = standaloneNumber(inputs, "wells", { positive: true }) * standaloneNumber(inputs, "plates", { positive: true });
-      const factor = 1 + standaloneNumber(inputs, "overagePercent") / 100;
-      const totalCells = standaloneNumber(inputs, "cellsPerWell", { positive: true }) * wells * factor;
-      const finalMl = standaloneNumber(inputs, "volumePerWellUl", { positive: true }) * wells * factor / 1000;
-      const stockMl = totalCells / standaloneNumber(inputs, "stockCellsPerMl", { positive: true });
-      if (stockMl > finalMl) throw new Error(bilingual("细胞原液浓度不足，无法在目标体积内达到要求。", "Stock cell density is too low for the requested volume."));
-      outputs = [plateOutput("totalCells", "总细胞数", "Total cells", totalCells, "cells"), plateOutput("stockVolumeMl", "细胞悬液", "Cell suspension", stockMl, "mL"), plateOutput("mediumVolumeMl", "培养基", "Medium", finalMl - stockMl, "mL"), plateOutput("finalVolumeMl", "最终悬液", "Final suspension", finalMl, "mL")];
-    } else if (calculatorId === "hydrogel") {
-      const totalUl = standaloneNumber(inputs, "wells", { positive: true }) * standaloneNumber(inputs, "volumePerWellUl", { positive: true });
-      const totalCells = standaloneNumber(inputs, "targetCellsPerMl", { positive: true }) * totalUl / 1000;
-      const cellStockUl = totalCells / standaloneNumber(inputs, "stockCellsPerMl", { positive: true }) * 1000;
-      const gelParts = standaloneNumber(inputs, "gelParts", { positive: true }), suspensionParts = standaloneNumber(inputs, "suspensionParts", { positive: true });
-      const gelUl = totalUl * gelParts / (gelParts + suspensionParts), suspensionUl = totalUl - gelUl;
-      if (cellStockUl > suspensionUl) warnings.push(bilingual("细胞原液体积超过悬液部分；请提高原液浓度或增加悬液比例。", "Cell stock exceeds the suspension fraction; increase stock density or suspension fraction."));
-      outputs = [plateOutput("totalCells", "总细胞数", "Total cells", totalCells, "cells"), plateOutput("hydrogelUl", "水凝胶", "Hydrogel", gelUl, "µL"), plateOutput("cellStockUl", "细胞原液", "Cell stock", cellStockUl, "µL"), plateOutput("mediumUl", "悬液培养基", "Suspension medium", Math.max(0, suspensionUl - cellStockUl), "µL")];
-    } else if (calculatorId === "kill-curve") {
-      const points = Math.floor(standaloneNumber(inputs, "points", { positive: true }));
-      const minimum = standaloneNumber(inputs, "minimum"), maximum = standaloneNumber(inputs, "maximum", { positive: true });
-      if (maximum < minimum) throw new Error(bilingual("最高浓度不能低于最低浓度。", "Maximum dose must be at least the minimum dose."));
-      if (inputs.scale === "log" && minimum <= 0) throw new Error(bilingual("对数梯度的最低浓度必须大于 0。", "The minimum logarithmic dose must be greater than 0."));
-      const stockUgMl = standaloneNumber(inputs, "stockConcentration", { positive: true }) * 1000;
-      const volume = standaloneNumber(inputs, "volumePerWellMl", { positive: true });
-      table = Array.from({ length: points }, (_, index) => {
-        const dose = inputs.scale === "log" ? minimum * (maximum / minimum) ** (index / Math.max(1, points - 1)) : minimum + (maximum - minimum) * index / Math.max(1, points - 1);
-        return { level: index + 1, doseUgMl: roundedPlateValue(dose), stockToAddUl: roundedPlateValue(dose * volume / stockUgMl * 1000) };
-      });
-      if (table.some((row) => row.stockToAddUl < 1)) warnings.push(bilingual("一个或多个母液加入量低于 1 µL，建议先配制中间工作液。", "One or more additions are below 1 µL; prepare an intermediate stock."));
-      outputs = [plateOutput("dosePoints", "浓度点数", "Dose points", points), plateOutput("highestStockAdditionUl", "最高浓度母液加入量", "Highest stock addition", table.at(-1)?.stockToAddUl || 0, "µL")];
-    } else if (calculatorId === "fold-dilution") {
-      const fold = standaloneNumber(inputs, "fold", { positive: true }), finalVolume = standaloneNumber(inputs, "finalVolume", { positive: true });
-      if (fold < 1) throw new Error(bilingual("浓缩倍数必须至少为 1。", "Stock fold must be at least 1."));
-      outputs = [plateOutput("stockVolume", "浓缩液", "Concentrated stock", finalVolume / fold, "mL"), plateOutput("diluentVolume", "稀释液", "Diluent", finalVolume - finalVolume / fold, "mL"), plateOutput("finalVolume", "最终1×体积", "Final 1× volume", finalVolume, "mL")];
-    } else if (calculatorId === "master-mix") {
-      const reactions = standaloneNumber(inputs, "reactions", { positive: true }), factor = 1 + standaloneNumber(inputs, "overagePercent") / 100;
-      table = String(inputs.components || "").split(/\r?\n/).map((line) => line.split(",").map((item) => item.trim())).filter((row) => row.some(Boolean)).map(([component, volume]) => ({ component, perReactionUl: Number(volume), batchUl: roundedPlateValue(Number(volume) * reactions * factor) }));
-      if (!table.length || table.some((row) => !row.component || !Number.isFinite(row.perReactionUl) || row.perReactionUl < 0)) throw new Error(bilingual("请按“组分名称, 每反应µL”逐行输入。", "Enter each line as component name, µL per reaction."));
-      outputs = [plateOutput("preparedReactions", "配制反应当量", "Prepared reaction equivalents", reactions * factor), plateOutput("totalMasterMixUl", "Master Mix总量", "Total master mix", table.reduce((sum, row) => sum + row.batchUl, 0), "µL")];
-    } else if (calculatorId === "moi") {
-      const moi = standaloneNumber(inputs, "desiredMoi"), cells = standaloneNumber(inputs, "cells", { positive: true });
-      const virusVolumeUl = cells * moi / standaloneNumber(inputs, "titer", { positive: true }) * 1000;
-      const p0 = Math.exp(-moi), p1 = moi * p0;
-      outputs = [plateOutput("virusVolumeUl", "病毒体积", "Virus volume", virusVolumeUl, "µL"), plateOutput("probabilityUninfectedPercent", "未感染概率", "Uninfected", p0 * 100, "%"), plateOutput("probabilityExactlyOnePercent", "恰好一次感染概率", "Exactly one event", p1 * 100, "%"), plateOutput("probabilityAtLeastOnePercent", "至少一次感染概率", "At least one event", (1 - p0) * 100, "%")];
-      warnings.push(bilingual(`结果沿用 ${inputs.titerUnit} 的感染单位；PFU、IU、TU 与 VG 不默认等价。`, `The result remains in ${inputs.titerUnit}; PFU, IU, TU, and VG are not assumed equivalent.`));
-    } else throw new Error(bilingual("未知的板相关计算器。", "Unknown plate calculator."));
-    return { calculatorId, methodVersion: plateCalculatorDefinitions[calculatorId].methodVersion, outputs: outputs.map((output) => ({ ...output, value: typeof output.value === "number" ? roundedPlateValue(output.value) : output.value })), warnings, table };
+    // Selected wells already define the complete scope. Never multiply by whole plates.
+    const normalized = calculatorId === "seeding" ? { ...inputs, plates: 1 } : inputs;
+    return window.LabNestCalculations.calculate({ calculatorId, inputs: normalized });
   }
 
   function renderStandalonePlateResult(result) {
@@ -3760,8 +3716,8 @@
         ...sameValue("转染复合物/孔", "Transfection complex/well", "µL", input.complexVolumeUlPerWell),
       ];
     }
-    if (payload.calculatorId === "reagent-dosing") return sameValue("加药目标浓度", "Target dosing concentration", "µM", input.targetConcentration);
-    if (payload.calculatorId === "fold-dilution") return sameValue("工作液倍数", "Working-solution fold", "×", 1);
+    if (payload.calculatorId === "reagent-dosing") return sameValue("加药目标浓度", "Target dosing concentration", input.targetConcentrationUnit || "µM", input.targetConcentration);
+    if (payload.calculatorId === "fold-dilution") return sameValue("工作液倍数", "Working-solution fold", "×", input.targetFold ?? 1);
     if (payload.calculatorId === "moi") return sameValue("目标 MOI", "Target MOI", "MOI", input.desiredMoi);
     if (payload.calculatorId === "kill-curve" || payload.calculatorId === "serial-dilution") {
       const rows = Array.isArray(payload.table) ? payload.table : [];
@@ -3770,7 +3726,7 @@
       if (!validRows.length) return [];
       return [{
         name: payload.calculatorId === "kill-curve" ? bilingual("杀灭曲线浓度", "Kill-curve dose") : bilingual("连续稀释浓度", "Serial-dilution concentration"),
-        unit: payload.calculatorId === "kill-curve" ? "µg/mL" : "relative",
+        unit: payload.calculatorId === "kill-curve" ? "µg/mL" : "µM",
         values: wellIds.map((_, index) => Number(validRows[Math.min(validRows.length - 1, Math.floor(index * validRows.length / wellIds.length))][valueKey])),
       }];
     }

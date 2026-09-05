@@ -3,10 +3,11 @@
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
+import { StepCalculator } from "@/components/calculators/StepCalculator";
 import { StepTimerControls } from "@/components/StepTimerControls";
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
@@ -70,6 +71,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
+  useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps]);
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
@@ -164,6 +166,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{selectedStep.title}</h3>
           {selectedStep.description ? <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p> : null}
 
+          {editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
           <StepTimerControls key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
 
           {evidence ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">Evidence · {evidence.observations} observations · {evidence.measurements} measurements · {evidence.files} files · {evidence.consumptions} inventory records</p> : null}
@@ -251,12 +254,13 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
               <span className="min-w-0"><strong id={`run-group-${group.key}`} className="block text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</strong><span className="mt-0.5 block text-xs text-muted">{heading.detail ? `${heading.detail} · ` : ""}Whole block · {groupCompleted}/{group.steps.length} steps checked</span></span>
             </label>
             <div className="divide-y divide-hairline">
-              {group.steps.map((step) => <div key={step.id} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
+              {group.steps.map((step) => <div id={`step-${step.id}`} key={step.id} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
                 <label className="flex min-w-0 cursor-pointer items-start gap-3">
                   <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
                   <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
                 <div>
+                  {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
                   {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label>{editable ? <button type="submit" name="intent" value="save" disabled={pending} className={`${secondaryButton} mt-2 w-full`}>{pending ? "Saving..." : "Save execution record"}</button> : null}</> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>)}

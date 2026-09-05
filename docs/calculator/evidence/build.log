@@ -1,0 +1,146 @@
+
+> labnest@0.1.0 build
+> node scripts/build-calculator-standalone.mjs && prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 279ms
+
+▲ Next.js 16.2.10 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.3s
+  Running TypeScript ...
+  Finished TypeScript in 13.7s ...
+  Collecting page data using 13 workers ...
+  Generating static pages using 13 workers (0/76) ...
+  Generating static pages using 13 workers (19/76)
+  Generating static pages using 13 workers (38/76)
+  Generating static pages using 13 workers (57/76)
+✓ Generating static pages using 13 workers (76/76) in 195ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /actions
+├ ƒ /actions/manual
+├ ƒ /api/ai/manual/parse
+├ ƒ /api/ai/manual/prompt
+├ ƒ /api/attachments
+├ ƒ /api/attachments/[id]
+├ ƒ /api/entries
+├ ƒ /api/entries/[id]
+├ ƒ /api/exports/backup.json
+├ ƒ /api/exports/entities.csv
+├ ƒ /api/exports/inventory.csv
+├ ƒ /api/exports/protocols.json
+├ ƒ /api/exports/results.csv
+├ ƒ /api/health
+├ ƒ /api/mobile/calculations
+├ ƒ /api/mobile/inventory-transactions
+├ ƒ /api/mobile/measurements
+├ ƒ /api/mobile/step-completions
+├ ƒ /api/protocols/[id]/versions/[versionId]/docx
+├ ƒ /api/protocols/[id]/versions/[versionId]/json
+├ ƒ /api/protocols/relevant-items
+├ ƒ /api/protocols/template/docx
+├ ƒ /api/reports/[id]/markdown
+├ ƒ /api/results/[id]/datasets
+├ ƒ /api/results/datasets/[id]
+├ ƒ /api/search
+├ ƒ /api/sequences/export
+├ ƒ /api/sequences/template
+├ ƒ /api/structured-export/[module]
+├ ƒ /api/structured-import/[module]/confirm
+├ ƒ /api/structured-import/[module]/preview
+├ ƒ /api/structured-import/[module]/template
+├ ƒ /attachments
+├ ƒ /entities
+├ ƒ /entities/new
+├ ƒ /entries
+├ ƒ /entries/[id]
+├ ƒ /entries/[id]/edit
+├ ƒ /entries/new
+├ ƒ /experiments
+├ ƒ /experiments/[id]
+├ ƒ /experiments/[id]/edit
+├ ƒ /experiments/[id]/run
+├ ƒ /experiments/export
+├ ƒ /experiments/import
+├ ƒ /experiments/new
+├ ƒ /exports
+├ ƒ /inventory
+├ ƒ /inventory/[id]
+├ ƒ /inventory/[id]/edit
+├ ƒ /inventory/export
+├ ƒ /inventory/import
+├ ƒ /inventory/locations
+├ ƒ /inventory/new
+├ ƒ /projects
+├ ƒ /projects/[id]
+├ ƒ /projects/[id]/edit
+├ ƒ /projects/export
+├ ƒ /projects/import
+├ ƒ /projects/new
+├ ƒ /protocol-run
+├ ƒ /protocols
+├ ƒ /protocols/[id]
+├ ƒ /protocols/[id]/adapt
+├ ƒ /protocols/[id]/versions/[versionId]/edit
+├ ƒ /protocols/export
+├ ƒ /protocols/import
+├ ƒ /protocols/new
+├ ƒ /purchases
+├ ƒ /purchases/school-template
+├ ƒ /records
+├ ƒ /reports
+├ ƒ /reports/[id]
+├ ƒ /reports/[id]/edit
+├ ƒ /reports/export
+├ ƒ /reports/import
+├ ƒ /reports/new
+├ ƒ /research-plans
+├ ƒ /research-plans/[id]
+├ ƒ /research-plans/[id]/edit
+├ ƒ /research-plans/export
+├ ƒ /research-plans/import
+├ ƒ /research-plans/new
+├ ƒ /results
+├ ƒ /results/[id]
+├ ƒ /results/[id]/edit
+├ ƒ /results/export
+├ ƒ /results/import
+├ ƒ /results/new
+├ ƒ /samples
+├ ƒ /search
+├ ƒ /sequences
+├ ƒ /sequences/[id]
+├ ƒ /sequences/[id]/edit
+├ ƒ /sequences/collections
+├ ƒ /sequences/collections/[id]
+├ ƒ /sequences/collections/[id]/edit
+├ ƒ /sequences/collections/export
+├ ƒ /sequences/collections/new
+├ ƒ /sequences/export
+├ ƒ /sequences/import
+├ ƒ /sequences/new
+├ ƒ /sequences/pairs/[id]
+├ ƒ /sequences/pairs/[id]/edit
+├ ƒ /sequences/workflows
+├ ƒ /sequences/workflows/[id]
+├ ƒ /sequences/workflows/new
+├ ƒ /settings
+├ ƒ /tools
+├ ƒ /tools/calculator
+├ ƒ /tools/calculator/[calculatorId]
+├ ƒ /tools/visualization
+└ ƒ /trash
+
+
+ƒ  (Dynamic)  server-rendered on demand

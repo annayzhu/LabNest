@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ResultForm } from "@/components/ResultForm";
@@ -13,6 +13,7 @@ export default async function EditResultPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const result = await prisma.result.findUnique({ where: { id } });
   if (!result || !result.experimentId) notFound();
+  if(result.resultType==="Calculation")redirect(`/results/${id}`);
   const [experiments, storedResultTypes] = await Promise.all([
     prisma.experiment.findMany({ where: { id: result.experimentId }, include: { project: { select: { name: true } }, researchPlan: { select: { code: true, title: true } } } }),
     prisma.resultTypeDefinition.findMany({ orderBy: [{ sortOrder: "asc" }, { label: "asc" }] }),

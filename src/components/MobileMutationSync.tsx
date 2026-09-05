@@ -31,6 +31,8 @@ export function MobileMutationSync() {
               response = await fetch("/api/mobile/measurements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "step.complete") {
               response = await fetch("/api/mobile/step-completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
+            } else if (mutation.actionType === "calculation.create") {
+              response = await fetch("/api/mobile/calculations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else {
               const formData = new FormData();
               formData.set("file", mutation.payload.file, mutation.payload.file.name);
@@ -44,7 +46,7 @@ export function MobileMutationSync() {
             }
             if (!response.ok) {
               const result = await response.json().catch(() => ({})) as { error?: string };
-              const requiresReview = [400, 404, 409, 422].includes(response.status);
+              const requiresReview = [400, 401, 403, 404, 409, 422].includes(response.status);
               await updateMobileMutation({ ...mutation, state: requiresReview ? "conflict" : "pending", retryCount: mutation.retryCount + 1, lastError: result.error ?? `Sync failed (${response.status}).` });
               continue;
             }

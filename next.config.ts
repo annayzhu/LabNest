@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.LABNEST_BUILD_DIR || ".next",
+  typescript: { tsconfigPath: process.env.LABNEST_TSCONFIG_PATH || "tsconfig.json" },
   allowedDevOrigins: ["127.0.0.1", "192.168.0.101", "192.168.0.102"],
   experimental: {
     serverActions: {

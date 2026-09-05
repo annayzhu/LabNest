@@ -23,7 +23,7 @@ describe("calculator local state", () => {
     expect(toggleFavorite(first, "dilution").favorites).toEqual([]);
   });
 
-  it("keeps only the newest 50 history entries", () => {
+  it("preserves all history entries without silently discarding records", () => {
     let state = createEmptyCalculatorState();
     for (let index = 0; index < 55; index += 1) {
       state = addHistoryEntry(state, {
@@ -39,9 +39,9 @@ describe("calculator local state", () => {
       });
     }
 
-    expect(state.history).toHaveLength(50);
+    expect(state.history).toHaveLength(55);
     expect(state.history[0].id).toBe("run-54");
-    expect(state.history.at(-1)?.id).toBe("run-5");
+    expect(state.history.at(-1)?.id).toBe("run-0");
   });
 
   it("removes image-like values before persistence", () => {

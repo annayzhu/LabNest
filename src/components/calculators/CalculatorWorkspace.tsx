@@ -1,27 +1,39 @@
 "use client";
-
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
+import { enqueueMobileMutation, requestMobileMutationSync } from "@/lib/mobile-mutation-queue";
+import { compatibleUnits, convert, parseScalar, units } from "@/lib/calculators/quantities";
+import { defaultTasks, isFieldVisible, legacyTaskMap } from "@/lib/calculators/task-definitions";
+import { MixEditor, SampleEditor, RecipeEditor, type RecipeRow, ReactionGroups, type ReactionGroup, CurveEditor } from "./StructuredInputs";
+import type { MixRow, SampleRow } from "@/lib/calculators/planning";
+import { recordVisit, saveDraft, restoreLegacyInputs } from "@/lib/calculators/calculator-storage";
+import { tableColumnLabel } from "@/lib/calculators/presentation";
+import { FitPlot } from "./FitPlot";
+import { ResultExport } from "./ResultExport";
+import { OfflineCalculator } from "./OfflineCalculator";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calculator, Check, Clock3, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Calculator, Check, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Search, Upload, X } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import { calculate, getCalculatorCatalog, getCalculatorDefinition, type CalculatorDefinition, type CalculatorResult } from "@/lib/calculators/calculator-engine";
-import { restoreCalculatorResult, addHistoryEntry, addPreset, clearHistory, deleteHistoryEntry, deletePreset, getCalculatorStorageIssue, loadCalculatorState, saveCalculatorState, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
+import { restoreCalculatorResult, addHistoryEntry, addPreset, deletePreset, getCalculatorStorageIssue, loadCalculatorState, saveCalculatorState, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
 
 const categoryLabels = {
-  "cell-culture": ["Cell culture", "细胞培养"],
-  solutions: ["Solutions & dosing", "溶液与加药"],
-  "molecular-biology": ["Molecular biology", "分子生物学"],
-  "virology-microbiology": ["Virology & microbiology", "病毒与微生物"],
-  general: ["General", "通用工具"],
+  "cell-culture": ["Cells", "细胞"],
+  protein: ["Protein", "蛋白"],
+  solutions: ["Solutions", "配液"],
+  "molecular-biology": ["Nucleic acids", "核酸"],
+  "virology-microbiology": ["Microbiology", "微生物"],
+  general: ["Units & equipment", "单位与设备"],
 } as const;
 
 function useCalculatorState() {
   const [state, setState] = useState<CalculatorState | null>(null);
   const [persistenceWarning, setPersistenceWarning] = useState("");
+  const pending=useRef<CalculatorState|null>(null);
+  const timer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+  useEffect(()=>{const flush=()=>{clearTimeout(timer.current);if(pending.current){saveCalculatorState(pending.current);pending.current=null;}};window.addEventListener('pagehide',flush);return()=>{window.removeEventListener('pagehide',flush);flush();};},[]);
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       setState(loadCalculatorState());
@@ -29,140 +41,119 @@ function useCalculatorState() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
-  const update = (next: CalculatorState) => {
-    setState(next);
-    saveCalculatorState(next);
-    setPersistenceWarning(getCalculatorStorageIssue());
+  const update = (next: CalculatorState, delay=0) => {
+    setState(next);pending.current=next;clearTimeout(timer.current);
+    const persist=()=>{saveCalculatorState(next);pending.current=null;setPersistenceWarning(getCalculatorStorageIssue());};
+    if(delay)timer.current=setTimeout(persist,delay);else persist();
   };
   return { state, update, persistenceWarning };
 }
 
 export function CalculatorCatalog() {
-  const { locale } = useI18n();
-  const zh = locale === "zh";
-  const [query, setQuery] = useState("");
-  const { state, update, persistenceWarning } = useCalculatorState();
-  const dialog = useModalDialog();
-  const catalog = getCalculatorCatalog();
-  const normalized = query.trim().toLocaleLowerCase();
-  const filtered = catalog.filter((tool) => !normalized || [tool.name, tool.nameZh, tool.shortDescription, tool.shortDescriptionZh, ...tool.aliases].join(" ").toLocaleLowerCase().includes(normalized));
-  const favoriteTools = state ? catalog.filter((tool) => state.favorites.includes(tool.id)) : [];
-  const recentIds = state ? [...new Set(state.history.map((item) => item.calculatorId))].slice(0, 5) : [];
-
-  return (
-    <div className="space-y-5">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <Card>
-          <CardBody className="p-4 sm:p-5">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-sage-surface text-moss"><Calculator className="h-5 w-5" aria-hidden /></span>
-              <div className="min-w-0">
-                <h2 className="font-serif text-xl font-medium text-ink">{zh ? "实验计算器" : "Experimental Calculator"}</h2>
-                <p className="mt-0.5 text-sm leading-5 text-muted">{zh ? "31 个浏览器本地计算模块；结果由你确认后才保存。" : "31 browser-local modules. Results are saved only after you confirm."}</p>
-              </div>
-            </div>
-            <label className="mt-4 flex h-10 items-center gap-2 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/45 px-3 focus-within:border-moss">
-              <Search className="h-4 w-4 text-muted" aria-hidden />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted" placeholder={zh ? "搜索中文、英文或别名…" : "Search name, Chinese, or alias…"} />
-              {query ? <button type="button" onClick={() => setQuery("")} className="text-muted hover:text-ink" aria-label={zh ? "清空搜索" : "Clear search"}><X className="h-4 w-4" /></button> : null}
-            </label>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title={zh ? "常用与最近" : "Pinned & recent"} />
-          <CardBody className="space-y-2 p-3">
-            {favoriteTools.length || recentIds.length ? (
-              <>
-                {favoriteTools.slice(0, 4).map((tool) => <CompactToolLink key={`favorite-${tool.id}`} tool={tool} zh={zh} marker={<Pin className="h-3.5 w-3.5" />} />)}
-                {!favoriteTools.length && recentIds.map((id) => catalog.find((tool) => tool.id === id)).filter(Boolean).map((tool) => <CompactToolLink key={`recent-${tool!.id}`} tool={tool!} zh={zh} marker={<Clock3 className="h-3.5 w-3.5" />} />)}
-              </>
-            ) : <p className="px-1 py-2 text-xs leading-5 text-muted">{zh ? "固定常用工具或完成一次计算后，这里会显示快捷入口。" : "Pin a tool or complete a calculation to create shortcuts here."}</p>}
-          </CardBody>
-        </Card>
-      </div>
-
-      {persistenceWarning ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-warning/25 bg-warning-surface px-3 py-2 text-xs text-warning">{zh ? "浏览器存储不可用或空间不足；本次更改仅保留在当前页面。" : persistenceWarning}</p> : null}
-
-      {Object.entries(categoryLabels).map(([category, labels]) => {
-        const tools = filtered.filter((tool) => tool.category === category);
-        if (!tools.length) return null;
-        return (
-          <Card key={category}>
-            <CardHeader title={zh ? labels[1] : labels[0]} action={<span className="font-mono text-[11px] text-muted">{tools.length}</span>} />
-            <CardBody className="divide-y divide-hairline p-0">
-              {tools.map((tool) => {
-                const favorite = state?.favorites.includes(tool.id) ?? false;
-                return (
-                  <div key={tool.id} className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 transition hover:bg-warm/45">
-                    <Link href={`/tools/calculator/${tool.id}`} className="focus-ring min-w-0 rounded-[var(--ln-radius-control-sm)]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-ink group-hover:text-moss">{zh ? tool.nameZh : tool.name}</span>
-                        {tool.plateAware ? <span className="rounded-full bg-info-surface px-2 py-0.5 text-[10px] font-medium text-info">{zh ? "板感知" : "Plate-aware"}</span> : null}
-                      </div>
-                      <p className="mt-0.5 text-xs leading-5 text-muted">{zh ? tool.shortDescriptionZh : tool.shortDescription}</p>
-                    </Link>
-                    {state ? <button type="button" onClick={() => update(toggleFavorite(state, tool.id))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted hover:bg-sage-surface hover:text-moss" aria-label={favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定工具" : "Pin tool")}>{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</button> : null}
-                  </div>
-                );
-              })}
-            </CardBody>
-          </Card>
-        );
-      })}
-      {!filtered.length ? <Card><CardBody><p className="text-sm text-muted">{zh ? "没有找到匹配的计算工具。" : "No calculators match this search."}</p></CardBody></Card> : null}
-      {state?.history.length ? <Card><CardHeader title={zh ? "本机计算历史" : "Local calculation history"} action={<button type="button" onClick={async () => { if (await dialog.confirm({ title: zh ? "清空全部计算历史？" : "Clear all calculation history?", description: zh ? "此操作无法撤销。" : "This action cannot be undone.", confirmLabel: zh ? "清空" : "Clear history", cancelLabel: zh ? "取消" : "Cancel", tone: "destructive" })) update(clearHistory(state)); }} className="text-xs font-medium text-muted hover:text-danger">{zh ? "清空" : "Clear"}</button>} /><CardBody className="divide-y divide-hairline p-0">{state.history.slice(0, 10).map((item) => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5"><Link href={`/tools/calculator/${item.calculatorId}`} className="min-w-0"><p className="truncate text-xs font-semibold text-graphite">{zh ? item.calculatorNameZh : item.calculatorName}</p><p className="mt-0.5 truncate font-mono text-[10px] text-muted">{new Date(item.createdAt).toLocaleString(locale)} · {item.methodVersion}</p></Link><button type="button" onClick={() => update(deleteHistoryEntry(state, item.id))} className="focus-ring flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-md)] text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除此条历史" : "Delete history entry"}><Trash2 className="h-3.5 w-3.5" /></button></div>)}</CardBody></Card> : null}
-    </div>
-  );
-}
-
-function CompactToolLink({ tool, zh, marker }: { tool: CalculatorDefinition; zh: boolean; marker: React.ReactNode }) {
-  return <Link href={`/tools/calculator/${tool.id}`} className="focus-ring flex items-center gap-2 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs font-medium text-graphite hover:bg-warm hover:text-moss"><span className="text-muted">{marker}</span><span className="truncate">{zh ? tool.nameZh : tool.name}</span></Link>;
+  const {locale}=useI18n(), zh=locale==='zh';
+  const {state,update,persistenceWarning}=useCalculatorState();
+  const [query,setQuery]=useState('');
+  const catalog=getCalculatorCatalog();
+  const visible=catalog.filter(tool=>!legacyTaskMap[tool.id]);
+  const filtered=visible.filter(tool=>[tool.name,tool.nameZh,...tool.aliases].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+  const pins=state?.favoritesConfigured?state.favorites:defaultTasks;
+  const toolLink=(id:string)=>{const tool=catalog.find(t=>t.id===id);return tool?<Link className="block min-h-11 min-w-0 rounded-lg border border-hairline p-3 hover:bg-warm" href={`/tools/calculator/${id}`}><strong className="text-sm">{zh?tool.nameZh:tool.name}</strong><p className="mt-1 text-xs text-muted">{zh?tool.shortDescriptionZh:tool.shortDescription}</p></Link>:null;};
+  return <div className="mx-auto max-w-4xl space-y-5"><h1 className="font-serif text-2xl">{zh?'实验计算':'Lab Calculations'}</h1><label className="flex min-h-11 items-center gap-2 rounded-lg border border-hairline px-3"><Search className="h-4 w-4"/><input aria-label={zh?'搜索计算':'Search calculations'} className="min-h-11 min-w-0 flex-1 bg-transparent outline-none" value={query} onChange={e=>setQuery(e.target.value)} placeholder={zh?'稀释、铺板、抗体、ng/μL…':'Dilution, seeding, antibody, ng/µL…'}/></label>
+    {persistenceWarning?<p role="status">{persistenceWarning}</p>:null}
+    {!query?<><section><h2 className="mb-2 text-sm font-semibold">{zh?'常用任务':'Pinned tasks'}</h2><div className="grid grid-cols-2 gap-2">{pins.map((id,index)=><div key={id} className="min-w-0">{toolLink(id)}{state?<div className="flex gap-2 text-xs"><button className="min-h-11" disabled={index===0} onClick={()=>{const next=[...pins];[next[index-1],next[index]]=[next[index],next[index-1]];update({...state,favoritesConfigured:true,favorites:next});}}>{zh?'前移':'Move earlier'}</button><button className="min-h-11" onClick={()=>update({...state,favoritesConfigured:true,favorites:pins.filter(key=>key!==id)})}>{zh?'移除':'Remove'}</button></div>:null}</div>)}</div></section><section><h2 className="mb-2 text-sm font-semibold">{zh?'最近使用':'Recently used'}</h2>{state?.recent.slice(0,3).map(item=><div key={item.calculatorId}>{toolLink(item.calculatorId)}<p className="mb-2 text-xs text-muted">{(()=>{const tool=catalog.find(tool=>tool.id===item.calculatorId);if(!tool)return item.summary;if([tool.shortDescription,tool.shortDescriptionZh].includes(item.summary))return zh?tool.shortDescriptionZh:tool.shortDescription;return tool.fields.reduce((summary,field)=>summary.replaceAll(zh?field.label:field.labelZh,zh?field.labelZh:field.label),item.summary);})()}</p></div>)}{!state?.recent.length?<p className="text-xs text-muted">{zh?'打开任务后会显示在这里。':'Opened tasks appear here.'}</p>:null}</section></>:null}
+    {Object.entries(categoryLabels).map(([category,labels])=>{const tools=filtered.filter(t=>t.category===category);return tools.length?<details key={`${category}-${Boolean(query)}`} open={Boolean(query)} className="rounded-lg border border-hairline"><summary className="min-h-11 cursor-pointer p-3 font-medium">{zh?labels[1]:labels[0]}</summary><div className="space-y-2 p-3">{tools.map(tool=><div key={tool.id} className="grid grid-cols-[minmax(0,1fr)_44px] gap-2">{toolLink(tool.id)}<button aria-label={zh?'固定工具':'Pin task'} onClick={()=>state&&update(toggleFavorite({...state,favorites:[...pins]},tool.id))}><Pin className="h-4 w-4"/></button></div>)}</div></details>:null;})}
+    {!filtered.length?<p>{zh?'未找到匹配任务':'No matching tasks'}</p>:null}
+    <details><summary className="min-h-11 cursor-pointer">{zh?'我的配方':'My recipes'} ({state?.presets.length??0})</summary>{state?.presets.map(item=><Link className="block min-h-11" key={item.id} href={`/tools/calculator/${item.calculatorId}`}>{item.name}</Link>)}</details>
+    <details><summary className="min-h-11 cursor-pointer">{zh?'计算记录':'Calculation records'} ({state?.history.length??0})</summary>{state?.history.map(item=><Link className="block min-h-11 text-sm" key={item.id} href={`/tools/calculator/${item.calculatorId}?record=${encodeURIComponent(item.id)}`}>{zh?item.calculatorNameZh:item.calculatorName} · {new Date(item.createdAt).toLocaleString(locale)}</Link>)}</details>
+  </div>;
 }
 
 type PlateContext = { workspaceId: string; plateId: string; plateName: string; plateSize: number; wellIds: string[] };
 
 export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext, embedded = false, embeddedLocale }: { calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext; embedded?: boolean; embeddedLocale?: "zh" | "en" }) {
-  const definition = getCalculatorDefinition(calculatorId);
+  const definition = useMemo(() => getCalculatorDefinition(calculatorId), [calculatorId]);
   const { locale: appLocale } = useI18n();
   const locale = embeddedLocale ?? appLocale;
   const zh = locale === "zh";
   const { state, update, persistenceWarning } = useCalculatorState();
-  const defaults = useMemo(() => Object.fromEntries(definition.fields.map((field) => [field.key, initialInputs[field.key] ?? field.defaultValue ?? ""])), [definition, initialInputs]);
+  const defaults = useMemo(() => {
+    const defaults:Record<string,unknown>=Object.fromEntries(definition.fields.map(field=>[field.key,field.type==='select'?field.defaultValue??'':'']));
+    const supplied=Object.keys(initialInputs).some(key=>['stockConcentration','fold'].includes(key))&&!initialInputs.mode?restoreLegacyInputs(calculatorId,initialInputs).inputs:initialInputs;
+    for(const field of definition.fields){if(supplied[field.key]!==undefined)defaults[field.key]=supplied[field.key];if(supplied[`${field.key}Unit`]!==undefined)defaults[`${field.key}Unit`]=supplied[`${field.key}Unit`];}
+    if(plateContext){if(definition.fields.some(field=>field.key==='wells'))defaults.wells=String(plateContext.wellIds.length);if(calculatorId==='master-mix'){defaults.samples=String(plateContext.wellIds.length);defaults.replicates='1';defaults.controls='0';}}
+    return defaults;
+  }, [definition,initialInputs,calculatorId,plateContext]);
   const [inputs, setInputs] = useState<Record<string, unknown>>(defaults);
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [presetName, setPresetName] = useState("");
+  const [operator,setOperator]=useState("");
+  const [recordStatus,setRecordStatus]=useState("");
+  const mutationId=useRef<string|null>(null);
+  const [example,setExample]=useState(false);
+  const [sourceRecord,setSourceRecord]=useState<string>();
+  const [historical,setHistorical]=useState(false);
+  const visitRef=useRef(false);
+  useEffect(()=>{
+    if(!state||visitRef.current)return;
+    const frame=window.requestAnimationFrame(()=>{
+    visitRef.current=true;
+    const previous=state.drafts[calculatorId]?.inputs;
+    if(previous)setInputs(current=>{const next={...current};for(const field of definition.fields){const unit=previous[`${field.key}Unit`];if(!String(current[field.key]??'').trim()&&typeof unit==='string'&&units[unit])next[`${field.key}Unit`]=unit;}return next;});
+    const record=state.history.find(item=>item.id===initialInputs.record);
+    if(record){setResult(restoreCalculatorResult(record));setHistorical(true);setSourceRecord(record.id);}
+    update(recordVisit(state,calculatorId,zh?definition.shortDescriptionZh:definition.shortDescription));
+    });return ()=>window.cancelAnimationFrame(frame);
+  },[state,calculatorId,definition,initialInputs.record,update,zh]);
+  function edit(next:Record<string,unknown>, nextExample=example) {
+    mutationId.current=null;setRecordStatus("");setInputs(next);setHistorical(false);setResult(null);setError('');setExample(nextExample);
+    if(state)update(saveDraft(state,calculatorId,next,nextExample),200);
+    if(!['master-mix','normalization','ic50-ec50','elisa-4pl','bradford-bca'].includes(calculatorId)&&!Array.isArray(next.samples)) {
+      try {setResult(calculate({calculatorId,inputs:next}));} catch { /* Partial input never keeps the previous result. */ }
+    }
+  }
+  function restore(inputs:Record<string,unknown>,version?:string) {const restored=version?.endsWith("-v2")?{inputs}:restoreLegacyInputs(calculatorId,inputs);edit(restored.inputs,false);if(restored.warning)setError(restored.warning);}
+
 
   function runCalculation(event?: FormEvent) {
     event?.preventDefault();
     try {
       const next = calculate({ calculatorId, inputs });
       setResult(next);
+      if(state)update(recordVisit(state,calculatorId,definition.fields.filter(field=>isFieldVisible(calculatorId,field.key,inputs)&&field.type==='number').slice(0,3).map(field=>`${zh?field.labelZh:field.label}: ${inputs[field.key]??''} ${inputs[`${field.key}Unit`]??field.unit??''}`).join(' · ')));
       setError("");
     } catch (calculationError) {
       setResult(null);
-      setError(calculationError instanceof Error ? calculationError.message : "Calculation failed.");
+      const raw=calculationError instanceof Error?calculationError.message:'Calculation failed.';
+      setError(definition.fields.reduce((message,field)=>message.replaceAll(field.key,zh?field.labelZh:field.label),raw));
     }
   }
 
   function saveResult() {
-    if (!state || !result) return;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? newClientMutationId() : `${Date.now()}`;
-    update(addHistoryEntry(state, { id, calculatorId, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs, inputUnits: Object.fromEntries(definition.fields.filter((field) => field.unit && field.unit !== "integer").map((field) => [field.key, field.unit!])), outputs: result.outputs, warnings: result.warnings, table: result.table, notes: result.notes }));
+    if (!state || !result || historical || example) return;
+    const id = newClientMutationId();
+    update(addHistoryEntry(state, { id, calculatorId, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs, inputUnits: Object.fromEntries(definition.fields.filter((field) => field.unit && field.unit !== "integer").map((field) => [field.key, String(inputs[`${field.key}Unit`]??field.unit!)])), outputs: result.outputs, warnings: result.warnings, snapshot: structuredClone(result), example, sourceRecordId: sourceRecord, context: plateContext ? {...plateContext} : undefined }));
   }
 
+  async function recordExperiment() {
+    if(!result||example||historical||!operator.trim()||!initialInputs.experimentId||!initialInputs.experimentStepId)return;
+    mutationId.current??=newClientMutationId();
+    try {await enqueueMobileMutation({clientMutationId:mutationId.current,actionType:'calculation.create',deviceCreatedAt:new Date().toISOString(),state:'pending',retryCount:0,payload:{experimentId:String(initialInputs.experimentId),experimentStepId:String(initialInputs.experimentStepId),operator:operator.trim(),calculatorId,inputs,snapshot:result}});requestMobileMutationSync();setRecordStatus(zh?'已加入统一同步队列；同步状态可在待同步记录查看。':'Added to sync queue; check sync status for completion.');}catch{setRecordStatus(zh?'无法保存到本机队列，请保留页面。':'Cannot save locally; keep this page open.');}
+  }
   function savePreset() {
     if (!state || !presetName.trim()) return;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? newClientMutationId() : `${Date.now()}`;
-    update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), inputs }));
+    const id = newClientMutationId();
+    update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), methodVersion:definition.methodVersion,source:example?"synthetic example":"user-defined", inputs }));
     setPresetName("");
   }
 
   function applyToPlate() {
-    if (!result || !plateContext) return;
-    const payload = { type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion };
+    if (!result || !plateContext || historical || example) return;
+    if(inputs.wells!==undefined&&Number(inputs.wells)!==plateContext.wellIds.length){setError(zh?"孔数与所选孔位不一致，请确认关联。":"Well count does not match selection; review context.");return;}
+    const plateInputs={...inputs};
+    for(const field of definition.fields){if(!field.unit||!isFieldVisible(calculatorId,field.key,inputs)||!String(inputs[field.key]??'').trim())continue;const from=String(inputs[`${field.key}Unit`]??field.unit);if(compatibleUnits(field.unit).includes(from)){plateInputs[field.key]=convert(parseScalar(inputs[field.key]),from,field.unit);plateInputs[`${field.key}Unit`]=field.unit;}}
+    const payload = { type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs:plateInputs, rawInputs:inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion };
     if (window.opener) {
       window.opener.postMessage(payload, window.location.origin);
       window.close();
@@ -173,7 +164,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   async function copyResult() {
     if (!result) return;
-    const content = result.outputs.map((item) => `${zh ? item.labelZh : item.label}: ${item.value}${item.unit ? ` ${item.unit}` : ""}`).join("\n");
+    const content = (example ? "示例 / EXAMPLE\n" : "") + result.outputs.map((item) => `${zh ? item.labelZh : item.label}: ${item.value}${item.unit ? ` ${item.unit}` : ""}`).join("\n") + (result.table?.length ? "\n" + Object.keys(result.table[0]).map(key=>tableColumnLabel(key,zh)).join("\t") + "\n" + result.table.map(row => Object.values(row).join("\t")).join("\n") : "") + "\n" + result.notes.join("\n");
     await navigator.clipboard.writeText(content);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -185,53 +176,63 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   const presets = state?.presets.filter((item) => item.calculatorId === calculatorId) ?? [];
   const history = state?.history.filter((item) => item.calculatorId === calculatorId).slice(0, 5) ?? [];
-  const favorite = state?.favorites.includes(calculatorId) ?? false;
+  const favorite = state?.favoritesConfigured ? state.favorites.includes(calculatorId) : defaultTasks.includes(calculatorId);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          {!embedded ? <Link href="/tools/calculator" className="focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline text-muted hover:bg-warm hover:text-ink" aria-label={zh ? "返回计算器" : "Back to calculators"}><ArrowLeft className="h-4 w-4" /></Link> : null}
+          {!embedded ? <Link href="/tools/calculator" className="focus-ring flex min-h-11 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline text-muted hover:bg-warm hover:text-ink" aria-label={zh ? "返回计算器" : "Back to calculators"}><ArrowLeft className="h-4 w-4" /></Link> : null}
           <div className="min-w-0"><h1 className="font-serif text-[21px] font-medium text-ink md:text-[24px]">{zh ? definition.nameZh : definition.name}</h1><p className="text-xs leading-5 text-muted">{zh ? definition.shortDescriptionZh : definition.shortDescription}</p></div>
         </div>
-        {state && !embedded ? <button type="button" onClick={() => update(toggleFavorite(state, calculatorId))} className="focus-ring inline-flex h-9 items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}
+        {state && !embedded ? <button type="button" onClick={() => update(toggleFavorite({...state,favorites:state.favoritesConfigured?state.favorites:defaultTasks}, calculatorId))} className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}
       </div>
 
+      {['molarity','percent-solution'].includes(calculatorId)?<nav aria-label="Solution modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" href="/tools/calculator/molarity">摩尔浓度 / Molarity</Link><Link className="min-h-11 text-moss" href="/tools/calculator/percent-solution">百分浓度 / Percentage</Link></nav>:null}
+      {['master-mix','transfection'].includes(calculatorId)?<nav aria-label="Reaction modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" href="/tools/calculator/master-mix">PCR / Master Mix</Link><Link className="min-h-11 text-moss" href="/tools/calculator/transfection">转染 / Transfection</Link></nav>:null}
+      {calculatorId==='hemocytometer'&&result&&!example&&!historical?<Link className="block min-h-11 text-moss" href={`/tools/calculator/seeding?stockCellsPerMl=${result.outputMap.viableCellsPerMl}`}>{zh?'用此活细胞浓度铺板':'Seed using this viable-cell concentration'}</Link>:null}
+      {initialInputs.experimentId&&initialInputs.experimentStepId?<div className="space-y-2 rounded-lg border border-hairline p-3"><p className="text-xs">{zh?'关联实验 / 步骤':'Linked experiment / step'}: {initialInputs.experimentId} / {initialInputs.experimentStepId}</p><a className="block min-h-11 text-moss" href={`/experiments/${encodeURIComponent(String(initialInputs.experimentId))}/run#step-${encodeURIComponent(String(initialInputs.experimentStepId))}`}>{zh?'返回实验步骤':'Return to experiment step'}</a><input className="min-h-11 w-full rounded border border-hairline px-3" aria-label="Operator" placeholder={zh?'记录人':'Recorded by'} value={operator} onChange={e=>setOperator(e.target.value)}/><button type="button" className="min-h-11 text-moss disabled:opacity-40" disabled={!result||historical||example||!operator.trim()} onClick={recordExperiment}>{zh?'记入实验':'Record in experiment'}</button><p role="status" className="text-xs">{recordStatus}</p></div>:null}
       {plateContext ? <div className="flex items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-info/20 bg-info-surface px-3 py-2 text-xs text-info"><FlaskConical className="h-4 w-4 shrink-0" /><span>{zh ? `来自“${plateContext.plateName}”的 ${plateContext.wellIds.length} 个孔；结果可回写到这些孔位。` : `${plateContext.wellIds.length} wells from “${plateContext.plateName}”; results can be sent back to these wells.`}</span></div> : null}
       {persistenceWarning ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-warning/25 bg-warning-surface px-3 py-2 text-xs text-warning">{zh ? "浏览器存储不可用或空间不足；本次更改仅保留在当前页面。" : persistenceWarning}</p> : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.72fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.72fr)]">
         <Card>
-          <CardHeader title={zh ? "输入" : "Inputs"} action={<button type="button" onClick={() => { setInputs(defaults); setResult(null); setError(""); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss"><RotateCcw className="h-3.5 w-3.5" />{zh ? "重置" : "Reset"}</button>} />
+          <CardHeader title={zh ? "输入" : "Inputs"} action={<button type="button" onClick={() => { edit(defaults,false); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss"><RotateCcw className="h-3.5 w-3.5" />{zh ? "重置" : "Reset"}</button>} />
           <CardBody>
             <form onSubmit={runCalculation} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                {definition.fields.map((field) => <FieldControl key={field.key} field={field} zh={zh} value={inputs[field.key]} onChange={(value) => { setInputs((current) => ({ ...current, [field.key]: value })); setResult(null); setError(""); }} />)}
+                {definition.fields.filter(field=>isFieldVisible(calculatorId,field.key,inputs)&&!(calculatorId==='wb-loading'&&Array.isArray(inputs.samples)&&field.key==='sampleConcentrationUgUl')).map((field) => <div key={field.key} className={`min-w-0 ${field.unit&&compatibleUnits(field.unit).length>1?"grid max-w-[18rem] grid-cols-[minmax(0,1fr)_auto] items-end gap-1.5":""}`}>{['points','standards'].includes(field.key)&&field.type==='textarea'?<CurveEditor zh={zh} value={String(inputs[field.key]??'')} onChange={value=>edit({...inputs,[field.key]:value})}/>:<FieldControl field={{...field,unit:field.unit&&compatibleUnits(field.unit).length>1?"":String(inputs[`${field.key}Unit`]??field.unit??"")}} zh={zh} value={inputs[field.key]??''} onChange={(value)=>edit({...inputs,[field.key]:value})}/>} {field.unit&&compatibleUnits(field.unit).length>1?<select aria-label={`${zh?field.labelZh:field.label} ${zh?'单位':'unit'}`} className="min-h-11 min-w-0 max-w-[105px] rounded-lg border border-hairline px-2 text-sm" value={String(inputs[`${field.key}Unit`]??field.unit)} onChange={event=>{try { const previous=String(inputs[`${field.key}Unit`]??field.unit);const value=String(inputs[field.key]??'').trim();edit({...inputs,[field.key]:value?String(convert(parseScalar(value),previous,event.target.value)):'',[`${field.key}Unit`]:event.target.value});}catch{setError(zh?'请先完成数值输入，再切换单位。':'Complete the number before changing units.');}}}>{(['dilution','reagent-dosing','fold-dilution'].includes(calculatorId)&&['stockConcentration','targetConcentration','initialConcentration'].includes(field.key)?Object.keys(units).filter(unit=>['molar-concentration','mass-concentration'].includes(units[unit].dimension)):compatibleUnits(field.unit)).map(unit=><option key={unit}>{unit}</option>)}</select>:null}</div>)}
               </div>
+              {['media-recipe','buffer-recipe'].includes(calculatorId)?<RecipeEditor zh={zh} rows={Array.isArray(inputs.recipeRows)?inputs.recipeRows as RecipeRow[]:String(inputs.components??'').split(/\r?\n/).filter(Boolean).map(line=>{const [name,amount,unit]=line.split(',');return{name,amount,unit};})} onChange={recipeRows=>edit({...inputs,recipeRows})}/>:null}
+              {calculatorId==='master-mix'&&!Array.isArray(inputs.groups)?<MixEditor zh={zh} rows={Array.isArray(inputs.rows)?inputs.rows as MixRow[]:[]} onChange={rows=>edit({...inputs,rows})}/>:null}
+              {calculatorId==='master-mix'?<><button className="min-h-11 text-sm text-moss" type="button" onClick={()=>{const next={...inputs};if(Array.isArray(next.groups))delete next.groups;else next.groups=[];edit(next);}}>{zh?'切换单组 / 多组独立配液':'Switch single / separate mix groups'}</button>{Array.isArray(inputs.groups)?<ReactionGroups zh={zh} groups={inputs.groups as ReactionGroup[]} onChange={groups=>edit({...inputs,groups})}/>:null}</>:null}
+              {calculatorId==='normalization'||(calculatorId==='wb-loading'&&Array.isArray(inputs.samples))?<SampleEditor zh={zh} unit={calculatorId==='normalization'?'ng/µL':'µg/µL'} rows={Array.isArray(inputs.samples)?inputs.samples as SampleRow[]:[]} onChange={samples=>edit({...inputs,samples})}/>:null}
+              {calculatorId==='wb-loading'?<button className="min-h-11 text-sm text-moss" type="button" onClick={()=>{const next={...inputs};if(Array.isArray(next.samples))delete next.samples;else next.samples=[];edit(next);}}>{zh?'切换单样本 / 批量':'Switch single / batch'}</button>:null}
+              <div className="flex flex-wrap gap-3"><button type="button" className="min-h-11 text-sm text-moss" onClick={()=>edit({...defaults,...definition.exampleInputs},true)}>{zh?'载入示例':'Load example'}</button>{state?.drafts[calculatorId]?<button className="min-h-11 text-sm text-moss" type="button" onClick={()=>edit(state.drafts[calculatorId].inputs,state.drafts[calculatorId].example)}>{zh?'恢复上次草稿':'Restore draft'}</button>:null}</div>
+              {example?<p role="status" className="text-sm text-warning">{zh?'示例：不可写入正式记录。请重置后输入实验参数。':'Example: cannot save a formal record. Reset and enter experimental inputs.'}</p>:null}
+              <details><summary className="min-h-11 cursor-pointer text-xs">{zh?'移液设备与舍入（可选）':'Pipetting equipment and rounding (optional)'}</summary><div className="grid gap-2 sm:grid-cols-2">{[['pipetteMinimumUl','设备下限µL','Equipment minimum µL'],['pipetteStepUl','移液步进µL','Pipetting increment µL']].map(([key,labelZh,label])=><label key={key} className="text-xs">{zh?labelZh:label}<input className="mt-1 min-h-11 w-full rounded border border-hairline px-2" value={String(inputs[key]??'')} onChange={e=>edit({...inputs,[key]:e.target.value})}/></label>)}</div></details>
               {error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-danger/25 bg-danger-surface px-3 py-2 text-xs leading-5 text-danger">{error}</p> : null}
-              <button type="submit" className="focus-ring inline-flex h-10 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-4 text-sm font-semibold text-warm sm:w-auto"><Calculator className="h-4 w-4" />{zh ? "计算" : "Calculate"}</button>
+              <button type="submit" className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-4 text-sm font-semibold text-warm sm:w-auto"><Calculator className="h-4 w-4" />{zh ? "计算" : "Calculate"}</button>
             </form>
           </CardBody>
         </Card>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card>
             <CardHeader title={zh ? "结果" : "Result"} action={result ? <button type="button" onClick={copyResult} className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? (zh ? "已复制" : "Copied") : (zh ? "复制" : "Copy")}</button> : undefined} />
             <CardBody>
-              {result ? <ResultPanel result={result} zh={zh} onSave={saveResult} onApplyToPlate={plateContext ? applyToPlate : undefined} /> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}
+              {result ? <><p className="text-xs text-muted">{result.methodVersion}{historical?' · 原始快照 / Original snapshot':''}</p>{historical?<button type="button" className="min-h-11 text-moss" onClick={()=>{const old=state?.history.find(item=>item.id===sourceRecord);if(old)restore(old.inputs,old.methodVersion);}}>{zh?'用当前方法重算（新记录）':'Recalculate with current method (new record)'}</button>:null}<ResultPanel result={result} zh={zh} onSave={saveResult} disabled={historical||example} onApplyToPlate={plateContext&&!historical&&!example ? applyToPlate : undefined} /></> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}
             </CardBody>
           </Card>
-          <Card>
-            <CardHeader title={zh ? "方法" : "Method"} />
-            <CardBody><p className="text-xs leading-5 text-graphite">{zh ? definition.methodZh : definition.method}</p><p className="mt-2 font-mono text-[10px] text-muted">{definition.methodVersion}</p></CardBody>
-          </Card>
+          <details className="rounded-lg border border-hairline p-3"><summary className="min-h-11 cursor-pointer text-sm">{zh?'方法与假设':'Method and assumptions'}</summary><p className="text-xs leading-5 text-graphite">{zh?definition.methodZh:definition.method}</p><p className="mt-2 text-xs text-muted">{definition.methodVersion}</p></details>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card><CardHeader title={zh ? "预设" : "Presets"} /><CardBody className="space-y-3"><div className="flex gap-2"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder={zh ? "预设名称" : "Preset name"} className="h-9 min-w-0 flex-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3 text-sm outline-none focus:border-moss" /><button type="button" onClick={savePreset} disabled={!presetName.trim()} className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "保存" : "Save"}</button></div>{presets.length ? <div className="space-y-1">{presets.map((preset) => <div key={preset.id} className="flex items-center gap-1"><button type="button" onClick={() => { setInputs(preset.inputs); setResult(null); }} className="min-w-0 flex-1 truncate rounded-full bg-sage-surface px-3 py-1 text-left text-xs font-medium text-moss">{preset.name}</button><button type="button" onClick={() => state && update(deletePreset(state, preset.id))} className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除预设" : "Delete preset"}><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="text-xs text-muted">{zh ? "尚无预设。" : "No presets yet."}</p>}</CardBody></Card>
-        <Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={() => { setInputs(item.inputs); setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>
-      </div>
+      <OfflineCalculator zh={zh}/>
+      <details><summary className="min-h-11 cursor-pointer text-sm">{zh?"常用配方与计算记录":"Recipes and calculation records"}</summary><div className="grid gap-4 lg:grid-cols-2">
+        <Card><CardHeader title={zh ? "预设" : "Presets"} /><CardBody className="space-y-3"><div className="flex gap-2"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder={zh ? "预设名称" : "Preset name"} className="min-h-11 min-w-0 flex-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3 text-sm outline-none focus:border-moss" /><button type="button" onClick={savePreset} disabled={!presetName.trim()} className="focus-ring inline-flex min-h-11 items-center gap-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "保存" : "Save"}</button></div>{presets.length ? <div className="space-y-1">{presets.map((preset) => <div key={preset.id} className="flex items-center gap-1"><button type="button" onClick={() => { restore(preset.inputs,preset.methodVersion); }} className="min-w-0 flex-1 truncate rounded-full bg-sage-surface px-3 py-1 text-left text-xs font-medium text-moss">{preset.name}</button><button type="button" onClick={() => state && update(deletePreset(state, preset.id))} className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除预设" : "Delete preset"}><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="text-xs text-muted">{zh ? "尚无预设。" : "No presets yet."}</p>}</CardBody></Card>
+        <Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={() => { setHistorical(true);setSourceRecord(item.id);setResult(item.snapshot??{ calculatorId, methodVersion: item.methodVersion, outputs: item.outputs, outputMap: Object.fromEntries(item.outputs.map((output) => [output.key, output.value])), warnings: item.warnings, notes: ["旧记录快照不完整 / Legacy snapshot incomplete"] }); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>
+      </div></details>
     </div>
   );
 }
@@ -239,11 +240,11 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 function FieldControl({ field, zh, value, onChange }: { field: CalculatorDefinition["fields"][number]; zh: boolean; value: unknown; onChange: (value: string | number) => void }) {
   const label = zh ? field.labelZh : field.label;
   const shared = "mt-1.5 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3 text-sm text-ink outline-none transition focus:border-moss focus:bg-surface";
-  return <label className={field.type === "textarea" ? "sm:col-span-2" : ""}><span className="flex items-center justify-between gap-2 text-xs font-medium text-graphite"><span>{label}</span>{field.unit && field.unit !== "integer" ? <span className="font-mono text-[10px] font-normal text-muted">{field.unit}</span> : null}</span>{field.type === "select" ? <select value={String(value)} onChange={(event) => onChange(event.target.value)} className={`${shared} h-10`}>{field.options?.map((option) => <option key={option.value} value={option.value}>{zh ? option.labelZh : option.label}</option>)}</select> : field.type === "textarea" ? <textarea rows={5} value={String(value)} onChange={(event) => onChange(event.target.value)} className={`${shared} py-2 font-mono text-xs`} /> : <input type={field.type} value={String(value)} min={field.min} step={field.step} onChange={(event) => onChange(field.type === "number" ? event.target.valueAsNumber : event.target.value)} className={`${shared} h-10`} />}</label>;
+  return <label className={field.type === "textarea" ? "sm:col-span-2" : ""}><span className="flex items-center justify-between gap-2 text-xs font-medium text-graphite"><span>{label}</span>{field.unit && field.unit !== "integer" ? <span className="font-mono text-[10px] font-normal text-muted">{field.unit}</span> : null}</span>{field.type === "select" ? <select value={String(value??"")} onChange={(event) => onChange(event.target.value)} className={`${shared} min-h-11`}>{field.options?.map((option) => <option key={option.value} value={option.value}>{zh ? option.labelZh : option.label}</option>)}</select> : field.type === "textarea" ? <textarea rows={5} value={String(value??"")} onChange={(event) => onChange(event.target.value)} className={`${shared} py-2 font-mono text-xs`} /> : <input type="text" inputMode={field.type === "number" ? "decimal" : undefined} value={String(value??"")} onChange={(event) => onChange(event.target.value)} className={`${shared} min-h-11`} />}</label>;
 }
 
-function ResultPanel({ result, zh, onSave, onApplyToPlate }: { result: CalculatorResult; zh: boolean; onSave: () => void; onApplyToPlate?: () => void }) {
-  return <div className="space-y-3"><dl className="divide-y divide-hairline">{result.outputs.map((output) => <div key={output.key} className="flex items-baseline justify-between gap-4 py-2 first:pt-0"><dt className="text-xs text-muted">{zh ? output.labelZh : output.label}</dt><dd className="text-right font-mono text-sm font-semibold text-ink">{typeof output.value === "number" ? output.value.toLocaleString(undefined, { maximumSignificantDigits: 8 }) : output.value}{output.unit ? <span className="ml-1 text-[10px] font-normal text-muted">{output.unit}</span> : null}</dd></div>)}</dl>{result.table?.length ? <div className="max-h-64 overflow-auto rounded-[var(--ln-radius-control-lg)] border border-hairline"><table className="w-full text-left text-xs"><thead className="sticky top-0 bg-warm"><tr>{Object.keys(result.table[0]).map((key) => <th key={key} className="px-2 py-1.5 font-medium text-graphite">{key}</th>)}</tr></thead><tbody>{result.table.map((row, index) => <tr key={index} className="border-t border-hairline">{Object.values(row).map((value, cell) => <td key={cell} className="px-2 py-1.5 font-mono text-ink">{value}</td>)}</tr>)}</tbody></table></div> : null}{result.warnings.map((warning) => <p key={warning} className="rounded-[var(--ln-radius-control-md)] bg-warning-surface px-3 py-2 text-xs leading-5 text-warning">{warning}</p>)}{result.notes.map((note) => <p key={note} className="text-[11px] leading-5 text-muted">{note}</p>)}{onApplyToPlate ? <button type="button" onClick={onApplyToPlate} className="focus-ring inline-flex h-9 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-3 text-xs font-semibold text-warm"><FlaskConical className="h-3.5 w-3.5" />{zh ? "写回所选孔位" : "Send to selected wells"}</button> : null}<button type="button" onClick={onSave} className="focus-ring inline-flex h-9 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-moss px-3 text-xs font-semibold text-moss hover:bg-sage-surface"><Save className="h-3.5 w-3.5" />{zh ? "保存到本机历史" : "Save to local history"}</button></div>;
+function ResultPanel({ result, zh, onSave, onApplyToPlate, disabled = false }: { result: CalculatorResult; zh: boolean; onSave: () => void; onApplyToPlate?: () => void; disabled?: boolean }) {
+  return <div className="min-w-0 space-y-3"><p className="text-xs">{result.status==='estimate'?(zh?'估算：请核对方法与适用条件':'Estimate: review method and assumptions'):result.status==='partial'?(zh?'部分样本不可行，详见状态列':'Some samples are infeasible; see status column'):(zh?'条件成立':'Valid conditions')}</p><ResultExport result={result} zh={zh}/><FitPlot result={result}/><dl className="divide-y divide-hairline">{result.outputs.map((output) => <div key={output.key} className="flex items-baseline justify-between gap-4 py-2 first:pt-0"><dt className="text-xs text-muted">{zh ? output.labelZh : output.label}</dt><dd className="text-right font-mono text-sm font-semibold text-ink">{typeof output.value === "number" ? output.value.toLocaleString(undefined, { maximumSignificantDigits: 8 }) : output.value}{output.unit ? <span className="ml-1 text-[10px] font-normal text-muted">{output.unit}</span> : null}</dd></div>)}</dl>{result.table?.length ? <div className="max-h-64 overflow-auto rounded-[var(--ln-radius-control-lg)] border border-hairline"><table className="w-full text-left text-xs"><thead className="sticky top-0 bg-warm"><tr>{Object.keys(result.table[0]).map((key) => <th key={key} className="px-2 py-1.5 font-medium text-graphite">{tableColumnLabel(key,zh)}</th>)}</tr></thead><tbody>{result.table.map((row, index) => <tr key={index} className="border-t border-hairline">{Object.values(row).map((value, cell) => <td key={cell} className="px-2 py-1.5 font-mono text-ink">{value}</td>)}</tr>)}</tbody></table></div> : null}{result.warnings.map((warning) => <p key={warning} className="rounded-[var(--ln-radius-control-md)] bg-warning-surface px-3 py-2 text-xs leading-5 text-warning">{warning}</p>)}{result.notes.map((note) => <p key={note} className="text-[11px] leading-5 text-muted">{note}</p>)}{onApplyToPlate ? <button type="button" onClick={onApplyToPlate} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-3 text-xs font-semibold text-warm"><FlaskConical className="h-3.5 w-3.5" />{zh ? "写回所选孔位" : "Send to selected wells"}</button> : null}<button type="button" disabled={disabled} onClick={onSave} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-moss px-3 text-xs font-semibold text-moss hover:bg-sage-surface"><Save className="h-3.5 w-3.5" />{zh ? "保存到本机历史" : "Save to local history"}</button></div>;
 }
 
 type DetectedSpot = { x: number; y: number; radius: number };
@@ -358,9 +359,9 @@ function ColonyCounter({ definition, zh, state, update }: { definition: Calculat
   function saveCount() {
     if (!state || !confirmed) return;
     const result = calculate({ calculatorId: definition.id, inputs: { automaticCount: spots.length, manualAdjustment } });
-    update(addHistoryEntry(state, { id: newClientMutationId(), calculatorId: definition.id, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs: { automaticCount: spots.length, manualAdjustment, threshold, minimumArea }, inputUnits: {}, outputs: result.outputs, warnings: result.warnings, table: result.table, notes: result.notes }));
+    update(addHistoryEntry(state, { id: newClientMutationId(), calculatorId: definition.id, calculatorName: definition.name, calculatorNameZh: definition.nameZh, createdAt: new Date().toISOString(), methodVersion: result.methodVersion, inputs: { automaticCount: spots.length, manualAdjustment, threshold, minimumArea }, inputUnits: {}, outputs: result.outputs, warnings: result.warnings }));
   }
 
   const finalCount = Math.max(0, spots.length + manualAdjustment);
-  return <div className="space-y-4"><div className="flex items-center gap-3"><Link href="/tools/calculator" className="focus-ring flex h-9 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline text-muted"><ArrowLeft className="h-4 w-4" /></Link><div><h1 className="font-serif text-[21px] font-medium text-ink md:text-[24px]">{zh ? definition.nameZh : definition.name}</h1><p className="text-xs text-muted">{zh ? "照片仅在当前浏览器会话中参与计数，不进入结果、历史或导出。" : "The photo is used only in this browser session and never enters results, history, or exports."}</p></div></div><div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]"><Card><CardHeader title={zh ? "图像与识别标记" : "Image & detection overlay"} /><CardBody><div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-dashed border-hairline bg-warm/35">{previewUrl ? <canvas ref={canvasRef} onClick={handleCanvasClick} className="max-h-[68vh] max-w-full cursor-crosshair object-contain" /> : <label className="flex cursor-pointer flex-col items-center gap-3 px-6 py-12 text-center"><Upload className="h-7 w-7 text-muted" /><span className="text-sm font-medium text-graphite">{zh ? "上传平皿或噬菌斑照片" : "Upload a plate or plaque image"}</span><span className="text-xs leading-5 text-muted">{zh ? "JPG / PNG；图像不会保存" : "JPG / PNG; image is not persisted"}</span><input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => loadImage(event.target.files?.[0])} /></label>}</div>{previewUrl ? <div className="mt-3 flex flex-wrap gap-2"><label className="focus-ring inline-flex h-9 cursor-pointer items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium"><Upload className="h-3.5 w-3.5" />{zh ? "更换照片" : "Replace image"}<input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => loadImage(event.target.files?.[0])} /></label><button type="button" onClick={detect} className="focus-ring h-9 rounded-[var(--ln-radius-control-lg)] bg-moss px-3 text-xs font-semibold text-warm">{zh ? "重新识别" : "Detect again"}</button></div> : null}</CardBody></Card><div className="space-y-4"><Card><CardHeader title={zh ? "识别设置" : "Detection settings"} /><CardBody className="space-y-4"><label className="block text-xs font-medium text-graphite">{zh ? "灰度阈值" : "Threshold"}<input type="range" min="20" max="235" value={threshold} onChange={(event) => { setThreshold(Number(event.target.value)); setConfirmed(false); }} className="mt-2 w-full accent-[var(--color-moss)]" /><span className="font-mono text-[10px] text-muted">{threshold}</span></label><label className="block text-xs font-medium text-graphite">{zh ? "最小区域" : "Minimum area"}<input type="number" min="2" value={minimumArea} onChange={(event) => { setMinimumArea(Number(event.target.value)); setConfirmed(false); }} className="mt-1.5 h-9 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3" /></label><div className="grid grid-cols-3 gap-1">{(["add", "remove", "exclude"] as const).map((item) => <button key={item} type="button" onClick={() => setMode(item)} className={`h-8 rounded-[var(--ln-radius-control-md)] text-[11px] font-medium ${mode === item ? "bg-sage-surface text-moss" : "border border-hairline text-muted"}`}>{zh ? { add: "补加", remove: "扣除", exclude: "排除区" }[item] : item}</button>)}</div><p className="text-[11px] leading-5 text-muted">{zh ? "选择模式后点击图像：补加/扣除计数，或排除局部识别区域。" : "Choose a mode, then click the image to add/remove a count or exclude a local region."}</p></CardBody></Card><Card><CardHeader title={zh ? "计数结果" : "Count"} /><CardBody className="space-y-3"><div className="grid grid-cols-2 gap-2"><div className="rounded-[var(--ln-radius-control-lg)] bg-warm p-3"><p className="text-[10px] text-muted">{zh ? "自动识别" : "Detected"}</p><p className="mt-1 font-mono text-xl font-semibold text-ink">{spots.length}</p></div><div className="rounded-[var(--ln-radius-control-lg)] bg-sage-surface p-3"><p className="text-[10px] text-moss">{zh ? "复核后" : "Reviewed"}</p><p className="mt-1 font-mono text-xl font-semibold text-moss">{finalCount}</p></div></div><p className="text-xs text-muted">{zh ? "人工调整" : "Manual adjustment"}: {manualAdjustment > 0 ? "+" : ""}{manualAdjustment}</p><button type="button" disabled={!previewUrl} onClick={() => setConfirmed(true)} className="focus-ring inline-flex h-9 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss text-xs font-semibold text-warm disabled:opacity-40"><Check className="h-3.5 w-3.5" />{confirmed ? (zh ? "已确认" : "Confirmed") : (zh ? "确认计数" : "Confirm count")}</button><button type="button" disabled={!confirmed || !state} onClick={saveCount} className="focus-ring inline-flex h-9 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-moss text-xs font-semibold text-moss disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "仅保存数字与参数" : "Save numbers & settings only"}</button></CardBody></Card></div></div></div>;
+  return <div className="space-y-4"><div className="flex items-center gap-3"><Link href="/tools/calculator" className="focus-ring flex min-h-11 w-9 items-center justify-center rounded-[var(--ln-radius-control-lg)] border border-hairline text-muted"><ArrowLeft className="h-4 w-4" /></Link><div><h1 className="font-serif text-[21px] font-medium text-ink md:text-[24px]">{zh ? definition.nameZh : definition.name}</h1><p className="text-xs text-muted">{zh ? "照片仅在当前浏览器会话中参与计数，不进入结果、历史或导出。" : "The photo is used only in this browser session and never enters results, history, or exports."}</p></div></div><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px]"><Card><CardHeader title={zh ? "图像与识别标记" : "Image & detection overlay"} /><CardBody><div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-dashed border-hairline bg-warm/35">{previewUrl ? <canvas ref={canvasRef} onClick={handleCanvasClick} className="max-h-[68vh] max-w-full cursor-crosshair object-contain" /> : <label className="flex cursor-pointer flex-col items-center gap-3 px-6 py-12 text-center"><Upload className="h-7 w-7 text-muted" /><span className="text-sm font-medium text-graphite">{zh ? "上传平皿或噬菌斑照片" : "Upload a plate or plaque image"}</span><span className="text-xs leading-5 text-muted">{zh ? "JPG / PNG；图像不会保存" : "JPG / PNG; image is not persisted"}</span><input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => loadImage(event.target.files?.[0])} /></label>}</div>{previewUrl ? <div className="mt-3 flex flex-wrap gap-2"><label className="focus-ring inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium"><Upload className="h-3.5 w-3.5" />{zh ? "更换照片" : "Replace image"}<input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => loadImage(event.target.files?.[0])} /></label><button type="button" onClick={detect} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-lg)] bg-moss px-3 text-xs font-semibold text-warm">{zh ? "重新识别" : "Detect again"}</button></div> : null}</CardBody></Card><div className="space-y-4"><Card><CardHeader title={zh ? "识别设置" : "Detection settings"} /><CardBody className="space-y-4"><label className="block text-xs font-medium text-graphite">{zh ? "灰度阈值" : "Threshold"}<input type="range" min="20" max="235" value={threshold} onChange={(event) => { setThreshold(Number(event.target.value)); setConfirmed(false); }} className="mt-2 w-full accent-[var(--color-moss)]" /><span className="font-mono text-[10px] text-muted">{threshold}</span></label><label className="block text-xs font-medium text-graphite">{zh ? "最小区域" : "Minimum area"}<input type="number" min="2" value={minimumArea} onChange={(event) => { setMinimumArea(Number(event.target.value)); setConfirmed(false); }} className="mt-1.5 min-h-11 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3" /></label><div className="grid grid-cols-3 gap-1">{(["add", "remove", "exclude"] as const).map((item) => <button key={item} type="button" onClick={() => setMode(item)} className={`h-8 rounded-[var(--ln-radius-control-md)] text-[11px] font-medium ${mode === item ? "bg-sage-surface text-moss" : "border border-hairline text-muted"}`}>{zh ? { add: "补加", remove: "扣除", exclude: "排除区" }[item] : item}</button>)}</div><p className="text-[11px] leading-5 text-muted">{zh ? "选择模式后点击图像：补加/扣除计数，或排除局部识别区域。" : "Choose a mode, then click the image to add/remove a count or exclude a local region."}</p></CardBody></Card><Card><CardHeader title={zh ? "计数结果" : "Count"} /><CardBody className="space-y-3"><div className="grid grid-cols-2 gap-2"><div className="rounded-[var(--ln-radius-control-lg)] bg-warm p-3"><p className="text-[10px] text-muted">{zh ? "自动识别" : "Detected"}</p><p className="mt-1 font-mono text-xl font-semibold text-ink">{spots.length}</p></div><div className="rounded-[var(--ln-radius-control-lg)] bg-sage-surface p-3"><p className="text-[10px] text-moss">{zh ? "复核后" : "Reviewed"}</p><p className="mt-1 font-mono text-xl font-semibold text-moss">{finalCount}</p></div></div><p className="text-xs text-muted">{zh ? "人工调整" : "Manual adjustment"}: {manualAdjustment > 0 ? "+" : ""}{manualAdjustment}</p><button type="button" disabled={!previewUrl || spots.length + manualAdjustment < 0} onClick={() => setConfirmed(true)} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss text-xs font-semibold text-warm disabled:opacity-40"><Check className="h-3.5 w-3.5" />{confirmed ? (zh ? "已确认" : "Confirmed") : (zh ? "确认计数" : "Confirm count")}</button><button type="button" disabled={!confirmed || !state} onClick={saveCount} className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-moss text-xs font-semibold text-moss disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "仅保存数字与参数" : "Save numbers & settings only"}</button></CardBody></Card></div></div></div>;
 }

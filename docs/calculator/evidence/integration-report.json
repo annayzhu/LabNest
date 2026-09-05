@@ -1,0 +1,22 @@
+{
+  "completedAt": "2026-09-05T23:27:01.762Z",
+  "resultId": "cmtp0ilqe0000xeos0v7nc8yz",
+  "clientMutationId": "ae81cb66-dcf5-4e7a-aed6-d1b3908439d3",
+  "checks": [
+    "Offline queue retained intent",
+    "Reconnect created Result",
+    "Replay returned identical Result ID",
+    "Missing step rejected",
+    "Archived experiment rejected",
+    "Foreign origin rejected",
+    "Forged snapshot rejected",
+    "Result page renders immutable calculation snapshot",
+    "Desktop drawer Escape and focus restoration"
+  ],
+  "errors": [],
+  "databaseReadback": {
+    "result": 1,
+    "stepEvent": 1,
+    "activity": 1
+  }
+}

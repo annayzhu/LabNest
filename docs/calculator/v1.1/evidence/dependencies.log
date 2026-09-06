@@ -1,0 +1,9 @@
+labnest@0.1.0 /private/tmp/labnest-calculator-v11
+├── @prisma/client@7.8.0
+├── next@16.2.10
+├── playwright@1.61.1
+├── prisma@7.8.0
+├── react@19.2.7
+├── vitest@4.1.10
+└── write-excel-file@4.1.1
+

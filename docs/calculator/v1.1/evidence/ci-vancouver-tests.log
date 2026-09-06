@@ -1,0 +1,165 @@
+Run npm test
+2026-09-06T01:53:12.2935101Z npm test
+2026-09-06T01:53:12.2971251Z shell: /usr/bin/bash -e {0}
+2026-09-06T01:53:12.2971495Z env:
+2026-09-06T01:53:12.2971692Z   TZ: America/Vancouver
+2026-09-06T01:53:12.2972529Z   DATABASE_URL: ***localhost:5432/labnest_test
+2026-09-06T01:53:12.2972834Z ##[endgroup]
+2026-09-06T01:53:12.4065654Z 
+2026-09-06T01:53:12.4066181Z > labnest@0.1.0 test
+2026-09-06T01:53:12.4066723Z > vitest run
+2026-09-06T01:53:12.4067324Z 
+2026-09-06T01:53:12.7262337Z 
+2026-09-06T01:53:12.7266692Z  RUN  v4.1.10 /home/runner/work/LabNest/LabNest
+2026-09-06T01:53:12.7267480Z 
+2026-09-06T01:53:13.5865192Z  ✓ src/lib/visualization-network.test.ts (10 tests) 142ms
+2026-09-06T01:53:13.6430151Z  ✓ src/lib/visualization-studio.test.ts (47 tests) 210ms
+2026-09-06T01:53:14.2094406Z  ✓ src/lib/protocol-docx.test.ts (7 tests) 169ms
+2026-09-06T01:53:14.2204249Z  ✓ src/lib/visualization-genomics.test.ts (13 tests) 780ms
+2026-09-06T01:53:14.2233869Z      ✓ builds and queries the maximum supported number of unique contigs without quadratic scans  603ms
+2026-09-06T01:53:14.5184601Z  ✓ src/lib/structured-files.test.ts (13 tests) 165ms
+2026-09-06T01:53:14.6674458Z  ✓ src/lib/calculators/calculator-engine.test.ts (22 tests) 76ms
+2026-09-06T01:53:14.8794951Z  ✓ src/lib/visualization-clinical.test.ts (16 tests) 50ms
+2026-09-06T01:53:15.0806382Z  ✓ src/lib/result-templates.test.ts (12 tests) 24ms
+2026-09-06T01:53:15.1698276Z  ✓ src/lib/calculators/spec-acceptance.test.ts (20 tests) 66ms
+2026-09-06T01:53:15.4055985Z  ✓ src/lib/experiment-results.test.ts (9 tests) 24ms
+2026-09-06T01:53:15.4286946Z  ✓ src/lib/protocol-document.test.ts (7 tests) 15ms
+2026-09-06T01:53:15.6906294Z  ✓ src/lib/calculators/v11-safety.test.ts (14 tests) 33ms
+2026-09-06T01:53:15.7934829Z  ✓ src/lib/result-creation.test.ts (4 tests) 24ms
+2026-09-06T01:53:15.9697772Z  ✓ src/lib/visualization-bar-analysis.test.ts (7 tests) 14ms
+2026-09-06T01:53:16.0133250Z  ✓ src/lib/typography-settings.test.ts (9 tests) 11ms
+2026-09-06T01:53:16.2844142Z  ✓ src/lib/protocol-tiptap.test.ts (4 tests) 25ms
+2026-09-06T01:53:16.3246510Z  ✓ src/lib/visualization-pca.test.ts (12 tests) 1883ms
+2026-09-06T01:53:16.3248807Z      ✓ supports the 300-observation boundary and enforces the one-million-cell boundary  1570ms
+2026-09-06T01:53:16.3465948Z  ✓ src/lib/scientific-tiptap.test.ts (6 tests) 21ms
+2026-09-06T01:53:16.5864346Z  ✓ src/lib/scientific-document.test.ts (7 tests) 10ms
+2026-09-06T01:53:16.6458612Z  ✓ src/lib/protocol.test.ts (8 tests) 17ms
+2026-09-06T01:53:16.8443611Z  ✓ src/lib/i18n.test.ts (8 tests) 15ms
+2026-09-06T01:53:16.8445187Z  ✓ src/lib/sequence-entry.test.ts (9 tests) 9ms
+2026-09-06T01:53:17.0802635Z  ✓ src/lib/result-dataset-paste.test.ts (8 tests) 13ms
+2026-09-06T01:53:17.0894565Z  ✓ src/lib/calculators/calculator-storage.test.ts (7 tests) 14ms
+2026-09-06T01:53:17.3214270Z  ✓ src/lib/record-lifecycle.test.ts (7 tests) 9ms
+2026-09-06T01:53:17.4721118Z  ✓ src/lib/procurement.test.ts (6 tests) 65ms
+2026-09-06T01:53:17.5359097Z  ✓ src/lib/experiment-planning.test.ts (5 tests) 8ms
+2026-09-06T01:53:17.7181167Z  ✓ src/lib/experiment-document.test.ts (3 tests) 14ms
+2026-09-06T01:53:17.8235933Z  ✓ src/lib/result-document.test.ts (5 tests) 9ms
+2026-09-06T01:53:17.9266527Z  ✓ src/lib/custom-font-storage.test.ts (4 tests) 11ms
+2026-09-06T01:53:18.0159368Z  ✓ src/lib/sequence-paste.test.ts (5 tests) 12ms
+2026-09-06T01:53:18.2411193Z  ✓ src/lib/samples.test.ts (5 tests) 7ms
+2026-09-06T01:53:18.3104365Z  ✓ src/lib/visualization-advanced.test.ts (11 tests) 1727ms
+2026-09-06T01:53:18.3114294Z      ✓ clusters the maximum supported 250 × 100 matrix without repeated vector-distance expansion  1710ms
+2026-09-06T01:53:18.3764084Z  ✓ src/lib/record-codes.test.ts (7 tests) 12ms
+2026-09-06T01:53:18.5005923Z  ✓ src/lib/calculators/migration-acceptance.test.ts (4 tests) 26ms
+2026-09-06T01:53:18.5212760Z  ✓ src/lib/system-theme.test.ts (5 tests) 8ms
+2026-09-06T01:53:18.5828684Z  ❯ src/lib/inventory.test.ts (8 tests | 1 failed) 17ms
+2026-09-06T01:53:18.5830791Z      ✓ derives quantity from same-unit transactions 3ms
+2026-09-06T01:53:18.5832470Z      ✓ blocks unit mismatches 2ms
+2026-09-06T01:53:18.5833970Z      ✓ blocks transactions that make inventory negative 1ms
+2026-09-06T01:53:18.5835721Z      ✓ converts direct quantity edits into adjust transactions 1ms
+2026-09-06T01:53:18.5837329Z      ✓ distinguishes depleted and low stock 1ms
+2026-09-06T01:53:18.5838858Z      ✓ distinguishes expired and soon-to-expire items 1ms
+2026-09-06T01:53:18.5840681Z      × keeps an item valid through its expiry date 6ms
+2026-09-06T01:53:18.5851491Z      ✓ does not flag healthy stock 1ms
+2026-09-06T01:53:18.7134609Z  ✓ src/lib/sequence.test.ts (8 tests) 8ms
+2026-09-06T01:53:18.7387543Z  ✓ src/lib/calculators/free-plate-integration.test.ts (4 tests) 7ms
+2026-09-06T01:53:18.9463333Z  ✓ src/lib/mobile-mutation-queue.test.ts (3 tests) 13ms
+2026-09-06T01:53:18.9679630Z  ✓ src/lib/calculators/v11-output.test.ts (3 tests) 33ms
+2026-09-06T01:53:19.0732802Z stderr | src/app/api/attachments/route.test.ts > keeps a committed original downloadable and replayable when Result validation fails
+2026-09-06T01:53:19.0743045Z [post-commit cleanup] refresh result validation failed after 3 attempts Error: Validation database unavailable
+2026-09-06T01:53:19.0774278Z     at Object.findUnique (/home/runner/work/LabNest/LabNest/src/app/api/attachments/route.test.ts:24:47)
+2026-09-06T01:53:19.0803585Z     at refreshResultValidation (/home/runner/work/LabNest/LabNest/src/lib/result-validation.ts:7:19)
+2026-09-06T01:53:19.0808464Z     at Object.run (/home/runner/work/LabNest/LabNest/src/app/api/attachments/route.ts:98:92)
+2026-09-06T01:53:19.0830933Z     at runPostCommitCleanup (/home/runner/work/LabNest/LabNest/src/lib/post-commit-cleanup.ts:23:20)
+2026-09-06T01:53:19.0833449Z  ✓ src/app/api/attachments/route.test.ts (1 test) 180ms
+2026-09-06T01:53:19.0863494Z     at Module.POST (/home/runner/work/LabNest/LabNest/src/app/api/attachments/route.ts:97:27)
+2026-09-06T01:53:19.0893274Z     at /home/runner/work/LabNest/LabNest/src/app/api/attachments/route.test.ts:41:20
+2026-09-06T01:53:19.0894980Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+2026-09-06T01:53:19.0924962Z 
+2026-09-06T01:53:19.1672802Z  ✓ src/lib/status-options.test.ts (1 test) 8ms
+2026-09-06T01:53:19.4011056Z  ✓ src/lib/appearance.test.ts (15 tests) 15ms
+2026-09-06T01:53:19.4663099Z  ✓ src/app/protocols/[id]/versions/[versionId]/edit/actions.test.ts (1 test) 37ms
+2026-09-06T01:53:19.6226140Z  ✓ src/lib/sequence-registry.test.ts (3 tests) 7ms
+2026-09-06T01:53:19.6634223Z  ✓ src/lib/protocol-relevant-items.test.ts (3 tests) 7ms
+2026-09-06T01:53:19.8311860Z  ✓ src/lib/tool-manifest.test.ts (4 tests) 8ms
+2026-09-06T01:53:20.1394311Z  ✓ src/app/experiments/[id]/run/actions.test.ts (1 test) 27ms
+2026-09-06T01:53:20.3564797Z  ✓ src/lib/rich-text-font-family.test.ts (4 tests) 7ms
+2026-09-06T01:53:20.6582798Z  ✓ src/lib/entry-mutations.test.ts (3 tests) 31ms
+2026-09-06T01:53:20.8718301Z  ✓ src/lib/document-surface-contract.test.ts (4 tests) 7ms
+2026-09-06T01:53:21.0461789Z  ✓ src/lib/entry-content.test.ts (3 tests) 6ms
+2026-09-06T01:53:21.2699103Z  ✓ src/lib/overview-calendar.test.ts (3 tests) 23ms
+2026-09-06T01:53:21.3176619Z  ✓ src/lib/ai.test.ts (2 tests) 7ms
+2026-09-06T01:53:21.5276126Z  ✓ src/lib/editor-named-styles.test.ts (3 tests) 11ms
+2026-09-06T01:53:21.6694437Z  ✓ src/app/results/actions.test.ts (1 test) 39ms
+2026-09-06T01:53:21.9641858Z  ✓ src/lib/entry-timeline.test.ts (3 tests) 13ms
+2026-09-06T01:53:22.0230041Z  ✓ src/app/inventory/actions.test.ts (1 test) 32ms
+2026-09-06T01:53:22.1749929Z  ✓ src/lib/entry-draft-migration.test.ts (2 tests) 4ms
+2026-09-06T01:53:22.2291538Z  ✓ src/components/TiptapCellContentView.test.ts (1 test) 28ms
+2026-09-06T01:53:22.2584137Z  ✓ src/lib/local-font-catalog.test.ts (2 tests) 20ms
+2026-09-06T01:53:22.3556188Z  ✓ src/components/ResearchPlanProtocolPicker.test.ts (2 tests) 4ms
+2026-09-06T01:53:22.4434671Z  ✓ src/lib/document-editor-workbench.test.ts (3 tests) 7ms
+2026-09-06T01:53:22.4817096Z  ✓ src/lib/rich-text-line-height.test.ts (2 tests) 7ms
+2026-09-06T01:53:22.5404147Z  ✓ src/lib/cell-editor.test.ts (2 tests) 6ms
+2026-09-06T01:53:22.6254495Z  ✓ src/lib/document-outline.test.ts (2 tests) 6ms
+2026-09-06T01:53:22.7251009Z  ✓ src/lib/block-reorder.test.ts (4 tests) 7ms
+2026-09-06T01:53:23.0368269Z  ✓ src/lib/tiptap-table-serialization.test.ts (1 test) 7ms
+2026-09-06T01:53:23.2184269Z  ✓ src/lib/visualization-palette-parity.test.ts (1 test) 10ms
+2026-09-06T01:53:23.2257986Z  ✓ src/lib/entry-draft-context.test.ts (2 tests) 6ms
+2026-09-06T01:53:23.4270480Z  ✓ src/lib/inventory-location-lifecycle.test.ts (2 tests) 4ms
+2026-09-06T01:53:23.4404632Z  ✓ src/lib/recycle-bin.test.ts (2 tests) 5ms
+2026-09-06T01:53:23.6360711Z  ✓ src/lib/research-plan-sorting.test.ts (3 tests) 5ms
+2026-09-06T01:53:23.6463254Z  ✓ src/lib/rich-text-font-size.test.ts (2 tests) 6ms
+2026-09-06T01:53:23.7334107Z  ✓ src/components/EntryComposer.test.ts (1 test) 58ms
+2026-09-06T01:53:23.8200053Z  ✓ src/lib/navigation-gesture.test.ts (3 tests) 4ms
+2026-09-06T01:53:23.8361873Z  ✓ src/lib/media-metadata.test.ts (2 tests) 6ms
+2026-09-06T01:53:23.9465020Z stderr | src/lib/post-commit-cleanup.test.ts > post-commit cleanup > returns the committed outcome with a retry warning when cleanup fails
+2026-09-06T01:53:23.9467489Z [post-commit cleanup] remove stored file failed after 3 attempts Error: disk unavailable
+2026-09-06T01:53:23.9469364Z     at /home/runner/work/LabNest/LabNest/src/lib/post-commit-cleanup.test.ts:7:43
+2026-09-06T01:53:23.9471486Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+2026-09-06T01:53:23.9474102Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+2026-09-06T01:53:23.9476275Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+2026-09-06T01:53:23.9477623Z     at new Promise (<anonymous>)
+2026-09-06T01:53:23.9479444Z     at runWithCancel (file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+2026-09-06T01:53:23.9481811Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+2026-09-06T01:53:23.9483652Z     at new Promise (<anonymous>)
+2026-09-06T01:53:23.9485554Z     at runWithTimeout (file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+2026-09-06T01:53:23.9487979Z     at file:///home/runner/work/LabNest/LabNest/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+2026-09-06T01:53:23.9489147Z 
+2026-09-06T01:53:23.9537316Z  ✓ src/lib/post-commit-cleanup.test.ts (1 test) 16ms
+2026-09-06T01:53:23.9852865Z  ✓ src/lib/step-timer.test.ts (3 tests) 4ms
+2026-09-06T01:53:24.0726677Z  ✓ src/lib/research-plan-deletion.test.ts (2 tests) 7ms
+2026-09-06T01:53:24.1617744Z  ✓ src/lib/measurement-validation.test.ts (3 tests) 5ms
+2026-09-06T01:53:24.1693908Z  ✓ src/lib/form-actions.test.ts (2 tests) 5ms
+2026-09-06T01:53:24.3240821Z  ✓ src/lib/tags.test.ts (3 tests) 7ms
+2026-09-06T01:53:24.3694005Z  ✓ src/lib/result-datasets.test.ts (1 test) 6ms
+2026-09-06T01:53:24.3960483Z  ✓ src/lib/client-mutation-id.test.ts (1 test) 8ms
+2026-09-06T01:53:24.5244318Z  ✓ src/lib/ui-scale.test.ts (2 tests) 5ms
+2026-09-06T01:53:24.5530615Z  ✓ src/lib/rich-text-color.test.ts (1 test) 6ms
+2026-09-06T01:53:24.5994426Z  ✓ src/lib/collection-export.test.ts (2 tests) 4ms
+2026-09-06T01:53:24.6758117Z  ✓ src/lib/key-information.test.ts (2 tests) 4ms
+2026-09-06T01:53:24.6804556Z 
+2026-09-06T01:53:24.6805664Z ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+2026-09-06T01:53:24.6806499Z 
+2026-09-06T01:53:24.6808659Z  FAIL  src/lib/inventory.test.ts > inventory risk flags > keeps an item valid through its expiry date
+2026-09-06T01:53:24.6823281Z AssertionError: expected [ 'expired' ] to not include 'expired'
+2026-09-06T01:53:24.6843289Z  ❯ src/lib/inventory.test.ts:64:123
+2026-09-06T01:53:24.6847641Z      62|
+2026-09-06T01:53:24.6848747Z      63|   it("keeps an item valid through its expiry date", () => {
+2026-09-06T01:53:24.6850149Z      64|     expect(getInventoryRiskFlags({ currentQuantity: 1, expiryDate: "20…
+2026-09-06T01:53:24.6851487Z        |                                                                                                                           ^
+2026-09-06T01:53:24.6852593Z      65|   });
+2026-09-06T01:53:24.6853093Z      66|
+2026-09-06T01:53:24.6853328Z 
+2026-09-06T01:53:24.6853777Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+2026-09-06T01:53:24.6854170Z 
+2026-09-06T01:53:24.6854202Z 
+2026-09-06T01:53:24.6863841Z  Test Files  1 failed | 89 passed (90)
+2026-09-06T01:53:24.6865455Z       Tests  1 failed | 489 passed (490)
+2026-09-06T01:53:24.6866518Z    Start at  18:53:12
+2026-09-06T01:53:24.6867836Z    Duration  11.93s (transform 3.83s, setup 0ms, import 13.32s, tests 6.54s, environment 14ms)
+2026-09-06T01:53:24.6868680Z 
+2026-09-06T01:53:24.6884545Z 
+2026-09-06T01:53:24.6905892Z ##[error]AssertionError: expected [ 'expired' ] to not include 'expired'
+ ❯ src/lib/inventory.test.ts:64:123
+
+
+2026-09-06T01:53:24.7555218Z ##[error]Process completed with exit code 

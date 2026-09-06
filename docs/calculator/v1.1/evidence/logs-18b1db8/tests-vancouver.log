@@ -1,0 +1,30 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /private/tmp/labnest-calculator-v11
+
+ ❯ src/lib/inventory.test.ts (8 tests | 1 failed) 11ms
+     × keeps an item valid through its expiry date 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/inventory.test.ts > inventory risk flags > keeps an item valid through its expiry date
+AssertionError: expected [ 'expired' ] to not include 'expired'
+ ❯ src/lib/inventory.test.ts:64:123
+     62|
+     63|   it("keeps an item valid through its expiry date", () => {
+     64|     expect(getInventoryRiskFlags({ currentQuantity: 1, expiryDate: "20…
+       |                                                                                                                           ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 89 passed (90)
+      Tests  1 failed | 489 passed (490)
+   Start at  18:42:50
+   Duration  3.62s (transform 6.44s, setup 0ms, import 13.76s, tests 4.26s, environment 6ms)
+

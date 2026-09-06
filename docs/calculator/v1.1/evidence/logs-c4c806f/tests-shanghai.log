@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /private/tmp/labnest-calculator-v11
+
+
+ Test Files  90 passed (90)
+      Tests  490 passed (490)
+   Start at  09:46:28
+   Duration  4.60s (transform 8.00s, setup 0ms, import 17.82s, tests 6.42s, environment 8ms)
+

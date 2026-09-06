@@ -52,3 +52,15 @@ export function batchPlan(rows: SampleRow[], target: number, volume: number, buf
     }
   });
 }
+
+export type ReducingAgent = { name: string; mode: 'volume-fraction' | 'target-concentration' | 'included'; volumeUl: number; definition: string };
+/** WB retains every independent component; invalid rows never acquire numeric zero placeholders. */
+export function wbPlan(rows: SampleRow[], target: number, volume: number, bufferFold: number, agent: ReducingAgent) {
+ const table=batchPlan(rows,target,volume,bufferFold,agent.volumeUl);
+ return table.map(row=>{
+  const valid=typeof row.sampleUl==='number';
+  const full={...row,concentrationUnit:'µg/µL',targetProteinUg:target,reducingAgent:agent.name,reducingMode:agent.mode,reducingDefinition:agent.definition,reducingAgentUl:valid?agent.volumeUl:'',totalUl:valid?volume:'',volumeUnit:'µL'};
+  if(valid && Math.abs(Number(full.sampleUl)+Number(full.bufferUl)+Number(full.reducingAgentUl)+Number(full.diluentUl)-volume)>Math.max(1e-9,volume*1e-9))throw new Error('WB volume balance failed');
+  return full;
+ });
+}

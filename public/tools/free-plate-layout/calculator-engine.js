@@ -18,12 +18,27 @@ var LabNestCalculations = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // src/lib/calculators/calculator-engine.ts
-  var calculator_engine_exports = {};
-  __export(calculator_engine_exports, {
+  // src/lib/calculators/standalone.ts
+  var standalone_exports = {};
+  __export(standalone_exports, {
+    appearanceKey: () => appearanceKey,
     calculate: () => calculate,
+    compatibleUnits: () => compatibleUnits,
+    displayQuantity: () => displayQuantity,
+    formatQuantity: () => formatQuantity,
     getCalculatorCatalog: () => getCalculatorCatalog,
-    getCalculatorDefinition: () => getCalculatorDefinition
+    getCalculatorDefinition: () => getCalculatorDefinition,
+    parseAppearance: () => parseAppearance,
+    presentedOutputs: () => presentedOutputs,
+    presentedTable: () => presentedTable,
+    resultClipboard: () => resultClipboard,
+    resultCsv: () => resultCsv,
+    resultExportRows: () => resultExportRows,
+    tableQuantityUnits: () => tableQuantityUnits,
+    tableUnitsFor: () => tableUnitsFor,
+    taskIconResource: () => taskIconResource,
+    taskPresentation: () => taskPresentation,
+    validateDisplayUnits: () => validateDisplayUnits
   });
 
   // src/lib/calculators/quantities.ts
@@ -64,27 +79,170 @@ var LabNestCalculations = (() => {
     if (a.dimension === "temperature" && canonical < 0) throw new Error("\u4F4E\u4E8E\u7EDD\u5BF9\u96F6\u5EA6 / Below absolute zero");
     return (canonical - (b.offset ?? 0)) / b.factor;
   }
+  function compatibleUnits(unit) {
+    const definition = units[normalizeUnit(unit)];
+    return definition ? Object.keys(units).filter((key) => units[key].dimension === definition.dimension) : [];
+  }
   var canonicalUnits = { mass: "g", volume: "L", amount: "mol", "molar-concentration": "mol/L", "mass-concentration": "g/L", "cell-concentration": "cells/mL", length: "cm", area: "cm\xB2", time: "s", temperature: "K" };
 
-  // src/lib/calculators/pipetting.ts
-  function applyPipettingOptions(result, inputs) {
-    const warnings = [...result.warnings];
-    const limit = inputs.pipetteMinimumUl ? parseScalar(inputs.pipetteMinimumUl) : void 0;
-    if (limit !== void 0) {
-      if (limit <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
-      const volumes = [...result.outputs.filter((output) => output.unit === "\xB5L" && typeof output.value === "number").map((output) => Number(output.value)), ...(result.table ?? []).flatMap((row) => Object.entries(row).filter(([key, value]) => /Ul$/.test(key) && typeof value === "number").map(([, value]) => Number(value)))];
-      if (volumes.some((value) => value > 0 && value < limit)) warnings.push(`\u90E8\u5206\u79FB\u6DB2\u91CF\u4F4E\u4E8E\u6240\u8BBE\u8BBE\u5907\u4E0B\u9650 ${limit} \xB5L / Some transfers are below the configured equipment minimum.`);
+  // src/lib/calculators/presentation.ts
+  var columns = {
+    reducingAgent: ["Reducing-agent stock", "\u8FD8\u539F\u5242\u539F\u6DB2"],
+    reducingMode: ["Adding definition", "\u6DFB\u52A0\u65B9\u5F0F"],
+    reducingDefinition: ["Stock / target definition", "\u539F\u6DB2\u4E0E\u76EE\u6807\u5B9A\u4E49"],
+    reducingAgentUl: ["Reducing agent (\xB5L)", "\u8FD8\u539F\u5242 (\xB5L)"],
+    totalUl: ["Total (\xB5L)", "\u603B\u91CF (\xB5L)"],
+    targetProteinUg: ["Target protein (\xB5g)", "\u76EE\u6807\u86CB\u767D\u91CF (\xB5g)"],
+    concentrationUnit: ["Input concentration unit", "\u8F93\u5165\u6D53\u5EA6\u5355\u4F4D"],
+    volumeUnit: ["Canonical volume unit", "\u539F\u59CB\u4F53\u79EF\u5355\u4F4D"],
+    tube: ["Tube", "\u7BA1\u53F7"],
+    concentration: ["Concentration", "\u6D53\u5EA6"],
+    source: ["Source", "\u6765\u6E90"],
+    takeUl: ["Take (\xB5L)", "\u53D6\u6DB2\u91CF (\xB5L)"],
+    diluentUl: ["Diluent (\xB5L)", "\u7A00\u91CA\u6DB2 (\xB5L)"],
+    mixedUl: ["Mixed volume (\xB5L)", "\u6DF7\u5300\u4F53\u79EF (\xB5L)"],
+    transferUl: ["Transfer out (\xB5L)", "\u5411\u540E\u8F6C\u79FB (\xB5L)"],
+    remainingUl: ["Remaining (\xB5L)", "\u5269\u4F59\u4F53\u79EF (\xB5L)"],
+    requiredUl: ["Required (\xB5L)", "\u6240\u9700\u4F53\u79EF (\xB5L)"],
+    sufficient: ["Sufficient?", "\u662F\u5426\u8DB3\u591F"],
+    component: ["Component", "\u7EC4\u5206"],
+    amount: ["Amount", "\u7528\u91CF"],
+    unit: ["Unit", "\u5355\u4F4D"],
+    perReactionUl: ["Per reaction (\xB5L)", "\u6BCF\u53CD\u5E94 (\xB5L)"],
+    premix: ["Premix?", "\u662F\u5426\u9884\u6DF7"],
+    batchUl: ["Prepare batch (\xB5L)", "\u6574\u6279\u914D\u5236 (\xB5L)"],
+    group: ["Mix group", "\u914D\u6DB2\u7EC4"],
+    id: ["Sample ID", "\u6837\u672CID"],
+    originalConcentration: ["Original concentration", "\u539F\u6D53\u5EA6"],
+    availableUl: ["Available (\xB5L)", "\u53EF\u7528\u4F53\u79EF (\xB5L)"],
+    status: ["Status", "\u72B6\u6001"],
+    sampleUl: ["Sample (\xB5L)", "\u6837\u54C1\u91CF (\xB5L)"],
+    bufferUl: ["Buffer (\xB5L)", "\u7F13\u51B2\u6DB2 (\xB5L)"],
+    theoreticalUl: ["Theoretical (\xB5L)", "\u7406\u8BBA\u91CF (\xB5L)"],
+    actualUl: ["Actual (\xB5L)", "\u5B9E\u9645\u91CF (\xB5L)"],
+    volumeUl: ["Volume (\xB5L)", "\u4F53\u79EF (\xB5L)"],
+    level: ["Level", "\u7EA7\u522B"],
+    doseUgMl: ["Target (\xB5g/mL)", "\u76EE\u6807\u6D53\u5EA6 (\xB5g/mL)"],
+    stockToAddUl: ["Stock (\xB5L)", "\u6BCD\u6DB2\u91CF (\xB5L)"],
+    observed: ["Observed response", "\u5B9E\u6D4B\u53CD\u5E94\u503C"],
+    fitted: ["Fitted response", "\u62DF\u5408\u53CD\u5E94\u503C"]
+  };
+  function tableColumnLabel(key, zh) {
+    return columns[key]?.[zh ? 1 : 0] ?? key;
+  }
+
+  // src/lib/calculators/result-presentation.ts
+  var tableQuantityUnits = { takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
+  function tableUnitsFor(result) {
+    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
+  }
+  function displayQuantity(value, unit, target) {
+    return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
+  }
+  function formatQuantity(value) {
+    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+  }
+  function validateDisplayUnits(result, candidate) {
+    if (!candidate || typeof candidate !== "object") return {};
+    const valid = {};
+    for (const [key, value] of Object.entries(candidate)) {
+      const unit = key.startsWith("table:") ? tableUnitsFor(result)[key.slice(6)] : result.outputs.find((o) => o.key === key)?.unit;
+      if (unit && typeof value === "string" && compatibleUnits(unit).includes(value)) valid[key] = value;
+      else throw new Error("Invalid display unit");
     }
-    if (!inputs.pipetteStepUl) return { ...result, warnings };
-    const step = parseScalar(inputs.pipetteStepUl);
-    if (step <= 0) throw new Error("\u79FB\u6DB2\u6B65\u8FDB\u5FC5\u987B\u5927\u4E8E0 / Pipetting increment must be positive");
-    if (!["dilution", "reagent-dosing", "fold-dilution"].includes(result.calculatorId) || inputs.mode === "add") return { ...result, warnings: [...warnings, "\u6B64\u6A21\u5F0F\u4FDD\u7559\u7406\u8BBA\u91CF\uFF1B\u672A\u5E94\u7528\u6B65\u8FDB\u820D\u5165 / This mode retains theoretical values; rounding not applied."] };
-    const stock = Number(result.outputMap.stockVolumeUl), finalOutput = result.outputs.find((output) => output.key === "finalVolume");
-    if (!finalOutput || typeof finalOutput.value !== "number" || !finalOutput.unit) return { ...result, warnings };
-    const final = convert(finalOutput.value, finalOutput.unit, "\xB5L"), actual = Math.round(stock / step) * step;
-    if (actual > final) throw new Error("\u820D\u5165\u540E\u7684\u6BCD\u6DB2\u91CF\u8D85\u8FC7\u603B\u4F53\u79EF / Rounded stock exceeds final volume");
-    const deviation = stock === 0 ? 0 : (actual / stock - 1) * 100;
-    return { ...result, warnings, table: [{ component: "\u6BCD\u6DB2 / Stock", theoreticalUl: stock, actualUl: actual }, { component: "\u7A00\u91CA\u6DB2 / Diluent", theoreticalUl: final - stock, actualUl: final - actual }], notes: [...result.notes, `\u79FB\u6DB2\u6B65\u8FDB ${step} \xB5L\uFF1B\u5B9E\u9645\u6D53\u5EA6\u76F8\u5BF9\u7406\u8BBA\u503C\u504F\u5DEE ${deviation.toPrecision(6)}% / Actual concentration deviation after explicit rounding. \u539F\u59CB\u8F93\u51FA\u4FDD\u7559\u7406\u8BBA\u503C / Outputs retain theory.`] };
+    return valid;
+  }
+  function presentedOutputs(result) {
+    return result.outputs.map((o) => typeof o.value === "number" && o.unit ? { ...o, ...displayQuantity(o.value, o.unit, result.displayUnits?.[o.key]) } : o);
+  }
+  function presentedTable(result, zh) {
+    const rows = result.table ?? [];
+    return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => {
+      const unit = tableUnitsFor(result)[key], target = result.displayUnits?.["table:" + key] ?? unit;
+      const label = tableColumnLabel(key, zh);
+      return [unit ? label.includes("(") ? label.replace(/\([^)]*\)/, `(${target})`) : `${label} (${target})` : label, unit && value !== "" && (typeof value === "number" || typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) ? convert(parseScalar(value), unit, target) : value];
+    })));
+  }
+  function resultExportRows(result, zh) {
+    const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
+    const metadata = { context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
+    return data.map((row) => ({ ...row, ...metadata }));
+  }
+  function resultClipboard(result, zh) {
+    const table = presentedTable(result, zh);
+    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
+  }
+  function resultCsv(result, zh) {
+    const rows = resultExportRows(result, zh);
+    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+    const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
+    return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
+  }
+
+  // src/lib/calculators/operations.ts
+  function withLiquidOperations(result, inputs) {
+    const operations = [];
+    function add(id, component, value, unit, role = "add", sample) {
+      if (value === "") return;
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw new Error("Invalid liquid operation: " + component);
+      operations.push({ id, component, sample, role, quantity: { value, unit, dimension: "volume" }, basis: "theoretical" });
+    }
+    const outputKeys = { seeding: ["stockVolumeMl", "mediumVolumeMl"], hydrogel: ["hydrogelUl", "cellStockUl", "mediumUl"], freezing: ["dmsoMl", "serumMl", "baseMediumMl"], transfection: ["reagentUl", "dnaVolumeUl", "diluentUl"], dilution: ["stockVolume", "diluentVolume"], "reagent-dosing": ["stockVolume", "diluentVolume"], "fold-dilution": ["stockVolume", "diluentVolume"], moi: ["virusVolumeUl"] };
+    if (!(result.calculatorId === "transfection" && result.table)) for (const key of outputKeys[result.calculatorId] ?? []) {
+      const output = result.outputs.find((o) => o.key === key);
+      if (output?.unit) add(key, output.labelZh + " / " + output.label, output.value, output.unit);
+    }
+    const schemas = { "serial-dilution": ["takeUl", "diluentUl"], "master-mix": ["perReactionUl", "batchUl"], normalization: ["sampleUl", "diluentUl"], "wb-loading": ["sampleUl", "bufferUl", "reducingAgentUl", "diluentUl"], "kill-curve": ["stockToAddUl"], transfection: ["volumeUl"] };
+    for (const [index, row] of (result.table ?? []).entries()) {
+      for (const key of schemas[result.calculatorId] ?? []) if (key in row) {
+        const label = key === "reducingAgentUl" ? String(row.reducingAgent) : tableColumnLabel(key, true) + " / " + tableColumnLabel(key, false);
+        add(`row:${index}:${key}`, String(row.component ?? label), row[key], "\xB5L", key === "takeUl" ? "transfer" : key === "perReactionUl" ? "dispense" : "add", String(row.id ?? row.tube ?? row.group ?? index + 1));
+      }
+      if (["media-recipe", "buffer-recipe"].includes(result.calculatorId) && !String(row.component).startsWith("\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3")) {
+        if (["L", "mL", "\xB5L", "\u03BCL", "uL", "nL"].includes(String(row.unit))) add(`recipe:${index}`, String(row.component), row.amount, String(row.unit));
+      }
+    }
+    const quantityInput = (key, defaultUnit) => convert(parseScalar(inputs[key]), String(inputs[key + "Unit"] ?? defaultUnit), "\xB5L");
+    if (["seeding", "hydrogel"].includes(result.calculatorId)) add("per-well", "\u6BCF\u5B54\u5206\u88C5 / Per well", quantityInput("volumePerWellUl", "\xB5L"), "\xB5L", "dispense");
+    if (result.calculatorId === "freezing" && Number(result.outputMap.vials) > 0) add("per-vial", "\u6BCF\u7BA1\u5206\u88C5 / Per vial", quantityInput("volumePerVialMl", "mL"), "\xB5L", "dispense");
+    if (result.calculatorId === "transfection") add("per-well", "\u6BCF\u5B54\u590D\u5408\u7269 / Complex per well", quantityInput("complexVolumeUlPerWell", "\xB5L"), "\xB5L", "dispense");
+    if (result.calculatorId === "master-mix" && typeof result.outputMap.dispenseUl === "number") add("premix-dispense", "\u6BCF\u53CD\u5E94\u9884\u6DF7\u6DB2 / Premix per reaction", result.outputMap.dispenseUl, "\xB5L", "dispense");
+    return { ...result, operations };
+  }
+
+  // src/lib/calculators/pipetting.ts
+  function applyPipettingOptions(source, inputs) {
+    let result = withLiquidOperations(source, inputs);
+    const operations = [...result.operations ?? []], warnings = [...result.warnings];
+    if (inputs.pipetteStepUl !== void 0 && inputs.pipetteStepUl !== null && inputs.pipetteStepUl !== "") {
+      const step = parseScalar(inputs.pipetteStepUl);
+      if (step <= 0) throw new Error("\u79FB\u6DB2\u6B65\u8FDB\u5FC5\u987B\u5927\u4E8E0 / Pipetting increment must be positive");
+      if (!["dilution", "reagent-dosing", "fold-dilution"].includes(result.calculatorId) || inputs.mode === "add") warnings.push("\u6B64\u6A21\u5F0F\u4FDD\u7559\u7406\u8BBA\u91CF\uFF1B\u672A\u5E94\u7528\u6B65\u8FDB\u820D\u5165 / This mode retains theoretical values; rounding not applied.");
+      else {
+        const stock = Number(result.outputMap.stockVolumeUl), finalOutput = result.outputs.find((o) => o.key === "finalVolume");
+        if (!finalOutput || typeof finalOutput.value !== "number" || !finalOutput.unit) throw new Error("Missing final volume");
+        const final = convert(finalOutput.value, finalOutput.unit, "\xB5L"), actual = Math.round(stock / step) * step;
+        if (actual > final || stock > 0 && actual === 0 || final - stock > 0 && final - actual === 0) throw new Error("\u6B65\u8FDB\u820D\u5165\u4F7F\u975E\u96F6\u7EC4\u5206\u4E3A0\u6216\u8D85\u8FC7\u603B\u91CF\uFF1B\u6B64\u65B9\u6848\u4E0D\u53EF\u6267\u884C / Rounding removes a nonzero component or exceeds final volume");
+        const deviation = stock === 0 ? 0 : (actual / stock - 1) * 100;
+        result = { ...result, table: [{ component: "\u6BCD\u6DB2 / Stock", theoreticalUl: stock, actualUl: actual }, { component: "\u7A00\u91CA\u6DB2 / Diluent", theoreticalUl: final - stock, actualUl: final - actual }], notes: [...result.notes, `\u79FB\u6DB2\u6B65\u8FDB ${step} \xB5L\uFF1B\u5B9E\u9645\u6D53\u5EA6\u504F\u5DEE ${deviation.toPrecision(6)}% / Actual concentration deviation; outputs retain theory.`] };
+        for (const [index, value] of [actual, final - actual].entries()) operations.push({ id: `actual:${index}`, component: index ? "\u7A00\u91CA\u6DB2 / Diluent" : "\u6BCD\u6DB2 / Stock", role: "add", basis: "actual", quantity: { value, unit: "\xB5L", dimension: "volume" } });
+      }
+    }
+    const structuredWarnings = [];
+    if (inputs.pipetteMinimumUl !== void 0 && inputs.pipetteMinimumUl !== null && inputs.pipetteMinimumUl !== "") {
+      const minimum = parseScalar(inputs.pipetteMinimumUl);
+      if (minimum <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
+      for (const operation of operations) {
+        const volume = convert(operation.quantity.value, operation.quantity.unit, "\xB5L");
+        if (!Number.isFinite(volume) || volume < 0) throw new Error("Invalid liquid operation");
+        if (volume > 0 && volume < minimum) {
+          const message = `${operation.sample ? operation.sample + " \xB7 " : ""}${operation.component} (${operation.basis}): ${formatQuantity(volume)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
+          structuredWarnings.push({ code: "below-minimum", operationId: operation.id, component: operation.component, sample: operation.sample, basis: operation.basis, volumeUl: volume, minimumUl: minimum, message });
+          warnings.push(message);
+        }
+      }
+    }
+    return { ...result, operations, warnings: [...new Set(warnings)], structuredWarnings };
   }
 
   // src/lib/calculators/task-definitions.ts
@@ -132,7 +290,12 @@ var LabNestCalculations = (() => {
       d.fields.unshift(select("complexMode", "Mixing template", "\u6DF7\u5408\u6A21\u677F", [["combined", "Combined mixture", "\u5355\u4F53\u7CFB"], ["two-tube", "Two separate tubes", "\u4E24\u7BA1\u5206\u522B\u914D\u5236\u518D\u6DF7\u5408"]]));
       d.fields.push(n("tubeAVolumeUl", "Tube A final volume per well", "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF", "\xB5L"));
     }
-    if (d.id === "wb-loading") d.fields.unshift(select("bufferContainsReducingAgent", "Buffer contains reducing agent", "Buffer\u662F\u5426\u5DF2\u542B\u8FD8\u539F\u5242", [["no", "No; specify separate amount", "\u5426\uFF0C\u5355\u72EC\u8BBE\u7F6E\u7528\u91CF"], ["yes", "Yes; do not add twice", "\u662F\uFF0C\u4E0D\u518D\u91CD\u590D\u6DFB\u52A0"]]));
+    if (d.id === "wb-loading") {
+      d.fields.unshift(select("bufferContainsReducingAgent", "Buffer contains reducing agent", "Buffer\u662F\u5426\u5DF2\u542B\u8FD8\u539F\u5242", [["", "Please confirm", "\u8BF7\u9009\u62E9\u786E\u8BA4"], ["no", "No; specify separate amount", "\u5426\uFF0C\u5355\u72EC\u8BBE\u7F6E\u7528\u91CF"], ["yes", "Yes; do not add twice", "\u662F\uFF0C\u4E0D\u518D\u91CD\u590D\u6DFB\u52A0"]]));
+      d.fields.push({ key: "reducingAgentName", type: "text", label: "Reducing-agent stock name", labelZh: "\u8FD8\u539F\u5242\u539F\u6DB2\u540D\u79F0" }, select("reducingMode", "Reducing-agent definition", "\u8FD8\u539F\u5242\u6DFB\u52A0\u5B9A\u4E49", [["volume-fraction", "Stock fraction of final volume", "\u539F\u6DB2\u5360\u6700\u7EC8\u4F53\u79EF\u6BD4\u4F8B"], ["target-concentration", "Target active concentration (%)", "\u6709\u6548\u6210\u5206\u76EE\u6807\u6D53\u5EA6\uFF08%\uFF09"]]), n("reducingStockPercent", "Stock concentration (%)", "\u539F\u6DB2\u6709\u6548\u6210\u5206\u6D53\u5EA6\uFF08%\uFF09", "%"));
+      d.exampleInputs = { ...d.exampleInputs, bufferContainsReducingAgent: "no", reducingAgentName: "Specified stock", reducingMode: "volume-fraction" };
+      d.methodVersion = "wb-loading-v3";
+    }
     if (d.id === "split") {
       d.fields.unshift(select("areaMode", "Container area", "\u5BB9\u5668\u9762\u79EF", [["same", "Same source and target area", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u76F8\u540C"], ["different", "Different areas", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u4E0D\u540C"]]));
       d.fields.push(n("sourceAreaCm2", "Source area", "\u6765\u6E90\u5BB9\u5668\u9762\u79EF", "cm\xB2"), n("targetAreaCm2", "Area of each target container", "\u6BCF\u4E2A\u76EE\u6807\u5BB9\u5668\u9762\u79EF", "cm\xB2"));
@@ -189,7 +352,7 @@ var LabNestCalculations = (() => {
     if (id === "hemocytometer" && ["areaMm2", "depthMm"].includes(key)) return inputs.countRegion === "custom";
     if (id === "master-mix" && Array.isArray(inputs.groups) && ["samples", "replicates", "controls"].includes(key)) return false;
     if (id === "transfection" && key === "tubeAVolumeUl") return inputs.complexMode === "two-tube";
-    if (id === "wb-loading" && key === "reducingAgentPercent") return inputs.bufferContainsReducingAgent !== "yes";
+    if (id === "wb-loading" && ["reducingAgentPercent", "reducingAgentName", "reducingMode", "reducingStockPercent"].includes(key)) return inputs.bufferContainsReducingAgent === "no" && (key !== "reducingStockPercent" || inputs.reducingMode === "target-concentration");
     if (id === "split" && ["sourceAreaCm2", "targetAreaCm2"].includes(key)) return inputs.areaMode === "different";
     if (id === "molarity") return key !== { mass: "massG", concentration: "concentrationM", volume: "volumeL" }[mode || "mass"];
     if (id === "centrifuge") return key !== (mode === "rcf-to-rpm" ? "rpm" : "rcf");
@@ -257,6 +420,15 @@ var LabNestCalculations = (() => {
       }
     });
   }
+  function wbPlan(rows, target, volume, bufferFold, agent) {
+    const table = batchPlan(rows, target, volume, bufferFold, agent.volumeUl);
+    return table.map((row) => {
+      const valid = typeof row.sampleUl === "number";
+      const full = { ...row, concentrationUnit: "\xB5g/\xB5L", targetProteinUg: target, reducingAgent: agent.name, reducingMode: agent.mode, reducingDefinition: agent.definition, reducingAgentUl: valid ? agent.volumeUl : "", totalUl: valid ? volume : "", volumeUnit: "\xB5L" };
+      if (valid && Math.abs(Number(full.sampleUl) + Number(full.bufferUl) + Number(full.reducingAgentUl) + Number(full.diluentUl) - volume) > Math.max(1e-9, volume * 1e-9)) throw new Error("WB volume balance failed");
+      return full;
+    });
+  }
 
   // src/lib/calculators/calculator-engine.ts
   var numberField = (key, label, labelZh, defaultValue, unit, min = 0) => ({ key, label, labelZh, type: "number", defaultValue, unit, min, step: "integer" === unit ? 1 : 0.01 });
@@ -313,8 +485,8 @@ var LabNestCalculations = (() => {
     if (n2 < 0 || !Number.isInteger(n2)) throw new Error("\u8BA1\u6570\u5FC5\u987B\u662F\u975E\u8D1F\u6574\u6570 / Counts must be nonnegative integers");
     return n2;
   });
-  var parseRows = (value, columns = 2) => String(value ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => line.split(/[,\t]/).map((part) => part.trim())).map((row) => {
-    if (row.length < columns || row.some((cell) => !cell)) throw new Error("\u8868\u683C\u542B\u4E0D\u5B8C\u6574\u884C / Incomplete table row");
+  var parseRows = (value, columns2 = 2) => String(value ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => line.split(/[,\t]/).map((part) => part.trim())).map((row) => {
+    if (row.length < columns2 || row.some((cell) => !cell)) throw new Error("\u8868\u683C\u542B\u4E0D\u5B8C\u6574\u884C / Incomplete table row");
     return row;
   });
   var out = (key, label, labelZh, value, unit) => ({ key, label, labelZh, value: typeof value === "number" ? round(value) : value, unit });
@@ -661,17 +833,27 @@ var LabNestCalculations = (() => {
         return finish(definition, [out("sampleConcentration", "Sample concentration", "\u6837\u54C1\u6D53\u5EA6", concentration), out("ec50", "Curve midpoint", "\u66F2\u7EBF\u4E2D\u70B9", fit.ec50), out("hillSlope", "Hill slope", "Hill\u659C\u7387", fit.hill), out("rSquared", "R\xB2", "R\xB2", fit.r2), out("bottom", "Bottom", "\u4E0B\u5E73\u53F0", fit.bottom), out("top", "Top", "\u4E0A\u5E73\u53F0", fit.top), out("converged", "Converged", "\u6570\u503C\u6536\u655B", fit.converged ? "Yes / \u662F" : "No / \u5426")], concentration / num(i, "dilutionFactor", { positive: true }) < Math.min(...rows.map((row) => row[0])) || concentration / num(i, "dilutionFactor", { positive: true }) > Math.max(...rows.map((row) => row[0])) ? ["\u7A00\u91CA\u6837\u672C\u53CD\u7B97\u6D53\u5EA6\u8D85\u51FA\u6807\u51C6\u8303\u56F4 / Diluted sample is outside the standard range"] : [], ["\u68C0\u67E5\u6807\u51C6\u66F2\u7EBF\u8986\u76D6\u8303\u56F4\u3001\u5E73\u53F0\u4E0E\u6536\u655B / Inspect range, plateaus and convergence"], rows.map(([x, y]) => ({ concentration: x, observed: y, fitted: fit.bottom + (fit.top - fit.bottom) / (1 + (fit.ec50 / x) ** fit.hill) })));
       }
       case "wb-loading": {
-        if (Array.isArray(i.samples)) {
-          const table = batchPlan(i.samples, num(i, "targetProteinUg", { positive: true }), num(i, "finalLoadingVolumeUl", { positive: true }), num(i, "bufferFold", { positive: true }), num(i, "finalLoadingVolumeUl") * num(i, "reducingAgentPercent", { min: 0 }) / 100);
-          return finish(current, [out("validRows", "Valid samples", "\u6709\u6548\u6837\u672C", table.filter((row) => typeof row.sampleUl === "number").length)], [], ["\u6D53\u5EA6\xB5g/\xB5L\uFF0C\u4F53\u79EF\xB5L / Concentrations \xB5g/\xB5L, volumes \xB5L"], table);
-        }
-        const sample = num(i, "targetProteinUg", { positive: true }) / num(i, "sampleConcentrationUgUl", { positive: true });
+        const inclusion = str(i, "bufferContainsReducingAgent");
+        if (!["yes", "no"].includes(inclusion)) throw new Error("\u8BF7\u786E\u8BA4Buffer\u662F\u5426\u542B\u8FD8\u539F\u5242 / Confirm whether buffer contains reducing agent");
         const final = num(i, "finalLoadingVolumeUl", { positive: true });
-        const buffer = final / num(i, "bufferFold", { positive: true });
-        const reducing = final * num(i, "reducingAgentPercent", { min: 0 }) / 100;
-        const water = final - sample - buffer - reducing;
-        if (water < 0) throw new Error("\u6837\u54C1\u53CA\u7EC4\u5206\u8D85\u8FC7\u6700\u7EC8\u4F53\u79EF / Sample and components exceed final volume");
-        return finish(definition, [out("sampleUl", "Sample", "\u6837\u54C1", sample, "\xB5L"), out("loadingBufferUl", "Loading buffer", "Loading Buffer", buffer, "\xB5L"), out("reducingAgentUl", "Reducing agent", "\u8FD8\u539F\u5242", reducing, "\xB5L"), out("waterUl", "Water", "\u6C34", Math.max(0, water), "\xB5L")], water < 0 ? ["The requested sample, buffer, and reducing agent exceed the final loading volume."] : []);
+        const mode = inclusion === "yes" ? "included" : str(i, "reducingMode") || "volume-fraction";
+        const percent = inclusion === "yes" ? 0 : num(i, "reducingAgentPercent", { min: 0 });
+        let reducing = final * percent / 100;
+        if (mode === "target-concentration") {
+          const stock = num(i, "reducingStockPercent", { positive: true });
+          if (percent > stock || stock > 100) throw new Error("\u8FD8\u539F\u5242\u6D53\u5EA6\u4E0D\u53EF\u884C / Invalid reducing-agent concentration");
+          reducing = final * percent / stock;
+        }
+        if (reducing > final) throw new Error("\u8FD8\u539F\u5242\u8D85\u8FC7\u603B\u4F53\u79EF / Reducing agent exceeds total volume");
+        const name = inclusion === "yes" ? "\u5DF2\u5305\u542B\u4E8EBuffer / Included in buffer" : str(i, "reducingAgentName") || (reducing === 0 ? "\u65E0\u72EC\u7ACB\u8FD8\u539F\u5242 / None" : "");
+        if (!name) throw new Error("\u8BF7\u6CE8\u660E\u8FD8\u539F\u5242\u539F\u6DB2\u540D\u79F0 / Name the reducing-agent stock");
+        const definition2 = mode === "included" ? "\u5DF2\u5305\u542B\u4E8EBuffer / Included in buffer" : mode === "target-concentration" ? `\u76EE\u6807 ${percent}%\uFF1B\u539F\u6DB2 ${i.reducingStockPercent}% / Target and stock concentrations` : `\u6700\u7EC8\u4F53\u79EF\u7684 ${percent}% v/v \u539F\u6DB2\uFF1B\u4E0D\u4EE3\u8868\u6709\u6548\u6210\u5206\u7EC8\u6D53\u5EA6 / Fraction of final volume, not active concentration`;
+        const rows = Array.isArray(i.samples) ? i.samples : [{ id: "Sample", concentration: String(i.sampleConcentrationUgUl ?? ""), available: "" }];
+        const table = wbPlan(rows, num(i, "targetProteinUg", { positive: true }), final, num(i, "bufferFold", { positive: true }), { name, mode, volumeUl: reducing, definition: definition2 });
+        if (!Array.isArray(i.samples) && typeof table[0]?.sampleUl !== "number") throw new Error(table[0]?.status ?? "Invalid WB sample");
+        const row = table[0];
+        const outputs = Array.isArray(i.samples) ? [out("validRows", "Valid samples", "\u6709\u6548\u6837\u672C", table.filter((r) => typeof r.sampleUl === "number").length)] : [out("sampleUl", "Sample", "\u6837\u54C1", row.sampleUl, "\xB5L"), out("loadingBufferUl", "Loading buffer", "Loading Buffer", row.bufferUl, "\xB5L"), out("reducingAgentUl", name, name, row.reducingAgentUl, "\xB5L"), out("waterUl", "Water", "\u6C34", row.diluentUl, "\xB5L")];
+        return finish(current, outputs, [], [definition2], table);
       }
       case "moi": {
         if (str(i, "titerUnit") === "VG/mL") throw new Error("VG\u4E0D\u662F\u529F\u80FD\u6027\u6EF4\u5EA6\uFF0C\u8BF7\u63D0\u4F9B\u529F\u80FD\u6027\u6EF4\u5EA6 / VG is not a functional titer");
@@ -715,7 +897,402 @@ var LabNestCalculations = (() => {
       normalizedInputs[field.key] = field.unit && units[normalizeUnit(field.unit)] ? { value: parseScalar(request.inputs[field.key]) * units[normalizeUnit(String(request.inputs[`${field.key}Unit`] ?? field.unit))].factor + (units[normalizeUnit(String(request.inputs[`${field.key}Unit`] ?? field.unit))].offset ?? 0), dimension: units[normalizeUnit(String(request.inputs[`${field.key}Unit`] ?? field.unit))].dimension, unit: canonicalUnits[units[normalizeUnit(String(request.inputs[`${field.key}Unit`] ?? field.unit))].dimension] ?? field.unit, sourceUnit: String(request.inputs[`${field.key}Unit`] ?? field.unit) } : request.inputs[field.key];
     }
     if (result.outputs.some((output) => typeof output.value === "number" && !Number.isFinite(output.value))) throw new Error("\u8BA1\u7B97\u6EA2\u51FA\u6216\u6761\u4EF6\u65E0\u6548 / Numerical overflow or invalid conditions");
-    return { ...result, schemaVersion: 2, status: ["split", "od600", "tm", "dna-rna-conversion", "moi", "virus-titer", "ic50-ec50", "elisa-4pl", "bradford-bca"].includes(request.calculatorId) ? "estimate" : result.table?.some((row) => typeof row.status === "string" && row.status !== "\u6709\u6548 / Valid") ? "partial" : "valid", mode: String(request.inputs.mode ?? "default"), rawInputs: structuredClone(request.inputs), normalizedInputs };
+    return { ...result, displayUnits: validateDisplayUnits(result, request.inputs.__displayUnits), schemaVersion: 2, status: ["split", "od600", "tm", "dna-rna-conversion", "moi", "virus-titer", "ic50-ec50", "elisa-4pl", "bradford-bca"].includes(request.calculatorId) ? "estimate" : result.table?.some((row) => typeof row.status === "string" && row.status !== "\u6709\u6548 / Valid") ? "partial" : "valid", mode: String(request.inputs.mode ?? "default"), rawInputs: structuredClone(request.inputs), normalizedInputs };
   }
-  return __toCommonJS(calculator_engine_exports);
+
+  // src/lib/calculators/task-presentation.ts
+  var names = { dilution: ["Dilution", "\u7A00\u91CA\u52A0\u836F"], molarity: ["Solutions", "\u79F0\u91CF\u914D\u6DB2"], seeding: ["Seeding", "\u7EC6\u80DE\u94FA\u677F"], "master-mix": ["Reaction mix", "\u53CD\u5E94\u914D\u6DB2"], "wb-loading": ["WB loading", "WB\u4E0A\u6837"], centrifuge: ["Centrifuge", "\u79BB\u5FC3\u6362\u7B97"] };
+  var tips = { dilution: ["Choose final volume or adding to existing liquid; they differ.", "\u5148\u9009\u914D\u5230\u603B\u4F53\u79EF\u6216\u5411\u5DF2\u6709\u6DB2\u4F53\u52A0\u5165\uFF0C\u4E24\u79CD\u6A21\u5F0F\u4E0D\u540C\u3002"], molarity: ["Confirm the molecular weight of the chemical form and concentration definition.", "\u6838\u5BF9\u5206\u5B50\u91CF\u5BF9\u5E94\u7684\u5316\u5B66\u5F62\u5F0F\uFF0C\u533A\u5206\u767E\u5206\u6D53\u5EA6\u7C7B\u578B\u3002"], seeding: ["Use viable-cell concentration; do not apply viability twice.", "\u8F93\u5165\u6D3B\u7EC6\u80DE\u6D53\u5EA6\u65F6\uFF0C\u4E0D\u8981\u518D\u6B21\u4E58\u6D3B\u7387\u3002"], "master-mix": ["Separate premix components from each sample template.", "\u533A\u5206\u53EF\u9884\u6DF7\u7EC4\u5206\u4E0E\u5404\u6837\u672C\u72EC\u7ACB\u52A0\u5165\u7684\u6A21\u677F\u3002"], "wb-loading": ["Confirm buffer reducing agent and check all component volumes.", "\u786E\u8BA4Buffer\u662F\u5426\u542B\u8FD8\u539F\u5242\uFF0C\u5E76\u6838\u5BF9\u6240\u6709\u7EC4\u5206\u603B\u91CF\u3002"], centrifuge: ["Use the actual rotor radius; RPM and RCF require it.", "\u4F7F\u7528\u5B9E\u9645\u8F6C\u5B50\u534A\u5F84\uFF1B\u7F3A\u5C11\u534A\u5F84\u4E0D\u80FD\u76F4\u63A5\u4E92\u6362\u3002"] };
+  function taskPresentation(id, zh) {
+    const d = getCalculatorDefinition(id);
+    return { name: names[id]?.[zh ? 1 : 0] ?? (zh ? d.nameZh : d.name), description: zh ? d.shortDescriptionZh : d.shortDescription, advice: tips[id]?.[zh ? 1 : 0] ?? (zh ? d.methodZh : d.method) };
+  }
+  var generatedTaskIcons = { dilution: "dilution", molarity: "solution-prep", seeding: "cell-seeding", "master-mix": "reaction-mix", "wb-loading": "wb-loading", centrifuge: "centrifuge" };
+  function taskIconResource(taskId, pack) {
+    return pack === "lab-soft" && generatedTaskIcons[taskId] ? `/icons/lab-soft-v1/${generatedTaskIcons[taskId]}.png` : null;
+  }
+
+  // src/lib/system-theme.ts
+  function defineSystemTheme(theme) {
+    return {
+      ...theme,
+      colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]],
+      navigation: {
+        background: theme.tokens["--nav-active-bg"],
+        foreground: theme.tokens["--nav-active-fg"]
+      }
+    };
+  }
+  var systemThemes = [
+    defineSystemTheme({
+      id: "moon-dai",
+      name: "\u6708\u767D\u9EDB\u9752",
+      motif: "huiwen",
+      description: "\u6708\u767D\u7EB8\u9762\u3001\u9EDB\u9752\u7ED3\u6784\u4E0E\u97CE\u97D0\u6696\u7EA2\uFF0C\u51B7\u6696\u5BF9\u7167\u66F4\u6E05\u695A\u3002",
+      tokens: {
+        "--paper": "#f7f9fb",
+        "--warm": "#fbfcfd",
+        "--stone": "#eef2f5",
+        "--sand-panel": "#e1e8ed",
+        "--ink": "#20282f",
+        "--graphite": "#475863",
+        "--muted": "#5b6a73",
+        "--disabled": "#a5ada9",
+        "--moss": "#2a475f",
+        "--moss-hover": "#213a4e",
+        "--moss-surface": "#e6eef4",
+        "--moss-surface-hover": "#dce7ef",
+        "--moss-border": "#bdcfdd",
+        "--action": "#2a475f",
+        "--action-hover": "#213a4e",
+        "--action-surface": "#e6eef4",
+        "--action-surface-hover": "#dce7ef",
+        "--action-border": "#bdcfdd",
+        "--contrast-action": "#a5441b",
+        "--contrast-action-hover": "#893614",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#f6e9e2",
+        "--contrast-action-border": "#8d3716",
+        "--sage": "#2a475f",
+        "--sage-surface": "#eaf1f5",
+        "--fog": "#526f83",
+        "--fog-surface": "#edf2f6",
+        "--clay": "#a5441b",
+        "--pale-sand": "#f6e9e2",
+        "--hairline": "#dce4e9",
+        "--border-strong": "#c4d0d8",
+        "--brand-mark-bg": "#2a475f",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#213a4e",
+        "--nav-active-bg": "#a5441b",
+        "--nav-active-fg": "#ffffff",
+        "--nav-active-border": "#8d3716"
+      }
+    }),
+    defineSystemTheme({
+      id: "azure-coral",
+      name: "\u6CD5\u84DD\u8D6A\u971E",
+      motif: "ruyi-cloud",
+      description: "\u660E\u4EAE\u800C\u6E05\u6670\uFF0C\u589E\u5F3A\u64CD\u4F5C\u4E0E\u9009\u4E2D\u72B6\u6001\u7684\u8FA8\u8BC6\u5EA6\u3002",
+      tokens: {
+        "--paper": "#f5fafb",
+        "--warm": "#fbfdfe",
+        "--stone": "#eaf5f7",
+        "--sand-panel": "#dceef2",
+        "--ink": "#20282b",
+        "--graphite": "#47595e",
+        "--muted": "#586c72",
+        "--disabled": "#a3b0b3",
+        "--moss": "#147d99",
+        "--moss-hover": "#106b84",
+        "--moss-surface": "#def3f7",
+        "--moss-surface-hover": "#d2edf3",
+        "--moss-border": "#a9dbe6",
+        "--action": "#147d99",
+        "--action-hover": "#106b84",
+        "--action-surface": "#def3f7",
+        "--action-surface-hover": "#d2edf3",
+        "--action-border": "#a9dbe6",
+        "--contrast-action": "#bf4f42",
+        "--contrast-action-hover": "#a23f35",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#f9e7e3",
+        "--contrast-action-border": "#a23f35",
+        "--sage": "#30aecf",
+        "--sage-surface": "#e4f6fa",
+        "--fog": "#4a7f8c",
+        "--fog-surface": "#e8f4f6",
+        "--clay": "#de7565",
+        "--pale-sand": "#f9e7e3",
+        "--hairline": "#d8e6e9",
+        "--border-strong": "#bdd3d8",
+        "--brand-mark-bg": "#147d99",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#116b83",
+        "--nav-active-bg": "#de7565",
+        "--nav-active-fg": "#2b1815",
+        "--nav-active-border": "#bd5d50"
+      }
+    }),
+    defineSystemTheme({
+      id: "celadon-pine",
+      name: "\u9752\u74F7\u677E\u77F3",
+      motif: "lotus",
+      description: "\u9752\u74F7\u4E0E\u677E\u77F3\u8D1F\u8D23\u79E9\u5E8F\uFF0C\u4EE5\u69DF\u6994\u68D5\u4F5C\u4E3A\u6E29\u6696\u7684\u9009\u4E2D\u649E\u8272\u3002",
+      tokens: {
+        "--paper": "#f5f8f2",
+        "--warm": "#fbfcf8",
+        "--stone": "#edf2e8",
+        "--sand-panel": "#e1e9dc",
+        "--ink": "#222a25",
+        "--graphite": "#4b5a51",
+        "--muted": "#5d6d63",
+        "--disabled": "#a6afa9",
+        "--moss": "#397978",
+        "--moss-hover": "#2e6665",
+        "--moss-surface": "#e2f1ef",
+        "--moss-surface-hover": "#d5eae7",
+        "--moss-border": "#b8d8d4",
+        "--action": "#397978",
+        "--action-hover": "#2e6665",
+        "--action-surface": "#e2f1ef",
+        "--action-surface-hover": "#d5eae7",
+        "--action-border": "#b8d8d4",
+        "--contrast-action": "#986524",
+        "--contrast-action-hover": "#7c5019",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#f8eadb",
+        "--contrast-action-border": "#7c5019",
+        "--sage": "#4a9d9c",
+        "--sage-surface": "#e5f3f1",
+        "--fog": "#5c7d78",
+        "--fog-surface": "#edf3ef",
+        "--clay": "#c1651a",
+        "--pale-sand": "#f8eadb",
+        "--hairline": "#dde5da",
+        "--border-strong": "#c7d2c3",
+        "--brand-mark-bg": "#397978",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#2e6665",
+        "--nav-active-bg": "#986524",
+        "--nav-active-fg": "#ffffff",
+        "--nav-active-border": "#7c5019"
+      }
+    }),
+    defineSystemTheme({
+      id: "lotus-ink",
+      name: "\u85D5\u8377\u781A\u58A8",
+      motif: "linked-diamond",
+      description: "\u85D5\u8377\u7D2B\u4E0E\u5B98\u7EFF\u76F8\u649E\uFF0C\u4FDD\u7559\u6E29\u6DA6\u7EB8\u611F\u53C8\u6709\u660E\u786E\u7126\u70B9\u3002",
+      tokens: {
+        "--paper": "#faf6f4",
+        "--warm": "#fdfaf8",
+        "--stone": "#f3ecec",
+        "--sand-panel": "#ebe1e3",
+        "--ink": "#2a2528",
+        "--graphite": "#5a4e54",
+        "--muted": "#6d5d65",
+        "--disabled": "#aea4a9",
+        "--moss": "#75556b",
+        "--moss-hover": "#624659",
+        "--moss-surface": "#f1e8ee",
+        "--moss-surface-hover": "#eadee6",
+        "--moss-border": "#ddcbd7",
+        "--action": "#75556b",
+        "--action-hover": "#624659",
+        "--action-surface": "#f1e8ee",
+        "--action-surface-hover": "#eadee6",
+        "--action-border": "#ddcbd7",
+        "--contrast-action": "#587f3d",
+        "--contrast-action-hover": "#45672f",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#edf3e6",
+        "--contrast-action-border": "#45672f",
+        "--sage": "#75556b",
+        "--sage-surface": "#f3ebf0",
+        "--fog": "#796674",
+        "--fog-surface": "#f3edef",
+        "--clay": "#7aa35a",
+        "--pale-sand": "#edf3e6",
+        "--hairline": "#e8dedf",
+        "--border-strong": "#d5c7ca",
+        "--brand-mark-bg": "#75556b",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#624659",
+        "--nav-active-bg": "#7aa35a",
+        "--nav-active-fg": "#15210f",
+        "--nav-active-border": "#638948"
+      }
+    }),
+    defineSystemTheme({
+      id: "indigo-xiangqi",
+      name: "\u975B\u9752\u7F03\u7EEE",
+      motif: "linked-diamond",
+      description: "\u6DF1\u975B\u84DD\u642D\u914D\u660E\u4EAE\u7F03\u7EEE\u91D1\uFF0C\u7406\u6027\u5185\u5BB9\u4E2D\u5E26\u6E05\u6670\u884C\u52A8\u7126\u70B9\u3002",
+      tokens: {
+        "--paper": "#f6f8fc",
+        "--warm": "#fbfcff",
+        "--stone": "#eaf0f8",
+        "--sand-panel": "#dce5f1",
+        "--ink": "#1f2937",
+        "--graphite": "#46566b",
+        "--muted": "#5c6b7e",
+        "--disabled": "#a4afbd",
+        "--moss": "#1661ab",
+        "--moss-hover": "#0f4f91",
+        "--moss-surface": "#e4eefb",
+        "--moss-surface-hover": "#d7e6f8",
+        "--moss-border": "#b8d0ee",
+        "--action": "#1661ab",
+        "--action-hover": "#0f4f91",
+        "--action-surface": "#e4eefb",
+        "--action-surface-hover": "#d7e6f8",
+        "--action-border": "#b8d0ee",
+        "--contrast-action": "#8a5a12",
+        "--contrast-action-hover": "#6f470c",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#fcf0dc",
+        "--contrast-action-border": "#6f470c",
+        "--sage": "#1661ab",
+        "--sage-surface": "#eaf2fc",
+        "--fog": "#526b89",
+        "--fog-surface": "#edf2f8",
+        "--clay": "#f8c471",
+        "--pale-sand": "#fcf0dc",
+        "--hairline": "#d9e2ef",
+        "--border-strong": "#bdcbe0",
+        "--brand-mark-bg": "#1661ab",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#0f4f91",
+        "--nav-active-bg": "#f8c471",
+        "--nav-active-fg": "#2f240e",
+        "--nav-active-border": "#d29b42"
+      }
+    }),
+    defineSystemTheme({
+      id: "palace-jasmine",
+      name: "\u5BAB\u7EFF\u8309\u8389",
+      motif: "lotus",
+      description: "\u5BAB\u6BBF\u7EFF\u4E0E\u8349\u8309\u8389\u7EA2\u5F62\u6210\u9C9C\u660E\u4E92\u8865\uFF0C\u660E\u5FEB\u4F46\u4E0D\u8FC7\u91CF\u3002",
+      tokens: {
+        "--paper": "#f7faf5",
+        "--warm": "#fbfdf9",
+        "--stone": "#edf4ea",
+        "--sand-panel": "#dfead9",
+        "--ink": "#202b23",
+        "--graphite": "#46584b",
+        "--muted": "#5c6d60",
+        "--disabled": "#a5b0a7",
+        "--moss": "#20894d",
+        "--moss-hover": "#176b3b",
+        "--moss-surface": "#e4f3e9",
+        "--moss-surface-hover": "#d7ebdf",
+        "--moss-border": "#b9d9c5",
+        "--action": "#20894d",
+        "--action-hover": "#176b3b",
+        "--action-surface": "#e4f3e9",
+        "--action-surface-hover": "#d7ebdf",
+        "--action-border": "#b9d9c5",
+        "--contrast-action": "#c92f46",
+        "--contrast-action-hover": "#aa2338",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#fde9ed",
+        "--contrast-action-border": "#aa2338",
+        "--sage": "#20894d",
+        "--sage-surface": "#edf4e7",
+        "--fog": "#5c7b63",
+        "--fog-surface": "#edf3ee",
+        "--clay": "#ef475d",
+        "--pale-sand": "#fde9ed",
+        "--hairline": "#dce6d8",
+        "--border-strong": "#c4d2bf",
+        "--brand-mark-bg": "#20894d",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#176b3b",
+        "--nav-active-bg": "#ef475d",
+        "--nav-active-fg": "#2c1015",
+        "--nav-active-border": "#ca3347"
+      }
+    }),
+    defineSystemTheme({
+      id: "ganqing-buddha",
+      name: "\u7EC0\u9752\u4F5B\u624B",
+      motif: "huiwen",
+      description: "\u6E05\u4EAE\u7EC0\u9752\u914D\u4F5B\u624B\u9EC4\uFF0C\u9002\u5408\u504F\u5E74\u8F7B\u3001\u8FA8\u8BC6\u5EA6\u9AD8\u7684\u5DE5\u4F5C\u754C\u9762\u3002",
+      tokens: {
+        "--paper": "#f7f9ff",
+        "--warm": "#fcfdff",
+        "--stone": "#edf1fb",
+        "--sand-panel": "#dfe6f5",
+        "--ink": "#202a3a",
+        "--graphite": "#495a72",
+        "--muted": "#5d6d84",
+        "--disabled": "#a5afbe",
+        "--moss": "#356fdc",
+        "--moss-hover": "#285bb9",
+        "--moss-surface": "#e6edff",
+        "--moss-surface-hover": "#d9e4ff",
+        "--moss-border": "#bdcdf5",
+        "--action": "#356fdc",
+        "--action-hover": "#285bb9",
+        "--action-surface": "#e6edff",
+        "--action-surface-hover": "#d9e4ff",
+        "--action-border": "#bdcdf5",
+        "--contrast-action": "#745b00",
+        "--contrast-action-hover": "#594600",
+        "--contrast-action-fg": "#ffffff",
+        "--contrast-action-soft": "#fff8cf",
+        "--contrast-action-border": "#594600",
+        "--sage": "#4f84ff",
+        "--sage-surface": "#edf2ff",
+        "--fog": "#5a7199",
+        "--fog-surface": "#eff2f8",
+        "--clay": "#fed71a",
+        "--pale-sand": "#fff8cf",
+        "--hairline": "#dce3f0",
+        "--border-strong": "#c5cede",
+        "--brand-mark-bg": "#356fdc",
+        "--brand-mark-fg": "#ffffff",
+        "--brand-mark-border": "#285bb9",
+        "--nav-active-bg": "#fed71a",
+        "--nav-active-fg": "#1f2a44",
+        "--nav-active-border": "#d8b400"
+      }
+    })
+  ];
+  function isSystemThemeId(value) {
+    return systemThemes.some((theme) => theme.id === value);
+  }
+
+  // src/lib/ui-scale.ts
+  var uiScaleOptions = [
+    {
+      id: "compact",
+      name: "\u7D27\u51D1",
+      nameEn: "Compact",
+      description: "\u66F4\u5C0F\u7684\u754C\u9762\u5B57\u4E0E\u66F4\u6E05\u695A\u7684\u4FE1\u606F\u5C42\u7EA7",
+      descriptionEn: "Smaller interface type with a clearer hierarchy"
+    },
+    {
+      id: "standard",
+      name: "\u6807\u51C6",
+      nameEn: "Standard",
+      description: "\u63A5\u8FD1\u6D4F\u89C8\u5668\u5E38\u89C4\u754C\u9762\u5B57\u53F7",
+      descriptionEn: "Balanced everyday interface sizing"
+    },
+    {
+      id: "comfortable",
+      name: "\u8212\u5C55",
+      nameEn: "Comfortable",
+      description: "\u653E\u5927\u754C\u9762\u6587\u5B57\uFF0C\u63A7\u4EF6\u95F4\u8DDD\u4FDD\u6301\u4E0D\u53D8",
+      descriptionEn: "Larger interface type without changing control spacing"
+    }
+  ];
+  var defaultUiScale = "compact";
+  function isUiScaleId(value) {
+    return typeof value === "string" && uiScaleOptions.some((option) => option.id === value);
+  }
+
+  // src/lib/appearance.ts
+  var appearanceKey = "labnest.appearance";
+  var appearanceDefaults = { schemaVersion: 1, mode: "system", colorSchemeId: "moon-dai", uiFontId: "system-sans", dataFontId: "mono", uiScaleId: defaultUiScale, iconPackId: "lab-soft" };
+  var preferenceIds = { mode: ["light", "dark", "system"], colorSchemeId: systemThemes.map((t) => t.id), uiFontId: ["system-sans", "system-serif"], dataFontId: ["system", "mono"], uiScaleId: uiScaleOptions.map((s) => s.id), iconPackId: ["classic-line", "lab-soft"] };
+  function parseAppearance(raw, legacyTheme, legacyScale, existingUser) {
+    const base = { ...appearanceDefaults, colorSchemeId: isSystemThemeId(legacyTheme) ? legacyTheme : "moon-dai", uiScaleId: isUiScaleId(legacyScale) ? legacyScale : defaultUiScale, iconPackId: existingUser ? "classic-line" : "lab-soft" };
+    if (raw === null) return { value: base, preserve: false };
+    try {
+      const data = JSON.parse(raw);
+      if (data?.schemaVersion !== 1) return { value: base, preserve: true };
+      let preserve = false;
+      for (const [key, ids] of Object.entries(preferenceIds)) {
+        if (ids.includes(data[key])) base[key] = data[key];
+        else preserve = true;
+      }
+      if (Object.keys(data).some((key) => key !== "schemaVersion" && !(key in preferenceIds))) preserve = true;
+      return { value: base, preserve };
+    } catch {
+      return { value: base, preserve: true };
+    }
+  }
+  return __toCommonJS(standalone_exports);
 })();

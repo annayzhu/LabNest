@@ -1,25 +1,16 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import {useAppearance} from "./AppearanceProvider";
 import { useI18n } from "@/components/I18nProvider";
-import { applyUiScale, defaultUiScale, isUiScaleId, uiScaleOptions, uiScaleStorageKey, type UiScaleId } from "@/lib/ui-scale";
+import { uiScaleOptions, type UiScaleId } from "@/lib/ui-scale";
 
 export function InterfaceScalePicker() {
   const { locale } = useI18n();
   const zh = locale === "zh";
-  const [selected, setSelected] = useState<UiScaleId>(defaultUiScale);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(uiScaleStorageKey);
-    const resolved = isUiScaleId(stored) ? stored : defaultUiScale;
-    queueMicrotask(() => setSelected(resolved));
-  }, []);
-
-  function choose(scale: UiScaleId) {
-    setSelected(scale);
-    applyUiScale(scale);
-  }
+  const {preferences,setAppearance}=useAppearance();
+  const selected=preferences.uiScaleId;
+  const choose=(uiScaleId:UiScaleId)=>setAppearance({uiScaleId});
 
   return (
     <fieldset className="interface-scale-picker">

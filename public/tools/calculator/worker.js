@@ -1,5 +1,5 @@
 /* Calculator-scoped offline cache. Never caches API writes or experiment pages. */
-const cacheName = 'labnest-calculator-shell-v2';
+const cacheName = 'labnest-calculator-shell-v3';
 self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 self.addEventListener('message', event => {
@@ -7,7 +7,7 @@ self.addEventListener('message', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(cacheName);
     const urls = [...new Set(event.data.urls)].filter(value => {
-      try { const url = new URL(value);return url.origin === self.location.origin && (url.pathname.startsWith('/tools/calculator') || url.pathname.startsWith('/_next/static/')); } catch { return false; }
+      try { const url = new URL(value);return url.origin === self.location.origin && (url.pathname.startsWith('/tools/calculator') || url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/lab-soft-v1/')); } catch { return false; }
     });
     try {
       for (const url of urls) { const response = await fetch(url);if (!response.ok) throw new Error('Cache request failed');await cache.put(url,response); }
@@ -17,7 +17,7 @@ self.addEventListener('message', event => {
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin || !(url.pathname.startsWith('/tools/calculator') || url.pathname.startsWith('/_next/static/'))) return;
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin || !(url.pathname.startsWith('/tools/calculator') || url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/lab-soft-v1/'))) return;
   // RSC transport is not interchangeable with a document and is never used as an offline HTML fallback.
   if (event.request.headers.get('RSC') === '1' || url.searchParams.has('_rsc')) return;
   event.respondWith((async () => {

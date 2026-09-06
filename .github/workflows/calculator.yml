@@ -1,0 +1,84 @@
+name: Calculator acceptance
+on:
+  pull_request:
+    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'package*.json', '.github/workflows/calculator.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        timezone: [Asia/Shanghai, America/Vancouver]
+    env:
+      TZ: ${{ matrix.timezone }}
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+  browser:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TZ: Asia/Shanghai
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_test
+      LABNEST_BUILD_DIR: .next/calculator-production
+      LABNEST_TSCONFIG_PATH: tsconfig.calculator.json
+      LABNEST_E2E_BASE_URL: http://localhost:3221
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start isolated fixture server
+        run: |
+          node scripts/calculator-acceptance-server.mjs > calculator-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3221/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat calculator-server.log
+          exit 1
+      - run: node scripts/verify-calculator-refactor.mjs
+      - run: node scripts/verify-calculator-legacy.mjs
+      - run: node scripts/verify-calculator-compact-ui.mjs
+      - run: node scripts/verify-calculator-plate.mjs
+      - run: node scripts/verify-calculator-storage-appearance.mjs
+      - run: node scripts/verify-calculator-appearance.mjs
+      - run: node scripts/verify-calculator-integration.mjs
+      - run: node scripts/verify-calculator-database.mjs
+      - run: node scripts/verify-calculator-rejection.mjs
+      - run: node scripts/verify-calculator-visual-v11.mjs
+      - run: node scripts/verify-calculator-standalone-v11.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calculator-browser-evidence
+          path: |
+            docs/calculator/evidence
+            docs/calculator/v1.1/evidence
+            calculator-server.log

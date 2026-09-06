@@ -26,7 +26,7 @@ export function enhanceDefinition(d: CalculatorDefinition): CalculatorDefinition
   }
   if (d.id === 'centrifuge') { d.aliases.push('g转rpm');d.fields.push(select('radiusDefinition','Radius definition','半径来源定义',[['entered','User-entered rotor radius','用户录入转子半径'],['maximum','Maximum radius','最大半径'],['mean','Mean radius','平均半径']])); }
   if(d.id==='transfection'){d.fields.unshift(select('complexMode','Mixing template','混合模板',[['combined','Combined mixture','单体系'],['two-tube','Two separate tubes','两管分别配制再混合']]));d.fields.push(n('tubeAVolumeUl','Tube A final volume per well','每孔A管总体积','µL'));}
-  if(d.id==='wb-loading')d.fields.unshift(select('bufferContainsReducingAgent','Buffer contains reducing agent','Buffer是否已含还原剂',[['no','No; specify separate amount','否，单独设置用量'],['yes','Yes; do not add twice','是，不再重复添加']]));
+  if(d.id==='wb-loading'){d.fields.unshift(select('bufferContainsReducingAgent','Buffer contains reducing agent','Buffer是否已含还原剂',[['','Please confirm','请选择确认'],['no','No; specify separate amount','否，单独设置用量'],['yes','Yes; do not add twice','是，不再重复添加']]));d.fields.push({key:'reducingAgentName',type:'text',label:'Reducing-agent stock name',labelZh:'还原剂原液名称'},select('reducingMode','Reducing-agent definition','还原剂添加定义',[['volume-fraction','Stock fraction of final volume','原液占最终体积比例'],['target-concentration','Target active concentration (%)','有效成分目标浓度（%）']]),n('reducingStockPercent','Stock concentration (%)','原液有效成分浓度（%）','%'));d.exampleInputs={...d.exampleInputs,bufferContainsReducingAgent:'no',reducingAgentName:'Specified stock',reducingMode:'volume-fraction'};d.methodVersion='wb-loading-v3';}
   if(d.id==='split'){d.fields.unshift(select('areaMode','Container area','容器面积',[['same','Same source and target area','来源和目标容器面积相同'],['different','Different areas','来源和目标容器面积不同']]));d.fields.push(n('sourceAreaCm2','Source area','来源容器面积','cm²'),n('targetAreaCm2','Area of each target container','每个目标容器面积','cm²'));}
 
   if (d.id === 'dna-rna-conversion') d.aliases.push('ng/μL 转 nM','DNA浓度','ng每μL转nM');
@@ -71,7 +71,7 @@ export function isFieldVisible(id: string, key: string, inputs: Record<string,un
   if(id==='hemocytometer'&&['areaMm2','depthMm'].includes(key))return inputs.countRegion==='custom';
   if(id==='master-mix'&&Array.isArray(inputs.groups)&&['samples','replicates','controls'].includes(key))return false;
   if(id==='transfection'&&key==='tubeAVolumeUl')return inputs.complexMode==='two-tube';
-  if(id==='wb-loading'&&key==='reducingAgentPercent')return inputs.bufferContainsReducingAgent!=='yes';
+  if(id==='wb-loading'&&['reducingAgentPercent','reducingAgentName','reducingMode','reducingStockPercent'].includes(key))return inputs.bufferContainsReducingAgent==='no'&&(key!=='reducingStockPercent'||inputs.reducingMode==='target-concentration');
   if(id==='split'&&['sourceAreaCm2','targetAreaCm2'].includes(key))return inputs.areaMode==='different';
   if(id==='molarity')return key!==({mass:'massG',concentration:'concentrationM',volume:'volumeL'}[mode||'mass']);
   if(id==='centrifuge')return key!==(mode==='rcf-to-rpm'?'rpm':'rcf');

@@ -6,6 +6,7 @@ import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
+import { TodayCalculators } from "@/components/calculators/TodayCalculators";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
@@ -231,6 +232,7 @@ export default async function OverviewPage({
         </Link>
 
         <MobileBenchStatus />
+        <TodayCalculators />
 
         <section aria-labelledby="today-plan-title">
           <div className="mb-2 flex items-center justify-between gap-3">

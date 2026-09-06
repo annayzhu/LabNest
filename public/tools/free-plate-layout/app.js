@@ -1188,7 +1188,7 @@
       methodZh: "按所选孔总体积和凝胶/细胞悬液比例计算混合体系，并校验细胞原液能否装入悬液部分。",
       methodEn: "Calculate the mixture from selected-well volume and gel/suspension ratio, checking that cell stock fits.",
       fields: [
-        ["stockCellsPerMl", "细胞原液浓度", "Stock cell density", 2000000, "cells/mL"],
+        ["stockCellsPerMl", "细胞原液浓度", "Stock cell density", 10000000, "cells/mL"],
         ["targetCellsPerMl", "目标细胞密度", "Target cell density", 1000000, "cells/mL"],
         ["wells", "孔数", "Wells", 24, "", "scope"], ["volumePerWellUl", "每孔体积", "Volume per well", 100, "µL"],
         ["gelParts", "水凝胶份数", "Hydrogel parts", 4, ""], ["suspensionParts", "细胞悬液份数", "Suspension parts", 1, ""],
@@ -1242,15 +1242,21 @@
     return `<label${type === "scope" ? ' class="liquid-scope-field"' : ""}><span>${escapeHtml(label)}</span><span class="liquid-inline-input"><input name="${name}" type="number" step="any" min="0" value="${escapeHtml(value)}" ${type === "scope" ? 'readonly aria-readonly="true"' : ""} required />${unitMarkup}</span></label>`;
   }
 
+  document.getElementById('cacheStandalone').addEventListener('click',async()=>{const status=document.getElementById('cacheStandaloneStatus');try{status.textContent='Caching / 正在缓存';const registration=await navigator.serviceWorker.register('./offline.js',{scope:'./'});const worker=registration.active||registration.installing||registration.waiting;if(!worker)throw Error('worker');if(worker.state!=='activated')await new Promise(resolve=>worker.addEventListener('statechange',()=>{if(worker.state==='activated')resolve();}));const paths=[location.href,...[...document.querySelectorAll('script[src],link[rel="stylesheet"]')].map(el=>el.src||el.href),...['dilution','solution-prep','cell-seeding','reaction-mix','wb-loading','centrifuge'].map(id=>`./icons/lab-soft-v1/${id}.png`)];const ok=await new Promise(resolve=>{const channel=new MessageChannel(),timer=setTimeout(()=>resolve(false),20000);channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data.ok);};worker.postMessage({type:'CACHE_STANDALONE',paths},[channel.port2]);});status.textContent=ok?'Cached for offline reload / 已缓存，可离线刷新':'Caching failed / 缓存失败';}catch{status.textContent='Caching unavailable; requires HTTPS or localhost / 需HTTPS或本机地址';}});
+  let standaloneIconPack='lab-soft';
+  let standaloneAppearanceWarning='';
+  try {const raw=localStorage.getItem('labnest.standalone-calculator.appearance');standaloneIconPack=window.LabNestCalculations.parseAppearance(raw,null,null,false).value.iconPackId;}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}
+  function standaloneTaskIcon(id){const resource=window.LabNestCalculations.taskIconResource(id,standaloneIconPack);const fallback='<svg aria-hidden="true" viewBox="0 0 24 24" width="32" height="32"><rect x="5" y="2" width="14" height="20" rx="2" fill="none" stroke="currentColor"/><path d="M8 6h8M8 11h2m4 0h2M8 15h2m4 0h2M8 19h2m4 0h2" stroke="currentColor"/></svg>';return `<span class="standalone-task-icon" aria-hidden="true" style="display:inline-flex;width:32px;height:32px">${resource?`<img src="${escapeHtml('.'+resource)}" width="32" height="32" alt="" />`:fallback}</span>`;}
   function standalonePlateCalculatorMarkup(calculatorId) {
     const definition = plateCalculatorDefinitions[calculatorId];
     const scopeCount = liquidTargetWellIds().length;
     return `<div class="liquid-workspace plate-calculator-workspace">
       <section class="liquid-form-card">
-        <h3>${escapeHtml(bilingual(definition.nameZh, definition.nameEn))}</h3>
+        <h3>${standaloneTaskIcon(calculatorId)} ${escapeHtml(bilingual(definition.nameZh, definition.nameEn))}</h3>
+        <label>任务图标 / Task icons <select data-standalone-icon-pack><option value="lab-soft" ${standaloneIconPack==='lab-soft'?'selected':''}>Lab soft</option><option value="classic-line" ${standaloneIconPack==='classic-line'?'selected':''}>Classic line</option></select></label><p>此独立版当前来源内生效，不自动跨来源同步 / Local to this standalone origin; no automatic cross-origin sync. ${escapeHtml(standaloneAppearanceWarning)}</p>
         <p>${escapeHtml(bilingual("当前范围：" + scopeCount + " 孔。直接在此计算，不需要打开 LabNest 其他页面。", `Current scope: ${scopeCount} wells. Calculate here without another LabNest page.`))}</p>
         <form id="standalonePlateCalculatorForm" data-calculator-id="${calculatorId}">
-          <div class="liquid-form-grid">${definition.fields.map((field) => standalonePlateFieldMarkup(field, scopeCount)).join("")}</div>
+          <div class="liquid-form-grid">${definition.fields.map((field) => standalonePlateFieldMarkup(field, scopeCount)).join("")}<label><span>移液下限 / Pipetting limit (µL)</span><input name="pipetteMinimumUl" type="number" step="any" min="0" placeholder="Optional" /></label></div>
           <div class="plate-calculator-method"><strong>${escapeHtml(bilingual("计算方法", "Method"))}</strong><br />${escapeHtml(bilingual(definition.methodZh, definition.methodEn))}</div>
           <div class="liquid-action-row"><button class="primary-button" type="submit">${escapeHtml(bilingual("计算", "Calculate"))}</button></div>
         </form>
@@ -1270,22 +1276,24 @@
 
   function calculateStandalonePlateCalculator(calculatorId, inputs) {
     // Selected wells already define the complete scope. Never multiply by whole plates.
-    const normalized = calculatorId === "seeding" ? { ...inputs, plates: 1 } : inputs;
+    const normalized = calculatorId === "seeding" ? { ...inputs, plates: 1 } : {...inputs};
+    if(normalized.pipetteMinimumUl==='')delete normalized.pipetteMinimumUl;
+    normalized.__context={workspaceId:workspace.id,plateId:project.id,wellIds:liquidTargetWellIds()};
     return window.LabNestCalculations.calculate({ calculatorId, inputs: normalized });
   }
 
   function renderStandalonePlateResult(result) {
     const host = document.getElementById("standalonePlateResult");
     if (!host) return;
-    const outputs = `<div class="plate-calculator-output-grid">${result.outputs.map((output) => `<div class="plate-calculator-output"><span>${escapeHtml(bilingual(output.labelZh, output.label))}</span><strong>${escapeHtml(Number.isFinite(output.value) ? Number(output.value).toLocaleString(undefined, { maximumSignificantDigits: 8 }) : output.value)}${output.unit ? ` ${escapeHtml(output.unit)}` : ""}</strong></div>`).join("")}</div>`;
-    const warnings = result.warnings.length ? `<div class="liquid-warning-list">${result.warnings.map((warning) => `<div class="liquid-warning">${escapeHtml(warning)}</div>`).join("")}</div>` : "";
-    let table = "";
-    if (result.table?.length) {
-      const keys = Object.keys(result.table[0]);
-      const labels = { level: bilingual("级别", "Level"), doseUgMl: bilingual("浓度 (µg/mL)", "Dose (µg/mL)"), stockToAddUl: bilingual("母液加入量 (µL)", "Stock addition (µL)"), component: bilingual("组分", "Component"), perReactionUl: bilingual("每反应 (µL)", "Per reaction (µL)"), batchUl: bilingual("整批 (µL)", "Batch (µL)") };
-      table = `<div class="liquid-table-wrap"><table class="liquid-table"><thead><tr>${keys.map((key) => `<th>${escapeHtml(labels[key] || key)}</th>`).join("")}</tr></thead><tbody>${result.table.map((row) => `<tr>${keys.map((key) => `<td>${escapeHtml(row[key])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
-    }
-    host.innerHTML = `${outputs}${warnings}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button></div>`;
+    const shared=window.LabNestCalculations;
+    const unitSelect=(key,unit)=>unit&&shared.compatibleUnits(unit).length>1?`<select aria-label="${escapeHtml(key)} display unit" data-output-unit="${escapeHtml(key)}">${shared.compatibleUnits(unit).map(u=>`<option ${u===unit?'selected':''}>${escapeHtml(u)}</option>`).join('')}</select>`:'';
+    const outputs = `<div class="plate-calculator-output-grid">${shared.presentedOutputs(result).map(output=>`<div class="plate-calculator-output"><span>${escapeHtml(bilingual(output.labelZh,output.label))}</span><strong>${escapeHtml(typeof output.value==='number'?shared.formatQuantity(output.value):output.value)} ${escapeHtml(output.unit||'')}</strong>${unitSelect(output.key,output.unit)}</div>`).join('')}</div>`;
+    const warnings = result.warnings.map(warning=>`<div class="liquid-warning">${escapeHtml(warning)}</div>`).join('');
+    const notes=result.notes.map(note=>`<p>${escapeHtml(note)}</p>`).join('');
+    const rows=shared.presentedTable(result,language==='zh');
+    const table=rows.length?`<div class="liquid-table-wrap"><table class="liquid-table"><thead><tr>${Object.keys(rows[0]).map(key=>`<th>${escapeHtml(key)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${Object.values(row).map(v=>`<td>${escapeHtml(typeof v==='number'?shared.formatQuantity(v):v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+    const columns=Object.keys(result.table?.[0]||{}).filter(k=>shared.tableUnitsFor(result)[k]).map(k=>`<label>${escapeHtml(k)} ${unitSelect('table:'+k,result.displayUnits?.['table:'+k]||shared.tableUnitsFor(result)[k])}</label>`).join('');
+    host.innerHTML = `${outputs}${warnings}${notes}${columns}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button><button type="button" data-plate-result-action="copy">Copy</button><button type="button" data-plate-result-action="csv">CSV</button></div>`;
   }
 
   function applyStandalonePlateCalculatorResult() {
@@ -3175,8 +3183,24 @@
     }
   });
 
-  elements.plateCalculatorHost.addEventListener("click", (event) => {
-    if (event.target.closest('[data-plate-result-action="apply"]')) applyStandalonePlateCalculatorResult();
+  elements.plateCalculatorHost.addEventListener('error',event=>{if(event.target.matches('.standalone-task-icon img')){event.target.outerHTML='<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" fill="none" stroke="currentColor"/><path d="M8 6h8M8 11h8M8 15h8M8 19h8" stroke="currentColor"/></svg>';}},true);
+  elements.plateCalculatorHost.addEventListener("change", event=>{
+    if(event.target.matches('[data-standalone-icon-pack]')){standaloneIconPack=event.target.value==='classic-line'?'classic-line':'lab-soft';try{const key='labnest.standalone-calculator.appearance',raw=localStorage.getItem(key),parsed=window.LabNestCalculations.parseAppearance(raw,null,null,false);if(parsed.preserve)throw Error('protected');localStorage.setItem(key,JSON.stringify({...parsed.value,iconPackId:standaloneIconPack}));standaloneAppearanceWarning='';}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}const container=elements.plateCalculatorHost.querySelector('.standalone-task-icon');if(container)container.outerHTML=standaloneTaskIcon(activePlateCalculator);showToast(standaloneAppearanceWarning||bilingual('仅在此独立版来源保存','Saved for this standalone origin'));return;}
+
+    const key=event.target.dataset.outputUnit;if(!key||!lastStandalonePlateResult)return;
+    lastStandalonePlateResult.displayUnits={...lastStandalonePlateResult.displayUnits,[key]:event.target.value};
+    renderStandalonePlateResult(lastStandalonePlateResult);
+  });
+  elements.plateCalculatorHost.addEventListener("click", async (event) => {
+    const action=event.target.closest('[data-plate-result-action]')?.dataset.plateResultAction;
+    if(!lastStandalonePlateResult)return;
+    if(action==='apply')applyStandalonePlateCalculatorResult();
+    if(action==='csv')downloadBlob(window.LabNestCalculations.resultCsv(lastStandalonePlateResult,language==='zh'),'text/csv;charset=utf-8','calculator.csv');
+    if(action==='copy'){
+      const text=window.LabNestCalculations.resultClipboard(lastStandalonePlateResult,language==='zh');
+      try{await navigator.clipboard.writeText(text);showToast(bilingual('已复制','Copied'));}
+      catch{const area=document.createElement('textarea');area.readOnly=true;area.value=text;area.setAttribute('aria-label','Manual copy');elements.plateCalculatorHost.append(area);area.focus();area.select();showToast(bilingual('请手动复制','Copy manually'));}
+    }
   });
 
   function downloadBlob(content, mimeType, fileName) {

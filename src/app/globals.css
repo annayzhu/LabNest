@@ -1089,7 +1089,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 }
 
 .focus-ring:focus-visible {
-  outline-color: var(--fog);
+  outline-color: var(--moss);
   box-shadow: 0 0 0 4px rgba(93, 98, 127, 0.15);
 }
 

@@ -1288,7 +1288,7 @@ var LabNestCalculations = (() => {
         if (ids.includes(data[key])) base[key] = data[key];
         else preserve = true;
       }
-      if (Object.keys(data).some((key) => key !== "schemaVersion" && !(key in preferenceIds))) preserve = true;
+      if (Object.keys(data).some((key) => key !== "schemaVersion" && !Object.prototype.hasOwnProperty.call(preferenceIds, key))) preserve = true;
       return { value: base, preserve };
     } catch {
       return { value: base, preserve: true };

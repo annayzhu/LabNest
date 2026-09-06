@@ -4,9 +4,9 @@
 
 - User supplied specification: `spec-v1.0.md` (unchanged copy of the Downloads document).
 - Inspected repository baseline: `27fa6f4` (not the document's historical `43cf9d1`).
-- Working branch: `codex/calculator-refactor-v1`.
+- Initial branch: `codex/calculator-refactor-v1`; release branch: `codex/calculator-main-integration`, based on current main `43cf9d1`.
 - Unrelated in-progress typography, global CSS, research-plan and translation edits are excluded from this change.
-- No production deployment, PR merge, Issue closure, or historical-data deletion is part of this delivery.
+- Subsequent user authorization includes creating and merging a PR and refreshing the local deployment. Historical data and unrelated working edits remain preserved.
 
 ## Phased implementation
 

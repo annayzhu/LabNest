@@ -5,8 +5,18 @@
 Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.8.0 -> 8.0.0-rc.13                  │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
 
-✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 279ms
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 280ms
 
 ▲ Next.js 16.2.10 (Turbopack)
 - Environments: .env
@@ -14,15 +24,15 @@ Prisma schema loaded from prisma/schema.prisma.
   · serverActions
 
   Creating an optimized production build ...
-✓ Compiled successfully in 7.3s
+✓ Compiled successfully in 7.5s
   Running TypeScript ...
-  Finished TypeScript in 13.7s ...
+  Finished TypeScript in 14.0s ...
   Collecting page data using 13 workers ...
   Generating static pages using 13 workers (0/76) ...
   Generating static pages using 13 workers (19/76)
   Generating static pages using 13 workers (38/76)
   Generating static pages using 13 workers (57/76)
-✓ Generating static pages using 13 workers (76/76) in 195ms
+✓ Generating static pages using 13 workers (76/76) in 166ms
   Finalizing page optimization ...
 
 Route (app)
@@ -51,6 +61,7 @@ Route (app)
 ├ ƒ /api/protocols/relevant-items
 ├ ƒ /api/protocols/template/docx
 ├ ƒ /api/reports/[id]/markdown
+├ ƒ /api/research-plans/[id]/relations
 ├ ƒ /api/results/[id]/datasets
 ├ ƒ /api/results/datasets/[id]
 ├ ƒ /api/search

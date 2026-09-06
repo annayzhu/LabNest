@@ -2,8 +2,8 @@ import { revalidatePath } from "next/cache";
 import { AppShell } from "@/components/AppShell";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
-import { SystemThemePicker } from "@/components/SystemThemePicker";
-import { InterfaceScalePicker } from "@/components/InterfaceScalePicker";
+import {AppearanceSettings} from "@/components/AppearanceSettings";
+
 import { TypographySettingsPanel } from "@/components/TypographySettingsPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -61,8 +61,8 @@ export default async function SettingsPage() {
         />
 
         <Card>
-          <CardHeader title="System style" />
-          <CardBody className="space-y-5"><SystemThemePicker /><InterfaceScalePicker /></CardBody>
+          <CardHeader title="Appearance / 外观" />
+          <CardBody className="space-y-5"><AppearanceSettings /></CardBody>
         </Card>
 
         <Card>

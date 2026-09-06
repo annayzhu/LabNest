@@ -157,3 +157,14 @@ export function systemThemeCssText() {
     return `${selector}{${declarations}}`;
   }).join("");
 }
+
+/** Dark variants reuse scheme IDs and existing semantic tokens; charts and document paper are separate. */
+export function resolvedThemeTokens(themeId:string,mode:'light'|'dark'):Record<string,string>{
+ const index=Math.max(0,systemThemes.findIndex(theme=>theme.id===themeId));const theme=systemThemes[index];
+ if(mode==='light')return {...theme.tokens,...(themeId==='palace-jasmine'?{'--moss':'#1b7d45','--action':'#1b7d45'}:{}),'--surface':'#ffffff','--warning':'#805b24','--warning-surface':'#faf0dc','--control-border':'#77848d'};
+ const accent=['#aac9e1','#89d5e8','#a7d2b4','#d6b9df'][index%4];
+ return {...theme.tokens,'--paper':'#151d24','--warm':'#1a242d','--stone':'#202c35','--sand-panel':'#283641','--surface':'#1c2730','--ink':'#edf2f5','--graphite':'#d0dce4','--muted':'#b3c2cd','--disabled':'#7d8a94','--moss':accent,'--moss-hover':'#d8e9f4','--action':accent,'--action-hover':'#d8e9f4','--sage':accent,'--moss-surface':'#263b46','--moss-surface-hover':'#304754','--moss-border':'#678493','--sage-surface':'#263b46','--action-surface':'#263b46','--action-surface-hover':'#304754','--action-border':'#678493','--fog':'#b4cedd','--fog-surface':'#263844','--pale-sand':'#3b302a','--clay':'#e2b99d','--hairline':'#455966','--border-strong':'#8aa2b1','--control-border':'#8aa2b1','--brand-mark-bg':accent,'--brand-mark-fg':'#15212a','--brand-mark-border':accent,'--nav-active-bg':'#e2b99d','--nav-active-fg':'#251c16','--nav-active-border':'#e2b99d','--contrast-action':'#e2b99d','--contrast-action-hover':'#efd0b9','--contrast-action-fg':'#251c16','--contrast-action-soft':'#3b302a','--contrast-action-border':'#e2b99d','--warning':'#f1ce92','--warning-surface':'#3b3020','--error':'#ffb8bf','--error-surface':'#402b33','--info':'#b7d9e8','--info-surface':'#233844'};
+}
+export function appearanceThemeCssText(){
+ return systemThemes.map(theme=>['light','dark'].map(mode=>{const tokens=resolvedThemeTokens(theme.id,mode as 'light'|'dark');const declarations=Object.entries(tokens).map(([key,value])=>`${key}:${value}`).join(';');const documentTokens=Object.entries(resolvedThemeTokens(theme.id,'light')).map(([key,value])=>`${key}:${value}`).join(';');return `html[data-labnest-theme="${theme.id}"][data-labnest-mode="${mode}"]{${declarations};color-scheme:${mode}}html[data-labnest-theme="${theme.id}"] :is(.document-a4-paper,.scientific-document-view,.tiptap.document-editor-content){${documentTokens};color-scheme:light}`;}).join('')).join('');
+}

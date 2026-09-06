@@ -1,0 +1,27 @@
+import type {CalculatorResult} from './calculator-engine';
+import {compatibleUnits,convert,parseScalar} from './quantities';
+import {tableColumnLabel} from './presentation';
+export const tableQuantityUnits:Record<string,string>={takeUl:'µL',diluentUl:'µL',mixedUl:'µL',transferUl:'µL',remainingUl:'µL',requiredUl:'µL',perReactionUl:'µL',batchUl:'µL',availableUl:'µL',sampleUl:'µL',bufferUl:'µL',reducingAgentUl:'µL',totalUl:'µL',theoreticalUl:'µL',actualUl:'µL',volumeUl:'µL',stockToAddUl:'µL',targetProteinUg:'µg'};
+export function tableUnitsFor(result:CalculatorResult):Record<string,string>{return {...tableQuantityUnits,...(result.calculatorId==='wb-loading'?{originalConcentration:'µg/µL'}:result.calculatorId==='normalization'?{originalConcentration:'ng/µL'}:result.calculatorId==='serial-dilution'?{concentration:'µM'}:{}),doseUgMl:'µg/mL'};}
+export function displayQuantity(value:number,unit:string,target?:string){return {value:target?convert(value,unit,target):value,unit:target??unit};}
+export function formatQuantity(value:number){return value!==0&&(Math.abs(value)<0.001||Math.abs(value)>=1e7)?value.toExponential(5):value.toLocaleString('en',{maximumSignificantDigits:9,useGrouping:false});}
+export function validateDisplayUnits(result:CalculatorResult,candidate:unknown):Record<string,string>{
+ if(!candidate||typeof candidate!=='object')return {};
+ const valid:Record<string,string>={};for(const [key,value] of Object.entries(candidate)){const unit=key.startsWith('table:')?tableUnitsFor(result)[key.slice(6)]:result.outputs.find(o=>o.key===key)?.unit;if(unit&&typeof value==='string'&&compatibleUnits(unit).includes(value))valid[key]=value;else throw new Error('Invalid display unit');}return valid;
+}
+export function presentedOutputs(result:CalculatorResult){return result.outputs.map(o=>typeof o.value==='number'&&o.unit?{...o,...displayQuantity(o.value,o.unit,result.displayUnits?.[o.key])}:o);}
+export function presentedTable(result:CalculatorResult,zh:boolean){
+ const rows=result.table??[];return rows.map(row=>Object.fromEntries(Object.entries(row).map(([key,value])=>{
+  const unit=tableUnitsFor(result)[key],target=result.displayUnits?.['table:'+key]??unit;
+  const label=tableColumnLabel(key,zh);return [unit?(label.includes('(')?label.replace(/\([^)]*\)/,`(${target})`):`${label} (${target})`):label,unit&&value!==''&&(typeof value==='number'||(typeof value==='string'&&value.trim()!==''&&Number.isFinite(Number(value))))?convert(parseScalar(value),unit,target):value];
+ })));
+}
+export function resultExportRows(result:CalculatorResult,zh:boolean){
+ const data=result.table?.length?presentedTable(result,zh):presentedOutputs(result).map(o=>({name:zh?o.labelZh:o.label,value:o.value,unit:o.unit??''}));
+ const metadata={context:JSON.stringify(result.rawInputs?.__context??{}),task:result.calculatorId,mode:result.mode??'',method:result.methodVersion,resultStatus:result.status??'legacy',warnings:result.warnings.join('\n'),assumptions:result.notes.join('\n'),inputs:JSON.stringify(result.rawInputs??{}),outputs:JSON.stringify(presentedOutputs(result)),displayUnits:JSON.stringify(result.displayUnits??{}),structuredWarnings:JSON.stringify(result.structuredWarnings??[])};
+ return data.map(row=>({...row,...metadata}));
+}
+export function resultClipboard(result:CalculatorResult,zh:boolean){
+ const table=presentedTable(result,zh);return [result.calculatorId+' · '+(result.mode??''),...presentedOutputs(result).map(o=>`${zh?o.labelZh:o.label}: ${typeof o.value==='number'?formatQuantity(o.value):o.value} ${o.unit??''}`),...(table.length?[Object.keys(table[0]).join('\t'),...table.map(row=>Object.values(row).map(value=>typeof value==='number'?formatQuantity(value):value).join('\t'))]:[]),zh?'警告':'Warnings',...result.warnings,zh?'关键假设':'Assumptions',...result.notes,`Status: ${result.status??'legacy'}; Method: ${result.methodVersion}`,`Inputs: ${JSON.stringify(result.rawInputs??{})}`,`Context: ${JSON.stringify(result.rawInputs?.__context??{})}`].join('\n');
+}
+export function resultCsv(result:CalculatorResult,zh:boolean){const rows=resultExportRows(result,zh);const keys=[...new Set(rows.flatMap(row=>Object.keys(row)))];const cell=(v:unknown)=>'"'+(typeof v==='number'?String(v):String(v??'').replace(/^[=+@\-]/,"'$&")).replaceAll('"','""')+'"';return '\uFEFF'+[keys.map(cell).join(','),...rows.map(row=>keys.map(key=>cell((row as Record<string,unknown>)[key])).join(','))].join('\r\n');}

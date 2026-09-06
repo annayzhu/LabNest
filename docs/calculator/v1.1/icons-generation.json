@@ -1,0 +1,58 @@
+[
+  {
+    "id": "dilution",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: An angled micropipette releasing one drop into ONE small laboratory tube. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/dilution.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-0e32369c-385c-49aa-b44c-f0b5a046ab0b.png"
+  },
+  {
+    "id": "solution-prep",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: A compact electronic laboratory weighing balance with a shallow weighing dish, blank display without text. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/solution-prep.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-30535778-9c33-44c6-8844-ee4eda388760.png"
+  },
+  {
+    "id": "cell-seeding",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: A top-down rectangular SIX-well culture plate, each circular well with only two tiny cell dots. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/cell-seeding.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-28a07945-b443-4cfb-b6f5-7c51f9da7720.png"
+  },
+  {
+    "id": "reaction-mix",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: A compact rack of THREE PCR tubes with ONE pipette tip above the middle tube. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/reaction-mix.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "originalSource": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-df7a6b81-3958-4cd8-a2d5-bfa02c10acf2.png",
+    "editPrompt": "Edit this single LabNest reaction-mix icon. Preserve its visual family, three PCR tubes and rack, muted slate sage blue palette. Fix the pipette at the top: show ONLY a short complete pipette TIP with its complete upper rim entirely inside the canvas, no cropped object. Make the composition compact and balanced with transparent margin of 14% on all four sides, subject centered, fully visible. Genuine transparent alpha background. Simplify surface shading and remove glossy highlights. One icon, no text, no frame.",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-43ed29f0-3314-4216-a5b6-20a772e31def.png"
+  },
+  {
+    "id": "wb-loading",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: A rectangular electrophoresis gel with THREE lanes and a few horizontal protein bands, no grid. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/wb-loading.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-5be96856-7b6a-454d-a4db-04385ad4c9a0.png"
+  },
+  {
+    "id": "centrifuge",
+    "prompt": "Use case: ui-mockup. Create ONE standalone compact laboratory calculator icon for LabNest. Subject: A top-down SIX-position centrifuge rotor with central hub and radial tube slots. Professional minimal flat scientific pictogram, dark slate outlines, restrained muted sage and blue accents, low detail, distinctive silhouette, consistent thick legible line weight, easily recognizable at 28\u201340 CSS pixels. Centered square composition, subject occupies 70\u201376% of canvas, complete subject and balanced 12\u201315% padding. Genuine transparent background with alpha. No text, numbers, logos, watermark, card, surrounding frame, glossy reflection, gradients, faces, decorative shadows or baked checkerboard. A single icon only, not a sheet. Same visual family across six laboratory calculator icons.",
+    "source": "docs/calculator/v1.1/icon-sources/centrifuge.png",
+    "tool": "image_gen.imagegen",
+    "model": "Not exposed by tool",
+    "generatedDate": "2026-09-06",
+    "generationOutputPath": "/Users/annayzhu/.codex/generated_images/01a073c8-0322-79b3-8846-b7a30345abc0/exec-c1bc5333-ca96-43b1-aa62-00b61d59b282.png"
+  }
+]

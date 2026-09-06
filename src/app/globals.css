@@ -1089,7 +1089,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 }
 
 .focus-ring:focus-visible {
-  outline-color: var(--fog);
+  outline-color: var(--moss);
   box-shadow: 0 0 0 4px rgba(93, 98, 127, 0.15);
 }
 
@@ -5300,3 +5300,21 @@ table :where(td) {
     display: none !important;
   }
 }
+
+/* Calculator v1.1: six stable slots, not a scrolling carousel. */
+.common-task-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+.common-task-tile { min-width:0; min-height:72px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border-radius:8px; font-size:13px; line-height:16px; text-align:center; padding:3px; font-size:max(13px,var(--ln-ui-body-font-size)); }
+.common-task-tile:hover { background:var(--sage-surface); }
+.common-task-tile span:last-child { max-width:100%; }
+@media (min-width:1200px) { .common-task-grid { grid-template-columns:repeat(6,minmax(0,1fr)); } }
+@media (max-height:600px) and (max-width:479px) { .calculator-catalog { margin-top:-12px; } .common-task-tile { min-height:60px; } .common-task-tile .task-icon { width:28px!important;height:28px!important; } .common-task-tile .task-icon img,.common-task-tile .task-icon svg { width:28px!important;height:28px!important; } }
+.task-help-dialog::backdrop { background:#0007; }
+html[data-labnest-mode="dark"] .task-icon:has(img) { background:#e5ebeb; border-radius:5px; }
+html[data-labnest-ui-font="system-sans"] { --font-ui:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans CJK SC",sans-serif; }
+html[data-labnest-ui-font="system-serif"] { --font-ui:"Songti SC","Noto Serif CJK SC","SimSun",Georgia,serif; }
+html[data-labnest-data-font="mono"] { --font-data:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; }
+html[data-labnest-data-font="system"] { --font-data:system-ui,-apple-system,"Segoe UI",sans-serif; }
+html[data-labnest-mode] :is(input:not([type=checkbox]):not([type=radio]),select,textarea):not(.document-a4-paper *) { border-color:var(--control-border); }
+html[data-labnest-mode="dark"] :is(input,select,textarea):not(.document-a4-paper *) { color:var(--ink); }
+html[data-labnest-mode] :is(.document-a4-paper,.scientific-document-view) { --font-ui:var(--font-latin-ui),var(--font-cjk-ui); --font-data:"IBM Plex Mono","JetBrains Mono",ui-monospace,monospace; }
+@media print { html[data-labnest-mode="dark"] { color-scheme:light; } }

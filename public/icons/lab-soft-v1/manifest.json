@@ -1,0 +1,105 @@
+{
+  "id": "lab-soft",
+  "version": 1,
+  "name": "Lab soft",
+  "fallback": "classic-line",
+  "modeTreatment": "Dark surfaces use a neutral contrast plate; same alpha asset",
+  "assets": [
+    {
+      "taskIcon": "dilution",
+      "path": "/icons/lab-soft-v1/dilution.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 988,
+      "sha256": "d147c5a73089f3c51dd768b16c42fc502c4fb3cabf7cd8e1c84478d6fd28c192",
+      "sourceSha256": "db940d65402a439f4b74d5cfbc8664cf87cb634910bc7496aac7243d364b81ec",
+      "sourceTransparentFraction": 0.8983609705720006,
+      "sourceBounds": [
+        282,
+        55,
+        1069,
+        1165
+      ]
+    },
+    {
+      "taskIcon": "solution-prep",
+      "path": "/icons/lab-soft-v1/solution-prep.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 1899,
+      "sha256": "b466457a4baefefabd9368fff275eba899bdc9310b3631d55ce8b2340a01cd75",
+      "sourceSha256": "10f1819c6b0f3fef6d4a465b20b7e725f2666cc2a493b7b3955341a6e567761e",
+      "sourceTransparentFraction": 0.5050148933301791,
+      "sourceBounds": [
+        73,
+        168,
+        1180,
+        1056
+      ]
+    },
+    {
+      "taskIcon": "cell-seeding",
+      "path": "/icons/lab-soft-v1/cell-seeding.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 2111,
+      "sha256": "bfcd0841b49796f138745167413ad6f9bd17d7999be7979941995b108ad969d4",
+      "sourceSha256": "24919c3ec33f0d13bfc8c2e53ea5a4648eb32f54445909c6b839c1318cc5732d",
+      "sourceTransparentFraction": 0.48086505956060227,
+      "sourceBounds": [
+        100,
+        224,
+        1154,
+        998
+      ]
+    },
+    {
+      "taskIcon": "reaction-mix",
+      "path": "/icons/lab-soft-v1/reaction-mix.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 1403,
+      "sha256": "74720eca80c562e775b8ccfcce5ff961b264105c5118d363b77ee44f26b4fd9d",
+      "sourceSha256": "e829829c8a9341599a55b0de053e4e4f47b6d2f089c292bc5e11a2193daae5d8",
+      "sourceTransparentFraction": 0.7956802983244685,
+      "sourceBounds": [
+        258,
+        117,
+        995,
+        1082
+      ]
+    },
+    {
+      "taskIcon": "wb-loading",
+      "path": "/icons/lab-soft-v1/wb-loading.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 1231,
+      "sha256": "97a06349bbece3dc1aa458caae7b24fa9093b38aa24474e5810e44f9fcbd3cb5",
+      "sourceSha256": "9ed747ed2c135376f0dd1e3fd69bc09beab2c641e151671aeb7338070e0e9d29",
+      "sourceTransparentFraction": 0.5919481900343144,
+      "sourceBounds": [
+        210,
+        126,
+        1044,
+        1099
+      ]
+    },
+    {
+      "taskIcon": "centrifuge",
+      "path": "/icons/lab-soft-v1/centrifuge.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 2726,
+      "sha256": "d86b5e4516405de548630f6dc55ed5a15af062084838b90715694f149bea056d",
+      "sourceSha256": "dbdb0b7640b7d44e6c21551ce5c24c053c7516ba31a36293fe456130d4621941",
+      "sourceTransparentFraction": 0.4909838755217753,
+      "sourceBounds": [
+        133,
+        89,
+        1120,
+        1137
+      ]
+    }
+  ]
+}

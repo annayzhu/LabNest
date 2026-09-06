@@ -1,0 +1,6 @@
+/* This static tool's scope is separate from the LabNest application and its database. */
+const cacheName='labnest-standalone-calculator-v11';
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('message',event=>{if(event.data?.type!=='CACHE_STANDALONE')return;event.waitUntil((async()=>{try{const cache=await caches.open(cacheName);const root=new URL('./',self.location.href);for(const path of event.data.paths){const url=new URL(path,root);if(url.origin!==root.origin||!url.pathname.startsWith(root.pathname))throw Error('scope');const response=await fetch(url);if(!response.ok)throw Error('fetch');await cache.put(url,response);}event.ports[0]?.postMessage({ok:true});}catch{event.ports[0]?.postMessage({ok:false});}})());});
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url),root=new URL('./',self.location.href);if(event.request.method!=='GET'||url.origin!==root.origin||!url.pathname.startsWith(root.pathname))return;event.respondWith(fetch(event.request).catch(async()=>await(await caches.open(cacheName)).match(event.request)||new Response('Not cached / 尚未缓存',{status:503})));});

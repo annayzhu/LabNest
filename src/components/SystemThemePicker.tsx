@@ -1,23 +1,14 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import {useAppearance} from "./AppearanceProvider";
 import { TraditionalMotif, type TraditionalMotifName } from "@/components/TraditionalMotif";
-import { isSystemThemeId, systemThemes, systemThemeStorageKey, type SystemThemeId } from "@/lib/system-theme";
+import { systemThemes, type SystemThemeId } from "@/lib/system-theme";
 
 export function SystemThemePicker() {
-  const [selectedTheme, setSelectedTheme] = useState<SystemThemeId>("moon-dai");
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem(systemThemeStorageKey);
-    if (isSystemThemeId(storedTheme)) queueMicrotask(() => setSelectedTheme(storedTheme));
-  }, []);
-
-  function selectTheme(themeId: SystemThemeId) {
-    setSelectedTheme(themeId);
-    document.documentElement.setAttribute("data-labnest-theme", themeId);
-    window.localStorage.setItem(systemThemeStorageKey, themeId);
-  }
+  const {preferences,setAppearance}=useAppearance();
+  const selectedTheme=preferences.colorSchemeId;
+  const selectTheme=(colorSchemeId:SystemThemeId)=>setAppearance({colorSchemeId});
 
   return (
     <fieldset>

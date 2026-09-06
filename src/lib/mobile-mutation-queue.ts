@@ -1,3 +1,4 @@
+import type { CalculatorResult } from "./calculators/calculator-engine";
 export type MobileMutationState = "local_only" | "pending" | "syncing" | "synced" | "conflict";
 
 export type QueuedEntryMutation = {
@@ -87,7 +88,12 @@ export type QueuedAttachmentMutation = {
   };
 };
 
-export type MobileMutation = QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
+export type QueuedCalculationMutation = {
+  clientMutationId: string; actionType: "calculation.create"; deviceCreatedAt: string;
+  state: MobileMutationState; retryCount: number; lastError?: string;
+  payload: { experimentId: string; experimentStepId: string; operator: string; calculatorId: string; inputs: Record<string,unknown>; snapshot: CalculatorResult };
+};
+export type MobileMutation = QueuedCalculationMutation | QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
 
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";

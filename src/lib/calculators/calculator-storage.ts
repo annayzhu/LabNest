@@ -1,8 +1,10 @@
-import type { CalculatorOutput, CalculatorResult } from "./calculator-engine";
+import { legacyTaskMap } from "./task-definitions";
+import type { CalculatorResult, CalculatorOutput } from "./calculator-engine";
 
 export const calculatorStorageKey = "labnest.calculators.v1";
-export const calculatorStateVersion = 1;
+export const calculatorStateVersion = 2;
 let calculatorStorageIssue = "";
+let calculatorStorageWritable = true;
 
 export type CalculatorHistoryEntry = {
   id: string;
@@ -16,10 +18,15 @@ export type CalculatorHistoryEntry = {
   outputs: CalculatorOutput[];
   warnings: string[];
   table?: CalculatorResult["table"];
+  snapshot?: CalculatorResult;
   notes?: string[];
+  sourceRecordId?: string;
+  example?: boolean;
+  context?: Record<string, unknown>;
 };
 
 export function restoreCalculatorResult(entry: CalculatorHistoryEntry): CalculatorResult {
+  if(entry.snapshot)return structuredClone(entry.snapshot);
   return {
     calculatorId: entry.calculatorId, methodVersion: entry.methodVersion,
     outputs: entry.outputs, outputMap: Object.fromEntries(entry.outputs.map((output) => [output.key, output.value])),
@@ -29,6 +36,8 @@ export function restoreCalculatorResult(entry: CalculatorHistoryEntry): Calculat
 }
 
 export type CalculatorPreset = {
+  methodVersion?: string;
+  source?: string;
   id: string;
   calculatorId: string;
   name: string;
@@ -39,12 +48,15 @@ export type CalculatorPreset = {
 export type CalculatorState = {
   version: typeof calculatorStateVersion;
   favorites: string[];
+  favoritesConfigured?: boolean;
   presets: CalculatorPreset[];
   history: CalculatorHistoryEntry[];
+  recent: Array<{ calculatorId: string; visitedAt: string; summary: string }>;
+  drafts: Record<string, { inputs: Record<string, unknown>; updatedAt: string; example: boolean }>;
 };
 
 export function createEmptyCalculatorState(): CalculatorState {
-  return { version: calculatorStateVersion, favorites: [], presets: [], history: [] };
+  return { version: calculatorStateVersion, favorites: [], presets: [], history: [], recent: [], drafts: {} };
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -79,6 +91,7 @@ export function toggleFavorite(state: CalculatorState, calculatorId: string): Ca
   const hasFavorite = state.favorites.includes(calculatorId);
   return {
     ...state,
+    favoritesConfigured: true,
     favorites: hasFavorite
       ? state.favorites.filter((id) => id !== calculatorId)
       : [...state.favorites, calculatorId],
@@ -87,7 +100,7 @@ export function toggleFavorite(state: CalculatorState, calculatorId: string): Ca
 
 export function addHistoryEntry(state: CalculatorState, entry: CalculatorHistoryEntry): CalculatorState {
   const safeEntry = { ...entry, inputs: sanitizePersistedInputs(entry.inputs) };
-  return { ...state, history: [safeEntry, ...state.history.filter((item) => item.id !== entry.id)].slice(0, 50) };
+  return { ...state, history: state.history.some(item => item.id === entry.id) ? state.history : [structuredClone(safeEntry), ...state.history] };
 }
 
 export function deleteHistoryEntry(state: CalculatorState, entryId: string): CalculatorState {
@@ -111,25 +124,35 @@ export function parseCalculatorState(serialized: string | null): CalculatorState
   if (!serialized) return createEmptyCalculatorState();
   try {
     const value = JSON.parse(serialized) as Partial<CalculatorState>;
-    if (value.version !== calculatorStateVersion || !Array.isArray(value.favorites) || !Array.isArray(value.presets) || !Array.isArray(value.history)) {
-      return createEmptyCalculatorState();
+    if ((value.version !== calculatorStateVersion && Number(value.version) !== 1) || !Array.isArray(value.favorites) || !Array.isArray(value.presets) || !Array.isArray(value.history)) {
+      calculatorStorageWritable=false;calculatorStorageIssue="计算数据版本或结构无效；原始数据已保留 / Invalid stored data; original retained";return createEmptyCalculatorState();
     }
     return {
       version: calculatorStateVersion,
-      favorites: value.favorites.filter((item): item is string => typeof item === "string"),
-      presets: value.presets.slice(0, 100) as CalculatorPreset[],
-      history: value.history.slice(0, 50) as CalculatorHistoryEntry[],
+      favoritesConfigured: value.favoritesConfigured ?? value.favorites.length > 0,
+      favorites: [...new Set(value.favorites.filter((item): item is string => typeof item === "string").map(id => legacyTaskMap[id]?.task ?? id))],
+      presets: value.presets.filter(item => isPlainObject(item) && typeof item.id === "string" && typeof item.calculatorId === "string" && isPlainObject(item.inputs)) as CalculatorPreset[],
+      history: value.history.filter(item => isPlainObject(item) && typeof item.id === "string" && Array.isArray(item.outputs) && Array.isArray(item.warnings) && isPlainObject(item.inputs)) as CalculatorHistoryEntry[],
+      recent: Array.isArray(value.recent) ? value.recent.filter(item => isPlainObject(item) && typeof item.calculatorId === "string" && typeof item.summary === "string") : [],
+      drafts: isPlainObject(value.drafts) ? Object.fromEntries(Object.entries(value.drafts).filter(([,draft]) => isPlainObject(draft) && isPlainObject(draft.inputs))) : {},
     };
   } catch {
-    return createEmptyCalculatorState();
+    calculatorStorageWritable=false;calculatorStorageIssue="计算数据损坏；禁止覆盖，原始数据已保留 / Corrupt data; overwriting blocked";return createEmptyCalculatorState();
   }
 }
 
 export function loadCalculatorState(): CalculatorState {
   if (typeof window === "undefined") return createEmptyCalculatorState();
   try {
-    calculatorStorageIssue = "";
-    return parseCalculatorState(window.localStorage.getItem(calculatorStorageKey));
+    calculatorStorageIssue = "";calculatorStorageWritable=true;
+    const raw = window.localStorage.getItem(calculatorStorageKey);
+    let needsBackup=false;try{needsBackup=Boolean(raw)&&JSON.parse(raw!).version!==calculatorStateVersion;}catch{needsBackup=true;}
+    if (raw && needsBackup) {
+      // Preserve exact bytes before any migration or edit; malformed data remains recoverable.
+      const backupKey = `${calculatorStorageKey}.backup.${raw.length}.${hashText(raw)}`;
+      if (!window.localStorage.getItem(backupKey)) window.localStorage.setItem(backupKey, raw);
+    }
+    return parseCalculatorState(raw);
   } catch {
     calculatorStorageIssue = "Browser storage is unavailable. Changes will remain only for this open page.";
     return createEmptyCalculatorState();
@@ -137,7 +160,7 @@ export function loadCalculatorState(): CalculatorState {
 }
 
 export function saveCalculatorState(state: CalculatorState): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined" || !calculatorStorageWritable) return false;
   try {
     window.localStorage.setItem(calculatorStorageKey, JSON.stringify(state));
     calculatorStorageIssue = "";
@@ -150,4 +173,21 @@ export function saveCalculatorState(state: CalculatorState): boolean {
 
 export function getCalculatorStorageIssue() {
   return calculatorStorageIssue;
+}
+
+function hashText(text: string) { let hash=0;for(const char of text) hash=((hash<<5)-hash+char.charCodeAt(0))|0;return hash.toString(16); }
+export function recordVisit(state: CalculatorState, calculatorId: string, summary: string): CalculatorState {
+  return { ...state, recent: [{calculatorId,summary,visitedAt:new Date().toISOString()},...state.recent.filter(item=>item.calculatorId!==calculatorId)].slice(0,20) };
+}
+export function saveDraft(state: CalculatorState, calculatorId: string, inputs: Record<string, unknown>, example: boolean): CalculatorState {
+  return { ...state, drafts: {...state.drafts,[calculatorId]:{inputs:sanitizePersistedInputs(inputs),example,updatedAt:new Date().toISOString()}} };
+}
+/** Returns only documented fixed-unit conversions; ambiguous legacy records stay unconfirmed. */
+export function restoreLegacyInputs(id: string, inputs: Record<string,unknown>): {inputs: Record<string,unknown>; warning?: string} {
+  if(id==='serial-dilution'&&!inputs.startingConcentrationUnit)return {inputs:{...inputs,startingConcentration:''},warning:'旧梯度浓度未注明单位，请确认后重新输入 / Legacy gradient concentration had no unit; confirm and re-enter'};
+  if(['ic50-ec50','bradford-bca','elisa-4pl'].includes(id)&&!inputs.concentrationUnit)return {inputs:{...inputs,concentrationUnit:''},warning:'旧曲线浓度未注明单位，请确认 / Confirm concentration units for this legacy curve'};
+  if (inputs.mode || !['dilution','reagent-dosing','fold-dilution'].includes(id)) return {inputs};
+  if (id==='fold-dilution') return {inputs:{mode:'fold',stockFold:inputs.fold,targetFold:1,finalVolume:inputs.finalVolume,finalVolumeUnit:'mL'}};
+  if (id==='reagent-dosing' && Number(inputs.stockToTargetFactor)===1000) return {inputs:{mode:'final',stockConcentration:inputs.stockConcentration,targetConcentration:inputs.targetConcentration,stockConcentrationUnit:'mM',targetConcentrationUnit:'µM',finalVolume:inputs.finalVolumeMl,finalVolumeUnit:'mL'}};
+  return {inputs:{mode:'final',stockConcentration:'',targetConcentration:'',finalVolume:inputs.finalVolume??inputs.finalVolumeMl,finalVolumeUnit:inputs.volumeUnit??'mL'},warning:'旧浓度单位缺失或倍率冲突。原快照保留；请确认单位后重新输入浓度。 / Legacy units missing or conflicting. Original snapshot retained; confirm units and re-enter concentrations.'};
 }

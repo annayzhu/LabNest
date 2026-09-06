@@ -85,6 +85,7 @@ async function persistResultUpdate(formData: FormData) {
   ]);
   if (!current) throw new Error("Result not found.");
   if (resultTemplateHasDuplicateKeys(current.templateSnapshotJson)) throw new Error(duplicateResultKeysMessage);
+  if(current.resultType === "Calculation") throw new Error("计算快照不可覆盖；请生成新计算记录 / Calculation snapshots are immutable; create a new calculation.");
   if (current.experimentId !== data.parsed.experimentId) throw new Error("A Result cannot be moved to another Experiment; create a new Result to preserve provenance.");
   if (current.templateKey && current.resultType !== data.parsed.resultType) throw new Error("A template-created Result cannot change result type; create a new Result instead.");
   if (current.templateKey && current.sourceType !== data.parsed.sourceType) throw new Error("A template-created Result cannot change source type.");

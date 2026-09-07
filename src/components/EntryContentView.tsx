@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { documentMediaFromMarkdown } from "@/lib/document-media";
+import { DocumentMediaView } from "./DocumentMediaView";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken } from "@/lib/rich-text-color";
 import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamilyLine, richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
@@ -39,6 +41,8 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
   return (
     <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-[var(--ln-rich-text-default-line-height)] text-graphite" : "space-y-1 text-[16px] leading-[var(--ln-rich-text-default-line-height)] text-graphite"}`}>
       {lines.map((rawLine, index) => {
+        const media = documentMediaFromMarkdown(rawLine);
+        if (media) return <DocumentMediaView key={`${media.id}-${index}`} block={media} />;
         const parsedLine = parseRichTextLineHeightLine(rawLine);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
         const line = parsedFontFamily.content;

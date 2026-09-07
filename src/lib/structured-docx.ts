@@ -1,5 +1,6 @@
 import { DOMParser } from "@xmldom/xmldom";
-import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
+import { extractDocxMedia } from "./docx-media-import";
+import { strToU8, unzipSync, zipSync } from "fflate";
 import type { StructuredModuleKey } from "./structured-modules";
 import { structuredModules } from "./structured-modules";
 
@@ -174,7 +175,7 @@ export function parseStructuredDocx(bytes: Uint8Array, module: Exclude<Structure
   const archive = unzipSync(bytes);
   const documentXml = archive["word/document.xml"];
   if (!documentXml) throw new Error("This file is not a readable Word DOCX document.");
-  const document = new DOMParser().parseFromString(strFromU8(documentXml), "application/xml");
+  const document = new DOMParser().parseFromString(extractDocxMedia(bytes).xml, "application/xml");
   const body = document.getElementsByTagName("w:body")[0];
   if (!body) throw new Error("The DOCX body could not be read.");
 

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ProtocolAvailability, ProtocolReviewStage, ProtocolScope } from "@/generated/prisma/enums";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { checkResultTemplate } from "@/lib/result-templates";
@@ -145,6 +146,7 @@ export async function createProtocolDocument(
       }
       const savedVersionId = created.versions[0]?.id;
       if (savedVersionId) {
+        await associateDocumentMedia(transaction, document, "protocol_version", savedVersionId);
         await transaction.attachmentLink.updateMany({
           where: { targetType: "protocol_upload_draft", targetId: parsed.uploadDraftId },
           data: { targetType: "protocol_version", targetId: savedVersionId },

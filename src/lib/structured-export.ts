@@ -1,9 +1,10 @@
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
 import { prisma } from "@/lib/db";
+import { documentMediaToMarkdown } from "@/lib/document-media";
 import { experimentNarrativeFromDocument } from "@/lib/experiment-document";
 import { getInventoryRiskFlags } from "@/lib/inventory";
-import { normalizeProtocolDocument, sectionPlainText } from "@/lib/protocol-document";
+import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
 import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, experimentSections, reportSections, type ScientificDocument } from "@/lib/scientific-document";
 import { structuredModules, type StructuredFileFormat, type StructuredModuleKey } from "@/lib/structured-modules";
 
@@ -42,15 +43,21 @@ function applyExportSelection<T extends { id: string }>(
   });
 }
 
-function scientificSectionText(document: ScientificDocument, key: string) {
-  const section = document.sections.find((item) => item.key === key);
-  return section ? documentPlainText({ schemaVersion: 1, sections: [section] }) : "";
-}
-
 export async function structuredExportRecords(
   module: StructuredModuleKey,
   selection: StructuredExportSelection = { scope: "all" },
+  preserveMedia = false,
 ): Promise<Record<string, unknown>[]> {
+  const sectionPlainText = (document: ProtocolDocument, key: Parameters<typeof protocolSectionPlainText>[1]) => {
+    const section = document.sections.find(item => item.key === key);
+    if (!section || !preserveMedia) return protocolSectionPlainText(document, key);
+    return section.blocks.map(block => block.type === "media" ? documentMediaToMarkdown(block) : protocolSectionPlainText({ ...document, sections: [{ ...section, blocks: [block] }] }, key)).join("\n\n");
+  };
+  const scientificSectionText = (document: ScientificDocument, key: string) => {
+    const section = document.sections.find(item => item.key === key);
+    if (!section) return "";
+    return section.blocks.map(block => preserveMedia && block.type === "media" ? documentMediaToMarkdown(block) : documentPlainText({ schemaVersion: 1, sections: [{ ...section, blocks: [block] }] })).join("\n\n");
+  };
   if (module === "projects") {
     const rows = applyExportSelection(
       await prisma.project.findMany({ orderBy: { updatedAt: "desc" } }),
@@ -91,6 +98,14 @@ export async function structuredExportRecords(
     return rows.map((row) => {
       const document = normalizeScientificDocument(row.contentJson, experimentSections);
       const narrative = experimentNarrativeFromDocument(document);
+      if (preserveMedia) {
+        narrative.background = scientificSectionText(document, "background");
+        narrative.materials = scientificSectionText(document, "setup");
+        narrative.steps = scientificSectionText(document, "execution");
+        narrative.observations = scientificSectionText(document, "observations");
+        narrative.deviations = scientificSectionText(document, "deviations");
+        narrative.conclusion = scientificSectionText(document, "conclusion");
+      }
       return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags };
     });
   }
@@ -161,7 +176,7 @@ export async function buildStructuredExport(
 ): Promise<StructuredExport> {
   const definition = structuredModules[module];
   if (!definition.exportFormats.includes(format)) throw new Error(`${format.toUpperCase()} export is not available for ${definition.title}.`);
-  const records = await structuredExportRecords(module, selection);
+  const records = await structuredExportRecords(module, selection, format === "md");
   if (!records.length) throw new Error("The selected export scope contains no records.");
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const base = `LabNest_${definition.title.replaceAll(" ", "_")}_${stamp}`;

@@ -3,6 +3,7 @@
 import { Children, cloneElement, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type ReactElement, type ReactNode, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
+import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Pencil, Plus, Quote, Redo2, Save, Strikethrough, Table2, Trash2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
@@ -333,6 +334,10 @@ export function DocumentWysiwygToolbar({
     <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
     {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
     <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger">
+        <button type="button" disabled={!collectDocumentMedia(editor.getJSON()).some(block => documentMediaAttachmentId(block)) || collectDocumentMedia(editor.getJSON()).some(block => block.pendingUploadId)} onClick={() => {
+          const ids = [...new Set(collectDocumentMedia(editor.getJSON()).flatMap(block => { const id = documentMediaAttachmentId(block); return id ? [id] : []; }))];
+          window.location.assign(`/api/attachments/package?ids=${encodeURIComponent(ids.join(","))}`);
+        } }><Save aria-hidden />下载附件包 / Download attachments</button>
         <button type="button" data-active={editor.isActive("strike") || undefined} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough aria-hidden />Strikethrough</button>
         <button type="button" data-active={editor.isActive("blockquote") || undefined} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote aria-hidden />Quote</button>
         <button type="button" data-active={editor.isActive("link") || undefined} onClick={setLink}><Link2 aria-hidden />Add / edit link</button>

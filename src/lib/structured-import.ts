@@ -1,5 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "./document-media.server";
+import { createImportedMedia, resolveImportedMedia, withPreparedDocxImages } from "./document-media-import.server";
 import { experimentDocumentFromNarrative } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshotInTransaction, type ExperimentSnapshotInput } from "@/lib/experiments";
 import { parseCustomExperimentSteps } from "@/lib/experiment-planning";
@@ -500,15 +502,16 @@ export async function commitStructuredImport(
   if (!validation.preview.canImport) throw new Error("Resolve every import validation error before confirming.");
   if (parsed.module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) throw new Error("Preview the Protocol file again before confirming.");
   const sourceMetadata = { sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceFormat: parsed.format };
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await withPreparedDocxImages(parsed.embeddedImages ?? [], async files => prisma.$transaction(async (tx) => {
     if (parsed.module === "protocols") {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${parsed.checksum}, 0))::text`;
       if (await tx.protocolVersion.findFirst({ where: { sourceFileChecksum: parsed.checksum }, select: { id: true } })) throw new Error("This exact source file has already been imported.");
     }
     const createdTargets: Array<{ targetType: string; targetId: string; href?: string }> = [];
+    const importedMediaIds = await createImportedMedia(tx, files, attachmentId);
 
     for (const row of validation.prepared) {
-      const data = row.data;
+      const data = resolveImportedMedia(row.data, importedMediaIds);
       if (data.kind === "projects") {
         const record = await tx.project.create({ data: { name: data.name, description: data.description, status: data.status, tags: data.tags } });
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "project", targetId: record.id, metadataJson: sourceMetadata } });
@@ -517,6 +520,7 @@ export async function commitStructuredImport(
       if (data.kind === "research-plans") {
         const code = data.code ?? await reserveRecordCode(tx, "researchPlan");
         const record = await tx.researchPlan.create({ data: { projectId: data.projectId, code, title: data.title, objective: data.objective, hypothesis: data.hypothesis, rationale: data.rationale, design: data.design, status: data.status, tags: data.tags, contentJson: data.contentJson, protocols: data.protocolIds.length ? { create: data.protocolIds.map((protocolId) => ({ protocolId, isPrimary: protocolId === data.primaryProtocolId })) } : undefined } });
+        await associateDocumentMedia(tx, data.contentJson, "research_plan", record.id);
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "research_plan", targetId: record.id, metadataJson: { ...sourceMetadata, code } } });
         createdTargets.push({ targetType: "research_plan", targetId: record.id, href: `/research-plans/${record.id}` });
       }
@@ -535,6 +539,7 @@ export async function commitStructuredImport(
           actorUserId: null,
           metadataJson: { ...sourceMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
         } });
+        await associateDocumentMedia(tx, importedDocument, "protocol_version", record.versions[0].id);
         createdTargets.push({ targetType: "protocol", targetId: record.id, href: `/protocols/${record.id}` });
       }
       if (data.kind === "experiments") {
@@ -574,6 +579,7 @@ export async function commitStructuredImport(
       }
       if (data.kind === "reports") {
         const record = await tx.report.create({ data: { projectId: data.projectId, researchPlanId: data.researchPlanId, title: data.title, status: data.status, periodStart: data.periodStart, periodEnd: data.periodEnd, tags: data.tags, contentJson: data.contentJson, sourceSnapshotJson: data.collected.snapshot, sources: data.collected.sources.length ? { create: data.collected.sources.map((source) => ({ sourceType: source.sourceType, sourceId: source.sourceId, titleSnapshot: source.titleSnapshot, versionSnapshot: source.versionSnapshot, hrefSnapshot: source.hrefSnapshot, metadataJson: source.metadataJson ?? {}, order: source.order, resultId: source.resultId })) } : undefined } });
+        await associateDocumentMedia(tx, data.contentJson, "report", record.id);
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "report", targetId: record.id, metadataJson: sourceMetadata } });
         createdTargets.push({ targetType: "report", targetId: record.id, href: `/reports/${record.id}` });
       }
@@ -581,7 +587,7 @@ export async function commitStructuredImport(
 
     if (createdTargets.length) await tx.attachmentLink.createMany({ data: createdTargets.map((target, index) => ({ attachmentId, targetType: target.targetType, targetId: target.targetId, linkType: "structured_import_source", order: index })) });
     return createdTargets;
-  });
+  }));
 
   return {
     count: created.length,

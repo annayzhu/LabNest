@@ -1,5 +1,6 @@
-import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, Link2, Table2, Wrench } from "lucide-react";
-import {ProtocolMediaImage} from "./ProtocolMediaImage";
+import { AlertTriangle, CheckSquare2, FileCheck2, Table2, Wrench } from "lucide-react";
+import { DocumentMediaView } from "./DocumentMediaView";
+import { documentMediaFromMarkdown } from "@/lib/document-media";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { separateLegacyImportWarnings } from "@/lib/protocol-import-state";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
@@ -128,6 +129,8 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
   const rendered: React.ReactNode[] = [];
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
+    const media = documentMediaFromMarkdown(node.content.map(run => run.text).join(""));
+    if (media) { rendered.push(<DocumentMediaView key={index} block={media} />); index += 1; continue; }
     if (node.type === "bullet" || node.type === "numbered") {
       const type = node.type;
       const items: ProtocolRichTextNode[] = [];
@@ -156,11 +159,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   if (block.type === "callout") {
     return <div className={cn("flex gap-3 rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span>{block.text}</span></div>;
   }
-  if (block.type === "media") {
-    const href = safeLink(block.url);
-    if (block.mediaType === "image" && href) return <figure className="ln-protocol-media-preview"><ProtocolMediaImage href={href} label={block.caption || block.filename || "Protocol image"}/>{block.caption ? <figcaption>{block.caption}</figcaption> : null}</figure>;
-    return <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium text-ink">{block.caption || block.filename || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
-  }
+  if (block.type === "media") return <DocumentMediaView block={block} />;
   if (block.type === "embedded_tool") {
     const href = safeLink(block.url);
     return <div className="ln-protocol-tool-card"><Wrench aria-hidden /><div><p>{block.label || "Embedded tool"}</p><small>{block.sourceKind === "manifest" ? "LabNest tool" : block.sourceKind === "path" ? "Application path" : "External URL"}</small></div>{href ? <a href={href} target="_blank" rel="noreferrer">Open tool</a> : <span>Invalid location</span>}</div>;

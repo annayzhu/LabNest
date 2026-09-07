@@ -1,5 +1,7 @@
 import { strToU8, zipSync } from "fflate";
 import type { ProtocolContentBlock, ProtocolDocument, ProtocolRichTextRun } from "./protocol-document";
+import { createDocxMedia, type DocxImageAssets } from "./docx-media";
+import { documentMediaFromMarkdown } from "./document-media";
 
 export type ProtocolDocxIdentity = {
   humanCode?: string | null;
@@ -140,10 +142,12 @@ function table(
   return `${captionXml}<w:tbl><w:tblPr>${caption ? `<w:tblCaption w:val="${xml(caption)}"/>` : ""}${options.description ? `<w:tblDescription w:val="${xml(options.description)}"/>` : ""}<w:tblW w:w="${tableWidth}" w:type="dxa"/><w:tblInd w:w="120" w:type="dxa"/><w:tblBorders>${tableBorders}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${body}</w:tbl>`;
 }
 
-function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }) {
+function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, media: ReturnType<typeof createDocxMedia>): string {
   if (block.type === "heading") return paragraph(run(block.text, { bold: true, heading: true }), "Heading2", { before: 120, keepNext: true });
   if (block.type === "text") return block.text.split(/\r?\n/).map((line) => paragraph(run(line))).join("");
   if (block.type === "rich_text") return block.nodes.map((node) => {
+    const inlineMedia = documentMediaFromMarkdown(node.content.map(item => item.text).join(""));
+    if (inlineMedia) return blockXml(inlineMedia, sequence, media);
     const content = richRuns(node.content);
     if (node.type === "heading2") return paragraph(content, "Heading2", { before: 120, keepNext: true, lineHeight: node.lineHeight });
     if (node.type === "heading3") return paragraph(content, "Heading3", { before: 80, keepNext: true, lineHeight: node.lineHeight });
@@ -166,7 +170,9 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }) {
         : "说明 / NOTE · ";
     return table([[`${prefix}${block.text}`]], undefined, { kind: "callout", tone: block.tone });
   }
-  if (block.type === "media") return paragraph(run(`${block.caption || block.mediaType}: ${block.url}`));
+  if (block.type === "media") return block.mediaType === "image"
+    ? paragraph(media.image(block)) + (block.caption ? paragraph(run(block.caption, { italic: true })) : "")
+    : paragraph(run(`${block.filename || block.caption || block.mediaType} — 附件，请从随附附件包打开 / Open from the accompanying attachment package.`));
   if (block.type === "embedded_tool") return paragraph(run(`${block.label}: ${block.url}`));
   return paragraph(run(`${block.label} · ${block.durationMinutes} min${block.notes ? ` · ${block.notes}` : ""}`, { bold: true }));
 }
@@ -208,7 +214,8 @@ export function protocolDocxFilename(identity: ProtocolDocxIdentity) {
   return `${code}_${title}_v${identity.displayVersion}_${status}.docx`;
 }
 
-export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: ProtocolDocument) {
+export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: ProtocolDocument, imageAssets: DocxImageAssets = {}) {
+  const media = createDocxMedia(imageAssets);
   const availabilityLabel = displayStatus(identity.availability);
   const reviewStageLabel = displayStatus(identity.reviewStage);
   const availability = identity.templateMode
@@ -224,7 +231,7 @@ export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: Pro
     ["Tag", identity.tags.join("; ")],
   ];
   const sequence = { numbered: 1 };
-  const sections = document.sections.map((section) => `${paragraph(run(section.title, { bold: true, heading: true }), "SectionHeading", { before: 160, after: 60, keepNext: true })}${section.blocks.length ? section.blocks.map((block) => blockXml(block, sequence)).join("") : paragraph(run("Not recorded.", { italic: true, color: palette.secondaryText }))}`).join("");
+  const sections = document.sections.map((section) => `${paragraph(run(section.title, { bold: true, heading: true }), "SectionHeading", { before: 160, after: 60, keepNext: true })}${section.blocks.length ? section.blocks.map((block) => blockXml(block, sequence, media)).join("") : paragraph(run("Not recorded.", { italic: true, color: palette.secondaryText }))}`).join("");
   const body = `${paragraph(run(identity.humanCode ?? "PRT-XXXXXX", { bold: true }), "ProtocolCode", { before: 120, after: 20, align: "center" })}${paragraph(run(identity.canonicalTitle, { bold: true, heading: true }), "Title", { after: 40, align: "center" })}${identity.englishTitle ? paragraph(run(identity.englishTitle, { italic: true, color: palette.secondaryText }), "Subtitle", { after: 100, align: "center" }) : ""}${table(identityRows, undefined, { kind: "identity" })}${sections}`;
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}<w:sectPr><w:headerReference w:type="default" r:id="rId2"/><w:footerReference w:type="default" r:id="rId3"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1020" w:right="1077" w:bottom="964" w:left="1077" w:header="454" w:footer="454" w:gutter="0"/></w:sectPr></w:body></w:document>`;
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`;
@@ -232,13 +239,14 @@ export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: Pro
   const documentRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/></Relationships>`;
   const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:updateFields w:val="true"/></w:settings>`;
   return zipSync({
-    "[Content_Types].xml": strToU8(contentTypes),
+    ...media.files,
+    "[Content_Types].xml": strToU8(contentTypes.replace("</Types>", `${media.contentTypes()}</Types>`)),
     "_rels/.rels": strToU8(rootRels),
     "word/document.xml": strToU8(documentXml),
     "word/styles.xml": strToU8(stylesXml),
     "word/settings.xml": strToU8(settingsXml),
     "word/header1.xml": strToU8(headerXml(identity)),
     "word/footer1.xml": strToU8(footerXml()),
-    "word/_rels/document.xml.rels": strToU8(documentRels),
+    "word/_rels/document.xml.rels": strToU8(documentRels.replace("</Relationships>", `${media.relationships.join("")}</Relationships>`)),
   }, { level: 6 });
 }

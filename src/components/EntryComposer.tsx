@@ -16,11 +16,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import type { Editor } from "@tiptap/core";
+import { documentMediaDraftId, insertDocumentMediaFiles } from "./DocumentMediaUploads";
 import { StandaloneDocumentEditorViewport } from "@/components/DocumentEditorViewport";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
-import type { WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { formInputClass } from "@/components/forms";
 import { useI18n } from "@/components/I18nProvider";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
@@ -169,6 +170,8 @@ export function EntryComposer({
   const cameraInputId = `${mediaInputPrefix}-camera`;
   const fileInputId = `${mediaInputPrefix}-files`;
   const previewUrls = useRef(new Set<string>());
+  const bodyEditors = useRef(new Set<Editor>());
+  const registerBodyEditor = useCallback((editor: Editor) => { bodyEditors.current.add(editor); return () => { bodyEditors.current.delete(editor); }; }, []);
   const baselineFields = useMemo(
     () => initialFields(defaultOccurredAt, defaultSource, defaultProtocolVersionId, defaultExperimentId, defaultExperimentStepId, entry),
     [defaultOccurredAt, defaultProtocolVersionId, defaultSource, defaultExperimentId, defaultExperimentStepId, entry],
@@ -258,10 +261,6 @@ export function EntryComposer({
   const selectedProject = projects.find((project) => project.id === fields.projectId);
   const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
   const selectedProtocol = protocols.find((protocol) => protocol.id === fields.protocolVersionId);
-  const entryInsertActions: WysiwygInsertAction[] = [
-    { id: "entry-image", icon: <ImagePlus aria-hidden />, label: "Image", description: "Choose one or more image files", run: () => document.getElementById(imageInputId)?.click() },
-    { id: "entry-file", icon: <Paperclip aria-hidden />, label: "File", description: "Attach a supporting file", run: () => document.getElementById(fileInputId)?.click() },
-  ];
   const captureMode = mode === "capture" && !entry;
 
   function updateField<K extends keyof EntryComposerFields>(key: K, value: EntryComposerFields[K]) {
@@ -269,6 +268,8 @@ export function EntryComposer({
   }
 
   function addFiles(fileList: FileList | File[]) {
+    const bodyEditor = [...bodyEditors.current].find(editor => !editor.isDestroyed && editor.view.dom.getClientRects().length > 0);
+    if (bodyEditor) { insertDocumentMediaFiles(bodyEditor, Array.from(fileList), documentMediaDraftId(bodyEditor)); return; }
     const files = Array.from(fileList);
     setSubmitStatus("");
     if (!files.length) return;
@@ -464,13 +465,11 @@ export function EntryComposer({
                 placeholder="Title is generated automatically · optional"
                 aria-label="Entry title"
               />
-              <textarea
-                required
+              <MarkdownRichTextEditor
+                registerEditor={registerBodyEditor}
                 value={fields.contentMarkdown}
-                onChange={(event) => updateField("contentMarkdown", event.target.value)}
-                className="focus-ring min-h-40 w-full resize-y rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-base leading-7 text-ink placeholder:text-muted"
+                onChange={(value) => updateField("contentMarkdown", value)}
                 placeholder="What did you observe?"
-                aria-label="Observation"
               />
             </div>
 
@@ -543,12 +542,12 @@ export function EntryComposer({
         </header>
         <div id="entry-document-content">
           <MarkdownRichTextEditor
+            registerEditor={registerBodyEditor}
             value={fields.contentMarkdown}
             onChange={(value) => updateField("contentMarkdown", value)}
             placeholder="Observation, decision, deviation, or follow-up…"
             minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
             toolbarHostId={toolbarHostId}
-            insertActions={entryInsertActions}
           />
         </div>
       </StandaloneDocumentEditorViewport>

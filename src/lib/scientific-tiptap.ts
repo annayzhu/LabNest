@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/core";
+import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
@@ -81,6 +82,8 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   const nodes: JSONContent[] = [];
   const lines = value.replaceAll("\r\n", "\n").split("\n");
   for (let index = 0; index < lines.length;) {
+    const media = documentMediaFromMarkdown(lines[index]);
+    if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
     const parsedLine = parseRichTextLineHeightLine(lines[index]);
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
     const line = parsedFontFamily.content;
@@ -131,6 +134,7 @@ function tableToTiptap(block: Extract<ScientificContentBlock, { type: "table" }>
 }
 
 function blockToTiptap(block: ScientificContentBlock): JSONContent[] {
+  if (block.type === "media") return [{ type: "documentMedia", attrs: { block } }];
   if (block.type === "text") return markdownToTiptap(block.text, block.id);
   if (block.type === "heading") return [{ type: "heading", attrs: { ...legacyAttrs(block.id, "heading"), level: 3 }, content: inlineMarkdownToTiptap(block.text) }];
   if (block.type === "checklist") return [{
@@ -197,6 +201,11 @@ function typographyPrefix(node: JSONContent) {
 function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
   const lines: string[] = [];
   for (const node of nodes) {
+    if (node.type === "documentMedia") {
+      const media = documentMediaSchema.safeParse(node.attrs?.block);
+      if (media.success) lines.push(documentMediaToMarkdown(media.data));
+      continue;
+    }
     if (node.type === "bulletList" || node.type === "orderedList" || node.type === "taskList") {
       (node.content ?? []).forEach((item, index) => {
         const paragraph = item.content?.[0];
@@ -235,7 +244,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
   const content = section.content ?? [];
   for (let index = 0; index < content.length;) {
     const node = content[index];
-    if (node.type === "scientificWidget") {
+    if (node.type === "scientificWidget" || node.type === "documentMedia") {
       const block = safeWidget(node);
       if (block) blocks.push(block);
       index += 1;
@@ -262,7 +271,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     }
     const groupId = nodeIdentity.id;
     const nodes: JSONContent[] = [];
-    while (content[index] && !["scientificWidget", "table"].includes(content[index].type ?? "")) {
+    while (content[index] && !["scientificWidget", "documentMedia", "table"].includes(content[index].type ?? "")) {
       const currentIdentity = identity(content[index]);
       if (nodes.length && (currentIdentity.id !== groupId || (content[index].type === "heading" && !currentIdentity.id))) break;
       if (!groupId && nodes.length && content[index].type === "heading") break;

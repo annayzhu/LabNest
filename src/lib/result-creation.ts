@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { RecordLifecycleStatus, ResultQualityStatus, ResultSourceType } from "@/generated/prisma/enums";
 import { buildExperimentResultReportTemplate, EXPERIMENT_RESULT_REPORT_KEY, experimentResultModules, isSingleResultTemplate } from "@/lib/experiment-results";
 import { normalizeResultTemplates, validateResultRecord } from "@/lib/result-templates";
@@ -169,6 +170,7 @@ export async function createResultInTransaction(
     },
   });
 
+  await associateDocumentMedia(tx, request.contentJson, "result", result.id);
   const itemLinks: Prisma.ItemLinkCreateManyInput[] = [{
     sourceType: "result",
     sourceId: result.id,

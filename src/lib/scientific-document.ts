@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
@@ -32,12 +33,7 @@ export const scientificContentBlockSchema = z.discriminatedUnion("type", [
     value: z.string(),
     unit: z.string().optional(),
   }),
-  baseBlockSchema.extend({
-    type: z.literal("media"),
-    mediaType: z.enum(["image", "video", "file"]),
-    url: z.string(),
-    caption: z.string().optional(),
-  }),
+  baseBlockSchema.extend(documentMediaFields),
   baseBlockSchema.extend({
     type: z.literal("dataset"),
     datasetId: z.string(),
@@ -120,6 +116,8 @@ export function scientificBlocksFromText(text: string, idPrefix: string): Scient
   };
 
   for (let index = 0; index < lines.length;) {
+    const media = documentMediaFromMarkdown(lines[index]);
+    if (media) { flushText(); blocks.push(media); index += 1; continue; }
     const table = markdownTableAt(lines, index);
     if (!table) {
       textLines.push(lines[index]);
@@ -133,7 +131,7 @@ export function scientificBlocksFromText(text: string, idPrefix: string): Scient
   }
   flushText();
 
-  if (!tableCount) return [{ id: idPrefix, type: "text", text }];
+  if (!tableCount && !blocks.some(block => block.type === "media")) return [{ id: idPrefix, type: "text", text }];
   return blocks;
 }
 
@@ -279,7 +277,7 @@ export function documentPlainText(document: ScientificDocument) {
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];
-    if (block.type === "media") return [block.caption || block.url];
+    if (block.type === "media") return [block.caption || block.filename || block.url];
     return [block.label];
   })).filter(Boolean).join("\n");
 }

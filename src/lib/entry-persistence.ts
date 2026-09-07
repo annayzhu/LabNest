@@ -14,6 +14,7 @@ import { reserveRecordCode } from "@/lib/record-codes";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { experimentSections, resultSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
 import { createResultInTransaction } from "@/lib/result-creation";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolParameter, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { normalizeResultTemplates } from "@/lib/result-templates";
 
@@ -290,6 +291,7 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
           contentJson: jsonValue(buildEntryContent(input.contentMarkdown, [])),
         },
       });
+      await associateDocumentMedia(tx, input.contentMarkdown, "entry", entry.id);
       const attachments = await createAttachmentRecords(tx, prepared);
       const content = buildEntryContent(input.contentMarkdown, attachments);
 
@@ -392,7 +394,8 @@ export async function updateEntryWithFiles(
           contentJson: jsonValue(content),
         },
       });
-      await tx.attachmentLink.deleteMany({ where: { targetType: "entry", targetId: entryId } });
+      await tx.attachmentLink.deleteMany({ where: { targetType: "entry", targetId: entryId, linkType: "entry_content" } });
+      await associateDocumentMedia(tx, input.contentMarkdown, "entry", entryId);
       if (orderedAttachments.length) {
         await tx.attachmentLink.createMany({
           data: orderedAttachments.map((attachment, attachmentOrder) => ({

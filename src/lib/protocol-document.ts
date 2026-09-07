@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
   ConsumptionRule,
   ProtocolMaterial,
@@ -75,16 +76,7 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     type: z.literal("checklist"),
     items: z.array(z.string()),
   }),
-  baseBlockSchema.extend({
-    type: z.literal("media"),
-    mediaType: z.enum(["image", "video", "file"]),
-    url: z.string(),
-    caption: z.string().optional(),
-    attachmentId: z.string().optional(),
-    filename: z.string().optional(),
-    mimeType: z.string().optional(),
-    size: z.number().int().nonnegative().optional(),
-  }),
+  baseBlockSchema.extend(documentMediaFields),
   baseBlockSchema.extend({
     type: z.literal("embedded_tool"),
     sourceKind: z.enum(["manifest", "url", "path"]),
@@ -156,7 +148,7 @@ export function richTextFromPlainText(text: string): ProtocolRichTextNode[] {
 }
 
 export function richTextPlainText(nodes: ProtocolRichTextNode[]) {
-  return nodes.map((node) => node.content.map((run) => run.text).join("")).join("\n");
+  return nodes.map((node) => { const text = node.content.map((run) => run.text).join(""); const media = documentMediaFromMarkdown(text); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : text; }).join("\n");
 }
 
 export function createProtocolTemplateDocument(): ProtocolDocument {

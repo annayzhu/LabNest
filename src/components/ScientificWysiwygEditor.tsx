@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { DocumentMediaNode } from "./DocumentMediaNode";
+import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { createPortal } from "react-dom";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
@@ -150,6 +152,7 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   onChange: (document: ScientificDocument) => void;
 }) {
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
+  const [mediaDraftId] = useState(() => crypto.randomUUID());
   const originalRef = useRef(document);
   const hiddenSectionKeysRef = useRef(hiddenSectionKeys);
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
@@ -183,12 +186,14 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
       ScientificLegacyAttributes,
       ScientificSection,
       ScientificWidget,
+      DocumentMediaNode,
     ],
     editorProps: {
       attributes: { class: "ln-protocol-tiptap ln-scientific-tiptap", spellcheck: "true", "aria-label": "Scientific document body" },
     },
     onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
   });
+  useDocumentMediaUploads(editor, mediaDraftId);
 
   useEffect(() => {
     if (!editor || previousHiddenSectionSignatureRef.current === hiddenSectionSignature) return;
@@ -206,10 +211,11 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
       editor={editor}
       ariaLabel="Scientific document formatting"
       checklist={checklist}
-      insertActions={scientificInsertActions(insertProfile)}
+      insertActions={[...scientificInsertActions(insertProfile).filter(action => action.id !== "media"), ...documentMediaInsertActions(mediaDraftId)]}
     />
   </div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
+    <input type="hidden" name="mediaDraftId" value={mediaDraftId} />
     {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
     <EditorContent editor={editor} />
   </section>;

@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { DOMParser } from "@xmldom/xmldom";
-import { strFromU8, unzipSync } from "fflate";
+import { unzipSync } from "fflate";
+import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
+import { documentMediaFromMarkdown } from "./document-media";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import {
   createEmptyProtocolDocument,
@@ -17,6 +19,7 @@ const headingToKey = new Map(
 );
 
 export type ParsedProtocolDocx = {
+  embeddedImages?: DocxEmbeddedImage[];
   humanCode?: string;
   canonicalTitle: string;
   englishTitle?: string;
@@ -192,6 +195,10 @@ export function parseProtocolDocumentXml(
         identityParagraphs.push(text);
         continue;
       }
+      const media = documentMediaFromMarkdown(text);
+      if (media) { pushBlock(media); continue; }
+      const previous = getSection(currentSection).blocks.at(-1);
+      if (previous?.type === "media" && previous.caption === text) continue;
       const checklistText = checklistItemText(element, text, currentSection);
       if (checklistText !== undefined) {
         if (checklistText) checklistBuffer.push(checklistText);
@@ -293,7 +300,11 @@ export function parseProtocolDocxBytes(bytes: Uint8Array, fileName: string): Par
   const documentXml = archive["word/document.xml"];
   if (!documentXml) throw new Error("This file is not a readable Word DOCX document.");
   const checksum = createHash("sha256").update(bytes).digest("hex");
-  return parseProtocolDocumentXml(strFromU8(documentXml), fileName, checksum);
+  const extracted = extractDocxMedia(bytes);
+  const parsed = parseProtocolDocumentXml(extracted.xml, fileName, checksum);
+  parsed.embeddedImages = extracted.images;
+  parsed.document.importWarnings = [...(parsed.document.importWarnings ?? []), ...extracted.warnings];
+  return parsed;
 }
 
 export async function parseProtocolDocx(file: File): Promise<ParsedProtocolDocx> {

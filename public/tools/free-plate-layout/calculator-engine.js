@@ -1320,8 +1320,8 @@ var LabNestCalculations = (() => {
   var uiScaleOptions = [
     {
       id: "compact",
-      name: "\u7D27\u51D1",
-      nameEn: "Compact",
+      name: "\u8F83\u5C0F",
+      nameEn: "Small",
       description: "\u66F4\u5C0F\u7684\u754C\u9762\u5B57\u4E0E\u66F4\u6E05\u695A\u7684\u4FE1\u606F\u5C42\u7EA7",
       descriptionEn: "Smaller interface type with a clearer hierarchy"
     },
@@ -1334,8 +1334,8 @@ var LabNestCalculations = (() => {
     },
     {
       id: "comfortable",
-      name: "\u8212\u5C55",
-      nameEn: "Comfortable",
+      name: "\u8F83\u5927",
+      nameEn: "Large",
       description: "\u653E\u5927\u754C\u9762\u6587\u5B57\uFF0C\u63A7\u4EF6\u95F4\u8DDD\u4FDD\u6301\u4E0D\u53D8",
       descriptionEn: "Larger interface type without changing control spacing"
     }
@@ -1347,8 +1347,8 @@ var LabNestCalculations = (() => {
 
   // src/lib/appearance.ts
   var appearanceKey = "labnest.appearance";
-  var appearanceDefaults = { schemaVersion: 1, mode: "system", colorSchemeId: "moon-dai", uiFontId: "system-sans", dataFontId: "mono", uiScaleId: defaultUiScale, iconPackId: "lab-soft" };
-  var preferenceIds = { mode: ["light", "dark", "system"], colorSchemeId: systemThemes.map((t) => t.id), uiFontId: ["system-sans", "system-serif"], dataFontId: ["system", "mono"], uiScaleId: uiScaleOptions.map((s) => s.id), iconPackId: ["classic-line", "lab-soft"] };
+  var appearanceDefaults = { schemaVersion: 1, mode: "system", colorSchemeId: "moon-dai", uiFontId: "system-sans", dataFontId: "mono", uiScaleId: defaultUiScale, iconPackId: "lab-soft", densityId: "standard" };
+  var preferenceIds = { mode: ["light", "dark", "system"], colorSchemeId: systemThemes.map((t) => t.id), uiFontId: ["system-sans", "system-serif"], dataFontId: ["system", "mono"], uiScaleId: uiScaleOptions.map((s) => s.id), iconPackId: ["classic-line", "lab-soft"], densityId: ["compact", "standard", "comfortable"] };
   function parseAppearance(raw, legacyTheme, legacyScale, existingUser) {
     const base = { ...appearanceDefaults, colorSchemeId: isSystemThemeId(legacyTheme) ? legacyTheme : "moon-dai", uiScaleId: isUiScaleId(legacyScale) ? legacyScale : defaultUiScale, iconPackId: existingUser ? "classic-line" : "lab-soft" };
     if (raw === null) return { value: base, preserve: false };
@@ -1358,7 +1358,7 @@ var LabNestCalculations = (() => {
       let preserve = false;
       for (const [key, ids] of Object.entries(preferenceIds)) {
         if (ids.includes(data[key])) base[key] = data[key];
-        else preserve = true;
+        else if (!(key === "densityId" && data[key] === void 0)) preserve = true;
       }
       if (Object.keys(data).some((key) => key !== "schemaVersion" && !Object.prototype.hasOwnProperty.call(preferenceIds, key))) preserve = true;
       return { value: base, preserve };

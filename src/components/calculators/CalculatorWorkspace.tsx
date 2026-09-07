@@ -14,7 +14,7 @@ import { MixEditor, SampleEditor, RecipeEditor, type RecipeRow, ReactionGroups, 
 import type { MixRow, SampleRow } from "@/lib/calculators/planning";
 import { recordVisit, saveDraft, restoreLegacyInputs } from "@/lib/calculators/calculator-storage";
 import { ResultPanel } from "./ResultPanel";
-import { resultClipboard } from "@/lib/calculators/result-presentation";
+import { resultClipboard, canCopyResult } from "@/lib/calculators/result-presentation";
 import { OfflineCalculator } from "./OfflineCalculator";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -130,8 +130,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   }
 
   async function copyResult() {
-    if (!result) return;
-    const content=(example?'EXAMPLE / 示例\n':'')+resultClipboard(result,zh);
+    if (!result || !canCopyResult(result)) return;
+    const content=resultClipboard(result,zh);
     const generation=++copyGeneration.current;
     const method=await copyCalculation(content);if(generation!==copyGeneration.current)return;setCopied(method!=='manual');setManualCopy(method==='manual'?content:'');if(method!=='manual')window.setTimeout(()=>setCopied(false),1600);
 
@@ -180,7 +180,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
         <div ref={resultSection} className="min-w-0 space-y-4">
           <Card>
-            <CardHeader title={zh ? "结果" : "Result"} action={result ? <button type="button" onClick={copyResult} className="focus-ring min-h-11 inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? (zh ? "已复制" : "Copied") : (zh ? "复制" : "Copy")}</button> : undefined} />
+            <CardHeader title={zh ? "结果" : "Result"} action={result ? <button type="button" onClick={copyResult} disabled={!canCopyResult(result)} className="focus-ring min-h-11 inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? (zh ? "已复制" : "Copied") : (zh ? "复制" : "Copy")}</button> : undefined} />
             <CardBody>
               {manualCopy&&result?<CopyPanel text={manualCopy} zh={zh} onRetry={copyResult}/>:null}
               {result ? <><p className="text-xs text-muted">{historical?'原始快照；单位转换仅临时显示 / Original snapshot; unit conversion is temporary':''}</p>{historical?<button type="button" className="min-h-11 text-moss" onClick={()=>{const old=state?.history.find(item=>item.id===sourceRecord);if(old)restore(old.inputs,old.methodVersion);}}>{zh?'用当前方法重算（新记录）':'Recalculate with current method (new record)'}</button>:null}<ResultPanel result={result} zh={zh} onUnit={(key,unit)=>{copyGeneration.current++;setCopied(false);setManualCopy("");const displayUnits={...result.displayUnits,[key]:unit};if(historical){setResult({...result,displayUnits});return;}const next={...inputs,__displayUnits:displayUnits};setInputs(next);setResult({...result,displayUnits,rawInputs:next});mutationId.current=null;if(state)update(saveDraft(state,calculatorId,next,example),200);}} onSave={saveResult} disabled={historical||example} onApplyToPlate={plateContext&&!historical&&!example ? applyToPlate : undefined} /></> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}

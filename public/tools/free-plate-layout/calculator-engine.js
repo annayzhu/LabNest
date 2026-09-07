@@ -23,6 +23,7 @@ var LabNestCalculations = (() => {
   __export(standalone_exports, {
     appearanceKey: () => appearanceKey,
     calculate: () => calculate,
+    canCopyResult: () => canCopyResult,
     compatibleUnits: () => compatibleUnits,
     copyCalculation: () => copyCalculation,
     displayQuantity: () => displayQuantity,
@@ -32,6 +33,7 @@ var LabNestCalculations = (() => {
     parseAppearance: () => parseAppearance,
     presentedOutputs: () => presentedOutputs,
     presentedTable: () => presentedTable,
+    resultAuditText: () => resultAuditText,
     resultClipboard: () => resultClipboard,
     resultCsv: () => resultCsv,
     resultExportRows: () => resultExportRows,
@@ -347,7 +349,7 @@ var LabNestCalculations = (() => {
     const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
     return data.map((row) => ({ ...row, ...metadata }));
   }
-  function resultClipboard(result, zh) {
+  function resultAuditText(result, zh) {
     const table = presentedTable(result, zh);
     return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
   }
@@ -356,6 +358,24 @@ var LabNestCalculations = (() => {
     const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
     const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
     return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
+  }
+  function canCopyResult(result) {
+    return result.status !== "partial" && (result.outputs.length > 0 || Boolean(result.table?.length)) && result.outputs.every((o) => typeof o.value !== "number" || Number.isFinite(o.value)) && (result.table ?? []).every((row) => Object.values(row).every((v) => typeof v !== "number" || Number.isFinite(v)));
+  }
+  function resultClipboard(result, zh) {
+    if (!canCopyResult(result)) return "";
+    const lines = presentedOutputs(result).filter((o) => (zh ? o.labelZh : o.label).trim()).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value}${o.unit ? " " + o.unit : ""}`);
+    const hidden = /* @__PURE__ */ new Set(["status", "componentId", "groupId", "inputRow", "planVersion", "methodVersion", "reducingMode", "reducingDefinition", "originalConcentration", "availableUl", "sufficient", "concentrationUnit", "volumeUnit", "action"]);
+    const table = presentedTable({ ...result, table: result.table?.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !hidden.has(key)))) }, zh);
+    for (const row of table) lines.push(Object.entries(row).filter(([key, value]) => key.trim() && value !== "").map(([key, value]) => `${key}: ${typeof value === "number" ? formatQuantity(value) : value}`).join("; "));
+    for (const op of result.operations ?? []) {
+      if (!["make-up-to", "dispense"].includes(op.role) && !(result.calculatorId === "transfection" && op.role === "transfer")) continue;
+      if (op.role === "make-up-to" && (result.table?.some((row) => row.action === "make-up-to") || result.outputs.some((o) => o.unit && typeof o.value === "number" && tableQuantityUnits[o.key] === void 0 && /volume/i.test(o.key)))) continue;
+      const component = op.component.split(" / ")[zh ? 0 : 1] ?? op.component;
+      const instruction = op.role === "make-up-to" ? zh ? "\u5B9A\u5BB9\u81F3" : "Bring to final volume" : component;
+      lines.push(`${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions > 1 ? " \xD7 " + op.repetitions : ""}`);
+    }
+    return lines.filter(Boolean).join("\n");
   }
 
   // src/lib/calculators/operations.ts

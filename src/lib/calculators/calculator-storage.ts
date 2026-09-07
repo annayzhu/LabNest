@@ -220,3 +220,9 @@ export function restoreLegacyInputs(id: string, inputs: Record<string,unknown>):
   if (id==='reagent-dosing' && Number(inputs.stockToTargetFactor)===1000) return {inputs:{mode:'final',stockConcentration:inputs.stockConcentration,targetConcentration:inputs.targetConcentration,stockConcentrationUnit:'mM',targetConcentrationUnit:'µM',finalVolume:inputs.finalVolumeMl,finalVolumeUnit:'mL'}};
   return {inputs:{mode:'final',stockConcentration:'',targetConcentration:'',finalVolume:inputs.finalVolume??inputs.finalVolumeMl,finalVolumeUnit:inputs.volumeUnit??'mL'},warning:'旧浓度单位缺失或倍率冲突。原快照保留；请确认单位后重新输入浓度。 / Legacy units missing or conflicting. Original snapshot retained; confirm units and re-enter concentrations.'};
 }
+
+/** Normalize legacy aliases before sorting/deduplication, including imported history. */
+export function recentCalculators(recent:CalculatorState['recent']){
+ const seen=new Set<string>();
+ return [...recent].sort((a,b)=>(Date.parse(b.visitedAt)||0)-(Date.parse(a.visitedAt)||0)).map(item=>({...item,calculatorId:legacyTaskMap[item.calculatorId]?.task??item.calculatorId})).filter(item=>{if(seen.has(item.calculatorId))return false;seen.add(item.calculatorId);return true;});
+}

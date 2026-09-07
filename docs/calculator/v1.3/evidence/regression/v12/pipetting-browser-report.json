@@ -1,13 +1,13 @@
 {
-  "startedAt": "2026-09-07T09:24:57.339Z",
+  "startedAt": "2026-09-07T13:22:10.881Z",
   "checks": [
     "T01 T03 T22 UI, real clipboard, CSV, local history, offline queue and successful Result",
     "T07",
     "T11",
     "T13"
   ],
-  "experimentId": "cmtr1b6ln0004atosds7a4uy1",
-  "experimentStepId": "cmtr1b6lt0006atosnn6jhvu0",
+  "experimentId": "cmtr9ol46000qaeos70iu1wbn",
+  "experimentStepId": "cmtr9ol49000saeospvh35wzi",
   "snapshot": {
     "calculatorId": "percent-solution",
     "methodVersion": "percent-solution-v2",
@@ -95,8 +95,8 @@
       "targetVolumeMl": "0.1",
       "targetMassG": "",
       "__context": {
-        "experimentId": "cmtr1b6ln0004atosds7a4uy1",
-        "experimentStepId": "cmtr1b6lt0006atosnn6jhvu0"
+        "experimentId": "cmtr9ol46000qaeos70iu1wbn",
+        "experimentStepId": "cmtr9ol49000saeospvh35wzi"
       },
       "pipetteMinimumUl": "1"
     },
@@ -116,5 +116,5 @@
       }
     }
   },
-  "resultId": "cmtr1bgkz000gatos578o31xd"
+  "resultId": "cmtr9sj88001caeosmpr1qrl9"
 }

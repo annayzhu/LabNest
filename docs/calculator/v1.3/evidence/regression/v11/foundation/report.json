@@ -1,6 +1,6 @@
 {
-  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
-  "at": "2026-09-07T09:26:12.838Z",
+  "sha": "779cf8b989afae471e46b696d8b978f6408dcf96",
+  "at": "2026-09-07T13:20:30.298Z",
   "checks": [
     "Old preferences retain scheme/font/size; missing density defaults standard; spacing changes padding not font and persists",
     "Preview shows shared card/table/tools and selected/success/warning/error; all seven palettes in both modes; desktop columns/mobile collapse",

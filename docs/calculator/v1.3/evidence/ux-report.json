@@ -1,7 +1,7 @@
 {
-  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
-  "at": "2026-09-07T09:26:30.061Z",
-  "base": "http://localhost:3223",
+  "sha": "779cf8b989afae471e46b696d8b978f6408dcf96",
+  "at": "2026-09-07T13:20:47.564Z",
+  "base": "http://localhost:3226",
   "browser": "149.0.7827.55",
   "checks": [
     {
@@ -17,7 +17,7 @@
     {
       "id": "CP-01/04",
       "status": "passed",
-      "detail": "Real system clipboard pasted through keyboard into a separate editable textarea; parallel sources/warnings retained"
+      "detail": "Real system clipboard pasted through keyboard into a separate editable textarea; parallel sources retained; warnings remain on page, outside copy"
     },
     {
       "id": "CP-03-compat",
@@ -708,11 +708,14 @@
     {
       "id": "transfection",
       "exportAudit": {
-        "rows": 5,
+        "rows": 4,
         "columns": [
-          "name",
-          "value",
-          "unit",
+          "Mix group",
+          "Tube",
+          "Component",
+          "Per well (µL)",
+          "Prepare batch (µL)",
+          "DNA per well (µg)",
           "operations",
           "operationVersion",
           "pipettingCheck",
@@ -728,7 +731,7 @@
           "displayUnits",
           "structuredWarnings"
         ],
-        "operationCount": 4,
+        "operationCount": 6,
         "allCsvXlsxCellsEqual": true,
         "notesProvenanceAndWarnings": true
       },
@@ -738,7 +741,7 @@
         "overlap": true,
         "overflow": false
       },
-      "invalidStateChecked": true,
+      "invalidStateChecked": false,
       "exports": [
         "CSV",
         "XLSX"

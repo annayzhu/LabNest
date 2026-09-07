@@ -1,7 +1,7 @@
 {
-  "sha": "979f1b07968057716a85563ff5e6c42f1e82045c",
+  "sha": "779cf8b989afae471e46b696d8b978f6408dcf96",
   "base": "http://localhost:3226",
-  "at": "2026-09-07T13:12:39.673Z",
+  "at": "2026-09-07T13:21:55.994Z",
   "checks": [
     {
       "name": "DNA example; desktop side-by-side / mobile stacked input and result tubes",

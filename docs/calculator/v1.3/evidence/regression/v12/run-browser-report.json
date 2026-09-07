@@ -65,7 +65,7 @@
     {
       "id": "R08/R10",
       "status": "passed",
-      "stepId": "cmtr1b6lt0006atosnn6jhvu0"
+      "stepId": "cmtr9ol49000saeospvh35wzi"
     },
     {
       "id": "R11",
@@ -103,10 +103,10 @@
       }
     }
   ],
-  "startedAt": "2026-09-07T09:24:43.336Z",
-  "syntheticAttachmentId": "cmtr1b5kp0000atos5tswazkm",
-  "protocolUrl": "http://localhost:3223/protocols/cmtr1b5ne0001atosbdv81r4o",
-  "experimentUrl": "http://localhost:3223/experiments/cmtr1b6ln0004atosds7a4uy1",
-  "runUrl": "http://localhost:3223/experiments/cmtr1b6ln0004atosds7a4uy1/run",
-  "stepId": "cmtr1b6lt0006atosnn6jhvu0"
+  "startedAt": "2026-09-07T13:19:06.252Z",
+  "syntheticAttachmentId": "cmtr9ok78000laeoswbejo6wt",
+  "protocolUrl": "http://localhost:3226/protocols/cmtr9ok8x000maeos1u3dqlh8",
+  "experimentUrl": "http://localhost:3226/experiments/cmtr9ol46000qaeos70iu1wbn",
+  "runUrl": "http://localhost:3226/experiments/cmtr9ol46000qaeos70iu1wbn/run",
+  "stepId": "cmtr9ol49000saeospvh35wzi"
 }

@@ -1,141 +1,167 @@
 {
-  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
-  "startedAt": "2026-09-07T09:24:42.645Z",
-  "base": "http://localhost:3223",
+  "sha": "779cf8b989afae471e46b696d8b978f6408dcf96",
+  "startedAt": "2026-09-07T13:19:05.818Z",
+  "base": "http://localhost:3226",
   "checks": [
     {
       "name": "run-v12",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 14261,
+      "durationMs": 13805,
       "log": "docs/calculator/v1.3/evidence/logs/run-v12.log"
     },
     {
       "name": "pipetting-v12",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 6511,
-      "log": "docs/calculator/v1.3/evidence/logs/pipetting-v12.log"
+      "durationMs": 1371,
+      "log": "docs/calculator/v1.3/evidence/logs/pipetting-v12.log",
+      "initialStatus": "失败",
+      "rerunAfterFix": true
     },
     {
       "name": "v12-database",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 88,
-      "log": "docs/calculator/v1.3/evidence/logs/v12-database.log"
+      "durationMs": 90,
+      "log": "docs/calculator/v1.3/evidence/logs/v12-database.log",
+      "initialStatus": "失败",
+      "rerunAfterFix": true
     },
     {
       "name": "refactor",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 15926,
+      "durationMs": 15938,
       "log": "docs/calculator/v1.3/evidence/logs/refactor.log"
     },
     {
       "name": "legacy",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 19680,
+      "durationMs": 19604,
       "log": "docs/calculator/v1.3/evidence/logs/legacy.log"
     },
     {
       "name": "compact-ui",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 6323,
+      "durationMs": 6342,
       "log": "docs/calculator/v1.3/evidence/logs/compact-ui.log"
     },
     {
       "name": "plate",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1260,
+      "durationMs": 1299,
       "log": "docs/calculator/v1.3/evidence/logs/plate.log"
     },
     {
       "name": "storage-appearance",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 4643,
+      "durationMs": 4741,
       "log": "docs/calculator/v1.3/evidence/logs/storage-appearance.log"
     },
     {
       "name": "appearance",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 27086,
+      "durationMs": 26857,
       "log": "docs/calculator/v1.3/evidence/logs/appearance.log"
     },
     {
       "name": "integration",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 2735,
+      "durationMs": 2705,
       "log": "docs/calculator/v1.3/evidence/logs/integration.log"
     },
     {
       "name": "database",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 89,
+      "durationMs": 92,
       "log": "docs/calculator/v1.3/evidence/logs/database.log"
     },
     {
       "name": "rejection",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1307,
+      "durationMs": 1329,
       "log": "docs/calculator/v1.3/evidence/logs/rejection.log"
     },
     {
       "name": "visual-v11",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 5149,
+      "durationMs": 5142,
       "log": "docs/calculator/v1.3/evidence/logs/visual-v11.log"
     },
     {
       "name": "standalone-v11",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1853,
+      "durationMs": 1881,
       "log": "docs/calculator/v1.3/evidence/logs/standalone-v11.log"
     },
     {
       "name": "ux-v13",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 32868,
+      "durationMs": 32311,
       "log": "docs/calculator/v1.3/evidence/logs/ux-v13.log"
     },
     {
       "name": "formal-exports",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1820,
+      "durationMs": 1691,
       "log": "docs/calculator/v1.3/evidence/logs/formal-exports.log"
     },
     {
       "name": "navigation-icons",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 27280,
+      "durationMs": 27084,
       "log": "docs/calculator/v1.3/evidence/logs/navigation-icons.log"
     },
     {
       "name": "colony-v13",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1385,
+      "durationMs": 1337,
       "log": "docs/calculator/v1.3/evidence/logs/colony-v13.log"
     },
     {
       "name": "cache-clear-failure",
       "status": "通过",
       "exitCode": 0,
-      "durationMs": 1734,
+      "durationMs": 1751,
       "log": "docs/calculator/v1.3/evidence/logs/cache-clear-failure.log"
+    },
+    {
+      "name": "copy-recent",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 4283,
+      "log": "docs/calculator/v1.3/evidence/logs/copy-recent.log"
+    },
+    {
+      "name": "transfection",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2040,
+      "log": "docs/calculator/v1.3/evidence/logs/transfection.log"
+    },
+    {
+      "name": "transfection-database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1172,
+      "log": "docs/calculator/v1.3/evidence/logs/transfection-database.log"
     }
   ],
-  "finishedAt": "2026-09-07T09:27:34.742Z"
+  "finishedAt": "2026-09-07T13:23:15.472406+00:00",
+  "resolution": "Two stale clipboard checks updated; pipetting and dependent DB suite rerun successfully. Other 20 suites passed in first pass. Test script patch is in the containing commit; app source 979f1b0."
 }

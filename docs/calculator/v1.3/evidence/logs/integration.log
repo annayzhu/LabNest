@@ -1,7 +1,7 @@
 {
-  "completedAt": "2026-09-07T09:26:21.137Z",
-  "resultId": "cmtr1d6wp000matosz6wzaom4",
-  "clientMutationId": "a7c9733c-1c4b-4dc7-be97-53171ad2ec6f",
+  "completedAt": "2026-09-07T13:20:38.558Z",
+  "resultId": "cmtr9qhpj0016aeos6gopq23u",
+  "clientMutationId": "6c4ef44b-0f15-4d42-97c3-191f4c9a0953",
   "checks": [
     "Offline queue retained intent, selected nL display and structured pipetting warning",
     "Reconnect created Result",

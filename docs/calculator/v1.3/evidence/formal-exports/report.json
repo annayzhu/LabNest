@@ -1,40 +1,31 @@
 {
-  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
-  "at": "2026-09-07T09:27:03.238Z",
-  "resultId": "cmtr1d0sb000jatosxh028l3l",
+  "sha": "779cf8b989afae471e46b696d8b978f6408dcf96",
+  "at": "2026-09-07T13:21:20.046Z",
+  "resultId": "cmtr9qbqk0013aeos13wmp493",
   "files": [
     {
       "format": "csv",
       "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.csv",
       "status": "通过",
-      "check": "Full nested snapshot equals independent database read",
-      "sha256": "e663f6ceaf8cacbddca35a5c66a035d38f6cdd809317162e0ceb598dee5d05c8"
+      "check": "Full nested snapshot equals independent database read"
     },
     {
       "format": "xlsx",
       "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.xlsx",
       "status": "通过",
-      "check": "Full nested snapshot equals independent database read",
-      "sha256": "17ccb621facc769d07726829c472e313230d092cec9da9630450e629b2cc279c"
+      "check": "Full nested snapshot equals independent database read"
     },
     {
       "format": "json",
       "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.json",
       "status": "通过",
-      "check": "Full nested snapshot equals independent database read",
-      "sha256": "1fe3cb79d0bb105832757fd3fe9871c68c4f11f75f316588a458f75fc80f7cba"
+      "check": "Full nested snapshot equals independent database read"
     },
     {
       "format": "pdf",
       "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.pdf",
       "status": "通过",
-      "check": "pdftotext numeric/unit/component/source/warning assertions and manual inspection of both final rendered pages; full preparation table legible, no clipped columns. Native OS print dialog not exercised.",
-      "sha256": "f609e21ae3bbaad3183c656e2be8ecc47064b0a98de0a06c8ebad3c1c8175c01",
-      "pages": 2,
-      "renderedPages": [
-        "saved-wb-1.png",
-        "saved-wb-2.png"
-      ]
+      "check": "pdftotext readback confirms 10/5/1/4 µL, stock sources, warning and full inputs; both rendered pages visually inspected. Native OS print dialog not exercised."
     }
   ]
 }

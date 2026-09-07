@@ -1,7 +1,7 @@
 name: Calculator acceptance
 on:
   pull_request:
-    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'package*.json', '.github/workflows/calculator.yml']
+    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'package*.json', 'next.config.ts', 'tsconfig*.json', 'prisma/**', '.github/workflows/calculator.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,7 +11,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        timezone: [Asia/Shanghai, America/Vancouver]
+        include:
+          - timezone: Asia/Shanghai
+            label: Shanghai
+          - timezone: America/Vancouver
+            label: Vancouver
     env:
       TZ: ${{ matrix.timezone }}
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_test
@@ -25,7 +29,12 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm test 2>&1 | tee quality-${{ matrix.label }}.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-${{ matrix.label }}
+          path: quality-${{ matrix.label }}.log
   browser:
     needs: quality
     runs-on: ubuntu-latest
@@ -63,6 +72,9 @@ jobs:
           done
           cat calculator-server.log
           exit 1
+      - run: node scripts/verify-calculator-run-v12.mjs
+      - run: node scripts/verify-calculator-pipetting-v12.mjs
+      - run: node scripts/verify-calculator-v12-database.mjs
       - run: node scripts/verify-calculator-refactor.mjs
       - run: node scripts/verify-calculator-legacy.mjs
       - run: node scripts/verify-calculator-compact-ui.mjs
@@ -81,4 +93,5 @@ jobs:
           path: |
             docs/calculator/evidence
             docs/calculator/v1.1/evidence
+            docs/calculator/v1.2/evidence
             calculator-server.log

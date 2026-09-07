@@ -24,11 +24,17 @@ try {
   });
   await page.getByRole("button", { name: "重试 / Retry", exact: true }).waitFor();
   assert(await page.locator('img[src^="blob:"]').count(), "Failed upload retains local preview");
-  await page.getByRole("button", { name: "重试 / Retry", exact: true }).click();
+  // Let the documented debounced local-draft save complete before simulating a reload.
+  await page.waitForTimeout(750);
+  await page.reload({ waitUntil: "networkidle" });
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "重新选择文件 / Reselect file", exact: true }).click();
+  const png = await page.evaluate(() => { const canvas = document.createElement("canvas"); canvas.width = 40; canvas.height = 30; return canvas.toDataURL().split(",")[1]; });
+  await (await chooser).setFiles({ name: "mobile-photo.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
   await page.waitForFunction(() => [...document.images].some(img => img.alt === "mobile-photo.png" && img.src.includes("/api/attachments/") && img.complete && img.naturalWidth > 0));
   await page.getByRole("button", { name: "Save Entry", exact: true }).click();
   await page.waitForURL(url => /\/entries\/(?!new)/.test(url.pathname));
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("img", { name: "mobile-photo.png", exact: true }).first().waitFor();
-  console.log("PASS mobile-sized Quick capture: rich body, failed preview, retry, save and refresh");
+  console.log("PASS mobile-sized Quick capture: rich body, failed preview, reload, photo reselection, save and refresh");
 } finally { await browser.close(); }

@@ -2,6 +2,7 @@ import { strToU8, zipSync } from "fflate";
 import type { ProtocolContentBlock, ProtocolDocument, ProtocolRichTextRun } from "./protocol-document";
 import { createDocxMedia, type DocxImageAssets } from "./docx-media";
 import { documentMediaFromMarkdown } from "./document-media";
+import { tiptapToProtocolRichText } from "./protocol-tiptap";
 
 export type ProtocolDocxIdentity = {
   humanCode?: string | null;
@@ -92,7 +93,7 @@ function border(side: string, value: "single" | "none", size: number, color: str
 function table(
   inputRows: string[][],
   caption?: string,
-  options: { kind?: TableKind; tone?: CalloutTone; description?: string } = {},
+  options: { kind?: TableKind; tone?: CalloutTone; description?: string; cellXml?: (value: string, row: number, column: number, width: number) => string | undefined } = {},
 ) {
   const rows = inputRows.length ? inputRows : [[""]];
   const kind = options.kind ?? "data";
@@ -130,7 +131,7 @@ function table(
         ? `<w:tcBorders>${border("bottom", "single", 6, palette.border)}</w:tcBorders>`
         : "";
       const cellProperties = `<w:tcPr><w:tcW w:w="${widths[columnIndex]}" w:type="dxa"/>${headerBottomBorder}<w:shd w:val="clear" w:color="auto" w:fill="${fill}"/><w:tcMar><w:top w:w="40" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>`;
-      return `<w:tc>${cellProperties}${paragraph(run(value, { bold, color }), undefined, { after: 0, align: isHeader ? "center" : "left" })}</w:tc>`;
+      return `<w:tc>${cellProperties}${options.cellXml?.(value, rowIndex, columnIndex, widths[columnIndex]) ?? paragraph(run(value, { bold, color }), undefined, { after: 0, align: isHeader ? "center" : "left" })}</w:tc>`;
     }).join("");
     return `<w:tr>${rowProperties}${cells}</w:tr>`;
   }).join("");
@@ -161,7 +162,25 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, m
     return paragraph(content, undefined, { lineHeight: node.lineHeight });
   }).join("");
   if (block.type === "checklist") return block.items.filter(Boolean).map((item) => paragraph(run(`☐ ${item}`), "Checklist")).join("");
-  if (block.type === "table") return table(block.rows, block.caption, { description: block.resultTemplate ? `labnest-result-template:${JSON.stringify(block.resultTemplate)}` : undefined });
+  if (block.type === "table") {
+    const instructions = block.resultTemplate?.instructions?.length ? blockXml({ id: `${block.id}-instructions`, type: "rich_text", nodes: block.resultTemplate.instructions }, sequence, media) : "";
+    // Word displays this content control, while reimport uses the table's structured
+    // instruction metadata. This avoids duplicating instructions as body blocks.
+    const instructionControl = instructions ? `<w:sdt><w:sdtPr><w:tag w:val="labnest-template-instructions"/></w:sdtPr><w:sdtContent>${instructions}</w:sdtContent></w:sdt>` : "";
+    return instructionControl + table(block.rows, block.caption, {
+      description: block.resultTemplate ? `labnest-result-template:${JSON.stringify(block.resultTemplate)}` : undefined,
+      cellXml: (value, row, column, width) => {
+        const cellMedia = { ...media, image: (image: Parameters<typeof media.image>[0]) => media.image(image, Math.max(240, width - 240) * 635) };
+        const rich = block.cellRichContent?.[row]?.[column];
+        if (rich) return blockXml({ id: `${block.id}-${row}-${column}`, type: "rich_text", nodes: tiptapToProtocolRichText({ type: "doc", content: rich }) }, sequence, cellMedia);
+        if (!value.split("\n").some(documentMediaFromMarkdown)) return undefined;
+        return value.split("\n").map(line => {
+          const image = documentMediaFromMarkdown(line);
+          return image ? blockXml(image, sequence, cellMedia) : paragraph(run(line));
+        }).join("");
+      },
+    });
+  }
   if (block.type === "callout") {
     const prefix = block.tone === "critical"
       ? "关键警告 / CRITICAL · "

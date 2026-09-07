@@ -250,7 +250,7 @@ export function EntryComposer({
         savedAt: new Date().toISOString(),
       };
       saveEntryDraft(draftKey, draft)
-        .then(() => setDraftStatus("Draft saved locally, including selected files."))
+        .then(() => setDraftStatus("Draft saved locally. Unfinished inline uploads may need the file reselected after reload."))
         .catch(() => setDraftStatus("Draft could not be saved locally."));
     }, 500);
     return () => window.clearTimeout(timer);

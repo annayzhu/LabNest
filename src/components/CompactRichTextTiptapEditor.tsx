@@ -64,7 +64,11 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   useEffect(() => { if (editor && registerEditor) return registerEditor(editor); }, [editor, registerEditor]);
   useEffect(() => {
     if (!editor || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash) return;
-    editor.commands.setContent(content);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled && !editor.isDestroyed && !editor.isFocused) editor.commands.setContent(content, { emitUpdate: false });
+    });
+    return () => { cancelled = true; };
   }, [content, contentHash, editor]);
   useEffect(() => {
     if (!editor || !toolbarTarget) return;

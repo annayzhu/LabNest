@@ -13,8 +13,9 @@ function MediaNodeView({ node, updateAttributes, deleteNode, editor }: NodeViewP
   const upload = useMediaUpload(block.id);
   return <NodeViewWrapper data-document-media={block.id} data-widget-type="media" contentEditable={false}>
     {upload?.preview ? <Image src={upload.preview} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} /> : null}
-    {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {upload?.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
+    {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
       {upload?.status === "failed" ? <><p className="text-error">{upload.error}</p><button type="button" className="min-h-11 px-2 text-moss" onClick={upload.retry}>重试 / Retry</button></> : null}
+      {!upload ? <button type="button" className="min-h-11 px-2 text-moss" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}>重新选择文件 / Reselect file</button> : null}
     </div> : null}
     <div data-print-hidden className="flex flex-wrap items-center gap-2 py-1 text-sm text-muted">
       <button type="button" data-drag-handle aria-label="移动附件 / Move attachment" className="min-h-11 px-2"><GripVertical className="h-4 w-4" /></button>

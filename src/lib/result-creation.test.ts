@@ -13,8 +13,9 @@ function fakeTransaction(options: { entry?: boolean; attachments?: boolean } = {
     resultTypeDefinition: { findUnique: vi.fn().mockResolvedValue({ id: "type-1" }) },
     entry: { findUnique: vi.fn().mockResolvedValue(options.entry ? { id: "entry-1", projectId: "project-1", researchPlanId: "plan-1", occurredAt: new Date("2026-08-27T00:00:00.000Z") } : null) },
     itemLink: { createMany: createLinks },
+    attachment: { findMany: vi.fn().mockResolvedValue([]) },
     attachmentLink: {
-      findMany: vi.fn().mockResolvedValue(options.attachments ? [{ attachmentId: "attachment-1", order: 0 }] : []),
+      findMany: vi.fn().mockImplementation(({ where }) => Promise.resolve(where.linkType === "embedded_document_media" ? [] : options.attachments ? [{ attachmentId: "attachment-1", order: 0 }] : [])),
       createMany: createAttachmentLinks,
     },
     activityLog: { create: createLog },

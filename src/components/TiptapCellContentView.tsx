@@ -2,6 +2,8 @@ import type { JSONContent } from "@tiptap/core";
 import type { CSSProperties, ReactNode } from "react";
 import { parseRichTextColor } from "@/lib/rich-text-color";
 import { parseRichTextFontSizePt } from "@/lib/rich-text-font-size";
+import { documentMediaFromMarkdown, documentMediaSchema } from "@/lib/document-media";
+import { DocumentMediaView } from "./DocumentMediaView";
 
 function safeHref(value: unknown) {
   if (typeof value !== "string") return undefined;
@@ -9,6 +11,10 @@ function safeHref(value: unknown) {
 }
 
 function renderNode(node: JSONContent, key: string): ReactNode {
+  if (node.type === "documentMedia") {
+    const media = documentMediaSchema.safeParse(node.attrs?.block);
+    return media.success ? <DocumentMediaView key={key} block={media.data} /> : null;
+  }
   if (node.type === "hardBreak") return <br key={key} />;
   let content: ReactNode = node.text ?? node.content?.map((child, index) => renderNode(child, `${key}-${index}`)) ?? null;
 
@@ -39,5 +45,8 @@ function renderNode(node: JSONContent, key: string): ReactNode {
 }
 
 export function TiptapCellContentView({ content, fallback }: { content?: JSONContent[] | null; fallback: string }) {
-  return content ? <>{content.map((node, index) => renderNode(node, `cell-${index}`))}</> : <>{fallback}</>;
+  return content ? <>{content.map((node, index) => renderNode(node, `cell-${index}`))}</> : <>{fallback.split("\n").map((line, index) => {
+    const media = documentMediaFromMarkdown(line);
+    return media ? <DocumentMediaView key={index} block={media} /> : <span key={index}>{index ? "\n" : ""}{line}</span>;
+  })}</>;
 }

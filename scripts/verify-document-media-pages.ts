@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { prisma } from "../src/lib/db";
 import { createExperimentWithProtocolSnapshot } from "../src/lib/experiments";
@@ -46,6 +47,27 @@ async function main() {
     await page.goto(`${base}/experiments/${experiment.id}/run`, { waitUntil: "networkidle" });
     await page.getByRole("img", { name: "Media acceptance fixture", exact: true }).first().waitFor();
     console.log("PASS Run: image in detached Protocol snapshot");
+    await page.goto(`${base}/experiments/${experiment.id}/edit`, { waitUntil: "networkidle" });
+    const media = page.locator("[data-document-media]").first();
+    const original = await media.getByRole("link", { name: "查看原图 / Open original", exact: true }).getAttribute("href"); assert(original);
+    await media.getByRole("textbox", { name: "图注 / Caption", exact: true }).fill("Replacement caption");
+    await media.getByRole("spinbutton", { name: "图片显示宽度百分比 / Image width percent", exact: true }).fill("60");
+    const replacement = page.waitForEvent("filechooser");
+    await media.getByRole("button", { name: "替换附件 / Replace attachment", exact: true }).click();
+    await (await replacement).setFiles({ name: "Replacement.png", mimeType: "image/png", buffer: readFileSync("public/icons/lab-soft-v1/solution-prep.png") });
+    await page.waitForFunction(old => [...document.querySelectorAll<HTMLAnchorElement>('[data-document-media] a')].some(link => link.getAttribute("href")?.startsWith("/api/attachments/") && link.getAttribute("href") !== old), original);
+    await page.getByRole("button", { name: "Save Experiment", exact: true }).click();
+    await page.waitForURL(url => !url.pathname.endsWith("/edit"));
+    await page.goto(`${base}/experiments/${experiment.id}/edit`, { waitUntil: "networkidle" });
+    assert.equal(await media.getByRole("textbox", { name: "图注 / Caption", exact: true }).inputValue(), "Replacement caption");
+    assert.equal(await media.getByRole("spinbutton", { name: "图片显示宽度百分比 / Image width percent", exact: true }).inputValue(), "60");
+    console.log("PASS replace image, caption/width persist, original retained");
+    await media.getByRole("button", { name: "移除引用 / Remove reference", exact: true }).click();
+    await page.getByRole("button", { name: "Save Experiment", exact: true }).click();
+    await page.waitForURL(url => !url.pathname.endsWith("/edit"));
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal((await page.request.get(new URL(original, base).toString())).status(), 200, "Removing the image does not delete its original");
+    console.log("PASS remove image reference, save/reload, original remains available");
   } finally { await browser.close(); await prisma.$disconnect(); }
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

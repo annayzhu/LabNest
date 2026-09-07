@@ -2,7 +2,7 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { strFromU8, unzipSync } from "fflate";
 import { documentMediaToMarkdown, type DocumentMedia } from "./document-media";
 
-export type DocxEmbeddedImage = { key: string; filename: string; mimeType: string; bytes: Uint8Array };
+export type DocxEmbeddedImage = { key: string; filename: string; mimeType: string; bytes: Uint8Array; sourceAttachmentId?: string };
 const wordNamespace = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
 /** Extract only package-local images; external relationships are never fetched. */
@@ -39,7 +39,7 @@ export function extractDocxMedia(bytes: Uint8Array) {
         const raw = node.getElementsByTagName("wp:docPr")[0]?.getAttribute("descr");
         if (raw?.startsWith("labnest-media:")) { try { metadata = JSON.parse(raw.slice("labnest-media:".length)); } catch { /* Fall back to source filename, never trust malformed metadata. */ } }
         const filename = typeof metadata.filename === "string" ? metadata.filename : path.split("/").at(-1)!;
-        images.push({ key, filename, mimeType, bytes: body });
+        images.push({ key, filename, mimeType, bytes: body, sourceAttachmentId: typeof metadata.attachmentId === "string" ? metadata.attachmentId : undefined });
         const media: DocumentMedia = { id: key, type: "media", mediaType: "image", url: "", importImageKey: key, filename, mimeType, size: body.length,
           ...(typeof metadata.caption === "string" ? { caption: metadata.caption } : {}),
           ...(typeof metadata.widthPercent === "number" && metadata.widthPercent >= 10 && metadata.widthPercent <= 100 ? { widthPercent: metadata.widthPercent } : {}),

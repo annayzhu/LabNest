@@ -6,8 +6,15 @@ import { FilePlus2, ImagePlus } from "lucide-react";
 import type { DocumentMedia } from "@/lib/document-media";
 import type { WysiwygInsertAction } from "./DocumentWysiwygToolbar";
 
-type Upload = { file: File; preview?: string; status: "uploading" | "failed"; error?: string; retry: () => void };
+type Upload = { file: File; preview?: string; status: "uploading" | "failed"; error?: string; retry: () => void; dispose: () => void };
 const uploads = new Map<string, Upload>();
+const activeEditors = new Set<Editor>();
+function releaseAbandonedUploads() {
+  const referenced = new Set<string>();
+  for (const editor of activeEditors) if (!editor.isDestroyed) editor.state.doc.descendants(node => { if (node.attrs.block?.pendingUploadId) referenced.add(node.attrs.block.id); });
+  for (const [id, upload] of uploads) if (!referenced.has(id)) { upload.dispose(); uploads.delete(id); }
+  publish();
+}
 const draftScopes = new WeakMap<Editor, string>();
 export function documentMediaDraftId(editor: Editor) {
   let id = draftScopes.get(editor);
@@ -48,13 +55,18 @@ export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId:
   else editor.chain().focus().insertContentAt(position ?? editor.state.selection.from, records.map(({ block }) => ({ type: "documentMedia", attrs: { block } }))).run();
   for (const { file, block } of records) {
     const preview = block.mediaType === "image" ? URL.createObjectURL(file) : undefined;
+    let inFlight = false, abandoned = false;
+    let controller: AbortController;
+    const dispose = () => { abandoned = true; controller?.abort(); if (preview) URL.revokeObjectURL(preview); };
     const run = async () => {
-      uploads.set(block.id, { file, preview, status: "uploading", retry: () => { void run(); } }); publish();
+      if (inFlight || abandoned) return;
+      inFlight = true; controller = new AbortController();
+      uploads.set(block.id, { file, preview, status: "uploading", retry: () => { void run(); }, dispose }); publish();
       try {
         const data = new FormData();
         data.set("file", file); data.set("targetType", "document_upload_draft"); data.set("targetId", draftId);
         data.set("linkType", "embedded_document_media"); data.set("clientMutationId", block.pendingUploadId);
-        const response = await fetch("/api/attachments", { method: "POST", body: data });
+        const response = await fetch("/api/attachments", { method: "POST", body: data, signal: controller.signal });
         const result = await response.json();
         if (!response.ok || !result.attachment?.id) throw new Error(result.error || "Upload failed");
         const { pendingUploadId: _pending, ...ready } = block;
@@ -62,8 +74,8 @@ export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId:
         updateAtIdentity(editor, block.id, { ...ready, attachmentId: result.attachment.id }, block.pendingUploadId);
         uploads.delete(block.id); if (preview) URL.revokeObjectURL(preview); publish();
       } catch (error) {
-        uploads.set(block.id, { file, preview, status: "failed", error: error instanceof Error ? error.message : "Upload failed", retry: () => { void run(); } }); publish();
-      }
+        if (!abandoned) { uploads.set(block.id, { file, preview, status: "failed", error: error instanceof Error ? error.message : "Upload failed", retry: () => { void run(); }, dispose }); publish(); }
+      } finally { inFlight = false; }
     };
     void run();
   }
@@ -78,6 +90,9 @@ function pendingInEditor(editor: Editor) {
 export function useDocumentMediaUploads(editor: Editor | null, draftId: string) {
   useEffect(() => {
     if (!editor) return;
+    activeEditors.add(editor);
+    const changed = () => queueMicrotask(releaseAbandonedUploads);
+    editor.on("transaction", changed);
     draftScopes.set(editor, draftId);
     const dom = editor.view.dom;
     const paste = (event: ClipboardEvent) => {
@@ -101,7 +116,7 @@ export function useDocumentMediaUploads(editor: Editor | null, draftId: string) 
     const form = dom.closest("form");
     dom.addEventListener("paste", paste, true); dom.addEventListener("drop", drop, true);
     form?.addEventListener("submit", submit, true);
-    return () => { dom.removeEventListener("paste", paste, true); dom.removeEventListener("drop", drop, true); form?.removeEventListener("submit", submit, true); };
+    return () => { dom.removeEventListener("paste", paste, true); dom.removeEventListener("drop", drop, true); form?.removeEventListener("submit", submit, true); editor.off("transaction", changed); activeEditors.delete(editor); queueMicrotask(releaseAbandonedUploads); };
   }, [editor, draftId]);
 }
 

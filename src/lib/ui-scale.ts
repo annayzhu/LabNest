@@ -3,8 +3,8 @@ export const uiScaleStorageKey = "labnest.ui-scale";
 export const uiScaleOptions = [
   {
     id: "compact",
-    name: "紧凑",
-    nameEn: "Compact",
+    name: "较小",
+    nameEn: "Small",
     description: "更小的界面字与更清楚的信息层级",
     descriptionEn: "Smaller interface type with a clearer hierarchy",
   },
@@ -17,8 +17,8 @@ export const uiScaleOptions = [
   },
   {
     id: "comfortable",
-    name: "舒展",
-    nameEn: "Comfortable",
+    name: "较大",
+    nameEn: "Large",
     description: "放大界面文字，控件间距保持不变",
     descriptionEn: "Larger interface type without changing control spacing",
   },

@@ -7,5 +7,5 @@ Warnings
 液体溶质体积 / Liquid solute (theoretical): 0.1 µL，低于所设 1 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution.
 Assumptions
 Status: valid; Method: percent-solution-v2
-Inputs: {"type":"v/v","percentage":"0.1","targetVolumeMl":"0.1","targetMassG":"","__context":{"experimentId":"cmtr0qxkl00044mosx22yoszp","experimentStepId":"cmtr0qxks00064mosyk2rdjb0"},"pipetteMinimumUl":"1"}
-Context: {"experimentId":"cmtr0qxkl00044mosx22yoszp","experimentStepId":"cmtr0qxks00064mosyk2rdjb0"}
+Inputs: {"type":"v/v","percentage":"0.1","targetVolumeMl":"0.1","targetMassG":"","__context":{"experimentId":"cmtr1b6ln0004atosds7a4uy1","experimentStepId":"cmtr1b6lt0006atosnn6jhvu0"},"pipetteMinimumUl":"1"}
+Context: {"experimentId":"cmtr1b6ln0004atosds7a4uy1","experimentStepId":"cmtr1b6lt0006atosnn6jhvu0"}

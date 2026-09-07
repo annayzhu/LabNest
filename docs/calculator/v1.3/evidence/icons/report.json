@@ -1,5 +1,5 @@
 {
-  "sha": "e2053d40ef0131e1bf19345d6fcc9d2520a3e9f8",
+  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
   "checks": [
     "Today → calculator → each of six default tasks reaches an editable form in two clicks",
     "Search alias → tool → explicit back restores query; clearing restores pre-search scroll",

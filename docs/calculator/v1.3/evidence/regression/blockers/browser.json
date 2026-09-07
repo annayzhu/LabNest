@@ -1,6 +1,6 @@
 {
-  "sha": "e2053d40ef0131e1bf19345d6fcc9d2520a3e9f8",
-  "at": "2026-09-07T09:09:33.335Z",
+  "sha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
+  "at": "2026-09-07T09:25:18.322Z",
   "checks": [
     "Parallel stock 100 µM → 10/20 µM, 100 µL: table, operations, clipboard, CSV 10+90 / 20+80"
   ],

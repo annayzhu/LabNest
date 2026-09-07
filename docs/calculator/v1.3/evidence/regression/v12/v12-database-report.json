@@ -1,9 +1,9 @@
 {
-  "completedAt": "2026-09-07T09:09:18.598Z",
-  "resultId": "cmtr0r7hm000g4mos841xg2tm",
-  "clientMutationId": "0646d800-73dd-4bd1-b543-b185c4bb4328",
-  "experimentId": "cmtr0qxkl00044mosx22yoszp",
-  "experimentStepId": "cmtr0qxks00064mosyk2rdjb0",
+  "completedAt": "2026-09-07T09:25:03.502Z",
+  "resultId": "cmtr1bgkz000gatos578o31xd",
+  "clientMutationId": "7a03dd43-1d90-4647-874a-a5009e87fe31",
+  "experimentId": "cmtr1b6ln0004atosds7a4uy1",
+  "experimentStepId": "cmtr1b6lt0006atosnn6jhvu0",
   "count": 1,
   "snapshot": {
     "mode": "default",
@@ -35,8 +35,8 @@
     "rawInputs": {
       "type": "v/v",
       "__context": {
-        "experimentId": "cmtr0qxkl00044mosx22yoszp",
-        "experimentStepId": "cmtr0qxks00064mosyk2rdjb0"
+        "experimentId": "cmtr1b6ln0004atosds7a4uy1",
+        "experimentStepId": "cmtr1b6lt0006atosnn6jhvu0"
       },
       "percentage": "0.1",
       "targetMassG": "",
@@ -117,7 +117,7 @@
     "versions": [
       {
         "revision": 1,
-        "humanCode": "PRT-100017",
+        "humanCode": "PRT-100018",
         "stepsJson": [
           {
             "order": 1,
@@ -168,7 +168,7 @@
               },
               {
                 "id": "a-image",
-                "url": "/api/attachments/cmtr0qwhb00004moskpa6zifw?inline=1",
+                "url": "/api/attachments/cmtr1b5kp0000atos5tswazkm?inline=1",
                 "type": "media",
                 "caption": "Step A image only",
                 "mediaType": "image"
@@ -542,7 +542,7 @@
             "requires_confirmation": true
           }
         ],
-        "protocolId": "cmtr0qwk500014moslqs2hfaj",
+        "protocolId": "cmtr1b5ne0001atosbdv81r4o",
         "contentJson": {
           "sections": [
             {
@@ -612,7 +612,7 @@
                 },
                 {
                   "id": "a-image",
-                  "url": "/api/attachments/cmtr0qwhb00004moskpa6zifw?inline=1",
+                  "url": "/api/attachments/cmtr1b5kp0000atos5tswazkm?inline=1",
                   "type": "media",
                   "caption": "Step A image only",
                   "mediaType": "image"
@@ -976,52 +976,52 @@
         "reviewStage": "draft",
         "equipmentJson": [],
         "materialsJson": [],
-        "protocolTitle": "V12 synthetic protocol 1788772139679",
+        "protocolTitle": "V12 synthetic protocol 1788773084583",
         "displayVersion": "0.1",
         "parametersJson": [],
-        "protocolVersionId": "cmtr0qwk600024mosh2hy99u2",
+        "protocolVersionId": "cmtr1b5nh0002atoszfbvrvz5",
         "resultTemplatesJson": []
       }
     ],
-    "capturedAt": "2026-09-07T09:09:01.169Z",
+    "capturedAt": "2026-09-07T09:24:45.992Z",
     "methodMode": "protocol",
     "schemaVersion": 1
   },
   "steps": [
     {
-      "id": "cmtr0qxks00054mosbuna77fp",
-      "protocolStepRef": "cmtr0qwk600024mosh2hy99u2:step-a:0",
+      "id": "cmtr1b6lt0005atos0d1ftu6s",
+      "protocolStepRef": "cmtr1b5nh0002atoszfbvrvz5:step-a:0",
       "completed": false,
       "deviationNote": null,
       "timerStartedAt": null
     },
     {
-      "id": "cmtr0qxks00064mosyk2rdjb0",
-      "protocolStepRef": "cmtr0qwk600024mosh2hy99u2:step-b:0",
-      "completed": false,
-      "deviationNote": null,
-      "timerStartedAt": "2026-09-07T01:09:03.839Z"
-    },
-    {
-      "id": "cmtr0qxks00074mosamuo9x2d",
-      "protocolStepRef": "cmtr0qwk600024mosh2hy99u2:step-c:0",
+      "id": "cmtr1b6lt0007atosnf333e85",
+      "protocolStepRef": "cmtr1b5nh0002atoszfbvrvz5:step-c:0",
       "completed": false,
       "deviationNote": null,
       "timerStartedAt": null
     },
     {
-      "id": "cmtr0qxks00084moskw1d7lb7",
-      "protocolStepRef": "cmtr0qwk600024mosh2hy99u2:check:0",
+      "id": "cmtr1b6lt0008atos26k7a8p5",
+      "protocolStepRef": "cmtr1b5nh0002atoszfbvrvz5:check:0",
       "completed": false,
       "deviationNote": null,
       "timerStartedAt": null
     },
     {
-      "id": "cmtr0qxks00094most563ruvn",
-      "protocolStepRef": "cmtr0qwk600024mosh2hy99u2:check:1",
+      "id": "cmtr1b6lt0009atos6e375gfc",
+      "protocolStepRef": "cmtr1b5nh0002atoszfbvrvz5:check:1",
       "completed": false,
       "deviationNote": null,
       "timerStartedAt": null
+    },
+    {
+      "id": "cmtr1b6lt0006atosnn6jhvu0",
+      "protocolStepRef": "cmtr1b5nh0002atoszfbvrvz5:step-b:0",
+      "completed": false,
+      "deviationNote": null,
+      "timerStartedAt": "2026-09-07T01:24:48.725Z"
     }
   ]
 }

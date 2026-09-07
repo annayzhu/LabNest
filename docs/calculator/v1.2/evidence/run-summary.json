@@ -1,0 +1,156 @@
+{
+  "sha": "0d01169b990293cf4857a9ba72a44ca11c465fdd",
+  "startedAt": "2026-09-07T00:47:37.012Z",
+  "server": "npm run start -- --port 3221; isolated database via calculator-acceptance-server.mjs; no API mocks",
+  "commands": [
+    {
+      "command": "LABNEST_BUILD_DIR=.next/calculator-production LABNEST_TSCONFIG_PATH=tsconfig.calculator.json npm run build",
+      "startedAt": "2026-09-07T00:47:37.013Z",
+      "finishedAt": "2026-09-07T00:48:04.854Z",
+      "exitCode": 0,
+      "log": "build.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "startedAt": "2026-09-07T00:48:04.855Z",
+      "finishedAt": "2026-09-07T00:48:07.048Z",
+      "exitCode": 0,
+      "log": "typecheck.log"
+    },
+    {
+      "command": "TZ=Asia/Shanghai npm test",
+      "startedAt": "2026-09-07T00:48:07.049Z",
+      "finishedAt": "2026-09-07T00:48:11.622Z",
+      "exitCode": 0,
+      "log": "tests-shanghai.log"
+    },
+    {
+      "command": "TZ=America/Vancouver npm test",
+      "startedAt": "2026-09-07T00:48:11.622Z",
+      "finishedAt": "2026-09-07T00:48:15.601Z",
+      "exitCode": 0,
+      "log": "tests-vancouver.log"
+    },
+    {
+      "command": "npm run lint",
+      "startedAt": "2026-09-07T00:48:15.602Z",
+      "finishedAt": "2026-09-07T00:48:37.919Z",
+      "exitCode": 0,
+      "log": "lint.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-run-v12.mjs",
+      "startedAt": "2026-09-07T00:48:41.435Z",
+      "finishedAt": "2026-09-07T00:48:49.873Z",
+      "exitCode": 0,
+      "log": "run-browser.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-pipetting-v12.mjs",
+      "startedAt": "2026-09-07T00:48:49.873Z",
+      "finishedAt": "2026-09-07T00:48:56.407Z",
+      "exitCode": 0,
+      "log": "pipetting-browser.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-v12-database.mjs",
+      "startedAt": "2026-09-07T00:48:56.408Z",
+      "finishedAt": "2026-09-07T00:48:56.497Z",
+      "exitCode": 0,
+      "log": "v12-database.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-refactor.mjs",
+      "startedAt": "2026-09-07T00:48:56.498Z",
+      "finishedAt": "2026-09-07T00:48:57.020Z",
+      "exitCode": 1,
+      "log": "regression.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-legacy.mjs",
+      "startedAt": "2026-09-07T00:48:57.021Z",
+      "finishedAt": "2026-09-07T00:49:16.835Z",
+      "exitCode": 0,
+      "log": "legacy.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-compact-ui.mjs",
+      "startedAt": "2026-09-07T00:49:16.836Z",
+      "finishedAt": "2026-09-07T00:49:23.346Z",
+      "exitCode": 0,
+      "log": "compact.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-plate.mjs",
+      "startedAt": "2026-09-07T00:49:23.347Z",
+      "finishedAt": "2026-09-07T00:49:25.643Z",
+      "exitCode": 0,
+      "log": "plate.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-storage-appearance.mjs",
+      "startedAt": "2026-09-07T00:49:25.644Z",
+      "finishedAt": "2026-09-07T00:49:30.359Z",
+      "exitCode": 0,
+      "log": "storage.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-appearance.mjs",
+      "startedAt": "2026-09-07T00:49:30.360Z",
+      "finishedAt": "2026-09-07T00:49:51.549Z",
+      "exitCode": 0,
+      "log": "appearance.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-integration.mjs",
+      "startedAt": "2026-09-07T00:49:51.549Z",
+      "finishedAt": "2026-09-07T00:49:54.477Z",
+      "exitCode": 0,
+      "log": "integration.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-database.mjs",
+      "startedAt": "2026-09-07T00:49:54.477Z",
+      "finishedAt": "2026-09-07T00:49:54.562Z",
+      "exitCode": 0,
+      "log": "database.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-rejection.mjs",
+      "startedAt": "2026-09-07T00:49:54.567Z",
+      "finishedAt": "2026-09-07T00:49:58.674Z",
+      "exitCode": 0,
+      "log": "rejection.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-visual-v11.mjs",
+      "startedAt": "2026-09-07T00:49:58.674Z",
+      "finishedAt": "2026-09-07T00:50:03.389Z",
+      "exitCode": 0,
+      "log": "visual.log"
+    },
+    {
+      "command": "node scripts/verify-calculator-standalone-v11.mjs",
+      "startedAt": "2026-09-07T00:50:03.389Z",
+      "finishedAt": "2026-09-07T00:50:05.232Z",
+      "exitCode": 0,
+      "log": "standalone.log"
+    }
+  ],
+  "serverPid": 19448,
+  "completedAt": "2026-09-07T00:50:05.233Z",
+  "corrections": [
+    {
+      "command": "LABNEST_E2E_BASE_URL=http://localhost:3221 node scripts/verify-calculator-refactor.mjs",
+      "exitCode": 0,
+      "log": "regression-retry.log",
+      "reason": "Original local orchestration omitted LABNEST_E2E_BASE_URL; script defaults to 3220. Remote CI already supplies it."
+    },
+    {
+      "command": "node docs/calculator/v1.2/evidence/followup.mjs",
+      "exitCode": 0,
+      "log": "followup.log",
+      "reason": "Corrected icon radio locator; initial failure log retained."
+    }
+  ]
+}

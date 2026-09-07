@@ -1,0 +1,11 @@
+percent-solution · default
+Liquid solute: 1.00000e-4 mL
+Bring to final volume: 0.1 mL
+Operations (liquid-operations-v2): [{"id":"percent-solution:soluteAmount","component":"液体溶质体积 / Liquid solute","source":"specified-stock","destination":"preparation","repetitions":1,"planVersion":"liquid-operations-v2","basis":"theoretical","componentId":"soluteAmount","role":"add","quantity":{"value":0.10000000000000003,"unit":"µL","dimension":"volume"}},{"id":"percent-solution:targetVolumeMl","component":"定容至 / Bring to final volume","source":"specified-stock","destination":"preparation","repetitions":1,"planVersion":"liquid-operations-v2","basis":"theoretical","componentId":"targetVolumeMl","role":"make-up-to","quantity":{"value":100.00000000000001,"unit":"µL","dimension":"volume"}}]
+Pipetting check: {"status":"below-minimum","minimumUl":1}
+Warnings
+液体溶质体积 / Liquid solute (theoretical): 0.1 µL，低于所设 1 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution.
+Assumptions
+Status: valid; Method: percent-solution-v2
+Inputs: {"type":"v/v","percentage":"0.1","targetVolumeMl":"0.1","targetMassG":"","__context":{"experimentId":"cmtqivkkk00032dos9ei7ei2w","experimentStepId":"cmtqivkko00052doslhl75c6b"},"pipetteMinimumUl":"1"}
+Context: {"experimentId":"cmtqivkkk00032dos9ei7ei2w","experimentStepId":"cmtqivkko00052doslhl75c6b"}

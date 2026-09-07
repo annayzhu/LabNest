@@ -1,0 +1,24 @@
+
+> labnest@0.1.0 lint
+> eslint
+
+
+/private/tmp/labnest-calculator-v11/public/tools/free-plate-layout/app.js
+   933:14  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+  1136:82  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+  1268:12  warning  'standaloneNumber' is defined but never used   @typescript-eslint/no-unused-vars
+  1274:12  warning  'plateOutput' is defined but never used        @typescript-eslint/no-unused-vars
+  1275:12  warning  'roundedPlateValue' is defined but never used  @typescript-eslint/no-unused-vars
+  1568:71  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+  2748:16  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+  2846:80  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+  3099:16  warning  'error' is defined but never used              @typescript-eslint/no-unused-vars
+
+/private/tmp/labnest-calculator-v11/public/tools/free-plate-layout/calculator-engine.js
+  2:5  warning  'LabNestCalculations' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/labnest-calculator-v11/src/components/EntityCreateForm.tsx
+  10:7  warning  'entityTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+✖ 11 problems (0 errors, 11 warnings)
+

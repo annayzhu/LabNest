@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3220/tools/calculator
+Call log:
+[2m  - navigating to "http://localhost:3220/tools/calculator", waiting until "networkidle"[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-v12/scripts/verify-calculator-refactor.mjs:11:13 {
+  log: [
+    '  - navigating to "http://localhost:3220/tools/calculator", waiting until "networkidle"'
+  ],
+  name: 'Error'
+}
+
+Node.js v22.23.1

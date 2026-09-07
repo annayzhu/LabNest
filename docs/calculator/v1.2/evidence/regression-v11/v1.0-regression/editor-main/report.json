@@ -1,0 +1,46 @@
+[
+  {
+    "viewport": "desktop",
+    "viewportWidth": 1440,
+    "pageOverflow": 0,
+    "outlineVisible": true,
+    "mobileNavVisible": false,
+    "panelWidth": 1042,
+    "stageWidth": 794,
+    "toolbarHeight": 42,
+    "saveGapAboveNavigation": null
+  },
+  {
+    "viewport": "compact-desktop",
+    "viewportWidth": 1100,
+    "pageOverflow": 0,
+    "outlineVisible": false,
+    "mobileNavVisible": false,
+    "panelWidth": 836,
+    "stageWidth": 794,
+    "toolbarHeight": 42,
+    "saveGapAboveNavigation": null
+  },
+  {
+    "viewport": "tablet",
+    "viewportWidth": 820,
+    "pageOverflow": 0,
+    "outlineVisible": false,
+    "mobileNavVisible": true,
+    "panelWidth": 780,
+    "stageWidth": 780,
+    "toolbarHeight": 75,
+    "saveGapAboveNavigation": 9
+  },
+  {
+    "viewport": "mobile",
+    "viewportWidth": 390,
+    "pageOverflow": 0,
+    "outlineVisible": false,
+    "mobileNavVisible": true,
+    "panelWidth": 366,
+    "stageWidth": 366,
+    "toolbarHeight": 144,
+    "saveGapAboveNavigation": 9
+  }
+]

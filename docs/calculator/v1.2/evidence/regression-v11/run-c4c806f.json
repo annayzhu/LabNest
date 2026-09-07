@@ -1,0 +1,204 @@
+{
+  "head": "c4c806fe5d81e6db569e8757badc3a4c7666c0da",
+  "startedAt": "2026-09-06T01:46:01.730Z",
+  "node": "v22.23.1",
+  "commands": [
+    {
+      "id": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 22817,
+      "log": "final-logs/lint.log"
+    },
+    {
+      "id": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 3200,
+      "log": "final-logs/typecheck.log"
+    },
+    {
+      "id": "tests-shanghai",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "environment": {
+        "TZ": "Asia/Shanghai"
+      },
+      "exitCode": 0,
+      "durationMs": 5071,
+      "log": "final-logs/tests-shanghai.log"
+    },
+    {
+      "id": "tests-vancouver",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "environment": {
+        "TZ": "America/Vancouver"
+      },
+      "exitCode": 1,
+      "durationMs": 4126,
+      "log": "final-logs/tests-vancouver.log"
+    },
+    {
+      "id": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 38485,
+      "log": "final-logs/build.log"
+    },
+    {
+      "id": "storage",
+      "command": [
+        "node",
+        "scripts/verify-calculator-storage-appearance.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 5110,
+      "log": "final-logs/storage.log"
+    },
+    {
+      "id": "appearance",
+      "command": [
+        "node",
+        "scripts/verify-calculator-appearance.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 21238,
+      "log": "final-logs/appearance.log"
+    },
+    {
+      "id": "integration",
+      "command": [
+        "node",
+        "scripts/verify-calculator-integration.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 2733,
+      "log": "final-logs/integration.log"
+    },
+    {
+      "id": "database",
+      "command": [
+        "node",
+        "scripts/verify-calculator-database.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 101,
+      "log": "final-logs/database.log"
+    },
+    {
+      "id": "rejection",
+      "command": [
+        "node",
+        "scripts/verify-calculator-rejection.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 1286,
+      "log": "final-logs/rejection.log"
+    },
+    {
+      "id": "standalone",
+      "command": [
+        "node",
+        "scripts/verify-calculator-standalone-v11.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 1763,
+      "log": "final-logs/standalone.log"
+    },
+    {
+      "id": "visual",
+      "command": [
+        "node",
+        "scripts/verify-calculator-visual-v11.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 4592,
+      "log": "final-logs/visual.log"
+    },
+    {
+      "id": "regression",
+      "command": [
+        "node",
+        "scripts/verify-calculator-refactor.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 14657,
+      "log": "final-logs/regression.log"
+    },
+    {
+      "id": "legacy",
+      "command": [
+        "node",
+        "scripts/verify-calculator-legacy.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 19578,
+      "log": "final-logs/legacy.log"
+    },
+    {
+      "id": "compact",
+      "command": [
+        "node",
+        "scripts/verify-calculator-compact-ui.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 6240,
+      "log": "final-logs/compact.log"
+    },
+    {
+      "id": "plate",
+      "command": [
+        "node",
+        "scripts/verify-calculator-plate.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 1233,
+      "log": "final-logs/plate.log"
+    },
+    {
+      "id": "editor",
+      "command": [
+        "node",
+        "scripts/verify-experiment-editor-responsive.mjs"
+      ],
+      "environment": {},
+      "exitCode": 0,
+      "durationMs": 1939,
+      "log": "final-logs/editor.log"
+    }
+  ],
+  "serverPid": 42707,
+  "finishedAt": "2026-09-06T01:48:39.055Z",
+  "finalSourceDiff": ""
+}

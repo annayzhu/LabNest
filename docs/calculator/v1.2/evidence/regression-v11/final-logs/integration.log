@@ -1,0 +1,18 @@
+{
+  "completedAt": "2026-09-06T01:50:32.091Z",
+  "resultId": "cmtp5n5kx0003pdosoloqt5rq",
+  "clientMutationId": "f4568eb0-d662-4c3f-b040-b90539a627e3",
+  "checks": [
+    "Offline queue retained intent, selected nL display and structured pipetting warning",
+    "Reconnect created Result",
+    "Replay returned identical Result ID",
+    "Missing step rejected",
+    "Archived experiment rejected",
+    "Foreign origin rejected",
+    "Forged snapshot rejected",
+    "Fresh mutation with stripped warnings rejected",
+    "Result page renders immutable calculation snapshot",
+    "Desktop drawer Escape and focus restoration"
+  ],
+  "errors": []
+}

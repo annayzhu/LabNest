@@ -5361,7 +5361,7 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 .calculator-back{display:inline-flex;align-items:center;justify-content:center;min-width:44px;width:44px;min-height:44px;flex-shrink:0;border-radius:var(--ln-radius-control-lg);color:var(--moss)}
 .calculator-back:hover,.calculator-back:active{background:var(--warm)}
 .calculator-categories{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
-.calculator-category{grid-column:span 4;border:1px solid var(--hairline);border-radius:var(--ln-radius-card);padding:10px;min-width:0;background:var(--surface)}
+.calculator-category{grid-column:span 4;border:1px solid var(--hairline);border-radius:var(--ln-radius-panel);padding:10px;min-width:0;background:var(--surface)}
 .calculator-category header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:32px}
 .calculator-category h2{font-size:14px;font-weight:600}.calculator-category small{font-size:11px;color:var(--muted)}
 .calculator-category header button{min-height:32px}

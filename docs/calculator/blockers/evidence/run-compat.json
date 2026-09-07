@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Parameterized frozen table renders 12; unresolved pending remains visible; fixture parameters inserted in isolated DB",
+    "Old Run fixture missing block copies recovers only its own frozen table",
+    "Text-only old Run explicitly reports lost formatting; no invented table"
+  ],
+  "at": "2026-09-07T02:39:02.377Z",
+  "experimentId": "cmtqmtb3200030kos93h4ykw8"
+}

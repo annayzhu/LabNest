@@ -1,0 +1,11 @@
+prisma migrate deploy succeeded in isolated database
+tsx scripts/seed-calculator-acceptance.ts succeeded in isolated database
+tsx scripts/seed-calculator-run-v12.ts succeeded in isolated database
+
+> labnest@0.1.0 start
+> next start --port 3221
+
+▲ Next.js 16.2.10
+- Local:         http://localhost:3221
+- Network:       http://172.17.65.77:3221
+✓ Ready in 101ms

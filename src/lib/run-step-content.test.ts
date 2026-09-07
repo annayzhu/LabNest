@@ -17,3 +17,23 @@ it('R05 R06 recovery uses captured same-version document and leaves text-only re
  expect(runStepContent({versions:[{protocolVersionId:'v1',stepsJson:legacy}]},step).source).toBe('legacy-text');
  expect(runStepContent({versions:[{protocolVersionId:'v2',stepsJson:legacy,contentJson:doc}]},step).blocks).toEqual([]);
 });
+
+it.each(['heading','heading2','heading3'] as const)('%s binds tables, images and text to the correct step in source order',kind=>{
+ const doc=createEmptyProtocolDocument();
+ const heading=(id:string,text:string):import('./protocol-document').ProtocolContentBlock=>kind==='heading'?{id,type:'heading',text}:{id,type:'rich_text',nodes:[{type:kind,content:[{text}]}]};
+ doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'prep',type:'text',text:'Shared preparation'},heading('a','A'),{id:'ta',type:'table',rows:[['Table A']]},{id:'img',type:'media',mediaType:'image',url:'/a.png'},{id:'list',type:'rich_text',nodes:[{type:'bullet',content:[{text:'A list'}]}]},{id:'note',type:'text',text:'A note'},heading('b','B'),{id:'tb',type:'table',rows:[['Table B']]}];
+ const projection=projectProtocolDocument(doc);
+ expect(projection.steps.map(s=>s.title)).toEqual(['A','B']);
+ expect(projection.steps[0].content_blocks?.map(b=>b.id)).toEqual(['ta','img','list:0','note']);
+ expect(projection.steps[1].content_blocks?.map(b=>b.id)).toEqual(['tb']);
+ expect(projection.commonBlocks.map(b=>b.id)).toEqual(['prep']);
+ const source={versions:[{protocolVersionId:'v',stepsJson:projection.steps,contentJson:doc}]};
+ const s=projection.steps[1];const resolved=runStepContent(source,{protocolStepRef:'v:'+s.source_ref,groupKey:'v',order:2,title:'B',description:''});
+ expect(resolved.common.map(b=>b.id)).toEqual(['prep']);expect(JSON.stringify(resolved)).not.toContain('Table A');
+});
+it('recovers a v1.2 rich heading with missing table from its frozen source ID, never as shared preparation',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'h',type:'rich_text',nodes:[{type:'heading2',content:[{text:'Old heading'}]}]},{id:'t',type:'table',rows:[['Frozen table']]}];
+ const old=[{order:1,title:'Old heading',description:'',source_ref:'h:0',content_blocks:[{id:'h:0',type:'rich_text',nodes:[{type:'heading2',content:[{text:'Old heading'}]}]}]}];
+ const r=runStepContent({versions:[{protocolVersionId:'v',stepsJson:old,contentJson:doc}]},{protocolStepRef:'v:h:0',groupKey:'v',order:1,title:'Old heading',description:''});
+ expect(r.blocks.map(b=>b.id)).toEqual(['t']);expect(r.common).toEqual([]);
+});

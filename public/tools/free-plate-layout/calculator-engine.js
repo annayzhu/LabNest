@@ -241,7 +241,7 @@ var LabNestCalculations = (() => {
       for (const key of schemas[result.calculatorId] ?? []) if (key in row) {
         if (result.calculatorId === "serial-dilution" && index === 0 && key === "takeUl" && inputs.firstSource !== "stock" && !["linear", "custom"].includes(String(inputs.gradientMode))) continue;
         const label = key === "reducingAgentUl" ? String(row.reducingAgent) : tableColumnLabel(key, true) + " / " + tableColumnLabel(key, false);
-        add(`row:${index}:${key}`, String(row.component ?? label), row[key], "\xB5L", key === "takeUl" ? "transfer" : "add", { componentId: key, inputRow: String(index), sample: String(row.id ?? row.tube ?? row.level ?? index + 1), source: key === "takeUl" ? `tube:${index || "starting-stock"}` : `stock:${key}`, destination: `${result.calculatorId}:${row.tube ?? row.id ?? index + 1}` });
+        add(`row:${index}:${key}`, String(row.component ?? label), row[key], "\xB5L", key === "takeUl" ? "transfer" : "add", { componentId: key, inputRow: String(index), sample: String(row.id ?? row.tube ?? row.level ?? index + 1), source: key === "takeUl" ? String(row.source) : `stock:${key}`, destination: `${result.calculatorId}:${row.tube ?? row.id ?? index + 1}` });
       }
       if (["media-recipe", "buffer-recipe"].includes(result.calculatorId) && units[normalizeUnit(String(row.unit))]?.dimension === "volume") add(`recipe:${row.componentId}`, String(row.component), row.amount, String(row.unit), row.action === "make-up-to" ? "make-up-to" : "add", { componentId: String(row.componentId), inputRow: String(index) });
       if (result.calculatorId === "kill-curve") add(`diluent:${index}`, "\u7A00\u91CA\u6DB2 / Diluent", convert(parseScalar(inputs.volumePerWellMl), String(inputs.volumePerWellMlUnit ?? "mL"), "\xB5L") - Number(row.stockToAddUl), "\xB5L", "add", { sample: String(row.level), destination: `well:${row.level}` });
@@ -315,6 +315,7 @@ var LabNestCalculations = (() => {
   var n = (key, label, labelZh, unit) => ({ key, label, labelZh, type: "number", unit });
   var select = (key, label, labelZh, options) => ({ key, label, labelZh, type: "select", defaultValue: options[0][0], options: options.map(([value, label2, labelZh2]) => ({ value, label: label2, labelZh: labelZh2 })) });
   function enhanceDefinition(d) {
+    if (d.id === "serial-dilution") d.methodVersion = "serial-dilution-v3";
     if (d.id === "master-mix") d.methodVersion = "master-mix-v3";
     if (d.id === "percent-solution") d.methodVersion = "percent-solution-v2";
     d = { ...d, fields: [...d.fields], aliases: [...d.aliases], methodVersion: d.methodVersion.replace(/-v1$/, "-v2") };

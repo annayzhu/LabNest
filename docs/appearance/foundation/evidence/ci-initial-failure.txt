@@ -1,0 +1,17 @@
+Run https://github.com/annayzhu/LabNest/actions/runs/34077175827
+SHA e23fc0b0a3477bbd4f086a074f77c2ffffa33133
+AssertionError [ERR_ASSERTION]: moon-dai/dark focusOutline/background
+2026-09-07T02:48:13.5626567Z     at file:///home/runner/work/LabNest/LabNest/scripts/verify-calculator-visual-v11.mjs:11:716 {
+2026-09-07T02:48:13.5627089Z   generatedMessage: false,
+2026-09-07T02:48:13.5627340Z   code: 'ERR_ASSERTION',
+2026-09-07T02:48:13.5627574Z   actual: false,
+2026-09-07T02:48:13.5628037Z   expected: true,
+2026-09-07T02:48:13.5628273Z   operator: '==',
+2026-09-07T02:48:13.5628484Z   diff: 'simple'
+2026-09-07T02:48:13.5628677Z }
+2026-09-07T02:48:13.5628775Z 
+2026-09-07T02:48:13.5628863Z Node.js v22.23.2
+2026-09-07T02:48:13.5759576Z ##[error]Process completed with exit code 1.
+2026-09-07T02:48:13.5830875Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-07T02:48:13.5832230Z ##[group]Run actions/upload-artifact@v4
+2026-09-0

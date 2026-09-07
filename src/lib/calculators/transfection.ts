@@ -54,7 +54,7 @@ export function calculateTransfection(plan:TransfectionPlan):CalculatorResult{
   if(dnaRows.length+rnaRows.length!==g.rows.length)throw Error('必须明确材料形式；病毒转导请使用MOI工具 / Specify material; viral transduction uses MOI');
   if((['dna','shrna-plasmid'].includes(plan.material)&&(dnaRows.length!==1||rnaRows.length))||(plan.material==='multi-dna'&&(dnaRows.length<2||rnaRows.length))||(plan.material==='sirna'&&(rnaRows.length!==1||dnaRows.length))||(plan.material==='multi-sirna'&&(rnaRows.length<2||dnaRows.length))||(plan.material==='dna-sirna'&&(!dnaRows.length||!rnaRows.length)))throw Error('材料类型与核酸行不一致 / Material and nucleic acid rows disagree');
   if(plan.material==='shrna-plasmid'&&g.rows[0].kind!=='shrna-plasmid')throw Error('shRNA必须注明表达质粒 / shRNA expression plasmid required');
-  const weight=(r:NucleicRow)=>positive(r.dose,'DNA ratio')*(g.dnaMode==='molar-ratio'?(choice(r.sizeBasis,['bp','mw'],'Molecular size'),positive(r.size,'质粒长度或分子量 / Plasmid length or MW')*(r.sizeBasis==='bp'?660:1)):1);
+  const weight=(r:NucleicRow)=>{const ratio=positive(r.dose,'DNA ratio');if(g.dnaMode!=='molar-ratio')return ratio;choice(r.sizeBasis,['bp','mw'],'Molecular size');const size=positive(r.size,'质粒长度或分子量 / Plasmid length or MW');if(r.sizeBasis==='bp'&&!Number.isInteger(size))throw Error('质粒bp长度必须为整数 / Plasmid bp length must be an integer');return ratio*size*(r.sizeBasis==='bp'?660:1);};
   const denominator=g.dnaMode==='amount'?1:dnaRows.reduce((s,r)=>s+weight(r),0),rnaRatio=rnaRows.reduce((s,r)=>s+positive(r.dose,'siRNA dose / ratio'),0);
   const rowNames=new Set<string>();let dnaTotal=0,rnaTotal=0;
   const doses=g.rows.map(r=>{

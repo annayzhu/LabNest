@@ -114,7 +114,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   function savePreset() {
     if (!state || !presetName.trim()) return;
     const id = newClientMutationId();
-    update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), methodVersion:definition.methodVersion,source:example?"synthetic example":"user-defined", inputs }));
+    update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), methodVersion:calculatorId==='transfection'&&!inputs.transfectionPlan?'transfection-v2':definition.methodVersion,source:example?"synthetic example":"user-defined", inputs }));
     setPresetName("");
   }
 

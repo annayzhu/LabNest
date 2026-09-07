@@ -7,10 +7,10 @@
 - 应用版本：`d1849b654c6e34fc1b339333895c9d57e373f133`（转染代码 `f619e80`，已合并 main `3f90adb`）。
 - 通过：上海/温哥华各576项测试、TypeScript、生产构建、定向lint；见相应日志。
 - 通过：生产页面单/双管、siRNA、摩尔比、模式清理、产品限制、多组、草稿恢复；两组CSV/XLSX逐单元格回读一致，Control质粒每孔0.5µL、整批1.65µL。
-- 浏览器使用 `localhost:3226`，最终入口连接既有合成验收库 `labnest_calculator_acceptance_20260906`；本轮页面操作只涉及计算、浏览器本地草稿和下载，没有写入生产科研记录。
+- 浏览器使用 `localhost:3226`，最终入口连接既有合成验收库 `labnest_calculator_acceptance_20260906`；新转染方案已通过离线入队、恢复联网同步、重复提交及数据库独立回读，没有写入生产科研记录。
 - 本次无未解决的本地验收失败；开发时的测试断言/辅助脚本问题已修正，最终结果见 `browser.json`。远端CI以PR的实际状态为准。
 
-## 已实现（以下TF-01—TF-12均通过；边界见未执行）
+## 已实现（以下TF-01—TF-13均通过；边界见未执行）
 
 | 编号 | 要求 | 修改位置 | 验收证据 |
 | --- | --- | --- | --- |
@@ -26,6 +26,8 @@
 | TF-10 | 复制简化、正式导出和结构化操作一致 | result-presentation.ts、operations | browser.json剪贴板；two-groups.csv/xlsx；保留内部追溯内容 |
 | TF-11 | 旧记录兼容与关联孔位保护 | calculator-engine.ts、transfectionPlateValues、free-plate-layout/app.js | 旧两管2/60.5/6/56.5回归；多组或孔数不匹配拒绝回写；单组只写每孔值 |
 | TF-12 | 草稿恢复 | 既有saveDraft、浏览器恢复按钮 | browser.json：多组参数刷新后恢复 |
+
+| TF-13 | 新转染方案离线入队、重连、幂等与DB回读 | 既有mobile队列/API、transfection-database脚本 | database.json：原始方案及operations完全一致，重放仅一条Result |
 
 ## 厂商依据与应用边界
 

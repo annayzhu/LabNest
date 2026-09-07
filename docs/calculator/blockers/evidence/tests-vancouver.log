@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-blockers
+
+
+ Test Files  93 passed (93)
+      Tests  515 passed (515)
+   Start at  19:38:49
+   Duration  4.51s (transform 8.90s, setup 0ms, import 19.93s, tests 8.17s, environment 8ms)
+

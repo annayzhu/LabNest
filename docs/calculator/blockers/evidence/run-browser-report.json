@@ -1,0 +1,111 @@
+{
+  "checks": [
+    {
+      "id": "R05",
+      "status": "passed",
+      "note": "Library edited after experiment creation; assertions below require original table"
+    },
+    {
+      "id": "R01/R07",
+      "width": 320,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 573.546875,
+          "width": 127,
+          "height": 44
+        },
+        {
+          "x": 164,
+          "y": 573.546875,
+          "width": 127,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R01/R07",
+      "width": 360,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 559.546875,
+          "width": 147,
+          "height": 44
+        },
+        {
+          "x": 184,
+          "y": 559.546875,
+          "width": 147,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R01/R07",
+      "width": 390,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 559.546875,
+          "width": 162,
+          "height": 44
+        },
+        {
+          "x": 199,
+          "y": 559.546875,
+          "width": 162,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R08/R10",
+      "status": "passed",
+      "stepId": "cmtqmtb3700050kosmffaesoq"
+    },
+    {
+      "id": "R11",
+      "status": "passed",
+      "note": "Explicit cached production Run reload restores selected step and rich content"
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 320,
+      "metrics": {
+        "left": 638,
+        "scrollWidth": 900,
+        "clientWidth": 262
+      }
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 360,
+      "metrics": {
+        "left": 598,
+        "scrollWidth": 900,
+        "clientWidth": 302
+      }
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 390,
+      "metrics": {
+        "left": 568,
+        "scrollWidth": 900,
+        "clientWidth": 332
+      }
+    }
+  ],
+  "startedAt": "2026-09-07T02:38:55.172Z",
+  "protocolUrl": "http://localhost:3221/protocols/cmtqmta5z00000kos0466c7h4",
+  "experimentUrl": "http://localhost:3221/experiments/cmtqmtb3200030kos93h4ykw8",
+  "runUrl": "http://localhost:3221/experiments/cmtqmtb3200030kos93h4ykw8/run",
+  "stepId": "cmtqmtb3700050kosmffaesoq"
+}

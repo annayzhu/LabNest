@@ -1,0 +1,25 @@
+{
+  "sha": "78fe8e07cbaf9b25da18218eb0a02cc0d22bd855",
+  "base": "4ad14fca3d17805749a8aafdcf15ea204579e984",
+  "executor": "Codex automated tests and screenshot inspection",
+  "environment": "macOS; Node22.23.1; npm10.9.8; npm ci lockfile; Next16.2.10 production http://localhost:3221; isolated PostgreSQL labnest_calculator_acceptance_20260906",
+  "commands": [
+    "npm run typecheck",
+    "TZ=Asia/Shanghai npm test",
+    "TZ=America/Vancouver npm test",
+    "npm run lint",
+    "LABNEST_BUILD_DIR=.next/calculator-production LABNEST_TSCONFIG_PATH=tsconfig.calculator.json npm run build",
+    "LABNEST_E2E_BASE_URL=http://localhost:3221 node scripts/verify-calculator-run-v12.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3221 node scripts/verify-calculator-refactor.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3221 node scripts/verify-calculator-pipetting-v12.mjs",
+    "node scripts/verify-calculator-v12-database.mjs"
+  ],
+  "allFinalLocalExitCodes": 0,
+  "inputExpectedActual": "gradient-source.test.ts, run-step-content.test.ts, browser.json, run-compat.json and run-browser-report.json",
+  "initialFailures": "CSV control locator corrected; home had no cache control, fixed by existing OfflineCalculator; final offline.json succeeds",
+  "manualUnexecuted": [
+    "Physical phone keyboard",
+    "Actual browser 200% zoom",
+    "Laboratory-user trials"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "UX-01/02 default tasks and antibody alias",
+    "UX-05/06 invalidation and physical unit preservation",
+    "draft explicit restoration",
+    "NUM-20 UI and UX-16 example guard",
+    "UX-14 eight task flows at 360 and 390 CSS px",
+    "UX-12 offline cached reload, restore and calculate"
+  ],
+  "errors": []
+}
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForEvent: Timeout 30000ms exceeded while waiting for event "download"
+=========================== logs ===========================
+waiting for event "download"
+============================================================
+    at /Users/annayzhu/Documents/Playground/LabNest-blockers/scripts/verify-calculator-blockers.mjs:20:22 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

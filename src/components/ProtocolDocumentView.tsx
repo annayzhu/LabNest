@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, Link2, Table2, Wrench } from "lucide-react";
 import {ProtocolMediaImage} from "./ProtocolMediaImage";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
+import { separateLegacyImportWarnings } from "@/lib/protocol-import-state";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ProtocolTimer } from "@/components/ProtocolTimer";
 import { ResultDatasetSchemaView } from "@/components/ResultDatasetSchemaView";
@@ -193,13 +194,14 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
 }
 
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
+  const { contentWarnings } = separateLegacyImportWarnings(document.importWarnings);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
       <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
-      {document.importWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{document.importWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
+      {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       {document.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block"><ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
     </div>
   </DocumentCanvas>;

@@ -7,6 +7,9 @@ npm run prisma:generate
 echo "[LabNest] Applying pending database migrations..."
 npx prisma migrate deploy
 
+echo "[LabNest] Preserving legacy Protocol import evidence..."
+npx tsx scripts/backfill-protocol-import-history.ts
+
 if [ ! -f .next/BUILD_ID ]; then
   echo "[LabNest] Creating the production build..."
   npm run build

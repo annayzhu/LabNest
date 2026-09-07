@@ -16,6 +16,8 @@ import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ProtocolDocument } from "@/lib/protocol-document";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
 import type { ManualRelevantLink, RelevantCatalogItem } from "@/lib/protocol-relevant-items";
+import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
+import type { ProtocolImportHistoryEntry } from "@/lib/protocol-import-history";
 
 export type ProtocolEditorState = { error?: string };
 export type ProtocolEditorAction = (
@@ -42,6 +44,7 @@ export function ProtocolDocumentEditor({
   relevantItems = {},
   relevantCatalog = [],
   initialManualRelevantLinks = [],
+  importHistory = [],
 }: {
   action: ProtocolEditorAction;
   mode: "create" | "edit";
@@ -56,6 +59,7 @@ export function ProtocolDocumentEditor({
   relevantItems?: ProtocolRelevantItems;
   relevantCatalog?: RelevantCatalogItem[];
   initialManualRelevantLinks?: ManualRelevantLink[];
+  importHistory?: ProtocolImportHistoryEntry[];
 }) {
   const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const [document, setDocument] = useState(initialDocument);
@@ -140,6 +144,7 @@ export function ProtocolDocumentEditor({
               <label><span className={formLabelClass}>{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={formInputClass} /></label>
               <label className="protocol-metadata-span-full"><span className={formLabelClass}>Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
             </div></fieldset>
+            <ProtocolImportHistory entries={importHistory} />
           </div>
         </section>}
         relations={<ProtocolRelevantItemsEditor

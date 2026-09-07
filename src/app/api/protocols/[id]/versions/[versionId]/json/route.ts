@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 import { normalizeProtocolDocument, projectProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 
@@ -48,6 +49,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       createdAt: version.createdAt,
     },
     document,
+    importHistory: await getProtocolImportHistory(id),
     structuredProjection: projectProtocolDocument(document),
   });
 }

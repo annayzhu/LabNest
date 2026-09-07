@@ -19,6 +19,8 @@ import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/pro
 import { protocolDeleteBlockers } from "@/lib/record-lifecycle";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { archiveProtocol, deleteProtocol } from "../actions";
+import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
+import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +58,7 @@ export default async function ProtocolDetailPage({
     },
   });
   if (!protocol) notFound();
+  const importHistory = await getProtocolImportHistory(id);
   const version = protocol.versions.find((item) => item.id === selectedVersionId) ?? protocol.versions[0];
   if (!version) notFound();
   const versionIds = protocol.versions.map((item) => item.id);
@@ -137,9 +140,9 @@ export default async function ProtocolDetailPage({
                   {protocol.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
                   {version.derivedFromVersion ? <Link href={`/protocols/${version.derivedFromVersion.protocol.id}?version=${version.derivedFromVersion.id}`} className="text-xs font-medium text-moss hover:underline">Derived from {version.derivedFromVersion.protocol.canonicalTitle ?? version.derivedFromVersion.protocol.title} · {version.derivedFromVersion.protocol.humanCode ?? "Uncoded"} · {version.derivedFromVersion.displayVersion}</Link> : null}
                   {version.previousVersion ? <Link href={`/protocols/${protocol.id}?version=${version.previousVersion.id}`} className="text-xs font-medium text-moss hover:underline">Previous revision {version.previousVersion.displayVersion}</Link> : null}
-                  {version.sourceFileName ? <span className="break-all font-mono text-xs text-muted">Source: {version.sourceFileName}</span> : null}
                   {protocol.researchPlans.map((link) => <Link key={link.researchPlanId} href={`/research-plans/${link.researchPlanId}`} className="text-xs font-medium text-moss hover:underline">{link.isPrimary ? "Primary · " : ""}{link.researchPlan.code} · {link.researchPlan.title}</Link>)}
                 </div>
+                <div className="sm:col-span-2"><ProtocolImportHistory entries={importHistory} /></div>
               </CardBody>
             </Card>
 

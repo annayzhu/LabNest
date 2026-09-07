@@ -10,6 +10,7 @@ import {
   sanitizeTextContent,
 } from "write-excel-file/utility";
 import { parseProtocolDocxBytes } from "./protocol-docx";
+import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import { exportProtocolDocxTemplate, protocolDocxTemplateFilename } from "./protocol-docx-template";
 import { createEmptyProtocolDocument, type ProtocolDocument } from "./protocol-document";
 import { exportStructuredDocxTemplate, parseStructuredDocx } from "./structured-docx";
@@ -29,6 +30,7 @@ export type ParsedStructuredFile = {
   records: Record<string, unknown>[];
   mapping: StructuredColumnMapping[];
   warnings: string[];
+  protocolDecisions?: ProtocolImportDecision[];
 };
 
 export type StructuredTemplate = {
@@ -224,8 +226,8 @@ function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
     humanCode: parsed.humanCode,
     canonicalTitle: parsed.canonicalTitle,
     englishTitle: parsed.englishTitle,
-    availability: parsed.availability,
-    reviewStage: parsed.reviewStage,
+    availability: parsed.importDecision.documentAvailability.raw,
+    reviewStage: parsed.importDecision.documentReviewStage.raw,
     displayVersion: parsed.displayVersion,
     tags: parsed.tags,
     description: parsed.description,
@@ -271,7 +273,8 @@ export async function parseStructuredFile(file: File, module: StructuredModuleKe
     const recordWarnings = record.__importWarnings;
     if (Array.isArray(recordWarnings)) warnings.push(...recordWarnings.map(String));
   }
-  return { module, format, fileName: file.name, checksum, records: mapped.records, mapping: mapped.mapping, warnings: [...new Set(warnings)] };
+  const protocolDecisions = module === "protocols" ? mapped.records.map((record) => decideProtocolImportState({ fileName: file.name, availability: record.availability, reviewStage: record.reviewStage, compareFilename: format === "docx" })) : undefined;
+  return { module, format, fileName: file.name, checksum, records: mapped.records, mapping: mapped.mapping, warnings: [...new Set(warnings)], protocolDecisions };
 }
 
 function templateSample(module: StructuredModuleKey) {

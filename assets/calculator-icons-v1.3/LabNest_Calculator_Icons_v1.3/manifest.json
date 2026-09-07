@@ -1,0 +1,452 @@
+[
+  {
+    "task_id": "hemocytometer",
+    "name_zh": "血球计数板",
+    "path": "icons/hemocytometer.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 797595,
+    "sha256": "c90ddb2cbf0eac734432920863ca96475264621ebcfe21472a3b2f61a5be7ec2",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7088805455715554,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a laboratory hemocytometer glass counting chamber, angled view, a single clearly visible square etched counting grid. Asset id hemocytometer (血球计数板), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "hydrogel",
+    "name_zh": "水凝胶培养",
+    "path": "icons/hydrogel.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 721257,
+    "sha256": "ef6b7adc9d7e63e8aa1a893ccbc8286029c241f6b574a209208d89aa7ddb0e8a",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6476697216435318,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a shallow round culture dish containing a pale translucent hydrogel dome and three small cells. Asset id hydrogel (水凝胶培养), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "split",
+    "name_zh": "细胞传代",
+    "path": "icons/split.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 569907,
+    "sha256": "8faa18c5f2dfcf7b65bf79452e8ea7c47c447e0cdb32081beb664367c730a073",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7890037366869399,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting one small cell culture flask branching into two smaller cell culture flasks, three flasks total, simple composition. Asset id split (细胞传代), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "freezing",
+    "name_zh": "细胞冻存",
+    "path": "icons/freezing.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 622682,
+    "sha256": "42ed8691b14e4bf08d613b017325443d588bcfd3fabe07d25bc8f9b88a80c676",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7160753849245413,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting two cryovials with blue screw caps and a small snowflake beside them. Asset id freezing (细胞冻存), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "transfection",
+    "name_zh": "转染体系",
+    "path": "icons/transfection.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 797342,
+    "sha256": "54a9d369b08f851ae2fa9c89444db65e90954be6f283600a56d5da82face113c",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6799886296864388,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a single pale round cell with a small circular DNA plasmid and two small lipid particles approaching its membrane, minimal. Asset id transfection (转染体系), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "kill-curve",
+    "name_zh": "杀灭曲线",
+    "path": "icons/kill-curve.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 420602,
+    "sha256": "3791889442d88e8d56b78c86cfb1b16a3a70722d8718122864665f73364426ce",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.765358826237698,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a small laboratory culture dish beside a tiny plain chart with a simple descending dose response line, no ticks and no numbers. Asset id kill-curve (杀灭曲线), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "viability",
+    "name_zh": "细胞活率",
+    "path": "icons/viability.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 798821,
+    "sha256": "5ab6967ee673ab6c4c12b3919df19844b1bb6ed9afe1ca50025c0fe6263330b1",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6339992725034276,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a round microscope field containing three intact pale teal cells and one blue stained cell, distinguish outlines. Asset id viability (细胞活率), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "od600",
+    "name_zh": "OD600菌液浓度",
+    "path": "icons/od600.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 502064,
+    "sha256": "42543283accf5b450b7060ee49e2915649f94ba1903d51ab734c766fc94bc92a",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.723102976376711,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a rectangular spectrophotometer cuvette containing pale teal liquid with a short light beam crossing it horizontally. Asset id od600 (OD600菌液浓度), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "cfu",
+    "name_zh": "菌落形成单位",
+    "path": "icons/cfu.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 885967,
+    "sha256": "8edb91c55d9af602403f9aff36deb5cb25ba8ccb0dde3a3930265194306caf05",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.5528484288872101,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting one closed round petri dish seen from above at a slight angle with seven distinct small teal bacterial colonies. Asset id cfu (菌落形成单位), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "colony-counter",
+    "name_zh": "菌落辅助计数",
+    "path": "icons/colony-counter.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 711926,
+    "sha256": "607ff1b4f748263c7174fc13e6ed2f4a21bf826cd86412f0fdc1fb21a073617c",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6772897700245976,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a petri dish with four distinct colonies and a small magnifying lens over one colony. Asset id colony-counter (菌落辅助计数), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "serial-dilution",
+    "name_zh": "梯度稀释",
+    "path": "icons/serial-dilution.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 610317,
+    "sha256": "1bce6442a8b246326a0d3abea9cd0e380adf38c330be301880820ab9950e79db",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6881697865077366,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting three laboratory test tubes in a short rack with progressively paler teal liquid from left to right. Asset id serial-dilution (梯度稀释), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "percent-solution",
+    "name_zh": "百分比溶液",
+    "path": "icons/percent-solution.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 578767,
+    "sha256": "75c7fd1588ef7e441686c6cf4d7d54337d762272984492a4cd01579974342d92",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6485135922305401,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a laboratory beaker containing pale teal liquid and a large simple percent sign on its front. Asset id percent-solution (百分比溶液), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "media-recipe",
+    "name_zh": "培养基配方",
+    "path": "icons/media-recipe.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 578500,
+    "sha256": "feb387bd0018ed528190200d431d69b1e47f958377cb9bd58e7334d116e79252",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6923827802070058,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a square laboratory media bottle with pale peach liquid and a simple tiny leaf-free cell dish beside it, no label text. Asset id media-recipe (培养基配方), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "buffer-recipe",
+    "name_zh": "缓冲液配方",
+    "path": "icons/buffer-recipe.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 613004,
+    "sha256": "f0ee01ee88d35632167c25f1436077b29fe256b34bce40e84f3a33f392c75810",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6477326780776793,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a wide laboratory reagent bottle containing pale blue liquid next to a narrow test strip with three muted color blocks, no letters. Asset id buffer-recipe (缓冲液配方), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "ic50-ec50",
+    "name_zh": "IC50 EC50拟合",
+    "path": "icons/ic50-ec50.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 575221,
+    "sha256": "79ced28f341c2f53a1fccaecbaad576afae160444b856b80fa0710f683785263",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.6281570425992485,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a compact plain chart on a square laboratory card showing one sigmoid descending teal curve with one central highlighted point, no numbers. Asset id ic50-ec50 (IC50 EC50拟合), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "ligation",
+    "name_zh": "连接反应",
+    "path": "icons/ligation.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 368485,
+    "sha256": "43840b63d2f1cd2cc7feb9be82f59b591f82ed317fac628b609a6fd1bf154830",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.8421510496554566,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting DNA ligation as a SINGLE short upright double helix made of an upper blue DNA fragment connected end-to-end to a lower teal DNA fragment. ONE shared vertical axis, ONE continuous double helix silhouette. Two tiny highlighted joints halfway along the two backbones denote the end-to-end connection. No side-by-side DNA molecules, no lateral bridge. Clean charcoal-blue outlines, muted pale blue and desaturated blue-green flat fills, minimalist laboratory icon style, no shading or gloss. One centered compact subject occupying 75% of square canvas. Transparent background with real alpha, no solid background and no checkerboard. No text, symbols, labels, frame, shadow, or watermark. This is an independent icon PNG.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "tm",
+    "name_zh": "引物Tm",
+    "path": "icons/tm.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 584541,
+    "sha256": "01158367a546a3758032cfba98e4332f9140ddc2f80ed5f16fd3cda9c91c4e8c",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7827487923811268,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a short double stranded DNA segment with a small plain laboratory thermometer beside it. Asset id tm (引物Tm), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "dna-rna-conversion",
+    "name_zh": "DNA RNA换算",
+    "path": "icons/dna-rna-conversion.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 592000,
+    "sha256": "1563712c2f9e6fbbdb587eb13f358f6a0b6b680211a0ff87041a81d9d026b794",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7755507734102547,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a short double helix beside a simple single-strand RNA squiggle linked by two tiny opposing arrows. Asset id dna-rna-conversion (DNA RNA换算), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "bradford-bca",
+    "name_zh": "蛋白定量",
+    "path": "icons/bradford-bca.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 444466,
+    "sha256": "84deb8531efe94e102d5c061e027c845852acaf0c5119570165cdef7a67707a5",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7399536793266333,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting three upright small test tubes containing progressively darker muted lavender assay solution. Asset id bradford-bca (蛋白定量), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "elisa-4pl",
+    "name_zh": "ELISA拟合",
+    "path": "icons/elisa-4pl.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 654810,
+    "sha256": "c1a241ac17470f0ee1621f372e91b1f76d9e5fd51fe236720c01d988e144c094",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.743301816960845,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a small rectangular microplate with twelve round wells and a tiny sigmoid assay curve on a small card beside it. Asset id elisa-4pl (ELISA拟合), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "moi",
+    "name_zh": "感染复数",
+    "path": "icons/moi.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 747627,
+    "sha256": "52ada559b0275f71d0e57e745a7b5c2e6f1c5d556656a94712f2349b33caa95a",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7339346626679792,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting one large round cell surrounded by three small simple round virus particles, balanced uncluttered. Asset id moi (感染复数), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "virus-titer",
+    "name_zh": "病毒滴度",
+    "path": "icons/virus-titer.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 477125,
+    "sha256": "8296b5bfa8b39b1db224c78e34407b1d8283e0bfbcb0fc7865f80edfa918ee3e",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.8092299219848955,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting one capped laboratory sample tube with three tiny simplified virus particles beside it, tiny graduated liquid markings without numbers. Asset id virus-titer (病毒滴度), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "unit-converter",
+    "name_zh": "单位换算",
+    "path": "icons/unit-converter.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 553353,
+    "sha256": "2835b2ba9ff87323fb5ca2161f11098b07a365ae6185154bfe431ac2bbd0bdd5",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7451968692210444,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a small laboratory measuring ruler and a graduated cylinder connected by two simple opposing arrows, no numbers or text. Asset id unit-converter (单位换算), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "resuspension",
+    "name_zh": "试剂复溶",
+    "path": "icons/resuspension.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 321963,
+    "sha256": "b09f0c7f1e7bc87c1393e446083f6d3a6ea426d92299053fb51baf2eea960908",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.8936843885849174,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting a small open microcentrifuge tube with a powder pellet at bottom and a single liquid droplet falling from a pipette tip above. Asset id resuspension (试剂复溶), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  },
+  {
+    "task_id": "normalization",
+    "name_zh": "浓度归一化",
+    "path": "icons/normalization.png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 560835,
+    "sha256": "c1a2436ccff16e6983de44d58083379c6ac87c860021993d6513f52b115b490a",
+    "has_alpha": true,
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_fraction": 0.7026930091649306,
+    "generation_method": "built-in Image Gen",
+    "prompt": "Use case: stylized-concept. Create ONE independent square UI icon asset for LabNest scientific calculator, depicting three capped laboratory sample tubes with the same pale teal liquid level and a small horizontal alignment marker. Asset id normalization (浓度归一化), but do not print the name. Match a cohesive existing minimalist laboratory icon family: clean charcoal-blue thin outlines, restrained soft gray and desaturated blue-green colors, subtly hand-drawn but precise flat scientific equipment illustration, slight three-quarter perspective where appropriate. Simple recognizable silhouette legible at 32 and 40 pixels. One centered compact subject cluster occupying about 75% of a square canvas with generous consistent margins. Transparent background with real alpha, no solid background and no fake checkerboard. No rectangular tile or decorative frame. No branding, captions, titles, letters, extra text, watermark, gloss, strong shadow, photorealism, kawaii face or elaborate texture. Only include the percent symbol if explicitly requested in subject. This is a standalone icon, not an icon sheet or UI screenshot.",
+    "status": "generated original; application integration and small-size acceptance pending"
+  }
+]

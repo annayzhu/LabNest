@@ -1,4 +1,6 @@
-import { runStepContent } from "@/lib/run-step-content";
+import {RunParameterEditor} from "@/components/RunParameterEditor";
+import {runParameterKeys} from "@/lib/run-parameters";
+import { runStepContent,runOfflineImagePaths } from "@/lib/run-step-content";
 import { ArrowLeft, Camera, FilePlus2, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -79,6 +81,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell>
+      {runOfflineImagePaths(experiment.protocolSnapshotJson).map(path=><meta key={path} name="labnest-offline-image" content={path}/>)}
       <div className="space-y-4">
         <PageHeader
           identifier={experiment.runCode}
@@ -102,6 +105,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             </div>
           </div>
         </section>
+
+        <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson)} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
 
         <ProtocolRunProgressForm
           key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}

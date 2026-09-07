@@ -18,7 +18,7 @@ try {
    if(task==='buffer-recipe')await page.getByRole('combobox',{name:'Component input mode'}).first().selectOption('concentration');
    const pairs=await page.locator('form select').evaluateAll(selects=>selects.filter(select=>select.getClientRects().length).flatMap(select=>{
     const parent=select.parentElement;
-    if(!parent.className.includes('grid-cols-['))return [];
+    if(!parent.className.includes('grid-cols-[')&&!parent.classList.contains('calculator-quantity'))return [];
     const input=parent.querySelector('input');if(!input)return [];
     const a=input.getBoundingClientRect(),b=select.getBoundingClientRect();
     return [{sameLine:Math.abs(a.top-b.top)<2,inside:a.left>=0&&b.right<=innerWidth+1,inputWidth:a.width,unitWidth:b.width}];

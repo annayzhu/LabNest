@@ -25,7 +25,7 @@ export function TopBar() {
       <div className="mx-auto flex min-h-11 max-w-[1480px] items-center gap-2 md:gap-3">
         <div className="flex min-w-0 flex-1 items-center justify-between lg:hidden">
           <div className="flex min-w-0 items-center gap-2">
-            {pathname !== "/" ? (
+            {pathname !== "/" && !pathname.startsWith("/tools/calculator") ? (
               <button
                 type="button"
                 onClick={() => router.back()}

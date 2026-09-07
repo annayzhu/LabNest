@@ -23,7 +23,9 @@ var LabNestCalculations = (() => {
   __export(standalone_exports, {
     appearanceKey: () => appearanceKey,
     calculate: () => calculate,
+    canCopyResult: () => canCopyResult,
     compatibleUnits: () => compatibleUnits,
+    copyCalculation: () => copyCalculation,
     displayQuantity: () => displayQuantity,
     formatQuantity: () => formatQuantity,
     getCalculatorCatalog: () => getCalculatorCatalog,
@@ -31,13 +33,16 @@ var LabNestCalculations = (() => {
     parseAppearance: () => parseAppearance,
     presentedOutputs: () => presentedOutputs,
     presentedTable: () => presentedTable,
+    resultAuditText: () => resultAuditText,
     resultClipboard: () => resultClipboard,
     resultCsv: () => resultCsv,
     resultExportRows: () => resultExportRows,
     tableQuantityUnits: () => tableQuantityUnits,
     tableUnitsFor: () => tableUnitsFor,
     taskIconResource: () => taskIconResource,
+    taskLineSvg: () => taskLineSvg,
     taskPresentation: () => taskPresentation,
+    transfectionPlateValues: () => transfectionPlateValues,
     validateDisplayUnits: () => validateDisplayUnits
   });
 
@@ -64,13 +69,13 @@ var LabNestCalculations = (() => {
   }
   function parseScalar(value, locale = "en") {
     if (typeof value !== "number" && typeof value !== "string") throw new Error("\u8BF7\u586B\u5199\u6570\u503C / Enter a number");
-    let text = String(value).trim();
+    let text2 = String(value).trim();
     if (/^(de|fr|es|it)(-|$)/.test(locale)) {
-      if (text.includes(".") && text.includes(",")) throw new Error("\u5C0F\u6570\u5206\u9694\u7B26\u6709\u6B67\u4E49 / Ambiguous separators");
-      text = text.replace(",", ".");
+      if (text2.includes(".") && text2.includes(",")) throw new Error("\u5C0F\u6570\u5206\u9694\u7B26\u6709\u6B67\u4E49 / Ambiguous separators");
+      text2 = text2.replace(",", ".");
     }
-    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text) || !Number.isFinite(Number(text))) throw new Error("\u8BF7\u586B\u5199\u5B8C\u6574\u6709\u9650\u6570\u503C / Enter a complete finite number");
-    return Number(text);
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text2) || !Number.isFinite(Number(text2))) throw new Error("\u8BF7\u586B\u5199\u5B8C\u6574\u6709\u9650\u6570\u503C / Enter a complete finite number");
+    return Number(text2);
   }
   function convert(value, from, to) {
     const a = units[normalizeUnit(from)], b = units[normalizeUnit(to)];
@@ -87,6 +92,10 @@ var LabNestCalculations = (() => {
 
   // src/lib/calculators/presentation.ts
   var columns = {
+    perWellUl: ["Per well (\xB5L)", "\u6BCF\u5B54 (\xB5L)"],
+    dnaMassUg: ["DNA per well (\xB5g)", "\u6BCF\u5B54DNA (\xB5g)"],
+    rnaPmol: ["siRNA per well (pmol)", "\u6BCF\u5B54siRNA (pmol)"],
+    finalNm: ["Final siRNA (nM)", "siRNA\u7EC8\u6D53\u5EA6 (nM)"],
     reducingAgent: ["Reducing-agent stock", "\u8FD8\u539F\u5242\u539F\u6DB2"],
     reducingMode: ["Adding definition", "\u6DFB\u52A0\u65B9\u5F0F"],
     reducingDefinition: ["Stock / target definition", "\u539F\u6DB2\u4E0E\u76EE\u6807\u5B9A\u4E49"],
@@ -129,54 +138,6 @@ var LabNestCalculations = (() => {
   };
   function tableColumnLabel(key, zh) {
     return columns[key]?.[zh ? 1 : 0] ?? key;
-  }
-
-  // src/lib/calculators/result-presentation.ts
-  var tableQuantityUnits = { takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
-  function tableUnitsFor(result) {
-    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
-  }
-  function displayQuantity(value, unit, target) {
-    return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
-  }
-  function formatQuantity(value) {
-    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
-  }
-  function validateDisplayUnits(result, candidate) {
-    if (!candidate || typeof candidate !== "object") return {};
-    const valid = {};
-    for (const [key, value] of Object.entries(candidate)) {
-      const unit = key.startsWith("table:") ? tableUnitsFor(result)[key.slice(6)] : result.outputs.find((o) => o.key === key)?.unit;
-      if (unit && typeof value === "string" && compatibleUnits(unit).includes(value)) valid[key] = value;
-      else throw new Error("Invalid display unit");
-    }
-    return valid;
-  }
-  function presentedOutputs(result) {
-    return result.outputs.map((o) => typeof o.value === "number" && o.unit ? { ...o, ...displayQuantity(o.value, o.unit, result.displayUnits?.[o.key]) } : o);
-  }
-  function presentedTable(result, zh) {
-    const rows = result.table ?? [];
-    return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => {
-      const unit = tableUnitsFor(result)[key], target = result.displayUnits?.["table:" + key] ?? unit;
-      const label = tableColumnLabel(key, zh);
-      return [unit ? label.includes("(") ? label.replace(/\([^)]*\)/, `(${target})`) : `${label} (${target})` : label, unit && value !== "" && (typeof value === "number" || typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) ? convert(parseScalar(value), unit, target) : value];
-    })));
-  }
-  function resultExportRows(result, zh) {
-    const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
-    const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
-    return data.map((row) => ({ ...row, ...metadata }));
-  }
-  function resultClipboard(result, zh) {
-    const table = presentedTable(result, zh);
-    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
-  }
-  function resultCsv(result, zh) {
-    const rows = resultExportRows(result, zh);
-    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
-    const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
-    return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
   }
 
   // src/lib/calculators/operations.ts
@@ -266,49 +227,166 @@ var LabNestCalculations = (() => {
     return { ...result, operations, operationVersion };
   }
 
-  // src/lib/calculators/pipetting.ts
-  function applyPipettingOptions(source, inputs) {
-    let result = withLiquidOperations(source, inputs);
-    let operations = [...result.operations ?? []];
-    const warnings = result.warnings.filter((w) => !source.structuredWarnings?.some((old) => old.message === w));
-    if (inputs.pipetteStepUl !== void 0 && inputs.pipetteStepUl !== null && inputs.pipetteStepUl !== "") {
-      const step = parseScalar(inputs.pipetteStepUl);
-      if (step <= 0) throw new Error("\u79FB\u6DB2\u6B65\u8FDB\u5FC5\u987B\u5927\u4E8E0 / Pipetting increment must be positive");
-      if (!["dilution", "reagent-dosing", "fold-dilution"].includes(result.calculatorId) || inputs.mode === "add") warnings.push("\u6B64\u6A21\u5F0F\u4FDD\u7559\u7406\u8BBA\u91CF\uFF1B\u672A\u5E94\u7528\u6B65\u8FDB\u820D\u5165 / This mode retains theoretical values; rounding not applied.");
-      else {
-        const stock = Number(result.outputMap.stockVolumeUl), finalOutput = result.outputs.find((o) => o.key === "finalVolume");
-        if (!finalOutput || typeof finalOutput.value !== "number" || !finalOutput.unit) throw new Error("Missing final volume");
-        const final = convert(finalOutput.value, finalOutput.unit, "\xB5L"), actual = Math.round(stock / step) * step;
-        if (actual > final || stock > 0 && actual === 0 || final - stock > 0 && final - actual === 0) throw new Error("\u6B65\u8FDB\u820D\u5165\u4F7F\u975E\u96F6\u7EC4\u5206\u4E3A0\u6216\u8D85\u8FC7\u603B\u91CF\uFF1B\u6B64\u65B9\u6848\u4E0D\u53EF\u6267\u884C / Rounding removes a nonzero component or exceeds final volume");
-        const deviation = stock === 0 ? 0 : (actual / stock - 1) * 100;
-        result = { ...result, table: [{ component: "\u6BCD\u6DB2 / Stock", theoreticalUl: stock, actualUl: actual }, { component: "\u7A00\u91CA\u6DB2 / Diluent", theoreticalUl: final - stock, actualUl: final - actual }], notes: [...result.notes, `\u79FB\u6DB2\u6B65\u8FDB ${step} \xB5L\uFF1B\u5B9E\u9645\u6D53\u5EA6\u504F\u5DEE ${deviation.toPrecision(6)}% / Actual concentration deviation; outputs retain theory.`] };
-        if (inputs.targetConcentration !== void 0) {
-          const concentration = parseScalar(inputs.targetConcentration) * (stock === 0 ? 1 : actual / stock);
-          const unit = String(inputs.targetConcentrationUnit ?? "\xB5M");
-          result.outputs = [...result.outputs, { key: "adoptedConcentration", label: "Adopted concentration", labelZh: "\u91C7\u7528\u65B9\u6848\u6D53\u5EA6", value: concentration, unit }];
-          result.outputMap = { ...result.outputMap, adoptedConcentration: concentration };
-        }
-        operations = [actual, final - actual].map((value, index) => operation(`adopted:${index}`, index ? "\u7A00\u91CA\u6DB2 / Diluent" : "\u6BCD\u6DB2 / Stock", value, "\xB5L", "add", { basis: "actual" }));
-      }
+  // src/lib/calculators/transfection.ts
+  function isTransfectionPlan(value) {
+    const object = (v) => Boolean(v) && typeof v === "object" && !Array.isArray(v);
+    const strings = (v, keys) => keys.every((k) => typeof v[k] === "string");
+    const reagent = (v) => object(v) && strings(v, ["name", "basis", "amount", "basisName", "basisUnit", "basisAmount"]);
+    const tube = (v) => object(v) && strings(v, ["mode", "value"]);
+    return object(value) && value.version === 3 && strings(value, ["material", "mixing", "protocol"]) && Array.isArray(value.groups) && value.groups.every((g) => object(g) && strings(g, ["name", "wells", "overage", "finalVolume", "dnaMode", "totalDna", "rnaMode", "totalRna", "diluent", "order"]) && Array.isArray(g.rows) && g.rows.every((r) => object(r) && strings(r, ["name", "kind", "stock", "stockUnit", "dose", "sizeBasis", "size"])) && reagent(g.reagent) && Array.isArray(g.auxiliaries) && g.auxiliaries.every(reagent) && tube(g.a) && tube(g.b) && tube(g.single));
+  }
+  var l3000 = "https://documents.thermofisher.com/TFS-Assets/LSG/manuals/lipofectamine3000_protocol.pdf";
+  var transfectionProtocols = {
+    "l3000": { name: "Lipofectamine 3000 \xB7 MAN0009872 Rev C.0", mixing: "two-tube", materials: ["dna", "multi-dna", "shrna-plasmid", "sirna", "multi-sirna"], source: l3000, order: "A\uFF1A\u7A00\u91CA\u6838\u9178\uFF0CDNA\u65B9\u6848\u53E6\u52A0P3000\uFF1BB\uFF1A\u7A00\u91CA\u8102\u8D28\u8BD5\u5242\uFF1B\u5C06A\u52A0\u5165B\uFF0C\u6309\u8BF4\u660E\u4E66\u5B75\u80B2\u540E\u52A0\u5165\u7EC6\u80DE\u3002 / A: dilute nucleic acids, add P3000 for DNA; B: dilute lipid. Add A to B, incubate per guide, then add to cells.", reagent: "Lipofectamine 3000" },
+    "l3000-co": { name: "Lipofectamine 3000 \xB7 DNA + siRNA FAQ", mixing: "two-tube", materials: ["dna-sirna"], source: "https://www.thermofisher.com/order/catalog/product/L3000015/faqs", order: "DNA\u548CsiRNA\u540C\u5165A\u7BA1\uFF0CP3000\u6309DNA\u91CF\u53E6\u8BBE\uFF1BB\u7BA1\u7A00\u91CA\u8102\u8D28\u3002A\u52A0\u5165B\u540E\u6309\u4EA7\u54C1\u65B9\u6848\u5B75\u80B2\u3001\u52A0\u81F3\u7EC6\u80DE\u3002 / DNA and siRNA in A; set P3000 against DNA separately. Dilute lipid in B; combine A into B and follow product incubation.", reagent: "Lipofectamine 3000" },
+    "rnaimax-forward": { name: "RNAiMAX \xB7 Forward transfection", mixing: "two-tube", materials: ["sirna", "multi-sirna"], source: "https://www.thermofisher.com/us/en/home/references/protocols/cell-culture/transfection-protocol/rnaimax-forward-transfections-lipofectamine.html", order: "A\uFF1A\u7A00\u91CAsiRNA\uFF1BB\uFF1A\u7A00\u91CARNAiMAX\uFF1B\u5206\u522B\u6DF7\u5300\u540E\u5408\u5E76\uFF0C\u6309\u8BF4\u660E\u5B75\u80B2\uFF0C\u518D\u52A0\u5230\u5DF2\u94FA\u7EC6\u80DE\u3002 / Dilute siRNA in A and RNAiMAX in B, combine, incubate per guide, then add to plated cells.", reagent: "Lipofectamine RNAiMAX" },
+    "rnaimax-reverse": { name: "RNAiMAX \xB7 Reverse, in-well preparation", mixing: "single", materials: ["sirna", "multi-sirna"], source: "https://www.thermofisher.com/us/en/home/references/protocols/cell-culture/transfection-protocol/rnaimax-reverse-transfections-lipofectamine.html", order: "\u5728\u6BCF\u4E2A\u5B54\u5185\u7A00\u91CAsiRNA\uFF0C\u518D\u52A0RNAiMAX\u5E76\u6309\u8BF4\u660E\u5B75\u80B2\uFF0C\u6700\u540E\u52A0\u7EC6\u80DE\u60AC\u6DB2\uFF1B\u6574\u6279\u6570\u5B57\u662F\u5907\u6599\u5408\u8BA1\uFF0C\u4E0D\u662F\u5408\u6210\u4E00\u7BA1\u3002 / Dilute siRNA in each well, add RNAiMAX and incubate per guide, then add cells. Batch figures are supply totals, not a pooled tube.", reagent: "Lipofectamine RNAiMAX" }
+  };
+  var newNucleicRow = (kind = "dna") => ({ name: "", kind, stock: "", stockUnit: kind === "sirna" ? "\xB5M" : "\xB5g/\xB5L", dose: "", sizeBasis: "bp", size: "" });
+  var newDoseReagent = () => ({ name: "", basis: "direct", amount: "", basisName: "", basisUnit: "", basisAmount: "" });
+  function newTransfectionGroup() {
+    return { name: "", wells: "", overage: "10", finalVolume: "", dnaMode: "amount", totalDna: "", rnaMode: "each-nm", totalRna: "", rows: [newNucleicRow()], reagent: newDoseReagent(), auxiliaries: [], a: { mode: "final", value: "" }, b: { mode: "final", value: "" }, single: { mode: "final", value: "" }, diluent: "Opti-MEM", order: "" };
+  }
+  function newTransfectionPlan() {
+    return { version: 3, material: "dna", mixing: "two-tube", protocol: "custom", groups: [newTransfectionGroup()] };
+  }
+  function exampleTransfectionPlan() {
+    const p = newTransfectionPlan();
+    p.groups[0] = { ...p.groups[0], name: "DNA group", wells: "6", finalVolume: "1000", rows: [{ ...newNucleicRow(), name: "Plasmid", stock: "1", dose: "2" }], reagent: { ...newDoseReagent(), name: "Custom lipid", basis: "dna", amount: "3" }, a: { mode: "final", value: "62.5" }, b: { mode: "final", value: "62.5" }, order: "A\u7BA1\u6838\u9178\u7A00\u91CA\u540E\u4E0EB\u7BA1\u7A00\u91CA\u8BD5\u5242\u6DF7\u5408\uFF0C\u6309\u5DF2\u9A8C\u8BC1\u65B9\u6848\u5B75\u80B2\uFF0C\u518D\u52A0\u5165\u7EC6\u80DE\u3002 / Dilute nucleic acid in A and reagent in B; combine and follow the validated protocol before adding to cells." };
+    return p;
+  }
+  function positive(value, label, zero = false) {
+    const n2 = parseScalar(value);
+    if (!Number.isFinite(n2) || (zero ? n2 < 0 : n2 <= 0)) throw Error(`${label}: ${zero ? "\u987B\u22650 / must be \u22650" : "\u987B>0 / must be >0"}`);
+    return n2;
+  }
+  function text(value, label) {
+    if (typeof value !== "string" || !value.trim()) throw Error(`${label}: \u5FC5\u586B / required`);
+    return value.trim();
+  }
+  function choice(value, choices, label) {
+    if (!choices.includes(value)) throw Error(`${label}: \u65E0\u6548\u9009\u9879 / invalid option`);
+    return value;
+  }
+  function volume(spec, components, label) {
+    choice(spec.mode, ["add", "final"], "Volume meaning");
+    const value = positive(spec.value, label, true);
+    const total = spec.mode === "add" ? components + value : value;
+    const diluent = spec.mode === "add" ? value : value - components;
+    if (diluent < -1e-10 || total <= 0) throw Error(`${label}: \u7EC4\u5206\u8D85\u8FC7\u672C\u7BA1\u603B\u4F53\u79EF / Components exceed tube total`);
+    return { total, diluent: Math.max(0, diluent) };
+  }
+  function reagentVolume(r, dna, rna) {
+    text(r.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
+    choice(r.basis, ["direct", "dna", "sirna", "custom"], "Reagent basis");
+    const rate = positive(r.amount, "\u8BD5\u5242\u7528\u91CF / Reagent amount", true);
+    if (r.basis === "dna" && dna === 0) throw Error("\u65E0DNA\uFF0C\u4E0D\u53EF\u6309DNA\u8D28\u91CF\u8BA1\u8BD5\u5242 / No DNA for DNA-based reagent");
+    if (r.basis === "sirna" && rna === 0) throw Error("\u65E0siRNA\uFF0C\u4E0D\u53EF\u6309siRNA\u8BA1\u8BD5\u5242 / No siRNA for RNA-based reagent");
+    if (r.basis === "custom") {
+      text(r.basisName, "\u4F9D\u636E\u5BF9\u8C61 / Basis object");
+      text(r.basisUnit, "\u4F9D\u636E\u5355\u4F4D / Basis unit");
+      return rate * positive(r.basisAmount, "\u6BCF\u5B54\u4F9D\u636E\u91CF / Basis per well");
     }
-    const structuredWarnings = [];
-    if (inputs.pipetteMinimumUl !== void 0 && inputs.pipetteMinimumUl !== null && inputs.pipetteMinimumUl !== "") {
-      const minimum2 = parseScalar(inputs.pipetteMinimumUl);
-      if (minimum2 <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
-      for (const operation2 of operations) {
-        if (operation2.role === "make-up-to" || operation2.repetitions === 0) continue;
-        const volume = convert(operation2.quantity.value, operation2.quantity.unit, "\xB5L");
-        if (!Number.isFinite(volume) || volume < 0) throw new Error("Invalid liquid operation");
-        if (volume > 0 && volume < minimum2) {
-          const message = `${operation2.groupName ? operation2.groupName + " \xB7 " : ""}${operation2.sample ? operation2.sample + " \xB7 " : ""}${operation2.component} (${operation2.basis}): ${formatQuantity(volume)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum2)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
-          structuredWarnings.push({ code: "below-minimum", operationId: operation2.id, component: operation2.component, sample: operation2.sample, basis: operation2.basis, volumeUl: volume, minimumUl: minimum2, message });
-          warnings.push(message);
-        }
-      }
+    return rate * (r.basis === "dna" ? dna : r.basis === "sirna" ? rna : 1);
+  }
+  function calculateTransfection(plan) {
+    if (!isTransfectionPlan(plan)) throw Error("\u65B9\u6848\u7ED3\u6784\u4E0D\u5B8C\u6574\u6216\u7248\u672C\u4E0D\u652F\u6301\uFF1B\u539F\u6570\u636E\u672A\u4FEE\u6539 / Incomplete or unsupported transfection plan; source preserved");
+    choice(plan.material, ["dna", "multi-dna", "sirna", "multi-sirna", "shrna-plasmid", "dna-sirna"], "Material");
+    choice(plan.mixing, ["single", "two-tube"], "Mixing");
+    const profile = transfectionProtocols[plan.protocol];
+    if (plan.protocol !== "custom" && !profile) throw Error("Unknown protocol");
+    if (profile && (profile.mixing !== plan.mixing || !profile.materials.includes(plan.material))) throw Error("\u4EA7\u54C1\u65B9\u6848\u4E0E\u6750\u6599\u6216\u914D\u5236\u6A21\u5F0F\u4E0D\u517C\u5BB9 / Protocol incompatible with material or preparation mode");
+    if (!Array.isArray(plan.groups) || !plan.groups.length || plan.groups.length > 96) throw Error("\u9700\u89811\u201396\u4E2A\u72EC\u7ACB\u7EC4 / Require 1\u201396 groups");
+    const table = [], operations = [], outputs = [], notes = [], warnings = [];
+    const names2 = /* @__PURE__ */ new Set();
+    let batchDna = 0;
+    for (const [gi, g] of plan.groups.entries()) {
+      const name = text(g.name, "\u5B9E\u9A8C\u7EC4\u540D\u79F0 / Group name");
+      if (names2.has(name)) throw Error("\u5B9E\u9A8C\u7EC4\u540D\u79F0\u91CD\u590D / Duplicate group name");
+      names2.add(name);
+      const wells = positive(g.wells, "\u5B54\u6570 / Wells");
+      if (!Number.isInteger(wells)) throw Error("\u5B54\u6570\u5FC5\u987B\u4E3A\u6574\u6570 / Integer wells required");
+      const factor = wells * (1 + positive(g.overage, "\u914D\u5236\u4F59\u91CF / Overage", true) / 100), final = positive(g.finalVolume, "\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF / Final culture volume");
+      if (!Array.isArray(g.rows) || !g.rows.length || g.rows.length > 96) throw Error("\u6838\u9178\u884C\u65E0\u6548 / Invalid nucleic acid rows");
+      choice(g.dnaMode, ["amount", "mass-ratio", "molar-ratio"], "DNA basis");
+      choice(g.rnaMode, ["each-nm", "each-pmol", "total-nm", "total-pmol"], "siRNA basis");
+      const dnaRows = g.rows.filter((r) => r.kind === "dna" || r.kind === "shrna-plasmid"), rnaRows = g.rows.filter((r) => r.kind === "sirna");
+      if (dnaRows.length + rnaRows.length !== g.rows.length) throw Error("\u5FC5\u987B\u660E\u786E\u6750\u6599\u5F62\u5F0F\uFF1B\u75C5\u6BD2\u8F6C\u5BFC\u8BF7\u4F7F\u7528MOI\u5DE5\u5177 / Specify material; viral transduction uses MOI");
+      if (["dna", "shrna-plasmid"].includes(plan.material) && (dnaRows.length !== 1 || rnaRows.length) || plan.material === "multi-dna" && (dnaRows.length < 2 || rnaRows.length) || plan.material === "sirna" && (rnaRows.length !== 1 || dnaRows.length) || plan.material === "multi-sirna" && (rnaRows.length < 2 || dnaRows.length) || plan.material === "dna-sirna" && (!dnaRows.length || !rnaRows.length)) throw Error("\u6750\u6599\u7C7B\u578B\u4E0E\u6838\u9178\u884C\u4E0D\u4E00\u81F4 / Material and nucleic acid rows disagree");
+      if (plan.material === "shrna-plasmid" && g.rows[0].kind !== "shrna-plasmid") throw Error("shRNA\u5FC5\u987B\u6CE8\u660E\u8868\u8FBE\u8D28\u7C92 / shRNA expression plasmid required");
+      const weight = (r) => {
+        const ratio = positive(r.dose, "DNA ratio");
+        if (g.dnaMode !== "molar-ratio") return ratio;
+        choice(r.sizeBasis, ["bp", "mw"], "Molecular size");
+        const size = positive(r.size, "\u8D28\u7C92\u957F\u5EA6\u6216\u5206\u5B50\u91CF / Plasmid length or MW");
+        if (r.sizeBasis === "bp" && !Number.isInteger(size)) throw Error("\u8D28\u7C92bp\u957F\u5EA6\u5FC5\u987B\u4E3A\u6574\u6570 / Plasmid bp length must be an integer");
+        return ratio * size * (r.sizeBasis === "bp" ? 660 : 1);
+      };
+      const denominator = g.dnaMode === "amount" ? 1 : dnaRows.reduce((s, r) => s + weight(r), 0), rnaRatio = rnaRows.reduce((s, r) => s + positive(r.dose, "siRNA dose / ratio"), 0);
+      const rowNames = /* @__PURE__ */ new Set();
+      let dnaTotal = 0, rnaTotal = 0;
+      const doses = g.rows.map((r) => {
+        const component = text(r.name, "\u6838\u9178\u540D\u79F0 / Nucleic acid name");
+        if (rowNames.has(component)) throw Error("\u540C\u7EC4\u6838\u9178\u540D\u79F0\u91CD\u590D / Duplicate nucleic acid name");
+        rowNames.add(component);
+        const dna = r.kind !== "sirna";
+        const amount = dna ? g.dnaMode === "amount" ? positive(r.dose, "\u6BCF\u5B54DNA\u8D28\u91CF / DNA mass per well") : positive(g.totalDna, "\u603BDNA\u8D28\u91CF / Total DNA mass") * weight(r) / denominator : (g.rnaMode.startsWith("total") ? positive(g.totalRna, "siRNA\u603B\u7528\u91CF / Total siRNA") * positive(r.dose, "siRNA ratio") / rnaRatio : positive(r.dose, "siRNA dose")) * (g.rnaMode.endsWith("nm") ? final / 1e3 : 1);
+        const stock = convert(positive(r.stock, "\u6BCD\u6DB2\u6D53\u5EA6 / Stock concentration"), r.stockUnit, dna ? "\xB5g/\xB5L" : "\xB5M");
+        const v = amount / stock;
+        dnaTotal += dna ? amount : 0;
+        rnaTotal += dna ? 0 : amount;
+        return { r, component, amount, volume: v, dna };
+      });
+      const reagentName = text(g.reagent.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
+      if (profile && reagentName !== profile.reagent) throw Error("\u8BD5\u5242\u540D\u79F0\u4E0E\u6240\u9009\u4EA7\u54C1\u4E0D\u7B26 / Reagent does not match product");
+      if (/rnaimax/i.test(reagentName) && dnaRows.length) throw Error("RNAiMAX\u4E0D\u9002\u7528\u4E8EDNA\u5171\u8F6C\u67D3 / RNAiMAX does not support DNA co-transfection");
+      if (!Array.isArray(g.auxiliaries)) throw Error("Invalid auxiliary list");
+      if (rnaRows.length && !dnaRows.length && g.auxiliaries.some((r) => /p\s*3000/i.test(r.name))) throw Error("\u7EAFsiRNA\u65B9\u6848\u4E0D\u6DFB\u52A0P3000 / Do not add P3000 to siRNA-only transfection");
+      if (profile && plan.protocol.startsWith("l3000") && dnaRows.length && !g.auxiliaries.some((r) => r.name === "P3000" && r.basis === "dna" && Number(r.amount) === 2)) throw Error("\u6240\u9009DNA\u65B9\u6848\u9700P3000 2 \xB5L/\xB5g DNA\uFF1B\u5176\u4ED6\u7528\u91CF\u8BF7\u4F7F\u7528\u6709\u4F9D\u636E\u7684\u81EA\u5B9A\u4E49\u65B9\u6848 / Selected DNA protocol requires P3000 2 \xB5L/\xB5g DNA");
+      const reagent = reagentVolume(g.reagent, dnaTotal, rnaTotal), aux = g.auxiliaries.map((r) => ({ name: text(r.name, "\u8F85\u52A9\u8BD5\u5242 / Auxiliary"), volume: reagentVolume(r, dnaTotal, rnaTotal) })), nucleic = doses.reduce((s, r) => s + r.volume, 0), auxTotal = aux.reduce((s, r) => s + r.volume, 0);
+      const a = plan.mixing === "two-tube" ? volume(g.a, nucleic + auxTotal, "A\u7BA1 / Tube A") : volume(g.single, nucleic + auxTotal + reagent, "\u5355\u4F53\u7CFB / Single mixture");
+      const b = plan.mixing === "two-tube" ? volume(g.b, reagent, "B\u7BA1 / Tube B") : { total: 0, diluent: 0 };
+      const mixed = a.total + b.total;
+      if (mixed > final + 1e-10) throw Error("\u6DF7\u5408\u6DB2\u8D85\u8FC7\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF / Mixture exceeds final culture volume");
+      const diluent = text(g.diluent, "\u7A00\u91CA\u6DB2\u540D\u79F0 / Diluent");
+      const order = profile?.order ?? text(g.order, "\u52A0\u6837\u987A\u5E8F / Addition order");
+      const inWell = plan.protocol === "rnaimax-reverse";
+      const push = (tube, component, v, extra = {}) => {
+        const row = table.length;
+        table.push({ group: name, tube, component, perWellUl: v, batchUl: v * factor, ...extra });
+        operations.push(operation(`transfection:${gi}:${row}`, component, inWell ? v : v * factor, "\xB5L", "add", { group: String(gi), groupName: name, source: component, destination: `${name}:${tube}`, repetitions: inWell ? wells : 1 }));
+      };
+      const at = plan.mixing === "two-tube" ? "A" : "\u5355\u4F53\u7CFB / Single";
+      for (const d of doses) push(at, d.component, d.volume, d.dna ? { dnaMassUg: d.amount } : { rnaPmol: d.amount, finalNm: d.amount * 1e3 / final });
+      for (const r of aux) push(at, r.name, r.volume);
+      push(at, diluent, a.diluent);
+      push(plan.mixing === "two-tube" ? "B" : at, reagentName, reagent);
+      if (plan.mixing === "two-tube") push("B", diluent, b.diluent);
+      const add = (key, en, cn, value, unit = "\xB5L") => outputs.push({ key: `group${gi}_${key}`, label: `${name} \xB7 ${en}`, labelZh: `${name} \xB7 ${cn}`, value, unit });
+      if (dnaRows.length) add("dna", "DNA per well", "\u6BCF\u5B54\u603BDNA", dnaTotal, "\xB5g");
+      if (rnaRows.length) add("rna", "siRNA per well", "\u6BCF\u5B54\u603BsiRNA", rnaTotal, "pmol");
+      if (rnaTotal) add("rnaFinal", "Total siRNA final concentration", "siRNA\u603B\u7EC8\u6D53\u5EA6", rnaTotal * 1e3 / final, "nM");
+      add("a", plan.mixing === "two-tube" ? "Tube A total per well" : "Mixture per well", plan.mixing === "two-tube" ? "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF" : "\u6BCF\u5B54\u6DF7\u5408\u6DB2\u603B\u4F53\u79EF", a.total);
+      if (plan.mixing === "two-tube") add("b", "Tube B total per well", "\u6BCF\u5B54B\u7BA1\u603B\u4F53\u79EF", b.total);
+      add("mixed", "Mixture added per well", "\u6BCF\u5B54\u6DF7\u5408\u6DB2\u52A0\u5165\u91CF", mixed);
+      add("final", "Final culture volume per well", "\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF", final);
+      add("medium", "Cell medium before addition", "\u52A0\u5165\u6DF7\u5408\u6DB2\u524D\u57F9\u517B\u57FA/\u7EC6\u80DE\u60AC\u6DB2", final - mixed);
+      add("batch", "Batch supply incl. overage", "\u542B\u4F59\u91CF\u6574\u6279\u5907\u6599\u4F53\u79EF", mixed * factor);
+      if (plan.mixing === "two-tube") operations.push(operation(`transfection:${gi}:combine`, "\u5408\u5E76A\u81F3B / Combine A into B", a.total * factor, "\xB5L", "transfer", { group: String(gi), groupName: name, source: `${name}:A`, destination: `${name}:B` }));
+      if (!inWell) operations.push(operation(`transfection:${gi}:dispense`, "\u6BCF\u5B54\u6DF7\u5408\u6DB2 / Mixture per well", mixed, "\xB5L", "dispense", { group: String(gi), groupName: name, source: `${name}:mixture`, destination: `${name}:wells`, repetitions: wells }));
+      notes.push(`${name}: ${order}`);
+      batchDna += dnaTotal * factor;
     }
-    const minimum = inputs.pipetteMinimumUl === void 0 || inputs.pipetteMinimumUl === null || inputs.pipetteMinimumUl === "" ? void 0 : parseScalar(inputs.pipetteMinimumUl);
-    const status = !operationCoverage[result.calculatorId] ? "incomplete" : operationCoverage[result.calculatorId].startsWith("not-applicable") ? "not-applicable" : !operations.some((o) => o.role !== "make-up-to") ? "incomplete" : minimum === void 0 ? "not-set" : structuredWarnings.length ? "below-minimum" : "passed";
-    return { ...result, operations, pipettingCheck: { status, minimumUl: minimum }, warnings: [...new Set(warnings)], structuredWarnings };
+    if (batchDna) outputs.push({ key: "dnaUg", label: "Batch DNA incl. overage", labelZh: "\u542B\u4F59\u91CF\u6574\u6279DNA", value: batchDna, unit: "\xB5g" });
+    notes.push("\u4F53\u79EF\u6309\u53EF\u52A0\u548C\u8BA1\u7B97\uFF1BsiRNA nM \xD7 \u6700\u7EC8\u57F9\u517B\u4F53\u79EF\xB5L \xF71000 = pmol\uFF1B\xB5M = pmol/\xB5L\u3002\u4F59\u91CF\u4EC5\u653E\u5927\u5907\u6599\uFF0C\u4E0D\u589E\u52A0\u6BCF\u5B54\u5242\u91CF\u3002 / Additive volumes; overage increases supplies only.");
+    if (plan.groups.some((g) => g.dnaMode === "molar-ratio")) notes.push("\u8D28\u7C92\u6469\u5C14\u6BD4\u6309\u957F\u5EA6\xD7660 g/mol/bp\u4F30\u7B97dsDNA\u5206\u5B50\u91CF\uFF0C\u6216\u4F7F\u7528\u5F55\u5165\u7684\u5B9E\u9645\u5206\u5B50\u91CF\u3002 / dsDNA estimate: 660 g/mol/bp; prefer actual MW.");
+    warnings.push("\u65B9\u6848\u7528\u91CF\u9700\u6309\u6240\u7528\u8BD5\u5242\u4E0E\u7EC6\u80DE\u6761\u4EF6\u9A8C\u8BC1\uFF1B\u4E0D\u540C\u5B9E\u9A8C\u7EC4\u5206\u522B\u914D\u5236\u3002 / Validate doses for reagent and cells; prepare each experimental group separately.");
+    if (profile) notes.push(`${profile.name}: ${profile.source}\uFF1B\u4F53\u79EF\u91C7\u7528\u6240\u9009\u201C\u52A0\u5165/\u8865\u8DB3\u201D\u542B\u4E49\u5E76\u8BA1\u5165\u6240\u6709\u7EC4\u5206\uFF0C\u4E0D\u80FD\u628A\u5382\u5546\u8FD1\u4F3C\u4F53\u79EF\u5F53\u6210\u7CBE\u786E\u603B\u91CF\u3002 / All component volumes counted; do not substitute nominal protocol volumes for measured totals.`);
+    return { calculatorId: "transfection", methodVersion: "transfection-v3", outputs, outputMap: Object.fromEntries(outputs.map((o) => [o.key, o.value])), table, operations, warnings, notes, instructions: plan.groups.map((g) => `${g.name}: ${profile?.order ?? g.order}`) };
+  }
+  function transfectionPlateValues(plan, wellCount) {
+    if (plan.groups.length !== 1 || Number(plan.groups[0].wells) !== wellCount) throw Error("\u8BF7\u6309\u5B9E\u9A8C\u7EC4\u5206\u522B\u9009\u62E9\u5B54\u4F4D\uFF0C\u4E14\u5B54\u6570\u9700\u4E00\u81F4 / Select matching wells for one group at a time");
+    return calculateTransfection(plan).outputMap;
   }
 
   // src/lib/calculators/task-definitions.ts
@@ -356,6 +434,10 @@ var LabNestCalculations = (() => {
       d.fields.push(select("radiusDefinition", "Radius definition", "\u534A\u5F84\u6765\u6E90\u5B9A\u4E49", [["entered", "User-entered rotor radius", "\u7528\u6237\u5F55\u5165\u8F6C\u5B50\u534A\u5F84"], ["maximum", "Maximum radius", "\u6700\u5927\u534A\u5F84"], ["mean", "Mean radius", "\u5E73\u5747\u534A\u5F84"]]));
     }
     if (d.id === "transfection") {
+      d.methodVersion = "transfection-v3";
+      d.method = "DNA mass or size-weighted molar ratios; siRNA pmol from final culture volume; independent groups and explicit tube volumes";
+      d.methodZh = "DNA\u8D28\u91CF\u6216\u6309\u5206\u5B50\u91CF\u6298\u7B97\u7684\u6469\u5C14\u6BD4\uFF1BsiRNA\u6309\u6700\u7EC8\u57F9\u517B\u4F53\u79EF\u8BA1\u7B97pmol\uFF1B\u72EC\u7ACB\u5B9E\u9A8C\u7EC4\u4E0E\u660E\u786E\u5355\u7BA1\u4F53\u79EF";
+      d.exampleInputs = { transfectionPlan: exampleTransfectionPlan() };
       d.fields.unshift(select("complexMode", "Mixing template", "\u6DF7\u5408\u6A21\u677F", [["combined", "Combined mixture", "\u5355\u4F53\u7CFB"], ["two-tube", "Two separate tubes", "\u4E24\u7BA1\u5206\u522B\u914D\u5236\u518D\u6DF7\u5408"]]));
       d.fields.push(n("tubeAVolumeUl", "Tube A final volume per well", "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF", "\xB5L"));
     }
@@ -400,6 +482,7 @@ var LabNestCalculations = (() => {
   ];
   function isFieldVisible(id, key, inputs) {
     const mode = String(inputs.mode ?? "");
+    if (id === "transfection" && inputs.transfectionPlan !== void 0) return false;
     if (["dilution", "reagent-dosing", "fold-dilution"].includes(id)) {
       const m = mode || "final";
       if (key === "molecularWeight") return ["final", "add"].includes(m) && units[normalizeUnit(String(inputs.stockConcentrationUnit ?? "mM"))]?.dimension !== units[normalizeUnit(String(inputs.targetConcentrationUnit ?? "\xB5M"))]?.dimension;
@@ -440,70 +523,7 @@ var LabNestCalculations = (() => {
     return true;
   }
 
-  // src/lib/calculators/planning.ts
-  function dilution(stock, target, volume) {
-    if (![stock, target, volume].every(Number.isFinite) || stock <= 0 || target < 0 || target > stock || volume <= 0) throw new Error("\u76EE\u6807\u6D53\u5EA6\u6216\u4F53\u79EF\u4E0D\u53EF\u884C / Target concentration or volume is infeasible");
-    const sample = target * volume / stock;
-    return { sample, diluent: volume - sample, final: volume };
-  }
-  function addStock(stock, target, initial, volume) {
-    if (![stock, target, initial, volume].every(Number.isFinite) || volume <= 0 || initial < 0 || target < initial || stock <= target) throw new Error("\u52A0\u5165\u6A21\u5F0F\u8981\u6C42\u6BCD\u6DB2\u6D53\u5EA6 > \u76EE\u6807\u6D53\u5EA6 \u2265 \u521D\u59CB\u6D53\u5EA6 / Require stock > target \u2265 initial");
-    const sample = (target - initial) * volume / (stock - target);
-    return { sample, diluent: volume, final: volume + sample };
-  }
-  function serialPlan(start, factor, count, volume, retained) {
-    if (![start, factor, count, volume].every(Number.isFinite) || start <= 0 || factor <= 1 || !Number.isInteger(count) || count < 1 || count > 384 || volume <= 0) throw new Error("\u68AF\u5EA6\u53C2\u6570\u65E0\u6548 / Invalid gradient parameters");
-    const prepared = Array(count).fill(volume);
-    if (retained) for (let index = count - 2; index >= 0; index--) prepared[index] = volume + prepared[index + 1] / factor;
-    return prepared.map((mixed, index) => {
-      const transfer = index < count - 1 ? prepared[index + 1] / factor : 0;
-      return { tube: index + 1, concentration: start / factor ** index, source: index ? `Tube ${index}` : "\u5DF2\u5907\u8D77\u59CB\u6DB2 / Prepared starting solution", takeUl: index ? mixed / factor : mixed, diluentUl: index ? mixed - mixed / factor : 0, mixedUl: mixed, transferUl: transfer, remainingUl: mixed - transfer };
-    });
-  }
-  function mixPlan(rows, reactions, extra, final, groupId = "default", groupName = groupId) {
-    if (!Number.isInteger(reactions) || reactions <= 0 || !Number.isFinite(extra) || extra < 0 || !Number.isFinite(final) || final <= 0 || !rows.length) throw new Error("\u53CD\u5E94\u53C2\u6570\u4E0D\u5B8C\u6574 / Incomplete reaction parameters");
-    const volumes = rows.map((row) => row.inputMode === "concentration" ? dilution(convert(parseScalar(row.stock), row.stockUnit ?? "mM", row.targetUnit ?? "\xB5M"), parseScalar(row.target), final).sample : parseScalar(row.volume));
-    if (rows.some((row) => !row.name.trim() || typeof row.premix !== "boolean") || volumes.some((v) => v < 0)) throw new Error("\u8BF7\u68C0\u67E5\u7EC4\u5206\u540D\u79F0\u53CA\u7528\u91CF / Check component names and volumes");
-    const sum = volumes.reduce((a, b) => a + b, 0);
-    if (sum > final + 1e-10) throw new Error("\u7EC4\u5206\u8D85\u8FC7\u5355\u53CD\u5E94\u4F53\u79EF / Components exceed reaction volume");
-    const table = rows.map((row, index) => ({ component: row.name, perReactionUl: volumes[index], premix: row.premix ? "\u662F / Yes" : "\u72EC\u7ACB\u52A0\u6837 / Separate", batchUl: row.premix ? volumes[index] * (reactions + extra) : "", group: row.group || "default" }));
-    if (final - sum > 1e-10) table.push({ component: "\u6C34 / Water", perReactionUl: final - sum, premix: "\u662F / Yes", batchUl: (final - sum) * (reactions + extra), group: "default" });
-    const operations = rows.flatMap((row, index) => [operation(`mix:${groupId}:${row.id ?? index}`, row.name, row.premix ? volumes[index] * (reactions + extra) : volumes[index], "\xB5L", "add", { group: groupId, groupName, componentId: row.id ?? String(index), sample: row.sampleId, source: row.premix ? `stock:${index}` : `individual-samples:${row.sampleId ?? index}`, destination: row.premix ? `premix:${groupId}` : `reactions:${groupId}`, repetitions: row.premix ? 1 : reactions, inputRow: String(index) })]);
-    if (final - sum > 1e-10) operations.push(operation(`mix:${groupId}:water`, "\u6C34 / Water", (final - sum) * (reactions + extra), "\xB5L", "add", { group: groupId, groupName, componentId: "auto-water", destination: `premix:${groupId}` }));
-    const dispense = final - rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0);
-    if (dispense > 0) operations.push(operation(`mix:${groupId}:dispense`, "\u9884\u6DF7\u6DB2 / Premix", dispense, "\xB5L", "dispense", { group: groupId, groupName, source: `premix:${groupId}`, destination: `reactions:${groupId}`, repetitions: reactions }));
-    return { operations, remaining: dispense * extra, table, total: table.reduce((s, row) => s + (typeof row.batchUl === "number" ? row.batchUl : 0), 0), separate: rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0) };
-  }
-  function batchPlan(rows, target, volume, bufferFold, other = 0) {
-    return rows.map((row) => {
-      try {
-        if (!row.id.trim() || rows.filter((other2) => other2.id.trim() === row.id.trim()).length > 1) throw new Error("\u6837\u672CID\u7F3A\u5931\u6216\u91CD\u590D / Missing or duplicate ID");
-        const concentration = parseScalar(row.concentration);
-        let plan;
-        if (bufferFold !== void 0) {
-          if (concentration <= 0 || bufferFold < 1 || volume <= 0 || target <= 0 || other < 0) throw new Error("\u53C2\u6570\u65E0\u6548 / Invalid parameters");
-          const sample = target / concentration, buffer = volume / bufferFold;
-          if (sample + buffer + other > volume) throw new Error("\u6D53\u5EA6\u4E0D\u8DB3 / Insufficient concentration");
-          plan = { sample, diluent: volume - sample - buffer - other, buffer };
-        } else plan = { ...dilution(concentration, target, volume), buffer: 0 };
-        if (row.available.trim() && parseScalar(row.available) < plan.sample) throw new Error("\u53EF\u7528\u6837\u54C1\u4E0D\u8DB3 / Insufficient available sample");
-        return { id: row.id, originalConcentration: row.concentration, availableUl: row.available, status: "\u6709\u6548 / Valid", sampleUl: plan.sample, diluentUl: plan.diluent, bufferUl: plan.buffer };
-      } catch (error) {
-        return { id: row.id, originalConcentration: row.concentration, availableUl: row.available, status: error.message, sampleUl: "", diluentUl: "", bufferUl: "" };
-      }
-    });
-  }
-  function wbPlan(rows, target, volume, bufferFold, agent) {
-    const table = batchPlan(rows, target, volume, bufferFold, agent.volumeUl);
-    return table.map((row) => {
-      const valid = typeof row.sampleUl === "number";
-      const full = { ...row, concentrationUnit: "\xB5g/\xB5L", targetProteinUg: target, reducingAgent: agent.name, reducingMode: agent.mode, reducingDefinition: agent.definition, reducingAgentUl: valid ? agent.volumeUl : "", totalUl: valid ? volume : "", volumeUnit: "\xB5L" };
-      if (valid && Math.abs(Number(full.sampleUl) + Number(full.bufferUl) + Number(full.reducingAgentUl) + Number(full.diluentUl) - volume) > Math.max(1e-9, volume * 1e-9)) throw new Error("WB volume balance failed");
-      return full;
-    });
-  }
-
-  // src/lib/calculators/calculator-engine.ts
+  // src/lib/calculators/catalog.ts
   var numberField = (key, label, labelZh, defaultValue, unit, min = 0) => ({ key, label, labelZh, type: "number", defaultValue, unit, min, step: "integer" === unit ? 1 : 0.01 });
   var textField = (key, label, labelZh, defaultValue, textarea = false) => ({ key, label, labelZh, type: textarea ? "textarea" : "text", defaultValue });
   var selectField = (key, label, labelZh, defaultValue, options) => ({ key, label, labelZh, type: "select", defaultValue, options: options.map(([value, en, zh]) => ({ value, label: en, labelZh: zh })) });
@@ -542,6 +562,191 @@ var LabNestCalculations = (() => {
   ];
   definitions.push(...newDefinitions);
   var byId = new Map(definitions.map((definition) => [definition.id, definition]));
+  function getCalculatorCatalog() {
+    return definitions.map((definition) => enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) }));
+  }
+  function getCalculatorDefinition(id) {
+    const definition = byId.get(id);
+    if (!definition) throw new Error(`Unknown calculator: ${id}`);
+    return enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) });
+  }
+
+  // src/lib/calculators/result-presentation.ts
+  var tableQuantityUnits = { perWellUl: "\xB5L", dnaMassUg: "\xB5g", rnaPmol: "pmol", finalNm: "nM", takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
+  function tableUnitsFor(result) {
+    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
+  }
+  function displayQuantity(value, unit, target) {
+    return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
+  }
+  function formatQuantity(value) {
+    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+  }
+  function validateDisplayUnits(result, candidate) {
+    if (!candidate || typeof candidate !== "object") return {};
+    const valid = {};
+    for (const [key, value] of Object.entries(candidate)) {
+      const unit = key.startsWith("table:") ? tableUnitsFor(result)[key.slice(6)] : result.outputs.find((o) => o.key === key)?.unit;
+      if (unit && typeof value === "string" && compatibleUnits(unit).includes(value)) valid[key] = value;
+      else throw new Error("Invalid display unit");
+    }
+    return valid;
+  }
+  function presentedOutputs(result) {
+    return result.outputs.map((o) => typeof o.value === "number" && o.unit ? { ...o, ...displayQuantity(o.value, o.unit, result.displayUnits?.[o.key]) } : o);
+  }
+  function presentedTable(result, zh) {
+    const rows = result.table ?? [];
+    return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => {
+      const unit = tableUnitsFor(result)[key], target = result.displayUnits?.["table:" + key] ?? unit;
+      const label = tableColumnLabel(key, zh);
+      return [unit ? label.includes("(") ? label.replace(/\([^)]*\)/, `(${target})`) : `${label} (${target})` : label, unit && value !== "" && (typeof value === "number" || typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) ? convert(parseScalar(value), unit, target) : value];
+    })));
+  }
+  function resultExportRows(result, zh) {
+    const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
+    const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
+    return data.map((row) => ({ ...row, ...metadata }));
+  }
+  function resultAuditText(result, zh) {
+    const table = presentedTable(result, zh);
+    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
+  }
+  function resultCsv(result, zh) {
+    const rows = resultExportRows(result, zh);
+    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+    const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
+    return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
+  }
+  function canCopyResult(result) {
+    return result.status !== "partial" && (result.outputs.length > 0 || Boolean(result.table?.length)) && result.outputs.every((o) => typeof o.value !== "number" || Number.isFinite(o.value)) && (result.table ?? []).every((row) => Object.values(row).every((v) => typeof v !== "number" || Number.isFinite(v)));
+  }
+  function resultClipboard(result, zh) {
+    if (!canCopyResult(result)) return "";
+    const lines = presentedOutputs(result).filter((o) => (zh ? o.labelZh : o.label).trim()).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value}${o.unit ? " " + o.unit : ""}`);
+    const hidden = /* @__PURE__ */ new Set(["status", "componentId", "groupId", "inputRow", "planVersion", "methodVersion", "reducingMode", "reducingDefinition", "originalConcentration", "availableUl", "sufficient", "concentrationUnit", "volumeUnit", "action"]);
+    const table = presentedTable({ ...result, table: result.table?.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !hidden.has(key)))) }, zh);
+    for (const row of table) lines.push(Object.entries(row).filter(([key, value]) => key.trim() && value !== "").map(([key, value]) => `${key}: ${typeof value === "number" ? formatQuantity(value) : value}`).join("; "));
+    for (const op of result.operations ?? []) {
+      if (!["make-up-to", "dispense"].includes(op.role) && !(result.calculatorId === "transfection" && op.role === "transfer")) continue;
+      if (op.role === "make-up-to" && (result.table?.some((row) => row.action === "make-up-to") || result.outputs.some((o) => o.unit && typeof o.value === "number" && tableQuantityUnits[o.key] === void 0 && /volume/i.test(o.key)))) continue;
+      const component = op.component.split(" / ")[zh ? 0 : 1] ?? op.component;
+      const instruction = op.role === "make-up-to" ? zh ? "\u5B9A\u5BB9\u81F3" : "Bring to final volume" : component;
+      lines.push(`${op.groupName ? op.groupName + ": " : ""}${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions > 1 ? " \xD7 " + op.repetitions : ""}`);
+    }
+    lines.push(...result.instructions ?? []);
+    return lines.filter(Boolean).join("\n");
+  }
+
+  // src/lib/calculators/pipetting.ts
+  function applyPipettingOptions(source, inputs) {
+    let result = withLiquidOperations(source, inputs);
+    let operations = [...result.operations ?? []];
+    const warnings = result.warnings.filter((w) => !source.structuredWarnings?.some((old) => old.message === w));
+    if (inputs.pipetteStepUl !== void 0 && inputs.pipetteStepUl !== null && inputs.pipetteStepUl !== "") {
+      const step = parseScalar(inputs.pipetteStepUl);
+      if (step <= 0) throw new Error("\u79FB\u6DB2\u6B65\u8FDB\u5FC5\u987B\u5927\u4E8E0 / Pipetting increment must be positive");
+      if (!["dilution", "reagent-dosing", "fold-dilution"].includes(result.calculatorId) || inputs.mode === "add") warnings.push("\u6B64\u6A21\u5F0F\u4FDD\u7559\u7406\u8BBA\u91CF\uFF1B\u672A\u5E94\u7528\u6B65\u8FDB\u820D\u5165 / This mode retains theoretical values; rounding not applied.");
+      else {
+        const stock = Number(result.outputMap.stockVolumeUl), finalOutput = result.outputs.find((o) => o.key === "finalVolume");
+        if (!finalOutput || typeof finalOutput.value !== "number" || !finalOutput.unit) throw new Error("Missing final volume");
+        const final = convert(finalOutput.value, finalOutput.unit, "\xB5L"), actual = Math.round(stock / step) * step;
+        if (actual > final || stock > 0 && actual === 0 || final - stock > 0 && final - actual === 0) throw new Error("\u6B65\u8FDB\u820D\u5165\u4F7F\u975E\u96F6\u7EC4\u5206\u4E3A0\u6216\u8D85\u8FC7\u603B\u91CF\uFF1B\u6B64\u65B9\u6848\u4E0D\u53EF\u6267\u884C / Rounding removes a nonzero component or exceeds final volume");
+        const deviation = stock === 0 ? 0 : (actual / stock - 1) * 100;
+        result = { ...result, table: [{ component: "\u6BCD\u6DB2 / Stock", theoreticalUl: stock, actualUl: actual }, { component: "\u7A00\u91CA\u6DB2 / Diluent", theoreticalUl: final - stock, actualUl: final - actual }], notes: [...result.notes, `\u79FB\u6DB2\u6B65\u8FDB ${step} \xB5L\uFF1B\u5B9E\u9645\u6D53\u5EA6\u504F\u5DEE ${deviation.toPrecision(6)}% / Actual concentration deviation; outputs retain theory.`] };
+        if (inputs.targetConcentration !== void 0) {
+          const concentration = parseScalar(inputs.targetConcentration) * (stock === 0 ? 1 : actual / stock);
+          const unit = String(inputs.targetConcentrationUnit ?? "\xB5M");
+          result.outputs = [...result.outputs, { key: "adoptedConcentration", label: "Adopted concentration", labelZh: "\u91C7\u7528\u65B9\u6848\u6D53\u5EA6", value: concentration, unit }];
+          result.outputMap = { ...result.outputMap, adoptedConcentration: concentration };
+        }
+        operations = [actual, final - actual].map((value, index) => operation(`adopted:${index}`, index ? "\u7A00\u91CA\u6DB2 / Diluent" : "\u6BCD\u6DB2 / Stock", value, "\xB5L", "add", { basis: "actual" }));
+      }
+    }
+    const structuredWarnings = [];
+    if (inputs.pipetteMinimumUl !== void 0 && inputs.pipetteMinimumUl !== null && inputs.pipetteMinimumUl !== "") {
+      const minimum2 = parseScalar(inputs.pipetteMinimumUl);
+      if (minimum2 <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
+      for (const operation2 of operations) {
+        if (operation2.role === "make-up-to" || operation2.repetitions === 0) continue;
+        const volume2 = convert(operation2.quantity.value, operation2.quantity.unit, "\xB5L");
+        if (!Number.isFinite(volume2) || volume2 < 0) throw new Error("Invalid liquid operation");
+        if (volume2 > 0 && volume2 < minimum2) {
+          const message = `${operation2.groupName ? operation2.groupName + " \xB7 " : ""}${operation2.sample ? operation2.sample + " \xB7 " : ""}${operation2.component} (${operation2.basis}): ${formatQuantity(volume2)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum2)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
+          structuredWarnings.push({ code: "below-minimum", operationId: operation2.id, component: operation2.component, sample: operation2.sample, basis: operation2.basis, volumeUl: volume2, minimumUl: minimum2, message });
+          warnings.push(message);
+        }
+      }
+    }
+    const minimum = inputs.pipetteMinimumUl === void 0 || inputs.pipetteMinimumUl === null || inputs.pipetteMinimumUl === "" ? void 0 : parseScalar(inputs.pipetteMinimumUl);
+    const status = !operationCoverage[result.calculatorId] ? "incomplete" : operationCoverage[result.calculatorId].startsWith("not-applicable") ? "not-applicable" : !operations.some((o) => o.role !== "make-up-to") ? "incomplete" : minimum === void 0 ? "not-set" : structuredWarnings.length ? "below-minimum" : "passed";
+    return { ...result, operations, pipettingCheck: { status, minimumUl: minimum }, warnings: [...new Set(warnings)], structuredWarnings };
+  }
+
+  // src/lib/calculators/planning.ts
+  function dilution(stock, target, volume2) {
+    if (![stock, target, volume2].every(Number.isFinite) || stock <= 0 || target < 0 || target > stock || volume2 <= 0) throw new Error("\u76EE\u6807\u6D53\u5EA6\u6216\u4F53\u79EF\u4E0D\u53EF\u884C / Target concentration or volume is infeasible");
+    const sample = target * volume2 / stock;
+    return { sample, diluent: volume2 - sample, final: volume2 };
+  }
+  function addStock(stock, target, initial, volume2) {
+    if (![stock, target, initial, volume2].every(Number.isFinite) || volume2 <= 0 || initial < 0 || target < initial || stock <= target) throw new Error("\u52A0\u5165\u6A21\u5F0F\u8981\u6C42\u6BCD\u6DB2\u6D53\u5EA6 > \u76EE\u6807\u6D53\u5EA6 \u2265 \u521D\u59CB\u6D53\u5EA6 / Require stock > target \u2265 initial");
+    const sample = (target - initial) * volume2 / (stock - target);
+    return { sample, diluent: volume2, final: volume2 + sample };
+  }
+  function serialPlan(start, factor, count, volume2, retained) {
+    if (![start, factor, count, volume2].every(Number.isFinite) || start <= 0 || factor <= 1 || !Number.isInteger(count) || count < 1 || count > 384 || volume2 <= 0) throw new Error("\u68AF\u5EA6\u53C2\u6570\u65E0\u6548 / Invalid gradient parameters");
+    const prepared = Array(count).fill(volume2);
+    if (retained) for (let index = count - 2; index >= 0; index--) prepared[index] = volume2 + prepared[index + 1] / factor;
+    return prepared.map((mixed, index) => {
+      const transfer = index < count - 1 ? prepared[index + 1] / factor : 0;
+      return { tube: index + 1, concentration: start / factor ** index, source: index ? `Tube ${index}` : "\u5DF2\u5907\u8D77\u59CB\u6DB2 / Prepared starting solution", takeUl: index ? mixed / factor : mixed, diluentUl: index ? mixed - mixed / factor : 0, mixedUl: mixed, transferUl: transfer, remainingUl: mixed - transfer };
+    });
+  }
+  function mixPlan(rows, reactions, extra, final, groupId = "default", groupName = groupId) {
+    if (!Number.isInteger(reactions) || reactions <= 0 || !Number.isFinite(extra) || extra < 0 || !Number.isFinite(final) || final <= 0 || !rows.length) throw new Error("\u53CD\u5E94\u53C2\u6570\u4E0D\u5B8C\u6574 / Incomplete reaction parameters");
+    const volumes = rows.map((row) => row.inputMode === "concentration" ? dilution(convert(parseScalar(row.stock), row.stockUnit ?? "mM", row.targetUnit ?? "\xB5M"), parseScalar(row.target), final).sample : parseScalar(row.volume));
+    if (rows.some((row) => !row.name.trim() || typeof row.premix !== "boolean") || volumes.some((v) => v < 0)) throw new Error("\u8BF7\u68C0\u67E5\u7EC4\u5206\u540D\u79F0\u53CA\u7528\u91CF / Check component names and volumes");
+    const sum = volumes.reduce((a, b) => a + b, 0);
+    if (sum > final + 1e-10) throw new Error("\u7EC4\u5206\u8D85\u8FC7\u5355\u53CD\u5E94\u4F53\u79EF / Components exceed reaction volume");
+    const table = rows.map((row, index) => ({ component: row.name, perReactionUl: volumes[index], premix: row.premix ? "\u662F / Yes" : "\u72EC\u7ACB\u52A0\u6837 / Separate", batchUl: row.premix ? volumes[index] * (reactions + extra) : "", group: row.group || "default" }));
+    if (final - sum > 1e-10) table.push({ component: "\u6C34 / Water", perReactionUl: final - sum, premix: "\u662F / Yes", batchUl: (final - sum) * (reactions + extra), group: "default" });
+    const operations = rows.flatMap((row, index) => [operation(`mix:${groupId}:${row.id ?? index}`, row.name, row.premix ? volumes[index] * (reactions + extra) : volumes[index], "\xB5L", "add", { group: groupId, groupName, componentId: row.id ?? String(index), sample: row.sampleId, source: row.premix ? `stock:${index}` : `individual-samples:${row.sampleId ?? index}`, destination: row.premix ? `premix:${groupId}` : `reactions:${groupId}`, repetitions: row.premix ? 1 : reactions, inputRow: String(index) })]);
+    if (final - sum > 1e-10) operations.push(operation(`mix:${groupId}:water`, "\u6C34 / Water", (final - sum) * (reactions + extra), "\xB5L", "add", { group: groupId, groupName, componentId: "auto-water", destination: `premix:${groupId}` }));
+    const dispense = final - rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0);
+    if (dispense > 0) operations.push(operation(`mix:${groupId}:dispense`, "\u9884\u6DF7\u6DB2 / Premix", dispense, "\xB5L", "dispense", { group: groupId, groupName, source: `premix:${groupId}`, destination: `reactions:${groupId}`, repetitions: reactions }));
+    return { operations, remaining: dispense * extra, table, total: table.reduce((s, row) => s + (typeof row.batchUl === "number" ? row.batchUl : 0), 0), separate: rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0) };
+  }
+  function batchPlan(rows, target, volume2, bufferFold, other = 0) {
+    return rows.map((row) => {
+      try {
+        if (!row.id.trim() || rows.filter((other2) => other2.id.trim() === row.id.trim()).length > 1) throw new Error("\u6837\u672CID\u7F3A\u5931\u6216\u91CD\u590D / Missing or duplicate ID");
+        const concentration = parseScalar(row.concentration);
+        let plan;
+        if (bufferFold !== void 0) {
+          if (concentration <= 0 || bufferFold < 1 || volume2 <= 0 || target <= 0 || other < 0) throw new Error("\u53C2\u6570\u65E0\u6548 / Invalid parameters");
+          const sample = target / concentration, buffer = volume2 / bufferFold;
+          if (sample + buffer + other > volume2) throw new Error("\u6D53\u5EA6\u4E0D\u8DB3 / Insufficient concentration");
+          plan = { sample, diluent: volume2 - sample - buffer - other, buffer };
+        } else plan = { ...dilution(concentration, target, volume2), buffer: 0 };
+        if (row.available.trim() && parseScalar(row.available) < plan.sample) throw new Error("\u53EF\u7528\u6837\u54C1\u4E0D\u8DB3 / Insufficient available sample");
+        return { id: row.id, originalConcentration: row.concentration, availableUl: row.available, status: "\u6709\u6548 / Valid", sampleUl: plan.sample, diluentUl: plan.diluent, bufferUl: plan.buffer };
+      } catch (error) {
+        return { id: row.id, originalConcentration: row.concentration, availableUl: row.available, status: error.message, sampleUl: "", diluentUl: "", bufferUl: "" };
+      }
+    });
+  }
+  function wbPlan(rows, target, volume2, bufferFold, agent) {
+    const table = batchPlan(rows, target, volume2, bufferFold, agent.volumeUl);
+    return table.map((row) => {
+      const valid = typeof row.sampleUl === "number";
+      const full = { ...row, concentrationUnit: "\xB5g/\xB5L", targetProteinUg: target, reducingAgent: agent.name, reducingMode: agent.mode, reducingDefinition: agent.definition, reducingAgentUl: valid ? agent.volumeUl : "", totalUl: valid ? volume2 : "", volumeUnit: "\xB5L" };
+      if (valid && Math.abs(Number(full.sampleUl) + Number(full.bufferUl) + Number(full.reducingAgentUl) + Number(full.diluentUl) - volume2) > Math.max(1e-9, volume2 * 1e-9)) throw new Error("WB volume balance failed");
+      return full;
+    });
+  }
+
+  // src/lib/calculators/calculator-engine.ts
   var round = (value) => value;
   var num = (inputs, key, options = {}) => {
     const value = parseScalar(inputs[key]);
@@ -613,14 +818,6 @@ var LabNestCalculations = (() => {
     const total = ys.reduce((s, y) => s + (y - mean) ** 2, 0);
     return { bottom: params[0], top: params[1], ec50: params[2], hill: params[3], converged: Math.max(...step) < 1e-8, r2: total ? 1 - best / total : 1 };
   }
-  function getCalculatorCatalog() {
-    return definitions.map((definition) => enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) }));
-  }
-  function getCalculatorDefinition(id) {
-    const definition = byId.get(id);
-    if (!definition) throw new Error(`Unknown calculator: ${id}`);
-    return enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) });
-  }
   function calculateInternal(request) {
     const definition = byId.get(request.calculatorId);
     if (!definition) throw new Error(`Unknown calculator: ${request.calculatorId}`);
@@ -680,6 +877,7 @@ var LabNestCalculations = (() => {
         return finish(definition, [out("vials", "Complete vials", "\u53EF\u51BB\u5B58\u6574\u7BA1\u6570", vials, "vials"), out("remainingCells", "Remaining cells", "\u5269\u4F59\u7EC6\u80DE", num(i, "totalCells") - vials * num(i, "cellsPerVial"), "cells"), out("totalMediumMl", "Total freezing medium", "\u51BB\u5B58\u6DB2\u603B\u91CF", total, "mL"), out("dmsoMl", "DMSO", "DMSO", dmso, "mL"), out("serumMl", "Serum", "\u8840\u6E05", serum, "mL"), out("baseMediumMl", "Base medium", "\u57FA\u7840\u57F9\u517B\u57FA", total - dmso - serum, "mL")], dmso + serum > total ? ["DMSO and serum percentages exceed 100% combined."] : []);
       }
       case "transfection": {
+        if (i.transfectionPlan !== void 0) return calculateTransfection(i.transfectionPlan);
         const n2 = num(i, "wells", { positive: true }) * num(i, "replicates", { positive: true });
         const f = 1 + num(i, "overagePercent", { min: 0 }) / 100;
         const dna = num(i, "dnaUgPerWell", { min: 0 }) * n2 * f;
@@ -693,7 +891,7 @@ var LabNestCalculations = (() => {
           if (a < dnaVolume || b < reagent) throw new Error("\u6838\u9178\u6216\u8BD5\u5242\u8D85\u8FC7\u5BF9\u5E94\u7BA1\u4F53\u79EF / DNA or reagent exceeds its tube volume");
           tubeTable = [{ tube: "A", component: "\u6838\u9178\u539F\u6DB2 / DNA stock", volumeUl: dnaVolume }, { tube: "A", component: "\u7A00\u91CA\u6DB2 / Diluent", volumeUl: a - dnaVolume }, { tube: "B", component: "\u8BD5\u5242 / Reagent", volumeUl: reagent }, { tube: "B", component: "\u7A00\u91CA\u6DB2 / Diluent", volumeUl: b - reagent }];
         }
-        return finish(definition, [out("dnaUg", "DNA", "DNA", dna, "\xB5g"), out("reagentUl", "Transfection reagent", "\u8F6C\u67D3\u8BD5\u5242", reagent, "\xB5L"), out("dnaVolumeUl", "DNA solution", "DNA\u539F\u6DB2", dnaVolume, "\xB5L"), out("diluentUl", "Diluent", "\u7A00\u91CA\u6DB2", total - reagent - dnaVolume, "\xB5L"), out("totalComplexUl", "Total complex", "\u590D\u5408\u7269\u603B\u91CF", total, "\xB5L")], [], ["\u8BD5\u5242\u3001\u7A00\u91CA\u6DB2\u53CA\u6DF7\u5408\u987A\u5E8F\u9075\u5FAA\u6240\u7528\u4EA7\u54C1\u8BF4\u660E / Follow product-specific reagent, diluent and mixing instructions"], tubeTable);
+        return finish({ ...definition, methodVersion: "transfection-v2" }, [out("dnaUg", "DNA", "DNA", dna, "\xB5g"), out("reagentUl", "Transfection reagent", "\u8F6C\u67D3\u8BD5\u5242", reagent, "\xB5L"), out("dnaVolumeUl", "DNA solution", "DNA\u539F\u6DB2", dnaVolume, "\xB5L"), out("diluentUl", "Diluent", "\u7A00\u91CA\u6DB2", total - reagent - dnaVolume, "\xB5L"), out("totalComplexUl", "Total complex", "\u590D\u5408\u7269\u603B\u91CF", total, "\xB5L")], [], ["\u8BD5\u5242\u3001\u7A00\u91CA\u6DB2\u53CA\u6DF7\u5408\u987A\u5E8F\u9075\u5FAA\u6240\u7528\u4EA7\u54C1\u8BF4\u660E / Follow product-specific reagent, diluent and mixing instructions"], tubeTable);
       }
       case "kill-curve": {
         const points = num(i, "points", { positive: true });
@@ -704,8 +902,8 @@ var LabNestCalculations = (() => {
         if (str(i, "scale") === "log" && min <= 0) throw new Error("\u5BF9\u6570\u68AF\u5EA6\u6700\u4F4E\u6D53\u5EA6\u5FC5\u987B\u5927\u4E8E0 / Log minimum must be positive");
         const stockUgMl = num(i, "stockConcentration", { positive: true }) * 1e3;
         if (max > stockUgMl) throw new Error("\u76EE\u6807\u6D53\u5EA6\u8D85\u8FC7\u6BCD\u6DB2 / Target exceeds stock");
-        const volume = num(i, "volumePerWellMl", { positive: true });
-        const table = doses.map((dose, index) => ({ level: index + 1, doseUgMl: round(dose), stockToAddUl: round(dose * volume / stockUgMl * 1e3) }));
+        const volume2 = num(i, "volumePerWellMl", { positive: true });
+        const table = doses.map((dose, index) => ({ level: index + 1, doseUgMl: round(dose), stockToAddUl: round(dose * volume2 / stockUgMl * 1e3) }));
         return finish(definition, [out("dosePoints", "Dose points", "\u6D53\u5EA6\u70B9\u6570", points), out("highestStockAdditionUl", "Highest stock addition", "\u6700\u9AD8\u6D53\u5EA6\u6BCD\u6DB2\u52A0\u5165\u91CF", table.at(-1)?.stockToAddUl ?? 0, "\xB5L")], [], [], table);
       }
       case "viability": {
@@ -735,7 +933,7 @@ var LabNestCalculations = (() => {
       case "fold-dilution": {
         const mode = str(i, "mode") || (definition.id === "fold-dilution" ? "fold" : "final");
         const modern = Boolean(i.mode);
-        const volume = num(i, definition.id === "reagent-dosing" && !modern ? "finalVolumeMl" : "finalVolume", { positive: true });
+        const volume2 = num(i, definition.id === "reagent-dosing" && !modern ? "finalVolumeMl" : "finalVolume", { positive: true });
         let stock = 1, target = 1, initial = 0;
         if (mode === "fold") {
           stock = num(i, modern ? "stockFold" : "fold", { positive: true });
@@ -764,7 +962,7 @@ var LabNestCalculations = (() => {
           }
           if (mode === "add") initial = convert(num(i, "initialConcentration", { min: 0 }), String(i.initialConcentrationUnit ?? "\xB5M"), String(i.targetConcentrationUnit ?? "\xB5M"));
         }
-        const plan = mode === "add" ? addStock(stock, target, initial, volume) : dilution(stock, target, volume);
+        const plan = mode === "add" ? addStock(stock, target, initial, volume2) : dilution(stock, target, volume2);
         const unit = modern ? "mL" : definition.id === "dilution" ? str(i, "volumeUnit") : "mL";
         return finish(current, [out("stockVolume", "Take stock", "\u53D6\u6BCD\u6DB2", plan.sample, unit), out("stockVolumeUl", "Take stock", "\u53D6\u6BCD\u6DB2", convert(plan.sample, unit, "\xB5L"), "\xB5L"), out("diluentVolume", "Diluent", "\u7A00\u91CA\u6DB2", mode === "add" ? 0 : plan.diluent, unit), out("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", plan.final, unit)], [], ["\u4F53\u79EF\u53EF\u52A0\u548C\u8FD1\u4F3C / Assumes additive volumes."]);
       }
@@ -848,7 +1046,7 @@ var LabNestCalculations = (() => {
         }
         const reactions = i.samples !== void 0 ? num(i, "samples", { positive: true }) * num(i, "replicates", { positive: true }) + num(i, "controls", { min: 0 }) : num(i, "reactions", { positive: true });
         if (!Number.isInteger(reactions)) throw new Error("\u53CD\u5E94\u6570\u5FC5\u987B\u662F\u6574\u6570 / Reaction count must be an integer");
-        const rows = Array.isArray(i.rows) ? i.rows : parseRows(i.components).map(([name, volume]) => ({ name, volume, premix: true }));
+        const rows = Array.isArray(i.rows) ? i.rows : parseRows(i.components).map(([name, volume2]) => ({ name, volume: volume2, premix: true }));
         const final = i.reactionVolumeUl !== void 0 ? num(i, "reactionVolumeUl", { positive: true }) : rows.reduce((s, row) => s + parseScalar(row.volume), 0);
         const extra = reactions * num(i, "overagePercent", { min: 0 }) / 100;
         const plan = mixPlan(rows, reactions, extra, final);
@@ -856,11 +1054,11 @@ var LabNestCalculations = (() => {
       }
       case "resuspension": {
         const mode = str(i, "mode");
-        let volume;
-        if (mode === "amount") volume = num(i, "amount", { positive: true }) * 1e-9 / (num(i, "targetMolar", { positive: true }) * 1e-6);
-        else if (mode === "mass") volume = num(i, "mass", { positive: true }) * 1e-3 / num(i, "targetMass", { positive: true });
-        else volume = num(i, "mass", { positive: true }) * 1e-3 / num(i, "molecularWeight", { positive: true }) / (num(i, "targetMolar", { positive: true }) * 1e-6);
-        return finish(current, [out("finalVolumeUl", "Final solution volume", "\u6700\u7EC8\u6EB6\u6DB2\u4F53\u79EF", volume * 1e6, "\xB5L")], [], ["\u4EE5COA\u91CF\u6216\u5206\u5B50\u91CF\u4E3A\u4F9D\u636E\uFF1B\u6EB6\u5242\u53CA\u590D\u6EB6\u64CD\u4F5C\u9075\u5FAA\u4EA7\u54C1\u8BF4\u660E / Use COA amount or MW and product instructions."]);
+        let volume2;
+        if (mode === "amount") volume2 = num(i, "amount", { positive: true }) * 1e-9 / (num(i, "targetMolar", { positive: true }) * 1e-6);
+        else if (mode === "mass") volume2 = num(i, "mass", { positive: true }) * 1e-3 / num(i, "targetMass", { positive: true });
+        else volume2 = num(i, "mass", { positive: true }) * 1e-3 / num(i, "molecularWeight", { positive: true }) / (num(i, "targetMolar", { positive: true }) * 1e-6);
+        return finish(current, [out("finalVolumeUl", "Final solution volume", "\u6700\u7EC8\u6EB6\u6DB2\u4F53\u79EF", volume2 * 1e6, "\xB5L")], [], ["\u4EE5COA\u91CF\u6216\u5206\u5B50\u91CF\u4E3A\u4F9D\u636E\uFF1B\u6EB6\u5242\u53CA\u590D\u6EB6\u64CD\u4F5C\u9075\u5FAA\u4EA7\u54C1\u8BF4\u660E / Use COA amount or MW and product instructions."]);
       }
       case "normalization": {
         if (!Array.isArray(i.samples) || !i.samples.length) throw new Error("\u8BF7\u8F93\u5165\u6837\u672C / Enter samples");
@@ -931,10 +1129,10 @@ var LabNestCalculations = (() => {
       case "moi": {
         if (str(i, "titerUnit") === "VG/mL") throw new Error("VG\u4E0D\u662F\u529F\u80FD\u6027\u6EF4\u5EA6\uFF0C\u8BF7\u63D0\u4F9B\u529F\u80FD\u6027\u6EF4\u5EA6 / VG is not a functional titer");
         const moi = num(i, "desiredMoi", { min: 0 }), units2 = num(i, "cells", { positive: true }) * moi;
-        const volume = units2 / num(i, "titer", { positive: true }) * 1e3;
+        const volume2 = units2 / num(i, "titer", { positive: true }) * 1e3;
         const p0 = Math.exp(-moi);
         const p1 = moi * p0;
-        return finish(definition, [out("virusVolumeUl", "Virus volume", "\u75C5\u6BD2\u4F53\u79EF", volume, "\xB5L"), out("probabilityUninfectedPercent", "Uninfected", "\u672A\u611F\u67D3\u6982\u7387", p0 * 100, "%"), out("probabilityExactlyOnePercent", "Exactly one event", "\u6070\u597D\u4E00\u6B21\u611F\u67D3\u6982\u7387", p1 * 100, "%"), out("probabilityAtLeastOnePercent", "At least one event", "\u81F3\u5C11\u4E00\u6B21\u611F\u67D3\u6982\u7387", (1 - p0) * 100, "%")], [], [`\u7406\u8BBA\u6CCA\u677E\u6A21\u578B\uFF1A\u72EC\u7ACB\u3001\u5747\u4E00\u4E8B\u4EF6\u5047\u8BBE\uFF0C\u4E0D\u4EE3\u8868\u786E\u5B9A\u611F\u67D3\u7387 / Theoretical Poisson model: independent homogeneous events. ${str(i, "titerUnit")}; PFU, IU, TU, TCID50, VG are not equivalent.`]);
+        return finish(definition, [out("virusVolumeUl", "Virus volume", "\u75C5\u6BD2\u4F53\u79EF", volume2, "\xB5L"), out("probabilityUninfectedPercent", "Uninfected", "\u672A\u611F\u67D3\u6982\u7387", p0 * 100, "%"), out("probabilityExactlyOnePercent", "Exactly one event", "\u6070\u597D\u4E00\u6B21\u611F\u67D3\u6982\u7387", p1 * 100, "%"), out("probabilityAtLeastOnePercent", "At least one event", "\u81F3\u5C11\u4E00\u6B21\u611F\u67D3\u6982\u7387", (1 - p0) * 100, "%")], [], [`\u7406\u8BBA\u6CCA\u677E\u6A21\u578B\uFF1A\u72EC\u7ACB\u3001\u5747\u4E00\u4E8B\u4EF6\u5047\u8BBE\uFF0C\u4E0D\u4EE3\u8868\u786E\u5B9A\u611F\u67D3\u7387 / Theoretical Poisson model: independent homogeneous events. ${str(i, "titerUnit")}; PFU, IU, TU, TCID50, VG are not equivalent.`]);
       }
       case "virus-titer": {
         if (str(i, "mode") === "plaque") {
@@ -944,7 +1142,7 @@ var LabNestCalculations = (() => {
         const rows = parseRows(i.tcidSeries, 3).map((row) => [Number(row[0]), Number(row[1]), Number(row[2])]);
         if (rows.length < 2) throw new Error("Enter at least two TCID50 dilution rows.");
         if (rows.some(([d, p, t]) => !Number.isFinite(d) || d <= 0 || d > 1 || !Number.isInteger(p) || !Number.isInteger(t) || p < 0 || t <= 0 || p > t)) throw new Error("\u7EC8\u70B9\u884C\u65E0\u6548 / Invalid endpoint row");
-        const crossing = rows.find(([, positive, total]) => positive / total <= 0.5);
+        const crossing = rows.find(([, positive2, total]) => positive2 / total <= 0.5);
         if (!crossing) throw new Error("\u672A\u8DE8\u8D8A50%\u7EC8\u70B9 / No 50% crossing observed");
         return finish(definition, [out("approximateTcid50Dilution", "Approximate 50% endpoint dilution", "\u8FD1\u4F3C50%\u7EC8\u70B9\u7A00\u91CA\u5EA6", crossing[0])], ["This quick endpoint identifies the first dilution at or below 50%; use a protocol-specific Reed\u2013Muench or Spearman\u2013K\xE4rber workflow for formal reporting."]);
       }
@@ -974,14 +1172,15 @@ var LabNestCalculations = (() => {
   }
 
   // src/lib/calculators/task-presentation.ts
-  var names = { dilution: ["Dilution", "\u7A00\u91CA\u52A0\u836F"], molarity: ["Solutions", "\u79F0\u91CF\u914D\u6DB2"], seeding: ["Seeding", "\u7EC6\u80DE\u94FA\u677F"], "master-mix": ["Reaction mix", "\u53CD\u5E94\u914D\u6DB2"], "wb-loading": ["WB loading", "WB\u4E0A\u6837"], centrifuge: ["Centrifuge", "\u79BB\u5FC3\u6362\u7B97"] };
+  var names = { "serial-dilution": ["Gradient", "\u68AF\u5EA6\u7A00\u91CA"], "percent-solution": ["Percent solution", "\u767E\u5206\u6BD4\u6EB6\u6DB2"], "hemocytometer": ["Cell count", "\u8840\u7403\u8BA1\u6570\u677F"], "colony-counter": ["Colony count", "\u83CC\u843D\u8F85\u52A9\u8BA1\u6570"], "dna-rna-conversion": ["DNA/RNA units", "\u6838\u9178\u6362\u7B97"], "bradford-bca": ["Protein assay", "\u86CB\u767D\u5B9A\u91CF"], "elisa-4pl": ["ELISA fit", "ELISA\u62DF\u5408"], "ic50-ec50": ["Dose response", "IC50/EC50"], "normalization": ["Normalize", "\u6D53\u5EA6\u5F52\u4E00\u5316"], "resuspension": ["Resuspension", "\u8BD5\u5242\u590D\u6EB6"], dilution: ["Dilution", "\u7A00\u91CA\u52A0\u836F"], molarity: ["Solutions", "\u79F0\u91CF\u914D\u6DB2"], seeding: ["Seeding", "\u7EC6\u80DE\u94FA\u677F"], "master-mix": ["Reaction mix", "\u53CD\u5E94\u914D\u6DB2"], "wb-loading": ["WB loading", "WB\u4E0A\u6837"], centrifuge: ["Centrifuge", "\u79BB\u5FC3\u6362\u7B97"] };
   var tips = { dilution: ["Choose final volume or adding to existing liquid; they differ.", "\u5148\u9009\u914D\u5230\u603B\u4F53\u79EF\u6216\u5411\u5DF2\u6709\u6DB2\u4F53\u52A0\u5165\uFF0C\u4E24\u79CD\u6A21\u5F0F\u4E0D\u540C\u3002"], molarity: ["Confirm the molecular weight of the chemical form and concentration definition.", "\u6838\u5BF9\u5206\u5B50\u91CF\u5BF9\u5E94\u7684\u5316\u5B66\u5F62\u5F0F\uFF0C\u533A\u5206\u767E\u5206\u6D53\u5EA6\u7C7B\u578B\u3002"], seeding: ["Use viable-cell concentration; do not apply viability twice.", "\u8F93\u5165\u6D3B\u7EC6\u80DE\u6D53\u5EA6\u65F6\uFF0C\u4E0D\u8981\u518D\u6B21\u4E58\u6D3B\u7387\u3002"], "master-mix": ["Separate premix components from each sample template.", "\u533A\u5206\u53EF\u9884\u6DF7\u7EC4\u5206\u4E0E\u5404\u6837\u672C\u72EC\u7ACB\u52A0\u5165\u7684\u6A21\u677F\u3002"], "wb-loading": ["Confirm buffer reducing agent and check all component volumes.", "\u786E\u8BA4Buffer\u662F\u5426\u542B\u8FD8\u539F\u5242\uFF0C\u5E76\u6838\u5BF9\u6240\u6709\u7EC4\u5206\u603B\u91CF\u3002"], centrifuge: ["Use the actual rotor radius; RPM and RCF require it.", "\u4F7F\u7528\u5B9E\u9645\u8F6C\u5B50\u534A\u5F84\uFF1B\u7F3A\u5C11\u534A\u5F84\u4E0D\u80FD\u76F4\u63A5\u4E92\u6362\u3002"] };
   function taskPresentation(id, zh) {
     const d = getCalculatorDefinition(id);
-    return { name: names[id]?.[zh ? 1 : 0] ?? (zh ? d.nameZh : d.name), description: zh ? d.shortDescriptionZh : d.shortDescription, advice: tips[id]?.[zh ? 1 : 0] ?? (zh ? d.methodZh : d.method) };
+    return { fullName: zh ? d.nameZh : d.name, name: names[id]?.[zh ? 1 : 0] ?? (zh ? d.nameZh : d.name), description: zh ? d.shortDescriptionZh : d.shortDescription, advice: tips[id]?.[zh ? 1 : 0] ?? (zh ? d.methodZh : d.method) };
   }
-  var generatedTaskIcons = { dilution: "dilution", molarity: "solution-prep", seeding: "cell-seeding", "master-mix": "reaction-mix", "wb-loading": "wb-loading", centrifuge: "centrifuge" };
+  var generatedTaskIcons = { "hemocytometer": "hemocytometer", "colony-counter": "colony-counter", "dna-rna-conversion": "dna-rna-conversion", "media-recipe": "media-recipe", "hydrogel": "hydrogel", "elisa-4pl": "elisa-4pl", "freezing": "freezing", "viability": "viability", "transfection": "transfection", "ligation": "ligation", "od600": "od600", "unit-converter": "unit-converter", "percent-solution": "percent-solution", "virus-titer": "virus-titer", "bradford-bca": "bradford-bca", "moi": "moi", "ic50-ec50": "ic50-ec50", "resuspension": "resuspension", "serial-dilution": "serial-dilution", "kill-curve": "kill-curve", "tm": "tm", "buffer-recipe": "buffer-recipe", "normalization": "normalization", "split": "split", "cfu": "cfu", dilution: "dilution", molarity: "solution-prep", seeding: "cell-seeding", "master-mix": "reaction-mix", "wb-loading": "wb-loading", centrifuge: "centrifuge" };
   function taskIconResource(taskId, pack) {
+    if (["fold-dilution", "reagent-dosing"].includes(taskId)) taskId = "dilution";
     return pack === "lab-soft" && generatedTaskIcons[taskId] ? `/icons/lab-soft-v1/${generatedTaskIcons[taskId]}.png` : null;
   }
 
@@ -1366,6 +1565,42 @@ var LabNestCalculations = (() => {
     } catch {
       return { value: base, preserve: true };
     }
+  }
+
+  // src/lib/calculators/clipboard.ts
+  async function copyCalculation(text2) {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text2);
+        return "clipboard";
+      } catch {
+      }
+    }
+    const previous = document.activeElement;
+    const field = document.createElement("textarea");
+    field.value = text2;
+    field.readOnly = true;
+    field.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
+    document.body.append(field);
+    field.select();
+    field.setSelectionRange(0, text2.length);
+    try {
+      return document.execCommand("copy") ? "compatibility" : "manual";
+    } catch {
+      return "manual";
+    } finally {
+      field.remove();
+      previous?.focus({ preventScroll: true });
+    }
+  }
+
+  // src/lib/calculators/line-icon-svg.json
+  var line_icon_svg_default = { hemocytometer: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scan" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path></svg>', hydrogel: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>', split: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-split" aria-hidden="true"><path d="M16 3h5v5"></path><path d="M8 3H3v5"></path><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"></path><path d="m15 9 6-6"></path></svg>', freezing: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-snowflake" aria-hidden="true"><path d="m10 20-1.25-2.5L6 18"></path><path d="M10 4 8.75 6.5 6 6"></path><path d="m14 20 1.25-2.5L18 18"></path><path d="m14 4 1.25 2.5L18 6"></path><path d="m17 21-3-6h-4"></path><path d="m17 3-3 6 1.5 3"></path><path d="M2 12h6.5L10 9"></path><path d="m20 10-1.5 2 1.5 2"></path><path d="M22 12h-6.5L14 15"></path><path d="m4 10 1.5 2L4 14"></path><path d="m7 21 3-6-1.5-3"></path><path d="m7 3 3 6h4"></path></svg>', transfection: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dna" aria-hidden="true"><path d="m10 16 1.5 1.5"></path><path d="m14 8-1.5-1.5"></path><path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"></path><path d="m16.5 10.5 1 1"></path><path d="m17 6-2.891-2.891"></path><path d="M2 15c6.667-6 13.333 0 20-6"></path><path d="m20 9 .891.891"></path><path d="M3.109 14.109 4 15"></path><path d="m6.5 12.5 1 1"></path><path d="m7 18 2.891 2.891"></path><path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"></path></svg>', "kill-curve": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-no-axes-combined" aria-hidden="true"><path d="M12 16v5"></path><path d="M16 14.639V21"></path><path d="M20 10.656V21"></path><path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"></path><path d="M4 18.463V21"></path><path d="M8 14.656V21"></path></svg>', viability: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-pulse" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"></path></svg>', od600: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>', cfu: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-dot" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="1"></circle></svg>', "colony-counter": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scan-eye" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><circle cx="12" cy="12" r="1"></circle><path d="M18.944 12.33a1 1 0 0 0 0-.66 7.5 7.5 0 0 0-13.888 0 1 1 0 0 0 0 .66 7.5 7.5 0 0 0 13.888 0"></path></svg>', "serial-dilution": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-ordered" aria-hidden="true"><path d="M11 5h10"></path><path d="M11 12h10"></path><path d="M11 19h10"></path><path d="M4 4h1v5"></path><path d="M4 9h2"></path><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"></path></svg>', "percent-solution": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent" aria-hidden="true"><line x1="19" x2="5" y1="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>', "media-recipe": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flask-conical" aria-hidden="true"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"></path><path d="M6.453 15h11.094"></path><path d="M8.5 2h7"></path></svg>', "buffer-recipe": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker" aria-hidden="true"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg>', "ic50-ec50": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-spline" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M7 16c.5-2 1.5-7 4-7 2 0 2 3 4 3 2.5 0 4.5-5 5-7"></path></svg>', ligation: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2 lucide-link-2" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"></path><path d="M15 7h2a5 5 0 1 1 0 10h-2"></path><line x1="8" x2="16" y1="12" y2="12"></line></svg>', tm: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-thermometer" aria-hidden="true"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>', "dna-rna-conversion": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right" aria-hidden="true"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></svg>', "bradford-bca": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-scatter" aria-hidden="true"><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="18.5" cy="5.5" r=".5" fill="currentColor"></circle><circle cx="11.5" cy="11.5" r=".5" fill="currentColor"></circle><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="14.5" r=".5" fill="currentColor"></circle><path d="M3 3v16a2 2 0 0 0 2 2h16"></path></svg>', "elisa-4pl": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-line" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>', moi: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-biohazard" aria-hidden="true"><circle cx="12" cy="11.9" r="2"></circle><path d="M6.7 3.4c-.9 2.5 0 5.2 2.2 6.7C6.5 9 3.7 9.6 2 11.6"></path><path d="m8.9 10.1 1.4.8"></path><path d="M17.3 3.4c.9 2.5 0 5.2-2.2 6.7 2.4-1.2 5.2-.6 6.9 1.5"></path><path d="m15.1 10.1-1.4.8"></path><path d="M16.7 20.8c-2.6-.4-4.6-2.6-4.7-5.3-.2 2.6-2.1 4.8-4.7 5.2"></path><path d="M12 13.9v1.6"></path><path d="M13.5 5.4c-1-.2-2-.2-3 0"></path><path d="M17 16.4c.7-.7 1.2-1.6 1.5-2.5"></path><path d="M5.5 13.9c.3.9.8 1.8 1.5 2.5"></path></svg>', "virus-titer": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bug" aria-hidden="true"><path d="M12 20v-9"></path><path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z"></path><path d="M14.12 3.88 16 2"></path><path d="M21 21a4 4 0 0 0-3.81-4"></path><path d="M21 5a4 4 0 0 1-3.55 3.97"></path><path d="M22 13h-4"></path><path d="M3 21a4 4 0 0 1 3.81-4"></path><path d="M3 5a4 4 0 0 0 3.55 3.97"></path><path d="M6 13H2"></path><path d="m8 2 1.88 1.88"></path><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"></path></svg>', "unit-converter": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"></path><path d="m14.5 12.5 2-2"></path><path d="m11.5 9.5 2-2"></path><path d="m8.5 6.5 2-2"></path><path d="m17.5 15.5 2-2"></path></svg>', resuspension: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-droplets" aria-hidden="true"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path></svg>', normalization: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-equal" aria-hidden="true"><line x1="5" x2="19" y1="9" y2="9"></line><line x1="5" x2="19" y1="15" y2="15"></line></svg>', dilution: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pipette" aria-hidden="true"><path d="m12 9-8.414 8.414A2 2 0 0 0 3 18.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 3.828 21h1.344a2 2 0 0 0 1.414-.586L15 12"></path><path d="m18 9 .4.4a1 1 0 1 1-3 3l-3.8-3.8a1 1 0 1 1 3-3l.4.4 3.4-3.4a1 1 0 1 1 3 3z"></path><path d="m2 22 .414-.414"></path></svg>', molarity: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale" aria-hidden="true"><path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"></path><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M7 21h10"></path></svg>', seeding: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grid2x2 lucide-grid-2x2" aria-hidden="true"><path d="M12 3v18"></path><path d="M3 12h18"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>', "master-mix": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-test-tubes" aria-hidden="true"><path d="M9 2v17.5A2.5 2.5 0 0 1 6.5 22A2.5 2.5 0 0 1 4 19.5V2"></path><path d="M20 2v17.5a2.5 2.5 0 0 1-2.5 2.5a2.5 2.5 0 0 1-2.5-2.5V2"></path><path d="M3 2h7"></path><path d="M14 2h7"></path><path d="M9 16H4"></path><path d="M20 16h-5"></path></svg>', "wb-loading": '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rows3 lucide-rows-3" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M21 9H3"></path><path d="M21 15H3"></path></svg>', centrifuge: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-fan" aria-hidden="true"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"></path><path d="M12 12v.01"></path></svg>' };
+
+  // src/lib/calculators/standalone.ts
+  function taskLineSvg(id) {
+    const key = ["fold-dilution", "reagent-dosing"].includes(id) ? "dilution" : id;
+    return line_icon_svg_default[key] ?? line_icon_svg_default.dilution;
   }
   return __toCommonJS(standalone_exports);
 })();

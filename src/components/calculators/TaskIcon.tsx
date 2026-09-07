@@ -1,9 +1,9 @@
 "use client";
 import {useState,useRef,useEffect} from 'react';
-import {Pipette,Scale,Grid2X2,TestTubes,Rows3,Fan,Calculator} from 'lucide-react';
+import {Calculator} from 'lucide-react';
+import {taskLineIcons} from '@/lib/calculators/task-line-icons';
 import {useAppearance} from '@/components/AppearanceProvider';
 import {taskIconResource} from '@/lib/calculators/task-presentation';
-const lines={dilution:Pipette,molarity:Scale,seeding:Grid2X2,'master-mix':TestTubes,'wb-loading':Rows3,centrifuge:Fan};
 export function TaskIcon({taskId,size=32,pack}:{taskId:string;size?:number;pack?:string}){
  const {preferences}=useAppearance();
  const src=taskIconResource(taskId,pack??preferences.iconPackId);
@@ -17,7 +17,8 @@ export function TaskIcon({taskId,size=32,pack}:{taskId:string;size?:number;pack?
    return()=>cancelAnimationFrame(frame);
   }
  },[src]);
- const Line=lines[taskId as keyof typeof lines]??Calculator;
+ const resolvedId=["fold-dilution","reagent-dosing"].includes(taskId)?"dilution":taskId;
+ const Line=taskLineIcons[resolvedId as keyof typeof taskLineIcons]??Calculator;
  return <span aria-hidden="true" className="task-icon shrink-0" style={{width:size,height:size,display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{src&&failed!==src?
  // Already optimized 128px local alpha asset; direct img also works in the standalone/offline pack.
  // eslint-disable-next-line @next/next/no-img-element

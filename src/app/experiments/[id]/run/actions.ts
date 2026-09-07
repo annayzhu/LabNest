@@ -313,3 +313,26 @@ export async function recordProtocolRunConsumption(formData: FormData) {
   revalidatePath(`/experiments/${parsed.experimentId}/run`);
   redirect(`/experiments/${parsed.experimentId}/run`);
 }
+
+/** Reuses ProtocolRun.parametersJson; no new parameter store or protocol rewrite. */
+export async function saveRunParameters(_previous:ProtocolRunProgressState,form:FormData):Promise<ProtocolRunProgressState>{
+ try{
+  const {validateRunParameters,runParameterKeys}=await import('@/lib/run-parameters');
+  const id=z.string().min(1).parse(form.get('experimentId'));
+  await prisma.$transaction(async tx=>{
+   const experiment=await tx.experiment.findUnique({where:{id},include:{protocolRun:true}});
+   if(!experiment||experiment.status==='archived'||experiment.status==='completed'||!experiment.primaryProtocolVersionId)throw new Error('This run cannot be edited.');
+   const previous=experiment.protocolRun?.parametersJson??{};
+   if(JSON.stringify(previous)!==String(form.get('expected')))throw new Error('Parameters changed elsewhere. Reload and review before saving.');
+   const raw=Object.fromEntries([...form.entries()].filter(([key])=>key.startsWith('parameter:')).map(([key,value])=>[key.slice(10),value]));
+   const edited=validateRunParameters(experiment.protocolSnapshotJson,raw);
+   const values={...(previous as Record<string,string|number|boolean>),...edited};
+   for(const key of runParameterKeys(experiment.protocolSnapshotJson))if(!edited[key])delete values[key];
+   if(JSON.stringify(values)===JSON.stringify(previous))return;
+   await tx.protocolRun.upsert({where:{experimentId:id},create:{experimentId:id,protocolVersionId:experiment.primaryProtocolVersionId,status:experiment.status,parametersJson:values,calculatedConsumptionJson:[]},update:{parametersJson:values}});
+   const content=appendExperimentObservation(experiment.contentJson,{text:`Run parameters changed: ${JSON.stringify(previous)} → ${JSON.stringify(values)}`,id:randomUUID(),recordedAt:new Date()});
+   await tx.experiment.update({where:{id},data:{contentJson:content as Prisma.InputJsonValue}});
+  },{isolationLevel:'Serializable'});
+  revalidatePath(`/experiments/${id}/run`);return {message:'参数已保存 / Parameters saved'};
+ }catch(error){return {error:formActionErrorMessage(error,'Could not save parameters.')};}
+}

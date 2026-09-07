@@ -1,0 +1,238 @@
+{
+  "base": "http://localhost:3226",
+  "at": "2026-09-07T13:21:51.659Z",
+  "checks": [
+    {
+      "name": "desktop",
+      "geometry": [
+        {
+          "width": 196.796875,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 196.796875,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 196.796875,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 196.796875,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 196.8125,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 196.796875,
+          "height": 56,
+          "icon": true
+        }
+      ]
+    },
+    {
+      "name": "phone",
+      "geometry": [
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 179,
+          "height": 56,
+          "icon": true
+        }
+      ]
+    },
+    {
+      "name": "narrow-zoom-equivalent",
+      "geometry": [
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        },
+        {
+          "width": 220,
+          "height": 56,
+          "icon": true
+        }
+      ]
+    }
+  ],
+  "unexecuted": [
+    "Real phone 160% pinch zoom"
+  ],
+  "clipboard": "Take stock: 0.002 mL\nTake stock: 2 µL\nDiluent: 1.998 mL\nFinal volume: 2 mL",
+  "emptyHidden": true,
+  "tools": [
+    {
+      "id": "dilution",
+      "text": "Take stock: 0.002 mL\nTake stock: 2 µL\nDiluent: 1.998 mL\nFinal volume: 2 mL"
+    },
+    {
+      "id": "serial-dilution",
+      "text": "Points including start: 6\nFirst transfer: 10 µL\nTube: 1; Concentration (µM): 100; Source: 已备起始液 / Prepared starting solution; Take (µL): 100; Diluent (µL): 0; Mixed volume (µL): 100; Transfer out (µL): 10; Remaining (µL): 90; Required (µL): 未设置 / Unspecified\nTube: 2; Concentration (µM): 10; Source: Tube 1; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 10; Remaining (µL): 90; Required (µL): 未设置 / Unspecified\nTube: 3; Concentration (µM): 1; Source: Tube 2; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 10; Remaining (µL): 90; Required (µL): 未设置 / Unspecified\nTube: 4; Concentration (µM): 0.1; Source: Tube 3; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 10; Remaining (µL): 90; Required (µL): 未设置 / Unspecified\nTube: 5; Concentration (µM): 0.01; Source: Tube 4; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 10; Remaining (µL): 90; Required (µL): 未设置 / Unspecified\nTube: 6; Concentration (µM): 0.001; Source: Tube 5; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 0; Remaining (µL): 100; Required (µL): 未设置 / Unspecified"
+    },
+    {
+      "id": "molarity",
+      "text": "Mass to weigh: 1.8016 g\nBring to final volume: 100000 µL"
+    },
+    {
+      "id": "percent-solution",
+      "text": "Solute mass: 25 g\nBring to final volume: 500 mL"
+    },
+    {
+      "id": "media-recipe",
+      "text": "Scale factor: 2\nComponents: 3\nComponent: FBS; Amount: 100; Unit: mL\nComponent: Pen/Strep; Amount: 10; Unit: mL\nComponent: 溶解后定容至 / Dissolve then bring to; Amount: 1000; Unit: mL"
+    },
+    {
+      "id": "buffer-recipe",
+      "text": "Scale factor: 0.5\nComponents: 3\nComponent: NaCl; Amount: 4; Unit: g\nComponent: KCl; Amount: 0.1; Unit: g\nComponent: 溶解后定容至 / Dissolve then bring to; Amount: 500; Unit: mL"
+    },
+    {
+      "id": "ic50-ec50",
+      "text": "Relative 4PL midpoint: 10 µM\nBottom: -0.28948456\nTop: 100.289485\nHill slope: 0.943243554\nR²: 1\nConverged: Yes / 是\nConcentration: 0.1; Observed response: 1; Fitted response: 1.00000001\nConcentration: 1; Observed response: 10; Fitted response: 10\nConcentration: 10; Observed response: 50; Fitted response: 50\nConcentration: 100; Observed response: 90; Fitted response: 90\nConcentration: 1000; Observed response: 99; Fitted response: 99"
+    },
+    {
+      "id": "resuspension",
+      "text": "Final solution volume: 250 µL"
+    },
+    {
+      "id": "normalization",
+      "copy": "disabled for invalid result"
+    },
+    {
+      "id": "hemocytometer",
+      "text": "Average count: 13.75 cells/quadrant\nCell concentration: 412500 cells/mL\nViable-cell concentration: 371250 cells/mL"
+    },
+    {
+      "id": "seeding",
+      "text": "Total cells: 1320000 cells\nCell suspension: 1.32 mL\nMedium: 11.88 mL\nFinal suspension: 13.2 mL\nPer well: 500 µL × 24"
+    },
+    {
+      "id": "hydrogel",
+      "text": "Total cells: 1000000 cells\nHydrogel: 800 µL\nCell stock: 100 µL\nSuspension medium: 100 µL\nPer well: 100 µL × 10"
+    },
+    {
+      "id": "split",
+      "text": "Post-split confluency: 22.5 %\nEstimated time to target: 43.9218 h\nEstimated days: 1.830075 days"
+    },
+    {
+      "id": "freezing",
+      "text": "Complete vials: 10 vials\nRemaining cells: 0 cells\nTotal freezing medium: 10 mL\nDMSO: 1 mL\nSerum: 2 mL\nBase medium: 7 mL\nPer vial: 1000 µL × 10"
+    },
+    {
+      "id": "transfection",
+      "text": "DNA group · DNA per well: 2 µg\nDNA group · Tube A total per well: 62.5 µL\nDNA group · Tube B total per well: 62.5 µL\nDNA group · Mixture added per well: 125 µL\nDNA group · Final culture volume per well: 1000 µL\nDNA group · Cell medium before addition: 875 µL\nDNA group · Batch supply incl. overage: 825 µL\nBatch DNA incl. overage: 13.2 µg\nMix group: DNA group; Tube: A; Component: Plasmid; Per well (µL): 2; Prepare batch (µL): 13.2; DNA per well (µg): 2\nMix group: DNA group; Tube: A; Component: Opti-MEM; Per well (µL): 60.5; Prepare batch (µL): 399.3\nMix group: DNA group; Tube: B; Component: Custom lipid; Per well (µL): 6; Prepare batch (µL): 39.6\nMix group: DNA group; Tube: B; Component: Opti-MEM; Per well (µL): 56.5; Prepare batch (µL): 372.9\nDNA group: Combine A into B: 412.5 µL\nDNA group: Mixture per well: 125 µL × 6\nDNA group: A管核酸稀释后与B管稀释试剂混合，按已验证方案孵育，再加入细胞。 / Dilute nucleic acid in A and reagent in B; combine and follow the validated protocol before adding to cells."
+    },
+    {
+      "id": "kill-curve",
+      "text": "Dose points: 8\nHighest stock addition: 0.5 µL\nLevel: 1; Target (µg/mL): 0.5; Stock (µL): 0.025\nLevel: 2; Target (µg/mL): 1.85714286; Stock (µL): 0.0928571429\nLevel: 3; Target (µg/mL): 3.21428571; Stock (µL): 0.160714286\nLevel: 4; Target (µg/mL): 4.57142857; Stock (µL): 0.228571429\nLevel: 5; Target (µg/mL): 5.92857143; Stock (µL): 0.296428571\nLevel: 6; Target (µg/mL): 7.28571429; Stock (µL): 0.364285714\nLevel: 7; Target (µg/mL): 8.64285714; Stock (µL): 0.432142857\nLevel: 8; Target (µg/mL): 10; Stock (µL): 0.5"
+    },
+    {
+      "id": "viability",
+      "text": "Live cells: 180000 cells\nDead cells: 20000 cells\nResuspension volume: 1.8 mL"
+    },
+    {
+      "id": "od600",
+      "text": "Path-corrected OD600: 0.8\nEstimated density: 6.40000e+8 cells/mL\nEstimated total cells: 3.20000e+9 cells"
+    },
+    {
+      "id": "cfu",
+      "text": "CFU/mL: 1.20000e+9 CFU/mL\nlog10 CFU/mL: 9.07918125\nTransformation efficiency: 6.00000e+8 CFU/µg"
+    },
+    {
+      "id": "moi",
+      "text": "Virus volume: 10 µL\nUninfected: 36.7879441 %\nExactly one event: 36.7879441 %\nAt least one event: 63.2120559 %"
+    },
+    {
+      "id": "virus-titer",
+      "text": "Virus titer: 2.00000e+8 PFU/mL\nlog10 titer: 8.30103"
+    },
+    {
+      "id": "master-mix",
+      "text": "Actual reactions: 26\nPremix equivalents: 28.6\nPrepare premix: 514.8 µL\nPremix per reaction: 18 µL\nSeparate sample per reaction: 2 µL\nPremix reserve: 46.8 µL\nComponent: 2× Mix; Per reaction (µL): 10; Premix?: 是 / Yes; Prepare batch (µL): 286; Mix group: default\nComponent: F; Per reaction (µL): 0.5; Premix?: 是 / Yes; Prepare batch (µL): 14.3; Mix group: default\nComponent: R; Per reaction (µL): 0.5; Premix?: 是 / Yes; Prepare batch (µL): 14.3; Mix group: default\nComponent: Template; Per reaction (µL): 2; Premix?: 独立加样 / Separate; Mix group: default\nComponent: Water; Per reaction (µL): 7; Premix?: 是 / Yes; Prepare batch (µL): 200.2; Mix group: default\ndefault: Premix: 18 µL × 26"
+    },
+    {
+      "id": "ligation",
+      "text": "Insert DNA required: 30 ng\nVector DNA: 50 ng"
+    },
+    {
+      "id": "tm",
+      "text": "Primer length: 20 nt\nGC content: 45 %\nEstimated Tm: 28.1329021 °C"
+    },
+    {
+      "id": "dna-rna-conversion",
+      "text": "Estimated molecular weight: 330000 g/mol\nEstimated molar concentration: 151.515152 nM\nAmount: 3.03030e-12 mol\nMolecules: 1.82489e+12 molecules\nMass concentration: 0.05 µg/µL"
+    },
+    {
+      "id": "bradford-bca",
+      "text": "Slope: 0.514137931\nIntercept: 0.0518103448\nR²: 0.999921287\nSample concentration: 1.51006036 mg/mL\nConcentration: 0; Observed response: 0.05; Fitted response: 0.0518103448\nConcentration: 0.25; Observed response: 0.18; Fitted response: 0.180344828\nConcentration: 0.5; Observed response: 0.31; Fitted response: 0.30887931\nConcentration: 1; Observed response: 0.57; Fitted response: 0.565948276\nConcentration: 1.5; Observed response: 0.82; Fitted response: 0.823017241"
+    },
+    {
+      "id": "elisa-4pl",
+      "text": "Sample concentration: 10.0693502 pg/mL\nCurve midpoint: 10.2823486 pg/mL\nHill slope: 1.06975426\nR²: 0.999952614\nBottom: 0.0618129769\nTop: 1.95943251\nConverged: Yes / 是\nConcentration: 0.1; Observed response: 0.08; Fitted response: 0.0750783112\nConcentration: 1; Observed response: 0.2; Fitted response: 0.20669879\nConcentration: 10; Observed response: 1; Fitted response: 0.996493251\nConcentration: 100; Observed response: 1.8; Fitted response: 1.80637068\nConcentration: 1000; Observed response: 1.95; Fitted response: 1.94535896"
+    },
+    {
+      "id": "wb-loading",
+      "text": "Sample: 10 µL\nLoading buffer: 5 µL\nSpecified stock: 1 µL\nWater: 4 µL\nSample ID: Sample; Sample (µL): 10; Diluent (µL): 4; Buffer (µL): 5; Target protein (µg): 20; Reducing-agent stock: Specified stock; Reducing agent (µL): 1; Total (µL): 20"
+    },
+    {
+      "id": "unit-converter",
+      "text": "Converted value: 1000 µL"
+    },
+    {
+      "id": "centrifuge",
+      "text": "RCF: 11180 ×g"
+    }
+  ]
+}

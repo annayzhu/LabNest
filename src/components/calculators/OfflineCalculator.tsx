@@ -1,19 +1,10 @@
 "use client";
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
+import {prepareOffline,clearOfflineTools,offlineStatus,OfflineError} from '@/lib/calculators/offline';
 export function OfflineCalculator({zh}:{zh:boolean}) {
- const [status,setStatus]=useState('');
- async function cachePage(){
-  try {
-   if(!('serviceWorker' in navigator))throw new Error('Unavailable');
-   setStatus(zh?'正在缓存此页…':'Caching this page…');
-   const registration=await navigator.serviceWorker.register('/tools/calculator/worker.js',{scope:'/'});
-   const worker=registration.active??registration.installing??registration.waiting;
-   if(!worker)throw new Error('Unavailable');
-   if(worker.state!=='activated')await new Promise<void>(resolve=>worker.addEventListener('statechange',()=>{if(worker.state==='activated')resolve();}));
-   const urls=[window.location.href,...performance.getEntriesByType('resource').map(item=>item.name)];
-   const result=await new Promise<boolean>((resolve)=>{const channel=new MessageChannel();const timer=setTimeout(()=>resolve(false),20000);channel.port1.onmessage=event=>{clearTimeout(timer);resolve(Boolean(event.data.ok));};worker.postMessage({type:'CACHE_CALCULATOR',urls},[channel.port2]);});
-   setStatus(result?(zh?'此页已缓存；离线可恢复草稿。':'This page is cached; drafts can be restored offline.'):(zh?'缓存未完成，请保持联网重试。':'Caching incomplete; retry while online.'));
-  }catch{setStatus(zh?'无法缓存。需要HTTPS或本机地址。':'Cannot cache. HTTPS or localhost is required.');}
- }
- return <details className="text-xs text-muted"><summary className="min-h-11 cursor-pointer">{zh?'离线使用':'Offline use'}</summary><button type="button" className="min-h-11 text-moss" onClick={cachePage}>{zh?'缓存当前页':'Cache this calculation page'}</button><p role="status">{status}</p></details>;
+ const [status,setStatus]=useState(''),[busy,setBusy]=useState(false);
+ const ready=(pages:string[]=[])=>zh?`可离线打开：${pages.join('、')}。缓存可能被浏览器回收。`:`Available offline: ${pages.join(', ')}. The browser may reclaim caches.`;
+ useEffect(()=>{let active=true;offlineStatus().then(r=>{if(active&&r.ok&&r.pages?.length)setStatus(ready(r.pages));}).catch(()=>{});return()=>{active=false;};},[zh]); // eslint-disable-line react-hooks/exhaustive-deps
+ async function prepare(){setBusy(true);try{const result=await prepareOffline(stage=>setStatus(stage==='documents'?(zh?'检查主页与当前页面…':'Checking home and current page…'):(zh?'准备脚本、样式和图标…':'Preparing scripts, styles and icons…')));setStatus(ready(result.pages));}catch(error){const kind=error instanceof OfflineError?error.kind:'resource';const labels={environment:['此环境不支持离线页面。请使用受信任HTTPS或本机地址；输入草稿独立保存。','Offline pages require trusted HTTPS or localhost. Input drafts are saved separately.'],registration:['离线服务注册/作用域失败，请重试并检查站点配置。','Worker registration/scope failed. Retry and check site configuration.'],resource:['必要页面或资源加载失败。保持联网后重试，原有可用缓存保留。','A required page or resource failed. Retry online; previous cache is retained.'],quota:['缓存空间不足，请清除工具缓存后重试。历史和草稿不会清除。','Cache storage is full. Clear tool caches and retry; history and drafts are retained.'],timeout:['准备超时，请检查连接并重试。','Preparation timed out. Check the connection and retry.']};setStatus(labels[kind][zh?0:1]);console.info('Calculator offline diagnostic',{kind,detail:String(error),secure:window.isSecureContext,protocol:location.protocol});}finally{setBusy(false);}}
+ return <details className="calculator-offline text-xs text-muted"><summary className="min-h-11 cursor-pointer">{zh?'离线页面':'Offline pages'}</summary><p>{zh?'输入草稿保存与页面离线缓存独立。这里只准备主页和当前页，不代表全部工具。当前站点为设备/工作区共享数据，无账号切换功能。':'Input drafts and offline pages are separate. Prepare home and this page, not all tools. This installation shares a device/workspace; it has no account switching.'}</p><div className="flex flex-wrap gap-3"><button disabled={busy} type="button" className="min-h-11 text-moss" onClick={prepare}>{zh?'准备离线使用 / 重试更新':'Prepare offline / Retry update'}</button><button disabled={busy} type="button" className="min-h-11 text-moss" onClick={async()=>{setBusy(true);try{await clearOfflineTools();setStatus(zh?'工具与Run页面缓存已清除；草稿、历史和同步队列保留。':'Tool and Run page caches cleared; drafts, history and sync queue retained.');}catch{setStatus(zh?'清除失败，请重试。':'Could not clear caches; retry.');}finally{setBusy(false);}}}>{zh?'清除工具缓存':'Clear tool caches'}</button></div><p role="status" aria-live="polite">{status}</p></details>;
 }

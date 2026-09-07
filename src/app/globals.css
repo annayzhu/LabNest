@@ -5351,3 +5351,64 @@ html[data-labnest-density="comfortable"] { --ln-content-padding:1.25rem; --ln-co
 html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-plate);border-radius:var(--ln-radius-control-lg);box-shadow:0 0 0 1px #aebfc333;}
 .common-task-tile {border-radius:var(--ln-radius-panel);line-height:1.3;overflow-wrap:anywhere;}
 @media(min-width:1100px){.appearance-layout{grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);gap:1.5rem;}.appearance-preview{position:sticky;top:1rem;}.appearance-preview:not([open])>.appearance-preview-body{display:grid;}.appearance-preview summary{pointer-events:none;list-style:none;}}
+
+/* Calculator shared layout: sizes are content-driven and do not override appearance text preferences. */
+.calculator-catalog{container-type:inline-size;max-width:1280px;margin-inline:auto;display:grid;gap:8px}
+.calculator-catalog-heading{display:flex;align-items:center;gap:8px;min-width:0}
+.calculator-catalog-heading h1{font-size:16px;font-weight:600;white-space:nowrap}
+.calculator-catalog-heading label{display:flex;align-items:center;gap:8px;flex:1;min-width:0;border:1px solid var(--hairline);border-radius:var(--ln-radius-control-lg);padding-inline:8px}
+.calculator-catalog-heading input{min-width:0;width:100%;min-height:44px;background:transparent;font-size:16px}
+.calculator-back{display:inline-flex;align-items:center;justify-content:center;min-width:44px;width:44px;min-height:44px;flex-shrink:0;border-radius:var(--ln-radius-control-lg);color:var(--moss)}
+.calculator-back:hover,.calculator-back:active{background:var(--warm)}
+.calculator-categories{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.calculator-category{grid-column:span 4;border:1px solid var(--hairline);border-radius:var(--ln-radius-panel);padding:10px;min-width:0;background:var(--surface)}
+.calculator-category header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:32px}
+.calculator-category h2{font-size:14px;font-weight:600}.calculator-category small{font-size:11px;color:var(--muted)}
+.calculator-category header button{min-height:32px}
+.category-solutions{grid-column:span 5}.category-cell-culture{grid-column:span 4}.category-virology-microbiology{grid-column:span 3}
+.calculator-category-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.category-solutions .calculator-category-tools{grid-template-columns:repeat(3,minmax(0,1fr))}
+.category-virology-microbiology .calculator-category-tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+.calculator-tool-tile{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;padding:5px 2px;min-height:76px;min-width:44px;border-radius:var(--ln-radius-control-lg);font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+.calculator-tool-tile:hover{background:var(--warm)}
+.calculator-recent{display:flex;align-items:center;gap:12px;min-width:0}.calculator-recent h2{font-size:12px;color:var(--muted)}.calculator-recent>div{min-width:0;flex:1}.calculator-recent a{display:flex;align-items:center;min-height:44px;font-size:13px}.calculator-recent p{font-size:11px;overflow-wrap:anywhere;color:var(--muted)}
+.calculator-catalog-footer{display:flex;flex-wrap:wrap;gap:16px;font-size:12px}.calculator-catalog-footer summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.calculator-catalog-footer details a{display:block;min-height:44px}
+.calculator-workbench{max-width:1120px;margin-inline:auto;min-width:0}.calculator-heading{display:flex;align-items:center;gap:10px;min-width:0}.calculator-heading h1{font-size:clamp(18px,1.6vw,22px);line-height:1.3;min-width:0;font-weight:600}.calculator-heading-actions{display:flex;align-items:center;gap:12px;margin-left:auto;flex-shrink:0}
+.calculator-workspace-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}.calculator-workspace-grid>*{min-width:0}
+.calculator-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.calculator-field{min-width:0;width:100%;max-width:280px;display:block}.calculator-field-wide{grid-column:1/-1;max-width:none}.calculator-quantity{display:grid;grid-template-columns:minmax(0,1fr) minmax(72px,auto);align-items:end;gap:6px}.calculator-field>label{display:block;min-width:0}.calculator-field input,.calculator-field select{height:44px;min-width:0}.calculator-quantity>select{max-width:104px}
+.calculator-input-form input:not([type=checkbox]),.calculator-input-form select,.calculator-input-form textarea{min-height:44px;border-radius:var(--ln-radius-control-lg)}
+.calculator-copy-panel{border:1px solid var(--hairline);padding:12px;border-radius:var(--ln-radius-control-lg);font-size:14px}.calculator-copy-panel textarea{width:100%;min-height:180px;border:1px solid var(--hairline);border-radius:6px;padding:8px;resize:vertical;overflow:auto;background:var(--surface);color:var(--ink);user-select:text}
+@container (max-width:900px){.calculator-category{grid-column:span 6}.calculator-category-tools,.category-virology-microbiology .calculator-category-tools{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (max-width:560px){.calculator-category{grid-column:1/-1;padding:12px}.calculator-category header button{min-height:44px}.calculator-categories{gap:10px}}
+@media(max-width:767px){.calculator-workspace-grid{grid-template-columns:1fr}.calculator-fields{grid-template-columns:1fr}.calculator-field{max-width:none}.calculator-input-form input,.calculator-input-form select,.calculator-input-form textarea{font-size:16px}.calculator-heading{gap:6px}.calculator-heading h1{font-size:18px}.calculator-heading-actions{gap:6px}.calculator-heading-actions button{padding-inline:4px}.calculator-recent{flex-wrap:wrap}.calculator-recent h2{width:100%}}
+@media(max-width:380px){html[data-labnest-ui-scale=comfortable] .calculator-category-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.calculator-catalog-heading h1{font-size:14px}}
+
+.calculator-tool-tile,.common-task-tile,.calculator-back{position:relative}
+.calculator-link-progress{position:absolute;right:4px;top:4px;width:7px;height:7px;border-radius:50%;background:currentColor;opacity:0;pointer-events:none}
+.calculator-link-progress[data-pending=true]{opacity:.6;transition:opacity 100ms ease 150ms}
+
+/* Recent tools use equal tracks and grow with text instead of clipping at zoom. */
+.calculator-recent{display:block;container-type:inline-size}
+.calculator-recent h2{font-size:12px;color:var(--muted);margin-bottom:8px}
+.calculator-recent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:8px;grid-auto-rows:1fr}
+.calculator-recent .calculator-tool-tile{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;min-width:0;min-height:56px;height:100%;padding:10px 12px;text-align:left;font-size:14px;line-height:1.4;background:var(--warm)}
+.calculator-recent .calculator-tool-tile span:not(.task-icon){min-width:0;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:767px){.calculator-recent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container(max-width:280px){.calculator-recent-grid{grid-template-columns:minmax(0,1fr)}}
+
+.transfection-workspace{grid-template-columns:minmax(0,1fr)}
+.transfection-editor{min-width:0}
+.transfection-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),1fr));gap:10px;margin-block:8px}
+.transfection-field{display:flex;flex-direction:column;gap:4px;font-size:12px;min-width:0}
+.transfection-field>div{display:flex;align-items:center;gap:5px;min-width:0}
+.transfection-field>div>span{flex-shrink:0;font-size:11px}
+.transfection-field input{width:100%;min-width:0}
+.transfection-group,.transfection-nucleic{border:1px solid var(--hairline);border-radius:var(--ln-radius-panel-inner);padding:12px;min-width:0}
+.transfection-group legend,.transfection-nucleic legend{padding-inline:5px;font-size:13px}
+.transfection-tubes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.transfection-tubes>section,.transfection-single>section{min-width:0;background:var(--warm);border-radius:var(--ln-radius-panel-inner);padding:10px}
+.transfection-tubes h3,.transfection-single h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.transfection-volume{display:grid;gap:6px;margin-top:10px}
+@media(max-width:767px){.transfection-tubes{grid-template-columns:minmax(0,1fr)}.transfection-row{grid-template-columns:minmax(0,1fr)}.transfection-field input,.transfection-field select{font-size:16px}}
+.transfection-result th,.transfection-result td{padding:8px 4px;text-align:left;overflow-wrap:anywhere;border-bottom:1px solid var(--hairline)}
+.transfection-result table{table-layout:fixed}

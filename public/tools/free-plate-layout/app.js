@@ -1242,11 +1242,11 @@
     return `<label${type === "scope" ? ' class="liquid-scope-field"' : ""}><span>${escapeHtml(label)}</span><span class="liquid-inline-input"><input name="${name}" type="number" step="any" min="0" value="${escapeHtml(value)}" ${type === "scope" ? 'readonly aria-readonly="true"' : ""} required />${unitMarkup}</span></label>`;
   }
 
-  document.getElementById('cacheStandalone').addEventListener('click',async()=>{const status=document.getElementById('cacheStandaloneStatus');try{status.textContent='Caching / 正在缓存';const registration=await navigator.serviceWorker.register('./offline.js',{scope:'./'});const worker=registration.active||registration.installing||registration.waiting;if(!worker)throw Error('worker');if(worker.state!=='activated')await new Promise(resolve=>worker.addEventListener('statechange',()=>{if(worker.state==='activated')resolve();}));const paths=[location.href,...[...document.querySelectorAll('script[src],link[rel="stylesheet"]')].map(el=>el.src||el.href),...['dilution','solution-prep','cell-seeding','reaction-mix','wb-loading','centrifuge'].map(id=>`./icons/lab-soft-v1/${id}.png`)];const ok=await new Promise(resolve=>{const channel=new MessageChannel(),timer=setTimeout(()=>resolve(false),20000);channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data.ok);};worker.postMessage({type:'CACHE_STANDALONE',paths},[channel.port2]);});status.textContent=ok?'Cached for offline reload / 已缓存，可离线刷新':'Caching failed / 缓存失败';}catch{status.textContent='Caching unavailable; requires HTTPS or localhost / 需HTTPS或本机地址';}});
+  document.getElementById('cacheStandalone').addEventListener('click',async()=>{const status=document.getElementById('cacheStandaloneStatus');try{status.textContent='Caching / 正在缓存';const registration=await navigator.serviceWorker.register('./offline.js',{scope:'./'});const worker=registration.active||registration.installing||registration.waiting;if(!worker)throw Error('worker');if(worker.state!=='activated')await new Promise(resolve=>worker.addEventListener('statechange',()=>{if(worker.state==='activated')resolve();}));const paths=[location.href,...[...document.querySelectorAll('script[src],link[rel="stylesheet"]')].map(el=>el.src||el.href),...(await (await fetch('./icons/lab-soft-v1/resources.json')).json()).map(path=>'.'+path)];const ok=await new Promise(resolve=>{const channel=new MessageChannel(),timer=setTimeout(()=>resolve(false),20000);channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data.ok);};worker.postMessage({type:'CACHE_STANDALONE',paths},[channel.port2]);});status.textContent=ok?'Cached for offline reload / 已缓存，可离线刷新':'Caching failed / 缓存失败';}catch{status.textContent='Caching unavailable; requires HTTPS or localhost / 需HTTPS或本机地址';}});
   let standaloneIconPack='lab-soft';
   let standaloneAppearanceWarning='';
   try {const raw=localStorage.getItem('labnest.standalone-calculator.appearance');standaloneIconPack=window.LabNestCalculations.parseAppearance(raw,null,null,false).value.iconPackId;}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}
-  function standaloneTaskIcon(id){const resource=window.LabNestCalculations.taskIconResource(id,standaloneIconPack);const fallback='<svg aria-hidden="true" viewBox="0 0 24 24" width="32" height="32"><rect x="5" y="2" width="14" height="20" rx="2" fill="none" stroke="currentColor"/><path d="M8 6h8M8 11h2m4 0h2M8 15h2m4 0h2M8 19h2m4 0h2" stroke="currentColor"/></svg>';return `<span class="standalone-task-icon" aria-hidden="true" style="display:inline-flex;width:32px;height:32px">${resource?`<img src="${escapeHtml('.'+resource)}" width="32" height="32" alt="" />`:fallback}</span>`;}
+  function standaloneTaskIcon(id){const resource=window.LabNestCalculations.taskIconResource(id,standaloneIconPack);const fallback=window.LabNestCalculations.taskLineSvg(id);return `<span class="standalone-task-icon" data-task-id="${escapeHtml(id)}" aria-hidden="true" style="display:inline-flex;width:32px;height:32px">${resource?`<img src="${escapeHtml('.'+resource)}" width="32" height="32" alt="" />`:fallback}</span>`;}
   function standalonePlateCalculatorMarkup(calculatorId) {
     const definition = plateCalculatorDefinitions[calculatorId];
     const scopeCount = liquidTargetWellIds().length;
@@ -3185,7 +3185,7 @@
     }
   });
 
-  elements.plateCalculatorHost.addEventListener('error',event=>{if(event.target.matches('.standalone-task-icon img')){event.target.outerHTML='<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" fill="none" stroke="currentColor"/><path d="M8 6h8M8 11h8M8 15h8M8 19h8" stroke="currentColor"/></svg>';}},true);
+  elements.plateCalculatorHost.addEventListener('error',event=>{if(event.target.matches('.standalone-task-icon img')){event.target.outerHTML=window.LabNestCalculations.taskLineSvg(event.target.parentElement.dataset.taskId);}},true);
   elements.plateCalculatorHost.addEventListener("change", event=>{
     if(event.target.matches('[data-standalone-icon-pack]')){standaloneIconPack=event.target.value==='classic-line'?'classic-line':'lab-soft';try{const key='labnest.standalone-calculator.appearance',raw=localStorage.getItem(key),parsed=window.LabNestCalculations.parseAppearance(raw,null,null,false);if(parsed.preserve)throw Error('protected');localStorage.setItem(key,JSON.stringify({...parsed.value,iconPackId:standaloneIconPack}));standaloneAppearanceWarning='';}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}const container=elements.plateCalculatorHost.querySelector('.standalone-task-icon');if(container)container.outerHTML=standaloneTaskIcon(activePlateCalculator);showToast(standaloneAppearanceWarning||bilingual('仅在此独立版来源保存','Saved for this standalone origin'));return;}
 
@@ -3200,8 +3200,8 @@
     if(action==='csv')downloadBlob(window.LabNestCalculations.resultCsv(lastStandalonePlateResult,language==='zh'),'text/csv;charset=utf-8','calculator.csv');
     if(action==='copy'){
       const text=window.LabNestCalculations.resultClipboard(lastStandalonePlateResult,language==='zh');
-      try{await navigator.clipboard.writeText(text);showToast(bilingual('已复制','Copied'));}
-      catch{const area=document.createElement('textarea');area.readOnly=true;area.value=text;area.setAttribute('aria-label','Manual copy');elements.plateCalculatorHost.append(area);area.focus();area.select();showToast(bilingual('请手动复制','Copy manually'));}
+      if(await window.LabNestCalculations.copyCalculation(text)!=='manual'){showToast(bilingual('已复制','Copied'));}
+      else{const area=document.createElement('textarea');area.readOnly=true;area.value=text;area.setAttribute('aria-label','Manual copy');elements.plateCalculatorHost.append(area);area.style.cssText='display:block;width:100%;min-height:180px;border:1px solid currentColor;padding:8px;';const select=document.createElement('button');select.type='button';select.textContent=bilingual('全选','Select all');select.onclick=()=>{area.focus();area.select();};elements.plateCalculatorHost.append(select);showToast(bilingual('请手动复制','Copy manually'));}
     }
   });
 
@@ -3737,6 +3737,10 @@
     }
     if (payload.calculatorId === "hydrogel") return sameValue("水凝胶培养体积/孔", "Hydrogel volume/well", "µL", input.volumePerWellUl);
     if (payload.calculatorId === "transfection") {
+      if(input.transfectionPlan){
+        const values=window.LabNestCalculations.transfectionPlateValues(input.transfectionPlan,wellIds.length);
+        return [...sameValue("转染DNA/孔","Transfection DNA/well","µg",values.group0_dna),...sameValue("转染siRNA/孔","Transfection siRNA/well","pmol",values.group0_rna),...sameValue("siRNA终浓度","Final siRNA concentration","nM",values.group0_rnaFinal),...sameValue("每孔混合液","Mixture per well","µL",values.group0_mixed),...sameValue("最终培养体积","Final culture volume","µL",values.group0_final)];
+      }
       return [
         ...sameValue("转染 DNA/孔", "Transfection DNA/well", "µg", input.dnaUgPerWell),
         ...sameValue("转染复合物/孔", "Transfection complex/well", "µL", input.complexVolumeUlPerWell),
@@ -3766,7 +3770,7 @@
     }
     const validWellIds = (payload.plateContext.wellIds || []).filter((wellId) => Core.makeWellIds(project.plateSize).includes(wellId));
     if (!validWellIds.length || !Array.isArray(payload.outputs)) return;
-    const mappings = plateMappingsForCalculator(payload, validWellIds);
+    let mappings;try{mappings = plateMappingsForCalculator(payload, validWellIds);}catch(error){showToast(error.message);return;}
     commit(() => {
       const wells = currentWells();
       mappings.forEach((mapping, mappingIndex) => {

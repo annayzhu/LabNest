@@ -11,6 +11,7 @@ New imports have immutable ActivityLog evidence linked to the source attachment 
 ## Verification
 
 - Full unit suite: 95 files, 540 tests passed.
+- Deployment follow-up: reproduced UTC-container/Asia-Shanghai-browser hydration mismatch in the history timestamp; fixed with explicitly labelled UTC display. Two timestamp regression tests cover bilingual formatting and invalid/missing historical dates. Browser tests explicitly use Asia/Shanghai against a UTC server.
 - TypeScript checking and production build are release gates.
 - `scripts/verify-protocol-import-state.ts`: isolated API + PostgreSQL + browser acceptance. Covers state mismatch, consistent exported state, invalid/missing declarations, DOCX/JSON batch/Markdown, real Draft/Draft persistence, forged actor/state/confirmation and changed file/filename rejection, duplicate/concurrent submission, normal later activation with unchanged history, export/reimport with a new identity, existing-identity duplicate protection, additive legacy backfill idempotence, retained unrelated warnings and unchanged version/current state.
 - `scripts/verify-protocol-import-ui.ts`: Chinese desktop (1440px) and English mobile (390px), actual file chooser/preview, explicit source/final state comparison, default-collapsed Metadata history, expansion, no horizontal overflow or browser errors.

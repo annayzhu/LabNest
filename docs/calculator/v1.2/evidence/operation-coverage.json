@@ -1,0 +1,479 @@
+[
+  {
+    "id": "hemocytometer",
+    "name": "Hemocytometer",
+    "method": "hemocytometer-v2",
+    "modes": [
+      {
+        "key": "countRegion",
+        "values": [
+          "standard",
+          "custom"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: counting only"
+  },
+  {
+    "id": "seeding",
+    "name": "Seeding",
+    "method": "seeding-v2",
+    "modes": [],
+    "coverage": "adapter: batch and per-well"
+  },
+  {
+    "id": "hydrogel",
+    "name": "Hydrogel",
+    "method": "hydrogel-v2",
+    "modes": [],
+    "coverage": "adapter: batch and per-well"
+  },
+  {
+    "id": "split",
+    "name": "Split Calculator",
+    "method": "split-v2",
+    "modes": [
+      {
+        "key": "areaMode",
+        "values": [
+          "same",
+          "different"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: confluency estimate"
+  },
+  {
+    "id": "freezing",
+    "name": "Freezing",
+    "method": "freezing-v2",
+    "modes": [],
+    "coverage": "adapter: batch and per-vial"
+  },
+  {
+    "id": "transfection",
+    "name": "Transfection",
+    "method": "transfection-v2",
+    "modes": [
+      {
+        "key": "complexMode",
+        "values": [
+          "combined",
+          "two-tube"
+        ]
+      }
+    ],
+    "coverage": "adapter: one/two-tube batch and dispensing"
+  },
+  {
+    "id": "kill-curve",
+    "name": "Kill Curve",
+    "method": "kill-curve-v2",
+    "modes": [
+      {
+        "key": "scale",
+        "values": [
+          "linear",
+          "log"
+        ]
+      }
+    ],
+    "coverage": "adapter: parallel additions and diluent"
+  },
+  {
+    "id": "viability",
+    "name": "Viability",
+    "method": "viability-v2",
+    "modes": [],
+    "coverage": "adapter: final resuspension target"
+  },
+  {
+    "id": "od600",
+    "name": "OD600",
+    "method": "od600-v2",
+    "modes": [],
+    "coverage": "not-applicable: density estimate"
+  },
+  {
+    "id": "cfu",
+    "name": "CFU/mL",
+    "method": "cfu-v2",
+    "modes": [],
+    "coverage": "not-applicable: colony count reference"
+  },
+  {
+    "id": "colony-counter",
+    "name": "Colony & Plaque Counter",
+    "method": "colony-counter-v2",
+    "modes": [],
+    "coverage": "not-applicable: image count"
+  },
+  {
+    "id": "reagent-dosing",
+    "name": "Dilution & dosing",
+    "method": "reagent-dosing-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "final",
+          "add",
+          "fold",
+          "ratio",
+          "parts"
+        ]
+      }
+    ],
+    "coverage": "adapter: dilution"
+  },
+  {
+    "id": "dilution",
+    "name": "Dilution & dosing",
+    "method": "dilution-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "final",
+          "add",
+          "fold",
+          "ratio",
+          "parts"
+        ]
+      }
+    ],
+    "coverage": "adapter: final/add/fold/ratio"
+  },
+  {
+    "id": "fold-dilution",
+    "name": "Dilution & dosing",
+    "method": "fold-dilution-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "final",
+          "add",
+          "fold",
+          "ratio",
+          "parts"
+        ]
+      }
+    ],
+    "coverage": "adapter: dilution"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "Serial Dilution",
+    "method": "serial-dilution-v2",
+    "modes": [
+      {
+        "key": "gradientMode",
+        "values": [
+          "geometric",
+          "linear",
+          "custom"
+        ]
+      },
+      {
+        "key": "volumeMode",
+        "values": [
+          "mixed",
+          "retained"
+        ]
+      },
+      {
+        "key": "firstSource",
+        "values": [
+          "prepared",
+          "stock"
+        ]
+      }
+    ],
+    "coverage": "adapter: transfers and diluent"
+  },
+  {
+    "id": "molarity",
+    "name": "Weigh & prepare",
+    "method": "molarity-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "mass",
+          "concentration",
+          "volume"
+        ]
+      }
+    ],
+    "coverage": "adapter: final-volume target only"
+  },
+  {
+    "id": "percent-solution",
+    "name": "% Solution",
+    "method": "percent-solution-v2",
+    "modes": [
+      {
+        "key": "type",
+        "values": [
+          "w/v",
+          "v/v",
+          "w/w"
+        ]
+      }
+    ],
+    "coverage": "adapter: v/v liquid and make-up; w/v make-up; w/w masses"
+  },
+  {
+    "id": "media-recipe",
+    "name": "Media Recipe",
+    "method": "media-recipe-v2",
+    "modes": [
+      {
+        "key": "recipeMode",
+        "values": [
+          "final",
+          "add"
+        ]
+      }
+    ],
+    "coverage": "adapter: typed liquid rows and make-up"
+  },
+  {
+    "id": "buffer-recipe",
+    "name": "Buffer Recipe",
+    "method": "buffer-recipe-v2",
+    "modes": [
+      {
+        "key": "recipeMode",
+        "values": [
+          "final",
+          "add"
+        ]
+      }
+    ],
+    "coverage": "adapter: typed liquid rows and make-up"
+  },
+  {
+    "id": "ic50-ec50",
+    "name": "IC50 / EC50",
+    "method": "four-pl-v2",
+    "modes": [
+      {
+        "key": "concentrationUnit",
+        "values": [
+          "",
+          "µM",
+          "nM",
+          "mg/mL",
+          "µg/mL",
+          "ng/mL",
+          "pg/mL"
+        ]
+      },
+      {
+        "key": "mode",
+        "values": [
+          "inhibition",
+          "activation"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: analysis"
+  },
+  {
+    "id": "master-mix",
+    "name": "Reaction preparation",
+    "method": "master-mix-v3",
+    "modes": [],
+    "coverage": "planner: per-group bulk, separate samples, dispensing"
+  },
+  {
+    "id": "ligation",
+    "name": "Ligation",
+    "method": "ligation-v2",
+    "modes": [],
+    "coverage": "not-applicable: DNA mass only"
+  },
+  {
+    "id": "tm",
+    "name": "Tm Calculator",
+    "method": "tm-basic-v2",
+    "modes": [],
+    "coverage": "not-applicable: temperature estimate"
+  },
+  {
+    "id": "dna-rna-conversion",
+    "name": "DNA / RNA Conversions",
+    "method": "nucleic-acid-conversion-v2",
+    "modes": [
+      {
+        "key": "type",
+        "values": [
+          "dsDNA",
+          "ssDNA",
+          "RNA"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: quantity conversion"
+  },
+  {
+    "id": "bradford-bca",
+    "name": "Bradford / BCA",
+    "method": "protein-linear-v2",
+    "modes": [
+      {
+        "key": "concentrationUnit",
+        "values": [
+          "",
+          "µM",
+          "nM",
+          "mg/mL",
+          "µg/mL",
+          "ng/mL",
+          "pg/mL"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: analysis"
+  },
+  {
+    "id": "elisa-4pl",
+    "name": "ELISA 4PL",
+    "method": "elisa-four-pl-v2",
+    "modes": [
+      {
+        "key": "concentrationUnit",
+        "values": [
+          "",
+          "µM",
+          "nM",
+          "mg/mL",
+          "µg/mL",
+          "ng/mL",
+          "pg/mL"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: analysis"
+  },
+  {
+    "id": "wb-loading",
+    "name": "WB Loading",
+    "method": "wb-loading-v3",
+    "modes": [
+      {
+        "key": "bufferContainsReducingAgent",
+        "values": [
+          "",
+          "no",
+          "yes"
+        ]
+      },
+      {
+        "key": "reducingMode",
+        "values": [
+          "volume-fraction",
+          "target-concentration"
+        ]
+      }
+    ],
+    "coverage": "adapter: each valid sample all components"
+  },
+  {
+    "id": "moi",
+    "name": "MOI",
+    "method": "moi-v2",
+    "modes": [
+      {
+        "key": "titerUnit",
+        "values": [
+          "PFU/mL",
+          "IU/mL",
+          "TU/mL",
+          "VG/mL"
+        ]
+      }
+    ],
+    "coverage": "adapter: virus stock"
+  },
+  {
+    "id": "virus-titer",
+    "name": "Virus Titer",
+    "method": "virus-titer-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "plaque",
+          "tcid50"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: titer estimate"
+  },
+  {
+    "id": "unit-converter",
+    "name": "Unit Converter",
+    "method": "unit-converter-v2",
+    "modes": [
+      {
+        "key": "dimension",
+        "values": [
+          "mass",
+          "volume",
+          "concentration",
+          "temperature"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: pure conversion"
+  },
+  {
+    "id": "centrifuge",
+    "name": "Centrifuge",
+    "method": "centrifuge-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "rpm-to-rcf",
+          "rcf-to-rpm"
+        ]
+      },
+      {
+        "key": "radiusDefinition",
+        "values": [
+          "entered",
+          "maximum",
+          "mean"
+        ]
+      }
+    ],
+    "coverage": "not-applicable: speed conversion"
+  },
+  {
+    "id": "resuspension",
+    "name": "Reagent resuspension",
+    "method": "resuspension-v2",
+    "modes": [
+      {
+        "key": "mode",
+        "values": [
+          "amount",
+          "mass",
+          "mass-molar"
+        ]
+      }
+    ],
+    "coverage": "adapter: make-up target"
+  },
+  {
+    "id": "normalization",
+    "name": "Batch normalization",
+    "method": "normalization-v2",
+    "modes": [],
+    "coverage": "adapter: sample and diluent"
+  }
+]

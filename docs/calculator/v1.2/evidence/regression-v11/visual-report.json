@@ -1,0 +1,178 @@
+{
+  "checks": [
+    "U16 fourteen actual scheme/mode preview renders; semantic token contrast also unit-tested",
+    "V09/U14 author document paper markup, font and colors preserved across appearance changes",
+    "U04 landscape and 200% CSS zoom simulation; physical browser zoom and real phone keyboard remain manual"
+  ],
+  "actualColors": [
+    {
+      "theme": "moon-dai",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(32, 40, 47)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(42, 71, 95)",
+      "buttonText": "rgb(251, 252, 253)",
+      "focusOutline": "rgb(42, 71, 95)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "moon-dai",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(170, 201, 225)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(170, 201, 225)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "azure-coral",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(32, 40, 43)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(20, 125, 153)",
+      "buttonText": "rgb(251, 253, 254)",
+      "focusOutline": "rgb(20, 125, 153)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "azure-coral",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(137, 213, 232)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(137, 213, 232)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "celadon-pine",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(34, 42, 37)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(57, 121, 120)",
+      "buttonText": "rgb(251, 252, 248)",
+      "focusOutline": "rgb(57, 121, 120)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "celadon-pine",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(167, 210, 180)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(167, 210, 180)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "lotus-ink",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(42, 37, 40)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(117, 85, 107)",
+      "buttonText": "rgb(253, 250, 248)",
+      "focusOutline": "rgb(117, 85, 107)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "lotus-ink",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(214, 185, 223)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(214, 185, 223)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "indigo-xiangqi",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(31, 41, 55)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(22, 97, 171)",
+      "buttonText": "rgb(251, 252, 255)",
+      "focusOutline": "rgb(22, 97, 171)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "indigo-xiangqi",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(170, 201, 225)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(170, 201, 225)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "palace-jasmine",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(32, 43, 35)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(27, 125, 69)",
+      "buttonText": "rgb(251, 253, 249)",
+      "focusOutline": "rgb(27, 125, 69)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "palace-jasmine",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(137, 213, 232)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(137, 213, 232)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    },
+    {
+      "theme": "ganqing-buddha",
+      "mode": "light",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(32, 42, 58)",
+      "inputBorder": "rgb(119, 132, 141)",
+      "buttonBackground": "rgb(53, 111, 220)",
+      "buttonText": "rgb(252, 253, 255)",
+      "focusOutline": "rgb(53, 111, 220)",
+      "warningBackground": "rgb(250, 240, 220)",
+      "warningText": "rgb(128, 91, 36)"
+    },
+    {
+      "theme": "ganqing-buddha",
+      "mode": "dark",
+      "background": "rgb(28, 39, 48)",
+      "text": "rgb(237, 242, 245)",
+      "inputBorder": "rgb(138, 162, 177)",
+      "buttonBackground": "rgb(167, 210, 180)",
+      "buttonText": "rgb(26, 36, 45)",
+      "focusOutline": "rgb(167, 210, 180)",
+      "warningBackground": "rgb(59, 48, 32)",
+      "warningText": "rgb(241, 206, 146)"
+    }
+  ],
+  "completedAt": "2026-09-07T00:50:03.361Z"
+}

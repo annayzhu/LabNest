@@ -165,12 +165,12 @@ var LabNestCalculations = (() => {
   }
   function resultExportRows(result, zh) {
     const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
-    const metadata = { context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
+    const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
     return data.map((row) => ({ ...row, ...metadata }));
   }
   function resultClipboard(result, zh) {
     const table = presentedTable(result, zh);
-    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
+    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
   }
   function resultCsv(result, zh) {
     const rows = resultExportRows(result, zh);
@@ -180,40 +180,97 @@ var LabNestCalculations = (() => {
   }
 
   // src/lib/calculators/operations.ts
+  var operationVersion = "liquid-operations-v2";
+  function operation(id, component, value, unit, role = "add", details = {}) {
+    const quantity = { value: convert(value, unit, "\xB5L"), unit: "\xB5L", dimension: "volume" };
+    const repetitions = details.repetitions ?? 1;
+    if (!Number.isFinite(quantity.value) || quantity.value < 0 || !Number.isInteger(repetitions) || repetitions < 0) throw new Error("\u65E0\u6548\u6DB2\u4F53\u64CD\u4F5C / Invalid liquid operation");
+    return { id, component, source: "specified-stock", destination: "preparation", repetitions, planVersion: operationVersion, basis: "theoretical", ...details, role, quantity };
+  }
+  var operationCoverage = {
+    "hemocytometer": "not-applicable: counting only",
+    seeding: "adapter: batch and per-well",
+    hydrogel: "adapter: batch and per-well",
+    split: "not-applicable: confluency estimate",
+    freezing: "adapter: batch and per-vial",
+    transfection: "adapter: one/two-tube batch and dispensing",
+    "kill-curve": "adapter: parallel additions and diluent",
+    viability: "adapter: final resuspension target",
+    od600: "not-applicable: density estimate",
+    cfu: "not-applicable: colony count reference",
+    "colony-counter": "not-applicable: image count",
+    dilution: "adapter: final/add/fold/ratio",
+    "reagent-dosing": "adapter: dilution",
+    "fold-dilution": "adapter: dilution",
+    "serial-dilution": "adapter: transfers and diluent",
+    molarity: "adapter: final-volume target only",
+    "percent-solution": "adapter: v/v liquid and make-up; w/v make-up; w/w masses",
+    "media-recipe": "adapter: typed liquid rows and make-up",
+    "buffer-recipe": "adapter: typed liquid rows and make-up",
+    "ic50-ec50": "not-applicable: analysis",
+    "master-mix": "planner: per-group bulk, separate samples, dispensing",
+    ligation: "not-applicable: DNA mass only",
+    tm: "not-applicable: temperature estimate",
+    "dna-rna-conversion": "not-applicable: quantity conversion",
+    "bradford-bca": "not-applicable: analysis",
+    "elisa-4pl": "not-applicable: analysis",
+    "wb-loading": "adapter: each valid sample all components",
+    moi: "adapter: virus stock",
+    "virus-titer": "not-applicable: titer estimate",
+    "unit-converter": "not-applicable: pure conversion",
+    centrifuge: "not-applicable: speed conversion",
+    resuspension: "adapter: make-up target",
+    normalization: "adapter: sample and diluent"
+  };
   function withLiquidOperations(result, inputs) {
+    if (result.operations) return { ...result, operationVersion };
     const operations = [];
-    function add(id, component, value, unit, role = "add", sample) {
+    function add(id, component, value, unit, role = "add", details = {}) {
       if (value === "") return;
-      if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw new Error("Invalid liquid operation: " + component);
-      operations.push({ id, component, sample, role, quantity: { value, unit, dimension: "volume" }, basis: "theoretical" });
+      if (typeof value !== "number") throw new Error("Invalid liquid operation: " + component);
+      operations.push(operation(`${result.calculatorId}:${id}`, component, value, unit, role, details));
+    }
+    function output(key, role = "add") {
+      const o = result.outputs.find((o2) => o2.key === key);
+      if (o?.unit) add(key, o.labelZh + " / " + o.label, o.value, o.unit, role, { componentId: key });
     }
     const outputKeys = { seeding: ["stockVolumeMl", "mediumVolumeMl"], hydrogel: ["hydrogelUl", "cellStockUl", "mediumUl"], freezing: ["dmsoMl", "serumMl", "baseMediumMl"], transfection: ["reagentUl", "dnaVolumeUl", "diluentUl"], dilution: ["stockVolume", "diluentVolume"], "reagent-dosing": ["stockVolume", "diluentVolume"], "fold-dilution": ["stockVolume", "diluentVolume"], moi: ["virusVolumeUl"] };
-    if (!(result.calculatorId === "transfection" && result.table)) for (const key of outputKeys[result.calculatorId] ?? []) {
-      const output = result.outputs.find((o) => o.key === key);
-      if (output?.unit) add(key, output.labelZh + " / " + output.label, output.value, output.unit);
-    }
-    const schemas = { "serial-dilution": ["takeUl", "diluentUl"], "master-mix": ["perReactionUl", "batchUl"], normalization: ["sampleUl", "diluentUl"], "wb-loading": ["sampleUl", "bufferUl", "reducingAgentUl", "diluentUl"], "kill-curve": ["stockToAddUl"], transfection: ["volumeUl"] };
+    if (!(result.calculatorId === "transfection" && result.table)) for (const key of outputKeys[result.calculatorId] ?? []) output(key);
+    const schemas = { "serial-dilution": ["takeUl", "diluentUl"], normalization: ["sampleUl", "diluentUl"], "wb-loading": ["sampleUl", "bufferUl", "reducingAgentUl", "diluentUl"], "kill-curve": ["stockToAddUl"], transfection: ["volumeUl"] };
     for (const [index, row] of (result.table ?? []).entries()) {
       for (const key of schemas[result.calculatorId] ?? []) if (key in row) {
+        if (result.calculatorId === "serial-dilution" && index === 0 && key === "takeUl" && inputs.firstSource !== "stock" && !["linear", "custom"].includes(String(inputs.gradientMode))) continue;
         const label = key === "reducingAgentUl" ? String(row.reducingAgent) : tableColumnLabel(key, true) + " / " + tableColumnLabel(key, false);
-        add(`row:${index}:${key}`, String(row.component ?? label), row[key], "\xB5L", key === "takeUl" ? "transfer" : key === "perReactionUl" ? "dispense" : "add", String(row.id ?? row.tube ?? row.group ?? index + 1));
+        add(`row:${index}:${key}`, String(row.component ?? label), row[key], "\xB5L", key === "takeUl" ? "transfer" : "add", { componentId: key, inputRow: String(index), sample: String(row.id ?? row.tube ?? row.level ?? index + 1), source: key === "takeUl" ? `tube:${index || "starting-stock"}` : `stock:${key}`, destination: `${result.calculatorId}:${row.tube ?? row.id ?? index + 1}` });
       }
-      if (["media-recipe", "buffer-recipe"].includes(result.calculatorId) && !String(row.component).startsWith("\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3")) {
-        if (["L", "mL", "\xB5L", "\u03BCL", "uL", "nL"].includes(String(row.unit))) add(`recipe:${index}`, String(row.component), row.amount, String(row.unit));
-      }
+      if (["media-recipe", "buffer-recipe"].includes(result.calculatorId) && units[normalizeUnit(String(row.unit))]?.dimension === "volume") add(`recipe:${row.componentId}`, String(row.component), row.amount, String(row.unit), row.action === "make-up-to" ? "make-up-to" : "add", { componentId: String(row.componentId), inputRow: String(index) });
+      if (result.calculatorId === "kill-curve") add(`diluent:${index}`, "\u7A00\u91CA\u6DB2 / Diluent", convert(parseScalar(inputs.volumePerWellMl), String(inputs.volumePerWellMlUnit ?? "mL"), "\xB5L") - Number(row.stockToAddUl), "\xB5L", "add", { sample: String(row.level), destination: `well:${row.level}` });
     }
-    const quantityInput = (key, defaultUnit) => convert(parseScalar(inputs[key]), String(inputs[key + "Unit"] ?? defaultUnit), "\xB5L");
-    if (["seeding", "hydrogel"].includes(result.calculatorId)) add("per-well", "\u6BCF\u5B54\u5206\u88C5 / Per well", quantityInput("volumePerWellUl", "\xB5L"), "\xB5L", "dispense");
-    if (result.calculatorId === "freezing" && Number(result.outputMap.vials) > 0) add("per-vial", "\u6BCF\u7BA1\u5206\u88C5 / Per vial", quantityInput("volumePerVialMl", "mL"), "\xB5L", "dispense");
-    if (result.calculatorId === "transfection") add("per-well", "\u6BCF\u5B54\u590D\u5408\u7269 / Complex per well", quantityInput("complexVolumeUlPerWell", "\xB5L"), "\xB5L", "dispense");
-    if (result.calculatorId === "master-mix" && typeof result.outputMap.dispenseUl === "number") add("premix-dispense", "\u6BCF\u53CD\u5E94\u9884\u6DF7\u6DB2 / Premix per reaction", result.outputMap.dispenseUl, "\xB5L", "dispense");
-    return { ...result, operations };
+    const quantityInput = (key, unit) => convert(parseScalar(inputs[key]), String(inputs[key + "Unit"] ?? unit), "\xB5L");
+    if (["seeding", "hydrogel"].includes(result.calculatorId)) add("per-well", "\u6BCF\u5B54\u5206\u88C5 / Per well", quantityInput("volumePerWellUl", "\xB5L"), "\xB5L", "dispense", { source: "prepared-batch", destination: "wells", repetitions: parseScalar(inputs.wells) * Number(inputs.plates ?? 1) });
+    if (result.calculatorId === "freezing" && Number(result.outputMap.vials) > 0) add("per-vial", "\u6BCF\u7BA1\u5206\u88C5 / Per vial", quantityInput("volumePerVialMl", "mL"), "\xB5L", "dispense", { source: "prepared-batch", destination: "vials", repetitions: Number(result.outputMap.vials) });
+    if (result.calculatorId === "transfection") {
+      if (inputs.complexMode === "two-tube") add("combine", "\u5408\u5E76A\u7BA1\u4E0EB\u7BA1 / Combine tubes A and B", quantityInput("tubeAVolumeUl", "\xB5L") * parseScalar(inputs.wells) * parseScalar(inputs.replicates) * (1 + parseScalar(inputs.overagePercent) / 100), "\xB5L", "transfer", { source: "transfection:A", destination: "transfection:B" });
+      add("per-well", "\u6BCF\u5B54\u590D\u5408\u7269 / Complex per well", quantityInput("complexVolumeUlPerWell", "\xB5L"), "\xB5L", "dispense", { source: "prepared-complex", destination: "wells", repetitions: parseScalar(inputs.wells) * parseScalar(inputs.replicates) });
+    }
+    if (result.calculatorId === "percent-solution") {
+      if (inputs.type === "v/v") output("soluteAmount");
+      if (inputs.type !== "w/w") output("targetVolumeMl", "make-up-to");
+    }
+    if (result.calculatorId === "resuspension") output("finalVolumeUl", "make-up-to");
+    if (result.calculatorId === "viability") output("resuspensionVolumeMl", "make-up-to");
+    if (result.calculatorId === "molarity") {
+      if (inputs.mode === "volume") output("volumeL", "make-up-to");
+      else if (inputs.mode === "mass") add("final", "\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3 / Dissolve then bring to", quantityInput("volumeL", "L"), "\xB5L", "make-up-to");
+    }
+    return { ...result, operations, operationVersion };
   }
 
   // src/lib/calculators/pipetting.ts
   function applyPipettingOptions(source, inputs) {
     let result = withLiquidOperations(source, inputs);
-    const operations = [...result.operations ?? []], warnings = [...result.warnings];
+    let operations = [...result.operations ?? []];
+    const warnings = result.warnings.filter((w) => !source.structuredWarnings?.some((old) => old.message === w));
     if (inputs.pipetteStepUl !== void 0 && inputs.pipetteStepUl !== null && inputs.pipetteStepUl !== "") {
       const step = parseScalar(inputs.pipetteStepUl);
       if (step <= 0) throw new Error("\u79FB\u6DB2\u6B65\u8FDB\u5FC5\u987B\u5927\u4E8E0 / Pipetting increment must be positive");
@@ -225,30 +282,41 @@ var LabNestCalculations = (() => {
         if (actual > final || stock > 0 && actual === 0 || final - stock > 0 && final - actual === 0) throw new Error("\u6B65\u8FDB\u820D\u5165\u4F7F\u975E\u96F6\u7EC4\u5206\u4E3A0\u6216\u8D85\u8FC7\u603B\u91CF\uFF1B\u6B64\u65B9\u6848\u4E0D\u53EF\u6267\u884C / Rounding removes a nonzero component or exceeds final volume");
         const deviation = stock === 0 ? 0 : (actual / stock - 1) * 100;
         result = { ...result, table: [{ component: "\u6BCD\u6DB2 / Stock", theoreticalUl: stock, actualUl: actual }, { component: "\u7A00\u91CA\u6DB2 / Diluent", theoreticalUl: final - stock, actualUl: final - actual }], notes: [...result.notes, `\u79FB\u6DB2\u6B65\u8FDB ${step} \xB5L\uFF1B\u5B9E\u9645\u6D53\u5EA6\u504F\u5DEE ${deviation.toPrecision(6)}% / Actual concentration deviation; outputs retain theory.`] };
-        for (const [index, value] of [actual, final - actual].entries()) operations.push({ id: `actual:${index}`, component: index ? "\u7A00\u91CA\u6DB2 / Diluent" : "\u6BCD\u6DB2 / Stock", role: "add", basis: "actual", quantity: { value, unit: "\xB5L", dimension: "volume" } });
+        if (inputs.targetConcentration !== void 0) {
+          const concentration = parseScalar(inputs.targetConcentration) * (stock === 0 ? 1 : actual / stock);
+          const unit = String(inputs.targetConcentrationUnit ?? "\xB5M");
+          result.outputs = [...result.outputs, { key: "adoptedConcentration", label: "Adopted concentration", labelZh: "\u91C7\u7528\u65B9\u6848\u6D53\u5EA6", value: concentration, unit }];
+          result.outputMap = { ...result.outputMap, adoptedConcentration: concentration };
+        }
+        operations = [actual, final - actual].map((value, index) => operation(`adopted:${index}`, index ? "\u7A00\u91CA\u6DB2 / Diluent" : "\u6BCD\u6DB2 / Stock", value, "\xB5L", "add", { basis: "actual" }));
       }
     }
     const structuredWarnings = [];
     if (inputs.pipetteMinimumUl !== void 0 && inputs.pipetteMinimumUl !== null && inputs.pipetteMinimumUl !== "") {
-      const minimum = parseScalar(inputs.pipetteMinimumUl);
-      if (minimum <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
-      for (const operation of operations) {
-        const volume = convert(operation.quantity.value, operation.quantity.unit, "\xB5L");
+      const minimum2 = parseScalar(inputs.pipetteMinimumUl);
+      if (minimum2 <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
+      for (const operation2 of operations) {
+        if (operation2.role === "make-up-to" || operation2.repetitions === 0) continue;
+        const volume = convert(operation2.quantity.value, operation2.quantity.unit, "\xB5L");
         if (!Number.isFinite(volume) || volume < 0) throw new Error("Invalid liquid operation");
-        if (volume > 0 && volume < minimum) {
-          const message = `${operation.sample ? operation.sample + " \xB7 " : ""}${operation.component} (${operation.basis}): ${formatQuantity(volume)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
-          structuredWarnings.push({ code: "below-minimum", operationId: operation.id, component: operation.component, sample: operation.sample, basis: operation.basis, volumeUl: volume, minimumUl: minimum, message });
+        if (volume > 0 && volume < minimum2) {
+          const message = `${operation2.groupName ? operation2.groupName + " \xB7 " : ""}${operation2.sample ? operation2.sample + " \xB7 " : ""}${operation2.component} (${operation2.basis}): ${formatQuantity(volume)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum2)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
+          structuredWarnings.push({ code: "below-minimum", operationId: operation2.id, component: operation2.component, sample: operation2.sample, basis: operation2.basis, volumeUl: volume, minimumUl: minimum2, message });
           warnings.push(message);
         }
       }
     }
-    return { ...result, operations, warnings: [...new Set(warnings)], structuredWarnings };
+    const minimum = inputs.pipetteMinimumUl === void 0 || inputs.pipetteMinimumUl === null || inputs.pipetteMinimumUl === "" ? void 0 : parseScalar(inputs.pipetteMinimumUl);
+    const status = !operationCoverage[result.calculatorId] ? "incomplete" : operationCoverage[result.calculatorId].startsWith("not-applicable") ? "not-applicable" : !operations.some((o) => o.role !== "make-up-to") ? "incomplete" : minimum === void 0 ? "not-set" : structuredWarnings.length ? "below-minimum" : "passed";
+    return { ...result, operations, pipettingCheck: { status, minimumUl: minimum }, warnings: [...new Set(warnings)], structuredWarnings };
   }
 
   // src/lib/calculators/task-definitions.ts
   var n = (key, label, labelZh, unit) => ({ key, label, labelZh, type: "number", unit });
   var select = (key, label, labelZh, options) => ({ key, label, labelZh, type: "select", defaultValue: options[0][0], options: options.map(([value, label2, labelZh2]) => ({ value, label: label2, labelZh: labelZh2 })) });
   function enhanceDefinition(d) {
+    if (d.id === "master-mix") d.methodVersion = "master-mix-v3";
+    if (d.id === "percent-solution") d.methodVersion = "percent-solution-v2";
     d = { ...d, fields: [...d.fields], aliases: [...d.aliases], methodVersion: d.methodVersion.replace(/-v1$/, "-v2") };
     if (["wb-loading", "bradford-bca", "elisa-4pl"].includes(d.id)) d.category = "protein";
     if (["od600", "cfu", "colony-counter"].includes(d.id)) d.category = "virology-microbiology";
@@ -391,15 +459,19 @@ var LabNestCalculations = (() => {
       return { tube: index + 1, concentration: start / factor ** index, source: index ? `Tube ${index}` : "\u5DF2\u5907\u8D77\u59CB\u6DB2 / Prepared starting solution", takeUl: index ? mixed / factor : mixed, diluentUl: index ? mixed - mixed / factor : 0, mixedUl: mixed, transferUl: transfer, remainingUl: mixed - transfer };
     });
   }
-  function mixPlan(rows, reactions, extra, final) {
+  function mixPlan(rows, reactions, extra, final, groupId = "default", groupName = groupId) {
     if (!Number.isInteger(reactions) || reactions <= 0 || !Number.isFinite(extra) || extra < 0 || !Number.isFinite(final) || final <= 0 || !rows.length) throw new Error("\u53CD\u5E94\u53C2\u6570\u4E0D\u5B8C\u6574 / Incomplete reaction parameters");
     const volumes = rows.map((row) => row.inputMode === "concentration" ? dilution(convert(parseScalar(row.stock), row.stockUnit ?? "mM", row.targetUnit ?? "\xB5M"), parseScalar(row.target), final).sample : parseScalar(row.volume));
-    if (rows.some((row) => !row.name.trim()) || volumes.some((v) => v < 0)) throw new Error("\u8BF7\u68C0\u67E5\u7EC4\u5206\u540D\u79F0\u53CA\u7528\u91CF / Check component names and volumes");
+    if (rows.some((row) => !row.name.trim() || typeof row.premix !== "boolean") || volumes.some((v) => v < 0)) throw new Error("\u8BF7\u68C0\u67E5\u7EC4\u5206\u540D\u79F0\u53CA\u7528\u91CF / Check component names and volumes");
     const sum = volumes.reduce((a, b) => a + b, 0);
     if (sum > final + 1e-10) throw new Error("\u7EC4\u5206\u8D85\u8FC7\u5355\u53CD\u5E94\u4F53\u79EF / Components exceed reaction volume");
     const table = rows.map((row, index) => ({ component: row.name, perReactionUl: volumes[index], premix: row.premix ? "\u662F / Yes" : "\u72EC\u7ACB\u52A0\u6837 / Separate", batchUl: row.premix ? volumes[index] * (reactions + extra) : "", group: row.group || "default" }));
     if (final - sum > 1e-10) table.push({ component: "\u6C34 / Water", perReactionUl: final - sum, premix: "\u662F / Yes", batchUl: (final - sum) * (reactions + extra), group: "default" });
-    return { table, total: table.reduce((s, row) => s + (typeof row.batchUl === "number" ? row.batchUl : 0), 0), separate: rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0) };
+    const operations = rows.flatMap((row, index) => [operation(`mix:${groupId}:${row.id ?? index}`, row.name, row.premix ? volumes[index] * (reactions + extra) : volumes[index], "\xB5L", "add", { group: groupId, groupName, componentId: row.id ?? String(index), sample: row.sampleId, source: row.premix ? `stock:${index}` : `individual-samples:${row.sampleId ?? index}`, destination: row.premix ? `premix:${groupId}` : `reactions:${groupId}`, repetitions: row.premix ? 1 : reactions, inputRow: String(index) })]);
+    if (final - sum > 1e-10) operations.push(operation(`mix:${groupId}:water`, "\u6C34 / Water", (final - sum) * (reactions + extra), "\xB5L", "add", { group: groupId, groupName, componentId: "auto-water", destination: `premix:${groupId}` }));
+    const dispense = final - rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0);
+    if (dispense > 0) operations.push(operation(`mix:${groupId}:dispense`, "\u9884\u6DF7\u6DB2 / Premix", dispense, "\xB5L", "dispense", { group: groupId, groupName, source: `premix:${groupId}`, destination: `reactions:${groupId}`, repetitions: reactions }));
+    return { operations, remaining: dispense * extra, table, total: table.reduce((s, row) => s + (typeof row.batchUl === "number" ? row.batchUl : 0), 0), separate: rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0) };
   }
   function batchPlan(rows, target, volume, bufferFold, other = 0) {
     return rows.map((row) => {
@@ -750,11 +822,11 @@ var LabNestCalculations = (() => {
           }
           return [row.name, row.amount, row.unit];
         }) : parseRows(i.components, 3);
-        const table = source.map(([name, amount, unit]) => ({ component: name, amount: parseScalar(amount) * scale, unit }));
+        const table = source.map(([name, amount, unit], index) => ({ component: name, componentId: String(index), action: "add", amount: parseScalar(amount) * scale, unit }));
         if (table.some((row) => !row.component.trim() || row.amount < 0)) throw new Error("\u7EC4\u5206\u540D\u79F0\u6216\u7528\u91CF\u65E0\u6548 / Invalid component name or amount");
         const liquidMl = table.filter((row) => ["mL", "\xB5L", "L"].includes(row.unit)).reduce((sum, row) => sum + convert(row.amount, row.unit, "mL"), 0);
         if (i.recipeMode === "final" && liquidMl > num(i, "targetVolumeMl")) throw new Error("\u6DB2\u4F53\u7EC4\u5206\u8D85\u8FC7\u6700\u7EC8\u4F53\u79EF / Liquid components exceed final volume");
-        if (i.recipeMode === "final") table.push({ component: "\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3 / Dissolve then bring to", amount: num(i, "targetVolumeMl"), unit: "mL" });
+        if (i.recipeMode === "final") table.push({ component: "\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3 / Dissolve then bring to", componentId: "final", action: "make-up-to", amount: num(i, "targetVolumeMl"), unit: "mL" });
         if (!table.length || table.some((row) => !Number.isFinite(Number(row.amount)))) throw new Error("Enter components as name, amount, unit.");
         return finish(definition, [out("scaleFactor", "Scale factor", "\u7F29\u653E\u500D\u6570", scale), out("componentCount", "Components", "\u7EC4\u5206\u6570", table.length)], [], [], table);
       }
@@ -767,11 +839,11 @@ var LabNestCalculations = (() => {
         if (Array.isArray(i.groups)) {
           const groups = i.groups;
           if (!groups.length || groups.some((group) => !group.name.trim()) || new Set(groups.map((group) => group.name.trim())).size !== groups.length) throw new Error("\u914D\u6DB2\u7EC4\u540D\u79F0\u7F3A\u5931\u6216\u91CD\u590D / Missing or duplicate mix group name");
-          const plans = groups.map((group) => {
+          const plans = groups.map((group, groupIndex) => {
             const reactions2 = parseScalar(group.reactions);
-            return { group, plan: mixPlan(group.rows, reactions2, reactions2 * num(i, "overagePercent", { min: 0 }) / 100, num(i, "reactionVolumeUl", { positive: true })) };
+            return { group, plan: mixPlan(group.rows, reactions2, reactions2 * num(i, "overagePercent", { min: 0 }) / 100, num(i, "reactionVolumeUl", { positive: true }), String(groupIndex), group.name) };
           });
-          return finish(current, [out("groups", "Separate mix groups", "\u72EC\u7ACB\u914D\u6DB2\u7EC4", groups.length), out("totalMasterMixUl", "Total across separate groups", "\u5404\u7EC4\u9884\u6DF7\u603B\u91CF\uFF08\u5206\u522B\u914D\u5236\uFF09", plans.reduce((sum, item) => sum + item.plan.total, 0), "\xB5L")], [], ["\u4E0D\u540C\u7EC4\u5206\u522B\u914D\u5236\uFF0C\u4E0D\u5408\u5E76\u6A21\u677F / Prepare each group separately; never pool templates"], plans.flatMap(({ group, plan: plan2 }) => plan2.table.map((row) => ({ ...row, group: group.name }))));
+          return { ...finish(current, [out("groups", "Separate mix groups", "\u72EC\u7ACB\u914D\u6DB2\u7EC4", groups.length), out("totalMasterMixUl", "Total across separate groups", "\u5404\u7EC4\u9884\u6DF7\u603B\u91CF\uFF08\u5206\u522B\u914D\u5236\uFF09", plans.reduce((sum, item) => sum + item.plan.total, 0), "\xB5L")], [], ["\u4E0D\u540C\u7EC4\u5206\u522B\u914D\u5236\uFF0C\u4E0D\u5408\u5E76\u6A21\u677F / Prepare each group separately; never pool templates"], plans.flatMap(({ group, plan: plan2 }) => plan2.table.map((row) => ({ ...row, group: group.name })))), operations: plans.flatMap(({ plan: plan2 }) => plan2.operations) };
         }
         const reactions = i.samples !== void 0 ? num(i, "samples", { positive: true }) * num(i, "replicates", { positive: true }) + num(i, "controls", { min: 0 }) : num(i, "reactions", { positive: true });
         if (!Number.isInteger(reactions)) throw new Error("\u53CD\u5E94\u6570\u5FC5\u987B\u662F\u6574\u6570 / Reaction count must be an integer");
@@ -779,7 +851,7 @@ var LabNestCalculations = (() => {
         const final = i.reactionVolumeUl !== void 0 ? num(i, "reactionVolumeUl", { positive: true }) : rows.reduce((s, row) => s + parseScalar(row.volume), 0);
         const extra = reactions * num(i, "overagePercent", { min: 0 }) / 100;
         const plan = mixPlan(rows, reactions, extra, final);
-        return finish(current, [out("actualReactions", "Actual reactions", "\u5B9E\u9645\u53CD\u5E94\u6570", reactions), out("preparedReactions", "Premix equivalents", "\u9884\u6DF7\u53CD\u5E94\u5F53\u91CF", reactions + extra), out("totalMasterMixUl", "Prepare premix", "\u914D\u5236\u9884\u6DF7\u6DB2", plan.total, "\xB5L"), out("dispenseUl", "Premix per reaction", "\u6BCF\u53CD\u5E94\u5206\u88C5\u9884\u6DF7\u6DB2", final - plan.separate, "\xB5L"), out("separateUl", "Separate sample per reaction", "\u6BCF\u53CD\u5E94\u72EC\u7ACB\u52A0\u6837", plan.separate, "\xB5L")], [], [], plan.table);
+        return { ...finish(current, [out("actualReactions", "Actual reactions", "\u5B9E\u9645\u53CD\u5E94\u6570", reactions), out("preparedReactions", "Premix equivalents", "\u9884\u6DF7\u53CD\u5E94\u5F53\u91CF", reactions + extra), out("totalMasterMixUl", "Prepare premix", "\u914D\u5236\u9884\u6DF7\u6DB2", plan.total, "\xB5L"), out("dispenseUl", "Premix per reaction", "\u6BCF\u53CD\u5E94\u5206\u88C5\u9884\u6DF7\u6DB2", final - plan.separate, "\xB5L"), out("separateUl", "Separate sample per reaction", "\u6BCF\u53CD\u5E94\u72EC\u7ACB\u52A0\u6837", plan.separate, "\xB5L"), out("remainingPremixUl", "Premix reserve", "\u9884\u6DF7\u4F59\u91CF", plan.remaining, "\xB5L")], [], ["\u6BCF\u53CD\u5E94\u5F53\u91CF\u4EC5\u8868\u793A\u7EC4\u6210\uFF1B\u9884\u6DF7\u7EC4\u5206\u6309\u6574\u6279\u52A0\u5165\uFF0C\u72EC\u7ACB\u6837\u672C\u5206\u522B\u52A0\u6837 / Per-reaction equivalents describe composition; prepare premix in bulk, add samples individually."], plan.table), operations: plan.operations };
       }
       case "resuspension": {
         const mode = str(i, "mode");

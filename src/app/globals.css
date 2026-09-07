@@ -5318,3 +5318,11 @@ html[data-labnest-mode] :is(input:not([type=checkbox]):not([type=radio]),select,
 html[data-labnest-mode="dark"] :is(input,select,textarea):not(.document-a4-paper *) { color:var(--ink); }
 html[data-labnest-mode] :is(.document-a4-paper,.scientific-document-view) { --font-ui:var(--font-latin-ui),var(--font-cjk-ui); --font-data:"IBM Plex Mono","JetBrains Mono",ui-monospace,monospace; }
 @media print { html[data-labnest-mode="dark"] { color-scheme:light; } }
+
+/* Run content remains a full document; only wide tables scroll horizontally. */
+.run-step-content {overflow-wrap:anywhere;}
+.run-step-content figure {max-width:100%;min-width:0;}
+.run-step-content .editorial-scrollbar {max-height:none;overflow-x:auto;}
+.run-step-content table {width:max-content;min-width:100%;}
+.run-step-content td,.run-step-content th {white-space:pre-wrap;overflow-wrap:anywhere;}
+.run-step-content img {height:auto;max-width:100%;}

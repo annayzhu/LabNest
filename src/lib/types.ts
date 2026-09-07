@@ -44,6 +44,8 @@ export type ProtocolMaterial = {
 };
 
 export type ProtocolStep = {
+  source_ref?: string;
+  content_blocks?: import("./protocol-document").ProtocolContentBlock[];
   order: number;
   title: string;
   description: string;

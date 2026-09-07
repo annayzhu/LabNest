@@ -1,0 +1,12 @@
+{
+  "sha": "0d01169b990293cf4857a9ba72a44ca11c465fdd",
+  "startedAt": "2026-09-07T00:55:21.510Z",
+  "checks": [
+    "T19: 20 output-unit/recalculation cycles preserve warning count and saved history",
+    "Offline production reload/calculation; one injected 503 remains recoverable; real retry and same-ID replay succeed",
+    "T26: legacy snapshot without operations remains byte-stable through font/icon changes"
+  ],
+  "resultId": "cmtqj44kn000q2dosfhzio23i",
+  "clientMutationId": "c0322a82-093f-449c-b5ef-ab8288765aa9",
+  "completedAt": "2026-09-07T00:55:24.497Z"
+}

@@ -1,0 +1,8 @@
+U01-U03: both languages; five sizes; six visible targets and half-screen geometry
+U05/U06: hover, hoverable tooltip, Escape, keyboard focus and Enter
+U07: native help dialog focus containment and restoration
+U10: eight, two and explicitly zero pins retained
+U11/U12/U14: fonts, modes, refresh, cross-tab, system and isolated reset
+U08/U09: generated icons and corrupted-resource line fallback preserve geometry
+V02/V06/V07/V09: WB 10/5/1/4; 20 output-unit rounds; byte-stable saved snapshot; clipboard fallback; CSV/XLSX read-back
+I06: same WB snapshot saved to actual isolated experiment Result

@@ -103,7 +103,7 @@ export function orderedUniqueIds(values: Iterable<string>) {
 
 export function buildProtocolExperimentSteps(sources: ProtocolStepSnapshotSource[]): ExperimentStepSnapshotDraft[] {
   return sources.flatMap((source, groupOrder) => source.steps.map((step, index) => ({
-    protocolStepRef: `${source.versionId}:${step.order ?? index + 1}`,
+    protocolStepRef: `${source.versionId}:${step.source_ref ?? step.order ?? index + 1}`,
     groupKey: source.versionId,
     groupTitle: buildExperimentStepGroupTitle(source),
     groupOrder,

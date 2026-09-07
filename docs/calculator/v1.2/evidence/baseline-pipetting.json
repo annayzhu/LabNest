@@ -1,0 +1,118 @@
+{
+  "sha": "d794c0ee01e5b513ced9def1c27a7061dfffd31d",
+  "percent": {
+    "operations": [],
+    "warnings": []
+  },
+  "mix": {
+    "operations": [
+      {
+        "id": "row:0:perReactionUl",
+        "component": "Mix",
+        "sample": "default",
+        "role": "dispense",
+        "quantity": {
+          "value": 10,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:0:batchUl",
+        "component": "Mix",
+        "sample": "default",
+        "role": "add",
+        "quantity": {
+          "value": 1000,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:1:perReactionUl",
+        "component": "Enzyme",
+        "sample": "default",
+        "role": "dispense",
+        "quantity": {
+          "value": 0.1,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:1:batchUl",
+        "component": "Enzyme",
+        "sample": "default",
+        "role": "add",
+        "quantity": {
+          "value": 10,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:2:perReactionUl",
+        "component": "Water",
+        "sample": "default",
+        "role": "dispense",
+        "quantity": {
+          "value": 7.9,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:2:batchUl",
+        "component": "Water",
+        "sample": "default",
+        "role": "add",
+        "quantity": {
+          "value": 790,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "row:3:perReactionUl",
+        "component": "Template",
+        "sample": "default",
+        "role": "dispense",
+        "quantity": {
+          "value": 2,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      },
+      {
+        "id": "premix-dispense",
+        "component": "每反应预混液 / Premix per reaction",
+        "role": "dispense",
+        "quantity": {
+          "value": 18,
+          "unit": "µL",
+          "dimension": "volume"
+        },
+        "basis": "theoretical"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "below-minimum",
+        "operationId": "row:1:perReactionUl",
+        "component": "Enzyme",
+        "sample": "default",
+        "basis": "theoretical",
+        "volumeUl": 0.1,
+        "minimumUl": 1,
+        "message": "default · Enzyme (theoretical): 0.1 µL，低于所设 1 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution."
+      }
+    ]
+  }
+}

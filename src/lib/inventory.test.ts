@@ -48,7 +48,8 @@ describe("inventory transaction logic", () => {
 });
 
 describe("inventory risk flags", () => {
-  const now = new Date("2026-08-08T00:00:00Z");
+  // Business day follows runtime local calendar, independent of UTC offset.
+  const now = new Date(2026, 7, 8, 12);
 
   it("distinguishes depleted and low stock", () => {
     expect(getInventoryRiskFlags({ currentQuantity: 0, lowThreshold: 10 }, now)).toContain("depleted");
@@ -68,3 +69,5 @@ describe("inventory risk flags", () => {
     expect(getInventoryRiskFlags({ currentQuantity: 20, lowThreshold: 10, expiryDate: "2027-01-01" }, now)).toEqual([]);
   });
 });
+
+it("expiry calendar boundaries apply to date inputs and persisted Date objects",()=>{for(const expiryDate of ['2026-08-08',new Date('2026-08-08T00:00:00Z')]){expect(getInventoryRiskFlags({currentQuantity:1,expiryDate},new Date(2026,7,8,23,59))).not.toContain('expired');expect(getInventoryRiskFlags({currentQuantity:1,expiryDate},new Date(2026,7,9,0,0))).toContain('expired');}expect(getInventoryRiskFlags({currentQuantity:1,expiryDate:'2026-09-07'},new Date(2026,7,8,12))).toContain('expiring');expect(getInventoryRiskFlags({currentQuantity:1,expiryDate:'2026-09-08'},new Date(2026,7,8,12))).not.toContain('expiring');});

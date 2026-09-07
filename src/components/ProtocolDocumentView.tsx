@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckSquare2, FileCheck2, FileImage, Link2, Table2, Wrench } from "lucide-react";
-import Image from "next/image";
+import {ProtocolMediaImage} from "./ProtocolMediaImage";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ProtocolTimer } from "@/components/ProtocolTimer";
@@ -157,7 +157,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   }
   if (block.type === "media") {
     const href = safeLink(block.url);
-    if (block.mediaType === "image" && href) return <figure className="ln-protocol-media-preview"><Image src={href} alt={block.caption || block.filename || "Protocol image"} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized />{block.caption ? <figcaption>{block.caption}</figcaption> : null}</figure>;
+    if (block.mediaType === "image" && href) return <figure className="ln-protocol-media-preview"><ProtocolMediaImage href={href} label={block.caption || block.filename || "Protocol image"}/>{block.caption ? <figcaption>{block.caption}</figcaption> : null}</figure>;
     return <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-4 py-3"><FileImage className="mt-0.5 h-4 w-4 text-moss" aria-hidden /><div><p className="text-sm font-medium text-ink">{block.caption || block.filename || block.mediaType}</p>{href ? <a href={href} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-moss hover:underline"><Link2 className="h-3.5 w-3.5" />Open {block.mediaType}</a> : <p className="mt-1 text-xs text-error">Media URL is missing or unsupported.</p>}</div></div>;
   }
   if (block.type === "embedded_tool") {
@@ -180,6 +180,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
   const [headerRow = [], ...bodyRows] = block.rows;
   return <figure className="space-y-2">
+    <p className="text-xs text-muted">左右滑动查看完整表格 / Scroll sideways for all columns</p>
     {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}
     <ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar">
       <table className="document-three-line-table min-w-full table-fixed text-left text-sm">

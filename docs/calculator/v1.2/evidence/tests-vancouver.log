@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-v12
+
+
+ Test Files  92 passed (92)
+      Tests  508 passed (508)
+   Start at  17:48:11
+   Duration  3.61s (transform 7.24s, setup 0ms, import 14.57s, tests 4.05s, environment 7ms)
+

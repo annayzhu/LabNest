@@ -1,0 +1,14 @@
+{
+  "originalWorkspace": "/Users/annayzhu/Documents/Playground/LabNest",
+  "originalHead": "3d140158da0b8a685e74fb054fe55d4c0d89b673",
+  "baseMain": "d794c0ee01e5b513ced9def1c27a7061dfffd31d",
+  "branch": "codex/calculator-followup-v12",
+  "node": "v22.23.1",
+  "npm": "10.9.8",
+  "specs": {
+    "docs/calculator/spec-v1.0.md": "af90727a89bba70ae5e73814b30f52c8a569d4def34d9ef5c15d988c2c3e2274",
+    "docs/calculator/spec-v1.1.md": "341bd3748b0e5726575a3d73809b4a4767ad756bd1c56294d8e3b1bc2553dc56",
+    "docs/calculator/spec-v1.2.md": "e10e44e1e76dd2727d10dcdb9926d5ced79b5adf129b60eca3ffa94e04157e57"
+  },
+  "capturedAt": "2026-09-07T00:48:32.945331+00:00"
+}

@@ -1293,7 +1293,9 @@
     const rows=shared.presentedTable(result,language==='zh');
     const table=rows.length?`<div class="liquid-table-wrap"><table class="liquid-table"><thead><tr>${Object.keys(rows[0]).map(key=>`<th>${escapeHtml(key)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${Object.values(row).map(v=>`<td>${escapeHtml(typeof v==='number'?shared.formatQuantity(v):v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
     const columns=Object.keys(result.table?.[0]||{}).filter(k=>shared.tableUnitsFor(result)[k]).map(k=>`<label>${escapeHtml(k)} ${unitSelect('table:'+k,result.displayUnits?.['table:'+k]||shared.tableUnitsFor(result)[k])}</label>`).join('');
-    host.innerHTML = `${outputs}${warnings}${notes}${columns}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button><button type="button" data-plate-result-action="copy">Copy</button><button type="button" data-plate-result-action="csv">CSV</button></div>`;
+    const operations=(result.operations||[]).map(o=>`<li>${escapeHtml(o.groupName||o.sample||'')} ${escapeHtml(o.component)}: ${o.role==='make-up-to'?'Make up to / 定容至 ':''}${shared.formatQuantity(o.quantity.value)} ${escapeHtml(o.quantity.unit)} × ${o.repetitions}</li>`).join('');
+    const status=escapeHtml(({passed:'Passed configured minimum / 通过所设下限检查','below-minimum':'Steps below minimum / 存在低量步骤','not-set':'Minimum not set / 未设置移液下限',incomplete:'Pipetting check incomplete / 未完成移液检查','not-applicable':'No pipetting operation / 不适用'})[result.pipettingCheck?.status]||'Legacy snapshot');
+    host.innerHTML = `${outputs}<p>${status}</p><ul>${operations}</ul>${warnings}${notes}${columns}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button><button type="button" data-plate-result-action="copy">Copy</button><button type="button" data-plate-result-action="csv">CSV</button></div>`;
   }
 
   function applyStandalonePlateCalculatorResult() {

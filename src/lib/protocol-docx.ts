@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { DOMParser } from "@xmldom/xmldom";
 import { strFromU8, unzipSync } from "fflate";
+import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import {
   createEmptyProtocolDocument,
   projectProtocolDocument,
@@ -19,8 +20,8 @@ export type ParsedProtocolDocx = {
   humanCode?: string;
   canonicalTitle: string;
   englishTitle?: string;
-  availability: "draft" | "active" | "retired" | "archived";
-  reviewStage: "draft" | "ready_for_review" | "reviewed";
+  availability: "draft" | "active" | "retired" | "archived" | null;
+  reviewStage: "draft" | "ready_for_review" | "reviewed" | null;
   displayVersion: string;
   tags: string[];
   document: ProtocolDocument;
@@ -34,6 +35,7 @@ export type ParsedProtocolDocx = {
   consumptionRules: ReturnType<typeof projectProtocolDocument>["consumptionRules"];
   sourceFileName: string;
   sourceFileChecksum: string;
+  importDecision: ProtocolImportDecision;
 };
 
 function elementText(element: Element) {
@@ -117,30 +119,13 @@ function tableDescription(element: Element) {
   return description?.getAttribute("w:val") ?? description?.getAttribute("val") ?? undefined;
 }
 
-function simpleValue(value: string | undefined) {
-  return value?.split(/[（(]/)[0].trim();
-}
-
-function parseAvailability(value?: string): ParsedProtocolDocx["availability"] {
-  const normalized = simpleValue(value)?.toLowerCase();
-  if (normalized === "active" || normalized === "retired" || normalized === "archived") return normalized;
-  return "draft";
-}
-
-function parseReviewStage(value?: string): ParsedProtocolDocx["reviewStage"] {
-  const normalized = simpleValue(value)?.toLowerCase().replaceAll(" ", "_");
-  if (normalized === "reviewed" || normalized === "ready_for_review") return normalized;
-  return "draft";
-}
-
 function parseFilename(fileName: string) {
-  const match = fileName.match(/^(PRT-\d{6})_(.+)_v(\d+(?:\.\d+)+)_(Draft|Active|Retired|Archived)\.docx$/i);
+  const match = fileName.match(/^(PRT-\d{6})_(.+)_v(\d+(?:\.\d+)+)(?:_([^.]*))?\.docx$/i);
   if (!match) return {};
   return {
     code: match[1],
     title: match[2],
     displayVersion: match[3],
-    availability: match[4].toLowerCase(),
   };
 }
 
@@ -272,17 +257,15 @@ export function parseProtocolDocumentXml(
   const englishTitle = /replace with english title/i.test(englishTitleCandidate ?? "")
     ? undefined
     : englishTitleCandidate;
-  const availability = parseAvailability(metadata.get("availability"));
-  const reviewStage = parseReviewStage(metadata.get("review stage"));
+  const importDecision = decideProtocolImportState({ fileName: sourceFileName, availability: metadata.get("availability"), reviewStage: metadata.get("review stage") });
+  const availability = importDecision.documentAvailability.value;
+  const reviewStage = importDecision.documentReviewStage.value;
   const tags = (metadata.get("tag") ?? "").split(/[;；]/).map((item) => item.trim()).filter(Boolean);
   const filename = parseFilename(sourceFileName);
   const displayVersion = filename.displayVersion ?? "0.1";
 
   if (filename.code && internalCode && filename.code !== internalCode) {
     warnings.push(`Filename code ${filename.code} does not match document code ${internalCode}.`);
-  }
-  if (filename.availability && filename.availability !== availability) {
-    warnings.push(`Filename availability ${filename.availability} does not match document availability ${availability}.`);
   }
   const missingSections = document.sections.filter((section) => section.blocks.length === 0).map((section) => section.title);
   if (missingSections.length) warnings.push(`Empty required sections: ${missingSections.join(", ")}.`);
@@ -301,6 +284,7 @@ export function parseProtocolDocumentXml(
     ...projection,
     sourceFileName,
     sourceFileChecksum,
+    importDecision,
   };
 }
 

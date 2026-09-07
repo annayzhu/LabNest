@@ -23,12 +23,15 @@ import {
 import type { ParsedStructuredFile } from "@/lib/structured-files";
 import { structuredModules, type StructuredModuleKey } from "@/lib/structured-modules";
 import { parseTags } from "@/lib/tags";
+import { decideProtocolImportState, separateLegacyImportWarnings, type ProtocolImportDecision } from "@/lib/protocol-import-state";
+import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
 
 export type StructuredImportRowPreview = {
   index: number;
   values: Record<string, string>;
   errors: string[];
   warnings: string[];
+  protocolDecision?: ProtocolImportDecision;
 };
 
 export type StructuredImportPreview = {
@@ -41,6 +44,7 @@ export type StructuredImportPreview = {
   errors: string[];
   rows: StructuredImportRowPreview[];
   canImport: boolean;
+  confirmationToken?: string;
 };
 
 type ProjectData = { kind: "projects"; name: string; description?: string; status: "active" | "paused" | "completed" | "archived"; tags: string[] };
@@ -74,6 +78,7 @@ type ProtocolData = {
   researchPlanIds: string[];
   primaryResearchPlanIds: string[];
   document: ProtocolDocument;
+  importDecision: ProtocolImportDecision;
 };
 type ExperimentData = { kind: "experiments"; input: ExperimentSnapshotInput };
 type ResultData = {
@@ -351,10 +356,8 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const displayVersion = optionalText(record.displayVersion) ?? "0.1";
       if (!/^\d+\.\d+(?:\.\d+)?$/.test(displayVersion)) errors.push("Version must look like 0.1 or 1.0.");
       const document = protocolDocumentFromRecord(record);
-      const declaredAvailability = enumValue(record.availability, ["draft", "active", "retired", "archived"] as const, "draft", "Availability", errors);
-      const declaredReview = enumValue(record.reviewStage, ["draft", "ready_for_review", "reviewed"] as const, "draft", "Review stage", errors);
-      if (declaredAvailability !== "draft" || declaredReview !== "draft") warnings.push(`Declared state ${declaredAvailability} / ${declaredReview} is preserved in the source file; imported Protocols start as Draft / Draft.`);
-      data = { kind: "protocols", humanCode, canonicalTitle, shortTitle: optionalText(record.shortTitle), englishTitle: optionalText(record.englishTitle), scope, projectId: projectMatch?.value?.id, availability: "draft", reviewStage: "draft", displayVersion, tags: parseTags(record.tags), researchPlanIds, primaryResearchPlanIds, document };
+      const importDecision = decideProtocolImportState({ fileName: parsed.fileName, availability: record.availability, reviewStage: record.reviewStage, compareFilename: parsed.format === "docx" });
+      data = { kind: "protocols", humanCode, canonicalTitle, shortTitle: optionalText(record.shortTitle), englishTitle: optionalText(record.englishTitle), scope, projectId: projectMatch?.value?.id, availability: importDecision.importedAvailability, reviewStage: importDecision.importedReviewStage, displayVersion, tags: parseTags(record.tags), researchPlanIds, primaryResearchPlanIds, document, importDecision };
     }
 
     if (parsed.module === "experiments") {
@@ -465,7 +468,7 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
     }
 
     if (!errors.length && data) prepared.push({ index, data });
-    previewRows.push({ index: index + 1, values: previewValues(parsed.module, record), errors: [...new Set(errors)], warnings: [...new Set(warnings)] });
+    previewRows.push({ index: index + 1, values: previewValues(parsed.module, record), errors: [...new Set(errors)], warnings: [...new Set(warnings)], ...(data?.kind === "protocols" ? { protocolDecision: data.importDecision } : {}) });
   }
 
   const preview: StructuredImportPreview = {
@@ -492,10 +495,16 @@ export async function commitStructuredImport(
   parsed: ParsedStructuredFile,
   validation: StructuredImportValidation,
   attachmentId: string,
+  confirmationToken = "",
 ) {
   if (!validation.preview.canImport) throw new Error("Resolve every import validation error before confirming.");
+  if (parsed.module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) throw new Error("Preview the Protocol file again before confirming.");
   const sourceMetadata = { sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceFormat: parsed.format };
   const created = await prisma.$transaction(async (tx) => {
+    if (parsed.module === "protocols") {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${parsed.checksum}, 0))::text`;
+      if (await tx.protocolVersion.findFirst({ where: { sourceFileChecksum: parsed.checksum }, select: { id: true } })) throw new Error("This exact source file has already been imported.");
+    }
     const createdTargets: Array<{ targetType: string; targetId: string; href?: string }> = [];
 
     for (const row of validation.prepared) {
@@ -512,11 +521,20 @@ export async function commitStructuredImport(
         createdTargets.push({ targetType: "research_plan", targetId: record.id, href: `/research-plans/${record.id}` });
       }
       if (data.kind === "protocols") {
+        const decision = decideProtocolImportState({ fileName: parsed.fileName, availability: parsed.records[row.index].availability, reviewStage: parsed.records[row.index].reviewStage, compareFilename: parsed.format === "docx" });
+        if (data.availability !== decision.importedAvailability || data.reviewStage !== decision.importedReviewStage || JSON.stringify(data.importDecision) !== JSON.stringify(decision)) throw new Error("The Protocol import decision changed. Preview it again.");
         const humanCode = data.humanCode ?? await reserveRecordCode(tx, "protocol");
+        const legacy = separateLegacyImportWarnings(data.document.importWarnings);
+        const importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
         const projection = projectProtocolDocument(data.document);
         const recordStatus = recordStatusForReview(data.reviewStage);
-        const record = await tx.protocol.create({ data: { humanCode, title: data.canonicalTitle, canonicalTitle: data.canonicalTitle, shortTitle: data.shortTitle, englishTitle: data.englishTitle, description: projection.description, scope: data.scope, availability: data.availability, recordStatus, projectId: data.scope === "project" ? data.projectId : null, tags: data.tags, versions: { create: { revision: 1, displayVersion: data.displayVersion, reviewStage: data.reviewStage, recordStatus, title: `${data.canonicalTitle} v${data.displayVersion}`, purpose: projection.purpose, background: projection.background, materialsJson: projection.materials, equipmentJson: projection.equipment, stepsJson: projection.steps, resultTemplatesJson: projection.resultTemplates, consumptionRulesJson: projection.consumptionRules, contentJson: data.document as Prisma.InputJsonValue, sourceType: parsed.format === "docx" ? "docx_import" : "manual", sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceImportedAt: new Date(), changeSummary: `Imported from ${parsed.format.toUpperCase()}.` } }, researchPlans: data.researchPlanIds.length ? { create: data.researchPlanIds.map((researchPlanId) => ({ researchPlanId, isPrimary: data.primaryResearchPlanIds.includes(researchPlanId) })) } : undefined } });
-        await tx.activityLog.create({ data: { action: "structured_import", targetType: "protocol", targetId: record.id, metadataJson: sourceMetadata } });
+        const record = await tx.protocol.create({ data: { humanCode, title: data.canonicalTitle, canonicalTitle: data.canonicalTitle, shortTitle: data.shortTitle, englishTitle: data.englishTitle, description: projection.description, scope: data.scope, availability: data.availability, recordStatus, projectId: data.scope === "project" ? data.projectId : null, tags: data.tags, versions: { create: { revision: 1, displayVersion: data.displayVersion, reviewStage: data.reviewStage, recordStatus, title: `${data.canonicalTitle} v${data.displayVersion}`, purpose: projection.purpose, background: projection.background, materialsJson: projection.materials, equipmentJson: projection.equipment, stepsJson: projection.steps, resultTemplatesJson: projection.resultTemplates, consumptionRulesJson: projection.consumptionRules, contentJson: importedDocument as Prisma.InputJsonValue, sourceType: parsed.format === "docx" ? "docx_import" : "manual", sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceImportedAt: new Date(), changeSummary: `Imported from ${parsed.format.toUpperCase()}.` } }, researchPlans: data.researchPlanIds.length ? { create: data.researchPlanIds.map((researchPlanId) => ({ researchPlanId, isPrimary: data.primaryResearchPlanIds.includes(researchPlanId) })) } : undefined }, include: { versions: { select: { id: true } } } });
+        await tx.activityLog.create({ data: {
+          action: "structured_import", targetType: "protocol", targetId: record.id,
+          // No authenticated user resolver exists here. Never accept an actor from the upload.
+          actorUserId: null,
+          metadataJson: { ...sourceMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
+        } });
         createdTargets.push({ targetType: "protocol", targetId: record.id, href: `/protocols/${record.id}` });
       }
       if (data.kind === "experiments") {

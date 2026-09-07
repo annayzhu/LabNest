@@ -13,6 +13,15 @@ function fileFromBody(body: string | Uint8Array | ArrayBuffer, filename: string,
 }
 
 describe("structured import files", () => {
+  it("uses the draft-only policy for every Protocol row and preserves invalid declarations", async () => {
+    const parsed = await parseStructuredFile(new File([JSON.stringify([
+      { canonicalTitle: "First", availability: "active", reviewStage: "reviewed" },
+      { canonicalTitle: "Second", availability: "Actve" },
+    ])], "batch.json"), "protocols");
+    expect(parsed.protocolDecisions?.map((decision) => [decision.importedAvailability, decision.importedReviewStage])).toEqual([["draft", "draft"], ["draft", "draft"]]);
+    expect(parsed.protocolDecisions?.[1].documentAvailability).toEqual({ status: "invalid", raw: "Actve", value: null });
+    expect(parsed.protocolDecisions?.[1].issues.map((issue) => issue.code)).toEqual(["PROTOCOL_STATE_INVALID", "PROTOCOL_STATE_MISSING"]);
+  });
   it("maps CSV aliases onto the Project contract", async () => {
     const file = new File([
       "项目名称,研究目的,项目状态,标签\nCHMP2A validation,Validate the candidate mechanism,active,CHMP2A;ESCC\n",

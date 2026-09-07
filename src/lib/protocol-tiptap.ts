@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/core";
+import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import {
   createEmptyProtocolDocument,
   protocolContentBlockSchema,
@@ -71,6 +72,8 @@ function legacyAttrs(blockId: string, blockType: ProtocolContentBlock["type"], n
 }
 
 function richNodeToTiptap(node: ProtocolRichTextNode, blockId: string): JSONContent {
+  const media = documentMediaFromMarkdown(node.content.map(run => run.text).join(""));
+  if (media) return { type: "documentMedia", attrs: { block: media } };
   const attrs = legacyAttrs(blockId, "rich_text", node);
   const content = inlineContentFromRuns(node.content);
   if (node.type === "heading2") return { type: "heading", attrs: { ...attrs, level: 2 }, content };
@@ -128,6 +131,7 @@ function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>):
 }
 
 function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
+  if (block.type === "media") return [{ type: "documentMedia", attrs: { block } }];
   if (block.type === "rich_text") return richNodesToTiptap(block.nodes, block.id);
   if (block.type === "heading") return [{
     type: "heading",
@@ -242,6 +246,10 @@ function listItemParagraph(item: JSONContent): JSONContent {
 }
 
 function tiptapNodeToRichNodes(node: JSONContent): ProtocolRichTextNode[] {
+  if (node.type === "documentMedia") {
+    const media = documentMediaSchema.safeParse(node.attrs?.block);
+    return media.success ? [{ type: "paragraph", content: [{ text: documentMediaToMarkdown(media.data) }] }] : [];
+  }
   if (node.type === "bulletList" || node.type === "orderedList") {
     return (node.content ?? []).map((item) => {
       const paragraph = listItemParagraph(item);
@@ -292,7 +300,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
   const content = section.content ?? [];
   for (let index = 0; index < content.length;) {
     const node = content[index];
-    if (node.type === "protocolWidget") {
+    if (node.type === "protocolWidget" || node.type === "documentMedia") {
       const block = safeWidgetBlock(node);
       if (block) blocks.push(block);
       index += 1;

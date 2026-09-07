@@ -6,6 +6,7 @@ import { z } from "zod";
 import { RecordLifecycleStatus, ResultQualityStatus, ResultSourceType } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { createResultInTransaction } from "@/lib/result-creation";
 import { duplicateResultKeysMessage, resultTemplateHasDuplicateKeys, parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
@@ -103,10 +104,11 @@ async function persistResultUpdate(formData: FormData) {
   if (["submitted", "reviewed"].includes(data.parsed.recordStatus) && !validation.complete) {
     throw new Error(`This Result cannot be ${data.parsed.recordStatus}: ${validation.errors.join(" ")}`);
   }
-  await prisma.$transaction([
-    prisma.result.update({ where: { id: current.id }, data: { title: data.parsed.title, resultType: data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, templateInstanceKey: current.templateKey ? data.templateInstanceKey : current.templateInstanceKey, templateInstanceLabel: current.templateKey ? data.templateInstanceLabel : current.templateInstanceLabel, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, valuesJson: data.valuesJson as Prisma.InputJsonValue, contentJson: data.contentJson, ...(data.legacyValuesPromoted ? { metadataJson: withResultLegacyPromotionMarker(current.metadataJson) as Prisma.InputJsonValue } : {}) } }),
-    prisma.activityLog.create({ data: { action: "update", targetType: "result", targetId: current.id, metadataJson: { recordStatus: data.parsed.recordStatus, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status } } }),
-  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.result.update({ where: { id: current.id }, data: { title: data.parsed.title, resultType: data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, templateInstanceKey: current.templateKey ? data.templateInstanceKey : current.templateInstanceKey, templateInstanceLabel: current.templateKey ? data.templateInstanceLabel : current.templateInstanceLabel, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, valuesJson: data.valuesJson as Prisma.InputJsonValue, contentJson: data.contentJson, ...(data.legacyValuesPromoted ? { metadataJson: withResultLegacyPromotionMarker(current.metadataJson) as Prisma.InputJsonValue } : {}) } });
+    await associateDocumentMedia(tx, data.contentJson, "result", current.id);
+    await tx.activityLog.create({ data: { action: "update", targetType: "result", targetId: current.id, metadataJson: { recordStatus: data.parsed.recordStatus, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status } } });
+  });
   return { resultId: current.id, experimentId: current.experimentId };
 }
 

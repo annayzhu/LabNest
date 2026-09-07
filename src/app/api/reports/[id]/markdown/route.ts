@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { documentMediaToMarkdown } from "@/lib/document-media";
 import { normalizeScientificDocument, reportSections, type ScientificContentBlock } from "@/lib/scientific-document";
 
 function blockMarkdown(block: ScientificContentBlock) {
@@ -8,7 +9,7 @@ function blockMarkdown(block: ScientificContentBlock) {
   if (block.type === "table") return [block.caption ? `**${block.caption}**` : "", block.rows.map((row) => `| ${row.join(" | ")} |`).join("\n")].filter(Boolean).join("\n\n");
   if (block.type === "callout") return `> ${block.tone.toUpperCase()}: ${block.text}`;
   if (block.type === "metric") return `**${block.label}:** ${block.value} ${block.unit ?? ""}`.trim();
-  if (block.type === "media") return `[${block.caption || block.mediaType}](${block.url})`;
+  if (block.type === "media") return documentMediaToMarkdown(block);
   return `Dataset: ${block.label} (${block.datasetId})`;
 }
 

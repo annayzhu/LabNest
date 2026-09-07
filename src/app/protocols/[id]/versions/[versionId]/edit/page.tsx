@@ -8,6 +8,7 @@ import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolD
 import { saveProtocolDocument } from "./actions";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
+import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
@@ -55,6 +56,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
     prisma.itemLink.findMany({ where: { sourceType: "protocol", sourceId: id, linkType: "manually_related", createdBy: "user" }, select: { targetType: true, targetId: true } }),
   ]);
   if (!version || version.protocolId !== id) notFound();
+  const importHistory = await getProtocolImportHistory(id);
 
   const document = upgradeProtocolDocumentForEditing(normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
     description: version.protocol.description,
@@ -106,6 +108,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             changeSummary: version.changeSummary ?? undefined,
           }}
           initialDocument={document}
+          importHistory={importHistory}
           suggestedDisplayVersion={nextDisplayVersion(version.displayVersion)}
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({

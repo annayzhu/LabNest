@@ -4,6 +4,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
+import { DocumentMediaNode } from "./DocumentMediaNode";
+import { documentMediaInsertActions, insertDocumentMediaFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import StarterKit from "@tiptap/starter-kit";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
@@ -240,7 +242,6 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   const inputPrefix = useId();
   const imageInputId = `${inputPrefix}-protocol-images`;
   const fileInputId = `${inputPrefix}-protocol-files`;
-  const [uploadStatus, setUploadStatus] = useState("");
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [inspectorTarget, setInspectorTarget] = useState<InspectorTarget | null>(null);
   const openImagePicker = useCallback(() => globalThis.document.getElementById(imageInputId)?.click(), [imageInputId]);
@@ -263,6 +264,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       ProtocolLegacyAttributes,
       ProtocolSection,
       ProtocolWidget,
+      DocumentMediaNode,
     ],
     editorProps: {
       attributes: {
@@ -275,6 +277,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       onChangeRef.current(tiptapToProtocolDocument(nextEditor.getJSON(), importWarningsRef.current));
     },
   });
+  useDocumentMediaUploads(editor, uploadDraftId);
 
   const [toolbarEditor, setToolbarEditor] = useState<Editor | null>(null);
   const activateToolbarEditor = useCallback((target: Editor) => setToolbarEditor(target), []);
@@ -292,41 +295,13 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
     };
   }, [editor]);
 
-  const addFiles = useCallback(async (files: File[]) => {
+  const addFiles = useCallback((files: File[]) => {
     if (!editor || !files.length) return;
-    setUploadStatus(`Uploading ${files.length} file${files.length === 1 ? "" : "s"}…`);
-    try {
-      for (const file of files) {
-        const formData = new FormData();
-        formData.set("file", file, file.name);
-        formData.set("targetType", "protocol_upload_draft");
-        formData.set("targetId", uploadDraftId);
-        formData.set("linkType", "embedded_protocol_media");
-        const response = await fetch("/api/attachments", { method: "POST", body: formData });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? `Could not upload ${file.name}.`);
-        const attachment = payload.attachment as { id: string; originalFilename: string; mimeType: string; size: number };
-        const mediaType = attachment.mimeType.startsWith("image/") ? "image" as const : attachment.mimeType.startsWith("video/") ? "video" as const : "file" as const;
-        insertWidget(editor, {
-          id: uniqueBlockId(mediaType),
-          type: "media",
-          mediaType,
-          attachmentId: attachment.id,
-          filename: attachment.originalFilename,
-          mimeType: attachment.mimeType,
-          size: attachment.size,
-          url: `/api/attachments/${attachment.id}${mediaType === "image" ? "?inline=1" : ""}`,
-          caption: attachment.originalFilename,
-        });
-      }
-      setUploadStatus("File added. Save the Protocol to keep the attachment link.");
-    } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "Upload failed.");
-    }
+    insertDocumentMediaFiles(editor, files, uploadDraftId);
   }, [editor, uploadDraftId]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? [] : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
+  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
   const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
   const inspectorHost = inspectorHostId ? globalThis.document?.getElementById(inspectorHostId) : null;
   return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><>
@@ -334,7 +309,6 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
     {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
     <input id={imageInputId} type="file" accept="image/*" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
     <input id={fileInputId} type="file" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-    {uploadStatus ? <p className="ln-protocol-upload-status" role="status">{uploadStatus}</p> : null}
     <div
       className="ln-protocol-editor-drop-zone"
       onDragEnter={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) { event.preventDefault(); setDraggingFiles(true); } }}

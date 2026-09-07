@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { parseStructuredFile } from "@/lib/structured-files";
 import { commitStructuredImport, validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
+import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
   const formData = await request.formData();
   const file = formData.get("file");
   const expectedChecksum = String(formData.get("checksum") ?? "");
+  const confirmationToken = String(formData.get("confirmationToken") ?? "");
   if (!(file instanceof File)) return Response.json({ error: "Choose the same source file again before confirming." }, { status: 400 });
 
   let attachmentId: string | undefined;
@@ -20,6 +22,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
   try {
     const parsed = await parseStructuredFile(file, module);
     if (!expectedChecksum || parsed.checksum !== expectedChecksum) return Response.json({ error: "The selected file changed after preview. Preview it again before importing." }, { status: 409 });
+    if (module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) return Response.json({ errorCode: "IMPORT_CONFIRMATION_CHANGED", error: "The file, filename or import decision changed, or the preview expired. Preview it again before importing." }, { status: 409 });
     const validation = await validateStructuredImport(parsed);
     if (!validation.preview.canImport) return Response.json({ error: "The import no longer passes validation.", preview: validation.preview }, { status: 422 });
 
@@ -35,7 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
       metadataJson: { ...preparedFile.metadataJson, importModule: module, importFormat: parsed.format },
     } });
     attachmentId = attachment.id;
-    const result = await commitStructuredImport(parsed, validation, attachment.id);
+    const result = await commitStructuredImport(parsed, validation, attachment.id, confirmationToken);
     revalidatePath(`/${module}`);
     revalidatePath("/");
     return Response.json({ result }, { status: 201 });

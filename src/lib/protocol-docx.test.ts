@@ -37,6 +37,17 @@ const xml = `<?xml version="1.0" encoding="UTF-8"?>
 </w:document>`;
 
 describe("Protocol DOCX parser", () => {
+  it("separates declared availability from the draft import decision without a body warning", () => {
+    const parsed = parseProtocolDocumentXml(xml, "PRT-100012_RNA逆转录_v0.1_Draft.docx");
+    expect(parsed.importDecision).toMatchObject({
+      filenameAvailability: { status: "valid", value: "draft" },
+      documentAvailability: { status: "valid", value: "active" },
+      documentReviewStage: { status: "valid", value: "reviewed" },
+      importedAvailability: "draft", importedReviewStage: "draft",
+      issues: [expect.objectContaining({ code: "PROTOCOL_AVAILABILITY_MISMATCH", filenameValue: "draft", documentValue: "active", importedValue: "draft", resolution: "import_as_draft" })],
+    });
+    expect(parsed.document.importWarnings).not.toContain("Filename availability draft does not match document availability active.");
+  });
   it("preserves fixed sections and mixed content blocks", () => {
     const parsed = parseProtocolDocumentXml(xml, "PRT-100012_RNA逆转录_v0.1_Active.docx");
     expect(parsed.humanCode).toBe("PRT-100012");
@@ -50,6 +61,21 @@ describe("Protocol DOCX parser", () => {
       expect.objectContaining({ title: "Setup", description: "" }),
       expect.objectContaining({ title: "Mix gently.", description: "" }),
     ]);
+  });
+
+  it.each([['', 'missing'], ['Actve', 'invalid']])("keeps %s declaration distinct from draft and does not fabricate a mismatch", (value, status) => {
+    const parsed = parseProtocolDocumentXml(xml.replace('<w:t>Active</w:t>', `<w:t>${value}</w:t>`), "PRT-100012_RNA_v0.1_Draft.docx");
+    expect(parsed.availability).toBeNull();
+    expect(parsed.importDecision.documentAvailability.status).toBe(status);
+    expect(parsed.importDecision.issues.map((issue) => issue.code)).toEqual([status === 'missing' ? 'PROTOCOL_STATE_MISSING' : 'PROTOCOL_STATE_INVALID']);
+    expect(parsed.importDecision.importedAvailability).toBe('draft');
+  });
+
+  it.each([['PRT-100012_RNA_v1.2.docx', 'missing'], ['PRT-100012_RNA_v1.2_Actve.docx', 'invalid']])("keeps version information when filename state is %s", (name, status) => {
+    const parsed = parseProtocolDocumentXml(xml, name);
+    expect(parsed.importDecision.filenameAvailability.status).toBe(status);
+    expect(parsed.displayVersion).toBe("1.2");
+    expect(parsed.importDecision.issues.some((issue) => issue.code === "PROTOCOL_AVAILABILITY_MISMATCH")).toBe(false);
   });
 
   it("reports filename and internal code mismatches", () => {

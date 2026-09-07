@@ -1,6 +1,7 @@
 import { parseStructuredFile } from "@/lib/structured-files";
 import { validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
+import { createImportConfirmation } from "@/lib/structured-import-confirmation";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
   try {
     const parsed = await parseStructuredFile(file, module);
     const validation = await validateStructuredImport(parsed);
+    validation.preview.confirmationToken = createImportConfirmation(parsed);
     return Response.json({ preview: validation.preview });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "The file could not be previewed." }, { status: 400 });

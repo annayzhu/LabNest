@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ProtocolImportDecisionNotice } from "@/components/ProtocolImportDecisionNotice";
+import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 import type { StructuredImportPreview } from "@/lib/structured-import";
@@ -86,7 +88,8 @@ function groupPreviewFields(module: StructuredModuleKey, values: Record<string, 
   });
   const technical = entries.filter(isTechnicalPreviewField);
   const narrative = entries.filter((field) => !isTechnicalPreviewField(field) && (narrativePreviewKeys.has(field.key ?? "") || field.value.length > 180 || field.value.includes("\n")));
-  const core = entries.filter((field) => !technical.includes(field) && !narrative.includes(field));
+  // Protocol source/final states are explicitly distinguished in the decision notice.
+  const core = entries.filter((field) => !technical.includes(field) && !narrative.includes(field) && !(module === "protocols" && ["availability", "reviewStage"].includes(field.key ?? "")));
   return { core, narrative, technical };
 }
 
@@ -102,6 +105,7 @@ function recordPreviewTitle(module: StructuredModuleKey, values: Record<string, 
 export function StructuredImportWorkspace({ module }: { module: StructuredModuleKey }) {
   const definition = structuredModules[module];
   const router = useRouter();
+  const { locale } = useI18n();
   const fileInput = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [file, setFile] = useState<File>();
@@ -197,9 +201,11 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
     if (!file || !preview) return;
     setPending("confirm"); setError(undefined);
     const formData = new FormData(); formData.set("file", file); formData.set("checksum", preview.checksum);
+    formData.set("confirmationToken", preview.confirmationToken ?? "");
     try {
       const response = await fetch(`/api/structured-import/${module}/confirm`, { method: "POST", body: formData });
-      const payload = await response.json() as { error?: string; preview?: StructuredImportPreview; result?: { href: string } };
+      const payload = await response.json() as { error?: string; errorCode?: string; preview?: StructuredImportPreview; result?: { href: string } };
+      if (payload.errorCode === "IMPORT_CONFIRMATION_CHANGED") throw new Error(locale === "zh" ? "文件、文件名或导入规则已变化，或预览已过期。请重新预览后再导入。" : payload.error);
       if (payload.preview) setPreview(payload.preview);
       if (!response.ok || !payload.result) throw new Error(payload.error ?? "The import could not be completed.");
       router.push(payload.result.href);
@@ -295,7 +301,7 @@ function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImpo
   const ignoredCount = preview.mapping.length - mappedCount;
   const readyCount = preview.rows.filter((row) => !row.errors.length).length;
   const rowErrorCount = preview.rows.reduce((sum, row) => sum + row.errors.length, 0);
-  const rowWarningCount = preview.rows.reduce((sum, row) => sum + row.warnings.length, 0) + preview.warnings.length;
+  const rowWarningCount = preview.rows.reduce((sum, row) => sum + row.warnings.length + (row.protocolDecision?.issues.length ?? 0), 0) + preview.warnings.length;
 
   return (
     <Card>
@@ -367,6 +373,7 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
       </header>
 
       <div className="space-y-4 p-3">
+        {row.protocolDecision ? <ProtocolImportDecisionNotice decision={row.protocolDecision} /> : null}
         {grouped.core.length ? (
           <section>
             <h4 className="text-xs font-semibold text-ink">Core fields</h4>

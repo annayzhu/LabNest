@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { assertUploadSize, getAttachmentRoot, safeAttachmentFilename } from "@/lib/attachments";
 import { buildAttachmentMetadata } from "@/lib/media-metadata";
@@ -14,7 +15,8 @@ export type PreparedAttachmentFile = {
   storagePath: string;
   absolutePath: string;
   sha256: string;
-  metadataJson: ReturnType<typeof buildAttachmentMetadata>;
+  metadataJson: ReturnType<typeof buildAttachmentMetadata> & { preview: { strategy: string; available: boolean; storagePath?: string; mimeType?: string } };
+  previewFile?: { buffer: Buffer; absolutePath: string };
 };
 
 export function assertEntryFileSet(files: File[]) {
@@ -42,6 +44,19 @@ export async function prepareAttachmentFile(file: File): Promise<PreparedAttachm
   const datePath = [String(now.getUTCFullYear()), String(now.getUTCMonth() + 1).padStart(2, "0")];
   const filename = `${randomUUID()}-${safeName}`;
   const storagePath = path.join(...datePath, filename);
+  const metadataJson: PreparedAttachmentFile["metadataJson"] = buildAttachmentMetadata(buffer, file.type || "application/octet-stream");
+  let previewFile: PreparedAttachmentFile["previewFile"];
+  if (file.type.startsWith("image/")) {
+    try {
+      const thumbnail = await sharp(buffer, { limitInputPixels: 100_000_000 }).rotate().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).png().toBuffer();
+      const previewPath = path.join(...datePath, `preview-${filename}.png`);
+      previewFile = { buffer: thumbnail, absolutePath: path.join(getAttachmentRoot(), previewPath) };
+      metadataJson.preview = { strategy: "thumbnail", available: true, storagePath: previewPath, mimeType: "image/png" };
+    } catch {
+      // Keep the original even when the server cannot decode its image format.
+      metadataJson.preview = { strategy: "original_inline", available: true };
+    }
+  }
 
   return {
     buffer,
@@ -52,7 +67,8 @@ export async function prepareAttachmentFile(file: File): Promise<PreparedAttachm
     storagePath,
     absolutePath: path.join(getAttachmentRoot(), storagePath),
     sha256: createHash("sha256").update(buffer).digest("hex"),
-    metadataJson: buildAttachmentMetadata(buffer, file.type || "application/octet-stream"),
+    metadataJson,
+    previewFile,
   };
 }
 
@@ -60,9 +76,10 @@ export async function writePreparedAttachmentFiles(files: PreparedAttachmentFile
   await Promise.all(files.map(async (file) => {
     await mkdir(path.dirname(file.absolutePath), { recursive: true });
     await writeFile(file.absolutePath, file.buffer, { flag: "wx" });
+    if (file.previewFile) await writeFile(file.previewFile.absolutePath, file.previewFile.buffer, { flag: "wx" });
   }));
 }
 
 export async function cleanupPreparedAttachmentFiles(files: PreparedAttachmentFile[]) {
-  await Promise.allSettled(files.map((file) => unlink(file.absolutePath)));
+  await Promise.allSettled(files.flatMap((file) => [unlink(file.absolutePath), ...(file.previewFile ? [unlink(file.previewFile.absolutePath)] : [])]));
 }

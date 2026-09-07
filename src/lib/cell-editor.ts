@@ -10,7 +10,7 @@ export function scientificBlockHasContent(block: ScientificContentBlock) {
   if (block.type === "checklist") return block.items.some((item) => item.trim());
   if (block.type === "table") return Boolean(block.caption?.trim()) || block.rows.some((row) => row.some((cell) => cell.trim()));
   if (block.type === "metric") return Boolean(block.label.trim() || block.value.trim() || block.unit?.trim());
-  if (block.type === "media") return Boolean(block.url.trim() || block.caption?.trim());
+  if (block.type === "media") return Boolean(block.pendingUploadId || block.attachmentId || block.url.trim() || block.caption?.trim());
   return Boolean(block.datasetId.trim() || block.label.trim());
 }
 

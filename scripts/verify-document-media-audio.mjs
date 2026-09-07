@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+import { unzipSync, strFromU8 } from "fflate";
+const base = "http://127.0.0.1:3211";
+const wav = Buffer.alloc(44 + 16000);
+wav.write("RIFF"); wav.writeUInt32LE(wav.length - 8, 4); wav.write("WAVEfmt ", 8); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write("data", 36); wav.writeUInt32LE(16000, 40);
+const browser = await chromium.launch();
+try {
+  const page = await browser.newPage();
+  await page.goto(`${base}/entries/new`, { waitUntil: "networkidle" });
+  await page.getByRole("textbox", { name: "Entry title", exact: true }).fill("Audio acceptance entry");
+  const editor = page.locator('[contenteditable="true"]:visible').first(); await editor.fill("Audio acceptance");
+  await editor.press("End"); await editor.press("Enter");
+  await page.getByRole("button", { name: /Insert/, exact: false }).first().click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("menuitem", { name: /附件 \/ File/ }).click();
+  await (await chooser).setFiles({ name: "科研录音.wav", mimeType: "audio/wav", buffer: wav });
+  const link = page.getByRole("link", { name: /科研录音.wav/ }); await link.waitFor();
+  assert.equal(await editor.locator("audio").count(), 0, "Audio must not play in body");
+  const href = await link.getAttribute("href"); assert(href?.startsWith("/attachments/"));
+  await page.getByRole("button", { name: "Save Entry", exact: true }).click();
+  await page.waitForURL(url => /\/entries\/(?!new)/.test(url.pathname));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("link", { name: /科研录音.wav/ }).first().click();
+  const audio = page.locator("audio"); await audio.waitFor();
+  await audio.evaluate(async element => { await element.play(); });
+  assert.equal(await audio.evaluate(element => element.autoplay), false);
+  assert.equal(await audio.evaluate(element => element.paused), false);
+  assert.equal(await audio.evaluate(element => element.duration), 1);
+  const id = href.split("/").at(-1);
+  const response = await page.request.get(`${base}/api/attachments/package?ids=${id}`);
+  assert.equal(response.status(), 200);
+  const archive = unzipSync(new Uint8Array(await response.body()));
+  assert.deepEqual(Buffer.from(archive[`${id}/科研录音.wav`]), wav);
+  assert(strFromU8(archive["README.txt"]).length > 0);
+  console.log("PASS named audio upload, save, preview playback, no autoplay, original offline package");
+} finally { await browser.close(); }

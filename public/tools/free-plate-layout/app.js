@@ -3737,6 +3737,10 @@
     }
     if (payload.calculatorId === "hydrogel") return sameValue("水凝胶培养体积/孔", "Hydrogel volume/well", "µL", input.volumePerWellUl);
     if (payload.calculatorId === "transfection") {
+      if(input.transfectionPlan){
+        const values=window.LabNestCalculations.transfectionPlateValues(input.transfectionPlan,wellIds.length);
+        return [...sameValue("转染DNA/孔","Transfection DNA/well","µg",values.group0_dna),...sameValue("转染siRNA/孔","Transfection siRNA/well","pmol",values.group0_rna),...sameValue("siRNA终浓度","Final siRNA concentration","nM",values.group0_rnaFinal),...sameValue("每孔混合液","Mixture per well","µL",values.group0_mixed),...sameValue("最终培养体积","Final culture volume","µL",values.group0_final)];
+      }
       return [
         ...sameValue("转染 DNA/孔", "Transfection DNA/well", "µg", input.dnaUgPerWell),
         ...sameValue("转染复合物/孔", "Transfection complex/well", "µL", input.complexVolumeUlPerWell),
@@ -3766,7 +3770,7 @@
     }
     const validWellIds = (payload.plateContext.wellIds || []).filter((wellId) => Core.makeWellIds(project.plateSize).includes(wellId));
     if (!validWellIds.length || !Array.isArray(payload.outputs)) return;
-    const mappings = plateMappingsForCalculator(payload, validWellIds);
+    let mappings;try{mappings = plateMappingsForCalculator(payload, validWellIds);}catch(error){showToast(error.message);return;}
     commit(() => {
       const wells = currentWells();
       mappings.forEach((mapping, mappingIndex) => {

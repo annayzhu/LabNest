@@ -42,6 +42,7 @@ var LabNestCalculations = (() => {
     taskIconResource: () => taskIconResource,
     taskLineSvg: () => taskLineSvg,
     taskPresentation: () => taskPresentation,
+    transfectionPlateValues: () => transfectionPlateValues,
     validateDisplayUnits: () => validateDisplayUnits
   });
 
@@ -68,13 +69,13 @@ var LabNestCalculations = (() => {
   }
   function parseScalar(value, locale = "en") {
     if (typeof value !== "number" && typeof value !== "string") throw new Error("\u8BF7\u586B\u5199\u6570\u503C / Enter a number");
-    let text = String(value).trim();
+    let text2 = String(value).trim();
     if (/^(de|fr|es|it)(-|$)/.test(locale)) {
-      if (text.includes(".") && text.includes(",")) throw new Error("\u5C0F\u6570\u5206\u9694\u7B26\u6709\u6B67\u4E49 / Ambiguous separators");
-      text = text.replace(",", ".");
+      if (text2.includes(".") && text2.includes(",")) throw new Error("\u5C0F\u6570\u5206\u9694\u7B26\u6709\u6B67\u4E49 / Ambiguous separators");
+      text2 = text2.replace(",", ".");
     }
-    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text) || !Number.isFinite(Number(text))) throw new Error("\u8BF7\u586B\u5199\u5B8C\u6574\u6709\u9650\u6570\u503C / Enter a complete finite number");
-    return Number(text);
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text2) || !Number.isFinite(Number(text2))) throw new Error("\u8BF7\u586B\u5199\u5B8C\u6574\u6709\u9650\u6570\u503C / Enter a complete finite number");
+    return Number(text2);
   }
   function convert(value, from, to) {
     const a = units[normalizeUnit(from)], b = units[normalizeUnit(to)];
@@ -89,185 +90,12 @@ var LabNestCalculations = (() => {
   }
   var canonicalUnits = { mass: "g", volume: "L", amount: "mol", "molar-concentration": "mol/L", "mass-concentration": "g/L", "cell-concentration": "cells/mL", length: "cm", area: "cm\xB2", time: "s", temperature: "K" };
 
-  // src/lib/calculators/task-definitions.ts
-  var n = (key, label, labelZh, unit) => ({ key, label, labelZh, type: "number", unit });
-  var select = (key, label, labelZh, options) => ({ key, label, labelZh, type: "select", defaultValue: options[0][0], options: options.map(([value, label2, labelZh2]) => ({ value, label: label2, labelZh: labelZh2 })) });
-  function enhanceDefinition(d) {
-    if (d.id === "serial-dilution") d.methodVersion = "serial-dilution-v3";
-    if (d.id === "master-mix") d.methodVersion = "master-mix-v3";
-    if (d.id === "percent-solution") d.methodVersion = "percent-solution-v2";
-    d = { ...d, fields: [...d.fields], aliases: [...d.aliases], methodVersion: d.methodVersion.replace(/-v1$/, "-v2") };
-    if (["wb-loading", "bradford-bca", "elisa-4pl"].includes(d.id)) d.category = "protein";
-    if (["od600", "cfu", "colony-counter"].includes(d.id)) d.category = "virology-microbiology";
-    if (["dilution", "reagent-dosing", "fold-dilution"].includes(d.id)) {
-      d.name = "Dilution & dosing";
-      d.nameZh = "\u7A00\u91CA\u4E0E\u52A0\u836F";
-      d.aliases.push("\u6297\u4F53", "1:1000", "antibody dilution", "10\xD7 PBS", "fold dilution", "\u52A0\u836F", "\u5E38\u89C4\u7A00\u91CA", "\u8BD5\u5242\u52A0\u836F", "\u500D\u6570\u7A00\u91CA");
-      d.fields = [select("mode", "Mode", "\u6A21\u5F0F", [["final", "Final volume", "\u914D\u81F3\u6700\u7EC8\u4F53\u79EF"], ["add", "Add to existing liquid", "\u5411\u5DF2\u6709\u6DB2\u4F53\u52A0\u836F"], ["fold", "Fold dilution", "\u500D\u6DB2"], ["ratio", "1:N dilution", "1:N\u7A00\u91CA\uFF08\u5360\u6700\u7EC8\u4F53\u79EF1/N\uFF09"], ["parts", "Stock:diluent", "\u6BCD\u6DB2:\u7A00\u91CA\u6DB2"]]), n("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", "mM"), n("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", "\xB5M"), n("initialConcentration", "Initial concentration (same solute)", "\u5DF2\u6709\u6DB2\u4F53\u521D\u59CB\u6D53\u5EA6\uFF08\u540C\u4E00\u6EB6\u8D28\uFF09", "\xB5M"), n("stockFold", "Stock fold", "\u6BCD\u6DB2\u500D\u6570"), n("targetFold", "Target fold", "\u76EE\u6807\u500D\u6570"), n("ratio", "Dilution denominator", "\u7A00\u91CA\u5206\u6BCDN"), n("stockParts", "Stock parts", "\u6BCD\u6DB2\u4EFD\u6570"), n("diluentParts", "Diluent parts", "\u7A00\u91CA\u6DB2\u4EFD\u6570"), n("finalVolume", "Final / initial volume", "\u6700\u7EC8\u4F53\u79EF / \u5DF2\u6709\u6DB2\u4F53\u4F53\u79EF", "mL"), n("molecularWeight", "MW of confirmed chemical form", "\u5DF2\u786E\u8BA4\u76D0/\u6C34\u5408\u7269\u5F62\u5F0F\u7684\u5206\u5B50\u91CF", "g/mol")];
-      d.exampleInputs = { mode: "final", stockConcentration: 10, targetConcentration: 10, finalVolume: 2, initialConcentration: 0 };
-      if (d.id === "fold-dilution") {
-        d.fields[0].defaultValue = "fold";
-        d.exampleInputs = { mode: "fold", stockFold: 10, targetFold: 2, finalVolume: 100 };
-      }
-    }
-    if (d.id === "molarity") {
-      d.name = "Weigh & prepare";
-      d.nameZh = "\u79F0\u91CF\u914D\u6DB2";
-      d.fields.push(n("purityPercent", "Mass purity", "\u8D28\u91CF\u7EAF\u5EA6", "%"));
-      d.exampleInputs.purityPercent = 100;
-    }
-    if (d.id === "seeding") {
-      d.fields = d.fields.filter((f) => f.key !== "plates");
-      d.fields[0] = { ...d.fields[0], label: "Viable-cell concentration", labelZh: "\u6D3B\u7EC6\u80DE\u6D53\u5EA6" };
-      d.aliases.push("seeding", "\u94FA24\u5B54");
-    }
-    if (d.id === "hemocytometer") {
-      d.fields.unshift(select("countRegion", "Counting region", "\u8BA1\u6570\u533A", [["standard", "Standard large square (100 nL)", "\u6807\u51C6\u5927\u65B9\u683C\uFF08100 nL\uFF09"], ["custom", "Custom geometry", "\u81EA\u5B9A\u4E49\u51E0\u4F55\u53C2\u6570"]]));
-      d.fields.push(n("areaMm2", "Counting area", "\u8BA1\u6570\u9762\u79EF", "mm\xB2"), n("depthMm", "Chamber depth", "\u8BA1\u6570\u6DF1\u5EA6", "mm"));
-    }
-    if (["ic50-ec50", "bradford-bca", "elisa-4pl"].includes(d.id)) {
-      d.fields.unshift(select("concentrationUnit", "Concentration unit", "\u6D53\u5EA6\u5355\u4F4D", [["", "Choose a unit", "\u8BF7\u9009\u62E9\u5355\u4F4D"], ["\xB5M", "\xB5M", "\xB5M"], ["nM", "nM", "nM"], ["mg/mL", "mg/mL", "mg/mL"], ["\xB5g/mL", "\xB5g/mL", "\xB5g/mL"], ["ng/mL", "ng/mL", "ng/mL"], ["pg/mL", "pg/mL", "pg/mL"]]));
-      d.exampleInputs.concentrationUnit = d.id === "ic50-ec50" ? "\xB5M" : d.id === "bradford-bca" ? "mg/mL" : "pg/mL";
-    }
-    if (d.id === "centrifuge") {
-      d.aliases.push("g\u8F6Crpm");
-      d.fields.push(select("radiusDefinition", "Radius definition", "\u534A\u5F84\u6765\u6E90\u5B9A\u4E49", [["entered", "User-entered rotor radius", "\u7528\u6237\u5F55\u5165\u8F6C\u5B50\u534A\u5F84"], ["maximum", "Maximum radius", "\u6700\u5927\u534A\u5F84"], ["mean", "Mean radius", "\u5E73\u5747\u534A\u5F84"]]));
-    }
-    if (d.id === "transfection") {
-      d.fields.unshift(select("complexMode", "Mixing template", "\u6DF7\u5408\u6A21\u677F", [["combined", "Combined mixture", "\u5355\u4F53\u7CFB"], ["two-tube", "Two separate tubes", "\u4E24\u7BA1\u5206\u522B\u914D\u5236\u518D\u6DF7\u5408"]]));
-      d.fields.push(n("tubeAVolumeUl", "Tube A final volume per well", "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF", "\xB5L"));
-    }
-    if (d.id === "wb-loading") {
-      d.fields.unshift(select("bufferContainsReducingAgent", "Buffer contains reducing agent", "Buffer\u662F\u5426\u5DF2\u542B\u8FD8\u539F\u5242", [["", "Please confirm", "\u8BF7\u9009\u62E9\u786E\u8BA4"], ["no", "No; specify separate amount", "\u5426\uFF0C\u5355\u72EC\u8BBE\u7F6E\u7528\u91CF"], ["yes", "Yes; do not add twice", "\u662F\uFF0C\u4E0D\u518D\u91CD\u590D\u6DFB\u52A0"]]));
-      d.fields.push({ key: "reducingAgentName", type: "text", label: "Reducing-agent stock name", labelZh: "\u8FD8\u539F\u5242\u539F\u6DB2\u540D\u79F0" }, select("reducingMode", "Reducing-agent definition", "\u8FD8\u539F\u5242\u6DFB\u52A0\u5B9A\u4E49", [["volume-fraction", "Stock fraction of final volume", "\u539F\u6DB2\u5360\u6700\u7EC8\u4F53\u79EF\u6BD4\u4F8B"], ["target-concentration", "Target active concentration (%)", "\u6709\u6548\u6210\u5206\u76EE\u6807\u6D53\u5EA6\uFF08%\uFF09"]]), n("reducingStockPercent", "Stock concentration (%)", "\u539F\u6DB2\u6709\u6548\u6210\u5206\u6D53\u5EA6\uFF08%\uFF09", "%"));
-      d.exampleInputs = { ...d.exampleInputs, bufferContainsReducingAgent: "no", reducingAgentName: "Specified stock", reducingMode: "volume-fraction" };
-      d.methodVersion = "wb-loading-v3";
-    }
-    if (d.id === "split") {
-      d.fields.unshift(select("areaMode", "Container area", "\u5BB9\u5668\u9762\u79EF", [["same", "Same source and target area", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u76F8\u540C"], ["different", "Different areas", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u4E0D\u540C"]]));
-      d.fields.push(n("sourceAreaCm2", "Source area", "\u6765\u6E90\u5BB9\u5668\u9762\u79EF", "cm\xB2"), n("targetAreaCm2", "Area of each target container", "\u6BCF\u4E2A\u76EE\u6807\u5BB9\u5668\u9762\u79EF", "cm\xB2"));
-    }
-    if (d.id === "dna-rna-conversion") d.aliases.push("ng/\u03BCL \u8F6C nM", "DNA\u6D53\u5EA6", "ng\u6BCF\u03BCL\u8F6CnM");
-    if (d.id === "percent-solution") {
-      d.fields[0].options = [...d.fields[0].options, { value: "w/w", label: "w/w", labelZh: "\u8D28\u91CF/\u8D28\u91CF" }];
-      d.fields.push(n("targetMassG", "Final mixture mass", "\u6700\u7EC8\u6DF7\u5408\u7269\u8D28\u91CF", "g"));
-    }
-    if (d.id === "serial-dilution") {
-      d.fields.push(select("volumeMode", "Volume meaning", "\u4F53\u79EF\u542B\u4E49", [["mixed", "Mixed volume", "\u6BCF\u7BA1\u6DF7\u5300\u65F6\u4F53\u79EF"], ["retained", "Retained volume", "\u8F6C\u79FB\u540E\u4FDD\u7559\u4F53\u79EF"]]));
-      d.fields.find((f) => f.key === "startingConcentration").unit = "\xB5M";
-    }
-    if (["media-recipe", "buffer-recipe"].includes(d.id)) {
-      d.fields = d.fields.filter((f) => f.key !== "components");
-      d.fields.push(select("recipeMode", "Preparation mode", "\u914D\u5236\u6A21\u5F0F", [["final", "Bring to final volume", "\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3\u6700\u7EC8\u4F53\u79EF"], ["add", "Add to existing base liquid", "\u5411\u5DF2\u6709\u57FA\u7840\u6DB2\u6DFB\u52A0"]]));
-    }
-    if (d.id === "serial-dilution") {
-      d.fields.unshift(select("gradientMode", "Gradient", "\u68AF\u5EA6\u65B9\u5F0F", [["geometric", "Geometric serial", "\u7B49\u500D\u8FDE\u7EED"], ["linear", "Linear parallel", "\u7EBF\u6027\u5E76\u884C\u914D\u5236"], ["custom", "Custom parallel", "\u81EA\u5B9A\u4E49\u6D53\u5EA6\u5E76\u884C\u914D\u5236"]]));
-      d.fields.push(n("requiredVolumeUl", "Required retained volume (optional)", "\u8F6C\u79FB\u540E\u6240\u9700\u7528\u91CF\uFF08\u53EF\u9009\uFF09", "\xB5L"), n("endingConcentration", "Last concentration", "\u672B\u70B9\u6D53\u5EA6", "\xB5M"), { key: "customTargets", label: "Targets (one \xB5M value per line)", labelZh: "\u76EE\u6807\u6D53\u5EA6\uFF08\u6BCF\u884C\u4E00\u4E2A\xB5M\u6570\u503C\uFF09", type: "textarea" }, select("firstSource", "Starting solution", "\u7B2C\u4E00\u7BA1\u6765\u6E90", [["prepared", "Already prepared starting solution", "\u5DF2\u5907\u8D77\u59CB\u6DB2"], ["stock", "Prepare from stock", "\u4ECE\u66F4\u6D53\u6BCD\u6DB2\u5236\u5907"]]), n("sourceConcentration", "Source stock concentration", "\u6765\u6E90\u6BCD\u6DB2\u6D53\u5EA6", "\xB5M"));
-    }
-    if (d.id === "master-mix") {
-      d.name = "Reaction preparation";
-      d.nameZh = "\u53CD\u5E94\u914D\u6DB2";
-      d.fields = [n("samples", "Samples", "\u6837\u672C\u6570", "integer"), n("replicates", "Replicates per sample", "\u6BCF\u6837\u672C\u91CD\u590D\u6570", "integer"), n("controls", "Control reactions", "\u989D\u5916\u5BF9\u7167\u53CD\u5E94\u6570", "integer"), n("overagePercent", "Overage", "\u9884\u6DF7\u4F59\u91CF", "%"), n("reactionVolumeUl", "Final volume per reaction", "\u5355\u53CD\u5E94\u603B\u4F53\u79EF", "\xB5L")];
-      d.exampleInputs = { samples: 8, replicates: 3, controls: 2, overagePercent: 10, reactionVolumeUl: 20, rows: [{ name: "2\xD7 Mix", volume: "10", premix: true }, { name: "F", volume: "0.5", premix: true }, { name: "R", volume: "0.5", premix: true }, { name: "Template", volume: "2", premix: false }, { name: "Water", volume: "7", premix: true }] };
-    }
-    return d;
-  }
-  var newDefinitions = [
-    { id: "resuspension", name: "Reagent resuspension", nameZh: "\u8BD5\u5242\u590D\u6EB6", shortDescription: "Final volume from amount and concentration", shortDescriptionZh: "\u6839\u636E\u8BD5\u5242\u91CF\u8BA1\u7B97\u590D\u6EB6\u6700\u7EC8\u4F53\u79EF", category: "solutions", aliases: ["\u5F15\u7269\u6EB6\u89E3", "oligo resuspension"], plateAware: false, method: "Final volume = amount / target concentration", methodZh: "\u6700\u7EC8\u4F53\u79EF = \u91CF / \u76EE\u6807\u6D53\u5EA6\uFF1B\u6309\u4EA7\u54C1\u8BF4\u660E\u9009\u62E9\u6EB6\u5242", methodVersion: "resuspension-v2", fields: [select("mode", "Mode", "\u6A21\u5F0F", [["amount", "Amount \u2192 molarity", "\u7269\u8D28\u7684\u91CF\u2192\u6469\u5C14\u6D53\u5EA6"], ["mass", "Mass \u2192 mass concentration", "\u8D28\u91CF\u2192\u8D28\u91CF\u6D53\u5EA6"], ["mass-molar", "Mass + MW \u2192 molarity", "\u8D28\u91CF\uFF0B\u5206\u5B50\u91CF\u2192\u6469\u5C14\u6D53\u5EA6"]]), n("amount", "Amount", "\u7269\u8D28\u7684\u91CF", "nmol"), n("mass", "Mass", "\u8D28\u91CF", "mg"), n("molecularWeight", "Molecular weight", "\u5206\u5B50\u91CF", "g/mol"), n("targetMolar", "Target molarity", "\u76EE\u6807\u6469\u5C14\u6D53\u5EA6", "\xB5M"), n("targetMass", "Target mass concentration", "\u76EE\u6807\u8D28\u91CF\u6D53\u5EA6", "mg/mL")], exampleInputs: { mode: "amount", amount: 25, targetMolar: 100 } },
-    { id: "normalization", name: "Batch normalization", nameZh: "\u6279\u91CF\u6D53\u5EA6\u5F52\u4E00\u5316", shortDescription: "Row-by-row dilution with sample availability", shortDescriptionZh: "\u9010\u6837\u672C\u68C0\u67E5\u6D53\u5EA6\u548C\u53EF\u7528\u4F53\u79EF\uFF0C\u751F\u6210\u79FB\u6DB2\u8868", category: "solutions", aliases: ["batch dilution", "\u6279\u91CF\u7A00\u91CA"], plateAware: false, method: "C1V1=C2V2; each sample validated separately", methodZh: "C1V1=C2V2\uFF1B\u9010\u884C\u6821\u9A8C\u5E76\u4FDD\u7559\u65E0\u6548\u884C", methodVersion: "normalization-v2", fields: [n("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", "ng/\xB5L"), n("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", "\xB5L")], exampleInputs: { targetConcentration: 10, finalVolume: 20, samples: [{ id: "A", concentration: "50", available: "" }, { id: "B", concentration: "5", available: "" }] } }
-  ];
-  function isFieldVisible(id, key, inputs) {
-    const mode = String(inputs.mode ?? "");
-    if (["dilution", "reagent-dosing", "fold-dilution"].includes(id)) {
-      const m = mode || "final";
-      if (key === "molecularWeight") return ["final", "add"].includes(m) && units[normalizeUnit(String(inputs.stockConcentrationUnit ?? "mM"))]?.dimension !== units[normalizeUnit(String(inputs.targetConcentrationUnit ?? "\xB5M"))]?.dimension;
-      if (["stockConcentration", "targetConcentration"].includes(key)) return ["final", "add"].includes(m);
-      if (key === "initialConcentration") return m === "add";
-      if (["stockFold", "targetFold"].includes(key)) return m === "fold";
-      if (key === "ratio") return m === "ratio";
-      if (["stockParts", "diluentParts"].includes(key)) return m === "parts";
-    }
-    if (id === "serial-dilution") {
-      const gradient = inputs.gradientMode ?? "geometric";
-      if (key === "startingConcentration" || key === "levels") return gradient !== "custom";
-      if (key === "dilutionFactor" || key === "volumeMode") return gradient === "geometric";
-      if (key === "endingConcentration") return gradient === "linear";
-      if (key === "customTargets") return gradient === "custom";
-      if (key === "sourceConcentration") return gradient !== "geometric" || inputs.firstSource === "stock";
-      if (key === "firstSource") return gradient === "geometric";
-    }
-    if (id === "hemocytometer" && ["areaMm2", "depthMm"].includes(key)) return inputs.countRegion === "custom";
-    if (id === "master-mix" && Array.isArray(inputs.groups) && ["samples", "replicates", "controls"].includes(key)) return false;
-    if (id === "transfection" && key === "tubeAVolumeUl") return inputs.complexMode === "two-tube";
-    if (id === "wb-loading" && ["reducingAgentPercent", "reducingAgentName", "reducingMode", "reducingStockPercent"].includes(key)) return inputs.bufferContainsReducingAgent === "no" && (key !== "reducingStockPercent" || inputs.reducingMode === "target-concentration");
-    if (id === "split" && ["sourceAreaCm2", "targetAreaCm2"].includes(key)) return inputs.areaMode === "different";
-    if (id === "molarity") return key !== { mass: "massG", concentration: "concentrationM", volume: "volumeL" }[mode || "mass"];
-    if (id === "centrifuge") return key !== (mode === "rcf-to-rpm" ? "rpm" : "rcf");
-    if (id === "percent-solution") {
-      if (key === "targetMassG") return inputs.type === "w/w";
-      if (key === "targetVolumeMl") return inputs.type !== "w/w";
-    }
-    if (id === "resuspension") {
-      if (key === "amount") return mode === "amount";
-      if (key === "mass") return mode !== "amount";
-      if (key === "molecularWeight") return mode === "mass-molar";
-      if (key === "targetMass") return mode === "mass";
-      if (key === "targetMolar") return mode !== "mass";
-    }
-    if (id === "virus-titer") return key === "mode" || (mode === "tcid50" ? key === "tcidSeries" : key !== "tcidSeries");
-    return true;
-  }
-
-  // src/lib/calculators/catalog.ts
-  var numberField = (key, label, labelZh, defaultValue, unit, min = 0) => ({ key, label, labelZh, type: "number", defaultValue, unit, min, step: "integer" === unit ? 1 : 0.01 });
-  var textField = (key, label, labelZh, defaultValue, textarea = false) => ({ key, label, labelZh, type: textarea ? "textarea" : "text", defaultValue });
-  var selectField = (key, label, labelZh, defaultValue, options) => ({ key, label, labelZh, type: "select", defaultValue, options: options.map(([value, en, zh]) => ({ value, label: en, labelZh: zh })) });
-  var definitions = [
-    { id: "hemocytometer", name: "Hemocytometer", nameZh: "\u8840\u7403\u8BA1\u6570\u677F", shortDescription: "Cell concentration from counted quadrants", shortDescriptionZh: "\u6839\u636E\u8BA1\u6570\u533A\u548C\u7A00\u91CA\u500D\u6570\u8BA1\u7B97\u7EC6\u80DE\u6D53\u5EA6", category: "cell-culture", aliases: ["cell count", "\u7EC6\u80DE\u8BA1\u6570"], plateAware: false, method: "Average count \xD7 dilution factor \xD7 10\u2074 cells/mL", methodZh: "\u5E73\u5747\u8BA1\u6570 \xD7 \u7A00\u91CA\u500D\u6570 \xD7 10\u2074 cells/mL", methodVersion: "hemocytometer-v1", fields: [textField("counts", "Quadrant counts", "\u8BA1\u6570\u533A\u7EC6\u80DE\u6570", "13,11,14,17"), numberField("dilutionFactor", "Dilution factor", "\u7A00\u91CA\u500D\u6570", 2), numberField("viabilityPercent", "Viability", "\u7EC6\u80DE\u6D3B\u7387", 90, "%")], exampleInputs: { counts: "13,11,14,17", dilutionFactor: 3, viabilityPercent: 90 } },
-    { id: "seeding", name: "Seeding", nameZh: "\u7EC6\u80DE\u94FA\u677F", shortDescription: "Cells and suspension volume per well", shortDescriptionZh: "\u8BA1\u7B97\u6BCF\u5B54\u7EC6\u80DE\u91CF\u53CA\u6574\u6279\u7EC6\u80DE\u60AC\u6DB2", category: "cell-culture", aliases: ["plating", "\u94FA\u677F"], plateAware: true, method: "Cell requirement and volume balance with overage applied once", methodZh: "\u6309\u603B\u5B54\u6570\u8BA1\u7B97\u7EC6\u80DE\u9700\u6C42\u5E76\u4EC5\u7EDF\u4E00\u52A0\u5165\u4E00\u6B21\u4F59\u91CF", methodVersion: "seeding-v1", fields: [numberField("stockCellsPerMl", "Stock cell density", "\u7EC6\u80DE\u539F\u6DB2\u6D53\u5EA6", 1e6, "cells/mL"), numberField("wells", "Wells", "\u5B54\u6570", 24, "integer", 1), numberField("plates", "Plates", "\u677F\u6570", 1, "integer", 1), numberField("cellsPerWell", "Cells per well", "\u6BCF\u5B54\u7EC6\u80DE\u6570", 5e4, "cells"), numberField("volumePerWellUl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 500, "\xB5L"), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%")], exampleInputs: { stockCellsPerMl: 1e6, wells: 24, plates: 1, cellsPerWell: 5e4, volumePerWellUl: 500, overagePercent: 10 } },
-    { id: "hydrogel", name: "Hydrogel", nameZh: "\u6C34\u51DD\u80F6\u57F9\u517B", shortDescription: "3D cell and hydrogel mixture", shortDescriptionZh: "\u8BA1\u7B973D\u57F9\u517B\u7684\u7EC6\u80DE\u4E0E\u6C34\u51DD\u80F6\u6DF7\u5408\u4F53\u7CFB", category: "cell-culture", aliases: ["3D culture", "Matrigel", "\u4E09\u7EF4\u57F9\u517B"], plateAware: true, method: "Target cells plus gel-to-cell-suspension volume ratio", methodZh: "\u4F9D\u636E\u76EE\u6807\u7EC6\u80DE\u91CF\u53CA\u51DD\u80F6\u4E0E\u7EC6\u80DE\u60AC\u6DB2\u4F53\u79EF\u6BD4\u8BA1\u7B97", methodVersion: "hydrogel-v1", fields: [numberField("stockCellsPerMl", "Stock cell density", "\u7EC6\u80DE\u539F\u6DB2\u6D53\u5EA6", 2e6, "cells/mL"), numberField("targetCellsPerMl", "Target density", "\u76EE\u6807\u7EC6\u80DE\u5BC6\u5EA6", 1e6, "cells/mL"), numberField("wells", "Wells", "\u5B54\u6570", 10, "integer", 1), numberField("volumePerWellUl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 100, "\xB5L"), numberField("gelParts", "Hydrogel parts", "\u6C34\u51DD\u80F6\u4EFD\u6570", 4), numberField("suspensionParts", "Cell suspension parts", "\u7EC6\u80DE\u60AC\u6DB2\u4EFD\u6570", 1)], exampleInputs: { stockCellsPerMl: 1e7, targetCellsPerMl: 1e6, wells: 10, volumePerWellUl: 100, gelParts: 4, suspensionParts: 1 } },
-    { id: "split", name: "Split Calculator", nameZh: "\u7EC6\u80DE\u4F20\u4EE3", shortDescription: "Post-split confluency and readiness estimate", shortDescriptionZh: "\u4F30\u7B97\u4F20\u4EE3\u540E\u6C47\u5408\u5EA6\u53CA\u8FBE\u5230\u76EE\u6807\u7684\u65F6\u95F4", category: "cell-culture", aliases: ["passage", "\u4F20\u4EE3", "confluency"], plateAware: false, method: "Exponential growth estimate from confluency, split ratio, and doubling time", methodZh: "\u6839\u636E\u6C47\u5408\u5EA6\u3001\u4F20\u4EE3\u6BD4\u4F8B\u548C\u500D\u589E\u65F6\u95F4\u8FDB\u884C\u6307\u6570\u751F\u957F\u4F30\u7B97", methodVersion: "split-v1", fields: [numberField("currentConfluency", "Current confluency", "\u5F53\u524D\u6C47\u5408\u5EA6", 90, "%"), numberField("splitRatio", "Split denominator", "\u4F20\u4EE3\u6BD4\u4F8B\u5206\u6BCD", 4), numberField("targetConfluency", "Target confluency", "\u76EE\u6807\u6C47\u5408\u5EA6", 80, "%"), numberField("doublingTimeHours", "Doubling time", "\u500D\u589E\u65F6\u95F4", 24, "h")], exampleInputs: { currentConfluency: 90, splitRatio: 4, targetConfluency: 80, doublingTimeHours: 24 } },
-    { id: "freezing", name: "Freezing", nameZh: "\u7EC6\u80DE\u51BB\u5B58", shortDescription: "Cryovials and freezing-medium composition", shortDescriptionZh: "\u8BA1\u7B97\u51BB\u5B58\u7BA1\u6570\u548C\u51BB\u5B58\u6DB2\u7EC4\u6210", category: "cell-culture", aliases: ["cryopreservation", "\u51BB\u5B58"], plateAware: false, method: "Available cells divided by target cells per vial; medium components by percentage", methodZh: "\u6309\u6BCF\u7BA1\u76EE\u6807\u7EC6\u80DE\u6570\u53CA\u51BB\u5B58\u6DB2\u767E\u5206\u6BD4\u8BA1\u7B97", methodVersion: "freezing-v1", fields: [numberField("totalCells", "Total cells", "\u603B\u7EC6\u80DE\u6570", 1e7, "cells"), numberField("cellsPerVial", "Cells per vial", "\u6BCF\u7BA1\u7EC6\u80DE\u6570", 1e6, "cells"), numberField("volumePerVialMl", "Volume per vial", "\u6BCF\u7BA1\u4F53\u79EF", 1, "mL"), numberField("dmsoPercent", "DMSO", "DMSO\u6BD4\u4F8B", 10, "%"), numberField("serumPercent", "Serum", "\u8840\u6E05\u6BD4\u4F8B", 20, "%")], exampleInputs: { totalCells: 1e7, cellsPerVial: 1e6, volumePerVialMl: 1, dmsoPercent: 10, serumPercent: 20 } },
-    { id: "transfection", name: "Transfection", nameZh: "\u8F6C\u67D3\u4F53\u7CFB", shortDescription: "Nucleic acid and reagent master mix", shortDescriptionZh: "\u8BA1\u7B97\u6838\u9178\u3001\u8F6C\u67D3\u8BD5\u5242\u548C\u7A00\u91CA\u6DB2", category: "cell-culture", aliases: ["lipofection", "siRNA", "\u8D28\u7C92\u8F6C\u67D3"], plateAware: true, method: "Per-well nucleic acid and reagent ratio scaled by wells, replicates, and overage", methodZh: "\u6309\u6BCF\u5B54\u6838\u9178\u91CF\u3001\u8BD5\u5242\u6BD4\u4F8B\u3001\u5B54\u6570\u53CA\u4F59\u91CF\u8BA1\u7B97", methodVersion: "transfection-v1", fields: [numberField("wells", "Wells", "\u5B54\u6570", 6, "integer", 1), numberField("replicates", "Replicates", "\u91CD\u590D\u6570", 1, "integer", 1), numberField("dnaUgPerWell", "DNA per well", "\u6BCF\u5B54DNA", 2, "\xB5g"), numberField("dnaConcentrationUgUl", "DNA stock concentration", "DNA\u6BCD\u6DB2\u6D53\u5EA6", 1, "\xB5g/\xB5L"), numberField("reagentUlPerUg", "Reagent per \xB5g DNA", "\u6BCF\xB5g DNA\u8BD5\u5242\u91CF", 3, "\xB5L/\xB5g"), numberField("complexVolumeUlPerWell", "Complex volume per well", "\u6BCF\u5B54\u590D\u5408\u7269\u4F53\u79EF", 125, "\xB5L"), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%")], exampleInputs: { wells: 6, replicates: 1, dnaUgPerWell: 2, dnaConcentrationUgUl: 1, reagentUlPerUg: 3, complexVolumeUlPerWell: 125, overagePercent: 10 } },
-    { id: "kill-curve", name: "Kill Curve", nameZh: "\u6740\u706D\u66F2\u7EBF", shortDescription: "Antibiotic dose series and stock additions", shortDescriptionZh: "\u751F\u6210\u6297\u751F\u7D20\u6D53\u5EA6\u68AF\u5EA6\u53CA\u6BCD\u6DB2\u52A0\u5165\u91CF", category: "cell-culture", aliases: ["antibiotic", "\u7B5B\u9009\u6D53\u5EA6"], plateAware: true, method: "Linear or logarithmic dose series followed by C1V1=C2V2", methodZh: "\u751F\u6210\u7EBF\u6027\u6216\u5BF9\u6570\u6D53\u5EA6\u5E8F\u5217\u540E\u6309C1V1=C2V2\u8BA1\u7B97", methodVersion: "kill-curve-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10, "mg/mL"), numberField("minimum", "Minimum dose", "\u6700\u4F4E\u6D53\u5EA6", 0.5, "\xB5g/mL"), numberField("maximum", "Maximum dose", "\u6700\u9AD8\u6D53\u5EA6", 10, "\xB5g/mL"), numberField("points", "Dose points", "\u6D53\u5EA6\u70B9\u6570", 8, "integer", 2), numberField("volumePerWellMl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 0.5, "mL"), selectField("scale", "Scale", "\u68AF\u5EA6\u65B9\u5F0F", "linear", [["linear", "Linear", "\u7EBF\u6027"], ["log", "Logarithmic", "\u5BF9\u6570"]])], exampleInputs: { stockConcentration: 10, minimum: 0.5, maximum: 10, points: 8, volumePerWellMl: 0.5, scale: "linear" } },
-    { id: "viability", name: "Viability", nameZh: "\u7EC6\u80DE\u6D3B\u7387", shortDescription: "Live/dead cells and resuspension", shortDescriptionZh: "\u8BA1\u7B97\u6D3B\u7EC6\u80DE\u3001\u6B7B\u7EC6\u80DE\u53CA\u91CD\u60AC\u4F53\u79EF", category: "cell-culture", aliases: ["trypan blue", "\u53F0\u76FC\u84DD"], plateAware: false, method: "Total cells partitioned by viability; optional live-cell target density", methodZh: "\u6309\u6D3B\u7387\u62C6\u5206\u6D3B/\u6B7B\u7EC6\u80DE\uFF0C\u5E76\u53EF\u6309\u76EE\u6807\u6D3B\u7EC6\u80DE\u6D53\u5EA6\u91CD\u60AC", methodVersion: "viability-v1", fields: [numberField("totalCells", "Total cells", "\u603B\u7EC6\u80DE\u6570", 2e5, "cells"), numberField("viabilityPercent", "Viability", "\u7EC6\u80DE\u6D3B\u7387", 90, "%"), numberField("targetLiveCellsPerMl", "Target live-cell density", "\u76EE\u6807\u6D3B\u7EC6\u80DE\u6D53\u5EA6", 1e5, "cells/mL")], exampleInputs: { totalCells: 2e5, viabilityPercent: 90, targetLiveCellsPerMl: 1e5 } },
-    { id: "od600", name: "OD600", nameZh: "OD600\u83CC\u6DB2\u6D53\u5EA6", shortDescription: "Optical density to estimated cell density", shortDescriptionZh: "\u6839\u636EOD600\u4F30\u7B97\u5FAE\u751F\u7269\u6D53\u5EA6", category: "cell-culture", aliases: ["bacterial density", "\u83CC\u6DB2\u6D53\u5EA6"], plateAware: false, method: "OD600 corrected for path length and multiplied by an explicit empirical factor", methodZh: "\u6309\u5149\u7A0B\u6821\u6B63OD600\u540E\u4E58\u4EE5\u660E\u786E\u7684\u7ECF\u9A8C\u6362\u7B97\u56E0\u5B50", methodVersion: "od600-v1", fields: [numberField("od600", "OD600", "OD600\u8BFB\u6570", 0.8), numberField("pathLengthCm", "Path length", "\u5149\u7A0B", 1, "cm"), numberField("cellsPerMlPerOd", "Empirical factor", "\u7ECF\u9A8C\u6362\u7B97\u56E0\u5B50", 8e8, "cells/mL/OD"), numberField("cultureVolumeMl", "Culture volume", "\u57F9\u517B\u4F53\u79EF", 5, "mL")], exampleInputs: { od600: 0.8, pathLengthCm: 1, cellsPerMlPerOd: 8e8, cultureVolumeMl: 5 } },
-    { id: "cfu", name: "CFU/mL", nameZh: "\u83CC\u843D\u5F62\u6210\u5355\u4F4D", shortDescription: "Colony-forming units from plated dilution", shortDescriptionZh: "\u6839\u636E\u83CC\u843D\u6570\u3001\u7A00\u91CA\u500D\u6570\u548C\u6D82\u677F\u4F53\u79EF\u8BA1\u7B97CFU/mL", category: "cell-culture", aliases: ["colony forming units", "\u83CC\u843D\u8BA1\u6570"], plateAware: false, method: "CFU/mL = colonies \xF7 (dilution \xD7 plated volume in mL)", methodZh: "CFU/mL = \u83CC\u843D\u6570 \xF7\uFF08\u7A00\u91CA\u5EA6 \xD7 \u6D82\u677F\u4F53\u79EFmL\uFF09", methodVersion: "cfu-v1", fields: [numberField("colonies", "Colonies", "\u83CC\u843D\u6570", 120, "integer", 1), numberField("dilution", "Dilution fraction", "\u7A00\u91CA\u5EA6", 1e-6), numberField("platedVolumeMl", "Plated volume", "\u6D82\u677F\u4F53\u79EF", 0.1, "mL"), numberField("dnaUg", "DNA amount (optional)", "DNA\u7528\u91CF\uFF08\u53EF\u9009\uFF09", 0, "\xB5g")], exampleInputs: { colonies: 120, dilution: 1e-6, platedVolumeMl: 0.1, dnaUg: 2 } },
-    { id: "colony-counter", name: "Colony & Plaque Counter", nameZh: "\u83CC\u843D\u4E0E\u566C\u83CC\u6591\u8F85\u52A9\u8BA1\u6570", shortDescription: "Reviewable image-assisted counting", shortDescriptionZh: "\u53EF\u4EBA\u5DE5\u590D\u6838\u7684\u56FE\u50CF\u8F85\u52A9\u8BA1\u6570", category: "cell-culture", aliases: ["photo count", "\u83CC\u843D\u56FE\u7247", "plaque counter"], plateAware: false, method: "Browser-local connected-region detection followed by mandatory human confirmation", methodZh: "\u6D4F\u89C8\u5668\u672C\u5730\u8FDE\u901A\u533A\u57DF\u8BC6\u522B\uFF0C\u5E76\u8981\u6C42\u4EBA\u5DE5\u786E\u8BA4", methodVersion: "colony-counter-v1", fields: [numberField("automaticCount", "Automatic count", "\u81EA\u52A8\u8BC6\u522B\u6570", 42, "integer"), numberField("manualAdjustment", "Manual adjustment", "\u4EBA\u5DE5\u589E\u51CF", 0, "integer", -1e5)], exampleInputs: { automaticCount: 42, manualAdjustment: -2 } },
-    { id: "reagent-dosing", name: "Reagent Dosing", nameZh: "\u8BD5\u5242\u52A0\u836F", shortDescription: "Stock addition to a desired final concentration", shortDescriptionZh: "\u4ECE\u6BCD\u6DB2\u8BA1\u7B97\u76EE\u6807\u7EC8\u6D53\u5EA6\u6240\u9700\u52A0\u5165\u91CF", category: "solutions", aliases: ["dose", "C1V1", "\u52A0\u836F"], plateAware: true, method: "C1V1 = C2V2", methodZh: "C1V1 = C2V2", methodVersion: "reagent-dosing-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10, "mM"), numberField("targetConcentration", "Final concentration", "\u76EE\u6807\u7EC8\u6D53\u5EA6", 10, "\xB5M"), numberField("finalVolumeMl", "Final volume", "\u6700\u7EC8\u4F53\u79EF", 10, "mL"), numberField("stockToTargetFactor", "Stock-unit to target-unit factor", "\u6BCD\u6DB2\u5355\u4F4D\u76F8\u5BF9\u76EE\u6807\u5355\u4F4D\u500D\u6570", 1e3)], exampleInputs: { stockConcentration: 10, targetConcentration: 10, finalVolumeMl: 10, stockToTargetFactor: 1e3 } },
-    { id: "dilution", name: "Dilution", nameZh: "\u5E38\u89C4\u7A00\u91CA", shortDescription: "Dilute a stock to a working concentration", shortDescriptionZh: "\u5C06\u6D53\u7F29\u6BCD\u6DB2\u7A00\u91CA\u81F3\u5DE5\u4F5C\u6D53\u5EA6", category: "solutions", aliases: ["C1V1=C2V2", "\u6BCD\u6DB2\u7A00\u91CA"], plateAware: true, method: "C1V1 = C2V2 with compatible concentration units", methodZh: "\u4F7F\u7528\u517C\u5BB9\u6D53\u5EA6\u5355\u4F4D\u7684C1V1=C2V2", methodVersion: "dilution-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10), numberField("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", 1), numberField("finalVolume", "Final volume", "\u76EE\u6807\u603B\u4F53\u79EF", 10), selectField("volumeUnit", "Volume unit", "\u4F53\u79EF\u5355\u4F4D", "mL", [["\xB5L", "\xB5L", "\xB5L"], ["mL", "mL", "mL"], ["L", "L", "L"]])], exampleInputs: { stockConcentration: 10, targetConcentration: 1, finalVolume: 10, volumeUnit: "mL" } },
-    { id: "fold-dilution", name: "Fold Dilution", nameZh: "\u500D\u6570\u7A00\u91CA", shortDescription: "Prepare 1\xD7 from a concentrated stock", shortDescriptionZh: "\u7531\u6D53\u7F29\u6DB2\u914D\u52361\xD7\u5DE5\u4F5C\u6DB2", category: "solutions", aliases: ["2x", "10x", "\u500D\u6DB2"], plateAware: true, method: "Concentrated-stock volume = final volume \xF7 fold", methodZh: "\u6D53\u7F29\u6DB2\u4F53\u79EF = \u6700\u7EC8\u4F53\u79EF \xF7 \u500D\u6570", methodVersion: "fold-dilution-v1", fields: [numberField("fold", "Stock fold", "\u6D53\u7F29\u500D\u6570", 10), numberField("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", 100, "mL")], exampleInputs: { fold: 10, finalVolume: 100 } },
-    { id: "serial-dilution", name: "Serial Dilution", nameZh: "\u8FDE\u7EED\u7A00\u91CA", shortDescription: "Multi-step fixed-factor dilution", shortDescriptionZh: "\u751F\u6210\u591A\u7EA7\u56FA\u5B9A\u500D\u6570\u7A00\u91CA\u6B65\u9AA4", category: "solutions", aliases: ["\u68AF\u5EA6\u7A00\u91CA", "serial"], plateAware: true, method: "Each level transfers total volume \xF7 dilution factor from the prior level", methodZh: "\u6BCF\u4E00\u7EA7\u4ECE\u524D\u4E00\u7EA7\u8F6C\u79FB\u76EE\u6807\u603B\u4F53\u79EF\u9664\u4EE5\u7A00\u91CA\u500D\u6570", methodVersion: "serial-dilution-v1", fields: [numberField("startingConcentration", "Starting concentration", "\u8D77\u59CB\u6D53\u5EA6", 100), numberField("dilutionFactor", "Dilution factor", "\u6BCF\u7EA7\u7A00\u91CA\u500D\u6570", 10), numberField("levels", "Levels", "\u7EA7\u6570", 6, "integer", 1), numberField("totalVolumePerLevel", "Volume per level", "\u6BCF\u7EA7\u603B\u4F53\u79EF", 100, "\xB5L")], exampleInputs: { startingConcentration: 100, dilutionFactor: 10, levels: 6, totalVolumePerLevel: 100 } },
-    { id: "molarity", name: "Molarity", nameZh: "\u6469\u5C14\u6D53\u5EA6", shortDescription: "Concentration, mass, or volume from molecular weight", shortDescriptionZh: "\u6839\u636E\u5206\u5B50\u91CF\u6C42\u6D53\u5EA6\u3001\u8D28\u91CF\u6216\u4F53\u79EF", category: "solutions", aliases: ["moles", "\u6469\u5C14", "\u79F0\u91CF"], plateAware: false, method: "Moles = mass \xF7 molecular weight; molarity = moles \xF7 volume", methodZh: "\u7269\u8D28\u7684\u91CF = \u8D28\u91CF \xF7 \u5206\u5B50\u91CF\uFF1B\u6469\u5C14\u6D53\u5EA6 = \u7269\u8D28\u7684\u91CF \xF7 \u4F53\u79EF", methodVersion: "molarity-v1", fields: [selectField("mode", "Solve for", "\u6C42\u89E3\u76EE\u6807", "mass", [["mass", "Mass to weigh", "\u79F0\u91CF\u8D28\u91CF"], ["concentration", "Concentration", "\u6D53\u5EA6"], ["volume", "Volume", "\u4F53\u79EF"]]), numberField("molecularWeight", "Molecular weight", "\u5206\u5B50\u91CF", 180.16, "g/mol"), numberField("concentrationM", "Concentration", "\u6469\u5C14\u6D53\u5EA6", 0.1, "M"), numberField("volumeL", "Volume", "\u4F53\u79EF", 0.1, "L"), numberField("massG", "Mass", "\u8D28\u91CF", 1.8016, "g")], exampleInputs: { mode: "mass", molecularWeight: 180.16, concentrationM: 0.1, volumeL: 0.1, massG: 1.8016 } },
-    { id: "percent-solution", name: "% Solution", nameZh: "\u767E\u5206\u6BD4\u6EB6\u6DB2", shortDescription: "w/v or v/v solution preparation", shortDescriptionZh: "\u914D\u5236w/v\u6216v/v\u767E\u5206\u6BD4\u6EB6\u6DB2", category: "solutions", aliases: ["w/v", "v/v", "\u767E\u5206\u6D53\u5EA6"], plateAware: false, method: "% w/v = g per 100 mL; % v/v = mL per 100 mL", methodZh: "% w/v\u8868\u793A\u6BCF100 mL\u4E2D\u7684\u514B\u6570\uFF1B% v/v\u8868\u793A\u6BCF100 mL\u4E2D\u7684\u6BEB\u5347\u6570", methodVersion: "percent-solution-v1", fields: [selectField("type", "Solution type", "\u6EB6\u6DB2\u7C7B\u578B", "w/v", [["w/v", "w/v", "\u8D28\u91CF/\u4F53\u79EF"], ["v/v", "v/v", "\u4F53\u79EF/\u4F53\u79EF"]]), numberField("percentage", "Percentage", "\u767E\u5206\u6D53\u5EA6", 5, "%"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 500, "mL")], exampleInputs: { type: "w/v", percentage: 5, targetVolumeMl: 500 } },
-    { id: "media-recipe", name: "Media Recipe", nameZh: "\u57F9\u517B\u57FA\u914D\u65B9", shortDescription: "Scale a custom medium recipe", shortDescriptionZh: "\u6309\u76EE\u6807\u4F53\u79EF\u7F29\u653E\u57F9\u517B\u57FA\u914D\u65B9", category: "solutions", aliases: ["culture medium", "\u57F9\u517B\u6DB2"], plateAware: false, method: "Each component scales linearly from the recipe base volume", methodZh: "\u5404\u7EC4\u5206\u6309\u914D\u65B9\u57FA\u7840\u4F53\u79EF\u7EBF\u6027\u7F29\u653E", methodVersion: "media-recipe-v1", fields: [numberField("baseVolumeMl", "Recipe base volume", "\u914D\u65B9\u57FA\u7840\u4F53\u79EF", 500, "mL"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 1e3, "mL"), textField("components", "Components (name, amount, unit)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u7528\u91CF,\u5355\u4F4D\uFF09", "FBS,50,mL\nPen/Strep,5,mL", true)], exampleInputs: { baseVolumeMl: 500, targetVolumeMl: 1e3, components: "FBS,50,mL\nPen/Strep,5,mL" } },
-    { id: "buffer-recipe", name: "Buffer Recipe", nameZh: "\u7F13\u51B2\u6DB2\u914D\u65B9", shortDescription: "Scale a custom buffer recipe", shortDescriptionZh: "\u6309\u76EE\u6807\u4F53\u79EF\u7F29\u653E\u7F13\u51B2\u6DB2\u914D\u65B9", category: "solutions", aliases: ["PBS", "Tris", "\u7F13\u51B2\u6DB2"], plateAware: false, method: "Each component scales linearly from the recipe base volume", methodZh: "\u5404\u7EC4\u5206\u6309\u914D\u65B9\u57FA\u7840\u4F53\u79EF\u7EBF\u6027\u7F29\u653E", methodVersion: "buffer-recipe-v1", fields: [numberField("baseVolumeMl", "Recipe base volume", "\u914D\u65B9\u57FA\u7840\u4F53\u79EF", 1e3, "mL"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 500, "mL"), textField("components", "Components (name, amount, unit)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u7528\u91CF,\u5355\u4F4D\uFF09", "NaCl,8,g\nKCl,0.2,g", true)], exampleInputs: { baseVolumeMl: 1e3, targetVolumeMl: 500, components: "NaCl,8,g\nKCl,0.2,g" } },
-    { id: "ic50-ec50", name: "IC50 / EC50", nameZh: "IC50 / EC50\u62DF\u5408", shortDescription: "Four-parameter logistic dose-response fit", shortDescriptionZh: "\u56DB\u53C2\u6570Logistic\u5242\u91CF\u53CD\u5E94\u62DF\u5408", category: "solutions", aliases: ["4PL", "dose response", "\u534A\u6570\u6291\u5236"], plateAware: false, method: "Four-parameter logistic model fitted by deterministic coordinate descent", methodZh: "\u4F7F\u7528\u786E\u5B9A\u6027\u5750\u6807\u4E0B\u964D\u62DF\u5408\u56DB\u53C2\u6570Logistic\u6A21\u578B", methodVersion: "four-pl-v2", fields: [selectField("mode", "Response direction", "\u53CD\u5E94\u65B9\u5411", "activation", [["inhibition", "Remaining response (falling)", "\u6B8B\u5B58\u53CD\u5E94\uFF08\u4E0B\u964D\uFF09"], ["activation", "Activation (rising)", "\u6FC0\u6D3B\u53CD\u5E94\uFF08\u4E0A\u5347\uFF09"]]), textField("points", "Dose,response pairs", "\u6D53\u5EA6,\u53CD\u5E94\u503C", "0.1,1\n1,10\n10,50\n100,90\n1000,99", true)], exampleInputs: { mode: "activation", points: "0.1,1\n1,10\n10,50\n100,90\n1000,99" } },
-    { id: "master-mix", name: "Master Mix", nameZh: "Master Mix\u4F53\u7CFB", shortDescription: "Scale repeated reaction components", shortDescriptionZh: "\u6309\u53CD\u5E94\u6570\u548C\u4F59\u91CF\u8BA1\u7B97\u6574\u6279\u53CD\u5E94\u4F53\u7CFB", category: "molecular-biology", aliases: ["PCR mix", "\u53CD\u5E94\u4F53\u7CFB"], plateAware: true, method: "Per-reaction components \xD7 reactions \xD7 (1 + overage)", methodZh: "\u5355\u53CD\u5E94\u7EC4\u5206 \xD7 \u53CD\u5E94\u6570 \xD7\uFF081 + \u4F59\u91CF\uFF09", methodVersion: "master-mix-v1", fields: [numberField("reactions", "Reactions", "\u53CD\u5E94\u6570", 10, "integer", 1), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%"), textField("components", "Components (name, \xB5L/reaction)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u6BCF\u53CD\u5E94\xB5L\uFF09", "2\xD7 SYBR Mix,10\nForward primer,0.5\nReverse primer,0.5\nWater,8", true)], exampleInputs: { reactions: 10, overagePercent: 10, components: "2\xD7 SYBR Mix,10\nForward primer,0.5\nReverse primer,0.5\nWater,8" } },
-    { id: "ligation", name: "Ligation", nameZh: "\u8FDE\u63A5\u53CD\u5E94", shortDescription: "Insert mass for a vector:insert molar ratio", shortDescriptionZh: "\u6309\u8F7D\u4F53\u4E0E\u63D2\u5165\u7247\u6BB5\u6469\u5C14\u6BD4\u8BA1\u7B97\u63D2\u5165\u7247\u6BB5\u8D28\u91CF", category: "molecular-biology", aliases: ["cloning", "\u8F7D\u4F53\u8FDE\u63A5"], plateAware: false, method: "Insert ng = vector ng \xD7 insert bp \xF7 vector bp \xD7 molar ratio", methodZh: "\u63D2\u5165\u7247\u6BB5ng = \u8F7D\u4F53ng \xD7 \u63D2\u5165\u7247\u6BB5bp \xF7 \u8F7D\u4F53bp \xD7 \u6469\u5C14\u6BD4", methodVersion: "ligation-v1", fields: [numberField("vectorBp", "Vector length", "\u8F7D\u4F53\u957F\u5EA6", 5e3, "bp"), numberField("insertBp", "Insert length", "\u63D2\u5165\u7247\u6BB5\u957F\u5EA6", 1e3, "bp"), numberField("vectorNg", "Vector mass", "\u8F7D\u4F53\u8D28\u91CF", 50, "ng"), numberField("molarRatio", "Insert:vector molar ratio", "\u63D2\u5165:\u8F7D\u4F53\u6469\u5C14\u6BD4", 3)], exampleInputs: { vectorBp: 5e3, insertBp: 1e3, vectorNg: 50, molarRatio: 3 } },
-    { id: "tm", name: "Tm Calculator", nameZh: "\u5F15\u7269Tm\u8BA1\u7B97", shortDescription: "Primer melting-temperature estimate", shortDescriptionZh: "\u6839\u636E\u5E8F\u5217\u4E0E\u76D0\u6761\u4EF6\u4F30\u7B97\u5F15\u7269\u7194\u89E3\u6E29\u5EA6", category: "molecular-biology", aliases: ["primer", "melting temperature", "\u5F15\u7269"], plateAware: false, method: "Wallace rule for short oligos; empirical long-oligo formula with monovalent-salt correction", methodZh: "\u77ED\u5BE1\u6838\u82F7\u9178\u4F7F\u7528Wallace\u89C4\u5219\uFF0C\u957F\u5E8F\u5217\u4F7F\u7528\u542B\u5355\u4EF7\u76D0\u6821\u6B63\u7684\u7ECF\u9A8C\u516C\u5F0F", methodVersion: "tm-basic-v1", fields: [textField("sequence", "Primer sequence", "\u5F15\u7269\u5E8F\u5217", "ATGCGTACGTTAGCTAAGCT"), numberField("sodiumMm", "Monovalent salt", "\u5355\u4EF7\u76D0\u6D53\u5EA6", 50, "mM")], exampleInputs: { sequence: "ATGCGTACGTTAGCTAAGCT", sodiumMm: 50 } },
-    { id: "dna-rna-conversion", name: "DNA / RNA Conversions", nameZh: "DNA / RNA\u6362\u7B97", shortDescription: "Mass, moles, molecules, and concentration", shortDescriptionZh: "\u8D28\u91CF\u3001\u6469\u5C14\u6570\u3001\u5206\u5B50\u6570\u548C\u6D53\u5EA6\u6362\u7B97", category: "molecular-biology", aliases: ["copies", "molecules", "\u6838\u9178\u6362\u7B97"], plateAware: false, method: "Molecular weight from length and nucleic-acid type; molecules from Avogadro constant", methodZh: "\u6309\u957F\u5EA6\u4E0E\u6838\u9178\u7C7B\u578B\u4F30\u7B97\u5206\u5B50\u91CF\uFF0C\u518D\u7528\u963F\u4F0F\u4F3D\u5FB7\u7F57\u5E38\u6570\u8BA1\u7B97\u5206\u5B50\u6570", methodVersion: "nucleic-acid-conversion-v1", fields: [selectField("type", "Nucleic acid", "\u6838\u9178\u7C7B\u578B", "dsDNA", [["dsDNA", "dsDNA", "\u53CC\u94FEDNA"], ["ssDNA", "ssDNA", "\u5355\u94FEDNA"], ["RNA", "RNA", "RNA"]]), numberField("length", "Length", "\u957F\u5EA6", 500, "nt/bp"), numberField("massUg", "Mass", "\u8D28\u91CF", 1, "\xB5g"), numberField("volumeUl", "Volume", "\u4F53\u79EF", 20, "\xB5L")], exampleInputs: { type: "dsDNA", length: 500, massUg: 1, volumeUl: 20 } },
-    { id: "bradford-bca", name: "Bradford / BCA", nameZh: "Bradford / BCA\u86CB\u767D\u5B9A\u91CF", shortDescription: "Protein standard curve and sample back-calculation", shortDescriptionZh: "\u86CB\u767D\u6807\u51C6\u66F2\u7EBF\u62DF\u5408\u4E0E\u6837\u54C1\u6D53\u5EA6\u56DE\u7B97", category: "molecular-biology", aliases: ["protein assay", "\u6807\u51C6\u66F2\u7EBF", "\u86CB\u767D\u6D53\u5EA6"], plateAware: false, method: "Blank-corrected ordinary least-squares linear standard curve", methodZh: "\u7A7A\u767D\u6263\u9664\u540E\u7684\u666E\u901A\u6700\u5C0F\u4E8C\u4E58\u7EBF\u6027\u6807\u51C6\u66F2\u7EBF", methodVersion: "protein-linear-v1", fields: [textField("standards", "Standards (concentration, absorbance)", "\u6807\u51C6\u54C1\uFF08\u6D53\u5EA6,\u5438\u5149\u5EA6\uFF09", "0,0.05\n0.25,0.18\n0.5,0.31\n1,0.57\n1.5,0.82", true), numberField("sampleAbsorbance", "Sample absorbance", "\u6837\u54C1\u5438\u5149\u5EA6", 0.44), numberField("dilutionFactor", "Sample dilution factor", "\u6837\u54C1\u7A00\u91CA\u500D\u6570", 2)], exampleInputs: { standards: "0,0.05\n0.25,0.18\n0.5,0.31\n1,0.57\n1.5,0.82", sampleAbsorbance: 0.44, dilutionFactor: 2 } },
-    { id: "elisa-4pl", name: "ELISA 4PL", nameZh: "ELISA\u56DB\u53C2\u6570\u62DF\u5408", shortDescription: "ELISA standard curve and sample back-calculation", shortDescriptionZh: "ELISA\u6807\u51C6\u66F2\u7EBF\u62DF\u5408\u548C\u6837\u54C1\u6D53\u5EA6\u56DE\u7B97", category: "molecular-biology", aliases: ["ELISA", "4PL", "\u514D\u75AB\u6D4B\u5B9A"], plateAware: false, method: "Four-parameter logistic standard curve with inverse sample calculation", methodZh: "\u56DB\u53C2\u6570Logistic\u6807\u51C6\u66F2\u7EBF\u53CA\u6837\u54C1\u53CD\u7B97", methodVersion: "elisa-four-pl-v1", fields: [textField("standards", "Standards (concentration, signal)", "\u6807\u51C6\u54C1\uFF08\u6D53\u5EA6,\u4FE1\u53F7\uFF09", "0.1,0.08\n1,0.2\n10,1.0\n100,1.8\n1000,1.95", true), numberField("sampleSignal", "Sample signal", "\u6837\u54C1\u4FE1\u53F7", 1), numberField("dilutionFactor", "Sample dilution factor", "\u6837\u54C1\u7A00\u91CA\u500D\u6570", 1)], exampleInputs: { standards: "0.1,0.08\n1,0.2\n10,1.0\n100,1.8\n1000,1.95", sampleSignal: 1, dilutionFactor: 1 } },
-    { id: "wb-loading", name: "WB Loading", nameZh: "Western Blot\u4E0A\u6837", shortDescription: "Sample, loading buffer, and reducing agent", shortDescriptionZh: "\u8BA1\u7B97\u6837\u54C1\u3001Loading Buffer\u4E0E\u8FD8\u539F\u5242", category: "molecular-biology", aliases: ["western blot", "\u4E0A\u6837\u4F53\u7CFB"], plateAware: false, method: "Sample volume from target protein mass; concentrated buffer by final fold", methodZh: "\u6309\u76EE\u6807\u86CB\u767D\u8D28\u91CF\u8BA1\u7B97\u6837\u54C1\u4F53\u79EF\uFF0C\u5E76\u6309\u7EC8\u6D53\u5EA6\u8BA1\u7B97\u6D53\u7F29\u4E0A\u6837\u7F13\u51B2\u6DB2", methodVersion: "wb-loading-v1", fields: [numberField("sampleConcentrationUgUl", "Sample concentration", "\u6837\u54C1\u6D53\u5EA6", 2, "\xB5g/\xB5L"), numberField("targetProteinUg", "Protein per lane", "\u6BCF\u5B54\u86CB\u767D\u91CF", 20, "\xB5g"), numberField("finalLoadingVolumeUl", "Final loading volume", "\u6700\u7EC8\u4E0A\u6837\u4F53\u79EF", 20, "\xB5L"), numberField("bufferFold", "Loading buffer stock", "Loading Buffer\u500D\u6570", 4), numberField("reducingAgentPercent", "Reducing agent", "\u8FD8\u539F\u5242\u6BD4\u4F8B", 5, "%")], exampleInputs: { sampleConcentrationUgUl: 2, targetProteinUg: 20, finalLoadingVolumeUl: 20, bufferFold: 4, reducingAgentPercent: 5 } },
-    { id: "moi", name: "MOI", nameZh: "\u611F\u67D3\u590D\u6570 MOI", shortDescription: "Virus amount and Poisson infection probabilities", shortDescriptionZh: "\u8BA1\u7B97\u75C5\u6BD2\u7528\u91CF\u53CA\u6CCA\u677E\u611F\u67D3\u6982\u7387", category: "virology-microbiology", aliases: ["multiplicity of infection", "\u75C5\u6BD2\u611F\u67D3"], plateAware: true, method: "Particles required = cells \xD7 MOI; Poisson probabilities use e^-MOI", methodZh: "\u6240\u9700\u611F\u67D3\u5355\u4F4D = \u7EC6\u80DE\u6570 \xD7 MOI\uFF1B\u611F\u67D3\u6982\u7387\u6309e^-MOI\u8BA1\u7B97", methodVersion: "moi-v1", fields: [numberField("cells", "Cells", "\u7EC6\u80DE\u6570", 1e6, "cells"), numberField("desiredMoi", "Desired MOI", "\u76EE\u6807MOI", 1), numberField("titer", "Virus titer", "\u75C5\u6BD2\u6EF4\u5EA6", 1e8), selectField("titerUnit", "Titer unit", "\u6EF4\u5EA6\u5355\u4F4D", "PFU/mL", [["PFU/mL", "PFU/mL", "PFU/mL"], ["IU/mL", "IU/mL", "IU/mL"], ["TU/mL", "TU/mL", "TU/mL"], ["VG/mL", "VG/mL", "VG/mL"]])], exampleInputs: { cells: 1e6, desiredMoi: 1, titer: 1e8, titerUnit: "PFU/mL" } },
-    { id: "virus-titer", name: "Virus Titer", nameZh: "\u75C5\u6BD2\u6EF4\u5EA6", shortDescription: "Plaque-assay PFU/mL or TCID50 estimate", shortDescriptionZh: "\u566C\u83CC\u6591PFU/mL\u6216TCID50\u4F30\u7B97", category: "virology-microbiology", aliases: ["PFU", "TCID50", "\u75C5\u6BD2\u6EF4\u5EA6"], plateAware: false, method: "Plaque assay: plaques \xF7 (dilution \xD7 inoculum mL); TCID50 remains a distinct mode", methodZh: "\u566C\u83CC\u6591\u6CD5\uFF1A\u6591\u6570 \xF7\uFF08\u7A00\u91CA\u5EA6 \xD7 \u63A5\u79CD\u4F53\u79EFmL\uFF09\uFF1BTCID50\u4FDD\u6301\u72EC\u7ACB\u6A21\u5F0F", methodVersion: "virus-titer-v1", fields: [selectField("mode", "Method", "\u65B9\u6CD5", "plaque", [["plaque", "Plaque assay", "\u566C\u83CC\u6591\u6CD5"], ["tcid50", "TCID50", "TCID50"]]), numberField("plaques", "Plaques", "\u566C\u83CC\u6591\u6570", 20, "integer", 1), numberField("dilution", "Dilution fraction", "\u7A00\u91CA\u5EA6", 1e-6), numberField("inoculumMl", "Inoculum volume", "\u63A5\u79CD\u4F53\u79EF", 0.1, "mL"), textField("tcidSeries", "TCID50 positive wells (dilution,positive,total)", "TCID50\u9633\u6027\u5B54\uFF08\u7A00\u91CA\u5EA6,\u9633\u6027\u6570,\u603B\u5B54\u6570\uFF09", "0.001,8,8\n0.0001,6,8\n0.00001,2,8\n0.000001,0,8", true)], exampleInputs: { mode: "plaque", plaques: 20, dilution: 1e-6, inoculumMl: 0.1 } },
-    { id: "unit-converter", name: "Unit Converter", nameZh: "\u5355\u4F4D\u6362\u7B97", shortDescription: "Mass, volume, concentration, and temperature", shortDescriptionZh: "\u8D28\u91CF\u3001\u4F53\u79EF\u3001\u6D53\u5EA6\u548C\u6E29\u5EA6\u6362\u7B97", category: "general", aliases: ["convert", "\u6362\u7B97"], plateAware: false, method: "Dimension-specific SI conversion; temperature uses affine conversion", methodZh: "\u540C\u7EF4\u5EA6SI\u5355\u4F4D\u6362\u7B97\uFF1B\u6E29\u5EA6\u4F7F\u7528\u4EFF\u5C04\u6362\u7B97", methodVersion: "unit-converter-v1", fields: [selectField("dimension", "Dimension", "\u6362\u7B97\u7C7B\u578B", "volume", [["mass", "Mass", "\u8D28\u91CF"], ["volume", "Volume", "\u4F53\u79EF"], ["concentration", "Concentration", "\u6D53\u5EA6"], ["temperature", "Temperature", "\u6E29\u5EA6"]]), numberField("value", "Value", "\u6570\u503C", 1), textField("fromUnit", "From unit", "\u539F\u5355\u4F4D", "mL"), textField("toUnit", "To unit", "\u76EE\u6807\u5355\u4F4D", "\xB5L")], exampleInputs: { dimension: "volume", value: 1, fromUnit: "mL", toUnit: "\xB5L" } },
-    { id: "centrifuge", name: "Centrifuge", nameZh: "\u79BB\u5FC3\u6362\u7B97", shortDescription: "RPM and RCF conversion", shortDescriptionZh: "RPM\u4E0ERCF\u76F8\u4E92\u6362\u7B97", category: "general", aliases: ["g force", "\u8F6C\u901F", "\u79BB\u5FC3\u529B"], plateAware: false, method: "RCF = 1.118 \xD7 10\u207B\u2075 \xD7 radius(cm) \xD7 RPM\xB2", methodZh: "RCF = 1.118 \xD7 10\u207B\u2075 \xD7 \u534A\u5F84(cm) \xD7 RPM\xB2", methodVersion: "centrifuge-v1", fields: [selectField("mode", "Conversion", "\u6362\u7B97\u65B9\u5411", "rpm-to-rcf", [["rpm-to-rcf", "RPM to RCF", "RPM\u8F6CRCF"], ["rcf-to-rpm", "RCF to RPM", "RCF\u8F6CRPM"]]), numberField("rpm", "RPM", "\u8F6C\u901F", 1e4, "rpm"), numberField("rcf", "RCF", "\u76F8\u5BF9\u79BB\u5FC3\u529B", 11180, "\xD7g"), numberField("radiusCm", "Rotor radius", "\u8F6C\u5B50\u534A\u5F84", 10, "cm")], exampleInputs: { mode: "rpm-to-rcf", rpm: 1e4, radiusCm: 10 } }
-  ];
-  definitions.push(...newDefinitions);
-  var byId = new Map(definitions.map((definition) => [definition.id, definition]));
-  function getCalculatorCatalog() {
-    return definitions.map((definition) => enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) }));
-  }
-  function getCalculatorDefinition(id) {
-    const definition = byId.get(id);
-    if (!definition) throw new Error(`Unknown calculator: ${id}`);
-    return enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) });
-  }
-
   // src/lib/calculators/presentation.ts
   var columns = {
+    perWellUl: ["Per well (\xB5L)", "\u6BCF\u5B54 (\xB5L)"],
+    dnaMassUg: ["DNA per well (\xB5g)", "\u6BCF\u5B54DNA (\xB5g)"],
+    rnaPmol: ["siRNA per well (pmol)", "\u6BCF\u5B54siRNA (pmol)"],
+    finalNm: ["Final siRNA (nM)", "siRNA\u7EC8\u6D53\u5EA6 (nM)"],
     reducingAgent: ["Reducing-agent stock", "\u8FD8\u539F\u5242\u539F\u6DB2"],
     reducingMode: ["Adding definition", "\u6DFB\u52A0\u65B9\u5F0F"],
     reducingDefinition: ["Stock / target definition", "\u539F\u6DB2\u4E0E\u76EE\u6807\u5B9A\u4E49"],
@@ -310,72 +138,6 @@ var LabNestCalculations = (() => {
   };
   function tableColumnLabel(key, zh) {
     return columns[key]?.[zh ? 1 : 0] ?? key;
-  }
-
-  // src/lib/calculators/result-presentation.ts
-  var tableQuantityUnits = { takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
-  function tableUnitsFor(result) {
-    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
-  }
-  function displayQuantity(value, unit, target) {
-    return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
-  }
-  function formatQuantity(value) {
-    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
-  }
-  function validateDisplayUnits(result, candidate) {
-    if (!candidate || typeof candidate !== "object") return {};
-    const valid = {};
-    for (const [key, value] of Object.entries(candidate)) {
-      const unit = key.startsWith("table:") ? tableUnitsFor(result)[key.slice(6)] : result.outputs.find((o) => o.key === key)?.unit;
-      if (unit && typeof value === "string" && compatibleUnits(unit).includes(value)) valid[key] = value;
-      else throw new Error("Invalid display unit");
-    }
-    return valid;
-  }
-  function presentedOutputs(result) {
-    return result.outputs.map((o) => typeof o.value === "number" && o.unit ? { ...o, ...displayQuantity(o.value, o.unit, result.displayUnits?.[o.key]) } : o);
-  }
-  function presentedTable(result, zh) {
-    const rows = result.table ?? [];
-    return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => {
-      const unit = tableUnitsFor(result)[key], target = result.displayUnits?.["table:" + key] ?? unit;
-      const label = tableColumnLabel(key, zh);
-      return [unit ? label.includes("(") ? label.replace(/\([^)]*\)/, `(${target})`) : `${label} (${target})` : label, unit && value !== "" && (typeof value === "number" || typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) ? convert(parseScalar(value), unit, target) : value];
-    })));
-  }
-  function resultExportRows(result, zh) {
-    const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
-    const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
-    return data.map((row) => ({ ...row, ...metadata }));
-  }
-  function resultAuditText(result, zh) {
-    const table = presentedTable(result, zh);
-    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
-  }
-  function resultCsv(result, zh) {
-    const rows = resultExportRows(result, zh);
-    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
-    const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
-    return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
-  }
-  function canCopyResult(result) {
-    return result.status !== "partial" && (result.outputs.length > 0 || Boolean(result.table?.length)) && result.outputs.every((o) => typeof o.value !== "number" || Number.isFinite(o.value)) && (result.table ?? []).every((row) => Object.values(row).every((v) => typeof v !== "number" || Number.isFinite(v)));
-  }
-  function resultClipboard(result, zh) {
-    if (!canCopyResult(result)) return "";
-    const lines = presentedOutputs(result).filter((o) => (zh ? o.labelZh : o.label).trim()).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value}${o.unit ? " " + o.unit : ""}`);
-    const hidden = /* @__PURE__ */ new Set(["status", "componentId", "groupId", "inputRow", "planVersion", "methodVersion", "reducingMode", "reducingDefinition", "originalConcentration", "availableUl", "sufficient", "concentrationUnit", "volumeUnit", "action"]);
-    const table = presentedTable({ ...result, table: result.table?.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !hidden.has(key)))) }, zh);
-    for (const row of table) lines.push(Object.entries(row).filter(([key, value]) => key.trim() && value !== "").map(([key, value]) => `${key}: ${typeof value === "number" ? formatQuantity(value) : value}`).join("; "));
-    for (const op of result.operations ?? []) {
-      if (!["make-up-to", "dispense"].includes(op.role) && !(result.calculatorId === "transfection" && op.role === "transfer")) continue;
-      if (op.role === "make-up-to" && (result.table?.some((row) => row.action === "make-up-to") || result.outputs.some((o) => o.unit && typeof o.value === "number" && tableQuantityUnits[o.key] === void 0 && /volume/i.test(o.key)))) continue;
-      const component = op.component.split(" / ")[zh ? 0 : 1] ?? op.component;
-      const instruction = op.role === "make-up-to" ? zh ? "\u5B9A\u5BB9\u81F3" : "Bring to final volume" : component;
-      lines.push(`${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions > 1 ? " \xD7 " + op.repetitions : ""}`);
-    }
-    return lines.filter(Boolean).join("\n");
   }
 
   // src/lib/calculators/operations.ts
@@ -465,6 +227,410 @@ var LabNestCalculations = (() => {
     return { ...result, operations, operationVersion };
   }
 
+  // src/lib/calculators/transfection.ts
+  function isTransfectionPlan(value) {
+    const object = (v) => Boolean(v) && typeof v === "object" && !Array.isArray(v);
+    const strings = (v, keys) => keys.every((k) => typeof v[k] === "string");
+    const reagent = (v) => object(v) && strings(v, ["name", "basis", "amount", "basisName", "basisUnit", "basisAmount"]);
+    const tube = (v) => object(v) && strings(v, ["mode", "value"]);
+    return object(value) && value.version === 3 && strings(value, ["material", "mixing", "protocol"]) && Array.isArray(value.groups) && value.groups.every((g) => object(g) && strings(g, ["name", "wells", "overage", "finalVolume", "dnaMode", "totalDna", "rnaMode", "totalRna", "diluent", "order"]) && Array.isArray(g.rows) && g.rows.every((r) => object(r) && strings(r, ["name", "kind", "stock", "stockUnit", "dose", "sizeBasis", "size"])) && reagent(g.reagent) && Array.isArray(g.auxiliaries) && g.auxiliaries.every(reagent) && tube(g.a) && tube(g.b) && tube(g.single));
+  }
+  var l3000 = "https://documents.thermofisher.com/TFS-Assets/LSG/manuals/lipofectamine3000_protocol.pdf";
+  var transfectionProtocols = {
+    "l3000": { name: "Lipofectamine 3000 \xB7 MAN0009872 Rev C.0", mixing: "two-tube", materials: ["dna", "multi-dna", "shrna-plasmid", "sirna", "multi-sirna"], source: l3000, order: "A\uFF1A\u7A00\u91CA\u6838\u9178\uFF0CDNA\u65B9\u6848\u53E6\u52A0P3000\uFF1BB\uFF1A\u7A00\u91CA\u8102\u8D28\u8BD5\u5242\uFF1B\u5C06A\u52A0\u5165B\uFF0C\u6309\u8BF4\u660E\u4E66\u5B75\u80B2\u540E\u52A0\u5165\u7EC6\u80DE\u3002 / A: dilute nucleic acids, add P3000 for DNA; B: dilute lipid. Add A to B, incubate per guide, then add to cells.", reagent: "Lipofectamine 3000" },
+    "l3000-co": { name: "Lipofectamine 3000 \xB7 DNA + siRNA FAQ", mixing: "two-tube", materials: ["dna-sirna"], source: "https://www.thermofisher.com/order/catalog/product/L3000015/faqs", order: "DNA\u548CsiRNA\u540C\u5165A\u7BA1\uFF0CP3000\u6309DNA\u91CF\u53E6\u8BBE\uFF1BB\u7BA1\u7A00\u91CA\u8102\u8D28\u3002A\u52A0\u5165B\u540E\u6309\u4EA7\u54C1\u65B9\u6848\u5B75\u80B2\u3001\u52A0\u81F3\u7EC6\u80DE\u3002 / DNA and siRNA in A; set P3000 against DNA separately. Dilute lipid in B; combine A into B and follow product incubation.", reagent: "Lipofectamine 3000" },
+    "rnaimax-forward": { name: "RNAiMAX \xB7 Forward transfection", mixing: "two-tube", materials: ["sirna", "multi-sirna"], source: "https://www.thermofisher.com/us/en/home/references/protocols/cell-culture/transfection-protocol/rnaimax-forward-transfections-lipofectamine.html", order: "A\uFF1A\u7A00\u91CAsiRNA\uFF1BB\uFF1A\u7A00\u91CARNAiMAX\uFF1B\u5206\u522B\u6DF7\u5300\u540E\u5408\u5E76\uFF0C\u6309\u8BF4\u660E\u5B75\u80B2\uFF0C\u518D\u52A0\u5230\u5DF2\u94FA\u7EC6\u80DE\u3002 / Dilute siRNA in A and RNAiMAX in B, combine, incubate per guide, then add to plated cells.", reagent: "Lipofectamine RNAiMAX" },
+    "rnaimax-reverse": { name: "RNAiMAX \xB7 Reverse, in-well preparation", mixing: "single", materials: ["sirna", "multi-sirna"], source: "https://www.thermofisher.com/us/en/home/references/protocols/cell-culture/transfection-protocol/rnaimax-reverse-transfections-lipofectamine.html", order: "\u5728\u6BCF\u4E2A\u5B54\u5185\u7A00\u91CAsiRNA\uFF0C\u518D\u52A0RNAiMAX\u5E76\u6309\u8BF4\u660E\u5B75\u80B2\uFF0C\u6700\u540E\u52A0\u7EC6\u80DE\u60AC\u6DB2\uFF1B\u6574\u6279\u6570\u5B57\u662F\u5907\u6599\u5408\u8BA1\uFF0C\u4E0D\u662F\u5408\u6210\u4E00\u7BA1\u3002 / Dilute siRNA in each well, add RNAiMAX and incubate per guide, then add cells. Batch figures are supply totals, not a pooled tube.", reagent: "Lipofectamine RNAiMAX" }
+  };
+  var newNucleicRow = (kind = "dna") => ({ name: "", kind, stock: "", stockUnit: kind === "sirna" ? "\xB5M" : "\xB5g/\xB5L", dose: "", sizeBasis: "bp", size: "" });
+  var newDoseReagent = () => ({ name: "", basis: "direct", amount: "", basisName: "", basisUnit: "", basisAmount: "" });
+  function newTransfectionGroup() {
+    return { name: "", wells: "", overage: "10", finalVolume: "", dnaMode: "amount", totalDna: "", rnaMode: "each-nm", totalRna: "", rows: [newNucleicRow()], reagent: newDoseReagent(), auxiliaries: [], a: { mode: "final", value: "" }, b: { mode: "final", value: "" }, single: { mode: "final", value: "" }, diluent: "Opti-MEM", order: "" };
+  }
+  function newTransfectionPlan() {
+    return { version: 3, material: "dna", mixing: "two-tube", protocol: "custom", groups: [newTransfectionGroup()] };
+  }
+  function exampleTransfectionPlan() {
+    const p = newTransfectionPlan();
+    p.groups[0] = { ...p.groups[0], name: "DNA group", wells: "6", finalVolume: "1000", rows: [{ ...newNucleicRow(), name: "Plasmid", stock: "1", dose: "2" }], reagent: { ...newDoseReagent(), name: "Custom lipid", basis: "dna", amount: "3" }, a: { mode: "final", value: "62.5" }, b: { mode: "final", value: "62.5" }, order: "A\u7BA1\u6838\u9178\u7A00\u91CA\u540E\u4E0EB\u7BA1\u7A00\u91CA\u8BD5\u5242\u6DF7\u5408\uFF0C\u6309\u5DF2\u9A8C\u8BC1\u65B9\u6848\u5B75\u80B2\uFF0C\u518D\u52A0\u5165\u7EC6\u80DE\u3002 / Dilute nucleic acid in A and reagent in B; combine and follow the validated protocol before adding to cells." };
+    return p;
+  }
+  function positive(value, label, zero = false) {
+    const n2 = parseScalar(value);
+    if (!Number.isFinite(n2) || (zero ? n2 < 0 : n2 <= 0)) throw Error(`${label}: ${zero ? "\u987B\u22650 / must be \u22650" : "\u987B>0 / must be >0"}`);
+    return n2;
+  }
+  function text(value, label) {
+    if (typeof value !== "string" || !value.trim()) throw Error(`${label}: \u5FC5\u586B / required`);
+    return value.trim();
+  }
+  function choice(value, choices, label) {
+    if (!choices.includes(value)) throw Error(`${label}: \u65E0\u6548\u9009\u9879 / invalid option`);
+    return value;
+  }
+  function volume(spec, components, label) {
+    choice(spec.mode, ["add", "final"], "Volume meaning");
+    const value = positive(spec.value, label, true);
+    const total = spec.mode === "add" ? components + value : value;
+    const diluent = spec.mode === "add" ? value : value - components;
+    if (diluent < -1e-10 || total <= 0) throw Error(`${label}: \u7EC4\u5206\u8D85\u8FC7\u672C\u7BA1\u603B\u4F53\u79EF / Components exceed tube total`);
+    return { total, diluent: Math.max(0, diluent) };
+  }
+  function reagentVolume(r, dna, rna) {
+    text(r.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
+    choice(r.basis, ["direct", "dna", "sirna", "custom"], "Reagent basis");
+    const rate = positive(r.amount, "\u8BD5\u5242\u7528\u91CF / Reagent amount", true);
+    if (r.basis === "dna" && dna === 0) throw Error("\u65E0DNA\uFF0C\u4E0D\u53EF\u6309DNA\u8D28\u91CF\u8BA1\u8BD5\u5242 / No DNA for DNA-based reagent");
+    if (r.basis === "sirna" && rna === 0) throw Error("\u65E0siRNA\uFF0C\u4E0D\u53EF\u6309siRNA\u8BA1\u8BD5\u5242 / No siRNA for RNA-based reagent");
+    if (r.basis === "custom") {
+      text(r.basisName, "\u4F9D\u636E\u5BF9\u8C61 / Basis object");
+      text(r.basisUnit, "\u4F9D\u636E\u5355\u4F4D / Basis unit");
+      return rate * positive(r.basisAmount, "\u6BCF\u5B54\u4F9D\u636E\u91CF / Basis per well");
+    }
+    return rate * (r.basis === "dna" ? dna : r.basis === "sirna" ? rna : 1);
+  }
+  function calculateTransfection(plan) {
+    if (!isTransfectionPlan(plan)) throw Error("\u65B9\u6848\u7ED3\u6784\u4E0D\u5B8C\u6574\u6216\u7248\u672C\u4E0D\u652F\u6301\uFF1B\u539F\u6570\u636E\u672A\u4FEE\u6539 / Incomplete or unsupported transfection plan; source preserved");
+    choice(plan.material, ["dna", "multi-dna", "sirna", "multi-sirna", "shrna-plasmid", "dna-sirna"], "Material");
+    choice(plan.mixing, ["single", "two-tube"], "Mixing");
+    const profile = transfectionProtocols[plan.protocol];
+    if (plan.protocol !== "custom" && !profile) throw Error("Unknown protocol");
+    if (profile && (profile.mixing !== plan.mixing || !profile.materials.includes(plan.material))) throw Error("\u4EA7\u54C1\u65B9\u6848\u4E0E\u6750\u6599\u6216\u914D\u5236\u6A21\u5F0F\u4E0D\u517C\u5BB9 / Protocol incompatible with material or preparation mode");
+    if (!Array.isArray(plan.groups) || !plan.groups.length || plan.groups.length > 96) throw Error("\u9700\u89811\u201396\u4E2A\u72EC\u7ACB\u7EC4 / Require 1\u201396 groups");
+    const table = [], operations = [], outputs = [], notes = [], warnings = [];
+    const names2 = /* @__PURE__ */ new Set();
+    let batchDna = 0;
+    for (const [gi, g] of plan.groups.entries()) {
+      const name = text(g.name, "\u5B9E\u9A8C\u7EC4\u540D\u79F0 / Group name");
+      if (names2.has(name)) throw Error("\u5B9E\u9A8C\u7EC4\u540D\u79F0\u91CD\u590D / Duplicate group name");
+      names2.add(name);
+      const wells = positive(g.wells, "\u5B54\u6570 / Wells");
+      if (!Number.isInteger(wells)) throw Error("\u5B54\u6570\u5FC5\u987B\u4E3A\u6574\u6570 / Integer wells required");
+      const factor = wells * (1 + positive(g.overage, "\u914D\u5236\u4F59\u91CF / Overage", true) / 100), final = positive(g.finalVolume, "\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF / Final culture volume");
+      if (!Array.isArray(g.rows) || !g.rows.length || g.rows.length > 96) throw Error("\u6838\u9178\u884C\u65E0\u6548 / Invalid nucleic acid rows");
+      choice(g.dnaMode, ["amount", "mass-ratio", "molar-ratio"], "DNA basis");
+      choice(g.rnaMode, ["each-nm", "each-pmol", "total-nm", "total-pmol"], "siRNA basis");
+      const dnaRows = g.rows.filter((r) => r.kind === "dna" || r.kind === "shrna-plasmid"), rnaRows = g.rows.filter((r) => r.kind === "sirna");
+      if (dnaRows.length + rnaRows.length !== g.rows.length) throw Error("\u5FC5\u987B\u660E\u786E\u6750\u6599\u5F62\u5F0F\uFF1B\u75C5\u6BD2\u8F6C\u5BFC\u8BF7\u4F7F\u7528MOI\u5DE5\u5177 / Specify material; viral transduction uses MOI");
+      if (["dna", "shrna-plasmid"].includes(plan.material) && (dnaRows.length !== 1 || rnaRows.length) || plan.material === "multi-dna" && (dnaRows.length < 2 || rnaRows.length) || plan.material === "sirna" && (rnaRows.length !== 1 || dnaRows.length) || plan.material === "multi-sirna" && (rnaRows.length < 2 || dnaRows.length) || plan.material === "dna-sirna" && (!dnaRows.length || !rnaRows.length)) throw Error("\u6750\u6599\u7C7B\u578B\u4E0E\u6838\u9178\u884C\u4E0D\u4E00\u81F4 / Material and nucleic acid rows disagree");
+      if (plan.material === "shrna-plasmid" && g.rows[0].kind !== "shrna-plasmid") throw Error("shRNA\u5FC5\u987B\u6CE8\u660E\u8868\u8FBE\u8D28\u7C92 / shRNA expression plasmid required");
+      const weight = (r) => positive(r.dose, "DNA ratio") * (g.dnaMode === "molar-ratio" ? (choice(r.sizeBasis, ["bp", "mw"], "Molecular size"), positive(r.size, "\u8D28\u7C92\u957F\u5EA6\u6216\u5206\u5B50\u91CF / Plasmid length or MW") * (r.sizeBasis === "bp" ? 660 : 1)) : 1);
+      const denominator = g.dnaMode === "amount" ? 1 : dnaRows.reduce((s, r) => s + weight(r), 0), rnaRatio = rnaRows.reduce((s, r) => s + positive(r.dose, "siRNA dose / ratio"), 0);
+      const rowNames = /* @__PURE__ */ new Set();
+      let dnaTotal = 0, rnaTotal = 0;
+      const doses = g.rows.map((r) => {
+        const component = text(r.name, "\u6838\u9178\u540D\u79F0 / Nucleic acid name");
+        if (rowNames.has(component)) throw Error("\u540C\u7EC4\u6838\u9178\u540D\u79F0\u91CD\u590D / Duplicate nucleic acid name");
+        rowNames.add(component);
+        const dna = r.kind !== "sirna";
+        const amount = dna ? g.dnaMode === "amount" ? positive(r.dose, "\u6BCF\u5B54DNA\u8D28\u91CF / DNA mass per well") : positive(g.totalDna, "\u603BDNA\u8D28\u91CF / Total DNA mass") * weight(r) / denominator : (g.rnaMode.startsWith("total") ? positive(g.totalRna, "siRNA\u603B\u7528\u91CF / Total siRNA") * positive(r.dose, "siRNA ratio") / rnaRatio : positive(r.dose, "siRNA dose")) * (g.rnaMode.endsWith("nm") ? final / 1e3 : 1);
+        const stock = convert(positive(r.stock, "\u6BCD\u6DB2\u6D53\u5EA6 / Stock concentration"), r.stockUnit, dna ? "\xB5g/\xB5L" : "\xB5M");
+        const v = amount / stock;
+        dnaTotal += dna ? amount : 0;
+        rnaTotal += dna ? 0 : amount;
+        return { r, component, amount, volume: v, dna };
+      });
+      const reagentName = text(g.reagent.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
+      if (profile && reagentName !== profile.reagent) throw Error("\u8BD5\u5242\u540D\u79F0\u4E0E\u6240\u9009\u4EA7\u54C1\u4E0D\u7B26 / Reagent does not match product");
+      if (/rnaimax/i.test(reagentName) && dnaRows.length) throw Error("RNAiMAX\u4E0D\u9002\u7528\u4E8EDNA\u5171\u8F6C\u67D3 / RNAiMAX does not support DNA co-transfection");
+      if (!Array.isArray(g.auxiliaries)) throw Error("Invalid auxiliary list");
+      if (rnaRows.length && !dnaRows.length && g.auxiliaries.some((r) => /p\s*3000/i.test(r.name))) throw Error("\u7EAFsiRNA\u65B9\u6848\u4E0D\u6DFB\u52A0P3000 / Do not add P3000 to siRNA-only transfection");
+      if (profile && plan.protocol.startsWith("l3000") && dnaRows.length && !g.auxiliaries.some((r) => r.name === "P3000" && r.basis === "dna" && Number(r.amount) === 2)) throw Error("\u6240\u9009DNA\u65B9\u6848\u9700P3000 2 \xB5L/\xB5g DNA\uFF1B\u5176\u4ED6\u7528\u91CF\u8BF7\u4F7F\u7528\u6709\u4F9D\u636E\u7684\u81EA\u5B9A\u4E49\u65B9\u6848 / Selected DNA protocol requires P3000 2 \xB5L/\xB5g DNA");
+      const reagent = reagentVolume(g.reagent, dnaTotal, rnaTotal), aux = g.auxiliaries.map((r) => ({ name: text(r.name, "\u8F85\u52A9\u8BD5\u5242 / Auxiliary"), volume: reagentVolume(r, dnaTotal, rnaTotal) })), nucleic = doses.reduce((s, r) => s + r.volume, 0), auxTotal = aux.reduce((s, r) => s + r.volume, 0);
+      const a = plan.mixing === "two-tube" ? volume(g.a, nucleic + auxTotal, "A\u7BA1 / Tube A") : volume(g.single, nucleic + auxTotal + reagent, "\u5355\u4F53\u7CFB / Single mixture");
+      const b = plan.mixing === "two-tube" ? volume(g.b, reagent, "B\u7BA1 / Tube B") : { total: 0, diluent: 0 };
+      const mixed = a.total + b.total;
+      if (mixed > final + 1e-10) throw Error("\u6DF7\u5408\u6DB2\u8D85\u8FC7\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF / Mixture exceeds final culture volume");
+      const diluent = text(g.diluent, "\u7A00\u91CA\u6DB2\u540D\u79F0 / Diluent");
+      const order = profile?.order ?? text(g.order, "\u52A0\u6837\u987A\u5E8F / Addition order");
+      const inWell = plan.protocol === "rnaimax-reverse";
+      const push = (tube, component, v, extra = {}) => {
+        const row = table.length;
+        table.push({ group: name, tube, component, perWellUl: v, batchUl: v * factor, ...extra });
+        operations.push(operation(`transfection:${gi}:${row}`, component, inWell ? v : v * factor, "\xB5L", "add", { group: String(gi), groupName: name, source: component, destination: `${name}:${tube}`, repetitions: inWell ? wells : 1 }));
+      };
+      const at = plan.mixing === "two-tube" ? "A" : "\u5355\u4F53\u7CFB / Single";
+      for (const d of doses) push(at, d.component, d.volume, d.dna ? { dnaMassUg: d.amount } : { rnaPmol: d.amount, finalNm: d.amount * 1e3 / final });
+      for (const r of aux) push(at, r.name, r.volume);
+      push(at, diluent, a.diluent);
+      push(plan.mixing === "two-tube" ? "B" : at, reagentName, reagent);
+      if (plan.mixing === "two-tube") push("B", diluent, b.diluent);
+      const add = (key, en, cn, value, unit = "\xB5L") => outputs.push({ key: `group${gi}_${key}`, label: `${name} \xB7 ${en}`, labelZh: `${name} \xB7 ${cn}`, value, unit });
+      if (dnaRows.length) add("dna", "DNA per well", "\u6BCF\u5B54\u603BDNA", dnaTotal, "\xB5g");
+      if (rnaRows.length) add("rna", "siRNA per well", "\u6BCF\u5B54\u603BsiRNA", rnaTotal, "pmol");
+      if (rnaTotal) add("rnaFinal", "Total siRNA final concentration", "siRNA\u603B\u7EC8\u6D53\u5EA6", rnaTotal * 1e3 / final, "nM");
+      add("a", plan.mixing === "two-tube" ? "Tube A total per well" : "Mixture per well", plan.mixing === "two-tube" ? "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF" : "\u6BCF\u5B54\u6DF7\u5408\u6DB2\u603B\u4F53\u79EF", a.total);
+      if (plan.mixing === "two-tube") add("b", "Tube B total per well", "\u6BCF\u5B54B\u7BA1\u603B\u4F53\u79EF", b.total);
+      add("mixed", "Mixture added per well", "\u6BCF\u5B54\u6DF7\u5408\u6DB2\u52A0\u5165\u91CF", mixed);
+      add("final", "Final culture volume per well", "\u6BCF\u5B54\u6700\u7EC8\u57F9\u517B\u4F53\u79EF", final);
+      add("medium", "Cell medium before addition", "\u52A0\u5165\u6DF7\u5408\u6DB2\u524D\u57F9\u517B\u57FA/\u7EC6\u80DE\u60AC\u6DB2", final - mixed);
+      add("batch", "Batch supply incl. overage", "\u542B\u4F59\u91CF\u6574\u6279\u5907\u6599\u4F53\u79EF", mixed * factor);
+      if (plan.mixing === "two-tube") operations.push(operation(`transfection:${gi}:combine`, "\u5408\u5E76A\u81F3B / Combine A into B", a.total * factor, "\xB5L", "transfer", { group: String(gi), groupName: name, source: `${name}:A`, destination: `${name}:B` }));
+      if (!inWell) operations.push(operation(`transfection:${gi}:dispense`, "\u6BCF\u5B54\u6DF7\u5408\u6DB2 / Mixture per well", mixed, "\xB5L", "dispense", { group: String(gi), groupName: name, source: `${name}:mixture`, destination: `${name}:wells`, repetitions: wells }));
+      notes.push(`${name}: ${order}`);
+      batchDna += dnaTotal * factor;
+    }
+    if (batchDna) outputs.push({ key: "dnaUg", label: "Batch DNA incl. overage", labelZh: "\u542B\u4F59\u91CF\u6574\u6279DNA", value: batchDna, unit: "\xB5g" });
+    notes.push("\u4F53\u79EF\u6309\u53EF\u52A0\u548C\u8BA1\u7B97\uFF1BsiRNA nM \xD7 \u6700\u7EC8\u57F9\u517B\u4F53\u79EF\xB5L \xF71000 = pmol\uFF1B\xB5M = pmol/\xB5L\u3002\u4F59\u91CF\u4EC5\u653E\u5927\u5907\u6599\uFF0C\u4E0D\u589E\u52A0\u6BCF\u5B54\u5242\u91CF\u3002 / Additive volumes; overage increases supplies only.");
+    if (plan.groups.some((g) => g.dnaMode === "molar-ratio")) notes.push("\u8D28\u7C92\u6469\u5C14\u6BD4\u6309\u957F\u5EA6\xD7660 g/mol/bp\u4F30\u7B97dsDNA\u5206\u5B50\u91CF\uFF0C\u6216\u4F7F\u7528\u5F55\u5165\u7684\u5B9E\u9645\u5206\u5B50\u91CF\u3002 / dsDNA estimate: 660 g/mol/bp; prefer actual MW.");
+    warnings.push("\u65B9\u6848\u7528\u91CF\u9700\u6309\u6240\u7528\u8BD5\u5242\u4E0E\u7EC6\u80DE\u6761\u4EF6\u9A8C\u8BC1\uFF1B\u4E0D\u540C\u5B9E\u9A8C\u7EC4\u5206\u522B\u914D\u5236\u3002 / Validate doses for reagent and cells; prepare each experimental group separately.");
+    if (profile) notes.push(`${profile.name}: ${profile.source}\uFF1B\u4F53\u79EF\u91C7\u7528\u6240\u9009\u201C\u52A0\u5165/\u8865\u8DB3\u201D\u542B\u4E49\u5E76\u8BA1\u5165\u6240\u6709\u7EC4\u5206\uFF0C\u4E0D\u80FD\u628A\u5382\u5546\u8FD1\u4F3C\u4F53\u79EF\u5F53\u6210\u7CBE\u786E\u603B\u91CF\u3002 / All component volumes counted; do not substitute nominal protocol volumes for measured totals.`);
+    return { calculatorId: "transfection", methodVersion: "transfection-v3", outputs, outputMap: Object.fromEntries(outputs.map((o) => [o.key, o.value])), table, operations, warnings, notes, instructions: plan.groups.map((g) => `${g.name}: ${profile?.order ?? g.order}`) };
+  }
+  function transfectionPlateValues(plan, wellCount) {
+    if (plan.groups.length !== 1 || Number(plan.groups[0].wells) !== wellCount) throw Error("\u8BF7\u6309\u5B9E\u9A8C\u7EC4\u5206\u522B\u9009\u62E9\u5B54\u4F4D\uFF0C\u4E14\u5B54\u6570\u9700\u4E00\u81F4 / Select matching wells for one group at a time");
+    return calculateTransfection(plan).outputMap;
+  }
+
+  // src/lib/calculators/task-definitions.ts
+  var n = (key, label, labelZh, unit) => ({ key, label, labelZh, type: "number", unit });
+  var select = (key, label, labelZh, options) => ({ key, label, labelZh, type: "select", defaultValue: options[0][0], options: options.map(([value, label2, labelZh2]) => ({ value, label: label2, labelZh: labelZh2 })) });
+  function enhanceDefinition(d) {
+    if (d.id === "serial-dilution") d.methodVersion = "serial-dilution-v3";
+    if (d.id === "master-mix") d.methodVersion = "master-mix-v3";
+    if (d.id === "percent-solution") d.methodVersion = "percent-solution-v2";
+    d = { ...d, fields: [...d.fields], aliases: [...d.aliases], methodVersion: d.methodVersion.replace(/-v1$/, "-v2") };
+    if (["wb-loading", "bradford-bca", "elisa-4pl"].includes(d.id)) d.category = "protein";
+    if (["od600", "cfu", "colony-counter"].includes(d.id)) d.category = "virology-microbiology";
+    if (["dilution", "reagent-dosing", "fold-dilution"].includes(d.id)) {
+      d.name = "Dilution & dosing";
+      d.nameZh = "\u7A00\u91CA\u4E0E\u52A0\u836F";
+      d.aliases.push("\u6297\u4F53", "1:1000", "antibody dilution", "10\xD7 PBS", "fold dilution", "\u52A0\u836F", "\u5E38\u89C4\u7A00\u91CA", "\u8BD5\u5242\u52A0\u836F", "\u500D\u6570\u7A00\u91CA");
+      d.fields = [select("mode", "Mode", "\u6A21\u5F0F", [["final", "Final volume", "\u914D\u81F3\u6700\u7EC8\u4F53\u79EF"], ["add", "Add to existing liquid", "\u5411\u5DF2\u6709\u6DB2\u4F53\u52A0\u836F"], ["fold", "Fold dilution", "\u500D\u6DB2"], ["ratio", "1:N dilution", "1:N\u7A00\u91CA\uFF08\u5360\u6700\u7EC8\u4F53\u79EF1/N\uFF09"], ["parts", "Stock:diluent", "\u6BCD\u6DB2:\u7A00\u91CA\u6DB2"]]), n("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", "mM"), n("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", "\xB5M"), n("initialConcentration", "Initial concentration (same solute)", "\u5DF2\u6709\u6DB2\u4F53\u521D\u59CB\u6D53\u5EA6\uFF08\u540C\u4E00\u6EB6\u8D28\uFF09", "\xB5M"), n("stockFold", "Stock fold", "\u6BCD\u6DB2\u500D\u6570"), n("targetFold", "Target fold", "\u76EE\u6807\u500D\u6570"), n("ratio", "Dilution denominator", "\u7A00\u91CA\u5206\u6BCDN"), n("stockParts", "Stock parts", "\u6BCD\u6DB2\u4EFD\u6570"), n("diluentParts", "Diluent parts", "\u7A00\u91CA\u6DB2\u4EFD\u6570"), n("finalVolume", "Final / initial volume", "\u6700\u7EC8\u4F53\u79EF / \u5DF2\u6709\u6DB2\u4F53\u4F53\u79EF", "mL"), n("molecularWeight", "MW of confirmed chemical form", "\u5DF2\u786E\u8BA4\u76D0/\u6C34\u5408\u7269\u5F62\u5F0F\u7684\u5206\u5B50\u91CF", "g/mol")];
+      d.exampleInputs = { mode: "final", stockConcentration: 10, targetConcentration: 10, finalVolume: 2, initialConcentration: 0 };
+      if (d.id === "fold-dilution") {
+        d.fields[0].defaultValue = "fold";
+        d.exampleInputs = { mode: "fold", stockFold: 10, targetFold: 2, finalVolume: 100 };
+      }
+    }
+    if (d.id === "molarity") {
+      d.name = "Weigh & prepare";
+      d.nameZh = "\u79F0\u91CF\u914D\u6DB2";
+      d.fields.push(n("purityPercent", "Mass purity", "\u8D28\u91CF\u7EAF\u5EA6", "%"));
+      d.exampleInputs.purityPercent = 100;
+    }
+    if (d.id === "seeding") {
+      d.fields = d.fields.filter((f) => f.key !== "plates");
+      d.fields[0] = { ...d.fields[0], label: "Viable-cell concentration", labelZh: "\u6D3B\u7EC6\u80DE\u6D53\u5EA6" };
+      d.aliases.push("seeding", "\u94FA24\u5B54");
+    }
+    if (d.id === "hemocytometer") {
+      d.fields.unshift(select("countRegion", "Counting region", "\u8BA1\u6570\u533A", [["standard", "Standard large square (100 nL)", "\u6807\u51C6\u5927\u65B9\u683C\uFF08100 nL\uFF09"], ["custom", "Custom geometry", "\u81EA\u5B9A\u4E49\u51E0\u4F55\u53C2\u6570"]]));
+      d.fields.push(n("areaMm2", "Counting area", "\u8BA1\u6570\u9762\u79EF", "mm\xB2"), n("depthMm", "Chamber depth", "\u8BA1\u6570\u6DF1\u5EA6", "mm"));
+    }
+    if (["ic50-ec50", "bradford-bca", "elisa-4pl"].includes(d.id)) {
+      d.fields.unshift(select("concentrationUnit", "Concentration unit", "\u6D53\u5EA6\u5355\u4F4D", [["", "Choose a unit", "\u8BF7\u9009\u62E9\u5355\u4F4D"], ["\xB5M", "\xB5M", "\xB5M"], ["nM", "nM", "nM"], ["mg/mL", "mg/mL", "mg/mL"], ["\xB5g/mL", "\xB5g/mL", "\xB5g/mL"], ["ng/mL", "ng/mL", "ng/mL"], ["pg/mL", "pg/mL", "pg/mL"]]));
+      d.exampleInputs.concentrationUnit = d.id === "ic50-ec50" ? "\xB5M" : d.id === "bradford-bca" ? "mg/mL" : "pg/mL";
+    }
+    if (d.id === "centrifuge") {
+      d.aliases.push("g\u8F6Crpm");
+      d.fields.push(select("radiusDefinition", "Radius definition", "\u534A\u5F84\u6765\u6E90\u5B9A\u4E49", [["entered", "User-entered rotor radius", "\u7528\u6237\u5F55\u5165\u8F6C\u5B50\u534A\u5F84"], ["maximum", "Maximum radius", "\u6700\u5927\u534A\u5F84"], ["mean", "Mean radius", "\u5E73\u5747\u534A\u5F84"]]));
+    }
+    if (d.id === "transfection") {
+      d.methodVersion = "transfection-v3";
+      d.method = "DNA mass or size-weighted molar ratios; siRNA pmol from final culture volume; independent groups and explicit tube volumes";
+      d.methodZh = "DNA\u8D28\u91CF\u6216\u6309\u5206\u5B50\u91CF\u6298\u7B97\u7684\u6469\u5C14\u6BD4\uFF1BsiRNA\u6309\u6700\u7EC8\u57F9\u517B\u4F53\u79EF\u8BA1\u7B97pmol\uFF1B\u72EC\u7ACB\u5B9E\u9A8C\u7EC4\u4E0E\u660E\u786E\u5355\u7BA1\u4F53\u79EF";
+      d.exampleInputs = { transfectionPlan: exampleTransfectionPlan() };
+      d.fields.unshift(select("complexMode", "Mixing template", "\u6DF7\u5408\u6A21\u677F", [["combined", "Combined mixture", "\u5355\u4F53\u7CFB"], ["two-tube", "Two separate tubes", "\u4E24\u7BA1\u5206\u522B\u914D\u5236\u518D\u6DF7\u5408"]]));
+      d.fields.push(n("tubeAVolumeUl", "Tube A final volume per well", "\u6BCF\u5B54A\u7BA1\u603B\u4F53\u79EF", "\xB5L"));
+    }
+    if (d.id === "wb-loading") {
+      d.fields.unshift(select("bufferContainsReducingAgent", "Buffer contains reducing agent", "Buffer\u662F\u5426\u5DF2\u542B\u8FD8\u539F\u5242", [["", "Please confirm", "\u8BF7\u9009\u62E9\u786E\u8BA4"], ["no", "No; specify separate amount", "\u5426\uFF0C\u5355\u72EC\u8BBE\u7F6E\u7528\u91CF"], ["yes", "Yes; do not add twice", "\u662F\uFF0C\u4E0D\u518D\u91CD\u590D\u6DFB\u52A0"]]));
+      d.fields.push({ key: "reducingAgentName", type: "text", label: "Reducing-agent stock name", labelZh: "\u8FD8\u539F\u5242\u539F\u6DB2\u540D\u79F0" }, select("reducingMode", "Reducing-agent definition", "\u8FD8\u539F\u5242\u6DFB\u52A0\u5B9A\u4E49", [["volume-fraction", "Stock fraction of final volume", "\u539F\u6DB2\u5360\u6700\u7EC8\u4F53\u79EF\u6BD4\u4F8B"], ["target-concentration", "Target active concentration (%)", "\u6709\u6548\u6210\u5206\u76EE\u6807\u6D53\u5EA6\uFF08%\uFF09"]]), n("reducingStockPercent", "Stock concentration (%)", "\u539F\u6DB2\u6709\u6548\u6210\u5206\u6D53\u5EA6\uFF08%\uFF09", "%"));
+      d.exampleInputs = { ...d.exampleInputs, bufferContainsReducingAgent: "no", reducingAgentName: "Specified stock", reducingMode: "volume-fraction" };
+      d.methodVersion = "wb-loading-v3";
+    }
+    if (d.id === "split") {
+      d.fields.unshift(select("areaMode", "Container area", "\u5BB9\u5668\u9762\u79EF", [["same", "Same source and target area", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u76F8\u540C"], ["different", "Different areas", "\u6765\u6E90\u548C\u76EE\u6807\u5BB9\u5668\u9762\u79EF\u4E0D\u540C"]]));
+      d.fields.push(n("sourceAreaCm2", "Source area", "\u6765\u6E90\u5BB9\u5668\u9762\u79EF", "cm\xB2"), n("targetAreaCm2", "Area of each target container", "\u6BCF\u4E2A\u76EE\u6807\u5BB9\u5668\u9762\u79EF", "cm\xB2"));
+    }
+    if (d.id === "dna-rna-conversion") d.aliases.push("ng/\u03BCL \u8F6C nM", "DNA\u6D53\u5EA6", "ng\u6BCF\u03BCL\u8F6CnM");
+    if (d.id === "percent-solution") {
+      d.fields[0].options = [...d.fields[0].options, { value: "w/w", label: "w/w", labelZh: "\u8D28\u91CF/\u8D28\u91CF" }];
+      d.fields.push(n("targetMassG", "Final mixture mass", "\u6700\u7EC8\u6DF7\u5408\u7269\u8D28\u91CF", "g"));
+    }
+    if (d.id === "serial-dilution") {
+      d.fields.push(select("volumeMode", "Volume meaning", "\u4F53\u79EF\u542B\u4E49", [["mixed", "Mixed volume", "\u6BCF\u7BA1\u6DF7\u5300\u65F6\u4F53\u79EF"], ["retained", "Retained volume", "\u8F6C\u79FB\u540E\u4FDD\u7559\u4F53\u79EF"]]));
+      d.fields.find((f) => f.key === "startingConcentration").unit = "\xB5M";
+    }
+    if (["media-recipe", "buffer-recipe"].includes(d.id)) {
+      d.fields = d.fields.filter((f) => f.key !== "components");
+      d.fields.push(select("recipeMode", "Preparation mode", "\u914D\u5236\u6A21\u5F0F", [["final", "Bring to final volume", "\u6EB6\u89E3\u540E\u5B9A\u5BB9\u81F3\u6700\u7EC8\u4F53\u79EF"], ["add", "Add to existing base liquid", "\u5411\u5DF2\u6709\u57FA\u7840\u6DB2\u6DFB\u52A0"]]));
+    }
+    if (d.id === "serial-dilution") {
+      d.fields.unshift(select("gradientMode", "Gradient", "\u68AF\u5EA6\u65B9\u5F0F", [["geometric", "Geometric serial", "\u7B49\u500D\u8FDE\u7EED"], ["linear", "Linear parallel", "\u7EBF\u6027\u5E76\u884C\u914D\u5236"], ["custom", "Custom parallel", "\u81EA\u5B9A\u4E49\u6D53\u5EA6\u5E76\u884C\u914D\u5236"]]));
+      d.fields.push(n("requiredVolumeUl", "Required retained volume (optional)", "\u8F6C\u79FB\u540E\u6240\u9700\u7528\u91CF\uFF08\u53EF\u9009\uFF09", "\xB5L"), n("endingConcentration", "Last concentration", "\u672B\u70B9\u6D53\u5EA6", "\xB5M"), { key: "customTargets", label: "Targets (one \xB5M value per line)", labelZh: "\u76EE\u6807\u6D53\u5EA6\uFF08\u6BCF\u884C\u4E00\u4E2A\xB5M\u6570\u503C\uFF09", type: "textarea" }, select("firstSource", "Starting solution", "\u7B2C\u4E00\u7BA1\u6765\u6E90", [["prepared", "Already prepared starting solution", "\u5DF2\u5907\u8D77\u59CB\u6DB2"], ["stock", "Prepare from stock", "\u4ECE\u66F4\u6D53\u6BCD\u6DB2\u5236\u5907"]]), n("sourceConcentration", "Source stock concentration", "\u6765\u6E90\u6BCD\u6DB2\u6D53\u5EA6", "\xB5M"));
+    }
+    if (d.id === "master-mix") {
+      d.name = "Reaction preparation";
+      d.nameZh = "\u53CD\u5E94\u914D\u6DB2";
+      d.fields = [n("samples", "Samples", "\u6837\u672C\u6570", "integer"), n("replicates", "Replicates per sample", "\u6BCF\u6837\u672C\u91CD\u590D\u6570", "integer"), n("controls", "Control reactions", "\u989D\u5916\u5BF9\u7167\u53CD\u5E94\u6570", "integer"), n("overagePercent", "Overage", "\u9884\u6DF7\u4F59\u91CF", "%"), n("reactionVolumeUl", "Final volume per reaction", "\u5355\u53CD\u5E94\u603B\u4F53\u79EF", "\xB5L")];
+      d.exampleInputs = { samples: 8, replicates: 3, controls: 2, overagePercent: 10, reactionVolumeUl: 20, rows: [{ name: "2\xD7 Mix", volume: "10", premix: true }, { name: "F", volume: "0.5", premix: true }, { name: "R", volume: "0.5", premix: true }, { name: "Template", volume: "2", premix: false }, { name: "Water", volume: "7", premix: true }] };
+    }
+    return d;
+  }
+  var newDefinitions = [
+    { id: "resuspension", name: "Reagent resuspension", nameZh: "\u8BD5\u5242\u590D\u6EB6", shortDescription: "Final volume from amount and concentration", shortDescriptionZh: "\u6839\u636E\u8BD5\u5242\u91CF\u8BA1\u7B97\u590D\u6EB6\u6700\u7EC8\u4F53\u79EF", category: "solutions", aliases: ["\u5F15\u7269\u6EB6\u89E3", "oligo resuspension"], plateAware: false, method: "Final volume = amount / target concentration", methodZh: "\u6700\u7EC8\u4F53\u79EF = \u91CF / \u76EE\u6807\u6D53\u5EA6\uFF1B\u6309\u4EA7\u54C1\u8BF4\u660E\u9009\u62E9\u6EB6\u5242", methodVersion: "resuspension-v2", fields: [select("mode", "Mode", "\u6A21\u5F0F", [["amount", "Amount \u2192 molarity", "\u7269\u8D28\u7684\u91CF\u2192\u6469\u5C14\u6D53\u5EA6"], ["mass", "Mass \u2192 mass concentration", "\u8D28\u91CF\u2192\u8D28\u91CF\u6D53\u5EA6"], ["mass-molar", "Mass + MW \u2192 molarity", "\u8D28\u91CF\uFF0B\u5206\u5B50\u91CF\u2192\u6469\u5C14\u6D53\u5EA6"]]), n("amount", "Amount", "\u7269\u8D28\u7684\u91CF", "nmol"), n("mass", "Mass", "\u8D28\u91CF", "mg"), n("molecularWeight", "Molecular weight", "\u5206\u5B50\u91CF", "g/mol"), n("targetMolar", "Target molarity", "\u76EE\u6807\u6469\u5C14\u6D53\u5EA6", "\xB5M"), n("targetMass", "Target mass concentration", "\u76EE\u6807\u8D28\u91CF\u6D53\u5EA6", "mg/mL")], exampleInputs: { mode: "amount", amount: 25, targetMolar: 100 } },
+    { id: "normalization", name: "Batch normalization", nameZh: "\u6279\u91CF\u6D53\u5EA6\u5F52\u4E00\u5316", shortDescription: "Row-by-row dilution with sample availability", shortDescriptionZh: "\u9010\u6837\u672C\u68C0\u67E5\u6D53\u5EA6\u548C\u53EF\u7528\u4F53\u79EF\uFF0C\u751F\u6210\u79FB\u6DB2\u8868", category: "solutions", aliases: ["batch dilution", "\u6279\u91CF\u7A00\u91CA"], plateAware: false, method: "C1V1=C2V2; each sample validated separately", methodZh: "C1V1=C2V2\uFF1B\u9010\u884C\u6821\u9A8C\u5E76\u4FDD\u7559\u65E0\u6548\u884C", methodVersion: "normalization-v2", fields: [n("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", "ng/\xB5L"), n("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", "\xB5L")], exampleInputs: { targetConcentration: 10, finalVolume: 20, samples: [{ id: "A", concentration: "50", available: "" }, { id: "B", concentration: "5", available: "" }] } }
+  ];
+  function isFieldVisible(id, key, inputs) {
+    const mode = String(inputs.mode ?? "");
+    if (id === "transfection" && inputs.transfectionPlan !== void 0) return false;
+    if (["dilution", "reagent-dosing", "fold-dilution"].includes(id)) {
+      const m = mode || "final";
+      if (key === "molecularWeight") return ["final", "add"].includes(m) && units[normalizeUnit(String(inputs.stockConcentrationUnit ?? "mM"))]?.dimension !== units[normalizeUnit(String(inputs.targetConcentrationUnit ?? "\xB5M"))]?.dimension;
+      if (["stockConcentration", "targetConcentration"].includes(key)) return ["final", "add"].includes(m);
+      if (key === "initialConcentration") return m === "add";
+      if (["stockFold", "targetFold"].includes(key)) return m === "fold";
+      if (key === "ratio") return m === "ratio";
+      if (["stockParts", "diluentParts"].includes(key)) return m === "parts";
+    }
+    if (id === "serial-dilution") {
+      const gradient = inputs.gradientMode ?? "geometric";
+      if (key === "startingConcentration" || key === "levels") return gradient !== "custom";
+      if (key === "dilutionFactor" || key === "volumeMode") return gradient === "geometric";
+      if (key === "endingConcentration") return gradient === "linear";
+      if (key === "customTargets") return gradient === "custom";
+      if (key === "sourceConcentration") return gradient !== "geometric" || inputs.firstSource === "stock";
+      if (key === "firstSource") return gradient === "geometric";
+    }
+    if (id === "hemocytometer" && ["areaMm2", "depthMm"].includes(key)) return inputs.countRegion === "custom";
+    if (id === "master-mix" && Array.isArray(inputs.groups) && ["samples", "replicates", "controls"].includes(key)) return false;
+    if (id === "transfection" && key === "tubeAVolumeUl") return inputs.complexMode === "two-tube";
+    if (id === "wb-loading" && ["reducingAgentPercent", "reducingAgentName", "reducingMode", "reducingStockPercent"].includes(key)) return inputs.bufferContainsReducingAgent === "no" && (key !== "reducingStockPercent" || inputs.reducingMode === "target-concentration");
+    if (id === "split" && ["sourceAreaCm2", "targetAreaCm2"].includes(key)) return inputs.areaMode === "different";
+    if (id === "molarity") return key !== { mass: "massG", concentration: "concentrationM", volume: "volumeL" }[mode || "mass"];
+    if (id === "centrifuge") return key !== (mode === "rcf-to-rpm" ? "rpm" : "rcf");
+    if (id === "percent-solution") {
+      if (key === "targetMassG") return inputs.type === "w/w";
+      if (key === "targetVolumeMl") return inputs.type !== "w/w";
+    }
+    if (id === "resuspension") {
+      if (key === "amount") return mode === "amount";
+      if (key === "mass") return mode !== "amount";
+      if (key === "molecularWeight") return mode === "mass-molar";
+      if (key === "targetMass") return mode === "mass";
+      if (key === "targetMolar") return mode !== "mass";
+    }
+    if (id === "virus-titer") return key === "mode" || (mode === "tcid50" ? key === "tcidSeries" : key !== "tcidSeries");
+    return true;
+  }
+
+  // src/lib/calculators/catalog.ts
+  var numberField = (key, label, labelZh, defaultValue, unit, min = 0) => ({ key, label, labelZh, type: "number", defaultValue, unit, min, step: "integer" === unit ? 1 : 0.01 });
+  var textField = (key, label, labelZh, defaultValue, textarea = false) => ({ key, label, labelZh, type: textarea ? "textarea" : "text", defaultValue });
+  var selectField = (key, label, labelZh, defaultValue, options) => ({ key, label, labelZh, type: "select", defaultValue, options: options.map(([value, en, zh]) => ({ value, label: en, labelZh: zh })) });
+  var definitions = [
+    { id: "hemocytometer", name: "Hemocytometer", nameZh: "\u8840\u7403\u8BA1\u6570\u677F", shortDescription: "Cell concentration from counted quadrants", shortDescriptionZh: "\u6839\u636E\u8BA1\u6570\u533A\u548C\u7A00\u91CA\u500D\u6570\u8BA1\u7B97\u7EC6\u80DE\u6D53\u5EA6", category: "cell-culture", aliases: ["cell count", "\u7EC6\u80DE\u8BA1\u6570"], plateAware: false, method: "Average count \xD7 dilution factor \xD7 10\u2074 cells/mL", methodZh: "\u5E73\u5747\u8BA1\u6570 \xD7 \u7A00\u91CA\u500D\u6570 \xD7 10\u2074 cells/mL", methodVersion: "hemocytometer-v1", fields: [textField("counts", "Quadrant counts", "\u8BA1\u6570\u533A\u7EC6\u80DE\u6570", "13,11,14,17"), numberField("dilutionFactor", "Dilution factor", "\u7A00\u91CA\u500D\u6570", 2), numberField("viabilityPercent", "Viability", "\u7EC6\u80DE\u6D3B\u7387", 90, "%")], exampleInputs: { counts: "13,11,14,17", dilutionFactor: 3, viabilityPercent: 90 } },
+    { id: "seeding", name: "Seeding", nameZh: "\u7EC6\u80DE\u94FA\u677F", shortDescription: "Cells and suspension volume per well", shortDescriptionZh: "\u8BA1\u7B97\u6BCF\u5B54\u7EC6\u80DE\u91CF\u53CA\u6574\u6279\u7EC6\u80DE\u60AC\u6DB2", category: "cell-culture", aliases: ["plating", "\u94FA\u677F"], plateAware: true, method: "Cell requirement and volume balance with overage applied once", methodZh: "\u6309\u603B\u5B54\u6570\u8BA1\u7B97\u7EC6\u80DE\u9700\u6C42\u5E76\u4EC5\u7EDF\u4E00\u52A0\u5165\u4E00\u6B21\u4F59\u91CF", methodVersion: "seeding-v1", fields: [numberField("stockCellsPerMl", "Stock cell density", "\u7EC6\u80DE\u539F\u6DB2\u6D53\u5EA6", 1e6, "cells/mL"), numberField("wells", "Wells", "\u5B54\u6570", 24, "integer", 1), numberField("plates", "Plates", "\u677F\u6570", 1, "integer", 1), numberField("cellsPerWell", "Cells per well", "\u6BCF\u5B54\u7EC6\u80DE\u6570", 5e4, "cells"), numberField("volumePerWellUl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 500, "\xB5L"), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%")], exampleInputs: { stockCellsPerMl: 1e6, wells: 24, plates: 1, cellsPerWell: 5e4, volumePerWellUl: 500, overagePercent: 10 } },
+    { id: "hydrogel", name: "Hydrogel", nameZh: "\u6C34\u51DD\u80F6\u57F9\u517B", shortDescription: "3D cell and hydrogel mixture", shortDescriptionZh: "\u8BA1\u7B973D\u57F9\u517B\u7684\u7EC6\u80DE\u4E0E\u6C34\u51DD\u80F6\u6DF7\u5408\u4F53\u7CFB", category: "cell-culture", aliases: ["3D culture", "Matrigel", "\u4E09\u7EF4\u57F9\u517B"], plateAware: true, method: "Target cells plus gel-to-cell-suspension volume ratio", methodZh: "\u4F9D\u636E\u76EE\u6807\u7EC6\u80DE\u91CF\u53CA\u51DD\u80F6\u4E0E\u7EC6\u80DE\u60AC\u6DB2\u4F53\u79EF\u6BD4\u8BA1\u7B97", methodVersion: "hydrogel-v1", fields: [numberField("stockCellsPerMl", "Stock cell density", "\u7EC6\u80DE\u539F\u6DB2\u6D53\u5EA6", 2e6, "cells/mL"), numberField("targetCellsPerMl", "Target density", "\u76EE\u6807\u7EC6\u80DE\u5BC6\u5EA6", 1e6, "cells/mL"), numberField("wells", "Wells", "\u5B54\u6570", 10, "integer", 1), numberField("volumePerWellUl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 100, "\xB5L"), numberField("gelParts", "Hydrogel parts", "\u6C34\u51DD\u80F6\u4EFD\u6570", 4), numberField("suspensionParts", "Cell suspension parts", "\u7EC6\u80DE\u60AC\u6DB2\u4EFD\u6570", 1)], exampleInputs: { stockCellsPerMl: 1e7, targetCellsPerMl: 1e6, wells: 10, volumePerWellUl: 100, gelParts: 4, suspensionParts: 1 } },
+    { id: "split", name: "Split Calculator", nameZh: "\u7EC6\u80DE\u4F20\u4EE3", shortDescription: "Post-split confluency and readiness estimate", shortDescriptionZh: "\u4F30\u7B97\u4F20\u4EE3\u540E\u6C47\u5408\u5EA6\u53CA\u8FBE\u5230\u76EE\u6807\u7684\u65F6\u95F4", category: "cell-culture", aliases: ["passage", "\u4F20\u4EE3", "confluency"], plateAware: false, method: "Exponential growth estimate from confluency, split ratio, and doubling time", methodZh: "\u6839\u636E\u6C47\u5408\u5EA6\u3001\u4F20\u4EE3\u6BD4\u4F8B\u548C\u500D\u589E\u65F6\u95F4\u8FDB\u884C\u6307\u6570\u751F\u957F\u4F30\u7B97", methodVersion: "split-v1", fields: [numberField("currentConfluency", "Current confluency", "\u5F53\u524D\u6C47\u5408\u5EA6", 90, "%"), numberField("splitRatio", "Split denominator", "\u4F20\u4EE3\u6BD4\u4F8B\u5206\u6BCD", 4), numberField("targetConfluency", "Target confluency", "\u76EE\u6807\u6C47\u5408\u5EA6", 80, "%"), numberField("doublingTimeHours", "Doubling time", "\u500D\u589E\u65F6\u95F4", 24, "h")], exampleInputs: { currentConfluency: 90, splitRatio: 4, targetConfluency: 80, doublingTimeHours: 24 } },
+    { id: "freezing", name: "Freezing", nameZh: "\u7EC6\u80DE\u51BB\u5B58", shortDescription: "Cryovials and freezing-medium composition", shortDescriptionZh: "\u8BA1\u7B97\u51BB\u5B58\u7BA1\u6570\u548C\u51BB\u5B58\u6DB2\u7EC4\u6210", category: "cell-culture", aliases: ["cryopreservation", "\u51BB\u5B58"], plateAware: false, method: "Available cells divided by target cells per vial; medium components by percentage", methodZh: "\u6309\u6BCF\u7BA1\u76EE\u6807\u7EC6\u80DE\u6570\u53CA\u51BB\u5B58\u6DB2\u767E\u5206\u6BD4\u8BA1\u7B97", methodVersion: "freezing-v1", fields: [numberField("totalCells", "Total cells", "\u603B\u7EC6\u80DE\u6570", 1e7, "cells"), numberField("cellsPerVial", "Cells per vial", "\u6BCF\u7BA1\u7EC6\u80DE\u6570", 1e6, "cells"), numberField("volumePerVialMl", "Volume per vial", "\u6BCF\u7BA1\u4F53\u79EF", 1, "mL"), numberField("dmsoPercent", "DMSO", "DMSO\u6BD4\u4F8B", 10, "%"), numberField("serumPercent", "Serum", "\u8840\u6E05\u6BD4\u4F8B", 20, "%")], exampleInputs: { totalCells: 1e7, cellsPerVial: 1e6, volumePerVialMl: 1, dmsoPercent: 10, serumPercent: 20 } },
+    { id: "transfection", name: "Transfection", nameZh: "\u8F6C\u67D3\u4F53\u7CFB", shortDescription: "Nucleic acid and reagent master mix", shortDescriptionZh: "\u8BA1\u7B97\u6838\u9178\u3001\u8F6C\u67D3\u8BD5\u5242\u548C\u7A00\u91CA\u6DB2", category: "cell-culture", aliases: ["lipofection", "siRNA", "\u8D28\u7C92\u8F6C\u67D3"], plateAware: true, method: "Per-well nucleic acid and reagent ratio scaled by wells, replicates, and overage", methodZh: "\u6309\u6BCF\u5B54\u6838\u9178\u91CF\u3001\u8BD5\u5242\u6BD4\u4F8B\u3001\u5B54\u6570\u53CA\u4F59\u91CF\u8BA1\u7B97", methodVersion: "transfection-v1", fields: [numberField("wells", "Wells", "\u5B54\u6570", 6, "integer", 1), numberField("replicates", "Replicates", "\u91CD\u590D\u6570", 1, "integer", 1), numberField("dnaUgPerWell", "DNA per well", "\u6BCF\u5B54DNA", 2, "\xB5g"), numberField("dnaConcentrationUgUl", "DNA stock concentration", "DNA\u6BCD\u6DB2\u6D53\u5EA6", 1, "\xB5g/\xB5L"), numberField("reagentUlPerUg", "Reagent per \xB5g DNA", "\u6BCF\xB5g DNA\u8BD5\u5242\u91CF", 3, "\xB5L/\xB5g"), numberField("complexVolumeUlPerWell", "Complex volume per well", "\u6BCF\u5B54\u590D\u5408\u7269\u4F53\u79EF", 125, "\xB5L"), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%")], exampleInputs: { wells: 6, replicates: 1, dnaUgPerWell: 2, dnaConcentrationUgUl: 1, reagentUlPerUg: 3, complexVolumeUlPerWell: 125, overagePercent: 10 } },
+    { id: "kill-curve", name: "Kill Curve", nameZh: "\u6740\u706D\u66F2\u7EBF", shortDescription: "Antibiotic dose series and stock additions", shortDescriptionZh: "\u751F\u6210\u6297\u751F\u7D20\u6D53\u5EA6\u68AF\u5EA6\u53CA\u6BCD\u6DB2\u52A0\u5165\u91CF", category: "cell-culture", aliases: ["antibiotic", "\u7B5B\u9009\u6D53\u5EA6"], plateAware: true, method: "Linear or logarithmic dose series followed by C1V1=C2V2", methodZh: "\u751F\u6210\u7EBF\u6027\u6216\u5BF9\u6570\u6D53\u5EA6\u5E8F\u5217\u540E\u6309C1V1=C2V2\u8BA1\u7B97", methodVersion: "kill-curve-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10, "mg/mL"), numberField("minimum", "Minimum dose", "\u6700\u4F4E\u6D53\u5EA6", 0.5, "\xB5g/mL"), numberField("maximum", "Maximum dose", "\u6700\u9AD8\u6D53\u5EA6", 10, "\xB5g/mL"), numberField("points", "Dose points", "\u6D53\u5EA6\u70B9\u6570", 8, "integer", 2), numberField("volumePerWellMl", "Volume per well", "\u6BCF\u5B54\u4F53\u79EF", 0.5, "mL"), selectField("scale", "Scale", "\u68AF\u5EA6\u65B9\u5F0F", "linear", [["linear", "Linear", "\u7EBF\u6027"], ["log", "Logarithmic", "\u5BF9\u6570"]])], exampleInputs: { stockConcentration: 10, minimum: 0.5, maximum: 10, points: 8, volumePerWellMl: 0.5, scale: "linear" } },
+    { id: "viability", name: "Viability", nameZh: "\u7EC6\u80DE\u6D3B\u7387", shortDescription: "Live/dead cells and resuspension", shortDescriptionZh: "\u8BA1\u7B97\u6D3B\u7EC6\u80DE\u3001\u6B7B\u7EC6\u80DE\u53CA\u91CD\u60AC\u4F53\u79EF", category: "cell-culture", aliases: ["trypan blue", "\u53F0\u76FC\u84DD"], plateAware: false, method: "Total cells partitioned by viability; optional live-cell target density", methodZh: "\u6309\u6D3B\u7387\u62C6\u5206\u6D3B/\u6B7B\u7EC6\u80DE\uFF0C\u5E76\u53EF\u6309\u76EE\u6807\u6D3B\u7EC6\u80DE\u6D53\u5EA6\u91CD\u60AC", methodVersion: "viability-v1", fields: [numberField("totalCells", "Total cells", "\u603B\u7EC6\u80DE\u6570", 2e5, "cells"), numberField("viabilityPercent", "Viability", "\u7EC6\u80DE\u6D3B\u7387", 90, "%"), numberField("targetLiveCellsPerMl", "Target live-cell density", "\u76EE\u6807\u6D3B\u7EC6\u80DE\u6D53\u5EA6", 1e5, "cells/mL")], exampleInputs: { totalCells: 2e5, viabilityPercent: 90, targetLiveCellsPerMl: 1e5 } },
+    { id: "od600", name: "OD600", nameZh: "OD600\u83CC\u6DB2\u6D53\u5EA6", shortDescription: "Optical density to estimated cell density", shortDescriptionZh: "\u6839\u636EOD600\u4F30\u7B97\u5FAE\u751F\u7269\u6D53\u5EA6", category: "cell-culture", aliases: ["bacterial density", "\u83CC\u6DB2\u6D53\u5EA6"], plateAware: false, method: "OD600 corrected for path length and multiplied by an explicit empirical factor", methodZh: "\u6309\u5149\u7A0B\u6821\u6B63OD600\u540E\u4E58\u4EE5\u660E\u786E\u7684\u7ECF\u9A8C\u6362\u7B97\u56E0\u5B50", methodVersion: "od600-v1", fields: [numberField("od600", "OD600", "OD600\u8BFB\u6570", 0.8), numberField("pathLengthCm", "Path length", "\u5149\u7A0B", 1, "cm"), numberField("cellsPerMlPerOd", "Empirical factor", "\u7ECF\u9A8C\u6362\u7B97\u56E0\u5B50", 8e8, "cells/mL/OD"), numberField("cultureVolumeMl", "Culture volume", "\u57F9\u517B\u4F53\u79EF", 5, "mL")], exampleInputs: { od600: 0.8, pathLengthCm: 1, cellsPerMlPerOd: 8e8, cultureVolumeMl: 5 } },
+    { id: "cfu", name: "CFU/mL", nameZh: "\u83CC\u843D\u5F62\u6210\u5355\u4F4D", shortDescription: "Colony-forming units from plated dilution", shortDescriptionZh: "\u6839\u636E\u83CC\u843D\u6570\u3001\u7A00\u91CA\u500D\u6570\u548C\u6D82\u677F\u4F53\u79EF\u8BA1\u7B97CFU/mL", category: "cell-culture", aliases: ["colony forming units", "\u83CC\u843D\u8BA1\u6570"], plateAware: false, method: "CFU/mL = colonies \xF7 (dilution \xD7 plated volume in mL)", methodZh: "CFU/mL = \u83CC\u843D\u6570 \xF7\uFF08\u7A00\u91CA\u5EA6 \xD7 \u6D82\u677F\u4F53\u79EFmL\uFF09", methodVersion: "cfu-v1", fields: [numberField("colonies", "Colonies", "\u83CC\u843D\u6570", 120, "integer", 1), numberField("dilution", "Dilution fraction", "\u7A00\u91CA\u5EA6", 1e-6), numberField("platedVolumeMl", "Plated volume", "\u6D82\u677F\u4F53\u79EF", 0.1, "mL"), numberField("dnaUg", "DNA amount (optional)", "DNA\u7528\u91CF\uFF08\u53EF\u9009\uFF09", 0, "\xB5g")], exampleInputs: { colonies: 120, dilution: 1e-6, platedVolumeMl: 0.1, dnaUg: 2 } },
+    { id: "colony-counter", name: "Colony & Plaque Counter", nameZh: "\u83CC\u843D\u4E0E\u566C\u83CC\u6591\u8F85\u52A9\u8BA1\u6570", shortDescription: "Reviewable image-assisted counting", shortDescriptionZh: "\u53EF\u4EBA\u5DE5\u590D\u6838\u7684\u56FE\u50CF\u8F85\u52A9\u8BA1\u6570", category: "cell-culture", aliases: ["photo count", "\u83CC\u843D\u56FE\u7247", "plaque counter"], plateAware: false, method: "Browser-local connected-region detection followed by mandatory human confirmation", methodZh: "\u6D4F\u89C8\u5668\u672C\u5730\u8FDE\u901A\u533A\u57DF\u8BC6\u522B\uFF0C\u5E76\u8981\u6C42\u4EBA\u5DE5\u786E\u8BA4", methodVersion: "colony-counter-v1", fields: [numberField("automaticCount", "Automatic count", "\u81EA\u52A8\u8BC6\u522B\u6570", 42, "integer"), numberField("manualAdjustment", "Manual adjustment", "\u4EBA\u5DE5\u589E\u51CF", 0, "integer", -1e5)], exampleInputs: { automaticCount: 42, manualAdjustment: -2 } },
+    { id: "reagent-dosing", name: "Reagent Dosing", nameZh: "\u8BD5\u5242\u52A0\u836F", shortDescription: "Stock addition to a desired final concentration", shortDescriptionZh: "\u4ECE\u6BCD\u6DB2\u8BA1\u7B97\u76EE\u6807\u7EC8\u6D53\u5EA6\u6240\u9700\u52A0\u5165\u91CF", category: "solutions", aliases: ["dose", "C1V1", "\u52A0\u836F"], plateAware: true, method: "C1V1 = C2V2", methodZh: "C1V1 = C2V2", methodVersion: "reagent-dosing-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10, "mM"), numberField("targetConcentration", "Final concentration", "\u76EE\u6807\u7EC8\u6D53\u5EA6", 10, "\xB5M"), numberField("finalVolumeMl", "Final volume", "\u6700\u7EC8\u4F53\u79EF", 10, "mL"), numberField("stockToTargetFactor", "Stock-unit to target-unit factor", "\u6BCD\u6DB2\u5355\u4F4D\u76F8\u5BF9\u76EE\u6807\u5355\u4F4D\u500D\u6570", 1e3)], exampleInputs: { stockConcentration: 10, targetConcentration: 10, finalVolumeMl: 10, stockToTargetFactor: 1e3 } },
+    { id: "dilution", name: "Dilution", nameZh: "\u5E38\u89C4\u7A00\u91CA", shortDescription: "Dilute a stock to a working concentration", shortDescriptionZh: "\u5C06\u6D53\u7F29\u6BCD\u6DB2\u7A00\u91CA\u81F3\u5DE5\u4F5C\u6D53\u5EA6", category: "solutions", aliases: ["C1V1=C2V2", "\u6BCD\u6DB2\u7A00\u91CA"], plateAware: true, method: "C1V1 = C2V2 with compatible concentration units", methodZh: "\u4F7F\u7528\u517C\u5BB9\u6D53\u5EA6\u5355\u4F4D\u7684C1V1=C2V2", methodVersion: "dilution-v1", fields: [numberField("stockConcentration", "Stock concentration", "\u6BCD\u6DB2\u6D53\u5EA6", 10), numberField("targetConcentration", "Target concentration", "\u76EE\u6807\u6D53\u5EA6", 1), numberField("finalVolume", "Final volume", "\u76EE\u6807\u603B\u4F53\u79EF", 10), selectField("volumeUnit", "Volume unit", "\u4F53\u79EF\u5355\u4F4D", "mL", [["\xB5L", "\xB5L", "\xB5L"], ["mL", "mL", "mL"], ["L", "L", "L"]])], exampleInputs: { stockConcentration: 10, targetConcentration: 1, finalVolume: 10, volumeUnit: "mL" } },
+    { id: "fold-dilution", name: "Fold Dilution", nameZh: "\u500D\u6570\u7A00\u91CA", shortDescription: "Prepare 1\xD7 from a concentrated stock", shortDescriptionZh: "\u7531\u6D53\u7F29\u6DB2\u914D\u52361\xD7\u5DE5\u4F5C\u6DB2", category: "solutions", aliases: ["2x", "10x", "\u500D\u6DB2"], plateAware: true, method: "Concentrated-stock volume = final volume \xF7 fold", methodZh: "\u6D53\u7F29\u6DB2\u4F53\u79EF = \u6700\u7EC8\u4F53\u79EF \xF7 \u500D\u6570", methodVersion: "fold-dilution-v1", fields: [numberField("fold", "Stock fold", "\u6D53\u7F29\u500D\u6570", 10), numberField("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", 100, "mL")], exampleInputs: { fold: 10, finalVolume: 100 } },
+    { id: "serial-dilution", name: "Serial Dilution", nameZh: "\u8FDE\u7EED\u7A00\u91CA", shortDescription: "Multi-step fixed-factor dilution", shortDescriptionZh: "\u751F\u6210\u591A\u7EA7\u56FA\u5B9A\u500D\u6570\u7A00\u91CA\u6B65\u9AA4", category: "solutions", aliases: ["\u68AF\u5EA6\u7A00\u91CA", "serial"], plateAware: true, method: "Each level transfers total volume \xF7 dilution factor from the prior level", methodZh: "\u6BCF\u4E00\u7EA7\u4ECE\u524D\u4E00\u7EA7\u8F6C\u79FB\u76EE\u6807\u603B\u4F53\u79EF\u9664\u4EE5\u7A00\u91CA\u500D\u6570", methodVersion: "serial-dilution-v1", fields: [numberField("startingConcentration", "Starting concentration", "\u8D77\u59CB\u6D53\u5EA6", 100), numberField("dilutionFactor", "Dilution factor", "\u6BCF\u7EA7\u7A00\u91CA\u500D\u6570", 10), numberField("levels", "Levels", "\u7EA7\u6570", 6, "integer", 1), numberField("totalVolumePerLevel", "Volume per level", "\u6BCF\u7EA7\u603B\u4F53\u79EF", 100, "\xB5L")], exampleInputs: { startingConcentration: 100, dilutionFactor: 10, levels: 6, totalVolumePerLevel: 100 } },
+    { id: "molarity", name: "Molarity", nameZh: "\u6469\u5C14\u6D53\u5EA6", shortDescription: "Concentration, mass, or volume from molecular weight", shortDescriptionZh: "\u6839\u636E\u5206\u5B50\u91CF\u6C42\u6D53\u5EA6\u3001\u8D28\u91CF\u6216\u4F53\u79EF", category: "solutions", aliases: ["moles", "\u6469\u5C14", "\u79F0\u91CF"], plateAware: false, method: "Moles = mass \xF7 molecular weight; molarity = moles \xF7 volume", methodZh: "\u7269\u8D28\u7684\u91CF = \u8D28\u91CF \xF7 \u5206\u5B50\u91CF\uFF1B\u6469\u5C14\u6D53\u5EA6 = \u7269\u8D28\u7684\u91CF \xF7 \u4F53\u79EF", methodVersion: "molarity-v1", fields: [selectField("mode", "Solve for", "\u6C42\u89E3\u76EE\u6807", "mass", [["mass", "Mass to weigh", "\u79F0\u91CF\u8D28\u91CF"], ["concentration", "Concentration", "\u6D53\u5EA6"], ["volume", "Volume", "\u4F53\u79EF"]]), numberField("molecularWeight", "Molecular weight", "\u5206\u5B50\u91CF", 180.16, "g/mol"), numberField("concentrationM", "Concentration", "\u6469\u5C14\u6D53\u5EA6", 0.1, "M"), numberField("volumeL", "Volume", "\u4F53\u79EF", 0.1, "L"), numberField("massG", "Mass", "\u8D28\u91CF", 1.8016, "g")], exampleInputs: { mode: "mass", molecularWeight: 180.16, concentrationM: 0.1, volumeL: 0.1, massG: 1.8016 } },
+    { id: "percent-solution", name: "% Solution", nameZh: "\u767E\u5206\u6BD4\u6EB6\u6DB2", shortDescription: "w/v or v/v solution preparation", shortDescriptionZh: "\u914D\u5236w/v\u6216v/v\u767E\u5206\u6BD4\u6EB6\u6DB2", category: "solutions", aliases: ["w/v", "v/v", "\u767E\u5206\u6D53\u5EA6"], plateAware: false, method: "% w/v = g per 100 mL; % v/v = mL per 100 mL", methodZh: "% w/v\u8868\u793A\u6BCF100 mL\u4E2D\u7684\u514B\u6570\uFF1B% v/v\u8868\u793A\u6BCF100 mL\u4E2D\u7684\u6BEB\u5347\u6570", methodVersion: "percent-solution-v1", fields: [selectField("type", "Solution type", "\u6EB6\u6DB2\u7C7B\u578B", "w/v", [["w/v", "w/v", "\u8D28\u91CF/\u4F53\u79EF"], ["v/v", "v/v", "\u4F53\u79EF/\u4F53\u79EF"]]), numberField("percentage", "Percentage", "\u767E\u5206\u6D53\u5EA6", 5, "%"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 500, "mL")], exampleInputs: { type: "w/v", percentage: 5, targetVolumeMl: 500 } },
+    { id: "media-recipe", name: "Media Recipe", nameZh: "\u57F9\u517B\u57FA\u914D\u65B9", shortDescription: "Scale a custom medium recipe", shortDescriptionZh: "\u6309\u76EE\u6807\u4F53\u79EF\u7F29\u653E\u57F9\u517B\u57FA\u914D\u65B9", category: "solutions", aliases: ["culture medium", "\u57F9\u517B\u6DB2"], plateAware: false, method: "Each component scales linearly from the recipe base volume", methodZh: "\u5404\u7EC4\u5206\u6309\u914D\u65B9\u57FA\u7840\u4F53\u79EF\u7EBF\u6027\u7F29\u653E", methodVersion: "media-recipe-v1", fields: [numberField("baseVolumeMl", "Recipe base volume", "\u914D\u65B9\u57FA\u7840\u4F53\u79EF", 500, "mL"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 1e3, "mL"), textField("components", "Components (name, amount, unit)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u7528\u91CF,\u5355\u4F4D\uFF09", "FBS,50,mL\nPen/Strep,5,mL", true)], exampleInputs: { baseVolumeMl: 500, targetVolumeMl: 1e3, components: "FBS,50,mL\nPen/Strep,5,mL" } },
+    { id: "buffer-recipe", name: "Buffer Recipe", nameZh: "\u7F13\u51B2\u6DB2\u914D\u65B9", shortDescription: "Scale a custom buffer recipe", shortDescriptionZh: "\u6309\u76EE\u6807\u4F53\u79EF\u7F29\u653E\u7F13\u51B2\u6DB2\u914D\u65B9", category: "solutions", aliases: ["PBS", "Tris", "\u7F13\u51B2\u6DB2"], plateAware: false, method: "Each component scales linearly from the recipe base volume", methodZh: "\u5404\u7EC4\u5206\u6309\u914D\u65B9\u57FA\u7840\u4F53\u79EF\u7EBF\u6027\u7F29\u653E", methodVersion: "buffer-recipe-v1", fields: [numberField("baseVolumeMl", "Recipe base volume", "\u914D\u65B9\u57FA\u7840\u4F53\u79EF", 1e3, "mL"), numberField("targetVolumeMl", "Target volume", "\u76EE\u6807\u4F53\u79EF", 500, "mL"), textField("components", "Components (name, amount, unit)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u7528\u91CF,\u5355\u4F4D\uFF09", "NaCl,8,g\nKCl,0.2,g", true)], exampleInputs: { baseVolumeMl: 1e3, targetVolumeMl: 500, components: "NaCl,8,g\nKCl,0.2,g" } },
+    { id: "ic50-ec50", name: "IC50 / EC50", nameZh: "IC50 / EC50\u62DF\u5408", shortDescription: "Four-parameter logistic dose-response fit", shortDescriptionZh: "\u56DB\u53C2\u6570Logistic\u5242\u91CF\u53CD\u5E94\u62DF\u5408", category: "solutions", aliases: ["4PL", "dose response", "\u534A\u6570\u6291\u5236"], plateAware: false, method: "Four-parameter logistic model fitted by deterministic coordinate descent", methodZh: "\u4F7F\u7528\u786E\u5B9A\u6027\u5750\u6807\u4E0B\u964D\u62DF\u5408\u56DB\u53C2\u6570Logistic\u6A21\u578B", methodVersion: "four-pl-v2", fields: [selectField("mode", "Response direction", "\u53CD\u5E94\u65B9\u5411", "activation", [["inhibition", "Remaining response (falling)", "\u6B8B\u5B58\u53CD\u5E94\uFF08\u4E0B\u964D\uFF09"], ["activation", "Activation (rising)", "\u6FC0\u6D3B\u53CD\u5E94\uFF08\u4E0A\u5347\uFF09"]]), textField("points", "Dose,response pairs", "\u6D53\u5EA6,\u53CD\u5E94\u503C", "0.1,1\n1,10\n10,50\n100,90\n1000,99", true)], exampleInputs: { mode: "activation", points: "0.1,1\n1,10\n10,50\n100,90\n1000,99" } },
+    { id: "master-mix", name: "Master Mix", nameZh: "Master Mix\u4F53\u7CFB", shortDescription: "Scale repeated reaction components", shortDescriptionZh: "\u6309\u53CD\u5E94\u6570\u548C\u4F59\u91CF\u8BA1\u7B97\u6574\u6279\u53CD\u5E94\u4F53\u7CFB", category: "molecular-biology", aliases: ["PCR mix", "\u53CD\u5E94\u4F53\u7CFB"], plateAware: true, method: "Per-reaction components \xD7 reactions \xD7 (1 + overage)", methodZh: "\u5355\u53CD\u5E94\u7EC4\u5206 \xD7 \u53CD\u5E94\u6570 \xD7\uFF081 + \u4F59\u91CF\uFF09", methodVersion: "master-mix-v1", fields: [numberField("reactions", "Reactions", "\u53CD\u5E94\u6570", 10, "integer", 1), numberField("overagePercent", "Overage", "\u989D\u5916\u4F59\u91CF", 10, "%"), textField("components", "Components (name, \xB5L/reaction)", "\u7EC4\u5206\uFF08\u540D\u79F0,\u6BCF\u53CD\u5E94\xB5L\uFF09", "2\xD7 SYBR Mix,10\nForward primer,0.5\nReverse primer,0.5\nWater,8", true)], exampleInputs: { reactions: 10, overagePercent: 10, components: "2\xD7 SYBR Mix,10\nForward primer,0.5\nReverse primer,0.5\nWater,8" } },
+    { id: "ligation", name: "Ligation", nameZh: "\u8FDE\u63A5\u53CD\u5E94", shortDescription: "Insert mass for a vector:insert molar ratio", shortDescriptionZh: "\u6309\u8F7D\u4F53\u4E0E\u63D2\u5165\u7247\u6BB5\u6469\u5C14\u6BD4\u8BA1\u7B97\u63D2\u5165\u7247\u6BB5\u8D28\u91CF", category: "molecular-biology", aliases: ["cloning", "\u8F7D\u4F53\u8FDE\u63A5"], plateAware: false, method: "Insert ng = vector ng \xD7 insert bp \xF7 vector bp \xD7 molar ratio", methodZh: "\u63D2\u5165\u7247\u6BB5ng = \u8F7D\u4F53ng \xD7 \u63D2\u5165\u7247\u6BB5bp \xF7 \u8F7D\u4F53bp \xD7 \u6469\u5C14\u6BD4", methodVersion: "ligation-v1", fields: [numberField("vectorBp", "Vector length", "\u8F7D\u4F53\u957F\u5EA6", 5e3, "bp"), numberField("insertBp", "Insert length", "\u63D2\u5165\u7247\u6BB5\u957F\u5EA6", 1e3, "bp"), numberField("vectorNg", "Vector mass", "\u8F7D\u4F53\u8D28\u91CF", 50, "ng"), numberField("molarRatio", "Insert:vector molar ratio", "\u63D2\u5165:\u8F7D\u4F53\u6469\u5C14\u6BD4", 3)], exampleInputs: { vectorBp: 5e3, insertBp: 1e3, vectorNg: 50, molarRatio: 3 } },
+    { id: "tm", name: "Tm Calculator", nameZh: "\u5F15\u7269Tm\u8BA1\u7B97", shortDescription: "Primer melting-temperature estimate", shortDescriptionZh: "\u6839\u636E\u5E8F\u5217\u4E0E\u76D0\u6761\u4EF6\u4F30\u7B97\u5F15\u7269\u7194\u89E3\u6E29\u5EA6", category: "molecular-biology", aliases: ["primer", "melting temperature", "\u5F15\u7269"], plateAware: false, method: "Wallace rule for short oligos; empirical long-oligo formula with monovalent-salt correction", methodZh: "\u77ED\u5BE1\u6838\u82F7\u9178\u4F7F\u7528Wallace\u89C4\u5219\uFF0C\u957F\u5E8F\u5217\u4F7F\u7528\u542B\u5355\u4EF7\u76D0\u6821\u6B63\u7684\u7ECF\u9A8C\u516C\u5F0F", methodVersion: "tm-basic-v1", fields: [textField("sequence", "Primer sequence", "\u5F15\u7269\u5E8F\u5217", "ATGCGTACGTTAGCTAAGCT"), numberField("sodiumMm", "Monovalent salt", "\u5355\u4EF7\u76D0\u6D53\u5EA6", 50, "mM")], exampleInputs: { sequence: "ATGCGTACGTTAGCTAAGCT", sodiumMm: 50 } },
+    { id: "dna-rna-conversion", name: "DNA / RNA Conversions", nameZh: "DNA / RNA\u6362\u7B97", shortDescription: "Mass, moles, molecules, and concentration", shortDescriptionZh: "\u8D28\u91CF\u3001\u6469\u5C14\u6570\u3001\u5206\u5B50\u6570\u548C\u6D53\u5EA6\u6362\u7B97", category: "molecular-biology", aliases: ["copies", "molecules", "\u6838\u9178\u6362\u7B97"], plateAware: false, method: "Molecular weight from length and nucleic-acid type; molecules from Avogadro constant", methodZh: "\u6309\u957F\u5EA6\u4E0E\u6838\u9178\u7C7B\u578B\u4F30\u7B97\u5206\u5B50\u91CF\uFF0C\u518D\u7528\u963F\u4F0F\u4F3D\u5FB7\u7F57\u5E38\u6570\u8BA1\u7B97\u5206\u5B50\u6570", methodVersion: "nucleic-acid-conversion-v1", fields: [selectField("type", "Nucleic acid", "\u6838\u9178\u7C7B\u578B", "dsDNA", [["dsDNA", "dsDNA", "\u53CC\u94FEDNA"], ["ssDNA", "ssDNA", "\u5355\u94FEDNA"], ["RNA", "RNA", "RNA"]]), numberField("length", "Length", "\u957F\u5EA6", 500, "nt/bp"), numberField("massUg", "Mass", "\u8D28\u91CF", 1, "\xB5g"), numberField("volumeUl", "Volume", "\u4F53\u79EF", 20, "\xB5L")], exampleInputs: { type: "dsDNA", length: 500, massUg: 1, volumeUl: 20 } },
+    { id: "bradford-bca", name: "Bradford / BCA", nameZh: "Bradford / BCA\u86CB\u767D\u5B9A\u91CF", shortDescription: "Protein standard curve and sample back-calculation", shortDescriptionZh: "\u86CB\u767D\u6807\u51C6\u66F2\u7EBF\u62DF\u5408\u4E0E\u6837\u54C1\u6D53\u5EA6\u56DE\u7B97", category: "molecular-biology", aliases: ["protein assay", "\u6807\u51C6\u66F2\u7EBF", "\u86CB\u767D\u6D53\u5EA6"], plateAware: false, method: "Blank-corrected ordinary least-squares linear standard curve", methodZh: "\u7A7A\u767D\u6263\u9664\u540E\u7684\u666E\u901A\u6700\u5C0F\u4E8C\u4E58\u7EBF\u6027\u6807\u51C6\u66F2\u7EBF", methodVersion: "protein-linear-v1", fields: [textField("standards", "Standards (concentration, absorbance)", "\u6807\u51C6\u54C1\uFF08\u6D53\u5EA6,\u5438\u5149\u5EA6\uFF09", "0,0.05\n0.25,0.18\n0.5,0.31\n1,0.57\n1.5,0.82", true), numberField("sampleAbsorbance", "Sample absorbance", "\u6837\u54C1\u5438\u5149\u5EA6", 0.44), numberField("dilutionFactor", "Sample dilution factor", "\u6837\u54C1\u7A00\u91CA\u500D\u6570", 2)], exampleInputs: { standards: "0,0.05\n0.25,0.18\n0.5,0.31\n1,0.57\n1.5,0.82", sampleAbsorbance: 0.44, dilutionFactor: 2 } },
+    { id: "elisa-4pl", name: "ELISA 4PL", nameZh: "ELISA\u56DB\u53C2\u6570\u62DF\u5408", shortDescription: "ELISA standard curve and sample back-calculation", shortDescriptionZh: "ELISA\u6807\u51C6\u66F2\u7EBF\u62DF\u5408\u548C\u6837\u54C1\u6D53\u5EA6\u56DE\u7B97", category: "molecular-biology", aliases: ["ELISA", "4PL", "\u514D\u75AB\u6D4B\u5B9A"], plateAware: false, method: "Four-parameter logistic standard curve with inverse sample calculation", methodZh: "\u56DB\u53C2\u6570Logistic\u6807\u51C6\u66F2\u7EBF\u53CA\u6837\u54C1\u53CD\u7B97", methodVersion: "elisa-four-pl-v1", fields: [textField("standards", "Standards (concentration, signal)", "\u6807\u51C6\u54C1\uFF08\u6D53\u5EA6,\u4FE1\u53F7\uFF09", "0.1,0.08\n1,0.2\n10,1.0\n100,1.8\n1000,1.95", true), numberField("sampleSignal", "Sample signal", "\u6837\u54C1\u4FE1\u53F7", 1), numberField("dilutionFactor", "Sample dilution factor", "\u6837\u54C1\u7A00\u91CA\u500D\u6570", 1)], exampleInputs: { standards: "0.1,0.08\n1,0.2\n10,1.0\n100,1.8\n1000,1.95", sampleSignal: 1, dilutionFactor: 1 } },
+    { id: "wb-loading", name: "WB Loading", nameZh: "Western Blot\u4E0A\u6837", shortDescription: "Sample, loading buffer, and reducing agent", shortDescriptionZh: "\u8BA1\u7B97\u6837\u54C1\u3001Loading Buffer\u4E0E\u8FD8\u539F\u5242", category: "molecular-biology", aliases: ["western blot", "\u4E0A\u6837\u4F53\u7CFB"], plateAware: false, method: "Sample volume from target protein mass; concentrated buffer by final fold", methodZh: "\u6309\u76EE\u6807\u86CB\u767D\u8D28\u91CF\u8BA1\u7B97\u6837\u54C1\u4F53\u79EF\uFF0C\u5E76\u6309\u7EC8\u6D53\u5EA6\u8BA1\u7B97\u6D53\u7F29\u4E0A\u6837\u7F13\u51B2\u6DB2", methodVersion: "wb-loading-v1", fields: [numberField("sampleConcentrationUgUl", "Sample concentration", "\u6837\u54C1\u6D53\u5EA6", 2, "\xB5g/\xB5L"), numberField("targetProteinUg", "Protein per lane", "\u6BCF\u5B54\u86CB\u767D\u91CF", 20, "\xB5g"), numberField("finalLoadingVolumeUl", "Final loading volume", "\u6700\u7EC8\u4E0A\u6837\u4F53\u79EF", 20, "\xB5L"), numberField("bufferFold", "Loading buffer stock", "Loading Buffer\u500D\u6570", 4), numberField("reducingAgentPercent", "Reducing agent", "\u8FD8\u539F\u5242\u6BD4\u4F8B", 5, "%")], exampleInputs: { sampleConcentrationUgUl: 2, targetProteinUg: 20, finalLoadingVolumeUl: 20, bufferFold: 4, reducingAgentPercent: 5 } },
+    { id: "moi", name: "MOI", nameZh: "\u611F\u67D3\u590D\u6570 MOI", shortDescription: "Virus amount and Poisson infection probabilities", shortDescriptionZh: "\u8BA1\u7B97\u75C5\u6BD2\u7528\u91CF\u53CA\u6CCA\u677E\u611F\u67D3\u6982\u7387", category: "virology-microbiology", aliases: ["multiplicity of infection", "\u75C5\u6BD2\u611F\u67D3"], plateAware: true, method: "Particles required = cells \xD7 MOI; Poisson probabilities use e^-MOI", methodZh: "\u6240\u9700\u611F\u67D3\u5355\u4F4D = \u7EC6\u80DE\u6570 \xD7 MOI\uFF1B\u611F\u67D3\u6982\u7387\u6309e^-MOI\u8BA1\u7B97", methodVersion: "moi-v1", fields: [numberField("cells", "Cells", "\u7EC6\u80DE\u6570", 1e6, "cells"), numberField("desiredMoi", "Desired MOI", "\u76EE\u6807MOI", 1), numberField("titer", "Virus titer", "\u75C5\u6BD2\u6EF4\u5EA6", 1e8), selectField("titerUnit", "Titer unit", "\u6EF4\u5EA6\u5355\u4F4D", "PFU/mL", [["PFU/mL", "PFU/mL", "PFU/mL"], ["IU/mL", "IU/mL", "IU/mL"], ["TU/mL", "TU/mL", "TU/mL"], ["VG/mL", "VG/mL", "VG/mL"]])], exampleInputs: { cells: 1e6, desiredMoi: 1, titer: 1e8, titerUnit: "PFU/mL" } },
+    { id: "virus-titer", name: "Virus Titer", nameZh: "\u75C5\u6BD2\u6EF4\u5EA6", shortDescription: "Plaque-assay PFU/mL or TCID50 estimate", shortDescriptionZh: "\u566C\u83CC\u6591PFU/mL\u6216TCID50\u4F30\u7B97", category: "virology-microbiology", aliases: ["PFU", "TCID50", "\u75C5\u6BD2\u6EF4\u5EA6"], plateAware: false, method: "Plaque assay: plaques \xF7 (dilution \xD7 inoculum mL); TCID50 remains a distinct mode", methodZh: "\u566C\u83CC\u6591\u6CD5\uFF1A\u6591\u6570 \xF7\uFF08\u7A00\u91CA\u5EA6 \xD7 \u63A5\u79CD\u4F53\u79EFmL\uFF09\uFF1BTCID50\u4FDD\u6301\u72EC\u7ACB\u6A21\u5F0F", methodVersion: "virus-titer-v1", fields: [selectField("mode", "Method", "\u65B9\u6CD5", "plaque", [["plaque", "Plaque assay", "\u566C\u83CC\u6591\u6CD5"], ["tcid50", "TCID50", "TCID50"]]), numberField("plaques", "Plaques", "\u566C\u83CC\u6591\u6570", 20, "integer", 1), numberField("dilution", "Dilution fraction", "\u7A00\u91CA\u5EA6", 1e-6), numberField("inoculumMl", "Inoculum volume", "\u63A5\u79CD\u4F53\u79EF", 0.1, "mL"), textField("tcidSeries", "TCID50 positive wells (dilution,positive,total)", "TCID50\u9633\u6027\u5B54\uFF08\u7A00\u91CA\u5EA6,\u9633\u6027\u6570,\u603B\u5B54\u6570\uFF09", "0.001,8,8\n0.0001,6,8\n0.00001,2,8\n0.000001,0,8", true)], exampleInputs: { mode: "plaque", plaques: 20, dilution: 1e-6, inoculumMl: 0.1 } },
+    { id: "unit-converter", name: "Unit Converter", nameZh: "\u5355\u4F4D\u6362\u7B97", shortDescription: "Mass, volume, concentration, and temperature", shortDescriptionZh: "\u8D28\u91CF\u3001\u4F53\u79EF\u3001\u6D53\u5EA6\u548C\u6E29\u5EA6\u6362\u7B97", category: "general", aliases: ["convert", "\u6362\u7B97"], plateAware: false, method: "Dimension-specific SI conversion; temperature uses affine conversion", methodZh: "\u540C\u7EF4\u5EA6SI\u5355\u4F4D\u6362\u7B97\uFF1B\u6E29\u5EA6\u4F7F\u7528\u4EFF\u5C04\u6362\u7B97", methodVersion: "unit-converter-v1", fields: [selectField("dimension", "Dimension", "\u6362\u7B97\u7C7B\u578B", "volume", [["mass", "Mass", "\u8D28\u91CF"], ["volume", "Volume", "\u4F53\u79EF"], ["concentration", "Concentration", "\u6D53\u5EA6"], ["temperature", "Temperature", "\u6E29\u5EA6"]]), numberField("value", "Value", "\u6570\u503C", 1), textField("fromUnit", "From unit", "\u539F\u5355\u4F4D", "mL"), textField("toUnit", "To unit", "\u76EE\u6807\u5355\u4F4D", "\xB5L")], exampleInputs: { dimension: "volume", value: 1, fromUnit: "mL", toUnit: "\xB5L" } },
+    { id: "centrifuge", name: "Centrifuge", nameZh: "\u79BB\u5FC3\u6362\u7B97", shortDescription: "RPM and RCF conversion", shortDescriptionZh: "RPM\u4E0ERCF\u76F8\u4E92\u6362\u7B97", category: "general", aliases: ["g force", "\u8F6C\u901F", "\u79BB\u5FC3\u529B"], plateAware: false, method: "RCF = 1.118 \xD7 10\u207B\u2075 \xD7 radius(cm) \xD7 RPM\xB2", methodZh: "RCF = 1.118 \xD7 10\u207B\u2075 \xD7 \u534A\u5F84(cm) \xD7 RPM\xB2", methodVersion: "centrifuge-v1", fields: [selectField("mode", "Conversion", "\u6362\u7B97\u65B9\u5411", "rpm-to-rcf", [["rpm-to-rcf", "RPM to RCF", "RPM\u8F6CRCF"], ["rcf-to-rpm", "RCF to RPM", "RCF\u8F6CRPM"]]), numberField("rpm", "RPM", "\u8F6C\u901F", 1e4, "rpm"), numberField("rcf", "RCF", "\u76F8\u5BF9\u79BB\u5FC3\u529B", 11180, "\xD7g"), numberField("radiusCm", "Rotor radius", "\u8F6C\u5B50\u534A\u5F84", 10, "cm")], exampleInputs: { mode: "rpm-to-rcf", rpm: 1e4, radiusCm: 10 } }
+  ];
+  definitions.push(...newDefinitions);
+  var byId = new Map(definitions.map((definition) => [definition.id, definition]));
+  function getCalculatorCatalog() {
+    return definitions.map((definition) => enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) }));
+  }
+  function getCalculatorDefinition(id) {
+    const definition = byId.get(id);
+    if (!definition) throw new Error(`Unknown calculator: ${id}`);
+    return enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) });
+  }
+
+  // src/lib/calculators/result-presentation.ts
+  var tableQuantityUnits = { perWellUl: "\xB5L", dnaMassUg: "\xB5g", rnaPmol: "pmol", finalNm: "nM", takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
+  function tableUnitsFor(result) {
+    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
+  }
+  function displayQuantity(value, unit, target) {
+    return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
+  }
+  function formatQuantity(value) {
+    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+  }
+  function validateDisplayUnits(result, candidate) {
+    if (!candidate || typeof candidate !== "object") return {};
+    const valid = {};
+    for (const [key, value] of Object.entries(candidate)) {
+      const unit = key.startsWith("table:") ? tableUnitsFor(result)[key.slice(6)] : result.outputs.find((o) => o.key === key)?.unit;
+      if (unit && typeof value === "string" && compatibleUnits(unit).includes(value)) valid[key] = value;
+      else throw new Error("Invalid display unit");
+    }
+    return valid;
+  }
+  function presentedOutputs(result) {
+    return result.outputs.map((o) => typeof o.value === "number" && o.unit ? { ...o, ...displayQuantity(o.value, o.unit, result.displayUnits?.[o.key]) } : o);
+  }
+  function presentedTable(result, zh) {
+    const rows = result.table ?? [];
+    return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => {
+      const unit = tableUnitsFor(result)[key], target = result.displayUnits?.["table:" + key] ?? unit;
+      const label = tableColumnLabel(key, zh);
+      return [unit ? label.includes("(") ? label.replace(/\([^)]*\)/, `(${target})`) : `${label} (${target})` : label, unit && value !== "" && (typeof value === "number" || typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))) ? convert(parseScalar(value), unit, target) : value];
+    })));
+  }
+  function resultExportRows(result, zh) {
+    const data = result.table?.length ? presentedTable(result, zh) : presentedOutputs(result).map((o) => ({ name: zh ? o.labelZh : o.label, value: o.value, unit: o.unit ?? "" }));
+    const metadata = { operations: JSON.stringify(result.operations ?? []), operationVersion: result.operationVersion ?? "legacy-unrecorded", pipettingCheck: JSON.stringify(result.pipettingCheck ?? {}), context: JSON.stringify(result.rawInputs?.__context ?? {}), task: result.calculatorId, mode: result.mode ?? "", method: result.methodVersion, resultStatus: result.status ?? "legacy", warnings: result.warnings.join("\n"), assumptions: result.notes.join("\n"), inputs: JSON.stringify(result.rawInputs ?? {}), outputs: JSON.stringify(presentedOutputs(result)), displayUnits: JSON.stringify(result.displayUnits ?? {}), structuredWarnings: JSON.stringify(result.structuredWarnings ?? []) };
+    return data.map((row) => ({ ...row, ...metadata }));
+  }
+  function resultAuditText(result, zh) {
+    const table = presentedTable(result, zh);
+    return [result.calculatorId + " \xB7 " + (result.mode ?? ""), ...presentedOutputs(result).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value} ${o.unit ?? ""}`), ...table.length ? [Object.keys(table[0]).join("	"), ...table.map((row) => Object.values(row).map((value) => typeof value === "number" ? formatQuantity(value) : value).join("	"))] : [], `Operations (${result.operationVersion ?? "legacy-unrecorded"}): ${JSON.stringify(result.operations ?? [])}`, `Pipetting check: ${JSON.stringify(result.pipettingCheck ?? {})}`, zh ? "\u8B66\u544A" : "Warnings", ...result.warnings, zh ? "\u5173\u952E\u5047\u8BBE" : "Assumptions", ...result.notes, `Status: ${result.status ?? "legacy"}; Method: ${result.methodVersion}`, `Inputs: ${JSON.stringify(result.rawInputs ?? {})}`, `Context: ${JSON.stringify(result.rawInputs?.__context ?? {})}`].join("\n");
+  }
+  function resultCsv(result, zh) {
+    const rows = resultExportRows(result, zh);
+    const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+    const cell = (v) => '"' + (typeof v === "number" ? String(v) : String(v ?? "").replace(/^[=+@\-]/, "'$&")).replaceAll('"', '""') + '"';
+    return "\uFEFF" + [keys.map(cell).join(","), ...rows.map((row) => keys.map((key) => cell(row[key])).join(","))].join("\r\n");
+  }
+  function canCopyResult(result) {
+    return result.status !== "partial" && (result.outputs.length > 0 || Boolean(result.table?.length)) && result.outputs.every((o) => typeof o.value !== "number" || Number.isFinite(o.value)) && (result.table ?? []).every((row) => Object.values(row).every((v) => typeof v !== "number" || Number.isFinite(v)));
+  }
+  function resultClipboard(result, zh) {
+    if (!canCopyResult(result)) return "";
+    const lines = presentedOutputs(result).filter((o) => (zh ? o.labelZh : o.label).trim()).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value}${o.unit ? " " + o.unit : ""}`);
+    const hidden = /* @__PURE__ */ new Set(["status", "componentId", "groupId", "inputRow", "planVersion", "methodVersion", "reducingMode", "reducingDefinition", "originalConcentration", "availableUl", "sufficient", "concentrationUnit", "volumeUnit", "action"]);
+    const table = presentedTable({ ...result, table: result.table?.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !hidden.has(key)))) }, zh);
+    for (const row of table) lines.push(Object.entries(row).filter(([key, value]) => key.trim() && value !== "").map(([key, value]) => `${key}: ${typeof value === "number" ? formatQuantity(value) : value}`).join("; "));
+    for (const op of result.operations ?? []) {
+      if (!["make-up-to", "dispense"].includes(op.role) && !(result.calculatorId === "transfection" && op.role === "transfer")) continue;
+      if (op.role === "make-up-to" && (result.table?.some((row) => row.action === "make-up-to") || result.outputs.some((o) => o.unit && typeof o.value === "number" && tableQuantityUnits[o.key] === void 0 && /volume/i.test(o.key)))) continue;
+      const component = op.component.split(" / ")[zh ? 0 : 1] ?? op.component;
+      const instruction = op.role === "make-up-to" ? zh ? "\u5B9A\u5BB9\u81F3" : "Bring to final volume" : component;
+      lines.push(`${op.groupName ? op.groupName + ": " : ""}${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions > 1 ? " \xD7 " + op.repetitions : ""}`);
+    }
+    lines.push(...result.instructions ?? []);
+    return lines.filter(Boolean).join("\n");
+  }
+
   // src/lib/calculators/pipetting.ts
   function applyPipettingOptions(source, inputs) {
     let result = withLiquidOperations(source, inputs);
@@ -496,11 +662,11 @@ var LabNestCalculations = (() => {
       if (minimum2 <= 0) throw new Error("\u8BBE\u5907\u4E0B\u9650\u5FC5\u987B\u5927\u4E8E0 / Equipment minimum must be positive");
       for (const operation2 of operations) {
         if (operation2.role === "make-up-to" || operation2.repetitions === 0) continue;
-        const volume = convert(operation2.quantity.value, operation2.quantity.unit, "\xB5L");
-        if (!Number.isFinite(volume) || volume < 0) throw new Error("Invalid liquid operation");
-        if (volume > 0 && volume < minimum2) {
-          const message = `${operation2.groupName ? operation2.groupName + " \xB7 " : ""}${operation2.sample ? operation2.sample + " \xB7 " : ""}${operation2.component} (${operation2.basis}): ${formatQuantity(volume)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum2)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
-          structuredWarnings.push({ code: "below-minimum", operationId: operation2.id, component: operation2.component, sample: operation2.sample, basis: operation2.basis, volumeUl: volume, minimumUl: minimum2, message });
+        const volume2 = convert(operation2.quantity.value, operation2.quantity.unit, "\xB5L");
+        if (!Number.isFinite(volume2) || volume2 < 0) throw new Error("Invalid liquid operation");
+        if (volume2 > 0 && volume2 < minimum2) {
+          const message = `${operation2.groupName ? operation2.groupName + " \xB7 " : ""}${operation2.sample ? operation2.sample + " \xB7 " : ""}${operation2.component} (${operation2.basis}): ${formatQuantity(volume2)} \xB5L\uFF0C\u4F4E\u4E8E\u6240\u8BBE ${formatQuantity(minimum2)} \xB5L \u4E0B\u9650 / below configured minimum. \u8C03\u6574\u5236\u5907\u89C4\u6A21\uFF0C\u6216\u8BC4\u4F30\u4E2D\u95F4\u6DB2\u65B9\u6848 / Adjust preparation scale or assess an intermediate dilution.`;
+          structuredWarnings.push({ code: "below-minimum", operationId: operation2.id, component: operation2.component, sample: operation2.sample, basis: operation2.basis, volumeUl: volume2, minimumUl: minimum2, message });
           warnings.push(message);
         }
       }
@@ -511,20 +677,20 @@ var LabNestCalculations = (() => {
   }
 
   // src/lib/calculators/planning.ts
-  function dilution(stock, target, volume) {
-    if (![stock, target, volume].every(Number.isFinite) || stock <= 0 || target < 0 || target > stock || volume <= 0) throw new Error("\u76EE\u6807\u6D53\u5EA6\u6216\u4F53\u79EF\u4E0D\u53EF\u884C / Target concentration or volume is infeasible");
-    const sample = target * volume / stock;
-    return { sample, diluent: volume - sample, final: volume };
+  function dilution(stock, target, volume2) {
+    if (![stock, target, volume2].every(Number.isFinite) || stock <= 0 || target < 0 || target > stock || volume2 <= 0) throw new Error("\u76EE\u6807\u6D53\u5EA6\u6216\u4F53\u79EF\u4E0D\u53EF\u884C / Target concentration or volume is infeasible");
+    const sample = target * volume2 / stock;
+    return { sample, diluent: volume2 - sample, final: volume2 };
   }
-  function addStock(stock, target, initial, volume) {
-    if (![stock, target, initial, volume].every(Number.isFinite) || volume <= 0 || initial < 0 || target < initial || stock <= target) throw new Error("\u52A0\u5165\u6A21\u5F0F\u8981\u6C42\u6BCD\u6DB2\u6D53\u5EA6 > \u76EE\u6807\u6D53\u5EA6 \u2265 \u521D\u59CB\u6D53\u5EA6 / Require stock > target \u2265 initial");
-    const sample = (target - initial) * volume / (stock - target);
-    return { sample, diluent: volume, final: volume + sample };
+  function addStock(stock, target, initial, volume2) {
+    if (![stock, target, initial, volume2].every(Number.isFinite) || volume2 <= 0 || initial < 0 || target < initial || stock <= target) throw new Error("\u52A0\u5165\u6A21\u5F0F\u8981\u6C42\u6BCD\u6DB2\u6D53\u5EA6 > \u76EE\u6807\u6D53\u5EA6 \u2265 \u521D\u59CB\u6D53\u5EA6 / Require stock > target \u2265 initial");
+    const sample = (target - initial) * volume2 / (stock - target);
+    return { sample, diluent: volume2, final: volume2 + sample };
   }
-  function serialPlan(start, factor, count, volume, retained) {
-    if (![start, factor, count, volume].every(Number.isFinite) || start <= 0 || factor <= 1 || !Number.isInteger(count) || count < 1 || count > 384 || volume <= 0) throw new Error("\u68AF\u5EA6\u53C2\u6570\u65E0\u6548 / Invalid gradient parameters");
-    const prepared = Array(count).fill(volume);
-    if (retained) for (let index = count - 2; index >= 0; index--) prepared[index] = volume + prepared[index + 1] / factor;
+  function serialPlan(start, factor, count, volume2, retained) {
+    if (![start, factor, count, volume2].every(Number.isFinite) || start <= 0 || factor <= 1 || !Number.isInteger(count) || count < 1 || count > 384 || volume2 <= 0) throw new Error("\u68AF\u5EA6\u53C2\u6570\u65E0\u6548 / Invalid gradient parameters");
+    const prepared = Array(count).fill(volume2);
+    if (retained) for (let index = count - 2; index >= 0; index--) prepared[index] = volume2 + prepared[index + 1] / factor;
     return prepared.map((mixed, index) => {
       const transfer = index < count - 1 ? prepared[index + 1] / factor : 0;
       return { tube: index + 1, concentration: start / factor ** index, source: index ? `Tube ${index}` : "\u5DF2\u5907\u8D77\u59CB\u6DB2 / Prepared starting solution", takeUl: index ? mixed / factor : mixed, diluentUl: index ? mixed - mixed / factor : 0, mixedUl: mixed, transferUl: transfer, remainingUl: mixed - transfer };
@@ -544,18 +710,18 @@ var LabNestCalculations = (() => {
     if (dispense > 0) operations.push(operation(`mix:${groupId}:dispense`, "\u9884\u6DF7\u6DB2 / Premix", dispense, "\xB5L", "dispense", { group: groupId, groupName, source: `premix:${groupId}`, destination: `reactions:${groupId}`, repetitions: reactions }));
     return { operations, remaining: dispense * extra, table, total: table.reduce((s, row) => s + (typeof row.batchUl === "number" ? row.batchUl : 0), 0), separate: rows.reduce((s, row, index) => s + (row.premix ? 0 : volumes[index]), 0) };
   }
-  function batchPlan(rows, target, volume, bufferFold, other = 0) {
+  function batchPlan(rows, target, volume2, bufferFold, other = 0) {
     return rows.map((row) => {
       try {
         if (!row.id.trim() || rows.filter((other2) => other2.id.trim() === row.id.trim()).length > 1) throw new Error("\u6837\u672CID\u7F3A\u5931\u6216\u91CD\u590D / Missing or duplicate ID");
         const concentration = parseScalar(row.concentration);
         let plan;
         if (bufferFold !== void 0) {
-          if (concentration <= 0 || bufferFold < 1 || volume <= 0 || target <= 0 || other < 0) throw new Error("\u53C2\u6570\u65E0\u6548 / Invalid parameters");
-          const sample = target / concentration, buffer = volume / bufferFold;
-          if (sample + buffer + other > volume) throw new Error("\u6D53\u5EA6\u4E0D\u8DB3 / Insufficient concentration");
-          plan = { sample, diluent: volume - sample - buffer - other, buffer };
-        } else plan = { ...dilution(concentration, target, volume), buffer: 0 };
+          if (concentration <= 0 || bufferFold < 1 || volume2 <= 0 || target <= 0 || other < 0) throw new Error("\u53C2\u6570\u65E0\u6548 / Invalid parameters");
+          const sample = target / concentration, buffer = volume2 / bufferFold;
+          if (sample + buffer + other > volume2) throw new Error("\u6D53\u5EA6\u4E0D\u8DB3 / Insufficient concentration");
+          plan = { sample, diluent: volume2 - sample - buffer - other, buffer };
+        } else plan = { ...dilution(concentration, target, volume2), buffer: 0 };
         if (row.available.trim() && parseScalar(row.available) < plan.sample) throw new Error("\u53EF\u7528\u6837\u54C1\u4E0D\u8DB3 / Insufficient available sample");
         return { id: row.id, originalConcentration: row.concentration, availableUl: row.available, status: "\u6709\u6548 / Valid", sampleUl: plan.sample, diluentUl: plan.diluent, bufferUl: plan.buffer };
       } catch (error) {
@@ -563,12 +729,12 @@ var LabNestCalculations = (() => {
       }
     });
   }
-  function wbPlan(rows, target, volume, bufferFold, agent) {
-    const table = batchPlan(rows, target, volume, bufferFold, agent.volumeUl);
+  function wbPlan(rows, target, volume2, bufferFold, agent) {
+    const table = batchPlan(rows, target, volume2, bufferFold, agent.volumeUl);
     return table.map((row) => {
       const valid = typeof row.sampleUl === "number";
-      const full = { ...row, concentrationUnit: "\xB5g/\xB5L", targetProteinUg: target, reducingAgent: agent.name, reducingMode: agent.mode, reducingDefinition: agent.definition, reducingAgentUl: valid ? agent.volumeUl : "", totalUl: valid ? volume : "", volumeUnit: "\xB5L" };
-      if (valid && Math.abs(Number(full.sampleUl) + Number(full.bufferUl) + Number(full.reducingAgentUl) + Number(full.diluentUl) - volume) > Math.max(1e-9, volume * 1e-9)) throw new Error("WB volume balance failed");
+      const full = { ...row, concentrationUnit: "\xB5g/\xB5L", targetProteinUg: target, reducingAgent: agent.name, reducingMode: agent.mode, reducingDefinition: agent.definition, reducingAgentUl: valid ? agent.volumeUl : "", totalUl: valid ? volume2 : "", volumeUnit: "\xB5L" };
+      if (valid && Math.abs(Number(full.sampleUl) + Number(full.bufferUl) + Number(full.reducingAgentUl) + Number(full.diluentUl) - volume2) > Math.max(1e-9, volume2 * 1e-9)) throw new Error("WB volume balance failed");
       return full;
     });
   }
@@ -704,6 +870,7 @@ var LabNestCalculations = (() => {
         return finish(definition, [out("vials", "Complete vials", "\u53EF\u51BB\u5B58\u6574\u7BA1\u6570", vials, "vials"), out("remainingCells", "Remaining cells", "\u5269\u4F59\u7EC6\u80DE", num(i, "totalCells") - vials * num(i, "cellsPerVial"), "cells"), out("totalMediumMl", "Total freezing medium", "\u51BB\u5B58\u6DB2\u603B\u91CF", total, "mL"), out("dmsoMl", "DMSO", "DMSO", dmso, "mL"), out("serumMl", "Serum", "\u8840\u6E05", serum, "mL"), out("baseMediumMl", "Base medium", "\u57FA\u7840\u57F9\u517B\u57FA", total - dmso - serum, "mL")], dmso + serum > total ? ["DMSO and serum percentages exceed 100% combined."] : []);
       }
       case "transfection": {
+        if (i.transfectionPlan !== void 0) return calculateTransfection(i.transfectionPlan);
         const n2 = num(i, "wells", { positive: true }) * num(i, "replicates", { positive: true });
         const f = 1 + num(i, "overagePercent", { min: 0 }) / 100;
         const dna = num(i, "dnaUgPerWell", { min: 0 }) * n2 * f;
@@ -717,7 +884,7 @@ var LabNestCalculations = (() => {
           if (a < dnaVolume || b < reagent) throw new Error("\u6838\u9178\u6216\u8BD5\u5242\u8D85\u8FC7\u5BF9\u5E94\u7BA1\u4F53\u79EF / DNA or reagent exceeds its tube volume");
           tubeTable = [{ tube: "A", component: "\u6838\u9178\u539F\u6DB2 / DNA stock", volumeUl: dnaVolume }, { tube: "A", component: "\u7A00\u91CA\u6DB2 / Diluent", volumeUl: a - dnaVolume }, { tube: "B", component: "\u8BD5\u5242 / Reagent", volumeUl: reagent }, { tube: "B", component: "\u7A00\u91CA\u6DB2 / Diluent", volumeUl: b - reagent }];
         }
-        return finish(definition, [out("dnaUg", "DNA", "DNA", dna, "\xB5g"), out("reagentUl", "Transfection reagent", "\u8F6C\u67D3\u8BD5\u5242", reagent, "\xB5L"), out("dnaVolumeUl", "DNA solution", "DNA\u539F\u6DB2", dnaVolume, "\xB5L"), out("diluentUl", "Diluent", "\u7A00\u91CA\u6DB2", total - reagent - dnaVolume, "\xB5L"), out("totalComplexUl", "Total complex", "\u590D\u5408\u7269\u603B\u91CF", total, "\xB5L")], [], ["\u8BD5\u5242\u3001\u7A00\u91CA\u6DB2\u53CA\u6DF7\u5408\u987A\u5E8F\u9075\u5FAA\u6240\u7528\u4EA7\u54C1\u8BF4\u660E / Follow product-specific reagent, diluent and mixing instructions"], tubeTable);
+        return finish({ ...definition, methodVersion: "transfection-v2" }, [out("dnaUg", "DNA", "DNA", dna, "\xB5g"), out("reagentUl", "Transfection reagent", "\u8F6C\u67D3\u8BD5\u5242", reagent, "\xB5L"), out("dnaVolumeUl", "DNA solution", "DNA\u539F\u6DB2", dnaVolume, "\xB5L"), out("diluentUl", "Diluent", "\u7A00\u91CA\u6DB2", total - reagent - dnaVolume, "\xB5L"), out("totalComplexUl", "Total complex", "\u590D\u5408\u7269\u603B\u91CF", total, "\xB5L")], [], ["\u8BD5\u5242\u3001\u7A00\u91CA\u6DB2\u53CA\u6DF7\u5408\u987A\u5E8F\u9075\u5FAA\u6240\u7528\u4EA7\u54C1\u8BF4\u660E / Follow product-specific reagent, diluent and mixing instructions"], tubeTable);
       }
       case "kill-curve": {
         const points = num(i, "points", { positive: true });
@@ -728,8 +895,8 @@ var LabNestCalculations = (() => {
         if (str(i, "scale") === "log" && min <= 0) throw new Error("\u5BF9\u6570\u68AF\u5EA6\u6700\u4F4E\u6D53\u5EA6\u5FC5\u987B\u5927\u4E8E0 / Log minimum must be positive");
         const stockUgMl = num(i, "stockConcentration", { positive: true }) * 1e3;
         if (max > stockUgMl) throw new Error("\u76EE\u6807\u6D53\u5EA6\u8D85\u8FC7\u6BCD\u6DB2 / Target exceeds stock");
-        const volume = num(i, "volumePerWellMl", { positive: true });
-        const table = doses.map((dose, index) => ({ level: index + 1, doseUgMl: round(dose), stockToAddUl: round(dose * volume / stockUgMl * 1e3) }));
+        const volume2 = num(i, "volumePerWellMl", { positive: true });
+        const table = doses.map((dose, index) => ({ level: index + 1, doseUgMl: round(dose), stockToAddUl: round(dose * volume2 / stockUgMl * 1e3) }));
         return finish(definition, [out("dosePoints", "Dose points", "\u6D53\u5EA6\u70B9\u6570", points), out("highestStockAdditionUl", "Highest stock addition", "\u6700\u9AD8\u6D53\u5EA6\u6BCD\u6DB2\u52A0\u5165\u91CF", table.at(-1)?.stockToAddUl ?? 0, "\xB5L")], [], [], table);
       }
       case "viability": {
@@ -759,7 +926,7 @@ var LabNestCalculations = (() => {
       case "fold-dilution": {
         const mode = str(i, "mode") || (definition.id === "fold-dilution" ? "fold" : "final");
         const modern = Boolean(i.mode);
-        const volume = num(i, definition.id === "reagent-dosing" && !modern ? "finalVolumeMl" : "finalVolume", { positive: true });
+        const volume2 = num(i, definition.id === "reagent-dosing" && !modern ? "finalVolumeMl" : "finalVolume", { positive: true });
         let stock = 1, target = 1, initial = 0;
         if (mode === "fold") {
           stock = num(i, modern ? "stockFold" : "fold", { positive: true });
@@ -788,7 +955,7 @@ var LabNestCalculations = (() => {
           }
           if (mode === "add") initial = convert(num(i, "initialConcentration", { min: 0 }), String(i.initialConcentrationUnit ?? "\xB5M"), String(i.targetConcentrationUnit ?? "\xB5M"));
         }
-        const plan = mode === "add" ? addStock(stock, target, initial, volume) : dilution(stock, target, volume);
+        const plan = mode === "add" ? addStock(stock, target, initial, volume2) : dilution(stock, target, volume2);
         const unit = modern ? "mL" : definition.id === "dilution" ? str(i, "volumeUnit") : "mL";
         return finish(current, [out("stockVolume", "Take stock", "\u53D6\u6BCD\u6DB2", plan.sample, unit), out("stockVolumeUl", "Take stock", "\u53D6\u6BCD\u6DB2", convert(plan.sample, unit, "\xB5L"), "\xB5L"), out("diluentVolume", "Diluent", "\u7A00\u91CA\u6DB2", mode === "add" ? 0 : plan.diluent, unit), out("finalVolume", "Final volume", "\u6700\u7EC8\u4F53\u79EF", plan.final, unit)], [], ["\u4F53\u79EF\u53EF\u52A0\u548C\u8FD1\u4F3C / Assumes additive volumes."]);
       }
@@ -872,7 +1039,7 @@ var LabNestCalculations = (() => {
         }
         const reactions = i.samples !== void 0 ? num(i, "samples", { positive: true }) * num(i, "replicates", { positive: true }) + num(i, "controls", { min: 0 }) : num(i, "reactions", { positive: true });
         if (!Number.isInteger(reactions)) throw new Error("\u53CD\u5E94\u6570\u5FC5\u987B\u662F\u6574\u6570 / Reaction count must be an integer");
-        const rows = Array.isArray(i.rows) ? i.rows : parseRows(i.components).map(([name, volume]) => ({ name, volume, premix: true }));
+        const rows = Array.isArray(i.rows) ? i.rows : parseRows(i.components).map(([name, volume2]) => ({ name, volume: volume2, premix: true }));
         const final = i.reactionVolumeUl !== void 0 ? num(i, "reactionVolumeUl", { positive: true }) : rows.reduce((s, row) => s + parseScalar(row.volume), 0);
         const extra = reactions * num(i, "overagePercent", { min: 0 }) / 100;
         const plan = mixPlan(rows, reactions, extra, final);
@@ -880,11 +1047,11 @@ var LabNestCalculations = (() => {
       }
       case "resuspension": {
         const mode = str(i, "mode");
-        let volume;
-        if (mode === "amount") volume = num(i, "amount", { positive: true }) * 1e-9 / (num(i, "targetMolar", { positive: true }) * 1e-6);
-        else if (mode === "mass") volume = num(i, "mass", { positive: true }) * 1e-3 / num(i, "targetMass", { positive: true });
-        else volume = num(i, "mass", { positive: true }) * 1e-3 / num(i, "molecularWeight", { positive: true }) / (num(i, "targetMolar", { positive: true }) * 1e-6);
-        return finish(current, [out("finalVolumeUl", "Final solution volume", "\u6700\u7EC8\u6EB6\u6DB2\u4F53\u79EF", volume * 1e6, "\xB5L")], [], ["\u4EE5COA\u91CF\u6216\u5206\u5B50\u91CF\u4E3A\u4F9D\u636E\uFF1B\u6EB6\u5242\u53CA\u590D\u6EB6\u64CD\u4F5C\u9075\u5FAA\u4EA7\u54C1\u8BF4\u660E / Use COA amount or MW and product instructions."]);
+        let volume2;
+        if (mode === "amount") volume2 = num(i, "amount", { positive: true }) * 1e-9 / (num(i, "targetMolar", { positive: true }) * 1e-6);
+        else if (mode === "mass") volume2 = num(i, "mass", { positive: true }) * 1e-3 / num(i, "targetMass", { positive: true });
+        else volume2 = num(i, "mass", { positive: true }) * 1e-3 / num(i, "molecularWeight", { positive: true }) / (num(i, "targetMolar", { positive: true }) * 1e-6);
+        return finish(current, [out("finalVolumeUl", "Final solution volume", "\u6700\u7EC8\u6EB6\u6DB2\u4F53\u79EF", volume2 * 1e6, "\xB5L")], [], ["\u4EE5COA\u91CF\u6216\u5206\u5B50\u91CF\u4E3A\u4F9D\u636E\uFF1B\u6EB6\u5242\u53CA\u590D\u6EB6\u64CD\u4F5C\u9075\u5FAA\u4EA7\u54C1\u8BF4\u660E / Use COA amount or MW and product instructions."]);
       }
       case "normalization": {
         if (!Array.isArray(i.samples) || !i.samples.length) throw new Error("\u8BF7\u8F93\u5165\u6837\u672C / Enter samples");
@@ -955,10 +1122,10 @@ var LabNestCalculations = (() => {
       case "moi": {
         if (str(i, "titerUnit") === "VG/mL") throw new Error("VG\u4E0D\u662F\u529F\u80FD\u6027\u6EF4\u5EA6\uFF0C\u8BF7\u63D0\u4F9B\u529F\u80FD\u6027\u6EF4\u5EA6 / VG is not a functional titer");
         const moi = num(i, "desiredMoi", { min: 0 }), units2 = num(i, "cells", { positive: true }) * moi;
-        const volume = units2 / num(i, "titer", { positive: true }) * 1e3;
+        const volume2 = units2 / num(i, "titer", { positive: true }) * 1e3;
         const p0 = Math.exp(-moi);
         const p1 = moi * p0;
-        return finish(definition, [out("virusVolumeUl", "Virus volume", "\u75C5\u6BD2\u4F53\u79EF", volume, "\xB5L"), out("probabilityUninfectedPercent", "Uninfected", "\u672A\u611F\u67D3\u6982\u7387", p0 * 100, "%"), out("probabilityExactlyOnePercent", "Exactly one event", "\u6070\u597D\u4E00\u6B21\u611F\u67D3\u6982\u7387", p1 * 100, "%"), out("probabilityAtLeastOnePercent", "At least one event", "\u81F3\u5C11\u4E00\u6B21\u611F\u67D3\u6982\u7387", (1 - p0) * 100, "%")], [], [`\u7406\u8BBA\u6CCA\u677E\u6A21\u578B\uFF1A\u72EC\u7ACB\u3001\u5747\u4E00\u4E8B\u4EF6\u5047\u8BBE\uFF0C\u4E0D\u4EE3\u8868\u786E\u5B9A\u611F\u67D3\u7387 / Theoretical Poisson model: independent homogeneous events. ${str(i, "titerUnit")}; PFU, IU, TU, TCID50, VG are not equivalent.`]);
+        return finish(definition, [out("virusVolumeUl", "Virus volume", "\u75C5\u6BD2\u4F53\u79EF", volume2, "\xB5L"), out("probabilityUninfectedPercent", "Uninfected", "\u672A\u611F\u67D3\u6982\u7387", p0 * 100, "%"), out("probabilityExactlyOnePercent", "Exactly one event", "\u6070\u597D\u4E00\u6B21\u611F\u67D3\u6982\u7387", p1 * 100, "%"), out("probabilityAtLeastOnePercent", "At least one event", "\u81F3\u5C11\u4E00\u6B21\u611F\u67D3\u6982\u7387", (1 - p0) * 100, "%")], [], [`\u7406\u8BBA\u6CCA\u677E\u6A21\u578B\uFF1A\u72EC\u7ACB\u3001\u5747\u4E00\u4E8B\u4EF6\u5047\u8BBE\uFF0C\u4E0D\u4EE3\u8868\u786E\u5B9A\u611F\u67D3\u7387 / Theoretical Poisson model: independent homogeneous events. ${str(i, "titerUnit")}; PFU, IU, TU, TCID50, VG are not equivalent.`]);
       }
       case "virus-titer": {
         if (str(i, "mode") === "plaque") {
@@ -968,7 +1135,7 @@ var LabNestCalculations = (() => {
         const rows = parseRows(i.tcidSeries, 3).map((row) => [Number(row[0]), Number(row[1]), Number(row[2])]);
         if (rows.length < 2) throw new Error("Enter at least two TCID50 dilution rows.");
         if (rows.some(([d, p, t]) => !Number.isFinite(d) || d <= 0 || d > 1 || !Number.isInteger(p) || !Number.isInteger(t) || p < 0 || t <= 0 || p > t)) throw new Error("\u7EC8\u70B9\u884C\u65E0\u6548 / Invalid endpoint row");
-        const crossing = rows.find(([, positive, total]) => positive / total <= 0.5);
+        const crossing = rows.find(([, positive2, total]) => positive2 / total <= 0.5);
         if (!crossing) throw new Error("\u672A\u8DE8\u8D8A50%\u7EC8\u70B9 / No 50% crossing observed");
         return finish(definition, [out("approximateTcid50Dilution", "Approximate 50% endpoint dilution", "\u8FD1\u4F3C50%\u7EC8\u70B9\u7A00\u91CA\u5EA6", crossing[0])], ["This quick endpoint identifies the first dilution at or below 50%; use a protocol-specific Reed\u2013Muench or Spearman\u2013K\xE4rber workflow for formal reporting."]);
       }
@@ -1394,22 +1561,22 @@ var LabNestCalculations = (() => {
   }
 
   // src/lib/calculators/clipboard.ts
-  async function copyCalculation(text) {
+  async function copyCalculation(text2) {
     if (navigator.clipboard?.writeText) {
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text2);
         return "clipboard";
       } catch {
       }
     }
     const previous = document.activeElement;
     const field = document.createElement("textarea");
-    field.value = text;
+    field.value = text2;
     field.readOnly = true;
     field.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
     document.body.append(field);
     field.select();
-    field.setSelectionRange(0, text.length);
+    field.setSelectionRange(0, text2.length);
     try {
       return document.execCommand("copy") ? "compatibility" : "manual";
     } catch {

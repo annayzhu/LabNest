@@ -142,7 +142,7 @@ describe("calculator module interface", () => {
   it("rejects an explicit invalid or boundary input for every calculator", () => {
     const invalidOverrides: Record<string, Record<string, unknown>> = {
       resuspension: {amount:0}, normalization:{finalVolume:0}, hemocytometer: { dilutionFactor: 0 }, seeding: { stockCellsPerMl: 0 }, hydrogel: { stockCellsPerMl: 0 }, split: { splitRatio: 0 },
-      freezing: { cellsPerVial: 0 }, transfection: { wells: 0 }, "kill-curve": { points: 0 }, viability: { targetLiveCellsPerMl: 0 },
+      freezing: { cellsPerVial: 0 }, transfection: { transfectionPlan: {...getCalculatorCatalog().find(d=>d.id==='transfection')!.exampleInputs.transfectionPlan as object, groups: []} }, "kill-curve": { points: 0 }, viability: { targetLiveCellsPerMl: 0 },
       od600: { pathLengthCm: 0 }, cfu: { dilution: 0 }, "colony-counter": { automaticCount: -1 }, "reagent-dosing": { stockConcentration: 0 },
       dilution: { stockConcentration: 0 }, "fold-dilution": { stockFold: 0 }, "serial-dilution": { dilutionFactor: 1 }, molarity: { molecularWeight: 0 },
       "percent-solution": { targetVolumeMl: 0 }, "media-recipe": { baseVolumeMl: 0 }, "buffer-recipe": { baseVolumeMl: 0 }, "ic50-ec50": { points: "1,1\n2,2" },

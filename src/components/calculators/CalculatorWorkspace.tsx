@@ -14,6 +14,8 @@ import { MixEditor, SampleEditor, RecipeEditor, type RecipeRow, ReactionGroups, 
 import type { MixRow, SampleRow } from "@/lib/calculators/planning";
 import { recordVisit, saveDraft, restoreLegacyInputs } from "@/lib/calculators/calculator-storage";
 import { ResultPanel } from "./ResultPanel";
+import {TransfectionEditor} from './TransfectionEditor';
+import {newTransfectionPlan,transfectionPlateValues,type TransfectionPlan} from '@/lib/calculators/transfection';
 import { resultClipboard, canCopyResult } from "@/lib/calculators/result-presentation";
 import { OfflineCalculator } from "./OfflineCalculator";
 import Link from "next/link";
@@ -38,6 +40,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     const supplied=Object.keys(initialInputs).some(key=>['stockConcentration','fold'].includes(key))&&!initialInputs.mode?restoreLegacyInputs(calculatorId,initialInputs).inputs:initialInputs;
     for(const field of definition.fields){if(supplied[field.key]!==undefined)defaults[field.key]=supplied[field.key];if(supplied[`${field.key}Unit`]!==undefined)defaults[`${field.key}Unit`]=supplied[`${field.key}Unit`];}
     if(plateContext){if(definition.fields.some(field=>field.key==='wells'))defaults.wells=String(plateContext.wellIds.length);if(calculatorId==='master-mix'){defaults.samples=String(plateContext.wellIds.length);defaults.replicates='1';defaults.controls='0';}}
+    if(calculatorId==='transfection'&&!('dnaUgPerWell' in supplied)){const plan=newTransfectionPlan();if(plateContext)plan.groups[0].wells=String(plateContext.wellIds.length);defaults.transfectionPlan=supplied.transfectionPlan??plan;}
     return defaults;
   }, [definition,initialInputs,calculatorId,plateContext]);
   const resultSection=useRef<HTMLDivElement>(null);
@@ -117,7 +120,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   function applyToPlate() {
     if (!result || !plateContext || historical || example) return;
-    if(inputs.wells!==undefined&&Number(inputs.wells)!==plateContext.wellIds.length){setError(zh?"孔数与所选孔位不一致，请确认关联。":"Well count does not match selection; review context.");return;}
+    if(inputs.transfectionPlan){try{transfectionPlateValues(inputs.transfectionPlan as TransfectionPlan,plateContext.wellIds.length);}catch(e){setError(e instanceof Error?e.message:String(e));return;}}
+    else if(inputs.wells!==undefined&&Number(inputs.wells)!==plateContext.wellIds.length){setError(zh?"孔数与所选孔位不一致，请确认关联。":"Well count does not match selection; review context.");return;}
     const plateInputs={...inputs};
     for(const field of definition.fields){if(!field.unit||!isFieldVisible(calculatorId,field.key,inputs)||!String(inputs[field.key]??'').trim())continue;const from=String(inputs[`${field.key}Unit`]??field.unit);if(compatibleUnits(field.unit).includes(from)){plateInputs[field.key]=convert(parseScalar(inputs[field.key]),from,field.unit);plateInputs[`${field.key}Unit`]=field.unit;}}
     const payload = { ...result, type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs:plateInputs, rawInputs:inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion };
@@ -156,11 +160,12 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
       {plateContext ? <div className="flex items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-info/20 bg-info-surface px-3 py-2 text-xs text-info"><FlaskConical className="h-4 w-4 shrink-0" /><span>{zh ? `来自“${plateContext.plateName}”的 ${plateContext.wellIds.length} 个孔；结果可回写到这些孔位。` : `${plateContext.wellIds.length} wells from “${plateContext.plateName}”; results can be sent back to these wells.`}</span></div> : null}
       <StorageRecovery message={persistenceWarning} onRetry={retry} zh={zh}/>
 
-      <div className="calculator-workspace-grid">
+      <div className={`calculator-workspace-grid ${calculatorId==='transfection'?'transfection-workspace':''}`}>
         <Card>
           <CardHeader title={zh ? "输入" : "Inputs"} action={<button type="button" onClick={() => { edit(defaults,false); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss"><RotateCcw className="h-3.5 w-3.5" />{zh ? "重置" : "Reset"}</button>} />
           <CardBody>
             <form onSubmit={runCalculation} className="calculator-input-form space-y-4">
+              {calculatorId==='transfection'?<TransfectionEditor zh={zh} plan={inputs.transfectionPlan as TransfectionPlan|undefined} onChange={transfectionPlan=>edit({...inputs,transfectionPlan,__displayUnits:{}})}/>:null}
               <div className="calculator-fields">
                 {definition.fields.filter(field=>isFieldVisible(calculatorId,field.key,inputs)&&!(calculatorId==='wb-loading'&&Array.isArray(inputs.samples)&&field.key==='sampleConcentrationUgUl')).map((field) => <div key={field.key} className={`calculator-field ${field.type==='textarea'?'calculator-field-wide':''} ${field.unit&&compatibleUnits(field.unit).length>1?"calculator-quantity":""}`}>{['points','standards'].includes(field.key)&&field.type==='textarea'?<CurveEditor zh={zh} value={String(inputs[field.key]??'')} onChange={value=>edit({...inputs,[field.key]:value})}/>:<CalculatorField field={{...field,unit:field.unit&&compatibleUnits(field.unit).length>1?"":String(inputs[`${field.key}Unit`]??field.unit??"")}} zh={zh} value={inputs[field.key]??''} onChange={(value)=>edit({...inputs,[field.key]:value})}/>} {field.unit&&compatibleUnits(field.unit).length>1?<select aria-label={`${zh?field.labelZh:field.label} ${zh?'单位':'unit'}`} className="min-h-11 min-w-0 max-w-[105px] rounded-lg border border-hairline px-2 text-sm" value={String(inputs[`${field.key}Unit`]??field.unit)} onChange={event=>{try { const previous=String(inputs[`${field.key}Unit`]??field.unit);const value=String(inputs[field.key]??'').trim();edit({...inputs,[field.key]:value?String(convert(parseScalar(value),previous,event.target.value)):'',[`${field.key}Unit`]:event.target.value});}catch{setError(zh?'请先完成数值输入，再切换单位。':'Complete the number before changing units.');}}}>{(['dilution','reagent-dosing','fold-dilution'].includes(calculatorId)&&['stockConcentration','targetConcentration','initialConcentration'].includes(field.key)?Object.keys(units).filter(unit=>['molar-concentration','mass-concentration'].includes(units[unit].dimension)):compatibleUnits(field.unit)).map(unit=><option key={unit}>{unit}</option>)}</select>:null}</div>)}
               </div>

@@ -1,7 +1,7 @@
 import type {CalculatorResult} from './calculator-engine';
 import {compatibleUnits,convert,parseScalar} from './quantities';
 import {tableColumnLabel} from './presentation';
-export const tableQuantityUnits:Record<string,string>={takeUl:'µL',diluentUl:'µL',mixedUl:'µL',transferUl:'µL',remainingUl:'µL',requiredUl:'µL',perReactionUl:'µL',batchUl:'µL',availableUl:'µL',sampleUl:'µL',bufferUl:'µL',reducingAgentUl:'µL',totalUl:'µL',theoreticalUl:'µL',actualUl:'µL',volumeUl:'µL',stockToAddUl:'µL',targetProteinUg:'µg'};
+export const tableQuantityUnits:Record<string,string>={perWellUl:'µL',dnaMassUg:'µg',rnaPmol:'pmol',finalNm:'nM',takeUl:'µL',diluentUl:'µL',mixedUl:'µL',transferUl:'µL',remainingUl:'µL',requiredUl:'µL',perReactionUl:'µL',batchUl:'µL',availableUl:'µL',sampleUl:'µL',bufferUl:'µL',reducingAgentUl:'µL',totalUl:'µL',theoreticalUl:'µL',actualUl:'µL',volumeUl:'µL',stockToAddUl:'µL',targetProteinUg:'µg'};
 export function tableUnitsFor(result:CalculatorResult):Record<string,string>{return {...tableQuantityUnits,...(result.calculatorId==='wb-loading'?{originalConcentration:'µg/µL'}:result.calculatorId==='normalization'?{originalConcentration:'ng/µL'}:result.calculatorId==='serial-dilution'?{concentration:'µM'}:{}),doseUgMl:'µg/mL'};}
 export function displayQuantity(value:number,unit:string,target?:string){return {value:target?convert(value,unit,target):value,unit:target??unit};}
 export function formatQuantity(value:number){return value!==0&&(Math.abs(value)<0.001||Math.abs(value)>=1e7)?value.toExponential(5):value.toLocaleString('en',{maximumSignificantDigits:9,useGrouping:false});}
@@ -44,7 +44,8 @@ export function resultClipboard(result:CalculatorResult,zh:boolean){
   if(op.role==='make-up-to'&&(result.table?.some(row=>row.action==='make-up-to')||result.outputs.some(o=>o.unit&&typeof o.value==='number'&&tableQuantityUnits[o.key]===undefined&&/volume/i.test(o.key))))continue;
   const component=op.component.split(' / ')[zh?0:1]??op.component;
   const instruction=op.role==='make-up-to'?(zh?'定容至':'Bring to final volume'):component;
-  lines.push(`${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions>1?' × '+op.repetitions:''}`);
+  lines.push(`${op.groupName?op.groupName+': ':''}${instruction}: ${formatQuantity(op.quantity.value)} ${op.quantity.unit}${op.repetitions>1?' × '+op.repetitions:''}`);
  }
+ lines.push(...(result.instructions??[]));
  return lines.filter(Boolean).join('\n');
 }

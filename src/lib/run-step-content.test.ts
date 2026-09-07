@@ -1,7 +1,7 @@
 import {it,expect} from 'vitest';
 import {createEmptyProtocolDocument,projectProtocolDocument} from './protocol-document';
 import {buildProtocolExperimentSteps} from './experiment-planning';
-import {runStepContent} from './run-step-content';
+import {runStepContent,runOfflineImagePaths} from './run-step-content';
 it('R01 R02 R04 stable block mapping retains tables, notes, and distinct same-title steps',()=>{
  const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'shared',type:'callout',tone:'note',text:'Shared preparation'},{id:'a',type:'heading',text:'Same'},{id:'p',type:'text',text:'Prepare'},{id:'t',type:'table',rows:[['Component','Volume'],['Enzyme','{{dose}} µL'],['Other','{{unknown}}']]},{id:'note',type:'text',text:'After table'},{id:'b',type:'heading',text:'Same'},{id:'material',type:'table',rows:[['Material'],['Tube']]},{id:'check',type:'checklist',items:['Check A','Check B']}];
  const steps=projectProtocolDocument(doc).steps;
@@ -37,3 +37,5 @@ it('recovers a v1.2 rich heading with missing table from its frozen source ID, n
  const r=runStepContent({versions:[{protocolVersionId:'v',stepsJson:old,contentJson:doc}]},{protocolStepRef:'v:h:0',groupKey:'v',order:1,title:'Old heading',description:''});
  expect(r.blocks.map(b=>b.id)).toEqual(['t']);expect(r.common).toEqual([]);
 });
+
+it('offline image manifest deduplicates only frozen local attachment images',()=>{const image=(url:string)=>({type:'media',mediaType:'image',url});expect(runOfflineImagePaths({versions:[{blocks:[image('/api/attachments/a?inline=1'),image('/api/attachments/a?inline=1'),image('https://outside.test/private.png'),image('/api/mobile/calculations'),{type:'media',mediaType:'video',url:'/api/attachments/movie'}]}]})).toEqual(['/api/attachments/a?inline=1']);});

@@ -1,0 +1,5 @@
+# Opt-in LAN HTTPS. Install the generated local CA on each client before using this URL.
+https://{$LABNEST_HTTPS_HOST} {
+    tls internal
+    reverse_proxy app:3000
+}

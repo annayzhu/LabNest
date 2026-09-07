@@ -1,0 +1,231 @@
+{
+  "version": "1.3",
+  "derived": [
+    {
+      "id": "bradford-bca",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/bradford-bca.png",
+      "sourceSha256": "84deb8531efe94e102d5c061e027c845852acaf0c5119570165cdef7a67707a5",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 1976
+    },
+    {
+      "id": "buffer-recipe",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/buffer-recipe.png",
+      "sourceSha256": "f0ee01ee88d35632167c25f1436077b29fe256b34bce40e84f3a33f392c75810",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2760
+    },
+    {
+      "id": "cfu",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/cfu.png",
+      "sourceSha256": "8edb91c55d9af602403f9aff36deb5cb25ba8ccb0dde3a3930265194306caf05",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3365
+    },
+    {
+      "id": "colony-counter",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/colony-counter.png",
+      "sourceSha256": "607ff1b4f748263c7174fc13e6ed2f4a21bf826cd86412f0fdc1fb21a073617c",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3298
+    },
+    {
+      "id": "dna-rna-conversion",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/dna-rna-conversion.png",
+      "sourceSha256": "1563712c2f9e6fbbdb587eb13f358f6a0b6b680211a0ff87041a81d9d026b794",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3306
+    },
+    {
+      "id": "elisa-4pl",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/elisa-4pl.png",
+      "sourceSha256": "c1a241ac17470f0ee1621f372e91b1f76d9e5fd51fe236720c01d988e144c094",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2520
+    },
+    {
+      "id": "freezing",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/freezing.png",
+      "sourceSha256": "42ed8691b14e4bf08d613b017325443d588bcfd3fabe07d25bc8f9b88a80c676",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3232
+    },
+    {
+      "id": "hemocytometer",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/hemocytometer.png",
+      "sourceSha256": "c90ddb2cbf0eac734432920863ca96475264621ebcfe21472a3b2f61a5be7ec2",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2570
+    },
+    {
+      "id": "hydrogel",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/hydrogel.png",
+      "sourceSha256": "ef6b7adc9d7e63e8aa1a893ccbc8286029c241f6b574a209208d89aa7ddb0e8a",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3321
+    },
+    {
+      "id": "ic50-ec50",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/ic50-ec50.png",
+      "sourceSha256": "79ced28f341c2f53a1fccaecbaad576afae160444b856b80fa0710f683785263",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2452
+    },
+    {
+      "id": "kill-curve",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/kill-curve.png",
+      "sourceSha256": "3791889442d88e8d56b78c86cfb1b16a3a70722d8718122864665f73364426ce",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2283
+    },
+    {
+      "id": "ligation",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/ligation.png",
+      "sourceSha256": "43840b63d2f1cd2cc7feb9be82f59b591f82ed317fac628b609a6fd1bf154830",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 1706
+    },
+    {
+      "id": "media-recipe",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/media-recipe.png",
+      "sourceSha256": "feb387bd0018ed528190200d431d69b1e47f958377cb9bd58e7334d116e79252",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2537
+    },
+    {
+      "id": "moi",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/moi.png",
+      "sourceSha256": "52ada559b0275f71d0e57e745a7b5c2e6f1c5d556656a94712f2349b33caa95a",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3394
+    },
+    {
+      "id": "normalization",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/normalization.png",
+      "sourceSha256": "c1a2436ccff16e6983de44d58083379c6ac87c860021993d6513f52b115b490a",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2409
+    },
+    {
+      "id": "od600",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/od600.png",
+      "sourceSha256": "42543283accf5b450b7060ee49e2915649f94ba1903d51ab734c766fc94bc92a",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 1892
+    },
+    {
+      "id": "percent-solution",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/percent-solution.png",
+      "sourceSha256": "75c7fd1588ef7e441686c6cf4d7d54337d762272984492a4cd01579974342d92",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2735
+    },
+    {
+      "id": "resuspension",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/resuspension.png",
+      "sourceSha256": "b09f0c7f1e7bc87c1393e446083f6d3a6ea426d92299053fb51baf2eea960908",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 1703
+    },
+    {
+      "id": "serial-dilution",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/serial-dilution.png",
+      "sourceSha256": "1bce6442a8b246326a0d3abea9cd0e380adf38c330be301880820ab9950e79db",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2619
+    },
+    {
+      "id": "split",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/split.png",
+      "sourceSha256": "8faa18c5f2dfcf7b65bf79452e8ea7c47c447e0cdb32081beb664367c730a073",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2152
+    },
+    {
+      "id": "tm",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/tm.png",
+      "sourceSha256": "01158367a546a3758032cfba98e4332f9140ddc2f80ed5f16fd3cda9c91c4e8c",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2537
+    },
+    {
+      "id": "transfection",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/transfection.png",
+      "sourceSha256": "54a9d369b08f851ae2fa9c89444db65e90954be6f283600a56d5da82face113c",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 3878
+    },
+    {
+      "id": "unit-converter",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/unit-converter.png",
+      "sourceSha256": "2835b2ba9ff87323fb5ca2161f11098b07a365ae6185154bfe431ac2bbd0bdd5",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2728
+    },
+    {
+      "id": "viability",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/viability.png",
+      "sourceSha256": "5ab6967ee673ab6c4c12b3919df19844b1bb6ed9afe1ca50025c0fe6263330b1",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 4354
+    },
+    {
+      "id": "virus-titer",
+      "source": "assets/calculator-icons-v1.3/LabNest_Calculator_Icons_v1.3/icons/virus-titer.png",
+      "sourceSha256": "8296b5bfa8b39b1db224c78e34407b1d8283e0bfbcb0fc7865f80edfa918ee3e",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "bytes": 2471
+    }
+  ],
+  "totalBytes": 78556
+}

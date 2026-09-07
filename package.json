@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/build-calculator-standalone.mjs && prisma generate && next build",
+    "build": "node scripts/build-calculator-icons.mjs && node scripts/build-calculator-standalone.mjs && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

@@ -72,20 +72,7 @@ jobs:
           done
           cat calculator-server.log
           exit 1
-      - run: node scripts/verify-calculator-run-v12.mjs
-      - run: node scripts/verify-calculator-pipetting-v12.mjs
-      - run: node scripts/verify-calculator-v12-database.mjs
-      - run: node scripts/verify-calculator-refactor.mjs
-      - run: node scripts/verify-calculator-legacy.mjs
-      - run: node scripts/verify-calculator-compact-ui.mjs
-      - run: node scripts/verify-calculator-plate.mjs
-      - run: node scripts/verify-calculator-storage-appearance.mjs
-      - run: node scripts/verify-calculator-appearance.mjs
-      - run: node scripts/verify-calculator-integration.mjs
-      - run: node scripts/verify-calculator-database.mjs
-      - run: node scripts/verify-calculator-rejection.mjs
-      - run: node scripts/verify-calculator-visual-v11.mjs
-      - run: node scripts/verify-calculator-standalone-v11.mjs
+      - run: node scripts/verify-calculator-v13-acceptance.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -94,4 +81,5 @@ jobs:
             docs/calculator/evidence
             docs/calculator/v1.1/evidence
             docs/calculator/v1.2/evidence
+            docs/calculator/v1.3/evidence
             calculator-server.log

@@ -1,0 +1,18 @@
+# Optional override; does not expose a public tunnel or replace database volumes.
+services:
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      LABNEST_HTTPS_HOST: ${LABNEST_HTTPS_HOST:?Set the LAN hostname or IP clients will use}
+    ports:
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - labnest-caddy-data:/data
+      - labnest-caddy-config:/config
+    depends_on:
+      - app
+volumes:
+  labnest-caddy-data:
+  labnest-caddy-config:

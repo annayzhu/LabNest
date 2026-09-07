@@ -22,3 +22,9 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  const render=(value:unknown,key=''):unknown=>typeof value==='string'&&!['id','url','source_ref','attachmentId'].includes(key)?renderProtocolTemplate(value,parameters):Array.isArray(value)?value.map(v=>render(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,render(v,k)])):value;
  return {blocks:render(blocks) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery'};
 }
+
+/** Publish only explicit same-origin image resources from this frozen Run. */
+export function runOfflineImagePaths(snapshot:unknown):string[]{
+ const paths=new Set<string>();
+ const visit=(value:unknown)=>{if(!value||typeof value!=='object')return;if(Array.isArray(value)){value.forEach(visit);return;}const record=value as Record<string,unknown>;if(record.type==='media'&&record.mediaType==='image'&&typeof record.url==='string'&&/^\/api\/attachments\/[^/?]+(?:\?inline=1)?$/.test(record.url))paths.add(record.url);Object.values(record).forEach(visit);};visit(snapshot);return [...paths];
+}

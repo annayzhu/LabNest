@@ -35,7 +35,7 @@ try {
   }
  }
  checks.push('UX-14 eight task flows at 360 and 390 CSS px');
- await page.goto(`${base}/tools/calculator/dilution`,{waitUntil:'networkidle'});await page.getByText('Offline use',{exact:true}).click();await page.getByRole('button',{name:'Cache this calculation page'}).click();await page.getByText('This page is cached; drafts can be restored offline.',{exact:true}).waitFor({timeout:30000});
+ await page.goto(`${base}/tools/calculator/dilution`,{waitUntil:'networkidle'});await page.getByText('Offline pages',{exact:true}).click();await page.getByRole('button',{name:'Prepare offline / Retry update'}).click();await page.getByText(/^Available offline:/).waitFor({timeout:30000});
  await context.setOffline(true);await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'Dilution & dosing'}).waitFor();await page.getByRole('button',{name:'Restore draft'}).click();await fill('Target concentration',20);await page.getByText('Valid conditions',{exact:true}).waitFor();checks.push('UX-12 offline cached reload, restore and calculate');await context.setOffline(false);
  assert.deepEqual(errors,[]);
  await writeFile(`${output}/browser-report.json`,JSON.stringify({base,checks,errors,completedAt:new Date().toISOString()},null,2));console.log(JSON.stringify({checks,errors},null,2));

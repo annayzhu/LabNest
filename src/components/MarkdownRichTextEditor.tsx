@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type { Editor } from "@tiptap/core";
 import { CompactRichTextTiptapEditor } from "@/components/CompactRichTextTiptapEditor";
 import type { WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { markdownRichTextToTiptap, tiptapToMarkdownRichText } from "@/lib/scientific-tiptap";
@@ -15,6 +16,7 @@ export function MarkdownRichTextEditor({
   toolbarHostId,
   insertActions,
   className,
+  registerEditor,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -24,9 +26,12 @@ export function MarkdownRichTextEditor({
   toolbarHostId?: string;
   insertActions?: WysiwygInsertAction[];
   className?: string;
+  registerEditor?: (editor: Editor) => () => void;
 }) {
   const content = useMemo(() => markdownRichTextToTiptap(value), [value]);
   return <CompactRichTextTiptapEditor
+    media
+    registerEditor={registerEditor}
     content={content}
     onChange={(json) => onChange(tiptapToMarkdownRichText(json))}
     placeholder={placeholder}

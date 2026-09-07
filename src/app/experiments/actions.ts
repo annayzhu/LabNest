@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ExperimentStatus, RecordLifecycleStatus } from "@/generated/prisma/enums";
 import type { ExperimentFormState } from "@/components/ExperimentForm";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshot } from "@/lib/experiments";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
@@ -101,6 +102,7 @@ export async function updateExperiment(
     if (current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
     const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
     await prisma.$transaction(async (tx) => {
+      await associateDocumentMedia(tx, data.contentJson, "experiment", data.parsed.id!);
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
         purpose: data.purpose, tags: data.tags, contentJson: data.contentJson, searchText: data.searchText,

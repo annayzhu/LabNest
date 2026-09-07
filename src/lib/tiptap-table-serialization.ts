@@ -1,6 +1,7 @@
 import type { JSONContent } from "@tiptap/core";
 import { parseRichTextFontSizePt, type RichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX, type RichTextColor } from "@/lib/rich-text-color";
+import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
 
 export type PersistedTiptapTable = {
   rows: string[][];
@@ -14,6 +15,7 @@ function plainText(node: JSONContent | undefined): string {
   if (!node) return "";
   if (node.type === "hardBreak") return "\n";
   if (node.type === "text") return node.text ?? "";
+  if (node.type === "documentMedia") return documentMediaToMarkdown(node.attrs?.block);
   return (node.content ?? []).map(plainText).join("");
 }
 
@@ -31,7 +33,10 @@ export function tiptapTableCell(value: string, header: boolean, width?: number |
   return {
     type: header ? "tableHeader" : "tableCell",
     attrs: width ? { colwidth: [Math.round(width)] } : undefined,
-    content: richContent ? cloneContent(richContent) : [{ type: "paragraph", content }],
+    content: richContent ? cloneContent(richContent) : value.split("\n").some(documentMediaFromMarkdown) ? value.split("\n").map(line => {
+      const media = documentMediaFromMarkdown(line);
+      return media ? { type: "documentMedia", attrs: { block: media } } : { type: "paragraph", content: line ? [{ type: "text", text: line, marks }] : [] };
+    }) : [{ type: "paragraph", content }],
   };
 }
 

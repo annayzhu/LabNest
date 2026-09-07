@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ReportStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { buildReportDraft, collectReportSources } from "@/lib/reports";
 import { reportDeleteBlockers } from "@/lib/record-lifecycle";
@@ -42,10 +43,11 @@ async function persistReportUpdate(formData: FormData) {
   const parsed = parse(formData); if (!parsed.id) throw new Error("Report ID is required."); const current = await prisma.report.findUnique({ where: { id: parsed.id } }); if (!current) throw new Error("Report not found.");
   if (current.projectId !== parsed.projectId || current.researchPlanId !== (parsed.researchPlanId ?? null)) throw new Error("Report scope cannot be moved after its source snapshot is created.");
   const contentJson = parseScientificDocumentJson(formData.get("contentJson"), reportSections);
-  await prisma.$transaction([
-    prisma.report.update({ where: { id: current.id }, data: { title: parsed.title, status: parsed.status, periodStart: parsed.periodStart, periodEnd: parsed.periodEnd, tags: parseTags(formData.get("tags")), contentJson } }),
-    prisma.activityLog.create({ data: { action: "update", targetType: "report", targetId: current.id, metadataJson: { status: parsed.status } } }),
-  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.report.update({ where: { id: current.id }, data: { title: parsed.title, status: parsed.status, periodStart: parsed.periodStart, periodEnd: parsed.periodEnd, tags: parseTags(formData.get("tags")), contentJson } });
+    await associateDocumentMedia(tx, contentJson, "report", current.id);
+    await tx.activityLog.create({ data: { action: "update", targetType: "report", targetId: current.id, metadataJson: { status: parsed.status } } });
+  });
   return current.id;
 }
 

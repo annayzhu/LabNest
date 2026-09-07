@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { buildProtocolExperimentSteps } from "@/lib/experiment-planning";
 import { isValidRecordCode, reserveRecordCode } from "@/lib/record-codes";
@@ -152,6 +153,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     }
 
     await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
+  await associateDocumentMedia(tx, [input.contentJson, experiment.protocolSnapshotJson], "experiment", experiment.id);
   return experiment;
 }
 

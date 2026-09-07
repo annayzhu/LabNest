@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ResearchPlanStatus } from "@/generated/prisma/enums";
 import type { ResearchPlanFormState } from "@/components/ResearchPlanForm";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { researchPlanRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { documentPlainText, parseScientificDocumentJson, researchPlanSections } from "@/lib/scientific-document";
@@ -103,6 +104,7 @@ export async function createResearchPlan(
           },
         },
       });
+      await associateDocumentMedia(tx, contentJson, "research_plan", created.id);
       await tx.activityLog.create({ data: { action: "create", targetType: "research_plan", targetId: created.id, metadataJson: { code, protocolIds } } });
       return created;
     });
@@ -138,6 +140,7 @@ export async function updateResearchPlan(
           contentJson,
         },
       });
+      await associateDocumentMedia(tx, contentJson, "research_plan", planId);
       await tx.researchPlanProtocol.deleteMany({ where: { researchPlanId: planId } });
       if (protocolIds.length) {
         await tx.researchPlanProtocol.createMany({ data: protocolIds.map((protocolId) => ({ researchPlanId: planId, protocolId, isPrimary: protocolId === primaryProtocolId })) });

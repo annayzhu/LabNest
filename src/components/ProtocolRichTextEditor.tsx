@@ -9,6 +9,7 @@ import { protocolRichTextToTiptap, tiptapToProtocolRichText } from "@/lib/protoc
 export function ProtocolRichTextEditor({ nodes, onChange, showToolbar = true }: { nodes: ProtocolRichTextNode[]; onChange: (nodes: ProtocolRichTextNode[]) => void; showToolbar?: boolean }) {
   const content = useMemo(() => protocolRichTextToTiptap(nodes), [nodes]);
   return <CompactRichTextTiptapEditor
+    media
     content={content}
     onChange={(json) => onChange(tiptapToProtocolRichText(json))}
     placeholder="How should this result be recorded?"

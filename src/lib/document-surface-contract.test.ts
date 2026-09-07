@@ -22,9 +22,8 @@ describe("shared document surface contract", () => {
     }
   });
 
-  it("offers attachment inserts in the Entry document toolbar", () => {
-    expect(source("src/components/EntryComposer.tsx")).toContain("insertActions={entryInsertActions}");
-  });
+  // Entry insertion is exercised through the real menu/file picker and save flow
+  // in scripts/verify-document-media-audio.mjs, not a private prop-name assertion.
 
   it("does not derive Entry source classification from attachment MIME types", () => {
     expect(source("src/components/EntryComposer.tsx")).not.toContain('updateField("sourceType", files.some');

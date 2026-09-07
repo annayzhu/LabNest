@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ProtocolAvailability, ProtocolReviewStage } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { associateDocumentMedia } from "@/lib/document-media.server";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { parseTags } from "@/lib/tags";
@@ -169,6 +170,7 @@ export async function saveProtocolDocument(
       }
 
       await transaction.researchPlanProtocol.deleteMany({ where: { protocolId: parsed.protocolId } });
+      await associateDocumentMedia(transaction, document, "protocol_version", savedVersionId);
       if (researchPlanIds.length) {
         await transaction.researchPlanProtocol.createMany({
           data: researchPlanIds.map((researchPlanId) => ({

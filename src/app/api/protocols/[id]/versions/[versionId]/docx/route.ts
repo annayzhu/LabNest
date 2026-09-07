@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { loadDocumentImageAssets } from "@/lib/document-media-export.server";
 import { exportProtocolDocx, protocolDocxFilename } from "@/lib/protocol-docx-export";
 import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
@@ -30,7 +31,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     projectName: version.protocol.project?.name,
     tags: version.protocol.tags,
   };
-  const bytes = exportProtocolDocx(identity, document);
+  const bytes = exportProtocolDocx(identity, document, await loadDocumentImageAssets(document));
   const filename = protocolDocxFilename(identity);
   return new Response(bytes, {
     headers: {

@@ -1,3 +1,4 @@
+import { runStepContent } from "@/lib/run-step-content";
 import { ArrowLeft, Camera, FilePlus2, PackageMinus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -106,7 +107,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
           experimentId={experiment.id}
           status={experiment.status}
-          steps={experiment.steps}
+          steps={experiment.steps.map(step=>({...step,richContent:runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>)}))}
           editable={editable}
           evidenceByStep={evidenceByStep}
         />

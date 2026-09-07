@@ -1,9 +1,11 @@
 "use client";
 
+import { OfflineCalculator } from "@/components/calculators/OfflineCalculator";
+import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState, useRef } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
@@ -13,6 +15,7 @@ import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
+  richContent?: ReturnType<typeof import("@/lib/run-step-content").runStepContent>;
   id: string;
   groupKey: string;
   groupTitle: string;
@@ -45,6 +48,11 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   editable: boolean;
   evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
+  const formRef=useRef<HTMLFormElement>(null);
+  const [draftFields,setDraftFields]=useState<Record<string,string>>({});
+  const draftInitialized=useRef(false);
+  const [draftReady,setDraftReady]=useState(false);
+  const [draftNotice,setDraftNotice]=useState("");
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
   const [selectedStepId, setSelectedStepId] = useState(() => steps.find((step) => !step.completed)?.id ?? steps[0]?.id ?? "");
   const [state, formAction, pending] = useActionState(async (previous: ProtocolRunProgressState, data: FormData) => {
@@ -52,6 +60,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     if (!result.error && result.completedStepIds) {
       const saved = new Set(result.completedStepIds);
       setCompletedIds(saved);
+      setDraftFields({});try{sessionStorage.removeItem(`labnest.run-draft:${experimentId}`);}catch{};setDraftNotice("");
       if (result.completedCurrentStepId) {
         const next = steps.find((step) => !saved.has(step.id));
         if (next) setSelectedStepId(next.id);
@@ -76,6 +85,17 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const [offlineStatus, setOfflineStatus] = useState("");
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
+  useEffect(()=>{
+    if(draftInitialized.current)return;draftInitialized.current=true;
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('已恢复未提交草稿 / Unsaved draft restored');}}catch{setDraftNotice('草稿存储不可用 / Draft storage unavailable');}setDraftReady(true);});
+    return()=>cancelAnimationFrame(frame);
+  },[experimentId,steps]);
+  useEffect(()=>{
+    if(!draftReady)return;
+    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('无法保存草稿，请保留页面 / Cannot save draft; keep this page');}};
+    preserve();window.addEventListener('pagehide',preserve);window.addEventListener('labnest:preserve-run-draft',preserve);
+    return()=>{window.removeEventListener('pagehide',preserve);window.removeEventListener('labnest:preserve-run-draft',preserve);};
+  },[experimentId,selectedStepId,completedIds,draftFields,draftReady]);
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
   const evidence = selectedStep && evidenceByStep ? evidenceByStep[selectedStep.id] : undefined;
   const evidenceTotals = Object.values(evidenceByStep ?? {}).reduce((total, item) => ({
@@ -142,7 +162,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     });
   }
 
-  return <form action={formAction} onSubmit={prepareMutation} className="space-y-4">
+  return <form ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
+    <OfflineCalculator zh={false}/>
     <input type="hidden" name="experimentId" value={experimentId} />
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
@@ -159,15 +180,17 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         </div>
       </div>
 
-      {selectedStep && currentStep ? (
+      {draftNotice?<p role="status" className="text-xs text-warning">{draftNotice}</p>:null}
+      {selectedStep ? (
         <div className="p-4">
-          <h2 className="text-sm font-semibold text-ink">{selectedStep.id === currentStep.id ? "Current step" : "Step review"}</h2>
+          <h2 className="text-sm font-semibold text-ink">{selectedStep.id === currentStep?.id ? "Current step" : "Step review"}</h2>
           <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{selectedStep.groupTitle} · Step {selectedStep.order}</p>
           <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{selectedStep.title}</h3>
-          {selectedStep.description ? <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p> : null}
+          <div data-run-tools className="mt-3 grid grid-cols-2 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
+          <StepTimerControls compact key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} /></div>
+          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.common.length?<details open><summary>共同准备 / Supplementary content</summary>{selectedStep.richContent.common.map(block=><ProtocolContentBlockView key={block.id} block={block}/>)}</details>:null}{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block}/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p><p className="text-xs text-warning">旧记录未保存完整格式 / Legacy record did not retain full formatting</p></>}</div>
 
-          {editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
-          <StepTimerControls key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
+
 
           {evidence ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">Evidence · {evidence.observations} observations · {evidence.measurements} measurements · {evidence.files} files · {evidence.consumptions} inventory records</p> : null}
 
@@ -185,16 +208,16 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             <div className="grid gap-3 pb-3">
             <label className="block">
               <span className={formLabelClass}>Deviation type</span>
-              <select name={`mobileDeviationType:${selectedStep.id}`} defaultValue={selectedStep.deviationType ?? "method"} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink">
+              <select name={`mobileDeviationType:${selectedStep.id}`} value={draftFields[`mobileDeviationType:${selectedStep.id}`]??selectedStep.deviationType??"method"} onChange={e=>setDraftFields(current=>({...current,[`mobileDeviationType:${selectedStep.id}`]:e.target.value}))} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink">
                 <option value="method">Method change</option><option value="timing">Timing</option><option value="material">Material or reagent</option><option value="equipment">Equipment</option><option value="incident">Incident</option><option value="other">Other</option>
               </select>
             </label>
             <label className="block">
               <span className={formLabelClass}>What differed from the planned method?</span>
-              <textarea name={`mobileDeviation:${selectedStep.id}`} defaultValue={selectedStep.deviationNote ?? ""} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
+              <textarea name={`mobileDeviation:${selectedStep.id}`} value={draftFields[`mobileDeviation:${selectedStep.id}`]??selectedStep.deviationNote??""} onChange={e=>setDraftFields(current=>({...current,[`mobileDeviation:${selectedStep.id}`]:e.target.value}))} disabled={!editable || pending} placeholder="Record only the observed deviation or incident" className={`${fieldClass} min-h-24 resize-y`} />
             </label>
-            <label className="block"><span className={formLabelClass}>Impact assessment</span><textarea name={`mobileDeviationImpact:${selectedStep.id}`} defaultValue={selectedStep.deviationImpact ?? ""} disabled={!editable || pending} placeholder="Effect on samples, quality, or interpretation; write unknown if not yet assessed" className={`${fieldClass} min-h-20 resize-y`} /></label>
-            <label className="block"><span className={formLabelClass}>Recorded by</span><input name={`mobileDeviationAuthor:${selectedStep.id}`} defaultValue={selectedStep.deviationAuthor ?? ""} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" /></label>
+            <label className="block"><span className={formLabelClass}>Impact assessment</span><textarea name={`mobileDeviationImpact:${selectedStep.id}`} value={draftFields[`mobileDeviationImpact:${selectedStep.id}`]??selectedStep.deviationImpact??""} onChange={e=>setDraftFields(current=>({...current,[`mobileDeviationImpact:${selectedStep.id}`]:e.target.value}))} disabled={!editable || pending} placeholder="Effect on samples, quality, or interpretation; write unknown if not yet assessed" className={`${fieldClass} min-h-20 resize-y`} /></label>
+            <label className="block"><span className={formLabelClass}>Recorded by</span><input name={`mobileDeviationAuthor:${selectedStep.id}`} value={draftFields[`mobileDeviationAuthor:${selectedStep.id}`]??selectedStep.deviationAuthor??""} onChange={e=>setDraftFields(current=>({...current,[`mobileDeviationAuthor:${selectedStep.id}`]:e.target.value}))} disabled={!editable || pending} className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" /></label>
             </div>
           </details> : <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted">This locked Protocol step does not allow a deviation record.</p>}
 

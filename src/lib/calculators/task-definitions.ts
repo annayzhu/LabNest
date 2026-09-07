@@ -7,6 +7,8 @@ export const legacyTaskMap: Record<string, { task: string; mode?: string }> = {
   'reagent-dosing': { task: 'dilution', mode: 'final' }, 'fold-dilution': { task: 'dilution', mode: 'fold' },
 };
 export function enhanceDefinition(d: CalculatorDefinition): CalculatorDefinition {
+  if(d.id==='master-mix')d.methodVersion='master-mix-v3';
+  if(d.id==='percent-solution')d.methodVersion='percent-solution-v2';
   d = { ...d, fields: [...d.fields], aliases: [...d.aliases], methodVersion: d.methodVersion.replace(/-v1$/, '-v2') };
   if(['wb-loading','bradford-bca','elisa-4pl'].includes(d.id))d.category='protein';
   if(['od600','cfu','colony-counter'].includes(d.id))d.category='virology-microbiology';

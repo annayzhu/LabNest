@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "sections": [
+    {
+      "key": "steps",
+      "title": "Steps",
+      "blocks": [
+        {
+          "id": "prep",
+          "type": "callout",
+          "tone": "note",
+          "text": "Common preparation: synthetic verification only"
+        },
+        {
+          "id": "step-a",
+          "type": "heading",
+          "text": "Prepare reaction"
+        },
+        {
+          "id": "before",
+          "type": "text",
+          "text": "Prepare reaction mix, then review the complete table."
+        },
+        {
+          "id": "mix-table",
+          "type": "table",
+          "rows": [
+            [
+              "Component",
+              "Stock",
+              "Per reaction",
+              "Instructions"
+            ],
+            [
+              "Reaction mix",
+              "2×",
+              "10 µL",
+              "Add to premix"
+            ],
+            [
+              "Enzyme",
+              "Synthetic",
+              "0.1 µL",
+              "Per reaction equivalent; prepare in bulk"
+            ],
+            [
+              "Water",
+              "—",
+              "7.9 µL",
+              "Add to premix"
+            ],
+            [
+              "Template",
+              "Individual sample",
+              "2 µL",
+              "Add separately"
+            ]
+          ]
+        },
+        {
+          "id": "after",
+          "type": "text",
+          "text": "Table note: all four components must remain visible."
+        },
+        {
+          "id": "warning",
+          "type": "callout",
+          "tone": "warning",
+          "text": "Synthetic display fixture, not a recommended experiment."
+        },
+        {
+          "id": "step-b",
+          "type": "heading",
+          "text": "Same title"
+        },
+        {
+          "id": "materials",
+          "type": "table",
+          "rows": [
+            [
+              "Material",
+              "Quantity"
+            ],
+            [
+              "Tube",
+              "{{tube_count}}"
+            ],
+            [
+              "Unresolved",
+              "{{pending}}"
+            ]
+          ]
+        },
+        {
+          "id": "after-b",
+          "type": "text",
+          "text": "Material table belongs to step B."
+        },
+        {
+          "id": "step-c",
+          "type": "heading",
+          "text": "Same title"
+        },
+        {
+          "id": "wide",
+          "type": "table",
+          "rows": [
+            [
+              "Column 0",
+              "Column 1",
+              "Column 2",
+              "Column 3",
+              "Column 4",
+              "Column 5",
+              "Column 6",
+              "Column 7"
+            ],
+            [
+              "Row 0 col 0\nLong cell name",
+              "Row 0 col 1\nLong cell name",
+              "Row 0 col 2\nLong cell name",
+              "Row 0 col 3\nLong cell name",
+              "Row 0 col 4\nLong cell name",
+              "Row 0 col 5\nLong cell name",
+              "Row 0 col 6\nLong cell name",
+              "Row 0 col 7\nLong cell name"
+            ],
+            [
+              "Row 1 col 0\nLong cell name",
+              "Row 1 col 1\nLong cell name",
+              "Row 1 col 2\nLong cell name",
+              "Row 1 col 3\nLong cell name",
+              "Row 1 col 4\nLong cell name",
+              "Row 1 col 5\nLong cell name",
+              "Row 1 col 6\nLong cell name",
+              "Row 1 col 7\nLong cell name"
+            ],
+            [
+              "Row 2 col 0\nLong cell name",
+              "Row 2 col 1\nLong cell name",
+              "Row 2 col 2\nLong cell name",
+              "Row 2 col 3\nLong cell name",
+              "Row 2 col 4\nLong cell name",
+              "Row 2 col 5\nLong cell name",
+              "Row 2 col 6\nLong cell name",
+              "Row 2 col 7\nLong cell name"
+            ],
+            [
+              "Row 3 col 0\nLong cell name",
+              "Row 3 col 1\nLong cell name",
+              "Row 3 col 2\nLong cell name",
+              "Row 3 col 3\nLong cell name",
+              "Row 3 col 4\nLong cell name",
+              "Row 3 col 5\nLong cell name",
+              "Row 3 col 6\nLong cell name",
+              "Row 3 col 7\nLong cell name"
+            ],
+            [
+              "Row 4 col 0\nLong cell name",
+              "Row 4 col 1\nLong cell name",
+              "Row 4 col 2\nLong cell name",
+              "Row 4 col 3\nLong cell name",
+              "Row 4 col 4\nLong cell name",
+              "Row 4 col 5\nLong cell name",
+              "Row 4 col 6\nLong cell name",
+              "Row 4 col 7\nLong cell name"
+            ],
+            [
+              "Row 5 col 0\nLong cell name",
+              "Row 5 col 1\nLong cell name",
+              "Row 5 col 2\nLong cell name",
+              "Row 5 col 3\nLong cell name",
+              "Row 5 col 4\nLong cell name",
+              "Row 5 col 5\nLong cell name",
+              "Row 5 col 6\nLong cell name",
+              "Row 5 col 7\nLong cell name"
+            ],
+            [
+              "Row 6 col 0\nLong cell name",
+              "Row 6 col 1\nLong cell name",
+              "Row 6 col 2\nLong cell name",
+              "Row 6 col 3\nLong cell name",
+              "Row 6 col 4\nLong cell name",
+              "Row 6 col 5\nLong cell name",
+              "Row 6 col 6\nLong cell name",
+              "Row 6 col 7\nLong cell name"
+            ],
+            [
+              "Row 7 col 0\nLong cell name",
+              "Row 7 col 1\nLong cell name",
+              "Row 7 col 2\nLong cell name",
+              "Row 7 col 3\nLong cell name",
+              "Row 7 col 4\nLong cell name",
+              "Row 7 col 5\nLong cell name",
+              "Row 7 col 6\nLong cell name",
+              "Row 7 col 7\nLong cell name"
+            ],
+            [
+              "Row 8 col 0\nLong cell name",
+              "Row 8 col 1\nLong cell name",
+              "Row 8 col 2\nLong cell name",
+              "Row 8 col 3\nLong cell name",
+              "Row 8 col 4\nLong cell name",
+              "Row 8 col 5\nLong cell name",
+              "Row 8 col 6\nLong cell name",
+              "Row 8 col 7\nLong cell name"
+            ],
+            [
+              "Row 9 col 0\nLong cell name",
+              "Row 9 col 1\nLong cell name",
+              "Row 9 col 2\nLong cell name",
+              "Row 9 col 3\nLong cell name",
+              "Row 9 col 4\nLong cell name",
+              "Row 9 col 5\nLong cell name",
+              "Row 9 col 6\nLong cell name",
+              "Row 9 col 7\nLong cell name"
+            ],
+            [
+              "Row 10 col 0\nLong cell name",
+              "Row 10 col 1\nLong cell name",
+              "Row 10 col 2\nLong cell name",
+              "Row 10 col 3\nLong cell name",
+              "Row 10 col 4\nLong cell name",
+              "Row 10 col 5\nLong cell name",
+              "Row 10 col 6\nLong cell name",
+              "Row 10 col 7\nLong cell name"
+            ],
+            [
+              "Row 11 col 0\nLong cell name",
+              "Row 11 col 1\nLong cell name",
+              "Row 11 col 2\nLong cell name",
+              "Row 11 col 3\nLong cell name",
+              "Row 11 col 4\nLong cell name",
+              "Row 11 col 5\nLong cell name",
+              "Row 11 col 6\nLong cell name",
+              "Row 11 col 7\nLong cell name"
+            ],
+            [
+              "Row 12 col 0\nLong cell name",
+              "Row 12 col 1\nLong cell name",
+              "Row 12 col 2\nLong cell name",
+              "Row 12 col 3\nLong cell name",
+              "Row 12 col 4\nLong cell name",
+              "Row 12 col 5\nLong cell name",
+              "Row 12 col 6\nLong cell name",
+              "Row 12 col 7\nLong cell name"
+            ],
+            [
+              "Row 13 col 0\nLong cell name",
+              "Row 13 col 1\nLong cell name",
+              "Row 13 col 2\nLong cell name",
+              "Row 13 col 3\nLong cell name",
+              "Row 13 col 4\nLong cell name",
+              "Row 13 col 5\nLong cell name",
+              "Row 13 col 6\nLong cell name",
+              "Row 13 col 7\nLong cell name"
+            ],
+            [
+              "Row 14 col 0\nLong cell name",
+              "Row 14 col 1\nLong cell name",
+              "Row 14 col 2\nLong cell name",
+              "Row 14 col 3\nLong cell name",
+              "Row 14 col 4\nLong cell name",
+              "Row 14 col 5\nLong cell name",
+              "Row 14 col 6\nLong cell name",
+              "Row 14 col 7\nLong cell name"
+            ],
+            [
+              "Row 15 col 0\nLong cell name",
+              "Row 15 col 1\nLong cell name",
+              "Row 15 col 2\nLong cell name",
+              "Row 15 col 3\nLong cell name",
+              "Row 15 col 4\nLong cell name",
+              "Row 15 col 5\nLong cell name",
+              "Row 15 col 6\nLong cell name",
+              "Row 15 col 7\nLong cell name"
+            ],
+            [
+              "Row 16 col 0\nLong cell name",
+              "Row 16 col 1\nLong cell name",
+              "Row 16 col 2\nLong cell name",
+              "Row 16 col 3\nLong cell name",
+              "Row 16 col 4\nLong cell name",
+              "Row 16 col 5\nLong cell name",
+              "Row 16 col 6\nLong cell name",
+              "Row 16 col 7\nLong cell name"
+            ],
+            [
+              "Row 17 col 0\nLong cell name",
+              "Row 17 col 1\nLong cell name",
+              "Row 17 col 2\nLong cell name",
+              "Row 17 col 3\nLong cell name",
+              "Row 17 col 4\nLong cell name",
+              "Row 17 col 5\nLong cell name",
+              "Row 17 col 6\nLong cell name",
+              "Row 17 col 7\nLong cell name"
+            ],
+            [
+              "Row 18 col 0\nLong cell name",
+              "Row 18 col 1\nLong cell name",
+              "Row 18 col 2\nLong cell name",
+              "Row 18 col 3\nLong cell name",
+              "Row 18 col 4\nLong cell name",
+              "Row 18 col 5\nLong cell name",
+              "Row 18 col 6\nLong cell name",
+              "Row 18 col 7\nLong cell name"
+            ],
+            [
+              "Row 19 col 0\nLong cell name",
+              "Row 19 col 1\nLong cell name",
+              "Row 19 col 2\nLong cell name",
+              "Row 19 col 3\nLong cell name",
+              "Row 19 col 4\nLong cell name",
+              "Row 19 col 5\nLong cell name",
+              "Row 19 col 6\nLong cell name",
+              "Row 19 col 7\nLong cell name"
+            ],
+            [
+              "Row 20 col 0\nLong cell name",
+              "Row 20 col 1\nLong cell name",
+              "Row 20 col 2\nLong cell name",
+              "Row 20 col 3\nLong cell name",
+              "Row 20 col 4\nLong cell name",
+              "Row 20 col 5\nLong cell name",
+              "Row 20 col 6\nLong cell name",
+              "Row 20 col 7\nLong cell name"
+            ],
+            [
+              "Row 21 col 0\nLong cell name",
+              "Row 21 col 1\nLong cell name",
+              "Row 21 col 2\nLong cell name",
+              "Row 21 col 3\nLong cell name",
+              "Row 21 col 4\nLong cell name",
+              "Row 21 col 5\nLong cell name",
+              "Row 21 col 6\nLong cell name",
+              "Row 21 col 7\nLong cell name"
+            ],
+            [
+              "Row 22 col 0\nLong cell name",
+              "Row 22 col 1\nLong cell name",
+              "Row 22 col 2\nLong cell name",
+              "Row 22 col 3\nLong cell name",
+              "Row 22 col 4\nLong cell name",
+              "Row 22 col 5\nLong cell name",
+              "Row 22 col 6\nLong cell name",
+              "Row 22 col 7\nLong cell name"
+            ],
+            [
+              "Row 23 col 0\nLong cell name",
+              "Row 23 col 1\nLong cell name",
+              "Row 23 col 2\nLong cell name",
+              "Row 23 col 3\nLong cell name",
+              "Row 23 col 4\nLong cell name",
+              "Row 23 col 5\nLong cell name",
+              "Row 23 col 6\nLong cell name",
+              "Row 23 col 7\nLong cell name"
+            ],
+            [
+              "Row 24 col 0\nLong cell name",
+              "Row 24 col 1\nLong cell name",
+              "Row 24 col 2\nLong cell name",
+              "Row 24 col 3\nLong cell name",
+              "Row 24 col 4\nLong cell name",
+              "Row 24 col 5\nLong cell name",
+              "Row 24 col 6\nLong cell name",
+              "Row 24 col 7\nLong cell name"
+            ]
+          ]
+        },
+        {
+          "id": "check",
+          "type": "checklist",
+          "items": [
+            "Confirm label",
+            "Confirm lot"
+          ]
+        }
+      ]
+    }
+  ],
+  "importWarnings": []
+}

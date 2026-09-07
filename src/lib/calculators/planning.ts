@@ -1,6 +1,7 @@
 /** Volume-balance primitives. Callers supply compatible concentrations and µL.
  * Methods and independent worked examples: docs/calculator/spec-v1.0.md §7, §14.
  */
+import { operation } from './operations';
 import { parseScalar, convert } from './quantities';
 export function dilution(stock: number, target: number, volume: number) {
   if (![stock, target, volume].every(Number.isFinite) || stock <= 0 || target < 0 || target > stock || volume <= 0) throw new Error('目标浓度或体积不可行 / Target concentration or volume is infeasible');
@@ -21,16 +22,20 @@ export function serialPlan(start: number, factor: number, count: number, volume:
     return { tube: index + 1, concentration: start / factor ** index, source: index ? `Tube ${index}` : '已备起始液 / Prepared starting solution', takeUl: index ? mixed / factor : mixed, diluentUl: index ? mixed - mixed / factor : 0, mixedUl: mixed, transferUl: transfer, remainingUl: mixed - transfer };
   });
 }
-export type MixRow = { name: string; volume: string; premix: boolean; group?: string; inputMode?: string; stock?: string; target?: string; stockUnit?: string; targetUnit?: string };
-export function mixPlan(rows: MixRow[], reactions: number, extra: number, final: number) {
+export type MixRow = { id?: string; sampleId?: string; name: string; volume: string; premix: boolean; group?: string; inputMode?: string; stock?: string; target?: string; stockUnit?: string; targetUnit?: string };
+export function mixPlan(rows: MixRow[], reactions: number, extra: number, final: number, groupId = 'default', groupName = groupId) {
   if (!Number.isInteger(reactions) || reactions <= 0 || !Number.isFinite(extra) || extra < 0 || !Number.isFinite(final) || final <= 0 || !rows.length) throw new Error('反应参数不完整 / Incomplete reaction parameters');
   const volumes = rows.map(row => row.inputMode==='concentration'?dilution(convert(parseScalar(row.stock),row.stockUnit??'mM',row.targetUnit??'µM'),parseScalar(row.target),final).sample:parseScalar(row.volume));
-  if (rows.some(row => !row.name.trim()) || volumes.some(v => v < 0)) throw new Error('请检查组分名称及用量 / Check component names and volumes');
+  if (rows.some(row => !row.name.trim()||typeof row.premix!=='boolean') || volumes.some(v => v < 0)) throw new Error('请检查组分名称及用量 / Check component names and volumes');
   const sum = volumes.reduce((a,b) => a+b,0);
   if (sum > final + 1e-10) throw new Error('组分超过单反应体积 / Components exceed reaction volume');
   const table = rows.map((row,index) => ({ component: row.name, perReactionUl: volumes[index], premix: row.premix ? '是 / Yes' : '独立加样 / Separate', batchUl: row.premix ? volumes[index] * (reactions + extra) : '', group: row.group || 'default' }));
   if (final - sum > 1e-10) table.push({ component: '水 / Water', perReactionUl: final - sum, premix: '是 / Yes', batchUl: (final - sum) * (reactions + extra), group: 'default' });
-  return { table, total: table.reduce((s,row) => s + (typeof row.batchUl === 'number' ? row.batchUl : 0),0), separate: rows.reduce((s,row,index) => s + (row.premix ? 0 : volumes[index]),0) };
+  const operations = rows.flatMap((row,index) => [operation(`mix:${groupId}:${row.id??index}`,row.name, row.premix ? volumes[index]*(reactions+extra) : volumes[index], 'µL', 'add', {group:groupId,groupName,componentId:row.id??String(index),sample:row.sampleId,source:row.premix?`stock:${index}`:`individual-samples:${row.sampleId??index}`,destination:row.premix?`premix:${groupId}`:`reactions:${groupId}`,repetitions:row.premix?1:reactions,inputRow:String(index)})]);
+  if(final-sum>1e-10)operations.push(operation(`mix:${groupId}:water`,'水 / Water',(final-sum)*(reactions+extra),'µL','add',{group:groupId,groupName,componentId:'auto-water',destination:`premix:${groupId}`}));
+  const dispense = final - rows.reduce((s,row,index)=>s+(row.premix?0:volumes[index]),0);
+  if(dispense>0)operations.push(operation(`mix:${groupId}:dispense`,'预混液 / Premix',dispense,'µL','dispense',{group:groupId,groupName,source:`premix:${groupId}`,destination:`reactions:${groupId}`,repetitions:reactions}));
+  return { operations, remaining:dispense*extra, table, total: table.reduce((s,row) => s + (typeof row.batchUl === 'number' ? row.batchUl : 0),0), separate: rows.reduce((s,row,index) => s + (row.premix ? 0 : volumes[index]),0) };
 }
 export type SampleRow = { id: string; concentration: string; available: string };
 export function batchPlan(rows: SampleRow[], target: number, volume: number, bufferFold?: number, other = 0) {

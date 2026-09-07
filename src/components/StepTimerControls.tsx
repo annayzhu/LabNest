@@ -7,7 +7,8 @@ import { formatStepTimer, remainingStepTimerSeconds } from "@/lib/step-timer";
 
 const initialState: StepTimerActionState = {};
 
-export function StepTimerControls({ experimentId, step }: {
+export function StepTimerControls({ experimentId, step, compact=false }: {
+  compact?:boolean;
   experimentId: string;
   step: {
     id: string;
@@ -18,6 +19,7 @@ export function StepTimerControls({ experimentId, step }: {
   };
 }) {
   const [state, formAction, pending] = useActionState(updateStepTimer, initialState);
+  const [expanded,setExpanded]=useState(false);
   const [clock, setClock] = useState(() => Date.now());
   const [durationMinutes, setDurationMinutes] = useState("5");
   const durationSeconds = step.timerDurationSeconds ?? 300;
@@ -44,7 +46,7 @@ export function StepTimerControls({ experimentId, step }: {
     startTransition(() => formAction(formData));
   }
 
-  return <section aria-label="Step timer" className="mt-5 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
+  return <>{compact?<button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>计时器{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
     <div className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-sm font-semibold text-ink"><Timer className="h-4 w-4 text-info" aria-hidden />Step timer</span>
       <span className="font-mono text-xl font-semibold tabular-nums text-ink" aria-live="off">{formatStepTimer(remaining)}</span>
@@ -58,5 +60,5 @@ export function StepTimerControls({ experimentId, step }: {
     </div>
     {state.error ? <p role="alert" className="mt-2 text-xs text-error">{state.error}</p> : null}
     {state.message ? <p role="status" className="mt-2 text-xs text-success">{state.message} Synced.</p> : null}
-  </section>;
+  </section></>;
 }

@@ -437,11 +437,16 @@ export function projectProtocolDocument(document: ProtocolDocument) {
 
   const steps: ProtocolStep[] = [];
   let currentHeading: string | undefined;
+  let currentBlocks: ProtocolContentBlock[] = [];
+  let currentRef: string | undefined;
   let currentDescription: string[] = [];
   const flushStep = () => {
     const description = currentDescription.filter(Boolean).join("\n").trim();
     if (currentHeading) steps.push({ order: steps.length + 1, title: currentHeading.replace(/^\d+[.、]\s*/, "") || `Step ${steps.length + 1}`, description, requires_confirmation: true, allows_deviation: true });
     else if (description) steps.push({ order: steps.length + 1, title: description.split("\n")[0], description: description.split("\n").slice(1).join("\n"), requires_confirmation: true, allows_deviation: true });
+    const projected = steps.at(-1);
+    if(projected && (currentBlocks.length||currentRef)){projected.content_blocks=structuredClone(currentBlocks);projected.source_ref=currentRef??currentBlocks[0]?.id;}
+    currentBlocks=[]; currentRef=undefined;
     currentHeading = undefined;
     currentDescription = [];
   };
@@ -452,31 +457,36 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     return true;
   };
   for (const block of stepSection?.blocks ?? []) {
-    if (block.type === "heading") { flushStep(); currentHeading = block.text; }
+    if (block.type === "heading") { flushStep(); currentHeading = block.text; currentRef=block.id; }
     if (block.type === "text") {
+      currentBlocks.push(block); currentRef??=block.id;
       if (currentHeading) currentDescription.push(block.text);
       else { currentDescription.push(block.text); flushStep(); }
     }
     if (block.type === "rich_text") {
-      for (const node of block.nodes) {
+      for (const [nodeIndex,node] of block.nodes.entries()) {
+        const fragment:ProtocolContentBlock={...block,id:`${block.id}:${nodeIndex}`,nodes:[node]};
         const text = node.content.map((run) => run.text).join("").trim();
         if (!text) continue;
         if (node.type === "numbered") {
           flushStep();
-          currentHeading = text;
-        } else if (currentHeading) currentDescription.push(node.type === "bullet" ? `• ${text}` : text);
-        else if (node.type === "bullet" && appendToLastProjectedStep(`• ${text}`)) continue;
-        else { currentDescription.push(text); flushStep(); }
+          currentHeading = text; currentRef=fragment.id;
+        } else if (currentHeading) {currentDescription.push(node.type === "bullet" ? `• ${text}` : text);currentBlocks.push(fragment);}
+        else if (node.type === "bullet" && appendToLastProjectedStep(`• ${text}`)) {const last=steps.at(-1)!;last.content_blocks=[...(last.content_blocks??[]),fragment];continue;}
+        else { currentDescription.push(text);currentBlocks.push(fragment);currentRef=fragment.id; flushStep(); }
       }
     }
     if (block.type === "checklist") {
       // A checklist is an explicit execution contract: every item must remain
       // independently confirmable in run mode, even when it follows a heading.
       flushStep();
-      for (const item of block.items) {
+      for (const [itemIndex,item] of block.items.entries()) {
         if (!item.trim()) continue;
-        steps.push({ order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
+        steps.push({source_ref:`${block.id}:${itemIndex}`,content_blocks:[{id:`${block.id}:${itemIndex}`,type:"text",text:item}], order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
       }
+    }
+    if(!["heading","text","rich_text","checklist"].includes(block.type)){
+      if(currentHeading)currentBlocks.push(block);
     }
   }
   flushStep();

@@ -37,6 +37,8 @@ export type CalculatorDefinition = {
 export type CalculatorRequest = { calculatorId: string; inputs: Record<string, unknown> };
 export type CalculatorOutput = { key: string; label: string; labelZh: string; value: number | string; unit?: string };
 export type CalculatorResult = {
+  operationVersion?: string;
+  pipettingCheck?: {status: 'not-set'|'passed'|'below-minimum'|'incomplete'|'not-applicable'; minimumUl?:number};
   operations?: import("./operations").LiquidOperation[];
   structuredWarnings?: import("./pipetting").PipettingWarning[];
   displayUnits?: Record<string,string>;
@@ -251,18 +253,18 @@ function calculateInternal(request: CalculatorRequest): CalculatorResult {
     case "media-recipe": case "buffer-recipe": { const scale = num(i, "targetVolumeMl", { positive: true }) / num(i, "baseVolumeMl", { positive: true }); const source = Array.isArray(i.recipeRows) ? (i.recipeRows as Array<{name:string;amount:string;unit:string;inputMode?:string;stock?:string;target?:string;stockUnit?:string;targetUnit?:string}>).map(row=>{
         if(row.inputMode==='concentration'){if(i.recipeMode==='add')throw new Error('目标浓度模式需明确最终体积，请选择定容模式 / Target concentration requires final-volume mode');const plan=dilution(convert(parseScalar(row.stock),row.stockUnit??'mM',row.targetUnit??'µM'),parseScalar(row.target),num(i,'targetVolumeMl',{positive:true}));return[row.name,String(plan.sample/scale),'mL'];}
         return [row.name,row.amount,row.unit];
-      }) : parseRows(i.components, 3); const table = source.map(([name, amount, unit]) => ({ component: name, amount: parseScalar(amount) * scale, unit }));
+      }) : parseRows(i.components, 3); const table = source.map(([name, amount, unit],index) => ({ component: name, componentId:String(index), action:'add', amount: parseScalar(amount) * scale, unit }));
       if(table.some(row=>!row.component.trim()||row.amount<0))throw new Error('组分名称或用量无效 / Invalid component name or amount');
       const liquidMl=table.filter(row=>['mL','µL','L'].includes(row.unit)).reduce((sum,row)=>sum+convert(row.amount,row.unit,'mL'),0);
       if(i.recipeMode==='final'&&liquidMl>num(i,'targetVolumeMl'))throw new Error('液体组分超过最终体积 / Liquid components exceed final volume');
-      if(i.recipeMode==='final')table.push({component:'溶解后定容至 / Dissolve then bring to',amount:num(i,'targetVolumeMl'),unit:'mL'}); if (!table.length || table.some((row) => !Number.isFinite(Number(row.amount)))) throw new Error("Enter components as name, amount, unit."); return finish(definition, [out("scaleFactor", "Scale factor", "缩放倍数", scale), out("componentCount", "Components", "组分数", table.length)], [], [], table); }
+      if(i.recipeMode==='final')table.push({component:'溶解后定容至 / Dissolve then bring to',componentId:'final',action:'make-up-to',amount:num(i,'targetVolumeMl'),unit:'mL'}); if (!table.length || table.some((row) => !Number.isFinite(Number(row.amount)))) throw new Error("Enter components as name, amount, unit."); return finish(definition, [out("scaleFactor", "Scale factor", "缩放倍数", scale), out("componentCount", "Components", "组分数", table.length)], [], [], table); }
     case "ic50-ec50": { const rows = parseRows(i.points).map((row) => [Number(row[0]), Number(row[1])]); const fit = fourPlFit(rows,str(i,"mode")==="inhibition"?-1:1); return finish(definition, [out("midpoint", "Relative 4PL midpoint", "相对4PL曲线中点", fit.ec50), out("bottom", "Bottom", "下平台", fit.bottom), out("top", "Top", "上平台", fit.top), out("hillSlope", "Hill slope", "Hill斜率", fit.hill), out("rSquared", "R²", "R²", fit.r2), out('converged','Converged','数值收敛',fit.converged?'Yes / 是':'No / 否')], fit.r2 < 0.9 || !fit.converged ? ["拟合需复核：R²不代表模型可靠性 / Review fit; R² alone is not validation"] : [], ['相对中点不是所有定义的绝对50%效应；检查平台和量程 / Relative midpoint is not necessarily absolute 50% effect; inspect plateaus and range.'], rows.map(([x,y])=>({concentration:x,observed:y,fitted:fit.bottom+(fit.top-fit.bottom)/(1+(fit.ec50/x)**fit.hill)}))); }
     case "master-mix": {
       if(Array.isArray(i.groups)){
         const groups=i.groups as Array<{name:string;reactions:string;rows:MixRow[]}>;
         if(!groups.length||groups.some(group=>!group.name.trim())||new Set(groups.map(group=>group.name.trim())).size!==groups.length)throw new Error('配液组名称缺失或重复 / Missing or duplicate mix group name');
-        const plans=groups.map(group=>{const reactions=parseScalar(group.reactions);return {group,plan:mixPlan(group.rows,reactions,reactions*num(i,'overagePercent',{min:0})/100,num(i,'reactionVolumeUl',{positive:true}))};});
-        return finish(current,[out('groups','Separate mix groups','独立配液组',groups.length),out('totalMasterMixUl','Total across separate groups','各组预混总量（分别配制）',plans.reduce((sum,item)=>sum+item.plan.total,0),'µL')],[],['不同组分别配制，不合并模板 / Prepare each group separately; never pool templates'],plans.flatMap(({group,plan})=>plan.table.map(row=>({...row,group:group.name}))));
+        const plans=groups.map((group,groupIndex)=>{const reactions=parseScalar(group.reactions);return {group,plan:mixPlan(group.rows,reactions,reactions*num(i,'overagePercent',{min:0})/100,num(i,'reactionVolumeUl',{positive:true}),String(groupIndex),group.name)};});
+        return {...finish(current,[out('groups','Separate mix groups','独立配液组',groups.length),out('totalMasterMixUl','Total across separate groups','各组预混总量（分别配制）',plans.reduce((sum,item)=>sum+item.plan.total,0),'µL')],[],['不同组分别配制，不合并模板 / Prepare each group separately; never pool templates'],plans.flatMap(({group,plan})=>plan.table.map(row=>({...row,group:group.name})))),operations:plans.flatMap(({plan})=>plan.operations)};
       }
       const reactions=i.samples!==undefined?num(i,'samples',{positive:true})*num(i,'replicates',{positive:true})+num(i,'controls',{min:0}):num(i,'reactions',{positive:true});
       if(!Number.isInteger(reactions))throw new Error('反应数必须是整数 / Reaction count must be an integer');
@@ -270,7 +272,7 @@ function calculateInternal(request: CalculatorRequest): CalculatorResult {
       const final=i.reactionVolumeUl!==undefined?num(i,'reactionVolumeUl',{positive:true}):rows.reduce((s,row)=>s+parseScalar(row.volume),0);
       const extra=reactions*num(i,'overagePercent',{min:0})/100;
       const plan=mixPlan(rows,reactions,extra,final);
-      return finish(current,[out('actualReactions','Actual reactions','实际反应数',reactions),out('preparedReactions','Premix equivalents','预混反应当量',reactions+extra),out('totalMasterMixUl','Prepare premix','配制预混液',plan.total,'µL'),out('dispenseUl','Premix per reaction','每反应分装预混液',final-plan.separate,'µL'),out('separateUl','Separate sample per reaction','每反应独立加样',plan.separate,'µL')],[],[],plan.table);
+      return {...finish(current,[out('actualReactions','Actual reactions','实际反应数',reactions),out('preparedReactions','Premix equivalents','预混反应当量',reactions+extra),out('totalMasterMixUl','Prepare premix','配制预混液',plan.total,'µL'),out('dispenseUl','Premix per reaction','每反应分装预混液',final-plan.separate,'µL'),out('separateUl','Separate sample per reaction','每反应独立加样',plan.separate,'µL') ,out('remainingPremixUl','Premix reserve','预混余量',plan.remaining,'µL')],[],['每反应当量仅表示组成；预混组分按整批加入，独立样本分别加样 / Per-reaction equivalents describe composition; prepare premix in bulk, add samples individually.'],plan.table),operations:plan.operations};
     }
     case "resuspension": {
       const mode=str(i,'mode');let volume;

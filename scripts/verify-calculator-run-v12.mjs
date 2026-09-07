@@ -30,3 +30,4 @@ await p.getByRole('button',{name:'Next',exact:true}).first().click();for(const [
 }catch(error){report.error=String(error);throw error;}finally{await writeFile(dir+'/run-browser-report.json',JSON.stringify(report,null,2));await browser.close();}
 
 await import('./verify-calculator-run-compat.mjs');
+await import('./verify-calculator-run-offline.mjs');

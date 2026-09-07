@@ -71,6 +71,7 @@ export function CalculatorCatalog({contextQuery=""}:{contextQuery?:string}) {
     {!filtered.length?<p>{zh?'未找到匹配任务':'No matching tasks'}</p>:null}
     <details><summary className="min-h-11 cursor-pointer">{zh?'我的配方':'My recipes'} ({state?.presets.length??0})</summary>{state?.presets.map(item=><Link className="block min-h-11" key={item.id} href={`/tools/calculator/${item.calculatorId}${contextQuery?`?${contextQuery}`:""}`}>{item.name}</Link>)}</details>
     <details><summary className="min-h-11 cursor-pointer">{zh?'计算记录':'Calculation records'} ({state?.history.length??0})</summary>{state?.history.map(item=><Link className="block min-h-11 text-sm" key={item.id} href={`/tools/calculator/${item.calculatorId}?record=${encodeURIComponent(item.id)}${contextQuery?`&${contextQuery}`:""}`}>{zh?item.calculatorNameZh:item.calculatorName} · {new Date(item.createdAt).toLocaleString(locale)}</Link>)}</details>
+    <OfflineCalculator zh={zh}/>
   </div>;
 }
 

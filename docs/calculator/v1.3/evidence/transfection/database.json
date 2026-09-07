@@ -1,11 +1,11 @@
 {
   "base": "http://localhost:3226",
-  "at": "2026-09-07T13:09:34.662Z",
+  "at": "2026-09-07T13:12:44.116Z",
   "database": "labnest_calculator_acceptance_20260906",
   "synthetic": true,
   "status": "passed",
-  "resultId": "cmtr9cays00005sosb1cqcqec",
-  "clientMutationId": "5475b852-e0a7-4b6f-9c3c-6e82c9b75354",
+  "resultId": "cmtr9gddp0000aeosodw5qbrq",
+  "clientMutationId": "7605ce8b-4478-4d8d-8266-ae908ade243e",
   "checks": [
     "UI offline queue retains complete nested plan",
     "Reconnect creates Result",

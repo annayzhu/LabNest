@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 281ms
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 297ms
 
 ▲ Next.js 16.2.10 (Turbopack)
 - Environments: .env
@@ -14,15 +14,15 @@ Prisma schema loaded from prisma/schema.prisma.
   · serverActions
 
   Creating an optimized production build ...
-✓ Compiled successfully in 7.8s
+✓ Compiled successfully in 7.0s
   Running TypeScript ...
-  Finished TypeScript in 18.5s ...
+  Finished TypeScript in 17.6s ...
   Collecting page data using 13 workers ...
   Generating static pages using 13 workers (0/77) ...
   Generating static pages using 13 workers (19/77) 
   Generating static pages using 13 workers (38/77) 
   Generating static pages using 13 workers (57/77) 
-✓ Generating static pages using 13 workers (77/77) in 183ms
+✓ Generating static pages using 13 workers (77/77) in 192ms
   Finalizing page optimization ...
 
 Route (app)

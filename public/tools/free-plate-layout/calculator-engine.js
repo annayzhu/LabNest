@@ -314,7 +314,14 @@ var LabNestCalculations = (() => {
       if (dnaRows.length + rnaRows.length !== g.rows.length) throw Error("\u5FC5\u987B\u660E\u786E\u6750\u6599\u5F62\u5F0F\uFF1B\u75C5\u6BD2\u8F6C\u5BFC\u8BF7\u4F7F\u7528MOI\u5DE5\u5177 / Specify material; viral transduction uses MOI");
       if (["dna", "shrna-plasmid"].includes(plan.material) && (dnaRows.length !== 1 || rnaRows.length) || plan.material === "multi-dna" && (dnaRows.length < 2 || rnaRows.length) || plan.material === "sirna" && (rnaRows.length !== 1 || dnaRows.length) || plan.material === "multi-sirna" && (rnaRows.length < 2 || dnaRows.length) || plan.material === "dna-sirna" && (!dnaRows.length || !rnaRows.length)) throw Error("\u6750\u6599\u7C7B\u578B\u4E0E\u6838\u9178\u884C\u4E0D\u4E00\u81F4 / Material and nucleic acid rows disagree");
       if (plan.material === "shrna-plasmid" && g.rows[0].kind !== "shrna-plasmid") throw Error("shRNA\u5FC5\u987B\u6CE8\u660E\u8868\u8FBE\u8D28\u7C92 / shRNA expression plasmid required");
-      const weight = (r) => positive(r.dose, "DNA ratio") * (g.dnaMode === "molar-ratio" ? (choice(r.sizeBasis, ["bp", "mw"], "Molecular size"), positive(r.size, "\u8D28\u7C92\u957F\u5EA6\u6216\u5206\u5B50\u91CF / Plasmid length or MW") * (r.sizeBasis === "bp" ? 660 : 1)) : 1);
+      const weight = (r) => {
+        const ratio = positive(r.dose, "DNA ratio");
+        if (g.dnaMode !== "molar-ratio") return ratio;
+        choice(r.sizeBasis, ["bp", "mw"], "Molecular size");
+        const size = positive(r.size, "\u8D28\u7C92\u957F\u5EA6\u6216\u5206\u5B50\u91CF / Plasmid length or MW");
+        if (r.sizeBasis === "bp" && !Number.isInteger(size)) throw Error("\u8D28\u7C92bp\u957F\u5EA6\u5FC5\u987B\u4E3A\u6574\u6570 / Plasmid bp length must be an integer");
+        return ratio * size * (r.sizeBasis === "bp" ? 660 : 1);
+      };
       const denominator = g.dnaMode === "amount" ? 1 : dnaRows.reduce((s, r) => s + weight(r), 0), rnaRatio = rnaRows.reduce((s, r) => s + positive(r.dose, "siRNA dose / ratio"), 0);
       const rowNames = /* @__PURE__ */ new Set();
       let dnaTotal = 0, rnaTotal = 0;

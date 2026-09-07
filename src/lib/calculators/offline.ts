@@ -15,7 +15,7 @@ async function message(type:string, payload:Record<string,unknown>={}){
  return new Promise<{ok:boolean;pages?:string[];kind?:OfflineFailure;detail?:string}>((resolve,reject)=>{const channel=new MessageChannel();const done=()=>{clearTimeout(timer);channel.port1.close();channel.port2.close();};const timer=setTimeout(()=>{done();reject(new OfflineError('timeout','Worker acknowledgement timeout'));},45000);channel.port1.onmessage=event=>{done();resolve(event.data);};try{worker.postMessage({type,...payload},[channel.port2]);}catch(error){done();reject(error);}});
 }
 export async function offlineStatus(){return message('CALCULATOR_STATUS');}
-export async function clearOfflineTools(){return message('CLEAR_CALCULATOR');}
+export async function clearOfflineTools(){const result=await message('CLEAR_CALCULATOR');if(!result.ok)throw new OfflineError(result.kind??'resource',result.detail??'Could not clear caches');return result;}
 export async function prepareOffline(onStage:(stage:string)=>void){
  onStage('documents');
  const pages=[...new Set(['/tools/calculator',location.pathname+location.search])];

@@ -1,0 +1,26 @@
+{
+  "sourceSha": "4b3ab5fc33b8d17049f79309c7a323e960875d83",
+  "base": "4ad14fca3d17805749a8aafdcf15ea204579e984",
+  "executor": "Codex automated browser tests plus rendered screenshot inspection",
+  "environment": "macOS Node22.23.1 npm10.9.8; npm ci; Next16.2.10 production localhost:3222; isolated synthetic PostgreSQL; Chromium. Remote CI Ubuntu/Node22/PostgreSQL16.",
+  "commands": [
+    "TZ=Asia/Shanghai npm test",
+    "TZ=America/Vancouver npm test",
+    "npm run lint",
+    "npm run typecheck",
+    "LABNEST_BUILD_DIR=.next/calculator-production LABNEST_TSCONFIG_PATH=tsconfig.calculator.json npm run build",
+    "LABNEST_E2E_BASE_URL=http://localhost:3222 node scripts/verify-calculator-appearance.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3222 node scripts/verify-calculator-storage-appearance.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3222 node scripts/verify-calculator-visual-v11.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3222 node scripts/verify-calculator-standalone-v11.mjs",
+    "LABNEST_E2E_BASE_URL=http://localhost:3222 node scripts/verify-calculator-appearance-foundation.mjs"
+  ],
+  "finalExitCodes": 0,
+  "testCountPerTimezone": 523,
+  "unexecuted": [
+    "Real phone keyboard",
+    "Actual browser 200% zoom",
+    "Laboratory user trials"
+  ],
+  "provenance": "Final build, foundation browser report/screenshots and visual report use 4b3ab5f. Earlier unit/storage/standalone logs precede the focus-ring class fix; final remote CI verifies the full source. Actual production pages with synthetic profiles and isolated database."
+}

@@ -11,7 +11,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-[var(--ln-radius-panel)] border border-hairline bg-surface",
+        "rounded-[var(--ln-radius-panel)] border-[length:var(--ln-border-width)] border-hairline bg-surface",
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function CardHeader({
 export const CardBody = forwardRef<HTMLDivElement, {
   children: ReactNode;
   className?: string;
-}>(({ children, className }, ref) => <div ref={ref} className={cn("p-4", className)}>{children}</div>);
+}>(({ children, className }, ref) => <div ref={ref} className={cn("p-[var(--ln-content-padding)]", className)}>{children}</div>);
 CardBody.displayName = "CardBody";
 
 export function SectionPanel({

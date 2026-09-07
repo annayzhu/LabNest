@@ -1,0 +1,8 @@
+
+> labnest@0.1.0 start
+> next start --port 3222
+
+▲ Next.js 16.2.10
+- Local:         http://localhost:3222
+- Network:       http://172.17.65.77:3222
+✓ Ready in 146ms

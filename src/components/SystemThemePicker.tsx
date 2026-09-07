@@ -1,12 +1,16 @@
 "use client";
 
+import {useEffect,useState} from "react";
 import { Check } from "lucide-react";
 import {useAppearance} from "./AppearanceProvider";
 import { TraditionalMotif, type TraditionalMotifName } from "@/components/TraditionalMotif";
-import { systemThemes, type SystemThemeId } from "@/lib/system-theme";
+import { systemThemes, resolvedThemeTokens, type SystemThemeId } from "@/lib/system-theme";
 
 export function SystemThemePicker() {
   const {preferences,setAppearance}=useAppearance();
+  const [systemDark,setSystemDark]=useState(false);
+  useEffect(()=>{const media=matchMedia('(prefers-color-scheme: dark)');const update=()=>setSystemDark(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update);},[]);
+  const mode=preferences.mode==='system'?(systemDark?'dark':'light'):preferences.mode;
   const selectedTheme=preferences.colorSchemeId;
   const selectTheme=(colorSchemeId:SystemThemeId)=>setAppearance({colorSchemeId});
 
@@ -15,6 +19,7 @@ export function SystemThemePicker() {
       <legend className="sr-only">System style</legend>
       <div className="system-theme-grid">
         {systemThemes.map((theme) => {
+          const tokens=resolvedThemeTokens(theme.id,mode);
           const selected = selectedTheme === theme.id;
           return (
             <label
@@ -23,10 +28,10 @@ export function SystemThemePicker() {
               data-selected={selected ? "true" : undefined}
             >
               <input className="sr-only" type="radio" name="system-theme" value={theme.id} checked={selected} onChange={() => selectTheme(theme.id)} />
-              <span className="system-theme-preview" aria-hidden>
-                <span style={{ backgroundColor: theme.colors[0] }} />
-                <span style={{ backgroundColor: theme.colors[1] }} />
-                <span style={{ backgroundColor: theme.colors[2] }} />
+              <span className="system-theme-preview" data-preview-mode={mode} aria-hidden>
+                <span style={{ backgroundColor: tokens['--paper'] }} />
+                <span style={{ backgroundColor: tokens['--moss'] }} />
+                <span style={{ backgroundColor: tokens['--nav-active-bg'] }} />
                 <TraditionalMotif motif={theme.motif as TraditionalMotifName} className="system-theme-preview-motif" />
               </span>
               <span className="min-w-0 flex-1 text-left">

@@ -25,3 +25,5 @@ try{
  await p.getByRole('textbox',{name:/^Operator/}).fill('Acceptance fixture operator');const pending=p.waitForResponse(r=>r.url().endsWith('/api/mobile/calculations')&&r.request().method()==='POST');await p.getByRole('button',{name:'Record in experiment',exact:true}).click();const response=await pending;assert.equal(response.status(),201,await response.text());const saved=await response.json();report.wbResultId=saved.resultId;await p.goto(base+'/results/'+saved.resultId,{waitUntil:'networkidle'});assert((await p.locator('main').first().innerText()).includes('Synthetic stock'));assert((await p.locator('main').first().innerText()).includes('below configured minimum'));check('I06: same WB snapshot saved to actual isolated experiment Result');
  await c.close();assert.deepEqual(report.errors,[]);
 }finally{report.completedAt=new Date().toISOString();await writeFile(dir+'/appearance-browser-report.json',JSON.stringify(report,null,2));await browser.close();}
+
+await import('./verify-calculator-appearance-foundation.mjs');

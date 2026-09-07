@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { chromium, devices } from "playwright";
 
-const base = "http://127.0.0.1:3211";
+const base = process.env.LABNEST_MEDIA_TEST_URL || "http://127.0.0.1:3211";
+assert.equal(new URL(base).port, "3211", "Use the isolated acceptance deployment");
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ ...devices["iPhone 13"] });

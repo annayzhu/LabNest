@@ -13,6 +13,7 @@ import Typography from "@tiptap/extension-typography";
 import { DocumentWysiwygToolbar, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
+import { newClientMutationId } from "@/lib/client-mutation-id";
 import { createDocumentBlockLineHeightExtension } from "@/lib/tiptap-document-extensions";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
@@ -31,7 +32,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   registerEditor?: (editor: Editor) => () => void;
 }) {
   const onChangeRef = useRef(onChange);
-  const [mediaDraftId] = useState(() => crypto.randomUUID());
+  const [mediaDraftId] = useState(newClientMutationId);
   const toolbarTarget = useDocumentToolbarTarget();
   const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
   const contentHash = useMemo(() => JSON.stringify(content), [content]);

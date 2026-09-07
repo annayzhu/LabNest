@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { createPortal } from "react-dom";
@@ -152,7 +153,7 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   onChange: (document: ScientificDocument) => void;
 }) {
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
-  const [mediaDraftId] = useState(() => crypto.randomUUID());
+  const [mediaDraftId] = useState(newClientMutationId);
   const originalRef = useRef(document);
   const hiddenSectionKeysRef = useRef(hiddenSectionKeys);
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");

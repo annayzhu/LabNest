@@ -29,6 +29,7 @@ Preserve existing dirty worktree and source data. No unsolicited remote-image fe
 - `verify-document-media.mjs`: real new Research Plan screenshot paste, decoded stored image, save/reload, formal link, separate thumbnail, unlink preserves original.
 - `verify-document-media-pages.ts`: Protocol, Experiment, Result, Report, Entry edits through actual buttons; Run detached image; replacement/caption/display-width and unlink preservation.
 - `verify-document-media-mobile.mjs`: iPhone-sized Quick capture, failed local preview, reload recovery via native file chooser, saved image after refresh. Earlier iteration also passed retry without reload.
+- Final LAN check ran the same mobile workflow against production-mode `http://192.168.0.109:3211` (insecure HTTP, `crypto.randomUUID` unavailable) and passed after reusing the existing LAN-compatible client ID helper. The isolated test port is not the delivery address.
 - `verify-document-media-order.mjs`: two simultaneous dropped images; source order, caption edited during upload and continuing text survive completion.
 - `verify-document-media-audio.mjs`: actual Insert file chooser; Chinese filename; saved named link; one-second WAV plays only on attachment page; ZIP bytes equal original.
 - `verify-document-media-concurrency.mjs`: eight concurrent record-save/original-delete attempts; both cannot succeed; accepted records retain accessible files.

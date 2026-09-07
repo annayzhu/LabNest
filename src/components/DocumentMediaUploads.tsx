@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import type { Editor } from "@tiptap/core";
 import { FilePlus2, ImagePlus } from "lucide-react";
 import type { DocumentMedia } from "@/lib/document-media";
+import { newClientMutationId } from "@/lib/client-mutation-id";
 import type { WysiwygInsertAction } from "./DocumentWysiwygToolbar";
 
 type Upload = { file: File; preview?: string; status: "uploading" | "failed"; error?: string; retry: () => void; dispose: () => void };
@@ -18,7 +19,7 @@ function releaseAbandonedUploads() {
 const draftScopes = new WeakMap<Editor, string>();
 export function documentMediaDraftId(editor: Editor) {
   let id = draftScopes.get(editor);
-  if (!id) { id = crypto.randomUUID(); draftScopes.set(editor, id); }
+  if (!id) { id = newClientMutationId(); draftScopes.set(editor, id); }
   return id;
 }
 const listeners = new Set<() => void>();
@@ -45,11 +46,11 @@ function updateAtIdentity(editor: Editor, id: string, block: DocumentMedia, comp
 /** Insert all anchors before starting I/O; completion never uses the current selection. */
 export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId: string, position?: number, replacement?: DocumentMedia) {
   const records = files.map(file => ({ file, block: {
-    id: replacement?.id ?? crypto.randomUUID(), type: "media" as const,
+    id: replacement?.id ?? newClientMutationId(), type: "media" as const,
     mediaType: file.type.startsWith("image/") ? "image" as const : file.type.startsWith("audio/") ? "audio" as const : file.type.startsWith("video/") ? "video" as const : "file" as const,
     url: "", filename: file.name, caption: replacement?.caption ?? "", mimeType: file.type, size: file.size,
     ...(replacement?.widthPercent ? { widthPercent: replacement.widthPercent } : {}),
-    pendingUploadId: crypto.randomUUID(),
+    pendingUploadId: newClientMutationId(),
   } }));
   if (replacement && records[0]) updateAtIdentity(editor, replacement.id, records[0].block);
   else editor.chain().focus().insertContentAt(position ?? editor.state.selection.from, records.map(({ block }) => ({ type: "documentMedia", attrs: { block } }))).run();

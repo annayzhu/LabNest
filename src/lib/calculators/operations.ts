@@ -29,7 +29,7 @@ export function withLiquidOperations(result:CalculatorResult, inputs:Record<stri
   for(const key of schemas[result.calculatorId]??[])if(key in row){
    if(result.calculatorId==='serial-dilution'&&index===0&&key==='takeUl'&&inputs.firstSource!=='stock'&&!['linear','custom'].includes(String(inputs.gradientMode)))continue;
    const label=key==='reducingAgentUl'?String(row.reducingAgent):tableColumnLabel(key,true)+' / '+tableColumnLabel(key,false);
-   add(`row:${index}:${key}`,String(row.component??label),row[key],'µL',key==='takeUl'?'transfer':'add',{componentId:key,inputRow:String(index),sample:String(row.id??row.tube??row.level??index+1),source:key==='takeUl'?`tube:${index||'starting-stock'}`:`stock:${key}`,destination:`${result.calculatorId}:${row.tube??row.id??index+1}`});
+   add(`row:${index}:${key}`,String(row.component??label),row[key],'µL',key==='takeUl'?'transfer':'add',{componentId:key,inputRow:String(index),sample:String(row.id??row.tube??row.level??index+1),source:key==='takeUl'?String(row.source):`stock:${key}`,destination:`${result.calculatorId}:${row.tube??row.id??index+1}`});
   }
   if(['media-recipe','buffer-recipe'].includes(result.calculatorId)&&units[normalizeUnit(String(row.unit))]?.dimension==='volume')add(`recipe:${row.componentId}`,String(row.component),row.amount,String(row.unit),row.action==='make-up-to'?'make-up-to':'add',{componentId:String(row.componentId),inputRow:String(index)});
   if(result.calculatorId==='kill-curve')add(`diluent:${index}`,'稀释液 / Diluent',convert(parseScalar(inputs.volumePerWellMl),String(inputs.volumePerWellMlUnit??'mL'),'µL')-Number(row.stockToAddUl),'µL','add',{sample:String(row.level),destination:`well:${row.level}`});

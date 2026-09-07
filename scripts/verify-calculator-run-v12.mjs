@@ -5,6 +5,10 @@ const report={checks:[],startedAt:new Date().toISOString()};
 try{
 await p.goto(base+'/protocols/new',{waitUntil:'networkidle'});const title='V12 synthetic protocol '+Date.now();await p.locator('[name=canonicalTitle]').fill(title);
 const doc=JSON.parse(await readFile(dir+'/run-fixture.json','utf8'));
+// Exercise headings emitted by the rich-text editor, not only plain heading blocks.
+for(const section of doc.sections)for(let n=0;n<section.blocks.length;n++){const block=section.blocks[n];if(block.type==='heading')section.blocks[n]={id:block.id,type:'rich_text',nodes:[{type:'heading2',content:[{text:block.text}]}]};}
+const firstTable=doc.sections[0].blocks.findIndex(b=>b.id==='mix-table');
+doc.sections[0].blocks.splice(firstTable+1,0,{id:'a-image',type:'media',mediaType:'image',url:'/icons/lab-soft-v1/dilution.png',caption:'Step A image only'},{id:'a-list',type:'rich_text',nodes:[{type:'bullet',content:[{text:'Step A list only'}]}]});
 await p.locator('input[name=contentJson]').evaluate((el,value)=>el.value=JSON.stringify(value),doc);
 await p.locator('button[type=submit]').first().click();await p.waitForURL(/\/protocols\/(?!new)/,{timeout:15000});report.protocolUrl=p.url();
 await p.goto(base+'/experiments/new',{waitUntil:'networkidle'});await p.getByRole('tab',{name:'Metadata',exact:true}).click();await p.getByRole('button').filter({hasText:title}).click();await p.locator('[name=title]').fill('V12 synthetic run');await p.getByRole('button',{name:'Save Experiment',exact:true}).click();await p.waitForURL(/\/experiments\/(?!new)/,{timeout:15000});report.experimentUrl=p.url();await p.goto(p.url()+'/run',{waitUntil:'networkidle'});report.runUrl=p.url();
@@ -14,7 +18,7 @@ for(const [width,height] of [[320,568],[360,640],[390,844]]){
  await p.setViewportSize({width,height});await content.waitFor();assert.equal(await content.locator('table tbody tr').count(),4);for(const text of ['10 µL','0.1 µL','7.9 µL','2 µL','Table note'])assert((await content.innerText()).includes(text));
  const geometry=await p.locator('[data-run-tools] button:visible').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}));assert.equal(geometry.length,2);assert(Math.abs(geometry[0].y-geometry[1].y)<2);assert(geometry.every(r=>r.height>=44&&r.width>=44));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await p.screenshot({path:`${dir}/run-${width}.png`,fullPage:true});report.checks.push({id:'R01/R07',width,geometry,status:'passed'});
 }
-await p.getByRole('button',{name:'Next',exact:true}).first().click();assert((await content.innerText()).includes('Material table belongs to step B'));assert(!(await content.innerText()).includes('Table note'));
+await p.getByRole('button',{name:'Next',exact:true}).first().click();assert((await content.innerText()).includes('Material table belongs to step B'));assert(!(await content.innerText()).includes('Table note'));assert(!(await content.innerText()).includes('Step A image only'));assert(!(await content.innerText()).includes('Step A list only'));assert.equal(await content.locator('table').count(),1);
 await p.getByText('Record a deviation',{exact:true}).click();const note=p.locator('textarea[name^="mobileDeviation:"]');await note.fill('Unsaved synthetic deviation');const name=await note.getAttribute('name');report.stepId=name.split(':').slice(1).join(':');
 await p.getByRole('button',{name:'计时器',exact:true}).click();await p.getByRole('textbox',{name:'Timer duration in minutes'}).count();await p.locator('[aria-label="Step timer"] button').first().click();await p.waitForTimeout(1000);
 await p.getByRole('button',{name:'计算器',exact:true}).first().click();await p.waitForURL(/\/tools\/calculator\?/);assert.equal(new URL(p.url()).pathname,'/tools/calculator');assert.equal(new URL(p.url()).searchParams.get('experimentStepId'),report.stepId);
@@ -24,3 +28,5 @@ await p.getByText('Offline use',{exact:true}).click();await p.getByRole('button'
 await p.getByRole('button',{name:'Next',exact:true}).first().click();for(const [width,height] of [[320,568],[360,640],[390,844]]){await p.setViewportSize({width,height});const table=content.locator('table');assert.equal(await table.locator('tbody tr').count(),25);const scroll=content.locator('.editorial-scrollbar');const metrics=await scroll.evaluate(el=>{el.scrollLeft=el.scrollWidth;return {left:el.scrollLeft,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth};});assert(metrics.left>0);assert((await table.locator('tbody tr').last().innerText()).includes('Row 24 col 7'));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await p.screenshot({path:`${dir}/run-wide-${width}.png`,fullPage:true});report.checks.push({id:'R02/R03',status:'passed',width,metrics});}
 
 }catch(error){report.error=String(error);throw error;}finally{await writeFile(dir+'/run-browser-report.json',JSON.stringify(report,null,2));await browser.close();}
+
+await import('./verify-calculator-run-compat.mjs');

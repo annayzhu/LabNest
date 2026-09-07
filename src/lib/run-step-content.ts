@@ -12,11 +12,12 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  const doc=protocolDocumentSchema.safeParse(version.contentJson);
  const projected=doc.success?projectProtocolDocument(doc.data).steps:[];
  // Old order refs are accepted only when the full projected step contract matches.
- const recovered=projected.find(s=>s.order===captured.order&&s.title===captured.title&&s.description===captured.description);
- const blocks=captured.content_blocks??recovered?.content_blocks;
+ const recovered=projected.find(s=>captured.source_ref && s.source_ref===captured.source_ref) ?? projected.find(s=>s.order===captured.order&&s.title===captured.title&&s.description===captured.description);
+ const blocks=recovered?.content_blocks??captured.content_blocks;
  if(!blocks)return legacy;
- const used=new Set(projected.flatMap(s=>s.content_blocks?.map(b=>b.id)??[]));
- const common=doc.success?(doc.data.sections.find(s=>s.key==='steps')?.blocks??[]).filter(b=>!used.has(b.id)&&!['heading','text','rich_text','checklist'].includes(b.type)):[];
+ // Only explicitly projected preparation blocks are shared. Unmatched content
+ // must never leak into every step when a legacy mapping cannot be recovered.
+ const common=doc.success?projectProtocolDocument(doc.data).commonBlocks:[];
  // Parameter interpolation traverses textual content, including table rich cells; IDs and URLs are unchanged.
  const render=(value:unknown,key=''):unknown=>typeof value==='string'&&!['id','url','source_ref','attachmentId'].includes(key)?renderProtocolTemplate(value,parameters):Array.isArray(value)?value.map(v=>render(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,render(v,k)])):value;
  return {blocks:render(blocks) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery'};

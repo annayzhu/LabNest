@@ -40,3 +40,6 @@ try {
  assert.deepEqual(errors,[]);
  await writeFile(`${output}/browser-report.json`,JSON.stringify({base,checks,errors,completedAt:new Date().toISOString()},null,2));console.log(JSON.stringify({checks,errors},null,2));
 } finally {await browser.close();}
+
+// Blocker acceptance runs in the same production CI server, after the legacy flows.
+await import('./verify-calculator-blockers.mjs');

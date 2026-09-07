@@ -33,11 +33,12 @@ export function getInventoryRiskFlags(
   }
 
   if (item.expiryDate) {
-    const expiry = new Date(item.expiryDate);
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-    const expiringCutoff = new Date(today);
-    expiringCutoff.setDate(expiringCutoff.getDate() + expiringWithinDays);
+    // Date-input values are stored as UTC midnight. Compare calendar days,
+    // using the caller/runtime local day for "today", not an expiry instant.
+    const expiryDay = item.expiryDate instanceof Date ? item.expiryDate.toISOString().slice(0,10) : item.expiryDate.slice(0,10);
+    const expiry = Date.parse(expiryDay);
+    const today = Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+    const expiringCutoff = today + expiringWithinDays * 86400000;
 
     if (expiry < today) {
       flags.push("expired");

@@ -15,7 +15,7 @@ async function main() {
   const bytes = exportProtocolDocx({ humanCode: "PRT-999998", canonicalTitle: "状态确认示例 / Import state confirmation", scope: "general", availability: "active", reviewStage: "reviewed", displayVersion: "0.1", tags: [] }, createProtocolTemplateDocument());
   try {
     for (const [locale, width, height] of [["zh", 1440, 1000], ["en", 390, 844]] as const) {
-      const context = await browser.newContext({ viewport: { width, height } });
+      const context = await browser.newContext({ viewport: { width, height }, timezoneId: "Asia/Shanghai" });
       await context.addCookies([{ name: "labnest_locale", value: locale, url: base }]);
       const page = await context.newPage();
       const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message));

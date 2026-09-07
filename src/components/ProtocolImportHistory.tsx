@@ -2,7 +2,7 @@
 
 import { useI18n } from "./I18nProvider";
 import type { ProtocolImportHistoryEntry } from "@/lib/protocol-import-history";
-import { declarationLabel, protocolImportIssueText } from "@/lib/protocol-import-messages";
+import { declarationLabel, formatProtocolImportTime, protocolImportIssueText } from "@/lib/protocol-import-messages";
 
 export function ProtocolImportHistory({ entries }: { entries: ProtocolImportHistoryEntry[] }) {
   const { locale } = useI18n();
@@ -20,7 +20,7 @@ export function ProtocolImportHistory({ entries }: { entries: ProtocolImportHist
           <p className="text-muted">{zh ? "文档声明的科学审核状态：" : "Declared scientific review: "}{declarationLabel(entry.decision.documentReviewStage, locale)}</p>
         </>}
         <dl className="grid gap-x-3 gap-y-1 text-xs sm:grid-cols-[auto_minmax(0,1fr)]">
-          <dt className="text-muted">{zh ? "导入时间" : "Imported at"}</dt><dd>{entry.importedAt ? new Intl.DateTimeFormat(zh ? "zh-CN" : "en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.importedAt)) : (zh ? "未记录" : "Not recorded")}</dd>
+          <dt className="text-muted">{zh ? "导入时间" : "Imported at"}</dt><dd>{formatProtocolImportTime(entry.importedAt, locale)}</dd>
           <dt className="text-muted">{zh ? "操作人" : "Actor"}</dt><dd>{entry.actorUserId ?? (zh ? "未识别操作人（当时未记录登录身份）" : "Unidentified (no authenticated identity recorded)")}</dd>
           <dt className="text-muted">{zh ? "目标版本" : "Target version"}</dt><dd className="break-all">{entry.protocolVersionId}</dd>
           <dt className="text-muted">SHA-256</dt><dd className="break-all">{entry.sourceFileChecksum ?? (zh ? "未记录" : "Not recorded")}</dd>

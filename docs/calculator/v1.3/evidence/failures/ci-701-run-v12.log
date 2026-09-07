@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'' !== 'w/v'
+
+    at file:///home/runner/work/LabNest/LabNest/scripts/verify-calculator-run-v12.mjs:28:150 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: 'w/v',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

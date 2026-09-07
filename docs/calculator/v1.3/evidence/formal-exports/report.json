@@ -1,0 +1,40 @@
+{
+  "sha": "e2053d40ef0131e1bf19345d6fcc9d2520a3e9f8",
+  "at": "2026-09-07T09:11:18.013Z",
+  "resultId": "cmtr0srmg000j4mos11fopil8",
+  "files": [
+    {
+      "format": "csv",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.csv",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read",
+      "sha256": "e663f6ceaf8cacbddca35a5c66a035d38f6cdd809317162e0ceb598dee5d05c8"
+    },
+    {
+      "format": "xlsx",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.xlsx",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read",
+      "sha256": "8f1147e513485e20793805674370f416ed1d20a083a59de55415270b334bfaef"
+    },
+    {
+      "format": "json",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.json",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read",
+      "sha256": "ec4e6640a28f94b99b9648eb54f6acec8f087164da6f6277083055ceaf184633"
+    },
+    {
+      "format": "pdf",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.pdf",
+      "status": "通过",
+      "check": "pdftotext numeric/unit/component/source/warning assertions and manual inspection of both rendered pages; full preparation table legible, no clipped columns. Native OS print dialog not exercised.",
+      "sha256": "9eb24eef9a35e3cf800cedc26a16eeaf73788df68f791068de95d17f69c57830",
+      "pages": 2,
+      "renderedPages": [
+        "saved-wb-1.png",
+        "saved-wb-2.png"
+      ]
+    }
+  ]
+}

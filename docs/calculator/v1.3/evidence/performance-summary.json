@@ -1,0 +1,193 @@
+{
+  "baselineSha": "446bb9bf6ea5dd4f672bc5acd365dc8e4e3808b8",
+  "codeSha": "f813ef67d8018caab9a97eba62a499f26420c2d2",
+  "measurement": "Playwright navigation/control actions; not native-device INP. Same machine and examples; each phase sequential without concurrent builds/tests. OS/browser cache retained within each phase; no forced cache disable in the 31×10 scan. Cold/no-cache and weak network separated in trace-report.",
+  "phases": {
+    "before": {
+      "open": {
+        "medianMs": 40.85412499999802,
+        "maxMs": 118.31162499999999,
+        "worstTool": "dilution",
+        "samples": 310
+      },
+      "input": {
+        "medianMs": 6.791645500008599,
+        "maxMs": 14.200207999994745,
+        "worstTool": "normalization",
+        "samples": 300
+      },
+      "calculate": {
+        "medianMs": 22.03200000000129,
+        "maxMs": 37.21625000000131,
+        "worstTool": "master-mix",
+        "samples": 300
+      },
+      "restoreDraft": {
+        "medianMs": 23.087416499998653,
+        "maxMs": 62.85458300000755,
+        "worstTool": "virus-titer",
+        "samples": 300
+      },
+      "return": {
+        "medianMs": 44.37856250000186,
+        "maxMs": 60.16620799998054,
+        "worstTool": "buffer-recipe",
+        "samples": 310
+      }
+    },
+    "after": {
+      "open": {
+        "medianMs": 35.29599999999482,
+        "maxMs": 260.659583,
+        "worstTool": "dilution",
+        "samples": 310
+      },
+      "input": {
+        "medianMs": 6.530770500008657,
+        "maxMs": 32.519916999997804,
+        "worstTool": "viability",
+        "samples": 300
+      },
+      "calculate": {
+        "medianMs": 21.357666999989306,
+        "maxMs": 40.12008400000195,
+        "worstTool": "master-mix",
+        "samples": 300
+      },
+      "restoreDraft": {
+        "medianMs": 22.853771000009147,
+        "maxMs": 65.3570830000026,
+        "worstTool": "hemocytometer",
+        "samples": 300
+      },
+      "return": {
+        "medianMs": 47.79387450001377,
+        "maxMs": 67.69125000000349,
+        "worstTool": "normalization",
+        "samples": 310
+      }
+    }
+  },
+  "identicalExampleCsv": [
+    {
+      "id": "dilution",
+      "sha256": "5e8af253a0519d0370a5ec6b915b31021c1a9d7fe6b5639aa3e7291dc92275a3"
+    },
+    {
+      "id": "molarity",
+      "sha256": "549b4c6e2bd4a4f4fb43e6998da8719e286fb6b95c2eb9a3288857d50df665b0"
+    },
+    {
+      "id": "seeding",
+      "sha256": "bb117c3e16746f1b7393dd273e1ae264ec630d9c41df5d934dc490fdba968707"
+    },
+    {
+      "id": "master-mix",
+      "sha256": "8f523a88865d951aba3fa41c55c22116ae5553843bf5a8241a2df781d49168ec"
+    },
+    {
+      "id": "wb-loading",
+      "sha256": "c49bf805c0c6c9b034e1093b82af0b866a956cd90d2235344450334b728730cc"
+    },
+    {
+      "id": "centrifuge",
+      "sha256": "2a10606e8d7fa251c3a01f96610f4ccd49b2ba298e4fcb7213a05ba1a9b43eed"
+    },
+    {
+      "id": "hemocytometer",
+      "sha256": "ee3252b855aa29ef972764bdb60968e54eb9f1024b8c8baa8481efa03cb3410d"
+    },
+    {
+      "id": "hydrogel",
+      "sha256": "a864ae16816db7797a7ec512888ef93ea905890fa62571f67db9e5222f2ce75f"
+    },
+    {
+      "id": "split",
+      "sha256": "146c7c20c7a4bc9c416e200f992327c849f7ed3fa08ed03cd851047bf4cbbde3"
+    },
+    {
+      "id": "freezing",
+      "sha256": "104462aad9bf18899fddee1cd1d85a04d88e45338f429f1f441a775aa357da26"
+    },
+    {
+      "id": "transfection",
+      "sha256": "277e9c3ae156ee892fd1d3733a804d078e9830b5197dc216bd54a23525706dd7"
+    },
+    {
+      "id": "kill-curve",
+      "sha256": "6bbda4c0cd06a6cc8f313e4088b624877308b7d3c8abd3549e3c2efccb0fccf0"
+    },
+    {
+      "id": "viability",
+      "sha256": "4848a84115a22946ad31ac59d1c6119484fc02b65d7373efdcd3ebe6c810f297"
+    },
+    {
+      "id": "od600",
+      "sha256": "005c9d2e57414aaa265a157faf3bda9ecfa773f94ed7b0d092bdd22b1d811f3d"
+    },
+    {
+      "id": "cfu",
+      "sha256": "a9f54e61b0250b2ff5d064be0de5f27433f20e91bd906e2976e51d94720c7e77"
+    },
+    {
+      "id": "serial-dilution",
+      "sha256": "5684b0729baef93aac7f1b6b5d869d4de944c8d4d544d2cac04b359e58ad0f9f"
+    },
+    {
+      "id": "percent-solution",
+      "sha256": "209e6025911d74d0e8134b92c69fde64170e8f45374ae3b4fb5b012aea85958f"
+    },
+    {
+      "id": "media-recipe",
+      "sha256": "679f5a88ffac25551915e9c4703734a7f773b71dfecb5779cf82f414d036bd7d"
+    },
+    {
+      "id": "buffer-recipe",
+      "sha256": "84d4df191fbc9d5543fa0c1af9bb6cb72eb9a8121a453a7ac507f55e6babc86b"
+    },
+    {
+      "id": "ic50-ec50",
+      "sha256": "858f991d79b66abb4eb3eb4a6188d8c3d2d5edc36b14093326215429909dafe5"
+    },
+    {
+      "id": "ligation",
+      "sha256": "32d96a615284466e9ae9ea1b5ee699beecb15a0c30d4f944b8faff7286b76ef3"
+    },
+    {
+      "id": "tm",
+      "sha256": "5240d09888c6e0c30c9c85b19011014da9766da57cb0dd6c6169adebdcd46a35"
+    },
+    {
+      "id": "dna-rna-conversion",
+      "sha256": "22719a960688d0812166746ba43703e27a8dc7008d1ab85be0a8d9b8e3d0b123"
+    },
+    {
+      "id": "bradford-bca",
+      "sha256": "b69b2c74203aee42f781d453d87aab804d2edd854c346261a053ca3adee69cae"
+    },
+    {
+      "id": "elisa-4pl",
+      "sha256": "8e4bc88548f9f38ee2df7493f0340a4a0185b6e27400c17aad03a924e0f54e8c"
+    },
+    {
+      "id": "moi",
+      "sha256": "518dd28bda8d420db32b5f3df6e2c0c886379eea08042b2afcf495ff1476ffab"
+    },
+    {
+      "id": "virus-titer",
+      "sha256": "d893ebdf4ef1dde3207ed7a87bc4f3e34a0504a2947333a954d6790997c14c11"
+    },
+    {
+      "id": "unit-converter",
+      "sha256": "6d5f2ac925bc00e861ac1fd5e3af241082542bc24438537005ad1b434995ad77"
+    },
+    {
+      "id": "resuspension",
+      "sha256": "49735bc7fc5bbbbe7341b3ba193fb671532e3b6cc7a076999e661d36a4d0b35f"
+    },
+    {
+      "id": "normalization",
+      "sha256": "25686194f5fc8917a17d0df08bfeeb9029746878a09939e484c72834f094c1a5"
+    }
+  ]
+}

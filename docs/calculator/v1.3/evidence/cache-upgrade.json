@@ -1,0 +1,12 @@
+{
+  "oldBase": "http://localhost:3000",
+  "newBase": "http://localhost:3223",
+  "checks": [
+    "Actual old production bundle and v4 worker prepared through a GET-only isolated origin",
+    "Upgrade resource 503 preserves v4; disconnected reload still calculates with its complete old bundle",
+    "Successful update publishes v5 and removes v4; new bundle reopens offline"
+  ],
+  "at": "2026-09-07T09:11:47.909Z",
+  "codeSha": "f813ef67d8018caab9a97eba62a499f26420c2d2",
+  "testSha": "e2053d40ef0131e1bf19345d6fcc9d2520a3e9f8"
+}

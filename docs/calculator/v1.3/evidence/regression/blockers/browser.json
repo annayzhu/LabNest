@@ -1,0 +1,166 @@
+{
+  "sha": "e2053d40ef0131e1bf19345d6fcc9d2520a3e9f8",
+  "at": "2026-09-07T09:09:33.335Z",
+  "checks": [
+    "Parallel stock 100 µM → 10/20 µM, 100 µL: table, operations, clipboard, CSV 10+90 / 20+80"
+  ],
+  "screenshots": [
+    "docs/calculator/blockers/evidence/gradient-desktop-light.png",
+    "docs/calculator/blockers/evidence/gradient-mobile-light.png",
+    "docs/calculator/blockers/evidence/gradient-desktop-dark.png",
+    "docs/calculator/blockers/evidence/gradient-mobile-dark.png"
+  ],
+  "snapshot": {
+    "calculatorId": "serial-dilution",
+    "methodVersion": "serial-dilution-v3",
+    "outputs": [
+      {
+        "key": "levels",
+        "label": "Concentration points",
+        "labelZh": "浓度点数",
+        "value": 2
+      }
+    ],
+    "outputMap": {
+      "levels": 2
+    },
+    "warnings": [],
+    "notes": [
+      "并行配制；浓度µM，体积µL / Parallel preparation; µM and µL"
+    ],
+    "table": [
+      {
+        "tube": 1,
+        "concentration": 10,
+        "source": "母液 / Stock",
+        "takeUl": 10,
+        "diluentUl": 90,
+        "mixedUl": 100,
+        "transferUl": 0,
+        "remainingUl": 100
+      },
+      {
+        "tube": 2,
+        "concentration": 20,
+        "source": "母液 / Stock",
+        "takeUl": 20,
+        "diluentUl": 80,
+        "mixedUl": 100,
+        "transferUl": 0,
+        "remainingUl": 100
+      }
+    ],
+    "operations": [
+      {
+        "id": "serial-dilution:row:0:takeUl",
+        "component": "取液量 (µL) / Take (µL)",
+        "source": "母液 / Stock",
+        "destination": "serial-dilution:1",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "takeUl",
+        "inputRow": "0",
+        "sample": "1",
+        "role": "transfer",
+        "quantity": {
+          "value": 10,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      },
+      {
+        "id": "serial-dilution:row:0:diluentUl",
+        "component": "稀释液 (µL) / Diluent (µL)",
+        "source": "stock:diluentUl",
+        "destination": "serial-dilution:1",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "diluentUl",
+        "inputRow": "0",
+        "sample": "1",
+        "role": "add",
+        "quantity": {
+          "value": 90,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      },
+      {
+        "id": "serial-dilution:row:1:takeUl",
+        "component": "取液量 (µL) / Take (µL)",
+        "source": "母液 / Stock",
+        "destination": "serial-dilution:2",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "takeUl",
+        "inputRow": "1",
+        "sample": "2",
+        "role": "transfer",
+        "quantity": {
+          "value": 20,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      },
+      {
+        "id": "serial-dilution:row:1:diluentUl",
+        "component": "稀释液 (µL) / Diluent (µL)",
+        "source": "stock:diluentUl",
+        "destination": "serial-dilution:2",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "diluentUl",
+        "inputRow": "1",
+        "sample": "2",
+        "role": "add",
+        "quantity": {
+          "value": 80,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      }
+    ],
+    "operationVersion": "liquid-operations-v2",
+    "pipettingCheck": {
+      "status": "not-set"
+    },
+    "structuredWarnings": [],
+    "displayUnits": {},
+    "schemaVersion": 2,
+    "status": "valid",
+    "mode": "default",
+    "rawInputs": {
+      "gradientMode": "custom",
+      "startingConcentration": "",
+      "dilutionFactor": "",
+      "levels": "",
+      "totalVolumePerLevel": "100",
+      "volumeMode": "mixed",
+      "requiredVolumeUl": "",
+      "endingConcentration": "",
+      "customTargets": "10\n20",
+      "firstSource": "prepared",
+      "sourceConcentration": "100"
+    },
+    "normalizedInputs": {
+      "gradientMode": "custom",
+      "totalVolumePerLevel": {
+        "value": 0.00009999999999999999,
+        "dimension": "volume",
+        "unit": "L",
+        "sourceUnit": "µL"
+      },
+      "customTargets": "10\n20",
+      "sourceConcentration": {
+        "value": 0.00009999999999999999,
+        "dimension": "molar-concentration",
+        "unit": "mol/L",
+        "sourceUnit": "µM"
+      }
+    }
+  }
+}

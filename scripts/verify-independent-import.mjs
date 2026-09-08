@@ -1,5 +1,6 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';
-const api=await request.newContext({baseURL:'http://localhost:3232'});const checks=[];
+const api=await request.newContext({baseURL:acceptanceBase});const checks=[];
 try{
  for(const [module,csv] of [['purchases','title,quantity,unit,actualAmount,status\nSynthetic purchase '+Date.now()+',2,box,,received\n'],['inventory','name,managementMode,currentQuantity,unit\nSynthetic unknown '+Date.now()+',information,,mL\n']]){
   const file={name:module+'.csv',mimeType:'text/csv',buffer:Buffer.from(csv)};

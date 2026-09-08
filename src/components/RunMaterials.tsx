@@ -139,7 +139,7 @@ export function RunMaterials({
     <section className="border-t border-hairline py-4">
       <h2 className="mb-3 text-lg font-semibold">本次使用的试剂与耗材</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="ln-run-material-table w-full text-left text-sm">
           <thead>
             <tr>
               {["物料", "预计", "实际", "来源", "执行状态"].map((h) => (
@@ -152,25 +152,27 @@ export function RunMaterials({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-hairline">
-                <td className="p-2">{row.name}</td>
-                <td className="p-2">
+                <td data-label="物料" className="p-2">{row.name}</td>
+                <td data-label="预计" className="p-2">
                   {row.expected ?? "未记录"} {row.unit}
                 </td>
-                <td className="p-2">
+                <td data-label="实际" className="p-2">
                   {row.actual ?? "未确认"} {row.unit}
                 </td>
-                <td className="p-2">
+                <td data-label="来源" className="p-2">
                   {row.containerId ??
                     stock.find((s) => s.id === row.inventoryItemId)?.name ??
                     "不管理库存"}
+                  <span className="block text-muted">{row.source === "manual" ? "手工记录" : row.source}</span>
                 </td>
-                <td className="p-2">
+                <td data-label="状态" className="p-2">
                   {row.status === "submitted"
                     ? "已扣减"
                     : row.status === "pending"
                       ? "待确认扣减"
                       : "仅记录"}
                   {row.error ? <p className="text-error">{row.error}</p> : null}
+                  {row.status !== "submitted" && editable ? <button type="button" className="focus-ring ml-2 min-h-11 text-moss" onClick={()=>{setDraftId(row.id);setName(row.name);setExpected(row.expected===null?"":String(row.expected));setActual(row.actual===null?"":String(row.actual));setUnit(row.unit);setInventory(row.inventoryItemId??"");setContainer(row.containerId??"");setCorrection(row.correctionOfId);setSource(row.source);}}>编辑</button>:null}
                   {row.status === "submitted" &&
                   editable &&
                   !rows.some((r) => r.correctionOfId === row.id) ? (
@@ -276,6 +278,10 @@ export function RunMaterials({
                 />
               </label>
             </div>
+            <label className="text-sm">
+              用量依据
+              <input required className={formInputClass} value={source} onChange={(e) => setSource(e.target.value)} />
+            </label>
             <label className="text-sm">
               库存来源
               <select

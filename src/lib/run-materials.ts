@@ -22,6 +22,8 @@ export async function saveRunMaterial(experimentId: string, raw: unknown) {
   await editable(experimentId);
   const { action: _, ...input } = rowInput.parse(raw);
   return prisma.$transaction(async (tx) => {
+    // Save and confirmation share one lock, including the first save when no row exists.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`run-material:${input.id}`},0))::text`;
     const previous = await tx.runMaterialUse.findUnique({
       where: { id: input.id },
     });
@@ -39,9 +41,9 @@ export async function saveRunMaterial(experimentId: string, raw: unknown) {
       });
       if (
         bottle.inventoryItemId !== input.inventoryItemId ||
-        bottle.state === "empty"
+        bottle.state !== "held"
       )
-        throw new Error("所选瓶不匹配或已用完。");
+        throw new Error("请选择匹配且已领用的瓶。");
     }
     const stock = input.inventoryItemId
       ? await tx.inventoryItem.findUniqueOrThrow({
@@ -82,6 +84,7 @@ export async function confirmRunMaterials(experimentId: string, raw: unknown) {
   for (const id of [...new Set(ids)]) {
     try {
       const row = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`run-material:${id}`},0))::text`;
         const row = await tx.runMaterialUse.findUniqueOrThrow({
           where: { id },
         });

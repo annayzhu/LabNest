@@ -1,5 +1,6 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';
-const api=await request.newContext({baseURL:'http://localhost:3232'});const checks=[];
+const api=await request.newContext({baseURL:acceptanceBase});const checks=[];
 try{
  let r=await api.post('/api/purchases',{data:{title:'Synthetic independent purchase '+Date.now(),quantity:5,unit:'瓶',status:'ordered',actualAmount:'420.00',invoiceStatus:'pending',clientMutationId:crypto.randomUUID()}});assert.equal(r.status(),201);const purchase=await r.json();
  const key=crypto.randomUUID();const data={action:'receive',quantity:2,inventory:'none',clientMutationId:key};r=await api.post('/api/purchases/'+purchase.id,{data});assert.equal(r.status(),200);r=await api.post('/api/purchases/'+purchase.id,{data});assert.equal(r.status(),200);

@@ -7,7 +7,7 @@ vi.mock("@/lib/db", () => {
   let quantity = 10;
   const tx = {
     inventoryItem: {
-      findUnique: async () => { const snapshot = { id: "item", currentQuantity: quantity, unit: "mL", locationId: null }; quantity = 8; return snapshot; },
+      findUnique: async () => { const snapshot = { id: "item", currentQuantity: quantity, quantityRecorded: true, managementMode: "precise", unit: "mL", locationId: null }; quantity = 8; return snapshot; },
       update: async () => { quantity = 20; },
       updateMany: async ({ where }: { where: { currentQuantity?: number } }) => ({ count: where.currentQuantity === quantity ? 1 : 0 }),
     },

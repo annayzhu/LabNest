@@ -1,7 +1,8 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
-const base='http://localhost:3232';
+const base=acceptanceBase;
 const browser=await chromium.launch();const page=await browser.newPage();
 const results=[];
 try {

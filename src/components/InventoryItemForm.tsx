@@ -117,6 +117,7 @@ export function InventoryItemForm({
 
       <Card>
         <CardHeader title="Stock and storage" />
+        {initial.quantityRecorded===false?<fieldset className="grid gap-3 px-4 sm:grid-cols-3"><legend className="text-sm font-semibold">首次盘点（启用数量时填写）</legend><label className="text-sm">盘点日期<input name="countedAt" type="date" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点登记人<input name="countedBy" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点来源<input name="countSource" required={managementMode!=="information"} placeholder="实物清点记录" className={formInputClass}/></label></fieldset>:null}
         <label className="block px-4"><span className={formLabelClass}>管理方式 / Management</span><select aria-label="管理方式 / Management" name="managementMode" value={managementMode} onChange={event=>setManagementMode(event.target.value)} className={formInputClass}><option value="information">信息追溯 · 余量选填</option><option value="package">按包装管理 · 瓶、盒、包</option><option value="precise">精确用量</option></select></label>
         <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label>

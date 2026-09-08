@@ -1,4 +1,5 @@
 "use client";
+import { InventoryBatchIssue } from "./InventoryBatchIssue";
 import {newClientMutationId} from "@/lib/client-mutation-id";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -91,12 +92,14 @@ export function InventoryContainers({
               }
             : {}),
           ...(draft.performedBy ? { performedBy: draft.performedBy } : {}),
+          ...(action === "observe" && draft.experimentId ? { experimentId: draft.experimentId } : {}),
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       setMutationKey(null);
       setMessage("已保存");
+      setAction("observe");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "保存失败，可重试");
@@ -129,6 +132,7 @@ export function InventoryContainers({
         持有 {containers.filter((c) => c.state === "held").length} · 已用完{" "}
         {containers.filter((c) => c.state === "empty").length}
       </p>
+      <InventoryBatchIssue itemId={itemId} available={containers.filter(c => c.state === "warehouse").map(c => c.id)} />
       <div className="divide-y divide-hairline">
         {containers.map((c) => (
           <div
@@ -254,6 +258,7 @@ export function InventoryContainers({
                     </select>
                   </label>
                   {field("performedBy", "登记人")}
+                  {field("experimentId", "关联实验 ID（选填）")}
                 </>
               ) : null}
               <Button type="submit" disabled={busy}>

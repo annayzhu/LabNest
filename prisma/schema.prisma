@@ -471,6 +471,7 @@ model Entry {
 
 model Experiment {
   materialUses RunMaterialUse[]
+  inventoryObservations InventoryObservation[]
   id                       String                @id @default(cuid())
   runCode                  String                @unique
   title                    String
@@ -766,6 +767,8 @@ model InventoryItem {
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
+  materialUses RunMaterialUse[]
+  receipts PurchaseReceipt[]
   containers   InventoryContainer[]
   transactions InventoryTransaction[]
   purchases    PurchaseRequest[]
@@ -782,6 +785,7 @@ model InventoryItem {
 }
 
 model InventoryTransaction {
+  materialUse RunMaterialUse?
   id               String                   @id @default(cuid())
   inventoryItemId  String
   inventoryItem    InventoryItem            @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
@@ -1522,6 +1526,7 @@ model DeletedRecord {
 
 // Physical identity survives issue, return and transfer. Amount observations are not stock transactions.
 model InventoryContainer {
+  materialUses RunMaterialUse[]
   id              String @id @default(cuid())
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
@@ -1558,6 +1563,7 @@ model InventoryObservation {
   quality      String
   performedBy  String
   experimentId String?
+  experiment Experiment? @relation(fields:[experimentId],references:[id],onDelete:Restrict)
   createdAt    DateTime @default(now())
   @@index([containerId, createdAt])
 }
@@ -1568,6 +1574,7 @@ model PurchaseReceipt {
   purchase PurchaseRequest @relation(fields:[purchaseId],references:[id],onDelete:Restrict)
   quantity Float
   inventoryItemId String?
+  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
   clientMutationId String @unique
   createdAt DateTime @default(now())
   @@index([purchaseId])
@@ -1589,10 +1596,15 @@ model RunMaterialUse {
   unit String
   source String
   inventoryItemId String?
+  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
   containerId String?
+  container InventoryContainer? @relation(fields:[containerId],references:[id],onDelete:Restrict)
   status String @default("recorded")
   transactionId String? @unique
+  transaction InventoryTransaction? @relation(fields:[transactionId],references:[id],onDelete:Restrict)
   correctionOfId String? @unique
+  correctionOf RunMaterialUse? @relation("MaterialCorrection",fields:[correctionOfId],references:[id],onDelete:Restrict)
+  correction RunMaterialUse? @relation("MaterialCorrection")
   error String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

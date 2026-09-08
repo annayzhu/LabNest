@@ -1,3 +1,4 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';
-const api=await request.newContext({baseURL:'http://localhost:3232'});
+const api=await request.newContext({baseURL:acceptanceBase});
 try{const name='Synthetic quote '+Date.now();const file={name:'quote.csv',mimeType:'text/csv',buffer:Buffer.from(`title,quantity,unit,recordKind,quotedAmount,vendor\n${name},2,box,quote,99.00,Supplier A\n`)};const {preview}=await (await api.post('/api/structured-import/purchases/preview',{multipart:{file}})).json();assert.ok(preview.canImport);const r=await api.post('/api/structured-import/purchases/confirm',{multipart:{file,checksum:preview.checksum,confirmationToken:preview.confirmationToken}});assert.equal(r.status(),201);const quotes=await (await api.get('/api/purchases/quotes')).json();assert.ok(quotes.some(q=>q.productName===name));const csv=await (await api.get('/api/purchases/export')).text();assert.equal(csv.includes(name),false,'Quote is never an actual reimbursement purchase');}finally{await api.dispose();}

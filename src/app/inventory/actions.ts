@@ -69,7 +69,7 @@ function parseInventoryItem(formData: FormData) {
     currentQuantity: formData.get("managementMode") === "information" && !optionalText(formData.get("currentQuantity")) ? 0 : optionalNumber(formData.get("currentQuantity")),
     managementMode: optionalText(formData.get("managementMode")) ?? "precise",
     quantityRecorded: !!optionalText(formData.get("currentQuantity")),
-    unit: optionalText(formData.get("unit")) ?? (formData.get("managementMode") === "information" ? "未指定" : ""),
+    unit: optionalText(formData.get("unit")) ?? (formData.get("managementMode") === "information" && !optionalText(formData.get("currentQuantity")) ? "未指定" : ""),
     lowThreshold: optionalNumber(formData.get("lowThreshold")),
     concentration: optionalText(formData.get("concentration")),
     locationId: optionalText(formData.get("locationId")),
@@ -164,6 +164,16 @@ async function persistInventoryItemUpdate(formData: FormData) {
       if(!Number.isInteger(parsed.currentQuantity)||parsed.currentQuantity>1000)throw new Error("Package count must be an integer from 0 to 1000.");
       if(parsed.currentQuantity>0)await tx.inventoryContainer.createMany({data:Array.from({length:parsed.currentQuantity},()=>({inventoryItemId:id,location:parsed.positionCode}))});
     }
+    const openingCount = !current.quantityRecorded && parsed.quantityRecorded;
+    let countedAt:Date|undefined;
+    let countedBy:string|undefined;
+    let countSource:string|undefined;
+    if(openingCount){
+      const input=z.object({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),by:z.string().trim().min(1).max(120),source:z.string().trim().min(1).max(1000)}).parse({date:formData.get("countedAt"),by:formData.get("countedBy"),source:formData.get("countSource")});
+      countedAt=new Date(`${input.date}T00:00:00Z`);
+      if(!Number.isFinite(countedAt.getTime())||countedAt.toISOString().slice(0,10)!==input.date)throw new Error("Invalid count date.");
+      countedBy=input.by;countSource=input.source;
+    }
     const quantityChange = Number((parsed.currentQuantity - current.currentQuantity).toFixed(6));
     const locationChanged = parsed.locationId !== (current.locationId ?? undefined);
     const principalInvestigatorChanged = parsed.principalInvestigator !== (current.principalInvestigator ?? undefined);
@@ -186,7 +196,9 @@ async function persistInventoryItemUpdate(formData: FormData) {
           unit: parsed.unit,
           fromLocationId: current.locationId ?? undefined,
           toLocationId: parsed.locationId,
-          notes: "Quantity adjustment generated from the Inventory Item edit form.",
+          notes: openingCount ? `Opening physical count: ${countSource}; no inferred past consumption.` : "Quantity adjustment generated from the Inventory Item edit form.",
+          performedBy:countedBy,
+          deviceCreatedAt:countedAt,
         },
       });
     }

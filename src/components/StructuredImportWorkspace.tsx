@@ -118,6 +118,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
 
   function chooseFile(nextFile?: File, source: "picker" | "drop" = "picker") {
     setPreview(undefined);
+    setColumnOverrides({});
     setError(undefined);
 
     if (source === "drop" && fileInput.current) fileInput.current.value = "";

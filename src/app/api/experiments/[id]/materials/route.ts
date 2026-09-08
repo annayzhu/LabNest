@@ -21,6 +21,7 @@ export async function POST(
   try {
     const input = await request.json();
     const id = (await params).id;
+    if (!["save", "confirm"].includes(input.action)) return Response.json({ error: "Unknown action" }, { status: 400 });
     return Response.json(
       input.action === "save"
         ? await saveRunMaterial(id, input)

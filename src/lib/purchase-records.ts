@@ -110,6 +110,8 @@ export async function updateIndependentPurchase(id: string, raw: unknown) {
   }
   try {
     return await prisma.$transaction(async (tx) => {
+      // Receipt and correction must validate against the same locked order state.
+      await tx.$queryRaw`SELECT "id" FROM "PurchaseRequest" WHERE "id"=${id} FOR UPDATE`;
       const purchase = await tx.purchaseRequest.findUniqueOrThrow({
         where: { id },
         include: { receipts: true },

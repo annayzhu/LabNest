@@ -1,0 +1,54 @@
+name: Independent inventory acceptance
+on:
+  pull_request:
+    paths: ['src/**', 'scripts/*inventory*', 'scripts/*purchase*', 'scripts/*import*', 'scripts/*run-materials*', 'scripts/stage-acceptance-env.mjs', 'package*.json', 'prisma/**', '.github/workflows/inventory.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_stage_a_acceptance
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_stage_a_acceptance
+      LABNEST_ACCEPTANCE_URL: http://localhost:3233
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build -- --webpack
+      - run: TZ=Asia/Shanghai npm test
+      - run: TZ=UTC npm test
+      - run: npx prisma migrate deploy
+      - run: node scripts/verify-inventory-legacy.mjs
+      - name: Start isolated production server
+        run: |
+          npm run start -- --port 3233 > inventory-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3233/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat inventory-server.log
+          exit 1
+      - run: node scripts/verify-inventory-all.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inventory-browser-evidence
+          path: |
+            docs/stage-20260908/A/evidence
+            inventory-server.log

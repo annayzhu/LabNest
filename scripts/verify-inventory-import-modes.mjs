@@ -1,5 +1,6 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:'http://localhost:3232'});
+const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:acceptanceBase});
 try{
  for(const [mode,quantity,expected] of [['balance',180,180],['arrival',20,200]]){
  const file={name:'inventory-'+mode+'.csv',mimeType:'text/csv',buffer:Buffer.from(`name,inventoryId,importMode,currentQuantity,unit\nSynthetic buffer,${f.inventoryItemId},${mode},${quantity},mL\n`)};

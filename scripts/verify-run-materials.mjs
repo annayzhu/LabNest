@@ -1,5 +1,6 @@
+import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:'http://localhost:3232'});const endpoint=`/api/experiments/${f.experimentId}/materials`;const checks=[];
+const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:acceptanceBase});const endpoint=`/api/experiments/${f.experimentId}/materials`;const checks=[];
 try{
  const create=async data=>{const r=await api.post(endpoint,{data:{action:'save',...data}});assert.equal(r.status(),200,await r.text());return r.json();};
  const free=await create({id:crypto.randomUUID(),name:'Unmanaged water',expected:15,actual:12,unit:'mL',source:'manual'});

@@ -144,7 +144,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
               getRowKey={(row) => row.id}
               emptyMessage="No stock movements have been recorded."
               columns={[
-                { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap font-mono text-xs">{row.createdAt.toLocaleString()}</span> },
+                { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap font-mono text-xs">{row.createdAt.toLocaleString()}{row.deviceCreatedAt ? <span className="block">盘点/发生日期 {row.deviceCreatedAt.toISOString().slice(0,10)}</span>:null}</span> },
                 { key: "type", header: "Movement", render: (row) => <StatusPill status={row.type} /> },
                 { key: "change", header: "Change", render: (row) => <span className={`font-mono font-semibold ${row.quantityChange < 0 ? "text-error" : "text-success"}`}>{row.quantityChange > 0 ? "+" : ""}{row.quantityChange} {row.unit}</span> },
                 { key: "handler", header: "Handled by", render: (row) => row.performedBy ?? "—" },

@@ -18,6 +18,7 @@ async function assertPrintedImage(filename, caption) {
  const pdf=await page.pdf({path,format:'A4',printBackground:true});
  assert(pdf.toString('latin1').includes('/Subtype /Image'),'PDF embeds raster content');
  const text=execFileSync('pdftotext',[path,'-'],{encoding:'utf8'});
+ assert(text.split('\f').slice(0,-1).every(page=>page.trim().length),`Unexpected blank print page: ${filename}`);
  assert(text.includes(caption),`Printed caption missing: ${filename}`);
  assert(text.includes('Editor acceptance body'),`Printed body missing: ${filename}`);
  assert(text.includes('Synthetic'),`Printed title missing: ${filename}`);
@@ -87,10 +88,10 @@ if(phase==='run'){
  for(const width of [1440,390]){await page.setViewportSize({width,height:1000});const imgs=page.locator('[data-run-step-content]:visible').getByRole('img',{name:caption,exact:true});await imgs.first().waitFor();assert(await imgs.count()>0);for(const img of await imgs.all())await img.evaluate(i=>i.decode());report.checks.push({entry:'run',width,loadedImages:await imgs.count(),url});}
 }
 if(phase==='visual'){
- for(const item of fixtures.cases){
+ for(const item of fixtures.cases.filter(item=>!process.env.EDITOR_VISUAL_ENTRIES||process.env.EDITOR_VISUAL_ENTRIES.split(',').includes(item.name))){
  for(const width of [1440,390]){
  await page.emulateMedia({media:'screen',colorScheme:item.name==='report'?'dark':'light'});await page.setViewportSize({width,height:1000});await page.goto(base+item.edit,{waitUntil:'networkidle'});await page.evaluate(()=>document.fonts.ready);
- const media=page.locator('[data-document-media]').first();await media.getByRole('img').evaluate(i=>i.decode());await media.getByRole('img').click();await media.scrollIntoViewIfNeeded();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),item.name+' page overflow');await page.screenshot({path:`${dir}/${item.name}-editor-${width}.png`});
+ const media=page.locator('[data-document-media]').filter({has:page.locator('img:visible')}).first();await media.getByRole('img').evaluate(i=>i.decode());await media.getByRole('img').click();await media.scrollIntoViewIfNeeded();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),item.name+' page overflow');await page.screenshot({path:`${dir}/${item.name}-editor-${width}.png`});
  await page.getByRole('tab',{name:'Metadata',exact:true}).click();const metadata=page.locator(item.name==='protocol'?'.protocol-metadata-card':'[data-document-metadata]');await metadata.waitFor();await metadata.evaluate(el=>Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));await page.evaluate(()=>scrollTo(0,0));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),item.name+' metadata overflow');await page.screenshot({path:`${dir}/${item.name}-metadata-${width}.png`});report.checks.push({entry:item.name,width,overflow:false});
  }
  }

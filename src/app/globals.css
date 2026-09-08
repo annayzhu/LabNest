@@ -5119,6 +5119,8 @@ table :where(td) {
   }
 
   .app-shell-main > :has(.document-print-root) > :not(.document-print-root):not(:has(.document-print-root)),
+  form:has(.document-print-root) > :not(.document-print-root):not(:has(.document-print-root)),
+  .standalone-document-editor-viewport:has(.document-print-root) > :not(.document-print-root):not(:has(.document-print-root)),
   .document-preview-layout > .document-preview-sidebar,
   .document-preview-main:has(.document-print-root) > :not(.document-print-root):not(:has(.document-print-root)),
   .document-editor-layout:has(.document-print-root) > :not(.document-editor-main):not(:has(.document-print-root)),
@@ -5189,6 +5191,8 @@ table :where(td) {
   .document-editor-context-rail {
     display: none !important;
   }
+
+  .document-editor-document-panel { overflow: visible !important; }
 
   .document-editor-document-stage {
     height: auto !important;

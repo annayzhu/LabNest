@@ -1,0 +1,16 @@
+Running tsx scripts/seed-inventory-run.ts
+Running scripts/verify-inventory-containers.mjs
+Running scripts/verify-purchase-receipts.mjs
+Running scripts/verify-run-materials.mjs
+Running scripts/verify-independent-import.mjs
+Running scripts/verify-inventory-import-modes.mjs
+Running scripts/verify-quote-import.mjs
+Running scripts/verify-inventory-xlsx.mjs
+Running scripts/verify-inventory-concurrency.mjs
+12 material save/confirm races and 12 purchase correction/receipt races preserve invariants
+Running scripts/verify-inventory-followup.mjs
+Running scripts/verify-inventory-pages.mjs
+Running tsx scripts/verify-inventory-run-completion.ts
+Running tsx scripts/verify-inventory-completion.ts
+Running tsx scripts/verify-school-export.ts
+Running tsx scripts/verify-inventory-export-formats.ts

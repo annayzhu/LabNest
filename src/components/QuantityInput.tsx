@@ -12,7 +12,7 @@ export function QuantityInput({ label, name, unitName = "unit", initialValue = "
   const [error, setError] = useState("");
   const [custom, setCustom] = useState(false);
   const current = value ?? localValue, selected = unit ?? localUnit;
-  const choices = [...new Set([selected,...compatibleUnits(selected),...(options ?? ["mL","µL","L","g","mg","µg","box","bottle","vial","pack","reaction"])])];
+  const choices = [...new Set(storageUnit ? [storageUnit,...compatibleUnits(storageUnit)] : [selected,...compatibleUnits(selected),...(options ?? ["mL","µL","L","g","mg","µg","box","bottle","vial","pack","reaction"])])];
   function change(next: string, nextUnit: string) { setLocalValue(next); setLocalUnit(nextUnit); onChange?.(next,nextUnit); }
   let saved = current;
   try { if (storageUnit && storageUnit !== selected && current.trim()) saved = String(Number(convert(parseScalar(current),selected,storageUnit).toPrecision(14))); } catch { saved = ""; }

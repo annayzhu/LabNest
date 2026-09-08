@@ -1,0 +1,970 @@
+{
+  "checks": [
+    {
+      "name": "home",
+      "path": "/",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entries",
+      "path": "/entries",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plans",
+      "path": "/research-plans",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocols",
+      "path": "/protocols",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiments",
+      "path": "/experiments",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "results",
+      "path": "/results",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "reports",
+      "path": "/reports",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory",
+      "path": "/inventory",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchases",
+      "path": "/purchases",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "sequences",
+      "path": "/sequences",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "tools",
+      "path": "/tools",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "settings",
+      "path": "/settings",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "search",
+      "path": "/search",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "trash",
+      "path": "/trash",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-detail",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-edit",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-detail",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-edit",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-detail",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-edit",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-detail",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-edit",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-detail",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-edit",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215/versions/cmts9ej4s0007b9ostb389uys/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-detail",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-edit",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko/edit",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory-new",
+      "path": "/inventory/new",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchase-new",
+      "path": "/purchases/new",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "calculator",
+      "path": "/tools/calculator",
+      "device": "desktop",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "home",
+      "path": "/",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entries",
+      "path": "/entries",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plans",
+      "path": "/research-plans",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocols",
+      "path": "/protocols",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiments",
+      "path": "/experiments",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "results",
+      "path": "/results",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "reports",
+      "path": "/reports",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory",
+      "path": "/inventory",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchases",
+      "path": "/purchases",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "sequences",
+      "path": "/sequences",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "tools",
+      "path": "/tools",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "settings",
+      "path": "/settings",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "search",
+      "path": "/search",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "trash",
+      "path": "/trash",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-detail",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-edit",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-detail",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-edit",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-detail",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-edit",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-detail",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-edit",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-detail",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-edit",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215/versions/cmts9ej4s0007b9ostb389uys/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-detail",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-edit",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko/edit",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory-new",
+      "path": "/inventory/new",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchase-new",
+      "path": "/purchases/new",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "calculator",
+      "path": "/tools/calculator",
+      "device": "desktop",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "home",
+      "path": "/",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entries",
+      "path": "/entries",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plans",
+      "path": "/research-plans",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocols",
+      "path": "/protocols",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiments",
+      "path": "/experiments",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "results",
+      "path": "/results",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "reports",
+      "path": "/reports",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory",
+      "path": "/inventory",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchases",
+      "path": "/purchases",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "sequences",
+      "path": "/sequences",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "tools",
+      "path": "/tools",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "settings",
+      "path": "/settings",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "search",
+      "path": "/search",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "trash",
+      "path": "/trash",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-detail",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-edit",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-detail",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-edit",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-detail",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-edit",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-detail",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-edit",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-detail",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-edit",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215/versions/cmts9ej4s0007b9ostb389uys/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-detail",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-edit",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko/edit",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory-new",
+      "path": "/inventory/new",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchase-new",
+      "path": "/purchases/new",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "calculator",
+      "path": "/tools/calculator",
+      "device": "mobile",
+      "mode": "light",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "home",
+      "path": "/",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entries",
+      "path": "/entries",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "projects",
+      "path": "/projects",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plans",
+      "path": "/research-plans",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocols",
+      "path": "/protocols",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiments",
+      "path": "/experiments",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "results",
+      "path": "/results",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "reports",
+      "path": "/reports",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory",
+      "path": "/inventory",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchases",
+      "path": "/purchases",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "sequences",
+      "path": "/sequences",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "tools",
+      "path": "/tools",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "settings",
+      "path": "/settings",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "search",
+      "path": "/search",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "trash",
+      "path": "/trash",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-detail",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "research-plan-edit",
+      "path": "/research-plans/cmts9ej410001b9os9aipzo8i/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-detail",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "experiment-edit",
+      "path": "/experiments/cmts9ej470002b9osn97jbs67/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-detail",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "result-edit",
+      "path": "/results/cmts9ej4b0003b9os47fg1efe/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-detail",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "report-edit",
+      "path": "/reports/cmts9ej4g0004b9osm4uhza6g/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-detail",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "protocol-edit",
+      "path": "/protocols/cmts9ej4n0006b9osoehph215/versions/cmts9ej4s0007b9ostb389uys/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-detail",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "entry-edit",
+      "path": "/entries/cmts9ej4k0005b9osh0ha6xko/edit",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "inventory-new",
+      "path": "/inventory/new",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "purchase-new",
+      "path": "/purchases/new",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "calculator",
+      "path": "/tools/calculator",
+      "device": "mobile",
+      "mode": "dark",
+      "overflow": false,
+      "status": 200
+    },
+    {
+      "name": "simulated160",
+      "overflow": false,
+      "hardware": false
+    }
+  ],
+  "errors": []
+}

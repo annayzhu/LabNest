@@ -1,4 +1,4 @@
-Synthetic protocol 1788845471484
+Synthetic protocol 1788847741691
 PROTOCOL ID
 
 VERSION
@@ -9,7 +9,7 @@ AVAILABILITY
 
 REVIEW
 
-PRT-1788845471484
+PRT-1788847741691
 
 0.1
 
@@ -21,7 +21,7 @@ draft
 
 Description
 
-中文图注 protocol 1788845541663
+中文图注 protocol 1788847767376
 
 Purpose
 Background

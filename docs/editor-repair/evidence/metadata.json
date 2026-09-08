@@ -22,11 +22,7 @@
       "sharedRightPanel": true
     }
   ],
-  "at": "2026-09-08T05:31:36.118Z",
-  "base": "http://localhost:3234",
-  "error": "AssertionError [ERR_ASSERTION]: No uncaught browser application errors\n+ actual - expected\n\n+ [\n+   'Error: Manifest file is empty'\n+ ]\n- []\n",
-  "clientErrors": [
-    "Error: Manifest file is empty"
-  ],
-  "pageText": "LabNest\nEdit Synthetic experiment\nDocument\nMetadata\nBody\nTimes New Roman\nSize\n1.6×\nMore\nInsert\nPrint\nEXPERIMENT ID\nEXP-1788845471484\nRESEARCH PLAN\nRPL-1788845471484 · Synthetic editor 1788845471484\nMETHOD\nFully custom\nDATE\n2026-09-08\nEXECUTION\nplanned\nRECORD\ndraft\nBackground & rationale\n\nEditor acceptance body / 正文验收\n\nSetup & samples\n\n\n\n\nExecution notes\n\n\n\n\nObservations & media\n\n\n\n\nDeviations & incidents\n\n\n\n\nSummary & conclusion\n\n\n\n\nSave Experiment\nToday\nRuns\nRecords\nInventory\nMore"
+  "at": "2026-09-08T06:09:08.877Z",
+  "base": "http://localhost:3235",
+  "clientErrors": []
 }

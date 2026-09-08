@@ -1,8 +1,13 @@
 {
   "phase": "template",
-  "checks": [],
-  "at": "2026-09-08T05:32:35.550Z",
-  "base": "http://localhost:3234",
-  "error": "Error: page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3234/experiments/cmts8enoy0002fnosxyh0krcq/edit\", waiting until \"networkidle\"\u001b[22m\n",
+  "checks": [
+    {
+      "entry": "result-template-instructions",
+      "caption": "结果模板说明 image 1788847774772",
+      "saveRefreshReadEditPrint": "passed"
+    }
+  ],
+  "at": "2026-09-08T06:09:33.216Z",
+  "base": "http://localhost:3235",
   "clientErrors": []
 }

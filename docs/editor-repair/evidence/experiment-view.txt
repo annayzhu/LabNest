@@ -1,10 +1,12 @@
-EXP-1788845471484
+EXP-1788847741691
 Synthetic experiment
 Background & rationale
 
-中文图注 experiment 1788845520832
-
 恢复图像 image
+
+中文图注 experiment 1788847758420
+
+中文 image 说明
 
 Editor acceptance body / 正文验收
 

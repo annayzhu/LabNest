@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Copy Run must exist and produce a fresh draft: {"error":"\nInvalid `prisma.$queryRaw()` invocation:\n\n\nRaw query failed. Code: `22003`. Message: `value \"1788845471485\" is out of range for type integer`"}
+
+409 !== 201
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-inventory-completion.ts:18:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

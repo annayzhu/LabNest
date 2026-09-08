@@ -1,0 +1,16 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "labnest_stage_a_acceptance", schema "public" at "localhost:5432"
+
+35 migrations found in prisma/migrations
+
+Applying migration `20260908080000_inventory_provenance`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260908080000_inventory_provenance/
+    └─ migration.sql
+
+All migrations have been successfully applied.

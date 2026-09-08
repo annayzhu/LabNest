@@ -1,0 +1,16 @@
+{
+  "database": "labnest_stage_a_legacy_1788840589399",
+  "fixture": "synthetic rows inserted into pre-A schema; no user records or actual attachment bytes",
+  "passed": [
+    "Experiment",
+    "InventoryItem",
+    "InventoryTransaction",
+    "Attachment",
+    "AttachmentLink"
+  ],
+  "migrationCount": 35,
+  "checks": [
+    "Old IDs, quantities, transaction and experiment link, aliquot parent and attachment link unchanged",
+    "Legacy known quantities remain precise/recorded, not reset to unknown"
+  ]
+}

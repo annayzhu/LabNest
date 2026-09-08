@@ -1,0 +1,6 @@
+{
+  "checks": [
+    "inventory: XLSX custom column mapping imports independently; altered mapping rejected until re-preview",
+    "purchases: XLSX custom column mapping imports independently; altered mapping rejected until re-preview"
+  ]
+}

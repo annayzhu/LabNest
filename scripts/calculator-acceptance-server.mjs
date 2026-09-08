@@ -10,5 +10,5 @@ await client.end();source.pathname=`/${name}`;process.env.DATABASE_URL=source.to
 for(const args of [['prisma','migrate','deploy'],['tsx','scripts/seed-calculator-acceptance.ts'],['tsx','scripts/seed-calculator-run-v12.ts']]){
  const result=spawnSync('npx',args,{env:process.env,stdio:'pipe',encoding:'utf8'});if(result.status!==0){console.error(result.stderr);process.exit(result.status??1);}console.log(`${args.join(' ')} succeeded in isolated database`);
 }
-process.env.LABNEST_BUILD_DIR='.next/calculator-production';process.env.LABNEST_TSCONFIG_PATH='tsconfig.calculator.json';
+process.env.LABNEST_BUILD_DIR??='.next/calculator-production';process.env.LABNEST_TSCONFIG_PATH??='tsconfig.calculator.json';
 const child=spawn('npm',['run','start','--','--port','3221'],{env:process.env,stdio:'inherit'});process.on('SIGINT',()=>child.kill('SIGINT'));await new Promise(resolve=>child.on('exit',resolve));

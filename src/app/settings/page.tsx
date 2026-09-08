@@ -61,7 +61,7 @@ export default async function SettingsPage() {
         />
 
         <nav aria-label="设置分类" className="sticky top-0 z-10 flex flex-wrap gap-x-5 border-b border-hairline bg-surface py-2 text-sm">{[["appearance","外观"],["typography","字体排版"],["ai-access","AI"],["providers","模型服务"],["local-backup","备份"],["connectors","文献连接"]].map(([id,label])=><a key={id} href={`#${id}`} className="focus-ring inline-flex min-h-11 items-center text-moss">{label}</a>)}</nav>
-        <Card id="appearance">
+        <Card>
           <CardHeader title="Appearance / 外观" />
           <CardBody className="space-y-5"><AppearanceSettings /></CardBody>
         </Card>

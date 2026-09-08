@@ -1,5 +1,6 @@
 "use client";
 
+import { ContextProperties, useContextProperties } from "./ContextProperties";
 import { FileText, Link2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useI18n } from "@/components/I18nProvider";
@@ -31,6 +32,8 @@ export function DocumentEditorWorkspace({
   onActiveTabChange?: (tab: DocumentEditorWorkspaceTab) => void;
   className?: string;
 }) {
+  const properties = useContextProperties();
+  const [metadataActivation, setMetadataActivation] = useState(0);
   const [activeTab, setActiveTab] = useState<DocumentEditorWorkspaceTab>("document");
   const [hasInspector, setHasInspector] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -44,15 +47,16 @@ export function DocumentEditorWorkspace({
 
   useEffect(() => {
     if (!inspectorHostId) return;
-    const host = globalThis.document.getElementById(inspectorHostId);
-    if (!host) return;
+    let previous = false;
     const update = () => {
-      const next = Boolean(host.firstElementChild);
+      const next = Boolean(globalThis.document.getElementById(inspectorHostId)?.firstElementChild);
+      if (previous === next) return;
+      previous = next;
       setHasInspector(next);
       setInspectorOpen(next);
     };
     const observer = new MutationObserver(update);
-    observer.observe(host, { childList: true });
+    observer.observe(globalThis.document.body, { childList: true, subtree: true });
     update();
     return () => observer.disconnect();
   }, [inspectorHostId]);
@@ -65,6 +69,8 @@ export function DocumentEditorWorkspace({
   }, [inspectorOpen]);
 
   function selectTab(tab: DocumentEditorWorkspaceTab) {
+    if (tab === "metadata") setMetadataActivation(n => n + 1);
+    else properties?.select(null);
     setActiveTab(tab);
     onActiveTabChange?.(tab);
   }
@@ -100,15 +106,15 @@ export function DocumentEditorWorkspace({
       {activeTab === "document" && toolbar ? <div className="document-editor-toolbar-row document-canvas-toolbar">{toolbar}</div> : null}
     </div>
 
-    <div className="document-editor-workbench" hidden={activeTab !== "document"}>
+    <div className="document-editor-workbench" hidden={activeTab === "relations"}>
       <DocumentOutlinePanel items={outline} />
       <section id="document-editor-panel-document" aria-labelledby="document-editor-tab-document" ref={panelRef} className="document-editor-tab-panel document-editor-document-panel" role="tabpanel" style={viewStyle}>
         <div ref={stageRef} className="document-editor-document-stage">{document}</div>
       </section>
-      {inspectorHostId ? <aside id={`${inspectorHostId}-drawer`} className="document-editor-context-rail" aria-label={t("Selected block settings")} aria-hidden={!inspectorOpen} data-open={inspectorOpen ? "true" : "false"} data-print-hidden><div id={inspectorHostId} /></aside> : null}
+      {inspectorHostId ? <ContextProperties title={t("Selected block settings")} selected={inspectorOpen} trigger={false}><div id={inspectorHostId} /></ContextProperties> : null}
     </div>
 
-    <section id="document-editor-panel-metadata" aria-labelledby="document-editor-tab-metadata" className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "metadata"}>{metadata}</section>
+    <ContextProperties title={t("Metadata")} activation={metadataActivation} trigger={false}><section id="document-editor-panel-metadata" aria-labelledby="document-editor-tab-metadata" className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel">{metadata}</section></ContextProperties>
     <section id="document-editor-panel-relations" aria-labelledby="document-editor-tab-relations" className="document-editor-tab-panel document-editor-properties-panel" role="tabpanel" hidden={activeTab !== "relations"}>{relations}</section>
   </div>;
 }

@@ -1,0 +1,9 @@
+{
+  "protocolId": "cmts89oq20000hrosjs2rnyy9",
+  "versionId": "cmts89or40001hroswii9rmgn",
+  "checks": [
+    "Outer whole-document formatting reaches nested instructions",
+    "Save and read-only retains18pt",
+    "DOCX includes nested text and36half-point runs"
+  ]
+}

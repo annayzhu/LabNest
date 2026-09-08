@@ -42,7 +42,7 @@ function ScientificSectionNodeView({ node }: NodeViewProps) {
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2>{node.attrs.sectionTitle}</h2>
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{node.attrs.sectionTitle}</h2>
       {node.attrs.sectionKey === "quality_limitations" ? <small>Only record deviations, failed QC, missing data, or limits that change interpretation.</small> : null}
     </header>
     <NodeViewContent as="div" className="ln-protocol-section-content" />
@@ -88,6 +88,7 @@ function ScientificWidgetNodeView({ node, updateAttributes, deleteNode, selected
 const ScientificSection = createDocumentSectionExtension({ name: "scientificSection", tag: "section[data-scientific-section]", attributes: {
   sectionKey: { default: "section", htmlAttribute: "data-scientific-section" },
   sectionTitle: { default: "Section", htmlAttribute: "data-section-title" },
+  titleFontSizePt: { default: null, htmlAttribute: "data-title-size" },
 }, nodeView: ReactNodeViewRenderer(ScientificSectionNodeView) });
 const ScientificWidget = createDocumentWidgetExtension({ name: "scientificWidget", htmlAttribute: "data-scientific-widget", nodeView: ReactNodeViewRenderer(ScientificWidgetNodeView) });
 const ScientificLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "scientificLegacyAttributes", attributes: [

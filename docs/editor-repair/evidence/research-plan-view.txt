@@ -1,6 +1,6 @@
-RPL-1788829601454
+RPL-1788845471484
 Synthetic research plan
-Synthetic editor 1788829601454
+Synthetic editor 1788845471484
 
 Scientific premise
 OBJECTIVE
@@ -15,7 +15,7 @@ Not recorded.
 
 Design
 
-中文图注 research-plan 1788829615126
+中文图注 research-plan 1788845513721
 
 Editor acceptance body / 正文验收
 

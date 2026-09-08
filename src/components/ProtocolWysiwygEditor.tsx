@@ -60,7 +60,7 @@ function ProtocolSectionNodeView({ node }: NodeViewProps) {
   return <NodeViewWrapper as="section" id={`protocol-section-${sectionKey}`} className="ln-protocol-section" data-section-key={sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
     </header>
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
@@ -118,7 +118,7 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
   </NodeViewWrapper>;
 }
 
-const ProtocolSection = createDocumentSectionExtension({ name: "protocolSection", tag: "section[data-protocol-section]", attributes: { sectionKey: { default: "description", htmlAttribute: "data-protocol-section" } }, nodeView: ReactNodeViewRenderer(ProtocolSectionNodeView) });
+const ProtocolSection = createDocumentSectionExtension({ name: "protocolSection", tag: "section[data-protocol-section]", attributes: { sectionKey: { default: "description", htmlAttribute: "data-protocol-section" }, titleFontSizePt: { default: null, htmlAttribute: "data-title-size" } }, nodeView: ReactNodeViewRenderer(ProtocolSectionNodeView) });
 const ProtocolWidget = createDocumentWidgetExtension({ name: "protocolWidget", htmlAttribute: "data-protocol-widget", nodeView: ReactNodeViewRenderer(ProtocolWidgetNodeView) });
 const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "protocolLegacyAttributes", attributes: [
   { name: "protocolBlockId", htmlAttribute: "data-protocol-block-id" },

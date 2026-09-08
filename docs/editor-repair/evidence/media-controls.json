@@ -1,9 +1,11 @@
 {
   "phase": "media-controls",
-  "checks": [
-    "Selection, optional width, keyboard focus/expand and replacement save/refresh passed"
+  "checks": [],
+  "at": "2026-09-08T05:31:17.437Z",
+  "base": "http://localhost:3234",
+  "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[contenteditable=\"true\"]').first()\u001b[22m\n",
+  "clientErrors": [
+    "Error: Manifest file is empty"
   ],
-  "at": "2026-09-08T01:06:46.728Z",
-  "base": "http://localhost:3227",
-  "clientErrors": []
+  "pageText": ""
 }

@@ -1,0 +1,17 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '13.3333px'
+- '24px'
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-b/scripts/verify-stage-nested-font.ts:16:127)
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '13.3333px',
+  expected: '24px',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

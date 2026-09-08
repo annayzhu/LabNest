@@ -115,6 +115,7 @@ export const protocolDocumentSchema = z.object({
     z.object({
       key: z.enum(protocolSectionKeys),
       title: z.string(),
+      titleFontSizePt: richTextFontSizeSchema.optional(),
       blocks: z.array(protocolContentBlockSchema),
     }),
   ),

@@ -7,6 +7,7 @@ import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-
 import { Bold, ChevronDown, Italic, Link2, List, ListChecks, ListOrdered, Pencil, Plus, Quote, Redo2, Save, Strikethrough, Table2, Trash2, Underline, Undo2, Unlink } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
+import { applyDocumentFontSize, selectedDocumentFontSize, type FontSizeScope } from "@/lib/document-text-formatting";
 import { RICH_TEXT_FONT_SIZES_PT } from "@/lib/rich-text-font-size";
 import { RICH_TEXT_LINE_HEIGHTS } from "@/lib/rich-text-line-height";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
@@ -150,6 +151,7 @@ function ToolbarMenu({
     : child);
 
   const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.target instanceof HTMLSelectElement) return;
     const buttons = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])];
     if (!buttons.length) return;
     const currentIndex = Math.max(0, buttons.indexOf(document.activeElement as HTMLButtonElement));
@@ -199,6 +201,7 @@ export function DocumentWysiwygToolbar({
   checklist?: boolean;
   className?: string;
 }) {
+  const [fontSizeScope, setFontSizeScope] = useState<FontSizeScope>("selection");
   const dialog = useModalDialog();
   const [, setRevision] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -231,6 +234,7 @@ export function DocumentWysiwygToolbar({
 
   const paragraphType = editor.isActive("heading", { level: 2 }) ? "heading2" : editor.isActive("heading", { level: 3 }) ? "heading3" : "paragraph";
   const textStyle = editor.getAttributes("textStyle");
+  const selectedSize = selectedDocumentFontSize(editor);
   const blockAttributes = editor.getAttributes(editor.isActive("heading") ? "heading" : editor.isActive("blockquote") ? "blockquote" : "paragraph");
   const blockLineHeight = (blockAttributes.documentLineHeight ?? blockAttributes.protocolLineHeight ?? blockAttributes.scientificLineHeight) as string | number | undefined;
   const activeLineHeight = blockLineHeight ? String(blockLineHeight) : textStyle.lineHeight as string | undefined;
@@ -322,9 +326,12 @@ export function DocumentWysiwygToolbar({
       <button type="button" data-active={!selectedFont || undefined} onClick={() => editor.chain().focus().unsetFontFamily().run()}>Document default</button>
       {fontOptions.map((option) => <button key={option.value} type="button" data-active={selectedFont === option.value || undefined} style={{ fontFamily: richTextFontFamilyCss(option.value) }} onClick={() => editor.chain().focus().setFontFamily(option.value).run()}>{option.label}</button>)}
     </ToolbarMenu>
-    <ToolbarMenu id="size" label={textStyle.fontSize?.replace("pt", " pt") ?? "Size"} ariaLabel="Font size" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-size-select">
-      <button type="button" data-active={!textStyle.fontSize || undefined} onClick={() => editor.chain().focus().unsetFontSize().run()}>Default</button>
-      {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={textStyle.fontSize === `${size}pt` || undefined} onClick={() => editor.chain().focus().setFontSize(`${size}pt`).run()}>{size} pt</button>)}
+    <ToolbarMenu id="size" label={selectedSize === "__mixed__" ? "多种字号 / Mixed sizes" : selectedSize.replace("pt", " pt") || "Size"} ariaLabel="Font size" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-size-select">
+      <label className="block text-xs">作用范围 / Scope<select aria-label="字号作用范围 / Font size scope" value={fontSizeScope} onMouseDown={event => event.stopPropagation()} onChange={event => setFontSizeScope(event.target.value as FontSizeScope)} className={wysiwygToolbarSelectClass}>
+        <option value="selection">选区 / Selection</option><option value="cell">当前单元格 / Cell</option><option value="row">当前行 / Row</option><option value="table">整表 / Table</option><option value="document">全文 / Entire document</option>
+      </select></label>
+      <button type="button" data-active={!selectedSize || undefined} onClick={() => applyDocumentFontSize(editor, null, fontSizeScope)}>Default</button>
+      {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={selectedSize === `${size}pt` || undefined} onClick={() => applyDocumentFontSize(editor, size, fontSizeScope)}>{size} pt</button>)}
     </ToolbarMenu>
     <ToolbarMenu id="spacing" label={`${activeLineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
       {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}

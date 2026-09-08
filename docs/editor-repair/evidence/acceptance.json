@@ -1,6 +1,6 @@
 {
-  "sha": "392eca9bf634595970d4c75990b0864b75fc59ae",
-  "startedAt": "2026-09-08T01:06:41.191Z",
+  "sha": "e8fb68d7be3b00236d5f8436f89f0b3d13c3cb0a",
+  "startedAt": "2026-09-08T05:31:11.211Z",
   "checks": [
     {
       "name": "seed",
@@ -19,13 +19,13 @@
     },
     {
       "name": "media-controls",
-      "status": "passed",
-      "exitCode": 0
+      "status": "failed",
+      "exitCode": 1
     },
     {
       "name": "metadata",
-      "status": "passed",
-      "exitCode": 0
+      "status": "failed",
+      "exitCode": 1
     },
     {
       "name": "image-recovery",
@@ -36,17 +36,6 @@
       "name": "roundtrip",
       "status": "passed",
       "exitCode": 0
-    },
-    {
-      "name": "template",
-      "status": "passed",
-      "exitCode": 0
-    },
-    {
-      "name": "run",
-      "status": "passed",
-      "exitCode": 0
     }
-  ],
-  "finishedAt": "2026-09-08T01:07:19.390Z"
+  ]
 }

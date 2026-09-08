@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.selectOption: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('combobox', { name: '字号作用范围 / Font size scope', exact: true })[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-stage-c/scripts/verify-stage-text.mjs:11:80 {
+  log: [
+    "  - waiting for getByRole('combobox', { name: '字号作用范围 / Font size scope', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

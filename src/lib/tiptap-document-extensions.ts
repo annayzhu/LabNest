@@ -14,7 +14,7 @@ declare module "@tiptap/core" {
 }
 
 type SectionAttribute = {
-  default: string;
+  default: string | number | null;
   htmlAttribute: string;
 };
 

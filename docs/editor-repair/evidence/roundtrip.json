@@ -3,48 +3,48 @@
   "checks": [
     {
       "entry": "research-plan",
-      "caption": "中文图注 research-plan 1788829615126",
+      "caption": "中文图注 research-plan 1788845513721",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/research-plans/cmtryyiap0001ksosk45dan2r",
-      "edit": "/research-plans/cmtryyiap0001ksosk45dan2r/edit"
+      "view": "/research-plans/cmts8enot0001fnos099fix0x",
+      "edit": "/research-plans/cmts8enot0001fnos099fix0x/edit"
     },
     {
       "entry": "experiment",
-      "caption": "中文图注 experiment 1788829618000",
+      "caption": "中文图注 experiment 1788845520832",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/experiments/cmtryyiau0002ksosmstrjxvm",
-      "edit": "/experiments/cmtryyiau0002ksosmstrjxvm/edit"
+      "view": "/experiments/cmts8enoy0002fnosxyh0krcq",
+      "edit": "/experiments/cmts8enoy0002fnosxyh0krcq/edit"
     },
     {
       "entry": "result",
-      "caption": "中文图注 result 1788829620825",
+      "caption": "中文图注 result 1788845526811",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/results/cmtryyib40003ksoslr9avys0",
-      "edit": "/results/cmtryyib40003ksoslr9avys0/edit"
+      "view": "/results/cmts8enp30003fnos3l4u7hws",
+      "edit": "/results/cmts8enp30003fnos3l4u7hws/edit"
     },
     {
       "entry": "report",
-      "caption": "中文图注 report 1788829623614",
+      "caption": "中文图注 report 1788845534707",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/reports/cmtryyib80004ksosflplvk6w",
-      "edit": "/reports/cmtryyib80004ksosflplvk6w/edit"
+      "view": "/reports/cmts8enp70004fnoswe95vqng",
+      "edit": "/reports/cmts8enp70004fnoswe95vqng/edit"
     },
     {
       "entry": "protocol",
-      "caption": "中文图注 protocol 1788829626390",
+      "caption": "中文图注 protocol 1788845541663",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/protocols/cmtryyibe0006ksospvy81z0v",
-      "edit": "/protocols/cmtryyibe0006ksospvy81z0v/versions/cmtryyibh0007ksosg7z0i4vy/edit"
+      "view": "/protocols/cmts8enpe0006fnos8la7fb6p",
+      "edit": "/protocols/cmts8enpe0006fnos8la7fb6p/versions/cmts8enph0007fnospntibpgu/edit"
     },
     {
       "entry": "entry",
-      "caption": "中文图注 entry 1788829629305",
+      "caption": "中文图注 entry 1788845548514",
       "saveRefreshReadEditPrint": "passed",
-      "view": "/entries/cmtryyibb0005ksosjz6o2jeb",
-      "edit": "/entries/cmtryyibb0005ksosjz6o2jeb/edit"
+      "view": "/entries/cmts8enpb0005fnos777hdqsf",
+      "edit": "/entries/cmts8enpb0005fnos777hdqsf/edit"
     }
   ],
-  "at": "2026-09-08T01:06:53.786Z",
-  "base": "http://localhost:3227",
+  "at": "2026-09-08T05:31:51.468Z",
+  "base": "http://localhost:3234",
   "clientErrors": []
 }

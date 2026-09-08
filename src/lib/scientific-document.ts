@@ -48,6 +48,7 @@ export const scientificDocumentSchema = z.object({
   sections: z.array(z.object({
     key: z.string().min(1),
     title: z.string().min(1),
+    titleFontSizePt: richTextFontSizeSchema.optional(),
     blocks: z.array(scientificContentBlockSchema),
   })),
 });

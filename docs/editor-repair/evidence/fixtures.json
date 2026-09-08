@@ -1,46 +1,46 @@
 {
   "synthetic": true,
-  "protocolTitle": "Synthetic protocol 1788829601454",
-  "projectId": "cmtryyi9x0000ksosbf5f0hg1",
-  "planId": "cmtryyiap0001ksosk45dan2r",
-  "experimentId": "cmtryyiau0002ksosmstrjxvm",
-  "protocolId": "cmtryyibe0006ksospvy81z0v",
-  "versionId": "cmtryyibh0007ksosg7z0i4vy",
+  "protocolTitle": "Synthetic protocol 1788845471484",
+  "projectId": "cmts8eno40000fnosz5zfgg8n",
+  "planId": "cmts8enot0001fnos099fix0x",
+  "experimentId": "cmts8enoy0002fnosxyh0krcq",
+  "protocolId": "cmts8enpe0006fnos8la7fb6p",
+  "versionId": "cmts8enph0007fnospntibpgu",
   "cases": [
     {
       "name": "research-plan",
-      "edit": "/research-plans/cmtryyiap0001ksosk45dan2r/edit",
-      "view": "/research-plans/cmtryyiap0001ksosk45dan2r",
+      "edit": "/research-plans/cmts8enot0001fnos099fix0x/edit",
+      "view": "/research-plans/cmts8enot0001fnos099fix0x",
       "save": "Save Research Plan"
     },
     {
       "name": "experiment",
-      "edit": "/experiments/cmtryyiau0002ksosmstrjxvm/edit",
-      "view": "/experiments/cmtryyiau0002ksosmstrjxvm",
+      "edit": "/experiments/cmts8enoy0002fnosxyh0krcq/edit",
+      "view": "/experiments/cmts8enoy0002fnosxyh0krcq",
       "save": "Save Experiment"
     },
     {
       "name": "result",
-      "edit": "/results/cmtryyib40003ksoslr9avys0/edit",
-      "view": "/results/cmtryyib40003ksoslr9avys0",
+      "edit": "/results/cmts8enp30003fnos3l4u7hws/edit",
+      "view": "/results/cmts8enp30003fnos3l4u7hws",
       "save": "Save Result"
     },
     {
       "name": "report",
-      "edit": "/reports/cmtryyib80004ksosflplvk6w/edit",
-      "view": "/reports/cmtryyib80004ksosflplvk6w",
+      "edit": "/reports/cmts8enp70004fnoswe95vqng/edit",
+      "view": "/reports/cmts8enp70004fnoswe95vqng",
       "save": "Save Report"
     },
     {
       "name": "protocol",
-      "edit": "/protocols/cmtryyibe0006ksospvy81z0v/versions/cmtryyibh0007ksosg7z0i4vy/edit",
-      "view": "/protocols/cmtryyibe0006ksospvy81z0v",
+      "edit": "/protocols/cmts8enpe0006fnos8la7fb6p/versions/cmts8enph0007fnospntibpgu/edit",
+      "view": "/protocols/cmts8enpe0006fnos8la7fb6p",
       "save": "Save Protocol"
     },
     {
       "name": "entry",
-      "edit": "/entries/cmtryyibb0005ksosjz6o2jeb/edit",
-      "view": "/entries/cmtryyibb0005ksosjz6o2jeb",
+      "edit": "/entries/cmts8enpb0005fnos777hdqsf/edit",
+      "view": "/entries/cmts8enpb0005fnos777hdqsf",
       "save": "Save changes"
     }
   ]

@@ -13,10 +13,11 @@ import { chooseFiles, documentMediaDraftId, useMediaUpload } from "./DocumentMed
 function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, getPos }: NodeViewProps) {
   const block = node.attrs.block as DocumentMedia;
   const upload = useMediaUpload(block.id);
+  const [activation, setActivation] = useState(0);
   const [focused, setFocused] = useState(false);
   const editorFocused = useEditorState({ editor, selector: ({ editor }) => editor.isFocused });
   const active = (selected && editorFocused) || focused;
-  const select = () => { const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
+  const select = () => { setActivation(n => n + 1); const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
   return <NodeViewWrapper data-document-media={block.id} data-widget-type="media" data-media-active={active} className="document-media-node" contentEditable={false} tabIndex={0} role="group" aria-label="编辑附件 / Edit attachment"
     onClick={select} onFocusCapture={() => setFocused(true)} onBlurCapture={(event: React.FocusEvent<HTMLDivElement>) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
     onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); select(); } }}>
@@ -28,7 +29,7 @@ function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, g
     </div> : null}
     <div data-print-hidden className="document-media-toolbar" data-active={active} onPointerDownCapture={() => setFocused(true)} onClick={event => event.stopPropagation()}>
       <button type="button" data-drag-handle aria-label="移动附件 / Move attachment" className="min-h-11 px-2"><GripVertical className="h-4 w-4" /></button>
-      <ContextProperties title="图片属性 / Image properties" triggerLabel="图片设置 / Image settings" selected={active}>
+      <ContextProperties title="图片属性 / Image properties" triggerLabel="图片设置 / Image settings" activation={activation} autoDismiss>
       <input aria-label="图注 / Caption" placeholder="图注 / Caption" className="min-h-9 min-w-0 flex-1 border-b border-hairline bg-transparent text-sm" value={block.caption || ""} onChange={event => updateAttributes({ block: { ...block, caption: event.target.value } })} />
       {block.mediaType === "image" ? <label className="inline-flex items-center gap-1">宽度 / Width <input aria-label="图片显示宽度百分比 / Image width percent" type="number" min={10} max={100} value={block.widthPercent ?? 100} className="w-16 min-h-9 border-b border-hairline bg-transparent" onChange={event => { const width = Number(event.target.value); if (width >= 10 && width <= 100) updateAttributes({ block: { ...block, widthPercent: width } }); }} />%</label> : null}
       <button type="button" aria-label="移除引用 / Remove reference" title="仅移除正文引用，保留原文件 / Keep original file" className="min-h-11 px-2 text-error" onClick={deleteNode}><Trash2 className="h-4 w-4" /></button>

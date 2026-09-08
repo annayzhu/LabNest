@@ -190,12 +190,14 @@ function ToolbarMenu({
  */
 export function DocumentWysiwygToolbar({
   editor,
+  documentEditor,
   ariaLabel,
   insertActions = [],
   checklist = true,
   className,
 }: {
   editor: Editor;
+  documentEditor?: Editor;
   ariaLabel: string;
   insertActions?: WysiwygInsertAction[];
   checklist?: boolean;
@@ -330,8 +332,8 @@ export function DocumentWysiwygToolbar({
       <label className="block text-xs">作用范围 / Scope<select aria-label="字号作用范围 / Font size scope" value={fontSizeScope} onMouseDown={event => event.stopPropagation()} onChange={event => setFontSizeScope(event.target.value as FontSizeScope)} className={wysiwygToolbarSelectClass}>
         <option value="selection">选区 / Selection</option><option value="cell">当前单元格 / Cell</option><option value="row">当前行 / Row</option><option value="table">整表 / Table</option><option value="document">全文 / Entire document</option>
       </select></label>
-      <button type="button" data-active={!selectedSize || undefined} onClick={() => applyDocumentFontSize(editor, null, fontSizeScope)}>Default</button>
-      {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={selectedSize === `${size}pt` || undefined} onClick={() => applyDocumentFontSize(editor, size, fontSizeScope)}>{size} pt</button>)}
+      <button type="button" data-active={!selectedSize || undefined} onClick={() => applyDocumentFontSize(fontSizeScope === "document" ? documentEditor ?? editor : editor, null, fontSizeScope)}>Default</button>
+      {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={selectedSize === `${size}pt` || undefined} onClick={() => applyDocumentFontSize(fontSizeScope === "document" ? documentEditor ?? editor : editor, size, fontSizeScope)}>{size} pt</button>)}
     </ToolbarMenu>
     <ToolbarMenu id="spacing" label={`${activeLineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
       {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}

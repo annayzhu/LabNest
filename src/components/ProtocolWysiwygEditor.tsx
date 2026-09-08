@@ -306,7 +306,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   }, [editor, uploadDraftId]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
+  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar documentEditor={editor} editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
   const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
   const inspectorHost = inspectorHostId ? globalThis.document?.getElementById(inspectorHostId) : null;
   return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><>

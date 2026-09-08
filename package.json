@@ -28,7 +28,8 @@
     "attachments:backfill-metadata": "tsx scripts/backfill-attachment-metadata.ts",
     "db:reset": "prisma migrate reset",
     "test:calculator:e2e": "node scripts/verify-calculator-refactor.mjs",
-    "test:calculator:integration": "node scripts/verify-calculator-integration.mjs"
+    "test:calculator:integration": "node scripts/verify-calculator-integration.mjs",
+    "test:editor-repair:e2e": "node scripts/verify-editor-repair-all.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

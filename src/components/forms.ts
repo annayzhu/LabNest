@@ -8,6 +8,8 @@ export const formLabelClass = "text-[length:var(--ln-ui-label-font-size)] font-s
 
 export function preventImplicitEnterSubmit(event: KeyboardEvent<HTMLFormElement>) {
   if (event.key !== "Enter" || event.defaultPrevented) return;
+  // Candidate confirmation belongs to the IME, including Safari’s legacy 229 event.
+  if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
   const target = event.target as HTMLElement;
   if (target.tagName === "TEXTAREA" || target.isContentEditable || target.closest("button")) return;
   event.preventDefault();

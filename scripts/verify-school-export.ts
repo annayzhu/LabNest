@@ -13,7 +13,7 @@ async function main(){
   const url=base+'/purchases/school-template?supplier='+encodeURIComponent(supplier);
   assert.equal((await api.get(url)).status(),422,'Required template fields cannot silently become zero');
   for(const values of [{amountInclTax:113,taxAmount:13},{amountInclTax:113,taxRate:0.13},{amountInclTax:113,amountExclTax:100}]){
-   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{productCategory:'耗材',amountExclTax:null,taxAmount:null,taxRate:null,amountInclTax:null,...values}});
+   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{productCategory:'耗材',amountExclTax:null,taxAmount:null,taxRate:null,...values}});
    assert.equal((await api.get(url)).status(),422,'Unsupported inclusive-only combinations must not export zero');
   }
   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{productCategory:'耗材',amountExclTax:100,taxAmount:13}});

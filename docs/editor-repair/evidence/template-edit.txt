@@ -1,0 +1,49 @@
+Synthetic protocol 1788829601454
+PROTOCOL ID
+
+VERSION
+
+SCOPE
+
+AVAILABILITY
+
+REVIEW
+
+PRT-1788829601454
+
+0.1
+
+General library
+
+draft
+
+draft
+
+Description
+measurement
+
+complete
+
+One per run · 1 fields · 0 tables · 0 files
+
+填写说明 / INSTRUCTIONS
+
+结果模板说明 image 1788829633599
+
+字段要求 / FIELDS
+Value
+
+Purpose
+Background
+Material
+Steps
+Step A
+Editor acceptance body
+
+Result Templates
+
+value · 数值 · 可选 · 测量值
+
+Consumption Rules
+
+

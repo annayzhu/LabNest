@@ -1,0 +1,28 @@
+{
+  "phase": "visual",
+  "checks": [
+    {
+      "entry": "protocol",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "protocol",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "entry": "entry",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "entry",
+      "width": 390,
+      "overflow": false
+    }
+  ],
+  "at": "2026-09-08T01:07:29.318Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

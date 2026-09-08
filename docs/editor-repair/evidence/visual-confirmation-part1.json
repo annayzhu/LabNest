@@ -1,0 +1,50 @@
+{
+  "phase": "visual",
+  "checks": [
+    {
+      "entry": "research-plan",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "research-plan",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "entry": "experiment",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "experiment",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "entry": "result",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "result",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "entry": "report",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "entry": "report",
+      "width": 390,
+      "overflow": false
+    }
+  ],
+  "at": "2026-09-08T01:04:12.364Z",
+  "base": "http://localhost:3227",
+  "error": "TimeoutError: locator.evaluate: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-document-media]').first().getByRole('img')\u001b[22m\n",
+  "clientErrors": [],
+  "pageText": "LabNest\nOverview\nEntries\nProjects\nResearch Plans\nProtocols\nExperiments\nResults\nReports\nInventory\nSequences\nTools\nSearch\nAI review\nRecycle Bin\nSettings\nSearch LabNest\nK\n中文\nEN\nPRT-1788829378883 · v0.1\nEdit Protocol\nDocument\nMetadata\nRelevant items\n%\nFit\nUnsaved changes are not recorded until you save.\nSave Protocol\nBody\nTimes New Roman\nSize\n1.6×\nMore\nInsert\nExport DOCX\nPrint\nOUTLINE\nDescription\nPurpose\nBackground\nMaterial\nSteps\nResult Templates\nConsumption Rules\nPROTOCOL ID\nPRT-1788829378883\nVERSION\n0.1\nSCOPE\nGeneral library\nAVAILABILITY\ndraft\nREVIEW\ndraft\nDescription\nmeasurement\n1 fields · 0 data tables · 0 files\nEdit\nPurpose\n\n\n\n\nBackground\n\n\n\n\nMaterial\n\n\n\n\nSteps\nStep A\n\nEditor acceptance body\n\nRun step image 1788829414952\nResult Templates\n\n\n\n\nConsumption Rules\n\n\n"
+}

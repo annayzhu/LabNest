@@ -1,0 +1,13 @@
+{
+  "phase": "template",
+  "checks": [
+    {
+      "entry": "result-template-instructions",
+      "caption": "结果模板说明 image 1788829633599",
+      "saveRefreshReadEditPrint": "passed"
+    }
+  ],
+  "at": "2026-09-08T01:07:12.010Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

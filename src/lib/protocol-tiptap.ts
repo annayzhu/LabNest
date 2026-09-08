@@ -172,7 +172,7 @@ export function protocolDocumentToTiptap(document: ProtocolDocument): JSONConten
         : rawContent;
       return {
         type: "protocolSection",
-        attrs: { sectionKey },
+        attrs: { sectionKey, titleFontSizePt: section?.titleFontSizePt ?? null },
         content: content.length ? content : [{
           type: "paragraph",
           attrs: legacyAttrs(newBlockId(sectionKey), "rich_text"),
@@ -358,6 +358,6 @@ export function tiptapToProtocolDocument(json: JSONContent, importWarnings: stri
   return {
     ...empty,
     importWarnings,
-    sections: empty.sections.map((section) => ({ ...section, blocks: sections.get(section.key) ?? [] })),
+    sections: empty.sections.map((section) => ({ ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: sections.get(section.key) ?? [] })),
   };
 }

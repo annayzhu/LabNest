@@ -32,7 +32,7 @@ export function ScientificDocumentView({
       {displayedSections.length ? displayedSections.map((section) => (
         <section key={section.key} id={`section-${section.key}`} className="document-section">
           <header className="mb-5">
-            <h2 className={`document-section-title font-serif font-medium ${section.key === "constraints" ? "text-error" : "text-ink"}`}>{section.title}</h2>
+            <h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className={`document-section-title font-serif font-medium ${section.key === "constraints" ? "text-error" : "text-ink"}`}>{section.title}</h2>
           </header>
           <div>
             {section.blocks.length

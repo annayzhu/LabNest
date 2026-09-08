@@ -5,7 +5,7 @@ STATUS
 
 PERIOD
 
-Synthetic editor 1788829601454 · Entire
+Synthetic editor 1788848074349 · Entire
 Project
 
 draft
@@ -14,7 +14,7 @@ Not specified
 
 Executive summary
 
-中文图注 report 1788829623614
+中文图注 report 1788848098071
 
 Editor acceptance body / 正文验收
 

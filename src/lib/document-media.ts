@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 
 /** Shared persisted media identity. Display dimensions never modify source files. */
 export const documentMediaFields = {
@@ -6,6 +7,7 @@ export const documentMediaFields = {
   mediaType: z.enum(["image", "video", "audio", "file"]),
   url: z.string(),
   caption: z.string().optional(),
+  captionFontSizePt: richTextFontSizeSchema.optional(),
   attachmentId: z.string().min(1).optional(),
   filename: z.string().optional(),
   mimeType: z.string().optional(),

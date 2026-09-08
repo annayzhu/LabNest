@@ -60,7 +60,7 @@ function ProtocolSectionNodeView({ node }: NodeViewProps) {
   return <NodeViewWrapper as="section" id={`protocol-section-${sectionKey}`} className="ln-protocol-section" data-section-key={sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
     </header>
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
@@ -118,7 +118,7 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
   </NodeViewWrapper>;
 }
 
-const ProtocolSection = createDocumentSectionExtension({ name: "protocolSection", tag: "section[data-protocol-section]", attributes: { sectionKey: { default: "description", htmlAttribute: "data-protocol-section" } }, nodeView: ReactNodeViewRenderer(ProtocolSectionNodeView) });
+const ProtocolSection = createDocumentSectionExtension({ name: "protocolSection", tag: "section[data-protocol-section]", attributes: { sectionKey: { default: "description", htmlAttribute: "data-protocol-section" }, titleFontSizePt: { default: null, htmlAttribute: "data-title-size" } }, nodeView: ReactNodeViewRenderer(ProtocolSectionNodeView) });
 const ProtocolWidget = createDocumentWidgetExtension({ name: "protocolWidget", htmlAttribute: "data-protocol-widget", nodeView: ReactNodeViewRenderer(ProtocolWidgetNodeView) });
 const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "protocolLegacyAttributes", attributes: [
   { name: "protocolBlockId", htmlAttribute: "data-protocol-block-id" },
@@ -306,7 +306,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   }, [editor, uploadDraftId]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
+  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden><DocumentWysiwygToolbar documentEditor={editor} editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : protocolInsertActions({ openImagePicker, openFilePicker })} /></div>;
   const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
   const inspectorHost = inspectorHostId ? globalThis.document?.getElementById(inspectorHostId) : null;
   return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><>

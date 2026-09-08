@@ -4,7 +4,7 @@ import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
 import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
 import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
-import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken } from "@/lib/rich-text-font-size";
+import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken, isRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
 import { persistedTableFromTiptap, tiptapTableRows } from "@/lib/tiptap-table-serialization";
 
@@ -151,7 +151,7 @@ export function scientificDocumentToTiptap(document: ScientificDocument, hiddenS
     type: "doc",
     content: document.sections.filter((section) => !hiddenSectionKeys.includes(section.key)).map((section) => ({
       type: "scientificSection",
-      attrs: { sectionKey: section.key, sectionTitle: section.title },
+      attrs: { sectionKey: section.key, sectionTitle: section.title, titleFontSizePt: section.titleFontSizePt ?? null },
       content: section.blocks.length ? section.blocks.flatMap(blockToTiptap) : [{ type: "paragraph", attrs: legacyAttrs(uniqueId(section.key), "text") }],
     })),
   };
@@ -179,7 +179,7 @@ function inlineTiptapToMarkdown(content: JSONContent[] | undefined): string {
     if (typeof link === "string" && /^https?:\/\//i.test(link)) value = `[${value}](${link})`;
     const textStyle = marks.find((mark) => mark.type === "textStyle");
     const fontSize = textStyle?.attrs?.fontSize;
-    if (typeof fontSize === "string" && [8, 9, 10, 11, 12, 14].includes(Number.parseFloat(fontSize))) value = `<span data-labnest-size="${Number.parseFloat(fontSize)}">${value}</span>`;
+    if (typeof fontSize === "string" && isRichTextFontSizePt(Number.parseFloat(fontSize))) value = `<span data-labnest-size="${Number.parseFloat(fontSize)}">${value}</span>`;
     if (parseRichTextColor(textStyle?.attrs?.color) === "risk") value = `<mark data-labnest-color="risk">${value}</mark>`;
     const fontFamily = parseRichTextFontFamily(textStyle?.attrs?.fontFamily);
     if (fontFamily) value = `<font data-labnest-family="${fontFamily}">${value}</font>`;
@@ -265,7 +265,10 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
       continue;
     }
     if (node.type === "heading" && (nodeIdentity.type === "heading" || !nodeIdentity.id)) {
-      blocks.push({ id: nodeIdentity.id ?? uniqueId("heading"), type: "heading", text: plainText(node) });
+      const formatted = Boolean(typographyPrefix(node)) || (node.content ?? []).some(child => child.marks?.length);
+      blocks.push(formatted
+        ? { id: nodeIdentity.id ?? uniqueId("heading"), type: "text", text: tiptapNodesToMarkdown([node]) }
+        : { id: nodeIdentity.id ?? uniqueId("heading"), type: "heading", text: plainText(node) });
       index += 1;
       continue;
     }
@@ -293,6 +296,6 @@ export function tiptapToScientificDocument(json: JSONContent, original: Scientif
   }
   return {
     schemaVersion: 1,
-    sections: original.sections.map((section) => editedSections.has(section.key) ? { ...section, blocks: editedSections.get(section.key) ?? [] } : section),
+    sections: original.sections.map((section) => editedSections.has(section.key) ? { ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: editedSections.get(section.key) ?? [] } : section),
   };
 }

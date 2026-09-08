@@ -1,0 +1,28 @@
+{
+  "checks": [
+    {
+      "entry": "research-plan",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    },
+    {
+      "entry": "experiment",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    },
+    {
+      "entry": "result",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    },
+    {
+      "entry": "report",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    },
+    {
+      "entry": "protocol",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    },
+    {
+      "entry": "entry",
+      "fullFontSaveRefreshReeditImagesPrint": "passed"
+    }
+  ]
+}

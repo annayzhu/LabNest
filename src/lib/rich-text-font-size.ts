@@ -1,4 +1,4 @@
-export const RICH_TEXT_FONT_SIZES_PT = [8, 9, 10, 11, 12, 14] as const;
+export const RICH_TEXT_FONT_SIZES_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72] as const;
 
 export type RichTextFontSizePt = (typeof RICH_TEXT_FONT_SIZES_PT)[number];
 

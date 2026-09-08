@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run src/lib/scientific-tiptap.test.ts src/lib/protocol-tiptap.test.ts src/lib/protocol-docx-export.test.ts
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-stage-c
+
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  10:36:25
+   Duration  307ms (transform 211ms, setup 0ms, import 356ms, tests 19ms, environment 0ms)
+

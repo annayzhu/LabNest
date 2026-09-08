@@ -295,6 +295,8 @@ export type InventoryItem = {
   catalogNumber?: string;
   casNumber?: string;
   currentQuantity: number;
+  quantityRecorded?: boolean;
+  managementMode?: string;
   unit: string;
   lowThreshold?: number;
   concentration?: string;

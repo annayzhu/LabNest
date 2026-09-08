@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"error":"Unknown structured import module."}
+
+404 !== 200
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-independent-import.mjs:6:96 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 404,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

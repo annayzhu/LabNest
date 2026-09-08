@@ -1,4 +1,4 @@
-import { parseStructuredFile } from "@/lib/structured-files";
+import { parseStructuredFile, parseColumnOverrides } from "@/lib/structured-files";
 import { validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
 import { createImportConfirmation } from "@/lib/structured-import-confirmation";
@@ -12,7 +12,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
   const file = formData.get("file");
   if (!(file instanceof File)) return Response.json({ error: "Choose an import file." }, { status: 400 });
   try {
-    const parsed = await parseStructuredFile(file, module);
+    const parsed = await parseStructuredFile(file, module, ["inventory","purchases"].includes(module)?parseColumnOverrides(formData.get("mapping")):{});
     const validation = await validateStructuredImport(parsed);
     validation.preview.confirmationToken = createImportConfirmation(parsed);
     return Response.json({ preview: validation.preview });

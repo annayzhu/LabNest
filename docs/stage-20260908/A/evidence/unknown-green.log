@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run src/lib/inventory-management.test.ts
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-stage-a
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:44:22
+   Duration  139ms (transform 22ms, setup 0ms, import 30ms, tests 3ms, environment 0ms)
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -27,6 +27,8 @@ type InventoryItemInitial = {
   barcode?: string | null;
   aliquotCode?: string | null;
   currentQuantity?: number;
+  quantityRecorded?: boolean;
+  managementMode?: string;
   unit?: string;
   lowThreshold?: number | null;
   concentration?: string | null;
@@ -49,6 +51,7 @@ export function InventoryItemForm({
   initial?: InventoryItemInitial;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [managementMode, setManagementMode] = useState(initial.managementMode ?? "information");
   const expiryDate = initial.expiryDate
     ? new Date(initial.expiryDate).toISOString().slice(0, 10)
     : "";
@@ -114,15 +117,16 @@ export function InventoryItemForm({
 
       <Card>
         <CardHeader title="Stock and storage" />
+        <label className="block px-4"><span className={formLabelClass}>管理方式 / Management</span><select aria-label="管理方式 / Management" name="managementMode" value={managementMode} onChange={event=>setManagementMode(event.target.value)} className={formInputClass}><option value="information">信息追溯 · 余量选填</option><option value="package">按包装管理 · 瓶、盒、包</option><option value="precise">精确用量</option></select></label>
         <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label>
-            <span className={formLabelClass}>{initial.id ? "Current quantity *" : "Opening quantity *"}</span>
-            <input required type="number" min="0" step="any" name="currentQuantity" defaultValue={initial.currentQuantity ?? 0} className={formInputClass} />
+            <span className={formLabelClass}>{initial.id ? "Current quantity" : "Opening quantity"}</span>
+            <input required={managementMode !== "information"} type="number" min="0" step="any" name="currentQuantity" defaultValue={initial.quantityRecorded === false ? "" : initial.currentQuantity ?? ""} className={formInputClass} />
             {initial.id ? <span className="mt-1 block text-xs text-muted">A changed value is recorded as an adjustment movement.</span> : null}
           </label>
           <label>
             <span className={formLabelClass}>Unit *</span>
-            <input required name="unit" defaultValue={initial.unit ?? ""} maxLength={32} className={formInputClass} placeholder="µL, mL, g, vial…" />
+            <input required={managementMode !== "information"} name="unit" defaultValue={initial.unit ?? ""} maxLength={32} className={formInputClass} placeholder="µL, mL, g, vial…" />
           </label>
           <label>
             <span className={formLabelClass}>Safety stock</span>

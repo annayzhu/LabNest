@@ -270,6 +270,7 @@ export async function recordProtocolRunConsumption(formData: FormData) {
     if (!item || item.status !== "active") throw new Error("Inventory Item not found or inactive.");
     if (parsed.experimentStepId && !step) throw new Error("The selected Step does not belong to this Experiment.");
 
+    if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("该物料不支持精确扣减；请使用实物流转或先盘点。 / Item requires physical management or an opening count.");
     const nextQuantity = Number((item.currentQuantity - parsed.quantity).toFixed(6));
     if (nextQuantity < 0) throw new Error(`Available stock is ${item.currentQuantity} ${item.unit}.`);
 

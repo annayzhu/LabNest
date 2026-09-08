@@ -8,6 +8,7 @@ import { listMobileMutations, mobileMutationStatusLabel, mobileQueueChangedEvent
 const actionLabels: Record<MobileMutation["actionType"], string> = {
   "calculation.create": "Calculation",
   "entry.create": "Observation",
+  "run.material": "Run material record",
   "inventory.transaction": "Inventory change",
   "measurement.create": "Measurement",
   "step.complete": "Step completion",

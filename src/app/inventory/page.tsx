@@ -1,3 +1,4 @@
+import { inventoryQuantityLabel } from "@/lib/inventory";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Filter, MapPin, Plus, Search, ShoppingCart, Upload, X } from "lucide-react";
@@ -68,7 +69,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
       select: { principalInvestigator: true },
       orderBy: { principalInvestigator: "asc" },
     }),
-    prisma.inventoryItem.findMany({ select: { id: true, currentQuantity: true, lowThreshold: true, expiryDate: true } }),
+    prisma.inventoryItem.findMany({ select: { id: true, currentQuantity: true, quantityRecorded: true, lowThreshold: true, expiryDate: true } }),
     prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
   ]);
 
@@ -210,7 +211,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                   ),
                   render: (row) => (
                     <div>
-                      <span className="font-mono">{row.currentQuantity} {row.unit}</span>
+                      <span className="font-mono">{inventoryQuantityLabel(row)}</span>
                       {row.lowThreshold == null ? null : <p className="mt-0.5 text-xs text-muted">safety {row.lowThreshold} {row.unit}</p>}
                     </div>
                   ),

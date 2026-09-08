@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     const result = await prisma.$transaction(async (tx) => {
       const item = await tx.inventoryItem.findUnique({ where: { id: input.inventoryItemId } });
       if (!item || item.status !== "active") throw new Error("Inventory item is missing or inactive.");
+    if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("该物料不支持精确扣减；请使用实物流转或先盘点。 / Item requires physical management or an opening count.");
       if (input.experimentStepId) {
         const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, ...(input.experimentId ? { experimentId: input.experimentId } : {}) }, select: { id: true } });
         if (!step) throw new Error("The selected experiment step is no longer available.");

@@ -7,6 +7,7 @@ export const structuredModuleKeys = [
   "experiments",
   "results",
   "inventory",
+  "purchases",
   "reports",
 ] as const;
 
@@ -211,6 +212,21 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "qualityLimitations", label: "Deviations & limitations" },
     ],
   },
+  purchases: {
+    key:"purchases",singular:"Purchase",title:"Purchases",importFormats:["csv","xlsx","json"],exportFormats:["csv","xlsx","json"],
+    fields:[
+      {key:"recordKind",label:"记录用途",allowedValues:["purchase","quote"],example:"purchase"},
+      {key:"quotedAmount",label:"报价总金额",description:"Quote only; never treated as actual purchase amount."},
+      {key:"title",label:"物料名称",required:true,aliases:["名称","productName"],example:"Replace with purchase title"},
+      {key:"quantity",label:"数量",required:true,example:1},
+      {key:"unit",label:"单位",required:true,example:"box"},
+      {key:"vendor",label:"供应商"},
+      {key:"actualAmount",label:"实际总金额",description:"CNY; blank means unknown, not zero."},
+      {key:"status",label:"购买状态",allowedValues:["planned","ordered","received"],example:"ordered"},
+      {key:"invoiceStatus",label:"发票状态",allowedValues:["pending","available","not_required"],example:"pending"},
+      {key:"invoiceReference",label:"发票编号"},
+    ],
+  },
   inventory: {
     key: "inventory",
     singular: "Inventory Item",
@@ -230,7 +246,10 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "vendor", label: "Vendor" },
       { key: "catalogNumber", label: "Catalog number" },
       { key: "casNumber", label: "CAS number", aliases: ["CAS", "CAS号"] },
-      { key: "currentQuantity", label: "Initial quantity", required: true, aliases: ["quantity", "数量"], example: 0 },
+      { key:"inventoryId",label:"Existing Inventory ID",description:"Optional explicit stock ID; never matched by name." },
+      { key:"importMode",label:"Import meaning",allowedValues:["balance","arrival"],example:"balance",description:"balance = dated physical count; arrival = newly received amount." },
+      { key: "managementMode",label:"管理方式",allowedValues:["information","precise","package"],example:"information" },
+      { key: "currentQuantity", label: "Initial quantity", aliases: ["quantity", "数量"], example: 0 },
       { key: "unit", label: "Unit", required: true, aliases: ["单位"], example: "µL" },
       { key: "lowThreshold", label: "Safety stock", aliases: ["reorderPoint", "安全库存", "最低库存"], example: 10 },
       { key: "concentration", label: "Concentration" },

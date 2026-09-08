@@ -1,3 +1,4 @@
+import {purchaseInput} from "@/lib/purchase-records";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "./document-media.server";
@@ -112,6 +113,8 @@ type ResultData = {
 };
 type InventoryData = {
   kind: "inventory";
+  inventoryId?:string;
+  importMode:"balance"|"arrival";
   name: string;
   englishName?: string;
   category?: string;
@@ -125,6 +128,8 @@ type InventoryData = {
   catalogNumber?: string;
   casNumber?: string;
   currentQuantity: number;
+  quantityRecorded: boolean;
+  managementMode: "information"|"precise"|"package";
   unit: string;
   lowThreshold?: number;
   concentration?: string;
@@ -149,7 +154,8 @@ type ReportData = {
   contentJson: Prisma.InputJsonValue;
   collected: CollectedReportSources;
 };
-type PreparedData = ProjectData | ResearchPlanData | ProtocolData | ExperimentData | ResultData | InventoryData | ReportData;
+type PurchaseData = {kind:"purchases";recordKind:"purchase"|"quote";quotedAmount?:number;title:string;quantity:number;unit:string;vendor?:string;actualAmount?:string;status:"planned"|"ordered"|"received";invoiceStatus:"pending"|"available"|"not_required";invoiceReference?:string};
+type PreparedData = PurchaseData | ProjectData | ResearchPlanData | ProtocolData | ExperimentData | ResultData | InventoryData | ReportData;
 type PreparedRow = { index: number; data: PreparedData };
 
 export type StructuredImportValidation = {
@@ -429,14 +435,22 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       if (experimentMatch.value) data = { kind: "results", experimentId: experimentMatch.value.id, projectId: experimentMatch.value.projectId ?? undefined, researchPlanId: experimentMatch.value.researchPlanId ?? undefined, title, resultType: requiredText(record.resultType, "Result type", errors), recordStatus: "draft", sourceType: "file_import", qualityStatus: enumValue(record.qualityStatus, ["not_assessed", "pass", "warning", "fail"] as const, "not_assessed", "Quality status", errors), textValue: optionalText(record.textValue), numericValue, unit: optionalText(record.unit), analysisMethod: optionalText(record.analysisMethod), notes: optionalText(record.notes), protocolVersionId: template ? experimentMatch.value.primaryProtocolVersionId ?? undefined : undefined, templateKey: template?.templateKey, templateInstanceKey, templateInstanceLabel: optionalText(record.templateInstanceLabel), templateSnapshotJson: (template ?? {}) as Prisma.InputJsonValue, valuesJson: values as Prisma.InputJsonValue, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, viewSpecJson: (template?.view ?? {}) as Prisma.InputJsonValue, contentJson: document as Prisma.InputJsonValue, provenanceJson: { experimentId: experimentMatch.value.id, projectId: experimentMatch.value.projectId, researchPlanId: experimentMatch.value.researchPlanId, protocolVersionId: template ? experimentMatch.value.primaryProtocolVersionId : undefined } };
     }
 
+    if (parsed.module === "purchases") {
+      const candidate=purchaseInput.safeParse({title:record.title,quantity:Number(record.quantity),unit:record.unit,vendor:optionalText(record.vendor),actualAmount:optionalText(record.actualAmount),status:optionalText(record.status),invoiceStatus:optionalText(record.invoiceStatus),invoiceReference:optionalText(record.invoiceReference),clientMutationId:"00000000-0000-4000-8000-000000000000"});
+      if(!candidate.success)errors.push(...candidate.error.issues.map(issue=>`${issue.path.join(".")}: ${issue.message}`));
+      else { const {clientMutationId:_,...purchase}=candidate.data;const recordKind=enumValue(record.recordKind,["purchase","quote"] as const,"purchase","Record kind",errors);const quotedAmount=optionalText(record.quotedAmount)?numberValue(record.quotedAmount,"Quoted amount",errors):undefined;if(quotedAmount!==undefined&&quotedAmount<0)errors.push("Quoted amount cannot be negative.");data={kind:"purchases",...purchase,recordKind,quotedAmount}; }
+    }
     if (parsed.module === "inventory") {
       const name = requiredText(record.name, "Item name", errors);
       if (isPlaceholder(name)) errors.push("Replace the template Inventory Item name before importing.");
       const aliquotCode = optionalText(record.aliquotCode);
-      if (aliquotCode && inventoryItems.some((item) => lower(item.aliquotCode) === lower(aliquotCode))) errors.push(`Aliquot code ${aliquotCode} already exists.`);
-      const key = `inventory:${lower(aliquotCode || optionalText(record.barcode) || `${name}:${optionalText(record.lotNumber)}`)}`;
+      if (!optionalText(record.inventoryId) && aliquotCode && inventoryItems.some((item) => lower(item.aliquotCode) === lower(aliquotCode))) errors.push(`Aliquot code ${aliquotCode} already exists.`);
+      const key = `inventory:${lower(optionalText(record.inventoryId)||aliquotCode || optionalText(record.barcode) || `${name}:${optionalText(record.brand)}:${optionalText(record.catalogNumber)}:${optionalText(record.lotNumber)}`)}`;
       if (batchKeys.has(key)) errors.push("This Inventory Item is duplicated in the import file."); else batchKeys.add(key);
-      const quantity = numberValue(record.currentQuantity, "Initial quantity", errors);
+      const managementMode=enumValue(record.managementMode,["information","precise","package"] as const,"precise","Management",errors);
+      const quantityRecorded=optionalText(record.currentQuantity)!==undefined;
+      const quantity = !quantityRecorded && managementMode==="information" ? 0 : numberValue(record.currentQuantity, "Initial quantity", errors);
+      if(managementMode==="package"&&(!Number.isInteger(quantity)||quantity>1000))errors.push("Package count must be an integer from 0 to 1000.");
       if (quantity < 0) errors.push("Initial quantity cannot be negative.");
       const lowThreshold = record.lowThreshold === undefined || record.lowThreshold === ""
         ? undefined
@@ -447,7 +461,10 @@ export async function validateStructuredImport(parsed: ParsedStructuredFile): Pr
       const locationName = optionalText(record.location);
       const locationMatch = locationName ? uniqueMatch(locations.filter((location) => location.id === locationName || lower(location.name) === lower(locationName)), `Inventory location “${locationName}”`) : undefined;
       if (locationMatch?.error) errors.push(locationMatch.error);
-      data = { kind: "inventory", name, englishName: optionalText(record.englishName), category: optionalText(record.category), brand: optionalText(record.brand), principalInvestigator: optionalText(record.principalInvestigator), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: requiredText(record.unit, "Unit", errors), lowThreshold, concentration: optionalText(record.concentration), locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
+      const inventoryId=optionalText(record.inventoryId);
+      if(inventoryId&&!inventoryItems.some(item=>item.id===inventoryId))errors.push("Existing Inventory ID was not found; no name-based matching is performed.");
+      const importMode=enumValue(record.importMode,["balance","arrival"] as const,"balance","Import meaning",errors);
+      data = { kind: "inventory", inventoryId,importMode,managementMode,quantityRecorded,name, englishName: optionalText(record.englishName), category: optionalText(record.category), brand: optionalText(record.brand), principalInvestigator: optionalText(record.principalInvestigator), containerType: optionalText(record.containerType), barcode: optionalText(record.barcode), aliquotCode, lotNumber: optionalText(record.lotNumber), vendor: optionalText(record.vendor), catalogNumber: optionalText(record.catalogNumber), casNumber: optionalText(record.casNumber), currentQuantity: quantity, unit: requiredText(record.unit, "Unit", errors), lowThreshold, concentration: optionalText(record.concentration), locationId: locationMatch?.value?.id, positionCode: optionalText(record.positionCode), expiryDate: dateValue(record.expiryDate, "Expiry date", errors), storageCondition: optionalText(record.storageCondition), freezeThawCount, status: enumValue(record.status, ["active", "inactive", "archived"] as const, "active", "Status", errors), notes: optionalText(record.notes) };
     }
 
     if (parsed.module === "reports") {
@@ -503,6 +520,10 @@ export async function commitStructuredImport(
   if (parsed.module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) throw new Error("Preview the Protocol file again before confirming.");
   const sourceMetadata = { sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceFormat: parsed.format };
   const created = await withPreparedDocxImages(parsed.embeddedImages ?? [], async files => prisma.$transaction(async (tx) => {
+    if (["purchases","inventory"].includes(parsed.module)) {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${parsed.checksum}, 0))::text`;
+      if(await tx.attachmentLink.findFirst({where:{linkType:"structured_import_source",attachment:{sha256:parsed.checksum}}}))throw new Error("This exact source file has already been imported.");
+    }
     if (parsed.module === "protocols") {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${parsed.checksum}, 0))::text`;
       if (await tx.protocolVersion.findFirst({ where: { sourceFileChecksum: parsed.checksum }, select: { id: true } })) throw new Error("This exact source file has already been imported.");
@@ -510,6 +531,7 @@ export async function commitStructuredImport(
     const createdTargets: Array<{ targetType: string; targetId: string; href?: string }> = [];
     const importedMediaIds = await createImportedMedia(tx, files, attachmentId);
 
+    let quoteInquiryId:string|undefined;
     for (const row of validation.prepared) {
       const data = resolveImportedMedia(row.data, importedMediaIds);
       if (data.kind === "projects") {
@@ -571,9 +593,38 @@ export async function commitStructuredImport(
         });
         createdTargets.push({ targetType: "result", targetId: record.resultId, href: `/results/${record.resultId}` });
       }
-      if (data.kind === "inventory") {
-        const record = await tx.inventoryItem.create({ data: { name: data.name, englishName: data.englishName, category: data.category, brand: data.brand, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
-        if (data.currentQuantity !== 0) await tx.inventoryTransaction.create({ data: { inventoryItemId: record.id, type: "receive", quantityChange: data.currentQuantity, unit: data.unit, toLocationId: data.locationId, notes: `Initial structured import from ${parsed.fileName}.` } });
+      if(data.kind==="purchases"&&data.recordKind==="quote"){
+        if(!quoteInquiryId){const inquiry=await tx.procurementInquiry.create({data:{title:parsed.fileName,sourceType:"excel",importedFileName:parsed.fileName}});quoteInquiryId=inquiry.id;}
+        const quote=await tx.procurementQuoteLine.create({data:{inquiryId:quoteInquiryId,productName:data.title,supplierName:data.vendor,quantity:data.quantity,packageUnit:data.unit,amountInclTax:data.quotedAmount,metadataJson:sourceMetadata}});
+        createdTargets.push({targetType:"procurement_quote_line",targetId:quote.id,href:"/purchases"});
+      }
+      if(data.kind==="purchases"&&data.recordKind==="purchase"){
+        const {kind:_,recordKind:__,quotedAmount:___,...fields}=data;
+        const record=await tx.purchaseRequest.create({data:fields});
+        if(fields.status==="received")await tx.purchaseReceipt.create({data:{purchaseId:record.id,quantity:fields.quantity,clientMutationId:`import:${parsed.checksum}:${row.index}`}});
+        await tx.activityLog.create({data:{action:"structured_import",targetType:"purchase",targetId:record.id,metadataJson:sourceMetadata}});
+        createdTargets.push({targetType:"purchase",targetId:record.id,href:`/purchases/${record.id}`});
+      }
+      if (data.kind === "inventory" && data.inventoryId) {
+        const item=await tx.inventoryItem.findUniqueOrThrow({where:{id:data.inventoryId}});
+        if(item.unit!==data.unit||item.status!=="active")throw new Error("Existing stock unit/status does not match the import row.");
+        if(!data.quantityRecorded)throw new Error("An existing balance cannot be replaced by an unknown quantity.");
+        if(item.managementMode==="package"&&data.importMode==="balance")throw new Error("Count existing packages through their physical records; do not overwrite bottle identities.");
+        if(data.importMode==="arrival"&&!item.quantityRecorded)throw new Error("Record the starting balance before adding arrivals to unknown stock.");
+        const next=data.importMode==="arrival"?item.currentQuantity+data.currentQuantity:data.currentQuantity;
+        const changed=await tx.inventoryItem.updateMany({where:{id:item.id,updatedAt:item.updatedAt},data:{currentQuantity:next,quantityRecorded:true}});
+        if(changed.count!==1)throw new Error("Stock changed; preview the file again.");
+        if(item.managementMode==="package"){
+          if(!Number.isInteger(data.currentQuantity)||data.currentQuantity>1000)throw new Error("Invalid physical package count.");
+          await tx.inventoryContainer.createMany({data:Array.from({length:data.currentQuantity},()=>({inventoryItemId:item.id,location:item.positionCode}))});
+        }
+        await tx.inventoryTransaction.create({data:{inventoryItemId:item.id,type:data.importMode==="arrival"?"receive":"adjust",quantityChange:next-item.currentQuantity,unit:item.unit,clientMutationId:`import:${parsed.checksum}:${row.index}`,notes:`${data.importMode}: ${parsed.fileName}; explicit existing stock ID. No inferred past consumption.`}});
+        createdTargets.push({targetType:"inventory_item",targetId:item.id,href:`/inventory/${item.id}`});
+      }
+      if (data.kind === "inventory" && !data.inventoryId) {
+        const record = await tx.inventoryItem.create({ data: { name: data.name, englishName: data.englishName, category: data.category, brand: data.brand, principalInvestigator: data.principalInvestigator, containerType: data.containerType, barcode: data.barcode, aliquotCode: data.aliquotCode, lotNumber: data.lotNumber, vendor: data.vendor, catalogNumber: data.catalogNumber, casNumber: data.casNumber, managementMode:data.managementMode,quantityRecorded:data.quantityRecorded,currentQuantity: data.currentQuantity, unit: data.unit, lowThreshold: data.lowThreshold, concentration: data.concentration, locationId: data.locationId, positionCode: data.positionCode, expiryDate: data.expiryDate, storageCondition: data.storageCondition, freezeThawCount: data.freezeThawCount, status: data.status, notes: data.notes } });
+        if(data.managementMode==="package"&&data.currentQuantity>0)await tx.inventoryContainer.createMany({data:Array.from({length:data.currentQuantity},()=>({inventoryItemId:record.id,location:data.positionCode}))});
+        if (data.quantityRecorded && data.currentQuantity !== 0) await tx.inventoryTransaction.create({ data: { inventoryItemId: record.id, type: "receive", quantityChange: data.currentQuantity, unit: data.unit, toLocationId: data.locationId, notes: `Initial structured import from ${parsed.fileName}.` } });
         await tx.activityLog.create({ data: { action: "structured_import", targetType: "inventory_item", targetId: record.id, metadataJson: sourceMetadata } });
         createdTargets.push({ targetType: "inventory_item", targetId: record.id, href: `/inventory/${record.id}` });
       }

@@ -1,3 +1,5 @@
+import {QuoteDecision} from "@/components/QuoteDecision";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -42,9 +44,9 @@ export default async function PurchasesPage() {
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Procurement"
+          actions={<div className="flex flex-wrap gap-4"><Link href="/purchases/import" className="focus-ring text-moss">导入购买明细</Link><Link href="/purchases/new" className="focus-ring text-moss">登记购买</Link><a href="/api/purchases/quotes?format=csv" className="focus-ring text-moss">导出报价比较</a><a href="/api/purchases/export" className="focus-ring text-moss">导出实际购买</a></div>}
           title="Purchases"
-          description="Inquiry spreadsheets stay lightweight. Only selected quote lines become purchase requests, school import rows, and later inventory transactions."
+          description="独立记录报价、购买和收货，按需关联库存。"
         />
 
         <section className="grid gap-4 md:grid-cols-4">
@@ -97,7 +99,7 @@ export default async function PurchasesPage() {
                   header: "Item",
                   render: (row) => (
                     <div>
-                      <p className="font-semibold text-ink">{row.productName}</p>
+                      <Link className="font-semibold text-moss" href={`/purchases/new?quote=${row.id}`}>{row.productName}</Link>
                       <p className="mt-1 text-xs text-muted">{row.specification ?? row.catalogNumber ?? "no specification"}</p>
                     </div>
                   ),
@@ -110,7 +112,7 @@ export default async function PurchasesPage() {
                   render: (row) => <span className="font-mono">{money(getQuoteLineAmountInclTax(row))}</span>,
                 },
                 { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
-                { key: "reason", header: "Decision", render: (row) => row.decisionReason ?? "not reviewed" },
+                { key: "reason", header: "Decision", render: (row) => <QuoteDecision id={row.id} status={row.status} reason={row.decisionReason}/> },
               ]}
             />
           </CardBody>
@@ -186,7 +188,7 @@ export default async function PurchasesPage() {
               rows={purchases}
               getRowKey={(row) => row.id}
               columns={[
-                { key: "title", header: "Request", render: (row) => <span className="font-semibold text-ink">{row.title}</span> },
+                { key: "title", header: "Request", render: (row) => <Link className="font-semibold text-moss" href={`/purchases/${row.id}`}>{row.title}</Link> },
                 { key: "status", header: "Status", render: (row) => <StatusPill status={row.status} /> },
                 { key: "vendor", header: "Vendor", render: (row) => row.vendor ?? "not set" },
                 {

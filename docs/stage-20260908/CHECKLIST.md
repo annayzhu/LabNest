@@ -8,25 +8,25 @@ A采购/Inventory、B共享UI、C字号/编辑器、D嵌入工具分别实施并
 
 | 编号 | 场景 | 初始现状 | 修改位置/验证版本 | 本轮方法与结果 | 证据/剩余问题 |
 |---|---|---|---|---|---|
-| T01 | 只记录实验 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-completion.json；无采购库存的合成Run在手机页面完成；创建用隔离DB夹具，非表单创建验收 |
-| T02 | 只用采购 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json / imports.json / xlsx.json；独立购买、无库存收货、CSV/XLSX导入及实际CSV导出；报价决定交互未逐按钮验收 |
-| T03 | 只用库存 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/imports.json / xlsx.json；独立库存导入，起始余额用adjust而非假造到货；无需采购来源 |
-| T04 | 同次Run混合管理 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json；未管理与精确库存同行记录，只有确认的精确用量扣减；已领瓶逻辑用接口和代码复核 |
-| T05 | 数量未知 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/pages.json / unknown-green.log；信息模式保存刷新显示数量未记录，未知0不误报缺货；首次盘点见followup.json |
-| T06 | 5瓶领出1瓶 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json / pages.json；5瓶领1→4/1，重试不重复；真实页面批量领2→3/2 |
-| T07 | 开封、转交与归还 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；开封、转交、归还接口回读保留ID、开封日期和余量；批量领用在页面验证 |
-| T08 | 估计余量 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；估计余量保存并回读登记人、时间及历史；可选实验关联未单独页面验收 |
-| T09 | 估计250变180 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；250→180不生成-70事务，不改变瓶数 |
-| T10 | 用完 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；用完后状态empty，原瓶和事件保留 |
-| T11 | 预计与实际不同 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json / followup.json；预计10µL与实际12000µL分别保存；执行12mL；页面编辑失败行和更正后回读账本 |
-| T12 | 不足或换算缺参数 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json / run-completion.json；库存不足保持pending；Run可完成且不自动扣减；缺浓度跨维度输入未独立页面验收 |
-| T13 | 重复点击与同步重试 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/browser-final.log / pages.json；扣减和领用重试一次执行；12+12并发成功执行断言；离线行同步后数量为1 |
-| T14 | 失败实验、复制Run、更正 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 未执行 | A/evidence/followup.json；更正原记录与唯一关系已通过；失败状态及复制Run的完整页面往返尚未执行，整项不关闭 |
-| T15 | 分批采购收货 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json / pages.json；2件不入库+3件新入库，累计5；发票待补独立；页面部分收货回读通过 |
-| T16 | 独立导入与重复导入 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/imports.json / xlsx.json / browser-final.log；CSV/XLSX独立导入，映射更改使确认失效，同文件重导拒绝；余额180+到货20=200 |
-| T17 | 后补采购库存关联 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/followup.json；后补采购库存关联前后库存数相同 |
-| T18 | 报销与报价不同 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json / followup.json；实际CSV按真实金额导出、候选排除，改价后旧快照字节一致；学校模板本轮未逐文件验收 |
-| T19 | 老数据兼容 | 已有实现并补验证 | 35714042b547f4edc3189c16c0934ca5ecf5943a；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/legacy.json；35项迁移，5类合成旧记录逐字段比较；旧ID/交易/实验/分装/附件引用保留；非真实旧记录或附件字节测试 |
+| T01 | 只记录实验 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-completion.json；无采购库存的合成Run在手机页面完成；创建用隔离DB夹具，非表单创建验收 |
+| T02 | 只用采购 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json, imports.json, xlsx.json, edge-cases.json; independent purchase/import/receipt and quote decision save/reload/download passed. |
+| T03 | 只用库存 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/imports.json / xlsx.json；独立库存导入，起始余额用adjust而非假造到货；无需采购来源 |
+| T04 | 同次Run混合管理 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json；未管理与精确库存同行记录，只有确认的精确用量扣减；已领瓶逻辑用接口和代码复核 |
+| T05 | 数量未知 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/pages.json / unknown-green.log；信息模式保存刷新显示数量未记录，未知0不误报缺货；首次盘点见followup.json |
+| T06 | 5瓶领出1瓶 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json / pages.json；5瓶领1→4/1，重试不重复；真实页面批量领2→3/2 |
+| T07 | 开封、转交与归还 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；开封、转交、归还接口回读保留ID、开封日期和余量；批量领用在页面验证 |
+| T08 | 估计余量 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；估计余量保存并回读登记人、时间及历史；可选实验关联未单独页面验收 |
+| T09 | 估计250变180 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；250→180不生成-70事务，不改变瓶数 |
+| T10 | 用完 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/containers.json；用完后状态empty，原瓶和事件保留 |
+| T11 | 预计与实际不同 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json / followup.json；预计10µL与实际12000µL分别保存；执行12mL；页面编辑失败行和更正后回读账本 |
+| T12 | 不足或换算缺参数 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/run-materials.json, run-completion.json, edge-cases.json; insufficient stock or missing concentration remains pending; Run can complete without deduction. |
+| T13 | 重复点击与同步重试 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/browser-final.log / pages.json；扣减和领用重试一次执行；12+12并发成功执行断言；离线行同步后数量为1 |
+| T14 | 失败实验、复制Run、更正 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 未执行 | A/evidence/followup.json, edge-cases.json; explicit correction and failed-status edit preserve ledger; complete Run-copy flow NOT EXECUTED, whole item remains open. |
+| T15 | 分批采购收货 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json / pages.json；2件不入库+3件新入库，累计5；发票待补独立；页面部分收货回读通过 |
+| T16 | 独立导入与重复导入 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/imports.json / xlsx.json / browser-final.log；CSV/XLSX独立导入，映射更改使确认失效，同文件重导拒绝；余额180+到货20=200 |
+| T17 | 后补采购库存关联 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/followup.json；后补采购库存关联前后库存数相同 |
+| T18 | 报销与报价不同 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/purchases.json / followup.json；实际CSV按真实金额导出、候选排除，改价后旧快照字节一致；学校模板本轮未逐文件验收 |
+| T19 | 老数据兼容 | 已有实现并补验证 | d5ba793071306f7c55d6e0b0f7ac2381ecae7af6；A/ACCEPTANCE.md位置表 | 通过 | A/evidence/legacy.json；35项迁移，5类合成旧记录逐字段比较；旧ID/交易/实验/分装/附件引用保留；非真实旧记录或附件字节测试 |
 | T20 | 全站平整布局 | 需要修改 | 待逐线核对 | 未执行 | 主页面、侧栏及弹出面板无装饰性卡片嵌套 |
 | T21 | 上下文属性切换 | 需要修改 | 待逐线核对 | 未执行 | 一个主要面板，设置对应选中对象，草稿不丢 |
 | T22 | 大量关联Protocol | 需要修改 | 待逐线核对 | 未执行 | 摘要可控，搜索与批量管理可用，解除不删除 |

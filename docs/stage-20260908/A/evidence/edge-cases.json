@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "Cross-dimension mg to mL without concentration stays pending with saved row; stock unchanged",
+    "Changing experiment to failed through edit page preserves consumption ledger and stock balance",
+    "Quote decision saved through page and retained after reload; export link downloads CSV"
+  ]
+}

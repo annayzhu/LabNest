@@ -10,6 +10,7 @@ async function main() {
   const fixture=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json','utf8'));
   const browser=await chromium.launch(); const page=await browser.newPage();const checks:string[]=[];
   try {
+    await prisma.experimentStep.create({data:{experimentId:fixture.experimentId,order:999,title:"Synthetic timer copy",description:"Timer reset fixture"}});
     await prisma.experimentStep.updateMany({where:{experimentId:fixture.experimentId},data:{timerDurationSeconds:60,timerRemainingSeconds:42,timerStartedAt:new Date(),timerPausedAt:new Date()}});
     const before=await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}});
     const key=crypto.randomUUID();

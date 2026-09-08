@@ -4065,7 +4065,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 .document-page-title,
 .document-section-title {
   font-family: var(--font-document-heading);
-  font-size: 12pt !important;
+  font-size: 12pt;
   line-height: 1.15 !important;
 }
 
@@ -4257,7 +4257,7 @@ body.labnest-column-resizing {
 
 .document-content-heading {
   font-family: var(--font-document-heading);
-  font-size: 11pt !important;
+  font-size: 11pt;
   line-height: var(--ln-document-heading-line-height) !important;
 }
 
@@ -4265,7 +4265,7 @@ body.labnest-column-resizing {
 .document-a4-paper .entry-content,
 .document-a4-paper [contenteditable="true"],
 .document-block :where(p, li, td, th, input, textarea, select) {
-  font-size: 10pt !important;
+  font-size: 10pt;
   line-height: var(--ln-document-copy-line-height) !important;
 }
 
@@ -4274,7 +4274,7 @@ body.labnest-column-resizing {
   .document-a4-paper .entry-content,
   .document-a4-paper [contenteditable="true"],
   .document-block :where(p, li, td, th, input, textarea, select) {
-    font-size: var(--ln-document-mobile-copy-size) !important;
+    font-size: var(--ln-document-mobile-copy-size);
   }
 }
 
@@ -4319,7 +4319,7 @@ body.labnest-column-resizing {
 .document-a4-paper .protocol-rich-editor h3,
 .document-a4-paper .entry-content h2 {
   font-family: var(--font-document-heading);
-  font-size: 11pt !important;
+  font-size: 11pt;
   line-height: 1.15 !important;
 }
 
@@ -5465,3 +5465,33 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
   .ln-run-material-table td:first-child { grid-column: 1 / -1; font-weight: 600; }
   .ln-run-material-table td:not(:first-child)::before { content: attr(data-label); display: block; color: var(--color-muted); }
 }
+
+/* Shared working surfaces: content hierarchy uses separators, not nested cards. */
+.ln-section { border-radius: 0; box-shadow: none; background: transparent; }
+.ln-section .ln-section { border: 0; }
+.context-properties { position: fixed; z-index: 80; inset: 0 0 0 auto; width: min(24rem, 100vw); background: var(--color-surface, #fff); color: var(--color-ink); border-left: 1px solid var(--color-hairline); display: flex; flex-direction: column; animation: properties-enter 140ms ease-out; }
+.context-properties[hidden] { display: none; }
+.context-properties-header { display: flex; align-items: center; flex: none; gap: .5rem; padding: .5rem 1rem; border-bottom: 1px solid var(--color-hairline); }
+.context-properties-body { overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; padding: 1rem; }
+.context-properties-body > * + * { margin-top: 1rem; }
+.context-properties-body .grid { grid-template-columns: minmax(0, 1fr); }
+.context-properties-body .ln-section { border-radius: 0; box-shadow: none; }
+@media (min-width: 1024px) { body:has(.context-properties[data-pinned="true"]:not([hidden])) .app-shell-content { padding-right: 24rem; } }
+@media (max-width: 639px) { .context-properties { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .context-properties { animation: none; } }
+@keyframes properties-enter { from { transform: translateX(1.5rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@media print { .context-properties { display: none !important; } }
+
+.document-media-toolbar[data-active="false"] > button { display: none; }
+.document-media-toolbar[data-active="false"] { border: 0; background: transparent; padding: 0; min-height: 0; }
+
+.context-properties .document-editor-sidebar { display: block !important; width: auto; padding: 0; border: 0; }
+.context-properties .document-editor-sidebar > * + * { margin-top: 1rem; }
+
+.quantity-control { display: grid; grid-template-columns: minmax(5ch, 1fr) minmax(3ch, auto); width: min(100%, 19rem); align-items: stretch; min-height: 2.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); margin-top: .25rem; background: var(--warm); }
+.quantity-control > :last-child { border-left: 1px solid var(--hairline); display: flex; align-items: center; }
+
+/* Lists/forms/settings share flat grouping; tool articles remain clickable single-level cards. */
+.app-shell-main :is(section,aside,div)[class*="rounded-"][class*="border"]:not(.document-paper):not(.document-page) { border-radius: 0; box-shadow: none; }
+.context-properties-body :is(section,details) { border-radius: 0; box-shadow: none; }
+.context-properties :is(.document-editor-sidebar,.entry-editor-sidebar-column) { position: static !important; inset: auto !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: none !important; max-height: none; max-width: none; overflow: visible; background: transparent; box-shadow: none; }

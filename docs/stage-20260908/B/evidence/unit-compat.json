@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Run manual5mg save/reload/API readback",
+    "Existing5bottle save/read retains5",
+    "Unknown first count establishes180mL and preserves audit",
+    "Empty quantity chooses mass or custom units without fabricated conversion"
+  ]
+}

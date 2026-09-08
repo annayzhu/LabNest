@@ -1,4 +1,6 @@
 "use client";
+import { QuantityInput } from "./QuantityInput";
+import { convert, parseScalar } from "@/lib/calculators/quantities";
 import {newClientMutationId} from "@/lib/client-mutation-id";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -258,28 +260,10 @@ export function RunMaterials({
                 onChange={(e) => setExpected(e.target.value)}
               />
             </label>
-            <div className="flex min-w-0 items-end gap-1">
-              <label className="text-sm">
-                实际
-                <input
-                  className={formInputClass}
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={actual}
-                  onChange={(e) => setActual(e.target.value)}
-                />
-              </label>
-              <label className="text-sm">
-                单位
-                <input
-                  required
-                  className={formInputClass}
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                />
-              </label>
-            </div>
+            <QuantityInput label="实际" name="actual" value={actual} unit={unit || "mL"} onChange={(next, nextUnit) => {
+              try { const nextExpected = nextUnit !== unit && expected.trim() ? String(Number(convert(parseScalar(expected),unit,nextUnit).toPrecision(14))) : expected; setExpected(nextExpected); setActual(next); setUnit(nextUnit); }
+              catch { setStatus("请先完成预计用量，再切换单位。"); }
+            }} />
             <label className="text-sm">
               用量依据
               <input required className={formInputClass} value={source} onChange={(e) => setSource(e.target.value)} />

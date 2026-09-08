@@ -13,7 +13,7 @@ export default async function Page({
   const [purchase, stock] = await Promise.all([
     prisma.purchaseRequest.findUnique({
       where: { id: (await params).id },
-      include: { receipts: { orderBy: { createdAt: "asc" } } },
+      include: { procurementQuoteLine: { select: { specification: true } }, receipts: { orderBy: { createdAt: "asc" } } },
     }),
     prisma.inventoryItem.findMany({
       where: { status: "active" },

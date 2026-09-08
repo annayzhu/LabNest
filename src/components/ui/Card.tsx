@@ -2,16 +2,18 @@ import { forwardRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function Card({
+  id,
   children,
   className,
 }: {
+  id?: string;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section
+    <section id={id}
       className={cn(
-        "rounded-[var(--ln-radius-panel)] border-[length:var(--ln-border-width)] border-hairline bg-surface",
+        "ln-section border-b border-hairline",
         className,
       )}
     >

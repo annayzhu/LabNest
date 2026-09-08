@@ -1,0 +1,9 @@
+{
+  "phase": "media-controls",
+  "checks": [
+    "Selection, optional width, keyboard focus/expand and replacement save/refresh passed"
+  ],
+  "at": "2026-09-08T01:06:46.728Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

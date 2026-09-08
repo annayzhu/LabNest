@@ -1,0 +1,28 @@
+{
+  "phase": "metadata",
+  "checks": [
+    {
+      "width": 1440,
+      "geometry": {
+        "left": 378,
+        "right": 1420,
+        "navLeft": 378,
+        "navRight": 1420,
+        "inset": 11.390625
+      }
+    },
+    {
+      "width": 390,
+      "geometry": {
+        "left": 12,
+        "right": 378,
+        "navLeft": 12,
+        "navRight": 378,
+        "inset": 11.390625
+      }
+    }
+  ],
+  "at": "2026-09-08T01:06:48.979Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

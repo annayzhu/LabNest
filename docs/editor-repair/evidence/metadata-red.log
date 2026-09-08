@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(Math.abs(geometry.left-geometry.navLeft)<2&&Math.abs(geometry.right-geometry.navRight)<2)
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-editor-repair/scripts/verify-editor-repair.mjs:33:547
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

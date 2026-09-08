@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.evaluate: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('img', { name: '恢复图像 image', exact: true }).first()[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-editor-repair/scripts/verify-editor-repair.mjs:23:69 {
+  log: [
+    "  - waiting for getByRole('img', { name: '恢复图像 image', exact: true }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

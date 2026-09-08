@@ -1,0 +1,52 @@
+name: Document editor acceptance
+on:
+  pull_request:
+    paths: ['src/**', 'scripts/*editor-repair*', 'package*.json', 'prisma/**', '.github/workflows/document-editor.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_editor66_acceptance
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_editor66_acceptance
+      LABNEST_EDITOR_TEST_URL: http://localhost:3227
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils fonts-noto-cjk
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - name: Start isolated production server
+        run: |
+          npm run start -- --port 3227 > editor-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3227/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat editor-server.log
+          exit 1
+      - run: npm run test:editor-repair:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editor-browser-evidence
+          path: |
+            docs/editor-repair/evidence
+            editor-server.log

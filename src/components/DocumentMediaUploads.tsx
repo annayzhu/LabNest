@@ -96,13 +96,17 @@ export function useDocumentMediaUploads(editor: Editor | null, draftId: string) 
     editor.on("transaction", changed);
     draftScopes.set(editor, draftId);
     const dom = editor.view.dom;
+    // Capture listeners also see nested template editors; only the nearest editor owns the file.
+    const ownsEvent = (event: Event) => event.target instanceof Element && event.target.closest('[contenteditable="true"]') === dom;
     const paste = (event: ClipboardEvent) => {
+      if (!ownsEvent(event)) return;
       const files = Array.from(event.clipboardData?.files ?? []);
       if (!files.length) return;
       event.preventDefault(); event.stopPropagation();
       insertDocumentMediaFiles(editor, files, draftId);
     };
     const drop = (event: DragEvent) => {
+      if (!ownsEvent(event)) return;
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (!files.length) return;
       event.preventDefault(); event.stopPropagation();

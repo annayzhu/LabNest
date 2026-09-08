@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-editor-repair
+
+
+ Test Files  104 passed (104)
+      Tests  576 passed (576)
+   Start at  09:01:22
+   Duration  5.09s (transform 10.91s, setup 0ms, import 24.76s, tests 6.28s, environment 9ms)
+

@@ -1,0 +1,52 @@
+{
+  "sha": "392eca9bf634595970d4c75990b0864b75fc59ae",
+  "startedAt": "2026-09-08T01:06:41.191Z",
+  "checks": [
+    {
+      "name": "seed",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "print",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "ime",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "media-controls",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "metadata",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "image-recovery",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "roundtrip",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "template",
+      "status": "passed",
+      "exitCode": 0
+    },
+    {
+      "name": "run",
+      "status": "passed",
+      "exitCode": 0
+    }
+  ],
+  "finishedAt": "2026-09-08T01:07:19.390Z"
+}

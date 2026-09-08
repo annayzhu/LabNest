@@ -1,0 +1,44 @@
+Synthetic experiment
+EXPERIMENT ID
+
+RESEARCH PLAN
+
+METHOD
+
+DATE
+
+EXECUTION
+
+EXP-1788829601454
+
+RPL-1788829601454 ·
+Synthetic editor
+1788829601454
+
+Fully custom
+
+2026-09-08
+
+planned
+
+RECORD
+
+draft
+
+Background & rationale
+
+恢复图像 image
+
+中文图注 experiment 1788829618000
+
+中文 image 说明
+
+Editor acceptance body / 正文验收
+
+Setup & samples
+Execution notes
+Observations & media
+Deviations & incidents
+Summary & conclusion
+
+

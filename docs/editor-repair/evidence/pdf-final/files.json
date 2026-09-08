@@ -1,0 +1,86 @@
+[
+  {
+    "file": "entry-edit.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "c18ca3e2ec1d359e939451f604698511ab17090875b2b602c6410ec6dd369cdc"
+  },
+  {
+    "file": "entry-view.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "b580fa2f3571336fe54e8c06df427a032809a95d06dbade92414389123d32038"
+  },
+  {
+    "file": "experiment-edit.pdf",
+    "pages": 2,
+    "noBlankPages": true,
+    "sha256": "06dcb72248dd0a1e47879279362dc525b756f320d52c1724300ee9b924f40cb6"
+  },
+  {
+    "file": "experiment-view.pdf",
+    "pages": 2,
+    "noBlankPages": true,
+    "sha256": "1b86eed5e63a8dc5361f77d5736395c3e7970209dd2368c795fff0bd585f0179"
+  },
+  {
+    "file": "protocol-edit.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "9805d2862564de9fa8b138ee519cd3406c7a7f6ad73eeaf43f66f54891f32ed7"
+  },
+  {
+    "file": "protocol-view.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "45b57682d085008452ff5ec8fec8228331b15afca7c4f4f881b2be0f55dfe957"
+  },
+  {
+    "file": "report-edit.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "63d89ea55e22f7032d98a3dc7e051f7dbf5d2d6e321498154d3f03d31bb27e85"
+  },
+  {
+    "file": "report-view.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "2f3de0ff86087f63450e4154f5dd5f5fc67168fa6626880567561e0f4606d367"
+  },
+  {
+    "file": "research-plan-edit.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "4b240ed3c84e9cc1b3525748a44d294db474e49401f4e2ee70466995d7b424de"
+  },
+  {
+    "file": "research-plan-view.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "e454f71dcc307e4a939ac5a9eb28fbe5ff45f8cd0a02576ede72a05e54a0235d"
+  },
+  {
+    "file": "result-edit.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "ec19b902eafd9bc999e4917d0d793600cb8863905e0e29ad91e00e8107f37894"
+  },
+  {
+    "file": "result-view.pdf",
+    "pages": 1,
+    "noBlankPages": true,
+    "sha256": "9b159402d234fbed23ea7b9c772068a885cbf04dcd0637ab34711269438a44d7"
+  },
+  {
+    "file": "template-edit.pdf",
+    "pages": 2,
+    "noBlankPages": true,
+    "sha256": "5f50c65101e30e970b5f83de47e44f7740c4f9385fe8a72963448390a50b9717"
+  },
+  {
+    "file": "template-view.pdf",
+    "pages": 2,
+    "noBlankPages": true,
+    "sha256": "2f940d8029af091246a92ba163cff60476d1122b8381ef9987ae675ccc2e3a75"
+  }
+]

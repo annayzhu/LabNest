@@ -1,0 +1,9 @@
+{
+  "phase": "print",
+  "checks": [
+    "Editor body remains visible in print media"
+  ],
+  "at": "2026-09-08T01:06:42.406Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

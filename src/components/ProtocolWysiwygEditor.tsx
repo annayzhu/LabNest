@@ -267,6 +267,11 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       DocumentMediaNode,
     ],
     editorProps: {
+      // Clicking media inside a template must not select the enclosing Protocol widget.
+      handleDOMEvents: {
+        // Nested instruction editors own their selection; the outer view must not select the whole template.
+        mousedown: (view, event) => event.target instanceof Element && event.target.closest('[contenteditable="true"]') !== view.dom,
+      },
       attributes: {
         class: "ln-protocol-tiptap",
         spellcheck: "true",

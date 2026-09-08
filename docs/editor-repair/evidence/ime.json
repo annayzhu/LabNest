@@ -1,0 +1,26 @@
+{
+  "phase": "ime",
+  "checks": [
+    {
+      "entry": "experiment",
+      "syntheticEvents": {
+        "composing": true,
+        "safari229": true,
+        "ordinary": false
+      },
+      "physicalIME": "not executed"
+    },
+    {
+      "entry": "result",
+      "syntheticEvents": {
+        "composing": true,
+        "safari229": true,
+        "ordinary": false
+      },
+      "physicalIME": "not executed"
+    }
+  ],
+  "at": "2026-09-08T01:06:44.005Z",
+  "base": "http://localhost:3227",
+  "clientErrors": []
+}

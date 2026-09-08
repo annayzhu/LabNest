@@ -52,7 +52,7 @@ if(phase==='media-controls'){
  await media.getByRole('img').click();await page.getByRole('textbox',{name:'图注 / Caption',exact:true}).fill('中文 image 说明');
  assert.equal(await page.getByRole('spinbutton',{name:'图片显示宽度百分比 / Image width percent',exact:true}).isVisible(),true,'Width appears in selected image context panel');await media.getByText('图片设置 / Image settings',{exact:true}).click();await page.getByRole('spinbutton',{name:'图片显示宽度百分比 / Image width percent',exact:true}).fill('60');
  assert.equal(await page.getByRole('spinbutton',{name:'图片显示宽度百分比 / Image width percent',exact:true}).inputValue(),'60');
- await page.getByRole('textbox',{name:'Experiment title',exact:true}).click();await media.focus();await media.press("Enter");assert(await page.getByRole('textbox',{name:'图注 / Caption',exact:true}).isVisible());
+ await page.getByRole('textbox',{name:'Experiment title',exact:true}).click();await media.focus();await media.press("Enter");await page.getByRole('textbox',{name:'图注 / Caption',exact:true}).waitFor({state:'visible'});
  const settings=media.getByRole('button',{name:'图片设置 / Image settings',exact:true});await settings.focus();await page.getByRole('button',{name:'收起属性',exact:true}).click();assert.equal(await settings.getAttribute('aria-expanded'),'false');await settings.press('Enter');
  const originalSrc=await media.getByRole('img').getAttribute('src');
  const chooser=page.waitForEvent('filechooser');await page.getByRole('button',{name:'替换附件 / Replace attachment',exact:true}).click();

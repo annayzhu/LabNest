@@ -1,10 +1,10 @@
 {
   "schemaVersion": "labnest.structured-export/v1",
   "module": "inventory",
-  "exportedAt": "2026-09-08T04:58:04.883Z",
+  "exportedAt": "2026-09-08T05:56:49.398Z",
   "records": [
     {
-      "inventoryId": "cmts782o80000xpostk523yrg",
+      "inventoryId": "cmts9bm7e0000ewosy6lqdhcy",
       "name": "Synthetic format stock",
       "englishName": null,
       "category": null,

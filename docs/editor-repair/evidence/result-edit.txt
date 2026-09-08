@@ -9,9 +9,9 @@ RECORD
 
 QC
 
-EXP-1788845471484 ·
+EXP-1788848074349 ·
 Synthetic editor
-1788845471484
+1788848074349
 
 Observation
 
@@ -23,7 +23,7 @@ not assessed
 
 Summary
 
-中文图注 result 1788845526811
+中文图注 result 1788848095205
 
 Editor acceptance body / 正文验收
 

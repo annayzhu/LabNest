@@ -1,4 +1,4 @@
-Synthetic protocol 1788829601454
+Synthetic protocol 1788848074349
 PROTOCOL ID
 
 VERSION
@@ -9,7 +9,7 @@ AVAILABILITY
 
 REVIEW
 
-PRT-1788829601454
+PRT-1788848074349
 
 0.1
 
@@ -28,7 +28,7 @@ One per run · 1 fields · 0 tables · 0 files
 
 填写说明 / INSTRUCTIONS
 
-结果模板说明 image 1788829633599
+结果模板说明 image 1788848108590
 
 字段要求 / FIELDS
 Value

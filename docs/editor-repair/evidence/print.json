@@ -3,7 +3,7 @@
   "checks": [
     "Editor body remains visible in print media"
   ],
-  "at": "2026-09-08T05:31:12.252Z",
-  "base": "http://localhost:3234",
+  "at": "2026-09-08T06:14:35.149Z",
+  "base": "http://localhost:3235",
   "clientErrors": []
 }

@@ -1,0 +1,15 @@
+2026-09-08T06:28:04.8976243Z locator.click: Timeout 30000ms exceeded.
+2026-09-08T06:28:04.8977028Z   - waiting for getByRole('button', { name: 'Save Experiment', exact: true })
+2026-09-08T06:28:04.8993328Z       - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events
+2026-09-08T06:28:04.9001173Z       - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events
+2026-09-08T06:28:04.9006340Z        - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events
+2026-09-08T06:28:04.9008393Z     at /home/runner/work/LabNest/LabNest/scripts/verify-calculator-run-v12.mjs:15:309 {
+2026-09-08T06:28:04.9009241Z     "  - waiting for getByRole('button', { name: 'Save Experiment', exact: true })",
+2026-09-08T06:28:04.9020687Z     '      - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events',
+2026-09-08T06:28:04.9024726Z     '      - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events',
+2026-09-08T06:28:04.9029329Z     '       - <footer class="border-t border-hairline px-4 py-2">…</footer> from <aside data-pinned="false" id="_R_f58lbsnpflb_" aria-label="Metadata" data-print-hidden="true" class="context-properties">…</aside> subtree intercepts pointer events',
+2026-09-08T06:28:04.9031090Z   name: 'TimeoutError'
+2026-09-08T06:29:01.3120242Z locator.innerText: Error: strict mode violation: locator('#appearance') resolved to 2 elements:
+2026-09-08T06:29:01.3125855Z   - waiting for locator('#appearance')
+2026-09-08T06:29:01.3127087Z   log: [ "  - waiting for locator('#appearance')" ]
+2026-09-08T06:31:26.1144280Z ##[error]Process completed with exit code 1.

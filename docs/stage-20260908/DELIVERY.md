@@ -25,3 +25,25 @@ A应用7bc8b4c，证据6488e16：隔离生产3233完整A脚本退出0、六项�
 硬件验收：在测试版本用真机160%依次打开库存与Run，中文输入登记人与图注并选词确认；保存、刷新确认内容；插图后保存→刷新→重编→只读→打印到真实打印机；实验人员完成一次收货→领用→Run→结果记录，记录遮挡、误触和数据差异。只使用测试记录。这些未执行项仍影响对应最终验收，不能自动判为通过。
 
 截图：B/evidence/coverage-*.png覆盖桌面/手机浅深色；D/evidence/{工具}-{设备}-{模式}.png；A/evidence保留20张。少量代表图经人工视觉检查，其余自动生成/几何检查，未逐张人工审美复核。统一逐项状态以CHECKLIST.md为准。
+
+
+最终单位菜单修复应用 `20e8855f56b252297ecd98d96da0be74f3493d4b`；仅限制已有账本可选维度，C/D代码未变。该版本生产构建、类型、双时区各577测试、eslint、共享交互与库存/Run单位页面回读重新通过。全面C/D页面及文件验收版本仍为071df83，不能混淆两个验证批次。日志ledger-final-*与ledger-unit-menu.json。
+
+
+## 最终完整CI同等验收
+
+应用757a5b6（设置Appearance唯一标识修复），联合提交9d7adb24c05c5d3bf50e3fd6e8a86c4541528457。生产构建、上海/UTC各577、类型、eslint重新通过。完整verify-calculator-v13-acceptance共22阶段退出0，包含Run→计算器→返回、移液、DB、旧快照、外观、离线、正式导出、导航、复制和转染。使用独立labnest_calculator_acceptance_20260906合成数据库及3221；数据与3235的合成A数据库分开。完整新证据存evidence/calculator-final，原历史Calculator报告恢复原样保存。
+
+远端此前失败两处：重复appearance标识已修复；Run测试更新为先收起Metadata再保存，与新界面一致。依赖的移液/DB失败由Run未创建引起；完整重跑均通过。红灯摘要remote-ui-red.log保留。
+
+
+## 远端验收最终通过
+
+| 工作线 | 验证提交 | Calculator（含双时区与浏览器） | Editor |
+|---|---|---|---|
+| A #69 | 6488e1619b70e04d3b27907a0028ae6ce1121d83 | 34192719486 success | 34192719433 success |
+| B #71 | 83ad61fd37d599c1dc10c01de4d98f9d7ae0edd6 | 34195237288 success | 34195237300 success |
+| C #72 | ce0a326e3379d15c35fa9a105682f256d1baab28 | 34195235926 success | 34195235970 success |
+| D #73 | 9d7adb24c05c5d3bf50e3fd6e8a86c4541528457 | 34195237553 success | 34195237656 success |
+
+原始状态JSON：evidence/remote-ci-final.json。之后的归档提交只含文档、证据及附加单位菜单测试脚本，应用代码不变；不把归档提交本身冒称上述工作流的验证SHA。

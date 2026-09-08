@@ -15,3 +15,6 @@ PR #73，依赖C #72。联合应用代码071df83，隔离生产3235。
 下载证据 evidence/file-checks.json 及对应5份ZIP/XLSX/JSON；截图{id}-{desktop|mobile}-{light|dark}.png。脚本 verify-stage-tool-files、verify-stage-tools。
 
 原工具路径、固定输入版本、SHA256见SOURCES.json，sync-embedded-tools.mjs可重复同步；不修改原目录或算法。补齐CNV分析原有diagnostics.js依赖；新增名单文件读取仅将明确选择的列送入原导入控件，导入后收起上方区并定位到工具。真实用户文件未读取。
+
+
+最终单位菜单修复应用 `20e8855f56b252297ecd98d96da0be74f3493d4b`；仅限制已有账本可选维度，C/D代码未变。该版本生产构建、类型、双时区各577测试、eslint、共享交互与库存/Run单位页面回读重新通过。全面C/D页面及文件验收版本仍为071df83，不能混淆两个验证批次。日志ledger-final-*与ledger-unit-menu.json。

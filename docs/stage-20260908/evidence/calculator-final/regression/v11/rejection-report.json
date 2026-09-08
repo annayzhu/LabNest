@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "I05 archived experiment rejected by server; original local inputs/snapshot preserved as conflict; reason visible"
+  ],
+  "lastError": "实验或步骤不可写入 / Experiment or step is unavailable",
+  "completedAt": "2026-09-08T06:36:39.687Z"
+}

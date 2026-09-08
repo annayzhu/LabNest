@@ -13,3 +13,6 @@ PR #72，依赖B #71。联合应用代码071df83，隔离生产3235，全部记�
 复用原C工作区改动并保留原工作区。主要代码 document-text-formatting、DocumentWysiwygToolbar、Protocol/Scientific Tiptap、文档视图和DOCX导出。图注和嵌套说明字号通过现有结构持久化，不另建文档系统。截图复用 B/evidence/coverage-{入口}-edit-{desktop|mobile}-{light|dark}.png；本目录PDF逐文件经文本/图像检查，真实打印机另验。
 
 复现顺序：seed-stage-text → verify-stage-text → verify-stage-font-all → verify-stage-nested-font → verify-editor-repair-all。LABNEST_ACCEPTANCE_URL及LABNEST_EDITOR_TEST_URL设http://localhost:3235，DATABASE_URL必须是独立合成库。
+
+
+最终单位菜单修复应用 `20e8855f56b252297ecd98d96da0be74f3493d4b`；仅限制已有账本可选维度，C/D代码未变。该版本生产构建、类型、双时区各577测试、eslint、共享交互与库存/Run单位页面回读重新通过。全面C/D页面及文件验收版本仍为071df83，不能混淆两个验证批次。日志ledger-final-*与ledger-unit-menu.json。

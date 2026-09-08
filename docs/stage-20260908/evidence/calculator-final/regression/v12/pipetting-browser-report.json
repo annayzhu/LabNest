@@ -1,0 +1,120 @@
+{
+  "startedAt": "2026-09-08T06:35:15.372Z",
+  "checks": [
+    "T01 T03 T22 UI, real clipboard, CSV, local history, offline queue and successful Result",
+    "T07",
+    "T11",
+    "T13"
+  ],
+  "experimentId": "cmtsaosnc0005z4osrj9icxem",
+  "experimentStepId": "cmtsaosnj0007z4oszv71xq3k",
+  "snapshot": {
+    "calculatorId": "percent-solution",
+    "methodVersion": "percent-solution-v2",
+    "outputs": [
+      {
+        "key": "soluteAmount",
+        "label": "Liquid solute",
+        "labelZh": "液体溶质体积",
+        "value": 0.00010000000000000002,
+        "unit": "mL"
+      },
+      {
+        "key": "targetVolumeMl",
+        "label": "Bring to final volume",
+        "labelZh": "定容至",
+        "value": 0.1,
+        "unit": "mL"
+      }
+    ],
+    "outputMap": {
+      "soluteAmount": 0.00010000000000000002,
+      "targetVolumeMl": 0.1
+    },
+    "warnings": [
+      "液体溶质体积 / Liquid solute (theoretical): 0.1 µL，低于所设 1 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution."
+    ],
+    "notes": [],
+    "operations": [
+      {
+        "id": "percent-solution:soluteAmount",
+        "component": "液体溶质体积 / Liquid solute",
+        "source": "specified-stock",
+        "destination": "preparation",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "soluteAmount",
+        "role": "add",
+        "quantity": {
+          "value": 0.10000000000000003,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      },
+      {
+        "id": "percent-solution:targetVolumeMl",
+        "component": "定容至 / Bring to final volume",
+        "source": "specified-stock",
+        "destination": "preparation",
+        "repetitions": 1,
+        "planVersion": "liquid-operations-v2",
+        "basis": "theoretical",
+        "componentId": "targetVolumeMl",
+        "role": "make-up-to",
+        "quantity": {
+          "value": 100.00000000000001,
+          "unit": "µL",
+          "dimension": "volume"
+        }
+      }
+    ],
+    "operationVersion": "liquid-operations-v2",
+    "pipettingCheck": {
+      "status": "below-minimum",
+      "minimumUl": 1
+    },
+    "structuredWarnings": [
+      {
+        "code": "below-minimum",
+        "operationId": "percent-solution:soluteAmount",
+        "component": "液体溶质体积 / Liquid solute",
+        "basis": "theoretical",
+        "volumeUl": 0.10000000000000003,
+        "minimumUl": 1,
+        "message": "液体溶质体积 / Liquid solute (theoretical): 0.1 µL，低于所设 1 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution."
+      }
+    ],
+    "displayUnits": {},
+    "schemaVersion": 2,
+    "status": "valid",
+    "mode": "default",
+    "rawInputs": {
+      "type": "v/v",
+      "percentage": "0.1",
+      "targetVolumeMl": "0.1",
+      "targetMassG": "",
+      "__context": {
+        "experimentId": "cmtsaosnc0005z4osrj9icxem",
+        "experimentStepId": "cmtsaosnj0007z4oszv71xq3k"
+      },
+      "pipetteMinimumUl": "1"
+    },
+    "normalizedInputs": {
+      "type": "v/v",
+      "percentage": {
+        "value": 0.1,
+        "dimension": "%",
+        "unit": "%",
+        "sourceUnit": "%"
+      },
+      "targetVolumeMl": {
+        "value": 0.0001,
+        "dimension": "volume",
+        "unit": "L",
+        "sourceUnit": "mL"
+      }
+    }
+  },
+  "resultId": "cmtsap2rl000iz4os6kzc57a0"
+}

@@ -39,4 +39,6 @@ A采购/Inventory、B共享UI、C字号/编辑器、D嵌入工具分别实施并
 | T29 | 打印与正式导出 | 保留正确实现并补齐 | 联合应用071df83 | 通过／真机未执行：12字号PDF、共享图片编辑/只读PDF逐文件文本图像检查、Protocol DOCX解包 | C/evidence与docs/editor-repair/evidence；真实打印机未执行 |
 | T30 | 四个嵌入工具 | 保留正确实现并补齐 | 联合应用071df83 | 通过：四工具真实导入与下载回读，排板保存返回重开 | D/evidence/file-checks.json、16截图；未承诺分析工具未保存状态跨导航恢复 |
 | T31 | 卡片入口 | 保留正确实现并补齐 | 联合应用071df83 | 通过：整卡链接键盘Enter，Preview独立，返回目录 | D/evidence/tools-inventory.json；原卡片无收藏按钮 |
-| T32 | 共享修改回归 | 保留正确实现并补齐 | 联合应用071df83 | 通过：生产构建/类型/双时区/Calculator及编辑器浏览器 | evidence/最终日志；远端检查另见DELIVERY.md |
+| T32 | 共享修改回归 | 保留正确实现并补齐 | 联合应用071df83 | 通过：生产构建/类型/双时区/Calculator及编辑器浏览器 | evidence/最终日志；远端B/C/D两工作流均success，精确SHA与运行ID见DELIVERY.md |
+
+最终联合应用757a5b6；完整22阶段Calculator验收本地与远端均通过。T32以DELIVERY.md最终版本表为准，前述071df83为页面/PDF初验批次。

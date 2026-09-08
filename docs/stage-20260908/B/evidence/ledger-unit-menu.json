@@ -1,0 +1,5 @@
+{
+  "checked": true,
+  "fixtureRun": "cmts9b90b00008posb9w6iwu1",
+  "check": "Existing volume ledger cannot switch to mass, including after clearing number"
+}

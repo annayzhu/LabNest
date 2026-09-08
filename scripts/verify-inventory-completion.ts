@@ -12,10 +12,11 @@ async function main() {
   try {
     await prisma.experimentStep.create({data:{experimentId:fixture.experimentId,order:999,title:"Synthetic timer copy",description:"Timer reset fixture"}});
     await prisma.experimentStep.updateMany({where:{experimentId:fixture.experimentId},data:{timerDurationSeconds:60,timerRemainingSeconds:42,timerStartedAt:new Date(),timerPausedAt:new Date()}});
+    await prisma.experiment.upsert({where:{runCode:"EXP-3000000000"},create:{runCode:"EXP-3000000000",title:"Synthetic long identifier"},update:{}});
     const before=await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}});
     const key=crypto.randomUUID();
     const response=await page.request.post(`${base}/api/experiments/${fixture.experimentId}/copy`,{data:{clientMutationId:key}});
-    assert.equal(response.status(),201,'Copy Run must exist and produce a fresh draft');
+    assert.equal(response.status(),201,'Copy Run must exist and produce a fresh draft: '+await response.text());
     const copied=await response.json();
     const repeat=await page.request.post(`${base}/api/experiments/${fixture.experimentId}/copy`,{data:{clientMutationId:key}});
     assert.equal((await repeat.json()).id,copied.id);

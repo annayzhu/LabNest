@@ -43,17 +43,18 @@ function numericSuffix(kind: RecordCodeKind, value: string) {
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
-function nextRecordCodeValue(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number) {
+function nextRecordCodeValue(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number | bigint) {
   const rule = recordCodeRules[kind];
   const highestExisting = existingCodes.reduce((highest, code) => {
     const suffix = numericSuffix(kind, code);
     return suffix === undefined ? highest : Math.max(highest, suffix);
   }, rule.firstValue - 1);
-  const safeLastReserved = Number.isSafeInteger(lastReservedValue) ? lastReservedValue! : rule.firstValue - 1;
+  const reserved = Number(lastReservedValue);
+  const safeLastReserved = Number.isSafeInteger(reserved) ? reserved : rule.firstValue - 1;
   return Math.max(rule.firstValue, highestExisting + 1, safeLastReserved + 1);
 }
 
-export function suggestNextRecordCode(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number) {
+export function suggestNextRecordCode(kind: RecordCodeKind, existingCodes: string[], lastReservedValue?: number | bigint) {
   return formatRecordCode(kind, nextRecordCodeValue(kind, existingCodes, lastReservedValue));
 }
 
@@ -85,7 +86,7 @@ export async function reserveRecordCodes(tx: Prisma.TransactionClient, kind: Rec
   const baseline = nextRecordCodeValue(kind, existingCodes);
   const requestedEnd = baseline + count - 1;
 
-  const rows = await tx.$queryRaw<Array<{ value: number }>>(Prisma.sql`
+  const rows = await tx.$queryRaw<Array<{ value: number | bigint }>>(Prisma.sql`
     INSERT INTO "RecordCodeCounter" ("key", "value", "updatedAt")
     VALUES (${rule.counterKey}, ${requestedEnd}, CURRENT_TIMESTAMP)
     ON CONFLICT ("key") DO UPDATE
@@ -93,7 +94,7 @@ export async function reserveRecordCodes(tx: Prisma.TransactionClient, kind: Rec
         "updatedAt" = CURRENT_TIMESTAMP
     RETURNING "value"
   `);
-  const endValue = rows[0]?.value;
+  const endValue = Number(rows[0]?.value);
   if (!Number.isSafeInteger(endValue)) throw new Error(`Could not reserve the next ${rule.prefix} codes.`);
   return Array.from({ length: count }, (_, index) => formatRecordCode(kind, endValue - count + index + 1));
 }

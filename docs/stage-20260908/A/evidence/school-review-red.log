@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Unsupported inclusive-only combinations must not export zero
+
+200 !== 422
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-school-export.ts:17:11) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 200,
+  expected: 422,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

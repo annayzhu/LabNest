@@ -10,6 +10,8 @@ async function main() {
   const fixture=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json','utf8'));
   const browser=await chromium.launch(); const page=await browser.newPage();const checks:string[]=[];
   try {
+    await prisma.experimentStep.create({data:{experimentId:fixture.experimentId,order:999,title:"Synthetic timer copy",description:"Timer reset fixture"}});
+    await prisma.experimentStep.updateMany({where:{experimentId:fixture.experimentId},data:{timerDurationSeconds:60,timerRemainingSeconds:42,timerStartedAt:new Date(),timerPausedAt:new Date()}});
     const before=await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}});
     const key=crypto.randomUUID();
     const response=await page.request.post(`${base}/api/experiments/${fixture.experimentId}/copy`,{data:{clientMutationId:key}});
@@ -23,6 +25,8 @@ async function main() {
     assert.equal(saved.inventoryTransactions.length,0);
     assert.ok(saved.materialUses.every(r=>r.actual===null&&r.transactionId===null&&r.correctionOfId===null));
     assert.ok(saved.steps.every(r=>!r.completed&&r.completedAt===null&&r.deviationNote===null));
+    assert.ok(saved.steps.length>0);
+    assert.ok(saved.steps.every(r=>r.timerDurationSeconds===60&&r.timerRemainingSeconds===null&&r.timerStartedAt===null&&r.timerPausedAt===null));
     assert.equal(await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}}),before);
     checks.push('Copy Run creates planned draft, resets actual use/execution/timers, carries no transactions, and retries return the same copy');
     await page.goto(`${base}/experiments/${fixture.experimentId}`);

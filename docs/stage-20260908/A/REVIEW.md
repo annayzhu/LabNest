@@ -15,3 +15,6 @@
 完整规格验收缺口见ACCEPTANCE.md，未把只读审查当作功能验收。
 
 Standards：2项原阻断已关闭；Spec：2项原问题已修复（含导入旁路），仍有明确未执行验收场景。
+
+## Completion review
+Standards and Spec reviewers both found an inclusive-price edge case in school export. Fixed by requiring explicit ex-tax amount/unit price and tax amount/rate for this template; added three rejected combinations. Copy timer evidence now seeds a running/paused timer and asserts reset runtime fields with preserved duration. These additional tests passed against isolated development server; final combined build/regression is recorded separately.

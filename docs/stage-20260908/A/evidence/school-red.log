@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Required template fields cannot silently become zero
+
+200 !== 422
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-school-export.ts:14:10) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 200,
+  expected: 422,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

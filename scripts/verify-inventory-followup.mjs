@@ -1,0 +1,77 @@
+import { acceptanceBase as base } from './stage-acceptance-env.mjs';
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+
+const f = JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const checks = [];
+const materialEndpoint = `/api/experiments/${f.experimentId}/materials`;
+const post = (path, data) => page.request.post(base + path, { data });
+const stock = async () => (await page.request.get(`${base}/api/inventory/${f.inventoryItemId}/containers`)).json();
+try {
+  const id = crypto.randomUUID();
+  const row = { action: 'save', id, name: 'Synthetic editable failed amount '+Date.now(), actual: 1e6, unit: 'mL', source: 'manual', inventoryItemId: f.inventoryItemId };
+  assert.equal((await post(materialEndpoint, row)).status(), 200);
+  await post(materialEndpoint, { action: 'confirm', ids: [id] });
+  await page.goto(`${base}/experiments/${f.experimentId}/run`);
+  const area = page.getByRole('heading', { name: '本次使用的试剂与耗材' }).locator('..');
+  await area.getByRole('row').filter({ hasText: row.name }).getByRole('button', { name: '编辑', exact: true }).click();
+  await area.getByLabel('实际', { exact: true }).fill('2');
+  await area.getByRole('button', { name: '保存使用记录', exact: true }).click();
+  await area.getByRole('status').filter({ hasText: '使用记录已保存' }).waitFor();
+  const before = (await stock()).currentQuantity;
+  await post(materialEndpoint, { action: 'confirm', ids: [id] });
+  await post(materialEndpoint, { action: 'confirm', ids: [id] });
+  assert.equal((await stock()).currentQuantity, before - 2);
+  const correction = { ...row, id: crypto.randomUUID(), actual: 1e6, correctionOfId: id };
+  await post(materialEndpoint, correction);
+  await post(materialEndpoint, { action: 'confirm', ids: [correction.id] });
+  await page.reload();
+  await area.getByRole('row').filter({ hasText: row.name }).filter({ hasText: '待确认扣减' }).getByRole('button', { name: '编辑', exact: true }).click();
+  await area.getByLabel('实际', { exact: true }).fill('1');
+  await area.getByRole('button', { name: '保存更正', exact: true }).click();
+  await area.getByRole('status').filter({ hasText: '使用记录已保存' }).waitFor();
+  await post(materialEndpoint, { action: 'confirm', ids: [correction.id] });
+  assert.equal((await stock()).currentQuantity, before - 1);
+  assert.equal((await post(materialEndpoint, { ...correction, id: crypto.randomUUID() })).status(), 409);
+  checks.push('Failed material and correction edited through Run UI with original IDs; explicit correction restores only 1 mL; duplicate correction rejected');
+
+  await page.goto(base + '/inventory/new');
+  await page.getByLabel('Item name *', { exact: true }).fill('Synthetic opening count ' + Date.now());
+  await page.getByRole('button', { name: 'Register Item', exact: true }).click();
+  await page.waitForURL(u => /^\/inventory\/[^/]+$/.test(u.pathname) && u.pathname !== '/inventory/new');
+  const inventoryId = new URL(page.url()).pathname.split('/').at(-1);
+  await page.goto(`${base}/inventory/${inventoryId}/edit`);
+  await page.getByLabel('管理方式 / Management', { exact: true }).selectOption('precise');
+  await page.locator('input[name=currentQuantity]').fill('180');
+  await page.getByLabel('Unit *', { exact: true }).fill('mL');
+  await page.getByLabel('盘点日期', { exact: true }).fill('2026-09-08');
+  await page.getByLabel('盘点登记人', { exact: true }).fill('合成验收员');
+  await page.getByLabel('盘点来源', { exact: true }).fill('合成实物清点记录');
+  await page.getByRole('button', { name: 'Save Item', exact: true }).click();
+  await page.waitForURL(u => u.pathname === `/inventory/${inventoryId}`);
+  const counted = await (await page.request.get(`${base}/api/inventory/${inventoryId}/containers`)).json();
+  assert.equal(counted.currentQuantity, 180);
+  assert.equal(counted.transactions.length, 1);
+  assert.equal(counted.transactions[0].type, 'adjust');
+  assert.equal(counted.transactions[0].performedBy, '合成验收员');
+  assert.ok(counted.transactions[0].deviceCreatedAt.startsWith('2026-09-08'));
+  assert.ok(counted.transactions[0].notes.includes('合成实物清点记录'));
+  checks.push('Unknown stock opening count through edit page preserves explicit date, recorder and source in one adjustment');
+
+  const purchase = await (await post('/api/purchases', { title: 'Synthetic snapshot and link', quantity: 2, unit: 'mL', actualAmount: '123.45', status: 'ordered', clientMutationId: crypto.randomUUID() })).json();
+  const stockBefore = (await stock()).currentQuantity;
+  await post(`/api/purchases/${purchase.id}`, { action: 'link', inventoryItemId: f.inventoryItemId, clientMutationId: crypto.randomUUID() });
+  assert.equal((await stock()).currentQuantity, stockBefore);
+  const exported = await page.request.get(base + '/api/purchases/export');
+  const content = await exported.text();
+  const snapshot = exported.headers()['content-disposition'].match(/purchases-(.*?)\.csv/)[1];
+  await post(`/api/purchases/${purchase.id}`, { action: 'details', quantity: 2, actualAmount: '234.56', clientMutationId: crypto.randomUUID() });
+  assert.equal(await (await page.request.get(`${base}/api/purchases/export?snapshot=${snapshot}`)).text(), content);
+  checks.push('Later inventory association does not receive stock; prior CSV snapshot is byte-identical after purchase amount correction');
+} finally {
+  writeFileSync('docs/stage-20260908/A/evidence/followup.json', JSON.stringify({ checks }, null, 2));
+  await browser.close();
+}

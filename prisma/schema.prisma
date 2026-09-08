@@ -470,6 +470,8 @@ model Entry {
 }
 
 model Experiment {
+  materialUses RunMaterialUse[]
+  inventoryObservations InventoryObservation[]
   id                       String                @id @default(cuid())
   runCode                  String                @unique
   title                    String
@@ -564,7 +566,7 @@ model ProjectProtocol {
 
 model RecordCodeCounter {
   key       String   @id
-  value     Int
+  value     BigInt
   updatedAt DateTime @updatedAt
 }
 
@@ -746,6 +748,8 @@ model InventoryItem {
   catalogNumber         String?
   casNumber             String?
   currentQuantity       Float              @default(0)
+  managementMode        String             @default("precise")
+  quantityRecorded      Boolean            @default(true)
   unit                  String
   lowThreshold          Float?
   concentration         String?
@@ -763,6 +767,9 @@ model InventoryItem {
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
+  materialUses RunMaterialUse[]
+  receipts PurchaseReceipt[]
+  containers   InventoryContainer[]
   transactions InventoryTransaction[]
   purchases    PurchaseRequest[]
   sampleEvents SampleLifecycleEvent[]
@@ -778,6 +785,7 @@ model InventoryItem {
 }
 
 model InventoryTransaction {
+  materialUse RunMaterialUse?
   id               String                   @id @default(cuid())
   inventoryItemId  String
   inventoryItem    InventoryItem            @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
@@ -1058,6 +1066,12 @@ model PurchaseRequest {
   updatedAt              DateTime              @updatedAt
 
   transactions InventoryTransaction[]
+  receipts PurchaseReceipt[]
+  actualAmount Decimal? @db.Decimal(18, 2)
+  currency String @default("CNY")
+  invoiceStatus String @default("pending")
+  invoiceReference String?
+  clientMutationId String? @unique
 
   @@index([status])
   @@index([linkedInventoryItemId])
@@ -1508,4 +1522,91 @@ model DeletedRecord {
 
   @@index([restoredAt, deletedAt])
   @@index([targetType, targetId])
+}
+
+// Physical identity survives issue, return and transfer. Amount observations are not stock transactions.
+model InventoryContainer {
+  materialUses RunMaterialUse[]
+  id              String @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  state           String @default("warehouse")
+  holder          String?
+  location        String?
+  openedAt        DateTime?
+  version         Int @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  events          InventoryContainerEvent[]
+  observations    InventoryObservation[]
+  @@index([inventoryItemId, state])
+}
+
+model InventoryContainerEvent {
+  id               String @id @default(cuid())
+  containerId      String
+  container        InventoryContainer @relation(fields: [containerId], references: [id], onDelete: Restrict)
+  action           String
+  performedBy      String?
+  snapshotJson     Json
+  clientMutationId String @unique
+  createdAt        DateTime @default(now())
+  @@index([containerId, createdAt])
+}
+
+model InventoryObservation {
+  id           String @id @default(cuid())
+  containerId  String
+  container    InventoryContainer @relation(fields: [containerId], references: [id], onDelete: Restrict)
+  remaining    Float
+  unit         String
+  quality      String
+  performedBy  String
+  experimentId String?
+  experiment Experiment? @relation(fields:[experimentId],references:[id],onDelete:Restrict)
+  createdAt    DateTime @default(now())
+  @@index([containerId, createdAt])
+}
+
+model PurchaseReceipt {
+  id String @id @default(cuid())
+  purchaseId String
+  purchase PurchaseRequest @relation(fields:[purchaseId],references:[id],onDelete:Restrict)
+  quantity Float
+  inventoryItemId String?
+  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
+  clientMutationId String @unique
+  createdAt DateTime @default(now())
+  @@index([purchaseId])
+}
+model PurchaseExportSnapshot {
+  id String @id @default(cuid())
+  content String
+  format String
+  createdAt DateTime @default(now())
+}
+
+model RunMaterialUse {
+  id String @id
+  experimentId String
+  experiment Experiment @relation(fields:[experimentId],references:[id],onDelete:Restrict)
+  name String
+  expected Float?
+  actual Float?
+  unit String
+  source String
+  inventoryItemId String?
+  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
+  containerId String?
+  container InventoryContainer? @relation(fields:[containerId],references:[id],onDelete:Restrict)
+  status String @default("recorded")
+  transactionId String? @unique
+  transaction InventoryTransaction? @relation(fields:[transactionId],references:[id],onDelete:Restrict)
+  correctionOfId String? @unique
+  correctionOf RunMaterialUse? @relation("MaterialCorrection",fields:[correctionOfId],references:[id],onDelete:Restrict)
+  correction RunMaterialUse? @relation("MaterialCorrection")
+  error String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([experimentId])
 }

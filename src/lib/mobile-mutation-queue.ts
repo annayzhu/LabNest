@@ -93,7 +93,8 @@ export type QueuedCalculationMutation = {
   state: MobileMutationState; retryCount: number; lastError?: string;
   payload: { experimentId: string; experimentStepId: string; operator: string; calculatorId: string; inputs: Record<string,unknown>; snapshot: CalculatorResult };
 };
-export type MobileMutation = QueuedCalculationMutation | QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
+export type QueuedRunMaterialMutation = {clientMutationId:string;actionType:"run.material";deviceCreatedAt:string;state:MobileMutationState;retryCount:number;lastError?:string;payload:{experimentId:string;row:Record<string,unknown>}};
+export type MobileMutation = QueuedRunMaterialMutation | QueuedCalculationMutation | QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
 
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";

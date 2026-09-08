@@ -61,7 +61,7 @@ function fieldLookup(module: StructuredModuleKey) {
   return lookup;
 }
 
-function mapRecords(module: StructuredModuleKey, records: Record<string, unknown>[]) {
+function mapRecords(module: StructuredModuleKey, records: Record<string, unknown>[], overrides: Record<string,string> = {}) {
   const lookup = fieldLookup(module);
   const mapping = new Map<string, StructuredColumnMapping>();
   const normalizedRecords = records.map((record) => {
@@ -71,7 +71,8 @@ function mapRecords(module: StructuredModuleKey, records: Record<string, unknown
         normalized[source] = value;
         continue;
       }
-      const field = lookup.get(normalizeKey(source));
+      const field = Object.hasOwn(overrides,source) ? structuredModules[module].fields.find(field=>field.key===overrides[source]) : lookup.get(normalizeKey(source));
+      if(field && Object.hasOwn(normalized,field.key))throw new Error(`Multiple source columns map to ${field.label}; choose one source.`);
       mapping.set(source, { source, target: field?.key, targetLabel: field?.label });
       if (field) normalized[field.key] = scalar(value);
     }
@@ -240,7 +241,7 @@ function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
   };
 }
 
-export async function parseStructuredFile(file: File, module: StructuredModuleKey): Promise<ParsedStructuredFile> {
+export async function parseStructuredFile(file: File, module: StructuredModuleKey, overrides: Record<string,string> = {}): Promise<ParsedStructuredFile> {
   if (!file.name || file.size === 0) throw new Error("Choose a non-empty import file.");
   if (file.size > 25 * 1024 * 1024) throw new Error("Structured import files must be 25 MB or smaller.");
   const format = formatFromFilename(file.name);
@@ -269,7 +270,7 @@ export async function parseStructuredFile(file: File, module: StructuredModuleKe
 
   if (rawRecords.length > 500) throw new Error("A single structured import is limited to 500 records.");
   if (!rawRecords.length) throw new Error("No data rows were found in the import file.");
-  const mapped = mapRecords(module, rawRecords);
+  const mapped = mapRecords(module, rawRecords, overrides);
   const unknownColumns = mapped.mapping.filter((item) => !item.target).map((item) => item.source);
   if (unknownColumns.length) warnings.push(`Unmapped columns retained outside the import: ${unknownColumns.join(", ")}.`);
   for (const record of mapped.records) {
@@ -408,4 +409,11 @@ export async function buildStructuredTemplate(module: StructuredModuleKey, forma
     ...(controlledValueFeature ? { features: [controlledValueFeature] } : {}),
   }).toBuffer();
   return { body: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer, filename: `${filenameBase}.xlsx`, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+}
+
+export function parseColumnOverrides(value:FormDataEntryValue|null):Record<string,string>{
+  if(!value)return {};
+  const parsed=JSON.parse(String(value));
+  if(!parsed||Array.isArray(parsed)||typeof parsed!=="object"||Object.values(parsed).some(v=>typeof v!=="string"))throw new Error("Invalid column mapping.");
+  return parsed;
 }

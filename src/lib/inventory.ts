@@ -15,6 +15,7 @@ export type InventoryRiskFlag = "depleted" | "low" | "expired" | "expiring";
 
 type InventoryRiskInput = {
   currentQuantity: number;
+  quantityRecorded?: boolean;
   lowThreshold?: number | null;
   expiryDate?: string | Date | null;
 };
@@ -26,9 +27,9 @@ export function getInventoryRiskFlags(
 ): InventoryRiskFlag[] {
   const flags: InventoryRiskFlag[] = [];
 
-  if (item.currentQuantity <= 0) {
+  if (item.quantityRecorded !== false && item.currentQuantity <= 0) {
     flags.push("depleted");
-  } else if (item.lowThreshold != null && item.currentQuantity <= item.lowThreshold) {
+  } else if (item.quantityRecorded !== false && item.lowThreshold != null && item.currentQuantity <= item.lowThreshold) {
     flags.push("low");
   }
 
@@ -104,4 +105,8 @@ export function directQuantityEditToAdjustTransaction({
     unit: item.unit,
     notes: notes ?? "Quantity adjustment generated instead of direct edit.",
   };
+}
+
+export function inventoryQuantityLabel(item: {currentQuantity:number;unit:string;quantityRecorded?:boolean}) {
+  return item.quantityRecorded === false ? "数量未记录 / Quantity not recorded" : `${item.currentQuantity} ${item.unit}`;
 }

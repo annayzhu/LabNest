@@ -1,0 +1,6 @@
+{
+  "checks": [
+    "Independent order: receive 2 without stock then 3 into new stock; replay is idempotent; invoice remains pending",
+    "Actual purchasing export includes actual amount and stable record ID"
+  ]
+}

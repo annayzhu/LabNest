@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "Failed material and correction edited through Run UI with original IDs; explicit correction restores only 1 mL; duplicate correction rejected",
+    "Unknown stock opening count through edit page preserves explicit date, recorder and source in one adjustment",
+    "Later inventory association does not receive stock; prior CSV snapshot is byte-identical after purchase amount correction"
+  ]
+}

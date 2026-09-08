@@ -1,14 +1,14 @@
+import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
 import {runParameterKeys} from "@/lib/run-parameters";
 import { runStepContent,runOfflineImagePaths } from "@/lib/run-step-content";
-import { ArrowLeft, Camera, FilePlus2, PackageMinus } from "lucide-react";
+import { ArrowLeft, Camera, FilePlus2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
-import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolRunProgressForm } from "@/components/ProtocolRunProgressForm";
 import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
@@ -16,13 +16,11 @@ import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording } from "@/lib/experiment-results";
-import { recordProtocolRunConsumption } from "./actions";
+
 
 export const dynamic = "force-dynamic";
 
 const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
-const primaryButton = buttonStyles({ variant: "primary", size: "md", className: "sm:col-span-2 font-medium" });
-const fieldClass = `${formInputClass} bg-surface`;
 
 export default async function ProtocolRunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,6 +28,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     prisma.experiment.findUnique({
       where: { id },
       include: {
+        materialUses: {orderBy:{createdAt:"asc"}},
         project: true,
         researchPlan: true,
         primaryProtocolVersion: { include: { protocol: true } },
@@ -45,8 +44,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     }),
     prisma.inventoryItem.findMany({
-      where: { status: "active", currentQuantity: { gt: 0 } },
-      include: { location: true },
+      where: { status: "active" },
+      include: { location: true, containers:{where:{state:"held"},select:{id:true,holder:true}} },
       orderBy: { name: "asc" },
       take: 250,
     }),
@@ -131,24 +130,11 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
-          <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
-            <div className="mb-4 flex items-center gap-2"><PackageMinus className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Inventory consumption</h2></div>
-            {editable && inventoryItems.length ? (
-              <form action={recordProtocolRunConsumption} className="grid gap-3 sm:grid-cols-2">
-                <input type="hidden" name="experimentId" value={experiment.id} />
-                {currentStep ? <input type="hidden" name="experimentStepId" value={currentStep.id} /> : null}
-                {currentStep ? <p className="sm:col-span-2 rounded-[var(--ln-radius-control-lg)] bg-action-surface px-3 py-2 text-xs text-graphite">Linked to Step {currentStep.order} · {currentStep.title}</p> : null}
-                <label className="sm:col-span-2"><span className={formLabelClass}>Inventory Item</span><select required name="inventoryItemId" className={fieldClass}><option value="">Select material…</option>{inventoryItems.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.currentQuantity} {item.unit}{item.location ? ` · ${item.location.name}` : ""}</option>)}</select></label>
-                <label><span className={formLabelClass}>Quantity used</span><input required name="quantity" type="number" min="0.000001" step="any" className={fieldClass} /></label>
-                <label><span className={formLabelClass}>Performed by</span><input name="performedBy" className={fieldClass} /></label>
-                <label className="sm:col-span-2"><span className={formLabelClass}>Note</span><input name="notes" placeholder="Plate, sample or step context" className={fieldClass} /></label>
-                <button className={primaryButton}><PackageMinus className="h-4 w-4" aria-hidden />Record consumption</button>
-              </form>
-            ) : <p className="text-sm text-muted">{editable ? "No active Inventory with available quantity." : "Archived runs cannot change Inventory."}</p>}
-            {transactions.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{transactions.map((transaction) => <li key={transaction.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span>{transaction.inventoryItem.name}</span><span className="font-mono text-xs text-muted">{transaction.quantityChange} {transaction.unit}</span></li>)}</ul> : null}
-          </section>
+          <RunMaterials experimentId={id} rows={JSON.parse(JSON.stringify(experiment.materialUses))} stock={inventoryItems} editable={editable} planned={Array.isArray(experiment.protocolRun?.calculatedConsumptionJson)?experiment.protocolRun.calculatedConsumptionJson as unknown as {materialName:string;quantity:number;unit:string;formula?:string}[]:[]}/>
+
         </div>
 
+        {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">已执行库存交易</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {t.quantityChange} {t.unit}</li>)}</ul></section>:null}
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>
     </AppShell>

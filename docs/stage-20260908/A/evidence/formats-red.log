@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+74 !== 2
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-inventory-export-formats.ts:14:419) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 74,
+  expected: 2,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

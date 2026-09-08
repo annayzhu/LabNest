@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+404 !== 201
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-purchase-receipts.mjs:4:228 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 404,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

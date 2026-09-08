@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Information-only inventory saves and refreshes with unknown quantity",
+    "Purchase form creates actual purchase and partial receipt without inventory",
+    "Run offline save uses existing queue, syncs once on reconnect and survives refresh",
+    "Batch issue form issues exactly two of five stable bottles, preserving unopened state",
+    "Desktop/mobile light/dark page batch: no root horizontal overflow or page exceptions"
+  ],
+  "errors": []
+}

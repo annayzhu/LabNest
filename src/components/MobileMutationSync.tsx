@@ -25,6 +25,8 @@ export function MobileMutationSync() {
               formData.set("mediaOrder", mutation.payload.mediaOrder);
               mutation.payload.files.forEach(({ name, file }) => formData.append("files", file, name));
               response = await fetch("/api/entries", { method: "POST", body: formData });
+            } else if (mutation.actionType === "run.material") {
+              response = await fetch(`/api/experiments/${mutation.payload.experimentId}/materials`, {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(mutation.payload.row)});
             } else if (mutation.actionType === "inventory.transaction") {
               response = await fetch("/api/mobile/inventory-transactions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "measurement.create") {

@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: balance updates explicit existing ID with correct meaning
+
+88 !== 180
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-inventory-import-modes.mjs:8:100 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 88,
+  expected: 180,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

@@ -118,6 +118,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
 
   function chooseFile(nextFile?: File, source: "picker" | "drop" = "picker") {
     setPreview(undefined);
+    setColumnOverrides({});
     setError(undefined);
 
     if (source === "drop" && fileInput.current) fileInput.current.value = "";
@@ -183,10 +184,11 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
     chooseFile(droppedFiles[0], "drop");
   }
 
+  const [columnOverrides,setColumnOverrides]=useState<Record<string,string>>({});
   async function requestPreview() {
     if (!file) { setError("Choose an import file first."); return; }
     setPending("preview"); setError(undefined); setPreview(undefined);
-    const formData = new FormData(); formData.set("file", file);
+    const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(columnOverrides));
     try {
       const response = await fetch(`/api/structured-import/${module}/preview`, { method: "POST", body: formData });
       const payload = await response.json() as { error?: string; preview?: StructuredImportPreview };
@@ -198,9 +200,9 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
   }
 
   async function confirmImport() {
-    if (!file || !preview) return;
+    if (!file || !preview || !preview.canImport) return;
     setPending("confirm"); setError(undefined);
-    const formData = new FormData(); formData.set("file", file); formData.set("checksum", preview.checksum);
+    const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(columnOverrides)); formData.set("checksum", preview.checksum);
     formData.set("confirmationToken", preview.confirmationToken ?? "");
     try {
       const response = await fetch(`/api/structured-import/${module}/confirm`, { method: "POST", body: formData });
@@ -291,12 +293,12 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
         </CardBody>
       </Card>
 
-      {preview ? <PreviewPanel preview={preview} pending={pending === "confirm"} onConfirm={confirmImport} /> : null}
+      {preview ? <PreviewPanel preview={preview} pending={pending === "confirm"} onConfirm={confirmImport} onRemap={["inventory","purchases"].includes(module)?(source,target)=>{setColumnOverrides(current=>({...current,[source]:target}));setPreview(current=>current?{...current,canImport:false,confirmationToken:undefined}:current);}:undefined} /> : null}
     </div>
   );
 }
 
-function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImportPreview; pending: boolean; onConfirm: () => void }) {
+function PreviewPanel({ preview, pending, onConfirm, onRemap }: { preview: StructuredImportPreview; pending: boolean; onConfirm: () => void; onRemap?:(source:string,target:string)=>void }) {
   const mappedCount = preview.mapping.filter((mapping) => mapping.target).length;
   const ignoredCount = preview.mapping.length - mappedCount;
   const readyCount = preview.rows.filter((row) => !row.errors.length).length;
@@ -326,7 +328,7 @@ function PreviewPanel({ preview, pending, onConfirm }: { preview: StructuredImpo
               <div key={mapping.source} className="grid gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 py-2 text-xs">
                 <span className="text-[11px] uppercase tracking-[0.06em] text-muted">Source column</span>
                 <span className="truncate font-mono text-graphite" title={mapping.source}>{mapping.source}</span>
-                <span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "Not imported"}</span>
+                {onRemap?<select aria-label={`Map ${mapping.source}`} defaultValue={mapping.target??""} className="focus-ring min-h-11 border border-hairline bg-surface" onChange={e=>onRemap(mapping.source,e.target.value)}><option value="">不导入</option>{structuredModules[preview.module].fields.map(field=><option key={field.key} value={field.key}>{field.label}</option>)}</select>:<span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "Not imported"}</span>}
               </div>
             ))}
           </div>

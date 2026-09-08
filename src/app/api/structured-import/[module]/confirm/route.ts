@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { cleanupPreparedAttachmentFiles, prepareAttachmentFile, writePreparedAttachmentFiles } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
-import { parseStructuredFile } from "@/lib/structured-files";
+import { parseStructuredFile, parseColumnOverrides } from "@/lib/structured-files";
 import { commitStructuredImport, validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
@@ -20,9 +20,9 @@ export async function POST(request: Request, context: { params: Promise<{ module
   let attachmentId: string | undefined;
   let preparedFile: Awaited<ReturnType<typeof prepareAttachmentFile>> | undefined;
   try {
-    const parsed = await parseStructuredFile(file, module);
+    const parsed = await parseStructuredFile(file, module, ["inventory","purchases"].includes(module)?parseColumnOverrides(formData.get("mapping")):{});
     if (!expectedChecksum || parsed.checksum !== expectedChecksum) return Response.json({ error: "The selected file changed after preview. Preview it again before importing." }, { status: 409 });
-    if (module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) return Response.json({ errorCode: "IMPORT_CONFIRMATION_CHANGED", error: "The file, filename or import decision changed, or the preview expired. Preview it again before importing." }, { status: 409 });
+    if (["protocols","purchases","inventory"].includes(module) && !matchesImportConfirmation(parsed, confirmationToken)) return Response.json({ errorCode: "IMPORT_CONFIRMATION_CHANGED", error: "The file, filename or import decision changed, or the preview expired. Preview it again before importing." }, { status: 409 });
     const validation = await validateStructuredImport(parsed);
     if (!validation.preview.canImport) return Response.json({ error: "The import no longer passes validation.", preview: validation.preview }, { status: 422 });
 

@@ -1,0 +1,2 @@
+recordKind,quotedAmount,title,quantity,unit,vendor,actualAmount,status,invoiceStatus,invoiceReference
+,,Synthetic format purchase,2,box,,123.45,received,pending,

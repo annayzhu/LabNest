@@ -186,6 +186,8 @@ function serializeInventoryItem(record: {
   catalogNumber: string | null;
   casNumber: string | null;
   currentQuantity: number;
+  quantityRecorded?: boolean;
+  managementMode?: string;
   unit: string;
   lowThreshold: number | null;
   concentration: string | null;
@@ -214,6 +216,8 @@ function serializeInventoryItem(record: {
     catalogNumber: optional(record.catalogNumber),
     casNumber: optional(record.casNumber),
     currentQuantity: record.currentQuantity,
+    quantityRecorded: record.quantityRecorded,
+    managementMode: record.managementMode,
     unit: record.unit,
     lowThreshold: optional(record.lowThreshold),
     concentration: optional(record.concentration),
@@ -244,7 +248,7 @@ function sampleWarnings(
     });
   }
 
-  if (activeItems.some((item) => item.lowThreshold !== undefined && item.currentQuantity <= item.lowThreshold)) {
+  if (activeItems.some((item) => item.quantityRecorded !== false && item.lowThreshold !== undefined && item.currentQuantity <= item.lowThreshold)) {
     warnings.push({
       type: "low_quantity",
       severity: "action",

@@ -1,0 +1,6 @@
+{
+  "checks": [
+    "purchases imports without other modules or fabricated zero; identical file cannot import twice",
+    "inventory imports without other modules or fabricated zero; identical file cannot import twice"
+  ]
+}

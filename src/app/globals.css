@@ -5456,3 +5456,12 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 @media (min-width: 1400px) {
   #document-editor-panel-metadata { max-width: none; width: calc(100% - var(--ln-document-outline-width) - var(--ln-document-workbench-gap)); }
 }
+
+/* Material records remain a flat ledger; narrow screens label each value instead of crushing columns. */
+@media (max-width: 640px) {
+  .ln-run-material-table thead { display: none; }
+  .ln-run-material-table tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ln-run-material-table td { min-width: 0; overflow-wrap: anywhere; }
+  .ln-run-material-table td:first-child { grid-column: 1 / -1; font-weight: 600; }
+  .ln-run-material-table td:not(:first-child)::before { content: attr(data-label); display: block; color: var(--color-muted); }
+}

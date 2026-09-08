@@ -1,0 +1,16 @@
+{
+  "commit": "d5ba793071306f7c55d6e0b0f7ac2381ecae7af6",
+  "runs": [
+    {
+      "id": 34187089188,
+      "name": "Calculator acceptance",
+      "conclusion": "success",
+      "includes": "Shanghai/Vancouver quality and browser"
+    },
+    {
+      "id": 34187089198,
+      "name": "Document editor acceptance",
+      "conclusion": "success"
+    }
+  ]
+}

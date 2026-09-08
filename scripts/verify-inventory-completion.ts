@@ -1,0 +1,58 @@
+import 'dotenv/config';
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { prisma } from '../src/lib/db';
+async function main() {
+  if (new URL(process.env.DATABASE_URL!).pathname !== '/labnest_stage_a_acceptance') throw new Error('Synthetic database only');
+  const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3233';
+  if(!['http://localhost:3232','http://localhost:3233'].includes(base))throw new Error('Isolated server only');
+  const fixture=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json','utf8'));
+  const browser=await chromium.launch(); const page=await browser.newPage();const checks:string[]=[];
+  try {
+    await prisma.experimentStep.create({data:{experimentId:fixture.experimentId,order:999,title:"Synthetic timer copy",description:"Timer reset fixture"}});
+    await prisma.experimentStep.updateMany({where:{experimentId:fixture.experimentId},data:{timerDurationSeconds:60,timerRemainingSeconds:42,timerStartedAt:new Date(),timerPausedAt:new Date()}});
+    await prisma.experiment.upsert({where:{runCode:"EXP-3000000000"},create:{runCode:"EXP-3000000000",title:"Synthetic long identifier"},update:{}});
+    const before=await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}});
+    const key=crypto.randomUUID();
+    const response=await page.request.post(`${base}/api/experiments/${fixture.experimentId}/copy`,{data:{clientMutationId:key}});
+    assert.equal(response.status(),201,'Copy Run must exist and produce a fresh draft: '+await response.text());
+    const copied=await response.json();
+    const repeat=await page.request.post(`${base}/api/experiments/${fixture.experimentId}/copy`,{data:{clientMutationId:key}});
+    assert.equal((await repeat.json()).id,copied.id);
+    await page.goto(`${base}/experiments/${copied.id}/run`);
+    assert.ok(await page.getByText('planned',{exact:true}).count());
+    const saved=await prisma.experiment.findUniqueOrThrow({where:{id:copied.id},include:{materialUses:true,steps:true,inventoryTransactions:true}});
+    assert.equal(saved.inventoryTransactions.length,0);
+    assert.ok(saved.materialUses.every(r=>r.actual===null&&r.transactionId===null&&r.correctionOfId===null));
+    assert.ok(saved.steps.every(r=>!r.completed&&r.completedAt===null&&r.deviationNote===null));
+    assert.ok(saved.steps.length>0);
+    assert.ok(saved.steps.every(r=>r.timerDurationSeconds===60&&r.timerRemainingSeconds===null&&r.timerStartedAt===null&&r.timerPausedAt===null));
+    assert.equal(await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}}),before);
+    checks.push('Copy Run creates planned draft, resets actual use/execution/timers, carries no transactions, and retries return the same copy');
+    await page.goto(`${base}/experiments/${fixture.experimentId}`);
+    await page.getByRole('button',{name:'复制为新实验',exact:true}).click();
+    await page.waitForURL(u=>u.pathname.startsWith('/experiments/')&&!u.pathname.includes(fixture.experimentId));
+    checks.push('Copy button opens a distinct experiment detail page');
+    const protocol=await prisma.protocol.create({data:{humanCode:'SYN-CONS-'+Date.now(),title:'Synthetic expected materials'}});
+    const version=await prisma.protocolVersion.create({data:{protocolId:protocol.id,revision:1,title:'Synthetic expected materials'}});
+    await prisma.protocolRun.upsert({where:{experimentId:copied.id},create:{experimentId:copied.id,protocolVersionId:version.id,calculatedConsumptionJson:[{materialName:'Synthetic planned medium',quantity:10,unit:'mL',formula:'wells * 2'}]},update:{calculatedConsumptionJson:[{materialName:'Synthetic planned medium',quantity:10,unit:'mL',formula:'wells * 2'}]}});
+    await page.goto(`${base}/experiments/${copied.id}/run`);
+    const area=page.getByRole('heading',{name:'本次使用的试剂与耗材'}).locator('..');
+    await area.getByLabel('预计材料',{exact:true}).selectOption('0');
+    assert.equal(await area.getByLabel('预计',{exact:true}).inputValue(),'10');
+    await area.getByLabel('实际',{exact:true}).fill('12');
+    await area.getByRole('button',{name:'保存使用记录',exact:true}).click();
+    await area.getByRole('status').filter({hasText:'已保存'}).waitFor();await page.reload();
+    const material=await prisma.runMaterialUse.findFirstOrThrow({where:{experimentId:copied.id,name:'Synthetic planned medium'}});
+    assert.equal(material.expected,10);assert.equal(material.actual,12);assert.ok(material.source.includes('wells * 2'));
+    checks.push('Consumption dropdown brings 10mL expected with source, actual12mL stays separate across save/reload');
+    const item=await prisma.inventoryItem.create({data:{name:'Synthetic held medium',managementMode:'package',currentQuantity:0,unit:'瓶',containers:{create:{state:'held',holder:'合成验收员'}}},include:{containers:true}});
+    await page.goto(`${base}/inventory/${item.id}`);await page.getByRole('button').filter({hasText:item.containers[0].id}).click();
+    await page.getByLabel('实物操作',{exact:true}).selectOption('observe');await page.getByLabel('余量',{exact:true}).fill('180');await page.getByLabel('登记人',{exact:true}).fill('合成验收员');await page.getByLabel('关联实验 ID（选填）',{exact:true}).fill(copied.id);await page.getByRole('button',{name:'确认登记余量',exact:true}).click();await page.getByRole('status').filter({hasText:'已保存'}).waitFor();await page.reload();
+    const bottle=await prisma.inventoryContainer.findUniqueOrThrow({where:{id:item.containers[0].id},include:{observations:true}});
+    assert.equal(bottle.observations[0].experimentId,copied.id);assert.equal(bottle.observations[0].remaining,180);assert.equal(bottle.observations[0].quality,'estimated');assert.equal(await prisma.inventoryTransaction.count({where:{inventoryItemId:item.id}}),0);
+    checks.push('Bottle observation180mL linked to experiment through page; estimate retained after reload without stock transaction');
+  } finally {writeFileSync('docs/stage-20260908/A/evidence/completion.json',JSON.stringify({checks},null,2));await browser.close();await prisma.$disconnect();}
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

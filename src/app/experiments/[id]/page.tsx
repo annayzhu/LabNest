@@ -1,3 +1,4 @@
+import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { Play } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -75,7 +76,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     proposedActions,
   });
   return <AppShell><div className="space-y-6">
-    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<><DocumentPrintButton showLabel />{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={resultRecordingHref} className={secondaryButton}>Record results</Link><Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link><RecordLifecycleControl id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></>} />
+    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<><DocumentPrintButton showLabel /><CopyExperimentButton id={experiment.id} />{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={resultRecordingHref} className={secondaryButton}>Record results</Link><Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link><RecordLifecycleControl id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></>} />
     {recycledAssociations.some((row) => row.targetType === "research_plan") ? <RecycleBinWarning label="Research Plan" labelZh="研究方案" /> : null}
     {recycledAssociations.some((row) => row.targetType === "protocol") ? <RecycleBinWarning label="Protocol" labelZh="实验规程" /> : null}
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}

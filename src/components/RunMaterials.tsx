@@ -215,9 +215,11 @@ export function RunMaterials({
               <label className="text-sm">
                 预计材料
                 <select
+                  aria-label="预计材料"
                   className={formInputClass}
                   defaultValue=""
                   onChange={(e) => {
+                    if (e.target.value === "") { setSource("manual"); return; }
                     const p = planned[Number(e.target.value)];
                     if (p) {
                       setName(p.materialName);

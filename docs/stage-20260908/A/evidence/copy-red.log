@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Copy Run must exist and produce a fresh draft
+
+404 !== 201
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-a/scripts/verify-inventory-completion.ts:16:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 404,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

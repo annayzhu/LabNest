@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Copy Run creates planned draft, resets actual use/execution/timers, carries no transactions, and retries return the same copy",
+    "Copy button opens a distinct experiment detail page",
+    "Consumption dropdown brings 10mL expected with source, actual12mL stays separate across save/reload",
+    "Bottle observation180mL linked to experiment through page; estimate retained after reload without stock transaction"
+  ]
+}

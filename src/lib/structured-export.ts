@@ -121,7 +121,7 @@ export async function structuredExportRecords(
     });
   }
   if(module==="purchases"){
-    const rows=await prisma.purchaseRequest.findMany({orderBy:{updatedAt:"desc"}});
+    const rows=applyExportSelection(await prisma.purchaseRequest.findMany({orderBy:{updatedAt:"desc"}}), selection, row=>({search:[row.title,row.vendor],filters:{status:row.status,invoiceStatus:row.invoiceStatus}}));
     return rows.map(row=>({id:row.id,title:row.title,quantity:row.quantity,unit:row.unit,vendor:row.vendor,actualAmount:row.actualAmount?.toFixed(2),status:row.status,invoiceStatus:row.invoiceStatus,invoiceReference:row.invoiceReference}));
   }
   if (module === "inventory") {
@@ -133,7 +133,7 @@ export async function structuredExportRecords(
         filters: { status: row.status, category: row.category, location: row.locationId, pi: row.principalInvestigator, flag: getInventoryRiskFlags(row) },
       }),
     );
-    return rows.map((row) => ({ name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, principalInvestigator: row.principalInvestigator, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, managementMode:row.managementMode,currentQuantity: row.quantityRecorded ? row.currentQuantity : null, unit: row.unit, lowThreshold: row.lowThreshold, concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
+    return rows.map((row) => ({ inventoryId: row.id, name: row.name, englishName: row.englishName, category: row.category, brand: row.brand, principalInvestigator: row.principalInvestigator, containerType: row.containerType, barcode: row.barcode, aliquotCode: row.aliquotCode, lotNumber: row.lotNumber, vendor: row.vendor, catalogNumber: row.catalogNumber, casNumber: row.casNumber, managementMode:row.managementMode,currentQuantity: row.quantityRecorded ? row.currentQuantity : null, unit: row.unit, lowThreshold: row.lowThreshold, concentration: row.concentration, location: row.location?.name, positionCode: row.positionCode, expiryDate: row.expiryDate?.toISOString(), storageCondition: row.storageCondition, freezeThawCount: row.freezeThawCount, status: row.status, notes: row.notes }));
   }
   const rows = applyExportSelection(
     await prisma.report.findMany({ include: { project: true, researchPlan: true }, orderBy: { updatedAt: "desc" } }),

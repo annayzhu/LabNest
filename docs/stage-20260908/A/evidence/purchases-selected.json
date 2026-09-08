@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "labnest.structured-export/v1",
+  "module": "purchases",
+  "exportedAt": "2026-09-08T04:58:04.908Z",
+  "records": [
+    {
+      "id": "cmts782ox0001xposek7f7r55",
+      "title": "Synthetic format purchase",
+      "quantity": 2,
+      "unit": "box",
+      "vendor": null,
+      "actualAmount": "123.45",
+      "status": "received",
+      "invoiceStatus": "pending",
+      "invoiceReference": null
+    }
+  ]
+}

@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get("snapshot");
   if (id) {
     const saved = await prisma.purchaseExportSnapshot.findUnique({where:{id}});
-    if (!saved) return Response.json({error:"Export snapshot not found"},{status:404});
+    if (!saved || saved.format !== "csv") return Response.json({error:"Export snapshot not found"},{status:404});
     return downloadResponse(saved.content, `purchases-${saved.id}.csv`, "text/csv; charset=utf-8");
   }
   const purchases = await prisma.purchaseRequest.findMany({

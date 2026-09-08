@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "inventory csv: selected scope, name, quantity/amount, unit and stock identity match",
+    "inventory xlsx: selected scope, name, quantity/amount, unit and stock identity match",
+    "inventory json: selected scope, name, quantity/amount, unit and stock identity match",
+    "purchases csv: selected scope, name, quantity/amount, unit and stock identity match",
+    "purchases xlsx: selected scope, name, quantity/amount, unit and stock identity match",
+    "purchases json: selected scope, name, quantity/amount, unit and stock identity match"
+  ]
+}

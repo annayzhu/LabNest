@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "labnest.structured-export/v1",
+  "module": "inventory",
+  "exportedAt": "2026-09-08T04:58:04.883Z",
+  "records": [
+    {
+      "inventoryId": "cmts782o80000xpostk523yrg",
+      "name": "Synthetic format stock",
+      "englishName": null,
+      "category": null,
+      "brand": "Brand A",
+      "principalInvestigator": null,
+      "containerType": null,
+      "barcode": null,
+      "aliquotCode": null,
+      "lotNumber": "LOT-1",
+      "vendor": null,
+      "catalogNumber": null,
+      "casNumber": null,
+      "managementMode": "precise",
+      "currentQuantity": 180,
+      "unit": "mL",
+      "lowThreshold": null,
+      "concentration": null,
+      "positionCode": null,
+      "storageCondition": null,
+      "freezeThawCount": 0,
+      "status": "active",
+      "notes": null
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "Missing category/money rejected at export",
+    "XLSX parsed: product, quantity2, ex-tax100 and tax13 match",
+    "After price change, snapshot returns identical bytes"
+  ]
+}

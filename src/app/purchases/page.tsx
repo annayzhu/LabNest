@@ -44,7 +44,7 @@ export default async function PurchasesPage() {
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          actions={<div className="flex flex-wrap gap-4"><Link href="/purchases/import" className="focus-ring text-moss">导入购买明细</Link><Link href="/purchases/new" className="focus-ring text-moss">登记购买</Link><a href="/api/purchases/quotes?format=csv" className="focus-ring text-moss">导出报价比较</a><a href="/api/purchases/export" className="focus-ring text-moss">导出实际购买</a></div>}
+          actions={<div className="flex flex-wrap gap-4"><Link href="/purchases/import" className="focus-ring text-moss">导入购买明细</Link><Link href="/purchases/new" className="focus-ring text-moss">登记购买</Link><a download href="/api/purchases/quotes?format=csv" className="focus-ring text-moss">导出报价比较</a><a download href="/api/purchases/export" className="focus-ring text-moss">导出实际购买</a></div>}
           title="Purchases"
           description="独立记录报价、购买和收货，按需关联库存。"
         />

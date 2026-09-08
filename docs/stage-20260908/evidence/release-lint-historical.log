@@ -1,0 +1,22 @@
+
+> labnest@0.1.0 lint
+> eslint
+
+
+/Users/annayzhu/Documents/Playground/LabNest-stage-b/scripts/verify-editor-repair.mjs
+  55:0  error  Parsing error: Merge conflict marker encountered
+
+/Users/annayzhu/Documents/Playground/LabNest-stage-b/src/components/EntityCreateForm.tsx
+  10:7  warning  'entityTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-stage-b/src/lib/run-materials.ts
+  23:19  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-stage-b/src/lib/structured-import.ts
+  441:38  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  602:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 7 problems (1 error, 6 warnings)
+

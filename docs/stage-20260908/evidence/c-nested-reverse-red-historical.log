@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'16px' !== '24px'
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-b/scripts/verify-stage-nested-font.ts:18:292) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '16px',
+  expected: '24px',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

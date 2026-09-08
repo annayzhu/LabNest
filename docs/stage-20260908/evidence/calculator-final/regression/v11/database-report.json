@@ -1,0 +1,9 @@
+{
+  "resultId": "cmtsaqsgw000oz4os9flnb2dp",
+  "wbResultId": "cmtsaqmkf000lz4osw5uom6tm",
+  "checks": [
+    "I04 replay creates exactly one database Result linked to fixture step",
+    "I06 WB Result database contains complete components, raw inputs, display units, warnings, notes and operator"
+  ],
+  "completedAt": "2026-09-08T06:36:38.426Z"
+}

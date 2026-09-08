@@ -9,15 +9,15 @@ describe("lab tool manifest", () => {
     expect(labToolManifest.filter((tool) => tool.category === "Analysis")).toHaveLength(3);
   });
 
-  it("connects every standalone tool to a managed HTTPS release", () => {
+  it("opens bundled tools internally and retains original release links", () => {
     expect(Object.values(standaloneToolDefaultUrls)).toHaveLength(4);
     for (const launchUrl of Object.values(standaloneToolDefaultUrls)) {
       expect(new URL(launchUrl).protocol).toBe("https:");
     }
 
-    const standaloneTools = labToolManifest.filter((tool) => tool.external);
+    const standaloneTools = labToolManifest.filter((tool) => tool.originalLaunchUrl);
     expect(standaloneTools).toHaveLength(4);
-    expect(standaloneTools.every((tool) => Boolean(tool.launchUrl))).toBe(true);
+    expect(standaloneTools.every((tool) => tool.launchUrl?.startsWith("/tools/") && !tool.external)).toBe(true);
   });
 
   it("keeps both visualization and free plate planning inside LabNest", () => {

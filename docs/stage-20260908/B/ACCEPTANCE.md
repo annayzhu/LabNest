@@ -14,3 +14,6 @@ PR #71，依赖 A #69。联合应用代码验证版本 071df83；后续合并仅
 主要代码：ContextProperties、QuantityInput、DocumentEditorLayout/Workspace、ResearchPlanProtocolPicker、InventoryItemForm/Containers、PurchaseRecordForm、RunMaterials、Card、settings/page。低频供应与追溯字段折叠；高频实际量和余量仍在主界面。跨维度不臆造换算，需清空数量再明确设置新材料单位。
 
 覆盖表由 coverage.json 提供逐路由状态，coverage-*.png 为实际页面。已人工查看采购桌面浅色、设置桌面深色、实验手机、手机属性面板；其余图生成并自动检查，未逐张人工审美复核。复现脚本 verify-stage-properties、verify-stage-shared、verify-stage-unit-compat、verify-stage-coverage；仅隔离3235和合成数据库。
+
+
+最终单位菜单修复应用 `20e8855f56b252297ecd98d96da0be74f3493d4b`；仅限制已有账本可选维度，C/D代码未变。该版本生产构建、类型、双时区各577测试、eslint、共享交互与库存/Run单位页面回读重新通过。全面C/D页面及文件验收版本仍为071df83，不能混淆两个验证批次。日志ledger-final-*与ledger-unit-menu.json。

@@ -10,6 +10,7 @@ export type LabToolManifestItem = {
   produces: string[];
   launchUrl?: string;
   external?: boolean;
+  originalLaunchUrl?: string;
 };
 
 export const standaloneToolDefaultUrls = {
@@ -36,8 +37,9 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Design sample, target, control, and replicate placement before a qPCR run.",
     accepts: ["sample list", "assay list", "plate format"],
     produces: ["plate map", "run sheet", "layout export"],
-    launchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
-    external: true,
+    launchUrl: "/tools/qpcr-plate-layout",
+    originalLaunchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
+    external: false,
   },
   {
     id: "cnv-plate-layout",
@@ -47,8 +49,9 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Prepare CNV assay layouts with calibrators, controls, and technical replicates.",
     accepts: ["sample list", "assay configuration", "replicate policy"],
     produces: ["plate map", "pipetting plan", "layout export"],
-    launchUrl: configuredToolUrl(process.env.CNV_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.cnvLayout),
-    external: true,
+    launchUrl: "/tools/cnv-plate-layout",
+    originalLaunchUrl: configuredToolUrl(process.env.CNV_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.cnvLayout),
+    external: false,
   },
   {
     id: "free-plate-layout",
@@ -80,8 +83,9 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Review amplification data and calculate QC-aware relative expression results.",
     accepts: ["instrument export", "sample metadata", "layout file"],
     produces: ["QC table", "analysis table", "figures"],
-    launchUrl: configuredToolUrl(process.env.QPCR_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.qpcrAnalysis),
-    external: true,
+    launchUrl: "/tools/qpcr-analysis",
+    originalLaunchUrl: configuredToolUrl(process.env.QPCR_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.qpcrAnalysis),
+    external: false,
   },
   {
     id: "cnv-analysis",
@@ -91,8 +95,9 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Calculate and review copy-number calls from CNV assay output with traceable QC.",
     accepts: ["instrument export", "calibrator", "layout file"],
     produces: ["copy-number calls", "QC report", "analysis export"],
-    launchUrl: configuredToolUrl(process.env.CNV_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.cnvAnalysis),
-    external: true,
+    launchUrl: "/tools/cnv-analysis",
+    originalLaunchUrl: configuredToolUrl(process.env.CNV_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.cnvAnalysis),
+    external: false,
   },
   {
     id: "visualization-studio",

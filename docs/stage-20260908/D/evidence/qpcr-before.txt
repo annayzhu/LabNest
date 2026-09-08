@@ -1,0 +1,79 @@
+qPCR Analysis Studio
+RELATIVE QUANTIFICATION WORKSPACE
+Local processing
+中文
+EN
+Data files 1
+New analysis
+
+QPCR · RELATIVE QUANTIFICATION & MELT REVIEW
+
+qPCR Analysis Studio
+RUO
+
+Well-level Cq relative quantification, replicate QC, and Tm/melt-group review with separate result and corrected-layout imports.
+
+DATA INTAKE
+
+Import by type, then analyze together
+
+Cq supports relative quantification; Tm/melt results support peak and grouping review. A separate plate layout is required only when Sample/Target information is missing.
+
+Ready
+
+ANALYSIS START
+
+Select analysis start
+
+One authoritative start is used per analysis; other supplied values are retained only for provenance and checks.
+
+●
+Start from Cq/Ct/Cp
+Full well-level QC and normalization
+○
+Start from ΔCq
+Reference normalization already completed
+○
+Start from ΔΔCq
+Normalization and calibration already completed
+01
+Instrument results
+REQUIRED
+
+Add multiple Cq/Ct/Cp, Tm, or melt-group files. Analysis becomes available when plate information is present.
+
+↓ Download input template
++ Add results
+↓
+Drop instrument result files
+Drop here, or click to browse
+XLSX · CSV · TXT · TSV
+CSV
+synthetic-qpcr.csv
+
+Generic table · Cq / Ct result
+
+Cq / Ct result
+×
+Review field detection
+4 columns read
+02
+Plate layout
+IF NEEDED
+
+Sample/Target information is already present. Skip this step or add a corrected layout to fix offsets.
+
++ Add layout
+↓
+Drop a plate-layout file
+Drop here, or click to browse
+XLSX · CSV · TXT · TSV
+No separate layout required
+✓
+The result file already contains the plate layout. Relative quantification is ready.
+
+1 Cq result(s), 0 Tm/melt result(s), and 0 layout file(s) loaded. You can return later to add or replace files.
+
+Open analysis →
+qPCR Analysis Studio · Research use only
+Raw data are processed only in this browser

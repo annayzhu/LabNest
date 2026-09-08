@@ -149,7 +149,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                   const presentation = toolPresentation[tool.id] ?? defaultToolPresentation;
                   const Icon = presentation.icon;
                   return (
-                    <article key={tool.id} className={`group flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}>
+                    <article key={tool.id} className={`group relative flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className={`ln-tool-card-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden /></div>
                         <span className="font-mono text-[10px] leading-none tabular-nums text-muted">v{tool.version}</span>
@@ -163,10 +163,10 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                         <span className="font-semibold text-graphite">Output</span><span>{tool.produces.join(" · ")}</span>
                       </div>
                       <div className="mt-2 flex min-h-7 items-end justify-between gap-2">
-                        <button type="button" className="ln-tool-preview-trigger focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-[11px] font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>
+                        <button type="button" className="ln-tool-preview-trigger relative z-10 focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-[11px] font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>
                           <Eye className="h-3.5 w-3.5" aria-hidden /> Preview
                         </button>
-                        <Link href={tool.launchUrl ?? "#"} target={tool.external ? "_blank" : undefined} rel={tool.external ? "noreferrer" : undefined} aria-label={`Open ${tool.name}${tool.external ? " in a new tab" : ""}`} className="focus-ring flex items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 py-1 text-xs font-semibold text-action">
+                        <Link href={tool.launchUrl ?? "#"} target={tool.external ? "_blank" : undefined} rel={tool.external ? "noreferrer" : undefined} aria-label={`Open ${tool.name}${tool.external ? " in a new tab" : ""}`} className="focus-ring flex items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 py-1 text-xs font-semibold text-action after:absolute after:inset-0 after:content-['']">
                           Open tool <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
                         </Link>
                       </div>

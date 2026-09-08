@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "output/**",
     "outputs/**",
     "standalone/**",
+    // Reproducible vendor/tool bundles; authoritative sources are tracked in stage D.
+    "public/tools/**",
     ".codex/**",
     "next-env.d.ts",
   ]),

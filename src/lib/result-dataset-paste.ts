@@ -21,7 +21,7 @@ export function isRectangularSpreadsheetPaste(text: string) {
 }
 
 /** Parse the tab-separated clipboard format produced by Excel and similar spreadsheet apps. */
-export function parseSpreadsheetClipboard(text: string): string[][] {
+export function parseSpreadsheetClipboard(text: string, delimiter = "\t"): string[][] {
   const normalized = text.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
   if (!normalized) return [];
 
@@ -48,7 +48,7 @@ export function parseSpreadsheetClipboard(text: string): string[][] {
 
     if (character === '"' && cell.length === 0) {
       quoted = true;
-    } else if (character === "\t") {
+    } else if (character === delimiter) {
       row.push(cell);
       cell = "";
     } else if (character === "\n") {

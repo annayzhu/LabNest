@@ -1,0 +1,84 @@
+[
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-plate-planner/outputs/portable/qPCR_Plate_Layout_Planner_Portable/Open_qPCR_Plate_Layout_Planner.html",
+    "target": "public/tools/qpcr-plate-layout/index.html",
+    "sha256": "4e23e90cec0bf84502c34d2d74889783ae4673fdfeec194576e17ae88525f122"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-plate-planner/outputs/portable/qPCR_Plate_Layout_Planner_Portable/THIRD_PARTY_LICENSES.txt",
+    "target": "public/tools/qpcr-plate-layout/THIRD_PARTY_LICENSES.txt",
+    "sha256": "22b6018941da2d15df99b68b84bad3101c63f1405e038c98de7a74e90af26566"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-analysis-studio/outputs/offline/qPCR-Analysis-Studio_Offline_20260828/index.html",
+    "target": "public/tools/qpcr-analysis/index.html",
+    "sha256": "c5c8d5c341bb45eb65031d0a704eefb067e545b4b3e07d71cfe011be4c35d9a4"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/cnvtool.html",
+    "target": "public/tools/cnv-analysis/index.html",
+    "sha256": "7f697807d3dd7181869e64260e1b285667534d0163dd6b4c6df9f9a6a628cf18"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/app.js",
+    "target": "public/tools/cnv-analysis/app.js",
+    "sha256": "916ac9470e42e5cdf130fd4d07ac380f6f86869874090d41067dd7cbe08d3d46"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/diagnostics.js",
+    "target": "public/tools/cnv-analysis/diagnostics.js",
+    "sha256": "85ec3d7e0a637fbc379a77fc8bbad5f8d3125428dbab47ebcfe209dbcf6a8ee7"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/core.js",
+    "target": "public/tools/cnv-analysis/core.js",
+    "sha256": "29c8fa2afdc672df7af314b91655bcda8ce3e507c5a0596c31ffd2262165f1ed"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/styles.css",
+    "target": "public/tools/cnv-analysis/styles.css",
+    "sha256": "5be1c410504be806029cdd3f162f8aa7399a5ea2b578966e7768349c39325643"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/vendor/xlsx.full.min.js",
+    "target": "public/tools/cnv-analysis/vendor/xlsx.full.min.js",
+    "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/THIRD_PARTY_NOTICES.md",
+    "target": "public/tools/cnv-analysis/THIRD_PARTY_NOTICES.md",
+    "sha256": "1297bd622d809b8c378be5babb11a92b5b9c3afa546f50a6a2638c09a83a2110"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/app/CnvPlanner.tsx",
+    "sha256": "7ee004ea22f6bd53e42561545c9807265bdef68372b8d674f1b88fe5b162309f"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/lib/cnvPlanner.ts",
+    "sha256": "fa3b69496a7c8bca8f10428a35f46463c91424f2583de118f720c2770c11a42c"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/lib/reactionCalculator.ts",
+    "sha256": "ab198cb3d48f12e85641563e084bd503d6c202657de35307f6a582c0ce5abe7b"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/lib/exportWorkbook.ts",
+    "sha256": "72e5e4411b94a91f43e64d502b0f89fd8a90b77fb09ba055b7fd547c0a44ff5d"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/package-lock.json",
+    "sha256": "69655c69f94e968e65d9240104401c26789d537b2ede90862f77a660424eaa88"
+  },
+  {
+    "target": "public/tools/cnv-plate-layout/assets/index-DN_JDDlW.js",
+    "sha256": "96e7c87a6303e01400013d870e2676c04fffb1d097079306ed0fe6d5619dd323"
+  },
+  {
+    "target": "public/tools/cnv-plate-layout/assets/index-DwGaEh4f.css",
+    "sha256": "f5e7de35fa5b817840a06194ba6f17e57430f8372c6cc6687d914d258ac37fd6"
+  },
+  {
+    "target": "public/tools/cnv-plate-layout/assets/xlsx.min-PXZy2cvG.js",
+    "sha256": "0754a5a904634a239d77f1c6854d2ca509bd2e07a80dd38b89b035dc81d955ce"
+  }
+]

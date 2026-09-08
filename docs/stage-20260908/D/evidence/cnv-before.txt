@@ -1,0 +1,198 @@
+TaqMan qPCR · COPY NUMBER VARIATION
+
+CNV分析工具
+v 1.3
+
+从孔级 Ct 到样本级拷贝数，保留公式、质控、校准与审计轨迹。
+
+本地浏览器计算，数据不上传
+仅供科研使用（RUO）
+本工具用于透明复算与研究性判读，不用于诊断、治疗选择或个体临床决策。
+01
+导入仪器结果
+
+支持 QuantStudio / Applied Biosystems 导出的 .xls、.xlsx、.csv 和 .txt，自动识别表头与部分孔板。
+
+↑
+将文件拖到这里，或点击选择
+原始文件只在当前页面内解析，不会被修改。
+synthetic-cnv.csv · 工作表 Sheet1 · 表头位于第 1 行
+物理孔
+24
+/ 96 孔板
+样本
+6
+不含 NTC
+Assay 层
+1
+按 target / panel
+内参
+RNaseP
+可在下方确认
+放行状态
+HOLD · 不可放行
+分析可查看，放行受 QC 控制
+02 运行 QC
+03 分析参数
+04 校准设置
+05 实验登记
+06 结果与导出
+02
+运行与数据质控
+
+先判断这批数据能不能被解释，再计算拷贝数。
+
+查看仪器元数据
+!
+自动基线未启用
+
+48 条记录没有启用自动基线。
+
+AUTO_BASELINE_OFF
+!
+未识别到 NTC
+
+未识别或确认 NTC；本次可继续人工复核，但无法据此排除污染或非特异扩增。若实验中确有 NTC 但 plate setup 漏标，可在下方补标；如本次未设置 NTC，软件不能补造。
+
+NO_NTC
+NTC 设置（无模板对照）
+
+如果实验中确实设置了无模板孔，但仪器 plate setup 没有标记，可在这里补充；文件中已有的 NTC 标记始终保留。原始样本名和孔级数据不会被修改。
+
+尚未设置
+实验边界：这里只能修正遗漏的板位标记；如果本次实验实际上没有设置 NTC，分析软件不能事后补造 NTC。
+NTC 识别方式
+仅使用导入文件中的标记
+按样本名补标 NTC
+按物理孔位补标 NTC
+按样本名会覆盖该名称对应的全部孔；按孔位会覆盖该孔的全部 multiplex 行。
+自动模式不会新增 NTC，只使用导入文件中的明确标记。
+按导入文件重新分析
+仪器元数据
+03
+分析参数
+
+默认值来自 CopyCaller v2.0 公开手册；它们是可调的经验阈值。
+
+内参 assay
+TARGET
+RNaseP
+内参 Ct 排除阈值
+Ct 高于此值的孔不参与计算。
+0-copy ΔCt 阈值
+目标相对内参过弱时作为 0-copy 证据。
+最少有效复孔
+文档推荐 4 复孔；少于此值直接 No call。
+复孔 ΔCt SD 预警值
+仅用于预警；最终限值应由实验室验证。
+反应组合防混合
+同一 target 在 duplex / triplex 中分开分析
+只有桥接验证通过后才建议关闭。
+应用参数并重新分析
+04
+按 assay 配置校准
+
+仪器文件中的 Reference Sample 不会自动继承。主校准品不合格时，改选已独立确认 CN 且本板通过资格检查的备用校准品或校准组。
+
+可选，但仍需独立确认 CN
+禁止作为校准品
+TARGET
+
+RNaseP + TARGET · reporter FAM · 样本 6
+
+未配置校准方式。
+校准方式
+未配置（停止 CN 计算）
+已知拷贝数的单一校准样本
+已知拷贝数的校准组
+无校准品：众数 CN 群体拟合
+确认依据 / 记录编号
+选择备注 / 替换原因
+锁定校准设置并计算
+05
+实验登记信息
+
+仪器与分析信息自动写入；只需补录板号、人员和本板试剂批次。品牌、货号等常用信息可在当前浏览器复用，批号和有效期每次重新确认。
+
+待补 19 项
+保存本次登记
+
+本次登记尚未保存
+
+Run ID（自动）
+Plate ID
+Analysis ID（自动）
+实验日期
+操作人
+反应体积
+Protocol / SOP 版本
+记录状态
+草稿
+已记录
+已复核
+试剂批次与复核信息
+Master Mix
+品牌
+Cat.
+批号
+有效期
+Assay / 试剂
+
+Target 和 Reporter 由仪器文件自动识别；品牌、Assay ID、浓度等可在本机复用，批号不会自动沿用到下一板。
+
+RNaseP
+VIC
+品牌
+Assay ID
+批号
+浓度
+Quencher
+TARGET
+FAM
+品牌
+Assay ID
+批号
+浓度
+Quencher
+人工复核
+最终结论
+待复核
+同意放行（自动质控 HOLD）
+不放行
+仅作调查性记录
+复核人
+复核日期
+复核说明
+实验 / 分析备注
+06
+结果、图形与审计导出
+
+首页一行对应一个 Sample，直接汇总各 target / panel 的 CN；计算明细、实验登记、QC、原始 Ct 和审计信息随同保存。
+
+导出完整实验记录 XLSX
+导出 CSV
+保存分析 JSON
+打印 / PDF
+样本结果
+Copy Number 图
+ΔCt 分布
+孔板图
+孔级审计
+方法边界
+显示 assay
+全部 assay
+TARGET [RNaseP + TARGET]
+搜索样本
+样本	Assay	信号分类	有效 n/总 n	Target Ct	Reference Ct	Mean ΔCt	SD(ΔCt)	ΔΔCt	RQ	CN calculated	CN predicted	Min–Max CN	Confidence-like	|Z|	QC	Flags
+Calibrator	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+S1	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+S2	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+S3	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+S4	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+S5	TARGET [RNaseP + TARGET]	检出	4/4	21.015	20.015	1.000	0.000	—	—	—	—	—	—	—	未校准	—
+方法依据
+
+已知校准样本的 ΔΔCt 公式、0-copy 规则、内参 Ct 阈值、众数校准的理论模型与 QC 指标定义来自官方手册。本工具的群体拟合、Confidence-like 与自动离群为可审计的透明近似。
+
+CopyCaller Software v2.0 User Guide
+TaqMan Copy Number Assays User Guide

@@ -82,6 +82,7 @@ export function InventoryItemForm({
               {inventoryCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
             </select>
           </label>
+          <details><summary className="focus-ring min-h-11 cursor-pointer py-2 text-sm">来源、供应与追溯</summary><div className="grid gap-3">
           <label>
             <span className={formLabelClass}>Scientific Entity / design</span>
             <select name="entityId" defaultValue={initial.entityId ?? ""} className={formInputClass}>
@@ -121,7 +122,7 @@ export function InventoryItemForm({
           <label>
             <span className={formLabelClass}>Safety stock</span>
             <input type="number" min="0" step="any" name="lowThreshold" defaultValue={initial.lowThreshold ?? ""} className={formInputClass} />
-          </label></div></ContextProperties>
+          </label></div></details></div></ContextProperties>
       <Card>
         <CardHeader title="Stock and storage" />
         {initial.quantityRecorded===false?<fieldset className="grid gap-3 px-4 sm:grid-cols-3"><legend className="text-sm font-semibold">首次盘点（启用数量时填写）</legend><label className="text-sm">盘点日期<input name="countedAt" type="date" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点登记人<input name="countedBy" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点来源<input name="countSource" required={managementMode!=="information"} placeholder="实物清点记录" className={formInputClass}/></label></fieldset>:null}

@@ -566,7 +566,7 @@ model ProjectProtocol {
 
 model RecordCodeCounter {
   key       String   @id
-  value     Int
+  value     BigInt
   updatedAt DateTime @updatedAt
 }
 

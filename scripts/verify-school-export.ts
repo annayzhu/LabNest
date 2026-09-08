@@ -12,6 +12,10 @@ async function main(){
  try{
   const url=base+'/purchases/school-template?supplier='+encodeURIComponent(supplier);
   assert.equal((await api.get(url)).status(),422,'Required template fields cannot silently become zero');
+  for(const values of [{amountInclTax:113,taxAmount:13},{amountInclTax:113,taxRate:0.13},{amountInclTax:113,amountExclTax:100}]){
+   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{productCategory:'耗材',amountExclTax:null,taxAmount:null,taxRate:null,amountInclTax:null,...values}});
+   assert.equal((await api.get(url)).status(),422,'Unsupported inclusive-only combinations must not export zero');
+  }
   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{productCategory:'耗材',amountExclTax:100,taxAmount:13}});
   const response=await api.get(url);assert.equal(response.status(),200);const bytes=await response.body();const rows=await readSheet(bytes);assert.ok(rows.some(r=>r.includes('Synthetic tube')&&r.includes(100)&&r.includes(13)&&r.includes(2)));
   const snapshot=response.headers()['x-export-snapshot'];assert.ok(snapshot);

@@ -51,8 +51,8 @@ export async function GET(request: Request) {
   const rows = toSchoolSelfPurchaseRows(group.quoteLines);
   const errors=rows.flatMap((row,index)=>{
     const line=group.quoteLines[index];const missing=validateSchoolSelfPurchaseRow(row);
-    if(line.amountExclTax==null&&line.unitPriceExclTax==null&&line.amountInclTax==null)missing.push("金额未记录；不能按零导出。");
-    if(line.taxAmount==null&&line.taxRate==null&&!(line.amountInclTax!=null&&line.amountExclTax!=null))missing.push("税额或税率未记录。");
+    if(line.amountExclTax==null&&line.unitPriceExclTax==null)missing.push("未税金额或未税单价未记录；请补齐后导出。");
+    if(line.taxAmount==null&&line.taxRate==null)missing.push("税额或税率未记录。");
     return missing.map(error=>({row:index+1,quoteId:line.id,error}));
   });
   if(errors.length)return Response.json({error:"请补齐所选模板的必填字段。",errors},{status:422});

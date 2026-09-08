@@ -1,4 +1,6 @@
 "use client";
+import { QuantityInput } from "./QuantityInput";
+import { ContextProperties } from "./ContextProperties";
 import {newClientMutationId} from "@/lib/client-mutation-id";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -122,9 +124,8 @@ export function PurchaseRecordForm({
             />
           ) : null}
           {field("title", "物料名称", "text", true)}
-          {field("vendor", "供应商")}
-          {field("quantity", "购买数量", "number", true)}
-          {field("unit", "单位", "text", true)}
+          <ContextProperties title="采购属性">{field("vendor", "供应商")}<p className="text-xs text-muted">数量和实际金额保留在主界面；供应商随购买记录保存。</p></ContextProperties>
+          <QuantityInput label="购买数量" name="quantity" required initialValue={initial.quantity ?? ""} initialUnit={initial.unit || "box"} options={["box","bottle","pack","vial","mL","µL","g","mg"]} />
           {field("actualAmount", "实际总金额（CNY）", "number")}
           <label className="text-sm">
             购买状态

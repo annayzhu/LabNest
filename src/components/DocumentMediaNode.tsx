@@ -1,5 +1,6 @@
 "use client";
 
+import { ContextProperties } from "./ContextProperties";
 import Image from "next/image";
 import { useState } from "react";
 import { NodeViewWrapper, ReactNodeViewRenderer, useEditorState, type NodeViewProps } from "@tiptap/react";
@@ -13,7 +14,6 @@ function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, g
   const block = node.attrs.block as DocumentMedia;
   const upload = useMediaUpload(block.id);
   const [focused, setFocused] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const editorFocused = useEditorState({ editor, selector: ({ editor }) => editor.isFocused });
   const active = (selected && editorFocused) || focused;
   const select = () => { const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
@@ -26,15 +26,15 @@ function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, g
       {upload?.status === "failed" ? <><p className="text-error">{upload.error}</p><button type="button" className="min-h-11 px-2 text-moss" onClick={upload.retry}>重试 / Retry</button></> : null}
       {!upload ? <button type="button" className="min-h-11 px-2 text-moss" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}>重新选择文件 / Reselect file</button> : null}
     </div> : null}
-    <div data-print-hidden className="document-media-toolbar" hidden={!active} onPointerDownCapture={() => setFocused(true)} onClick={event => event.stopPropagation()}>
+    <div data-print-hidden className="document-media-toolbar" data-active={active} onPointerDownCapture={() => setFocused(true)} onClick={event => event.stopPropagation()}>
       <button type="button" data-drag-handle aria-label="移动附件 / Move attachment" className="min-h-11 px-2"><GripVertical className="h-4 w-4" /></button>
+      <ContextProperties title="图片属性 / Image properties" triggerLabel="图片设置 / Image settings" selected={active}>
       <input aria-label="图注 / Caption" placeholder="图注 / Caption" className="min-h-9 min-w-0 flex-1 border-b border-hairline bg-transparent text-sm" value={block.caption || ""} onChange={event => updateAttributes({ block: { ...block, caption: event.target.value } })} />
-      <div className="document-media-settings"><button type="button" className="focus-ring" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(open => !open)}>图片设置 / Image settings</button><div hidden={!settingsOpen}>
       {block.mediaType === "image" ? <label className="inline-flex items-center gap-1">宽度 / Width <input aria-label="图片显示宽度百分比 / Image width percent" type="number" min={10} max={100} value={block.widthPercent ?? 100} className="w-16 min-h-9 border-b border-hairline bg-transparent" onChange={event => { const width = Number(event.target.value); if (width >= 10 && width <= 100) updateAttributes({ block: { ...block, widthPercent: width } }); }} />%</label> : null}
       <button type="button" aria-label="移除引用 / Remove reference" title="仅移除正文引用，保留原文件 / Keep original file" className="min-h-11 px-2 text-error" onClick={deleteNode}><Trash2 className="h-4 w-4" /></button>
       {!block.pendingUploadId ? <button type="button" aria-label="替换附件 / Replace attachment" className="min-h-11 px-2" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}><Replace className="h-4 w-4" /></button> : null}
       {documentMediaUrl(block, true) ? <a href={documentMediaUrl(block, true)} target="_blank" rel="noreferrer">查看原图 / Open original</a> : null}
-      </div></div>
+      </ContextProperties>
     </div>
   </NodeViewWrapper>;
 }

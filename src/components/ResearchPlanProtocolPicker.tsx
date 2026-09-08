@@ -1,135 +1,42 @@
 "use client";
 
-import { ChevronDown, Search, X } from "lucide-react";
-import { useId, useMemo, useState } from "react";
-import { formInputClass, formLabelClass } from "@/components/forms";
-import { useI18n } from "@/components/I18nProvider";
-import { ProtocolIdentity } from "@/components/ProtocolIdentity";
-import { filterProtocolPickerOptions, type ResearchPlanProtocolOption } from "@/lib/research-plan-protocol-picker";
+import { useContextProperties } from "./ContextProperties";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { formInputClass } from "./forms";
+import type { ResearchPlanProtocolOption } from "@/lib/research-plan-protocol-picker";
 
-export function ResearchPlanProtocolPicker({
-  protocols,
-  initialSelectedIds = [],
-  initialPrimaryProtocolId,
-}: {
-  protocols: ResearchPlanProtocolOption[];
-  initialSelectedIds?: string[];
-  initialPrimaryProtocolId?: string;
+export function ResearchPlanProtocolPicker({ protocols, initialSelectedIds = [], initialPrimaryProtocolId, workspaceId }: {
+  protocols: ResearchPlanProtocolOption[]; initialSelectedIds?: string[]; initialPrimaryProtocolId?: string; workspaceId?: string;
 }) {
-  const { t } = useI18n();
-  const listboxId = useId();
-  const protocolMap = useMemo(() => new Map(protocols.map((protocol) => [protocol.id, protocol])), [protocols]);
-  const [selectedIds, setSelectedIds] = useState(() => {
-    const requested = new Set([...initialSelectedIds, ...(initialPrimaryProtocolId ? [initialPrimaryProtocolId] : [])]);
-    return protocols.filter((protocol) => requested.has(protocol.id)).map((protocol) => protocol.id);
-  });
-  const [primaryProtocolId, setPrimaryProtocolId] = useState(
-    initialPrimaryProtocolId && protocolMap.has(initialPrimaryProtocolId) ? initialPrimaryProtocolId : "",
-  );
+  const properties = useContextProperties();
+  const [ids, setIds] = useState(() => [...new Set([...initialSelectedIds, ...(initialPrimaryProtocolId ? [initialPrimaryProtocolId] : [])])].filter(id => protocols.some(p => p.id === id)));
+  const [primary, setPrimary] = useState(initialPrimaryProtocolId ?? "");
   const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const selectedProtocols = selectedIds.flatMap((id) => {
-    const protocol = protocolMap.get(id);
-    return protocol ? [protocol] : [];
-  });
-  const matches = filterProtocolPickerOptions(protocols, selectedIds, query);
-
-  function addProtocol(protocolId: string) {
-    setSelectedIds((current) => current.includes(protocolId) ? current : [...current, protocolId]);
-    setQuery("");
-    setIsOpen(false);
+  const [filter, setFilter] = useState("all");
+  const [checked, setChecked] = useState<string[]>([]);
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  const selected = protocols.filter(p => ids.includes(p.id));
+  const matches = useMemo(() => protocols.filter(p => (filter === "all" || ids.includes(p.id) === (filter === "linked")) && [p.title,p.humanCode,p.scope].some(value => value?.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))), [protocols, ids, query, filter]);
+  function update(add: boolean) {
+    const visible = checked.filter(id => matches.some(p => p.id === id));
+    setIds(current => add ? [...new Set([...current,...visible])] : current.filter(id => !visible.includes(id)));
+    if (!add && visible.includes(primary)) setPrimary("");
+    setChecked([]);
   }
-
-  function removeProtocol(protocolId: string) {
-    setSelectedIds((current) => current.filter((id) => id !== protocolId));
-    if (primaryProtocolId === protocolId) setPrimaryProtocolId("");
-  }
-
-  return (
-    <details className="group rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
-      <summary className="focus-ring flex h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--ln-radius-panel)] px-4 [&::-webkit-details-marker]:hidden">
-        <h2 className="font-serif text-[17px] font-medium leading-tight text-ink">{t("Protocol set")}</h2>
-        <span className="flex items-center gap-3 text-xs font-medium text-muted">
-          <span aria-live="polite">{t("Linked protocols")}: {selectedProtocols.length}</span>
-          <span className="flex items-center gap-1.5"><span className="group-open:hidden">{t("Expand")}</span><span className="hidden group-open:inline">{t("Collapse")}</span><ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /></span>
-        </span>
-      </summary>
-      <div className="space-y-4 border-t border-hairline/80 p-4">
-        <div
-          className="relative max-w-2xl"
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsOpen(false);
-          }}
-        >
-          <label htmlFor={`${listboxId}-search`} className={formLabelClass}>{t("Add from Protocol library")}</label>
-          <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-muted" />
-          <input
-            type="search"
-            id={`${listboxId}-search`}
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={isOpen}
-            aria-controls={listboxId}
-            value={query}
-            onFocus={() => setIsOpen(true)}
-            onClick={() => setIsOpen(true)}
-            onChange={(event) => { setQuery(event.target.value); setIsOpen(true); }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") setIsOpen(false);
-              if (event.key === "ArrowDown" && isOpen) {
-                event.preventDefault();
-                document.getElementById(`${listboxId}-option-0`)?.focus();
-              }
-            }}
-            placeholder={t("Search protocol title or code…")}
-            className={`${formInputClass} pl-9`}
-          />
-          {isOpen ? <div id={listboxId} role="listbox" className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-1.5 shadow-soft">
-            {matches.length ? matches.map((protocol, index) => (
-              <button
-                key={protocol.id}
-                id={`${listboxId}-option-${index}`}
-                type="button"
-                role="option"
-                aria-selected="false"
-                onClick={() => addProtocol(protocol.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    document.getElementById(`${listboxId}-option-${index + 1}`)?.focus();
-                  }
-                  if (event.key === "ArrowUp") {
-                    event.preventDefault();
-                    if (index === 0) document.getElementById(`${listboxId}-search`)?.focus();
-                    else document.getElementById(`${listboxId}-option-${index - 1}`)?.focus();
-                  }
-                  if (event.key === "Escape") {
-                    setIsOpen(false);
-                    document.getElementById(`${listboxId}-search`)?.focus();
-                  }
-                }}
-                className="focus-ring flex w-full items-start justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2 text-left hover:bg-sage-surface"
-              >
-                <ProtocolIdentity className="min-w-0 flex-1 text-ink" title={protocol.title} code={protocol.humanCode} meta={protocol.scope} />
-                <span className="shrink-0 text-xs font-medium text-moss">{t("Add")}</span>
-              </button>
-            )) : <p className="px-3 py-4 text-center text-sm text-muted">{t(protocols.length === selectedProtocols.length ? "All available Protocols are already selected." : "No matching Protocols.")}</p>}
-          </div> : null}
-        </div>
-
-        <div>
-          <p className={formLabelClass}>{t("Selected Protocols")}</p>
-          {selectedProtocols.length ? <div className="mt-2 grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
-            {selectedProtocols.map((protocol) => <div key={protocol.id} className="flex min-h-10 items-start gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/70 px-2.5 py-2 text-xs text-graphite">
-              <input type="hidden" name="protocolIds" value={protocol.id} />
-              <ProtocolIdentity className="min-w-0 flex-1 text-ink" compact title={protocol.title} code={protocol.humanCode} meta={protocol.scope} />
-              <button type="button" onClick={() => removeProtocol(protocol.id)} aria-label={`${t("Remove protocol")}: ${protocol.title}`} title={t("Remove protocol")} className="focus-ring rounded p-0.5 text-muted hover:bg-error-surface hover:text-error"><X className="h-3.5 w-3.5" /></button>
-            </div>)}
-          </div> : <p className="mt-2 rounded-[var(--ln-radius-control-md)] border border-dashed border-hairline px-3 py-3 text-sm text-muted">{t("No Protocols selected yet.")}</p>}
-        </div>
-
-        <label className="block max-w-2xl"><span className={formLabelClass}>{t("Primary protocol")}</span><select name="primaryProtocolId" value={primaryProtocolId} onChange={(event) => setPrimaryProtocolId(event.target.value)} disabled={!selectedProtocols.length} className={formInputClass}><option value="">{t("No primary protocol")}</option>{selectedProtocols.map((protocol) => <option key={protocol.id} value={protocol.id}>{protocol.title}{protocol.humanCode ? ` · ${protocol.humanCode}` : ""}</option>)}</select></label>
-      </div>
-    </details>
-  );
+  const manager = <section aria-label="管理关联 Protocol" className="border-y border-hairline py-4" data-print-hidden>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">关联 Protocol · {ids.length}</h2><button type="button" className="min-h-11 px-2 text-moss" onClick={() => setTarget(null)}>完成管理</button></div>
+    <div className="flex flex-wrap gap-2"><input type="search" aria-label="搜索关联 Protocol" placeholder="搜索名称或编号" className={formInputClass + " max-w-sm"} value={query} onChange={e => setQuery(e.target.value)} /><select aria-label="关联筛选" className={formInputClass + " max-w-40"} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">全部</option><option value="linked">已关联</option><option value="available">未关联</option></select></div>
+    <div className="flex flex-wrap items-center gap-3 py-2"><label><input type="checkbox" aria-label="选择当前筛选全部" checked={matches.length > 0 && matches.every(p => checked.includes(p.id))} onChange={e => setChecked(e.target.checked ? matches.map(p => p.id) : [])} /> 选择当前筛选</label><button type="button" disabled={!checked.length} className="min-h-11 px-2 text-moss" onClick={() => update(true)}>批量添加</button><button type="button" disabled={!checked.length} className="min-h-11 px-2 text-error" onClick={() => update(false)}>解除所选关联</button></div>
+    <ul className="divide-y divide-hairline">{matches.map(p => <li key={p.id} className="flex items-center gap-3 py-2"><input type="checkbox" aria-label={`选择 ${p.title}`} checked={checked.includes(p.id)} onChange={e => setChecked(current => e.target.checked ? [...current,p.id] : current.filter(id => id !== p.id))} /><div className="min-w-0 flex-1"><span className="mr-2 text-xs text-muted">{p.humanCode}</span>{p.title}<span className="ml-2 text-xs text-muted">{p.scope}</span></div><span className="text-sm">{ids.includes(p.id) ? "已关联" : "未关联"}</span></li>)}</ul>
+    {!matches.length ? <p className="py-3 text-muted">没有匹配的 Protocol</p> : null}
+    <label className="block py-2">主要 Protocol<select aria-label="主要 Protocol" value={primary} onChange={e => setPrimary(e.target.value)} className={formInputClass}><option value="">未指定</option>{selected.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>
+    <p className="text-xs text-muted">随研究方案保存。解除关联保留原 Protocol 和历史 Run 版本。</p>
+  </section>;
+  return <section aria-label="关联 Protocol 摘要" className="border-t border-hairline py-3">
+    {ids.map(id => <input key={id} type="hidden" name="protocolIds" value={id} />)}<input type="hidden" name="primaryProtocolId" value={primary} />
+    <h2 className="font-semibold">Protocol · {ids.length}</h2><ul className="divide-y divide-hairline">{selected.slice(0,3).map(p => <li key={p.id} className="py-2 text-sm"><span className="mr-2 text-xs text-muted">{p.humanCode}</span>{p.title}</li>)}</ul>
+    <button type="button" className="min-h-11 text-moss" onClick={() => { const main = workspaceId ? document.getElementById(workspaceId) : null; setTarget(main ?? document.querySelector('main')); properties?.select(null); main?.scrollIntoView({block:'start'}); }}>管理全部（{ids.length}）</button>
+    {target ? createPortal(manager,target) : null}
+  </section>;
 }

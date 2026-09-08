@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor";
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { RecordCodeField } from "@/components/RecordCodeField";
@@ -49,6 +49,7 @@ export function ResearchPlanForm({
     document: ScientificDocument;
   };
 }) {
+  const workspaceId = useId();
   const [state, formAction, pending] = useActionState(action, initialState);
   const [title, setTitle] = useState(initial.title ?? "");
   const [projectId, setProjectId] = useState(initial.projectId ?? "");
@@ -64,7 +65,7 @@ export function ResearchPlanForm({
     <form action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
       <DocumentEditorLayout>
-        <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
+        <div className="document-editor-main"><div id={workspaceId} /><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
           { label: "Project", value: project?.name ?? "Not selected" },
           { label: "Status", value: status.replaceAll("_", " ") },
         ]} leadingContent={<div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>} /></div>
@@ -83,7 +84,7 @@ export function ResearchPlanForm({
               <label><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
             </CardBody>
           </Card>
-          <ResearchPlanProtocolPicker protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
+          <ResearchPlanProtocolPicker workspaceId={workspaceId} protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
         </aside>
       </DocumentEditorLayout>
       <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">

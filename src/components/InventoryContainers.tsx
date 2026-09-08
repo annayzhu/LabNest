@@ -1,4 +1,6 @@
 "use client";
+import { QuantityInput } from "./QuantityInput";
+import { ContextProperties } from "./ContextProperties";
 import { InventoryBatchIssue } from "./InventoryBatchIssue";
 import {newClientMutationId} from "@/lib/client-mutation-id";
 import { useState } from "react";
@@ -188,6 +190,7 @@ export function InventoryContainers({
               收起
             </button>
           </div>
+          <ContextProperties title="实物属性"><dl className="space-y-3 text-sm"><div><dt>瓶编号</dt><dd className="break-all">{bottle.id}</dd></div><div><dt>持有人</dt><dd>{bottle.holder ?? "仓库"}</dd></div><div><dt>位置</dt><dd>{bottle.location ?? "未记录"}</dd></div><div><dt>开封日期</dt><dd>{bottle.openedAt?.slice(0,10) ?? "未开封"}</dd></div></dl><p className="text-xs text-muted">通过主界面的领用、转交、归还或开封操作更新，并保留历史。</p></ContextProperties>
           {bottle.state !== "empty" ? (
             <form
               onSubmit={submit}
@@ -231,21 +234,7 @@ export function InventoryContainers({
               {action === "open" ? field("openedAt", "开封日期", "date") : null}
               {action === "observe" ? (
                 <>
-                  <div className="flex min-w-0 items-end gap-1">
-                    {field("remaining", "余量", "number")}
-                    <label className="text-sm">
-                      单位
-                      <select
-                        className={formInputClass}
-                        value={draft.unit ?? "mL"}
-                        onChange={(e) => edit("unit", e.target.value)}
-                      >
-                        {["mL", "µL", "L", "mg", "g"].map((u) => (
-                          <option key={u}>{u}</option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
+                  <QuantityInput label="余量" name="remaining" required value={draft.remaining ?? ""} unit={draft.unit ?? "mL"} options={["mL","µL","L","mg","g"]} onChange={(remaining, unit) => { if (selected) setDrafts(current => ({...current,[selected]:{...current[selected],remaining,unit}})); setMutationKey(null); }} />
                   <label className="text-sm">
                     依据
                     <select

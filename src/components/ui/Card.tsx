@@ -11,7 +11,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-[var(--ln-radius-panel)] border-[length:var(--ln-border-width)] border-hairline bg-surface",
+        "ln-section border-b border-hairline",
         className,
       )}
     >

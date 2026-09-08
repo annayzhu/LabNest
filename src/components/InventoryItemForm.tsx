@@ -1,5 +1,7 @@
 "use client";
 
+import { QuantityInput } from "./QuantityInput";
+import { ContextProperties } from "./ContextProperties";
 import { useActionState, useState } from "react";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
@@ -70,9 +72,13 @@ export function InventoryItemForm({
             <span className={formLabelClass}>English name</span>
             <input name="englishName" defaultValue={initial.englishName ?? ""} maxLength={180} className={formInputClass} />
           </label>
+        </CardBody>
+      </Card>
+
+      <ContextProperties title="物料属性"><div className="grid gap-3">        <label className="block px-4"><span className={formLabelClass}>管理方式 / Management</span><select aria-label="管理方式 / Management" name="managementMode" value={managementMode} onChange={event=>setManagementMode(event.target.value)} className={formInputClass}><option value="information">信息追溯 · 余量选填</option><option value="package">按包装管理 · 瓶、盒、包</option><option value="precise">精确用量</option></select></label>
           <label>
             <span className={formLabelClass}>Category</span>
-            <select name="category" defaultValue={initial.category ?? "reagent"} className={formInputClass}>
+            <select aria-label="Category" name="category" defaultValue={initial.category ?? "reagent"} className={formInputClass}>
               {inventoryCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
             </select>
           </label>
@@ -112,27 +118,16 @@ export function InventoryItemForm({
             <span className={formLabelClass}>Container type</span>
             <input name="containerType" defaultValue={initial.containerType ?? ""} maxLength={80} className={formInputClass} placeholder="bottle, tube, box…" />
           </label>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Stock and storage" />
-        {initial.quantityRecorded===false?<fieldset className="grid gap-3 px-4 sm:grid-cols-3"><legend className="text-sm font-semibold">首次盘点（启用数量时填写）</legend><label className="text-sm">盘点日期<input name="countedAt" type="date" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点登记人<input name="countedBy" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点来源<input name="countSource" required={managementMode!=="information"} placeholder="实物清点记录" className={formInputClass}/></label></fieldset>:null}
-        <label className="block px-4"><span className={formLabelClass}>管理方式 / Management</span><select aria-label="管理方式 / Management" name="managementMode" value={managementMode} onChange={event=>setManagementMode(event.target.value)} className={formInputClass}><option value="information">信息追溯 · 余量选填</option><option value="package">按包装管理 · 瓶、盒、包</option><option value="precise">精确用量</option></select></label>
-        <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <label>
-            <span className={formLabelClass}>{initial.id ? "Current quantity" : "Opening quantity"}</span>
-            <input required={managementMode !== "information"} type="number" min="0" step="any" name="currentQuantity" defaultValue={initial.quantityRecorded === false ? "" : initial.currentQuantity ?? ""} className={formInputClass} />
-            {initial.id ? <span className="mt-1 block text-xs text-muted">A changed value is recorded as an adjustment movement.</span> : null}
-          </label>
-          <label>
-            <span className={formLabelClass}>Unit *</span>
-            <input required={managementMode !== "information"} name="unit" defaultValue={initial.unit ?? ""} maxLength={32} className={formInputClass} placeholder="µL, mL, g, vial…" />
-          </label>
           <label>
             <span className={formLabelClass}>Safety stock</span>
             <input type="number" min="0" step="any" name="lowThreshold" defaultValue={initial.lowThreshold ?? ""} className={formInputClass} />
-          </label>
+          </label></div></ContextProperties>
+      <Card>
+        <CardHeader title="Stock and storage" />
+        {initial.quantityRecorded===false?<fieldset className="grid gap-3 px-4 sm:grid-cols-3"><legend className="text-sm font-semibold">首次盘点（启用数量时填写）</legend><label className="text-sm">盘点日期<input name="countedAt" type="date" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点登记人<input name="countedBy" required={managementMode!=="information"} className={formInputClass}/></label><label className="text-sm">盘点来源<input name="countSource" required={managementMode!=="information"} placeholder="实物清点记录" className={formInputClass}/></label></fieldset>:null}
+
+        <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <QuantityInput label={initial.id ? "Current quantity" : "Opening quantity"} name="currentQuantity" required={managementMode !== "information"} initialValue={initial.quantityRecorded === false ? "" : String(initial.currentQuantity ?? "")} initialUnit={initial.unit || "mL"} storageUnit={initial.id ? initial.unit : undefined} options={["mL","µL","L","g","mg","µg","vial","bottle","box","pack","reaction"]} />
           <label>
             <span className={formLabelClass}>Location</span>
             <select name="locationId" defaultValue={initial.locationId ?? ""} className={formInputClass}>

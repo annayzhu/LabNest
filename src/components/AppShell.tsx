@@ -1,3 +1,4 @@
+import { ContextPropertiesProvider } from "./ContextProperties";
 import type { ReactNode } from "react";
 import { MobileBottomNav, Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -7,7 +8,7 @@ import { MobileMutationSync } from "./MobileMutationSync";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <ModalDialogProvider><div className="app-shell min-h-[100dvh] overflow-x-clip text-ink">
+    <ModalDialogProvider><ContextPropertiesProvider><div className="app-shell min-h-[100dvh] overflow-x-clip text-ink">
       <div className="app-shell-layout flex">
         <Sidebar />
         <div className="app-shell-content min-w-0 flex-1 pb-28 lg:pb-0">
@@ -20,6 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <MobileBottomNav />
       <MobileMutationSync />
       <OfflineCompanion />
-    </div></ModalDialogProvider>
+    </div></ContextPropertiesProvider></ModalDialogProvider>
   );
 }

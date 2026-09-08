@@ -1,5 +1,5 @@
 {
-  "base": "http://localhost:3221",
+  "base": "http://localhost:3235",
   "checks": [
     "UX-01/02 default tasks and antibody alias",
     "UX-05/06 invalidation and physical unit preservation",
@@ -9,5 +9,5 @@
     "UX-12 offline cached reload, restore and calculate"
   ],
   "errors": [],
-  "completedAt": "2026-09-06T00:10:48.793Z"
+  "completedAt": "2026-09-08T06:15:49.127Z"
 }

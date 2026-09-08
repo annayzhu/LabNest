@@ -3,11 +3,11 @@
   "checks": [
     {
       "entry": "result-template-instructions",
-      "caption": "结果模板说明 image 1788847774772",
+      "caption": "结果模板说明 image 1788848108590",
       "saveRefreshReadEditPrint": "passed"
     }
   ],
-  "at": "2026-09-08T06:09:33.216Z",
+  "at": "2026-09-08T06:15:07.016Z",
   "base": "http://localhost:3235",
   "clientErrors": []
 }

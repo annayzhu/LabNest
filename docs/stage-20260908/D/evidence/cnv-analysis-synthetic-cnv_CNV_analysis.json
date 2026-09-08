@@ -4,7 +4,7 @@
   "registration": {
     "runId": "synthetic-cnv",
     "plateId": "",
-    "analysisId": "CNV-synthetic-cnv-20260908060843",
+    "analysisId": "CNV-synthetic-cnv-20260908061723",
     "experimentDate": "",
     "operator": "",
     "reactionVolume": "",
@@ -45,7 +45,7 @@
   },
   "analysis": {
     "version": "1.3",
-    "generatedAt": "2026-09-08T06:08:43.673Z",
+    "generatedAt": "2026-09-08T06:17:23.244Z",
     "settings": {
       "referenceCtMax": 32,
       "zeroCopyDeltaCt": 4,

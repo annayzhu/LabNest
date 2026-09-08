@@ -2,12 +2,14 @@
   {
     "id": "qpcr-plate-layout",
     "file": "docs/stage-20260908/D/evidence/qpcr-plate-layout-qPCR_plate_layout_20260908.zip",
-    "sampleImportAndDownload": "passed"
+    "sampleImportAndDownload": "passed",
+    "savedReturnReopen": "passed"
   },
   {
     "id": "cnv-plate-layout",
     "file": "docs/stage-20260908/D/evidence/cnv-plate-layout-TaqMan_CNV_All_Plates_96well_20260908.xlsx",
-    "sampleImportAndDownload": "passed"
+    "sampleImportAndDownload": "passed",
+    "savedReturnReopen": "passed"
   },
   {
     "id": "qpcr-analysis",

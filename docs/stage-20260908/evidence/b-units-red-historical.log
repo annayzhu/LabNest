@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'' !== '5'
+
+    at main (/Users/annayzhu/Documents/Playground/LabNest-stage-b/scripts/verify-stage-unit-compat.ts:13:63) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: '5',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

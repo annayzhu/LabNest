@@ -1,10 +1,10 @@
 {
   "schemaVersion": "labnest.structured-export/v1",
   "module": "purchases",
-  "exportedAt": "2026-09-08T04:58:04.908Z",
+  "exportedAt": "2026-09-08T05:56:49.425Z",
   "records": [
     {
-      "id": "cmts782ox0001xposek7f7r55",
+      "id": "cmts9bm860001ewoss1jephlk",
       "title": "Synthetic format purchase",
       "quantity": 2,
       "unit": "box",

@@ -1,13 +1,15 @@
 {
-  "sourceCommit": "0a4c57dd5edd3cc37857e5c3bda3e9d905ca45a2",
+  "sourceCommit": "5c1215d44445673b7a0351d21fd1d516f778063b",
   "baseline": "87a7610e09df32fa7b4a55fef69b3116d8c95974",
-  "builtSource": "source identical to 0a4c57d; commit created after successful build",
-  "buildDirectory": ".next/accepted",
+  "builtSource": "5c1215d, webpack production build passed",
+  "buildDirectory": ".next/final-debug",
   "browserURL": "http://localhost:3232",
   "calculatorFullSuiteCommit": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
   "calculatorFullSuiteStages": 22,
   "finalCommitCalculatorCI": "pending PR",
   "testData": "synthetic isolated databases only",
   "physicalChecks": "not executed",
-  "recordedAt": "2026-09-09T08:15:35.736013+00:00"
+  "recordedAt": "2026-09-09T08:15:35.736013+00:00",
+  "earlierPageEvidenceCommit": "0a4c57dd5edd3cc37857e5c3bda3e9d905ca45a2",
+  "finalSourceRegression": "material sessions, shared units and delayed save race rerun in actual production browser; 604 tests in Shanghai and Vancouver; lint and typecheck"
 }

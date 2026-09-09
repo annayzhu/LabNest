@@ -37,7 +37,7 @@
 | T27 | 估计250→180mL | 通过 | 250→180mL保留两次估计观察，无-70mL库存交易。 | [证据](evidence/inventory/containers.json) |
 | T28 | Origin合法访问 | 通过 | 实际内网HTTP浏览器表单保存并刷新回读；使用当前地址及隔离3232端口。未改正式服务。 | [证据](evidence/lan-browser.json) |
 | T29 | Origin不可信访问 | 通过 | 恶意Origin、null、伪造转发头仍拒绝；未扩大信任边界。 | [证据](evidence/origin-http.json) |
-| T30 | 保存失败反馈 | 通过 | 合成503在弹窗内中文提示、保留输入；保存中关闭/Esc不能切换清掉另一草稿。 | [证据](evidence/save-session-race-green.log) |
+| T30 | 保存失败反馈 | 通过 | 合成503在弹窗内中文提示、保留输入；保存中关闭/Esc不能切换清掉另一草稿。 | [最终版本证据](evidence/final-save-race.json) |
 | T31 | 四工具默认站内页 | 通过 | 四工具既有站内入口保留；桌面/手机与明暗布局回归。 | [证据](evidence/tools/tools-inventory.json) |
 | T32 | 工具工作流 | 通过 | 四工具导入、保存往返、下载及逐文件回读通过，算法未重写。 | [证据](evidence/tools/file-checks.json) |
 | T33 | 整卡进入／独立按钮 | 未执行 | 鼠标整卡、键盘及独立按钮已通过；真实触控仍待真机验收。 | [证据](evidence/tools/tools-inventory.json) |
@@ -54,3 +54,5 @@
 | T44 | 采购／库存独立性 | 通过 | 沿用既有库存/采购账本；无库存及不足待扣的Run均能完成且无自动交易，数据库回读通过。 | [证据](evidence/inventory-independent.json) |
 | T45 | Calculator受影响回归 | 通过 | 本轮22阶段Calculator全套通过，含正确性、历史、离线往返、导出与转染回读；验证SHA单列。 | [证据](evidence/calculator/acceptance-run.json) |
 | T46 | 默认A4打印与PDF尺寸 | 通过 | 全部31份PDF共48页均为A4且非空；其中14份正文PDF16页逐页含图片。系统/驱动覆盖与真实打印未执行。 | [全部PDF](evidence/all-pdfs.json) · [正文尺寸](evidence/pdf-page-dimensions.json) |
+
+最终应用代码 `5c1215d` 已通过 Lint、TypeScript、生产构建、上海与温哥华双时区各604项测试；弹窗会话、单位与延迟保存竞态在新构建真实页面复验。先前页面证据代码版本为 `0a4c57d`，差异仅弹窗会话标识改由React状态驱动及未使用导入清理，未改算法。最终分支远端CI待PR检查。

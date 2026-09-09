@@ -16,3 +16,5 @@
 运行 `verify-debug-brief-status.mjs` 前先生成 `run-history.json`。来源优先级测试先运行 `seed-debug-method-priority.ts`，再运行 `verify-debug-method-priority.mjs`。耗材边界测试先运行 `seed-debug-material-boundaries.ts`，再运行 `verify-debug-material-boundaries.mjs` 和 `verify-debug-inventory-independent.ts`；后者会完成该合成Run。
 
 Calculator全套脚本的输出复制到本轮 evidence/calculator；其中日志仍记录原脚本输出路径，原有历史验收文件已恢复，避免用新结果覆盖旧版本证据。每轮回归的提交与局限见 VERSION.json。README中的开发服务命令不能当作生产构建验收。
+
+最终补充：`node scripts/verify-debug-save-race.mjs`、`node scripts/verify-debug-template-delete.mjs`、`node scripts/verify-debug-experiment-exports.mjs`；均使用3232隔离验收服务与对应合成夹具。

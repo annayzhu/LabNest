@@ -1,0 +1,55 @@
+{
+  "sha": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
+  "base": "http://localhost:3221",
+  "at": "2026-09-09T07:36:36.574Z",
+  "checks": [
+    {
+      "name": "DNA example; desktop side-by-side / mobile stacked input and result tubes",
+      "status": "passed"
+    },
+    {
+      "name": "siRNA final concentration uses 600 µL culture, not 125 µL mixture",
+      "status": "passed"
+    },
+    {
+      "name": "Mode switch clears hidden values and refuses incomplete plan",
+      "status": "passed"
+    },
+    {
+      "name": "Single mixture shows one composition table with actual total",
+      "status": "passed"
+    },
+    {
+      "name": "RNAiMAX reverse preset uses in-well order, restricted to siRNA single mixture",
+      "status": "passed"
+    },
+    {
+      "name": "1:1 molar ratio with 3kb/6kb yields 1µg/2µg",
+      "status": "passed"
+    },
+    {
+      "name": "Missing plasmid length blocks calculation and copy",
+      "status": "passed"
+    },
+    {
+      "name": "Two treatment groups produce separate tables and copied instructions",
+      "status": "passed"
+    },
+    {
+      "name": "CSV/XLSX every cell matches; Control plasmid 0.5µL/well, 1.65µL batch",
+      "status": "passed"
+    },
+    {
+      "name": "Nested group draft restores after route reload",
+      "status": "passed"
+    }
+  ],
+  "unexecuted": [
+    "Real phone soft keyboard and 160% zoom",
+    "Wet-lab user validation"
+  ],
+  "sirnaClipboard": "DNA group · siRNA per well: 6 pmol\nDNA group · Total siRNA final concentration: 10 nM\nDNA group · Tube A total per well: 62.5 µL\nDNA group · Tube B total per well: 62.5 µL\nDNA group · Mixture added per well: 125 µL\nDNA group · Final culture volume per well: 600 µL\nDNA group · Cell medium before addition: 475 µL\nDNA group · Batch supply incl. overage: 825 µL\nMix group: DNA group; Tube: A; Component: siTarget; Per well (µL): 0.3; Prepare batch (µL): 1.98; siRNA per well (pmol): 6; Final siRNA (nM): 10\nMix group: DNA group; Tube: A; Component: Opti-MEM; Per well (µL): 62.2; Prepare batch (µL): 410.52\nMix group: DNA group; Tube: B; Component: Custom RNA lipid; Per well (µL): 1; Prepare batch (µL): 6.6\nMix group: DNA group; Tube: B; Component: Opti-MEM; Per well (µL): 61.5; Prepare batch (µL): 405.9\nDNA group: Combine A into B: 412.5 µL\nDNA group: Mixture per well: 125 µL × 6\nDNA group: Dilute siRNA and reagent separately, combine, then add to cells.",
+  "groupClipboard": "DNA group · DNA per well: 2 µg\nDNA group · Tube A total per well: 62.5 µL\nDNA group · Tube B total per well: 62.5 µL\nDNA group · Mixture added per well: 125 µL\nDNA group · Final culture volume per well: 1000 µL\nDNA group · Cell medium before addition: 875 µL\nDNA group · Batch supply incl. overage: 825 µL\nControl · DNA per well: 1 µg\nControl · Tube A total per well: 50 µL\nControl · Tube B total per well: 50 µL\nControl · Mixture added per well: 100 µL\nControl · Final culture volume per well: 1000 µL\nControl · Cell medium before addition: 900 µL\nControl · Batch supply incl. overage: 330 µL\nBatch DNA incl. overage: 16.5 µg\nMix group: DNA group; Tube: A; Component: Plasmid; Per well (µL): 2; Prepare batch (µL): 13.2; DNA per well (µg): 2\nMix group: DNA group; Tube: A; Component: Opti-MEM; Per well (µL): 60.5; Prepare batch (µL): 399.3\nMix group: DNA group; Tube: B; Component: Custom lipid; Per well (µL): 6; Prepare batch (µL): 39.6\nMix group: DNA group; Tube: B; Component: Opti-MEM; Per well (µL): 56.5; Prepare batch (µL): 372.9\nMix group: Control; Tube: A; Component: Control plasmid; Per well (µL): 0.5; Prepare batch (µL): 1.65; DNA per well (µg): 1\nMix group: Control; Tube: A; Component: Opti-MEM; Per well (µL): 49.5; Prepare batch (µL): 163.35\nMix group: Control; Tube: B; Component: Custom lipid; Per well (µL): 2; Prepare batch (µL): 6.6\nMix group: Control; Tube: B; Component: Opti-MEM; Per well (µL): 48; Prepare batch (µL): 158.4\nDNA group: Combine A into B: 412.5 µL\nDNA group: Mixture per well: 125 µL × 6\nControl: Combine A into B: 165 µL\nControl: Mixture per well: 100 µL × 3\nDNA group: A管核酸稀释后与B管稀释试剂混合，按已验证方案孵育，再加入细胞。 / Dilute nucleic acid in A and reagent in B; combine and follow the validated protocol before adding to cells.\nControl: Prepare Control separately; combine A into B.",
+  "exportRows": 8,
+  "status": "passed"
+}

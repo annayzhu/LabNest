@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "Template instruction image Delete and undo",
+    "Backspace and continued instruction typing",
+    "Save/reload removes only selected image reference and retains instruction text"
+  ]
+}

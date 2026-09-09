@@ -15,7 +15,7 @@
 | T05 | 多规程与改研究方案 | 通过 | 关联规程排第一，可添加其他规程；切换研究方案保留版本ID，顺序调整正确。 | [证据](evidence/method-priority.json) |
 | T06 | 简介字段 | 通过 | 简介仅ID、方案名称、方法名称版本；自行记录空状态沿用。 | [证据](evidence/run-document-browser.json) |
 | T07 | 简介长名称与手机 | 通过 | 390px、三档系统字号简介保持单行，展开可读三个完整方法；PDF保留全部长名称，无整页溢出。 | [证据](evidence/brief-status.json) |
-| T08 | 简介正式保存／输出 | 通过 | 固定来源进入只读文档及PDF完整来源区；编辑保持同一来源。 | [证据](evidence/run-document.pdf) |
+| T08 | 简介正式保存／输出 | 通过 | 固定来源进入只读文档、PDF及CSV/XLSX/JSON/Markdown；逐文件回读步骤状态、异常处理、参数与原方法名称。 | [证据](evidence/experiment-exports.json) |
 | T09 | Protocol新版本发布 | 通过 | 合成数据新增reviewed版本并改名后，旧实验仍保留原名称与版本；新版发布界面本身未操作。 | [证据](evidence/run-history.json) |
 | T10 | 正常步骤完成 | 通过 | 仅completed步骤显示勾；未完成保留文字，正常步骤不展开原始说明。 | [证据](evidence/run-document-browser.json) |
 | T11 | 步骤偏差 | 通过 | 偏差具体文字、关联步骤、手写内容在刷新及PDF保留。 | [证据](evidence/run-document.pdf) |
@@ -41,7 +41,7 @@
 | T31 | 四工具默认站内页 | 通过 | 四工具既有站内入口保留；桌面/手机与明暗布局回归。 | [证据](evidence/tools/tools-inventory.json) |
 | T32 | 工具工作流 | 通过 | 四工具导入、保存往返、下载及逐文件回读通过，算法未重写。 | [证据](evidence/tools/file-checks.json) |
 | T33 | 整卡进入／独立按钮 | 未执行 | 鼠标整卡、键盘及独立按钮已通过；真实触控仍待真机验收。 | [证据](evidence/tools/tools-inventory.json) |
-| T34 | 删除图片空白 | 通过 | 六入口×四位置×两删除键，48组合包含撤销重做及继续输入；独立合成夹具保留其他空段落。 | [证据](evidence/image-matrix.json) |
+| T34 | 删除图片空白 | 通过 | 六入口×四位置×两删除键，48组合包含撤销重做及继续输入；独立合成夹具保留其他空段落；结果模板另验删除、撤销、继续输入及保存刷新。 | [正文证据](evidence/image-matrix.json) · [模板证据](evidence/template-delete.json) |
 | T35 | 图片保存／打印回归 | 通过 | 六正文与模板保存、刷新、重编、只读检查图片decode；14份PDF逐页非空。 | [证据](evidence/editor/) |
 | T36 | 全文／表格字号 | 通过 | 全文、单元格、行、表格、多单元格范围及保存重编；六入口字号/图注/打印回归。 | [证据](evidence/fonts/text.json) |
 | T37 | 主题配色 | 通过 | 五组参考配色覆盖17张来源色卡映射，区分标注与近似取样，保留原配色ID/深色语义。 | [证据](evidence/../VISUAL-SOURCES.md) |
@@ -53,4 +53,4 @@
 | T43 | 真机输入与160%缩放 | 未执行 | 真机IME完整选词、软键盘、160%系统缩放、实验人员试用未执行；模拟不替代。 | [证据](evidence/../MANUAL-ACCEPTANCE.md) |
 | T44 | 采购／库存独立性 | 通过 | 沿用既有库存/采购账本；无库存及不足待扣的Run均能完成且无自动交易，数据库回读通过。 | [证据](evidence/inventory-independent.json) |
 | T45 | Calculator受影响回归 | 通过 | 本轮22阶段Calculator全套通过，含正确性、历史、离线往返、导出与转染回读；验证SHA单列。 | [证据](evidence/calculator/acceptance-run.json) |
-| T46 | 默认A4打印与PDF尺寸 | 通过 | 14份PDF16页逐页A4，误差<1pt；每页非空、含图片。系统/驱动覆盖与真实打印未执行。 | [证据](evidence/pdf-page-dimensions.json) |
+| T46 | 默认A4打印与PDF尺寸 | 通过 | 全部31份PDF共48页均为A4且非空；其中14份正文PDF16页逐页含图片。系统/驱动覆盖与真实打印未执行。 | [全部PDF](evidence/all-pdfs.json) · [正文尺寸](evidence/pdf-page-dimensions.json) |

@@ -348,5 +348,33 @@
         841.92
       ]
     ]
+  },
+  {
+    "path": "docs/debug-20260909/evidence/template-only/template-edit.pdf",
+    "pages": 2,
+    "sizes": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "path": "docs/debug-20260909/evidence/template-only/template-view.pdf",
+    "pages": 2,
+    "sizes": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
   }
 ]

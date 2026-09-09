@@ -1,8 +1,9 @@
+import { experimentMethodNames, experimentPlanName } from "@/lib/experiment-provenance";
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
 import { prisma } from "@/lib/db";
 import { documentMediaToMarkdown } from "@/lib/document-media";
-import { experimentNarrativeFromDocument } from "@/lib/experiment-document";
+import { experimentNarrativeFromDocument, experimentExecutionDocument } from "@/lib/experiment-document";
 import { getInventoryRiskFlags } from "@/lib/inventory";
 import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
 import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, experimentSections, reportSections, type ScientificDocument } from "@/lib/scientific-document";
@@ -91,12 +92,12 @@ export async function structuredExportRecords(
   }
   if (module === "experiments") {
     const rows = applyExportSelection(
-      await prisma.experiment.findMany({ include: { project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
+      await prisma.experiment.findMany({ include: { steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
       selection,
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
     return rows.map((row) => {
-      const document = normalizeScientificDocument(row.contentJson, experimentSections);
+      const document = experimentExecutionDocument(row.contentJson, row.steps);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");
@@ -106,7 +107,7 @@ export async function structuredExportRecords(
         narrative.deviations = scientificSectionText(document, "deviations");
         narrative.conclusion = scientificSectionText(document, "conclusion");
       }
-      return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags };
+      return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, researchPlanName: experimentPlanName(row.protocolSnapshotJson,row.researchPlan?.title??null), methodSources:experimentMethodNames(row.protocolSnapshotJson), runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags };
     });
   }
   if (module === "results") {

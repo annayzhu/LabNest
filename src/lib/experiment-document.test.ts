@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   appendExperimentObservation,
+  experimentExecutionDocument,
   experimentDocumentFromNarrative,
   experimentNarrativeFromDocument,
   experimentSearchText,
@@ -66,4 +67,22 @@ describe("Experiment structured document", () => {
       conclusion: "Signal increased\nRepeat with an independent batch",
     });
   });
+});
+
+it("projects all Run steps in execution order without replacing authored notes", () => {
+  const source = experimentDocumentFromNarrative({steps:"手写实验记录"});
+  const steps = [
+    {id:"3",groupOrder:0,order:3,groupTitle:"锁定规程 v1",title:"检测",completed:false,deviationNote:null},
+    {id:"1",groupOrder:0,order:1,groupTitle:"锁定规程 v1",title:"取样",completed:true,deviationNote:null},
+    {id:"2",groupOrder:0,order:2,groupTitle:"锁定规程 v1",title:"培养",completed:true,deviationNote:"实际延长 5 分钟"},
+  ];
+  const projected = experimentExecutionDocument(source, steps);
+  const text = experimentNarrativeFromDocument(projected).steps;
+  expect(text).toContain("手写实验记录");
+  expect(text).toContain("✓ 取样");
+  expect(text).toContain("偏差：实际延长 5 分钟");
+  expect(text).toContain("未完成 检测");
+  expect(text.indexOf("取样")).toBeLessThan(text.indexOf("培养"));
+  expect(experimentNarrativeFromDocument(source).steps).toBe("手写实验记录");
+  expect(experimentNarrativeFromDocument(experimentExecutionDocument(projected,steps)).steps).toBe(text);
 });

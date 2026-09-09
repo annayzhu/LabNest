@@ -1,3 +1,4 @@
+import { runConsumptionSources } from "@/lib/run-consumption";
 import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
 import {runParameterKeys} from "@/lib/run-parameters";
@@ -130,7 +131,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
-          <RunMaterials experimentId={id} rows={JSON.parse(JSON.stringify(experiment.materialUses))} stock={inventoryItems} editable={editable} planned={Array.isArray(experiment.protocolRun?.calculatedConsumptionJson)?experiment.protocolRun.calculatedConsumptionJson as unknown as {materialName:string;quantity:number;unit:string;formula?:string}[]:[]}/>
+          <RunMaterials consumptionSources={runConsumptionSources(experiment.protocolSnapshotJson)} parameterValues={(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>} experimentId={id} rows={JSON.parse(JSON.stringify(experiment.materialUses))} stock={inventoryItems} editable={editable} planned={Array.isArray(experiment.protocolRun?.calculatedConsumptionJson)?experiment.protocolRun.calculatedConsumptionJson as unknown as {materialName:string;quantity:number;unit:string;formula?:string}[]:[]}/>
 
         </div>
 

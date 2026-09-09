@@ -98,3 +98,26 @@ export function appendExperimentObservation(
       : section),
   };
 }
+
+/** Derived at read/export time: current persisted Run evidence, never authored prose.
+ * The reserved ID prefix permits refreshing the projection without accumulating it. */
+export function experimentExecutionDocument(contentJson: unknown, steps: readonly {
+  id: string; groupOrder: number; order: number; groupTitle: string; title: string;
+  completed: boolean; deviationNote?: string | null; deviationType?: string | null;
+  deviationImpact?: string | null; deviationAuthor?: string | null;
+}[]): ScientificDocument {
+  const document = normalizeScientificDocument(contentJson, experimentSections);
+  const blocks: ScientificDocument['sections'][number]['blocks'] = [];
+  let group: number | undefined;
+  for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
+    if (group !== step.groupOrder) {
+      group = step.groupOrder;
+      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle});
+    }
+    const title = `${step.completed ? '✓' : '未完成'} ${step.title}`;
+    if (step.deviationNote?.trim()) {
+      blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
+    } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title});
+  }
+  return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}:section)};
+}

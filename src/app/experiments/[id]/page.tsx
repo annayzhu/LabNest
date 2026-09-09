@@ -1,3 +1,5 @@
+import { ExperimentBrief } from "@/components/ExperimentBrief";
+import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { Play } from "lucide-react";
 import Link from "next/link";
@@ -38,7 +40,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
-  const document = normalizeScientificDocument(experiment.contentJson, experimentSections);
+  const document = experimentExecutionDocument(experiment.contentJson, experiment.steps);
   const completed = experiment.steps.filter((step) => step.completed).length;
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
@@ -48,12 +50,6 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     resultTemplatesJson: link.protocolVersion.resultTemplatesJson,
   })), experiment.results);
   const resultRecordingHref = preferredResultRecordingHref(experiment.id, resultRecording);
-  const stepGroups = Array.from(experiment.steps.reduce((groups, step) => {
-    const group = groups.get(step.groupKey) ?? { key: step.groupKey, title: step.groupTitle, order: step.groupOrder, steps: [] as typeof experiment.steps };
-    group.steps.push(step);
-    groups.set(step.groupKey, group);
-    return groups;
-  }, new Map<string, { key: string; title: string; order: number; steps: typeof experiment.steps }>()).values()).sort((a, b) => a.order - b.order);
   const recycleConditions = [
     ...(experiment.researchPlanId ? [{ targetType: "research_plan", targetId: experiment.researchPlanId }] : []),
     ...experiment.protocolVersions.map((row) => ({ targetType: "protocol", targetId: row.protocolVersion.protocolId })),
@@ -82,9 +78,8 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main space-y-6">
-        <ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} />
-        <Card><CardHeader title="Execution record" eyebrow="Run mode is the source of step execution and live notes" action={<Link href={`/experiments/${experiment.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-2 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} /><CardBody className="space-y-2 text-sm leading-6 text-graphite"><p>{completed}/{experiment.steps.length} planned steps completed</p><p>{experiment.steps.filter((step) => Boolean(step.deviationNote)).length} deviations were recorded</p>{!experiment.steps.length ? <p className="text-xs text-muted">No fixed checklist steps were configured. Use run mode for freeform execution notes.</p> : null}</CardBody></Card>
-        {stepGroups.length ? <Card><CardHeader title="Execution step history" eyebrow="Last known step-level status (for quick checks)" /><CardBody className="space-y-4">{stepGroups.map((group) => { const heading = experimentStepGroupHeading(group.title); return <section key={group.key} className="overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-hairline"><div className="bg-sage-surface/55 px-3 py-2"><h3 className="text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</h3>{heading.detail ? <p className="mt-0.5 text-xs text-muted">{heading.detail}</p> : null}</div><div className="divide-y divide-hairline">{group.steps.slice(0, 2).map((step) => <div key={step.id} className="flex gap-3 bg-warm px-3 py-3 text-sm"><span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${step.completed ? "border-moss bg-moss text-warm" : "border-border-strong"}`}>{step.completed ? "✓" : ""}</span><div><strong className="font-medium text-ink">{step.order}. {step.title}</strong>{step.description ? <p className="mt-1 leading-6 text-graphite">{step.description}</p> : null}{step.deviationNote ? <p className="mt-1 text-warning">Deviation: {step.deviationNote}</p> : null}</div></div>)}</div></section>; })}</CardBody></Card> : null}
+        <ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} />} />
+
       </main>
 
       <aside className="document-preview-sidebar experiment-detail-sidebar" aria-label="Experiment controls and result recording">

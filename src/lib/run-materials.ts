@@ -7,12 +7,12 @@ const rowInput = z.object({
   name: z.string().trim().min(1).max(240),
   expected: z.number().finite().nonnegative().nullable().optional(),
   actual: z.number().finite().nonnegative().nullable().optional(),
-  unit: z.string().trim().min(1).max(32),
-  source: z.string().trim().min(1).max(1000),
+  unit: z.string().trim().max(32).default(""),
+  source: z.string().trim().min(1).max(1000).default("manual"),
   inventoryItemId: z.string().min(1).nullable().optional(),
   containerId: z.string().min(1).nullable().optional(),
   correctionOfId: z.string().uuid().nullable().optional(),
-});
+}).refine(row => (row.expected == null && row.actual == null) || Boolean(row.unit), { message: "填写用量时请选择单位。", path: ["unit"] });
 async function editable(id: string) {
   const run = await prisma.experiment.findUniqueOrThrow({ where: { id } });
   if (run.status === "archived")
@@ -183,4 +183,19 @@ export async function confirmRunMaterials(experimentId: string, raw: unknown) {
     }
   }
   return outcomes;
+}
+
+/** Removal is only for unposted records. Posted ledger history stays immutable. */
+export async function deleteRunMaterial(experimentId: string, raw: unknown) {
+  await editable(experimentId);
+  const { id } = z.object({ id: z.string().uuid() }).parse(raw);
+  return prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`run-material:${id}`},0))::text`;
+    const row = await tx.runMaterialUse.findUnique({where:{id}});
+    if (!row) return {id, deleted:true}; // retry after successful deletion
+    if (row.experimentId !== experimentId) throw new Error("材料不属于当前实验。");
+    if (row.status === "submitted" || row.transactionId) throw new Error("已扣减记录不可删除；请登记更正，保留原流水。");
+    await tx.runMaterialUse.delete({where:{id}});
+    return {id, deleted:true};
+  });
 }

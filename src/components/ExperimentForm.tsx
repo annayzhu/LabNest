@@ -1,5 +1,6 @@
 "use client";
 
+import { experimentMethodNames } from "@/lib/experiment-provenance";
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
@@ -32,7 +33,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   initial: {
     id?: string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
     purpose?: string | null; tags?: string[]; methodMode?: "protocol" | "custom";
-    selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
+    protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -41,7 +42,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const plan = plans.find((item) => item.id === planId);
   const initialSelectedIds = initial.selectedProtocolVersionIds ?? [];
   const [methodMode, setMethodMode] = useState<"protocol" | "custom">(initial.methodMode ?? "protocol");
-  const [selectedProtocolCount, setSelectedProtocolCount] = useState(initialSelectedIds.length);
+  const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [title, setTitle] = useState(initial.title ?? "");
   const [runCodeSuffix, setRunCodeSuffix] = useState(initial.suggestedCodeSuffix ?? "");
   const [date, setDate] = useState(initial.date ?? new Date().toISOString().slice(0, 10));
@@ -52,11 +53,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const identifier = initial.runCode ?? (runCodeSuffix ? `EXP-${runCodeSuffix}` : "Draft Experiment");
   const lockedMethodMode = initialSelectedIds.length ? "protocol" : "custom";
   const activeMethodMode = initial.id ? lockedMethodMode : methodMode;
-  const protocolMethodSummary = initial.id
-    ? `${initialSelectedIds.length} locked ProtocolVersion(s)`
-    : selectedProtocolCount
-      ? `${selectedProtocolCount} ProtocolVersion(s) selected · locks on Save`
-      : "Select ProtocolVersion(s)";
+  const protocolMethodSummary = initial.id ? experimentMethodNames(initial.protocolSnapshotJson).join('；') : selectedIds.map(id=>{const version=protocolVersions.find(v=>v.id===id);return version ? `${version.protocol.title} · ${version.displayVersion}` : '规程未记录';}).join('；') || '未选择规程';
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
   return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
@@ -65,21 +62,18 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>
       <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
-        { label: "Research Plan", value: plan ? `${plan.code ?? plan.title} · ${plan.project.name}` : "Not selected" },
-        { label: "Method", value: activeMethodMode === "protocol" ? protocolMethodSummary : "Fully custom" },
-        { label: "Date", value: date },
-        { label: "Execution", value: status.replaceAll("_", " ") },
-        { label: "Record", value: recordStatus.replaceAll("_", " ") },
+        { label: "研究计划", value: plan?.title ?? "未选择" },
+        { label: "方法来源", value: activeMethodMode === "protocol" ? protocolMethodSummary : "自行记录" },
       ]} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
+      <label className="md:col-span-2"><span className={formLabelClass}>Research Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan?.project.name} · {plan?.title}</div> : <select required name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}</label>
     {!initial.id ? <Card><CardHeader title="Protocol association & method source" eyebrow="Choose in execution order; Protocol Steps become the on-bench checklist" /><CardBody className="space-y-5">
       <fieldset className="grid gap-3 md:grid-cols-2"><legend className={formLabelClass}>Planning mode</legend>
         <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>
         <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Fully custom Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">No Protocol dependency. Enter your own execution steps instead.</span></span></label>
       </fieldset>
         {methodMode === "protocol" ? <>
-        <ExperimentProtocolPicker versions={protocolVersions} initialSelectedIds={initialSelectedIds} onSelectionChange={(ids) => setSelectedProtocolCount(ids.length)} />
-        <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional result modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
+        <ExperimentProtocolPicker versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={initialSelectedIds} onSelectionChange={setSelectedIds} />
       </> : <>
         <label className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
           <input
@@ -99,7 +93,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </CardBody></Card> : null}
 
     <Card><CardHeader title="Experiment identity" eyebrow="Plan a future execution inside one Research Plan" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <label className="md:col-span-2"><span className={formLabelClass}>Research Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan?.project.name} · {plan?.code ?? plan?.title}</div> : <select required name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.code ?? item.title}</option>)}</select>}</label>
+
       <RecordCodeField label="Experiment code" prefix="EXP-" name="runCodeSuffix" minimumDigits={3} placeholder="001" value={runCodeSuffix} onValueChange={setRunCodeSuffix} existingCode={initial.id ? initial.runCode : undefined} />
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
@@ -117,7 +111,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
+      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedIds.length)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
 }

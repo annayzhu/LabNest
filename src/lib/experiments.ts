@@ -78,6 +78,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   const snapshot = {
     schemaVersion: 1,
     methodMode: input.methodMode,
+    researchPlanTitle: plan.title,
     capturedAt: new Date().toISOString(),
     versions: orderedVersions.map((version) => ({
       protocolId: version.protocolId,

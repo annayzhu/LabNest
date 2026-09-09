@@ -1,5 +1,7 @@
 "use client";
 
+import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { experimentMethodNames } from "@/lib/experiment-provenance";
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -16,7 +18,7 @@ import type { ScientificDocument } from "@/lib/scientific-document";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 
 type PlanOption = { id: string; code: string | null; title: string; project: { name: string } };
-type StepOption = { id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null };
+type StepOption = { evidence?: ScientificDocument["sections"][number]["blocks"]; groupOrder?:number;groupTitle?:string;deviationType?:string|null;deviationImpact?:string|null;deviationAuthor?:string|null; id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null };
 export type ExperimentFormState = { error?: string };
 export type ExperimentFormAction = (
   previousState: ExperimentFormState,
@@ -61,7 +63,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"}))).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "研究计划", value: plan?.title ?? "未选择" },
         { label: "方法来源", value: activeMethodMode === "protocol" ? protocolMethodSummary : "自行记录" },
       ]} /></div>

@@ -52,8 +52,22 @@ export function RunMaterials({
   const [mounted, setMounted] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
   const [review, setReview] = useState(false);
-  function openDialog() { setMounted(true); requestAnimationFrame(() => dialogRef.current?.showModal()); }
-  function closeDialog() { dialogRef.current?.close(); triggerRef.current?.focus(); }
+  const sessionKey = useRef('create');
+  type Draft = {draftId:string|null;name:string;expected:string;actual:string;unit:string;source:string;inventory:string;container:string;correction:string|null;mode:string};
+  const drafts = useRef<Record<string,Draft>>({});
+  const [dialogActive,setDialogActive] = useState(false);
+  function applyDraft(d:Draft) {setDraftId(d.draftId);setName(d.name);setExpected(d.expected);setActual(d.actual);setUnit(d.unit);setSource(d.source);setInventory(d.inventory);setContainer(d.container);setCorrection(d.correction);setMode(d.mode);}
+  const blankDraft: Draft = {draftId:null,name:'',expected:'',actual:'',unit:'mL',source:'manual',inventory:'',container:'',correction:null,mode:'manual'};
+  function rowDraft(row: Row, correcting=false): Draft {return {draftId:correcting?null:row.id,name:row.name,expected:row.expected===null?'':String(row.expected),actual:row.actual===null?'':String(row.actual),unit:row.unit,source:correcting?`correction:${row.id}`:row.source,inventory:row.inventoryItemId??'',container:correcting?'':row.containerId??'',correction:correcting?row.id:row.correctionOfId,mode:'manual'};}
+  function openDialog(key='create', initial=blankDraft) {
+    if(key!==sessionKey.current) {
+      drafts.current[sessionKey.current]={draftId,name,expected,actual,unit,source,inventory,container,correction,mode};
+      applyDraft(drafts.current[key] ?? initial);
+      sessionKey.current=key;
+    }
+    setDialogActive(true);setMounted(true);requestAnimationFrame(()=>dialogRef.current?.showModal());
+  }
+  function closeDialog() { setDialogActive(false); dialogRef.current?.close(); triggerRef.current?.focus(); }
   async function remove(id: string) {
     setBusy(true);
     try {
@@ -132,6 +146,8 @@ export function RunMaterials({
       setExpected("");
       setActual("");
       setCorrection(null);
+      setInventory('');setContainer('');setSource('manual');setMode('manual');setPreview([]);
+      delete drafts.current[sessionKey.current];sessionKey.current='create';applyDraft(drafts.current.create ?? blankDraft);
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "保存失败，输入仍保留",
@@ -167,7 +183,7 @@ export function RunMaterials({
   }
   return (
     <section className="border-t border-hairline py-4">
-      <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-base font-semibold">本次使用的试剂与耗材</h2>{editable ? <button ref={triggerRef} type="button" className="focus-ring min-h-11 px-3 text-moss" onClick={openDialog}>添加</button> : null}</div>
+      <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-base font-semibold">本次使用的试剂与耗材</h2>{editable ? <button ref={triggerRef} type="button" className="focus-ring min-h-11 px-3 text-moss" onClick={()=>openDialog()}>添加</button> : null}</div>
       {!rows.length ? <p className="text-sm text-muted">尚未记录</p> : null}
       <div className="overflow-x-auto" hidden={!rows.length}>
         <table className="ln-run-material-table w-full text-left text-sm">
@@ -192,10 +208,10 @@ export function RunMaterials({
                 </td>
                 <td data-label="来源" className="p-2">
                   {row.status === "pending" && editable ? <label className="flex gap-2"><input type="checkbox" aria-label={`选择扣减 ${row.name}`} checked={selection.includes(row.id)} onChange={event=>setSelection(old=>event.target.checked?[...old,row.id]:old.filter(id=>id!==row.id))}/>待确认扣减</label> : row.status === 'submitted' ? '已扣减' : '仅记录'}
-                  <details><summary className="cursor-pointer text-muted">来源与详情</summary><p>{row.source === 'manual' ? '手动填写' : row.source.startsWith('correction:') ? '更正记录' : '依据规程'}</p><p>{stock.find(s=>s.id===row.inventoryItemId)?.name ?? '不管理库存'}</p>{row.containerId ? <p>{row.containerId}</p> : null}{row.error ? <p role="alert" className="text-error">{row.error}</p> : null}</details>
+                  <details><summary className="cursor-pointer text-muted">来源与详情</summary><p>{row.source === 'manual' ? '手动填写' : row.source.startsWith('correction:') ? '更正记录' : '依据规程'}</p>{row.source.startsWith('Consumption:') ? <p className="break-words">{row.source.split('|').slice(1).join('|') || row.source}</p> : null}<p>{stock.find(s=>s.id===row.inventoryItemId)?.name ?? '不管理库存'}</p>{row.containerId ? <p>{row.containerId}</p> : null}{row.error ? <p role="alert" className="text-error">{row.error}</p> : null}</details>
                 </td>
                 <td data-label="操作" className="p-2">
-                  {row.status !== "submitted" && editable ? <button type="button" className="focus-ring ml-2 min-h-11 text-moss" onClick={()=>{setDraftId(row.id);setName(row.name);setExpected(row.expected===null?"":String(row.expected));setActual(row.actual===null?"":String(row.actual));setUnit(row.unit);setInventory(row.inventoryItemId??"");setContainer(row.containerId??"");setCorrection(row.correctionOfId);setSource(row.source);openDialog();}}>编辑</button>:null}
+                  {row.status !== "submitted" && editable ? <button type="button" className="focus-ring ml-2 min-h-11 text-moss" onClick={()=>openDialog(`edit:${row.id}`,rowDraft(row))}>编辑</button>:null}
                   {row.status !== "submitted" && editable ? <button type="button" disabled={busy} className="focus-ring ml-2 min-h-11 text-error" onClick={()=>remove(row.id)}>删除</button>:null}
                   {row.status === "submitted" &&
                   editable &&
@@ -203,22 +219,7 @@ export function RunMaterials({
                     <button
                       type="button"
                       className="focus-ring ml-2 min-h-11 text-moss"
-                      onClick={() => {
-                        setDraftId(null);
-                        setName(row.name);
-                        setExpected(
-                          row.expected === null ? "" : String(row.expected),
-                        );
-                        setActual(
-                          row.actual === null ? "" : String(row.actual),
-                        );
-                        setUnit(row.unit);
-                        setInventory(row.inventoryItemId ?? "");
-                        setContainer("");
-                        setCorrection(row.id);
-                        setSource(`correction:${row.id}`);
-                        openDialog();
-                      }}
+                      onClick={()=>openDialog(`correction:${row.id}`,rowDraft(row,true))}
                     >
                       登记更正
                     </button>
@@ -231,8 +232,9 @@ export function RunMaterials({
       </div>
       {editable ? (
         <>
-          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(event.nativeEvent.isTrusted) triggerRef.current?.focus();}}>
-          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : '添加耗材'}</h3><Button type="button" onClick={closeDialog}>关闭</Button></div>
+          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={()=>{setDialogActive(false);triggerRef.current?.focus();}}>
+          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.current.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" onClick={closeDialog}>关闭</Button></div>
+          {status && dialogActive ? <p role="alert" className="my-2 text-sm">{status}</p> : null}
           <form
             onSubmit={save}
             onKeyDown={preventImplicitEnterSubmit}
@@ -321,7 +323,7 @@ export function RunMaterials({
           {review ? <div className="mt-3 border-t border-hairline py-3"><p>仅扣减以下已选用量；保存记录本身不会扣库。</p><ul>{rows.filter(r=>selection.includes(r.id)).map(r=><li key={r.id}>{r.name}：{r.actual ?? '未确认'} {r.unit}{adjustment(r)}</li>)}</ul><Button type="button" disabled={busy || !selection.length} onClick={async()=>{await confirm();setReview(false);setSelection([]);}}>确认扣减所选项</Button><Button type="button" onClick={()=>setReview(false)}>取消</Button></div> : null}
         </>
       ) : null}
-      {status ? (
+      {status && !dialogActive ? (
         <p role="status" className="mt-3 text-sm">
           {status}
         </p>

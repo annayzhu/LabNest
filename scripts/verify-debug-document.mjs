@@ -1,6 +1,6 @@
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const {experimentId}=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const browser=await chromium.launch();
+const {experimentId}=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));const browser=await chromium.launch();
 try{
  for(const [name,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
  const page=await browser.newPage({viewport});await page.goto(`http://localhost:3232/experiments/${experimentId}`);await page.reload();

@@ -5518,3 +5518,18 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 :is(.focus-ring, .ln-tool-card) { transition: background-color var(--ln-motion-fast) ease-out, color var(--ln-motion-fast) ease-out, border-color var(--ln-motion-fast) ease-out; }
 button.focus-ring:active { filter: brightness(.96); }
 @media (prefers-reduced-motion: reduce) { .context-properties, .focus-ring, .ln-tool-card { transition: none; animation: none; } }
+
+.ln-experiment-brief, .document-page-facts.ln-experiment-facts { flex-wrap: nowrap; align-items: baseline; }
+.ln-experiment-brief > span { flex: 0 1 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-experiment-brief > details, .ln-experiment-facts > div { flex: 1 1 0; }
+.ln-experiment-brief summary { max-width: 100%; }
+.ln-experiment-brief details[open] { flex-basis: 45%; }
+@media print { .ln-experiment-brief { display: flex; flex-wrap: wrap; } .ln-experiment-brief .ln-brief-print { flex: 1 1 100%; } }
+.ln-brief-source { display: none; }
+@media print {
+  .ln-experiment-brief { display: flex; flex-wrap: nowrap; }
+  .ln-experiment-brief details { display: block; }
+  .ln-experiment-brief details summary { display: block; }
+  .ln-experiment-brief details > :not(summary) { display: none !important; }
+  .ln-brief-source { display: block; margin-block: 1rem; }
+}

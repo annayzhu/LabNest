@@ -2,7 +2,7 @@ import {request} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 const base='http://localhost:3232';
-const fixture=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));
+const fixture=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));
 const api=await request.newContext({baseURL:base});
 const endpoint=`/api/experiments/${fixture.experimentId}/materials`;
 const id=crypto.randomUUID();

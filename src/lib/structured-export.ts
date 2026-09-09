@@ -1,3 +1,4 @@
+import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { experimentMethodNames, experimentPlanName } from "@/lib/experiment-provenance";
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
@@ -96,8 +97,8 @@ export async function structuredExportRecords(
       selection,
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
-    return rows.map((row) => {
-      const document = experimentExecutionDocument(row.contentJson, row.steps);
+    return Promise.all(rows.map(async (row) => {
+      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps));
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");
@@ -108,7 +109,7 @@ export async function structuredExportRecords(
         narrative.conclusion = scientificSectionText(document, "conclusion");
       }
       return { project: row.project?.name, researchPlan: row.researchPlan?.code ?? row.researchPlan?.title, researchPlanName: experimentPlanName(row.protocolSnapshotJson,row.researchPlan?.title??null), methodSources:experimentMethodNames(row.protocolSnapshotJson), runCode: row.runCode, title: row.title, date: row.date.toISOString(), status: row.status, recordStatus: row.recordStatus, primaryProtocolCode: row.primaryProtocolVersion?.protocol.humanCode ?? row.primaryProtocolVersion?.protocol.canonicalTitle, protocolVersion: row.primaryProtocolVersion?.displayVersion, supportingProtocolCodes: row.protocolVersions.filter((link) => link.role === "supporting").map((link) => link.protocolVersion.protocol.humanCode ?? link.protocolVersion.protocol.canonicalTitle ?? link.protocolVersion.protocol.title), purpose: row.purpose, ...narrative, tags: row.tags };
-    });
+    }));
   }
   if (module === "results") {
     const rows = applyExportSelection(

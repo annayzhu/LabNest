@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/editor-repair/evidence/fixtures.json'));const browser=await chromium.launch();const page=await browser.newPage();const records=[];
+const f=JSON.parse(readFileSync('docs/debug-20260909/evidence/editor/fixtures.json'));const browser=await chromium.launch();const page=await browser.newPage();const records=[];
 try{
  for(const item of f.cases){
  await page.goto('http://localhost:3232'+item.edit);const body=page.locator('[contenteditable="true"]').first();await body.click();await page.keyboard.press('End');await page.keyboard.press('Enter');

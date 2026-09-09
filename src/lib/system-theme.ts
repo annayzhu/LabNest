@@ -144,14 +144,14 @@ const establishedThemes = [
 const referenceThemes = [
   {id:'reference-cool',name:'冷白实验室',base:0,paper:'#EDF5F1',warm:'#F2F9FE',stone:'#DDE7E9'},
   {id:'reference-lilac',name:'柔紫灰',base:3,paper:'#EFE4E9',warm:'#F2EFED',stone:'#CECBDA'},
-  {id:'reference-cream',name:'暖白实验簿',base:2,paper:'#F5F1E8',warm:'#FEFDF9',stone:'#F8F2E4'},
+  {id:'reference-cream',name:'暖白实验簿',base:2,paper:'#F5F1E8',warm:'#F9F5F0',stone:'#F8F2E4'},
   {id:'reference-peach',name:'柔粉米白',base:1,paper:'#FAEBE6',warm:'#FEF0E3',stone:'#FDF6E9'},
   {id:'reference-blue',name:'深蓝冷白',base:4,paper:'#E2EEFD',warm:'#FEFDF9',stone:'#DDE7E9'},
 ] as const;
 export const systemThemes = [...establishedThemes,...referenceThemes.map(reference=>defineSystemTheme({
   ...establishedThemes[reference.base],id:reference.id,name:reference.name,
   description:'依据附件近似背景色取样，正文与操作色经对比度派生。',
-  tokens:{...establishedThemes[reference.base].tokens,'--paper':reference.paper,'--warm':reference.warm,'--stone':reference.stone,...(reference.id==='reference-peach'?{'--moss':'#106b84','--action':'#106b84'}:{})},
+  tokens:{...establishedThemes[reference.base].tokens,'--paper':reference.paper,'--warm':reference.warm,'--stone':reference.stone,...(reference.id==='reference-peach'?{'--moss':'#106b84','--action':'#106b84','--pale-sand':'#FDF4DF'}:reference.id==='reference-blue'?{'--moss':'#033167','--action':'#033167'}:reference.id==='reference-lilac'?{'--hairline':'#CFD1D3'}:{})},
 }))];
 
 export type SystemThemeId = (typeof systemThemes)[number]["id"];

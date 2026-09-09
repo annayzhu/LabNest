@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const {experimentId}=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();
+const {experimentId}=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();
 try{
  const endpoint=`http://localhost:3232/api/experiments/${experimentId}/materials`;
  for(const row of await (await page.request.get(endpoint)).json()) if(row.name==='Synthetic mix' && row.status!=='submitted') await page.request.post(endpoint,{data:{action:'delete',id:row.id}});

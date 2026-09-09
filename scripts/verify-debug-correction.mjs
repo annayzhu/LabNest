@@ -1,5 +1,5 @@
 import {request} from 'playwright';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:'http://localhost:3232'});const url=`/api/experiments/${f.experimentId}/materials`;
+const f=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));const api=await request.newContext({baseURL:'http://localhost:3232'});const url=`/api/experiments/${f.experimentId}/materials`;
 try {
  const post=async data=>{const r=await api.post(url,{data});assert.equal(r.status(),200,await r.text());return r.json();};
  const original=crypto.randomUUID();await post({action:'save',id:original,name:'更正回归',actual:10,unit:'mL',inventoryItemId:f.inventoryItemId});

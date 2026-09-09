@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();
+const f=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();
 try{
  await page.goto(`http://localhost:3232/experiments/${f.experimentId}/run`);
  const area=page.locator('section').filter({has:page.getByRole('heading',{name:'本次使用的试剂与耗材',exact:true})}).last();

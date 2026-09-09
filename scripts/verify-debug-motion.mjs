@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/editor-repair/evidence/fixtures.json'));const browser=await chromium.launch();const checks=[];
+const f=JSON.parse(readFileSync('docs/debug-20260909/evidence/editor/fixtures.json'));const browser=await chromium.launch();const checks=[];
 try{for(const [name,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
  console.log('Testing',name);
  const context=await browser.newContext({viewport,recordVideo:{dir:'docs/debug-20260909/evidence/motion',size:viewport}});const page=await context.newPage();await page.goto('http://localhost:3232'+f.cases.find(c=>c.name==='experiment').edit,{waitUntil:'networkidle'});

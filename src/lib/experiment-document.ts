@@ -105,6 +105,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
   id: string; groupOrder: number; order: number; groupTitle: string; title: string;
   completed: boolean; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
+  evidence?: ScientificDocument['sections'][number]['blocks'];
 }[]): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificDocument['sections'][number]['blocks'] = [];
@@ -118,6 +119,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     if (step.deviationNote?.trim()) {
       blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
     } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title});
+    blocks.push(...(step.evidence??[]).map((block,index)=>({...block,id:`run-derived:${step.id}:evidence:${index}`})));
   }
   return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}:section)};
 }

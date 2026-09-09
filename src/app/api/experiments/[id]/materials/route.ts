@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { acceptsRequestOrigin } from "@/lib/request-origin";
 import { prisma } from "@/lib/db";
 import { saveRunMaterial, confirmRunMaterials, deleteRunMaterial } from "@/lib/run-materials";
@@ -32,7 +33,7 @@ export async function POST(
     );
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Save failed" },
+      { error: error instanceof z.ZodError ? "请检查名称、用量和单位；输入尚未保存。" : error && typeof error === "object" && "code" in error && error.code === "P2002" ? "该记录或更正已存在，请刷新后核对，避免重复提交。" : error instanceof Error ? error.message : "保存失败，请重试；输入仍保留。" },
       { status: 409 },
     );
   }

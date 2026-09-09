@@ -69,10 +69,10 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       ]} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
       <label className="md:col-span-2"><span className={formLabelClass}>Research Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan?.project.name} · {plan?.title}</div> : <select required name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}</label>
-    {!initial.id ? <Card><CardHeader title="Protocol association & method source" eyebrow="Choose in execution order; Protocol Steps become the on-bench checklist" /><CardBody className="space-y-5">
-      <fieldset className="grid gap-3 md:grid-cols-2"><legend className={formLabelClass}>Planning mode</legend>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Fully custom Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">No Protocol dependency. Enter your own execution steps instead.</span></span></label>
+    {!initial.id ? <section className="space-y-3 border-b border-hairline py-3"><h3 className="text-sm font-semibold">方法来源</h3><div className="space-y-3">
+      <fieldset className="grid gap-3 md:grid-cols-2"><legend className="sr-only">方法来源</legend>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">依据实验规程</strong></span></label>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">自行记录</strong></span></label>
       </fieldset>
         {methodMode === "protocol" ? <>
         <ExperimentProtocolPicker versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={initialSelectedIds} onSelectionChange={setSelectedIds} />
@@ -92,9 +92,9 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
           <p className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-muted">No step-by-step checklist for this custom protocol. Run notes will be recorded in a freeform execution log.</p>
         )}
       </>}
-    </CardBody></Card> : null}
+    </div></section> : null}
 
-    <Card><CardHeader title="Experiment identity" eyebrow="Plan a future execution inside one Research Plan" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="border-b border-hairline py-3"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 
       <RecordCodeField label="Experiment code" prefix="EXP-" name="runCodeSuffix" minimumDigits={3} placeholder="001" value={runCodeSuffix} onValueChange={setRunCodeSuffix} existingCode={initial.id ? initial.runCode : undefined} />
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
@@ -103,7 +103,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
       <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
       <label className="md:col-span-2 xl:col-span-4"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
-    </CardBody></Card>
+    </div></section>
 
     {initial.id && initial.steps?.length ? <Card>
       <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />

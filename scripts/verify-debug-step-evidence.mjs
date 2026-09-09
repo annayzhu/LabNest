@@ -5,7 +5,7 @@ try{
  for(const suffix of ['', '/edit']){
   await page.goto(base+'/experiments/'+f.experimentId+suffix,{waitUntil:'networkidle'});await page.reload();
   const text=await page.locator('.document-a4-paper').innerText();
-  assert.equal(text.split('仅归属取样步骤：样本均匀').length-1,1);assert.ok(text.indexOf('取样')<text.indexOf('仅归属取样步骤'));assert.ok(text.indexOf('仅归属取样步骤')<text.indexOf('培养'));assert.ok(text.indexOf('培养')<text.indexOf('37.2'));assert.ok(text.indexOf('37.2')<text.indexOf('未完成 检测'));
+  assert.equal(text.split('仅归属取样步骤：样本均匀').length-1,1);assert.ok(text.indexOf('取样')<text.indexOf('仅归属取样步骤'));assert.ok(text.indexOf('仅归属取样步骤')<text.indexOf('培养'));assert.ok(text.indexOf('培养')<text.indexOf('37.2'));assert.ok(text.indexOf('37.2')<text.indexOf('未完成 检测'));assert.ok(text.includes('11180'),'Stored calculation must show its actual result rather than missing-value text');
   await page.screenshot({path:`docs/debug-20260909/evidence/step-evidence-${suffix?'edit':'view'}.png`,fullPage:true});
  }
  writeFileSync('docs/debug-20260909/evidence/step-evidence.json',JSON.stringify({experimentId:f.experimentId,checks:['Public measurement save','Reloaded edit and readonly document include linked observation and 37.2 °C measurement exactly once in their own step order']},null,2));

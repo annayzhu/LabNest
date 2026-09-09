@@ -90,7 +90,7 @@ function buildProtocolVersionGroups(versions: ExperimentProtocolVersionOption[],
     group.push(version);
     byProtocol.set(version.protocol.id, group);
   });
-  return [...byProtocol.entries()].flatMap(([protocolId, groupVersions]) => {
+  return [...byProtocol.entries()].flatMap<ProtocolVersionGroup>(([protocolId, groupVersions]) => {
     const sorted = [...groupVersions].sort(compareProtocolVersionOptions);
     const latest = sorted[0];
     if (!latest) return [];
@@ -103,7 +103,7 @@ function buildProtocolVersionGroups(versions: ExperimentProtocolVersionOption[],
     const primary = selectedSet.has(latest.id) ? undefined : latest;
     if (!primary && !history.length) return [];
     return [{ protocolId, latest, primary, history, searchMode: false }];
-  }).sort((a, b) => `${a.latest.protocol.title} ${a.latest.protocol.humanCode}`.localeCompare(`${b.latest.protocol.title} ${b.latest.protocol.humanCode}`, undefined, { numeric: true, sensitivity: "base" }));
+  });
 }
 
 export function ExperimentProtocolPicker({
@@ -162,7 +162,6 @@ export function ExperimentProtocolPicker({
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm">{index + 1}</span>
               <span className="min-w-0">
                 <span className="text-sm font-medium">{version.protocol.title} · {version.displayVersion}</span>
-                <span className="mt-0.5 block text-xs text-muted">{protocolVersionMeta(version)}</span>
               </span>
               <span className="flex items-center justify-end gap-1">
                 <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="上移规程" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>

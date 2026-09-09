@@ -1,0 +1,17 @@
+{
+  "experimentId": "cmttpvqvg0000ufosxy9qgcvw",
+  "steps": [
+    {
+      "id": "cmttqneu30000ymosmcu0r0vl",
+      "title": "取样"
+    },
+    {
+      "id": "cmttqneu40001ymosg1khzgqi",
+      "title": "培养"
+    },
+    {
+      "id": "cmttqneu40002ymos2wm0slha",
+      "title": "检测"
+    }
+  ]
+}

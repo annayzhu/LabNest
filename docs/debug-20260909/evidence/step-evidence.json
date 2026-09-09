@@ -1,0 +1,7 @@
+{
+  "experimentId": "cmttpvqvg0000ufosxy9qgcvw",
+  "checks": [
+    "Public measurement save",
+    "Reloaded edit and readonly document include linked observation and 37.2 °C measurement exactly once in their own step order"
+  ]
+}

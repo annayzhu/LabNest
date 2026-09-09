@@ -52,7 +52,7 @@ export function RunMaterials({
   const [mounted, setMounted] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
   const [review, setReview] = useState(false);
-  const sessionKey = useRef('create');
+  const [sessionKey, setSessionKey] = useState('create');
   type Draft = {draftId:string|null;name:string;expected:string;actual:string;unit:string;source:string;inventory:string;container:string;correction:string|null;mode:string};
   const drafts = useRef<Record<string,Draft>>({});
   const [dialogActive,setDialogActive] = useState(false);
@@ -61,10 +61,10 @@ export function RunMaterials({
   function rowDraft(row: Row, correcting=false): Draft {return {draftId:correcting?null:row.id,name:row.name,expected:row.expected===null?'':String(row.expected),actual:row.actual===null?'':String(row.actual),unit:row.unit,source:correcting?`correction:${row.id}`:row.source,inventory:row.inventoryItemId??'',container:correcting?'':row.containerId??'',correction:correcting?row.id:row.correctionOfId,mode:'manual'};}
   function openDialog(key='create', initial=blankDraft) {
     if (busy) return;
-    if(key!==sessionKey.current) {
-      drafts.current[sessionKey.current]={draftId,name,expected,actual,unit,source,inventory,container,correction,mode};
+    if(key!==sessionKey) {
+      drafts.current[sessionKey]={draftId,name,expected,actual,unit,source,inventory,container,correction,mode};
       applyDraft(drafts.current[key] ?? initial);
-      sessionKey.current=key;
+      setSessionKey(key);
     }
     setDialogActive(true);setMounted(true);requestAnimationFrame(()=>dialogRef.current?.showModal());
   }
@@ -148,7 +148,7 @@ export function RunMaterials({
       setActual("");
       setCorrection(null);
       setInventory('');setContainer('');setSource('manual');setMode('manual');setPreview([]);
-      delete drafts.current[sessionKey.current];sessionKey.current='create';applyDraft(drafts.current.create ?? blankDraft);
+      delete drafts.current[sessionKey];setSessionKey('create');applyDraft(drafts.current.create ?? blankDraft);
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "保存失败，输入仍保留",
@@ -234,7 +234,7 @@ export function RunMaterials({
       {editable ? (
         <>
           {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
-          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.current.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>关闭</Button></div>
+          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>关闭</Button></div>
           {status && dialogActive ? <p role="alert" className="my-2 text-sm">{status}</p> : null}
           <form
             onSubmit={save}

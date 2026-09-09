@@ -19,9 +19,7 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
-import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { buildExperimentResultRecording, preferredResultRecordingHref } from "@/lib/experiment-results";
-import { experimentSections, normalizeScientificDocument } from "@/lib/scientific-document";
 import { experimentDeleteBlockers } from "@/lib/record-lifecycle";
 import { archiveExperiment, deleteExperiment } from "../actions";
 

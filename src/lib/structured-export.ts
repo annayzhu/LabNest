@@ -7,7 +7,7 @@ import { documentMediaToMarkdown } from "@/lib/document-media";
 import { experimentNarrativeFromDocument, experimentExecutionDocument } from "@/lib/experiment-document";
 import { getInventoryRiskFlags } from "@/lib/inventory";
 import { normalizeProtocolDocument, sectionPlainText as protocolSectionPlainText, type ProtocolDocument } from "@/lib/protocol-document";
-import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, experimentSections, reportSections, type ScientificDocument } from "@/lib/scientific-document";
+import { documentPlainText, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, reportSections, type ScientificDocument } from "@/lib/scientific-document";
 import { structuredModules, type StructuredFileFormat, type StructuredModuleKey } from "@/lib/structured-modules";
 
 export type StructuredExport = { body: string | ArrayBuffer; filename: string; contentType: string };

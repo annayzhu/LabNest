@@ -49,7 +49,7 @@ export function StatusRadioGroup({
               "focus-within:ring-2 focus-within:ring-moss/30 flex cursor-pointer border border-hairline bg-surface text-graphite transition hover:border-border-strong hover:bg-warm",
               density === "compact"
                 ? "min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-xs"
-                : "min-h-10 items-start gap-2 rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-sm",
+                : "min-h-10 items-start gap-2 rounded-[var(--ln-radius-control-lg)] px-3 py-2 text-[length:var(--ln-control-font-size-md)]",
               disabled && "cursor-not-allowed opacity-55",
             )}
           >
@@ -64,7 +64,7 @@ export function StatusRadioGroup({
               className={cn("shrink-0 accent-moss", density === "compact" ? "m-0 h-3.5 w-3.5" : "mt-0.5 h-4 w-4")}
             />
             <span>
-              <span className="block font-medium text-ink">{option.label}</span>
+              <span className={density === "compact" ? "block font-medium text-ink" : "block font-normal text-ink"}>{option.label}</span>
               {option.description ? (
                 <span className="mt-0.5 block text-xs leading-4 text-muted">{option.description}</span>
               ) : null}

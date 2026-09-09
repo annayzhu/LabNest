@@ -1,0 +1,68 @@
+[
+  {
+    "entry": "research-plan",
+    "before": {
+      "height": 535.21875,
+      "text": "Design中文图注 research-plan 1788937373852图片设置 / Image settingsEditor acceptance body / 正文验收Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 548.84375,
+      "text": "Design中文图注 research-plan 1788937373852图片设置 / Image settingsEditor acceptance body / 正文验收Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "before": {
+      "height": 580.734375,
+      "text": "Background & rationale中文图注 experiment 1788937382103图片设置 / Image settingsEditor acceptance body / 正文验收Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 594.359375,
+      "text": "Background & rationale中文图注 experiment 1788937382103图片设置 / Image settingsEditor acceptance body / 正文验收Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "before": {
+      "height": 540.859375,
+      "text": "Summary中文图注 result 1788937388590图片设置 / Image settingsEditor acceptance body / 正文验收Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 554.484375,
+      "text": "Summary中文图注 result 1788937388590图片设置 / Image settingsEditor acceptance body / 正文验收Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "before": {
+      "height": 580.734375,
+      "text": "Executive summary中文图注 report 1788937396775图片设置 / Image settingsEditor acceptance body / 正文验收Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 594.359375,
+      "text": "Executive summary中文图注 report 1788937396775图片设置 / Image settingsEditor acceptance body / 正文验收Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "before": {
+      "height": 393.953125,
+      "text": "DescriptionmeasurementOne per run · 1 fields · 0 tables · 0 filescomplete填写说明 / Instructions结果模板说明 image 1788937561438字段要求 / FieldsValuevalue · 数值 · 可选 · 测量值measurement1 fields · 0 data tables · 0 filesEditResult TemplateDefine only what this experiment should leave behind. Technical metadata is generated automatically.completeResult nameOne-line description · optionalHow many separate Result documents?One Result per experimentMultiple separate Results in one experimentA data table can contain many sample rows inside one Result. Choose multiple Results only when every sample or timepoint needs its own separate result document.填写说明 / InstructionsThis guidance follows the frozen template into the Experiment and final Result record.结果模板说明 image 1788937561438图片设置 / Image settingsWhat should be recorded?Fields, tables, files and images belong to one result checklist.Evidence typeNumeric valueTextOptionsYes / NoDateData tableFileImageAdd1.Numeric valueNameTypeTextNumeric valueOptionsLegacy file referencesYes / NoDateDate and timeUnitRequiredMinimumMaximumShow as a key metricAdvancedStable keyHelp textAdvanced template settingsStable template keyStable keys are used for imports and Result matching. Existing custom keys remain unchanged unless edited here.PurposeBackgroundMaterialStepsStep AEditor acceptance bodyResult TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionmeasurementOne per run · 1 fields · 0 tables · 0 filescomplete填写说明 / Instructions结果模板说明 image 1788937561438字段要求 / FieldsValuevalue · 数值 · 可选 · 测量值measurement1 fields · 0 data tables · 0 filesEditResult TemplateDefine only what this experiment should leave behind. Technical metadata is generated automatically.completeResult nameOne-line description · optionalHow many separate Result documents?One Result per experimentMultiple separate Results in one experimentA data table can contain many sample rows inside one Result. Choose multiple Results only when every sample or timepoint needs its own separate result document.填写说明 / InstructionsThis guidance follows the frozen template into the Experiment and final Result record.结果模板说明 image 1788937561438图片设置 / Image settingsWhat should be recorded?Fields, tables, files and images belong to one result checklist.Evidence typeNumeric valueTextOptionsYes / NoDateData tableFileImageAdd1.Numeric valueNameTypeTextNumeric valueOptionsLegacy file referencesYes / NoDateDate and timeUnitRequiredMinimumMaximumShow as a key metricAdvancedStable keyHelp textAdvanced template settingsStable template keyStable keys are used for imports and Result matching. Existing custom keys remain unchanged unless edited here.PurposeBackgroundMaterialStepsStep AEditor acceptance bodyResult TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "before": {
+      "height": 345.15625,
+      "text": "Editor acceptance body中文图注 entry 1788937413154图片设置 / Image settings"
+    },
+    "after": {
+      "height": 358.78125,
+      "text": "Editor acceptance body中文图注 entry 1788937413154图片设置 / Image settings"
+    }
+  }
+]

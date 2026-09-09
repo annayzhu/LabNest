@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Entire document applies 18pt to heading, body, list and table across sections",
+    "Read-only refresh preserves explicit document font size",
+    "Cell, row and whole-table sizes preserve other scopes and numeric contents",
+    "Multi-cell selection shows mixed size, applies only two cells and persists after save/reedit"
+  ]
+}

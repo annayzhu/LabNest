@@ -1,0 +1,47 @@
+{
+  "synthetic": true,
+  "protocolTitle": "Synthetic protocol 1788936942514",
+  "projectId": "cmttqv7600000xzosn56dm4st",
+  "planId": "cmttqv76w0001xzosv4txacwv",
+  "experimentId": "cmttqv7720002xzosz9erb6la",
+  "protocolId": "cmttqv77j0006xzosx3f3ehi0",
+  "versionId": "cmttqv77o0007xzosdkzrytfe",
+  "cases": [
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmttqv76w0001xzosv4txacwv/edit",
+      "view": "/research-plans/cmttqv76w0001xzosv4txacwv",
+      "save": "Save Research Plan"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmttqv7720002xzosz9erb6la/edit",
+      "view": "/experiments/cmttqv7720002xzosz9erb6la",
+      "save": "Save Experiment"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmttqv7770003xzosp84qy88v/edit",
+      "view": "/results/cmttqv7770003xzosp84qy88v",
+      "save": "Save Result"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmttqv77d0004xzospkypjj7j/edit",
+      "view": "/reports/cmttqv77d0004xzospkypjj7j",
+      "save": "Save Report"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmttqv77j0006xzosx3f3ehi0/versions/cmttqv77o0007xzosdkzrytfe/edit",
+      "view": "/protocols/cmttqv77j0006xzosx3f3ehi0",
+      "save": "Save Protocol"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmttqv77g0005xzosbxf7b4d4/edit",
+      "view": "/entries/cmttqv77g0005xzosbxf7b4d4",
+      "save": "Save changes"
+    }
+  ]
+}

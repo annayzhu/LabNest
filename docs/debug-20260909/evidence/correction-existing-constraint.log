@@ -1,0 +1,19 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"error":"\nInvalid `prisma.runMaterialUse.upsert()` invocation:\n\n\nUnique constraint failed on the fields: (`\"correctionOfId\"`)"}
+
+409 !== 200
+
+    at post (file:///Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-debug-correction.mjs:4:68)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-debug-correction.mjs:8:31 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

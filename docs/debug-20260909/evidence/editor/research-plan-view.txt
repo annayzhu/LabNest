@@ -1,0 +1,36 @@
+RPL-1788936942514
+Synthetic research plan
+Synthetic editor 1788936942514
+
+Scientific premise
+OBJECTIVE
+
+Not recorded.
+HYPOTHESIS
+
+Not recorded.
+RATIONALE
+
+Not recorded.
+
+Design
+
+中文图注 research-plan 1788940149101
+
+中文图注 research-plan 1788937373852
+
+Editor acceptance body / 正文验收
+
+Material & methods
+Not recorded.
+
+Acceptance criteria
+Not recorded.
+
+Constraints & dependencies
+Not recorded.
+
+References & working notes
+Not recorded.
+
+

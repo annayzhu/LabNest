@@ -1,0 +1,252 @@
+{
+  "sha": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
+  "checks": [
+    "Today → calculator → each of six default tasks reaches an editable form in two clicks",
+    "Search alias → tool → explicit back restores query; clearing restores pre-search scroll",
+    "Browser system Back returns to catalog",
+    "Legacy alias/language duplicates collapse; all summaries removed; only icons and short names retained",
+    "All 31 assets across seven palettes, both modes, 32/40 px; 31 distinct semantic SVG fallbacks"
+  ],
+  "themes": [
+    {
+      "scheme": "moon-dai",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "moon-dai",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "azure-coral",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "azure-coral",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "celadon-pine",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "celadon-pine",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "lotus-ink",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "lotus-ink",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "indigo-xiangqi",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "indigo-xiangqi",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "palace-jasmine",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "palace-jasmine",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "ganqing-buddha",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "ganqing-buddha",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-cool",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-cool",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-lilac",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-lilac",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-cream",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-cream",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-peach",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-peach",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-blue",
+      "mode": "light",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    },
+    {
+      "scheme": "reference-blue",
+      "mode": "dark",
+      "assets": 31,
+      "sizes": [
+        32,
+        40
+      ],
+      "overflow": false
+    }
+  ]
+}

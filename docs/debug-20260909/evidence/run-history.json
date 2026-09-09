@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "experimentId": "cmtttgxj90008fnos0la37f4w",
+  "versionCreation": "New reviewed version and rename via synthetic DB setup; publication UI not exercised",
+  "checks": [
+    "Three steps completed through actual mobile Run form, fourth left incomplete",
+    "DB readback retains actual deviation and incident handling text",
+    "Edit/read/print retain handwritten body, step order and experiment-level actual parameters",
+    "New reviewed version and rename do not overwrite frozen original names/version",
+    "All three long method names retained in PDF; 390px has no horizontal overflow"
+  ]
+}

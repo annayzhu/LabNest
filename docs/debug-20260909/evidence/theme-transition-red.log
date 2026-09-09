@@ -1,0 +1,15 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: azure-coral/light buttonText/buttonBackground
+    at file:///Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-calculator-visual-v11.mjs:11:716 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

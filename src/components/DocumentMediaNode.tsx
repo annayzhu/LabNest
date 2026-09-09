@@ -1,5 +1,6 @@
 "use client";
 
+import { closeHistory } from "@tiptap/pm/history";
 import { ContextProperties } from "./ContextProperties";
 import Image from "next/image";
 import { useState } from "react";
@@ -10,17 +11,28 @@ import { documentMediaUrl, type DocumentMedia } from "@/lib/document-media";
 import { DocumentMediaView } from "./DocumentMediaView";
 import { chooseFiles, documentMediaDraftId, useMediaUpload } from "./DocumentMediaUploads";
 
-function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, getPos }: NodeViewProps) {
+function MediaNodeView({ node, updateAttributes, editor, selected, getPos }: NodeViewProps) {
   const block = node.attrs.block as DocumentMedia;
   const upload = useMediaUpload(block.id);
   const [activation, setActivation] = useState(0);
   const [focused, setFocused] = useState(false);
   const editorFocused = useEditorState({ editor, selector: ({ editor }) => editor.isFocused });
   const active = (selected && editorFocused) || focused;
+  // Removing a media reference is one undoable action, even immediately after paste/upload.
+  const deleteNode = () => {
+    const pos = getPos();
+    if (typeof pos !== "number") return;
+    editor.chain().focus().command(({tr}) => { closeHistory(tr); return true; }).deleteRange({from:pos,to:pos+node.nodeSize}).run();
+  };
   const select = () => { setActivation(n => n + 1); const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
   return <NodeViewWrapper data-document-media={block.id} data-widget-type="media" data-media-active={active} className="document-media-node" contentEditable={false} tabIndex={0} role="group" aria-label="编辑附件 / Edit attachment"
     onClick={select} onFocusCapture={() => setFocused(true)} onBlurCapture={(event: React.FocusEvent<HTMLDivElement>) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
-    onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); select(); } }}>
+    onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget || event.nativeEvent.isComposing || event.keyCode === 229) return;
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault(); event.stopPropagation(); deleteNode(); editor.commands.focus();
+      } else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); }
+    }}>
 
     {upload?.preview ? <Image src={upload.preview} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
     {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}

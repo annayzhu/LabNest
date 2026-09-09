@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-09T08:13:51.144920+00:00",
+  "originMain": "87a7610e09df32fa7b4a55fef69b3116d8c95974",
+  "deploymentCheckout": "87a7610e09df32fa7b4a55fef69b3116d8c95974",
+  "productionImageId": "sha256:9222b95b49be8ad0e37bde1049701461233131fffd9ab482af034e8f10666a89",
+  "productionImageRevisionLabel": null,
+  "productionHealth": "healthy; database reachable",
+  "productionChanged": false,
+  "testDatabase": "labnest_stage_a_acceptance",
+  "testURL": "http://localhost:3232",
+  "LANTestURL": "http://10.165.113.167:3232",
+  "runtimeCaveat": "No image commit label; checkout SHA is not independent runtime attestation."
+}

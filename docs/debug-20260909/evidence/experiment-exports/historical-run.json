@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "labnest.structured-export/v1",
+  "module": "experiments",
+  "exportedAt": "2026-09-09T08:29:05.890Z",
+  "records": [
+    {
+      "project": "Synthetic historical Run 1788941315623",
+      "researchPlan": "SYN-H-1788941315623",
+      "researchPlanName": "合成历史研究方案长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称长名称",
+      "methodSources": [
+        "合成历史规程1方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称 · 1.0",
+        "合成历史规程2方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称 · 1.0",
+        "合成历史规程3方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称方法名称 · 1.0"
+      ],
+      "runCode": "SYN-H-1788941315623",
+      "title": "Synthetic historical Run",
+      "date": "2026-09-09T08:08:35.781Z",
+      "status": "running",
+      "recordStatus": "draft",
+      "primaryProtocolCode": "SYN-H-1788941315623-0",
+      "protocolVersion": "1.0",
+      "supportingProtocolCodes": [
+        "SYN-H-1788941315623-0",
+        "SYN-H-1788941315623-1",
+        "SYN-H-1788941315623-2"
+      ],
+      "purpose": null,
+      "background": "",
+      "materials": "",
+      "steps": "手写内容始终保留\n原记录参数\n值\nsample_count\n2\nactual_temperature_c\n37\n规程组1\n✓ 正常取样\n规程组2\n✓ 偏差培养\n偏差：实际延长5分钟\n规程组3\n✓ 异常处理\n异常：设备停机；已更换设备后继续\n未完成 未执行检测",
+      "observations": "",
+      "deviations": "",
+      "conclusion": "",
+      "tags": []
+    }
+  ]
+}

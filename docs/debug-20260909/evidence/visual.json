@@ -1,0 +1,142 @@
+[
+  {
+    "name": "overview",
+    "device": "desktop",
+    "mode": "light",
+    "theme": "reference-cool",
+    "screenshot": "docs/debug-20260909/evidence/overview-desktop-light.png"
+  },
+  {
+    "name": "editor",
+    "device": "desktop",
+    "mode": "light",
+    "theme": "reference-lilac",
+    "screenshot": "docs/debug-20260909/evidence/editor-desktop-light.png"
+  },
+  {
+    "name": "inventory",
+    "device": "desktop",
+    "mode": "light",
+    "theme": "reference-cream",
+    "screenshot": "docs/debug-20260909/evidence/inventory-desktop-light.png"
+  },
+  {
+    "name": "properties",
+    "device": "desktop",
+    "mode": "light",
+    "theme": "reference-peach",
+    "screenshot": "docs/debug-20260909/evidence/properties-desktop-light.png"
+  },
+  {
+    "name": "tools",
+    "device": "desktop",
+    "mode": "light",
+    "theme": "reference-blue",
+    "screenshot": "docs/debug-20260909/evidence/tools-desktop-light.png"
+  },
+  {
+    "name": "overview",
+    "device": "desktop",
+    "mode": "dark",
+    "theme": "reference-cool",
+    "screenshot": "docs/debug-20260909/evidence/overview-desktop-dark.png"
+  },
+  {
+    "name": "editor",
+    "device": "desktop",
+    "mode": "dark",
+    "theme": "reference-lilac",
+    "screenshot": "docs/debug-20260909/evidence/editor-desktop-dark.png"
+  },
+  {
+    "name": "inventory",
+    "device": "desktop",
+    "mode": "dark",
+    "theme": "reference-cream",
+    "screenshot": "docs/debug-20260909/evidence/inventory-desktop-dark.png"
+  },
+  {
+    "name": "properties",
+    "device": "desktop",
+    "mode": "dark",
+    "theme": "reference-peach",
+    "screenshot": "docs/debug-20260909/evidence/properties-desktop-dark.png"
+  },
+  {
+    "name": "tools",
+    "device": "desktop",
+    "mode": "dark",
+    "theme": "reference-blue",
+    "screenshot": "docs/debug-20260909/evidence/tools-desktop-dark.png"
+  },
+  {
+    "name": "overview",
+    "device": "mobile",
+    "mode": "light",
+    "theme": "reference-cool",
+    "screenshot": "docs/debug-20260909/evidence/overview-mobile-light.png"
+  },
+  {
+    "name": "editor",
+    "device": "mobile",
+    "mode": "light",
+    "theme": "reference-lilac",
+    "screenshot": "docs/debug-20260909/evidence/editor-mobile-light.png"
+  },
+  {
+    "name": "inventory",
+    "device": "mobile",
+    "mode": "light",
+    "theme": "reference-cream",
+    "screenshot": "docs/debug-20260909/evidence/inventory-mobile-light.png"
+  },
+  {
+    "name": "properties",
+    "device": "mobile",
+    "mode": "light",
+    "theme": "reference-peach",
+    "screenshot": "docs/debug-20260909/evidence/properties-mobile-light.png"
+  },
+  {
+    "name": "tools",
+    "device": "mobile",
+    "mode": "light",
+    "theme": "reference-blue",
+    "screenshot": "docs/debug-20260909/evidence/tools-mobile-light.png"
+  },
+  {
+    "name": "overview",
+    "device": "mobile",
+    "mode": "dark",
+    "theme": "reference-cool",
+    "screenshot": "docs/debug-20260909/evidence/overview-mobile-dark.png"
+  },
+  {
+    "name": "editor",
+    "device": "mobile",
+    "mode": "dark",
+    "theme": "reference-lilac",
+    "screenshot": "docs/debug-20260909/evidence/editor-mobile-dark.png"
+  },
+  {
+    "name": "inventory",
+    "device": "mobile",
+    "mode": "dark",
+    "theme": "reference-cream",
+    "screenshot": "docs/debug-20260909/evidence/inventory-mobile-dark.png"
+  },
+  {
+    "name": "properties",
+    "device": "mobile",
+    "mode": "dark",
+    "theme": "reference-peach",
+    "screenshot": "docs/debug-20260909/evidence/properties-mobile-dark.png"
+  },
+  {
+    "name": "tools",
+    "device": "mobile",
+    "mode": "dark",
+    "theme": "reference-blue",
+    "screenshot": "docs/debug-20260909/evidence/tools-mobile-dark.png"
+  }
+]

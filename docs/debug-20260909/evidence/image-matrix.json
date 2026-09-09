@@ -1,0 +1,674 @@
+[
+  {
+    "entry": "research-plan",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design插图位置前文保留后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design插图位置前文保留后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design插图位置前文保留后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design插图位置前文保留后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale插图位置前文保留后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale插图位置前文保留后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale插图位置前文保留后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale插图位置前文保留后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary插图位置前文保留后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary插图位置前文保留后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "result",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary插图位置前文保留后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary插图位置前文保留后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary插图位置前文保留后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary插图位置前文保留后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "report",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary插图位置前文保留后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary插图位置前文保留后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置前文保留后文保留Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置前文保留后文保留Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置前文保留后文保留Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置前文保留后文保留Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "beginning",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "插图位置前文保留后文保留"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "插图位置前文保留后文保留"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "beginning",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "插图位置前文保留后文保留"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "插图位置前文保留后文保留"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design前文保留插图位置后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design前文保留插图位置后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design前文保留插图位置后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design前文保留插图位置后文保留Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale前文保留插图位置后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale前文保留插图位置后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale前文保留插图位置后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale前文保留插图位置后文保留Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary前文保留插图位置后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary前文保留插图位置后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "result",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary前文保留插图位置后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary前文保留插图位置后文保留Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary前文保留插图位置后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary前文保留插图位置后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "report",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary前文保留插图位置后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary前文保留插图位置后文保留Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留插图位置后文保留Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留插图位置后文保留Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留插图位置后文保留Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留插图位置后文保留Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "middle",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "前文保留插图位置后文保留"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "前文保留插图位置后文保留"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "middle",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "前文保留插图位置后文保留"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "前文保留插图位置后文保留"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design前文保留后文保留插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design前文保留后文保留插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design前文保留后文保留插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design前文保留后文保留插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale前文保留后文保留插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale前文保留后文保留插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale前文保留后文保留插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale前文保留后文保留插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary前文保留后文保留插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary前文保留后文保留插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "result",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary前文保留后文保留插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary前文保留后文保留插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary前文保留后文保留插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary前文保留后文保留插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "report",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary前文保留后文保留插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary前文保留后文保留插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留后文保留插图位置Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留后文保留插图位置Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留后文保留插图位置Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps前文保留后文保留插图位置Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "end",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "前文保留后文保留插图位置"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "前文保留后文保留插图位置"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "end",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 164.53125,
+      "text": "前文保留后文保留插图位置"
+    },
+    "after": {
+      "height": 121.90625,
+      "text": "前文保留后文保留插图位置"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "research-plan",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Design插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "Design插图位置Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "experiment",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Background & rationale插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationale插图位置Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "result",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Summary插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "Summary插图位置Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "report",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "Executive summary插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summary插图位置Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "protocol",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置Result TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialSteps插图位置Result TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "only",
+    "key": "Backspace",
+    "undoRedo": true,
+    "before": {
+      "height": 36.65625,
+      "text": "插图位置"
+    },
+    "after": {
+      "height": 36.65625,
+      "text": "插图位置"
+    }
+  },
+  {
+    "entry": "entry",
+    "position": "only",
+    "key": "Delete",
+    "undoRedo": true,
+    "before": {
+      "height": 36.65625,
+      "text": "插图位置"
+    },
+    "after": {
+      "height": 36.65625,
+      "text": "插图位置"
+    }
+  }
+]

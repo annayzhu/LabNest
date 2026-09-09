@@ -1,0 +1,9 @@
+{
+  "experimentId": "cmttpvqvg0000ufosxy9qgcvw",
+  "name": "Synthetic offline 1788940666806",
+  "checks": [
+    "Offline form saved to existing local queue",
+    "Reconnect sync created one record only",
+    "Reload retains actual amount without stock deduction"
+  ]
+}

@@ -33,11 +33,11 @@ export function DocumentPageHeader({
       </h1>
       {subtitle?.trim() ? <p className="document-page-subtitle">{subtitle}</p> : null}
       {visibleFacts.length ? (
-        <dl className="document-page-facts">
+        <dl className={`document-page-facts ${documentType === "Experiment" ? "ln-experiment-facts" : ""}`}>
           {visibleFacts.map((fact) => (
             <div key={`${fact.label}-${fact.value}`} className="min-w-0">
               <dt>{fact.label}</dt>
-              <dd className={fact.mono ? "record-identifier" : undefined}>{fact.value}</dd>
+              <dd title={fact.value ?? undefined} className={fact.mono ? "record-identifier" : undefined}>{fact.value}</dd>
             </div>
           ))}
         </dl>

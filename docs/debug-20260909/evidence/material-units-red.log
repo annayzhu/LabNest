@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.selectOption: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('dialog').getByLabel('预计单位', { exact: true })[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-debug-material-units.mjs:3:355 {
+  log: [
+    "  - waiting for getByRole('dialog').getByLabel('预计单位', { exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

@@ -1,0 +1,125 @@
+[
+  {
+    "scale": "compact",
+    "styles": [
+      {
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      }
+    ],
+    "peer": {
+      "fontSize": "12px",
+      "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif"
+    },
+    "longNamesExpandable": true,
+    "singleLine": true
+  },
+  {
+    "scale": "standard",
+    "styles": [
+      {
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      }
+    ],
+    "peer": {
+      "fontSize": "13px",
+      "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif"
+    },
+    "longNamesExpandable": true,
+    "singleLine": true
+  },
+  {
+    "scale": "comfortable",
+    "styles": [
+      {
+        "fontSize": "14px",
+        "lineHeight": "21px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "14px",
+        "lineHeight": "21px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "14px",
+        "lineHeight": "21px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "14px",
+        "lineHeight": "21px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      },
+      {
+        "fontSize": "14px",
+        "lineHeight": "21px",
+        "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+        "fontWeight": "400"
+      }
+    ],
+    "peer": {
+      "fontSize": "14px",
+      "fontFamily": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif"
+    },
+    "longNamesExpandable": true,
+    "singleLine": true
+  }
+]

@@ -7,6 +7,7 @@ import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 
 export type ExperimentProtocolVersionOption = {
   id: string;
+  researchPlanIds?: string[];
   revision: number;
   displayVersion: string;
   versionTitle: string;
@@ -89,7 +90,7 @@ function buildProtocolVersionGroups(versions: ExperimentProtocolVersionOption[],
     group.push(version);
     byProtocol.set(version.protocol.id, group);
   });
-  return [...byProtocol.entries()].flatMap(([protocolId, groupVersions]) => {
+  return [...byProtocol.entries()].flatMap<ProtocolVersionGroup>(([protocolId, groupVersions]) => {
     const sorted = [...groupVersions].sort(compareProtocolVersionOptions);
     const latest = sorted[0];
     if (!latest) return [];
@@ -102,7 +103,7 @@ function buildProtocolVersionGroups(versions: ExperimentProtocolVersionOption[],
     const primary = selectedSet.has(latest.id) ? undefined : latest;
     if (!primary && !history.length) return [];
     return [{ protocolId, latest, primary, history, searchMode: false }];
-  }).sort((a, b) => `${a.latest.protocol.title} ${a.latest.protocol.humanCode}`.localeCompare(`${b.latest.protocol.title} ${b.latest.protocol.humanCode}`, undefined, { numeric: true, sensitivity: "base" }));
+  });
 }
 
 export function ExperimentProtocolPicker({
@@ -153,24 +154,23 @@ export function ExperimentProtocolPicker({
     <div className="space-y-4">
       {selectedIds.map((id) => <input key={id} type="hidden" name="protocolVersionIds" value={id} />)}
       <div>
-        <p className={formLabelClass}>Selected ProtocolVersions · execution order</p>
+        <p className={formLabelClass}>已选规程与版本 · 执行顺序</p>
         {selectedIds.length ? <ol className="mt-2 space-y-2">
           {selectedIds.map((id, index) => {
             const version = versionMap.get(id)!;
-            return <li key={id} className="grid gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm/70 px-3 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:items-center">
+            return <li key={id} className="flex items-center gap-2 border-b border-hairline py-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm">{index + 1}</span>
               <span className="min-w-0">
-                <ProtocolIdentity title={version.protocol.title} code={version.protocol.humanCode} />
-                <span className="mt-0.5 block text-xs text-muted">{protocolVersionMeta(version)} · checkable</span>
+                <span className="text-sm font-medium">{version.protocol.title} · {version.displayVersion}</span>
               </span>
               <span className="flex items-center justify-end gap-1">
-                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Move ProtocolVersion earlier" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
-                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="Move ProtocolVersion later" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="上移规程" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="下移规程" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
                 <button type="button" onClick={() => commit(selectedIds.filter((item) => item !== id))} aria-label={`Remove ${version.protocol.title} ${version.versionTitle}`} className="focus-ring rounded p-1.5 text-error hover:bg-error-surface"><X className="h-4 w-4" /></button>
               </span>
             </li>;
           })}
-        </ol> : <p className="mt-2 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">No ProtocolVersion selected. Add versions below in the order you will perform them; their Steps will become the on-bench checklist.</p>}
+        </ol> : <p className="mt-2 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">尚未选择规程。</p>}
       </div>
 
       <div>
@@ -191,10 +191,9 @@ export function ExperimentProtocolPicker({
                 {visibleHistory.map((version) => <ProtocolVersionAddButton key={version.id} version={version} latestId={group.latest.id} onAdd={add} />)}
               </div> : null}
             </div>;
-          }) : <p className="px-3 py-6 text-center text-sm text-muted">{versions.length === selectedIds.length ? "All ProtocolVersions are selected." : "No matching ProtocolVersion."}</p>}
+          }) : <p className="px-3 py-6 text-center text-sm text-muted">{versions.length === selectedIds.length ? "全部版本已选择。" : "没有匹配的规程版本。"}</p>}
         </div>
       </div>
-      <p className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-sage-surface/55 px-3 py-2 text-xs leading-5 text-graphite"><strong className="font-semibold text-ink">What happens after Save:</strong> the selected versions are frozen in this order, each version becomes one execution block, and its Steps become individually and whole-block checkable items in On-bench Run.</p>
     </div>
   );
 }

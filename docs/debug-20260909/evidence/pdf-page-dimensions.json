@@ -1,0 +1,166 @@
+[
+  {
+    "file": "entry-edit.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "entry-view.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "experiment-edit.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "experiment-view.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "protocol-edit.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "protocol-view.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "report-edit.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "report-view.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "research-plan-edit.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "research-plan-view.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "result-edit.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "result-view.pdf",
+    "pages": 1,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "template-edit.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  },
+  {
+    "file": "template-view.pdf",
+    "pages": 2,
+    "dimensions": [
+      [
+        594.96,
+        841.92
+      ],
+      [
+        594.96,
+        841.92
+      ]
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "experimentId": "cmttpvqvg0000ufosxy9qgcvw",
+  "checks": [
+    "Persisted all three steps and handwritten text survive reload",
+    "Deviation text and incomplete status visible",
+    "No whole-page horizontal overflow at 390 and 1440",
+    "PDF uses CSS page size"
+  ]
+}

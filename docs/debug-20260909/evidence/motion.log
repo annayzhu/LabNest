@@ -1,0 +1,10 @@
+Testing desktop
+desktop [
+  { hidden: false, label: 'Metadata' },
+  { hidden: true, label: '图片属性 / Image properties' }
+]
+Testing mobile
+mobile [
+  { hidden: false, label: 'Metadata' },
+  { hidden: true, label: '图片属性 / Image properties' }
+]

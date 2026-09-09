@@ -24,6 +24,7 @@ export function ScientificDocumentEditor({
   subtitle,
   headerFacts,
   leadingContent,
+  trailingContent,
   titleEditor,
   hiddenSectionKeys = [],
   insertProfile,
@@ -39,6 +40,7 @@ export function ScientificDocumentEditor({
   subtitle?: string | null;
   headerFacts?: DocumentPageHeaderFact[];
   leadingContent?: ReactNode;
+  trailingContent?: ReactNode;
   titleEditor?: ReactNode;
   hiddenSectionKeys?: string[];
   insertProfile?: DocumentInsertProfile;
@@ -74,6 +76,7 @@ export function ScientificDocumentEditor({
           checklist={checklist}
           onChange={setDocument}
         />
+        {trailingContent}
     </StandaloneDocumentEditorViewport>
   </>;
 }

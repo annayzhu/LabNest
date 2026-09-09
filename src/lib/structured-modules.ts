@@ -161,6 +161,8 @@ export const structuredModules: Record<StructuredModuleKey, StructuredModuleDefi
       { key: "primaryProtocolCode", label: "First Protocol code", aliases: ["protocol", "protocolCode", "primaryProtocolCode", "主要实验规程"], description: "Optional. Leave blank for a fully custom Experiment." },
       { key: "protocolVersion", label: "Protocol version", example: "0.1" },
       { key: "supportingProtocolCodes", label: "Supporting Protocol codes" },
+      { key: "researchPlanName", label: "研究计划名称" },
+      { key: "methodSources", label: "方法来源与版本" },
       { key: "purpose", label: "Purpose" },
       // Everything below lands in a section of the Experiment document; the
       // Experiment table keeps no per-section narrative columns.

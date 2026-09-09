@@ -32,7 +32,7 @@ function defineSystemTheme<const Id extends string>(theme: {
   } as const;
 }
 
-export const systemThemes = [
+const establishedThemes = [
   defineSystemTheme({
     id: "moon-dai", name: "月白黛青", motif: "huiwen",
     description: "月白纸面、黛青结构与韎韐暖红，冷暖对照更清楚。",
@@ -140,6 +140,20 @@ export const systemThemes = [
   }),
 ] as const;
 
+// User-supplied approximate background samples; accents remain contrast-derived.
+const referenceThemes = [
+  {id:'reference-cool',name:'冷白实验室',base:0,paper:'#EDF5F1',warm:'#F2F9FE',stone:'#DDE7E9'},
+  {id:'reference-lilac',name:'柔紫灰',base:3,paper:'#EFE4E9',warm:'#F2EFED',stone:'#CECBDA'},
+  {id:'reference-cream',name:'暖白实验簿',base:2,paper:'#F5F1E8',warm:'#F9F5F0',stone:'#F8F2E4'},
+  {id:'reference-peach',name:'柔粉米白',base:1,paper:'#FAEBE6',warm:'#FEF0E3',stone:'#FDF6E9'},
+  {id:'reference-blue',name:'深蓝冷白',base:4,paper:'#E2EEFD',warm:'#FEFDF9',stone:'#DDE7E9'},
+] as const;
+export const systemThemes = [...establishedThemes,...referenceThemes.map(reference=>defineSystemTheme({
+  ...establishedThemes[reference.base],id:reference.id,name:reference.name,
+  description:'依据附件近似背景色取样，正文与操作色经对比度派生。',
+  tokens:{...establishedThemes[reference.base].tokens,'--paper':reference.paper,'--warm':reference.warm,'--stone':reference.stone,...(reference.id==='reference-peach'?{'--moss':'#106b84','--action':'#106b84','--pale-sand':'#FDF4DF'}:reference.id==='reference-blue'?{'--moss':'#033167','--action':'#033167'}:reference.id==='reference-lilac'?{'--hairline':'#CFD1D3'}:{})},
+}))];
+
 export type SystemThemeId = (typeof systemThemes)[number]["id"];
 
 export function isSystemThemeId(value: string | null): value is SystemThemeId {
@@ -164,7 +178,7 @@ export function resolvedThemeTokens(themeId:string,mode:'light'|'dark'):Record<s
  if(mode==='light')return {...theme.tokens,...(themeId==='palace-jasmine'?{'--moss':'#1b7d45','--action':'#1b7d45'}:{}),'--surface':'#ffffff','--warning':'#805b24','--warning-surface':'#faf0dc','--control-border':'#77848d','--success':'#276340','--success-surface':'#e9f5ec','--error':'#a12a39','--error-surface':'#fcebef'};
  // Each existing scheme has its own dark palette; IDs and user selections stay stable.
  const darkPalettes=[['#aac9e1','#e2b99d','#151d24'],['#89d5e8','#f2ada3','#132126'],['#a7d2b4','#e4c29b','#17221c'],['#d6b9df','#b9d6a2','#231b24'],['#aacbff','#f2d294','#182033'],['#97d5af','#f2aebe','#17231d'],['#b4c9ff','#efda86','#1c2032']];
- const [accent,selection,paper]=darkPalettes[index];
+ const [accent,selection,paper]=darkPalettes[index < establishedThemes.length ? index : referenceThemes[index-establishedThemes.length].base];
  return {...theme.tokens,'--paper':paper,'--warm':'#1a242d','--stone':'#202c35','--sand-panel':'#283641','--surface':'#1c2730','--ink':'#edf2f5','--graphite':'#d0dce4','--muted':'#b3c2cd','--disabled':'#7d8a94','--moss':accent,'--moss-hover':'#d8e9f4','--action':accent,'--action-hover':'#d8e9f4','--sage':accent,'--moss-surface':'#263b46','--moss-surface-hover':'#304754','--moss-border':'#678493','--sage-surface':'#263b46','--action-surface':'#263b46','--action-surface-hover':'#304754','--action-border':'#678493','--fog':'#b4cedd','--fog-surface':'#263844','--pale-sand':'#3b302a','--clay':'#e2b99d','--hairline':'#455966','--border-strong':'#8aa2b1','--control-border':'#8aa2b1','--brand-mark-bg':accent,'--brand-mark-fg':'#15212a','--brand-mark-border':accent,'--nav-active-bg':selection,'--nav-active-fg':'#251c16','--nav-active-border':selection,'--contrast-action':'#e2b99d','--contrast-action-hover':'#efd0b9','--contrast-action-fg':'#251c16','--contrast-action-soft':'#3b302a','--contrast-action-border':'#e2b99d','--warning':'#f1ce92','--warning-surface':'#3b3020','--success':'#a6dfb3','--success-surface':'#203b2b','--error':'#ffb8bf','--error-surface':'#402b33','--info':'#b7d9e8','--info-surface':'#233844'};
 }
 export function appearanceThemeCssText(){

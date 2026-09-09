@@ -1,0 +1,16 @@
+{
+  "base": "http://localhost:3221",
+  "at": "2026-09-09T07:36:38.742Z",
+  "database": "labnest_calculator_acceptance_20260906",
+  "synthetic": true,
+  "status": "passed",
+  "resultId": "cmttsbulr000rgrosdikgkeff",
+  "clientMutationId": "c71b39e5-3a49-4852-89d2-45430100c991",
+  "checks": [
+    "UI offline queue retains complete nested plan",
+    "Reconnect creates Result",
+    "Replay gives identical Result, independent DB count is one",
+    "DB raw plan and operations exactly match submitted snapshot",
+    "Per-well DNA volume and mixture volume preserved"
+  ]
+}

@@ -1,0 +1,122 @@
+qPCR Analysis Studio
+RELATIVE QUANTIFICATION WORKSPACE
+Local processing
+中文
+EN
+Data files 1
+New analysis
+
+ACTIVE ANALYSIS
+
+96-well qPCR analysis
+
+1 source file(s) · 2 sample(s) · 2 target(s) · 12 valid Cq
+
+Overview, plate, and results synchronized
+Overview & QC
+OVERVIEW + QC
+Plate workspace
+PLATE
+Results & figures
+RESULTS
+Relative quantification
+
+Configure normalization, display order, and the calibrator; charts and tables update together.
+
+Quantification
+Tm & melt
+1
+Select reference targets
+
+Normalization
+
+Multiple
+GAPDH
+GENE
+
+Multiple reference targets are normalized by the geometric mean of relative quantities.
+
+2
+Choose displayed targets & samples
+
+Selection order defines chart order
+
+Clear
+Targets
+1 selected
+GAPDH
+Ref
+GENE
+1
+Samples
+2 selected · numbers define left-to-right order
+Control
+1
+Treatment
+2
+3
+Select calibrator sample
+
+ΔΔCq baseline
+
+Calibrator
+None - calculate ΔCq only
+Control
+Treatment
+
+A calibrator enables ΔΔCq and relative expression. Missing amplification efficiency is recorded and assumed to be 100%.
+
+Result preview
+
+2 sample(s) and 1 target(s) selected; charts and table use the same order.
+
+Display
+Propagated technical SD
+QC warnings only
+Figure
+Paper
+Dark
+Power of 2
+Linear
+Complete results
+Excel · 5 sheets
+TSV · 4 files
+Visualization Studio · Bar-chart format
+Bar Excel
+Bar TSV
+category · value · sd · sem · group
+What does each parameter mean?
+Relative-expression figures
+
+Compact previews support review; SVG and PNG 4× retain complete figure elements and long sample names.
+
+1 figures
+GENE
+
+Relative expression · 2⁻ΔΔCq
+
+SVG
+PNG 4×
+Reference = 1
+Calibrator
+0.125
+0.25
+0.5
+1
+2
+4
+8
+Control
+Treatment
+Biological sample
+Relative expression (log₂ ratio axis)
+Valid technical-replicate n
+Complete calculation results
+
+The default order follows the selected targets and samples. Select a column heading to sort; scroll horizontally to review all calculation fields.
+
+SAMPLE	TARGET	TARGET VALID N	TARGET MEAN CQ	TARGET TECHNICAL SD	TARGET TECHNICAL SEM	REFERENCE VALID N	REFERENCE MEAN CQ	REFERENCE PROPAGATED SD	REFERENCE PROPAGATED SEM	ΔCQ	2^-ΔCQ	ΔΔCQ	RELATIVE EXPRESSION	PROPAGATED SD	PROPAGATED SEM	WARNINGS
+Control	GENE	3	23.010	0.010	0.006	3	20.010	0.010	0.006	3.000	0.1250	0.000	1.0000	0.0098	0.0057	-
+Treatment	GENE	3	23.010	0.010	0.006	3	20.010	0.010	0.006	3.000	0.1250	0.000	1.0000	0.0139	0.0080	-
+qPCR Analysis Studio · Research use only
+Raw data are processed only in this browser

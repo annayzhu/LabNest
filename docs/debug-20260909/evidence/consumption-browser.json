@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "Missing parameters block preview",
+    "2 samples x 3 µL = 6 µL",
+    "Expected saved without assuming actual",
+    "Frozen version and calculation parameters retained in source"
+  ],
+  "row": {
+    "id": "9d79f44f-ebb8-4bb1-9180-340e0bd09132",
+    "experimentId": "cmttpvqvg0000ufosxy9qgcvw",
+    "name": "Synthetic mix",
+    "expected": 6,
+    "actual": null,
+    "unit": "µL",
+    "source": "Consumption:synthetic-rule-v1:0|合成固定规程 · 1.2；sample_count * reaction_volume；sample_count=2，reaction_volume=3",
+    "inventoryItemId": null,
+    "containerId": null,
+    "status": "recorded",
+    "transactionId": null,
+    "correctionOfId": null,
+    "error": null,
+    "createdAt": "2026-09-09T08:05:23.398Z",
+    "updatedAt": "2026-09-09T08:05:23.398Z"
+  }
+}

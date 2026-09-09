@@ -1,0 +1,25 @@
+[
+  {
+    "id": "qpcr-plate-layout",
+    "file": "docs/debug-20260909/evidence/tools/qpcr-plate-layout-qPCR_plate_layout_20260909.zip",
+    "sampleImportAndDownload": "passed",
+    "savedReturnReopen": "passed"
+  },
+  {
+    "id": "cnv-plate-layout",
+    "file": "docs/debug-20260909/evidence/tools/cnv-plate-layout-TaqMan_CNV_All_Plates_96well_20260909.xlsx",
+    "sampleImportAndDownload": "passed",
+    "savedReturnReopen": "passed"
+  },
+  {
+    "id": "qpcr-analysis",
+    "file": "docs/debug-20260909/evidence/tools/qpcr-analysis-synthetic-qpcr-cq-20260909-complete-calculation.xlsx",
+    "import12WellsAndExport": "passed"
+  },
+  {
+    "id": "cnv-analysis",
+    "file": "docs/debug-20260909/evidence/tools/cnv-analysis-synthetic-cnv_CNV_实验记录.xlsx",
+    "json": "docs/debug-20260909/evidence/tools/cnv-analysis-synthetic-cnv_CNV_analysis.json",
+    "import24SyntheticWellsAndExport": "passed"
+  }
+]

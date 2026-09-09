@@ -1,0 +1,6 @@
+*server.log
+server.log
+generated-regression/
+motion/*.webm
+!motion/page@e0ce8faadad48f58e28e3f34f7333e3a.webm
+!motion/page@a2bc757096d5e6838cc53b26ee638de6.webm

@@ -1,0 +1,8 @@
+{
+  "results": [
+    "5 bottles -> warehouse 4, Zhang 1; replay does not issue twice or imply opened/consumed",
+    "Run held-bottle use retains Zhang holder and links to remaining observations; confirmation does not deduct another bottle",
+    "Opening, transfer and return preserve ID, opened date and both observations; 250 -> 180 never consumes 70",
+    "Empty bottle is unavailable but retained"
+  ]
+}

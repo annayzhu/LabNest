@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Associated method comes first",
+    "Other library methods remain selectable",
+    "Changing plan preserves selected IDs",
+    "Order controls reorder exact version IDs"
+  ]
+}

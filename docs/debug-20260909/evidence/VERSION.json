@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "3429d4e3eee6cfc55fa4023b42b4bfaa0b7c8713",
+  "baseline": "87a7610e09df32fa7b4a55fef69b3116d8c95974",
+  "builtSource": "3429d4e CSS contrast correction, webpack build passed",
+  "buildDirectory": ".next/final-contrast",
+  "browserURL": "http://localhost:3232",
+  "calculatorFullSuiteCommit": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
+  "calculatorFullSuiteStages": 22,
+  "finalCommitCalculatorCI": "pending PR",
+  "testData": "synthetic isolated databases only",
+  "physicalChecks": "not executed",
+  "recordedAt": "2026-09-09T08:15:35.736013+00:00",
+  "earlierPageEvidenceCommit": "0a4c57dd5edd3cc37857e5c3bda3e9d905ca45a2",
+  "finalSourceRegression": "material sessions, shared units and delayed save race rerun in actual production browser; 604 tests in Shanghai and Vancouver; lint and typecheck",
+  "previousSourceCommit": "5c1215d44445673b7a0351d21fd1d516f778063b",
+  "finalThemeRegression": "24 actual theme/mode pairs passed original contrast assertions; final-theme/visual-report.json",
+  "firstCalculatorCI": "34330363243 failed visual-v11 due color crossfade; 21 other stages passed; corrected and awaiting new run"
+}

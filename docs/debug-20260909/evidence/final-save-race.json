@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Pending request disables close",
+    "Escape keeps current session",
+    "Failed response retains draft",
+    "Reopen restores draft"
+  ],
+  "result": "passed"
+}

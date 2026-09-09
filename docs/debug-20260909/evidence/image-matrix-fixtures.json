@@ -1,0 +1,125 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmttt1w3t0001hzostkwevcdj/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmttt1w3z0002hzosmkzfumjy/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmttt1w460003hzos3cvq503z/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmttt1w4b0004hzosv3172xzh/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmttt1w4i0006hzosk1k3xnba/versions/cmttt1w4o0007hzos9rvqutr2/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmttt1w4f0005hzossi2kq20p/edit",
+      "position": "beginning"
+    },
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmttt1w4t0008hzosz2a42t3d/edit",
+      "position": "middle"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmttt1w4w0009hzosmbb9r3sy/edit",
+      "position": "middle"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmttt1w4x000ahzosfx1z11u7/edit",
+      "position": "middle"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmttt1w4z000bhzosvopq4evq/edit",
+      "position": "middle"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmttt1w54000dhzoso6xx7mcm/versions/cmttt1w55000ehzos9xl438op/edit",
+      "position": "middle"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmttt1w52000chzosni80l0oq/edit",
+      "position": "middle"
+    },
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmttt1w56000fhzosrw38t5e2/edit",
+      "position": "end"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmttt1w57000ghzosh8g32a8k/edit",
+      "position": "end"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmttt1w58000hhzosvrk3eprz/edit",
+      "position": "end"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmttt1w5a000ihzosyz24nu6n/edit",
+      "position": "end"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmttt1w5c000khzosrto8gsf5/versions/cmttt1w5d000lhzosivg5ohax/edit",
+      "position": "end"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmttt1w5b000jhzosyb7gkrru/edit",
+      "position": "end"
+    },
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmttt1w5f000mhzos7p5zl5c2/edit",
+      "position": "only"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmttt1w5g000nhzos7ncqyoto/edit",
+      "position": "only"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmttt1w5i000ohzoshi4vgwax/edit",
+      "position": "only"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmttt1w5k000phzosk69dkja9/edit",
+      "position": "only"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmttt1w5n000rhzospzb0o6t8/versions/cmttt1w5o000shzosbgb62k04/edit",
+      "position": "only"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmttt1w5m000qhzosxai1u1c1/edit",
+      "position": "only"
+    }
+  ]
+}

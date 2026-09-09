@@ -2,8 +2,8 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {writeFileSync,readFileSync} from 'node:fs';
 import {unzipSync,strFromU8} from 'fflate';
-const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3234';assert(['http://localhost:3234','http://localhost:3235'].includes(base));
-const dir='docs/stage-20260908/D/evidence';const browser=await chromium.launch();const page=await browser.newPage();const checks=[];
+const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3234';assert(['http://localhost:3232','http://localhost:3234','http://localhost:3235'].includes(base));
+const dir=process.env.LABNEST_TOOL_EVIDENCE_DIR||'docs/stage-20260908/D/evidence';const browser=await chromium.launch();const page=await browser.newPage();const checks=[];
 async function download(action,id){const [file]=await Promise.all([page.waitForEvent('download'),action()]);const path=dir+'/'+id+'-'+file.suggestedFilename();await file.saveAs(path);assert(readFileSync(path).length>100);return path;}
 try{
  for(const id of (process.env.ANALYSIS_ONLY?[]:['qpcr-plate-layout','cnv-plate-layout'])){

@@ -1,0 +1,32 @@
+PRT-1788936942514 · 0.1
+Synthetic protocol 1788936942514
+Description
+measurement
+
+complete
+
+One per run · 1 fields · 0 tables · 0 files
+
+填写说明 / INSTRUCTIONS
+
+结果模板说明 image 1788937561438
+
+字段要求 / FIELDS
+Value
+
+Purpose
+Background
+Material
+
+value · 数值 · 可选 · 测量值
+
+中文图注 protocol 1788940161685
+
+Steps
+Step A
+Editor acceptance body
+
+Result Templates
+Consumption Rules
+
+

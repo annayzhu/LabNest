@@ -1,0 +1,68 @@
+[
+  {
+    "entry": "research-plan",
+    "before": {
+      "height": 384,
+      "text": "DesignEditor acceptance body / 正文验收Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    },
+    "after": {
+      "height": 384,
+      "text": "DesignEditor acceptance body / 正文验收Material & methodsAcceptance criteriaConstraints & dependenciesReferences & working notes"
+    }
+  },
+  {
+    "entry": "experiment",
+    "before": {
+      "height": 384,
+      "text": "Background & rationaleEditor acceptance body / 正文验收Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    },
+    "after": {
+      "height": 384,
+      "text": "Background & rationaleEditor acceptance body / 正文验收Setup & samplesExecution notesObservations & mediaDeviations & incidentsSummary & conclusion"
+    }
+  },
+  {
+    "entry": "result",
+    "before": {
+      "height": 384,
+      "text": "SummaryEditor acceptance body / 正文验收Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    },
+    "after": {
+      "height": 384,
+      "text": "SummaryEditor acceptance body / 正文验收Data & mediaAnalysisInterpretationDeviations & limitationsOnly record deviations, failed QC, missing data, or limits that change interpretation."
+    }
+  },
+  {
+    "entry": "report",
+    "before": {
+      "height": 384,
+      "text": "Executive summaryEditor acceptance body / 正文验收Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    },
+    "after": {
+      "height": 384,
+      "text": "Executive summaryEditor acceptance body / 正文验收Research question & designMethods & executionResults & evidenceInterpretationLimitations & next steps"
+    }
+  },
+  {
+    "entry": "protocol",
+    "before": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialStepsStep AEditor acceptance bodyResult TemplatesConsumption Rules"
+    },
+    "after": {
+      "height": 384,
+      "text": "DescriptionPurposeBackgroundMaterialStepsStep AEditor acceptance bodyResult TemplatesConsumption Rules"
+    }
+  },
+  {
+    "entry": "entry",
+    "before": {
+      "height": 57.96875,
+      "text": "Editor acceptance body"
+    },
+    "after": {
+      "height": 36.65625,
+      "text": "Editor acceptance body"
+    }
+  }
+]

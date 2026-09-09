@@ -1,5 +1,8 @@
 "use client";
 
+import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { ScientificBlockView } from "@/components/ScientificBlockView";
+import { experimentMethodNames } from "@/lib/experiment-provenance";
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
@@ -15,7 +18,7 @@ import type { ScientificDocument } from "@/lib/scientific-document";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 
 type PlanOption = { id: string; code: string | null; title: string; project: { name: string } };
-type StepOption = { id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null };
+type StepOption = { evidence?: ScientificDocument["sections"][number]["blocks"]; groupOrder?:number;groupTitle?:string;deviationType?:string|null;deviationImpact?:string|null;deviationAuthor?:string|null; id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null };
 export type ExperimentFormState = { error?: string };
 export type ExperimentFormAction = (
   previousState: ExperimentFormState,
@@ -32,7 +35,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   initial: {
     id?: string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
     purpose?: string | null; tags?: string[]; methodMode?: "protocol" | "custom";
-    selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
+    executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -41,7 +44,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const plan = plans.find((item) => item.id === planId);
   const initialSelectedIds = initial.selectedProtocolVersionIds ?? [];
   const [methodMode, setMethodMode] = useState<"protocol" | "custom">(initial.methodMode ?? "protocol");
-  const [selectedProtocolCount, setSelectedProtocolCount] = useState(initialSelectedIds.length);
+  const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [title, setTitle] = useState(initial.title ?? "");
   const [runCodeSuffix, setRunCodeSuffix] = useState(initial.suggestedCodeSuffix ?? "");
   const [date, setDate] = useState(initial.date ?? new Date().toISOString().slice(0, 10));
@@ -52,11 +55,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const identifier = initial.runCode ?? (runCodeSuffix ? `EXP-${runCodeSuffix}` : "Draft Experiment");
   const lockedMethodMode = initialSelectedIds.length ? "protocol" : "custom";
   const activeMethodMode = initial.id ? lockedMethodMode : methodMode;
-  const protocolMethodSummary = initial.id
-    ? `${initialSelectedIds.length} locked ProtocolVersion(s)`
-    : selectedProtocolCount
-      ? `${selectedProtocolCount} ProtocolVersion(s) selected · locks on Save`
-      : "Select ProtocolVersion(s)";
+  const protocolMethodSummary = initial.id ? experimentMethodNames(initial.protocolSnapshotJson).join('；') : selectedIds.map(id=>{const version=protocolVersions.find(v=>v.id===id);return version ? `${version.protocol.title} · ${version.displayVersion}` : '规程未记录';}).join('；') || '未选择规程';
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
   return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
@@ -64,22 +63,19 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
-        { label: "Research Plan", value: plan ? `${plan.code ?? plan.title} · ${plan.project.name}` : "Not selected" },
-        { label: "Method", value: activeMethodMode === "protocol" ? protocolMethodSummary : "Fully custom" },
-        { label: "Date", value: date },
-        { label: "Execution", value: status.replaceAll("_", " ") },
-        { label: "Record", value: recordStatus.replaceAll("_", " ") },
+      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"})),initial.executionParameters).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+        { label: "研究计划", value: plan?.title ?? "未选择" },
+        { label: "方法来源", value: activeMethodMode === "protocol" ? protocolMethodSummary : "自行记录" },
       ]} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
-    {!initial.id ? <Card><CardHeader title="Protocol association & method source" eyebrow="Choose in execution order; Protocol Steps become the on-bench checklist" /><CardBody className="space-y-5">
-      <fieldset className="grid gap-3 md:grid-cols-2"><legend className={formLabelClass}>Planning mode</legend>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Plan from Protocol</strong><span className="mt-1 block text-xs leading-5 text-muted">Select one or more exact versions in execution order. Their Steps become the field checklist.</span></span></label>
-        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">Fully custom Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">No Protocol dependency. Enter your own execution steps instead.</span></span></label>
+      <label className="md:col-span-2"><span className={formLabelClass}>Research Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan?.project.name} · {plan?.title}</div> : <select required name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}</label>
+    {!initial.id ? <section className="space-y-3 border-b border-hairline py-3"><h3 className="text-sm font-semibold">方法来源</h3><div className="space-y-3">
+      <fieldset className="grid gap-3 md:grid-cols-2"><legend className="sr-only">方法来源</legend>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "protocol" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "protocol"} onChange={() => setMethodMode("protocol")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">依据实验规程</strong></span></label>
+        <label className={`mt-2 flex cursor-pointer items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-3 ${methodMode === "custom" ? "border-moss bg-sage-surface" : "border-hairline bg-warm"}`}><input type="radio" checked={methodMode === "custom"} onChange={() => setMethodMode("custom")} className="mt-1 accent-[var(--moss)]" /><span><strong className="block text-sm font-medium text-ink">自行记录</strong></span></label>
       </fieldset>
         {methodMode === "protocol" ? <>
-        <ExperimentProtocolPicker versions={protocolVersions} initialSelectedIds={initialSelectedIds} onSelectionChange={(ids) => setSelectedProtocolCount(ids.length)} />
-        <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm text-graphite"><strong className="block font-medium text-ink">One Result per Experiment</strong><span className="mt-1 block text-xs leading-5 text-muted">Selected Protocols contribute optional result modules. After execution, choose the modules you need; duplicate evidence fields are merged.</span></div>
+        <ExperimentProtocolPicker versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={initialSelectedIds} onSelectionChange={setSelectedIds} />
       </> : <>
         <label className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-sage-surface/60 px-3 py-3 text-sm">
           <input
@@ -96,10 +92,10 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
           <p className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-muted">No step-by-step checklist for this custom protocol. Run notes will be recorded in a freeform execution log.</p>
         )}
       </>}
-    </CardBody></Card> : null}
+    </div></section> : null}
 
-    <Card><CardHeader title="Experiment identity" eyebrow="Plan a future execution inside one Research Plan" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <label className="md:col-span-2"><span className={formLabelClass}>Research Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan?.project.name} · {plan?.code ?? plan?.title}</div> : <select required name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.code ?? item.title}</option>)}</select>}</label>
+    <section className="border-b border-hairline py-3"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+
       <RecordCodeField label="Experiment code" prefix="EXP-" name="runCodeSuffix" minimumDigits={3} placeholder="001" value={runCodeSuffix} onValueChange={setRunCodeSuffix} existingCode={initial.id ? initial.runCode : undefined} />
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
@@ -107,7 +103,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
       <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
       <label className="md:col-span-2 xl:col-span-4"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
-    </CardBody></Card>
+    </div></section>
 
     {initial.id && initial.steps?.length ? <Card>
       <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />
@@ -117,7 +113,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedProtocolCount)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
+      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedIds.length)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
 }

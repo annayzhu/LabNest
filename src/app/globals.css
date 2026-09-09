@@ -5495,3 +5495,42 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 .app-shell-main :is(section,aside,div)[class*="rounded-"][class*="border"]:not(.document-paper):not(.document-page) { border-radius: 0; box-shadow: none; }
 .context-properties-body :is(section,details) { border-radius: 0; box-shadow: none; }
 .context-properties :is(.document-editor-sidebar,.entry-editor-sidebar-column) { position: static !important; inset: auto !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: none !important; max-height: none; max-width: none; overflow: visible; background: transparent; box-shadow: none; }
+
+.ln-material-dialog { width: min(42rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; margin: auto; padding: 1.25rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); }
+.ln-material-dialog::backdrop { background: rgb(0 0 0 / .35); }
+.ln-material-dialog form > label { flex: 1 1 12rem; min-width: 0; }
+
+.ln-experiment-brief, .document-page-facts.ln-experiment-facts { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-block: 1rem; }
+.ln-experiment-brief > *, .ln-experiment-facts > div { min-width: 0; max-width: 100%; }
+.ln-experiment-brief summary { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 28rem; }
+.ln-experiment-facts > div { display: flex; gap: .4rem; }
+.ln-experiment-facts dd { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-experiment-facts dt { flex-shrink: 0; }
+@media print { .ln-experiment-brief details > :not(summary) { display: block !important; } .ln-experiment-brief details summary { display: none; } .ln-experiment-brief { display: block; } .ln-experiment-facts dd { white-space: normal; overflow: visible; } }
+
+.ln-brief-print { display: none; }
+@media print { .ln-experiment-brief .ln-brief-print { display: block; } .ln-experiment-brief details { display: none; } }
+
+:root { --ln-motion-fast: 130ms; --ln-motion-panel: 220ms; --ln-motion-ease: cubic-bezier(.16,1,.3,1); }
+.context-properties { animation: none; opacity: 1; transform: translateX(0); transition: transform var(--ln-motion-panel) var(--ln-motion-ease), opacity var(--ln-motion-panel) var(--ln-motion-ease), display var(--ln-motion-panel) allow-discrete; }
+.context-properties[hidden] { opacity: 0; transform: translateX(1.5rem); }
+@starting-style { .context-properties:not([hidden]) { opacity: 0; transform: translateX(1.5rem); } }
+/* Swap foreground/background together: cross-fading light and dark pairs loses contrast midway. */
+:is(.focus-ring, .ln-tool-card) { transition: transform var(--ln-motion-fast) ease-out, border-color var(--ln-motion-fast) ease-out; }
+button.focus-ring:active { filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) { .context-properties, .focus-ring, .ln-tool-card { transition: none; animation: none; } }
+
+.ln-experiment-brief, .document-page-facts.ln-experiment-facts { flex-wrap: nowrap; align-items: baseline; }
+.ln-experiment-brief > span { flex: 0 1 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-experiment-brief > details, .ln-experiment-facts > div { flex: 1 1 0; }
+.ln-experiment-brief summary { max-width: 100%; }
+.ln-experiment-brief details[open] { flex-basis: 45%; }
+@media print { .ln-experiment-brief { display: flex; flex-wrap: wrap; } .ln-experiment-brief .ln-brief-print { flex: 1 1 100%; } }
+.ln-brief-source { display: none; }
+@media print {
+  .ln-experiment-brief { display: flex; flex-wrap: nowrap; }
+  .ln-experiment-brief details { display: block; }
+  .ln-experiment-brief details summary { display: block; }
+  .ln-experiment-brief details > :not(summary) { display: none !important; }
+  .ln-brief-source { display: block; margin-block: 1rem; }
+}

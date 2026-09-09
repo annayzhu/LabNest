@@ -1,0 +1,25 @@
+{
+  "experimentId": "cmtttgxj90008fnos0la37f4w",
+  "checks": [
+    {
+      "format": "csv",
+      "path": "docs/debug-20260909/evidence/experiment-exports/historical-run.csv",
+      "stepEvidenceAndSources": "passed"
+    },
+    {
+      "format": "xlsx",
+      "path": "docs/debug-20260909/evidence/experiment-exports/historical-run.xlsx",
+      "stepEvidenceAndSources": "passed"
+    },
+    {
+      "format": "json",
+      "path": "docs/debug-20260909/evidence/experiment-exports/historical-run.json",
+      "stepEvidenceAndSources": "passed"
+    },
+    {
+      "format": "md",
+      "path": "docs/debug-20260909/evidence/experiment-exports/historical-run.md",
+      "stepEvidenceAndSources": "passed"
+    }
+  ]
+}

@@ -1195,7 +1195,7 @@ var LabNestCalculations = (() => {
       }
     };
   }
-  var systemThemes = [
+  var establishedThemes = [
     defineSystemTheme({
       id: "moon-dai",
       name: "\u6708\u767D\u9EDB\u9752",
@@ -1512,6 +1512,20 @@ var LabNestCalculations = (() => {
       }
     })
   ];
+  var referenceThemes = [
+    { id: "reference-cool", name: "\u51B7\u767D\u5B9E\u9A8C\u5BA4", base: 0, paper: "#EDF5F1", warm: "#F2F9FE", stone: "#DDE7E9" },
+    { id: "reference-lilac", name: "\u67D4\u7D2B\u7070", base: 3, paper: "#EFE4E9", warm: "#F2EFED", stone: "#CECBDA" },
+    { id: "reference-cream", name: "\u6696\u767D\u5B9E\u9A8C\u7C3F", base: 2, paper: "#F5F1E8", warm: "#F9F5F0", stone: "#F8F2E4" },
+    { id: "reference-peach", name: "\u67D4\u7C89\u7C73\u767D", base: 1, paper: "#FAEBE6", warm: "#FEF0E3", stone: "#FDF6E9" },
+    { id: "reference-blue", name: "\u6DF1\u84DD\u51B7\u767D", base: 4, paper: "#E2EEFD", warm: "#FEFDF9", stone: "#DDE7E9" }
+  ];
+  var systemThemes = [...establishedThemes, ...referenceThemes.map((reference) => defineSystemTheme({
+    ...establishedThemes[reference.base],
+    id: reference.id,
+    name: reference.name,
+    description: "\u4F9D\u636E\u9644\u4EF6\u8FD1\u4F3C\u80CC\u666F\u8272\u53D6\u6837\uFF0C\u6B63\u6587\u4E0E\u64CD\u4F5C\u8272\u7ECF\u5BF9\u6BD4\u5EA6\u6D3E\u751F\u3002",
+    tokens: { ...establishedThemes[reference.base].tokens, "--paper": reference.paper, "--warm": reference.warm, "--stone": reference.stone, ...reference.id === "reference-peach" ? { "--moss": "#106b84", "--action": "#106b84", "--pale-sand": "#FDF4DF" } : reference.id === "reference-blue" ? { "--moss": "#033167", "--action": "#033167" } : reference.id === "reference-lilac" ? { "--hairline": "#CFD1D3" } : {} }
+  }))];
   function isSystemThemeId(value) {
     return systemThemes.some((theme) => theme.id === value);
   }

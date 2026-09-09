@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260909
+
+ ❯ src/app/api/experiments/[id]/materials/route.test.ts (1 test | 1 failed) 17ms
+   × accepts the browser LAN origin when Next binds to an internal address 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/api/experiments/[id]/materials/route.test.ts > accepts the browser LAN origin when Next binds to an internal address
+AssertionError: expected 403 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 403
+
+ ❯ src/app/api/experiments/[id]/materials/route.test.ts:9:27
+      7|     method: 'POST', headers: { host: '172.17.72.251:3000', origin: 'ht…
+      8|   }), {params: Promise.resolve({id:'test'})});
+      9|   expect(response.status).toBe(400);
+       |                           ^
+     10| });
+     11|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  14:27:04
+   Duration  229ms (transform 41ms, setup 0ms, import 99ms, tests 17ms, environment 0ms)
+

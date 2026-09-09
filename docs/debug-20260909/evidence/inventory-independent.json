@@ -1,0 +1,7 @@
+{
+  "fixture": "Synthetic Run creation via Prisma; completion through real mobile page",
+  "checks": [
+    "Run with no purchases/inventory completes",
+    "Run with pending insufficient consumption completes without automatic deduction or losing saved material rows"
+  ]
+}

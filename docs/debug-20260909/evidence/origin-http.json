@@ -1,0 +1,8 @@
+{
+  "base": "http://localhost:3232",
+  "checks": [
+    "Browser Origin saves through HTTP and GET returns saved name",
+    "Untrusted Origin with forged forwarded host rejected"
+  ],
+  "fixture": "cmttpvqvg0000ufosxy9qgcvw"
+}

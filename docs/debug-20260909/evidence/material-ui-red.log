@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 4000ms exceeded.
+Call log:
+[2m  - waiting for locator('section').filter({ has: getByRole('heading', { name: '本次使用的试剂与耗材', exact: true }) }).last().getByRole('button', { name: '添加', exact: true })[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-debug-material-ui.mjs:7:56 {
+  log: [
+    "  - waiting for locator('section').filter({ has: getByRole('heading', { name: '本次使用的试剂与耗材', exact: true }) }).last().getByRole('button', { name: '添加', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

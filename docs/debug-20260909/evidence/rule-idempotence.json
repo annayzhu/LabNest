@@ -1,0 +1,6 @@
+{
+  "checks": [
+    "Concurrent identical rule introduction creates one record; second rejected with 409"
+  ],
+  "key": "Consumption:synthetic-50911a5f-18be-49a4-ae4b-695ae5037971:0"
+}

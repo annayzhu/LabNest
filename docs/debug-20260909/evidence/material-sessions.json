@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Edit-close-add creates distinct identity",
+    "Original record unchanged",
+    "Unsubmitted edit draft restored",
+    "Save error visible inside modal and draft retained"
+  ]
+}

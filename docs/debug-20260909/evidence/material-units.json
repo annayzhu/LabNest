@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "Both quantities use shared inline unit controls",
+    "5mL/2mL -> 5000µL/2000µL and back from either selector",
+    "Missing actual remains empty rather than zero"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "checks": [
+    "Incompatible mass/volume units stay pending",
+    "Mixed unmanaged and precise rows save independently; 12000µL confirms once; insufficient 200mL stays pending without losing rows"
+  ]
+}

@@ -5515,7 +5515,8 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 .context-properties { animation: none; opacity: 1; transform: translateX(0); transition: transform var(--ln-motion-panel) var(--ln-motion-ease), opacity var(--ln-motion-panel) var(--ln-motion-ease), display var(--ln-motion-panel) allow-discrete; }
 .context-properties[hidden] { opacity: 0; transform: translateX(1.5rem); }
 @starting-style { .context-properties:not([hidden]) { opacity: 0; transform: translateX(1.5rem); } }
-:is(.focus-ring, .ln-tool-card) { transition: background-color var(--ln-motion-fast) ease-out, color var(--ln-motion-fast) ease-out, border-color var(--ln-motion-fast) ease-out; }
+/* Swap foreground/background together: cross-fading light and dark pairs loses contrast midway. */
+:is(.focus-ring, .ln-tool-card) { transition: transform var(--ln-motion-fast) ease-out, border-color var(--ln-motion-fast) ease-out; }
 button.focus-ring:active { filter: brightness(.96); }
 @media (prefers-reduced-motion: reduce) { .context-properties, .focus-ring, .ln-tool-card { transition: none; animation: none; } }
 

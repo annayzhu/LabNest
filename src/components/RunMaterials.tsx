@@ -60,6 +60,7 @@ export function RunMaterials({
   const blankDraft: Draft = {draftId:null,name:'',expected:'',actual:'',unit:'mL',source:'manual',inventory:'',container:'',correction:null,mode:'manual'};
   function rowDraft(row: Row, correcting=false): Draft {return {draftId:correcting?null:row.id,name:row.name,expected:row.expected===null?'':String(row.expected),actual:row.actual===null?'':String(row.actual),unit:row.unit,source:correcting?`correction:${row.id}`:row.source,inventory:row.inventoryItemId??'',container:correcting?'':row.containerId??'',correction:correcting?row.id:row.correctionOfId,mode:'manual'};}
   function openDialog(key='create', initial=blankDraft) {
+    if (busy) return;
     if(key!==sessionKey.current) {
       drafts.current[sessionKey.current]={draftId,name,expected,actual,unit,source,inventory,container,correction,mode};
       applyDraft(drafts.current[key] ?? initial);
@@ -232,15 +233,15 @@ export function RunMaterials({
       </div>
       {editable ? (
         <>
-          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={()=>{setDialogActive(false);triggerRef.current?.focus();}}>
-          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.current.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" onClick={closeDialog}>关闭</Button></div>
+          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
+          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.current.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>关闭</Button></div>
           {status && dialogActive ? <p role="alert" className="my-2 text-sm">{status}</p> : null}
           <form
             onSubmit={save}
             onKeyDown={preventImplicitEnterSubmit}
             className="mt-4 flex flex-wrap items-end gap-3"
           >
-            <label className="text-sm">添加方式<select aria-label="添加方式" className={formInputClass} value={mode} onChange={e=>{setMode(e.target.value);if(e.target.value==='manual')setSource('manual');}}><option value="manual">手动填写</option><option value="protocol">依据规程</option></select></label>
+            <fieldset disabled={busy} className="contents"><label className="text-sm">添加方式<select aria-label="添加方式" className={formInputClass} value={mode} onChange={e=>{setMode(e.target.value);if(e.target.value==='manual')setSource('manual');}}><option value="manual">手动填写</option><option value="protocol">依据规程</option></select></label>
             {mode==='protocol' ? <div className="w-full space-y-3"><label>规程版本<select aria-label="规程版本" className={formInputClass} value={versionId} onChange={e=>{setVersionId(e.target.value);setPreview([]);}}>{consumptionSources.map(v=><option key={v.id} value={v.id}>{v.label}</option>)}</select></label>{!consumptionSources.length ? <p>锁定版本没有可用的耗材规则。</p> : null}{consumptionSources.find(v=>v.id===versionId)?.keys.map(key=><label key={key} className="block">{key}<input className={formInputClass} value={String(parameterDraft[key]??'')} onChange={e=>{setParameterDraft(p=>({...p,[key]:e.target.value}));setPreview([]);}}/></label>)}<Button type="button" onClick={()=>{try{const selected=consumptionSources.find(v=>v.id===versionId);if(!selected)throw Error('请选择含耗材规则的锁定版本。');setPreview(previewRunConsumption(selected,parameterDraft));setPreviewError('');}catch(e){setPreviewError(e instanceof Error?e.message:'参数无效');}}}>计算预计量</Button>{previewError ? <p role="alert" className="text-error">{previewError}</p>:null}{preview.map(p=><div key={p.source}><p>{p.materialName}：{p.quantity} {p.unit}</p><p className="text-sm text-muted">{p.basis}</p><Button type="button" disabled={rows.some(row=>row.source===p.source || row.source.startsWith(p.source+'|'))} onClick={()=>{setName(p.materialName);setExpected(String(p.quantity));setUnit(p.unit);setSource(p.source+'|'+p.basis);}}>选择此项</Button>{rows.some(row=>row.source===p.source || row.source.startsWith(p.source+'|'))?<span>已添加，请编辑原记录</span>:null}</div>)}</div>:null}
             <label className="text-sm">
               名称
@@ -309,7 +310,7 @@ export function RunMaterials({
               {correction ? "保存更正" : "保存使用记录"}
             </Button>
             <Button type="submit" data-continue="true" disabled={busy}>添加并继续</Button>
-          </form></dialog>, document.body) : null}
+          </fieldset></form></dialog>, document.body) : null}
           {selection.length ? (
             <Button
               type="button"

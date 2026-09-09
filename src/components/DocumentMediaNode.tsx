@@ -20,7 +20,12 @@ function MediaNodeView({ node, updateAttributes, deleteNode, editor, selected, g
   const select = () => { setActivation(n => n + 1); const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
   return <NodeViewWrapper data-document-media={block.id} data-widget-type="media" data-media-active={active} className="document-media-node" contentEditable={false} tabIndex={0} role="group" aria-label="编辑附件 / Edit attachment"
     onClick={select} onFocusCapture={() => setFocused(true)} onBlurCapture={(event: React.FocusEvent<HTMLDivElement>) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
-    onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); select(); } }}>
+    onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget || event.nativeEvent.isComposing || event.keyCode === 229) return;
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault(); event.stopPropagation(); deleteNode(); editor.commands.focus();
+      } else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); }
+    }}>
 
     {upload?.preview ? <Image src={upload.preview} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
     {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}

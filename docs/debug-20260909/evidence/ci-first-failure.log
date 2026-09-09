@@ -1,0 +1,11 @@
+2026-09-09T08:46:29.0972653Z 失败: visual-v11 (2066 ms)
+2026-09-09T08:46:29.0976701Z node:internal/modules/run_main:123
+2026-09-09T08:46:29.0977249Z     triggerUncaughtException(
+2026-09-09T08:46:29.0977674Z     ^
+2026-09-09T08:46:29.0977862Z 
+2026-09-09T08:46:29.0978422Z AssertionError [ERR_ASSERTION]: moon-dai/dark buttonText/buttonBackground
+2026-09-09T08:46:29.0979576Z     at file:///home/runner/work/LabNest/LabNest/scripts/verify-calculator-visual-v11.mjs:11:716 {
+2026-09-09T08:46:29.0980404Z   generatedMessage: false,
+2026-09-09T08:46:29.0980848Z   code: 'ERR_ASSERTION',
+2026-09-09T08:46:29.0982041Z   actual: false,
+2026-09-09T08:46:29.0982406Z   expected: true,

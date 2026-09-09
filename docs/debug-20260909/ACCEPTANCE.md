@@ -56,3 +56,5 @@
 | T46 | 默认A4打印与PDF尺寸 | 通过 | 全部31份PDF共48页均为A4且非空；其中14份正文PDF16页逐页含图片。系统/驱动覆盖与真实打印未执行。 | [全部PDF](evidence/all-pdfs.json) · [正文尺寸](evidence/pdf-page-dimensions.json) |
 
 最终应用代码 `5c1215d` 已通过 Lint、TypeScript、生产构建、上海与温哥华双时区各604项测试；弹窗会话、单位与延迟保存竞态在新构建真实页面复验。先前页面证据代码版本为 `0a4c57d`，差异仅弹窗会话标识改由React状态驱动及未使用导入清理，未改算法。最终分支远端CI待PR检查。
+
+CI首次运行 `34330363243` 的 visual-v11 对比度失败，其他21阶段通过。定位为新增颜色交叉渐变产生低对比中间帧，应用修复 `3429d4e` 改为前景/背景原子切换并保留位移/边框动效；新生产构建的24个主题/模式组合通过原对比度断言，见 [最终配色](evidence/final-theme/visual-report.json)、[红灯](evidence/theme-transition-red.log)、[绿灯](evidence/theme-transition-green.log)。远端最终运行状态以PR实时检查及说明为准。

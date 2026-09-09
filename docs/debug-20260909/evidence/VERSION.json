@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "0a4c57dd5edd3cc37857e5c3bda3e9d905ca45a2",
+  "baseline": "87a7610e09df32fa7b4a55fef69b3116d8c95974",
+  "builtSource": "source identical to 0a4c57d; commit created after successful build",
+  "buildDirectory": ".next/accepted",
+  "browserURL": "http://localhost:3232",
+  "calculatorFullSuiteCommit": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
+  "calculatorFullSuiteStages": 22,
+  "finalCommitCalculatorCI": "pending PR",
+  "testData": "synthetic isolated databases only",
+  "physicalChecks": "not executed",
+  "recordedAt": "2026-09-09T08:15:35.736013+00:00"
+}

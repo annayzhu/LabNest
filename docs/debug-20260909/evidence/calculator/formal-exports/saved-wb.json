@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "labnest.structured-export/v1",
+  "module": "results",
+  "exportedAt": "2026-09-09T07:35:47.456Z",
+  "records": [
+    {
+      "experiment": "CALC-ACCEPTANCE-20260906",
+      "title": "Synthetic calculation · wb-loading",
+      "resultType": "Calculation",
+      "templateKey": null,
+      "templateInstanceKey": null,
+      "templateInstanceLabel": null,
+      "templateValuesJson": {
+        "mode": "default",
+        "notes": [
+          "最终体积的 5% v/v 原液；不代表有效成分终浓度 / Fraction of final volume, not active concentration"
+        ],
+        "table": [
+          {
+            "id": "WB-A",
+            "status": "有效 / Valid",
+            "totalUl": 20,
+            "bufferUl": 5,
+            "sampleUl": 10,
+            "diluentUl": 4,
+            "volumeUnit": "µL",
+            "availableUl": "",
+            "reducingMode": "volume-fraction",
+            "reducingAgent": "Synthetic stock",
+            "reducingAgentUl": 1,
+            "targetProteinUg": 20,
+            "concentrationUnit": "µg/µL",
+            "reducingDefinition": "最终体积的 5% v/v 原液；不代表有效成分终浓度 / Fraction of final volume, not active concentration",
+            "originalConcentration": "2"
+          }
+        ],
+        "status": "valid",
+        "outputs": [
+          {
+            "key": "validRows",
+            "label": "Valid samples",
+            "value": 1,
+            "labelZh": "有效样本"
+          }
+        ],
+        "warnings": [
+          "WB-A · Synthetic stock (theoretical): 1 µL，低于所设 2 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution."
+        ],
+        "outputMap": {
+          "validRows": 1
+        },
+        "rawInputs": {
+          "samples": [
+            {
+              "id": "WB-A",
+              "available": "",
+              "concentration": "2"
+            }
+          ],
+          "__context": {
+            "experimentId": "calculator-acceptance-experiment",
+            "experimentStepId": "calculator-acceptance-step"
+          },
+          "bufferFold": 4,
+          "reducingMode": "volume-fraction",
+          "__displayUnits": {
+            "table:sampleUl": "µL"
+          },
+          "targetProteinUg": 20,
+          "pipetteMinimumUl": 2,
+          "reducingAgentName": "Synthetic stock",
+          "finalLoadingVolumeUl": 20,
+          "reducingAgentPercent": 5,
+          "bufferContainsReducingAgent": "no"
+        },
+        "operations": [
+          {
+            "id": "wb-loading:row:0:sampleUl",
+            "role": "add",
+            "basis": "theoretical",
+            "sample": "WB-A",
+            "source": "stock:sampleUl",
+            "inputRow": "0",
+            "quantity": {
+              "unit": "µL",
+              "value": 10,
+              "dimension": "volume"
+            },
+            "component": "样品量 (µL) / Sample (µL)",
+            "componentId": "sampleUl",
+            "destination": "wb-loading:WB-A",
+            "planVersion": "liquid-operations-v2",
+            "repetitions": 1
+          },
+          {
+            "id": "wb-loading:row:0:bufferUl",
+            "role": "add",
+            "basis": "theoretical",
+            "sample": "WB-A",
+            "source": "stock:bufferUl",
+            "inputRow": "0",
+            "quantity": {
+              "unit": "µL",
+              "value": 5,
+              "dimension": "volume"
+            },
+            "component": "缓冲液 (µL) / Buffer (µL)",
+            "componentId": "bufferUl",
+            "destination": "wb-loading:WB-A",
+            "planVersion": "liquid-operations-v2",
+            "repetitions": 1
+          },
+          {
+            "id": "wb-loading:row:0:reducingAgentUl",
+            "role": "add",
+            "basis": "theoretical",
+            "sample": "WB-A",
+            "source": "stock:reducingAgentUl",
+            "inputRow": "0",
+            "quantity": {
+              "unit": "µL",
+              "value": 1,
+              "dimension": "volume"
+            },
+            "component": "Synthetic stock",
+            "componentId": "reducingAgentUl",
+            "destination": "wb-loading:WB-A",
+            "planVersion": "liquid-operations-v2",
+            "repetitions": 1
+          },
+          {
+            "id": "wb-loading:row:0:diluentUl",
+            "role": "add",
+            "basis": "theoretical",
+            "sample": "WB-A",
+            "source": "stock:diluentUl",
+            "inputRow": "0",
+            "quantity": {
+              "unit": "µL",
+              "value": 4,
+              "dimension": "volume"
+            },
+            "component": "稀释液 (µL) / Diluent (µL)",
+            "componentId": "diluentUl",
+            "destination": "wb-loading:WB-A",
+            "planVersion": "liquid-operations-v2",
+            "repetitions": 1
+          }
+        ],
+        "calculatorId": "wb-loading",
+        "displayUnits": {
+          "table:sampleUl": "µL"
+        },
+        "methodVersion": "wb-loading-v3",
+        "schemaVersion": 2,
+        "pipettingCheck": {
+          "status": "below-minimum",
+          "minimumUl": 2
+        },
+        "normalizedInputs": {
+          "bufferFold": 4,
+          "reducingMode": "volume-fraction",
+          "targetProteinUg": {
+            "unit": "g",
+            "value": 0.000019999999999999998,
+            "dimension": "mass",
+            "sourceUnit": "µg"
+          },
+          "reducingAgentName": "Synthetic stock",
+          "finalLoadingVolumeUl": {
+            "unit": "L",
+            "value": 0.000019999999999999998,
+            "dimension": "volume",
+            "sourceUnit": "µL"
+          },
+          "reducingAgentPercent": {
+            "unit": "%",
+            "value": 5,
+            "dimension": "%",
+            "sourceUnit": "%"
+          },
+          "bufferContainsReducingAgent": "no"
+        },
+        "operationVersion": "liquid-operations-v2",
+        "structuredWarnings": [
+          {
+            "code": "below-minimum",
+            "basis": "theoretical",
+            "sample": "WB-A",
+            "message": "WB-A · Synthetic stock (theoretical): 1 µL，低于所设 2 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案 / Adjust preparation scale or assess an intermediate dilution.",
+            "volumeUl": 1,
+            "component": "Synthetic stock",
+            "minimumUl": 2,
+            "operationId": "wb-loading:row:0:reducingAgentUl"
+          }
+        ]
+      },
+      "templateSnapshotJson": null,
+      "validationStatus": "valid",
+      "recordStatus": "recorded",
+      "sourceType": "manual",
+      "qualityStatus": "not_assessed",
+      "textValue": null,
+      "numericValue": null,
+      "unit": null,
+      "analysisMethod": "wb-loading-v3",
+      "notes": null,
+      "summary": "",
+      "analysis": "",
+      "interpretation": "",
+      "qualityLimitations": ""
+    }
+  ]
+}

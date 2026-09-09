@@ -1,0 +1,38 @@
+通过: run-v12 (14418 ms)
+通过: pipetting-v12 (6471 ms)
+通过: v12-database (83 ms)
+通过: refactor (15756 ms)
+通过: legacy (19709 ms)
+通过: compact-ui (6291 ms)
+通过: plate (1264 ms)
+通过: storage-appearance (4638 ms)
+通过: appearance (27551 ms)
+通过: integration (2726 ms)
+通过: database (84 ms)
+通过: rejection (1285 ms)
+失败: visual-v11 (1484 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: azure-coral/light buttonText/buttonBackground
+    at file:///Users/annayzhu/Documents/Playground/LabNest-debug-20260909/scripts/verify-calculator-visual-v11.mjs:11:716 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1
+
+通过: standalone-v11 (1799 ms)
+通过: ux-v13 (32286 ms)
+通过: formal-exports (1394 ms)
+通过: navigation-icons (40505 ms)
+通过: colony-v13 (1340 ms)
+通过: cache-clear-failure (1718 ms)
+通过: copy-recent (4288 ms)
+通过: transfection (2210 ms)
+通过: transfection-database (1166 ms)

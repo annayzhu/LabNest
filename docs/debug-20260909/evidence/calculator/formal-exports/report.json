@@ -1,0 +1,31 @@
+{
+  "sha": "ee2195cd2967ed01f99e10a7ec0d0f911c45b76f",
+  "at": "2026-09-09T07:35:47.356Z",
+  "resultId": "cmtts9qa4000lgros5ahdtwql",
+  "files": [
+    {
+      "format": "csv",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.csv",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read"
+    },
+    {
+      "format": "xlsx",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.xlsx",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read"
+    },
+    {
+      "format": "json",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.json",
+      "status": "通过",
+      "check": "Full nested snapshot equals independent database read"
+    },
+    {
+      "format": "pdf",
+      "path": "docs/calculator/v1.3/evidence/formal-exports/saved-wb.pdf",
+      "status": "待文件回读",
+      "check": "Chromium print renderer; native OS print dialog not exercised"
+    }
+  ]
+}

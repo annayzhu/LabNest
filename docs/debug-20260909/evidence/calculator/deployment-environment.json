@@ -1,0 +1,54 @@
+[
+  {
+    "base": "http://localhost:3000",
+    "environment": {
+      "secure": true,
+      "clipboard": true,
+      "serviceWorker": true,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/149.0.7827.55 Safari/537.36",
+      "iframe": false
+    },
+    "policy": null,
+    "workerStatus": 200,
+    "workerHeaders": {
+      "service-worker-allowed": "/",
+      "accept-ranges": "bytes",
+      "cache-control": "public, max-age=0",
+      "last-modified": "Mon, 07 Sep 2026 06:16:06 GMT",
+      "etag": "W/\"87c-1a07a827870\"",
+      "content-type": "application/javascript; charset=UTF-8",
+      "vary": "Accept-Encoding",
+      "content-encoding": "gzip",
+      "date": "Mon, 07 Sep 2026 07:56:23 GMT",
+      "connection": "keep-alive",
+      "keep-alive": "timeout=5",
+      "transfer-encoding": "chunked"
+    }
+  },
+  {
+    "base": "http://172.17.65.77:3000",
+    "environment": {
+      "secure": false,
+      "clipboard": false,
+      "serviceWorker": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/149.0.7827.55 Safari/537.36",
+      "iframe": false
+    },
+    "policy": null,
+    "workerStatus": 200,
+    "workerHeaders": {
+      "service-worker-allowed": "/",
+      "accept-ranges": "bytes",
+      "cache-control": "public, max-age=0",
+      "last-modified": "Mon, 07 Sep 2026 06:16:06 GMT",
+      "etag": "W/\"87c-1a07a827870\"",
+      "content-type": "application/javascript; charset=UTF-8",
+      "vary": "Accept-Encoding",
+      "content-encoding": "gzip",
+      "date": "Mon, 07 Sep 2026 07:56:23 GMT",
+      "connection": "keep-alive",
+      "keep-alive": "timeout=5",
+      "transfer-encoding": "chunked"
+    }
+  }
+]

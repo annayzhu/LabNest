@@ -93,12 +93,12 @@ export async function structuredExportRecords(
   }
   if (module === "experiments") {
     const rows = applyExportSelection(
-      await prisma.experiment.findMany({ include: { steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
+      await prisma.experiment.findMany({ include: { protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } }, orderBy: { order: "asc" } } }, orderBy: { date: "desc" } }),
       selection,
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
     return Promise.all(rows.map(async (row) => {
-      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps));
+      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");

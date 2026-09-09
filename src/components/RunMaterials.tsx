@@ -252,22 +252,15 @@ export function RunMaterials({
                 onChange={(e) => setName(e.target.value)}
               />
             </label>
-            <label className="text-sm">
-              预计
-              <input
-                className={formInputClass}
-                type="number"
-                min="0"
-                step="any"
-                value={expected}
-                onChange={(e) => setExpected(e.target.value)}
-              />
-            </label>
+            <QuantityInput label="预计" name="expected" value={expected} unit={unit || "mL"} onChange={(next,nextUnit)=>{
+              try {const nextActual=nextUnit!==unit && actual.trim()?String(Number(convert(parseScalar(actual),unit,nextUnit).toPrecision(14))):actual;setExpected(next);setActual(nextActual);setUnit(nextUnit);}
+              catch {setStatus("请先完成实际用量，再切换单位。");}
+            }}/>
             <QuantityInput label="实际" name="actual" value={actual} unit={unit || "mL"} onChange={(next, nextUnit) => {
               try { const nextExpected = nextUnit !== unit && expected.trim() ? String(Number(convert(parseScalar(expected),unit,nextUnit).toPrecision(14))) : expected; setExpected(nextExpected); setActual(next); setUnit(nextUnit); }
               catch { setStatus("请先完成预计用量，再切换单位。"); }
             }} />
-            <p className="w-full text-sm text-muted">{source === 'manual' ? '手动填写' : correction ? '更正已扣减记录：保存后仍需明确确认库存调整。' : '依据规程：'+source.replace('Consumption: ', '')}</p>
+            <p className="w-full text-sm text-muted">{source === 'manual' ? '手动填写' : correction ? '更正已扣减记录：保存后仍需明确确认库存调整。' : '依据规程：'+(source.split('|').slice(1).join('|') || '已保存的版本规则')}</p>
             <label className="text-sm">
               库存来源
               <select

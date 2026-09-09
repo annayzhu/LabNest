@@ -86,3 +86,10 @@ it("projects all Run steps in execution order without replacing authored notes",
   expect(experimentNarrativeFromDocument(source).steps).toBe("手写实验记录");
   expect(experimentNarrativeFromDocument(experimentExecutionDocument(projected,steps)).steps).toBe(text);
 });
+
+it('retains stored execution parameters at experiment scope without assigning them to a step', () => {
+  const doc=experimentExecutionDocument(undefined,[],{sample_count:2,reaction_volume:3});
+  const execution=doc.sections.find(section=>section.key==='execution')!;
+  expect(execution.blocks).toContainEqual({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],['sample_count','2'],['reaction_volume','3']]});
+  expect(experimentExecutionDocument(doc,[],{sample_count:4}).sections.find(section=>section.key==='execution')!.blocks).toHaveLength(1);
+});

@@ -41,7 +41,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
-  const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps));
+  const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson);
   const completed = experiment.steps.filter((step) => step.completed).length;
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,

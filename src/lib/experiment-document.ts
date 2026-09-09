@@ -106,9 +106,13 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
   completed: boolean; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
   evidence?: ScientificDocument['sections'][number]['blocks'];
-}[]): ScientificDocument {
+}[], parameters?: unknown): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificDocument['sections'][number]['blocks'] = [];
+  if(parameters && typeof parameters==='object' && !Array.isArray(parameters)) {
+    const rows=Object.entries(parameters).filter(([,value])=>['string','number','boolean'].includes(typeof value)).map(([key,value])=>[key,String(value)]);
+    if(rows.length)blocks.push({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],...rows]});
+  }
   let group: number | undefined;
   for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
     if (group !== step.groupOrder) {

@@ -127,7 +127,7 @@ export function getOrderedAttachmentIds(value: unknown) {
   );
 }
 
-export function plainTextFromEntryMarkdown(markdown: string) {
+export function plainTextFromEntryMarkdown(markdown: string): string {
   const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.map(plainTextFromEntryMarkdown).join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : line; }).join("\n");
   return stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable))))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))

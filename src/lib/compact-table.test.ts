@@ -15,6 +15,7 @@ it('associates images inside Entry table cells and rejects pending uploads',asyn
  const {collectDocumentMedia,assertDocumentMediaReady}=await import('./document-media');
  const block={id:'cell-image',type:'media',mediaType:'image',url:'/attachments/fixture-image',attachmentId:'fixture-image',caption:'表内图'};
  const withImage:JSONContent={type:'table',content:[{type:'tableRow',content:[{type:'tableCell',content:[{type:'documentMedia',attrs:{block}}]}]}]};
- const stored=tiptapToMarkdownRichText({type:'doc',content:[withImage]});expect(collectDocumentMedia(stored)).toHaveLength(1);expect(collectDocumentMedia(stored)[0].attachmentId).toBe('fixture-image');
- for(const pending of [{url:'blob:pending',pendingUploadId:'pending'},{url:'data:image/png;base64,eA=='}]){withImage.content![0].content![0].content=[{type:'documentMedia',attrs:{block:{...block,...pending}}}];expect(()=>assertDocumentMediaReady(tiptapToMarkdownRichText({type:'doc',content:[withImage]}))).toThrow();}
+ const stored=tiptapToMarkdownRichText({type:'doc',content:[withImage]});// The searchable row and rich cell mirror both contain the image; persistence deduplicates attachment IDs.
+ expect([...new Set(collectDocumentMedia(stored).map(media=>media.attachmentId))]).toEqual(['fixture-image']);expect(collectDocumentMedia(stored)[0].attachmentId).toBe('fixture-image');
+ for(const pending of [{url:'blob:pending',pendingUploadId:'8f2b4bc4-429a-44da-a574-22c2ae8fc956'},{url:'data:image/png;base64,eA=='}]){withImage.content![0].content![0].content=[{type:'documentMedia',attrs:{block:{...block,...pending}}}];expect(()=>assertDocumentMediaReady(tiptapToMarkdownRichText({type:'doc',content:[withImage]}))).toThrow('pendingUploadId' in pending ? /尚未上传完成/ : /不能保存临时图片/);}
 });

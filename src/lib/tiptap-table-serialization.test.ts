@@ -30,3 +30,10 @@ it('retains paragraph-only cell layout and paragraph breaks through persistence'
   expect(persisted.rows[0][0]).toBe('10 µL\n中文说明');
   expect(tiptapTableRows(persisted)[0].content?.[0].content).toEqual(source.content[0].content[0].content);
 });
+
+it.each(['left','center','right','justify'])('retains a single unmarked cell paragraph with %s alignment', textAlign => {
+  const content=[{type:'paragraph',attrs:{textAlign,documentIndent:1,spaceBeforePt:3},content:[{type:'text',text:'12 µL'}]}];
+  const persisted=persistedTableFromTiptap({type:'table',content:[{type:'tableRow',content:[{type:'tableCell',content}]}]});
+  expect(persisted.cellRichContent?.[0]?.[0]).toEqual(content);
+  expect(tiptapTableRows(persisted)[0].content?.[0].content).toEqual(content);
+});

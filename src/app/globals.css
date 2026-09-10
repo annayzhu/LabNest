@@ -678,7 +678,7 @@ textarea {
 /* Slack-like spring response for disclosure controls; content still follows document flow. */
 details > summary { transition: background-color 160ms ease, color 160ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1); }
 details > summary:active { transform: scale(0.985); }
-details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* Disclosure contents retain their reading position; do not replay entrance animation. */
 @keyframes ln-disclosure-content-in {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2450,7 +2450,8 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
   text-transform: uppercase;
 }
 
-.document-editor-properties-card > header h2 {
+.app-shell-main .document-editor-properties-card > header h2 {
+  margin-block: 0;
   color: var(--ink);
   font-size: 13px;
   font-weight: 650;

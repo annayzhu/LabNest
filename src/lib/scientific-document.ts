@@ -1,3 +1,4 @@
+import {decodeDocumentTableToken} from "./document-table-token";
 import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
@@ -105,9 +106,8 @@ export function scientificTableToMarkdown(block: Extract<ScientificContentBlock,
   return `<!--labnest-table:${encodeURIComponent(JSON.stringify(block))}-->`;
 }
 export function scientificTableFromMarkdown(line: string): Extract<ScientificContentBlock,{type:"table"}> | undefined {
-  const match=line.trim().match(/^<!--labnest-table:(.+)-->$/);
-  if(!match)return undefined;
-  try { const parsed=scientificContentBlockSchema.safeParse(JSON.parse(decodeURIComponent(match[1])));return parsed.success && parsed.data.type==="table" ? parsed.data : undefined; } catch { return undefined; }
+  const parsed = scientificContentBlockSchema.safeParse(decodeDocumentTableToken(line));
+  return parsed.success && parsed.data.type === "table" ? parsed.data : undefined;
 }
 
 /**

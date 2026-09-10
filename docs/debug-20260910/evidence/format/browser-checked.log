@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.evaluate: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.tiptap p').filter({ hasText: 'Editor acceptance body' }).first()[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-debug-20260910/scripts/verify-debug10-editors.mjs:13:102 {
+  log: [
+    "  - waiting for locator('.tiptap p').filter({ hasText: 'Editor acceptance body' }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

@@ -1,0 +1,7 @@
+
+> labnest@0.1.0 typecheck
+> tsc --noEmit
+
+src/components/CompactRichTextTiptapEditor.tsx(83,196): error TS2322: Type '(WysiwygInsertAction | { id: string; label: string; onSelect: (target: Editor) => boolean; })[]' is not assignable to type 'WysiwygInsertAction[]'.
+  Type 'WysiwygInsertAction | { id: string; label: string; onSelect: (target: Editor) => boolean; }' is not assignable to type 'WysiwygInsertAction'.
+    Object literal may only specify known properties, and 'onSelect' does not exist in type 'WysiwygInsertAction'.

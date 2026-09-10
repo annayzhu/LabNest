@@ -1,0 +1,7 @@
+{
+  "sha": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+  "checks": [
+    "Negative worker reply displays failure, retains real prepared caches, never reports cleared",
+    "Retry with actual worker deletes tool cache and then reports success"
+  ]
+}

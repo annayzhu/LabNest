@@ -1,0 +1,46 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/experiment-document.test.ts (6 tests | 1 failed) 17ms
+   × labels derived deviations explicitly without styling authored warnings as execution 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/experiment-document.test.ts > labels derived deviations explicitly without styling authored warnings as execution
+AssertionError: expected { id: 'run-derived:step1', …(3) } to match object { execution: { role: 'step', …(4) } }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "execution": {
+-     "completed": false,
+-     "deviationLabel": "偏差",
+-     "deviationNote": "延长5分钟",
+-     "role": "step",
+-     "stepId": "step1",
+-   },
++   "id": "run-derived:step1",
++   "text": "未完成 Inspect
++ 偏差：延长5分钟",
++   "tone": "critical",
++   "type": "callout",
+  }
+
+ ❯ src/lib/experiment-document.test.ts:103:53
+    101|  const blocks=result.sections.find(s=>s.key==='execution')!.blocks;
+    102|  expect(blocks[0]).not.toHaveProperty('execution');
+    103|  expect(blocks.find(b=>b.id==='run-derived:step1')).toMatchObject({exe…
+       |                                                     ^
+    104|  expect(source.sections.find(s=>s.key==='execution')!.blocks).toHaveLe…
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  12:25:08
+   Duration  273ms (transform 76ms, setup 0ms, import 141ms, tests 17ms, environment 0ms)
+

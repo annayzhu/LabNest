@@ -1,0 +1,30 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "kind": "recoverable",
+      "snapshotHash": "6f724313a3a0b7e35518fb9fdbc895d8ee1b3546bbb67f569e1e4bc5e3690357",
+      "stableStepIdentity": true,
+      "completionUnchanged": true
+    },
+    {
+      "kind": "unverified",
+      "snapshotHash": "618727dc7c0337d318a7b4d2ac51ef938057cb904910f0d283210a5f02285c8a",
+      "stableStepIdentity": true,
+      "completionUnchanged": true
+    },
+    {
+      "measurementResultId": "cmtv4ha0w002ncxosg59r1njv",
+      "experimentId": "cmtv1p7yt0000lsos65l0fxjs",
+      "value": 12.3,
+      "unit": "µL",
+      "notes": "Synthetic draft 中文 × ± ≥ CO₂",
+      "replayCount": 1
+    },
+    {
+      "entryId": "cmtv4dsum0005e7osrioho104",
+      "tableImageAttachmentId": "cmtv4frnh002acxos9ya7rotb",
+      "associationCount": 1
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/result-templates.test.ts (13 tests | 1 failed) 16ms
+   × preserves instruction paragraph layout and nested list content during template normalization 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/result-templates.test.ts > preserves instruction paragraph layout and nested list content during template normalization
+AssertionError: expected [ { type: 'bullet', …(1) } ] to deeply equal [ { type: 'bullet', …(5) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "childContent": [
+-       {
+-         "content": [
+-           {
+-             "content": [
+-               {
+-                 "content": [
+-                   {
+-                     "text": "Nested instruction",
+-                     "type": "text",
+-                   },
+-                 ],
+-                 "type": "paragraph",
+-               },
+-             ],
+-             "type": "listItem",
+-           },
+-         ],
+-         "type": "bulletList",
+-       },
+-     ],
+      "content": [
+        {
+          "text": "Instruction µL",
+        },
+      ],
+-     "documentIndent": 1,
+-     "spaceAfterPt": 6,
+-     "textAlign": "right",
+      "type": "bullet",
+    },
+  ]
+
+ ❯ src/lib/result-templates.test.ts:175:106
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  13:26:59
+   Duration  331ms (transform 77ms, setup 0ms, import 199ms, tests 16ms, environment 0ms)
+

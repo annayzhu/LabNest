@@ -1,0 +1,23 @@
+[
+  {
+    "mixedAlignment": true,
+    "multiParagraphIndentBounds": "0–8 clamped and decrease restores zero",
+    "status": "passed"
+  },
+  {
+    "keyboard": "Mod+B/I/U applies to selected paragraph",
+    "status": "passed"
+  },
+  {
+    "keyboard": "List Tab/Shift+Tab and table next cell",
+    "status": "passed"
+  },
+  {
+    "indent": "increase undo redo",
+    "status": "passed"
+  },
+  {
+    "roundtrip": "Four paragraph and table alignments, scientific symbols, saved/read/reopened/PDF generated",
+    "status": "passed"
+  }
+]

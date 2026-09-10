@@ -1,0 +1,20 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-run-step-content]:visible').first() to be visible[22m
+[2m    - waiting for" http://localhost:3240/experiments/cmtv0ztw7000a67osnvm83ixp/run" navigation to finish...[22m
+[2m    - navigated to "http://localhost:3240/experiments/cmtv0ztw7000a67osnvm83ixp/run"[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-debug-20260910/scripts/verify-debug10-run.mjs:9:87 {
+  log: [
+    "  - waiting for locator('[data-run-step-content]:visible').first() to be visible",
+    '    - waiting for" http://localhost:3240/experiments/cmtv0ztw7000a67osnvm83ixp/run" navigation to finish...',
+    '    - navigated to "http://localhost:3240/experiments/cmtv0ztw7000a67osnvm83ixp/run"'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

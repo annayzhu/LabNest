@@ -1,0 +1,17 @@
+PRT-1789020149959 · 0.1
+Synthetic protocol 1789020149959
+Description
+
+中文图注 protocol 1789020177657
+
+Purpose
+Background
+Material
+Steps
+Step A
+Editor acceptance body
+
+Result Templates
+Consumption Rules
+
+

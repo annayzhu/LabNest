@@ -1,0 +1,50 @@
+{
+  "phase": "roundtrip",
+  "checks": [
+    {
+      "entry": "research-plan",
+      "caption": "中文图注 research-plan 1789020165260",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/research-plans/cmtv4emgt0001spos4ajh0loi",
+      "edit": "/research-plans/cmtv4emgt0001spos4ajh0loi/edit"
+    },
+    {
+      "entry": "experiment",
+      "caption": "中文图注 experiment 1789020168385",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/experiments/cmtv4emgy0002spose2wmmahk",
+      "edit": "/experiments/cmtv4emgy0002spose2wmmahk/edit"
+    },
+    {
+      "entry": "result",
+      "caption": "中文图注 result 1789020171550",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/results/cmtv4emh20003sposd70t4cq5",
+      "edit": "/results/cmtv4emh20003sposd70t4cq5/edit"
+    },
+    {
+      "entry": "report",
+      "caption": "中文图注 report 1789020174609",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/reports/cmtv4emh70004sposl12ljrzk",
+      "edit": "/reports/cmtv4emh70004sposl12ljrzk/edit"
+    },
+    {
+      "entry": "protocol",
+      "caption": "中文图注 protocol 1789020177657",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/protocols/cmtv4emhd0006spos0mvlnd6k",
+      "edit": "/protocols/cmtv4emhd0006spos0mvlnd6k/versions/cmtv4emhh0007sposcrs9eb6s/edit"
+    },
+    {
+      "entry": "entry",
+      "caption": "中文图注 entry 1789020180671",
+      "saveRefreshReadEditPrint": "passed",
+      "view": "/entries/cmtv4emha0005spos6lv2bn25",
+      "edit": "/entries/cmtv4emha0005spos6lv2bn25/edit"
+    }
+  ],
+  "at": "2026-09-10T06:02:43.894Z",
+  "base": "http://localhost:3240",
+  "clientErrors": []
+}

@@ -1,0 +1,51 @@
+{
+  "synthetic": true,
+  "id": "cmtv2nhbn00006mosm96juasq",
+  "captured": [
+    {
+      "order": 1,
+      "title": "Prepare synthetic sample",
+      "description": "Synthetic operation only; no experimental recommendation.",
+      "requires_confirmation": true,
+      "allows_deviation": true,
+      "content_blocks": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "Synthetic operation only; no experimental recommendation."
+        }
+      ],
+      "source_ref": "heading"
+    },
+    {
+      "source_ref": "checks:0",
+      "content_blocks": [
+        {
+          "id": "checks:0",
+          "type": "text",
+          "text": "Confirm sample identity with a deliberately long confirmation label that wraps to check hanging alignment on mobile"
+        }
+      ],
+      "order": 2,
+      "title": "Confirm sample identity with a deliberately long confirmation label that wraps to check hanging alignment on mobile",
+      "description": "",
+      "requires_confirmation": true,
+      "allows_deviation": true
+    },
+    {
+      "source_ref": "checks:1",
+      "content_blocks": [
+        {
+          "id": "checks:1",
+          "type": "text",
+          "text": "Confirm volume"
+        }
+      ],
+      "order": 3,
+      "title": "Confirm volume",
+      "description": "",
+      "requires_confirmation": true,
+      "allows_deviation": true
+    }
+  ]
+}

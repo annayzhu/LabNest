@@ -1,0 +1,44 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Save Experiment', exact: true })[22m
+[2m    - locator resolved to <button disabled type="submit" aria-busy="false" data-ui-button="true" data-variant="primary" class="ui-motion-button focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 ln-key-action h-[var(--ln-control-height-lg)] px-[var(--ln-control-padding-x-lg)] text-[length:var(--…>…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not enabled[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not enabled[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    58 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not enabled[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-debug-20260910/scripts/prepare-debug10-run.mjs:15:438 {
+  log: [
+    "  - waiting for getByRole('button', { name: 'Save Experiment', exact: true })",
+    '    - locator resolved to <button disabled type="submit" aria-busy="false" data-ui-button="true" data-variant="primary" class="ui-motion-button focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 ln-key-action h-[var(--ln-control-height-lg)] px-[var(--ln-control-padding-x-lg)] text-[length:var(--…>…</button>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not enabled',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not enabled',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    58 × waiting for element to be visible, enabled and stable',
+    '       - element is not enabled',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

@@ -1,0 +1,23 @@
+[
+  {
+    "copyButton": true,
+    "macCopyAndEditorSelectAll": true,
+    "status": "passed"
+  },
+  {
+    "cutAndUndo": true,
+    "macKeyboardCutUndoRedo": true,
+    "status": "passed"
+  },
+  {
+    "plainTextClipboard": true,
+    "symbolsAndNewlines": true,
+    "status": "passed"
+  },
+  {
+    "status": "failed",
+    "error": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Shortcut plain µL ×', { exact: true }) to be visible\u001b[22m\n",
+    "platform": "MacIntel",
+    "body": "<p>纯文本 µL μL × ± ≥ CO₂</p><p>Second line &lt;literal&gt; &amp; symbols</p><p data-placeholder=\"Observation, decision, deviation, or follow-up…\" class=\"is-empty\"><br class=\"ProseMirror-trailingBreak\"></p>"
+  }
+]

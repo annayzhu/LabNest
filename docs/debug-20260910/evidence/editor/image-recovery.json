@@ -1,0 +1,10 @@
+{
+  "phase": "image-recovery",
+  "checks": [
+    "Saved image reloads; failed preview recovers original without editing stored reference",
+    "Both sources failing shows recoverable error; retry loads image when network recovers"
+  ],
+  "at": "2026-09-10T06:02:40.128Z",
+  "base": "http://localhost:3240",
+  "clientErrors": []
+}

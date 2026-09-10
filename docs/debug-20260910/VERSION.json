@@ -1,0 +1,66 @@
+{
+  "verifiedAt": "2026-09-10T06:11:13.728971+00:00",
+  "baseMain": "4f93dc8910cdc2b9f55914e632a82154f470caa8",
+  "latestRemoteMain": "4f93dc8910cdc2b9f55914e632a82154f470caa8",
+  "testedApplicationCommit": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+  "applicationSourceTree": "c7904ed204cde501fd6e860b065909982dff7ad0",
+  "productionBuildId": "6YqQehnfWYObm6aX6U7CU",
+  "branch": "codex/debug-20260910",
+  "pullRequest": "https://github.com/annayzhu/LabNest/pull/77",
+  "merged": false,
+  "formallyDeployed": false,
+  "existingProductionCommit": "4f93dc8910cdc2b9f55914e632a82154f470caa8",
+  "localFixtureUrl": "http://localhost:3240",
+  "calculatorFixtureUrl": "http://localhost:3221",
+  "dataScope": "isolated synthetic databases; five production snapshots read-only, not included",
+  "checks": {
+    "Shanghai": {
+      "passed": 625,
+      "files": 108
+    },
+    "Vancouver": {
+      "passed": 625,
+      "files": 108
+    },
+    "typecheck": "passed",
+    "build": "passed",
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 10
+    },
+    "sep10BrowserPhases": 11,
+    "editorBrowserPhases": 8,
+    "calculatorPhases": 22,
+    "screenshots": {
+      "pageMatrix": 44,
+      "widths": [
+        390,
+        1440
+      ],
+      "modes": [
+        "light",
+        "dark"
+      ]
+    },
+    "pdf": {
+      "files": 40,
+      "pages": 61,
+      "scope": "all files A4/text checks, expected images checked; selected pages visually inspected, not physical printing"
+    }
+  },
+  "ci": [
+    {
+      "name": "Document editor acceptance",
+      "commit": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+      "url": "https://github.com/annayzhu/LabNest/actions/runs/34443367979",
+      "status": "success"
+    },
+    {
+      "name": "Calculator acceptance (two timezone quality + browser)",
+      "commit": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+      "url": "https://github.com/annayzhu/LabNest/actions/runs/34443368017",
+      "status": "success"
+    }
+  ],
+  "evidenceCommits": "Subsequent commits contain only scripts/docs/evidence; compare applicationSourceTree to verify source parity. Final evidence commit is identified by git/PR history."
+}

@@ -1,0 +1,162 @@
+{
+  "sha": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+  "startedAt": "2026-09-10T06:02:28.564Z",
+  "base": "http://localhost:3221",
+  "checks": [
+    {
+      "name": "run-v12",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 13973,
+      "log": "docs/calculator/v1.3/evidence/logs/run-v12.log"
+    },
+    {
+      "name": "pipetting-v12",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6367,
+      "log": "docs/calculator/v1.3/evidence/logs/pipetting-v12.log"
+    },
+    {
+      "name": "v12-database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 85,
+      "log": "docs/calculator/v1.3/evidence/logs/v12-database.log"
+    },
+    {
+      "name": "refactor",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 15708,
+      "log": "docs/calculator/v1.3/evidence/logs/refactor.log"
+    },
+    {
+      "name": "legacy",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 19725,
+      "log": "docs/calculator/v1.3/evidence/logs/legacy.log"
+    },
+    {
+      "name": "compact-ui",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6521,
+      "log": "docs/calculator/v1.3/evidence/logs/compact-ui.log"
+    },
+    {
+      "name": "plate",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2058,
+      "log": "docs/calculator/v1.3/evidence/logs/plate.log"
+    },
+    {
+      "name": "storage-appearance",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 5257,
+      "log": "docs/calculator/v1.3/evidence/logs/storage-appearance.log"
+    },
+    {
+      "name": "appearance",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 27433,
+      "log": "docs/calculator/v1.3/evidence/logs/appearance.log"
+    },
+    {
+      "name": "integration",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 3490,
+      "log": "docs/calculator/v1.3/evidence/logs/integration.log"
+    },
+    {
+      "name": "database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 104,
+      "log": "docs/calculator/v1.3/evidence/logs/database.log"
+    },
+    {
+      "name": "rejection",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1299,
+      "log": "docs/calculator/v1.3/evidence/logs/rejection.log"
+    },
+    {
+      "name": "visual-v11",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6447,
+      "log": "docs/calculator/v1.3/evidence/logs/visual-v11.log"
+    },
+    {
+      "name": "standalone-v11",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1826,
+      "log": "docs/calculator/v1.3/evidence/logs/standalone-v11.log"
+    },
+    {
+      "name": "ux-v13",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 32101,
+      "log": "docs/calculator/v1.3/evidence/logs/ux-v13.log"
+    },
+    {
+      "name": "formal-exports",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1443,
+      "log": "docs/calculator/v1.3/evidence/logs/formal-exports.log"
+    },
+    {
+      "name": "navigation-icons",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 40339,
+      "log": "docs/calculator/v1.3/evidence/logs/navigation-icons.log"
+    },
+    {
+      "name": "colony-v13",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1321,
+      "log": "docs/calculator/v1.3/evidence/logs/colony-v13.log"
+    },
+    {
+      "name": "cache-clear-failure",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1458,
+      "log": "docs/calculator/v1.3/evidence/logs/cache-clear-failure.log"
+    },
+    {
+      "name": "copy-recent",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 4195,
+      "log": "docs/calculator/v1.3/evidence/logs/copy-recent.log"
+    },
+    {
+      "name": "transfection",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2274,
+      "log": "docs/calculator/v1.3/evidence/logs/transfection.log"
+    },
+    {
+      "name": "transfection-database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1214,
+      "log": "docs/calculator/v1.3/evidence/logs/transfection-database.log"
+    }
+  ],
+  "finishedAt": "2026-09-10T06:05:43.317Z"
+}

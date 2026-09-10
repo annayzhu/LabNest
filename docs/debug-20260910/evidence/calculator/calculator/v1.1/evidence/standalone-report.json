@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "I07 standalone UI reuses engine and presentation; 0.1 µL warning survives nL display",
+    "Explicit standalone-origin icon setting",
+    "Independent offline cached reload, icons and calculation"
+  ],
+  "errors": [],
+  "completedAt": "2026-09-10T06:04:18.841Z"
+}

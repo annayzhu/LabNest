@@ -5591,3 +5591,6 @@ html[data-labnest-ui-scale="comfortable"] { --ln-control-font-size-sm:14px; --ln
 .ln-ui-label { font-weight:var(--ln-ui-label-weight); line-height:var(--ln-ui-label-leading); }
 .ln-ui-caption { font-size:var(--ln-ui-caption-size); line-height:var(--ln-ui-caption-leading); font-weight:var(--ln-ui-caption-weight); }
 .ui-motion-button { font-weight:var(--ln-ui-button-weight); line-height:var(--ln-ui-button-leading); }
+
+.protocol-metadata-card > header { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; }
+.protocol-metadata-card > header > span { grid-column:1 / -1; }

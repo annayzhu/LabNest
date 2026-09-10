@@ -1,3 +1,10 @@
+import { z } from "zod";
+export const paragraphLayoutFields = {
+  textAlign:z.enum(["left","center","right","justify"]).optional(),
+  documentIndent:z.number().min(0).max(8).optional(),
+  spaceBeforePt:z.number().min(0).max(48).optional(),
+  spaceAfterPt:z.number().min(0).max(48).optional(),
+};
 /** Shared paragraph layout values; the existing adapters own persistence. */
 export type ParagraphLayout = {textAlign?: 'left'|'center'|'right'|'justify'; documentIndent?: number; spaceBeforePt?: number; spaceAfterPt?: number};
 export function paragraphLayout(value: Record<string, unknown> = {}): ParagraphLayout {

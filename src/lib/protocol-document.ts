@@ -1,3 +1,4 @@
+import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
@@ -57,10 +58,7 @@ export const protocolRichTextRunSchema = z.object({
 
 export const protocolRichTextNodeSchema = z.object({
   childContent: tiptapCellRichContentSchema.optional(),
-  textAlign: z.enum(["left", "center", "right", "justify"]).optional(),
-  documentIndent: z.number().min(0).max(8).optional(),
-  spaceBeforePt: z.number().min(0).max(48).optional(),
-  spaceAfterPt: z.number().min(0).max(48).optional(),
+  ...paragraphLayoutFields,
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(protocolRichTextRunSchema),
   lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),

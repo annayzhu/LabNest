@@ -1,0 +1,38 @@
+[
+  {
+    "copyButton": true,
+    "macCopyAndEditorSelectAll": true,
+    "status": "passed"
+  },
+  {
+    "cutAndUndo": true,
+    "macKeyboardCutUndoRedo": true,
+    "status": "passed"
+  },
+  {
+    "plainTextClipboard": true,
+    "symbolsAndNewlines": true,
+    "status": "passed"
+  },
+  {
+    "macPlainTextPasteShortcut": true,
+    "status": "passed"
+  },
+  {
+    "nativeRichClipboard": "Mac paste preserves heading, bold, list, table and scientific symbols",
+    "status": "passed"
+  },
+  {
+    "tableImageAttachmentId": "cmtv4frnh002acxos9ya7rotb",
+    "entryId": "cmtv4dsum0005e7osrioho104",
+    "status": "passed"
+  },
+  {
+    "injectedClipboardDenial": "content unchanged and failure visible",
+    "status": "passed"
+  },
+  {
+    "richClipboardTableSaveRefreshReeditPrint": true,
+    "status": "passed"
+  }
+]

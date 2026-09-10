@@ -174,7 +174,7 @@ export default async function OverviewPage({
     <AppShell>
       {!mobileCalendarOpen ? <section className="bench-mobile space-y-5 lg:hidden">
         <div>
-          <h1 className="font-serif text-2xl font-medium tracking-[-0.02em] text-ink">Today at the bench</h1>
+          <h1 className="page-header-title font-serif tracking-[-0.02em] text-ink">Today at the bench</h1>
           <p className="mt-1 text-sm text-muted" data-i18n-ignore>{format(today, "EEEE, MMMM d")}</p>
         </div>
 

@@ -1,0 +1,28 @@
+{
+  "phase": "metadata",
+  "checks": [
+    {
+      "width": 1440,
+      "geometry": {
+        "left": 1056,
+        "right": 1440,
+        "width": 384,
+        "viewport": 1440
+      },
+      "sharedRightPanel": true
+    },
+    {
+      "width": 390,
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "width": 390,
+        "viewport": 390
+      },
+      "sharedRightPanel": true
+    }
+  ],
+  "at": "2026-09-10T06:02:38.193Z",
+  "base": "http://localhost:3240",
+  "clientErrors": []
+}

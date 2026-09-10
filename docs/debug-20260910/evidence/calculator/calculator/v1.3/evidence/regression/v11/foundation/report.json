@@ -1,0 +1,276 @@
+{
+  "sha": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+  "at": "2026-09-10T06:03:59.676Z",
+  "checks": [
+    "Old preferences retain scheme/font/size; missing density defaults standard; spacing changes padding not font and persists",
+    "Preview shows shared card/table/tools and selected/success/warning/error; all seven palettes in both modes; desktop columns/mobile collapse",
+    "Six mobile tiles remain 3×2 and clickable at default/large text; Appearance never changes calculator storage bytes",
+    "Failed icon resources in a fresh context fall back to line icons without losing labels/links"
+  ],
+  "colors": [
+    {
+      "scheme": "moon-dai",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f7f9fb",
+        "--nav-active-bg": "#a5441b",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "azure-coral",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f5fafb",
+        "--nav-active-bg": "#de7565",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "celadon-pine",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f5f8f2",
+        "--nav-active-bg": "#986524",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "lotus-ink",
+      "mode": "light",
+      "colors": {
+        "--paper": "#faf6f4",
+        "--nav-active-bg": "#7aa35a",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "indigo-xiangqi",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f6f8fc",
+        "--nav-active-bg": "#f8c471",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "palace-jasmine",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f7faf5",
+        "--nav-active-bg": "#ef475d",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "ganqing-buddha",
+      "mode": "light",
+      "colors": {
+        "--paper": "#f7f9ff",
+        "--nav-active-bg": "#fed71a",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "reference-cool",
+      "mode": "light",
+      "colors": {
+        "--paper": "#EDF5F1",
+        "--nav-active-bg": "#a5441b",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "reference-lilac",
+      "mode": "light",
+      "colors": {
+        "--paper": "#EFE4E9",
+        "--nav-active-bg": "#7aa35a",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "reference-cream",
+      "mode": "light",
+      "colors": {
+        "--paper": "#F5F1E8",
+        "--nav-active-bg": "#986524",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "reference-peach",
+      "mode": "light",
+      "colors": {
+        "--paper": "#FAEBE6",
+        "--nav-active-bg": "#de7565",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "reference-blue",
+      "mode": "light",
+      "colors": {
+        "--paper": "#E2EEFD",
+        "--nav-active-bg": "#f8c471",
+        "--success-surface": "#e9f5ec",
+        "--warning-surface": "#faf0dc",
+        "--error-surface": "#fcebef"
+      }
+    },
+    {
+      "scheme": "moon-dai",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#151d24",
+        "--nav-active-bg": "#e2b99d",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "azure-coral",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#132126",
+        "--nav-active-bg": "#f2ada3",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "celadon-pine",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#17221c",
+        "--nav-active-bg": "#e4c29b",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "lotus-ink",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#231b24",
+        "--nav-active-bg": "#b9d6a2",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "indigo-xiangqi",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#182033",
+        "--nav-active-bg": "#f2d294",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "palace-jasmine",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#17231d",
+        "--nav-active-bg": "#f2aebe",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "ganqing-buddha",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#1c2032",
+        "--nav-active-bg": "#efda86",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "reference-cool",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#151d24",
+        "--nav-active-bg": "#e2b99d",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "reference-lilac",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#231b24",
+        "--nav-active-bg": "#b9d6a2",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "reference-cream",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#17221c",
+        "--nav-active-bg": "#e4c29b",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "reference-peach",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#132126",
+        "--nav-active-bg": "#f2ada3",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    },
+    {
+      "scheme": "reference-blue",
+      "mode": "dark",
+      "colors": {
+        "--paper": "#182033",
+        "--nav-active-bg": "#f2d294",
+        "--success-surface": "#203b2b",
+        "--warning-surface": "#3b3020",
+        "--error-surface": "#402b33"
+      }
+    }
+  ]
+}

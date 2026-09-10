@@ -1,3 +1,4 @@
+import { paragraphLayout, type ParagraphLayout } from "./document-paragraph-layout";
 import { Extension, mergeAttributes, Node, type NodeViewRenderer } from "@tiptap/core";
 import { TableKit } from "@tiptap/extension-table";
 
@@ -8,6 +9,8 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     documentBlockLineHeight: {
       setDocumentBlockLineHeight: (lineHeight: string) => ReturnType;
+      setDocumentParagraphLayout: (layout: ParagraphLayout) => ReturnType;
+      indentDocumentParagraph: (direction: 1 | -1) => ReturnType;
       unsetDocumentBlockLineHeight: () => ReturnType;
     };
   }
@@ -122,6 +125,19 @@ export function createDocumentBlockLineHeightExtension() {
       return [{
         types: documentTextBlockTypes,
         attributes: {
+          ...Object.fromEntries((["documentIndent", "spaceBeforePt", "spaceAfterPt"] as const).map(key => [key, {
+            default: null,
+            parseHTML: (element: HTMLElement) => {
+              const value=element.getAttribute(`data-labnest-${key}`);
+              return value === null ? null : paragraphLayout({[key]:Number(value)})[key] ?? null;
+            },
+            renderHTML: (attrs: Record<string,unknown>) => {
+              const value=paragraphLayout(attrs)[key];
+              if(value===undefined)return {};
+              const css=key==="documentIndent" ? `padding-inline-start:${value*1.5}em` : `${key==="spaceBeforePt"?"margin-block-start":"margin-block-end"}:${value}pt`;
+              return {[`data-labnest-${key}`]:value,style:css};
+            },
+          }])),
           documentLineHeight: {
             default: null,
             parseHTML: (element: HTMLElement) => element.getAttribute("data-labnest-line-height") ?? element.style.lineHeight ?? null,
@@ -134,6 +150,21 @@ export function createDocumentBlockLineHeightExtension() {
     },
     addCommands() {
       return {
+        setDocumentParagraphLayout: (layout: ParagraphLayout) => ({chain}) => {
+          let next=chain();
+          for(const type of ["paragraph","heading"])next=next.updateAttributes(type,paragraphLayout(layout));
+          return next.run();
+        },
+        indentDocumentParagraph: (direction: 1 | -1) => ({state,tr,dispatch}) => {
+          // Lists have structural indentation; do not turn it into paragraph padding.
+          const {from,to}=state.selection;
+          state.doc.nodesBetween(from,to,(node,pos) => {
+            if(["bulletList","orderedList","taskList"].includes(node.type.name))return false;
+            if(!["paragraph","heading"].includes(node.type.name))return;
+            if(dispatch)tr.setNodeMarkup(pos,undefined,{...node.attrs,documentIndent:Math.max(0,Math.min(8,Number(node.attrs.documentIndent??0)+direction))});
+          });
+          return true;
+        },
         setDocumentBlockLineHeight: (lineHeight: string) => ({ chain }) => {
           let next = chain();
           for (const type of documentTextBlockTypes) next = next.updateAttributes(type, { documentLineHeight: lineHeight });

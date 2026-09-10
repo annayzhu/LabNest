@@ -1,3 +1,5 @@
+import {decodeDocumentTableToken} from "./document-table-token";
+import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
@@ -7,7 +9,10 @@ import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
-const baseBlockSchema = z.object({ id: z.string().min(1) });
+const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
+ role:z.enum(["group","step","confirmation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),
+ deviationLabel:z.enum(["偏差","异常"]).optional(),deviationNote:z.string().optional(),impact:z.string().optional(),author:z.string().optional(),
+}).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
   baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
@@ -96,6 +101,15 @@ function markdownTableAt(lines: string[], start: number) {
   };
 }
 
+/** Preserve rich table cells in legacy Markdown fields using the existing table schema. */
+export function scientificTableToMarkdown(block: Extract<ScientificContentBlock,{type:"table"}>): string {
+  return `<!--labnest-table:${encodeURIComponent(JSON.stringify(block))}-->`;
+}
+export function scientificTableFromMarkdown(line: string): Extract<ScientificContentBlock,{type:"table"}> | undefined {
+  const parsed = scientificContentBlockSchema.safeParse(decodeDocumentTableToken(line));
+  return parsed.success && parsed.data.type === "table" ? parsed.data : undefined;
+}
+
 /**
  * Upgrade legacy text blocks containing Markdown tables into native scientific
  * table blocks. This also lets structured imports share one lossless path for
@@ -117,6 +131,8 @@ export function scientificBlocksFromText(text: string, idPrefix: string): Scient
   };
 
   for (let index = 0; index < lines.length;) {
+    const richTable=scientificTableFromMarkdown(lines[index]);
+    if(richTable){flushText();blocks.push(richTable);tableCount+=1;index+=1;continue;}
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { flushText(); blocks.push(media); index += 1; continue; }
     const table = markdownTableAt(lines, index);
@@ -274,7 +290,7 @@ export function parseScientificDocumentJson(
 export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
     if (block.type === "heading" || block.type === "callout") return [block.text];
-    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(block.text)))];
+    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(block.text))))];
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];

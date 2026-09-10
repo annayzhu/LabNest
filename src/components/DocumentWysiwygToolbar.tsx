@@ -146,7 +146,7 @@ function ToolbarMenu({
     };
   }, [open, setOpenMenu, updateMenuPosition]);
 
-  const menuItems = Children.map(children, (child) => isValidElement(child)
+  const menuItems = Children.map(children, (child) => isValidElement(child) && child.type === "button"
     ? cloneElement(child as ReactElement<{ role?: string; tabIndex?: number }>, { role: "menuitem", tabIndex: -1 })
     : child);
 
@@ -234,6 +234,39 @@ export function DocumentWysiwygToolbar({
     return () => { editor.off("selectionUpdate", refresh); editor.off("transaction", refresh); };
   }, [editor]);
 
+  const [clipboardNotice,setClipboardNotice]=useState("");
+  const copySelection=(operation:"copy"|"cut")=>{
+    editor.commands.focus();
+    try { setClipboardNotice(document.execCommand(operation)?"":"Use the browser Edit menu or keyboard shortcut."); }
+    catch { setClipboardNotice("Use the browser Edit menu or keyboard shortcut."); }
+  };
+  const pastePlainText=useCallback(async()=>{
+    const {from,to}=editor.state.selection;
+    const originalDocument=editor.state.doc;
+    try {
+      const text=await navigator.clipboard.readText();
+      if(!text)return;
+      if(editor.isDestroyed || !editor.state.doc.eq(originalDocument)){setClipboardNotice("Document changed. Select the destination and paste again.");return;}
+      editor.chain().focus().setTextSelection({from,to}).insertContent(text.split(/\r?\n/).map(line=>({type:"paragraph",content:line?[{type:"text",text:line}]:[]}))).run();
+      setClipboardNotice("");
+    } catch { setClipboardNotice("Paste unavailable. Use the browser Edit menu; your content is unchanged."); }
+  },[editor]);
+  useEffect(() => {
+    // Scope the fallback to this editor; never intercept shortcuts in forms or the browser.
+    const element=editor.view.dom;
+    const onPasteShortcut=(event:KeyboardEvent)=>{
+      if(!event.isComposing && (event.metaKey || event.ctrlKey) && event.shiftKey && !event.altKey && event.key.toLowerCase()==="v"){
+        event.preventDefault();event.stopPropagation();void pastePlainText();
+      }
+    };
+    element.addEventListener("keydown",onPasteShortcut,true);
+    return ()=>element.removeEventListener("keydown",onPasteShortcut,true);
+  },[editor,pastePlainText]);
+  const alignments=new Set<string>();
+  editor.state.doc.nodesBetween(editor.state.selection.from,editor.state.selection.to,node=>{
+    if(["paragraph","heading"].includes(node.type.name))alignments.add(node.attrs.textAlign ?? "left");
+  });
+  const alignmentLabel=alignments.size>1?"Mixed alignment":"Paragraph";
   const paragraphType = editor.isActive("heading", { level: 2 }) ? "heading2" : editor.isActive("heading", { level: 3 }) ? "heading3" : "paragraph";
   const textStyle = editor.getAttributes("textStyle");
   const selectedSize = selectedDocumentFontSize(editor);
@@ -335,6 +368,12 @@ export function DocumentWysiwygToolbar({
       <button type="button" data-active={!selectedSize || undefined} onClick={() => applyDocumentFontSize(fontSizeScope === "document" ? documentEditor ?? editor : editor, null, fontSizeScope)}>Default</button>
       {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={selectedSize === `${size}pt` || undefined} onClick={() => applyDocumentFontSize(fontSizeScope === "document" ? documentEditor ?? editor : editor, size, fontSizeScope)}>{size} pt</button>)}
     </ToolbarMenu>
+    <ToolbarMenu id="paragraph-layout" label={alignmentLabel} ariaLabel="Paragraph layout" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu">
+      {(["left","center","right","justify"] as const).map(align => <button type="button" key={align} data-active={editor.isActive({textAlign:align}) || undefined} onClick={() => editor.chain().focus().setTextAlign(align).run()}>{({left:"Align left",center:"Align center",right:"Align right",justify:"Justify"})[align]}</button>)}
+      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus().indentDocumentParagraph(1).run()}>Increase paragraph indent</button>
+      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus().indentDocumentParagraph(-1).run()}>Decrease paragraph indent</button>
+      {(["spaceBeforePt","spaceAfterPt"] as const).map(key => <div key={key}><span className="text-xs text-muted">{key==="spaceBeforePt"?"Before paragraph":"After paragraph"}</span>{[0,6,12,18,24].map(value => <button type="button" key={value} onClick={() => editor.chain().focus().setDocumentParagraphLayout({[key]:value}).run()}>{value} pt</button>)}</div>)}
+    </ToolbarMenu>
     <ToolbarMenu id="spacing" label={`${activeLineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
       {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}
     </ToolbarMenu>
@@ -343,6 +382,10 @@ export function DocumentWysiwygToolbar({
     <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
     {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
     <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger">
+        <button type="button" onClick={()=>copySelection("copy")}>Copy selection</button>
+        <button type="button" onClick={()=>copySelection("cut")}>Cut selection</button>
+        <button type="button" onClick={pastePlainText}>Paste plain text</button>
+        <button type="button" onClick={()=>editor.chain().focus().unsetAllMarks().clearNodes().resetAttributes("paragraph",["textAlign","documentIndent","spaceBeforePt","spaceAfterPt","documentLineHeight"]).run()}>Clear formatting</button>
         <button type="button" disabled={!collectDocumentMedia(editor.getJSON()).some(block => documentMediaAttachmentId(block)) || collectDocumentMedia(editor.getJSON()).some(block => block.pendingUploadId)} onClick={() => {
           const ids = [...new Set(collectDocumentMedia(editor.getJSON()).flatMap(block => { const id = documentMediaAttachmentId(block); return id ? [id] : []; }))];
           window.location.assign(`/api/attachments/package?ids=${encodeURIComponent(ids.join(","))}`);
@@ -363,6 +406,7 @@ export function DocumentWysiwygToolbar({
         {insertActions.map((action) => <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
     </ToolbarMenu> : null}
     {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
+    {clipboardNotice?<span role="status" className="text-xs text-warning">{clipboardNotice}</span>:null}
     <span className="ln-wysiwyg-toolbar-spacer" />
     <ToolbarButton editor={editor} label="Undo" disabled={!editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><Undo2 aria-hidden /></ToolbarButton>
     <ToolbarButton editor={editor} label="Redo" disabled={!editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><Redo2 aria-hidden /></ToolbarButton>

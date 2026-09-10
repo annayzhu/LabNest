@@ -1,8 +1,9 @@
+import { paragraphLayoutPrefix, parseParagraphLayoutLine } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
-import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
+import { scientificContentBlockSchema, scientificTableFromMarkdown, scientificTableToMarkdown, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
 import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken, isRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
@@ -71,23 +72,27 @@ function typographyMarks(lineHeight?: number, fontFamily?: string): TiptapMark[]
 }
 
 function listLine(value: string) {
-  const height = parseRichTextLineHeightLine(value);
+  const layout = parseParagraphLayoutLine(value);
+  const height = parseRichTextLineHeightLine(layout.content);
   const font = parseRichTextFontFamilyLine(height.content);
   const match = font.content.match(/^(\s*)(?:([-*+])\s+(?:\[([ xX])\]\s+)?|(\d+)\.\s+)(.*)$/);
   if (!match) return undefined;
-  return { indent: match[1].length, type: match[3] !== undefined ? "taskList" : match[4] ? "orderedList" : "bulletList", checked: match[3]?.toLowerCase() === "x", start: Number(match[4] || 1), text: match[5], lineHeight: height.lineHeight, fontFamily: font.fontFamily };
+  return { layout: layout.layout, indent: match[1].length, type: match[3] !== undefined ? "taskList" : match[4] ? "orderedList" : "bulletList", checked: match[3]?.toLowerCase() === "x", start: Number(match[4] || 1), text: match[5], lineHeight: height.lineHeight, fontFamily: font.fontFamily };
 }
 
 function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   const nodes: JSONContent[] = [];
   const lines = value.replaceAll("\r\n", "\n").split("\n");
   for (let index = 0; index < lines.length;) {
+    const table=scientificTableFromMarkdown(lines[index]);
+    if(table){nodes.push(tableToTiptap(table));index+=1;continue;}
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
-    const parsedLine = parseRichTextLineHeightLine(lines[index]);
+    const layout = parseParagraphLayoutLine(lines[index]);
+    const parsedLine = parseRichTextLineHeightLine(layout.content);
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
     const line = parsedFontFamily.content;
-    const attrs = legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily);
+    const attrs = {...legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily), ...layout.layout};
     const inheritedMarks = typographyMarks(parsedLine.lineHeight, parsedFontFamily.fontFamily);
     const list = listLine(lines[index]);
     if (list) {
@@ -104,7 +109,7 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
         items.push({
           type: list.type === "taskList" ? "taskItem" : "listItem",
           ...(list.type === "taskList" ? { attrs: { checked: item.checked } } : {}),
-          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", item.lineHeight, item.fontFamily), content: inlineMarkdownToTiptap(item.text, typographyMarks(item.lineHeight, item.fontFamily)) },
+          content: [{ type: "paragraph", attrs: {...legacyAttrs(blockId, "text", item.lineHeight, item.fontFamily), ...item.layout}, content: inlineMarkdownToTiptap(item.text, typographyMarks(item.lineHeight, item.fontFamily)) },
             ...(continuation.length ? markdownToTiptap(continuation.join("\n"), blockId) : [])],
         });
       }
@@ -195,12 +200,13 @@ function typographyPrefix(node: JSONContent) {
   // persisted as inline marks so mixed-font paragraphs round-trip exactly.
   const fontValue = node.attrs?.scientificFontFamily;
   const fontFamily = parseRichTextFontFamily(fontValue);
-  return `${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
+  return `${paragraphLayoutPrefix(node.attrs ?? {})}${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
 }
 
 function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
   const lines: string[] = [];
   for (const node of nodes) {
+    if(node.type === "table"){lines.push(scientificTableToMarkdown({id:node.attrs?.scientificBlockId??uniqueId("compact-table"),type:"table",...persistedTableFromTiptap(node)}));continue;}
     if (node.type === "documentMedia") {
       const media = documentMediaSchema.safeParse(node.attrs?.block);
       if (media.success) lines.push(documentMediaToMarkdown(media.data));
@@ -217,7 +223,7 @@ function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
     } else if (node.type === "heading") lines.push(`${typographyPrefix(node)}${Number(node.attrs?.level) === 2 ? "#" : "##"} ${inlineTiptapToMarkdown(node.content)}`);
     else if (node.type === "blockquote") {
       const paragraph = node.content?.find((child) => child.type === "paragraph") ?? node;
-      lines.push(`${typographyPrefix(node)}> ${inlineTiptapToMarkdown(paragraph.content)}`);
+      lines.push(`${typographyPrefix(paragraph)}> ${inlineTiptapToMarkdown(paragraph.content)}`);
     } else lines.push(`${typographyPrefix(node)}${inlineTiptapToMarkdown(node.content)}`);
   }
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();

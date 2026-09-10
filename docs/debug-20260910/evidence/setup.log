@@ -1,0 +1,137 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 293ms
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "labnest_debug_20260910", schema "public" at "localhost:5432"
+
+36 migrations found in prisma/migrations
+
+Applying migration `20260707195800_init`
+Applying migration `20260708030200_phase3_extensions`
+Applying migration `20260808190000_labnest_foundation`
+Applying migration `20260808193000_align_updated_at_defaults`
+Applying migration `20260809103000_protocol_document_content`
+Applying migration `20260809130000_research_workflow_documents`
+Applying migration `20260809160000_entry_multimedia_content`
+Applying migration `20260810120000_inventory_resource_lifecycle`
+Applying migration `20260811120000_record_code_prefixes`
+Applying migration `20260812120000_result_template_runtime`
+Applying migration `20260812123000_result_template_instances`
+Applying migration `20260813120000_experiment_narrative_to_document`
+Applying migration `20260814120000_entry_archival`
+Applying migration `20260815120000_recycle_bin`
+Applying migration `20260815130000_control_key_information`
+Applying migration `20260815140000_inventory_principal_investigator`
+Applying migration `20260815150000_inventory_location_management`
+Applying migration `20260816120000_experiment_planning_and_result_types`
+Applying migration `20260817120000_sequence_registry_phase_1_2`
+Applying migration `20260817123000_allow_sequence_version_reversion`
+Applying migration `20260831103000_result_naming_and_file_entry`
+Applying migration `20260901143000_sequence_library_scope_and_pairs`
+Applying migration `20260904194000_experiment_step_persistent_timer`
+Applying migration `20260904200500_entry_mobile_idempotency`
+Applying migration `20260904202000_inventory_mobile_idempotency`
+Applying migration `20260904203500_experiment_step_events`
+Applying migration `20260904213000_mobile_step_evidence`
+Applying migration `20260904214500_entry_step_provenance`
+Applying migration `20260904222000_mobile_attachment_idempotency`
+Applying migration `20260904224500_experiment_step_execution_rules`
+Applying migration `20260908040000_inventory_management`
+Applying migration `20260908050000_inventory_containers`
+Applying migration `20260908060000_purchase_receipts`
+Applying migration `20260908070000_run_materials`
+Applying migration `20260908080000_inventory_provenance`
+Applying migration `20260908090000_record_counter_capacity`
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.8.0 -> 8.0.0-rc.13                  │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260707195800_init/
+    └─ migration.sql
+  └─ 20260708030200_phase3_extensions/
+    └─ migration.sql
+  └─ 20260808190000_labnest_foundation/
+    └─ migration.sql
+  └─ 20260808193000_align_updated_at_defaults/
+    └─ migration.sql
+  └─ 20260809103000_protocol_document_content/
+    └─ migration.sql
+  └─ 20260809130000_research_workflow_documents/
+    └─ migration.sql
+  └─ 20260809160000_entry_multimedia_content/
+    └─ migration.sql
+  └─ 20260810120000_inventory_resource_lifecycle/
+    └─ migration.sql
+  └─ 20260811120000_record_code_prefixes/
+    └─ migration.sql
+  └─ 20260812120000_result_template_runtime/
+    └─ migration.sql
+  └─ 20260812123000_result_template_instances/
+    └─ migration.sql
+  └─ 20260813120000_experiment_narrative_to_document/
+    └─ migration.sql
+  └─ 20260814120000_entry_archival/
+    └─ migration.sql
+  └─ 20260815120000_recycle_bin/
+    └─ migration.sql
+  └─ 20260815130000_control_key_information/
+    └─ migration.sql
+  └─ 20260815140000_inventory_principal_investigator/
+    └─ migration.sql
+  └─ 20260815150000_inventory_location_management/
+    └─ migration.sql
+  └─ 20260816120000_experiment_planning_and_result_types/
+    └─ migration.sql
+  └─ 20260817120000_sequence_registry_phase_1_2/
+    └─ migration.sql
+  └─ 20260817123000_allow_sequence_version_reversion/
+    └─ migration.sql
+  └─ 20260831103000_result_naming_and_file_entry/
+    └─ migration.sql
+  └─ 20260901143000_sequence_library_scope_and_pairs/
+    └─ migration.sql
+  └─ 20260904194000_experiment_step_persistent_timer/
+    └─ migration.sql
+  └─ 20260904200500_entry_mobile_idempotency/
+    └─ migration.sql
+  └─ 20260904202000_inventory_mobile_idempotency/
+    └─ migration.sql
+  └─ 20260904203500_experiment_step_events/
+    └─ migration.sql
+  └─ 20260904213000_mobile_step_evidence/
+    └─ migration.sql
+  └─ 20260904214500_entry_step_provenance/
+    └─ migration.sql
+  └─ 20260904222000_mobile_attachment_idempotency/
+    └─ migration.sql
+  └─ 20260904224500_experiment_step_execution_rules/
+    └─ migration.sql
+  └─ 20260908040000_inventory_management/
+    └─ migration.sql
+  └─ 20260908050000_inventory_containers/
+    └─ migration.sql
+  └─ 20260908060000_purchase_receipts/
+    └─ migration.sql
+  └─ 20260908070000_run_materials/
+    └─ migration.sql
+  └─ 20260908080000_inventory_provenance/
+    └─ migration.sql
+  └─ 20260908090000_record_counter_capacity/
+    └─ migration.sql
+
+All migrations have been successfully applied.

@@ -1,0 +1,57 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/protocol-tiptap.test.ts (6 tests | 1 failed) 13ms
+   × preserves legacy block formatting without changing step source identities 3ms
+ ❯ src/lib/scientific-tiptap.test.ts (8 tests | 1 failed) 15ms
+   × retains layout assigned to the paragraph inside a quote 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/protocol-tiptap.test.ts > preserves legacy block formatting without changing step source identities
+AssertionError: expected undefined to be 'center' // Object.is equality
+
+- Expected:
+"center"
+
++ Received:
+undefined
+
+ ❯ src/lib/protocol-tiptap.test.ts:118:39
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/lib/scientific-tiptap.test.ts > retains layout assigned to the paragraph inside a quote
+AssertionError: expected { …(5) } to match object { textAlign: 'center', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "spaceBeforePt": 12,
+-   "textAlign": "center",
++   "documentLineHeight": null,
++   "scientificBlockId": "standalone-rich-text",
++   "scientificBlockType": "text",
++   "scientificFontFamily": null,
++   "scientificLineHeight": null,
+  }
+
+ ❯ src/lib/scientific-tiptap.test.ts:99:72
+     97| it('retains layout assigned to the paragraph inside a quote',()=>{
+     98|  const saved=tiptapToMarkdownRichText({type:'doc',content:[{type:'bloc…
+     99|  expect(markdownRichTextToTiptap(saved).content![0].content![0].attrs)…
+       |                                                                        ^
+    100| });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 12 passed (14)
+   Start at  12:49:09
+   Duration  461ms (transform 182ms, setup 0ms, import 313ms, tests 29ms, environment 0ms)
+

@@ -1,3 +1,4 @@
+import {decodeDocumentTableToken} from "./document-table-token";
 import { z } from "zod";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 
@@ -52,7 +53,12 @@ export function documentMediaFromMarkdown(line: string): DocumentMedia | undefin
 
 /** Walk persisted documents and Markdown bodies, never fetch external links. */
 export function collectDocumentMedia(value: unknown): DocumentMedia[] {
-  if (typeof value === "string") return value.split("\n").flatMap(line => { const media = documentMediaFromMarkdown(line); return media ? [media] : []; });
+  if (typeof value === "string") return value.split("\n").flatMap(line => {
+    const table = decodeDocumentTableToken(line);
+    if (table && typeof table === "object" && "type" in table && table.type === "table") return collectDocumentMedia(table);
+    const media = documentMediaFromMarkdown(line);
+    return media ? [media] : [];
+  });
   if (Array.isArray(value)) return value.flatMap(collectDocumentMedia);
   if (!value || typeof value !== "object") return [];
   const candidate = value as Record<string, unknown>;

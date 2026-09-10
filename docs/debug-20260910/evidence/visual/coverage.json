@@ -1,0 +1,1938 @@
+[
+  {
+    "name": "overview",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "今日实验台",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "正在进行的实验",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic execution hierarchy",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "今日计划",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiments",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiment",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic experiment",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "执行管理",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验结果",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "已锁定的实验规程版本",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "附件",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "protocol",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic protocol 1789020111560",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验规程控制",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "版本历史",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "活动记录",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "run",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "V12 synthetic run",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "照片与文件",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本次使用的试剂与耗材",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "records",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验记录",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "2026年9月",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "inventory",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验台库存",
+        "size": "22px",
+        "line": "29.3333px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "最近更新",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "procurement",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "采购",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "询价表",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "报价行",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "学校导入分组",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "自购模板预览",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "采购申请",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "settings",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "设置",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Appearance / 外观",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "蛋白上样 · 示例",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤 2 · 准备反应液",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Typography / 字体排版",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "AI 访问",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "模型提供商",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本地备份",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "tools",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "工具",
+        "size": "20px",
+        "line": "25px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "规划",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Free Plate Layout Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "qPCR Plate Layout Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "TaqMan CNV Plate Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "计算工具",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "实验计算器",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "分析",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "editor",
+    "width": 390,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "编辑 Synthetic experiment",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "overview",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "今日实验台",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "正在进行的实验",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic execution hierarchy",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "今日计划",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiments",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiment",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic experiment",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "执行管理",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验结果",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "已锁定的实验规程版本",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "附件",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "protocol",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic protocol 1789020111560",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验规程控制",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "版本历史",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "活动记录",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "run",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "V12 synthetic run",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "14px",
+        "line": "17.5px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "照片与文件",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本次使用的试剂与耗材",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "records",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验记录",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "2026年9月",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "inventory",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验台库存",
+        "size": "22px",
+        "line": "29.3333px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "最近更新",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "procurement",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "采购",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "询价表",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "报价行",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "学校导入分组",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "自购模板预览",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "采购申请",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "settings",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "设置",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Appearance / 外观",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "蛋白上样 · 示例",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤 2 · 准备反应液",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Typography / 字体排版",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "AI 访问",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "模型提供商",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本地备份",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "tools",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "工具",
+        "size": "20px",
+        "line": "25px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "规划",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Free Plate Layout Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "qPCR Plate Layout Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "TaqMan CNV Plate Planner",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "计算工具",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "实验计算器",
+        "size": "14px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "分析",
+        "size": "16px",
+        "line": "24px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "editor",
+    "width": 390,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "编辑 Synthetic experiment",
+        "size": "20px",
+        "line": "28px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "overview",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "总览",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "今日入口",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "在研方案",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "日历",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "9月10日 星期四",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiments",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiment",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic experiment",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "执行管理",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验结果",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "已锁定的实验规程版本",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "附件",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "protocol",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic protocol 1789020111560",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验规程控制",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "版本历史",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "活动记录",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "run",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "V12 synthetic run",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验执行记录",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "照片与文件",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本次使用的试剂与耗材",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "records",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验记录",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "2026年9月",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "inventory",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "库存",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "procurement",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "采购",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "询价表",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "报价行",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "学校导入分组",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "自购模板预览",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "采购申请",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "settings",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "设置",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Appearance / 外观",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "蛋白上样 · 示例",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤 2 · 准备反应液",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Typography / 字体排版",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "AI 访问",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "模型提供商",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本地备份",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "tools",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "工具",
+        "size": "24px",
+        "line": "30px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "规划",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Free Plate Layout Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "qPCR Plate Layout Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "TaqMan CNV Plate Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "计算工具",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "实验计算器",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "分析",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "editor",
+    "width": 1440,
+    "mode": "light",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "编辑 Synthetic experiment",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "overview",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "总览",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "今日入口",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "在研方案",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "日历",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "9月10日 星期四",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiments",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "experiment",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic experiment",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "执行管理",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验结果",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "已锁定的实验规程版本",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "附件",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "protocol",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "Synthetic protocol 1789020111560",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验规程控制",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "版本历史",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "活动记录",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "run",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "V12 synthetic run",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Prepare reaction",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Same title",
+        "size": "15px",
+        "line": "18.75px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "实验执行记录",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "照片与文件",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本次使用的试剂与耗材",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "records",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "实验记录",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "2026年9月",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Synthetic entry",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "inventory",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "库存",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "procurement",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "采购",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "询价表",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "报价行",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "学校导入分组",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "自购模板预览",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "采购申请",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "settings",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "设置",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Appearance / 外观",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "蛋白上样 · 示例",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "步骤 2 · 准备反应液",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "Typography / 字体排版",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "AI 访问",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "模型提供商",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "本地备份",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "tools",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "工具",
+        "size": "24px",
+        "line": "30px",
+        "weight": "500"
+      },
+      {
+        "role": "H2",
+        "text": "规划",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "Free Plate Layout Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "qPCR Plate Layout Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "TaqMan CNV Plate Planner",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "计算工具",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      },
+      {
+        "role": "H3",
+        "text": "实验计算器",
+        "size": "15px",
+        "line": "22px",
+        "weight": "600"
+      },
+      {
+        "role": "H2",
+        "text": "分析",
+        "size": "18px",
+        "line": "26px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  },
+  {
+    "name": "editor",
+    "width": 1440,
+    "mode": "dark",
+    "overflow": false,
+    "headings": [
+      {
+        "role": "H1",
+        "text": "编辑 Synthetic experiment",
+        "size": "24px",
+        "line": "32px",
+        "weight": "600"
+      }
+    ],
+    "status": "passed"
+  }
+]

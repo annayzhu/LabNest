@@ -1,0 +1,36 @@
+Synthetic research plan
+RESEARCH PLAN ID
+
+PROJECT
+
+STATUS
+
+RPL-1789020149959
+
+Synthetic editor 1789020149959
+
+draft
+
+Scientific premise
+OBJECTIVE
+
+Not recorded.
+HYPOTHESIS
+
+Not recorded.
+RATIONALE
+
+Not recorded.
+
+Design
+
+中文图注 research-plan 1789020165260
+
+Editor acceptance body / 正文验收
+
+Material & methods
+Acceptance criteria
+Constraints & dependencies
+References & working notes
+
+

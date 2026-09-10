@@ -1,0 +1,89 @@
+[
+  {
+    "width": 320,
+    "height": 568,
+    "firstTableRows": 5,
+    "bodyY": 340.828125,
+    "status": "passed"
+  },
+  {
+    "width": 320,
+    "wideTable": {
+      "scroll": 638,
+      "width": 262,
+      "total": 900
+    },
+    "status": "passed"
+  },
+  {
+    "width": 360,
+    "height": 640,
+    "firstTableRows": 5,
+    "bodyY": 340.828125,
+    "status": "passed"
+  },
+  {
+    "width": 360,
+    "wideTable": {
+      "scroll": 598,
+      "width": 302,
+      "total": 900
+    },
+    "status": "passed"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "firstTableRows": 5,
+    "bodyY": 340.828125,
+    "status": "passed"
+  },
+  {
+    "width": 390,
+    "wideTable": {
+      "scroll": 568,
+      "width": 332,
+      "total": 900
+    },
+    "status": "passed"
+  },
+  {
+    "width": 430,
+    "height": 932,
+    "firstTableRows": 5,
+    "bodyY": 340.828125,
+    "status": "passed"
+  },
+  {
+    "width": 430,
+    "wideTable": {
+      "scroll": 528,
+      "width": 372,
+      "total": 900
+    },
+    "status": "passed"
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "firstTableRows": 5,
+    "bodyY": 288.140625,
+    "status": "passed"
+  },
+  {
+    "width": 844,
+    "wideTable": {
+      "scroll": 130,
+      "width": 770,
+      "total": 900
+    },
+    "status": "passed"
+  },
+  {
+    "width": 1440,
+    "height": 1000,
+    "firstTableRows": 5,
+    "bodyY": 487.421875,
+    "status": "passed"
+  }
+]

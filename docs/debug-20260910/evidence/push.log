@@ -1,0 +1,5 @@
+remote: This repository moved. Please use the new location:        
+remote:   https://github.com/annayzhu/LabNest.git        
+To https://github.com/annayzhu/labnest.git
+ ! [remote rejected] codex/debug-20260910 -> codex/debug-20260910 (refusing to allow an OAuth App to create or update workflow `.github/workflows/inventory.yml` without `workflow` scope)
+error: failed to push some refs to 'https://github.com/annayzhu/labnest.git'

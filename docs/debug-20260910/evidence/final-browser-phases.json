@@ -1,0 +1,46 @@
+[
+  {
+    "name": "editors",
+    "status": "passed"
+  },
+  {
+    "name": "paragraphs",
+    "status": "passed"
+  },
+  {
+    "name": "clipboard",
+    "status": "passed"
+  },
+  {
+    "name": "execution",
+    "status": "passed"
+  },
+  {
+    "name": "run",
+    "status": "passed"
+  },
+  {
+    "name": "visual",
+    "status": "passed"
+  },
+  {
+    "name": "comparison",
+    "status": "passed"
+  },
+  {
+    "name": "density",
+    "status": "passed"
+  },
+  {
+    "name": "legacy",
+    "status": "passed"
+  },
+  {
+    "name": "template-format",
+    "status": "passed"
+  },
+  {
+    "name": "print",
+    "status": "passed"
+  }
+]

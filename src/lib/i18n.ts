@@ -10,6 +10,28 @@ export function resolveAppLocale(value: unknown, fallback: AppLocale = "en"): Ap
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  "Unsaved draft restored": "已恢复未提交草稿",
+  "Draft storage unavailable": "草稿存储不可用",
+  "Cannot save draft; keep this page": "无法保存草稿，请保留页面",
+  "Unsaved parameters restored": "已恢复未提交参数",
+  "Parameter draft storage unavailable": "参数草稿存储不可用",
+  "Cannot save parameter draft; keep this page": "参数草稿无法保存，请保留页面",
+  "Scroll sideways for all columns": "左右滑动查看完整表格",
+  "Copy selection": "复制选区",
+  "Cut selection": "剪切选区",
+  "Paste plain text": "粘贴纯文本",
+  "Align left": "左对齐",
+  "Align center": "居中",
+  "Align right": "右对齐",
+  "Justify": "两端对齐",
+
+  "Files, materials and results": "附件与材料",
+  "Paragraph layout": "段落设置",
+  "Increase paragraph indent": "增加段落缩进",
+  "Decrease paragraph indent": "减少段落缩进",
+  "Before paragraph": "段前间距",
+  "After paragraph": "段后间距",
+
   "Overview": "总览",
   "Entries": "实验记录",
   "Entry": "记录",
@@ -1128,7 +1150,6 @@ export const zhUi: Record<string, string> = {
   "Required": "必填",
   "Created at": "创建时间",
   "Updated at": "更新时间",
-  "Research Plan": "研究方案",
   "protocol": "实验规程",
   "version": "版本",
   "file": "文件",

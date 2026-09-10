@@ -1,0 +1,1365 @@
+{
+  "sha": "98a7f02519c70bd63b3e3056962206b9a8dad7c8",
+  "at": "2026-09-10T06:04:19.378Z",
+  "base": "http://localhost:3221",
+  "browser": "149.0.7827.55",
+  "checks": [
+    {
+      "id": "UI-01/02",
+      "status": "passed",
+      "detail": "Six groups / 31 actual visible category links; desktop first-screen counts, mobile half-screen and overflow measured"
+    },
+    {
+      "id": "UI-04/RG-01/exports",
+      "status": "passed",
+      "detail": "All 31 tool headings/navigation, 30 formula tools run examples and export real CSV/XLSX; image counter separately covered"
+    },
+    {
+      "id": "CP-01/04",
+      "status": "passed",
+      "detail": "Real system clipboard pasted through keyboard into a separate editable textarea; parallel sources retained; warnings remain on page, outside copy"
+    },
+    {
+      "id": "CP-03-compat",
+      "status": "passed",
+      "detail": "Clipboard API absent; actual legacy browser copy returns success"
+    },
+    {
+      "id": "CP-03-manual",
+      "status": "passed",
+      "detail": "API absent + compatibility failure injection exposes complete selectable panel, no false success"
+    },
+    {
+      "id": "CP-04-unit-refresh",
+      "status": "passed",
+      "detail": "Changing output display units invalidates the old manual copy panel and generates fresh content"
+    },
+    {
+      "id": "CA-01/02",
+      "status": "passed",
+      "detail": "After explicit preparation: close page, disconnect, NEW tab home → current tool → local calculation"
+    },
+    {
+      "id": "CA-05",
+      "status": "passed",
+      "detail": "Explicit cache clearing has a separate namespace from history/drafts/queue"
+    }
+  ],
+  "layouts": [
+    {
+      "width": 1366,
+      "height": 768,
+      "mode": "light",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "mode": "dark",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "mode": "light",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "mode": "dark",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "mode": "light",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "mode": "dark",
+      "visible": 31,
+      "overflow": false,
+      "commonBottom": 251
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "mode": "light",
+      "visible": 12,
+      "overflow": false,
+      "commonBottom": 321
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "mode": "dark",
+      "visible": 12,
+      "overflow": false,
+      "commonBottom": 321
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "mode": "light",
+      "visible": 12,
+      "overflow": false,
+      "commonBottom": 321
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "mode": "dark",
+      "visible": 12,
+      "overflow": false,
+      "commonBottom": 321
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "mode": "light",
+      "visible": 15,
+      "overflow": false,
+      "commonBottom": 321
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "mode": "dark",
+      "visible": 15,
+      "overflow": false,
+      "commonBottom": 321
+    }
+  ],
+  "tools": [
+    {
+      "id": "dilution",
+      "exportAudit": {
+        "rows": 4,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 2,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "serial-dilution",
+      "exportAudit": {
+        "rows": 6,
+        "columns": [
+          "Tube",
+          "Concentration (µM)",
+          "Source",
+          "Take (µL)",
+          "Diluent (µL)",
+          "Mixed volume (µL)",
+          "Transfer out (µL)",
+          "Remaining (µL)",
+          "Required (µL)",
+          "Sufficient?",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 11,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "molarity",
+      "exportAudit": {
+        "rows": 1,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "percent-solution",
+      "exportAudit": {
+        "rows": 2,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "media-recipe",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "Component",
+          "componentId",
+          "action",
+          "Amount",
+          "Unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 3,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "buffer-recipe",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "Component",
+          "componentId",
+          "action",
+          "Amount",
+          "Unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "ic50-ec50",
+      "exportAudit": {
+        "rows": 5,
+        "columns": [
+          "Concentration",
+          "Observed response",
+          "Fitted response",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "resuspension",
+      "exportAudit": {
+        "rows": 1,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 80.390625,
+        "titleTop": 73,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "normalization",
+      "exportAudit": {
+        "rows": 2,
+        "columns": [
+          "Sample ID",
+          "Original concentration (ng/µL)",
+          "Available (µL)",
+          "Status",
+          "Sample (µL)",
+          "Diluent (µL)",
+          "Buffer (µL)",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 2,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "hemocytometer",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "seeding",
+      "exportAudit": {
+        "rows": 4,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 3,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "hydrogel",
+      "exportAudit": {
+        "rows": 4,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 4,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "split",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "freezing",
+      "exportAudit": {
+        "rows": 6,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 4,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "transfection",
+      "exportAudit": {
+        "rows": 4,
+        "columns": [
+          "Mix group",
+          "Tube",
+          "Component",
+          "Per well (µL)",
+          "Prepare batch (µL)",
+          "DNA per well (µg)",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 6,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": false,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "kill-curve",
+      "exportAudit": {
+        "rows": 8,
+        "columns": [
+          "Level",
+          "Target (µg/mL)",
+          "Stock (µL)",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 16,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "viability",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "od600",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "cfu",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "colony-counter",
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "special": "Image review tested by existing legacy browser suite"
+    },
+    {
+      "id": "moi",
+      "exportAudit": {
+        "rows": 4,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 1,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "virus-titer",
+      "exportAudit": {
+        "rows": 2,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "master-mix",
+      "exportAudit": {
+        "rows": 5,
+        "columns": [
+          "Component",
+          "Per reaction (µL)",
+          "Premix?",
+          "Prepare batch (µL)",
+          "Mix group",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 6,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 80.390625,
+        "titleTop": 73,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "ligation",
+      "exportAudit": {
+        "rows": 2,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "tm",
+      "exportAudit": {
+        "rows": 3,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "dna-rna-conversion",
+      "exportAudit": {
+        "rows": 5,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 80.390625,
+        "titleTop": 73,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "bradford-bca",
+      "exportAudit": {
+        "rows": 5,
+        "columns": [
+          "Concentration",
+          "Observed response",
+          "Fitted response",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "elisa-4pl",
+      "exportAudit": {
+        "rows": 5,
+        "columns": [
+          "Concentration",
+          "Observed response",
+          "Fitted response",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "wb-loading",
+      "exportAudit": {
+        "rows": 1,
+        "columns": [
+          "Sample ID",
+          "Original concentration (µg/µL)",
+          "Available (µL)",
+          "Status",
+          "Sample (µL)",
+          "Diluent (µL)",
+          "Buffer (µL)",
+          "Input concentration unit",
+          "Target protein (µg)",
+          "Reducing-agent stock",
+          "Adding definition",
+          "Stock / target definition",
+          "Reducing agent (µL)",
+          "Total (µL)",
+          "Canonical volume unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 4,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "unit-converter",
+      "exportAudit": {
+        "rows": 1,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    },
+    {
+      "id": "centrifuge",
+      "exportAudit": {
+        "rows": 1,
+        "columns": [
+          "name",
+          "value",
+          "unit",
+          "operations",
+          "operationVersion",
+          "pipettingCheck",
+          "context",
+          "task",
+          "mode",
+          "method",
+          "resultStatus",
+          "warnings",
+          "assumptions",
+          "inputs",
+          "outputs",
+          "displayUnits",
+          "structuredWarnings"
+        ],
+        "operationCount": 0,
+        "allCsvXlsxCellsEqual": true,
+        "notesProvenanceAndWarnings": true
+      },
+      "geometry": {
+        "iconTop": 79,
+        "titleTop": 83.296875,
+        "overlap": true,
+        "overflow": false
+      },
+      "invalidStateChecked": true,
+      "exports": [
+        "CSV",
+        "XLSX"
+      ]
+    }
+  ],
+  "unexecuted": [
+    "Real phone keyboard",
+    "Real phone zoom 100/160%",
+    "Laboratory user trials"
+  ]
+}

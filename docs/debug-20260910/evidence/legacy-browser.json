@@ -1,0 +1,23 @@
+[
+  {
+    "kind": "recoverable",
+    "status": "passed",
+    "synthetic": true
+  },
+  {
+    "kind": "unverified",
+    "status": "passed",
+    "synthetic": true
+  },
+  {
+    "measurementResponse": {
+      "resultId": "cmtv4ha0w002ncxosg59r1njv",
+      "validationStatus": "valid"
+    },
+    "status": "passed"
+  },
+  {
+    "measurement": "close/reopen, reload draft, successful save clears form",
+    "status": "passed"
+  }
+]

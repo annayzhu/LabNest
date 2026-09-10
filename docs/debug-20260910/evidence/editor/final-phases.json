@@ -1,0 +1,34 @@
+[
+  {
+    "phase": "print",
+    "status": "passed"
+  },
+  {
+    "phase": "ime",
+    "status": "passed"
+  },
+  {
+    "phase": "media-controls",
+    "status": "passed"
+  },
+  {
+    "phase": "metadata",
+    "status": "passed"
+  },
+  {
+    "phase": "image-recovery",
+    "status": "passed"
+  },
+  {
+    "phase": "roundtrip",
+    "status": "passed"
+  },
+  {
+    "phase": "template",
+    "status": "passed"
+  },
+  {
+    "phase": "run",
+    "status": "passed"
+  }
+]

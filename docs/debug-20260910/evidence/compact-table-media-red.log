@@ -1,0 +1,28 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/compact-table.test.ts (3 tests | 1 failed) 12ms
+   × associates images inside Entry table cells and rejects pending uploads 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/compact-table.test.ts > associates images inside Entry table cells and rejects pending uploads
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/lib/compact-table.test.ts:17:111
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  13:52:00
+   Duration  318ms (transform 119ms, setup 0ms, import 199ms, tests 12ms, environment 0ms)
+

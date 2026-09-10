@@ -1,0 +1,25 @@
+
+> labnest@0.1.0 lint
+> eslint
+
+
+/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/scripts/verify-editor-repair.mjs
+  34:8    warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  45:8    warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  81:173  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  86:172  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/EntityCreateForm.tsx
+  10:7  warning  'entityTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/lib/run-materials.ts
+  23:19  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/lib/structured-import.ts
+  441:38  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  602:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 10 problems (0 errors, 10 warnings)
+

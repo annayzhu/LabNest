@@ -1,5 +1,8 @@
 "use client";
 
+import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
+import Link from "next/link";
+import { useI18n } from "@/components/I18nProvider";
 import { OfflineCalculator } from "@/components/calculators/OfflineCalculator";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { newClientMutationId } from "@/lib/client-mutation-id";
@@ -15,7 +18,7 @@ import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
-  richContent?: ReturnType<typeof import("@/lib/run-step-content").runStepContent>;
+  richContent?: Omit<ReturnType<typeof import("@/lib/run-step-content").runStepContent>, "reference">;
   id: string;
   groupKey: string;
   groupTitle: string;
@@ -41,13 +44,16 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences }: {
   experimentId: string;
   status: string;
   steps: RunStep[];
   editable: boolean;
+  frozenReferences?: Record<string, ReturnType<typeof import("@/lib/run-step-content").runStepContent>["reference"]>;
   evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
+  const { locale } = useI18n();
+  const zh = locale === "zh";
   const formRef=useRef<HTMLFormElement>(null);
   const [draftFields,setDraftFields]=useState<Record<string,string>>({});
   const draftInitialized=useRef(false);
@@ -81,18 +87,19 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
   useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps]);
+  const [recordOpen,setRecordOpen]=useState(false);
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
-    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('已恢复未提交草稿 / Unsaved draft restored');}}catch{setDraftNotice('草稿存储不可用 / Draft storage unavailable');}setDraftReady(true);});
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
   },[experimentId,steps]);
   useEffect(()=>{
     if(!draftReady)return;
-    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('无法保存草稿，请保留页面 / Cannot save draft; keep this page');}};
+    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
     preserve();window.addEventListener('pagehide',preserve);window.addEventListener('labnest:preserve-run-draft',preserve);
     return()=>{window.removeEventListener('pagehide',preserve);window.removeEventListener('labnest:preserve-run-draft',preserve);};
   },[experimentId,selectedStepId,completedIds,draftFields,draftReady]);
@@ -163,7 +170,6 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   }
 
   return <form ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
-    <OfflineCalculator zh={false}/>
     <input type="hidden" name="experimentId" value={experimentId} />
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
@@ -172,8 +178,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
-          <span>{hasSteps ? `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
-          <span>{selectedStep ? `Step ${selectedStepIndex + 1}` : "Ready to finish"}</span>
+          <span>{hasSteps ? zh ? `第${selectedStepIndex+1}/${steps.length}步 · 已完成${completedIds.size}步` : `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
+          {!zh ? <span>{selectedStep ? `Step ${selectedStepIndex + 1}` : "Ready to finish"}</span> : null}
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone">
           <div className="h-full rounded-full bg-moss transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${hasSteps ? Math.round((completedIds.size / steps.length) * 100) : 0}%` }} />
@@ -183,16 +189,22 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       {draftNotice?<p role="status" className="text-xs text-warning">{draftNotice}</p>:null}
       {selectedStep ? (
         <div className="p-4">
-          <h2 className="text-sm font-semibold text-ink">{selectedStep.id === currentStep?.id ? "Current step" : "Step review"}</h2>
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{selectedStep.groupTitle} · Step {selectedStep.order}</p>
-          <h3 className="mt-1 text-xl font-semibold leading-7 tracking-[-0.015em] text-ink">{selectedStep.title}</h3>
-          <div data-run-tools className="mt-3 grid grid-cols-2 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
-          <StepTimerControls compact key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} /></div>
-          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.common.length?<details open><summary>共同准备 / Supplementary content</summary>{selectedStep.richContent.common.map(block=><ProtocolContentBlockView key={block.id} block={block}/>)}</details>:null}{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block}/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p><p className="text-xs text-warning">旧记录未保存完整格式 / Legacy record did not retain full formatting</p></>}</div>
+          {groups.length>1 ? <p className="text-xs text-muted">{experimentStepGroupHeading(selectedStep.groupTitle).title}</p> : null}
+          <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>
+
+          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.common.length?<details><summary>{zh ? "共同准备" : "Shared preparation"}</summary>{selectedStep.richContent.common.map(block=><ProtocolContentBlockView key={block.id} block={block}/>)}</details>:null}{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block}/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
+          <div data-run-tools className="mt-3 grid grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
+          <StepTimerControls compact key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
+          <button type="button" aria-expanded={recordOpen} onClick={()=>setRecordOpen(value=>!value)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline px-2 text-sm font-medium text-moss">{zh?"记录":"Record"}</button></div>
+          <div hidden={!recordOpen} className="mt-2" data-run-record><div className="grid grid-cols-3 gap-2">
+            <Link onClick={()=>window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${selectedStep.id}`} className="focus-ring flex min-h-11 items-center justify-center text-sm text-moss">{zh?"添加观察":"Observe"}</Link>
+            <MobileMeasurementCapture key={selectedStep.id} experimentId={experimentId} step={selectedStep}/>
+            <a href="#result-recording" className="focus-ring flex min-h-11 items-center justify-center text-sm text-moss">{zh?"实验结果":"Result"}</a>
+          </div></div>
 
 
 
-          {evidence ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">Evidence · {evidence.observations} observations · {evidence.measurements} measurements · {evidence.files} files · {evidence.consumptions} inventory records</p> : null}
+          {evidence && Object.values(evidence).some(count => count > 0) ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">{Object.entries(evidence).filter(([,count])=>count>0).map(([key,count])=>`${zh?({observations:"观察",measurements:"测量",files:"附件",consumptions:"耗材"} as Record<string,string>)[key]:key} ${count}`).join(" · ")}</p> : null}
 
           <div className="mt-4 grid grid-cols-3 gap-2">
             <button type="button" disabled={selectedStepIndex <= 0} onClick={() => setSelectedStepId(steps[selectedStepIndex - 1].id)} className="focus-ring flex min-h-11 items-center justify-center gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2 text-xs font-semibold text-moss disabled:opacity-35"><ArrowLeft className="h-4 w-4" aria-hidden />Previous</button>
@@ -202,7 +214,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
-              Record a deviation
+              {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{(draftFields[`mobileDeviationType:${selectedStep.id}`]??selectedStep.deviationType)==="incident" ? (zh?"异常":"Incident") : (zh?"偏差":"Deviation")} · {(draftFields[`mobileDeviation:${selectedStep.id}`]??selectedStep.deviationNote??"").slice(0,60)}</span> : null}
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
             </summary>
             <div className="grid gap-3 pb-3">
@@ -221,7 +233,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             </div>
           </details> : <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted">This locked Protocol step does not allow a deviation record.</p>}
 
-          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : <p className="rounded-[var(--ln-radius-control-lg)] bg-success-surface px-3 py-2 text-sm text-success">This step is complete.</p>}
+          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : null}
         </div>
       ) : (
         <div className="p-4">
@@ -238,12 +250,30 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         </div>
       )}
 
+      {hasSteps && remaining===0 && editable ? <details className="mx-4 mb-3 border-t border-hairline pt-2"><summary className="focus-ring cursor-pointer text-sm font-medium">{zh?"审核并完成本次实验":"Review and complete run"}</summary><label className="my-2 flex min-h-11 items-start gap-2 text-sm"><input type="checkbox" checked={reviewConfirmed} onChange={event=>setReviewConfirmed(event.target.checked)} className="mt-1 h-4 w-4"/>{zh?"已核对实验记录和未解决的偏差":"I reviewed the run evidence and unresolved deviations."}</label><button type="submit" name="intent" value="complete" disabled={pending||!reviewConfirmed} className={primaryButton}>{zh?"完成实验":"Complete run"}</button></details>:null}
+
       {state.error ? <p role="alert" className="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{state.error}</p> : null}
       {state.message ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}{state.savedAt ? ` Saved at ${new Date(state.savedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · Synced` : ""}</p> : null}
       {offlineStatus ? <p role="status" className="mx-4 mb-4 rounded-[var(--ln-radius-control-lg)] border border-action-border bg-action-surface px-3 py-2 text-sm text-moss">{offlineStatus}</p> : null}
 
-      {hasSteps ? <button type="button" onClick={() => setAllStepsOpen(true)} className="focus-ring flex min-h-12 w-full items-center justify-between border-t border-hairline bg-warm/45 px-4 text-sm font-semibold text-moss">All steps<ChevronDown className="h-4 w-4" aria-hidden /></button> : null}
+
     </section>
+
+    <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 py-2" data-run-reference>
+      <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
+      <div className="mt-3 space-y-3">
+        <OfflineCalculator zh={zh}/>
+        {groups.map(group => <details key={group.key}>
+          <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
+          <div className="run-step-content mt-2 min-w-0 space-y-3">
+            {(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
+              <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
+              {section.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block}/>)}
+            </section>)}
+          </div>
+        </details>)}
+      </div>
+    </details>
 
     {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
       <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />

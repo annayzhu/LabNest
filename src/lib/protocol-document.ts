@@ -1,3 +1,4 @@
+import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
@@ -56,6 +57,8 @@ export const protocolRichTextRunSchema = z.object({
 });
 
 export const protocolRichTextNodeSchema = z.object({
+  childContent: tiptapCellRichContentSchema.optional(),
+  ...paragraphLayoutFields,
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(protocolRichTextRunSchema),
   lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),
@@ -66,8 +69,8 @@ export type ProtocolRichTextRun = z.infer<typeof protocolRichTextRunSchema>;
 export type ProtocolRichTextNode = z.infer<typeof protocolRichTextNodeSchema>;
 
 export const protocolContentBlockSchema = z.discriminatedUnion("type", [
-  baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
-  baseBlockSchema.extend({ type: z.literal("text"), text: z.string() }),
+  baseBlockSchema.extend({ type: z.literal("heading"), text: z.string(), nodes:z.array(protocolRichTextNodeSchema).optional() }),
+  baseBlockSchema.extend({ type: z.literal("text"), text: z.string(), nodes:z.array(protocolRichTextNodeSchema).optional() }),
   baseBlockSchema.extend({
     type: z.literal("rich_text"),
     nodes: z.array(protocolRichTextNodeSchema),
@@ -75,6 +78,7 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
   baseBlockSchema.extend({
     type: z.literal("checklist"),
     items: z.array(z.string()),
+    itemNodes:z.array(z.array(protocolRichTextNodeSchema)).optional(),
   }),
   baseBlockSchema.extend(documentMediaFields),
   baseBlockSchema.extend({
@@ -469,6 +473,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
           startedSteps = true;
           flushStep();
           currentHeading = text; currentRef=fragment.id;
+          if(node.childContent?.length)currentBlocks.push({...fragment,nodes:[{type:"paragraph",content:[],childContent:node.childContent}]});
         } else if (currentHeading) {currentDescription.push(node.type === "bullet" ? `• ${text}` : text);currentBlocks.push(fragment);}
         else if (node.type === "bullet" && appendToLastProjectedStep(`• ${text}`)) {const last=steps.at(-1)!;last.content_blocks=[...(last.content_blocks??[]),fragment];continue;}
         else if (!startedSteps && (stepSection?.blocks ?? []).some(b => b.type === "heading" || (b.type === "rich_text" && b.nodes.some(n => ["heading2", "heading3", "numbered"].includes(n.type))))) commonBlocks.push(fragment);
@@ -482,7 +487,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
       flushStep();
       for (const [itemIndex,item] of block.items.entries()) {
         if (!item.trim()) continue;
-        steps.push({source_ref:`${block.id}:${itemIndex}`,content_blocks:[{id:`${block.id}:${itemIndex}`,type:"text",text:item}], order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
+        steps.push({source_ref:`${block.id}:${itemIndex}`,content_blocks:[{id:`${block.id}:${itemIndex}`,type:"text",text:item,...(block.itemNodes?.[itemIndex]?{nodes:block.itemNodes[itemIndex]}:{})}], order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
       }
     }
     if(!["heading","text","rich_text","checklist"].includes(block.type)){

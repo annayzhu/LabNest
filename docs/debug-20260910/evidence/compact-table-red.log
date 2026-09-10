@@ -1,0 +1,75 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/compact-table.test.ts (2 tests | 2 failed) 11ms
+     × Entry markdown reopens rich cells and promotes the same table into scientific documents 6ms
+     × template instructions retain table content through their existing validated rich nodes 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/compact-table.test.ts > compact rich editors retain pasted tables > Entry markdown reopens rich cells and promotes the same table into scientific documents
+AssertionError: expected 'paragraph' to be 'table' // Object.is equality
+
+Expected: "table"
+Received: "paragraph"
+
+ ❯ src/lib/compact-table.test.ts:8:250
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/lib/compact-table.test.ts > compact rich editors retain pasted tables > template instructions retain table content through their existing validated rich nodes
+AssertionError: expected undefined to deeply equal { Object (type, content) }
+
+- Expected:
+{
+  "content": [
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                [Object],
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "tableHeader",
+        },
+        {
+          "content": [
+            {
+              "attrs": {
+                "documentIndent": 1,
+                "textAlign": "right",
+              },
+              "content": [
+                [Object],
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "tableHeader",
+        },
+      ],
+      "type": "tableRow",
+    },
+  ],
+  "type": "table",
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/compact-table.test.ts:9:311
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  13:46:11
+   Duration  398ms (transform 124ms, setup 0ms, import 200ms, tests 11ms, environment 0ms)
+

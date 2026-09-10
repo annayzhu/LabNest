@@ -1,3 +1,5 @@
+import type { ParagraphLayout } from "./document-paragraph-layout";
+import type { JSONContent } from "@tiptap/core";
 import type { RichTextFontFamily } from "./rich-text-font-family";
 
 export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info" | "sage";
@@ -120,6 +122,7 @@ export type ResultChartSpec = {
 };
 
 export type ResultTemplateInstructionRun = {
+  fontFamily?: RichTextFontFamily;
   text: string;
   bold?: boolean;
   italic?: boolean;
@@ -131,7 +134,8 @@ export type ResultTemplateInstructionRun = {
   fontSizePt?: RichTextFontSizePt;
 };
 
-export type ResultTemplateInstructionNode = {
+export type ResultTemplateInstructionNode = ParagraphLayout & {
+  childContent?: JSONContent[];
   type: "paragraph" | "heading2" | "heading3" | "bullet" | "numbered" | "quote";
   content: ResultTemplateInstructionRun[];
   lineHeight?: 1 | 1.15 | 1.3 | 1.5 | 1.6 | 2;

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/run-step-content.test.ts (9 tests | 1 failed) 13ms
+   × keeps frozen material tables reachable even when an old step cannot be recovered 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/run-step-content.test.ts > keeps frozen material tables reachable even when an old step cannot be recovered
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ src/lib/run-step-content.test.ts:57:21
+     55|  const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key===…
+     56|  const r=runStepContent({versions:[{protocolVersionId:'v',contentJson:…
+     57|  expect(r.reference.find(s=>s.key==='material')?.blocks).toEqual([{id:…
+       |                     ^
+     58|  expect(r.source).toBe('legacy-text');expect(r.blocks).toEqual([]);
+     59| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  12:16:21
+   Duration  369ms (transform 96ms, setup 0ms, import 168ms, tests 13ms, environment 0ms)
+

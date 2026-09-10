@@ -1,0 +1,1154 @@
+▲ Next.js 16.2.10 (webpack)
+- Local:         http://localhost:3240
+- Network:       http://172.17.71.205:3240
+- Environments: .env
+✓ Ready in 429ms
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /protocols/new ...
+ GET /protocols/new 200 in 7.1s (next.js: 5.2s, application-code: 1840ms)
+ POST /api/attachments 201 in 1736ms (next.js: 1694ms, application-code: 43ms)
+ GET /protocols/cmtv0w5wy000167ospeatbfxn 200 in 1514ms (next.js: 1264ms, application-code: 250ms)
+ POST /protocols/new 303 in 1687ms (next.js: 82ms, application-code: 1605ms)
+  └─ ƒ createProtocolDocument({}, {}) in 54ms app/protocols/new/actions.ts
+ GET /api/attachments/cmtv0w5qs000067oslq0qzojy?inline=1 200 in 1194ms
+ GET /experiments/new 200 in 1210ms (next.js: 894ms, application-code: 316ms)
+ GET /experiments/new 200 in 261ms (next.js: 105ms, application-code: 156ms)
+ GET /protocols/new 200 in 1191ms (next.js: 761ms, application-code: 430ms)
+ POST /api/attachments 201 in 457ms (next.js: 429ms, application-code: 28ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 607ms (next.js: 370ms, application-code: 237ms)
+ POST /protocols/new 303 in 753ms (next.js: 82ms, application-code: 671ms)
+  └─ ƒ createProtocolDocument({}, {}) in 29ms app/protocols/new/actions.ts
+ GET /experiments/new 200 in 318ms (next.js: 50ms, application-code: 268ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp 200 in 1310ms (next.js: 1143ms, application-code: 167ms)
+ POST /experiments/new 303 in 1420ms (next.js: 33ms, application-code: 1387ms)
+  └─ ƒ createExperiment({}, {}) in 49ms app/experiments/actions.ts
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 2.3s (next.js: 1803ms, application-code: 482ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 16ms (next.js: 8ms, application-code: 8ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 6ms)
+⨯ Error: Manifest file is empty
+    at ignore-listed frames {
+  page: '/experiments/cmtv0ztw7000a67osnvm83ixp/run'
+}
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 500 in 2.1s (next.js: 1978ms, application-code: 79ms)
+[browser] Uncaught Error: Manifest file is empty
+[browser] ./src/components/ProtocolRunProgressForm.tsx
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/ProtocolRunProgressForm.tsx
+./src/app/experiments/[id]/run/page.tsx 
+⨯ ./src/components/ProtocolRunProgressForm.tsx
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/ProtocolRunProgressForm.tsx
+./src/app/experiments/[id]/run/page.tsx
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 500 in 1673ms (next.js: 1646ms, application-code: 27ms)
+[browser] Uncaught ModuleBuildError: Module build failed (from ../LabNest/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+
+Caused by:
+    Syntax Error
+[browser] ./src/components/ProtocolRunProgressForm.tsx
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+Caused by:
+    Syntax Error 
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 500 in 10ms (next.js: 1882µs, application-code: 8ms)
+[browser] Uncaught ModuleBuildError: Module build failed (from ../LabNest/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+
+Caused by:
+    Syntax Error
+[browser] ./src/components/ProtocolRunProgressForm.tsx
+Error:   x Expected '</', got '}'
+     ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/ProtocolRunProgressForm.tsx:223:1]
+ 220 | 
+ 221 |           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
+ 222 |             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
+ 223 |               {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span>}
+     :                                                                                                                                                                                                                                 ^
+ 224 |               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
+ 225 |             </summary>
+ 226 |             <div className="grid gap-3 pb-3">
+     `----
+
+Caused by:
+    Syntax Error 
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 984ms (next.js: 502ms, application-code: 482ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 547ms (next.js: 530ms, application-code: 17ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 6ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/edit 404 in 985ms (next.js: 885ms, application-code: 100ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/edit 404 in 119ms (next.js: 41ms, application-code: 78ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 1121ms (next.js: 554ms, application-code: 567ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 592ms (next.js: 571ms, application-code: 21ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 1525ms (next.js: 1355ms, application-code: 170ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 171ms (next.js: 45ms, application-code: 126ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 59ms (next.js: 3ms, application-code: 56ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 404ms (next.js: 51ms, application-code: 353ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 8ms, application-code: 7ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 291ms (next.js: 3ms, application-code: 288ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 63ms (next.js: 1721µs, application-code: 61ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 9ms (next.js: 3ms, application-code: 6ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 2.8s (next.js: 2.4s, application-code: 437ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 14ms (next.js: 7ms, application-code: 7ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 134ms (next.js: 1974µs, application-code: 132ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 192ms (next.js: 3ms, application-code: 189ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 9ms (next.js: 3ms, application-code: 6ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 234ms (next.js: 13ms, application-code: 221ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 120ms (next.js: 60ms, application-code: 60ms)
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 131ms (next.js: 3ms, application-code: 128ms)
+ POST /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 303 in 190ms (next.js: 4ms, application-code: 186ms)
+  └─ ƒ saveProtocolDocument({}, {}) in 41ms app/protocols/[id]/versions/[versionId]/edit/actions.ts
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q 200 in 257ms (next.js: 1409µs, application-code: 255ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /protocols/cmtv0zrp8000667osdjhdlw6q/versions/cmtv0zrpa000767osfllsf5d0/edit 200 in 52ms (next.js: 3ms, application-code: 50ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 1038ms (next.js: 590ms, application-code: 448ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 25ms (next.js: 13ms, application-code: 12ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 3ms, application-code: 6ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+⨯ Error: Manifest file is empty
+    at ignore-listed frames {
+  page: '/experiments/cmtv0ztw7000a67osnvm83ixp/run'
+}
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 241ms (next.js: 42ms, application-code: 198ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 500 in 892ms (next.js: 871ms, application-code: 21ms)
+[browser] Uncaught Error: Manifest file is empty
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 306ms (next.js: 3ms, application-code: 304ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 8ms, application-code: 7ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 315ms (next.js: 137ms, application-code: 178ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 539ms (next.js: 1608µs, application-code: 537ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 620ms (next.js: 1361µs, application-code: 619ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 20ms (next.js: 12ms, application-code: 8ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 193ms (next.js: 3ms, application-code: 190ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 13ms (next.js: 5ms, application-code: 8ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ProtocolRunPage>
+      <AppShell>
+        <ModalDialogProvider>
+          ...
+            <div className="app-shell ...">
+              <div className="app-shell-...">
+                <Sidebar>
+                <div className="app-shell-...">
+                  <TopBar>
+                  <main className="app-shell-...">
+                    <meta>
+                    <div className="space-y-4">
+                      <header>
+                      <details>
+                      <ProtocolRunProgressForm experimentId="cmtv0ztw70..." status="planned" steps={[...]} ...>
+                        <form ref={{current:null}} action={function bound dispatchActionState} ...>
+                          <input>
+                          <input>
+                          <input>
+                          <section className="overflow-h...">
+                            <div>
+                            <div className="p-4">
+                              <h3>
+                              <div>
+                              ...
+                                <section hidden={true} aria-label="Step timer" className="col-span-2...">
+                                  <div>
+                                  <div className="mt-3 grid ...">
+                                    <label className="min-w-0">
+                                      <span>
+                                      <input
+                                        value="5"
+                                        onChange={function onChange}
+                                        type="number"
+                                        min="0.1"
+                                        max="1440"
+                                        step="0.1"
+                                        className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border..."
+                                        aria-label="Timer duration in minutes"
+-                                       style={{caret-color:"transparent"}}
+                                      >
+                                    ...
+                              <div>
+                              <details className="group mt-5...">
+                                <summary>
+                                <div className="grid gap-3...">
+                                  <label>
+                                  <label className="block">
+                                    <span>
+                                    <textarea
+                                      name="mobileDeviation:cmtv0ztwd000b67oslbwe3as2"
+                                      value=""
+                                      onChange={function onChange}
+                                      disabled={false}
+                                      placeholder="Record only the observed deviation or incident"
+                                      className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-[var..."
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                  <label className="block">
+                                    <span>
+                                    <textarea
+                                      name="mobileDeviationImpact:cmtv0ztwd000b67oslbwe3as2"
+                                      value=""
+                                      onChange={function onChange}
+                                      disabled={false}
+                                      placeholder="Effect on samples, quality, or interpretation; write unknown if not..."
+                                      className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-[var..."
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                  <label className="block">
+                                    <span>
+                                    <input
+                                      name="mobileDeviationAuthor:cmtv0ztwd000b67oslbwe3as2"
+                                      value=""
+                                      onChange={function onChange}
+                                      disabled={false}
+                                      className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border b..."
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                              ...
+                          <details>
+                          <section className="hidden ove...">
+                            <div>
+                            <div className="divide-y-4...">
+                              <section aria-labelledby="run-group-...">
+                                <label className="flex curso...">
+                                  <input
+                                    type="checkbox"
+                                    checked={false}
+                                    onChange={function onChange}
+                                    disabled={false}
+                                    className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  ...
+                                <div className="divide-y d...">
+                                  <div id="step-cmtv0..." className="grid gap-3...">
+                                    <div className="min-w-0">
+                                      <label className="flex min-w...">
+                                        <input
+                                          type="checkbox"
+                                          name="completedStepIds"
+                                          value="cmtv0ztwd000b67oslbwe3as2"
+                                          checked={false}
+                                          onChange={function onChange}
+                                          disabled={false}
+                                          className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                         style={{caret-color:"transparent"}}
+                                        >
+                                        ...
+                                      ...
+                                    <div>
+                                      <StepCalculator>
+                                      <label>
+                                        <span>
+                                        <textarea
+                                          name="deviation:cmtv0ztwd000b67oslbwe3as2"
+                                          defaultValue=""
+                                          disabled={false}
+                                          placeholder="Only record what differed from the planned method"
+                                          className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-..."
+-                                         style={{caret-color:"transparent"}}
+                                        >
+                                      ...
+                                  <div id="step-cmtv0..." className="grid gap-3...">
+                                    <div className="min-w-0">
+                                      <label className="flex min-w...">
+                                        <input
+                                          type="checkbox"
+                                          name="completedStepIds"
+                                          value="cmtv0ztwd000c67osoyut4vjf"
+                                          checked={false}
+                                          onChange={function onChange}
+                                          disabled={false}
+                                          className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                         style={{caret-color:"transparent"}}
+                                        >
+                                        ...
+                                      ...
+                                    <div>
+                                      <StepCalculator>
+                                      <label>
+                                        <span>
+                                        <textarea
+                                          name="deviation:cmtv0ztwd000c67osoyut4vjf"
+                                          defaultValue=""
+                                          disabled={false}
+                                          placeholder="Only record what differed from the planned method"
+                                          className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-..."
+-                                         style={{caret-color:"transparent"}}
+                                        >
+                                      ...
+                                  <div id="step-cmtv0..." className="grid gap-3...">
+                                    <div className="min-w-0">
+                                      <label className="flex min-w...">
+                                        <input
+                                          type="checkbox"
+                                          name="completedStepIds"
+                                          value="cmtv0ztwd000d67oshdqboixw"
+                                          checked={false}
+                                          onChange={function onChange}
+                                          disabled={false}
+                                          className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                         style={{caret-color:"transparent"}}
+                                        >
+                                        ...
+                                      ...
+                                    ...
+                                  ...
+                            ...
+                          ...
+                      ...
+              ...
+ 
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 652ms (next.js: 1760µs, application-code: 650ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 579ms (next.js: 24ms, application-code: 555ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 14ms (next.js: 4ms, application-code: 9ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 1272µs, application-code: 6ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 18ms (next.js: 6ms, application-code: 12ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 736ms (next.js: 3ms, application-code: 733ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 4ms, application-code: 10ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 181ms (next.js: 3ms, application-code: 178ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 1229µs, application-code: 14ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+⨯ Error: Manifest file is empty
+    at ignore-listed frames {
+  page: '/experiments/cmtv0ztw7000a67osnvm83ixp/run'
+}
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 500 in 818ms (next.js: 801ms, application-code: 17ms)
+[browser] Uncaught Error: Manifest file is empty
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 254ms (next.js: 59ms, application-code: 195ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 237ms (next.js: 1031µs, application-code: 236ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 395ms (next.js: 1775µs, application-code: 393ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 80ms (next.js: 3ms, application-code: 78ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 460ms (next.js: 445ms, application-code: 15ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="experiment...">
+      <SegmentTrieNode>
+      <ProtocolRunPage>
+        <AppShell>
+          <ModalDialogProvider>
+            <ContextPropertiesProvider>
+              <div className="app-shell ...">
+                <div className="app-shell-...">
+                  <Sidebar>
+                  <div className="app-shell-...">
+                    <TopBar>
+                      <header className="sticky top...">
+                        <div className="mx-auto fl...">
+                          <div>
+                          <form action="/search" className="hidden min...">
+                            <label className="ln-global-...">
+                              <Search>
+                              <span>
+                              <input
+                                name="q"
+                                defaultValue=""
+                                className="w-full bg-transparent text-ink outline-none placeholder:text-muted"
+                                placeholder="Search LabNest..."
+                                autoComplete="off"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              ...
+                          ...
+                    <main className="app-shell-...">
+                      <meta>
+                      <div className="space-y-4">
+                        <header>
+                        <details className="rounded-[v...">
+                          <summary>
+                          <section>
+                          <RunParameterEditor experimentId="cmtv0ztw70..." keys={[...]} values={{}} editable={true}>
+                            <details className="rounded bo...">
+                              <summary>
+                              <form action={function bound dispatchActionState} className="space-y-3">
+                                <input
+                                  type="hidden"
+                                  name="experimentId"
+                                  value="cmtv0ztw7000a67osnvm83ixp"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                <input
+                                  type="hidden"
+                                  name="expected"
+                                  value="{}"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                <p>
+                                <div className="grid gap-3...">
+                                  <label className="text-sm">
+                                    <input
+                                      className="block min-h-11 w-full rounded border border-hairline px-3"
+                                      name="parameter:pending"
+                                      value=""
+                                      onChange={function onChange}
+                                      disabled={false}
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                  <label className="text-sm">
+                                    <input
+                                      className="block min-h-11 w-full rounded border border-hairline px-3"
+                                      name="parameter:tube_count"
+                                      value=""
+                                      onChange={function onChange}
+                                      disabled={false}
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                ...
+                        ...
+                ...
+    ...
+ 
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 3ms, application-code: 12ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 560ms (next.js: 139ms, application-code: 421ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 324ms (next.js: 1269µs, application-code: 322ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 10ms (next.js: 3ms, application-code: 7ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 159ms (next.js: 3ms, application-code: 156ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 12ms (next.js: 4ms, application-code: 8ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 7ms (next.js: 1703µs, application-code: 5ms)
+[browser] Can't perform a React state update on a component that hasn't mounted yet. This indicates that you have a side-effect in your render function that asynchronously tries to update the component. Move this work to useEffect instead. 
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 377ms (next.js: 2ms, application-code: 375ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 14ms (next.js: 3ms, application-code: 10ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 147ms (next.js: 3ms, application-code: 144ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 103ms (next.js: 3ms, application-code: 100ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 269ms (next.js: 1492µs, application-code: 267ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 252ms (next.js: 1523µs, application-code: 251ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 4ms, application-code: 11ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 10ms (next.js: 1524µs, application-code: 8ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 8ms (next.js: 1445µs, application-code: 6ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 254ms (next.js: 3ms, application-code: 251ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 62ms (next.js: 2ms, application-code: 60ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 12ms (next.js: 5ms, application-code: 8ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 221ms (next.js: 1431µs, application-code: 219ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 16ms (next.js: 2ms, application-code: 14ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 9ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 15ms (next.js: 3ms, application-code: 12ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 526ms (next.js: 4ms, application-code: 523ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 281ms (next.js: 1928µs, application-code: 279ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 229ms (next.js: 1543µs, application-code: 227ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 249ms (next.js: 1749µs, application-code: 247ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 267ms (next.js: 1362µs, application-code: 265ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 65ms (next.js: 4ms, application-code: 61ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 75ms (next.js: 1500µs, application-code: 73ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 72ms (next.js: 886µs, application-code: 71ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 63ms (next.js: 1573µs, application-code: 61ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 980ms (next.js: 10ms, application-code: 970ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 945ms (next.js: 1638µs, application-code: 943ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 839ms (next.js: 1535µs, application-code: 837ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 828ms (next.js: 1370µs, application-code: 827ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 312ms (next.js: 3ms, application-code: 310ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 13ms (next.js: 1383µs, application-code: 11ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 111ms (next.js: 1959µs, application-code: 109ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 12ms (next.js: 2ms, application-code: 10ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="experiment...">
+      <SegmentTrieNode>
+      <ProtocolRunPage>
+        <AppShell>
+          <ModalDialogProvider>
+            ...
+              <div className="app-shell ...">
+                <div className="app-shell-...">
+                  <Sidebar>
+                  <div className="app-shell-...">
+                    <TopBar>
+                    <main className="app-shell-...">
+                      <meta>
+                      <div className="space-y-4">
+                        <header>
+                        <details>
+                        <ProtocolRunProgressForm experimentId="cmtv0ztw70..." status="planned" steps={[...]} ...>
+                          <form ref={{current:null}} action={function bound dispatchActionState} ...>
+                            <input>
+                            <input>
+                            <input>
+                            <section>
+                            <details>
+                            <section className="hidden ove...">
+                              <div>
+                              <div className="divide-y-4...">
+                                <section aria-labelledby="run-group-...">
+                                  <label className="flex curso...">
+                                    <input
+                                      type="checkbox"
+                                      checked={false}
+                                      onChange={function onChange}
+                                      disabled={false}
+                                      className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                    ...
+                                  <div className="divide-y d...">
+                                    <div id="step-cmtv0..." className="grid gap-3...">
+                                      <div className="min-w-0">
+                                        <label className="flex min-w...">
+                                          <input
+                                            type="checkbox"
+                                            name="completedStepIds"
+                                            value="cmtv0ztwd000b67oslbwe3as2"
+                                            checked={false}
+                                            onChange={function onChange}
+                                            disabled={false}
+                                            className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                          ...
+                                        ...
+                                      <div>
+                                        <StepCalculator>
+                                        <label>
+                                          <span>
+                                          <textarea
+                                            name="deviation:cmtv0ztwd000b67oslbwe3as2"
+                                            defaultValue=""
+                                            disabled={false}
+                                            placeholder="Only record what differed from the planned method"
+                                            className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounde..."
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                        ...
+                                    <div id="step-cmtv0..." className="grid gap-3...">
+                                      <div className="min-w-0">
+                                        <label className="flex min-w...">
+                                          <input
+                                            type="checkbox"
+                                            name="completedStepIds"
+                                            value="cmtv0ztwd000c67osoyut4vjf"
+                                            checked={false}
+                                            onChange={function onChange}
+                                            disabled={false}
+                                            className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                          ...
+                                        ...
+                                      <div>
+                                        <StepCalculator>
+                                        <label>
+                                          <span>
+                                          <textarea
+                                            name="deviation:cmtv0ztwd000c67osoyut4vjf"
+                                            defaultValue=""
+                                            disabled={false}
+                                            placeholder="Only record what differed from the planned method"
+                                            className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounde..."
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                        ...
+                                    <div id="step-cmtv0..." className="grid gap-3...">
+                                      <div className="min-w-0">
+                                        <label className="flex min-w...">
+                                          <input
+                                            type="checkbox"
+                                            name="completedStepIds"
+                                            value="cmtv0ztwd000d67oshdqboixw"
+                                            checked={false}
+                                            onChange={function onChange}
+                                            disabled={false}
+                                            className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                          ...
+                                        ...
+                                      <div>
+                                        <StepCalculator>
+                                        <label>
+                                          <span>
+                                          <textarea
+                                            name="deviation:cmtv0ztwd000d67oshdqboixw"
+                                            defaultValue=""
+                                            disabled={false}
+                                            placeholder="Only record what differed from the planned method"
+                                            className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounde..."
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                        ...
+                                    <div id="step-cmtv0..." className="grid gap-3...">
+                                      <div className="min-w-0">
+                                        <label className="flex min-w...">
+                                          <input
+                                            type="checkbox"
+                                            name="completedStepIds"
+                                            value="cmtv0ztwd000e67osb7d42ufc"
+                                            checked={false}
+                                            onChange={function onChange}
+                                            disabled={false}
+                                            className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                          ...
+                                        ...
+                                      <div>
+                                        <StepCalculator>
+                                        <label>
+                                          <span>
+                                          <textarea
+                                            name="deviation:cmtv0ztwd000e67osb7d42ufc"
+                                            defaultValue=""
+                                            disabled={false}
+                                            placeholder="Only record what differed from the planned method"
+                                            className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounde..."
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                        ...
+                                    <div id="step-cmtv0..." className="grid gap-3...">
+                                      <div className="min-w-0">
+                                        <label className="flex min-w...">
+                                          <input
+                                            type="checkbox"
+                                            name="completedStepIds"
+                                            value="cmtv0ztwd000f67os5ry9z6fn"
+                                            checked={false}
+                                            onChange={function onChange}
+                                            disabled={false}
+                                            className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]"
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                          ...
+                                        ...
+                                      <div>
+                                        <StepCalculator>
+                                        <label>
+                                          <span>
+                                          <textarea
+                                            name="deviation:cmtv0ztwd000f67os5ry9z6fn"
+                                            defaultValue=""
+                                            disabled={false}
+                                            placeholder="Only record what differed from the planned method"
+                                            className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounde..."
+-                                           style={{caret-color:"transparent"}}
+                                          >
+                                        ...
+                              <div className="px-4 pb-4 ...">
+                                <label>
+                                  <span>
+                                  <textarea
+                                    name="quickNote"
+                                    disabled={false}
+                                    placeholder="What happened at this stage? This is timestamped and appended to exec..."
+                                    className="focus-ring mt-[var(--ln-form-field-gap)] min-h-24 w-full rounded-[var(-..."
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                            ...
+                        ...
+                          <section className="rounded-[v...">
+                            <div>
+                            <div className="lg:hidden">
+                              <p>
+                              <AttachmentUploadForm targetType="experiment..." targetId="cmtv0ztwd0..." ...>
+                                <form onSubmit={function upload} className="grid gap-3...">
+                                  <input
+                                    type="hidden"
+                                    name="targetType"
+                                    value="experiment_step"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <input
+                                    type="hidden"
+                                    name="targetId"
+                                    value="cmtv0ztwd000b67oslbwe3as2"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <input
+                                    type="hidden"
+                                    name="linkType"
+                                    value="step_evidence"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <label className="block min-w-0">
+                                    <span>
+                                    <input
+                                      required={true}
+                                      name="file"
+                                      type="file"
+                                      accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx"
+                                      className="focus-ring mt-[var(--ln-form-field-gap)] h-[var(--ln-control-height-l..."
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                  ...
+                            <div className="hidden lg:...">
+                              <AttachmentUploadForm targetType="experiment" targetId="cmtv0ztw70..." ...>
+                                <form onSubmit={function upload} className="grid gap-3...">
+                                  <input
+                                    type="hidden"
+                                    name="targetType"
+                                    value="experiment"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <input
+                                    type="hidden"
+                                    name="targetId"
+                                    value="cmtv0ztw7000a67osnvm83ixp"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <input
+                                    type="hidden"
+                                    name="linkType"
+                                    value="run_evidence"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  <label className="block min-w-0">
+                                    <span>
+                                    <input
+                                      required={true}
+                                      name="file"
+                                      type="file"
+                                      accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx"
+                                      className="focus-ring mt-[var(--ln-form-field-gap)] h-[var(--ln-control-height-l..."
+-                                     style={{caret-color:"transparent"}}
+                                    >
+                                  ...
+                            ...
+                        ...
+                ...
+ 
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 1739ms (next.js: 1352ms, application-code: 387ms)
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 67ms (next.js: 3ms, application-code: 64ms)
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 124ms (next.js: 18ms, application-code: 106ms)
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7/edit 200 in 2.3s (next.js: 2.2s, application-code: 193ms)
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7/edit 200 in 165ms (next.js: 79ms, application-code: 86ms)
+ POST /api/attachments 201 in 1132ms (next.js: 941ms, application-code: 190ms)
+ GET /api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1 200 in 412ms (next.js: 400ms, application-code: 12ms)
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7 200 in 1306ms (next.js: 1154ms, application-code: 152ms)
+ POST /research-plans/cmtv1d6ez0001xposwnbbp0p7/edit 303 in 1395ms (next.js: 33ms, application-code: 1362ms)
+  └─ ƒ updateResearchPlan({}, {}) in 21ms app/research-plans/actions.ts
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7 200 in 195ms (next.js: 3ms, application-code: 193ms)
+ GET /api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1 200 in 16ms (next.js: 6ms, application-code: 10ms)
+[browser] Image with src "/api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7 200 in 87ms (next.js: 3ms, application-code: 84ms)
+ GET /api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /research-plans/cmtv1d6ez0001xposwnbbp0p7/edit 200 in 213ms (next.js: 11ms, application-code: 202ms)
+ GET /api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1eq4p000l67osk1l89rv9?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 339ms (next.js: 61ms, application-code: 278ms)
+ POST /api/attachments 201 in 23ms (next.js: 6ms, application-code: 17ms)
+ GET /api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1 200 in 7ms (next.js: 3ms, application-code: 4ms)
+ GET /experiments/cmtv1d6f40002xpos1oxiefya 200 in 856ms (next.js: 673ms, application-code: 183ms)
+ POST /experiments/cmtv1d6f40002xpos1oxiefya/edit 303 in 898ms (next.js: 3ms, application-code: 896ms)
+  └─ ƒ updateExperiment({}, {}) in 24ms app/experiments/actions.ts
+ GET /experiments/cmtv1d6f40002xpos1oxiefya 200 in 74ms (next.js: 1343µs, application-code: 73ms)
+ GET /experiments/cmtv1d6f40002xpos1oxiefya 200 in 163ms (next.js: 1176µs, application-code: 162ms)
+ GET /api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1 200 in 13ms (next.js: 7ms, application-code: 6ms)
+[browser] Image with src "/api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv1d6f40002xpos1oxiefya 200 in 90ms (next.js: 5ms, application-code: 86ms)
+ GET /api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1 200 in 10ms (next.js: 3ms, application-code: 7ms)
+[browser] Image with src "/api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 325ms (next.js: 13ms, application-code: 312ms)
+ GET /api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1ew5m000p67osmlta1pm4?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /experiments/cmtv1d6f40002xpos1oxiefya/edit 200 in 152ms (next.js: 13ms, application-code: 139ms)
+ GET /results/cmtv1d6f90003xposjvijstv2/edit 200 in 1799ms (next.js: 1615ms, application-code: 184ms)
+ POST /api/attachments 201 in 23ms (next.js: 5ms, application-code: 18ms)
+ GET /api/attachments/cmtv1f2ir000t67os7d1tto6q?inline=1&preview=1 200 in 10ms (next.js: 6ms, application-code: 5ms)
+ GET /results/cmtv1d6f90003xposjvijstv2 200 in 1724ms (next.js: 1528ms, application-code: 196ms)
+ GET /results/cmtv1d6f90003xposjvijstv2 200 in 49ms (next.js: 3ms, application-code: 46ms)
+ POST /results/cmtv1d6f90003xposjvijstv2/edit 303 in 1766ms (next.js: 3ms, application-code: 1763ms)
+  └─ ƒ updateResult({}, {}) in 27ms app/results/actions.ts
+ GET /results/cmtv1d6f90003xposjvijstv2 200 in 155ms (next.js: 1185µs, application-code: 154ms)
+ GET /api/attachments/cmtv1f2ir000t67os7d1tto6q?inline=1&preview=1 200 in 14ms (next.js: 6ms, application-code: 8ms)
+ GET /results/cmtv1d6f90003xposjvijstv2 200 in 67ms (next.js: 3ms, application-code: 65ms)
+ GET /api/attachments/cmtv1f2ir000t67os7d1tto6q?inline=1&preview=1 200 in 7ms (next.js: 3ms, application-code: 5ms)
+ GET /results/cmtv1d6f90003xposjvijstv2/edit 200 in 356ms (next.js: 16ms, application-code: 340ms)
+ GET /api/attachments/cmtv1f2ir000t67os7d1tto6q?inline=1&preview=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1f2ir000t67os7d1tto6q?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /results/cmtv1d6f90003xposjvijstv2/edit 200 in 120ms (next.js: 15ms, application-code: 105ms)
+ GET /reports/cmtv1d6fd0004xpostdrivl2s/edit 200 in 1821ms (next.js: 1652ms, application-code: 169ms)
+ POST /api/attachments 201 in 21ms (next.js: 5ms, application-code: 15ms)
+ GET /api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1 200 in 15ms (next.js: 10ms, application-code: 5ms)
+ GET /reports/cmtv1d6fd0004xpostdrivl2s 200 in 1383ms (next.js: 1258ms, application-code: 125ms)
+ POST /reports/cmtv1d6fd0004xpostdrivl2s/edit 303 in 1415ms (next.js: 4ms, application-code: 1411ms)
+  └─ ƒ updateReport({}, {}) in 19ms app/reports/actions.ts
+ GET /reports/cmtv1d6fd0004xpostdrivl2s 200 in 122ms (next.js: 3ms, application-code: 118ms)
+ GET /api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1 200 in 10ms (next.js: 6ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /reports/cmtv1d6fd0004xpostdrivl2s 200 in 63ms (next.js: 5ms, application-code: 58ms)
+ GET /api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1 200 in 12ms (next.js: 3ms, application-code: 9ms)
+[browser] Image with src "/api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /reports/cmtv1d6fd0004xpostdrivl2s/edit 200 in 325ms (next.js: 13ms, application-code: 312ms)
+ GET /api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1 200 in 7ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1f9im000x67osr6x490v8?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /reports/cmtv1d6fd0004xpostdrivl2s/edit 200 in 104ms (next.js: 3ms, application-code: 101ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo/versions/cmtv1d6fn0007xpos2gxbztnn/edit 200 in 525ms (next.js: 63ms, application-code: 462ms)
+ POST /api/attachments 201 in 21ms (next.js: 5ms, application-code: 17ms)
+ GET /api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1 200 in 7ms (next.js: 2ms, application-code: 5ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo 200 in 1309ms (next.js: 1094ms, application-code: 215ms)
+ POST /protocols/cmtv1d6fj0006xposp6m1tvlo/versions/cmtv1d6fn0007xpos2gxbztnn/edit 303 in 1353ms (next.js: 3ms, application-code: 1351ms)
+  └─ ƒ saveProtocolDocument({}, {}) in 33ms app/protocols/[id]/versions/[versionId]/edit/actions.ts
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo 200 in 90ms (next.js: 1297µs, application-code: 89ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo 200 in 136ms (next.js: 3ms, application-code: 134ms)
+ GET /api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1 200 in 11ms (next.js: 6ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo 200 in 56ms (next.js: 4ms, application-code: 51ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo 200 in 96ms (next.js: 1151µs, application-code: 95ms)
+ GET /api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1 200 in 7ms (next.js: 2ms, application-code: 5ms)
+ GET /research-plans/cmtv1fhz60001e1osey6b7gqo/edit 200 in 115ms (next.js: 12ms, application-code: 102ms)
+[browser] Image with src "/api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo/versions/cmtv1d6fn0007xpos2gxbztnn/edit 200 in 372ms (next.js: 14ms, application-code: 357ms)
+ GET /research-plans/cmtv1fhz60001e1osey6b7gqo 200 in 167ms (next.js: 24ms, application-code: 143ms)
+ POST /research-plans/cmtv1fhz60001e1osey6b7gqo/edit 303 in 289ms (next.js: 3ms, application-code: 286ms)
+  └─ ƒ updateResearchPlan({}, {}) in 83ms app/research-plans/actions.ts
+ GET /research-plans/cmtv1fhz60001e1osey6b7gqo 200 in 84ms (next.js: 3ms, application-code: 81ms)
+ GET /research-plans/cmtv1fhz60001e1osey6b7gqo 200 in 111ms (next.js: 1903µs, application-code: 109ms)
+ GET /api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1 200 in 8ms (next.js: 3ms, application-code: 5ms)
+[browser] Image with src "/api/attachments/cmtv1fffo001167osven4jh1i?inline=1&preview=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /research-plans/cmtv1fhz60001e1osey6b7gqo/edit 200 in 77ms (next.js: 3ms, application-code: 74ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo/versions/cmtv1d6fn0007xpos2gxbztnn/edit 200 in 175ms (next.js: 13ms, application-code: 162ms)
+ GET /entries/cmtv1d6fg0005xpos7goy1xyz/edit 200 in 2.2s (next.js: 2.0s, application-code: 226ms)
+ GET /protocols/cmtv1d6fj0006xposp6m1tvlo/versions/cmtv1d6fn0007xpos2gxbztnn/edit 200 in 110ms (next.js: 3ms, application-code: 108ms)
+ GET /experiments/cmtv1fhza0002e1oskncv8zst/edit 200 in 176ms (next.js: 15ms, application-code: 160ms)
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i/edit 500 in 16ms (next.js: 4ms, application-code: 13ms)
+[browser] Uncaught ModuleBuildError: Module build failed (from ../LabNest/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+
+Caused by:
+    Syntax Error
+[browser] ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error 
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+⨯ ./src/components/MobileMeasurementCapture.tsx
+Error:   x Expected '</', got 'ident'
+    ,-[/Users/annayzhu/Documents/Playground/LabNest-debug-20260910/src/components/MobileMeasurementCapture.tsx:72:1]
+ 69 |     }} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss disabled:opacity-45"><Gauge className="h-5 w-5" aria-hidden />Measurement</button>
+ 70 |     {hasOpened && step ? createPortal(<div hidden={!open} className="ln-modal-layer fixed inset-0 z-50 lg:hidden"><button type="button" aria-label="Close measurement" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" /><section role="dialog" aria-modal="true" aria-labelledby="measurement-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
+ 71 |       <div className="flex items-start justify-between gap-3"><div><h2 id="measurement-title" className="font-serif text-xl font-medium text-ink">Record measurement</h2><p className="mt-1 text-xs text-muted">Step {step.order} · {step.title}</p></div><button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} aria-label="Close measurement" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button></div>
+ 72 |       <form ref={formRef} onInput={()=>{try{if(formRef.current)sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(new FormData(formRef.current))));}catch{setStatus("Draft could not be saved. Keep this page open.");}} onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3">
+    :                                                                                                                                                                                                                                         ^^^^^^^^
+ 73 |         <label><span className="text-xs font-semibold text-muted">Value *</span><input ref={valueInput} required name="value" type="number" step="any" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 74 |         <label><span className="text-xs font-semibold text-muted">Unit *</span><input required name="unit" maxLength={32} placeholder="ng/µL, %, fold…" className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-base text-ink" /></label>
+ 75 |         <label className="col-span-2"><span className="text-xs font-semibold text-muted">Observed at *</span><input required name="observedAt" type="datetime-local" value={observedAt} onChange={(event) => setObservedAt(event.target.value)} className="focus-ring mt-1 h-12 w-full rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 text-sm text-ink" /></label>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/MobileMeasurementCapture.tsx
+./src/components/ProtocolRunProgressForm.tsx
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i/edit 200 in 602ms (next.js: 247ms, application-code: 355ms)
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i 200 in 1829ms (next.js: 1629ms, application-code: 200ms)
+ POST /research-plans/cmtv1hmab0001t0os9kohe18i/edit 303 in 1877ms (next.js: 3ms, application-code: 1874ms)
+  └─ ƒ updateResearchPlan({}, {}) in 18ms app/research-plans/actions.ts
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i 200 in 71ms (next.js: 1406µs, application-code: 69ms)
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i 200 in 153ms (next.js: 1357µs, application-code: 152ms)
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i/edit 200 in 322ms (next.js: 14ms, application-code: 308ms)
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i/edit 200 in 142ms (next.js: 11ms, application-code: 131ms)
+ GET /experiments/cmtv1hmag0002t0osn9cpu3zn/edit 200 in 1295ms (next.js: 975ms, application-code: 320ms)
+ GET /experiments/cmtv1hmag0002t0osn9cpu3zn 200 in 1506ms (next.js: 1285ms, application-code: 221ms)
+ POST /experiments/cmtv1hmag0002t0osn9cpu3zn/edit 303 in 1540ms (next.js: 3ms, application-code: 1537ms)
+  └─ ƒ updateExperiment({}, {}) in 20ms app/experiments/actions.ts
+ GET /experiments/cmtv1hmag0002t0osn9cpu3zn 200 in 78ms (next.js: 1224µs, application-code: 77ms)
+ GET /experiments/cmtv1hmag0002t0osn9cpu3zn 200 in 121ms (next.js: 1309µs, application-code: 120ms)
+ GET /experiments/cmtv1hmag0002t0osn9cpu3zn/edit 200 in 348ms (next.js: 15ms, application-code: 334ms)
+ GET /results/cmtv1hmal0003t0os1wdluyoj/edit 200 in 152ms (next.js: 74ms, application-code: 78ms)
+ GET /results/cmtv1hmal0003t0os1wdluyoj 200 in 963ms (next.js: 777ms, application-code: 186ms)
+ POST /results/cmtv1hmal0003t0os1wdluyoj/edit 303 in 996ms (next.js: 3ms, application-code: 993ms)
+  └─ ƒ updateResult({}, {}) in 18ms app/results/actions.ts
+ GET /results/cmtv1hmal0003t0os1wdluyoj 200 in 43ms (next.js: 1206µs, application-code: 42ms)
+ GET /results/cmtv1hmal0003t0os1wdluyoj 200 in 116ms (next.js: 1614µs, application-code: 114ms)
+ GET /results/cmtv1hmal0003t0os1wdluyoj/edit 200 in 408ms (next.js: 19ms, application-code: 389ms)
+ GET /research-plans/cmtv1hmab0001t0os9kohe18i/edit 200 in 130ms (next.js: 19ms, application-code: 112ms)
+ GET /experiments/cmtv0ztw7000a67osnvm83ixp/run 200 in 390ms (next.js: 94ms, application-code: 296ms)
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 1116ms (next.js: 1104ms, application-code: 12ms)
+[browser] Image with src "/api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /api/attachments/cmtv0zrjn000567osayd9o1xa?inline=1 200 in 7ms (next.js: 2ms, application-code: 5ms)
+[?25h

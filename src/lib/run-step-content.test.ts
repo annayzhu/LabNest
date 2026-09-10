@@ -1,5 +1,5 @@
 import {it,expect} from 'vitest';
-import {createEmptyProtocolDocument,projectProtocolDocument} from './protocol-document';
+import {createEmptyProtocolDocument,projectProtocolDocument,protocolDocumentSchema} from './protocol-document';
 import {buildProtocolExperimentSteps} from './experiment-planning';
 import {runStepContent,runOfflineImagePaths} from './run-step-content';
 it('R01 R02 R04 stable block mapping retains tables, notes, and distinct same-title steps',()=>{
@@ -29,7 +29,7 @@ it.each(['heading','heading2','heading3'] as const)('%s binds tables, images and
  expect(projection.commonBlocks.map(b=>b.id)).toEqual(['prep']);
  const source={versions:[{protocolVersionId:'v',stepsJson:projection.steps,contentJson:doc}]};
  const s=projection.steps[1];const resolved=runStepContent(source,{protocolStepRef:'v:'+s.source_ref,groupKey:'v',order:2,title:'B',description:''});
- expect(resolved.common.map(b=>b.id)).toEqual(['prep']);expect(JSON.stringify(resolved)).not.toContain('Table A');
+ expect(resolved.common.map(b=>b.id)).toEqual(['prep']);expect(JSON.stringify({blocks:resolved.blocks,common:resolved.common})).not.toContain('Table A');
 });
 it('recovers a v1.2 rich heading with missing table from its frozen source ID, never as shared preparation',()=>{
  const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'h',type:'rich_text',nodes:[{type:'heading2',content:[{text:'Old heading'}]}]},{id:'t',type:'table',rows:[['Frozen table']]}];
@@ -39,3 +39,35 @@ it('recovers a v1.2 rich heading with missing table from its frozen source ID, n
 });
 
 it('offline image manifest deduplicates only frozen local attachment images',()=>{const image=(url:string)=>({type:'media',mediaType:'image',url});expect(runOfflineImagePaths({versions:[{blocks:[image('/api/attachments/a?inline=1'),image('/api/attachments/a?inline=1'),image('https://outside.test/private.png'),image('/api/mobile/calculations'),{type:'media',mediaType:'video',url:'/api/attachments/movie'}]}]})).toEqual(['/api/attachments/a?inline=1']);});
+
+it('restores a legacy heading-plus-checklist contract without changing its saved step identity',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[
+  {id:'a',type:'heading',text:'1. Prepare'}, {id:'ca',type:'checklist',items:['Add buffer','Mix']},
+  {id:'b',type:'heading',text:'2. Prepare'}, {id:'tb',type:'table',rows:[['Component','Volume'],['DNA','2 µL']]}, {id:'cb',type:'checklist',items:['Add DNA']},
+ ];
+ const snapshot={versions:[{protocolVersionId:'v',contentJson:doc,stepsJson:[{order:1,title:'Prepare',description:'Add buffer\nMix'},{order:2,title:'Prepare',description:'Add DNA'}]}]};
+ const step={protocolStepRef:'v:2',groupKey:'v',order:2,title:'Prepare',description:'Add DNA'};
+ const before=JSON.stringify(snapshot);
+ expect(runStepContent(snapshot,step).blocks.map(b=>b.id)).toEqual(['tb','cb']);
+ expect(JSON.stringify(snapshot)).toBe(before);
+});
+it('keeps frozen material tables reachable even when an old step cannot be recovered',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='material')!.blocks=[{id:'material',type:'table',rows:[['Reagent','µL'],['Buffer','{{dose}}']]}];
+ const r=runStepContent({versions:[{protocolVersionId:'v',contentJson:doc,stepsJson:[]}]},{protocolStepRef:'v:9',groupKey:'v',order:9,title:'Unknown',description:'Saved text'},{dose:7});
+ expect(r.reference.find(s=>s.key==='material')?.blocks).toEqual([{id:'material',type:'table',rows:[['Reagent','µL'],['Buffer','7']]}]);
+ expect(r.source).toBe('legacy-text');expect(r.blocks).toEqual([]);
+});
+
+it('identifies confirmation hierarchy only from frozen checklist identity',async()=>{
+ const {runStepIsConfirmation}=await import('./run-step-content');
+ const doc={schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{id:'heading',type:'heading',text:'Confirm'},{id:'checks',type:'checklist',items:['Confirm']}]}]};
+ const projected=projectProtocolDocument(protocolDocumentSchema.parse(doc));
+ const snapshot={versions:[{protocolVersionId:'v',stepsJson:projected.steps,contentJson:doc}]};
+ expect(runStepIsConfirmation(snapshot,{groupKey:'v',protocolStepRef:'v:checks:0'})).toBe(true);
+ expect(runStepIsConfirmation(snapshot,{groupKey:'v',protocolStepRef:'v:heading'})).toBe(false);
+});
+
+it('keeps numbered item details in its existing Run step',()=>{
+ const doc=protocolDocumentSchema.parse({schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{id:'numbered',type:'rich_text',nodes:[{type:'numbered',content:[{text:'Prepare'}],childContent:[{type:'paragraph',content:[{type:'text',text:'Critical dose 5 µL'}]}]}]}]}]});
+ const projection=projectProtocolDocument(doc);expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('numbered:0');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Critical dose 5 µL');
+});

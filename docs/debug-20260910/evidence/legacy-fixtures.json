@@ -1,0 +1,35 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "kind": "recoverable",
+      "id": "cmtv1p7yt0000lsos65l0fxjs",
+      "steps": [
+        {
+          "id": "cmtv1p7yy0001lsosbbpcv42o",
+          "ref": "synthetic-frozen-v1:1"
+        },
+        {
+          "id": "cmtv1p7yz0002lsosxcyo3e3v",
+          "ref": "synthetic-frozen-v1:2"
+        }
+      ],
+      "snapshotHash": "6f724313a3a0b7e35518fb9fdbc895d8ee1b3546bbb67f569e1e4bc5e3690357"
+    },
+    {
+      "kind": "unverified",
+      "id": "cmtv1p7z90003lsosxszjpejv",
+      "steps": [
+        {
+          "id": "cmtv1p7za0004lsosb0rhfb7h",
+          "ref": "synthetic-frozen-v1:1"
+        },
+        {
+          "id": "cmtv1p7za0005lsos0tc590n4",
+          "ref": "synthetic-frozen-v1:2"
+        }
+      ],
+      "snapshotHash": "618727dc7c0337d318a7b4d2ac51ef938057cb904910f0d283210a5f02285c8a"
+    }
+  ]
+}

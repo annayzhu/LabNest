@@ -1,0 +1,53 @@
+[
+  {
+    "width": 1440,
+    "sizes": [
+      {
+        "role": "step",
+        "size": "14.6667px",
+        "indent": "0px"
+      },
+      {
+        "role": "confirmation",
+        "size": "13.3333px",
+        "indent": "16px"
+      },
+      {
+        "role": "confirmation",
+        "size": "13.3333px",
+        "indent": "16px"
+      }
+    ],
+    "completed": 1,
+    "uncompleted": 2,
+    "labelOnlyBorder": true
+  },
+  {
+    "width": 390,
+    "sizes": [
+      {
+        "role": "step",
+        "size": "14.6667px",
+        "indent": "0px"
+      },
+      {
+        "role": "confirmation",
+        "size": "13.3333px",
+        "indent": "12px"
+      },
+      {
+        "role": "confirmation",
+        "size": "13.3333px",
+        "indent": "12px"
+      }
+    ],
+    "completed": 1,
+    "uncompleted": 2,
+    "labelOnlyBorder": true
+  },
+  {
+    "authoredFontPreserved": true,
+    "derivedReadAndEditConsistent": true,
+    "status": "passed"
+  }
+]

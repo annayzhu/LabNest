@@ -1,3 +1,5 @@
+import { paragraphLayoutFields } from "./document-paragraph-layout";
+import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 import { z } from "zod";
 import type {
   ResultCardinality,
@@ -82,6 +84,7 @@ const resultChartInputSchema = z.object({
 });
 
 const resultTemplateInstructionRunSchema = z.object({
+  fontFamily:z.custom<RichTextFontFamily>((value) => typeof value === "string" && Boolean(parseRichTextFontFamily(value))).optional(),
   text: z.string(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
@@ -94,6 +97,8 @@ const resultTemplateInstructionRunSchema = z.object({
 });
 
 const resultTemplateInstructionNodeSchema = z.object({
+  ...paragraphLayoutFields,
+  childContent:tiptapCellRichContentSchema.optional(),
   type: z.enum(["paragraph", "heading2", "heading3", "bullet", "numbered", "quote"]),
   content: z.array(resultTemplateInstructionRunSchema),
   lineHeight: z.union([z.literal(1), z.literal(1.15), z.literal(1.3), z.literal(1.5), z.literal(1.6), z.literal(2)]).optional(),

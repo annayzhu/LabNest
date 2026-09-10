@@ -1,3 +1,4 @@
+import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import { AlertTriangle, CheckSquare2, FileCheck2, Table2, Wrench } from "lucide-react";
 import { DocumentMediaView } from "./DocumentMediaView";
 import { documentMediaFromMarkdown } from "@/lib/document-media";
@@ -136,20 +137,23 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
       const items: ProtocolRichTextNode[] = [];
       while (nodes[index]?.type === type) { items.push(nodes[index]); index += 1; }
       const List = type === "bullet" ? "ul" : "ol";
-      rendered.push(<List key={`list-${index}`} className={type === "bullet" ? "document-rich-list list-disc pl-6" : "document-rich-list list-decimal pl-6"}>{items.map((item, itemIndex) => <li key={itemIndex} data-labnest-line-height={item.lineHeight} data-labnest-font-family={item.fontFamily} style={{ ...(item.lineHeight ? { lineHeight: item.lineHeight } : {}), ...(item.fontFamily ? { fontFamily: richTextFontFamilyCss(item.fontFamily) } : {}) }}><NodeContent node={item} /></li>)}</List>);
+      rendered.push(<List key={`list-${index}`} className={type === "bullet" ? "document-rich-list list-disc pl-6" : "document-rich-list list-decimal pl-6"}>{items.map((item, itemIndex) => <li key={itemIndex} data-labnest-line-height={item.lineHeight} data-labnest-font-family={item.fontFamily} style={{ ...paragraphLayoutStyle(item), ...(item.lineHeight ? { lineHeight: item.lineHeight } : {}), ...(item.fontFamily ? { fontFamily: richTextFontFamilyCss(item.fontFamily) } : {}) }}><NodeContent node={item} />{item.childContent?.length ? <TiptapCellContentView content={item.childContent} fallback=""/>:null}</li>)}</List>);
       continue;
     }
-    const lineProps = { ...(node.lineHeight ? { "data-labnest-line-height": node.lineHeight } : {}), ...(node.fontFamily ? { "data-labnest-font-family": node.fontFamily } : {}), style: { ...(node.lineHeight ? { lineHeight: node.lineHeight } : {}), ...(node.fontFamily ? { fontFamily: richTextFontFamilyCss(node.fontFamily) } : {}) } };
+    const lineProps = { ...(node.lineHeight ? { "data-labnest-line-height": node.lineHeight } : {}), ...(node.fontFamily ? { "data-labnest-font-family": node.fontFamily } : {}), style: { ...paragraphLayoutStyle(node), ...(node.lineHeight ? { lineHeight: node.lineHeight } : {}), ...(node.fontFamily ? { fontFamily: richTextFontFamilyCss(node.fontFamily) } : {}) } };
     if (node.type === "heading2") rendered.push(<h3 key={index} {...lineProps} className="document-content-heading font-serif font-medium text-ink"><NodeContent node={node} /></h3>);
     else if (node.type === "heading3") rendered.push(<h4 key={index} {...lineProps} className="document-content-heading font-semibold text-ink"><NodeContent node={node} /></h4>);
     else if (node.type === "quote") rendered.push(<blockquote key={index} {...lineProps} className="border-l-2 border-sage pl-4 italic text-muted"><NodeContent node={node} /></blockquote>);
     else rendered.push(<p key={index} {...lineProps} className="whitespace-pre-wrap"><NodeContent node={node} /></p>);
+    if(node.childContent?.length)rendered.push(<TiptapCellContentView key={`children-${index}`} content={node.childContent} fallback=""/>);
     index += 1;
   }
   return <div className="document-copy document-rich-text-flow text-graphite">{rendered}</div>;
 }
 
 export function ProtocolContentBlockView({ block }: { block: ProtocolContentBlock }) {
+  if ((block.type==="heading" || block.type==="text") && block.nodes) return <ProtocolRichTextContent nodes={block.nodes}/>;
+  if (block.type==="checklist" && block.itemNodes) return <ul className="document-rich-list pl-4">{block.items.map((item,index)=><li key={index}><ProtocolRichTextContent nodes={block.itemNodes?.[index]??[{type:"paragraph",content:[{text:item}]}]}/></li>)}</ul>;
   if (block.type === "heading") return <h3 className="document-content-heading font-serif font-medium text-ink">{block.text}</h3>;
   if (block.type === "text") return <p className="document-copy whitespace-pre-wrap leading-7 text-graphite">{block.text}</p>;
   if (block.type === "rich_text") return <ProtocolRichTextContent nodes={block.nodes} />;
@@ -180,7 +184,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
   const [headerRow = [], ...bodyRows] = block.rows;
   return <figure className="space-y-2">
-    <p className="text-xs text-muted">左右滑动查看完整表格 / Scroll sideways for all columns</p>
+    <p className="text-xs text-muted">Scroll sideways for all columns</p>
     {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}
     <ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar">
       <table className="document-three-line-table min-w-full table-fixed text-left text-sm">

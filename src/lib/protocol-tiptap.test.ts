@@ -99,3 +99,39 @@ describe("Protocol Tiptap compatibility layer", () => {
     expect(purpose?.content?.[0]?.attrs?.protocolBlockId).toBe("purpose-user-blank");
   });
 });
+
+it("retains paragraph layout after validation and reopening", () => {
+  const document = createEmptyProtocolDocument();
+  document.sections[0].blocks = [{id:"layout",type:"rich_text",nodes:[{type:"paragraph",content:[{text:"剂量 5 µL"}]}]}];
+  const json=protocolDocumentToTiptap(document);
+  Object.assign(json.content![0].content![0].attrs!,{textAlign:"right",documentIndent:2,spaceBeforePt:6,spaceAfterPt:12});
+  const saved=tiptapToProtocolDocument(json);
+  const reopened=protocolDocumentToTiptap(saved);
+  expect(reopened.content![0].content![0].attrs).toMatchObject({textAlign:"right",documentIndent:2,spaceBeforePt:6,spaceAfterPt:12});
+});
+
+it('preserves legacy block formatting without changing step source identities',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'h',type:'heading',text:'Prepare'},{id:'t',type:'text',text:'Add 5 µL'},{id:'c',type:'checklist',items:['Confirm']}];
+ const json=protocolDocumentToTiptap(doc);const nodes=json.content!.find(n=>n.attrs?.sectionKey==='steps')?.content ?? json.content!.find(n=>n.content?.some(c=>c.attrs?.protocolBlockId==='h'))!.content!;
+ nodes[0].attrs={...nodes[0].attrs,textAlign:'center'};nodes[1].attrs={...nodes[1].attrs,documentIndent:2};nodes[2].content![0].content![0].content![0].marks=[{type:'textStyle',attrs:{fontSize:'18pt'}}];
+ const saved=tiptapToProtocolDocument(json);const reopened=protocolDocumentToTiptap(saved).content!.find(n=>n.content?.some(c=>c.attrs?.protocolBlockId==='h'))!.content!;
+ expect(reopened[0].attrs?.textAlign).toBe('center');expect(reopened[1].attrs?.documentIndent).toBe(2);expect(reopened[2].content![0].content![0].content![0].marks).toContainEqual({type:'textStyle',attrs:{fontSize:'18pt'}});
+ expect(saved.sections.find(s=>s.key==='steps')!.blocks.map(b=>[b.id,b.type])).toEqual([['h','heading'],['t','text'],['c','checklist']]);
+});
+
+it('keeps nested list content and continuation paragraphs when reopening',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections[0].blocks=[{id:'list',type:'rich_text',nodes:[{type:'bullet',content:[{text:'Parent'}]}]}];
+ const json=protocolDocumentToTiptap(doc);const item=json.content![0].content![0].content![0];
+ item.content!.push({type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Child 5 µL'}]}]}]},{type:'paragraph',content:[{type:'text',text:'Keep on ice'}]});
+ const saved=tiptapToProtocolDocument(json);const restored=protocolDocumentToTiptap(saved).content![0].content![0].content![0];
+ expect(restored.content?.map(node=>node.type)).toEqual(['paragraph','bulletList','paragraph']);
+ expect(JSON.stringify(restored)).toContain('Child 5 µL');expect(JSON.stringify(restored)).toContain('Keep on ice');
+});
+
+it('preserves nested checklist details without creating extra confirmation items',()=>{
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'check',type:'checklist',items:['Parent']}];const json=protocolDocumentToTiptap(doc);
+ const item=json.content!.find(n=>n.content?.some(c=>c.type==='taskList'))!.content![0].content![0];
+ item.content!.push({type:'taskList',content:[{type:'taskItem',attrs:{checked:false},content:[{type:'paragraph',content:[{type:'text',text:'Child dose 5 µL'}]}]}]},{type:'paragraph',content:[{type:'text',text:'Followup note'}]});
+ const saved=tiptapToProtocolDocument(json);const restored=protocolDocumentToTiptap(saved).content!.find(n=>n.content?.some(c=>c.type==='taskList'))!.content![0].content![0];
+ expect(restored.content?.map(n=>n.type)).toEqual(['paragraph','taskList','paragraph']);expect(saved.sections.find(s=>s.key==='steps')!.blocks).toHaveLength(1);
+});

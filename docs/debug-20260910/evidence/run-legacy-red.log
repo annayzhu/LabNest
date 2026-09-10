@@ -1,0 +1,36 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/run-step-content.test.ts (8 tests | 1 failed) 14ms
+   × restores a legacy heading-plus-checklist contract without changing its saved step identity 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/run-step-content.test.ts > restores a legacy heading-plus-checklist contract without changing its saved step identity
+AssertionError: expected [] to deeply equal [ 'tb', 'cb' ]
+
+- Expected
++ Received
+
+- [
+-   "tb",
+-   "cb",
+- ]
++ []
+
+ ❯ src/lib/run-step-content.test.ts:51:60
+     49|  const step={protocolStepRef:'v:2',groupKey:'v',order:2,title:'Prepare…
+     50|  const before=JSON.stringify(snapshot);
+     51|  expect(runStepContent(snapshot,step).blocks.map(b=>b.id)).toEqual(['t…
+       |                                                            ^
+     52|  expect(JSON.stringify(snapshot)).toBe(before);
+     53| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  12:14:38
+   Duration  470ms (transform 112ms, setup 0ms, import 205ms, tests 14ms, environment 0ms)
+

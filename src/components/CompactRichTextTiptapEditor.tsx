@@ -14,7 +14,8 @@ import { DocumentWysiwygToolbar, type WysiwygInsertAction } from "@/components/D
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
 import { newClientMutationId } from "@/lib/client-mutation-id";
-import { createDocumentBlockLineHeightExtension } from "@/lib/tiptap-document-extensions";
+import TextAlign from "@tiptap/extension-text-align";
+import { createDocumentBlockLineHeightExtension, createResizableDocumentTableExtension, createDocumentLegacyAttributesExtension } from "@/lib/tiptap-document-extensions";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
 
@@ -50,8 +51,11 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
     autofocus: autoFocus ? "end" : false,
     extensions: [
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
+      createResizableDocumentTableExtension(),
+      createDocumentLegacyAttributesExtension({name:"compactDocumentIdentity",attributes:[{name:"scientificBlockId",htmlAttribute:"data-scientific-block-id"}]}),
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
+      TextAlign.configure({types:["paragraph","heading"]}),
       TaskList,
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder }),
@@ -77,7 +81,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
-  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={media ? [...insertActions.filter(action => !["media", "attachment"].includes(action.id)), ...documentMediaInsertActions(mediaDraftId)] : insertActions} className="ln-compact-rich-toolbar" />;
+  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={media ? [...(!insertActions.some(action=>action.id==="table")?[{id:"table",label:"Table",icon:null,description:"Insert an editable table",run:(target:Editor)=>target.chain().focus().insertTable({rows:3,cols:3,withHeaderRow:true}).run()}]:[]),...insertActions.filter(action => !["media", "attachment"].includes(action.id)), ...documentMediaInsertActions(mediaDraftId)] : insertActions} className="ln-compact-rich-toolbar" />;
   return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
     {showToolbar ? (toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar) : null}
     <EditorContent editor={editor} />

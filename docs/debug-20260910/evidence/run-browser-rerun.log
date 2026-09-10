@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await content.locator('img').evaluate(image=>image.complete&&image.naturalWidth>0))
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-debug-20260910/scripts/verify-debug10-run.mjs:11:3 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

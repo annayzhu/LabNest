@@ -1,0 +1,38 @@
+Synthetic result
+EXPERIMENT
+
+RESULT TYPE
+
+SOURCE
+
+RECORD
+
+QC
+
+EXP-1789020149959 ·
+Synthetic editor
+1789020149959
+
+Observation
+
+manual
+
+draft
+
+not assessed
+
+Summary
+
+中文图注 result 1789020171550
+
+Editor acceptance body / 正文验收
+
+Data & media
+Analysis
+Interpretation
+Only record deviations, failed QC,
+
+Deviations & limitations missing data, or limits that change
+interpretation.
+
+

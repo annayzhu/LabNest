@@ -169,3 +169,8 @@ describe("Result Template runtime", () => {
     expect(checkResultTemplate(blankTemplate).errors).toContain("Replace the placeholder with a Result name.");
   });
 });
+
+it('preserves instruction paragraph layout and nested list content during template normalization', () => {
+ const node={type:'bullet' as const,textAlign:'right' as const,documentIndent:1,spaceAfterPt:6,content:[{text:'Instruction µL'}],childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Nested instruction'}]}]}]}]};
+ expect(normalizeResultTemplate({result_type:'Observation',fields:[],instructions:[node]}).instructions).toEqual([node]);
+});

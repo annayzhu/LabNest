@@ -93,3 +93,13 @@ it('retains stored execution parameters at experiment scope without assigning th
   expect(execution.blocks).toContainEqual({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],['sample_count','2'],['reaction_volume','3']]});
   expect(experimentExecutionDocument(doc,[],{sample_count:4}).sections.find(section=>section.key==='execution')!.blocks).toHaveLength(1);
 });
+
+it("labels derived deviations explicitly without styling authored warnings as execution", () => {
+ const source=createScientificDocument(experimentSections);
+ source.sections.find(s=>s.key==='execution')!.blocks=[{id:'authored',type:'callout',tone:'critical',text:'偏差是观察内容，不是执行状态'}];
+ const result=experimentExecutionDocument(source,[{id:'step1',groupOrder:0,order:1,groupTitle:'Method v1',title:'Inspect',completed:false,deviationNote:'延长5分钟'}]);
+ const blocks=result.sections.find(s=>s.key==='execution')!.blocks;
+ expect(blocks[0]).not.toHaveProperty('execution');
+ expect(blocks.find(b=>b.id==='run-derived:step1')).toMatchObject({execution:{role:'step',stepId:'step1',completed:false,deviationLabel:'偏差',deviationNote:'延长5分钟'}});
+ expect(source.sections.find(s=>s.key==='execution')!.blocks).toHaveLength(1);
+});

@@ -98,7 +98,7 @@ export async function structuredExportRecords(
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
     return Promise.all(rows.map(async (row) => {
-      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson);
+      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");

@@ -1,0 +1,53 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-debug-20260910
+
+ ❯ src/lib/tiptap-table-serialization.test.ts (2 tests | 1 failed) 7ms
+   × retains paragraph-only cell layout and paragraph breaks through persistence 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/tiptap-table-serialization.test.ts > retains paragraph-only cell layout and paragraph breaks through persistence
+AssertionError: expected undefined to deeply equal [ { type: 'paragraph', …(2) }, …(1) ]
+
+- Expected:
+[
+  {
+    "attrs": {
+      "documentIndent": 2,
+      "documentLineHeight": "1.5",
+      "spaceAfterPt": 6,
+      "textAlign": "right",
+    },
+    "content": [
+      {
+        "text": "10 µL",
+        "type": "text",
+      },
+    ],
+    "type": "paragraph",
+  },
+  {
+    "content": [
+      {
+        "text": "中文说明",
+        "type": "text",
+      },
+    ],
+    "type": "paragraph",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ src/lib/tiptap-table-serialization.test.ts:29:47
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  13:09:33
+   Duration  254ms (transform 48ms, setup 0ms, import 109ms, tests 7ms, environment 0ms)
+

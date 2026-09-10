@@ -1,3 +1,4 @@
+import { paragraphLayout } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import {
@@ -65,6 +66,7 @@ function legacyAttrs(blockId: string, blockType: ProtocolContentBlock["type"], n
   return {
     protocolBlockId: blockId,
     protocolBlockType: blockType,
+    ...paragraphLayout(node),
     documentLineHeight: node?.lineHeight ?? null,
     protocolLineHeight: node?.lineHeight ?? null,
     protocolFontFamily: node?.fontFamily ?? null,
@@ -91,7 +93,8 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
     if (node.type !== "bullet" && node.type !== "numbered") {
-      content.push(richNodeToTiptap(node, blockId));
+      if(node.content.length===0 && node.childContent?.[0]?.type==="table")content.push(...node.childContent);
+      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []));
       index += 1;
       continue;
     }
@@ -102,7 +105,7 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
       const attrs = legacyAttrs(blockId, "rich_text", item);
       items.push({
         type: "listItem",
-        content: [{ type: "paragraph", attrs, content: inlineContentFromRuns(item.content) }],
+        content: [{ type: "paragraph", attrs, content: inlineContentFromRuns(item.content) }, ...(item.childContent ?? [])],
       });
       index += 1;
     }
@@ -131,6 +134,7 @@ function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>):
 }
 
 function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
+  if ((block.type==="heading" || block.type==="text") && block.nodes) return richNodesToTiptap(block.nodes,block.id).map(node=>({...node,attrs:{...node.attrs,protocolBlockId:block.id,protocolBlockType:block.type}}));
   if (block.type === "media") return [{ type: "documentMedia", attrs: { block } }];
   if (block.type === "rich_text") return richNodesToTiptap(block.nodes, block.id);
   if (block.type === "heading") return [{
@@ -146,10 +150,10 @@ function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
   if (block.type === "checklist") return [{
     type: "taskList",
     attrs: legacyAttrs(block.id, "checklist"),
-    content: (block.items.length ? block.items : [""]).map((item) => ({
+    content: (block.items.length ? block.items : [""]).map((item,index) => ({
       type: "taskItem",
       attrs: { checked: false },
-      content: [{ type: "paragraph", content: textContent(item) }],
+      content: block.itemNodes?.[index] ? richNodesToTiptap(block.itemNodes[index],block.id) : [{ type: "paragraph", content: textContent(item) }],
     })),
   }];
   if (block.type === "table" && !block.resultTemplate) return [tableToTiptap(block)];
@@ -236,6 +240,7 @@ function nodeTypography(node: JSONContent) {
   const lineHeight = node.attrs?.documentLineHeight ?? node.attrs?.protocolLineHeight ?? textStyle?.attrs?.lineHeight;
   const fontFamily = node.attrs?.protocolFontFamily ?? textStyle?.attrs?.fontFamily;
   return {
+    ...paragraphLayout(node.attrs),
     lineHeight: [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,
     fontFamily: parseRichTextFontFamily(fontFamily),
   };
@@ -246,6 +251,7 @@ function listItemParagraph(item: JSONContent): JSONContent {
 }
 
 function tiptapNodeToRichNodes(node: JSONContent): ProtocolRichTextNode[] {
+  if (node.type === "table") return [{type:"paragraph",content:[],childContent:[node]}];
   if (node.type === "documentMedia") {
     const media = documentMediaSchema.safeParse(node.attrs?.block);
     return media.success ? [{ type: "paragraph", content: [{ text: documentMediaToMarkdown(media.data) }] }] : [];
@@ -257,12 +263,13 @@ function tiptapNodeToRichNodes(node: JSONContent): ProtocolRichTextNode[] {
         type: node.type === "bulletList" ? "bullet" as const : "numbered" as const,
         content: runsFromInlineContent(paragraph.content),
         ...nodeTypography(paragraph),
+        ...(item.content?.length && item.content.length>1 ? {childContent:item.content.slice(1)} : {}),
       };
     });
   }
   if (node.type === "blockquote") {
     const paragraph = node.content?.find((item) => item.type === "paragraph") ?? node;
-    return [{ type: "quote", content: runsFromInlineContent(paragraph.content), ...nodeTypography(node) }];
+    return [{ type: "quote", content: runsFromInlineContent(paragraph.content), ...nodeTypography(paragraph) }];
   }
   if (node.type === "heading") {
     return [{
@@ -280,7 +287,7 @@ export function tiptapToProtocolRichText(json: JSONContent): ProtocolRichTextNod
 }
 
 function taskItems(node: JSONContent): string[] {
-  return (node.content ?? []).map((item) => plainText(item));
+  return (node.content ?? []).map((item) => (item.content??[]).map(plainText).join("\n"));
 }
 
 function safeWidgetBlock(node: JSONContent): ProtocolContentBlock | undefined {
@@ -293,6 +300,10 @@ function blockIdentity(node: JSONContent) {
     id: typeof node.attrs?.protocolBlockId === "string" ? node.attrs.protocolBlockId : newBlockId("rich"),
     type: typeof node.attrs?.protocolBlockType === "string" ? node.attrs.protocolBlockType : "rich_text",
   };
+}
+
+function hasExplicitFormatting(nodes:ProtocolRichTextNode[]):boolean {
+ return nodes.some(node=>Boolean(node.childContent?.length) || Object.entries(node).some(([key,value])=>!["type","content"].includes(key)&&value!==undefined) || node.content.some(run=>Object.entries(run).some(([key,value])=>key!=="text"&&value!==undefined)));
 }
 
 function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
@@ -313,22 +324,25 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
       continue;
     }
     if (node.type === "taskList") {
-      blocks.push({ id: identity.id, type: "checklist", items: taskItems(node) });
+      const itemNodes=(node.content??[]).map(item=>{const first=listItemParagraph(item);return [{...tiptapNodeToRichNodes(first)[0],...(item.content && item.content.length>1?{childContent:item.content.slice(1)}:{})}];});
+      blocks.push({ id: identity.id, type: "checklist", items: taskItems(node), ...(itemNodes.some(nodes=>hasExplicitFormatting(nodes)||nodes.some(n=>n.type!=="paragraph"))?{itemNodes}:{} ) });
       index += 1;
       continue;
     }
     if (identity.type === "heading" && node.type === "heading") {
-      blocks.push({ id: identity.id, type: "heading", text: plainText(node) });
+      const nodes=tiptapNodeToRichNodes(node);
+      blocks.push({ id: identity.id, type: "heading", text: plainText(node), ...(hasExplicitFormatting(nodes)?{nodes}:{}) });
       index += 1;
       continue;
     }
-    if (identity.type === "text") {
+    if (identity.type === "text" && node.type === "paragraph") {
       const nodes: JSONContent[] = [];
       while (content[index] && blockIdentity(content[index]).id === identity.id && content[index].type === "paragraph") {
         nodes.push(content[index]);
         index += 1;
       }
-      blocks.push({ id: identity.id, type: "text", text: nodes.map(plainText).join("\n") });
+      const formatted=nodes.flatMap(tiptapNodeToRichNodes);
+      blocks.push({ id: identity.id, type: "text", text: nodes.map(plainText).join("\n"), ...(hasExplicitFormatting(formatted)?{nodes:formatted}:{}) });
       continue;
     }
     const richNodes: JSONContent[] = [];

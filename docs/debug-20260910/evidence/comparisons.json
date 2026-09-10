@@ -1,0 +1,86 @@
+[
+  {
+    "name": "execution",
+    "width": 390,
+    "stage": "before",
+    "port": 3241,
+    "route": "/experiments/cmtv2nhbn00006mosm96juasq"
+  },
+  {
+    "name": "editor",
+    "width": 390,
+    "stage": "before",
+    "port": 3241,
+    "route": "/experiments/cmtv4dsu90002e7osccp89197/edit"
+  },
+  {
+    "name": "properties",
+    "width": 390,
+    "stage": "before",
+    "port": 3241,
+    "route": "/protocols/cmtv4dsup0006e7oswcxg3nqn"
+  },
+  {
+    "name": "execution",
+    "width": 390,
+    "stage": "after",
+    "port": 3240,
+    "route": "/experiments/cmtv2nhbn00006mosm96juasq"
+  },
+  {
+    "name": "editor",
+    "width": 390,
+    "stage": "after",
+    "port": 3240,
+    "route": "/experiments/cmtv4dsu90002e7osccp89197/edit"
+  },
+  {
+    "name": "properties",
+    "width": 390,
+    "stage": "after",
+    "port": 3240,
+    "route": "/protocols/cmtv4dsup0006e7oswcxg3nqn"
+  },
+  {
+    "name": "execution",
+    "width": 1440,
+    "stage": "before",
+    "port": 3241,
+    "route": "/experiments/cmtv2nhbn00006mosm96juasq"
+  },
+  {
+    "name": "editor",
+    "width": 1440,
+    "stage": "before",
+    "port": 3241,
+    "route": "/experiments/cmtv4dsu90002e7osccp89197/edit"
+  },
+  {
+    "name": "properties",
+    "width": 1440,
+    "stage": "before",
+    "port": 3241,
+    "route": "/protocols/cmtv4dsup0006e7oswcxg3nqn"
+  },
+  {
+    "name": "execution",
+    "width": 1440,
+    "stage": "after",
+    "port": 3240,
+    "route": "/experiments/cmtv2nhbn00006mosm96juasq"
+  },
+  {
+    "name": "editor",
+    "width": 1440,
+    "stage": "after",
+    "port": 3240,
+    "route": "/experiments/cmtv4dsu90002e7osccp89197/edit"
+  },
+  {
+    "name": "properties",
+    "width": 1440,
+    "stage": "after",
+    "port": 3240,
+    "route": "/protocols/cmtv4dsup0006e7oswcxg3nqn"
+  }
+]

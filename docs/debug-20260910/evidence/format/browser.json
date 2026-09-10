@@ -1,0 +1,68 @@
+[
+  {
+    "entry": "research-plan",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body / 正文验收",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  },
+  {
+    "entry": "experiment",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body / 正文验收",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  },
+  {
+    "entry": "result",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body / 正文验收",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  },
+  {
+    "entry": "report",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body / 正文验收",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  },
+  {
+    "entry": "protocol",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  },
+  {
+    "entry": "entry",
+    "status": "passed",
+    "savedReadonlyAndReopened": [
+      {
+        "text": "Editor acceptance body",
+        "align": "center",
+        "padding": "20px"
+      }
+    ]
+  }
+]

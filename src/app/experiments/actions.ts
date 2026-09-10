@@ -100,18 +100,13 @@ export async function updateExperiment(
     const current = await prisma.experiment.findUnique({ where: { id: data.parsed.id } });
     if (!current) throw new Error("Experiment not found.");
     if (current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
-    const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
     await prisma.$transaction(async (tx) => {
       await associateDocumentMedia(tx, data.contentJson, "experiment", data.parsed.id!);
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
         purpose: data.purpose, tags: data.tags, contentJson: data.contentJson, searchText: data.searchText,
       } });
-      const steps = await tx.experimentStep.findMany({ where: { experimentId: current.id }, select: { id: true, completed: true } });
-      for (const step of steps) {
-        const completed = completedStepIds.has(step.id);
-        if (completed !== step.completed) await tx.experimentStep.update({ where: { id: step.id }, data: { completed, completedAt: completed ? new Date() : null } });
-      }
+      // Completion belongs to Run actions; document saves must not replay stale or absent checkboxes.
       if (current.primaryProtocolVersionId) await tx.protocolRun.updateMany({ where: { experimentId: current.id }, data: { status: data.parsed.status } });
       await tx.activityLog.create({ data: { action: "update", targetType: "experiment", targetId: current.id, metadataJson: { status: data.parsed.status, recordStatus: data.parsed.recordStatus } } });
     });

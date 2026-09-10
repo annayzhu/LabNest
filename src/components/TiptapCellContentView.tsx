@@ -41,8 +41,8 @@ function renderNode(node: JSONContent, key: string): ReactNode {
   if (node.type === "paragraph") return <div key={key} style={blockStyle}>{content}</div>;
   if (node.type === "heading") return <div key={key} style={blockStyle} className="font-semibold">{content}</div>;
   if (node.type === "blockquote") return <blockquote key={key}>{content}</blockquote>;
-  if (node.type === "bulletList" || node.type === "taskList") return <ul key={key}>{content}</ul>;
-  if (node.type === "orderedList") return <ol key={key}>{content}</ol>;
+  if (node.type === "bulletList" || node.type === "taskList") return <ul key={key} className="list-disc pl-4">{content}</ul>;
+  if (node.type === "orderedList") return <ol key={key} className="list-decimal pl-4">{content}</ol>;
   if (node.type === "listItem" || node.type === "taskItem") return <li key={key}>{content}</li>;
   return <span key={key}>{content}</span>;
 }

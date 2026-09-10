@@ -214,7 +214,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
-              {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{zh?"已有记录":"Recorded"}</span> : null}
+              {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{selectedStep.deviationType==="incident" ? (zh?"异常":"Incident") : (zh?"偏差":"Deviation")} · {(draftFields[`mobileDeviation:${selectedStep.id}`]??selectedStep.deviationNote??"").slice(0,60)}</span> : null}
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
             </summary>
             <div className="grid gap-3 pb-3">

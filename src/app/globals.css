@@ -5332,8 +5332,8 @@ html[data-labnest-mode] :is(.document-a4-paper,.scientific-document-view) { --fo
 .run-step-content img {height:auto;max-width:100%;}
 
 /* Appearance foundation: reuse the existing shape tokens; density is independent of type. */
-:root { --ln-border-width:1px; --ln-content-padding:1rem; --ln-content-gap:1rem; --ln-decoration-opacity:.12; --ln-icon-plate:#e5ebeb; }
-html[data-labnest-density="compact"] { --ln-content-padding:.75rem; --ln-content-gap:.75rem; --ln-page-density-gap:.4rem; }
+:root { --ln-border-width:1px; --ln-content-padding:var(--ln-space-4); --ln-content-gap:var(--ln-space-4); --ln-decoration-opacity:.12; --ln-icon-plate:#e5ebeb; }
+html[data-labnest-density="compact"] { --ln-content-padding:var(--ln-space-3); --ln-content-gap:var(--ln-space-3); --ln-page-density-gap:.4rem; }
 html[data-labnest-density="comfortable"] { --ln-content-padding:1.25rem; --ln-content-gap:1.25rem; --ln-page-density-gap:.8rem; }
 .appearance-layout {display:grid;gap:var(--ln-content-gap);align-items:start;}
 .appearance-controls {display:grid;gap:1.5rem;min-width:0;}
@@ -5572,3 +5572,14 @@ html[data-labnest-ui-scale="comfortable"] { --ln-control-font-size-sm:14px; --ln
 @media(max-width:767px) {
  html[data-labnest-ui-scale="standard"],html[data-labnest-ui-scale="comfortable"] { --ln-ui-section-title-font-size:16px; }
 }
+/* Consume UI roles outside authored document paper and editor content. */
+.app-shell-main { line-height:var(--ln-ui-body-leading); }
+:where(.app-shell-main h2):not(.document-a4-paper *):not(.tiptap *) {
+  font-size:var(--ln-ui-section-title-font-size); line-height:var(--ln-ui-h2-leading); font-weight:600;
+}
+:where(.app-shell-main h3):not(.document-a4-paper *):not(.tiptap *) {
+  font-size:var(--ln-ui-h3-size); line-height:var(--ln-ui-h3-leading); font-weight:600;
+}
+:root { --ln-execution-indent:16px; }
+.document-execution-step[data-execution-role="confirmation"] { padding-inline-start:var(--ln-execution-indent); }
+@media(max-width:767px) { :root { --ln-ui-h2-leading:24px; --ln-execution-indent:12px; } }

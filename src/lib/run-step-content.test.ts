@@ -66,3 +66,8 @@ it('identifies confirmation hierarchy only from frozen checklist identity',async
  expect(runStepIsConfirmation(snapshot,{groupKey:'v',protocolStepRef:'v:checks:0'})).toBe(true);
  expect(runStepIsConfirmation(snapshot,{groupKey:'v',protocolStepRef:'v:heading'})).toBe(false);
 });
+
+it('keeps numbered item details in its existing Run step',()=>{
+ const doc=protocolDocumentSchema.parse({schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{id:'numbered',type:'rich_text',nodes:[{type:'numbered',content:[{text:'Prepare'}],childContent:[{type:'paragraph',content:[{type:'text',text:'Critical dose 5 µL'}]}]}]}]}]});
+ const projection=projectProtocolDocument(doc);expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('numbered:0');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Critical dose 5 µL');
+});

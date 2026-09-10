@@ -93,3 +93,8 @@ it("retains paragraph layout with existing typography through markdown storage",
  expect(reopened.content![0].attrs).toMatchObject({textAlign:"justify",documentIndent:3,spaceBeforePt:6,spaceAfterPt:12,documentLineHeight:2});
  expect(tiptapToMarkdownRichText(reopened)).toBe(saved);
 });
+
+it('retains layout assigned to the paragraph inside a quote',()=>{
+ const saved=tiptapToMarkdownRichText({type:'doc',content:[{type:'blockquote',content:[{type:'paragraph',attrs:{textAlign:'center',spaceBeforePt:12},content:[{type:'text',text:'quoted'}]}]}]});
+ expect(markdownRichTextToTiptap(saved).content![0].content![0].attrs).toMatchObject({textAlign:'center',spaceBeforePt:12});
+});

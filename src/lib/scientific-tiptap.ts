@@ -220,7 +220,7 @@ function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
     } else if (node.type === "heading") lines.push(`${typographyPrefix(node)}${Number(node.attrs?.level) === 2 ? "#" : "##"} ${inlineTiptapToMarkdown(node.content)}`);
     else if (node.type === "blockquote") {
       const paragraph = node.content?.find((child) => child.type === "paragraph") ?? node;
-      lines.push(`${typographyPrefix(node)}> ${inlineTiptapToMarkdown(paragraph.content)}`);
+      lines.push(`${typographyPrefix(paragraph)}> ${inlineTiptapToMarkdown(paragraph.content)}`);
     } else lines.push(`${typographyPrefix(node)}${inlineTiptapToMarkdown(node.content)}`);
   }
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();

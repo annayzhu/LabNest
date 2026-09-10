@@ -16,7 +16,7 @@ function plainText(node: JSONContent | undefined): string {
   if (node.type === "hardBreak") return "\n";
   if (node.type === "text") return node.text ?? "";
   if (node.type === "documentMedia") return documentMediaToMarkdown(node.attrs?.block);
-  return (node.content ?? []).map(plainText).join("");
+  return (node.content ?? []).map(plainText).join(["tableCell", "tableHeader", "listItem", "taskItem"].includes(node.type ?? "") ? "\n" : "");
 }
 
 function cloneContent(content: JSONContent[]) {
@@ -53,16 +53,17 @@ function needsRichPersistence(cell: JSONContent) {
   const fontSizes = new Set<string>();
   const colors = new Set<string>();
   let lossyMark = false;
-  let richStructure = false;
+  let richStructure = (cell.content?.length ?? 0) > 1;
   const visit = (node: JSONContent, isRoot = false) => {
     if (!isRoot && !["paragraph", "text", "hardBreak"].includes(node.type ?? "")) richStructure = true;
+    if (["textAlign", "documentIndent", "spaceBeforePt", "spaceAfterPt", "documentLineHeight"].some(key => node.attrs?.[key] != null)) richStructure = true;
     if (node.type === "text") {
       const textStyle = node.marks?.find((mark) => mark.type === "textStyle");
       fontSizes.add(textStyle?.attrs?.fontSize === undefined ? "default" : String(textStyle.attrs.fontSize));
       colors.add(textStyle?.attrs?.color === undefined ? "default" : String(textStyle.attrs.color));
     }
     for (const mark of node.marks ?? []) {
-      if (mark.type !== "textStyle") lossyMark = true;
+      if (mark.type !== "textStyle" || mark.attrs?.fontFamily) lossyMark = true;
     }
     node.content?.forEach((child) => visit(child));
   };

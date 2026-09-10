@@ -10,6 +10,12 @@ export function resolveAppLocale(value: unknown, fallback: AppLocale = "en"): Ap
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  "Unsaved draft restored": "已恢复未提交草稿",
+  "Draft storage unavailable": "草稿存储不可用",
+  "Cannot save draft; keep this page": "无法保存草稿，请保留页面",
+  "Unsaved parameters restored": "已恢复未提交参数",
+  "Parameter draft storage unavailable": "参数草稿存储不可用",
+  "Cannot save parameter draft; keep this page": "参数草稿无法保存，请保留页面",
   "Scroll sideways for all columns": "左右滑动查看完整表格",
   "Copy selection": "复制选区",
   "Cut selection": "剪切选区",

@@ -94,12 +94,12 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
-    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('已恢复未提交草稿 / Unsaved draft restored');}}catch{setDraftNotice('草稿存储不可用 / Draft storage unavailable');}setDraftReady(true);});
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
   },[experimentId,steps]);
   useEffect(()=>{
     if(!draftReady)return;
-    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('无法保存草稿，请保留页面 / Cannot save draft; keep this page');}};
+    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
     preserve();window.addEventListener('pagehide',preserve);window.addEventListener('labnest:preserve-run-draft',preserve);
     return()=>{window.removeEventListener('pagehide',preserve);window.removeEventListener('labnest:preserve-run-draft',preserve);};
   },[experimentId,selectedStepId,completedIds,draftFields,draftReady]);
@@ -214,7 +214,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
           {selectedStep.allowsDeviation ? <details className="group mt-5 border-t border-hairline pt-2">
             <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-moss [&::-webkit-details-marker]:hidden">
-              {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{selectedStep.deviationType==="incident" ? (zh?"异常":"Incident") : (zh?"偏差":"Deviation")} · {(draftFields[`mobileDeviation:${selectedStep.id}`]??selectedStep.deviationNote??"").slice(0,60)}</span> : null}
+              {zh ? "记录偏差" : "Record a deviation"}{(draftFields[`mobileDeviation:${selectedStep.id}`] ?? selectedStep.deviationNote)?.trim() ? <span className="ml-2 text-xs text-warning">{(draftFields[`mobileDeviationType:${selectedStep.id}`]??selectedStep.deviationType)==="incident" ? (zh?"异常":"Incident") : (zh?"偏差":"Deviation")} · {(draftFields[`mobileDeviation:${selectedStep.id}`]??selectedStep.deviationNote??"").slice(0,60)}</span> : null}
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden />
             </summary>
             <div className="grid gap-3 pb-3">

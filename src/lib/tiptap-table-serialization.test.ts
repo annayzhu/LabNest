@@ -22,3 +22,11 @@ describe("Tiptap table serialization", () => {
     expect(roundTrip.cellColors).toBeUndefined();
   });
 });
+
+it('retains paragraph-only cell layout and paragraph breaks through persistence', () => {
+  const source={type:'table',content:[{type:'tableRow',content:[{type:'tableCell',content:[{type:'paragraph',attrs:{textAlign:'right',documentIndent:2,spaceAfterPt:6,documentLineHeight:'1.5'},content:[{type:'text',text:'10 µL'}]},{type:'paragraph',content:[{type:'text',text:'中文说明'}]}]}]}]};
+  const persisted=persistedTableFromTiptap(source);
+  expect(persisted.cellRichContent?.[0]?.[0]).toEqual(source.content[0].content[0].content);
+  expect(persisted.rows[0][0]).toBe('10 µL\n中文说明');
+  expect(tiptapTableRows(persisted)[0].content?.[0].content).toEqual(source.content[0].content[0].content);
+});

@@ -146,7 +146,7 @@ function ToolbarMenu({
     };
   }, [open, setOpenMenu, updateMenuPosition]);
 
-  const menuItems = Children.map(children, (child) => isValidElement(child)
+  const menuItems = Children.map(children, (child) => isValidElement(child) && child.type === "button"
     ? cloneElement(child as ReactElement<{ role?: string; tabIndex?: number }>, { role: "menuitem", tabIndex: -1 })
     : child);
 

@@ -1,3 +1,4 @@
+import {scientificTableFromMarkdown} from "./scientific-document";
 import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
@@ -127,7 +128,7 @@ export function getOrderedAttachmentIds(value: unknown) {
 }
 
 export function plainTextFromEntryMarkdown(markdown: string) {
-  const searchable = markdown.split("\n").map(line => { const media = documentMediaFromMarkdown(line); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : line; }).join("\n");
+  const searchable = markdown.split("\n").map(line => { const table=scientificTableFromMarkdown(line);if(table)return table.rows.map(row=>row.join(" ")).join("\n"); const media = documentMediaFromMarkdown(line); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : line; }).join("\n");
   return stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable))))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")

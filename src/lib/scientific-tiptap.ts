@@ -3,7 +3,7 @@ import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
 import { LABNEST_COLOR_TOKEN_SOURCE, parseLabNestColorToken, parseRichTextColor, RICH_TEXT_RISK_COLOR_HEX } from "@/lib/rich-text-color";
-import { scientificContentBlockSchema, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
+import { scientificContentBlockSchema, scientificTableFromMarkdown, scientificTableToMarkdown, type ScientificContentBlock, type ScientificDocument } from "@/lib/scientific-document";
 import { LABNEST_FONT_FAMILY_TOKEN_SOURCE, parseLabNestFontFamilyToken, parseRichTextFontFamily, parseRichTextFontFamilyLine, richTextFontFamilyPrefix } from "@/lib/rich-text-font-family";
 import { LABNEST_FONT_SIZE_TOKEN_SOURCE, parseLabNestFontSizeToken, isRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { parseRichTextLineHeightLine, richTextLineHeightPrefix } from "@/lib/rich-text-line-height";
@@ -84,6 +84,8 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   const nodes: JSONContent[] = [];
   const lines = value.replaceAll("\r\n", "\n").split("\n");
   for (let index = 0; index < lines.length;) {
+    const table=scientificTableFromMarkdown(lines[index]);
+    if(table){nodes.push(tableToTiptap(table));index+=1;continue;}
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
     const layout = parseParagraphLayoutLine(lines[index]);
@@ -204,6 +206,7 @@ function typographyPrefix(node: JSONContent) {
 function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
   const lines: string[] = [];
   for (const node of nodes) {
+    if(node.type === "table"){lines.push(scientificTableToMarkdown({id:node.attrs?.scientificBlockId??uniqueId("compact-table"),type:"table",...persistedTableFromTiptap(node)}));continue;}
     if (node.type === "documentMedia") {
       const media = documentMediaSchema.safeParse(node.attrs?.block);
       if (media.success) lines.push(documentMediaToMarkdown(media.data));

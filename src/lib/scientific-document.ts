@@ -100,6 +100,16 @@ function markdownTableAt(lines: string[], start: number) {
   };
 }
 
+/** Preserve rich table cells in legacy Markdown fields using the existing table schema. */
+export function scientificTableToMarkdown(block: Extract<ScientificContentBlock,{type:"table"}>): string {
+  return `<!--labnest-table:${encodeURIComponent(JSON.stringify(block))}-->`;
+}
+export function scientificTableFromMarkdown(line: string): Extract<ScientificContentBlock,{type:"table"}> | undefined {
+  const match=line.trim().match(/^<!--labnest-table:(.+)-->$/);
+  if(!match)return undefined;
+  try { const parsed=scientificContentBlockSchema.safeParse(JSON.parse(decodeURIComponent(match[1])));return parsed.success && parsed.data.type==="table" ? parsed.data : undefined; } catch { return undefined; }
+}
+
 /**
  * Upgrade legacy text blocks containing Markdown tables into native scientific
  * table blocks. This also lets structured imports share one lossless path for
@@ -121,6 +131,8 @@ export function scientificBlocksFromText(text: string, idPrefix: string): Scient
   };
 
   for (let index = 0; index < lines.length;) {
+    const richTable=scientificTableFromMarkdown(lines[index]);
+    if(richTable){flushText();blocks.push(richTable);tableCount+=1;index+=1;continue;}
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { flushText(); blocks.push(media); index += 1; continue; }
     const table = markdownTableAt(lines, index);

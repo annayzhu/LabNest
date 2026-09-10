@@ -38,6 +38,10 @@ function renderNode(node: JSONContent, key: string): ReactNode {
   }
 
   const blockStyle = {...paragraphLayoutStyle(node.attrs ?? {}), ...(node.attrs?.documentLineHeight ? {lineHeight:node.attrs.documentLineHeight} : {})};
+  if (node.type === "table") return <div key={key} className="overflow-x-auto"><table className="document-three-line-table"><tbody>{content}</tbody></table></div>;
+  if (node.type === "tableRow") return <tr key={key}>{content}</tr>;
+  if (node.type === "tableHeader") return <th key={key}>{content}</th>;
+  if (node.type === "tableCell") return <td key={key}>{content}</td>;
   if (node.type === "paragraph") return <div key={key} style={blockStyle}>{content}</div>;
   if (node.type === "heading") return <div key={key} style={blockStyle} className="font-semibold">{content}</div>;
   if (node.type === "blockquote") return <blockquote key={key}>{content}</blockquote>;

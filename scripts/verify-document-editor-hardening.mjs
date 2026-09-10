@@ -173,8 +173,8 @@ async function assertSharedDocumentShell(page, route, titleName) {
   assert.equal(await shell.getByRole("tab", { name: "Metadata", exact: true }).count(), 1, `${route}: Metadata tab is missing.`);
   assert.equal(await shell.getByRole("textbox", { name: titleName, exact: true }).count(), 1, `${route}: title is not directly editable in the document.`);
   await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
-  await page.waitForFunction(el => el?.getAttribute("data-active-view") === "metadata", await shell.elementHandle());
-  assert.equal(await shell.getAttribute("data-active-view"), "metadata", `${route}: Metadata tab did not activate.`);
+  await page.getByRole("complementary", {name:"Metadata",exact:true}).waitFor({state:"visible"});
+  assert.equal(await shell.getByRole("tab", {name:"Metadata",exact:true}).getAttribute("aria-selected"), "true", `${route}: Metadata tab did not activate.`);
   await shell.getByRole("tab", { name: "Document", exact: true }).click();
 }
 
@@ -185,7 +185,8 @@ async function assertMetadataIsTheOnlyRecordPropertiesPath(page) {
   assert.equal(await shell.getByRole("button", { name: /information/i }).count(), 0, "The duplicate record-information drawer toggle remains.");
   assert.equal(await shell.getByRole("complementary", { name: /information/i }).count(), 0, "The duplicate record-information drawer remains.");
   await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
-  assert.equal(await shell.locator('[data-document-metadata="true"]').count(), 1, "Experiment properties do not have exactly one Metadata region.");
+  await page.getByRole("complementary", {name:"Metadata",exact:true}).waitFor({state:"visible"});
+  assert.equal(await page.getByRole("complementary", {name:"Metadata",exact:true}).locator('[data-document-metadata="true"]').count(), 1, "Experiment properties do not have exactly one Metadata region.");
 }
 
 const browser = await chromium.launch({ headless: true });

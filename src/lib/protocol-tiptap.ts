@@ -93,7 +93,8 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
     if (node.type !== "bullet" && node.type !== "numbered") {
-      content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []));
+      if(node.content.length===0 && node.childContent?.[0]?.type==="table")content.push(...node.childContent);
+      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []));
       index += 1;
       continue;
     }
@@ -250,6 +251,7 @@ function listItemParagraph(item: JSONContent): JSONContent {
 }
 
 function tiptapNodeToRichNodes(node: JSONContent): ProtocolRichTextNode[] {
+  if (node.type === "table") return [{type:"paragraph",content:[],childContent:[node]}];
   if (node.type === "documentMedia") {
     const media = documentMediaSchema.safeParse(node.attrs?.block);
     return media.success ? [{ type: "paragraph", content: [{ text: documentMediaToMarkdown(media.data) }] }] : [];

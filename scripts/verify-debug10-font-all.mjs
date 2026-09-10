@@ -7,7 +7,7 @@ const dir='docs/debug-20260910/evidence/fonts';mkdirSync(dir,{recursive:true});
 const fixtures=JSON.parse(readFileSync('docs/debug-20260910/evidence/font-fixtures.json'));
 const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:1000}});const checks=[];
 try{for(const item of fixtures.cases){
- await page.emulateMedia({media:'screen'});await page.goto(base+item.edit);const editor=page.locator('[contenteditable=true]').first();await editor.click();
+ await page.emulateMedia({media:'screen'});await page.goto(base+item.edit,{waitUntil:'networkidle'});const editor=page.locator('[contenteditable=true]').first();await editor.locator('p').filter({hasText:item.name==='entry'?'Editor acceptance body':'Alpha sample beta'}).first().click();await page.keyboard.press('End');
  await editor.evaluate(el=>{const canvas=document.createElement('canvas');canvas.width=120;canvas.height=80;const ctx=canvas.getContext('2d');ctx.fillStyle='#315f72';ctx.fillRect(0,0,120,80);const d=new DataTransfer();d.items.add(new File([Uint8Array.from(atob(canvas.toDataURL().split(',')[1]),v=>v.charCodeAt(0))],'font-all.png',{type:'image/png'}));el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}));});
  const img=editor.getByRole('img',{name:'font-all.png',exact:true});await img.evaluate(i=>i.decode());await img.click();const caption='字号图注 '+item.name;
  await page.getByRole('textbox',{name:'图注 / Caption',exact:true}).fill(caption);await page.getByRole('button',{name:'收起属性'}).click();

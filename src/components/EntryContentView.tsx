@@ -1,3 +1,5 @@
+import {scientificTableFromMarkdown} from "@/lib/scientific-document";
+import {ScientificTableView} from "./ScientificTableView";
 import { parseParagraphLayoutLine, paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import type { ReactNode } from "react";
 import { documentMediaFromMarkdown } from "@/lib/document-media";
@@ -42,6 +44,8 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
   return (
     <div className={`entry-content ${compact ? "space-y-0.5 text-sm leading-[var(--ln-rich-text-default-line-height)] text-graphite" : "space-y-1 text-[16px] leading-[var(--ln-rich-text-default-line-height)] text-graphite"}`}>
       {lines.map((rawLine, index) => {
+        const table=scientificTableFromMarkdown(rawLine);
+        if(table)return <ScientificTableView key={`${table.id}-${index}`} block={table}/>;
         const media = documentMediaFromMarkdown(rawLine);
         if (media) return <DocumentMediaView key={`${media.id}-${index}`} block={media} />;
         const layout = parseParagraphLayoutLine(rawLine);

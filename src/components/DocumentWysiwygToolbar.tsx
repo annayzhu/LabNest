@@ -240,7 +240,7 @@ export function DocumentWysiwygToolbar({
     try { setClipboardNotice(document.execCommand(operation)?"":"Use the browser Edit menu or keyboard shortcut."); }
     catch { setClipboardNotice("Use the browser Edit menu or keyboard shortcut."); }
   };
-  const pastePlainText=async()=>{
+  const pastePlainText=useCallback(async()=>{
     const {from,to}=editor.state.selection;
     const originalDocument=editor.state.doc;
     try {
@@ -250,7 +250,18 @@ export function DocumentWysiwygToolbar({
       editor.chain().focus().setTextSelection({from,to}).insertContent(text.split(/\r?\n/).map(line=>({type:"paragraph",content:line?[{type:"text",text:line}]:[]}))).run();
       setClipboardNotice("");
     } catch { setClipboardNotice("Paste unavailable. Use the browser Edit menu; your content is unchanged."); }
-  };
+  },[editor]);
+  useEffect(() => {
+    // Scope the fallback to this editor; never intercept shortcuts in forms or the browser.
+    const element=editor.view.dom;
+    const onPasteShortcut=(event:KeyboardEvent)=>{
+      if(!event.isComposing && (event.metaKey || event.ctrlKey) && event.shiftKey && !event.altKey && event.key.toLowerCase()==="v"){
+        event.preventDefault();event.stopPropagation();void pastePlainText();
+      }
+    };
+    element.addEventListener("keydown",onPasteShortcut,true);
+    return ()=>element.removeEventListener("keydown",onPasteShortcut,true);
+  },[editor,pastePlainText]);
   const alignments=new Set<string>();
   editor.state.doc.nodesBetween(editor.state.selection.from,editor.state.selection.to,node=>{
     if(["paragraph","heading"].includes(node.type.name))alignments.add(node.attrs.textAlign ?? "left");

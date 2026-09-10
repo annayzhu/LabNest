@@ -1,3 +1,4 @@
+import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
@@ -7,7 +8,10 @@ import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
-const baseBlockSchema = z.object({ id: z.string().min(1) });
+const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
+ role:z.enum(["group","step","confirmation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),
+ deviationLabel:z.enum(["偏差","异常"]).optional(),deviationNote:z.string().optional(),impact:z.string().optional(),author:z.string().optional(),
+}).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
   baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
@@ -274,7 +278,7 @@ export function parseScientificDocumentJson(
 export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
     if (block.type === "heading" || block.type === "callout") return [block.text];
-    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(block.text)))];
+    if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(block.text))))];
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];

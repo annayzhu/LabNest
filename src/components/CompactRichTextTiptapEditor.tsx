@@ -14,6 +14,7 @@ import { DocumentWysiwygToolbar, type WysiwygInsertAction } from "@/components/D
 import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
 import { cn } from "@/lib/cn";
 import { newClientMutationId } from "@/lib/client-mutation-id";
+import TextAlign from "@tiptap/extension-text-align";
 import { createDocumentBlockLineHeightExtension } from "@/lib/tiptap-document-extensions";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
@@ -52,6 +53,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
       StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
+      TextAlign.configure({types:["paragraph","heading"]}),
       TaskList,
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder }),

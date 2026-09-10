@@ -1,3 +1,4 @@
+import { runStepIsConfirmation } from "./run-step-content";
 import {
   createScientificDocument,
   documentPlainText,
@@ -102,11 +103,11 @@ export function appendExperimentObservation(
 /** Derived at read/export time: current persisted Run evidence, never authored prose.
  * The reserved ID prefix permits refreshing the projection without accumulating it. */
 export function experimentExecutionDocument(contentJson: unknown, steps: readonly {
-  id: string; groupOrder: number; order: number; groupTitle: string; title: string;
+  id: string; protocolStepRef?:string|null;groupKey?:string;groupOrder: number; order: number; groupTitle: string; title: string;
   completed: boolean; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
   evidence?: ScientificDocument['sections'][number]['blocks'];
-}[], parameters?: unknown): ScientificDocument {
+}[], parameters?: unknown, snapshot?:unknown): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificDocument['sections'][number]['blocks'] = [];
   if(parameters && typeof parameters==='object' && !Array.isArray(parameters)) {
@@ -117,12 +118,13 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
   for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
     if (group !== step.groupOrder) {
       group = step.groupOrder;
-      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle});
+      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
     }
+    const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed};
     const title = `${step.completed ? '✓' : '未完成'} ${step.title}`;
     if (step.deviationNote?.trim()) {
-      blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
-    } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title});
+      blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',execution:{...execution,deviationLabel:['abnormal','incident'].includes(step.deviationType ?? '')?'异常':'偏差',deviationNote:step.deviationNote.trim(),impact:step.deviationImpact??undefined,author:step.deviationAuthor??undefined},text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
+    } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title,execution});
     blocks.push(...(step.evidence??[]).map((block,index)=>({...block,id:`run-derived:${step.id}:evidence:${index}`})));
   }
   return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}:section)};

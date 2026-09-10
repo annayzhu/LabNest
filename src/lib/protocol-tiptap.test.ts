@@ -99,3 +99,13 @@ describe("Protocol Tiptap compatibility layer", () => {
     expect(purpose?.content?.[0]?.attrs?.protocolBlockId).toBe("purpose-user-blank");
   });
 });
+
+it("retains paragraph layout after validation and reopening", () => {
+  const document = createEmptyProtocolDocument();
+  document.sections[0].blocks = [{id:"layout",type:"rich_text",nodes:[{type:"paragraph",content:[{text:"剂量 5 µL"}]}]}];
+  const json=protocolDocumentToTiptap(document);
+  Object.assign(json.content![0].content![0].attrs!,{textAlign:"right",documentIndent:2,spaceBeforePt:6,spaceAfterPt:12});
+  const saved=tiptapToProtocolDocument(json);
+  const reopened=protocolDocumentToTiptap(saved);
+  expect(reopened.content![0].content![0].attrs).toMatchObject({textAlign:"right",documentIndent:2,spaceBeforePt:6,spaceAfterPt:12});
+});

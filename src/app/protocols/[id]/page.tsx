@@ -147,11 +147,12 @@ export default async function ProtocolDetailPage({
             </Card>
 
             <Card>
-              <CardHeader title="Attachments" eyebrow="Version-specific files" />
+              <details><summary className="focus-ring cursor-pointer px-3 py-2 text-sm font-medium">Attachments · {attachmentLinks.length}</summary>
               <CardBody className="space-y-4">
                 {!recycleEntry ? <AttachmentUploadForm targetType="protocol_version" targetId={version.id} hideTargetFields /> : null}
                 {attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="border-t border-hairline pt-4 text-sm text-muted">No files attached to this exact version.</p>}
               </CardBody>
+            </details>
             </Card>
 
             <Card>
@@ -180,5 +181,5 @@ export default async function ProtocolDetailPage({
 }
 
 function Control({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>;
+  return <div className="grid min-w-0 grid-cols-[minmax(72px,auto)_minmax(0,1fr)] items-start gap-2"><p className="text-xs font-medium leading-5 text-muted">{label}</p><div className="min-w-0 break-words text-sm leading-5 text-ink">{children}</div></div>;
 }

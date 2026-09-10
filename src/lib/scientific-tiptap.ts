@@ -1,3 +1,4 @@
+import { paragraphLayoutPrefix, parseParagraphLayoutLine } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import { scientificBlockHasContent } from "@/lib/cell-editor";
@@ -71,11 +72,12 @@ function typographyMarks(lineHeight?: number, fontFamily?: string): TiptapMark[]
 }
 
 function listLine(value: string) {
-  const height = parseRichTextLineHeightLine(value);
+  const layout = parseParagraphLayoutLine(value);
+  const height = parseRichTextLineHeightLine(layout.content);
   const font = parseRichTextFontFamilyLine(height.content);
   const match = font.content.match(/^(\s*)(?:([-*+])\s+(?:\[([ xX])\]\s+)?|(\d+)\.\s+)(.*)$/);
   if (!match) return undefined;
-  return { indent: match[1].length, type: match[3] !== undefined ? "taskList" : match[4] ? "orderedList" : "bulletList", checked: match[3]?.toLowerCase() === "x", start: Number(match[4] || 1), text: match[5], lineHeight: height.lineHeight, fontFamily: font.fontFamily };
+  return { layout: layout.layout, indent: match[1].length, type: match[3] !== undefined ? "taskList" : match[4] ? "orderedList" : "bulletList", checked: match[3]?.toLowerCase() === "x", start: Number(match[4] || 1), text: match[5], lineHeight: height.lineHeight, fontFamily: font.fontFamily };
 }
 
 function markdownToTiptap(value: string, blockId: string): JSONContent[] {
@@ -84,10 +86,11 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
   for (let index = 0; index < lines.length;) {
     const media = documentMediaFromMarkdown(lines[index]);
     if (media) { nodes.push({ type: "documentMedia", attrs: { block: media } }); index += 1; continue; }
-    const parsedLine = parseRichTextLineHeightLine(lines[index]);
+    const layout = parseParagraphLayoutLine(lines[index]);
+    const parsedLine = parseRichTextLineHeightLine(layout.content);
     const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
     const line = parsedFontFamily.content;
-    const attrs = legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily);
+    const attrs = {...legacyAttrs(blockId, "text", parsedLine.lineHeight, parsedFontFamily.fontFamily), ...layout.layout};
     const inheritedMarks = typographyMarks(parsedLine.lineHeight, parsedFontFamily.fontFamily);
     const list = listLine(lines[index]);
     if (list) {
@@ -104,7 +107,7 @@ function markdownToTiptap(value: string, blockId: string): JSONContent[] {
         items.push({
           type: list.type === "taskList" ? "taskItem" : "listItem",
           ...(list.type === "taskList" ? { attrs: { checked: item.checked } } : {}),
-          content: [{ type: "paragraph", attrs: legacyAttrs(blockId, "text", item.lineHeight, item.fontFamily), content: inlineMarkdownToTiptap(item.text, typographyMarks(item.lineHeight, item.fontFamily)) },
+          content: [{ type: "paragraph", attrs: {...legacyAttrs(blockId, "text", item.lineHeight, item.fontFamily), ...item.layout}, content: inlineMarkdownToTiptap(item.text, typographyMarks(item.lineHeight, item.fontFamily)) },
             ...(continuation.length ? markdownToTiptap(continuation.join("\n"), blockId) : [])],
         });
       }
@@ -195,7 +198,7 @@ function typographyPrefix(node: JSONContent) {
   // persisted as inline marks so mixed-font paragraphs round-trip exactly.
   const fontValue = node.attrs?.scientificFontFamily;
   const fontFamily = parseRichTextFontFamily(fontValue);
-  return `${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
+  return `${paragraphLayoutPrefix(node.attrs ?? {})}${richTextLineHeightPrefix(lineHeight)}${richTextFontFamilyPrefix(fontFamily)}`;
 }
 
 function tiptapNodesToMarkdown(nodes: JSONContent[]): string {

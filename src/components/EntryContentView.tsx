@@ -1,3 +1,4 @@
+import { parseParagraphLayoutLine, paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import type { ReactNode } from "react";
 import { documentMediaFromMarkdown } from "@/lib/document-media";
 import { DocumentMediaView } from "./DocumentMediaView";
@@ -43,10 +44,11 @@ export function EntryContentView({ markdown, compact = false }: { markdown: stri
       {lines.map((rawLine, index) => {
         const media = documentMediaFromMarkdown(rawLine);
         if (media) return <DocumentMediaView key={`${media.id}-${index}`} block={media} />;
-        const parsedLine = parseRichTextLineHeightLine(rawLine);
+        const layout = parseParagraphLayoutLine(rawLine);
+        const parsedLine = parseRichTextLineHeightLine(layout.content);
         const parsedFontFamily = parseRichTextFontFamilyLine(parsedLine.content);
         const line = parsedFontFamily.content;
-        const lineProps = { ...(parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { "data-labnest-font-family": parsedFontFamily.fontFamily } : {}), style: { ...(parsedLine.lineHeight ? { lineHeight: parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { fontFamily: richTextFontFamilyCss(parsedFontFamily.fontFamily) } : {}) } };
+        const lineProps = { ...(parsedLine.lineHeight ? { "data-labnest-line-height": parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { "data-labnest-font-family": parsedFontFamily.fontFamily } : {}), style: { ...paragraphLayoutStyle(layout.layout), ...(parsedLine.lineHeight ? { lineHeight: parsedLine.lineHeight } : {}), ...(parsedFontFamily.fontFamily ? { fontFamily: richTextFontFamilyCss(parsedFontFamily.fontFamily) } : {}) } };
         const key = `${index}-${line.slice(0, 12)}`;
         if (!line.trim()) return <div key={key} {...lineProps} className="h-1" aria-hidden />;
         const heading = line.match(/^(#{1,3})\s+(.+)$/);

@@ -96,10 +96,10 @@
   --ln-control-padding-x-sm: 0.625rem; /* 小按钮左右内边距。 */
   --ln-control-padding-x-md: 0.75rem; /* 默认按钮和筛选器左右内边距。 */
   --ln-control-padding-x-lg: 1rem; /* 主要按钮左右内边距。 */
-  --ln-ui-body-font-size: 12.5px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
+  --ln-ui-body-font-size: 13px; /* 工作界面正文与说明文字字号；不影响 A4 文档。 */
   --ln-ui-nav-font-size: 12px; /* 桌面侧栏与紧凑导航字号。 */
-  --ln-ui-section-title-font-size: 12.5px; /* 卡片和工作区 section 标题字号。 */
-  --ln-ui-label-font-size: 10.5px; /* 表单标签与低层级标题字号。 */
+  --ln-ui-section-title-font-size: 17px; /* 卡片和工作区 section 标题字号。 */
+  --ln-ui-label-font-size: 12px; /* 表单标签与低层级标题字号。 */
   --ln-ui-table-font-size: 11.5px; /* 共享数据表正文低于侧栏导航，避免内容反客为主。 */
   --ln-ui-search-font-size: 12.5px; /* 顶部全局搜索字号。 */
   --ln-ui-local-search-font-size: 11.5px; /* 页面内搜索低于顶部全局搜索。 */
@@ -112,7 +112,7 @@
 
   /* 全站工作区密度：由已确认的 Protocol 切片推广到共享页面标题、动作与文档工作区。 */
   --ln-page-density-gap: 0.55rem; /* 页面标题、提示和主要内容之间距离。 */
-  --ln-page-title-size: 16px; /* 全站工作页外层标题字号。 */
+  --ln-page-title-size: 22px; /* 全站工作页外层标题字号。 */
   --ln-page-action-height: 1.875rem; /* 页头次级动作高度。 */
   --ln-page-primary-action-height: 2.25rem; /* 页头主操作保留 36px 的键盘与触控目标。 */
   --ln-page-action-font-size: 11.5px; /* 页头动作字号。 */
@@ -372,10 +372,10 @@
 
 /* 界面字号只作用于应用 chrome；A4 文档在 .document-a4-paper 中保持固定排版。 */
 html[data-labnest-ui-scale="standard"] {
-  --ln-ui-body-font-size: 13px;
+  --ln-ui-body-font-size: 14px;
   --ln-ui-nav-font-size: 12.5px;
-  --ln-ui-section-title-font-size: 13px;
-  --ln-ui-label-font-size: 11px;
+  --ln-ui-section-title-font-size: 18px;
+  --ln-ui-label-font-size: 12px;
   --ln-ui-table-font-size: 12.5px;
   --ln-ui-search-font-size: 13px;
   --ln-ui-local-search-font-size: 12px;
@@ -383,15 +383,15 @@ html[data-labnest-ui-scale="standard"] {
   --ln-control-font-size-sm: 12px;
   --ln-control-font-size-md: 13px;
   --ln-control-font-size-lg: 12px;
-  --ln-page-title-size: 17px;
+  --ln-page-title-size: 24px;
   --ln-page-action-font-size: 12px;
   --ln-list-table-head-font-size: 11.5px;
 }
 
 html[data-labnest-ui-scale="comfortable"] {
-  --ln-ui-body-font-size: 14px;
+  --ln-ui-body-font-size: 15px;
   --ln-ui-nav-font-size: 13px;
-  --ln-ui-section-title-font-size: 14px;
+  --ln-ui-section-title-font-size: 19px;
   --ln-ui-label-font-size: 12px;
   --ln-ui-table-font-size: 13px;
   --ln-ui-search-font-size: 14px;
@@ -400,7 +400,7 @@ html[data-labnest-ui-scale="comfortable"] {
   --ln-control-font-size-sm: 13px;
   --ln-control-font-size-md: 14px;
   --ln-control-font-size-lg: 13px;
-  --ln-page-title-size: 18px;
+  --ln-page-title-size: 26px;
   --ln-page-action-font-size: 13px;
   --ln-list-table-head-font-size: 12px;
 }
@@ -3740,7 +3740,7 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 @media (max-width: 767px) {
   :root {
     --ln-page-action-font-size: 10.5px;
-    --ln-page-title-size: 14px;
+    --ln-page-title-size: 19px;
     --ln-wysiwyg-menu-trigger-height: 2rem;
     --ln-wysiwyg-toolbar-control-height: 2rem;
     --ln-wysiwyg-toolbar-font-size: 11.5px;
@@ -3748,12 +3748,12 @@ details[open] > :not(summary) { animation: ln-disclosure-content-in 240ms cubic-
 
   html[data-labnest-ui-scale="standard"] {
     --ln-page-action-font-size: 11px;
-    --ln-page-title-size: 15px;
+    --ln-page-title-size: 20px;
   }
 
   html[data-labnest-ui-scale="comfortable"] {
     --ln-page-action-font-size: 12px;
-    --ln-page-title-size: 16px;
+    --ln-page-title-size: 22px;
   }
 
   .protocol-density-slice {
@@ -5069,7 +5069,7 @@ table :where(td) {
   .document-editor-toolbar-format { flex-basis: 100%; order: 2; }
   .document-editor-toolbar-format { flex-wrap: wrap; }
   .document-editor-toolbar-format .ln-document-toolbar-host { flex-basis: 100%; }
-  .document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: wrap; }
+  .document-editor-toolbar-format .ln-wysiwyg-toolbar { flex-wrap: nowrap; overflow-x: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5533,4 +5533,42 @@ button.focus-ring:active { filter: brightness(.96); }
   .ln-experiment-brief details summary { display: block; }
   .ln-experiment-brief details > :not(summary) { display: none !important; }
   .ln-brief-source { display: block; margin-block: 1rem; }
+}
+
+/* Sep10 UI roles. Document typography remains independently authored in pt. */
+:root {
+  --ln-ui-h3-size: 15px;
+  --ln-ui-caption-size: 12px;
+  --ln-ui-body-leading: 22px;
+  --ln-ui-caption-leading: 18px;
+  --ln-space-1: 4px;
+  --ln-space-2: 8px;
+  --ln-space-3: 12px;
+  --ln-space-4: 16px;
+  --ln-space-6: 24px;
+  --ln-space-8: 32px;
+}
+.page-header-title { line-height: 32px; }
+.document-execution-group { font-size: 12pt; line-height: 1.5; margin-block: 12pt 6pt; }
+.document-execution-step { font-size: 11pt; line-height: 1.6; margin-block: 4pt; }
+.document-execution-step[data-execution-role="confirmation"] { padding-inline-start: 1.5em; font-size: 10pt; }
+@media (max-width: 767px) {
+  :root { --ln-ui-h3-size:14px; --ln-ui-section-title-font-size:16px; }
+  .page-header-title { line-height: 28px; }
+  .ln-wysiwyg-toolbar { flex-wrap:nowrap; overflow-x:auto; }
+  .ln-wysiwyg-toolbar > * { flex-shrink:0; }
+  [data-run-step-content] { font-size:14px; line-height:22px; }
+  form input:not([type="checkbox"]):not([type="radio"]), form textarea, form select { font-size:max(16px,1em); }
+}
+
+:root {
+  --ln-ui-h1-weight:600; --ln-ui-h2-leading:26px; --ln-ui-h3-leading:22px;
+  --ln-ui-label-leading:18px; --ln-ui-button-leading:18px;
+  --ln-control-font-size-sm:13px; --ln-control-font-size-lg:13px;
+}
+html[data-labnest-ui-scale="standard"] { --ln-control-font-size-sm:13px; --ln-control-font-size-lg:13px; }
+html[data-labnest-ui-scale="comfortable"] { --ln-control-font-size-sm:14px; --ln-control-font-size-lg:14px; }
+.page-header-title { font-weight:var(--ln-ui-h1-weight); }
+@media(max-width:767px) {
+ html[data-labnest-ui-scale="standard"],html[data-labnest-ui-scale="comfortable"] { --ln-ui-section-title-font-size:16px; }
 }

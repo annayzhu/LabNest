@@ -1,4 +1,5 @@
 "use client";
+import {useI18n} from "@/components/I18nProvider";
 
 import { Pause, Play, RotateCcw, Timer } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
@@ -18,6 +19,7 @@ export function StepTimerControls({ experimentId, step, compact=false }: {
     timerPausedAt: Date | null;
   };
 }) {
+  const {locale}=useI18n();
   const [state, formAction, pending] = useActionState(updateStepTimer, initialState);
   const [expanded,setExpanded]=useState(false);
   const [clock, setClock] = useState(() => Date.now());
@@ -46,7 +48,7 @@ export function StepTimerControls({ experimentId, step, compact=false }: {
     startTransition(() => formAction(formData));
   }
 
-  return <>{compact?<button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>计时器{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
+  return <>{compact?<button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>{locale==="zh"?"计时器":"Timer"}{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
     <div className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-sm font-semibold text-ink"><Timer className="h-4 w-4 text-info" aria-hidden />Step timer</span>
       <span className="font-mono text-xl font-semibold tabular-nums text-ink" aria-live="off">{formatStepTimer(remaining)}</span>

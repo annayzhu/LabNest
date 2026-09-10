@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
-const base=process.env.LABNEST_EDITOR_TEST_URL||'http://localhost:3227';assert(['3227','3232','3234','3235'].includes(new URL(base).port)&&['localhost','127.0.0.1'].includes(new URL(base).hostname),'Use isolated editor acceptance server');
+const base=process.env.LABNEST_EDITOR_TEST_URL||'http://localhost:3227';assert(['3227','3232','3234','3235','3240'].includes(new URL(base).port)&&['localhost','127.0.0.1'].includes(new URL(base).hostname),'Use isolated editor acceptance server');
 const dir=process.env.LABNEST_EDITOR_EVIDENCE_DIR || 'docs/editor-repair/evidence';mkdirSync(dir,{recursive:true});const fixtures=JSON.parse(readFileSync(dir+'/fixtures.json','utf8'));
 const phase=process.env.EDITOR_CHECK||'print';const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(15000);
 async function insertImage(page, name='editor-fixture.png', body=page.locator('[contenteditable="true"]').first()) {

@@ -1,3 +1,4 @@
+import { paragraphLayout } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import {
@@ -65,6 +66,7 @@ function legacyAttrs(blockId: string, blockType: ProtocolContentBlock["type"], n
   return {
     protocolBlockId: blockId,
     protocolBlockType: blockType,
+    ...paragraphLayout(node),
     documentLineHeight: node?.lineHeight ?? null,
     protocolLineHeight: node?.lineHeight ?? null,
     protocolFontFamily: node?.fontFamily ?? null,
@@ -236,6 +238,7 @@ function nodeTypography(node: JSONContent) {
   const lineHeight = node.attrs?.documentLineHeight ?? node.attrs?.protocolLineHeight ?? textStyle?.attrs?.lineHeight;
   const fontFamily = node.attrs?.protocolFontFamily ?? textStyle?.attrs?.fontFamily;
   return {
+    ...paragraphLayout(node.attrs),
     lineHeight: [1, 1.15, 1.3, 1.5, 1.6, 2].includes(Number(lineHeight)) ? Number(lineHeight) as ProtocolRichTextNode["lineHeight"] : undefined,
     fontFamily: parseRichTextFontFamily(fontFamily),
   };

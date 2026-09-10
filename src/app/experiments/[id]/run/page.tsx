@@ -3,7 +3,7 @@ import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
 import {runParameterKeys} from "@/lib/run-parameters";
 import { runStepContent,runOfflineImagePaths } from "@/lib/run-step-content";
-import { ArrowLeft, Camera, FilePlus2 } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -12,7 +12,6 @@ import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolRunProgressForm } from "@/components/ProtocolRunProgressForm";
-import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
 import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
@@ -59,9 +58,6 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   ]);
   if (!experiment) notFound();
 
-  const completed = experiment.steps.filter((step) => step.completed).length;
-  const total = experiment.steps.length;
-  const progress = total ? Math.round((completed / total) * 100) : 0;
   const lockedProtocol = experiment.primaryProtocolVersion;
   const currentStep = experiment.steps.find((step) => !step.completed);
   const editable = experiment.status !== "archived";
@@ -71,6 +67,12 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     files: attachmentLinks.filter((link) => link.targetType === "experiment_step" && link.targetId === step.id).length,
     consumptions: step._count.inventoryTransactions,
   }]));
+  const frozenReferences: Record<string, ReturnType<typeof runStepContent>["reference"]> = {};
+  const renderedSteps=experiment.steps.map(step=>{
+    const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
+    frozenReferences[step.groupKey] ??= reference;
+    return {...step,richContent};
+  });
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,
@@ -92,38 +94,36 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </>}
         />
 
-        <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-4 py-4">
+        <details className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2">
+          <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">Experiment information</summary>
+          <section className="mt-2">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>
               <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "Unassigned plan"} · {experiment.project?.name ?? "Unassigned project"}</p>
               <p className="mt-1 text-xs text-muted">{lockedProtocol ? `${lockedProtocol.protocol.canonicalTitle ?? lockedProtocol.protocol.title} · ${lockedProtocol.protocol.humanCode ?? "Uncoded"} · ${lockedProtocol.displayVersion}` : "No locked ProtocolVersion"}</p>
             </div>
-            <div className="min-w-52">
-              <div className="flex items-center justify-between text-xs text-muted"><span>Run progress</span><span>{completed}/{total}</span></div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-stone"><div className="h-full rounded-full bg-moss transition-all" style={{ width: `${progress}%` }} /></div>
-            </div>
+
           </div>
         </section>
 
         <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson)} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
+        </details>
 
         <ProtocolRunProgressForm
           key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
           experimentId={experiment.id}
           status={experiment.status}
-          steps={experiment.steps.map(step=>({...step,richContent:runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>)}))}
+          steps={renderedSteps}
+          frozenReferences={frozenReferences}
           editable={editable}
           evidenceByStep={evidenceByStep}
         />
 
-        <section aria-label="Current run capture actions" className="grid grid-cols-3 gap-2 lg:hidden">
-          <Link href={`/entries/new?mode=capture&experiment=${experiment.id}${currentStep ? `&step=${currentStep.id}` : ""}`} className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><Camera className="h-5 w-5" aria-hidden />Observe</Link>
-          <MobileMeasurementCapture experimentId={experiment.id} step={currentStep ? { id: currentStep.id, title: currentStep.title, order: currentStep.order } : undefined} />
-          <a href="#result-recording" className="focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2 text-center text-xs font-semibold text-moss"><FilePlus2 className="h-5 w-5" aria-hidden />Result</a>
-        </section>
 
-        <div className="grid gap-4 xl:grid-cols-2">
+
+        <details className="rounded-[var(--ln-radius-panel)] border border-hairline px-3 py-2"><summary className="focus-ring cursor-pointer text-sm font-medium text-moss">Files, materials and results</summary>
+        <div className="mt-3 grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Photos and files</h2></div>
             {currentStep ? <div className="lg:hidden"><p className="mb-2 text-xs text-muted">Linked to Step {currentStep.order} · {currentStep.title}</p><AttachmentUploadForm targetType="experiment_step" targetId={currentStep.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="step_evidence" /></div> : null}
@@ -136,6 +136,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         </div>
 
         {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">已执行库存交易</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {t.quantityChange} {t.unit}</li>)}</ul></section>:null}
+        </details>
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>
     </AppShell>

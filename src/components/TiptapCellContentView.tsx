@@ -1,3 +1,5 @@
+import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
+import { richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import type { JSONContent } from "@tiptap/core";
 import type { CSSProperties, ReactNode } from "react";
 import { parseRichTextColor } from "@/lib/rich-text-color";
@@ -30,13 +32,14 @@ function renderNode(node: JSONContent, key: string): ReactNode {
       content = href ? <a key={markKey} href={href} target="_blank" rel="noreferrer">{content}</a> : content;
     } else if (mark.type === "textStyle") {
       const fontSizePt = parseRichTextFontSizePt(typeof mark.attrs?.fontSize === "string" ? String(Number.parseFloat(mark.attrs.fontSize)) : undefined);
-      const style: CSSProperties | undefined = fontSizePt ? { fontSize: `${fontSizePt}pt` } : undefined;
+      const style: CSSProperties = { ...(fontSizePt ? {fontSize:`${fontSizePt}pt`} : {}), ...(typeof mark.attrs?.fontFamily === "string" ? {fontFamily:richTextFontFamilyCss(mark.attrs.fontFamily)} : {}) };
       content = <span key={markKey} className={parseRichTextColor(mark.attrs?.color) === "risk" ? "text-error" : undefined} style={style}>{content}</span>;
     }
   }
 
-  if (node.type === "paragraph") return <div key={key}>{content}</div>;
-  if (node.type === "heading") return <div key={key} className="font-semibold">{content}</div>;
+  const blockStyle = {...paragraphLayoutStyle(node.attrs ?? {}), ...(node.attrs?.documentLineHeight ? {lineHeight:node.attrs.documentLineHeight} : {})};
+  if (node.type === "paragraph") return <div key={key} style={blockStyle}>{content}</div>;
+  if (node.type === "heading") return <div key={key} style={blockStyle} className="font-semibold">{content}</div>;
   if (node.type === "blockquote") return <blockquote key={key}>{content}</blockquote>;
   if (node.type === "bulletList" || node.type === "taskList") return <ul key={key}>{content}</ul>;
   if (node.type === "orderedList") return <ol key={key}>{content}</ol>;

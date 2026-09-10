@@ -1,3 +1,4 @@
+import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
@@ -127,7 +128,7 @@ export function getOrderedAttachmentIds(value: unknown) {
 
 export function plainTextFromEntryMarkdown(markdown: string) {
   const searchable = markdown.split("\n").map(line => { const media = documentMediaFromMarkdown(line); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : line; }).join("\n");
-  return stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(searchable)))
+  return stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(searchable))))
     .replace(/```[\s\S]*?```/g, (block) => block.replaceAll("```", ""))
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]+)\]\((?:https?:\/\/)[^)]+\)/g, "$1")

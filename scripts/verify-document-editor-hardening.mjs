@@ -7,7 +7,7 @@ async function findReportEditor(page) {
   await page.goto(`${baseUrl}/reports`, { waitUntil: "networkidle" });
   const href = await page.locator('a[href^="/reports/"]').evaluateAll((links) => links
     .map((link) => link.getAttribute("href"))
-    .find((value) => value && /^\/reports\/[^/]+$/.test(value)));
+    .find((value) => value && /^\/reports\/[^/]+$/.test(value) && !["/reports/new", "/reports/import"].includes(value)));
   if (!href) return null;
   await page.goto(`${baseUrl}${href}`, { waitUntil: "networkidle" });
   const editLink = page.locator('a[href^="/reports/"][href$="/edit"]').first();
@@ -173,6 +173,7 @@ async function assertSharedDocumentShell(page, route, titleName) {
   assert.equal(await shell.getByRole("tab", { name: "Metadata", exact: true }).count(), 1, `${route}: Metadata tab is missing.`);
   assert.equal(await shell.getByRole("textbox", { name: titleName, exact: true }).count(), 1, `${route}: title is not directly editable in the document.`);
   await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
+  await page.waitForFunction(el => el?.getAttribute("data-active-view") === "metadata", await shell.elementHandle());
   assert.equal(await shell.getAttribute("data-active-view"), "metadata", `${route}: Metadata tab did not activate.`);
   await shell.getByRole("tab", { name: "Document", exact: true }).click();
 }

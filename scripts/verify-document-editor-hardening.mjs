@@ -4,18 +4,18 @@ import { chromium } from "playwright";
 const baseUrl = process.env.LABNEST_E2E_BASE_URL ?? "http://127.0.0.1:3100";
 
 async function findReportEditor(page) {
-  await page.goto(`${baseUrl}/reports`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/reports`, { waitUntil: "networkidle" });
   const href = await page.locator('a[href^="/reports/"]').evaluateAll((links) => links
     .map((link) => link.getAttribute("href"))
     .find((value) => value && /^\/reports\/[^/]+$/.test(value)));
   if (!href) return null;
-  await page.goto(`${baseUrl}${href}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${href}`, { waitUntil: "networkidle" });
   const editLink = page.locator('a[href^="/reports/"][href$="/edit"]').first();
   return await editLink.count() ? editLink.getAttribute("href") : null;
 }
 
 async function assertToolbar(page, route, ariaLabel) {
-  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
   const toolbar = page.getByRole("toolbar", { name: ariaLabel }).first();
   await toolbar.waitFor();
   // SSR exposes the toolbar before React has attached its menu handlers. Wait
@@ -104,7 +104,7 @@ async function assertToolbar(page, route, ariaLabel) {
 async function assertNamedStylesAcrossEditors(page) {
   const styleName = `QC emphasis ${Date.now()}`;
   const renamedStyle = `${styleName} revised`;
-  await page.goto(`${baseUrl}/protocols/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/protocols/new`, { waitUntil: "networkidle" });
   const protocolToolbar = page.getByRole("toolbar", { name: "Protocol formatting" }).first();
   const paragraph = page.locator(".ProseMirror p").first();
   await paragraph.click();
@@ -117,14 +117,14 @@ async function assertNamedStylesAcrossEditors(page) {
   await saveDialog.getByLabel("Style name").fill(styleName);
   await saveDialog.getByRole("button", { name: "Save style" }).click();
 
-  await page.goto(`${baseUrl}/results/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
   const resultToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
   await resultToolbar.getByRole("button", { name: "Paragraph style", exact: true }).click();
   const styleMenu = page.locator('[data-toolbar-menu="style"]');
   assert.equal(await styleMenu.getByRole("menuitem", { name: styleName, exact: true }).count(), 1, "A named style created in Protocol is not available in Result.");
   await styleMenu.getByRole("menuitem", { name: styleName, exact: true }).click();
 
-  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.reload({ waitUntil: "networkidle" });
   const reloadedToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
   await reloadedToolbar.getByRole("button", { name: "More", exact: true }).click();
   await page.locator('[data-toolbar-menu="more"]').getByRole("menuitem", { name: `Rename style: ${styleName}` }).click();
@@ -142,7 +142,7 @@ async function assertNamedStylesAcrossEditors(page) {
 }
 
 async function assertZoom(page, route) {
-  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
   const paper = page.locator(".document-a4-paper").first();
   const view = page.getByRole("group", { name: "Document view zoom" }).first();
   await view.waitFor();
@@ -166,7 +166,7 @@ async function assertZoom(page, route) {
 }
 
 async function assertSharedDocumentShell(page, route, titleName) {
-  await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
   await page.waitForLoadState("networkidle");
   const shell = page.locator(".document-editor-layout").first();
   await shell.getByRole("tab", { name: "Document", exact: true }).waitFor();
@@ -178,7 +178,7 @@ async function assertSharedDocumentShell(page, route, titleName) {
 }
 
 async function assertMetadataIsTheOnlyRecordPropertiesPath(page) {
-  await page.goto(`${baseUrl}/experiments/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/experiments/new`, { waitUntil: "networkidle" });
   await page.waitForLoadState("networkidle");
   const shell = page.locator(".document-editor-layout").first();
   assert.equal(await shell.getByRole("button", { name: /information/i }).count(), 0, "The duplicate record-information drawer toggle remains.");
@@ -194,7 +194,7 @@ try {
   await assertToolbar(page, protocolEditor, "Protocol formatting");
   await assertNamedStylesAcrossEditors(page);
 
-  await page.goto(`${baseUrl}${protocolEditor}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}${protocolEditor}`, { waitUntil: "networkidle" });
 
   await page.getByRole("tab", { name: "Metadata" }).click();
   const metadata = page.getByRole("region", { name: "Protocol metadata" });
@@ -231,17 +231,17 @@ try {
   if (reportEditor) await assertToolbar(page, reportEditor, "Scientific document formatting");
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/results/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
   await page.getByRole("toolbar", { name: "Scientific document formatting" }).waitFor();
   const widths = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
   assert(widths.scroll <= widths.client + 1, `Document editor overflows on mobile: ${JSON.stringify(widths)}`);
 
-  await page.goto(`${baseUrl}/results/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
   const resultToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
   await resultToolbar.getByRole("button", { name: "Insert", exact: true }).click();
   const resultInsertMenu = page.locator(`[data-toolbar-menu="insert"]`);
   await resultInsertMenu.waitFor({ state: "visible" });
-  for (const label of ["Table", "Metric", "Callout", "Media", "Dataset"]) {
+  for (const label of ["Table", "Metric", "Callout", "图片 / Image", "Dataset"]) {
     assert.equal(await resultInsertMenu.getByText(label, { exact: true }).count(), 1, `Result Insert is missing ${label}.`);
   }
 
@@ -254,7 +254,7 @@ try {
   if (reportEditor) await assertSharedDocumentShell(page, reportEditor, "Report title");
   await assertMetadataIsTheOnlyRecordPropertiesPath(page);
 
-  await page.goto(`${baseUrl}/research-plans`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/research-plans`, { waitUntil: "networkidle" });
   await page.waitForTimeout(350);
   for (const kind of ["protocols", "records"]) {
     const countButton = page.getByRole("button", { name: new RegExp(`View \\d+ linked ${kind}`) }).first();
@@ -265,7 +265,7 @@ try {
     await page.keyboard.press("Escape");
   }
   await page.setViewportSize({ width: 800, height: 900 });
-  await page.goto(`${baseUrl}/results/new`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
   await page.getByRole("group", { name: "Document view zoom" }).getByRole("button", { name: "Fit" }).click();
   const tabletPaper = page.locator(".document-a4-paper").first();
   const tabletFit = await page.locator(".document-editor-document-panel").first().evaluate((element) => ({ width: element.getBoundingClientRect().width, overflow: getComputedStyle(element).overflowX }));

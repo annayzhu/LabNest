@@ -1,0 +1,78 @@
+{
+  "base": "http://localhost:3251",
+  "at": "2026-09-15T05:32:11.840Z",
+  "checks": [
+    {
+      "width": 1440,
+      "mode": "light",
+      "status": "passed",
+      "checks": [
+        "empty save-only row",
+        "presets follow calculation",
+        "save metadata and units",
+        "cancel keeps edited input",
+        "load resets manual output",
+        "rename persists after refresh",
+        "many searchable presets",
+        "delete confirmed",
+        "single offline panel",
+        "no outer overflow"
+      ]
+    },
+    {
+      "width": 1440,
+      "mode": "dark",
+      "status": "passed",
+      "checks": [
+        "empty save-only row",
+        "presets follow calculation",
+        "save metadata and units",
+        "cancel keeps edited input",
+        "load resets manual output",
+        "rename persists after refresh",
+        "many searchable presets",
+        "delete confirmed",
+        "single offline panel",
+        "no outer overflow"
+      ]
+    },
+    {
+      "width": 390,
+      "mode": "light",
+      "status": "passed",
+      "checks": [
+        "empty save-only row",
+        "presets follow calculation",
+        "save metadata and units",
+        "cancel keeps edited input",
+        "load resets manual output",
+        "rename persists after refresh",
+        "many searchable presets",
+        "delete confirmed",
+        "single offline panel",
+        "no outer overflow"
+      ]
+    },
+    {
+      "width": 390,
+      "mode": "dark",
+      "status": "passed",
+      "checks": [
+        "empty save-only row",
+        "presets follow calculation",
+        "save metadata and units",
+        "cancel keeps edited input",
+        "load resets manual output",
+        "rename persists after refresh",
+        "many searchable presets",
+        "delete confirmed",
+        "single offline panel",
+        "no outer overflow"
+      ]
+    },
+    {
+      "status": "passed",
+      "check": "cross-dimension preset retains mg to µg and computes 2000"
+    }
+  ]
+}

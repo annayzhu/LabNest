@@ -1,0 +1,9 @@
+{
+  "applicationSha": "35abfcbc80227d522cd2637004c4c775a8b01066",
+  "sourceTree": "75f6a2704cb14d4a599f17877a603481b0876a86",
+  "fixture": "Production build on localhost:3251; synthetic browser-only data; no production writes",
+  "reviews": {
+    "spec": "reported cross-dimension units fixed and rechecked",
+    "standards": "search submission, shared typography, focus-ring fixed and rechecked"
+  }
+}

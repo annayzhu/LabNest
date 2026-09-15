@@ -1,0 +1,8 @@
+{
+  "base": "http://localhost:3251",
+  "checks": [
+    "Preparation failure does not claim offline availability and offers Retry",
+    "Successful preparation and update cache home/current; actual disconnected reload restores draft and calculates",
+    "Clear preserves exact calculator storage and blocked IndexedDB queue; action returns to Prepare"
+  ]
+}

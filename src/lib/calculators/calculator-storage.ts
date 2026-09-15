@@ -226,3 +226,9 @@ export function recentCalculators(recent:CalculatorState['recent']){
  const seen=new Set<string>();
  return [...recent].sort((a,b)=>(Date.parse(b.visitedAt)||0)-(Date.parse(a.visitedAt)||0)).map(item=>({...item,calculatorId:legacyTaskMap[item.calculatorId]?.task??item.calculatorId})).filter(item=>{if(seen.has(item.calculatorId))return false;seen.add(item.calculatorId);return true;});
 }
+
+/** Rename only metadata; retain the original calculation parameters and provenance. */
+export function renamePreset(state: CalculatorState, presetId: string, name: string): CalculatorState {
+  if (!name.trim()) return state;
+  return {...state, presets: state.presets.map(preset => preset.id === presetId ? {...preset, name: name.trim()} : preset)};
+}

@@ -83,3 +83,14 @@ describe("calculator local state", () => {
     expect(saveCalculatorState(createEmptyCalculatorState())).toBe(false);
   });
 });
+
+it('renames a preset without replacing its inputs, version or other saved data', async () => {
+  const {renamePreset,addPreset,createEmptyCalculatorState}=await import('./calculator-storage');
+  const original=addPreset(createEmptyCalculatorState(),{id:'recipe',calculatorId:'dilution',name:'Old',createdAt:'2026-09-15',methodVersion:'dilution-v3',inputs:{mode:'final',stockConcentration:100,stockConcentrationUnit:'µM'}});
+  const changed=renamePreset(original,'recipe','  New name  ');
+  expect(changed.presets[0]).toEqual({...original.presets[0],name:'New name'});
+  expect(original.presets[0].name).toBe('Old');
+  expect(changed.history).toBe(original.history);
+  expect(changed.drafts).toBe(original.drafts);
+  expect(renamePreset(original,'recipe',' ')).toBe(original);
+});

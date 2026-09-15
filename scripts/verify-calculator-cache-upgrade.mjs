@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import {createServer} from 'node:http';import {chromium} from 'playwright';import assert from 'node:assert/strict';import {writeFile} from 'node:fs/promises';
 // Same-origin staging proxy, GET only. Old deployment is read-only; no production writes.
 const oldBase=process.env.LABNEST_OLD_BASE_URL||'http://localhost:3000',newBase=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3223';let source=oldBase,failResource=false;

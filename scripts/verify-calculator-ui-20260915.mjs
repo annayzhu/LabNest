@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
@@ -10,6 +11,8 @@ try {
  for(const width of [1440,390])for(const id of ids){
   await page.setViewportSize({width,height:width===1440?900:844});
   await page.goto(`${base}/tools/calculator/${id}`,{waitUntil:'networkidle'});
+  const initialResult=await page.locator('[data-calculator-result]').count();assert.equal(initialResult,0,id+' initial');
+  await page.screenshot({path:`${dir}/${id}-${width}-initial.png`,fullPage:true});
   if(id!=='colony-counter'){
    const load=page.getByRole('button',{name:/^(Load example|载入示例)$/});await load.click();
    await page.getByRole('button',{name:/^(Calculate|计算)$/}).click();
@@ -19,7 +22,18 @@ try {
   const error=(await page.locator('[role="alert"]').allTextContents()).filter(Boolean);
   await page.screenshot({path:`${dir}/${id}-${width}-input.png`,fullPage:true});
   if(width===390){const switcher=page.locator('.calculator-pane-switch').first().getByRole('button',{name:/^(Result|结果)$/});if(await switcher.count()){await switcher.click();await page.screenshot({path:`${dir}/${id}-${width}-result.png`,fullPage:true});}}
-  checks.push({id,width,error,...positions});
+  let invalidChecked=false;
+  if(id!=='colony-counter'){
+   const inputTab=page.locator('.calculator-pane-switch').first().getByRole('button',{name:/^(Inputs|输入)$/});if(await inputTab.count()&&await inputTab.isVisible())await inputTab.click();
+   const editable=page.locator('.calculator-input-form input[inputmode=decimal]:visible').first();
+   if(await editable.count()){
+    await editable.fill('invalid');await page.getByRole('button',{name:/^(Calculate|计算)$/}).click();
+    assert.equal(await page.locator('[data-calculator-result]').count(),0,id+' invalid result removed');
+    assert.ok(await page.locator('[role=alert]').count(),id+' invalid feedback');invalidChecked=true;
+    await page.screenshot({path:`${dir}/${id}-${width}-invalid.png`,fullPage:true});
+   }
+  }
+  checks.push({id,width,error,initialResult,invalidChecked,...positions});
   console.log(id,width,positions.overflow?'OVERFLOW':'ok',error.join(';'));
  }
  await writeFile(`${dir}/report.json`,JSON.stringify({base,phase,at:new Date().toISOString(),sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),checks},null,2));

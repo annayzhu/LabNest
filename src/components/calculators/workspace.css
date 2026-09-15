@@ -89,3 +89,6 @@
 .calculator-compact .calculator-row-stack > * { margin-block:0; }
 .calculator-compact .calculator-row-stack > button { align-self:flex-start; }
 .calculator-compact .calculator-input-form > .calculator-row-stack { display:flex; }
+.calculator-compact.calculator-stack { gap:8px; }
+.calculator-compact > nav { margin-block:0!important; }
+@media(min-width:768px) { .calculator-compact > nav > a { min-height:34px; } }

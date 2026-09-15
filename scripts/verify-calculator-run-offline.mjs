@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';import {readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
 const dir='docs/calculator/blockers/evidence',r=JSON.parse(await readFile('docs/calculator/v1.2/evidence/run-browser-report.json','utf8'));const b=await chromium.launch(),c=await b.newContext({viewport:{width:390,height:844}}),p=await c.newPage();p.setDefaultTimeout(12000);const report={at:new Date().toISOString(),checks:[]};
 const cache=async()=>{if(await p.locator('[data-run-reference]').count())await p.locator('[data-run-reference] > summary').click();await openCalculatorDisclosure(p,'Offline use');await p.getByText('Offline pages',{exact:true}).click();await p.getByRole('button',{name:'Prepare offline / Retry update'}).click();await p.getByText(/^Available offline:/).waitFor();};

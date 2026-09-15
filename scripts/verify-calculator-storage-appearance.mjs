@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {} from './calculator-ui-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';

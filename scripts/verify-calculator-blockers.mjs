@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';

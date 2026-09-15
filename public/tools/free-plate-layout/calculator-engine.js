@@ -256,7 +256,12 @@ var LabNestCalculations = (() => {
     return p;
   }
   function positive(value, label, zero = false) {
-    const n2 = parseScalar(value);
+    let n2;
+    try {
+      n2 = parseScalar(value);
+    } catch {
+      throw Error(`${label}: \u8BF7\u8F93\u5165\u6709\u6548\u6570\u5B57 / Enter a valid number`);
+    }
     if (!Number.isFinite(n2) || (zero ? n2 < 0 : n2 <= 0)) throw Error(`${label}: ${zero ? "\u987B\u22650 / must be \u22650" : "\u987B>0 / must be >0"}`);
     return n2;
   }

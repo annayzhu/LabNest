@@ -28,3 +28,12 @@ export const primaryOutputKeys:Record<string,string[]>={
  'dna-rna-conversion':['concentrationNm','moles'],'bradford-bca':['sampleConcentration'],
  'master-mix':['dispenseUl','totalMasterMixUl','actualReactions'],
 };
+
+/** Select only explicitly paired legacy bilingual text; never split unit slashes or URLs. */
+export function calculatorText(value:string,zh:boolean):string {
+ const parts=value.split(' / ');
+ if(parts.length!==2)return value;
+ const chinese=(text:string)=>/[\u3400-\u9fff]/.test(text);
+ if(chinese(parts[0])===chinese(parts[1]))return value;
+ return parts.find(part=>chinese(part)===zh)??value;
+}

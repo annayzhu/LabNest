@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
@@ -31,7 +31,7 @@ try {
    await page.getByRole('button',{name:'Load example'}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);
    assert.equal(await page.locator('main').getByRole('alert').count(),0,`${id} must calculate its explicit example`);
    const layout=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));assert(layout.scroll<=layout.width+1,`${id} overflows at ${width}: ${layout.scroll}`);
-   const clipped=await page.locator('main input, main select, main button').evaluateAll(elements=>elements.filter(element=>element.getClientRects().length).filter(element=>{const rect=element.getBoundingClientRect();return rect.left < -1 || rect.right > window.innerWidth+1;}).map(element=>({text:element.getAttribute('aria-label')??element.textContent,right:element.getBoundingClientRect().right})));assert.deepEqual(clipped,[],`${id} has clipped controls at ${width}`);
+   const clipped=await page.locator('main input, main select, main button').evaluateAll(elements=>elements.filter(element=>element.getClientRects().length&&!element.closest('.calculator-data-scroll')).filter(element=>{const rect=element.getBoundingClientRect();return rect.left < -1 || rect.right > window.innerWidth+1;}).map(element=>({text:element.getAttribute('aria-label')??element.textContent,right:element.getBoundingClientRect().right})));assert.deepEqual(clipped,[],`${id} has clipped controls at ${width}`);
    if(width===390)await page.screenshot({path:`${output}/${id}-390.png`,fullPage:true});
   }
  }

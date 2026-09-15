@@ -1,4 +1,4 @@
-import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult} from './calculator-ui-test-helpers.mjs';
 import 'dotenv/config';
 import {chromium} from 'playwright';
 import pg from 'pg';

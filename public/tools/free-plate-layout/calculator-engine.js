@@ -593,7 +593,7 @@ var LabNestCalculations = (() => {
   // src/lib/calculators/result-presentation.ts
   var tableQuantityUnits = { perWellUl: "\xB5L", dnaMassUg: "\xB5g", rnaPmol: "pmol", finalNm: "nM", takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
   function tableUnitsFor(result) {
-    return { ...tableQuantityUnits, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
+    return { ...tableQuantityUnits, ...["bradford-bca", "elisa-4pl", "ic50-ec50"].includes(result.calculatorId) && typeof result.rawInputs?.concentrationUnit === "string" && result.rawInputs.concentrationUnit ? { concentration: result.rawInputs.concentrationUnit } : {}, ...result.calculatorId === "wb-loading" ? { originalConcentration: "\xB5g/\xB5L" } : result.calculatorId === "normalization" ? { originalConcentration: "ng/\xB5L" } : result.calculatorId === "serial-dilution" ? { concentration: "\xB5M" } : {}, doseUgMl: "\xB5g/mL" };
   }
   function displayQuantity(value, unit, target) {
     return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };

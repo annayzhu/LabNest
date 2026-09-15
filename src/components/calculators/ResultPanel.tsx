@@ -22,7 +22,7 @@ export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit}:{r
  const curve=['bradford-bca','elisa-4pl','ic50-ec50'].includes(result.calculatorId);
  const tableView=table.length?<div className="calculator-data-scroll"><table><thead><tr>{Object.keys(table[0]).map(key=><th key={key}>{key}</th>)}</tr></thead><tbody>{table.map((row,index)=><tr key={index}>{Object.values(row).map((value,column)=><td key={column}>{typeof value==='number'?formatQuantity(value):String(local(value))}</td>)}</tr>)}</tbody></table></div>:null;
  const priority=primaryOutputKeys[result.calculatorId]??[];
- const outputs=presentedOutputs(result).sort((a,b)=>{const rank=(key:string)=>priority.includes(key)?priority.indexOf(key):priority.length;return rank(a.key)-rank(b.key);});
+ const outputs=presentedOutputs(result).filter(o=>!(result.calculatorId==='cfu'&&o.key==='transformantsPerUg'&&o.value==='Not calculated')).sort((a,b)=>{const rank=(key:string)=>priority.includes(key)?priority.indexOf(key):priority.length;return rank(a.key)-rank(b.key);});
  const values=(items:typeof outputs)=><dl className="calculator-result-values">{items.map(output=><div key={output.key}><dt>{zh?output.labelZh:output.label}</dt><dd><span>{typeof output.value==='number'?formatQuantity(output.value):String(local(output.value))}</span>{output.unit?picker(output.key,result.outputs.find(o=>o.key===output.key)!.unit!,zh?output.labelZh:output.label):null}</dd></div>)}</dl>;
  return <div className="min-w-0 space-y-3" data-calculator-result>
   {values(curve?outputs.slice(0,2):result.methodVersion==='transfection-v3'?outputs.filter(o=>o.key.startsWith(`group${groups.indexOf(group)}_`)&&/_(mixed|final|batch)$/.test(o.key)):table.length?outputs.slice(0,3):outputs)}

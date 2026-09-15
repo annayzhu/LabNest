@@ -33,4 +33,25 @@ try{
   await page.getByRole('button',{name:'Calculate',exact:true}).click();assert.equal(await page.getByRole('button',{name:'B tube',exact:true}).getAttribute('aria-pressed'),'true');assert.equal(await page.locator('.transfection-volume input').last().evaluate(el=>el===document.activeElement),true);
   await page.screenshot({path:`${out}/transfection-error-390.png`,fullPage:true});
  });
+ await check('Mobile B custom basis amount and A auxiliary amount errors retain the correct tube',async()=>{
+  await example('transfection');await page.getByRole('button',{name:'B tube',exact:true}).click();
+  await page.getByRole('combobox',{name:'Dose basis',exact:true}).selectOption('custom');
+  await page.getByRole('textbox',{name:'Reagent amount',exact:true}).fill('1');
+  await page.getByRole('textbox',{name:'Applicable object / basis',exact:true}).fill('Cells');
+  await page.getByRole('textbox',{name:'Basis unit',exact:true}).fill('10000 cells');
+  await page.getByRole('button',{name:'A tube',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'B tube',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.getByRole('textbox',{name:'Basis quantity per well',exact:true}).evaluate(el=>el===document.activeElement),true);
+  await example('transfection');await page.getByRole('button',{name:'+ Auxiliary reagent',exact:true}).click();
+  await page.locator('[data-auxiliary]').getByRole('textbox',{name:'Reagent name',exact:true}).fill('Auxiliary');
+  await page.getByRole('button',{name:'B tube',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'A tube',exact:true}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('[data-auxiliary]').getByRole('textbox',{name:'Reagent amount',exact:true}).evaluate(el=>el===document.activeElement),true);
+ });
+ await check('CFU optional efficiency can be enabled then disabled without blocking CFU',async()=>{
+  await example('cfu');const checkbox=page.getByRole('checkbox',{name:'Calculate transformation efficiency',exact:true});
+  await checkbox.check();await page.getByRole('textbox',{name:/DNA/}).fill('1');await page.getByRole('button',{name:'Calculate',exact:true}).click();
+  await checkbox.uncheck();await page.getByRole('button',{name:'Calculate',exact:true}).click();
+  assert.equal(await page.locator('.calculator-input-form [role=alert]').count(),0);assert.ok(await page.locator('[data-calculator-result]').count());assert.equal(await page.getByRole('textbox',{name:/DNA/}).count(),0);
+ });
 }finally{await writeFile(`${out}/report.json`,JSON.stringify({base,checks},null,2));await browser.close();}

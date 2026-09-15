@@ -37,6 +37,13 @@ function positive(value:unknown,label:string,zero=false){let n:number;try{n=pars
 function text(value:unknown,label:string){if(typeof value!=='string'||!value.trim())throw Error(`${label}: 必填 / required`);return value.trim();}
 function choice<T extends string>(value:T,choices:readonly T[],label:string):T{if(!choices.includes(value))throw Error(`${label}: 无效选项 / invalid option`);return value;}
 function volume(spec:TubeVolume,components:number,label:string){choice(spec.mode,['add','final'],'Volume meaning');const value=positive(spec.value,label,true);const total=spec.mode==='add'?components+value:value;const diluent=spec.mode==='add'?value:value-components;if(diluent<-1e-10||total<=0)throw Error(`${label}: 组分超过本管总体积 / Components exceed tube total`);return {total,diluent:Math.max(0,diluent)};}
+/** Context for UI focus, without changing the numeric validation or serialized result. */
+export class TransfectionFieldError extends Error {
+ constructor(message:string,readonly scope:'reagent'|'auxiliary',readonly row=0){super(message);}
+}
+function reagentInput<T>(scope:'reagent'|'auxiliary',row:number,read:()=>T):T {
+ try{return read();}catch(error){throw new TransfectionFieldError(error instanceof Error?error.message:String(error),scope,row);}
+}
 function reagentVolume(r:DoseReagent,dna:number,rna:number){text(r.name,'试剂名称 / Reagent name');choice(r.basis,['direct','dna','sirna','custom'],'Reagent basis');const rate=positive(r.amount,'试剂用量 / Reagent amount',true);if(r.basis==='dna'&&dna===0)throw Error('无DNA，不可按DNA质量计试剂 / No DNA for DNA-based reagent');if(r.basis==='sirna'&&rna===0)throw Error('无siRNA，不可按siRNA计试剂 / No siRNA for RNA-based reagent');if(r.basis==='custom'){text(r.basisName,'依据对象 / Basis object');text(r.basisUnit,'依据单位 / Basis unit');return rate*positive(r.basisAmount,'每孔依据量 / Basis per well');}return rate*(r.basis==='dna'?dna:r.basis==='sirna'?rna:1);}
 /** Unit-explicit per-well arithmetic; overage is applied once, only to supply/preparation volumes. */
 export function calculateTransfection(plan:TransfectionPlan):CalculatorResult{
@@ -62,12 +69,12 @@ export function calculateTransfection(plan:TransfectionPlan):CalculatorResult{
    const dna=r.kind!=='sirna';const amount=dna?(g.dnaMode==='amount'?positive(r.dose,'每孔DNA质量 / DNA mass per well'):positive(g.totalDna,'总DNA质量 / Total DNA mass')*weight(r)/denominator):(g.rnaMode.startsWith('total')?positive(g.totalRna,'siRNA总用量 / Total siRNA')*positive(r.dose,'siRNA ratio')/rnaRatio:positive(r.dose,'siRNA dose'))*(g.rnaMode.endsWith('nm')?final/1000:1);
    const stock=convert(positive(r.stock,'母液浓度 / Stock concentration'),r.stockUnit,dna?'µg/µL':'µM');const v=amount/stock;dnaTotal+=dna?amount:0;rnaTotal+=dna?0:amount;return {r,component,amount,volume:v,dna};
   });
-  const reagentName=text(g.reagent.name,'试剂名称 / Reagent name');if(profile&&reagentName!==profile.reagent)throw Error('试剂名称与所选产品不符 / Reagent does not match product');
+  const reagentName=reagentInput('reagent',0,()=>text(g.reagent.name,'试剂名称 / Reagent name'));if(profile&&reagentName!==profile.reagent)throw Error('试剂名称与所选产品不符 / Reagent does not match product');
   if(/rnaimax/i.test(reagentName)&&dnaRows.length)throw Error('RNAiMAX不适用于DNA共转染 / RNAiMAX does not support DNA co-transfection');
   if(!Array.isArray(g.auxiliaries))throw Error('Invalid auxiliary list');
   if(rnaRows.length&&!dnaRows.length&&g.auxiliaries.some(r=>/p\s*3000/i.test(r.name)))throw Error('纯siRNA方案不添加P3000 / Do not add P3000 to siRNA-only transfection');
   if(profile&&plan.protocol.startsWith('l3000')&&dnaRows.length&&!g.auxiliaries.some(r=>r.name==='P3000'&&r.basis==='dna'&&Number(r.amount)===2))throw Error('所选DNA方案需P3000 2 µL/µg DNA；其他用量请使用有依据的自定义方案 / Selected DNA protocol requires P3000 2 µL/µg DNA');
-  const reagent=reagentVolume(g.reagent,dnaTotal,rnaTotal),aux=g.auxiliaries.map(r=>({name:text(r.name,'辅助试剂 / Auxiliary'),volume:reagentVolume(r,dnaTotal,rnaTotal)})),nucleic=doses.reduce((s,r)=>s+r.volume,0),auxTotal=aux.reduce((s,r)=>s+r.volume,0);
+  const reagent=reagentInput('reagent',0,()=>reagentVolume(g.reagent,dnaTotal,rnaTotal)),aux=g.auxiliaries.map((r,index)=>reagentInput('auxiliary',index,()=>({name:text(r.name,'辅助试剂 / Auxiliary'),volume:reagentVolume(r,dnaTotal,rnaTotal)}))),nucleic=doses.reduce((s,r)=>s+r.volume,0),auxTotal=aux.reduce((s,r)=>s+r.volume,0);
   const a=plan.mixing==='two-tube'?volume(g.a,nucleic+auxTotal,'A管 / Tube A'):volume(g.single,nucleic+auxTotal+reagent,'单体系 / Single mixture');const b=plan.mixing==='two-tube'?volume(g.b,reagent,'B管 / Tube B'):{total:0,diluent:0};const mixed=a.total+b.total;
   if(mixed>final+1e-10)throw Error('混合液超过每孔最终培养体积 / Mixture exceeds final culture volume');
   const diluent=text(g.diluent,'稀释液名称 / Diluent');const order=profile?.order??text(g.order,'加样顺序 / Addition order');const inWell=plan.protocol==='rnaimax-reverse';

@@ -1,3 +1,4 @@
+import {openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import { chromium } from 'playwright';
 import { writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
@@ -9,7 +10,7 @@ const base = process.env.LABNEST_E2E_BASE_URL || 'http://localhost:3223';
 const report = { sha: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), checks: [] };
 try {
   await page.goto(base + '/tools/calculator/dilution', { waitUntil: 'networkidle' });
-  await page.getByText('Offline pages', { exact: true }).click();
+  await openCalculatorDisclosure(page,'Offline use');await page.getByText('Offline pages', { exact: true }).click();
   await page.getByRole('button', { name: 'Prepare offline / Retry update' }).click();
   await page.getByText(/^Available offline:/).waitFor({ timeout: 60000 });
   const before = await page.evaluate(() => caches.keys());

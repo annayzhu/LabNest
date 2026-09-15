@@ -281,6 +281,20 @@ var LabNestCalculations = (() => {
     if (diluent < -1e-10 || total <= 0) throw Error(`${label}: \u7EC4\u5206\u8D85\u8FC7\u672C\u7BA1\u603B\u4F53\u79EF / Components exceed tube total`);
     return { total, diluent: Math.max(0, diluent) };
   }
+  var TransfectionFieldError = class extends Error {
+    constructor(message, scope, row = 0) {
+      super(message);
+      this.scope = scope;
+      this.row = row;
+    }
+  };
+  function reagentInput(scope, row, read) {
+    try {
+      return read();
+    } catch (error) {
+      throw new TransfectionFieldError(error instanceof Error ? error.message : String(error), scope, row);
+    }
+  }
   function reagentVolume(r, dna, rna) {
     text(r.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
     choice(r.basis, ["direct", "dna", "sirna", "custom"], "Reagent basis");
@@ -342,13 +356,13 @@ var LabNestCalculations = (() => {
         rnaTotal += dna ? 0 : amount;
         return { r, component, amount, volume: v, dna };
       });
-      const reagentName = text(g.reagent.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name");
+      const reagentName = reagentInput("reagent", 0, () => text(g.reagent.name, "\u8BD5\u5242\u540D\u79F0 / Reagent name"));
       if (profile && reagentName !== profile.reagent) throw Error("\u8BD5\u5242\u540D\u79F0\u4E0E\u6240\u9009\u4EA7\u54C1\u4E0D\u7B26 / Reagent does not match product");
       if (/rnaimax/i.test(reagentName) && dnaRows.length) throw Error("RNAiMAX\u4E0D\u9002\u7528\u4E8EDNA\u5171\u8F6C\u67D3 / RNAiMAX does not support DNA co-transfection");
       if (!Array.isArray(g.auxiliaries)) throw Error("Invalid auxiliary list");
       if (rnaRows.length && !dnaRows.length && g.auxiliaries.some((r) => /p\s*3000/i.test(r.name))) throw Error("\u7EAFsiRNA\u65B9\u6848\u4E0D\u6DFB\u52A0P3000 / Do not add P3000 to siRNA-only transfection");
       if (profile && plan.protocol.startsWith("l3000") && dnaRows.length && !g.auxiliaries.some((r) => r.name === "P3000" && r.basis === "dna" && Number(r.amount) === 2)) throw Error("\u6240\u9009DNA\u65B9\u6848\u9700P3000 2 \xB5L/\xB5g DNA\uFF1B\u5176\u4ED6\u7528\u91CF\u8BF7\u4F7F\u7528\u6709\u4F9D\u636E\u7684\u81EA\u5B9A\u4E49\u65B9\u6848 / Selected DNA protocol requires P3000 2 \xB5L/\xB5g DNA");
-      const reagent = reagentVolume(g.reagent, dnaTotal, rnaTotal), aux = g.auxiliaries.map((r) => ({ name: text(r.name, "\u8F85\u52A9\u8BD5\u5242 / Auxiliary"), volume: reagentVolume(r, dnaTotal, rnaTotal) })), nucleic = doses.reduce((s, r) => s + r.volume, 0), auxTotal = aux.reduce((s, r) => s + r.volume, 0);
+      const reagent = reagentInput("reagent", 0, () => reagentVolume(g.reagent, dnaTotal, rnaTotal)), aux = g.auxiliaries.map((r, index) => reagentInput("auxiliary", index, () => ({ name: text(r.name, "\u8F85\u52A9\u8BD5\u5242 / Auxiliary"), volume: reagentVolume(r, dnaTotal, rnaTotal) }))), nucleic = doses.reduce((s, r) => s + r.volume, 0), auxTotal = aux.reduce((s, r) => s + r.volume, 0);
       const a = plan.mixing === "two-tube" ? volume(g.a, nucleic + auxTotal, "A\u7BA1 / Tube A") : volume(g.single, nucleic + auxTotal + reagent, "\u5355\u4F53\u7CFB / Single mixture");
       const b = plan.mixing === "two-tube" ? volume(g.b, reagent, "B\u7BA1 / Tube B") : { total: 0, diluent: 0 };
       const mixed = a.total + b.total;

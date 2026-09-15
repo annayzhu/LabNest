@@ -19,14 +19,15 @@ import { ResultPanel } from "./ResultPanel";
 import {TransfectionEditor,type TransfectionEditorHandle} from './TransfectionEditor';
 import {newTransfectionPlan,transfectionPlateValues,type TransfectionPlan} from '@/lib/calculators/transfection';
 import { resultClipboard, canCopyResult } from "@/lib/calculators/result-presentation";
-import { OfflineCalculator } from "./OfflineCalculator";
+import { CalculatorMore } from "./CalculatorMore";
+import { CalculatorPresets } from "./CalculatorPresets";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Calculator, Check, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Upload, X } from "lucide-react";
+import { Calculator, Check, Copy, FlaskConical, History, Pin, PinOff, RotateCcw, Save, Upload } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { calculate, getCalculatorDefinition, type CalculatorDefinition, type CalculatorResult } from "@/lib/calculators/calculator-engine";
-import { restoreCalculatorResult, addHistoryEntry, addPreset, deletePreset, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
+import { restoreCalculatorResult, addHistoryEntry, addPreset, deletePreset, renamePreset, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
 
 type PlateContext = { workspaceId: string; plateId: string; plateName: string; plateSize: number; wellIds: string[] };
 
@@ -55,7 +56,6 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [manualCopy,setManualCopy]=useState("");
-  const [presetName, setPresetName] = useState("");
   const [operator,setOperator]=useState("");
   const [recordStatus,setRecordStatus]=useState("");
   const mutationId=useRef<string|null>(null);
@@ -90,7 +90,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
       try {setResult(calculate({calculatorId,inputs:next}));} catch { /* Partial input never keeps the previous result. */ }
     }
   }
-  function restore(inputs:Record<string,unknown>,version?:string) {const restored=version?.endsWith("-v2")?{inputs}:restoreLegacyInputs(calculatorId,inputs);edit(restored.inputs,false);if(restored.warning)setError(restored.warning);}
+  function restore(inputs:Record<string,unknown>,version?:string,isExample=false) {const restored=version?.endsWith("-v2")?{inputs}:restoreLegacyInputs(calculatorId,inputs);edit(restored.inputs,isExample);if(restored.warning)setError(restored.warning);}
 
 
   const transfectionEditor=useRef<TransfectionEditorHandle>(null);
@@ -120,11 +120,10 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     mutationId.current??=newClientMutationId();
     try {await enqueueMobileMutation({clientMutationId:mutationId.current,actionType:'calculation.create',deviceCreatedAt:new Date().toISOString(),state:'pending',retryCount:0,payload:{experimentId:String(initialInputs.experimentId),experimentStepId:String(initialInputs.experimentStepId),operator:operator.trim(),calculatorId,inputs,snapshot:result}});requestMobileMutationSync();setRecordStatus(zh?'已加入统一同步队列；同步状态可在待同步记录查看。':'Added to sync queue; check sync status for completion.');}catch{setRecordStatus(zh?'无法保存到本机队列，请保留页面。':'Cannot save locally; keep this page open.');}
   }
-  function savePreset() {
+  function savePreset(presetName:string) {
     if (!state || !presetName.trim()) return;
     const id = newClientMutationId();
     update(addPreset(state, { id, calculatorId, name: presetName.trim(), createdAt: new Date().toISOString(), methodVersion:calculatorId==='transfection'&&!inputs.transfectionPlan?'transfection-v2':definition.methodVersion,source:example?"synthetic example":"user-defined", inputs }));
-    setPresetName("");
   }
 
   function applyToPlate() {
@@ -160,7 +159,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   return (
     <div className="calculator-workbench calculator-compact calculator-stack" data-layout={layout} data-pane={mobilePane}>
-      <CalculatorHeading id={calculatorId} title={zh?definition.nameZh:definition.name} zh={zh} contextQuery={contextQuery} embedded={embedded} actions={<>{state && !embedded ? <button type="button" onClick={() => update(toggleFavorite({...state,favorites:state.favoritesConfigured?state.favorites:defaultTasks}, calculatorId))} className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}</>}/>
+      <CalculatorHeading id={calculatorId} title={zh?definition.nameZh:definition.name} zh={zh} contextQuery={contextQuery} embedded={embedded} actions={<><CalculatorMore zh={zh} history={<Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={(event) => { event.currentTarget.closest("dialog")?.close();setMobilePane("result");setHistorical(true);setSourceRecord(item.id);setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>}/>{state && !embedded ? <button type="button" onClick={() => update(toggleFavorite({...state,favorites:state.favoritesConfigured?state.favorites:defaultTasks}, calculatorId))} className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite hover:bg-warm">{favorite ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}</>}/>
 
       {['molarity','percent-solution'].includes(calculatorId)?<nav aria-label="Solution modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" href={`/tools/calculator/molarity${contextQuery?`?${contextQuery}`:""}`}>{zh?"摩尔浓度":"Molarity"}</Link><Link className="min-h-11 text-moss" href={`/tools/calculator/percent-solution${contextQuery?`?${contextQuery}`:""}`}>{zh?"百分浓度":"Percentage"}</Link></nav>:null}
       {['master-mix','transfection'].includes(calculatorId)?<nav aria-label="Reaction modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" href={`/tools/calculator/master-mix${contextQuery?`?${contextQuery}`:""}`}>PCR / Master Mix</Link><Link className="min-h-11 text-moss" href={`/tools/calculator/transfection${contextQuery?`?${contextQuery}`:""}`}>{zh?"转染":"Transfection"}</Link></nav>:null}
@@ -186,7 +185,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
               {calculatorId==='master-mix'&&Array.isArray(inputs.groups)?<ReactionGroups zh={zh} groups={inputs.groups as ReactionGroup[]} onChange={groups=>edit({...inputs,groups})}/>:null}
               {calculatorId==='normalization'||(calculatorId==='wb-loading'&&Array.isArray(inputs.samples))?<SampleEditor zh={zh} unit={calculatorId==='normalization'?'ng/µL':'µg/µL'} rows={Array.isArray(inputs.samples)?inputs.samples as SampleRow[]:[]} onChange={samples=>edit({...inputs,samples})}/>:null}
               {calculatorId==='wb-loading'?<button className="min-h-11 text-sm text-moss" type="button" onClick={()=>{const next={...inputs};if(Array.isArray(next.samples))delete next.samples;else next.samples=[];edit(next);}}>{zh?'切换单样本 / 批量':'Switch single / batch'}</button>:null}
-              <button type="submit" className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-4 text-sm font-semibold text-warm sm:w-auto"><Calculator className="h-4 w-4" />{zh ? "计算" : "Calculate"}</button>{layout!=='simple'?<button type="button" className="calculator-mobile-result" onClick={()=>setMobilePane('result')}>{zh?'结果':'Result'}</button>:null}
+              <button type="submit" className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--ln-radius-control-lg)] bg-moss px-4 text-sm font-semibold text-warm sm:w-auto"><Calculator className="h-4 w-4" />{zh ? "计算" : "Calculate"}</button><CalculatorPresets zh={zh} presets={presets} disabled={!state||!!persistenceWarning} onSave={savePreset} onLoad={preset=>restore(preset.inputs,preset.methodVersion,preset.source==="synthetic example")} onRename={(id,name)=>{if(state)update(renamePreset(state,id,name));}} onDelete={id=>{if(state)update(deletePreset(state,id));}}/>{layout!=='simple'?<button type="button" className="calculator-mobile-result" onClick={()=>setMobilePane('result')}>{zh?'结果':'Result'}</button>:null}
               <div className="flex flex-wrap gap-3"><button type="button" className="min-h-11 text-sm text-moss" onClick={()=>edit({...defaults,...definition.exampleInputs},true)}>{zh?'载入示例':'Load example'}</button>{state?.drafts[calculatorId]?<button className="min-h-11 text-sm text-moss" type="button" onClick={()=>edit(state.drafts[calculatorId].inputs,state.drafts[calculatorId].example)}>{zh?'恢复上次草稿':'Restore draft'}</button>:null}</div>
               {example?<p role="status" className="text-sm text-warning">{zh?'示例数据：重置后可保存自己的计算。':'Example data. Reset to save your own calculation.'}</p>:null}
               {hasPipettingSettings(calculatorId)?<details><summary className="min-h-11 cursor-pointer text-xs">{zh?'移液设备与舍入（可选）':'Pipetting equipment and rounding (optional)'}</summary><div className="grid gap-2 sm:grid-cols-2">{[['pipetteMinimumUl','设备下限µL','Equipment minimum µL'],['pipetteStepUl','移液步进µL','Pipetting increment µL']].map(([key,labelZh,label])=><label key={key} className="text-xs">{zh?labelZh:label}<input className="mt-1 min-h-11 w-full rounded border border-hairline px-2" value={String(inputs[key]??'')} onChange={e=>edit({...inputs,[key]:e.target.value})}/></label>)}</div></details>:null}
@@ -208,11 +207,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
         </div>
       </div>
 
-      <details className="calculator-secondary"><summary>{zh?"离线使用":"Offline use"}</summary><OfflineCalculator zh={zh}/></details>
-      <details><summary className="min-h-11 cursor-pointer text-sm">{zh?"历史 / 配方":"History / recipes"}</summary><div className="grid gap-4 lg:grid-cols-2">
-        <Card><CardHeader title={zh ? "预设" : "Presets"} /><CardBody className="space-y-3"><div className="flex gap-2"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder={zh ? "预设名称" : "Preset name"} className="min-h-11 min-w-0 flex-1 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/30 px-3 text-sm outline-none focus:border-moss" /><button type="button" onClick={savePreset} disabled={!presetName.trim()} className="focus-ring inline-flex min-h-11 items-center gap-1.5 rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-graphite disabled:opacity-40"><Save className="h-3.5 w-3.5" />{zh ? "保存" : "Save"}</button></div>{presets.length ? <div className="space-y-1">{presets.map((preset) => <div key={preset.id} className="flex items-center gap-1"><button type="button" onClick={() => { restore(preset.inputs,preset.methodVersion); }} className="min-w-0 flex-1 truncate rounded-full bg-sage-surface px-3 py-1 text-left text-xs font-medium text-moss">{preset.name}</button><button type="button" onClick={() => state && update(deletePreset(state, preset.id))} className="flex h-7 w-7 items-center justify-center rounded-full text-muted hover:bg-danger-surface hover:text-danger" aria-label={zh ? "删除预设" : "Delete preset"}><X className="h-3.5 w-3.5" /></button></div>)}</div> : <p className="text-xs text-muted">{zh ? "尚无预设。" : "No presets yet."}</p>}</CardBody></Card>
-        <Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={() => { setHistorical(true);setSourceRecord(item.id);setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><History className="h-3.5 w-3.5 shrink-0 text-muted" /></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>
-      </div></details>
+
     </div>
   );
 }

@@ -10,8 +10,8 @@ const base = process.env.LABNEST_E2E_BASE_URL || 'http://localhost:3223';
 const report = { sha: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), checks: [] };
 try {
   await page.goto(base + '/tools/calculator/dilution', { waitUntil: 'networkidle' });
-  await openCalculatorDisclosure(page,'Offline use');await page.getByText('Offline pages', { exact: true }).click();
-  await page.getByRole('button', { name: 'Prepare offline / Retry update' }).click();
+  await openCalculatorDisclosure(page,'Offline use');
+  await page.getByRole('button', { name: /^(Prepare offline|Update offline content|Retry)$/ }).click();
   await page.getByText(/^Available offline:/).waitFor({ timeout: 60000 });
   const before = await page.evaluate(() => caches.keys());
   // Inject only the worker's negative acknowledgement. Actual page/button/error UI remains intact.
@@ -26,13 +26,13 @@ try {
       return original.call(this, data, ports);
     };
   });
-  await page.getByRole('button', { name: 'Clear tool caches', exact: true }).click();
-  await page.getByText('Could not clear caches; retry.', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Clear offline caches', exact: true }).click();
+  await page.getByText('Could not clear caches; retry clearing.', { exact: true }).waitFor();
   assert.deepEqual(await page.evaluate(() => caches.keys()), before);
   report.checks.push('Negative worker reply displays failure, retains real prepared caches, never reports cleared');
   await page.evaluate(() => window.restoreWorkerMessaging());
-  await page.getByRole('button', { name: 'Clear tool caches', exact: true }).click();
-  await page.getByText('Tool and Run page caches cleared; drafts, history and sync queue retained.', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Clear offline caches', exact: true }).click();
+  await page.getByText('Offline caches cleared; drafts, presets, history and sync queue retained.', { exact: true }).waitFor();
   assert(!(await page.evaluate(() => caches.keys())).some(name => name.startsWith('labnest-calculator')));
   report.checks.push('Retry with actual worker deletes tool cache and then reports success');
 } catch (error) {

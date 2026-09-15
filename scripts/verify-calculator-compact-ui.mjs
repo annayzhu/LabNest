@@ -1,3 +1,4 @@
+import {showCalculatorResult,showCalculatorInputs,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
@@ -12,10 +13,9 @@ try {
    await page.goto(`${base}/tools/calculator/${task}`,{waitUntil:'networkidle'});
    await page.getByRole('button',{name:'Load example',exact:true}).click();
    if(task==='master-mix') {
-    await page.getByText('Calculate volume from stock / target concentration',{exact:true}).first().click();
-    await page.getByText('Use concentrations (ignore fixed volume)',{exact:true}).first().click();
+    await page.getByRole('combobox',{name:'Calculation basis',exact:true}).first().selectOption('concentration');
    }
-   if(task==='buffer-recipe')await page.getByRole('combobox',{name:'Component input mode'}).first().selectOption('concentration');
+   if(task==='buffer-recipe')await page.getByRole('combobox',{name:'Basis',exact:true}).first().selectOption('concentration');
    const pairs=await page.locator('form select').evaluateAll(selects=>selects.filter(select=>select.getClientRects().length).flatMap(select=>{
     const parent=select.parentElement;
     if(!parent.className.includes('grid-cols-[')&&!parent.classList.contains('calculator-quantity'))return [];

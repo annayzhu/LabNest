@@ -10,5 +10,5 @@ export function ResultExport({result,zh}:{result:CalculatorResult;zh:boolean}){
   else blob=new Blob([resultCsv(result,zh)],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${result.calculatorId}-${result.methodVersion}.${xlsx?'xlsx':'csv'}`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setError('');
  }catch{setError(zh?'导出失败，请重试或复制操作步骤。':'Export failed. Retry or copy the steps.');}}
- return <div className="flex flex-wrap gap-3 text-sm"><button type="button" className="min-h-11 text-moss" onClick={()=>download()}>{zh?'导出CSV':'Export CSV'}</button><button type="button" className="min-h-11 text-moss" onClick={()=>download(true)}>{zh?'导出XLSX':'Export XLSX'}</button>{error?<p role="alert">{error}</p>:null}</div>;
+ return <details className="text-sm"><summary className="cursor-pointer">{zh?"导出":"Export"}</summary><div className="flex flex-wrap gap-3"><button type="button" className="min-h-11 text-moss" onClick={()=>download()}>{zh?'导出CSV':'Export CSV'}</button><button type="button" className="min-h-11 text-moss" onClick={()=>download(true)}>{zh?'导出XLSX':'Export XLSX'}</button>{error?<p role="alert">{error}</p>:null}</div></details>;
 }

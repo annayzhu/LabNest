@@ -4,7 +4,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3251',dir='docs/calculator/presets-20260915/evidence';await mkdir(dir,{recursive:true});
 const browser=await chromium.launch();const checks=[];
 try{for(const width of [1440,390])for(const mode of ['light','dark']){
- const context=await browser.newContext({viewport:{width,height:900},colorScheme:mode});const p=await context.newPage();
+ const context=await browser.newContext({viewport:{width,height:900},colorScheme:mode});const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(base+'/tools/calculator/master-mix',{waitUntil:'networkidle'});
  assert.equal(await p.getByText('Offline pages',{exact:true}).isVisible(),false);
  assert.equal(await p.getByRole('textbox',{name:'Preset name',exact:true}).count(),0);
@@ -24,7 +24,7 @@ try{for(const width of [1440,390])for(const mode of ['light','dark']){
  await p.getByText('Choose / manage presets',{exact:true}).click();
  await p.screenshot({path:`${dir}/presets-${width}-${mode}.png`,fullPage:true});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
  await p.locator('.calculator-more > summary').click();await p.getByRole('button',{name:'Offline use',exact:true}).click();const panel=p.getByRole('dialog',{name:'Offline use',exact:true});assert(await panel.isVisible());assert.equal(await panel.locator('details').count(),0);await p.screenshot({path:`${dir}/offline-${width}-${mode}.png`});await p.keyboard.press('Escape');assert.equal(await panel.isVisible(),false);
- checks.push({width,mode,status:'passed',checks:['empty save-only row','presets follow calculation','save metadata and units','cancel keeps edited input','load resets manual output','rename persists after refresh','many searchable presets','delete confirmed','single offline panel','no outer overflow']});await context.close();
+ assert.deepEqual(errors,[]);checks.push({width,mode,status:'passed',checks:['empty save-only row','presets follow calculation','save metadata and units','cancel keeps edited input','load resets manual output','rename persists after refresh','many searchable presets','delete confirmed','single offline panel','no outer overflow']});await context.close();
 }
  const c=await browser.newContext(),p=await c.newPage();await p.goto(base+'/tools/calculator/unit-converter',{waitUntil:'networkidle'});
  await p.evaluate(()=>{const k='labnest.calculators.v1',s=JSON.parse(localStorage.getItem(k));s.presets=[{id:'mass',calculatorId:'unit-converter',name:'Mass reference',createdAt:'2026-09-15',methodVersion:'unit-converter-v1',inputs:{dimension:'mass',value:2,fromUnit:'mg',toUnit:'µg'}}];localStorage.setItem(k,JSON.stringify(s));});await p.reload({waitUntil:'networkidle'});await p.getByRole('combobox',{name:'Presets',exact:true}).selectOption('mass');await p.getByRole('button',{name:'Load',exact:true}).click();assert.equal(await p.getByRole('combobox',{name:'From unit',exact:true}).inputValue(),'mg');assert.equal(await p.getByRole('combobox',{name:'To unit',exact:true}).inputValue(),'µg');assert((await p.locator('[data-calculator-result]').innerText()).replaceAll(',','').includes('2000'));checks.push({status:'passed',check:'cross-dimension preset retains mg to µg and computes 2000'});await c.close();

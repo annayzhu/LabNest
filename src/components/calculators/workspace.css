@@ -121,3 +121,6 @@
 .calculator-presets summary { display:flex; align-items:center; }
 
 .calculator-input-panel .calculator-presets { margin-block:8px; }
+
+.calculator-secondary-inputs { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.calculator-secondary-inputs > :is(div,details,p) { flex-basis:100%; min-width:0; margin:0; }

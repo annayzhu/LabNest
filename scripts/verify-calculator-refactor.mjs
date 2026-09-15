@@ -1,4 +1,4 @@
-import {showCalculatorResult,openCalculatorDisclosure,prepareCalculatorOffline} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult,prepareCalculatorOffline} from './calculator-ui-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';

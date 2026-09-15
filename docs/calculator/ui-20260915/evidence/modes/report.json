@@ -1,0 +1,3631 @@
+{
+  "base": "http://localhost:3240",
+  "checks": [
+    {
+      "id": "dilution",
+      "mode": "final",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeFinal volumeAdd to existing liquidFold dilution1:N dilutionStock:diluent",
+          "value": "final"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "10"
+        },
+        {
+          "label": "Stock concentration unit",
+          "value": "mM"
+        },
+        {
+          "label": "Target concentration",
+          "value": "10"
+        },
+        {
+          "label": "Target concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Final / initial volume",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-final.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "dilution",
+      "mode": "add",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeFinal volumeAdd to existing liquidFold dilution1:N dilutionStock:diluent",
+          "value": "add"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "10"
+        },
+        {
+          "label": "Stock concentration unit",
+          "value": "mM"
+        },
+        {
+          "label": "Target concentration",
+          "value": "10"
+        },
+        {
+          "label": "Target concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Initial concentration (same solute)",
+          "value": "0"
+        },
+        {
+          "label": "Initial concentration (same solute) unit",
+          "value": "µM"
+        },
+        {
+          "label": "Final / initial volume",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-add.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "dilution",
+      "mode": "fold",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeFinal volumeAdd to existing liquidFold dilution1:N dilutionStock:diluent",
+          "value": "fold"
+        },
+        {
+          "label": "Stock fold",
+          "value": "10"
+        },
+        {
+          "label": "Target fold",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-fold.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "dilution",
+      "mode": "ratio",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeFinal volumeAdd to existing liquidFold dilution1:N dilutionStock:diluent",
+          "value": "ratio"
+        },
+        {
+          "label": "Dilution denominator",
+          "value": "1000"
+        },
+        {
+          "label": "Final / initial volume",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-ratio.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "dilution",
+      "mode": "parts",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeFinal volumeAdd to existing liquidFold dilution1:N dilutionStock:diluent",
+          "value": "parts"
+        },
+        {
+          "label": "Stock parts",
+          "value": "1"
+        },
+        {
+          "label": "Diluent parts",
+          "value": "10"
+        },
+        {
+          "label": "Final / initial volume",
+          "value": "2"
+        },
+        {
+          "label": "Final / initial volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-parts.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "hemocytometer",
+      "mode": "custom geometry",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Counting regionStandard large square (100 nL)Custom geometry",
+          "value": "custom"
+        },
+        {
+          "label": "Quadrant counts",
+          "value": "13,11,14,17"
+        },
+        {
+          "label": "Dilution factor",
+          "value": "3"
+        },
+        {
+          "label": "Viability%",
+          "value": "90"
+        },
+        {
+          "label": "Counting area",
+          "value": "1"
+        },
+        {
+          "label": "Counting area unit",
+          "value": "mm²"
+        },
+        {
+          "label": "Chamber depth",
+          "value": "0.1"
+        },
+        {
+          "label": "Chamber depth unit",
+          "value": "mm"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/hemocytometer-custom-geometry.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "split",
+      "mode": "different areas",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Container areaSame source and target areaDifferent areas",
+          "value": "different"
+        },
+        {
+          "label": "Current confluency%",
+          "value": "90"
+        },
+        {
+          "label": "Split denominator",
+          "value": "4"
+        },
+        {
+          "label": "Target confluency%",
+          "value": "80"
+        },
+        {
+          "label": "Doubling time",
+          "value": "24"
+        },
+        {
+          "label": "Doubling time unit",
+          "value": "h"
+        },
+        {
+          "label": "Source area",
+          "value": "10"
+        },
+        {
+          "label": "Source area unit",
+          "value": "cm²"
+        },
+        {
+          "label": "Area of each target container",
+          "value": "5"
+        },
+        {
+          "label": "Area of each target container unit",
+          "value": "cm²"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/split-different-areas.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "molarity",
+      "mode": "mass",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solve forMass to weighConcentrationVolume",
+          "value": "mass"
+        },
+        {
+          "label": "Molecular weightg/mol",
+          "value": "58.44"
+        },
+        {
+          "label": "Concentration",
+          "value": "0.1"
+        },
+        {
+          "label": "Concentration unit",
+          "value": "M"
+        },
+        {
+          "label": "Volume",
+          "value": "0.1"
+        },
+        {
+          "label": "Volume unit",
+          "value": "L"
+        },
+        {
+          "label": "Mass purity%",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-mass.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "molarity",
+      "mode": "concentration",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solve forMass to weighConcentrationVolume",
+          "value": "concentration"
+        },
+        {
+          "label": "Molecular weightg/mol",
+          "value": "58.44"
+        },
+        {
+          "label": "Volume",
+          "value": "0.1"
+        },
+        {
+          "label": "Volume unit",
+          "value": "L"
+        },
+        {
+          "label": "Mass",
+          "value": "0.5844"
+        },
+        {
+          "label": "Mass unit",
+          "value": "g"
+        },
+        {
+          "label": "Mass purity%",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-concentration.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "molarity",
+      "mode": "volume",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solve forMass to weighConcentrationVolume",
+          "value": "volume"
+        },
+        {
+          "label": "Molecular weightg/mol",
+          "value": "58.44"
+        },
+        {
+          "label": "Concentration",
+          "value": "0.1"
+        },
+        {
+          "label": "Concentration unit",
+          "value": "M"
+        },
+        {
+          "label": "Mass",
+          "value": "0.5844"
+        },
+        {
+          "label": "Mass unit",
+          "value": "g"
+        },
+        {
+          "label": "Mass purity%",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-volume.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "percent-solution",
+      "mode": "w/v",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solution typew/vv/vw/w",
+          "value": "w/v"
+        },
+        {
+          "label": "Percentage%",
+          "value": "10"
+        },
+        {
+          "label": "Target volume",
+          "value": "500"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-w-v.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "percent-solution",
+      "mode": "v/v",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solution typew/vv/vw/w",
+          "value": "v/v"
+        },
+        {
+          "label": "Percentage%",
+          "value": "10"
+        },
+        {
+          "label": "Target volume",
+          "value": "500"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-v-v.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "percent-solution",
+      "mode": "w/w",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Solution typew/vv/vw/w",
+          "value": "w/w"
+        },
+        {
+          "label": "Percentage%",
+          "value": "10"
+        },
+        {
+          "label": "Final mixture mass",
+          "value": "100"
+        },
+        {
+          "label": "Final mixture mass unit",
+          "value": "g"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-w-w.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "resuspension",
+      "mode": "amount",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeAmount → molarityMass → mass concentrationMass + MW → molarity",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "25"
+        },
+        {
+          "label": "Amount unit",
+          "value": "nmol"
+        },
+        {
+          "label": "Target molarity",
+          "value": "100"
+        },
+        {
+          "label": "Target molarity unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-amount.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "resuspension",
+      "mode": "mass",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeAmount → molarityMass → mass concentrationMass + MW → molarity",
+          "value": "mass"
+        },
+        {
+          "label": "Mass",
+          "value": "1"
+        },
+        {
+          "label": "Mass unit",
+          "value": "mg"
+        },
+        {
+          "label": "Target mass concentration",
+          "value": "1"
+        },
+        {
+          "label": "Target mass concentration unit",
+          "value": "mg/mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-mass.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "resuspension",
+      "mode": "mass-molar",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ModeAmount → molarityMass → mass concentrationMass + MW → molarity",
+          "value": "mass-molar"
+        },
+        {
+          "label": "Mass",
+          "value": "1"
+        },
+        {
+          "label": "Mass unit",
+          "value": "mg"
+        },
+        {
+          "label": "Molecular weightg/mol",
+          "value": "100"
+        },
+        {
+          "label": "Target molarity",
+          "value": "100"
+        },
+        {
+          "label": "Target molarity unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-mass-molar.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "centrifuge",
+      "mode": "rpm-to-rcf",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ConversionRPM to RCFRCF to RPM",
+          "value": "rpm-to-rcf"
+        },
+        {
+          "label": "Radius definitionUser-entered rotor radiusMaximum radiusMean radius",
+          "value": "entered"
+        },
+        {
+          "label": "RPMrpm",
+          "value": "1000"
+        },
+        {
+          "label": "Rotor radius",
+          "value": "10"
+        },
+        {
+          "label": "Rotor radius unit",
+          "value": "cm"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/centrifuge-rpm-to-rcf.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "centrifuge",
+      "mode": "rcf-to-rpm",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "ConversionRPM to RCFRCF to RPM",
+          "value": "rcf-to-rpm"
+        },
+        {
+          "label": "Radius definitionUser-entered rotor radiusMaximum radiusMean radius",
+          "value": "entered"
+        },
+        {
+          "label": "RCF×g",
+          "value": "111.8"
+        },
+        {
+          "label": "Rotor radius",
+          "value": "10"
+        },
+        {
+          "label": "Rotor radius unit",
+          "value": "cm"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/centrifuge-rcf-to-rpm.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "mixed-prepared",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "geometric"
+        },
+        {
+          "label": "Volume meaningMixed volumeRetained volume",
+          "value": "mixed"
+        },
+        {
+          "label": "Starting solutionAlready prepared starting solutionPrepare from stock",
+          "value": "prepared"
+        },
+        {
+          "label": "Starting concentration",
+          "value": "100"
+        },
+        {
+          "label": "Starting concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Dilution factor",
+          "value": "10"
+        },
+        {
+          "label": "Levels",
+          "value": "6"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-mixed-prepared.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "mixed-stock",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "geometric"
+        },
+        {
+          "label": "Volume meaningMixed volumeRetained volume",
+          "value": "mixed"
+        },
+        {
+          "label": "Starting solutionAlready prepared starting solutionPrepare from stock",
+          "value": "stock"
+        },
+        {
+          "label": "Starting concentration",
+          "value": "100"
+        },
+        {
+          "label": "Starting concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Dilution factor",
+          "value": "10"
+        },
+        {
+          "label": "Levels",
+          "value": "6"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        },
+        {
+          "label": "Source stock concentration",
+          "value": "1000"
+        },
+        {
+          "label": "Source stock concentration unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-mixed-stock.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "retained-prepared",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "geometric"
+        },
+        {
+          "label": "Volume meaningMixed volumeRetained volume",
+          "value": "retained"
+        },
+        {
+          "label": "Starting solutionAlready prepared starting solutionPrepare from stock",
+          "value": "prepared"
+        },
+        {
+          "label": "Starting concentration",
+          "value": "100"
+        },
+        {
+          "label": "Starting concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Dilution factor",
+          "value": "10"
+        },
+        {
+          "label": "Levels",
+          "value": "6"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-retained-prepared.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "retained-stock",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "geometric"
+        },
+        {
+          "label": "Volume meaningMixed volumeRetained volume",
+          "value": "retained"
+        },
+        {
+          "label": "Starting solutionAlready prepared starting solutionPrepare from stock",
+          "value": "stock"
+        },
+        {
+          "label": "Starting concentration",
+          "value": "100"
+        },
+        {
+          "label": "Starting concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Dilution factor",
+          "value": "10"
+        },
+        {
+          "label": "Levels",
+          "value": "6"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        },
+        {
+          "label": "Source stock concentration",
+          "value": "1000"
+        },
+        {
+          "label": "Source stock concentration unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-retained-stock.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "linear",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "linear"
+        },
+        {
+          "label": "Starting concentration",
+          "value": "10"
+        },
+        {
+          "label": "Starting concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Levels",
+          "value": "2"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        },
+        {
+          "label": "Last concentration",
+          "value": "20"
+        },
+        {
+          "label": "Last concentration unit",
+          "value": "µM"
+        },
+        {
+          "label": "Source stock concentration",
+          "value": "100"
+        },
+        {
+          "label": "Source stock concentration unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-linear.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "serial-dilution",
+      "mode": "custom",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "GradientGeometric serialLinear parallelCustom parallel",
+          "value": "custom"
+        },
+        {
+          "label": "Volume per level",
+          "value": "100"
+        },
+        {
+          "label": "Volume per level unit",
+          "value": "µL"
+        },
+        {
+          "label": "Required retained volume (optional)",
+          "value": ""
+        },
+        {
+          "label": "Required retained volume (optional) unit",
+          "value": "µL"
+        },
+        {
+          "label": "Source stock concentration",
+          "value": "100"
+        },
+        {
+          "label": "Source stock concentration unit",
+          "value": "µM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-custom.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "media-recipe",
+      "mode": "final",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Preparation modeBring to final volumeAdd to existing base liquid",
+          "value": "final"
+        },
+        {
+          "label": "Recipe base volume",
+          "value": "100"
+        },
+        {
+          "label": "Recipe base volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Target volume",
+          "value": "100"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Name",
+          "value": "Salt"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "g"
+        },
+        {
+          "label": "Name",
+          "value": "Stock"
+        },
+        {
+          "label": "Basis",
+          "value": "concentration"
+        },
+        {
+          "label": "Stock concentrationMmol/LmMµMnMpM",
+          "value": "100"
+        },
+        {
+          "label": "stock unit",
+          "value": "mM"
+        },
+        {
+          "label": "Target concentrationMmol/LmMµMnMpM",
+          "value": "1"
+        },
+        {
+          "label": "target unit",
+          "value": "mM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/media-recipe-final.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "media-recipe",
+      "mode": "add",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Preparation modeBring to final volumeAdd to existing base liquid",
+          "value": "add"
+        },
+        {
+          "label": "Recipe base volume",
+          "value": "100"
+        },
+        {
+          "label": "Recipe base volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Target volume",
+          "value": "100"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Name",
+          "value": "Salt"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "g"
+        },
+        {
+          "label": "Name",
+          "value": "Stock"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/media-recipe-add.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "buffer-recipe",
+      "mode": "final",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Preparation modeBring to final volumeAdd to existing base liquid",
+          "value": "final"
+        },
+        {
+          "label": "Recipe base volume",
+          "value": "100"
+        },
+        {
+          "label": "Recipe base volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Target volume",
+          "value": "100"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Name",
+          "value": "Salt"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "g"
+        },
+        {
+          "label": "Name",
+          "value": "Stock"
+        },
+        {
+          "label": "Basis",
+          "value": "concentration"
+        },
+        {
+          "label": "Stock concentrationMmol/LmMµMnMpM",
+          "value": "100"
+        },
+        {
+          "label": "stock unit",
+          "value": "mM"
+        },
+        {
+          "label": "Target concentrationMmol/LmMµMnMpM",
+          "value": "1"
+        },
+        {
+          "label": "target unit",
+          "value": "mM"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/buffer-recipe-final.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "buffer-recipe",
+      "mode": "add",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Preparation modeBring to final volumeAdd to existing base liquid",
+          "value": "add"
+        },
+        {
+          "label": "Recipe base volume",
+          "value": "100"
+        },
+        {
+          "label": "Recipe base volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Target volume",
+          "value": "100"
+        },
+        {
+          "label": "Target volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Name",
+          "value": "Salt"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "g"
+        },
+        {
+          "label": "Name",
+          "value": "Stock"
+        },
+        {
+          "label": "Basis",
+          "value": "amount"
+        },
+        {
+          "label": "Amount",
+          "value": "1"
+        },
+        {
+          "label": "Component unit",
+          "value": "mL"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/buffer-recipe-add.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "normalization",
+      "mode": "20 samples with invalid row",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Target concentration",
+          "value": "10"
+        },
+        {
+          "label": "Target concentration unit",
+          "value": "ng/µL"
+        },
+        {
+          "label": "Final volume",
+          "value": "20"
+        },
+        {
+          "label": "Final volume unit",
+          "value": "µL"
+        },
+        {
+          "label": "id 1",
+          "value": "Sample 1"
+        },
+        {
+          "label": "concentration 1",
+          "value": "50"
+        },
+        {
+          "label": "available 1",
+          "value": "100"
+        },
+        {
+          "label": "id 2",
+          "value": "Sample 2"
+        },
+        {
+          "label": "concentration 2",
+          "value": "50"
+        },
+        {
+          "label": "available 2",
+          "value": "100"
+        },
+        {
+          "label": "id 3",
+          "value": "Sample 3"
+        },
+        {
+          "label": "concentration 3",
+          "value": "50"
+        },
+        {
+          "label": "available 3",
+          "value": "100"
+        },
+        {
+          "label": "id 4",
+          "value": "Sample 4"
+        },
+        {
+          "label": "concentration 4",
+          "value": "50"
+        },
+        {
+          "label": "available 4",
+          "value": "100"
+        },
+        {
+          "label": "id 5",
+          "value": "Sample 5"
+        },
+        {
+          "label": "concentration 5",
+          "value": "50"
+        },
+        {
+          "label": "available 5",
+          "value": "100"
+        },
+        {
+          "label": "id 6",
+          "value": "Sample 6"
+        },
+        {
+          "label": "concentration 6",
+          "value": "50"
+        },
+        {
+          "label": "available 6",
+          "value": "100"
+        },
+        {
+          "label": "id 7",
+          "value": "Sample 7"
+        },
+        {
+          "label": "concentration 7",
+          "value": "50"
+        },
+        {
+          "label": "available 7",
+          "value": "100"
+        },
+        {
+          "label": "id 8",
+          "value": "Sample 8"
+        },
+        {
+          "label": "concentration 8",
+          "value": "50"
+        },
+        {
+          "label": "available 8",
+          "value": "100"
+        },
+        {
+          "label": "id 9",
+          "value": "Sample 9"
+        },
+        {
+          "label": "concentration 9",
+          "value": "50"
+        },
+        {
+          "label": "available 9",
+          "value": "100"
+        },
+        {
+          "label": "id 10",
+          "value": "Sample 10"
+        },
+        {
+          "label": "concentration 10",
+          "value": "invalid"
+        },
+        {
+          "label": "available 10",
+          "value": "100"
+        },
+        {
+          "label": "id 11",
+          "value": "Sample 11"
+        },
+        {
+          "label": "concentration 11",
+          "value": "50"
+        },
+        {
+          "label": "available 11",
+          "value": "100"
+        },
+        {
+          "label": "id 12",
+          "value": "Sample 12"
+        },
+        {
+          "label": "concentration 12",
+          "value": "50"
+        },
+        {
+          "label": "available 12",
+          "value": "100"
+        },
+        {
+          "label": "id 13",
+          "value": "Sample 13"
+        },
+        {
+          "label": "concentration 13",
+          "value": "50"
+        },
+        {
+          "label": "available 13",
+          "value": "100"
+        },
+        {
+          "label": "id 14",
+          "value": "Sample 14"
+        },
+        {
+          "label": "concentration 14",
+          "value": "50"
+        },
+        {
+          "label": "available 14",
+          "value": "100"
+        },
+        {
+          "label": "id 15",
+          "value": "Sample 15"
+        },
+        {
+          "label": "concentration 15",
+          "value": "50"
+        },
+        {
+          "label": "available 15",
+          "value": "100"
+        },
+        {
+          "label": "id 16",
+          "value": "Sample 16"
+        },
+        {
+          "label": "concentration 16",
+          "value": "50"
+        },
+        {
+          "label": "available 16",
+          "value": "100"
+        },
+        {
+          "label": "id 17",
+          "value": "Sample 17"
+        },
+        {
+          "label": "concentration 17",
+          "value": "50"
+        },
+        {
+          "label": "available 17",
+          "value": "100"
+        },
+        {
+          "label": "id 18",
+          "value": "Sample 18"
+        },
+        {
+          "label": "concentration 18",
+          "value": "50"
+        },
+        {
+          "label": "available 18",
+          "value": "100"
+        },
+        {
+          "label": "id 19",
+          "value": "Sample 19"
+        },
+        {
+          "label": "concentration 19",
+          "value": "50"
+        },
+        {
+          "label": "available 19",
+          "value": "100"
+        },
+        {
+          "label": "id 20",
+          "value": "Sample 20"
+        },
+        {
+          "label": "concentration 20",
+          "value": "50"
+        },
+        {
+          "label": "available 20",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/normalization-20-samples-with-invalid-row.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "wb-loading",
+      "mode": "20 samples with invalid row",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Buffer contains reducing agentPlease confirmNo; specify separate amountYes; do not add twice",
+          "value": "no"
+        },
+        {
+          "label": "Reducing-agent definitionStock fraction of final volumeTarget active concentration (%)",
+          "value": "volume-fraction"
+        },
+        {
+          "label": "Protein per lane",
+          "value": "20"
+        },
+        {
+          "label": "Protein per lane unit",
+          "value": "µg"
+        },
+        {
+          "label": "Final loading volume",
+          "value": "20"
+        },
+        {
+          "label": "Final loading volume unit",
+          "value": "µL"
+        },
+        {
+          "label": "Loading buffer stock",
+          "value": "4"
+        },
+        {
+          "label": "Reducing agent%",
+          "value": "5"
+        },
+        {
+          "label": "Reducing-agent stock name",
+          "value": "Specified stock"
+        },
+        {
+          "label": "id 1",
+          "value": "Sample 1"
+        },
+        {
+          "label": "concentration 1",
+          "value": "50"
+        },
+        {
+          "label": "available 1",
+          "value": "100"
+        },
+        {
+          "label": "id 2",
+          "value": "Sample 2"
+        },
+        {
+          "label": "concentration 2",
+          "value": "50"
+        },
+        {
+          "label": "available 2",
+          "value": "100"
+        },
+        {
+          "label": "id 3",
+          "value": "Sample 3"
+        },
+        {
+          "label": "concentration 3",
+          "value": "50"
+        },
+        {
+          "label": "available 3",
+          "value": "100"
+        },
+        {
+          "label": "id 4",
+          "value": "Sample 4"
+        },
+        {
+          "label": "concentration 4",
+          "value": "50"
+        },
+        {
+          "label": "available 4",
+          "value": "100"
+        },
+        {
+          "label": "id 5",
+          "value": "Sample 5"
+        },
+        {
+          "label": "concentration 5",
+          "value": "50"
+        },
+        {
+          "label": "available 5",
+          "value": "100"
+        },
+        {
+          "label": "id 6",
+          "value": "Sample 6"
+        },
+        {
+          "label": "concentration 6",
+          "value": "50"
+        },
+        {
+          "label": "available 6",
+          "value": "100"
+        },
+        {
+          "label": "id 7",
+          "value": "Sample 7"
+        },
+        {
+          "label": "concentration 7",
+          "value": "50"
+        },
+        {
+          "label": "available 7",
+          "value": "100"
+        },
+        {
+          "label": "id 8",
+          "value": "Sample 8"
+        },
+        {
+          "label": "concentration 8",
+          "value": "50"
+        },
+        {
+          "label": "available 8",
+          "value": "100"
+        },
+        {
+          "label": "id 9",
+          "value": "Sample 9"
+        },
+        {
+          "label": "concentration 9",
+          "value": "50"
+        },
+        {
+          "label": "available 9",
+          "value": "100"
+        },
+        {
+          "label": "id 10",
+          "value": "Sample 10"
+        },
+        {
+          "label": "concentration 10",
+          "value": "invalid"
+        },
+        {
+          "label": "available 10",
+          "value": "100"
+        },
+        {
+          "label": "id 11",
+          "value": "Sample 11"
+        },
+        {
+          "label": "concentration 11",
+          "value": "50"
+        },
+        {
+          "label": "available 11",
+          "value": "100"
+        },
+        {
+          "label": "id 12",
+          "value": "Sample 12"
+        },
+        {
+          "label": "concentration 12",
+          "value": "50"
+        },
+        {
+          "label": "available 12",
+          "value": "100"
+        },
+        {
+          "label": "id 13",
+          "value": "Sample 13"
+        },
+        {
+          "label": "concentration 13",
+          "value": "50"
+        },
+        {
+          "label": "available 13",
+          "value": "100"
+        },
+        {
+          "label": "id 14",
+          "value": "Sample 14"
+        },
+        {
+          "label": "concentration 14",
+          "value": "50"
+        },
+        {
+          "label": "available 14",
+          "value": "100"
+        },
+        {
+          "label": "id 15",
+          "value": "Sample 15"
+        },
+        {
+          "label": "concentration 15",
+          "value": "50"
+        },
+        {
+          "label": "available 15",
+          "value": "100"
+        },
+        {
+          "label": "id 16",
+          "value": "Sample 16"
+        },
+        {
+          "label": "concentration 16",
+          "value": "50"
+        },
+        {
+          "label": "available 16",
+          "value": "100"
+        },
+        {
+          "label": "id 17",
+          "value": "Sample 17"
+        },
+        {
+          "label": "concentration 17",
+          "value": "50"
+        },
+        {
+          "label": "available 17",
+          "value": "100"
+        },
+        {
+          "label": "id 18",
+          "value": "Sample 18"
+        },
+        {
+          "label": "concentration 18",
+          "value": "50"
+        },
+        {
+          "label": "available 18",
+          "value": "100"
+        },
+        {
+          "label": "id 19",
+          "value": "Sample 19"
+        },
+        {
+          "label": "concentration 19",
+          "value": "50"
+        },
+        {
+          "label": "available 19",
+          "value": "100"
+        },
+        {
+          "label": "id 20",
+          "value": "Sample 20"
+        },
+        {
+          "label": "concentration 20",
+          "value": "50"
+        },
+        {
+          "label": "available 20",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-20-samples-with-invalid-row.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "cfu",
+      "mode": "with efficiency",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Colonies",
+          "value": "120"
+        },
+        {
+          "label": "Dilution fraction",
+          "value": "0.000001"
+        },
+        {
+          "label": "Plated volume",
+          "value": "0.1"
+        },
+        {
+          "label": "Plated volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "DNA amount (optional)",
+          "value": "1"
+        },
+        {
+          "label": "DNA amount (optional) unit",
+          "value": "µg"
+        },
+        {
+          "label": "Calculate transformation efficiency",
+          "value": "on"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/cfu-with-efficiency.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "cfu",
+      "mode": "without efficiency",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Colonies",
+          "value": "120"
+        },
+        {
+          "label": "Dilution fraction",
+          "value": "0.000001"
+        },
+        {
+          "label": "Plated volume",
+          "value": "0.1"
+        },
+        {
+          "label": "Plated volume unit",
+          "value": "mL"
+        },
+        {
+          "label": "Calculate transformation efficiency",
+          "value": "on"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/cfu-without-efficiency.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "virus-titer",
+      "mode": "TCID50",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "MethodPlaque assayTCID50",
+          "value": "tcid50"
+        },
+        {
+          "label": "Dilution row 1",
+          "value": "0.001"
+        },
+        {
+          "label": "Positive wells row 1",
+          "value": "8"
+        },
+        {
+          "label": "Total wells row 1",
+          "value": "8"
+        },
+        {
+          "label": "Dilution row 2",
+          "value": "0.0001"
+        },
+        {
+          "label": "Positive wells row 2",
+          "value": "6"
+        },
+        {
+          "label": "Total wells row 2",
+          "value": "8"
+        },
+        {
+          "label": "Dilution row 3",
+          "value": "0.00001"
+        },
+        {
+          "label": "Positive wells row 3",
+          "value": "2"
+        },
+        {
+          "label": "Total wells row 3",
+          "value": "8"
+        },
+        {
+          "label": "Dilution row 4",
+          "value": "0.000001"
+        },
+        {
+          "label": "Positive wells row 4",
+          "value": "0"
+        },
+        {
+          "label": "Total wells row 4",
+          "value": "8"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/virus-titer-TCID50.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "wb-loading",
+      "mode": "buffer already contains reducer",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Buffer contains reducing agentPlease confirmNo; specify separate amountYes; do not add twice",
+          "value": "yes"
+        },
+        {
+          "label": "Sample concentration",
+          "value": "2"
+        },
+        {
+          "label": "Sample concentration unit",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Protein per lane",
+          "value": "20"
+        },
+        {
+          "label": "Protein per lane unit",
+          "value": "µg"
+        },
+        {
+          "label": "Final loading volume",
+          "value": "20"
+        },
+        {
+          "label": "Final loading volume unit",
+          "value": "µL"
+        },
+        {
+          "label": "Loading buffer stock",
+          "value": "4"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-buffer-already-contains-reducer.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "wb-loading",
+      "mode": "target active reducer",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Buffer contains reducing agentPlease confirmNo; specify separate amountYes; do not add twice",
+          "value": "no"
+        },
+        {
+          "label": "Reducing-agent definitionStock fraction of final volumeTarget active concentration (%)",
+          "value": "target-concentration"
+        },
+        {
+          "label": "Sample concentration",
+          "value": "2"
+        },
+        {
+          "label": "Sample concentration unit",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Protein per lane",
+          "value": "20"
+        },
+        {
+          "label": "Protein per lane unit",
+          "value": "µg"
+        },
+        {
+          "label": "Final loading volume",
+          "value": "20"
+        },
+        {
+          "label": "Final loading volume unit",
+          "value": "µL"
+        },
+        {
+          "label": "Loading buffer stock",
+          "value": "4"
+        },
+        {
+          "label": "Reducing agent%",
+          "value": "5"
+        },
+        {
+          "label": "Reducing-agent stock name",
+          "value": "Specified stock"
+        },
+        {
+          "label": "Stock concentration (%)%",
+          "value": "100"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-target-active-reducer.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "dna-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocol",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer µg total DNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "dna-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "multi-dna-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocol",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer µg total DNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-dna-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "multi-dna-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-dna-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "sirna-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolRNAiMAX · Reverse, in-well preparation",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer pmol total siRNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-sirna-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "sirna-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-sirna-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "multi-sirna-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolRNAiMAX · Reverse, in-well preparation",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer pmol total siRNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-sirna-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "multi-sirna-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-sirna-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "shrna-plasmid-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "shrna-plasmid"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocol",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer µg total DNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-shrna-plasmid-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "shrna-plasmid-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "shrna-plasmid"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-shrna-plasmid-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "dna-sirna-single",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "dna-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "single"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocol",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Reagent name",
+          "value": "Custom lipid"
+        },
+        {
+          "label": "Dose basisVolume per wellPer µg total DNAPer pmol total siRNACustom protocol basis",
+          "value": "direct"
+        },
+        {
+          "label": "Reagent amount",
+          "value": "3"
+        },
+        {
+          "label": "Single mixture volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "100"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-sirna-single.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "dna-sirna-two-tube",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "dna-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · DNA + siRNA FAQ",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "amount"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "DNA mass per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "Component 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "50"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Add components in the supplied custom order"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-sirna-two-tube.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "each-nm",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-nm"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-each-nm.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "each-pmol",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "each-pmol"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "siRNA dose per well",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-each-pmol.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "total-nm",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "total-nm"
+        },
+        {
+          "label": "Total siRNA mixture dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "Mixture ratio",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "Mixture ratio",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-total-nm.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "total-pmol",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-sirna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0RNAiMAX · Forward transfection",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "siRNA dose meaningEach siRNA final concentrationEach siRNA pmol per wellMixture total concentration + ratiosMixture total pmol + ratios",
+          "value": "total-pmol"
+        },
+        {
+          "label": "Total siRNA mixture dose per well",
+          "value": "10"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "Mixture ratio",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "siRNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "20"
+        },
+        {
+          "label": "Stock concentration unitµMnM",
+          "value": "µM"
+        },
+        {
+          "label": "Mixture ratio",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-total-pmol.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "mass-ratio",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "mass-ratio"
+        },
+        {
+          "label": "Total DNA mass per well",
+          "value": "3"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "DNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Plasmid ratio",
+          "value": "1"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "DNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Plasmid ratio",
+          "value": "1"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-mass-ratio.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "transfection",
+      "mode": "molar-ratio",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Transfection materialSingle DNA plasmidMultiple DNA plasmidssiRNAMultiple siRNAsshRNA expression plasmidDNA + siRNA",
+          "value": "multi-dna"
+        },
+        {
+          "label": "Preparation modeTwo tubes (nucleic acid A + reagent B)Single mixture",
+          "value": "two-tube"
+        },
+        {
+          "label": "Product protocol (doses set separately)Custom protocolLipofectamine 3000 · MAN0009872 Rev C.0",
+          "value": "custom"
+        },
+        {
+          "label": "Group name",
+          "value": "DNA group"
+        },
+        {
+          "label": "Actual wells (including replicates)",
+          "value": "6"
+        },
+        {
+          "label": "Batch overage",
+          "value": "10"
+        },
+        {
+          "label": "Final culture volume per well (including mixture)",
+          "value": "1000"
+        },
+        {
+          "label": "Diluent name",
+          "value": "Opti-MEM"
+        },
+        {
+          "label": "DNA dosingMass per plasmid per wellTotal mass + mass ratioTotal mass + molar ratio",
+          "value": "molar-ratio"
+        },
+        {
+          "label": "Total DNA mass per well",
+          "value": "3"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "DNA 1"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Plasmid ratio",
+          "value": "1"
+        },
+        {
+          "label": "Molecular weight basisdsDNA lengthActual molecular weight",
+          "value": "bp"
+        },
+        {
+          "label": "Length or molecular weight",
+          "value": "3000"
+        },
+        {
+          "label": "Nucleic acid name",
+          "value": "DNA 2"
+        },
+        {
+          "label": "Stock concentration",
+          "value": "1"
+        },
+        {
+          "label": "Stock concentration unitµg/µLng/µL",
+          "value": "µg/µL"
+        },
+        {
+          "label": "Plasmid ratio",
+          "value": "1"
+        },
+        {
+          "label": "Molecular weight basisdsDNA lengthActual molecular weight",
+          "value": "bp"
+        },
+        {
+          "label": "Length or molecular weight",
+          "value": "6000"
+        },
+        {
+          "label": "Tube A volume definitionAdd diluentBring to total volume with diluent",
+          "value": "final"
+        },
+        {
+          "label": "Prepared total per well",
+          "value": "62.5"
+        },
+        {
+          "label": "Addition order (custom protocol)",
+          "value": "Combine A and B"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-molar-ratio.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    },
+    {
+      "id": "master-mix",
+      "mode": "two groups",
+      "status": "passed",
+      "visibleInputs": [
+        {
+          "label": "Overage%",
+          "value": "10"
+        },
+        {
+          "label": "Final volume per reaction",
+          "value": "20"
+        },
+        {
+          "label": "Final volume per reaction unit",
+          "value": "µL"
+        },
+        {
+          "label": "Group name",
+          "value": "A"
+        },
+        {
+          "label": "Actual reactions (incl. repeats and controls)",
+          "value": "2"
+        },
+        {
+          "label": "Component name",
+          "value": "Mix"
+        },
+        {
+          "label": "Calculation basis",
+          "value": "volume"
+        },
+        {
+          "label": "Volume per reaction",
+          "value": "18"
+        },
+        {
+          "label": "Include in premix",
+          "value": "on"
+        },
+        {
+          "label": "Component name",
+          "value": "Template"
+        },
+        {
+          "label": "Calculation basis",
+          "value": "volume"
+        },
+        {
+          "label": "Volume per reaction",
+          "value": "2"
+        },
+        {
+          "label": "Include in premix",
+          "value": "on"
+        }
+      ],
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/master-mix-two-groups.png",
+      "fixture": "synthetic draft restored through UI; calculated and read back from local history"
+    }
+  ]
+}

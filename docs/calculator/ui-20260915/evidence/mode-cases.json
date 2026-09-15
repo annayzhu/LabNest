@@ -1,0 +1,2292 @@
+[
+  {
+    "id": "dilution",
+    "name": "final",
+    "inputs": {
+      "mode": "final",
+      "stockConcentration": 10,
+      "targetConcentration": 10,
+      "finalVolume": 2,
+      "initialConcentration": 0
+    },
+    "outputs": {
+      "stockVolume": 0.002,
+      "stockVolumeUl": 2,
+      "diluentVolume": 1.998,
+      "finalVolume": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "dilution",
+    "name": "add",
+    "inputs": {
+      "mode": "add",
+      "stockConcentration": 10,
+      "targetConcentration": 10,
+      "finalVolume": 2,
+      "initialConcentration": 0
+    },
+    "outputs": {
+      "stockVolume": 0.002002002002002002,
+      "stockVolumeUl": 2.002002002002002,
+      "diluentVolume": 0,
+      "finalVolume": 2.002002002002002
+    },
+    "status": "valid"
+  },
+  {
+    "id": "dilution",
+    "name": "fold",
+    "inputs": {
+      "mode": "fold",
+      "stockConcentration": 10,
+      "targetConcentration": 10,
+      "finalVolume": 2,
+      "initialConcentration": 0,
+      "stockFold": 10,
+      "targetFold": 2
+    },
+    "outputs": {
+      "stockVolume": 0.4,
+      "stockVolumeUl": 400.00000000000006,
+      "diluentVolume": 1.6,
+      "finalVolume": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "dilution",
+    "name": "ratio",
+    "inputs": {
+      "mode": "ratio",
+      "stockConcentration": 10,
+      "targetConcentration": 10,
+      "finalVolume": 2,
+      "initialConcentration": 0,
+      "ratio": 1000
+    },
+    "outputs": {
+      "stockVolume": 0.002,
+      "stockVolumeUl": 2,
+      "diluentVolume": 1.998,
+      "finalVolume": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "dilution",
+    "name": "parts",
+    "inputs": {
+      "mode": "parts",
+      "stockConcentration": 10,
+      "targetConcentration": 10,
+      "finalVolume": 2,
+      "initialConcentration": 0,
+      "stockParts": 1,
+      "diluentParts": 10
+    },
+    "outputs": {
+      "stockVolume": 0.18181818181818182,
+      "stockVolumeUl": 181.81818181818184,
+      "diluentVolume": 1.8181818181818181,
+      "finalVolume": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "hemocytometer",
+    "name": "custom geometry",
+    "inputs": {
+      "counts": "13,11,14,17",
+      "dilutionFactor": 3,
+      "viabilityPercent": 90,
+      "countRegion": "custom",
+      "areaMm2": 1,
+      "depthMm": 0.1
+    },
+    "outputs": {
+      "averageCount": 13.75,
+      "concentrationCellsPerMl": 412500,
+      "viableCellsPerMl": 371250
+    },
+    "status": "valid"
+  },
+  {
+    "id": "split",
+    "name": "different areas",
+    "inputs": {
+      "currentConfluency": 90,
+      "splitRatio": 4,
+      "targetConfluency": 80,
+      "doublingTimeHours": 24,
+      "areaMode": "different",
+      "sourceAreaCm2": 10,
+      "targetAreaCm2": 5
+    },
+    "outputs": {
+      "postSplitConfluency": 45,
+      "hoursToTarget": 19.9217999653845,
+      "daysToTarget": 0.8300749985576875
+    },
+    "status": "estimate"
+  },
+  {
+    "id": "molarity",
+    "name": "mass",
+    "inputs": {
+      "mode": "mass",
+      "molecularWeight": 58.44,
+      "concentrationM": 0.1,
+      "volumeL": 0.1,
+      "massG": 0.5844,
+      "purityPercent": 100
+    },
+    "outputs": {
+      "massG": 0.5844
+    },
+    "status": "valid"
+  },
+  {
+    "id": "molarity",
+    "name": "concentration",
+    "inputs": {
+      "mode": "concentration",
+      "molecularWeight": 58.44,
+      "concentrationM": 0.1,
+      "volumeL": 0.1,
+      "massG": 0.5844,
+      "purityPercent": 100
+    },
+    "outputs": {
+      "concentrationM": 0.09999999999999999
+    },
+    "status": "valid"
+  },
+  {
+    "id": "molarity",
+    "name": "volume",
+    "inputs": {
+      "mode": "volume",
+      "molecularWeight": 58.44,
+      "concentrationM": 0.1,
+      "volumeL": 0.1,
+      "massG": 0.5844,
+      "purityPercent": 100
+    },
+    "outputs": {
+      "volumeL": 0.09999999999999999
+    },
+    "status": "valid"
+  },
+  {
+    "id": "percent-solution",
+    "name": "w/v",
+    "inputs": {
+      "type": "w/v",
+      "percentage": 10,
+      "targetVolumeMl": 500,
+      "targetMassG": 100
+    },
+    "outputs": {
+      "soluteAmount": 50,
+      "targetVolumeMl": 500
+    },
+    "status": "valid"
+  },
+  {
+    "id": "percent-solution",
+    "name": "v/v",
+    "inputs": {
+      "type": "v/v",
+      "percentage": 10,
+      "targetVolumeMl": 500,
+      "targetMassG": 100
+    },
+    "outputs": {
+      "soluteAmount": 50,
+      "targetVolumeMl": 500
+    },
+    "status": "valid"
+  },
+  {
+    "id": "percent-solution",
+    "name": "w/w",
+    "inputs": {
+      "type": "w/w",
+      "percentage": 10,
+      "targetVolumeMl": 500,
+      "targetMassG": 100
+    },
+    "outputs": {
+      "soluteAmount": 10,
+      "otherMassG": 90
+    },
+    "status": "valid"
+  },
+  {
+    "id": "resuspension",
+    "name": "amount",
+    "inputs": {
+      "mode": "amount",
+      "amount": 25,
+      "targetMolar": 100,
+      "mass": 1,
+      "molecularWeight": 100,
+      "targetMass": 1
+    },
+    "outputs": {
+      "finalVolumeUl": 250.00000000000006
+    },
+    "status": "valid"
+  },
+  {
+    "id": "resuspension",
+    "name": "mass",
+    "inputs": {
+      "mode": "mass",
+      "amount": 25,
+      "targetMolar": 100,
+      "mass": 1,
+      "molecularWeight": 100,
+      "targetMass": 1
+    },
+    "outputs": {
+      "finalVolumeUl": 1000
+    },
+    "status": "valid"
+  },
+  {
+    "id": "resuspension",
+    "name": "mass-molar",
+    "inputs": {
+      "mode": "mass-molar",
+      "amount": 25,
+      "targetMolar": 100,
+      "mass": 1,
+      "molecularWeight": 100,
+      "targetMass": 1
+    },
+    "outputs": {
+      "finalVolumeUl": 100000.00000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "centrifuge",
+    "name": "rpm-to-rcf",
+    "inputs": {
+      "mode": "rpm-to-rcf",
+      "rpm": 1000,
+      "radiusCm": 10,
+      "rcf": 111.8
+    },
+    "outputs": {
+      "rcf": 111.8
+    },
+    "status": "valid"
+  },
+  {
+    "id": "centrifuge",
+    "name": "rcf-to-rpm",
+    "inputs": {
+      "mode": "rcf-to-rpm",
+      "rpm": 1000,
+      "radiusCm": 10,
+      "rcf": 111.8
+    },
+    "outputs": {
+      "rpm": 1000
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "mixed-prepared",
+    "inputs": {
+      "startingConcentration": 100,
+      "dilutionFactor": 10,
+      "levels": 6,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "geometric",
+      "volumeMode": "mixed",
+      "firstSource": "prepared",
+      "sourceConcentration": 1000
+    },
+    "outputs": {
+      "levels": 6,
+      "transferVolume": 10
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "mixed-stock",
+    "inputs": {
+      "startingConcentration": 100,
+      "dilutionFactor": 10,
+      "levels": 6,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "geometric",
+      "volumeMode": "mixed",
+      "firstSource": "stock",
+      "sourceConcentration": 1000
+    },
+    "outputs": {
+      "levels": 6,
+      "transferVolume": 10
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "retained-prepared",
+    "inputs": {
+      "startingConcentration": 100,
+      "dilutionFactor": 10,
+      "levels": 6,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "geometric",
+      "volumeMode": "retained",
+      "firstSource": "prepared",
+      "sourceConcentration": 1000
+    },
+    "outputs": {
+      "levels": 6,
+      "transferVolume": 11.111
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "retained-stock",
+    "inputs": {
+      "startingConcentration": 100,
+      "dilutionFactor": 10,
+      "levels": 6,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "geometric",
+      "volumeMode": "retained",
+      "firstSource": "stock",
+      "sourceConcentration": 1000
+    },
+    "outputs": {
+      "levels": 6,
+      "transferVolume": 11.111
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "linear",
+    "inputs": {
+      "startingConcentration": 10,
+      "dilutionFactor": 10,
+      "levels": 2,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "linear",
+      "endingConcentration": 20,
+      "customTargets": "10\n20",
+      "sourceConcentration": 100
+    },
+    "outputs": {
+      "levels": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "serial-dilution",
+    "name": "custom",
+    "inputs": {
+      "startingConcentration": 10,
+      "dilutionFactor": 10,
+      "levels": 2,
+      "totalVolumePerLevel": 100,
+      "gradientMode": "custom",
+      "endingConcentration": 20,
+      "customTargets": "10\n20",
+      "sourceConcentration": 100
+    },
+    "outputs": {
+      "levels": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "media-recipe",
+    "name": "final",
+    "inputs": {
+      "baseVolumeMl": 100,
+      "targetVolumeMl": 100,
+      "components": "FBS,50,mL\nPen/Strep,5,mL",
+      "recipeMode": "final",
+      "recipeRows": [
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "g"
+        },
+        {
+          "name": "Stock",
+          "inputMode": "concentration",
+          "amount": "1",
+          "unit": "mL",
+          "stock": "100",
+          "stockUnit": "mM",
+          "target": "1",
+          "targetUnit": "mM"
+        }
+      ]
+    },
+    "outputs": {
+      "scaleFactor": 1,
+      "componentCount": 3
+    },
+    "status": "valid"
+  },
+  {
+    "id": "media-recipe",
+    "name": "add",
+    "inputs": {
+      "baseVolumeMl": 100,
+      "targetVolumeMl": 100,
+      "components": "FBS,50,mL\nPen/Strep,5,mL",
+      "recipeMode": "add",
+      "recipeRows": [
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "g"
+        },
+        {
+          "name": "Stock",
+          "inputMode": "amount",
+          "amount": "1",
+          "unit": "mL",
+          "stock": "100",
+          "stockUnit": "mM",
+          "target": "1",
+          "targetUnit": "mM"
+        }
+      ]
+    },
+    "outputs": {
+      "scaleFactor": 1,
+      "componentCount": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "buffer-recipe",
+    "name": "final",
+    "inputs": {
+      "baseVolumeMl": 100,
+      "targetVolumeMl": 100,
+      "components": "NaCl,8,g\nKCl,0.2,g",
+      "recipeMode": "final",
+      "recipeRows": [
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "g"
+        },
+        {
+          "name": "Stock",
+          "inputMode": "concentration",
+          "amount": "1",
+          "unit": "mL",
+          "stock": "100",
+          "stockUnit": "mM",
+          "target": "1",
+          "targetUnit": "mM"
+        }
+      ]
+    },
+    "outputs": {
+      "scaleFactor": 1,
+      "componentCount": 3
+    },
+    "status": "valid"
+  },
+  {
+    "id": "buffer-recipe",
+    "name": "add",
+    "inputs": {
+      "baseVolumeMl": 100,
+      "targetVolumeMl": 100,
+      "components": "NaCl,8,g\nKCl,0.2,g",
+      "recipeMode": "add",
+      "recipeRows": [
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "g"
+        },
+        {
+          "name": "Stock",
+          "inputMode": "amount",
+          "amount": "1",
+          "unit": "mL",
+          "stock": "100",
+          "stockUnit": "mM",
+          "target": "1",
+          "targetUnit": "mM"
+        }
+      ]
+    },
+    "outputs": {
+      "scaleFactor": 1,
+      "componentCount": 2
+    },
+    "status": "valid"
+  },
+  {
+    "id": "normalization",
+    "name": "20 samples with invalid row",
+    "inputs": {
+      "targetConcentration": 10,
+      "finalVolume": 20,
+      "samples": [
+        {
+          "id": "Sample 1",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 2",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 3",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 4",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 5",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 6",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 7",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 8",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 9",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 10",
+          "concentration": "invalid",
+          "available": "100"
+        },
+        {
+          "id": "Sample 11",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 12",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 13",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 14",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 15",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 16",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 17",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 18",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 19",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 20",
+          "concentration": "50",
+          "available": "100"
+        }
+      ]
+    },
+    "outputs": {
+      "validRows": 19
+    },
+    "status": "partial"
+  },
+  {
+    "id": "wb-loading",
+    "name": "20 samples with invalid row",
+    "inputs": {
+      "sampleConcentrationUgUl": 2,
+      "targetProteinUg": 20,
+      "finalLoadingVolumeUl": 20,
+      "bufferFold": 4,
+      "reducingAgentPercent": 5,
+      "bufferContainsReducingAgent": "no",
+      "reducingAgentName": "Specified stock",
+      "reducingMode": "volume-fraction",
+      "samples": [
+        {
+          "id": "Sample 1",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 2",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 3",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 4",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 5",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 6",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 7",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 8",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 9",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 10",
+          "concentration": "invalid",
+          "available": "100"
+        },
+        {
+          "id": "Sample 11",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 12",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 13",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 14",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 15",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 16",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 17",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 18",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 19",
+          "concentration": "50",
+          "available": "100"
+        },
+        {
+          "id": "Sample 20",
+          "concentration": "50",
+          "available": "100"
+        }
+      ]
+    },
+    "outputs": {
+      "validRows": 19
+    },
+    "status": "partial"
+  },
+  {
+    "id": "cfu",
+    "name": "with efficiency",
+    "inputs": {
+      "colonies": 120,
+      "dilution": 0.000001,
+      "platedVolumeMl": 0.1,
+      "dnaUg": 1
+    },
+    "outputs": {
+      "cfuPerMl": 1200000000,
+      "log10CfuPerMl": 9.079181246047625,
+      "transformantsPerUg": 1200000000
+    },
+    "status": "valid"
+  },
+  {
+    "id": "cfu",
+    "name": "without efficiency",
+    "inputs": {
+      "colonies": 120,
+      "dilution": 0.000001,
+      "platedVolumeMl": 0.1,
+      "dnaUg": 0
+    },
+    "outputs": {
+      "cfuPerMl": 1200000000,
+      "log10CfuPerMl": 9.079181246047625,
+      "transformantsPerUg": "Not calculated"
+    },
+    "status": "valid"
+  },
+  {
+    "id": "virus-titer",
+    "name": "TCID50",
+    "inputs": {
+      "mode": "tcid50",
+      "plaques": 20,
+      "dilution": 0.000001,
+      "inoculumMl": 0.1,
+      "tcidSeries": "0.001,8,8\n0.0001,6,8\n0.00001,2,8\n0.000001,0,8"
+    },
+    "outputs": {
+      "approximateTcid50Dilution": 0.00001
+    },
+    "status": "estimate"
+  },
+  {
+    "id": "wb-loading",
+    "name": "buffer already contains reducer",
+    "inputs": {
+      "sampleConcentrationUgUl": 2,
+      "targetProteinUg": 20,
+      "finalLoadingVolumeUl": 20,
+      "bufferFold": 4,
+      "reducingAgentPercent": 5,
+      "bufferContainsReducingAgent": "yes",
+      "reducingAgentName": "Specified stock",
+      "reducingMode": "volume-fraction"
+    },
+    "outputs": {
+      "sampleUl": 10,
+      "loadingBufferUl": 5,
+      "reducingAgentUl": 0,
+      "waterUl": 5
+    },
+    "status": "valid"
+  },
+  {
+    "id": "wb-loading",
+    "name": "target active reducer",
+    "inputs": {
+      "sampleConcentrationUgUl": 2,
+      "targetProteinUg": 20,
+      "finalLoadingVolumeUl": 20,
+      "bufferFold": 4,
+      "reducingAgentPercent": 5,
+      "bufferContainsReducingAgent": "no",
+      "reducingAgentName": "Specified stock",
+      "reducingMode": "target-concentration",
+      "reducingStockPercent": 100
+    },
+    "outputs": {
+      "sampleUl": 10,
+      "loadingBufferUl": 5,
+      "reducingAgentUl": 1,
+      "waterUl": 4
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "dna-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "dna",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "dna-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "dna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "multi-dna-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-dna",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 2,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 13.200000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "multi-dna-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-dna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 2,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 13.200000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "sirna-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "sirna",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "sirna-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "multi-sirna-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 20,
+      "group0_rnaFinal": 20,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "multi-sirna-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 20,
+      "group0_rnaFinal": 20,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "shrna-plasmid-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "shrna-plasmid",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "shrna-plasmid",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "shrna-plasmid-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "shrna-plasmid",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "shrna-plasmid",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "dna-sirna-single",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "dna-sirna",
+        "mixing": "single",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 100,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "dna-sirna-two-tube",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "dna-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "Component 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "Component 2",
+                "kind": "sirna",
+                "stock": "1",
+                "stockUnit": "µM",
+                "dose": "10",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "3",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "50"
+            },
+            "b": {
+              "mode": "final",
+              "value": "50"
+            },
+            "single": {
+              "mode": "final",
+              "value": "100"
+            },
+            "diluent": "Opti-MEM",
+            "order": "Add components in the supplied custom order"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 1,
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 50,
+      "group0_b": 50,
+      "group0_mixed": 100,
+      "group0_final": 1000,
+      "group0_medium": 900,
+      "group0_batch": 660,
+      "dnaUg": 6.6000000000000005
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "each-nm",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-nm",
+            "totalRna": "10",
+            "rows": [
+              {
+                "name": "siRNA 1",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "siRNA 2",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 2,
+      "group0_rnaFinal": 2,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "each-pmol",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "each-pmol",
+            "totalRna": "10",
+            "rows": [
+              {
+                "name": "siRNA 1",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "siRNA 2",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 2,
+      "group0_rnaFinal": 2,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "total-nm",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "total-nm",
+            "totalRna": "10",
+            "rows": [
+              {
+                "name": "siRNA 1",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "siRNA 2",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "total-pmol",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-sirna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "amount",
+            "totalDna": "",
+            "rnaMode": "total-pmol",
+            "totalRna": "10",
+            "rows": [
+              {
+                "name": "siRNA 1",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              },
+              {
+                "name": "siRNA 2",
+                "kind": "sirna",
+                "stock": "20",
+                "stockUnit": "µM",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": ""
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_rna": 10,
+      "group0_rnaFinal": 10,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "mass-ratio",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-dna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "mass-ratio",
+            "totalDna": "3",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "DNA 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": "3000"
+              },
+              {
+                "name": "DNA 2",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": "6000"
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 3,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001,
+      "dnaUg": 19.8
+    },
+    "status": "valid"
+  },
+  {
+    "id": "transfection",
+    "name": "molar-ratio",
+    "inputs": {
+      "transfectionPlan": {
+        "version": 3,
+        "material": "multi-dna",
+        "mixing": "two-tube",
+        "protocol": "custom",
+        "groups": [
+          {
+            "name": "DNA group",
+            "wells": "6",
+            "overage": "10",
+            "finalVolume": "1000",
+            "dnaMode": "molar-ratio",
+            "totalDna": "3",
+            "rnaMode": "each-nm",
+            "totalRna": "",
+            "rows": [
+              {
+                "name": "DNA 1",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": "3000"
+              },
+              {
+                "name": "DNA 2",
+                "kind": "dna",
+                "stock": "1",
+                "stockUnit": "µg/µL",
+                "dose": "1",
+                "sizeBasis": "bp",
+                "size": "6000"
+              }
+            ],
+            "reagent": {
+              "name": "Custom lipid",
+              "basis": "direct",
+              "amount": "1",
+              "basisName": "",
+              "basisUnit": "",
+              "basisAmount": ""
+            },
+            "auxiliaries": [],
+            "a": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "b": {
+              "mode": "final",
+              "value": "62.5"
+            },
+            "single": {
+              "mode": "final",
+              "value": ""
+            },
+            "diluent": "Opti-MEM",
+            "order": "Combine A and B"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "group0_dna": 3,
+      "group0_a": 62.5,
+      "group0_b": 62.5,
+      "group0_mixed": 125,
+      "group0_final": 1000,
+      "group0_medium": 875,
+      "group0_batch": 825.0000000000001,
+      "dnaUg": 19.8
+    },
+    "status": "valid"
+  },
+  {
+    "id": "master-mix",
+    "name": "two groups",
+    "inputs": {
+      "samples": 8,
+      "replicates": 3,
+      "controls": 2,
+      "overagePercent": 10,
+      "reactionVolumeUl": 20,
+      "rows": [
+        {
+          "name": "2× Mix",
+          "volume": "10",
+          "premix": true
+        },
+        {
+          "name": "F",
+          "volume": "0.5",
+          "premix": true
+        },
+        {
+          "name": "R",
+          "volume": "0.5",
+          "premix": true
+        },
+        {
+          "name": "Template",
+          "volume": "2",
+          "premix": false
+        },
+        {
+          "name": "Water",
+          "volume": "7",
+          "premix": true
+        }
+      ],
+      "groups": [
+        {
+          "name": "A",
+          "reactions": "2",
+          "rows": [
+            {
+              "name": "Mix",
+              "volume": "18",
+              "premix": true
+            },
+            {
+              "name": "Template",
+              "volume": "2",
+              "premix": false
+            }
+          ]
+        },
+        {
+          "name": "B",
+          "reactions": "3",
+          "rows": [
+            {
+              "name": "Mix",
+              "volume": "18",
+              "premix": true
+            },
+            {
+              "name": "Template",
+              "volume": "2",
+              "premix": false
+            }
+          ]
+        }
+      ]
+    },
+    "outputs": {
+      "groups": 2,
+      "totalMasterMixUl": 99
+    },
+    "status": "valid"
+  }
+]

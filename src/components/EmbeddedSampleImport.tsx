@@ -20,7 +20,7 @@ export function EmbeddedSampleImport({ frame, toolId }: { frame: RefObject<HTMLI
     }} /></label>
     {rows.length ? <><label className="mr-3 text-sm"><input type="checkbox" checked={header} onChange={e => setHeader(e.target.checked)} /> 第一行为标题</label><label className="text-sm">样本名称列<select aria-label="样本名称列" className="ml-2 min-h-11 border border-hairline bg-surface" value={column} onChange={e => setColumn(Number(e.target.value))}>{rows[0].map((cell,index)=><option key={index} value={index}>{index+1} · {header ? cell : '列'}</option>)}</select></label><p className="py-2 text-sm">{names.length} 个名称：{names.slice(0,6).join('、')}{names.length>6?'…':''}</p><button type="button" disabled={!names.length} className="focus-ring min-h-11 text-moss" onClick={() => {
       const win = frame.current?.contentWindow as (Window & typeof globalThis) | null;
-      const input = frame.current?.contentDocument?.querySelector<HTMLTextAreaElement>(toolId === 'qpcr-plate-layout' ? 'textarea.sample-batch-box' : 'textarea.bulk-input');
+      const input = frame.current?.contentDocument?.querySelector<HTMLTextAreaElement>(toolId === 'qpcr-plate-layout' ? 'textarea[aria-label="批量粘贴样本"]' : 'textarea.bulk-input');
       if (!input || !win) { setMessage('工具尚未就绪，请稍后重试。'); return; }
       Object.getOwnPropertyDescriptor(win.HTMLTextAreaElement.prototype,'value')!.set!.call(input,names.join('\n')); input.dispatchEvent(new win.Event('input',{bubbles:true})); setOpen(false); requestAnimationFrame(() => frame.current?.scrollIntoView({block:'start'})); setMessage('已送入下方样本导入区，请在工具中确认导入。');
     }}>送入样本导入区</button></> : null}

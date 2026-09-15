@@ -1,0 +1,150 @@
+通过: run-v12 (13277 ms)
+通过: pipetting-v12 (6248 ms)
+通过: v12-database (84 ms)
+通过: refactor (15995 ms)
+通过: legacy (19873 ms)
+通过: compact-ui (6278 ms)
+通过: plate (1235 ms)
+通过: storage-appearance (4602 ms)
+失败: appearance (49904 ms)
+U01-U03: both languages; five sizes; six visible targets and half-screen geometry
+U05/U06: hover, hoverable tooltip, Escape, keyboard focus and Enter
+U07: native help dialog focus containment and restoration
+U10: eight, two and explicitly zero pins retained
+U11/U12/U14: fonts, modes, refresh, cross-tab, system and isolated reset
+U08/U09: generated icons and corrupted-resource line fallback preserve geometry; fresh browser context forces the failed download
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForEvent: Timeout 30000ms exceeded while waiting for event "download"
+=========================== logs ===========================
+waiting for event "download"
+============================================================
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-appearance.mjs:23:70 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: integration (2840 ms)
+通过: database (98 ms)
+通过: rejection (1291 ms)
+通过: visual-v11 (7426 ms)
+通过: standalone-v11 (1876 ms)
+失败: ux-v13 (47591 ms)
+locator.selectOption: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('combobox', { name: /display unit/ }).first()[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-ux-v13.mjs:40:605 {
+  log: [
+    "  - waiting for getByRole('combobox', { name: /display unit/ }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+失败: formal-exports (1326 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 1
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-formal-exports.mjs:16:89 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1
+
+通过: navigation-icons (40028 ms)
+失败: colony-v13 (31770 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Save numbers & settings only', exact: true })[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-colony-v13.mjs:3:767 {
+  log: [
+    "  - waiting for getByRole('button', { name: 'Save numbers & settings only', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+失败: cache-clear-failure (31119 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('Offline pages', { exact: true })[22m
+[2m    - locator resolved to <summary class="min-h-11 cursor-pointer">Offline pages</summary>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not visible[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    58 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is not visible[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-cache-clear-failure.mjs:12:58 {
+  log: [
+    "  - waiting for getByText('Offline pages', { exact: true })",
+    '    - locator resolved to <summary class="min-h-11 cursor-pointer">Offline pages</summary>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not visible',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not visible',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    58 × waiting for element to be visible, enabled and stable',
+    '       - element is not visible',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: copy-recent (4325 ms)
+失败: transfection (16632 ms)
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForEvent: Timeout 15000ms exceeded while waiting for event "download"
+=========================== logs ===========================
+waiting for event "download"
+============================================================
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-transfection.mjs:25:52 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: transfection-database (1164 ms)

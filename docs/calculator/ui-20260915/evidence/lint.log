@@ -1,0 +1,70 @@
+
+> labnest@0.1.0 lint
+> eslint
+
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-appearance.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used      @typescript-eslint/no-unused-vars
+  1:51  warning  'openCalculatorDisclosure' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-blockers.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-cache-upgrade.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-compact-ui.mjs
+  1:9   warning  'showCalculatorResult' is defined but never used      @typescript-eslint/no-unused-vars
+  1:30  warning  'showCalculatorInputs' is defined but never used      @typescript-eslint/no-unused-vars
+  1:51  warning  'openCalculatorDisclosure' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-copy-recent.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used      @typescript-eslint/no-unused-vars
+  1:51  warning  'openCalculatorDisclosure' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-pipetting-v12.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-refactor.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-run-offline.mjs
+  1:9   warning  'showCalculatorResult' is defined but never used  @typescript-eslint/no-unused-vars
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-run-v12.mjs
+  1:9   warning  'showCalculatorResult' is defined but never used  @typescript-eslint/no-unused-vars
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-storage-appearance.mjs
+  1:9   warning  'showCalculatorResult' is defined but never used      @typescript-eslint/no-unused-vars
+  1:30  warning  'showCalculatorInputs' is defined but never used      @typescript-eslint/no-unused-vars
+  1:51  warning  'openCalculatorDisclosure' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-transfection-database.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used      @typescript-eslint/no-unused-vars
+  1:51  warning  'openCalculatorDisclosure' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-ux-v13.mjs
+  1:30  warning  'showCalculatorInputs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-editor-repair.mjs
+  34:8    warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  45:8    warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  81:173  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  86:172  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/src/components/EntityCreateForm.tsx
+  10:7  warning  'entityTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/src/lib/run-materials.ts
+  23:19  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/src/lib/structured-import.ts
+  441:38  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  602:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  602:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 31 problems (0 errors, 31 warnings)
+

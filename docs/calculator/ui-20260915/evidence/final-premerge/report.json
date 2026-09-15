@@ -1,0 +1,2090 @@
+{
+  "base": "http://localhost:3221",
+  "phase": "final-premerge",
+  "at": "2026-09-15T05:00:14.635Z",
+  "sha": "6dc03cc664da7ef87a004908917dc96463b3b731",
+  "checks": [
+    {
+      "id": "hemocytometer",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 346,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "seeding",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 473
+      },
+      "calculate": {
+        "top": 360,
+        "bottom": 392,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 432,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "hydrogel",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 473
+      },
+      "calculate": {
+        "top": 360,
+        "bottom": 392,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 432,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "split",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 360,
+        "bottom": 392,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 406,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "freezing",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 360,
+        "bottom": 392,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 506,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "transfection",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 1512,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 520.796875,
+        "bottom": 552.796875,
+        "left": 256,
+        "right": 578.328125
+      },
+      "calculate": {
+        "top": 1261.59375,
+        "bottom": 1293.59375,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 228,
+        "bottom": 861.890625,
+        "left": 948.65625,
+        "right": 1407.984375
+      },
+      "overflow": false
+    },
+    {
+      "id": "viability",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 380,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "dilution",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 725
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 486,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "serial-dilution",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 967,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 262,
+        "bottom": 294,
+        "left": 538,
+        "right": 734
+      },
+      "calculate": {
+        "top": 418,
+        "bottom": 450,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 784.125,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "molarity",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 246,
+        "bottom": 278,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 402,
+        "bottom": 434,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 228,
+        "bottom": 402,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "percent-solution",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 246,
+        "bottom": 278,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 344,
+        "bottom": 376,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 228,
+        "bottom": 400,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "media-recipe",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 444,
+        "right": 562
+      },
+      "calculate": {
+        "top": 412.53125,
+        "bottom": 444.53125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 524.0625,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "buffer-recipe",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 444,
+        "right": 562
+      },
+      "calculate": {
+        "top": 412.53125,
+        "bottom": 444.53125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 524.0625,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "master-mix",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 925,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 286,
+        "bottom": 318,
+        "left": 256,
+        "right": 436
+      },
+      "calculate": {
+        "top": 674.78125,
+        "bottom": 706.78125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 228,
+        "bottom": 706.75,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "resuspension",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 734
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 360,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "normalization",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 256,
+        "right": 443
+      },
+      "calculate": {
+        "top": 450.53125,
+        "bottom": 482.53125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 578.25,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "kill-curve",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 538,
+        "right": 725
+      },
+      "calculate": {
+        "top": 360,
+        "bottom": 392,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 645.78125,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "ligation",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 314,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "tm",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 244,
+        "bottom": 276,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 406,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "dna-rna-conversion",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 490,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "bradford-bca",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 960,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 296.90625,
+        "bottom": 328.90625,
+        "left": 262.71875,
+        "right": 486.96875
+      },
+      "calculate": {
+        "top": 644.78125,
+        "bottom": 676.78125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 777.109375,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "elisa-4pl",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 970,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 296.90625,
+        "bottom": 328.90625,
+        "left": 262.71875,
+        "right": 486.96875
+      },
+      "calculate": {
+        "top": 644.78125,
+        "bottom": 676.78125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 787.109375,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "ic50-ec50",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": false,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 960,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 296.90625,
+        "bottom": 328.90625,
+        "left": 262.71875,
+        "right": 486.96875
+      },
+      "calculate": {
+        "top": 586.78125,
+        "bottom": 618.78125,
+        "left": 256,
+        "right": 358.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 777.109375,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "wb-loading",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 262,
+        "bottom": 294,
+        "left": 256,
+        "right": 443
+      },
+      "calculate": {
+        "top": 418,
+        "bottom": 450,
+        "left": 380.515625,
+        "right": 482.65625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 630.84375,
+        "left": 852,
+        "right": 1408
+      },
+      "overflow": false
+    },
+    {
+      "id": "od600",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 406,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "cfu",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 530.484375,
+        "right": 632.625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 326,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "colony-counter",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": false,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": null,
+      "calculate": null,
+      "result": null,
+      "overflow": false
+    },
+    {
+      "id": "moi",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 482,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "virus-titer",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 320,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "unit-converter",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 272,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "centrifuge",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 262,
+        "bottom": 294,
+        "left": 334,
+        "right": 569
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 262,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "reagent-dosing",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 725
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 486,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "fold-dilution",
+      "width": 1440,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scrollHeight": 900,
+      "scrollWidth": 1440,
+      "input": {
+        "top": 204,
+        "bottom": 236,
+        "left": 577,
+        "right": 812
+      },
+      "calculate": {
+        "top": 302,
+        "bottom": 334,
+        "left": 334,
+        "right": 436.140625
+      },
+      "result": {
+        "top": 186,
+        "bottom": 486,
+        "left": 852,
+        "right": 1330
+      },
+      "overflow": false
+    },
+    {
+      "id": "hemocytometer",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1134,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 366
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 611.140625,
+        "bottom": 807.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "seeding",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1310,
+      "scrollWidth": 390,
+      "input": {
+        "top": 222,
+        "bottom": 266,
+        "left": 24,
+        "right": 99
+      },
+      "calculate": {
+        "top": 414,
+        "bottom": 458,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 677.140625,
+        "bottom": 983.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "hydrogel",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1310,
+      "scrollWidth": 390,
+      "input": {
+        "top": 222,
+        "bottom": 266,
+        "left": 24,
+        "right": 99
+      },
+      "calculate": {
+        "top": 414,
+        "bottom": 458,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 677.140625,
+        "bottom": 983.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "split",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1194,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 611.140625,
+        "bottom": 867.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "freezing",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1382,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 663.140625,
+        "bottom": 1055.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "transfection",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 2379,
+      "scrollWidth": 390,
+      "input": {
+        "top": 713.59375,
+        "bottom": 757.59375,
+        "left": 24,
+        "right": 366
+      },
+      "calculate": {
+        "top": 1909.1875,
+        "bottom": 1953.1875,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "viability",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1164,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 344,
+        "bottom": 388,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 607.140625,
+        "bottom": 837.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "dilution",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1388,
+      "scrollWidth": 390,
+      "input": {
+        "top": 292,
+        "bottom": 336,
+        "left": 24,
+        "right": 109
+      },
+      "calculate": {
+        "top": 414,
+        "bottom": 458,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 677.140625,
+        "bottom": 1061.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "serial-dilution",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1160,
+      "scrollWidth": 390,
+      "input": {
+        "top": 484,
+        "bottom": 528,
+        "left": 24,
+        "right": 119
+      },
+      "calculate": {
+        "top": 690,
+        "bottom": 734,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "molarity",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1264,
+      "scrollWidth": 390,
+      "input": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 452,
+        "bottom": 496,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 715.140625,
+        "bottom": 937.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "percent-solution",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1192,
+      "scrollWidth": 390,
+      "input": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 382,
+        "bottom": 426,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 645.140625,
+        "bottom": 865.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "media-recipe",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1067,
+      "scrollWidth": 390,
+      "input": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 136
+      },
+      "calculate": {
+        "top": 597.125,
+        "bottom": 641.125,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "buffer-recipe",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1067,
+      "scrollWidth": 390,
+      "input": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 136
+      },
+      "calculate": {
+        "top": 597.125,
+        "bottom": 641.125,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "master-mix",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1443,
+      "scrollWidth": 390,
+      "input": {
+        "top": 366.78125,
+        "bottom": 410.78125,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 972.625,
+        "bottom": 1016.625,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "resuspension",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1145,
+      "scrollWidth": 390,
+      "input": {
+        "top": 280.78125,
+        "bottom": 324.78125,
+        "left": 24,
+        "right": 119
+      },
+      "calculate": {
+        "top": 332.78125,
+        "bottom": 376.78125,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 595.921875,
+        "bottom": 817.921875,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "normalization",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1076,
+      "scrollWidth": 390,
+      "input": {
+        "top": 274,
+        "bottom": 318,
+        "left": 24,
+        "right": 109
+      },
+      "calculate": {
+        "top": 606.0625,
+        "bottom": 650.0625,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "kill-curve",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1006,
+      "scrollWidth": 390,
+      "input": {
+        "top": 344,
+        "bottom": 388,
+        "left": 24,
+        "right": 109
+      },
+      "calculate": {
+        "top": 536,
+        "bottom": 580,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "ligation",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1032,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 541.140625,
+        "bottom": 705.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "tm",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1124,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 366
+      },
+      "calculate": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 541.140625,
+        "bottom": 797.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "dna-rna-conversion",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1305,
+      "scrollWidth": 390,
+      "input": {
+        "top": 280.78125,
+        "bottom": 324.78125,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 402.78125,
+        "bottom": 446.78125,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 613.921875,
+        "bottom": 977.921875,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "bradford-bca",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1249,
+      "scrollWidth": 390,
+      "input": {
+        "top": 369.734375,
+        "bottom": 413.734375,
+        "left": 31.1875,
+        "right": 197.234375
+      },
+      "calculate": {
+        "top": 830.90625,
+        "bottom": 874.90625,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "elisa-4pl",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1249,
+      "scrollWidth": 390,
+      "input": {
+        "top": 369.734375,
+        "bottom": 413.734375,
+        "left": 31.1875,
+        "right": 198.609375
+      },
+      "calculate": {
+        "top": 830.90625,
+        "bottom": 874.90625,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "ic50-ec50",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": false,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1249,
+      "scrollWidth": 390,
+      "input": {
+        "top": 439.734375,
+        "bottom": 483.734375,
+        "left": 31.1875,
+        "right": 198.609375
+      },
+      "calculate": {
+        "top": 830.90625,
+        "bottom": 874.90625,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "wb-loading",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1198,
+      "scrollWidth": 390,
+      "input": {
+        "top": 414,
+        "bottom": 458,
+        "left": 24,
+        "right": 109
+      },
+      "calculate": {
+        "top": 728,
+        "bottom": 772,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "overflow": false
+    },
+    {
+      "id": "od600",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1124,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 330,
+        "bottom": 374,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 541.140625,
+        "bottom": 797.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "cfu",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1081,
+      "scrollWidth": 390,
+      "input": {
+        "top": 208,
+        "bottom": 252,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 391,
+        "bottom": 435,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 602.140625,
+        "bottom": 754.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "colony-counter",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": false,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1206,
+      "scrollWidth": 390,
+      "input": null,
+      "calculate": null,
+      "result": null,
+      "overflow": false
+    },
+    {
+      "id": "moi",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1334,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 663.140625,
+        "bottom": 1007.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "virus-titer",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1084,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 611.140625,
+        "bottom": 757.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "unit-converter",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1118,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 470,
+        "bottom": 514,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 681.140625,
+        "bottom": 791.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "centrifuge",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1026,
+      "scrollWidth": 390,
+      "input": {
+        "top": 348,
+        "bottom": 392,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 611.140625,
+        "bottom": 699.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "reagent-dosing",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1388,
+      "scrollWidth": 390,
+      "input": {
+        "top": 292,
+        "bottom": 336,
+        "left": 24,
+        "right": 109
+      },
+      "calculate": {
+        "top": 414,
+        "bottom": 458,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 677.140625,
+        "bottom": 1061.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    },
+    {
+      "id": "fold-dilution",
+      "width": 390,
+      "error": [],
+      "initialResult": 0,
+      "invalidChecked": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollHeight": 1374,
+      "scrollWidth": 390,
+      "input": {
+        "top": 278,
+        "bottom": 322,
+        "left": 24,
+        "right": 191
+      },
+      "calculate": {
+        "top": 400,
+        "bottom": 444,
+        "left": 24,
+        "right": 366
+      },
+      "result": {
+        "top": 663.140625,
+        "bottom": 1047.140625,
+        "left": 24,
+        "right": 366
+      },
+      "overflow": false
+    }
+  ]
+}

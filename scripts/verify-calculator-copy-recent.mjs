@@ -1,3 +1,4 @@
+import {showCalculatorResult} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -13,12 +14,12 @@ try{
   await page.setViewportSize({width,height:900});const geometry=await page.locator('.calculator-recent a').evaluateAll(nodes=>nodes.map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height,icon:!!n.querySelector('.task-icon')})));
   assert(geometry.every(g=>g.icon&&Math.abs(g.width-geometry[0].width)<1));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});report.checks.push({name,geometry});
  }
- await page.setViewportSize({width:1000,height:900});await page.goto(base+'/tools/calculator/dilution');await page.getByRole('button',{name:'Load example',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await page.getByRole('button',{name:'Copy',exact:true}).click();const text=await page.evaluate(()=>navigator.clipboard.readText());assert(text.length>0);assert(!/Operations|Context|Inputs|EXAMPLE|Warnings|Assumptions|Method:|Status:/.test(text));report.clipboard=text;
+ await page.setViewportSize({width:1000,height:900});await page.goto(base+'/tools/calculator/dilution');await page.getByRole('button',{name:'Load example',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);await page.getByRole('button',{name:'Copy',exact:true}).click();const text=await page.evaluate(()=>navigator.clipboard.readText());assert(text.length>0);assert(!/Operations|Context|Inputs|EXAMPLE|Warnings|Assumptions|Method:|Status:/.test(text));report.clipboard=text;
  await page.screenshot({path:`${dir}/copy-result.png`,fullPage:true});
  await page.goto(base+'/tools/calculator');await page.evaluate(()=>localStorage.removeItem('labnest.calculators.v1'));await page.reload();await page.waitForSelector('.calculator-categories');assert.equal(await page.locator('.calculator-recent').count(),0);report.emptyHidden=true;
  const allIds=await page.locator('.calculator-category-tools .calculator-tool-tile').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).pathname.split('/').at(-1)));report.tools=[];
  for(const id of allIds.filter(id=>id!=='colony-counter')){
-  await page.goto(base+'/tools/calculator/'+id);await page.getByRole('button',{name:'Load example',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();const copy=page.getByRole('button',{name:'Copy',exact:true});await copy.waitFor();
+  await page.goto(base+'/tools/calculator/'+id);await page.getByRole('button',{name:'Load example',exact:true}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);const copy=page.getByRole('button',{name:'Copy',exact:true});await copy.waitFor();
   if(await copy.isDisabled()){report.tools.push({id,copy:'disabled for invalid result'});continue;}
   await copy.click();const text=await page.evaluate(()=>navigator.clipboard.readText());assert(text.trim());assert(!/Operations|Context|Inputs|EXAMPLE|Warnings|Assumptions|Method:|Status:/.test(text),id);report.tools.push({id,text});
  }

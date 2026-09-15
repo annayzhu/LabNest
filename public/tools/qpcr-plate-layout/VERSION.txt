@@ -1,0 +1,3 @@
+﻿构建日期：20260915
+源码版本：ecb4b45
+格式：单文件离线 HTML（CSS、JavaScript 及 Excel 导出组件均已内嵌）

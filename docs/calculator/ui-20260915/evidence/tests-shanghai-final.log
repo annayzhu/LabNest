@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915
+
+
+ Test Files  109 passed (109)
+      Tests  629 passed (629)
+   Start at  12:59:22
+   Duration  6.05s (transform 14.51s, setup 0ms, import 30.01s, tests 7.44s, environment 11ms)
+

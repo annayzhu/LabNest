@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  12:17:55
+   Duration  329ms (transform 116ms, setup 0ms, import 158ms, tests 23ms, environment 0ms)
+

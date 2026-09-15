@@ -1,0 +1,33 @@
+{
+  "base": "http://localhost:3240",
+  "checks": [
+    {
+      "name": "Master Mix first screen at 1366 × 768",
+      "status": "passed"
+    },
+    {
+      "name": "Recipe continuous rows, new row focus, cancellation preserves filled row",
+      "status": "passed"
+    },
+    {
+      "name": "Curve staged paste, row/column error, cancel, duplicate/order and units retained",
+      "status": "passed"
+    },
+    {
+      "name": "TCID50 has distinct accessible column labels",
+      "status": "passed"
+    },
+    {
+      "name": "Mobile hidden B tube error automatically locates field",
+      "status": "passed"
+    },
+    {
+      "name": "Mobile B custom basis amount and A auxiliary amount errors retain the correct tube",
+      "status": "passed"
+    },
+    {
+      "name": "CFU optional efficiency can be enabled then disabled without blocking CFU",
+      "status": "passed"
+    }
+  ]
+}

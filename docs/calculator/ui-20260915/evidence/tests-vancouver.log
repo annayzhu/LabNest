@@ -1,0 +1,30 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915
+
+ ❯ src/lib/visualization-advanced.test.ts (11 tests | 1 failed) 3177ms
+     × clusters the maximum supported 250 × 100 matrix without repeated vector-distance expansion 3166ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/visualization-advanced.test.ts > advanced visualization statistics > clusters the maximum supported 250 × 100 matrix without repeated vector-distance expansion
+AssertionError: expected 3159.536333 to be less than 3000
+ ❯ src/lib/visualization-advanced.test.ts:63:41
+     61|     const tree = hierarchicalClusterTree(vectors, "euclidean", "averag…
+     62|     expect(tree?.order).toHaveLength(250);
+     63|     expect(performance.now() - started).toBeLessThan(3_000);
+       |                                         ^
+     64|   });
+     65|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 108 passed (109)
+      Tests  1 failed | 625 passed (626)
+   Start at  21:18:13
+   Duration  6.94s (transform 14.57s, setup 0ms, import 33.33s, tests 10.82s, environment 11ms)
+

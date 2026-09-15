@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {calculate} from './calculator-engine';
-import {transfectionPlateValues,exampleTransfectionPlan,changeTransfectionMaterial,changeTransfectionMixing,newDoseReagent,newNucleicRow,type TransfectionPlan} from './transfection';
+import {TransfectionFieldError,transfectionPlateValues,exampleTransfectionPlan,changeTransfectionMaterial,changeTransfectionMixing,newDoseReagent,newNucleicRow,type TransfectionPlan} from './transfection';
 import {resultClipboard,resultCsv} from './result-presentation';
 const run=(p:TransfectionPlan)=>calculate({calculatorId:'transfection',inputs:{transfectionPlan:p,pipetteMinimumUl:2}});
 function rna(){const p=changeTransfectionMaterial(exampleTransfectionPlan(),'sirna');const g=p.groups[0];g.rows=[{...newNucleicRow('sirna'),name:'siTarget',stock:'20',dose:'10'}];g.finalVolume='600';g.reagent={...newDoseReagent(),name:'RNAiMAX',amount:'1'};g.order='Dilute, mix, add to cells';return p;}
@@ -18,4 +18,15 @@ describe('transfection per-well design',()=>{
  it('siRNA product profile requires no DNA enhancer; incompatible units and malformed drafts fail',()=>{const p=rna();p.protocol='l3000';p.groups[0].reagent.name='Lipofectamine 3000';expect(run(p).table!.some(r=>r.component==='P3000')).toBe(false);p.groups[0].rows[0].stockUnit='µg/µL';expect(()=>run(p)).toThrow();expect(()=>run({version:4} as unknown as TransfectionPlan)).toThrow(/unsupported/);});
  it('plate assignments use per-well values and reject multi-group ambiguity',()=>{const p=exampleTransfectionPlan();expect(transfectionPlateValues(p,6).group0_dna).toBe(2);expect(()=>transfectionPlateValues(p,5)).toThrow();p.groups.push({...structuredClone(p.groups[0]),name:'Other'});expect(()=>transfectionPlateValues(p,12)).toThrow();});
  it('rejects missing names, fractional wells and impossible culture totals',()=>{const p=exampleTransfectionPlan();p.groups[0].wells='1.5';expect(()=>run(p)).toThrow();p.groups[0].wells='1';p.groups[0].finalVolume='10';expect(()=>run(p)).toThrow(/culture volume/);p.groups[0].finalVolume='1000';p.groups[0].rows[0].name='';expect(()=>run(p)).toThrow();});
+});
+
+it('attaches the reagent object to hidden-field errors without changing plan data',()=>{
+ for(const scope of ['reagent','auxiliary'] as const){
+  const plan=exampleTransfectionPlan();
+  if(scope==='reagent')plan.groups[0].reagent={...newDoseReagent(),name:'Custom lipid',basis:'custom',amount:'1',basisName:'Cells',basisUnit:'cells',basisAmount:''};
+  else plan.groups[0].auxiliaries=[{...newDoseReagent(),name:'Auxiliary',amount:''}];
+  const before=JSON.stringify(plan);
+  try{run(plan);throw Error('Expected validation failure');}catch(error){expect(error).toBeInstanceOf(TransfectionFieldError);expect((error as TransfectionFieldError).scope).toBe(scope);}
+  expect(JSON.stringify(plan)).toBe(before);
+ }
 });

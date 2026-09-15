@@ -1,0 +1,3 @@
+Concentration points: 2
+Tube: 1; Concentration (µM): 10; Source: 母液 / Stock; Take (µL): 10; Diluent (µL): 90; Mixed volume (µL): 100; Transfer out (µL): 0; Remaining (µL): 100
+Tube: 2; Concentration (µM): 20; Source: 母液 / Stock; Take (µL): 20; Diluent (µL): 80; Mixed volume (µL): 100; Transfer out (µL): 0; Remaining (µL): 100

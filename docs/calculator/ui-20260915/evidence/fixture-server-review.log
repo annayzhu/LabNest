@@ -1,0 +1,19 @@
+prisma migrate deploy succeeded in isolated database
+tsx scripts/seed-calculator-acceptance.ts succeeded in isolated database
+tsx scripts/seed-calculator-run-v12.ts succeeded in isolated database
+
+> labnest@0.1.0 start
+> next start --port 3221
+
+▲ Next.js 16.2.10
+- Local:         http://localhost:3221
+- Network:       http://172.17.72.220:3221
+✓ Ready in 100ms
+⨯ TypeError: Cannot read properties of undefined (reading 'includes')
+    at e (.next/calculator-production/server/chunks/ssr/src_1eqfmph._.js:1:4465)
+    at <unknown> (.next/calculator-production/server/chunks/ssr/src_1eqfmph._.js:1:4373)
+    at Array.map (<anonymous>)
+    at d (.next/calculator-production/server/chunks/ssr/src_1eqfmph._.js:1:4031)
+    at stringify (<anonymous>) {
+  digest: '2147291135'
+}

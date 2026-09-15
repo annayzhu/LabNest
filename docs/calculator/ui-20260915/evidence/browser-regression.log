@@ -1,0 +1,123 @@
+失败: run-v12 (26680 ms)
+
+失败: pipetting-v12 (1299 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert((await p.locator('[data-liquid-operations]').innerText()).includes('0.1 µL'))
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-pipetting-v12.mjs:7:125 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1
+
+失败: v12-database (83 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(report.resultId)
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-v12-database.mjs:4:115 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1
+
+失败: refactor (31690 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('Valid conditions', { exact: true }) to be visible[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-refactor.mjs:18:56 {
+  log: [
+    "  - waiting for getByText('Valid conditions', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: legacy (19647 ms)
+失败: compact-ui (31933 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('Calculate volume from stock / target concentration', { exact: true }).first()[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-compact-ui.mjs:15:101 {
+  log: [
+    "  - waiting for getByText('Calculate volume from stock / target concentration', { exact: true }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: plate (1767 ms)
+失败: storage-appearance (31270 ms)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('Valid conditions', { exact: true }) to be visible[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-storage-appearance.mjs:9:462 {
+  log: [
+    "  - waiting for getByText('Valid conditions', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+失败: appearance (50342 ms)
+U01-U03: both languages; five sizes; six visible targets and half-screen geometry
+U05/U06: hover, hoverable tooltip, Escape, keyboard focus and Enter
+U07: native help dialog focus containment and restoration
+U10: eight, two and explicitly zero pins retained
+U11/U12/U14: fonts, modes, refresh, cross-tab, system and isolated reset
+U08/U09: generated icons and corrupted-resource line fallback preserve geometry; fresh browser context forces the failed download
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForEvent: Timeout 30000ms exceeded while waiting for event "download"
+=========================== logs ===========================
+waiting for event "download"
+============================================================
+    at /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-appearance.mjs:23:70 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+通过: integration (2901 ms)
+通过: database (98 ms)
+通过: rejection (1356 ms)

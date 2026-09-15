@@ -1,0 +1,1 @@
+src/components/calculators/ResultPanel.tsx(26,172): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.

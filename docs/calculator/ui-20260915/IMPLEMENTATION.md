@@ -31,3 +31,5 @@ The attachment explicitly requests existing calculation compatibility tests and 
 Shanghai suite: 626 passed initially. Vancouver initial run: 625 passed, one existing visualization wall-clock threshold failed at 3159 ms during concurrent compilation. Isolated rerun of the unchanged file: 11 passed. This is recorded as a timing failure and rerun, not omitted.
 
 Before screenshots were taken from production port 3000. Initial after screenshots are development evidence, not production acceptance. `candidate` screenshots use the production build fixture server. Fixture records are synthetic. Real device soft keyboard, real OS zoom and researcher trial are not automated browser evidence.
+
+Final targeted review also fixed reagent-object error focus, optional CFU clearing, complete table access, curve column units, and full-width mobile tool intake. The sample-file adapter explicitly selects the qPCR sample textarea, preserving the separate gene input. See ACCEPTANCE.md and VERSION.json for exact evidence boundaries.

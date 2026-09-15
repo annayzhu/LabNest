@@ -1,0 +1,14 @@
+U01-U03: both languages; five sizes; six visible targets and half-screen geometry
+U05/U06: hover, hoverable tooltip, Escape, keyboard focus and Enter
+U07: native help dialog focus containment and restoration
+U10: eight, two and explicitly zero pins retained
+U11/U12/U14: fonts, modes, refresh, cross-tab, system and isolated reset
+U08/U09: generated icons and corrupted-resource line fallback preserve geometry; fresh browser context forces the failed download
+file:///Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-appearance.mjs:23
+ await openCalculatorDisclosure(p,'Export');const downloads={};for(const ext of ['CSV','XLSX']){const pending=p.waitForEvent('download');await p.getByRole('button',{name:`Export ${ext}`,exact:true}).click();const download=await pending;const path=`${dir}/wb.${ext.toLowerCase()}`;await download.saveAs(path);downloads[ext]=await readFile(path);}const csv=downloads.CSV.toString();for(const text of ['Synthetic stock','below configured minimum','wb-loading-v3'])assert(csv.includes(text));const zipped=unzipSync(downloads.XLSX);const xml=Object.entries(zipped).filter(([key])=>key.endsWith('.xml')).map(([,v])=>strFromU8(v)).join('\n');for(const text of ['Synthetic stock','below configured minimum','wb-loading-v3','Components','Notes'])assert(xml.includes(text));await p.evaluate(()=>scrollTo(0,0));await p.screenshot({path:`${dir}/wb-warning-result.png`,fullPage:true});
+ ^
+
+ReferenceError: openCalculatorDisclosure is not defined
+    at file:///Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915/scripts/verify-calculator-appearance.mjs:23:2
+
+Node.js v22.23.1

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-calculator-ui-20260915
+
+ ❯ src/components/calculators/result-layout.test.ts (1 test | 1 failed) 37ms
+     × shows estimated Tm before sequence statistics and omits irrelevant pipetting UI 36ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/calculators/result-layout.test.ts > calculator result reading order > shows estimated Tm before sequence statistics and omits irrelevant pipetting UI
+AssertionError: expected 279 to be less than 107
+ ❯ src/components/calculators/result-layout.test.ts:10:40
+      8|   const d=getCalculatorDefinition('tm');const result=calculate({calcul…
+      9|   const html=renderToStaticMarkup(createElement(ResultPanel,{result,zh…
+     10|   expect(html.indexOf('Estimated Tm')).toBeLessThan(html.indexOf('Prim…
+       |                                        ^
+     11|   expect(html).not.toContain('Minimum not set');expect(html).not.toCon…
+     12|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  12:17:19
+   Duration  302ms (transform 120ms, setup 0ms, import 164ms, tests 37ms, environment 0ms)
+

@@ -1,0 +1,84 @@
+[
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-plate-planner/outputs/portable/qPCR_Plate_Layout_Planner_Portable_20260915.zip!/Open_qPCR_Plate_Layout_Planner.html",
+    "target": "public/tools/qpcr-plate-layout/index.html",
+    "sha256": "f84fe4d6848abee0b8607b92df2f628d3c04649e4a63b73dc18fa7562dc14644"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-plate-planner/outputs/portable/qPCR_Plate_Layout_Planner_Portable_20260915.zip!/VERSION.txt",
+    "target": "public/tools/qpcr-plate-layout/VERSION.txt",
+    "sha256": "880ab70efda9c17fad0cd6aa71f3f01987d75b4903d5f612b408e4c684356420"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-plate-planner/outputs/portable/qPCR_Plate_Layout_Planner_Portable_20260915.zip!/THIRD_PARTY_LICENSES.txt",
+    "target": "public/tools/qpcr-plate-layout/THIRD_PARTY_LICENSES.txt",
+    "sha256": "22b6018941da2d15df99b68b84bad3101c63f1405e038c98de7a74e90af26566"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/cnvtool.html",
+    "target": "public/tools/cnv-analysis/index.html",
+    "sha256": "7f697807d3dd7181869e64260e1b285667534d0163dd6b4c6df9f9a6a628cf18"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/app.js",
+    "target": "public/tools/cnv-analysis/app.js",
+    "sha256": "c46a53f927571c1b92a5cde8cc16b4eb1f75a6b35f4c437fef1e9e9324b7c600"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/core.js",
+    "target": "public/tools/cnv-analysis/core.js",
+    "sha256": "2b230397c6ae624aa66f728dd2e62c0e8d49109a11e0714d278e6bbc633a2d2b"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/diagnostics.js",
+    "target": "public/tools/cnv-analysis/diagnostics.js",
+    "sha256": "c6f9c9552e235c92c9fa0d25e7bd1e469c38641ca4db589edaa98db82e4914cd"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/styles.css",
+    "target": "public/tools/cnv-analysis/styles.css",
+    "sha256": "5be1c410504be806029cdd3f162f8aa7399a5ea2b578966e7768349c39325643"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/vendor/xlsx.full.min.js",
+    "target": "public/tools/cnv-analysis/vendor/xlsx.full.min.js",
+    "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CopyNumber_Analyzer/THIRD_PARTY_NOTICES.md",
+    "target": "public/tools/cnv-analysis/THIRD_PARTY_NOTICES.md",
+    "sha256": "1297bd622d809b8c378be5babb11a92b5b9c3afa546f50a6a2638c09a83a2110"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/dist/assets/index-CZiIt48V.js",
+    "target": "public/tools/cnv-plate-layout/assets/index-CZiIt48V.js",
+    "sha256": "ac0037257ae5c2ef3ecc43e2d40e2d722ae73fb7975a1540f6e2c07e0fd26f4d"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/dist/assets/index-Cei4V47r.css",
+    "target": "public/tools/cnv-plate-layout/assets/index-Cei4V47r.css",
+    "sha256": "d7cfbb7880f365f296f7cf7dcf55bb92478932a91bec8d9972e3b179b3fd572f"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/dist/assets/xlsx.min-B2PEYkw6.js",
+    "target": "public/tools/cnv-plate-layout/assets/xlsx.min-B2PEYkw6.js",
+    "sha256": "db65ca3bd3811a9e5611b9606b998c2de482b3b20f1cf8ebb61232ead55e3e13"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/dist/favicon.svg",
+    "target": "public/tools/cnv-plate-layout/favicon.svg",
+    "sha256": "e6d2e59b7b5bbb0342e0fb496dfc262decbfe4426bbb7b047aec8d467d1dc6f7"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/C_Taqman_CNV/CNV_Plate_Planner/dist/index.html",
+    "target": "public/tools/cnv-plate-layout/index.html",
+    "adaptation": "Relative asset paths for subdirectory hosting",
+    "sha256": "bbbb4e73f9fb4519e9384122fbe3dff08986a647422b97e30be86e37d7280374"
+  },
+  {
+    "source": "/Users/annayzhu/Library/CloudStorage/OneDrive-Personal/Anna_work/C_材料方法/qpcr-analysis-studio/outputs/offline/qPCR-Analysis-Studio_Offline_20260915_359afb0573a5/index.html",
+    "target": "public/tools/qpcr-analysis/index.html",
+    "sha256": "359afb0573a50e1b6b2d3935a3db9d66e16b1d06e5ded360c415e3ba63a12287",
+    "sourceCommit": "7e812fc2ed899a16ce8410edaebfeaf6fcc8b36b"
+  }
+]

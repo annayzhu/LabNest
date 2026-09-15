@@ -1,0 +1,7 @@
+passed Master Mix first screen at 1366 × 768
+passed Recipe continuous rows, new row focus, cancellation preserves filled row
+passed Curve staged paste, row/column error, cancel, duplicate/order and units retained
+passed TCID50 has distinct accessible column labels
+passed Mobile hidden B tube error automatically locates field
+passed Mobile B custom basis amount and A auxiliary amount errors retain the correct tube
+passed CFU optional efficiency can be enabled then disabled without blocking CFU

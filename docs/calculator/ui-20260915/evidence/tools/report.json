@@ -1,0 +1,104 @@
+{
+  "base": "http://localhost:3221",
+  "at": "2026-09-15T04:59:34.768Z",
+  "checks": [
+    {
+      "id": "calculator",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/calculator",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "qpcr-plate-layout",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/qpcr-plate-layout",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "cnv-plate-layout",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/cnv-plate-layout",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "qpcr-analysis",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/qpcr-analysis",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "cnv-analysis",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/cnv-analysis",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "free-plate-layout",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/free-plate-layout/index.html?v=20260826-2",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "visualization",
+      "width": 1440,
+      "url": "http://localhost:3221/tools/visualization",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "calculator",
+      "width": 390,
+      "url": "http://localhost:3221/tools/calculator",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "qpcr-plate-layout",
+      "width": 390,
+      "url": "http://localhost:3221/tools/qpcr-plate-layout",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "cnv-plate-layout",
+      "width": 390,
+      "url": "http://localhost:3221/tools/cnv-plate-layout",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "qpcr-analysis",
+      "width": 390,
+      "url": "http://localhost:3221/tools/qpcr-analysis",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "cnv-analysis",
+      "width": 390,
+      "url": "http://localhost:3221/tools/cnv-analysis",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "free-plate-layout",
+      "width": 390,
+      "url": "http://localhost:3221/tools/free-plate-layout/index.html?v=20260826-2",
+      "status": "passed",
+      "errors": []
+    },
+    {
+      "id": "visualization",
+      "width": 390,
+      "url": "http://localhost:3221/tools/visualization",
+      "status": "passed",
+      "errors": []
+    }
+  ]
+}

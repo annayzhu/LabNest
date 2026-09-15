@@ -1,0 +1,9 @@
+{
+  "applicationCommit": "eed92803a57642db4a068765bd5bcf68efc2c83b",
+  "baseCommit": "c69e06806a79f65c9c1d609f8254c7a03b1be3da",
+  "applicationSourceTree": "5f030e58b9aea94509f158cd3581286ad1f47436",
+  "browserRegressionCommit": "68ca3fdffa4fb28314840a1fda7a4aef44dbbb43",
+  "candidateScreenshotCommit": "6dc03cc664da7ef87a004908917dc96463b3b731",
+  "finalCIScope": "PR final head",
+  "deployment": "pending; recorded separately after merge"
+}

@@ -1,0 +1,7 @@
+{
+  "sha": "68ca3fdffa4fb28314840a1fda7a4aef44dbbb43",
+  "checks": [
+    "Two synthetic colonies detected; explicit confirmation saves only numeric count/settings, no image",
+    "Invalid replacement reports error, preserves prior image, prevents confirmation/save"
+  ]
+}

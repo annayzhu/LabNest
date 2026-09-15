@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ModalDialogProvider } from "@/components/ui/ModalDialogProvider";
 import { AppShell } from "@/components/AppShell";
 import { CalculatorWorkbench } from "@/components/calculators/CalculatorWorkspace";
 import { getCalculatorCatalog, getCalculatorDefinition } from "@/lib/calculators/calculator-engine";
@@ -29,7 +30,7 @@ export default async function CalculatorToolPage({
   const embedded = query.embed === "plate" || query.embed === "step";
   const embeddedLocale = query.locale === "zh" || query.locale === "en" ? query.locale : undefined;
   if (embedded) {
-    return <main className="min-h-screen bg-warm/35 p-3 sm:p-5"><CalculatorWorkbench calculatorId={calculatorId} initialInputs={initialInputs} plateContext={plateContext} embedded embeddedLocale={embeddedLocale} /></main>;
+    return <ModalDialogProvider><main className="min-h-screen bg-warm/35 p-3 sm:p-5"><CalculatorWorkbench calculatorId={calculatorId} initialInputs={initialInputs} plateContext={plateContext} embedded embeddedLocale={embeddedLocale} /></main></ModalDialogProvider>;
   }
   return <AppShell><CalculatorWorkbench calculatorId={calculatorId} initialInputs={initialInputs} plateContext={plateContext} /></AppShell>;
 }

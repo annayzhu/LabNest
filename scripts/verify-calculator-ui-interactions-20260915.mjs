@@ -8,7 +8,7 @@ async function check(name,fn){await fn();checks.push({name,status:'passed'});con
 async function example(id){await page.goto(`${base}/tools/calculator/${id}`);await page.getByRole('button',{name:'Load example',exact:true}).click();}
 try{
  await check('Master Mix first screen at 1366 × 768',async()=>{
-  await example('master-mix');await page.evaluate(()=>scrollTo(0,0));
+  await example('master-mix');await page.getByRole('button',{name:'Add component',exact:true}).click();await page.locator('[data-component-name]').last().fill('Extra component');await page.getByRole('textbox',{name:'Volume per reaction',exact:true}).last().fill('0');await page.getByRole('button',{name:'Calculate',exact:true}).click();await page.evaluate(()=>scrollTo(0,0));
   const box=await page.getByRole('button',{name:'Calculate',exact:true}).boundingBox();assert.ok(box.y+box.height<=768,JSON.stringify(box));
   await page.screenshot({path:`${out}/master-mix-1366.png`,fullPage:true});
  });

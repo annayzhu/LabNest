@@ -1,7 +1,9 @@
 {
-  "implementationSha": "44c5c85804e849b9fbdfe18f9849712885f0ef5e",
+  "implementationSha": "6885b29a8ce17c615be9e87100182935793a73f9",
   "baseline": "0402a9a3aef554ff74b274853febd5546e186878",
   "productionBuild": true,
   "fixture": "isolated synthetic database",
-  "screens": "Chromium CSS viewport simulation, not physical phones"
+  "screens": "Chromium CSS viewport simulation, not physical phones",
+  "targetedBrowserCpuRate": 4,
+  "fullLocalRegressionSha": "44c5c85804e849b9fbdfe18f9849712885f0ef5e"
 }

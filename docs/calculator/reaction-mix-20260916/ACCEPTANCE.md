@@ -1,6 +1,6 @@
 # 2026-09-16 反应配液验收
 
-基线 main：`0402a9a3aef554ff74b274853febd5546e186878`。实现版本：`44c5c85804e849b9fbdfe18f9849712885f0ef5e`。后续交付提交仅增加验收资料；合并及运行版本另见部署记录。
+基线 main：`0402a9a3aef554ff74b274853febd5546e186878`。最终实现版本：`6885b29a8ce17c615be9e87100182935793a73f9`。后续交付提交仅增加验收资料；合并及运行版本另见部署记录。
 
 使用隔离数据库和合成记录，未访问或改写用户实验数据。浏览器运行生产构建，1440 / 700 / 390 CSS px，浅色及深色。手机宽度为 Chromium 模拟，不等于真机。
 
@@ -44,10 +44,12 @@
 
 ## 自动验证
 
-生产构建、TypeScript、110文件634项测试通过；lint为0错误、10条既有警告。完整25组浏览器回归全部通过（含31工具页面/正式导出、Run、离线同步、数据库回读、移液、旧记录、预设及本轮用例），见 [汇总日志](evidence/logs/regression.log) 和 [分项结果](evidence/regression.json)。计算器验收当前无失败项。完整历史回归输出保留在本地部署备份的 final-local-regression；CI双时区及编辑器回归链接见PR。
+生产构建、TypeScript、110文件634项测试通过；lint为0错误、10条既有警告。本地完整25组浏览器回归在`44c5c85`全部通过（含31工具页面/正式导出、Run、离线同步、数据库回读、移液、旧记录、预设及本轮用例），见 [汇总日志](evidence/logs/regression.log) 和 [分项结果](evidence/regression.json)。计算器验收当前无失败项。完整历史回归输出保留在本地部署备份的 final-local-regression；CI双时区及编辑器回归链接见PR。
 
 编辑器CI初次运行在图片回退时出现`decode()`节点替换竞态（run 35089756710）；测试改为先等待实际原图URL、complete及naturalWidth，再验证decode。未修改产品图片代码。隔离数据库的定向图片回退/双源失败/恢复重试用例已通过，见 [记录](evidence/editor-recovery.json)。最终CI状态以PR最新提交为准。
 
 计算器CI run 35090287642的前24组既有回归均通过，新增用例过早检查requestAnimationFrame中的字段focus而失败。新增用例现等待指定字段实际取得焦点，仍保留焦点精确断言；移至总回归首位以更早发现问题。产品代码无变化。
 
 4倍CPU降速验证进一步复现未选中组切换后条件字段尚未提交时，单次requestAnimationFrame定位失效。ReactionGroups已改为在useLayoutEffect提交后消费待定位字段；回归脚本支持`LABNEST_E2E_CPU_RATE=4`复现慢环境，且等待localStorage初始化后再注入合成草稿。
+
+最终实现`6885b29`的生产构建、TypeScript、634项测试及4倍CPU降速页面用例全部通过（browser.json中的cpuRate=4，包含6种宽度/配色组合及多组/失败重试/隐藏组定位）。完整25组最终回归由最新提交CI再次执行，以PR最终成功状态和部署记录为准。

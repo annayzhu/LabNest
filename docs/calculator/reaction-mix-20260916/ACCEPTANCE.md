@@ -49,3 +49,5 @@
 编辑器CI初次运行在图片回退时出现`decode()`节点替换竞态（run 35089756710）；测试改为先等待实际原图URL、complete及naturalWidth，再验证decode。未修改产品图片代码。隔离数据库的定向图片回退/双源失败/恢复重试用例已通过，见 [记录](evidence/editor-recovery.json)。最终CI状态以PR最新提交为准。
 
 计算器CI run 35090287642的前24组既有回归均通过，新增用例过早检查requestAnimationFrame中的字段focus而失败。新增用例现等待指定字段实际取得焦点，仍保留焦点精确断言；移至总回归首位以更早发现问题。产品代码无变化。
+
+4倍CPU降速验证进一步复现未选中组切换后条件字段尚未提交时，单次requestAnimationFrame定位失效。ReactionGroups已改为在useLayoutEffect提交后消费待定位字段；回归脚本支持`LABNEST_E2E_CPU_RATE=4`复现慢环境，且等待localStorage初始化后再注入合成草稿。

@@ -1,5 +1,5 @@
 "use client";
-import {useState,useRef,useImperativeHandle,type Ref} from 'react';
+import {useState,useRef,useImperativeHandle,useLayoutEffect,type Ref} from 'react';
 import {compatibleUnits,convert,parseScalar} from '@/lib/calculators/quantities';
 import type {MixRow,SampleRow} from '@/lib/calculators/planning';
 const control='min-h-11 w-full min-w-0 rounded border border-hairline bg-surface px-2 text-sm';
@@ -53,7 +53,15 @@ export type ReactionGroupsHandle={focusIssue:(group:number,selector:string)=>voi
 export function ReactionGroups({groups,onChange,zh,ref}:{ref?:Ref<ReactionGroupsHandle>;groups:ReactionGroup[];onChange:(groups:ReactionGroup[])=>void;zh:boolean}) {
  const root=useRef<HTMLDivElement>(null);
  const [active,setActive]=useState(0);
- useImperativeHandle(ref,()=>({focusIssue:(group,selector)=>{setActive(group);requestAnimationFrame(()=>{const field=root.current?.querySelector<HTMLElement>(selector);field?.focus({preventScroll:true});field?.scrollIntoView({block:"center",behavior:"instant"});});}}));
+ const pendingFocus=useRef<string|null>(null);
+ const [focusRequest,setFocusRequest]=useState(0);
+ useImperativeHandle(ref,()=>({focusIssue:(group,selector)=>{pendingFocus.current=selector;setActive(group);setFocusRequest(n=>n+1);}}));
+ // A group can render different fields; focus only after that DOM has committed.
+ useLayoutEffect(()=>{
+  if(!pendingFocus.current)return;
+  const field=root.current?.querySelector<HTMLElement>(pendingFocus.current);pendingFocus.current=null;
+  field?.focus({preventScroll:true});field?.scrollIntoView({block:"center",behavior:"instant"});
+ },[active,focusRequest]);
  const index=Math.min(active,Math.max(0,groups.length-1)),group=groups[index];
  return <div ref={root} className="calculator-row-stack"><nav className="calculator-group-tabs" aria-label={zh?'配液组':'Mix groups'}>{groups.map((g,i)=><button type="button" key={i} aria-pressed={i===index} onClick={()=>setActive(i)}>{g.name||`${zh?'组':'Group'} ${i+1}`}</button>)}</nav>{group?<fieldset className="min-w-0"><div className="grid grid-cols-2 gap-2"><label>{zh?'组名':'Group name'}<input data-group-name className={control} aria-label="Group name" value={group.name} onChange={e=>onChange(groups.map((g,i)=>i===index?{...g,name:e.target.value}:g))}/></label><label>{zh?'实际反应数（含重复及对照）':'Actual reactions (incl. repeats and controls)'}<input data-group-reactions className={control} value={group.reactions} onChange={e=>onChange(groups.map((g,i)=>i===index?{...g,reactions:e.target.value}:g))}/></label></div><MixEditor zh={zh} rows={group.rows} onChange={rows=>onChange(groups.map((g,i)=>i===index?{...g,rows}:g))}/><button type="button" onClick={()=>confirmRemove(true,zh,()=>onChange(groups.filter((_,i)=>i!==index)))}>{zh?'移除此组':'Remove group'}</button></fieldset>:null}<button className="text-moss" type="button" onClick={()=>{onChange([...groups,{name:'',reactions:'',rows:[]}]);setActive(groups.length);}}>{zh?'添加独立配液组':'Add separate mix group'}</button></div>;
 }

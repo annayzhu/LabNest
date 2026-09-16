@@ -1,0 +1,129 @@
+{
+  "base": "http://localhost:3221",
+  "cpuRate": 4,
+  "at": "2026-09-16T11:43:59.997Z",
+  "checks": [
+    {
+      "width": 1440,
+      "mode": "light",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "width": 1440,
+      "mode": "dark",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "width": 390,
+      "mode": "light",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "width": 390,
+      "mode": "dark",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "width": 700,
+      "mode": "light",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "width": 700,
+      "mode": "dark",
+      "status": "passed",
+      "checks": [
+        "input preparation precedes calculate",
+        "original draft survives loading example",
+        "explicit calculation changes actual narrow pane only",
+        "result top visible",
+        "copy pasted into real textarea equals supplied sample",
+        "six operation steps",
+        "one table with units above",
+        "unit display does not alter inputs",
+        "invalid input focuses field without losing values",
+        "preset invalidates previous result"
+      ]
+    },
+    {
+      "status": "passed",
+      "checks": [
+        "infeasible concentration in hidden group is located after unit conversion",
+        "failed current-group copy retries same text without false success",
+        "invalid hidden group selected and focused",
+        "duplicate group name focused",
+        "negative component volume focused"
+      ]
+    },
+    {
+      "status": "passed",
+      "checks": [
+        "desktop resize into narrow tabs",
+        "copy all includes nonvisible groups",
+        "current group copy",
+        "same reagent across groups",
+        "separate addition uses actual reactions without premix overage"
+      ]
+    }
+  ]
+}

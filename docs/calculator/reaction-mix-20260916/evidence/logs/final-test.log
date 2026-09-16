@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-reaction-mix-20260916
+
+
+ Test Files  110 passed (110)
+      Tests  634 passed (634)
+   Start at  19:43:19
+   Duration  4.57s (transform 9.90s, setup 0ms, import 20.88s, tests 5.83s, environment 10ms)
+

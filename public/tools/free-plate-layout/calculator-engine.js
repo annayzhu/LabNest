@@ -590,6 +590,51 @@ var LabNestCalculations = (() => {
     return enhanceDefinition({ ...definition, exampleInputs: { ...definition.exampleInputs }, fields: definition.fields.map((field) => ({ ...field })) });
   }
 
+  // src/lib/calculators/quantity-format.ts
+  function formatQuantity(value) {
+    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+  }
+
+  // src/lib/calculators/reaction-mix-presentation.ts
+  function reactionMixGroups(result, zh) {
+    const operations = result.operations ?? [];
+    const ids = [...new Set(operations.map((o) => o.group).filter((id) => id !== void 0))];
+    return ids.map((id) => {
+      const ops = operations.filter((o) => o.group === id), originalName = ops[0].groupName ?? id;
+      const name = originalName === "default" ? zh ? "\u9884\u6DF7\u6DB2" : "Premix" : originalName;
+      const rows = (result.table ?? []).filter((row) => ids.length === 1 || String(row.group) === originalName);
+      const total = rows.reduce((sum, row) => sum + (typeof row.batchUl === "number" ? row.batchUl : 0), 0);
+      return { id, name, rows, operations: ops, total, reactions: ops.find((o) => o.role === "dispense")?.repetitions ?? ops.find((o) => o.destination.startsWith("reactions:"))?.repetitions, dispense: ops.find((o) => o.role === "dispense") };
+    });
+  }
+  function reactionMixUnit(result) {
+    return result.displayUnits?.["table:perReactionUl"] ?? "\xB5L";
+  }
+  function reactionMixQuantity(value, result) {
+    const unit = reactionMixUnit(result);
+    return `${formatQuantity(convert(value, "\xB5L", unit))} ${unit}`;
+  }
+  function reactionComponent(value, zh) {
+    return value === "\u6C34 / Water" ? zh ? "\u6C34" : "Water" : String(value);
+  }
+  function reactionMixClipboard(result, zh, groupId) {
+    const all = reactionMixGroups(result, zh), groups = groupId === void 0 ? all : all.filter((g) => g.id === groupId);
+    if (!groups.length) return "";
+    const lines = [`${zh ? "\u72EC\u7ACB\u914D\u6DB2\u7EC4" : "Separate mix groups"}: ${groups.length}`];
+    if (groups.length === 1) lines.push(`${zh ? "\u5404\u7EC4\u9884\u6DF7\u603B\u91CF\uFF08\u5206\u522B\u914D\u5236\uFF09" : "Premix to prepare"}: ${reactionMixQuantity(groups[0].total, result)}`);
+    for (const group of groups) {
+      lines.push("");
+      lines.push(`${group.name}: ${group.dispense ? `${zh ? "\u9884\u6DF7\u6DB2" : "Premix"}: ${reactionMixQuantity(group.dispense.quantity.value, result)} \xD7 ${group.dispense.repetitions}` : `${zh ? "\u5355\u72EC\u52A0\u5165\u5404\u7EC4\u5206" : "Add components separately"}${group.reactions === void 0 ? "" : ` \xD7 ${group.reactions} ${zh ? "\u4E2A\u53CD\u5E94" : "reactions"}`}`}`);
+      if (groups.length > 1) lines.push(`${zh ? "\u9884\u6DF7\u603B\u91CF" : "Premix to prepare"}: ${reactionMixQuantity(group.total, result)}`);
+      for (const row of group.rows) {
+        const premix = row.premix === "\u662F / Yes";
+        const batch = typeof row.batchUl === "number" ? `; ${zh ? "\u6574\u6279" : "Batch"}: ${reactionMixQuantity(row.batchUl, result)}` : "";
+        lines.push(`${reactionComponent(row.component, zh)}${zh ? "\u6BCF\u53CD\u5E94" : " per reaction"}: ${reactionMixQuantity(Number(row.perReactionUl), result)}; ${premix ? zh ? "\u9884\u6DF7" : "Premix" : zh ? "\u5355\u72EC\u52A0\u5165" : "Add separately"}${batch};`);
+      }
+    }
+    return lines.join("\n");
+  }
+
   // src/lib/calculators/result-presentation.ts
   var tableQuantityUnits = { perWellUl: "\xB5L", dnaMassUg: "\xB5g", rnaPmol: "pmol", finalNm: "nM", takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
   function tableUnitsFor(result) {
@@ -597,9 +642,6 @@ var LabNestCalculations = (() => {
   }
   function displayQuantity(value, unit, target) {
     return { value: target ? convert(value, unit, target) : value, unit: target ?? unit };
-  }
-  function formatQuantity(value) {
-    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
   }
   function validateDisplayUnits(result, candidate) {
     if (!candidate || typeof candidate !== "object") return {};
@@ -642,6 +684,7 @@ var LabNestCalculations = (() => {
   }
   function resultClipboard(result, zh) {
     if (!canCopyResult(result)) return "";
+    if (result.calculatorId === "master-mix" && result.operations?.length) return reactionMixClipboard(result, zh);
     const lines = presentedOutputs(result).filter((o) => (zh ? o.labelZh : o.label).trim()).map((o) => `${zh ? o.labelZh : o.label}: ${typeof o.value === "number" ? formatQuantity(o.value) : o.value}${o.unit ? " " + o.unit : ""}`);
     const hidden = /* @__PURE__ */ new Set(["status", "componentId", "groupId", "inputRow", "planVersion", "methodVersion", "reducingMode", "reducingDefinition", "originalConcentration", "availableUl", "sufficient", "concentrationUnit", "volumeUnit", "action"]);
     const table = presentedTable({ ...result, table: result.table?.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !hidden.has(key)))) }, zh);

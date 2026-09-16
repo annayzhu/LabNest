@@ -1,0 +1,1 @@
+export function formatQuantity(value:number){return value!==0&&(Math.abs(value)<0.001||Math.abs(value)>=1e7)?value.toExponential(5):value.toLocaleString('en',{maximumSignificantDigits:9,useGrouping:false});}

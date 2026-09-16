@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-reaction-mix-20260916
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  19:14:12
+   Duration  256ms (transform 110ms, setup 0ms, import 133ms, tests 24ms, environment 0ms)
+

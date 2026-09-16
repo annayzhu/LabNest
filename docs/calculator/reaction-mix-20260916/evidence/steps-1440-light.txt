@@ -1,0 +1,6 @@
+1. G_mix配制
+2. Master mix: 132 µL → G_mix
+3. H2O: 95.04 µL → G_mix
+4. GAPDH-F: 5.28 µL → G_mix
+5. GAPDH-R: 5.28 µL → G_mix
+6. G_mix预混液: 9 µL × 24 孔加样

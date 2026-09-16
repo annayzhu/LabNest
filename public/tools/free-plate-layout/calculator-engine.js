@@ -604,7 +604,7 @@ var LabNestCalculations = (() => {
       const name = originalName === "default" ? zh ? "\u9884\u6DF7\u6DB2" : "Premix" : originalName;
       const rows = (result.table ?? []).filter((row) => ids.length === 1 || String(row.group) === originalName);
       const total = rows.reduce((sum, row) => sum + (typeof row.batchUl === "number" ? row.batchUl : 0), 0);
-      return { id, name, rows, operations: ops, total, dispense: ops.find((o) => o.role === "dispense") };
+      return { id, name, rows, operations: ops, total, reactions: ops.find((o) => o.role === "dispense")?.repetitions ?? ops.find((o) => o.destination.startsWith("reactions:"))?.repetitions, dispense: ops.find((o) => o.role === "dispense") };
     });
   }
   function reactionMixUnit(result) {
@@ -624,7 +624,7 @@ var LabNestCalculations = (() => {
     if (groups.length === 1) lines.push(`${zh ? "\u5404\u7EC4\u9884\u6DF7\u603B\u91CF\uFF08\u5206\u522B\u914D\u5236\uFF09" : "Premix to prepare"}: ${reactionMixQuantity(groups[0].total, result)}`);
     for (const group of groups) {
       lines.push("");
-      lines.push(`${group.name}: ${group.dispense ? `${zh ? "\u9884\u6DF7\u6DB2" : "Premix"}: ${reactionMixQuantity(group.dispense.quantity.value, result)} \xD7 ${group.dispense.repetitions}` : zh ? "\u5355\u72EC\u52A0\u5165\u5404\u7EC4\u5206" : "Add components separately"}`);
+      lines.push(`${group.name}: ${group.dispense ? `${zh ? "\u9884\u6DF7\u6DB2" : "Premix"}: ${reactionMixQuantity(group.dispense.quantity.value, result)} \xD7 ${group.dispense.repetitions}` : `${zh ? "\u5355\u72EC\u52A0\u5165\u5404\u7EC4\u5206" : "Add components separately"}${group.reactions === void 0 ? "" : ` \xD7 ${group.reactions} ${zh ? "\u4E2A\u53CD\u5E94" : "reactions"}`}`}`);
       if (groups.length > 1) lines.push(`${zh ? "\u9884\u6DF7\u603B\u91CF" : "Premix to prepare"}: ${reactionMixQuantity(group.total, result)}`);
       for (const row of group.rows) {
         const premix = row.premix === "\u662F / Yes";

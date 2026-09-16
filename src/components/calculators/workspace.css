@@ -138,9 +138,20 @@
 .reaction-mix-steps { list-style:decimal; padding-inline-start:24px; overflow-wrap:anywhere; }
 .reaction-mix-steps li { padding-block:4px; }
 [data-calculator="master-mix"] .calculator-result-panel { scroll-margin-block-start:120px; }
-.reaction-mix-result summary { cursor:pointer; min-height:36px; display:flex; align-items:center; }
+.reaction-mix-result summary { cursor:pointer; min-height:36px; display:list-item; padding-block:8px; list-style:disclosure-closed inside; }
+.reaction-mix-result details[open] > summary { list-style-type:disclosure-open; }
 @media(max-width:767px){
  [data-calculator="master-mix"] .reaction-input-tools { flex-basis:100%; justify-content:flex-start; }
  .reaction-mix-toolbar :is(select,button),.reaction-mix-result summary { min-height:44px; }
  .reaction-mix-toolbar select { font-size:max(16px,var(--ln-control-font-size-md)); }
+}
+
+@media(max-width:767px){
+ .reaction-mix-result .calculator-data-scroll table { min-width:100%; table-layout:fixed; width:100%; }
+ .reaction-mix-result .calculator-data-scroll :is(th,td) { white-space:normal; overflow-wrap:anywhere; }
+ .reaction-mix-result th:nth-child(1) { width:28%; }
+ .reaction-mix-result th:nth-child(2) { width:24%; }
+ .reaction-mix-result th:nth-child(3) { width:20%; }
+ .reaction-mix-result th:nth-child(4) { width:28%; }
+ .reaction-input-tools .calculator-preset-menu { flex:0 1 auto; }
 }

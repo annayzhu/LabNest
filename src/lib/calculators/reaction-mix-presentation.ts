@@ -11,7 +11,7 @@ export function reactionMixGroups(result:CalculatorResult,zh:boolean) {
   const name=originalName==='default'?(zh?'预混液':'Premix'):originalName;
   const rows=(result.table??[]).filter(row=>ids.length===1||String(row.group)===originalName);
   const total=rows.reduce((sum,row)=>sum+(typeof row.batchUl==='number'?row.batchUl:0),0);
-  return {id,name,rows,operations:ops,total,dispense:ops.find(o=>o.role==='dispense')};
+  return {id,name,rows,operations:ops,total,reactions:ops.find(o=>o.role==='dispense')?.repetitions??ops.find(o=>o.destination.startsWith('reactions:'))?.repetitions,dispense:ops.find(o=>o.role==='dispense')};
  });
 }
 export function reactionMixUnit(result:CalculatorResult){return result.displayUnits?.['table:perReactionUl']??'µL';}
@@ -24,7 +24,7 @@ export function reactionMixClipboard(result:CalculatorResult,zh:boolean,groupId?
  if(groups.length===1)lines.push(`${zh?'各组预混总量（分别配制）':'Premix to prepare'}: ${reactionMixQuantity(groups[0].total,result)}`);
  for(const group of groups){
   lines.push('');
-  lines.push(`${group.name}: ${group.dispense?`${zh?'预混液':'Premix'}: ${reactionMixQuantity(group.dispense.quantity.value,result)} × ${group.dispense.repetitions}`:(zh?'单独加入各组分':'Add components separately')}`);
+  lines.push(`${group.name}: ${group.dispense?`${zh?'预混液':'Premix'}: ${reactionMixQuantity(group.dispense.quantity.value,result)} × ${group.dispense.repetitions}`:`${zh?'单独加入各组分':'Add components separately'}${group.reactions===undefined?'':` × ${group.reactions} ${zh?'个反应':'reactions'}`}`}`);
   if(groups.length>1)lines.push(`${zh?'预混总量':'Premix to prepare'}: ${reactionMixQuantity(group.total,result)}`);
   for(const row of group.rows){
    const premix=row.premix==='是 / Yes';
@@ -41,7 +41,7 @@ export function reactionMixSteps(result:CalculatorResult,zh:boolean,groupId?:str
   steps.push(`${group.name}${zh?'配制':' preparation'}`);
   for(const op of group.operations.filter(o=>o.role==='add'&&o.destination.startsWith('premix:')))steps.push(`${reactionComponent(op.component,zh)}: ${reactionMixQuantity(op.quantity.value,result)} → ${group.name}`);
   if(group.dispense)steps.push(`${group.name}${zh?'预混液':' premix'}: ${reactionMixQuantity(group.dispense.quantity.value,result)} × ${group.dispense.repetitions} ${container}`);
-  for(const op of group.operations.filter(o=>o.role==='add'&&!o.destination.startsWith('premix:')))steps.push(`${reactionComponent(op.component,zh)}: ${reactionMixQuantity(op.quantity.value,result)} × ${op.repetitions} ${container}${zh?'，单独加入':'，add separately'}`);
+  for(const op of group.operations.filter(o=>o.role==='add'&&!o.destination.startsWith('premix:')))steps.push(`${reactionComponent(op.component,zh)}: ${reactionMixQuantity(op.quantity.value,result)} × ${op.repetitions} ${container}${zh?'，单独加入':', add separately'}`);
  }
  return steps;
 }

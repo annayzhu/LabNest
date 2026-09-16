@@ -12,7 +12,8 @@ import { newClientMutationId } from "@/lib/client-mutation-id";
 import { enqueueMobileMutation, requestMobileMutationSync, listMobileMutations, mobileQueueChangedEvent } from "@/lib/mobile-mutation-queue";
 import { compatibleUnits, convert, parseScalar, units } from "@/lib/calculators/quantities";
 import { defaultTasks, isFieldVisible } from "@/lib/calculators/task-definitions";
-import { MixEditor, SampleEditor, RecipeEditor, type RecipeRow, ReactionGroups, type ReactionGroup, CurveEditor } from "./StructuredInputs";
+import {mixGroupIssue,mixRowIssue} from "./reaction-input-focus";
+import { MixEditor, SampleEditor, RecipeEditor, type RecipeRow, ReactionGroups, type ReactionGroup, type ReactionGroupsHandle, CurveEditor } from "./StructuredInputs";
 import type { MixRow, SampleRow } from "@/lib/calculators/planning";
 import { recordVisit, saveDraft, restoreLegacyInputs } from "@/lib/calculators/calculator-storage";
 import { ResultPanel } from "./ResultPanel";
@@ -67,6 +68,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   const [recordStatus,setRecordStatus]=useState("");
   const mutationId=useRef<string|null>(null);
   const copyGeneration=useRef(0);
+  const copyScope=useRef<string|undefined>(undefined);
+  const reactionGroups=useRef<ReactionGroupsHandle>(null);
   useEffect(()=>{
     const read=async()=>{if(!mutationId.current)return;try{const mutation=(await listMobileMutations()).find(item=>item.clientMutationId===mutationId.current);if(mutation?.lastError)setRecordStatus(`${zh?'本机意图已保留；服务器尚未接受：':'Local intent retained; server has not accepted: '}${mutation.lastError}`);}catch{/* Queue storage exposes its own failure when saving. */}};
     window.addEventListener(mobileQueueChangedEvent,read);
@@ -81,7 +84,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     const frame=window.requestAnimationFrame(()=>{
     visitRef.current=true;
     const draft=state.drafts[calculatorId];
-    if(draft&&Object.values(draft.inputs).some(v=>Array.isArray(v)?v.length>0:typeof v==="string"?v.trim():typeof v==="number"))setInitialDraft(structuredClone(draft));
+    if(draft&&Object.entries(draft.inputs).some(([key,v])=>!key.startsWith("__")&&!key.endsWith("Unit")&&(Array.isArray(v)?v.length>0:typeof v==="string"?v.trim():typeof v==="number")))setInitialDraft(structuredClone(draft));
     const previous=draft?.inputs;
     if(previous)setInputs(current=>{const next={...current};for(const field of definition.fields){const unit=previous[`${field.key}Unit`];if(!String(current[field.key]??'').trim()&&typeof unit==='string'&&units[unit])next[`${field.key}Unit`]=unit;}return next;});
     const record=state.history.find(item=>item.id===initialInputs.record);
@@ -116,7 +119,17 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
       if(calculatorId==="master-mix")setMobilePane("inputs");
       transfectionEditor.current?.focusError();
       const raw=calculationError instanceof Error?calculationError.message:'Calculation failed.';
-      if(calculatorId==='master-mix')requestAnimationFrame(()=>{const key=definition.fields.find(f=>raw.includes(f.key))?.key??(/exceed|超过/.test(raw)?'reactionVolumeUl':undefined);const root=inputSection.current;const field=key?root?.querySelector<HTMLElement>(`[data-field-key="${key}"] input`):Array.from(root?.querySelectorAll<HTMLInputElement>('.calculator-input-form input')??[]).find(el=>!el.value.trim());const target=field??root?.querySelector<HTMLElement>('[role=alert]');target?.focus({preventScroll:true});target?.scrollIntoView({block:'center',behavior:'instant'});});
+      if(calculatorId==='master-mix')requestAnimationFrame(()=>{
+        if(Array.isArray(inputs.groups)){
+          const issue=mixGroupIssue(inputs.groups as ReactionGroup[]);
+          if(issue){reactionGroups.current?.focusIssue(issue.group,issue.selector);return;}
+        }
+        const rowIssue=Array.isArray(inputs.rows)?mixRowIssue(inputs.rows as MixRow[]):undefined;
+        const key=definition.fields.find(f=>raw.includes(f.key))?.key??(/exceed|超过/.test(raw)?'reactionVolumeUl':undefined);
+        const root=inputSection.current;
+        const field=rowIssue?root?.querySelector<HTMLElement>(`[data-mix-row="${rowIssue.row}"] [data-mix-field="${rowIssue.field}"]`):key?root?.querySelector<HTMLElement>(`[data-field-key="${key}"] input`):undefined;
+        const target=field??root?.querySelector<HTMLElement>('[role=alert]');target?.focus({preventScroll:true});target?.scrollIntoView({block:'center',behavior:'instant'});
+      });
       setError(definition.fields.reduce((message,field)=>message.replaceAll(field.key,zh?field.labelZh:field.label),raw));
     }
   }
@@ -169,6 +182,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
   async function copyResult(groupId?:string) {
     if (!result || !canCopyResult(result)) return;
+    copyScope.current=groupId;
     const content=groupId===undefined?resultClipboard(result,zh):reactionMixClipboard(result,zh,groupId);
     const generation=++copyGeneration.current;
     const method=await copyCalculation(content);if(generation!==copyGeneration.current)return;setCopied(method!=='manual');setManualCopy(method==='manual'?content:'');if(method!=='manual')window.setTimeout(()=>setCopied(false),1600);
@@ -212,7 +226,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
               {['media-recipe','buffer-recipe'].includes(calculatorId)?<RecipeEditor zh={zh} rows={Array.isArray(inputs.recipeRows)?inputs.recipeRows as RecipeRow[]:String(inputs.components??'').split(/\r?\n/).filter(Boolean).map(line=>{const [name,amount,unit]=line.split(',');return{name,amount,unit};})} onChange={recipeRows=>edit({...inputs,recipeRows})}/>:null}
               {calculatorId==='master-mix'?<details><summary className="focus-ring">{zh?'余量与组分用量':'Overage and components'}</summary><p className="text-xs">{zh?'总体积与预混余量作用于所有组。组内反应数已包含重复及对照；余量仅增加预混配制量，单独加入的组分按实际反应数。':'Final volume and premix overage apply to all groups. Group counts include replicates and controls; overage increases premix preparation only, not individually added components.'}</p></details>:null}
               {calculatorId==='master-mix'&&!Array.isArray(inputs.groups)?<MixEditor zh={zh} rows={Array.isArray(inputs.rows)?inputs.rows as MixRow[]:[]} onChange={rows=>edit({...inputs,rows})}/>:null}
-              {calculatorId==='master-mix'&&Array.isArray(inputs.groups)?<ReactionGroups zh={zh} groups={inputs.groups as ReactionGroup[]} onChange={groups=>edit({...inputs,groups})}/>:null}
+              {calculatorId==='master-mix'&&Array.isArray(inputs.groups)?<ReactionGroups ref={reactionGroups} zh={zh} groups={inputs.groups as ReactionGroup[]} onChange={groups=>edit({...inputs,groups})}/>:null}
               {calculatorId==='normalization'||(calculatorId==='wb-loading'&&Array.isArray(inputs.samples))?<SampleEditor zh={zh} unit={calculatorId==='normalization'?'ng/µL':'µg/µL'} rows={Array.isArray(inputs.samples)?inputs.samples as SampleRow[]:[]} onChange={samples=>edit({...inputs,samples})}/>:null}
               {calculatorId==='wb-loading'?<button className="min-h-11 text-sm text-moss" type="button" onClick={()=>{const next={...inputs};if(Array.isArray(next.samples))delete next.samples;else next.samples=[];edit(next);}}>{zh?'切换单样本 / 批量':'Switch single / batch'}</button>:null}
               {hasPipettingSettings(calculatorId)?<details><summary className="min-h-11 cursor-pointer text-xs">{zh?'移液设备与舍入（可选）':'Pipetting equipment and rounding (optional)'}</summary><div className="grid gap-2 sm:grid-cols-2">{[['pipetteMinimumUl','设备下限µL','Equipment minimum µL'],['pipetteStepUl','移液步进µL','Pipetting increment µL']].map(([key,labelZh,label])=><label key={key} className="text-xs">{zh?labelZh:label}<input className="mt-1 min-h-11 w-full rounded border border-hairline px-2" value={String(inputs[key]??'')} onChange={e=>edit({...inputs,[key]:e.target.value})}/></label>)}</div></details>:null}
@@ -230,7 +244,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
           <Card>
             <CardHeader title={calculatorId==='master-mix'?(zh?"配液清单":"Preparation list"):(zh ? "结果" : "Result")} action={result ? <div className="reaction-result-toolbar"><button type="button" onClick={()=>void copyResult()} disabled={!canCopyResult(result)} className="focus-ring min-h-11 inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-moss">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? (zh ? "已复制" : "Copied") : (calculatorId==='master-mix'&&Number(result.outputMap.groups)>1?(zh?"复制全部":"Copy all"):(zh ? "复制" : "Copy"))}</button>{calculatorId==='master-mix'&&canCopyResult(result)?<ResultExport result={result} zh={zh}/>:null}</div> : undefined} />
             <CardBody>
-              {manualCopy&&result?<CopyPanel text={manualCopy} zh={zh} onRetry={copyResult}/>:null}
+              {manualCopy&&result?<CopyPanel text={manualCopy} zh={zh} onRetry={()=>void copyResult(copyScope.current)}/>:null}
               {result ? <><p className="text-xs text-muted">{historical?(zh?'原始快照；单位转换仅临时显示':'Original snapshot; unit conversion is temporary'):''}</p>{historical?<button type="button" className="min-h-11 text-moss" onClick={()=>{const old=state?.history.find(item=>item.id===sourceRecord);if(old)restore(old.inputs,old.methodVersion);}}>{zh?'用当前方法重算（新记录）':'Recalculate with current method (new record)'}</button>:null}<ResultPanel result={result} zh={zh} onCopyGroup={id=>void copyResult(id)} onUnit={(key,unit)=>{copyGeneration.current++;setCopied(false);setManualCopy("");const displayUnits={...result.displayUnits,[key]:unit,...(calculatorId==='master-mix'?{'table:perReactionUl':unit,'table:batchUl':unit}:{} )};if(historical){setResult({...result,displayUnits});return;}const next={...inputs,__displayUnits:displayUnits};setInputs(next);setResult({...result,displayUnits,rawInputs:next});mutationId.current=null;if(state)update(saveDraft(state,calculatorId,next,example),200);}} onSave={saveResult} disabled={historical||example||!canCopyResult(result)} onApplyToPlate={plateContext&&!historical&&!example&&canCopyResult(result) ? applyToPlate : undefined} /></> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}
             </CardBody>
           </Card>

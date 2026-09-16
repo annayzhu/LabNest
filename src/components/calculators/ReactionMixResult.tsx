@@ -11,7 +11,7 @@ export function ReactionMixResult({result,zh,onUnit,onSave,disabled,onApplyToPla
  const groups=reactionMixGroups(result,zh),group=groups.find(g=>g.id===selected)??groups[0];
  if(!group)return <p>{zh?'此旧记录未保存分组操作，请按原始记录核对。':'This legacy record has no grouped operation plan. Review its original record.'}</p>;
  const quantity=(value:number)=>reactionMixQuantity(value,result);
- return <div className="reaction-mix-result calculator-row-stack" data-calculator-result>
+ return <div className="reaction-mix-result calculator-row-stack" data-calculator-result data-i18n-ignore>
   <div className="reaction-mix-summary"><span>{zh?'独立配液组':'Separate mix groups'}: {groups.length}</span>{groups.map(g=><span key={g.id}>{groups.length>1?`${g.name}: `:''}{zh?'预混配制量':'Premix to prepare'}: {quantity(g.total)}</span>)}</div>
   {result.warnings.map(w=><p key={w} role="status" className="rounded bg-warning-surface p-2 text-xs text-warning">{calculatorText(w,zh)}</p>)}
   <div className="reaction-mix-toolbar">
@@ -21,7 +21,7 @@ export function ReactionMixResult({result,zh,onUnit,onSave,disabled,onApplyToPla
   </div>
   <section aria-label={group.name}>
    <h3 className="font-semibold">{group.name}</h3>
-   {group.dispense?<p>{zh?'分装':'Dispense'}: {quantity(group.dispense.quantity.value)} × {group.dispense.repetitions} {zh?'个反应':'reactions'}</p>:null}
+   {group.dispense?<p>{zh?'分装':'Dispense'}: {quantity(group.dispense.quantity.value)} × {group.dispense.repetitions} {zh?'个反应':'reactions'}</p>:group.reactions!==undefined?<p>{zh?'单独加样':'Separate additions'}: {group.reactions} {zh?'个反应':'reactions'}</p>:null}
    <div className="calculator-data-scroll"><table><thead><tr><th>{zh?'组分':'Component'}</th><th>{zh?'每反应':'Per reaction'} ({reactionMixUnit(result)})</th><th>{zh?'加入方式':'Addition'}</th><th>{zh?'整批配制':'Batch'} ({reactionMixUnit(result)})</th></tr></thead><tbody>{group.rows.map((row,index)=><tr key={index}><td>{reactionComponent(row.component,zh)}</td><td>{quantity(Number(row.perReactionUl))}</td><td>{row.premix==='是 / Yes'?(zh?'预混':'Premix'):(zh?'单独加入':'Add separately')}</td><td>{typeof row.batchUl==='number'?quantity(row.batchUl):(zh?'按反应分别加入':'Add per reaction')}</td></tr>)}</tbody></table></div>
    <p className="text-xs text-muted">{zh?'配制量含设置的预混余量；分装量按实际反应数，不含余量。':'Preparation includes the configured premix reserve; dispensing uses the actual reaction count.'}</p>
   </section>

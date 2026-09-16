@@ -31,3 +31,8 @@ it('keeps groups separate, uses actual separate additions, and converts displaye
  expect(resultClipboard(display,false)).not.toMatch(/预混|单独|Yes|是/);
  expect(resultClipboard({...display,status:'partial'},true)).toBe('');
 });
+it('retains the actual count when every component is added separately',()=>{
+ const result=calculate({calculatorId:'master-mix',inputs:{reactionVolumeUl:10,overagePercent:20,groups:[{name:'Individual',reactions:'7',rows:[{name:'Sample',volume:'10',premix:false}]}]}});
+ expect(resultClipboard(result,true)).toContain('Individual: 单独加入各组分 × 7 个反应');
+ expect(reactionMixSteps(result,true)).toContain('Sample: 10 µL × 7 个反应，单独加入');
+});

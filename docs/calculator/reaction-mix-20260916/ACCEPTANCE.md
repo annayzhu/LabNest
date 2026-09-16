@@ -44,4 +44,6 @@
 
 ## 自动验证
 
-生产构建、TypeScript、110文件634项测试通过；lint为0错误、10条既有警告。完整25组浏览器回归全部通过（含31工具页面/正式导出、Run、离线同步、数据库回读、移液、旧记录、预设及本轮用例），见 [汇总日志](evidence/logs/regression.log) 和 [分项结果](evidence/regression.json)。当前无失败项。完整历史回归输出保留在本地部署备份的 final-local-regression；CI双时区及编辑器回归链接见PR。
+生产构建、TypeScript、110文件634项测试通过；lint为0错误、10条既有警告。完整25组浏览器回归全部通过（含31工具页面/正式导出、Run、离线同步、数据库回读、移液、旧记录、预设及本轮用例），见 [汇总日志](evidence/logs/regression.log) 和 [分项结果](evidence/regression.json)。计算器验收当前无失败项。完整历史回归输出保留在本地部署备份的 final-local-regression；CI双时区及编辑器回归链接见PR。
+
+编辑器CI初次运行在图片回退时出现`decode()`节点替换竞态（run 35089756710）；测试改为先等待实际原图URL、complete及naturalWidth，再验证decode。未修改产品图片代码。隔离数据库的定向图片回退/双源失败/恢复重试用例已通过，见 [记录](evidence/editor-recovery.json)。最终CI状态以PR最新提交为准。

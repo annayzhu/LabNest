@@ -41,10 +41,16 @@ if(phase==='ime'){
  });assert.deepEqual(events,{composing:true,safari229:true,ordinary:false});report.checks.push({entry:item.name,syntheticEvents:events,physicalIME:'not executed'});
  }
 }
+// Preview failure replaces the img node; decoding the old node races React's fallback.
+// Wait for the actual original URL and loaded pixels, not network-idle alone.
+async function assertLoadedImage(caption,original=false) {
+ await page.waitForFunction(({caption,original})=>[...document.images].some(i=>i.alt===caption&&(!original||!new URL(i.currentSrc||i.src).searchParams.has('preview'))&&i.complete&&i.naturalWidth>0),{caption,original});
+ await page.getByRole('img',{name:caption,exact:true}).first().evaluate(i=>i.decode());
+}
 if(phase==='image-recovery'){
  const media=await insertImage(page,'recovery.png');await page.getByRole('textbox',{name:'图注 / Caption',exact:true}).fill('恢复图像 image');if(await page.getByRole('button',{name:'收起属性',exact:true}).isVisible())await page.getByRole('button',{name:'收起属性',exact:true}).click();await page.getByRole('button',{name:item.save,exact:true}).click();await page.waitForURL(base+item.view);await page.reload({waitUntil:'networkidle'});await page.getByRole('img',{name:'恢复图像 image',exact:true}).first().evaluate(i=>i.decode());
  await page.route('**/api/attachments/*?*preview=1',r=>r.abort());await page.reload({waitUntil:'networkidle'});
- await page.getByRole('img',{name:'恢复图像 image',exact:true}).first().evaluate(i=>i.decode());report.checks.push('Saved image reloads; failed preview recovers original without editing stored reference');let fail=true;await page.route('**/api/attachments/**',r=>fail?r.abort():r.continue());await page.reload({waitUntil:'networkidle'});await page.getByText('图片加载失败 / Image unavailable',{exact:true}).first().waitFor();fail=false;await page.getByRole('button',{name:'重试 / Retry',exact:true}).first().click();await page.getByRole('img',{name:'恢复图像 image',exact:true}).first().evaluate(i=>i.decode());report.checks.push('Both sources failing shows recoverable error; retry loads image when network recovers');
+ await assertLoadedImage('恢复图像 image',true);report.checks.push('Saved image reloads; failed preview recovers original without editing stored reference');let fail=true;await page.route('**/api/attachments/**',r=>fail?r.abort():r.continue());await page.reload({waitUntil:'networkidle'});await page.getByText('图片加载失败 / Image unavailable',{exact:true}).first().waitFor();fail=false;await page.getByRole('button',{name:'重试 / Retry',exact:true}).first().click();await assertLoadedImage('恢复图像 image');report.checks.push('Both sources failing shows recoverable error; retry loads image when network recovers');
 }
 if(phase==='media-controls'){
  const media=await insertImage(page,'controls.png');await page.getByRole('textbox',{name:'Experiment title',exact:true}).click();

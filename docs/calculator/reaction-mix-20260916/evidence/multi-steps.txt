@@ -1,0 +1,7 @@
+G_two配制
+Master mix: 11 µL → G_two
+H2O: 7.92 µL → G_two
+GAPDH-F: 0.44 µL → G_two
+GAPDH-R: 0.44 µL → G_two
+G_two预混液: 9 µL × 2 个反应
+Template: 1 µL × 2 个反应，单独加入

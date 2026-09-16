@@ -1,0 +1,7 @@
+{
+  "implementationSha": "44c5c85804e849b9fbdfe18f9849712885f0ef5e",
+  "baseline": "0402a9a3aef554ff74b274853febd5546e186878",
+  "productionBuild": true,
+  "fixture": "isolated synthetic database",
+  "screens": "Chromium CSS viewport simulation, not physical phones"
+}

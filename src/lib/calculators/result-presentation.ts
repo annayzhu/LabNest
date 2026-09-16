@@ -4,7 +4,9 @@ import {tableColumnLabel} from './presentation';
 export const tableQuantityUnits:Record<string,string>={perWellUl:'µL',dnaMassUg:'µg',rnaPmol:'pmol',finalNm:'nM',takeUl:'µL',diluentUl:'µL',mixedUl:'µL',transferUl:'µL',remainingUl:'µL',requiredUl:'µL',perReactionUl:'µL',batchUl:'µL',availableUl:'µL',sampleUl:'µL',bufferUl:'µL',reducingAgentUl:'µL',totalUl:'µL',theoreticalUl:'µL',actualUl:'µL',volumeUl:'µL',stockToAddUl:'µL',targetProteinUg:'µg'};
 export function tableUnitsFor(result:CalculatorResult):Record<string,string>{return {...tableQuantityUnits,...(['bradford-bca','elisa-4pl','ic50-ec50'].includes(result.calculatorId)&&typeof result.rawInputs?.concentrationUnit==='string'&&result.rawInputs.concentrationUnit?{concentration:result.rawInputs.concentrationUnit}:{}),...(result.calculatorId==='wb-loading'?{originalConcentration:'µg/µL'}:result.calculatorId==='normalization'?{originalConcentration:'ng/µL'}:result.calculatorId==='serial-dilution'?{concentration:'µM'}:{}),doseUgMl:'µg/mL'};}
 export function displayQuantity(value:number,unit:string,target?:string){return {value:target?convert(value,unit,target):value,unit:target??unit};}
-export function formatQuantity(value:number){return value!==0&&(Math.abs(value)<0.001||Math.abs(value)>=1e7)?value.toExponential(5):value.toLocaleString('en',{maximumSignificantDigits:9,useGrouping:false});}
+import {formatQuantity} from './quantity-format';
+export {formatQuantity} from './quantity-format';
+import {reactionMixClipboard} from './reaction-mix-presentation';
 export function validateDisplayUnits(result:CalculatorResult,candidate:unknown):Record<string,string>{
  if(!candidate||typeof candidate!=='object')return {};
  const valid:Record<string,string>={};for(const [key,value] of Object.entries(candidate)){const unit=key.startsWith('table:')?tableUnitsFor(result)[key.slice(6)]:result.outputs.find(o=>o.key===key)?.unit;if(unit&&typeof value==='string'&&compatibleUnits(unit).includes(value))valid[key]=value;else throw new Error('Invalid display unit');}return valid;
@@ -34,6 +36,7 @@ export function canCopyResult(result:CalculatorResult){
 }
 export function resultClipboard(result:CalculatorResult,zh:boolean){
  if(!canCopyResult(result))return '';
+ if(result.calculatorId==='master-mix'&&result.operations?.length)return reactionMixClipboard(result,zh);
  const lines=presentedOutputs(result).filter(o=>(zh?o.labelZh:o.label).trim()).map(o=>`${zh?o.labelZh:o.label}: ${typeof o.value==='number'?formatQuantity(o.value):o.value}${o.unit?' '+o.unit:''}`);
  // Keep user-facing component amounts, tube sources and instructions, never internal IDs/status.
  const hidden=new Set(['status','componentId','groupId','inputRow','planVersion','methodVersion','reducingMode','reducingDefinition','originalConcentration','availableUl','sufficient','concentrationUnit','volumeUnit','action']);

@@ -1,4 +1,5 @@
 "use client";
+import {ReactionMixResult} from './ReactionMixResult';
 import {useState} from 'react';
 import {primaryOutputKeys,calculatorText} from '@/lib/calculators/workspace-presentation';
 import {TransfectionResult} from './TransfectionResult';
@@ -9,9 +10,10 @@ import {presentedOutputs,presentedTable,formatQuantity,tableUnitsFor} from '@/li
 import {tableColumnLabel} from '@/lib/calculators/presentation';
 import {ResultExport} from './ResultExport';
 import {FitPlot} from './FitPlot';
-export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit}:{result:CalculatorResult;zh:boolean;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onUnit?:(key:string,unit:string)=>void}) {
+export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit,onCopyGroup}:{result:CalculatorResult;zh:boolean;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onUnit?:(key:string,unit:string)=>void;onCopyGroup?:(id:string)=>void}) {
  const picker=(key:string,unit:string,label:string)=>compatibleUnits(unit).length>1&&onUnit?<select aria-label={`${label} ${zh?'显示单位':'display unit'}`} className="max-w-28 rounded border border-hairline bg-transparent px-1 text-xs" value={result.displayUnits?.[key]??unit} onChange={e=>onUnit(key,e.target.value)}>{compatibleUnits(unit).map(value=><option key={value}>{value}</option>)}</select>:<span className="text-xs">{unit}</span>;
  const [selectedGroup,setSelectedGroup]=useState('');
+ if(result.calculatorId==='master-mix'&&result.operations?.length)return <ReactionMixResult result={result} zh={zh} onUnit={onUnit} onSave={onSave} disabled={disabled} onApplyToPlate={onApplyToPlate} onCopyGroup={onCopyGroup}/>;
  const groups=[...new Set((result.table??[]).map(row=>String(row.group??'')).filter(Boolean))];
  const group=groups.includes(selectedGroup)?selectedGroup:groups[0];
  const visibleRows=groups.length>1?result.table?.filter(row=>String(row.group)===group):result.table;

@@ -1,5 +1,7 @@
 # Visualization VIS-01–03 验收（2026-09-20）
 
+> 正式入口后续发现根 CardBody 属性传递遗漏，修复及最终635项回归见 [CARD-FOLLOWUP.md](CARD-FOLLOWUP.md)。以下原始记录的版本边界保持不变。
+
 ## 版本与范围
 
 基线：LabNest `2200db8f03ed46554cc7cef232f0fd33ccc3c125`，独立版 `e5173126cceb3379e5137df65549bdced2696aa0`。

@@ -17,7 +17,7 @@ async function fullyInViewport(locator) {
   observer.observe(element);
  }));
 }
-async function geometry(){return page.locator('[data-visualization-panel="parameters"]').evaluate(el=>{const body=el.querySelector('[data-visualization-parameter-scroll]') || el.firstElementChild.lastElementChild;return {height:body.clientHeight,scrollHeight:body.scrollHeight,scrollRange:body.scrollHeight-body.clientHeight,column:el.getBoundingClientRect().toJSON(),guidance:el.querySelector('[data-plot-guidance]').getBoundingClientRect().toJSON()};});}
+async function geometry(){return page.locator('[data-visualization-panel="parameters"]').evaluate(el=>{const body=el.querySelector('[data-visualization-parameter-scroll]'); if(!body) throw new Error('Parameter scroll marker must reach the real DOM');return {height:body.clientHeight,scrollHeight:body.scrollHeight,scrollRange:body.scrollHeight-body.clientHeight,column:el.getBoundingClientRect().toJSON(),guidance:el.querySelector('[data-plot-guidance]').getBoundingClientRect().toJSON()};});}
 try {
  await page.goto(base,{waitUntil:'networkidle'});
  await page.getByRole('button',{name:'中国传统',exact:true}).click();

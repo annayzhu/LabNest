@@ -1,4 +1,4 @@
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function Card({
@@ -43,10 +43,10 @@ export function CardHeader({
   );
 }
 
-export const CardBody = forwardRef<HTMLDivElement, {
+export const CardBody = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   className?: string;
-}>(({ children, className }, ref) => <div ref={ref} className={cn("p-[var(--ln-content-padding)]", className)}>{children}</div>);
+}>(({ children, className, ...props }, ref) => <div {...props} ref={ref} className={cn("p-[var(--ln-content-padding)]", className)}>{children}</div>);
 CardBody.displayName = "CardBody";
 
 export function SectionPanel({

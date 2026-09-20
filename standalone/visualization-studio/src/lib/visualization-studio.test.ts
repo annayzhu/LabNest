@@ -746,7 +746,14 @@ describe("Visualization Studio data contracts", () => {
       expect(Math.abs(relativeLuminance(theme.sequential[0]) - relativeLuminance(theme.sequential[1]))).toBeGreaterThan(theme.series === "chinese-traditional" ? 0.25 : 0.35);
       expect(relativeLuminance(theme.diverging[1])).toBeGreaterThan(Math.max(relativeLuminance(theme.diverging[0]), relativeLuminance(theme.diverging[2])));
       expect(theme.categorical.reduce((sum, color) => sum + relativeLuminance(color), 0) / theme.categorical.length).toBeGreaterThan(0.15);
-      expect(theme.categorical.some((color) => relativeLuminance(color) > 0.35)).toBe(true);
+      if (theme.series === "chinese-traditional" && theme.id !== "cn-vermilion") {
+        // Redesigned marks must remain visible on the white export canvas;
+        // the previous requirement for a pale (>0.35 luminance) mark contradicted this.
+        theme.categorical.forEach((color) => expect(1.05 / (relativeLuminance(color) + 0.05)).toBeGreaterThanOrEqual(3));
+        expect(1.05 / (relativeLuminance(theme.muted) + 0.05)).toBeGreaterThanOrEqual(4.5);
+      } else {
+        expect(theme.categorical.some((color) => relativeLuminance(color) > 0.35)).toBe(true);
+      }
     });
     Object.values(journalThemes).filter((theme) => theme.series === "chinese-traditional").forEach((theme) => {
       expect(relativeLuminance(theme.diverging[1])).toBeGreaterThan(0.85);
@@ -768,15 +775,15 @@ describe("Visualization Studio data contracts", () => {
     });
   });
 
-  it("uses the named Pixso source colors for Chinese-traditional palettes", () => {
-    expect(journalThemes["cn-beihai"].categorical).toEqual(["#957454", "#1D4C50", "#D4A278", "#3F605B"]);
-    expect(journalThemes["cn-imperial-orange"].categorical).toEqual(["#DB5E40", "#2E2F25", "#E68959", "#866040"]);
-    expect(journalThemes["cn-wisteria"].categorical).toEqual(["#F1E7E5", "#1D4C50", "#D3A488", "#BDAEAD"]);
-    expect(journalThemes["cn-sunset"].categorical).toEqual(["#F7CD9B", "#313534", "#F0A72E", "#AE7F77"]);
-    expect(journalThemes["cn-hutong"].categorical).toEqual(["#3E443C", "#D3A488", "#8B6B5B", "#24271E"]);
-    expect(journalThemes["cn-dragon"].categorical).toEqual(["#B5A59B", "#655045", "#AF5F54", "#3B4E3D"]);
-    expect(journalThemes["cn-coral"].categorical).toEqual(["#DB785C", "#283F3E", "#E9A182", "#824E40"]);
-    expect(journalThemes["cn-autumn"].categorical).toEqual(["#E5B552", "#24271E", "#CCD8D0", "#DFBE96"]);
+  it("preserves named theme IDs and redesigned Chinese palettes", () => {
+    expect(journalThemes["cn-beihai"].categorical).toEqual(["#94613A", "#207D87", "#B68B28", "#80629D"]);
+    expect(journalThemes["cn-imperial-orange"].categorical).toEqual(["#C65B38", "#3677A3", "#43856A", "#8A6190"]);
+    expect(journalThemes["cn-wisteria"].categorical).toEqual(["#8263A9", "#267D88", "#B1842E", "#B85D66"]);
+    expect(journalThemes["cn-sunset"].categorical).toEqual(["#BB687F", "#3C7895", "#AA8429", "#4D8263"]);
+    expect(journalThemes["cn-hutong"].categorical).toEqual(["#346B89", "#AF793B", "#89658E", "#39867C"]);
+    expect(journalThemes["cn-dragon"].categorical).toEqual(["#61777E", "#A46A3F", "#7B659B", "#3F836F"]);
+    expect(journalThemes["cn-coral"].categorical).toEqual(["#BF6651", "#427D9E", "#8A649B", "#66823C"]);
+    expect(journalThemes["cn-autumn"].categorical).toEqual(["#A98225", "#3F7395", "#A35D72", "#4C846A"]);
     expect(journalThemes["cn-vermilion"].categorical).toEqual(["#BF1103", "#580F05", "#970804", "#DFBE96"]);
   });
 

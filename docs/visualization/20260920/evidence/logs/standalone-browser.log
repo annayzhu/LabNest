@@ -1,0 +1,176 @@
+Exporting 柴染棕 bar
+Exporting 柴染棕 scatter
+Exporting 柴染棕 heatmap
+Exporting 柴染棕 heatmap-sequential
+Exporting 橙绯红 bar
+Exporting 橙绯红 scatter
+Exporting 橙绯红 heatmap
+Exporting 橙绯红 heatmap-sequential
+Exporting 淡藤萝紫 bar
+Exporting 淡藤萝紫 scatter
+Exporting 淡藤萝紫 heatmap
+Exporting 淡藤萝紫 heatmap-sequential
+Exporting 瓜瓤粉 bar
+Exporting 瓜瓤粉 scatter
+Exporting 瓜瓤粉 heatmap
+Exporting 瓜瓤粉 heatmap-sequential
+Exporting 蓝墨茶 bar
+Exporting 蓝墨茶 scatter
+Exporting 蓝墨茶 heatmap
+Exporting 蓝墨茶 heatmap-sequential
+Exporting 棉絮灰 bar
+Exporting 棉絮灰 scatter
+Exporting 棉絮灰 heatmap
+Exporting 棉絮灰 heatmap-sequential
+Exporting 珊瑚朱 bar
+Exporting 珊瑚朱 scatter
+Exporting 珊瑚朱 heatmap
+Exporting 珊瑚朱 heatmap-sequential
+Exporting 杏叶黄 bar
+Exporting 杏叶黄 scatter
+Exporting 杏叶黄 heatmap
+Exporting 杏叶黄 heatmap-sequential
+Exporting 中国红 bar
+Exporting 中国红 scatter
+Exporting 中国红 heatmap
+Exporting 中国红 heatmap-sequential
+{
+  "phase": "after",
+  "figures": 36,
+  "layouts": [
+    {
+      "state": "collapsed",
+      "height": 595,
+      "scrollHeight": 2125,
+      "scrollRange": 1530,
+      "column": {
+        "x": 1128,
+        "y": 169,
+        "width": 288,
+        "height": 715,
+        "top": 169,
+        "right": 1416,
+        "bottom": 884,
+        "left": 1128
+      },
+      "guidance": {
+        "x": 1128,
+        "y": 826,
+        "width": 288,
+        "height": 58,
+        "top": 826,
+        "right": 1416,
+        "bottom": 884,
+        "left": 1128
+      }
+    },
+    {
+      "state": "expanded",
+      "height": 331,
+      "scrollHeight": 2125,
+      "scrollRange": 1794,
+      "column": {
+        "x": 1128,
+        "y": 169,
+        "width": 288,
+        "height": 715,
+        "top": 169,
+        "right": 1416,
+        "bottom": 884,
+        "left": 1128
+      },
+      "guidance": {
+        "x": 1128,
+        "y": 562.25,
+        "width": 288,
+        "height": 321.75,
+        "top": 562.25,
+        "right": 1416,
+        "bottom": 884,
+        "left": 1128
+      }
+    },
+    {
+      "width": 1440,
+      "height": 1800,
+      "state": "expanded",
+      "scrollHeight": 1800,
+      "scrollRange": 0,
+      "column": {
+        "x": 1128,
+        "y": -1658,
+        "width": 288,
+        "height": 2205.59375,
+        "top": -1658,
+        "right": 1416,
+        "bottom": 547.59375,
+        "left": 1128
+      },
+      "guidance": {
+        "x": 1128,
+        "y": 204.21875,
+        "width": 288,
+        "height": 343.375,
+        "top": 204.21875,
+        "right": 1416,
+        "bottom": 547.59375,
+        "left": 1128
+      }
+    },
+    {
+      "width": 1024,
+      "height": 1752,
+      "state": "expanded",
+      "scrollHeight": 1752,
+      "scrollRange": 0,
+      "column": {
+        "x": 24,
+        "y": -1305,
+        "width": 976,
+        "height": 2061.453125,
+        "top": -1305,
+        "right": 1000,
+        "bottom": 756.453125,
+        "left": 24
+      },
+      "guidance": {
+        "x": 24,
+        "y": 509.21875,
+        "width": 976,
+        "height": 247.234375,
+        "top": 509.21875,
+        "right": 1000,
+        "bottom": 756.453125,
+        "left": 24
+      }
+    },
+    {
+      "width": 390,
+      "height": 2061,
+      "state": "expanded",
+      "scrollHeight": 2061,
+      "scrollRange": 0,
+      "column": {
+        "x": 12,
+        "y": -1693.25,
+        "width": 366,
+        "height": 2525.046875,
+        "top": -1693.25,
+        "right": 378,
+        "bottom": 831.796875,
+        "left": 12
+      },
+      "guidance": {
+        "x": 12,
+        "y": 429.28125,
+        "width": 366,
+        "height": 402.515625,
+        "top": 429.28125,
+        "right": 378,
+        "bottom": 831.796875,
+        "left": 12
+      }
+    }
+  ],
+  "errors": []
+}

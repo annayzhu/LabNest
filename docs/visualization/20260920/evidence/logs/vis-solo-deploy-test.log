@@ -1,0 +1,5 @@
+
+> visualization-studio@1.0.0 test:deployment
+> node scripts/smoke-standalone.mjs
+
+Verified standalone page /visualization-studio/ and 9 prefixed assets.

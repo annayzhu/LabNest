@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T15:02:53.514Z",
+  "generatedAt": "2026-09-20T15:03:08.114Z",
   "plotType": "bar",
-  "themeId": "cn-beihai",
+  "themeId": "cn-coral",
   "mapping": {
     "category": "category",
     "value": "value",
@@ -90,8 +90,8 @@
     "foldChangeThreshold": 1,
     "pValueThreshold": 0.05,
     "labelLimit": 8,
-    "heatmapScale": "row",
-    "heatmapColorMode": "diverging",
+    "heatmapScale": "none",
+    "heatmapColorMode": "sequential",
     "heatmapDisplay": "rectangular",
     "heatmapTriangle": "lower",
     "heatmapDistance": "euclidean",
@@ -154,16 +154,16 @@
     "radialMaximum": null,
     "pyramidDisplayMode": "value",
     "categoricalColors": [
-      "#94613A",
-      "#207D87",
-      "#B68B28",
-      "#80629D"
+      "#BF6651",
+      "#427D9E",
+      "#8A649B",
+      "#66823C"
     ],
-    "continuousLow": "#EDF4F3",
-    "continuousHigh": "#245F69",
-    "divergingLow": "#286F83",
-    "divergingMid": "#F8F7F3",
-    "divergingHigh": "#A66635"
+    "continuousLow": "#FCF0E9",
+    "continuousHigh": "#A84C36",
+    "divergingLow": "#427D9E",
+    "divergingMid": "#FCF8F3",
+    "divergingHigh": "#B65C46"
   },
   "data": "category\tvalue\tsd\tgroup\tsecondary\ttarget\tp_value\tfacet\nDay 1\t3.8\t0.31\tControl\t4.0\t4.5\t0.41\tEarly\nDay 1\t4.2\t0.36\tTreatment A\t4.4\t4.8\t0.12\tEarly\nDay 1\t4.5\t0.40\tTreatment B\t4.6\t5.0\t0.032\tEarly\nDay 1\t4.8\t0.42\tTreatment C\t4.9\t5.2\t0.008\tEarly\nDay 7\t7.2\t0.54\tControl\t6.8\t7.5\t0.18\tLate\nDay 7\t7.8\t0.61\tTreatment A\t7.4\t8.1\t0.041\tLate\nDay 7\t8.4\t0.66\tTreatment B\t8.0\t8.8\t0.006\tLate\nDay 7\t9.0\t0.72\tTreatment C\t8.6\t9.4\t0.0007\tLate"
 }

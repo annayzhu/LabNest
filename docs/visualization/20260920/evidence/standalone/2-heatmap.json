@@ -1,23 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T15:02:53.514Z",
-  "plotType": "bar",
-  "themeId": "cn-beihai",
-  "mapping": {
-    "category": "category",
-    "value": "value",
-    "error": "sd",
-    "sd": "sd",
-    "sem": "",
-    "n": "",
-    "subject": "",
-    "analysisValue": "",
-    "group": "group",
-    "secondary": "secondary",
-    "target": "target",
-    "pValue": "p_value",
-    "facet": "facet"
-  },
+  "generatedAt": "2026-09-20T15:02:59.581Z",
+  "plotType": "heatmap",
+  "themeId": "cn-wisteria",
+  "mapping": {},
   "settings": {
     "title": "",
     "fontFamily": "arial",
@@ -91,7 +77,7 @@
     "pValueThreshold": 0.05,
     "labelLimit": 8,
     "heatmapScale": "row",
-    "heatmapColorMode": "diverging",
+    "heatmapColorMode": "sequential",
     "heatmapDisplay": "rectangular",
     "heatmapTriangle": "lower",
     "heatmapDistance": "euclidean",
@@ -154,16 +140,16 @@
     "radialMaximum": null,
     "pyramidDisplayMode": "value",
     "categoricalColors": [
-      "#94613A",
-      "#207D87",
-      "#B68B28",
-      "#80629D"
+      "#8263A9",
+      "#267D88",
+      "#B1842E",
+      "#B85D66"
     ],
-    "continuousLow": "#EDF4F3",
-    "continuousHigh": "#245F69",
-    "divergingLow": "#286F83",
-    "divergingMid": "#F8F7F3",
-    "divergingHigh": "#A66635"
+    "continuousLow": "#F3EFF8",
+    "continuousHigh": "#65448B",
+    "divergingLow": "#6D5298",
+    "divergingMid": "#FAF8F5",
+    "divergingHigh": "#A77B28"
   },
-  "data": "category\tvalue\tsd\tgroup\tsecondary\ttarget\tp_value\tfacet\nDay 1\t3.8\t0.31\tControl\t4.0\t4.5\t0.41\tEarly\nDay 1\t4.2\t0.36\tTreatment A\t4.4\t4.8\t0.12\tEarly\nDay 1\t4.5\t0.40\tTreatment B\t4.6\t5.0\t0.032\tEarly\nDay 1\t4.8\t0.42\tTreatment C\t4.9\t5.2\t0.008\tEarly\nDay 7\t7.2\t0.54\tControl\t6.8\t7.5\t0.18\tLate\nDay 7\t7.8\t0.61\tTreatment A\t7.4\t8.1\t0.041\tLate\nDay 7\t8.4\t0.66\tTreatment B\t8.0\t8.8\t0.006\tLate\nDay 7\t9.0\t0.72\tTreatment C\t8.6\t9.4\t0.0007\tLate"
+  "data": "gene\tControl_1\tControl_2\tControl_3\tControl_4\tControl_5\tControl_6\tTreatment_1\tTreatment_2\tTreatment_3\tTreatment_4\tTreatment_5\tTreatment_6\nTP53\t5.12\t5.29\t5.04\t4.99\t4.97\t5.32\t6.77\t6.94\t6.69\t6.64\t6.62\t6.97\nCDKN1A\t5.65\t5.66\t5.38\t5.47\t5.60\t5.91\t7.30\t7.31\t7.03\t7.12\t7.25\t7.56\nBAX\t6.06\t5.98\t5.80\t6.07\t6.22\t6.39\t7.71\t7.63\t7.45\t7.72\t7.87\t8.04\nBBC3\t6.39\t6.36\t6.35\t6.71\t6.75\t6.75\t8.04\t8.01\t8.00\t8.36\t8.40\t8.40\nEGFR\t6.73\t6.85\t6.98\t7.29\t7.16\t7.08\t5.28\t5.40\t5.53\t5.84\t5.71\t5.63\nERBB2\t4.77\t5.06\t5.20\t5.35\t5.09\t5.06\t3.32\t3.61\t3.75\t3.90\t3.64\t3.61\nMYC\t5.34\t5.69\t5.72\t5.71\t5.43\t5.55\t3.89\t4.24\t4.27\t4.26\t3.98\t4.10\nCCND1\t5.97\t6.26\t6.12\t6.03\t5.88\t6.16\t4.52\t4.81\t4.67\t4.58\t4.43\t4.71\nMKI67\t6.80\t6.93\t6.66\t6.64\t6.66\t7.02\t7.85\t7.98\t7.71\t7.69\t7.71\t8.07\nPCNA\t7.31\t7.28\t7.01\t7.15\t7.29\t7.58\t8.36\t8.33\t8.06\t8.20\t8.34\t8.63\nTOP2A\t5.29\t5.21\t5.07\t5.37\t5.50\t5.63\t6.34\t6.26\t6.12\t6.42\t6.55\t6.68\nBIRC5\t5.61\t5.61\t5.65\t6.00\t6.01\t5.98\t6.66\t6.66\t6.70\t7.05\t7.06\t7.03\nEPCAM\t5.97\t6.14\t6.28\t6.56\t6.39\t6.30\t5.07\t5.24\t5.38\t5.66\t5.49\t5.40\nCDH1\t6.44\t6.76\t6.88\t6.99\t6.71\t6.71\t5.54\t5.86\t5.98\t6.09\t5.81\t5.81\nKRT8\t7.03\t7.38\t7.37\t7.33\t7.07\t7.24\t6.13\t6.48\t6.47\t6.43\t6.17\t6.34\nKRT18\t5.27\t5.53\t5.34\t5.26\t5.15\t5.46\t4.37\t4.63\t4.44\t4.36\t4.25\t4.56\nVIM\t6.08\t6.17\t5.88\t5.90\t5.95\t6.31\t7.73\t7.82\t7.53\t7.55\t7.60\t7.96\nSNAI1\t6.55\t6.50\t6.26\t6.44\t6.59\t6.85\t8.20\t8.15\t7.91\t8.09\t8.24\t8.50\nSNAI2\t6.92\t6.84\t6.74\t7.07\t7.18\t7.26\t8.57\t8.49\t8.39\t8.72\t8.83\t8.91\nZEB1\t7.24\t7.27\t7.34\t7.69\t7.65\t7.60\t8.89\t8.92\t8.99\t9.34\t9.30\t9.25\nBCL2\t5.22\t5.42\t5.58\t5.82\t5.61\t5.53\t3.77\t3.97\t4.13\t4.37\t4.16\t4.08\nMCL1\t5.72\t6.06\t6.16\t6.22\t5.94\t5.97\t4.27\t4.61\t4.71\t4.77\t4.49\t4.52\nGAPDH\t6.33\t6.67\t6.61\t6.55\t6.32\t6.53\t4.88\t5.22\t5.16\t5.10\t4.87\t5.08\nACTB\t6.96\t7.18\t6.96\t6.89\t6.82\t7.16\t5.51\t5.73\t5.51\t5.44\t5.37\t5.71"
 }

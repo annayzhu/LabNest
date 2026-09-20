@@ -1,22 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T15:02:53.514Z",
-  "plotType": "bar",
-  "themeId": "cn-beihai",
+  "generatedAt": "2026-09-20T15:03:03.856Z",
+  "plotType": "scatter",
+  "themeId": "cn-hutong",
   "mapping": {
-    "category": "category",
-    "value": "value",
-    "error": "sd",
-    "sd": "sd",
-    "sem": "",
-    "n": "",
-    "subject": "",
-    "analysisValue": "",
+    "x": "x",
+    "y": "y",
+    "z": "",
     "group": "group",
-    "secondary": "secondary",
-    "target": "target",
-    "pValue": "p_value",
-    "facet": "facet"
+    "label": "label"
   },
   "settings": {
     "title": "",
@@ -90,8 +82,8 @@
     "foldChangeThreshold": 1,
     "pValueThreshold": 0.05,
     "labelLimit": 8,
-    "heatmapScale": "row",
-    "heatmapColorMode": "diverging",
+    "heatmapScale": "none",
+    "heatmapColorMode": "sequential",
     "heatmapDisplay": "rectangular",
     "heatmapTriangle": "lower",
     "heatmapDistance": "euclidean",
@@ -154,16 +146,14 @@
     "radialMaximum": null,
     "pyramidDisplayMode": "value",
     "categoricalColors": [
-      "#94613A",
-      "#207D87",
-      "#B68B28",
-      "#80629D"
+      "#346B89",
+      "#AF793B"
     ],
-    "continuousLow": "#EDF4F3",
-    "continuousHigh": "#245F69",
-    "divergingLow": "#286F83",
-    "divergingMid": "#F8F7F3",
-    "divergingHigh": "#A66635"
+    "continuousLow": "#ECF2F6",
+    "continuousHigh": "#275671",
+    "divergingLow": "#346B89",
+    "divergingMid": "#F9F7F2",
+    "divergingHigh": "#A87035"
   },
-  "data": "category\tvalue\tsd\tgroup\tsecondary\ttarget\tp_value\tfacet\nDay 1\t3.8\t0.31\tControl\t4.0\t4.5\t0.41\tEarly\nDay 1\t4.2\t0.36\tTreatment A\t4.4\t4.8\t0.12\tEarly\nDay 1\t4.5\t0.40\tTreatment B\t4.6\t5.0\t0.032\tEarly\nDay 1\t4.8\t0.42\tTreatment C\t4.9\t5.2\t0.008\tEarly\nDay 7\t7.2\t0.54\tControl\t6.8\t7.5\t0.18\tLate\nDay 7\t7.8\t0.61\tTreatment A\t7.4\t8.1\t0.041\tLate\nDay 7\t8.4\t0.66\tTreatment B\t8.0\t8.8\t0.006\tLate\nDay 7\t9.0\t0.72\tTreatment C\t8.6\t9.4\t0.0007\tLate"
+  "data": "x\ty\tgroup\tlabel\n1.2\t1.6\tControl\tS1\n1.8\t2.1\tControl\tS2\n2.2\t2.4\tControl\tS3\n2.5\t3.4\tTreatment\tS4\n3.2\t3.7\tTreatment\tS5\n3.8\t4.6\tTreatment\tS6\n4.4\t5.0\tTreatment\tS7"
 }

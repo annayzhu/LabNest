@@ -10,7 +10,7 @@ const page = await browser.newPage({viewport:{width:1440,height:900}});
 const errors=[]; page.on('pageerror', e=>errors.push(e.message));
 const themes = ['柴染棕','橙绯红','淡藤萝紫','瓜瓤粉','蓝墨茶','棉絮灰','珊瑚朱','杏叶黄','中国红'];
 const evidence={base,phase,viewport:{width:1440,height:900},figures:[],layouts:[]};
-async function config(){const event=page.waitForEvent('download');await page.getByRole('button',{name:'Config',exact:true}).click();return JSON.parse(await readFile(await (await event).path(),'utf8'));}
+async function config(){await new Promise(resolve => setTimeout(resolve, 250));const event=page.waitForEvent('download');await page.getByRole('button',{name:'Config',exact:true}).click();return JSON.parse(await readFile(await (await event).path(),'utf8'));}
 async function fullyInViewport(locator) {
  return locator.evaluate(element => new Promise(resolve => {
   const observer = new IntersectionObserver(([entry]) => { observer.disconnect(); resolve(entry.intersectionRatio > 0 && entry.boundingClientRect.height - entry.intersectionRect.height <= 1 && entry.boundingClientRect.width - entry.intersectionRect.width <= 1); });
@@ -49,8 +49,13 @@ try {
    await page.getByRole('button',{name:label}).click();
    if(plot.startsWith('heatmap')) await page.getByRole('combobox',{name:'Scaling',exact:true}).selectOption(plot==='heatmap'?'row':'none');
    if(plot==='heatmap-sequential') await page.getByRole('combobox',{name:'Color scale',exact:true}).selectOption('sequential');
+   // Let the existing chart-selection animation-frame scroll finish before clicking exports.
+   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
    const svg=page.locator('svg[aria-label$="scientific figure preview"]');await svg.waitFor();
    const source=await svg.evaluate(el=>el.outerHTML);
+   // Chromium rate-limits bursts of automatic downloads; pace artifact collection.
+   await new Promise(resolve => setTimeout(resolve, 250));
+   console.log('Exporting', name, plot);
    const svgEvent=page.waitForEvent('download'); await page.getByRole('button',{name:'SVG',exact:true}).click(); const exportSource=await readFile(await (await svgEvent).path(),'utf8'); await writeFile(`${out}/${index}-${plot}-export.svg`,exportSource);
    assert(exportSource.includes('<svg'),'SVG download must contain the actual figure');
    await writeFile(`${out}/${index}-${plot}.svg`,source);

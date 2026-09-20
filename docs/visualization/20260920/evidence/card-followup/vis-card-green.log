@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-visualization-20260920
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  23:21:28
+   Duration  242ms (transform 32ms, setup 0ms, import 68ms, tests 11ms, environment 0ms)
+

@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest-visualization-20260920
+
+
+ Test Files  111 passed (111)
+      Tests  635 passed (635)
+   Start at  23:21:58
+   Duration  4.10s (transform 9.71s, setup 0ms, import 20.10s, tests 4.69s, environment 9ms)
+

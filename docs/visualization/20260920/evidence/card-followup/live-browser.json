@@ -1,0 +1,38 @@
+[
+  {
+    "url": "http://localhost:32121/tools/visualization",
+    "width": 1440,
+    "toolsRoute": true,
+    "newPalette": true,
+    "collapsedHeight": 498,
+    "expandedHeight": 278,
+    "errors": []
+  },
+  {
+    "url": "http://localhost:32121/tools/visualization",
+    "width": 390,
+    "toolsRoute": true,
+    "newPalette": true,
+    "collapsedHeight": 2580,
+    "expandedHeight": 2580,
+    "errors": []
+  },
+  {
+    "url": "http://192.168.0.105:32121/tools/visualization",
+    "width": 1440,
+    "toolsRoute": true,
+    "newPalette": true,
+    "collapsedHeight": 498,
+    "expandedHeight": 278,
+    "errors": []
+  },
+  {
+    "url": "http://192.168.0.105:32121/tools/visualization",
+    "width": 390,
+    "toolsRoute": true,
+    "newPalette": true,
+    "collapsedHeight": 2580,
+    "expandedHeight": 2580,
+    "errors": []
+  }
+]

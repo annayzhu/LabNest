@@ -1,0 +1,218 @@
+[
+  {
+    "theme": "柴染棕",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "柴染棕",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "柴染棕",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "柴染棕",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "橙绯红",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "橙绯红",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "橙绯红",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "橙绯红",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "淡藤萝紫",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "淡藤萝紫",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "淡藤萝紫",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "淡藤萝紫",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "瓜瓤粉",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "瓜瓤粉",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "瓜瓤粉",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "瓜瓤粉",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "蓝墨茶",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "蓝墨茶",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "蓝墨茶",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "蓝墨茶",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "棉絮灰",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "棉絮灰",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "棉絮灰",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "棉絮灰",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "珊瑚朱",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "珊瑚朱",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "珊瑚朱",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "珊瑚朱",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "杏叶黄",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "杏叶黄",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "杏叶黄",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "杏叶黄",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "not applicable"
+  },
+  {
+    "theme": "中国红",
+    "plot": "bar",
+    "nonColorConfig": "identical",
+    "chinaRed": "identical"
+  },
+  {
+    "theme": "中国红",
+    "plot": "scatter",
+    "nonColorConfig": "identical",
+    "chinaRed": "identical"
+  },
+  {
+    "theme": "中国红",
+    "plot": "heatmap",
+    "nonColorConfig": "identical",
+    "chinaRed": "identical"
+  },
+  {
+    "theme": "中国红",
+    "plot": "heatmap-sequential",
+    "nonColorConfig": "identical",
+    "chinaRed": "identical"
+  }
+]

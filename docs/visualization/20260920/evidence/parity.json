@@ -1,0 +1,31 @@
+{
+  "rootPaletteEqualsIndependent": true,
+  "chinaRedEntireDefinitionUnchanged": true,
+  "files": [
+    {
+      "file": "src/components/VisualizationStudio.tsx",
+      "packagedEqualsIndependent": true,
+      "sha256": "6239f33c94d8d41d7dcbf686a54bf76b6f673192dd1538420ede68614a688ffb"
+    },
+    {
+      "file": "src/components/ui/Card.tsx",
+      "packagedEqualsIndependent": true,
+      "sha256": "8853afa13507aa1c36d37813fafe3ae1951a1c98808e335932d710c68032195c"
+    },
+    {
+      "file": "src/lib/visualization-studio.ts",
+      "packagedEqualsIndependent": true,
+      "sha256": "4bbcf75e588457f2e4756eb1a670e6aa2022cd9acb6a8ec4b492523ee7a305e4"
+    },
+    {
+      "file": "src/lib/visualization-studio.test.ts",
+      "packagedEqualsIndependent": true,
+      "sha256": "9f2107610cffe0e162886c4630f9091e94d00cda1522b71bc628950f8b5cf12d"
+    },
+    {
+      "file": "tests/e2e/guidance-20260920.spec.ts",
+      "packagedEqualsIndependent": true,
+      "sha256": "e83be5d42aded32427afd895ea24ef1f93ea52fe1003fe0a11f8906f974d7b48"
+    }
+  ]
+}

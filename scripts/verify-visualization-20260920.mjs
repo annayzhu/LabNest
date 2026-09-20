@@ -13,7 +13,7 @@ const evidence={base,phase,viewport:{width:1440,height:900},figures:[],layouts:[
 async function config(){const event=page.waitForEvent('download');await page.getByRole('button',{name:'Config',exact:true}).click();return JSON.parse(await readFile(await (await event).path(),'utf8'));}
 async function fullyInViewport(locator) {
  return locator.evaluate(element => new Promise(resolve => {
-  const observer = new IntersectionObserver(([entry]) => { observer.disconnect(); resolve(entry.intersectionRatio >= 0.99); });
+  const observer = new IntersectionObserver(([entry]) => { observer.disconnect(); resolve(entry.intersectionRatio > 0 && entry.boundingClientRect.height - entry.intersectionRect.height <= 1 && entry.boundingClientRect.width - entry.intersectionRect.width <= 1); });
   observer.observe(element);
  }));
 }

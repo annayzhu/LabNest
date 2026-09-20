@@ -1,0 +1,426 @@
+{
+  "base": "http://localhost:3000/tools/visualization",
+  "phase": "before",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "figures": [
+    {
+      "name": "柴染棕",
+      "plot": "bar",
+      "themeId": "cn-beihai",
+      "colors": [
+        "#957454",
+        "#1D4C50",
+        "#D4A278",
+        "#3F605B"
+      ],
+      "svg": "0-bar.svg"
+    },
+    {
+      "name": "柴染棕",
+      "plot": "scatter",
+      "themeId": "cn-beihai",
+      "colors": [
+        "#957454",
+        "#1D4C50"
+      ],
+      "svg": "0-scatter.svg"
+    },
+    {
+      "name": "柴染棕",
+      "plot": "heatmap",
+      "themeId": "cn-beihai",
+      "colors": [
+        "#957454",
+        "#1D4C50",
+        "#D4A278",
+        "#3F605B"
+      ],
+      "svg": "0-heatmap.svg"
+    },
+    {
+      "name": "柴染棕",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-beihai",
+      "colors": [
+        "#957454",
+        "#1D4C50",
+        "#D4A278",
+        "#3F605B"
+      ],
+      "svg": "0-heatmap-sequential.svg"
+    },
+    {
+      "name": "橙绯红",
+      "plot": "bar",
+      "themeId": "cn-imperial-orange",
+      "colors": [
+        "#DB5E40",
+        "#2E2F25",
+        "#E68959",
+        "#866040"
+      ],
+      "svg": "1-bar.svg"
+    },
+    {
+      "name": "橙绯红",
+      "plot": "scatter",
+      "themeId": "cn-imperial-orange",
+      "colors": [
+        "#DB5E40",
+        "#2E2F25"
+      ],
+      "svg": "1-scatter.svg"
+    },
+    {
+      "name": "橙绯红",
+      "plot": "heatmap",
+      "themeId": "cn-imperial-orange",
+      "colors": [
+        "#DB5E40",
+        "#2E2F25",
+        "#E68959",
+        "#866040"
+      ],
+      "svg": "1-heatmap.svg"
+    },
+    {
+      "name": "橙绯红",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-imperial-orange",
+      "colors": [
+        "#DB5E40",
+        "#2E2F25",
+        "#E68959",
+        "#866040"
+      ],
+      "svg": "1-heatmap-sequential.svg"
+    },
+    {
+      "name": "淡藤萝紫",
+      "plot": "bar",
+      "themeId": "cn-wisteria",
+      "colors": [
+        "#F1E7E5",
+        "#1D4C50",
+        "#D3A488",
+        "#BDAEAD"
+      ],
+      "svg": "2-bar.svg"
+    },
+    {
+      "name": "淡藤萝紫",
+      "plot": "scatter",
+      "themeId": "cn-wisteria",
+      "colors": [
+        "#F1E7E5",
+        "#1D4C50"
+      ],
+      "svg": "2-scatter.svg"
+    },
+    {
+      "name": "淡藤萝紫",
+      "plot": "heatmap",
+      "themeId": "cn-wisteria",
+      "colors": [
+        "#F1E7E5",
+        "#1D4C50",
+        "#D3A488",
+        "#BDAEAD"
+      ],
+      "svg": "2-heatmap.svg"
+    },
+    {
+      "name": "淡藤萝紫",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-wisteria",
+      "colors": [
+        "#F1E7E5",
+        "#1D4C50",
+        "#D3A488",
+        "#BDAEAD"
+      ],
+      "svg": "2-heatmap-sequential.svg"
+    },
+    {
+      "name": "瓜瓤粉",
+      "plot": "bar",
+      "themeId": "cn-sunset",
+      "colors": [
+        "#F7CD9B",
+        "#313534",
+        "#F0A72E",
+        "#AE7F77"
+      ],
+      "svg": "3-bar.svg"
+    },
+    {
+      "name": "瓜瓤粉",
+      "plot": "scatter",
+      "themeId": "cn-sunset",
+      "colors": [
+        "#F7CD9B",
+        "#313534"
+      ],
+      "svg": "3-scatter.svg"
+    },
+    {
+      "name": "瓜瓤粉",
+      "plot": "heatmap",
+      "themeId": "cn-sunset",
+      "colors": [
+        "#F7CD9B",
+        "#313534",
+        "#F0A72E",
+        "#AE7F77"
+      ],
+      "svg": "3-heatmap.svg"
+    },
+    {
+      "name": "瓜瓤粉",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-sunset",
+      "colors": [
+        "#F7CD9B",
+        "#313534",
+        "#F0A72E",
+        "#AE7F77"
+      ],
+      "svg": "3-heatmap-sequential.svg"
+    },
+    {
+      "name": "蓝墨茶",
+      "plot": "bar",
+      "themeId": "cn-hutong",
+      "colors": [
+        "#3E443C",
+        "#D3A488",
+        "#8B6B5B",
+        "#24271E"
+      ],
+      "svg": "4-bar.svg"
+    },
+    {
+      "name": "蓝墨茶",
+      "plot": "scatter",
+      "themeId": "cn-hutong",
+      "colors": [
+        "#3E443C",
+        "#D3A488"
+      ],
+      "svg": "4-scatter.svg"
+    },
+    {
+      "name": "蓝墨茶",
+      "plot": "heatmap",
+      "themeId": "cn-hutong",
+      "colors": [
+        "#3E443C",
+        "#D3A488",
+        "#8B6B5B",
+        "#24271E"
+      ],
+      "svg": "4-heatmap.svg"
+    },
+    {
+      "name": "蓝墨茶",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-hutong",
+      "colors": [
+        "#3E443C",
+        "#D3A488",
+        "#8B6B5B",
+        "#24271E"
+      ],
+      "svg": "4-heatmap-sequential.svg"
+    },
+    {
+      "name": "棉絮灰",
+      "plot": "bar",
+      "themeId": "cn-dragon",
+      "colors": [
+        "#B5A59B",
+        "#655045",
+        "#AF5F54",
+        "#3B4E3D"
+      ],
+      "svg": "5-bar.svg"
+    },
+    {
+      "name": "棉絮灰",
+      "plot": "scatter",
+      "themeId": "cn-dragon",
+      "colors": [
+        "#B5A59B",
+        "#655045"
+      ],
+      "svg": "5-scatter.svg"
+    },
+    {
+      "name": "棉絮灰",
+      "plot": "heatmap",
+      "themeId": "cn-dragon",
+      "colors": [
+        "#B5A59B",
+        "#655045",
+        "#AF5F54",
+        "#3B4E3D"
+      ],
+      "svg": "5-heatmap.svg"
+    },
+    {
+      "name": "棉絮灰",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-dragon",
+      "colors": [
+        "#B5A59B",
+        "#655045",
+        "#AF5F54",
+        "#3B4E3D"
+      ],
+      "svg": "5-heatmap-sequential.svg"
+    },
+    {
+      "name": "珊瑚朱",
+      "plot": "bar",
+      "themeId": "cn-coral",
+      "colors": [
+        "#DB785C",
+        "#283F3E",
+        "#E9A182",
+        "#824E40"
+      ],
+      "svg": "6-bar.svg"
+    },
+    {
+      "name": "珊瑚朱",
+      "plot": "scatter",
+      "themeId": "cn-coral",
+      "colors": [
+        "#DB785C",
+        "#283F3E"
+      ],
+      "svg": "6-scatter.svg"
+    },
+    {
+      "name": "珊瑚朱",
+      "plot": "heatmap",
+      "themeId": "cn-coral",
+      "colors": [
+        "#DB785C",
+        "#283F3E",
+        "#E9A182",
+        "#824E40"
+      ],
+      "svg": "6-heatmap.svg"
+    },
+    {
+      "name": "珊瑚朱",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-coral",
+      "colors": [
+        "#DB785C",
+        "#283F3E",
+        "#E9A182",
+        "#824E40"
+      ],
+      "svg": "6-heatmap-sequential.svg"
+    },
+    {
+      "name": "杏叶黄",
+      "plot": "bar",
+      "themeId": "cn-autumn",
+      "colors": [
+        "#E5B552",
+        "#24271E",
+        "#CCD8D0",
+        "#DFBE96"
+      ],
+      "svg": "7-bar.svg"
+    },
+    {
+      "name": "杏叶黄",
+      "plot": "scatter",
+      "themeId": "cn-autumn",
+      "colors": [
+        "#E5B552",
+        "#24271E"
+      ],
+      "svg": "7-scatter.svg"
+    },
+    {
+      "name": "杏叶黄",
+      "plot": "heatmap",
+      "themeId": "cn-autumn",
+      "colors": [
+        "#E5B552",
+        "#24271E",
+        "#CCD8D0",
+        "#DFBE96"
+      ],
+      "svg": "7-heatmap.svg"
+    },
+    {
+      "name": "杏叶黄",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-autumn",
+      "colors": [
+        "#E5B552",
+        "#24271E",
+        "#CCD8D0",
+        "#DFBE96"
+      ],
+      "svg": "7-heatmap-sequential.svg"
+    },
+    {
+      "name": "中国红",
+      "plot": "bar",
+      "themeId": "cn-vermilion",
+      "colors": [
+        "#BF1103",
+        "#580F05",
+        "#970804",
+        "#DFBE96"
+      ],
+      "svg": "8-bar.svg"
+    },
+    {
+      "name": "中国红",
+      "plot": "scatter",
+      "themeId": "cn-vermilion",
+      "colors": [
+        "#BF1103",
+        "#580F05"
+      ],
+      "svg": "8-scatter.svg"
+    },
+    {
+      "name": "中国红",
+      "plot": "heatmap",
+      "themeId": "cn-vermilion",
+      "colors": [
+        "#BF1103",
+        "#580F05",
+        "#970804",
+        "#DFBE96"
+      ],
+      "svg": "8-heatmap.svg"
+    },
+    {
+      "name": "中国红",
+      "plot": "heatmap-sequential",
+      "themeId": "cn-vermilion",
+      "colors": [
+        "#BF1103",
+        "#580F05",
+        "#970804",
+        "#DFBE96"
+      ],
+      "svg": "8-heatmap-sequential.svg"
+    }
+  ],
+  "layouts": [],
+  "errors": []
+}

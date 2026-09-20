@@ -1,0 +1,13 @@
+
+> visualization-studio@1.0.0 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/annayzhu/Documents/Playground/Visualization-studio-20260920
+
+
+ Test Files  13 passed (13)
+      Tests  196 passed (196)
+   Start at  22:53:04
+   Duration  1.98s (transform 4.63s, setup 0ms, import 6.50s, tests 4.78s, environment 1ms)
+

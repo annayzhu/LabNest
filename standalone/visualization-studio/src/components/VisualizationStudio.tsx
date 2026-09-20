@@ -463,12 +463,15 @@ export function VisualizationStudio() {
   const [selectedCustomPaletteId, setSelectedCustomPaletteId] = useState("");
   const [customPaletteName, setCustomPaletteName] = useState("");
   const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
+  // Reading preference is independent of chart settings and survives chart changes.
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [plotSearchQuery, setPlotSearchQuery] = useState("");
   const [plotFinderOpen, setPlotFinderOpen] = useState(false);
   const [plotFinderGoalId, setPlotFinderGoalId] = useState<PlotFinderGoalId>("compare");
   const [loadedFileName, setLoadedFileName] = useState("");
   const [fileError, setFileError] = useState("");
   const [stickyHeaderHeight, setStickyHeaderHeight] = useState(0);
+  const [workbenchOffset, setWorkbenchOffset] = useState(0);
   const [selectedIntersectionSignature, setSelectedIntersectionSignature] = useState("");
   const svgRef = useRef<SVGSVGElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -507,6 +510,9 @@ export function VisualizationStudio() {
       window.cancelAnimationFrame(frameId);
       frameId = window.requestAnimationFrame(() => {
         setStickyHeaderHeight(Math.ceil(element.getBoundingClientRect().height));
+        // The embedded AppShell adds space above the workbench. Include its
+        // natural document offset so the initial sidebar fits without scrolling.
+        setWorkbenchOffset(Math.ceil((element.parentElement?.getBoundingClientRect().top ?? 0) + window.scrollY));
       });
     };
     const observer = new ResizeObserver(updateHeight);
@@ -604,7 +610,7 @@ export function VisualizationStudio() {
   const isValid = validation.errors.length === 0;
   const mainGridStyle = {
     "--visualization-panel-top": `${stickyHeaderHeight + 12}px`,
-    "--visualization-panel-height": `calc(100dvh - ${stickyHeaderHeight + 28}px)`,
+    "--visualization-panel-height": `calc(100dvh - ${stickyHeaderHeight + workbenchOffset + 28}px)`,
   } as CSSProperties;
   const currentColorFingerprint = useMemo(() => colorFingerprint(paletteColorsFromSettings(settings, themeId)), [settings, themeId]);
   const selectedCustomPalette = useMemo(() => customPalettes.find((palette) => palette.id === selectedCustomPaletteId), [customPalettes, selectedCustomPaletteId]);
@@ -1165,7 +1171,7 @@ export function VisualizationStudio() {
               const plotResetSettings = plotType === "rose" ? { ...resetSettings, compositionLabelMode: "value" as const } : resetSettings;
               setSettings(settingsForDistributionPreset(plotResetSettings, plotType));
             }}><RotateCcw className="h-3.5 w-3.5" aria-hidden />Reset</Button>} />
-            <CardBody ref={parameterScrollRef} className="space-y-4 p-4 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:[scrollbar-gutter:stable]">
+            <CardBody data-visualization-parameter-scroll ref={parameterScrollRef} className="space-y-4 p-4 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:[scrollbar-gutter:stable]">
               <ControlGroup title="Labels">
                 <TextControl label="Title" value={settings.title} onChange={(value) => updateSetting("title", value)} placeholder={`${definition.name} title`} />
               {hasSetting("xLabel") ? <TextControl label="X-axis label" value={settings.xLabel} onChange={(value) => updateSetting("xLabel", value)} /> : null}
@@ -1395,9 +1401,12 @@ export function VisualizationStudio() {
             </CardBody>
           </Card>
 
-          <aside data-plot-guidance={plotType} aria-live="polite" className="rounded-[var(--ln-vis-panel-radius)] border border-moss/20 bg-sage-surface/70 p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-ink"><Lightbulb className="h-3.5 w-3.5 text-moss" aria-hidden />图形定义与适用场景</div>
-            <div className="mt-2 space-y-2 text-[11px] leading-[1.55] text-graphite">
+          <aside data-plot-guidance={plotType} className="flex shrink-0 flex-col overflow-hidden xl:max-h-[45%] rounded-[var(--ln-vis-panel-radius)] border border-moss/20 bg-sage-surface/70 p-3">
+            <button type="button" aria-expanded={guidanceOpen} aria-controls="visualization-guidance-content" aria-label={`${guidanceOpen ? "收起" : "展开"}图形定义与适用场景`} onClick={() => setGuidanceOpen((open) => !open)} className="focus-ring flex min-h-8 w-full shrink-0 items-center justify-between gap-2 rounded text-left text-xs font-semibold text-ink">
+              <span className="flex items-center gap-2"><Lightbulb className="h-3.5 w-3.5 shrink-0 text-moss" aria-hidden />图形定义与适用场景</span>
+              <span className="flex shrink-0 items-center gap-1 text-[11px] text-moss">{guidanceOpen ? "收起" : "展开"}<ChevronDown className={cn("h-3.5 w-3.5", guidanceOpen && "rotate-180")} aria-hidden /></span>
+            </button>
+            <div id="visualization-guidance-content" hidden={!guidanceOpen} className="mt-2 min-h-0 space-y-2 overflow-y-auto text-[11px] leading-[1.55] text-graphite">
               <p><span className="font-semibold text-ink">基本定义：</span>{guidance.definition}</p>
               <p><span className="font-semibold text-ink">适合的数据：</span>{guidance.suitableData}</p>
               <p><span className="font-semibold text-ink">适合说明的问题：</span>{guidance.answers}</p>

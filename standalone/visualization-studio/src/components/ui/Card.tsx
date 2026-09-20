@@ -46,12 +46,12 @@ export function CardBody({
   children,
   className,
   ref,
-}: {
+  ...props
+}: HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
-  className?: string;
   ref?: Ref<HTMLDivElement>;
 }) {
-  return <div ref={ref} className={cn("p-4", className)}>{children}</div>;
+  return <div {...props} ref={ref} className={cn("p-4", className)}>{children}</div>;
 }
 
 export function SectionPanel({

@@ -44,3 +44,12 @@ button, input, select, textarea { font-family: inherit; }
 .focus-ring { outline: 2px solid transparent; outline-offset: 2px; }
 .focus-ring:focus-visible { outline-color: var(--fog); box-shadow: 0 0 0 4px rgba(93, 98, 127, 0.15); }
 :where(nav a, nav button, .card-action a, .card-action button) { font-weight: 400; letter-spacing: 0.005em; }
+
+/* Short windows use document scrolling, so neither parameters nor references
+   are trapped in a nearly zero-height sticky sidebar. Narrow layouts already flow. */
+@media (min-width: 1280px) and (max-height: 639px) {
+  [data-visualization-panel="parameters"] { position: static; height: auto; overflow: visible; }
+  [data-visualization-parameter-scroll] { overflow-y: visible; }
+  [data-plot-guidance] { max-height: none; }
+  #visualization-guidance-content { overflow-y: visible; }
+}

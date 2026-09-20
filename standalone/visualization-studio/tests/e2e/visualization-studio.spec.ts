@@ -288,11 +288,11 @@ siFBN2-9706\t0.07\t0.04\tFBN2`);
     expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#2878B5", "#5595C3", "#82B0D2", "#B7D5E8"]);
   });
 
-  test("renders source-faithful traditional and journal colors", async ({ page }, testInfo) => {
+  test("renders redesigned traditional and journal colors", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chromium", "Desktop palette rendering");
     await page.goto("/");
     const bars = page.locator("svg[aria-label='Bar scientific figure preview'] [data-plot-element='bar']");
-    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#957454", "#1D4C50", "#D4A278", "#3F605B"]);
+    expect(await bars.evaluateAll((marks) => marks.slice(0, 4).map((mark) => mark.getAttribute("fill")))).toEqual(["#94613A", "#207D87", "#B68B28", "#80629D"]);
 
     await page.getByRole("button", { name: "期刊配色", exact: true }).click();
     await page.getByRole("button", { name: "Nature", exact: true }).click();
@@ -329,6 +329,7 @@ siFBN2-9706\t0.07\t0.04\tFBN2`);
     await expect(page.getByRole("button", { name: /apply/i })).toHaveCount(0);
 
     const guidance = page.locator('[data-plot-guidance="word-cloud"]');
+    await guidance.getByRole("button", { name: "展开图形定义与适用场景" }).click();
     await expect(guidance).toContainText("基本定义");
     await expect(guidance).toContainText("适合的数据");
     await expect(guidance).toContainText("适合说明的问题");

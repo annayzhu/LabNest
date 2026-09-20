@@ -5597,3 +5597,12 @@ html[data-labnest-ui-scale="comfortable"] { --ln-control-font-size-sm:14px; --ln
 
 /* Full browser workspaces must not inherit document/mobile main padding. */
 main.embedded-tool-workspace { padding: 0 !important; }
+
+/* Short windows use document scrolling, so neither parameters nor references
+   are trapped in a nearly zero-height sticky sidebar. Narrow layouts already flow. */
+@media (min-width: 1280px) and (max-height: 639px) {
+  [data-visualization-panel="parameters"] { position: static; height: auto; overflow: visible; }
+  [data-visualization-parameter-scroll] { overflow-y: visible; }
+  [data-plot-guidance] { max-height: none; }
+  #visualization-guidance-content { overflow-y: visible; }
+}

@@ -39,8 +39,10 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       HOSTNAME: 0.0.0.0
       PORT: "3000"
+      # Server-rendered record times (run steps, activity) follow the lab clock, not UTC.
+      TZ: ${TZ:-Asia/Shanghai}
     ports:
-      - "3000:3000"
+      - "${LABNEST_HOST_PORT:-3001}:3000"
     volumes:
       - labnest-attachments:/app/storage/attachments
     command: sh scripts/docker-start.sh

@@ -85,8 +85,8 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
               <Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{tool.category} · v{tool.version}</p>
-              <h2 id={`tool-preview-${tool.id}`} className="mt-1 font-serif text-xl font-medium leading-tight text-ink">{tool.name}</h2>
+              <p className="text-xs text-muted">{tool.category} · v{tool.version}</p>
+              <h2 id={`tool-preview-${tool.id}`} className="mt-1 text-xl font-semibold leading-tight text-ink">{tool.name}</h2>
             </div>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm text-muted hover:text-ink" aria-label="Close preview">
@@ -101,8 +101,8 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
             <p className="mt-3 text-xs leading-5 text-muted">{tool.external ? "Opens as an independent application in a new tab." : "Runs inside the LabNest workspace."}</p>
           </div>
           <dl className="grid content-start gap-3 text-xs">
-            <div><dt className="font-semibold text-ink">Input</dt><dd className="mt-1 leading-5 text-graphite">{tool.accepts.join(" · ")}</dd></div>
-            <div><dt className="font-semibold text-ink">Output</dt><dd className="mt-1 leading-5 text-graphite">{tool.produces.join(" · ")}</dd></div>
+            <div><dt className="font-semibold text-ink">Input</dt><dd className="mt-1 leading-5 text-graphite">{tool.accepts.join(", ")}</dd></div>
+            <div><dt className="font-semibold text-ink">Output</dt><dd className="mt-1 leading-5 text-graphite">{tool.produces.join(", ")}</dd></div>
           </dl>
         </div>
 
@@ -140,7 +140,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
             <section key={category} aria-labelledby={`tools-${category.toLowerCase()}`} className="space-y-2">
               <div className="flex items-center gap-3">
                 <h2 id={`tools-${category.toLowerCase()}`} className="text-sm font-semibold text-ink">{category}</h2>
-                <span className="font-mono text-xs tabular-nums text-muted">{categoryTools.length} {categoryTools.length === 1 ? "tool" : "tools"}</span>
+                <span className="text-xs tabular-nums text-muted">{categoryTools.length} {categoryTools.length === 1 ? "tool" : "tools"}</span>
                 <span className="h-px flex-1 bg-hairline" aria-hidden />
               </div>
 
@@ -155,12 +155,12 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                         <span className="font-mono text-xs leading-none tabular-nums text-muted">v{tool.version}</span>
                       </div>
                       <div className="mt-3 flex-1">
-                        <h3 className="font-serif text-xl font-medium leading-tight tracking-[-0.015em] text-ink">{tool.name}</h3>
+                        <h3 className="text-base font-semibold leading-tight tracking-[-0.01em] text-ink">{tool.name}</h3>
                         <p className="mt-1 max-w-[66ch] text-sm leading-5 text-graphite">{tool.description}</p>
                       </div>
                       <div className="mt-3 grid gap-x-2 gap-y-0.5 border-t border-hairline/80 pt-2 text-xs leading-4 text-muted sm:grid-cols-[42px_minmax(0,1fr)]">
-                        <span className="font-semibold text-graphite">Input</span><span>{tool.accepts.join(" · ")}</span>
-                        <span className="font-semibold text-graphite">Output</span><span>{tool.produces.join(" · ")}</span>
+                        <span className="font-semibold text-graphite">Input</span><span>{tool.accepts.join(", ")}</span>
+                        <span className="font-semibold text-graphite">Output</span><span>{tool.produces.join(", ")}</span>
                       </div>
                       <div className="mt-2 flex min-h-7 items-end justify-between gap-2">
                         <button type="button" className="ln-tool-preview-trigger relative z-10 focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-xs font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>

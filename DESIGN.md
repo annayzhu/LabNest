@@ -158,6 +158,8 @@ Typography is user-configurable by role from Settings. Interface text, document 
 
 **Character:** The workspace is sans throughout; serif belongs to the record, so `font-serif` resolves to the document heading font only inside the A4 paper. Monospace is reserved for values, units, method versions, timestamps, and other exact data.
 
+**Label case.** Interface labels and section titles use normal case; uppercase with letter-spacing is reserved for the A4 record's own typography (kickers, facts, captions) and calendar weekday initials. A section never carries a small label above a heading that says the same thing.
+
 **Type scale.** Interface text uses six sizes only: 12, 13, 14, 16, 20, 24px. Nothing in the chrome is smaller than 12px; hierarchy below that comes from weight and color, not smaller type.
 
 ### Hierarchy
@@ -244,7 +246,7 @@ A detail page's right column is one surface with a hairline border; its sections
 
 Back, catalog, favorites, and history links remain compact and understated. Icon-only actions require an accessible name; current context is shown with label text or selected-state styling rather than icon color alone.
 
-The Overview quick-entry row is a 40px compact target with unboxed line icons. Its label reveals once per pointer hover rather than animating on page load. Offline status appears only when the browser reports a lost connection and offers a small keyboard-operable dinosaur diversion without blocking locally available work.
+The desktop Overview opens with a Today panel (active run beside today's plan) above the month calendar; quick actions and active plans sit in a narrow right panel. Quick actions are unboxed rows with line icons whose label reveals once per pointer hover rather than animating on page load. Offline status appears only when the browser reports a lost connection and offers a small keyboard-operable dinosaur diversion without blocking locally available work.
 
 ### Result & Method Panels
 

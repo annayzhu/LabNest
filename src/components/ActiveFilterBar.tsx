@@ -25,7 +25,7 @@ export function ActiveFilterBar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-3 py-2">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Filtered</span>
+        <span className="text-xs font-medium text-muted">Filtered</span>
         {filters.map((filter) => (
           <Badge key={`${filter.label}-${filter.value}`} tone="sage">
             {filter.label}: {filter.value}

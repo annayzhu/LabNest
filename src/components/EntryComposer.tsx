@@ -452,7 +452,7 @@ export function EntryComposer({
       {captureMode ? (
         <section className="space-y-5 lg:hidden">
           <div>
-            <h1 className="font-serif text-2xl font-medium tracking-[-0.02em] text-ink">Quick capture</h1>
+            <h1 className="text-xl font-semibold tracking-[-0.02em] text-ink">Quick capture</h1>
             <p className="mt-1 text-sm leading-6 text-muted">Record what happened now. You can organize the document later.</p>
           </div>
 
@@ -693,11 +693,11 @@ export function EntryComposer({
 }
 
 function ComposerInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="block"><span className="text-xs font-medium uppercase tracking-[0.05em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
+  return <label className="block"><span className="text-xs font-medium text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
 }
 
 function ComposerSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <label className="block"><span className="text-xs font-medium uppercase tracking-[0.05em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+  return <label className="block"><span className="text-xs font-medium text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
 }
 
 function MediaPickerLabel({ htmlFor, disabled, spacious = false, children }: { htmlFor: string; disabled?: boolean; spacious?: boolean; children: React.ReactNode }) {

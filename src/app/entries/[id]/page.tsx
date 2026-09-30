@@ -110,8 +110,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Source files</p>
-                  <h2 className="mt-1 font-serif text-2xl font-medium text-ink">Attachments</h2>
+                  <h2 className="text-base font-semibold text-ink">Attachments</h2>
                 </div>
                 <Badge tone="sage">{entry.attachmentCount}</Badge>
               </div>
@@ -149,8 +148,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Backlinks</p>
-                  <h2 className="mt-1 font-serif text-2xl font-medium text-ink">Linked records</h2>
+                  <h2 className="text-base font-semibold text-ink">Linked records</h2>
                 </div>
                 <Badge tone="sage">{entry.itemLinks.length}</Badge>
               </div>
@@ -181,7 +179,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
 
           <aside className="document-preview-sidebar">
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Entry context</p>
+              <h2 className="text-base font-semibold text-ink">Entry context</h2>
               <dl className="mt-4 space-y-4 text-sm">
                 <div>
                   <dt className="text-xs text-muted">Project</dt>
@@ -212,7 +210,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
               <div className="flex items-center gap-2 text-moss">
                 <ListChecks className="h-4 w-4" aria-hidden />
-                <p className="text-xs font-semibold uppercase tracking-[0.1em]">Proposed actions</p>
+                <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
               </div>
               {entry.pendingActions.length ? (
                 <div className="mt-4 space-y-3">

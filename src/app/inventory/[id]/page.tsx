@@ -169,8 +169,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 function Metric({ label, value, detail }: { label: string; value: React.ReactNode; detail: string }) {
   return (
     <div className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4 shadow-paper">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
-      <div className="mt-2 min-h-7 font-serif text-xl font-medium text-ink">{value}</div>
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <div className="mt-2 min-h-7 text-xl font-semibold text-ink">{value}</div>
       <p className="mt-1 text-xs text-muted">{detail}</p>
     </div>
   );
@@ -179,7 +179,7 @@ function Metric({ label, value, detail }: { label: string; value: React.ReactNod
 function Field({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
+      <p className="text-xs font-medium text-muted">{label}</p>
       <div className={`mt-1 text-sm text-ink ${mono ? "font-mono text-xs" : ""}`}>{value || "—"}</div>
     </div>
   );

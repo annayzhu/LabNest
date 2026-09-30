@@ -215,8 +215,8 @@ export default async function PurchasesPage() {
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
-      <p className="mt-2 font-serif text-2xl font-medium leading-none text-ink">{value}</p>
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <p className="mt-2 text-2xl font-semibold leading-none text-ink">{value}</p>
     </div>
   );
 }

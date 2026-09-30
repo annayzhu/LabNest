@@ -302,7 +302,7 @@ function serializeSvg(svg: SVGSVGElement, fontFamily: string) {
 function ControlGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <fieldset className="space-y-2.5 border-t border-hairline pt-3 first:border-0 first:pt-0">
-      <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{title}</legend>
+      <legend className="mb-2 text-xs font-medium text-muted">{title}</legend>
       {children}
     </fieldset>
   );
@@ -1017,7 +1017,7 @@ export function VisualizationStudio() {
               <input aria-label="Search plot types" type="search" value={plotSearchQuery} onChange={(event) => setPlotSearchQuery(event.target.value)} placeholder="Search plots" className="focus-ring h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-white pl-8 pr-2 text-xs text-ink placeholder:text-muted" />
             </div>
             {plotFinderOpen ? <div className="space-y-1.5 rounded-[var(--ln-radius-control-md)] bg-stone p-2">
-              <label className="block text-xs font-semibold uppercase tracking-[0.06em] text-muted" htmlFor="plot-finder-goal">What should the figure show?</label>
+              <label className="block text-xs font-medium text-muted" htmlFor="plot-finder-goal">What should the figure show?</label>
               <select id="plot-finder-goal" aria-label="What do you want to show?" value={plotFinderGoalId} onChange={(event) => setPlotFinderGoalId(event.target.value as PlotFinderGoalId)} className="focus-ring h-8 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-white px-2 text-xs text-ink">{plotFinderGoals.map((goal) => <option key={goal.id} value={goal.id}>{goal.label}</option>)}</select>
               <p className="text-xs leading-4 text-muted">{selectedPlotFinderGoal.description}</p>
               <div className="flex flex-wrap gap-1">{recommendedPlotModules.map((candidate) => <button key={`desktop-recommend-${candidate.definition.id}`} type="button" onClick={() => selectPlot(candidate.definition.id)} className="focus-ring rounded-[5px] border border-hairline bg-white px-1.5 py-1 text-xs text-graphite hover:border-moss hover:text-ink">{candidate.definition.name}</button>)}</div>
@@ -1027,7 +1027,7 @@ export function VisualizationStudio() {
             {filteredPlotModules.map(({ definition: plot }) => (
               <button key={plot.id} type="button" onClick={() => selectPlot(plot.id)} className={cn("focus-ring relative w-full rounded-[var(--ln-radius-control-sm)] border border-transparent px-2.5 py-2 text-left transition-colors before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-transparent", plotType === plot.id ? "bg-[var(--ln-vis-active-bg)] font-medium text-moss before:bg-moss" : "hover:bg-warm") }>
                 <span className="block text-[13px] font-medium text-ink">{plot.name}</span>
-                <span className="mt-0.5 block text-xs uppercase tracking-[0.07em] text-muted">{plot.family}</span>
+                <span className="mt-0.5 block text-xs text-muted">{plot.family}</span>
               </button>
             ))}
             {filteredPlotModules.length === 0 ? <div className="rounded-[var(--ln-radius-control-md)] border border-dashed border-hairline px-2 py-4 text-center text-xs leading-4 text-muted">No matching plot. Try a scientific question such as “survival”, “enrichment”, “微生物”, or “相关”.</div> : null}
@@ -1056,7 +1056,7 @@ export function VisualizationStudio() {
                 <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-ink"><span>Statistical results · {barAnalysis.results.length} comparison{barAnalysis.results.length === 1 ? "" : "s"}</span><Button type="button" size="sm" onClick={(event) => { event.preventDefault(); downloadBarAnalysis(); }}><Download className="h-3.5 w-3.5" aria-hidden />TSV</Button></summary>
                 <div className="overflow-x-auto border-t border-hairline">
                   <table className="min-w-full text-left text-xs text-graphite">
-                    <thead className="bg-stone text-xs uppercase tracking-[0.04em] text-muted"><tr><th className="px-3 py-2">Group</th><th className="px-3 py-2">Comparison</th><th className="px-3 py-2">Difference (95% CI)</th><th className="px-3 py-2">n</th><th className="px-3 py-2">P raw</th><th className="px-3 py-2">P adjusted</th><th className="px-3 py-2">Method / scale</th></tr></thead>
+                    <thead className="bg-stone text-xs text-muted"><tr><th className="px-3 py-2">Group</th><th className="px-3 py-2">Comparison</th><th className="px-3 py-2">Difference (95% CI)</th><th className="px-3 py-2">n</th><th className="px-3 py-2">P raw</th><th className="px-3 py-2">P adjusted</th><th className="px-3 py-2">Method / scale</th></tr></thead>
                     <tbody>{barAnalysis.results.map((result) => <tr key={`${result.facet}-${result.group}-${result.reference}-${result.comparison}`} className="border-t border-hairline first:border-t-0"><td className="whitespace-nowrap px-3 py-2">{result.group}</td><td className="whitespace-nowrap px-3 py-2">{result.comparison} vs {result.reference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.difference.toPrecision(4)} ({result.lower95.toPrecision(4)}, {result.upper95.toPrecision(4)})</td><td className="whitespace-nowrap px-3 py-2">{result.nComparison} / {result.nReference}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.rawPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2 font-mono">{result.adjustedPValue.toPrecision(3)}</td><td className="whitespace-nowrap px-3 py-2">{result.method} · {result.analysisScale}</td></tr>)}</tbody>
                   </table>
                 </div>

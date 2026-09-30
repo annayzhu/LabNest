@@ -265,7 +265,7 @@ export function ResultTemplateConfigEditor({ block, onChange }: { block: TableBl
   return <div className="mt-[var(--ln-result-template-root-margin-top)] space-y-[var(--ln-result-template-section-gap)]">
     <div className="rounded-[var(--ln-result-template-card-radius)] border border-sage/40 bg-sage-surface/50 p-[var(--ln-result-template-panel-padding)]">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-moss">Result Template</p><p className="mt-1 text-xs leading-5 text-muted">Define only what this experiment should leave behind. Technical metadata is generated automatically.</p></div>
+        <div><p className="text-xs font-medium text-moss">Result Template</p><p className="mt-1 text-xs leading-5 text-muted">Define only what this experiment should leave behind. Technical metadata is generated automatically.</p></div>
         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${check.status === "complete" ? "bg-success-surface text-success" : check.status === "warning" ? "bg-warning-surface text-warning" : "bg-error-surface text-error"}`}>{check.status}</span>
       </div>
       {check.errors.length || check.warnings.length ? <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-graphite">{[...check.errors, ...check.warnings].map((message) => <li key={message}>{message}</li>)}</ul> : null}

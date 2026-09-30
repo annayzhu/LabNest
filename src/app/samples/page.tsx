@@ -298,8 +298,8 @@ function SampleMetric({
     <div className="flex min-h-[94px] min-w-0 flex-col justify-between rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper">
       <Icon className="h-4 w-4 shrink-0 text-moss" aria-hidden />
       <div>
-        <p className="font-serif text-2xl font-medium leading-none text-ink">{value}</p>
-        <p className="mt-2 text-xs font-semibold uppercase leading-none tracking-[0.04em] text-muted">{label}</p>
+        <p className="text-2xl font-semibold leading-none text-ink">{value}</p>
+        <p className="mt-2 text-xs font-medium leading-none text-muted">{label}</p>
       </div>
     </div>
   );

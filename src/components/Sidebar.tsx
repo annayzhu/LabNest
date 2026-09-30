@@ -258,7 +258,7 @@ export function MobileBottomNav() {
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 id="mobile-more-navigation-title" className="font-serif text-xl font-medium text-ink">All modules</h2>
+                <h2 id="mobile-more-navigation-title" className="text-xl font-semibold text-ink">All modules</h2>
                 <p className="mt-1 text-xs text-muted">Open any LabNest workspace or utility.</p>
               </div>
               <button ref={closeButtonRef} type="button" onClick={() => closeMoreMenu(true)} aria-label="Close menu" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-warm text-muted">
@@ -293,7 +293,7 @@ export function MobileBottomNav() {
               })}
             </nav>
 
-            <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Utilities</h3>
+            <h3 className="mb-2 mt-5 text-xs font-medium text-muted">Utilities</h3>
             <nav aria-label="Utilities" className="grid grid-cols-2 gap-2">
               {utilityItems.map((item) => {
                 const Icon = item.icon;

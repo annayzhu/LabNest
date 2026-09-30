@@ -53,7 +53,7 @@ export default async function SequencePairDetailPage({ params }: { params: Promi
           {pair.members.map((member) => <PairMemberCard key={member.id} member={member} />)}
         </section>
         {metadataRows.length ? <Card><CardHeader title="Design details" /><CardBody className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-          {metadataRows.map((item) => <div key={item.label}><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{item.label}</p><p className="mt-1 text-sm text-ink">{item.value}</p></div>)}
+          {metadataRows.map((item) => <div key={item.label}><p className="text-xs font-medium text-muted">{item.label}</p><p className="mt-1 text-sm text-ink">{item.value}</p></div>)}
         </CardBody></Card> : null}
         {pair.description ? <Card><CardHeader title="Notes" /><CardBody><p className="whitespace-pre-wrap text-sm leading-6 text-graphite">{pair.description}</p></CardBody></Card> : null}
         <Card><CardHeader title="Activity" eyebrow="Audit trail" /><CardBody><p className="pb-2 text-xs text-muted">Created {pair.createdAt.toLocaleString()} · Updated {pair.updatedAt.toLocaleString()}</p>{activityLogs.length ? <ul className="divide-y divide-hairline border-t border-hairline">{activityLogs.map((log) => <li key={log.id} className="flex items-center justify-between gap-3 py-2 text-sm"><span className="font-medium capitalize text-ink">{log.action.replaceAll("_", " ")}</span><time className="text-xs text-muted">{log.createdAt.toLocaleString()}</time></li>)}</ul> : <p className="border-t border-hairline pt-2 text-sm text-muted">No activity recorded.</p>}</CardBody></Card>

@@ -26,11 +26,11 @@ export default function ToolsPage() {
   return (
     <AppShell>
       <div className="space-y-5">
-        <div className="flex flex-col gap-3 border-b border-hairline pb-4 md:flex-row md:items-end md:justify-between">
-          <h1 className="tools-page-title font-serif text-[length:var(--ln-page-title-size)] font-medium leading-[1.25] tracking-[-0.012em] text-ink">
+        <div>
+          <h1 className="tools-page-title text-[length:var(--ln-page-title-size)] font-semibold leading-[1.25] tracking-[-0.018em] text-ink">
             Tools
           </h1>
-          <p className="max-w-[68ch] text-sm leading-6 text-graphite md:text-right">
+          <p className="mt-1 max-w-[65ch] text-sm leading-6 text-muted">
             Planning, calculation, and analysis tools in one compact workspace.
           </p>
         </div>

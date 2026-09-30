@@ -35,7 +35,7 @@ export function TopBar() {
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
             ) : null}
-            <span className="truncate font-serif text-lg font-medium text-ink">{mobileTitle}</span>
+            <span className="truncate text-lg font-semibold text-ink">{mobileTitle}</span>
           </div>
           <Link
             href="/search"

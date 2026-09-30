@@ -281,7 +281,7 @@ const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", clas
 function InventoryColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`normal-case tracking-normal ${className}`}>
-      <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
+      <span className="block text-xs font-medium text-muted">{label}</span>
       <div className="mt-1.5 hidden md:block">{children}</div>
     </div>
   );

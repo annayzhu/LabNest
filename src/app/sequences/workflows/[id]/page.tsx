@@ -25,5 +25,5 @@ export default async function SequenceWorkflowDetailPage({ params }: { params: P
 }
 
 function Field({ label, value }: { label: string; value: string | null }) {
-  return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><p className="mt-1 whitespace-pre-wrap text-sm text-ink">{value || "—"}</p></div>;
+  return <div><p className="text-xs font-medium text-muted">{label}</p><p className="mt-1 whitespace-pre-wrap text-sm text-ink">{value || "—"}</p></div>;
 }

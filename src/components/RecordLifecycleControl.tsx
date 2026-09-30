@@ -82,10 +82,10 @@ export function RecordLifecycleControl({
           <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-error">
+                <p className="text-xs font-medium text-error">
                   {locale === "zh" ? "记录生命周期" : "Record lifecycle"}
                 </p>
-                <h2 id={`record-lifecycle-${id}`} className="mt-1 font-serif text-xl font-medium text-ink">
+                <h2 id={`record-lifecycle-${id}`} className="mt-1 text-xl font-semibold text-ink">
                   {locale === "zh" ? `移入回收站或归档${label}` : `Recycle or archive this ${label}?`}
                 </h2>
               </div>

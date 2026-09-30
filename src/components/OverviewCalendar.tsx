@@ -192,7 +192,7 @@ export function OverviewCalendar({
               return (
                 <Link key={activity.id} href={activity.href} className="focus-ring group block bg-surface px-4 py-3 transition hover:bg-warm/60 sm:px-5 sm:py-4">
                   <span className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.06em] text-muted">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
                       <span className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-md)]",
                         activity.kind === "entry" ? "bg-info-surface text-info" : "bg-sage-surface text-moss",

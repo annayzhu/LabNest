@@ -54,7 +54,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
                       <span className="record-identifier text-xs text-muted">{experiment.runCode}</span>
                       <StatusPill status={experiment.status} />
                     </div>
-                    <h2 className="mt-2 truncate font-serif text-lg font-medium text-ink">{experiment.title}</h2>
+                    <h2 className="mt-2 truncate text-lg font-semibold text-ink">{experiment.title}</h2>
                     <p className="mt-1 text-xs text-muted">
                       {experiment.researchPlan?.code ?? "Unassigned plan"}
                       {experiment.primaryProtocolVersion ? ` · ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} · ${experiment.primaryProtocolVersion.protocol.humanCode ?? "Uncoded"} · ${experiment.primaryProtocolVersion.displayVersion}` : ""}

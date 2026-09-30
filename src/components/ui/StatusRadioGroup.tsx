@@ -38,7 +38,7 @@ export function StatusRadioGroup({
 
   return (
     <fieldset className={cn("min-w-0", className)} disabled={disabled}>
-      <legend className={density === "compact" ? "text-xs font-medium uppercase tracking-[0.05em] text-muted" : formLabelClass}>
+      <legend className={density === "compact" ? "text-xs font-medium text-muted" : formLabelClass}>
         {label}
       </legend>
       <div className={cn(density === "compact" ? "mt-1.5 flex flex-wrap gap-1.5" : "mt-2 flex flex-wrap gap-2", optionsClassName)}>

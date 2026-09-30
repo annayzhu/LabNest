@@ -127,7 +127,7 @@ export default async function SequenceDetailPage({ params, searchParams }: { par
           <Card>
             <CardHeader title="Validation and modifications" />
             <CardBody className="space-y-4">
-              <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{currentValidationLabel}</p><p className="mt-2 text-sm leading-6 text-graphite">{selectedVersion.validationSummary ?? "No validation evidence has been recorded."}</p>{selectedVersion.validatedAt ? <p className="mt-2 text-xs text-muted">Conclusion recorded {selectedVersion.validatedAt.toLocaleDateString()}</p> : null}</div>
+              <div className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm/50 p-3"><p className="text-xs font-medium text-muted">{currentValidationLabel}</p><p className="mt-2 text-sm leading-6 text-graphite">{selectedVersion.validationSummary ?? "No validation evidence has been recorded."}</p>{selectedVersion.validatedAt ? <p className="mt-2 text-xs text-muted">Conclusion recorded {selectedVersion.validatedAt.toLocaleDateString()}</p> : null}</div>
               <DataTable rows={selectedVersion.modifications} getRowKey={(row) => row.id} emptyMessage="No chemical modifications recorded." columns={[
                 { key: "position", header: "Position", render: (row) => <span className="font-mono text-xs">{row.position}</span> },
                 { key: "modification", header: "Modification", render: (row) => row.modification },
@@ -209,5 +209,5 @@ function FeatureStrip({ length, features }: { length: number; features: Array<{ 
 }
 
 function Field({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
-  return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className={`mt-1 text-sm text-ink ${mono ? "font-mono text-xs" : ""}`}>{value || "—"}</div></div>;
+  return <div><p className="text-xs font-medium text-muted">{label}</p><div className={`mt-1 text-sm text-ink ${mono ? "font-mono text-xs" : ""}`}>{value || "—"}</div></div>;
 }

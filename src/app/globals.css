@@ -1641,9 +1641,7 @@ details > summary:active { transform: scale(0.985); }
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.07em;
   padding: 0.3rem 0.45rem 0.2rem 1.8rem;
-  text-transform: uppercase;
 }
 
 .typography-font-option-group > button {
@@ -2233,8 +2231,6 @@ details > summary:active { transform: scale(0.985); }
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
 }
 
 .document-editor-context-card > header h2 {
@@ -2485,8 +2481,6 @@ details > summary:active { transform: scale(0.985); }
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .app-shell-main .document-editor-properties-card > header h2 {
@@ -2655,8 +2649,6 @@ details > summary:active { transform: scale(0.985); }
   color: var(--muted);
   font-size: var(--ln-wysiwyg-relevant-meta-font-size);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .document-editor-relevant-groups {
@@ -2673,9 +2665,7 @@ details > summary:active { transform: scale(0.985); }
   font-size: var(--ln-wysiwyg-relevant-meta-font-size);
   font-weight: 650;
   justify-content: space-between;
-  letter-spacing: 0.06em;
   min-height: var(--ln-wysiwyg-relevant-heading-height);
-  text-transform: uppercase;
 }
 
 .document-editor-relevant-group {
@@ -2861,9 +2851,7 @@ details > summary:active { transform: scale(0.985); }
   font-size: var(--ln-wysiwyg-relevant-meta-font-size);
   font-weight: 650;
   justify-content: space-between;
-  letter-spacing: 0.06em;
   min-height: var(--ln-wysiwyg-relevant-heading-height);
-  text-transform: uppercase;
 }
 
 .document-editor-linked-row,
@@ -4722,9 +4710,7 @@ table :where(td) {
     content: attr(data-label);
     font-size: 12px;
     font-weight: 650;
-    letter-spacing: 0.05em;
     line-height: 1.2;
-    text-transform: uppercase;
   }
 
   .ln-result-dataset-editor td[data-row-actions] {

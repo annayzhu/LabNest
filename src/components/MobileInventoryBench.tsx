@@ -47,7 +47,7 @@ export function MobileInventoryBench({ items, query, attentionCount }: { items: 
   return (
     <section className="space-y-4 lg:hidden" aria-label="Bench inventory">
       <div>
-        <h1 className="font-serif text-2xl font-medium tracking-[-0.02em] text-ink">Inventory at the bench</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-ink">Inventory at the bench</h1>
         <p className="mt-1 text-sm text-muted">Scan or search first, then confirm the material before recording a movement.</p>
       </div>
 

@@ -106,6 +106,6 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
   </div></AppShell>;
 }
 
-function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div className="min-w-0"><p className="text-xs font-semibold uppercase leading-3 tracking-[0.07em] text-muted">{label}</p><div className="mt-0.5 min-w-0 break-words text-xs font-medium leading-4 text-ink">{children}</div></div>; }
+function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div className="min-w-0"><p className="text-xs font-medium leading-3 text-muted">{label}</p><div className="mt-0.5 min-w-0 break-words text-xs font-medium leading-4 text-ink">{children}</div></div>; }
 
-function CompactStat({ label, value }: { label: string; value: React.ReactNode }) { return <span className="whitespace-nowrap text-xs leading-4 text-muted"><span className="font-semibold uppercase tracking-[0.04em]">{label}</span><strong className="ml-1 font-medium text-ink">{value}</strong></span>; }
+function CompactStat({ label, value }: { label: string; value: React.ReactNode }) { return <span className="whitespace-nowrap text-xs leading-4 text-muted"><span className="font-medium">{label}</span><strong className="ml-1 font-medium text-ink">{value}</strong></span>; }

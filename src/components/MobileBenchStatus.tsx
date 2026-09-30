@@ -84,7 +84,7 @@ export function MobileBenchStatus() {
       <button type="button" aria-label="Close sync review" onClick={() => { setReviewOpen(false); reviewTrigger.current?.focus(); }} className="ln-modal-backdrop absolute inset-0 bg-ink/25" />
       <section role="dialog" aria-modal="true" aria-labelledby="sync-review-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
         <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
-          <div><h2 id="sync-review-title" className="font-serif text-xl font-medium text-ink">Review sync issues</h2><p className="mt-1 text-xs text-muted">Your local record is kept until you retry or discard it.</p></div>
+          <div><h2 id="sync-review-title" className="text-xl font-semibold text-ink">Review sync issues</h2><p className="mt-1 text-xs text-muted">Your local record is kept until you retry or discard it.</p></div>
           <button type="button" aria-label="Close sync review" onClick={() => { setReviewOpen(false); reviewTrigger.current?.focus(); }} className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hairline"><X className="h-4 w-4" /></button>
         </div>
         <ul className="divide-y divide-hairline">

@@ -39,7 +39,7 @@ export function RecycleBinActions({ id, identifier, title, associationsPreserved
           <div className="ln-modal-backdrop pointer-events-none absolute inset-0 bg-ink/35 backdrop-blur-[2px]" aria-hidden />
           <section role="dialog" aria-modal="true" aria-labelledby={`purge-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
-              <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-error">{locale === "zh" ? "不可撤销" : "Irreversible"}</p><h2 id={`purge-${id}`} className="mt-1 font-serif text-xl font-medium text-ink">{locale === "zh" ? "从回收站永久删除？" : "Delete from the Recycle Bin forever?"}</h2></div>
+              <div><p className="text-xs font-medium text-error">{locale === "zh" ? "不可撤销" : "Irreversible"}</p><h2 id={`purge-${id}`} className="mt-1 text-xl font-semibold text-ink">{locale === "zh" ? "从回收站永久删除？" : "Delete from the Recycle Bin forever?"}</h2></div>
               <button type="button" aria-label="Close permanent deletion dialog" disabled={purging} onClick={() => setOpen(false)} className="focus-ring rounded-[var(--ln-radius-control-sm)] p-1.5 text-muted hover:bg-stone hover:text-ink"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-4 rounded-[var(--ln-radius-control-lg)] border border-error/25 bg-error-surface px-3 py-3"><p className="font-medium text-error">{identifier} · {title}</p><p className="mt-1 text-sm leading-6 text-graphite">{locale === "zh" ? "这会删除最后一份恢复快照，之后无法找回。" : "This removes the final recovery snapshot and cannot be undone."}</p></div>

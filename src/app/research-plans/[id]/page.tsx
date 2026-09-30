@@ -87,4 +87,4 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
   );
 }
 
-function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }
+function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-medium text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }

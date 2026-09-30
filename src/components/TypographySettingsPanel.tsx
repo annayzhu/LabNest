@@ -20,8 +20,10 @@ import {
 } from "@/lib/local-font-catalog";
 import {
   applyTypographySettings,
+  clearTypographySettings,
   defaultTypographySettings,
   maxCustomFontCount,
+  saveTypographySettings,
   settingsWithoutCustomFont,
   typographyPresets,
   typographyRoleGroups,
@@ -33,10 +35,8 @@ import {
 } from "@/lib/typography-settings";
 
 const roleCopy: Record<TypographyRole, { zh: string; en: string; noteZh: string; noteEn: string }> = {
-  cjkUi: { zh: "中文界面", en: "Chinese interface", noteZh: "导航、按钮与表单中的中文", noteEn: "Chinese in navigation, buttons, and forms" },
   cjkDocumentBody: { zh: "中文正文", en: "Chinese document body", noteZh: "实验记录与长文中的中文", noteEn: "Chinese in records and long-form documents" },
   cjkDocumentHeading: { zh: "中文标题", en: "Chinese headings", noteZh: "页面与文档标题中的中文", noteEn: "Chinese page and document headings" },
-  latinUi: { zh: "英文界面", en: "English interface", noteZh: "导航、按钮与表单中的英文", noteEn: "English in navigation, buttons, and forms" },
   latinDocumentBody: { zh: "英文正文", en: "English document body", noteZh: "实验记录与长文中的英文", noteEn: "English in records and long-form documents" },
   latinDocumentHeading: { zh: "英文标题", en: "English headings", noteZh: "页面与文档标题中的英文", noteEn: "English page and document headings" },
 };
@@ -45,14 +45,14 @@ const groupCopy = {
   cjk: {
     zh: "中文字体",
     en: "Chinese fonts",
-    noteZh: "中文按界面、正文和标题分别设置；英文字符不会再沿用宋体。",
-    noteEn: "Choose Chinese fonts separately for interface, body, and headings. Latin text no longer inherits a Chinese serif.",
+    noteZh: "中文按正文和标题分别设置；英文字符不会再沿用宋体。",
+    noteEn: "Choose Chinese fonts separately for body and headings. Latin text no longer inherits a Chinese serif.",
   },
   latin: {
     zh: "英文字体",
     en: "English fonts",
-    noteZh: "可为界面、正文和标题使用完整的英文字体目录，也可扫描本机字体或导入字体族。",
-    noteEn: "Use the complete Latin catalog for interface, body, and headings, or discover/import additional families.",
+    noteZh: "可为正文和标题使用完整的英文字体目录，也可扫描本机字体或导入字体族。",
+    noteEn: "Use the complete Latin catalog for body and headings, or discover/import additional families.",
   },
 } as const;
 
@@ -171,8 +171,17 @@ export function TypographySettingsPanel() {
   function updateSettings(next: TypographySettings, confirmation = copy("字体设置已应用。", "Typography settings applied.")) {
     setSettings(next);
     applyTypographySettings(next);
+    saveTypographySettings(next);
     setError("");
     setMessage(confirmation);
+  }
+
+  function resetSettings() {
+    setSettings(defaultTypographySettings);
+    applyTypographySettings(defaultTypographySettings);
+    clearTypographySettings();
+    setError("");
+    setMessage(copy("已恢复默认字体。", "Default typography restored."));
   }
 
   function selectFont(role: TypographyRole, value: string) {
@@ -202,7 +211,7 @@ export function TypographySettingsPanel() {
     try {
       const families = await discoverLocalFontFamilies();
       setLocalFonts(families);
-      setMessage(copy(`已发现 ${families.length} 个本机字体族，可用于界面、正文和标题。`, `Found ${families.length} device font families for interface, body, and headings.`));
+      setMessage(copy(`已发现 ${families.length} 个本机字体族，可用于正文和标题。`, `Found ${families.length} device font families for body and headings.`));
     } catch (error) {
       setError(error instanceof DOMException && error.name === "NotAllowedError"
         ? copy("未获得本机字体访问权限。你可以重新点击并允许访问，或继续使用内置/导入字体。", "Device-font access was not granted. Retry and allow access, or keep using built-in/imported fonts.")
@@ -298,6 +307,7 @@ export function TypographySettingsPanel() {
 
   return (
     <div className="typography-settings-panel">
+      <p className="mb-4 text-sm text-muted">{copy("这里设置实验记录与文档的字体；界面字体在", "Fonts for records and documents. Set the interface font in ")}<a className="underline" href="#appearance">{copy("外观", "Appearance")}</a>{copy("中设置。", ".")}</p>
       <div className="typography-language-groups">
         {(Object.keys(typographyRoleGroups) as Array<keyof typeof typographyRoleGroups>).map((group) => (
           <fieldset key={group} className="typography-language-group" data-typography-script={group}>
@@ -327,7 +337,7 @@ export function TypographySettingsPanel() {
             <p className="typography-preview-body">The quick brown fox jumps over 13 wells.</p>
           </div>
         </div>
-        <button type="button" className="focus-ring typography-reset-button" onClick={() => updateSettings(defaultTypographySettings, copy("已恢复默认字体。", "Default typography restored."))}>
+        <button type="button" className="focus-ring typography-reset-button" onClick={resetSettings}>
           <RotateCcw aria-hidden />{copy("恢复默认", "Reset")}
         </button>
       </div>
@@ -335,7 +345,7 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("本机字体", "Device fonts")}</p>
-          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的界面、正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English interface, body, and headings.")}</p>
+          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English body and headings.")}</p>
         </div>
         <button type="button" className="focus-ring typography-import-button" disabled={discoveringFonts} onClick={() => void discoverFonts()}>
           <Laptop aria-hidden />{discoveringFonts ? copy("正在读取…", "Discovering…") : localFonts.length ? copy("重新扫描", "Scan again") : copy("扫描本机字体", "Find device fonts")}

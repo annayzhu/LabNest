@@ -9,16 +9,15 @@ export const customFontStoreName = "fonts";
 export const maxCustomFontBytes = 10_000_000;
 export const maxCustomFontCount = 8;
 
-/* The selectable families live in one catalog shared by Settings and every editor toolbar. */
+/* The selectable families live in one catalog shared by Settings and every editor toolbar.
+ * Typography owns document roles only; Appearance (uiFontId) owns the interface font. */
 const cjkTypographyCatalog = cjkFontCatalog;
 
 const latinTypographyCatalog = latinFontCatalog;
 
 export const typographyPresets = {
-  cjkUi: cjkTypographyCatalog,
   cjkDocumentBody: cjkTypographyCatalog,
   cjkDocumentHeading: cjkTypographyCatalog,
-  latinUi: latinTypographyCatalog,
   latinDocumentBody: latinTypographyCatalog,
   latinDocumentHeading: latinTypographyCatalog,
 } as const;
@@ -60,32 +59,29 @@ export type CustomFontFaceRecord = {
 };
 
 export const defaultTypographySettings: TypographySettings = {
-  cjkUi: { kind: "preset", id: "source-han-sans" },
   cjkDocumentBody: { kind: "preset", id: "source-han-serif" },
   cjkDocumentHeading: { kind: "preset", id: "source-han-serif" },
-  latinUi: { kind: "preset", id: "arial" },
   latinDocumentBody: { kind: "preset", id: "times-new-roman" },
   latinDocumentHeading: { kind: "preset", id: "times-new-roman" },
 };
 
 const cssVariableByRole: Record<TypographyRole, string> = {
-  cjkUi: "--font-cjk-ui",
   cjkDocumentBody: "--font-cjk-document-body",
   cjkDocumentHeading: "--font-cjk-document-heading",
-  latinUi: "--font-latin-ui",
   latinDocumentBody: "--font-latin-document-body",
   latinDocumentHeading: "--font-latin-document-heading",
 };
 
 export const typographyCssProperties = Object.values(cssVariableByRole);
+/* Earlier releases wrote these inline; clearing them lets globals.css and Appearance take over. */
+const retiredTypographyCssProperties = ["--font-ui", "--font-document-body", "--font-document-heading", "--font-cjk-ui", "--font-latin-ui"];
 
 export const typographyRoleGroups = {
-  cjk: ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading"],
-  latin: ["latinUi", "latinDocumentBody", "latinDocumentHeading"],
+  cjk: ["cjkDocumentBody", "cjkDocumentHeading"],
+  latin: ["latinDocumentBody", "latinDocumentHeading"],
 } as const satisfies Record<"cjk" | "latin", readonly TypographyRole[]>;
 
-const legacyRoleByRole: Partial<Record<TypographyRole, "ui" | "documentBody" | "documentHeading">> = {
-  cjkUi: "ui",
+const legacyRoleByRole: Partial<Record<TypographyRole, "documentBody" | "documentHeading">> = {
   cjkDocumentBody: "documentBody",
   cjkDocumentHeading: "documentHeading",
 };
@@ -124,7 +120,7 @@ function parseSelection(role: TypographyRole, value: unknown): FontSelection {
 export function parseTypographySettings(serialized: string | null): TypographySettings {
   if (!serialized) return defaultTypographySettings;
   try {
-    const value = JSON.parse(serialized) as Partial<Record<TypographyRole | "ui" | "documentBody" | "documentHeading", unknown>>;
+    const value = JSON.parse(serialized) as Partial<Record<TypographyRole | "documentBody" | "documentHeading", unknown>>;
     return (Object.keys(defaultTypographySettings) as TypographyRole[]).reduce<TypographySettings>((settings, role) => {
       const legacyRole = legacyRoleByRole[role];
       settings[role] = parseSelection(role, value[role] ?? (legacyRole ? value[legacyRole] : undefined));
@@ -156,12 +152,24 @@ export function typographyCssVariables(settings: TypographySettings): Record<str
 }
 
 export function applyTypographySettings(settings: TypographySettings, root: HTMLElement = document.documentElement) {
-  const variables = typographyCssVariables(settings);
-  ["--font-ui", "--font-document-body", "--font-document-heading"].forEach((property) => root.style.removeProperty(property));
-  Object.entries(variables).forEach(([property, value]) => root.style.setProperty(property, value));
-  window.localStorage.setItem(typographySettingsStorageKey, JSON.stringify(settings));
-  window.localStorage.setItem(typographyCssStorageKey, JSON.stringify(variables));
+  retiredTypographyCssProperties.forEach((property) => root.style.removeProperty(property));
+  Object.entries(typographyCssVariables(settings)).forEach(([property, value]) => root.style.setProperty(property, value));
+}
+
+/* The CSS cache only feeds the pre-paint bootstrap script; it is derived data, not a user choice. */
+export function cacheTypographyCss(settings: TypographySettings) {
+  window.localStorage.setItem(typographyCssStorageKey, JSON.stringify(typographyCssVariables(settings)));
   window.localStorage.removeItem(legacyTypographyCssStorageKey);
+}
+
+/* Call only for an explicit choice; loading never saves, so people who never chose keep following future defaults. */
+export function saveTypographySettings(settings: TypographySettings) {
+  window.localStorage.setItem(typographySettingsStorageKey, JSON.stringify(settings));
+  cacheTypographyCss(settings);
+}
+
+export function clearTypographySettings() {
+  [typographySettingsStorageKey, typographyCssStorageKey, legacyTypographyCssStorageKey].forEach((key) => window.localStorage.removeItem(key));
 }
 
 export function validateCustomFontFile(file: Pick<File, "name" | "size">, locale: "zh" | "en" = "zh"): string | null {

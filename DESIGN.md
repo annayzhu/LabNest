@@ -27,35 +27,30 @@ colors:
   border-strong: "#c8d2cd"
 typography:
   display:
-    fontFamily: "Source Serif 4, Iowan Old Style, Palatino Linotype, Georgia, serif"
-    fontSize: "24px"
-    fontWeight: 500
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+    fontSize: "20px"
+    fontWeight: 600
     lineHeight: 1.25
   title:
-    fontFamily: "Source Serif 4, Iowan Old Style, Palatino Linotype, Georgia, serif"
-    fontSize: "17px"
-    fontWeight: 500
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+    fontSize: "16px"
+    fontWeight: 600
     lineHeight: 1.25
   body:
-    fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "11px"
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif"
+    fontSize: "12px"
     fontWeight: 500
     lineHeight: 1.35
-  caption:
-    fontFamily: "Source Sans 3, IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "10px"
+  document:
+    fontFamily: "Times New Roman, Source Han Serif SC, Songti SC, serif"
+    fontSize: "10pt"
     fontWeight: 400
-    lineHeight: 1.4
-  micro:
-    fontFamily: "IBM Plex Mono, JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
-    fontSize: "10px"
-    fontWeight: 400
-    lineHeight: 1.4
+    lineHeight: 1.6
   data:
     fontFamily: "IBM Plex Mono, JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
     fontSize: "12px"
@@ -106,13 +101,13 @@ components:
 
 **Creative North Star: "The Scientific Workbench"**
 
-LabNest is a calm, precise operating surface for laboratory work. Its moon-white canvas, ink-dark typography, restrained dai-cyan actions, white instrument-like panels, editorial serif headings, and compact data typography make dense scientific tasks legible without making them feel administrative or clinical.
+LabNest is a calm, precise operating surface for laboratory work. Its moon-white canvas, ink-dark typography, restrained dai-cyan actions, white instrument-like panels, system-sans headings with a serif A4 record, and compact data typography make dense scientific tasks legible without making them feel administrative or clinical.
 
 Calculator extends this world with a deliberate sequence: discover a narrowly named tool, enter values with visible units, calculate, inspect the result and method, then explicitly save or send it onward. Visual emphasis follows scientific responsibility rather than novelty.
 
 **Key Characteristics:**
 
-- Moon-white and blue-green neutrals with one restrained dai-cyan action color and low-dose cinnabar semantics.
+- Moon-white and blue-green neutrals with one restrained dai-cyan accent; color otherwise only carries status.
 - Flat, bordered panels and compact controls optimized for repeated work.
 - Editorial headings paired with utilitarian UI copy and monospaced measurements.
 - State changes expressed through color, text, icons, and explicit confirmation.
@@ -139,7 +134,9 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 **The One-Action Rule.** A panel has one visually filled primary action; secondary actions remain bordered, quiet, or textual.
 
-**The Collision-Action Rule.** Each system theme supplies a second, deliberately contrasting action family. It is reserved for one decisive create, save, run, or confirm action per region and for compact quick-entry shortcuts. Links, tabs, selection, and focus continue to use the quieter primary family; destructive actions always keep the semantic error family.
+**The One-Accent Rule.** Each system theme has exactly one accent: its dai-cyan (moss/action) family. Decisive actions are filled with it, links, tabs, selection, and focus use it quietly, and nothing else is colored except semantic status. Destructive actions keep the semantic error family and live in the page's More menu.
+
+**The Quiet Status Rule.** Settled states (completed, active, pass, valid, reviewed, running, archived) read as plain muted text. Only states that ask for attention (draft, planned, submitted, warning, failed) keep a tinted pill, so a table row carries at most one pill.
 
 **The Semantic Pair Rule.** Success, warning, error, and info foregrounds always travel with their matching pale surface and a textual or iconic cue.
 
@@ -153,13 +150,15 @@ Traditional motifs are a small identity layer, not a replacement for functional 
 
 ## Typography
 
-Typography is user-configurable by role from Settings. Interface text, document body copy, and headings remain separate roles so a researcher can lighten Chinese body text without weakening navigation or data scanning. The defaults are Source Han Sans SC at its Normal 350 weight for interface text and Source Han Serif SC for document body and headings, with system-safe Chinese fallbacks. Imported WOFF2, TTF, and OTF fonts remain browser-local; the fixed monospace data role is never changed by typography preferences.
+Typography is user-configurable by role from Settings. Interface text, document body copy, and headings remain separate roles. The interface defaults to the device's system fonts (SF Pro + PingFang on macOS, Segoe UI + Microsoft YaHei on Windows) at weight 400. The A4 record defaults to Times New Roman with Source Han Serif/Songti, the convention of Chinese research writing and of the Word exports. Imported WOFF2, TTF, and OTF fonts remain browser-local; the fixed monospace data role is never changed by typography preferences.
 
-**Display Font:** The selected heading role, defaulting to Source Han Serif SC with Chinese serif fallbacks
-**Body Font:** The selected interface role for product UI and the selected document-body role for A4 reading, defaulting to Source Han Sans SC and Source Han Serif SC respectively
+**Display Font:** System sans at 600 for page and card titles
+**Body Font:** System sans for product UI; the document-body role for A4 reading
 **Label/Mono Font:** IBM Plex Mono with technical monospace fallbacks
 
-**Character:** Serif type marks page and tool identity; sans-serif carries interaction and explanation; monospace is reserved for values, units, method versions, timestamps, and other exact data.
+**Character:** The workspace is sans throughout; serif belongs to the record, so `font-serif` resolves to the document heading font only inside the A4 paper. Monospace is reserved for values, units, method versions, timestamps, and other exact data.
+
+**Type scale.** Interface text uses six sizes only: 12, 13, 14, 16, 20, 24px. Nothing in the chrome is smaller than 12px; hierarchy below that comes from weight and color, not smaller type.
 
 ### Hierarchy
 
@@ -207,7 +206,7 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 - **Primary:** Filled primary color, high-contrast label, 36–40px height, and 6px corners. Use for Calculate, Confirm, Detect, or Send.
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
-- **Motion:** Decisive buttons may reveal a thin theme-spectrum edge on hover and show a bottom progress tracer only while a real action is pending. Dropdown icons use a short, directional micro-motion. Tool cards may expand into a focused preview modal; routine content never animates merely for decoration. All spatial motion is removed by `prefers-reduced-motion`.
+- **Motion:** Decisive buttons change fill on hover and show a bottom progress tracer only while a real action is pending. Dropdown icons use a short, directional micro-motion. Tool cards may expand into a focused preview modal; routine content never animates merely for decoration. All spatial motion is removed by `prefers-reduced-motion`.
 - **Shared motion grammar:** Dialogs use one 340ms card-and-backdrop entrance; selection surfaces use a 220ms trigger-connected reveal; disclosures use a 240ms spring response; and the sidebar icon crossfades while the rail changes width. These patterns preserve focus, document flow, and reduced-motion preferences.
 
 ### Chips
@@ -228,6 +227,10 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 - **Style:** 40px controls, 6px corners, hairline border, near-white fill, explicit label, and unit aligned opposite the label.
 - **Focus:** Border changes to the primary color; standalone controls also use the shared focus outline and halo.
 - **Error / Disabled:** Errors use the semantic error pair and `role="alert"`; disabled actions remain visible with reduced opacity.
+
+### Page Actions
+
+A page header shows at most its primary action, Edit, and one More (⋯) menu. Print, copy, export, secondary links, and Delete/archive live in the menu as plain text rows, with the destructive row last and separated by a hairline.
 
 ### Navigation
 

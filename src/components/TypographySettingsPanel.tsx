@@ -335,7 +335,7 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("本机字体", "Device fonts")}</p>
-          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的界面、正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English interface, body, and headings.")}</p>
+          <p className="mt-0.5 text-xs leading-5 text-muted">{copy("经浏览器授权后读取可用字体族；字体文件不会上传。发现的字体可用于中文或英文的界面、正文和标题。", "With browser permission, discover installed families without uploading font files. Use them for Chinese or English interface, body, and headings.")}</p>
         </div>
         <button type="button" className="focus-ring typography-import-button" disabled={discoveringFonts} onClick={() => void discoverFonts()}>
           <Laptop aria-hidden />{discoveringFonts ? copy("正在读取…", "Discovering…") : localFonts.length ? copy("重新扫描", "Scan again") : copy("扫描本机字体", "Find device fonts")}
@@ -345,7 +345,7 @@ export function TypographySettingsPanel() {
       <div className="typography-import-row">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">{copy("我的字体", "My fonts")}</p>
-          <p className="mt-0.5 text-[11px] leading-5 text-muted">{copy(`按字体族同时选择 Regular、Bold、Italic 等文件；单个文件不超过 10 MB，最多 ${maxCustomFontCount} 个字体族。`, `Select Regular, Bold, Italic, and other faces together; 10 MB per file and up to ${maxCustomFontCount} families.`)}</p>
+          <p className="mt-0.5 text-xs leading-5 text-muted">{copy(`按字体族同时选择 Regular、Bold、Italic 等文件；单个文件不超过 10 MB，最多 ${maxCustomFontCount} 个字体族。`, `Select Regular, Bold, Italic, and other faces together; 10 MB per file and up to ${maxCustomFontCount} families.`)}</p>
         </div>
         <label className="focus-ring typography-import-button" data-busy={importing ? "true" : undefined} aria-disabled={importing || customFonts.length >= maxCustomFontCount}>
           <Upload aria-hidden />{importing ? copy("正在导入…", "Importing…") : copy("导入字体族", "Import family")}
@@ -368,7 +368,7 @@ export function TypographySettingsPanel() {
             <li key={font.id}>
               <span className="min-w-0">
                 <span className="block truncate text-sm text-ink" style={{ fontFamily: `"${font.family} Latin", "${font.family} CJK"` }}>{font.name}</span>
-                <span className="block truncate text-[10px] text-muted">{font.faces?.length ?? 1} faces · {font.fileName} · {formatFileSize(font.size)}</span>
+                <span className="block truncate text-xs text-muted">{font.faces?.length ?? 1} faces · {font.fileName} · {formatFileSize(font.size)}</span>
               </span>
               <button type="button" className="focus-ring" onClick={() => void removeFont(font)} aria-label={copy(`删除字体 ${font.name}`, `Delete font ${font.name}`)}>
                 <Trash2 aria-hidden />

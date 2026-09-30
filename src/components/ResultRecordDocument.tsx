@@ -73,7 +73,7 @@ export function ResultRecordDocument({
   const canvas = <DocumentCanvas className="result-record-document" label={title}>
     <header className="document-page-header">
       <h1 className="document-page-title font-serif font-medium leading-tight text-ink">{title}</h1>
-      {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-[10px] text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
+      {qualityStatus !== "pass" || validationStatus !== "valid" ? <p className="mt-1 text-xs text-muted">Quality: {qualityStatus.replaceAll("_", " ")} · Template: {validationStatus.replaceAll("_", " ")}</p> : null}
     </header>
 
     <CalculationSnapshot value={values}/>

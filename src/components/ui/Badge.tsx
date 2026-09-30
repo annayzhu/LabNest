@@ -13,7 +13,7 @@ const toneClass: Record<StatusTone, string> = {
 };
 
 const badgeClass =
-  "inline-flex min-h-6 items-center rounded-[var(--ln-radius-control-sm)] border px-2 py-0.5 text-[11px] font-medium leading-5 tracking-[-0.005em]";
+  "inline-flex min-h-6 items-center rounded-[var(--ln-radius-control-sm)] border px-2 py-0.5 text-xs font-medium leading-5 tracking-[-0.005em]";
 
 export function Badge({
   children,
@@ -116,9 +116,19 @@ const statusTone: Record<string, StatusTone> = {
   inconclusive: "warning",
 };
 
+// Settled states read as plain text; only states that ask for attention (draft, warning, failure) keep a pill.
+const quietTones = new Set<StatusTone>(["success", "neutral", "info"]);
+const quietStatusClass = "inline-flex items-center text-xs font-medium leading-5 text-graphite";
+
 export function StatusPill({ status, href }: { status: string; href?: string }) {
   const label = status.replaceAll("_", " ");
   const tone = statusTone[status] ?? "neutral";
+
+  if (quietTones.has(tone)) {
+    return href
+      ? <Link href={href} title={`Filter by ${label}`} className={cn(quietStatusClass, "focus-ring rounded-[var(--ln-radius-control-sm)] hover:text-ink hover:underline")}>{label}</Link>
+      : <span className={quietStatusClass}>{label}</span>;
+  }
 
   if (href) {
     return (

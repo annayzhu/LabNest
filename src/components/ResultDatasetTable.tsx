@@ -89,7 +89,7 @@ export function ResultDatasetTableEditor({ datasets, values, onChange }: {
             </div></td></tr>)}</tbody>
           </table>
         </ResizableTableFrame> : <p className="px-4 py-4 text-sm text-muted">该数据表尚未定义列，需先回到实验规程补充列结构。</p>}
-        {dataset.columns.length ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline px-3 py-2"><button type="button" onClick={() => commitRows(dataset.key, displayRows, [...displayRows, {}])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-xs font-medium text-moss hover:bg-sage-surface"><Plus className="h-3.5 w-3.5" />添加一行</button><p className="text-[11px] text-muted">支持从 Excel 粘贴多行多列</p>{pasteNotices[dataset.key] ? <p role="status" aria-live="polite" className="text-xs leading-5 text-muted">{pasteNotices[dataset.key]}</p> : null}</div> : null}
+        {dataset.columns.length ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline px-3 py-2"><button type="button" onClick={() => commitRows(dataset.key, displayRows, [...displayRows, {}])} className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-xs font-medium text-moss hover:bg-sage-surface"><Plus className="h-3.5 w-3.5" />添加一行</button><p className="text-xs text-muted">支持从 Excel 粘贴多行多列</p>{pasteNotices[dataset.key] ? <p role="status" aria-live="polite" className="text-xs leading-5 text-muted">{pasteNotices[dataset.key]}</p> : null}</div> : null}
       </section>;
     })}
   </div>;

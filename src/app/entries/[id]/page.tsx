@@ -11,6 +11,7 @@ import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
+import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
@@ -74,10 +75,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
-            <DocumentPrintButton showLabel />
             {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
-            <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
-            <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
+            <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
           </div>}
         />
 

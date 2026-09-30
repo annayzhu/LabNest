@@ -90,7 +90,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
                 {monthGroups.map((group) => (
                   <section key={group.key} aria-labelledby={`entries-${group.key}`}>
                     <div className="mb-4 flex items-end justify-between gap-4 border-b border-hairline pb-3">
-                      <h2 id={`entries-${group.key}`} className="text-[18px] font-semibold tracking-[-0.02em] text-ink sm:text-[20px]">
+                      <h2 id={`entries-${group.key}`} className="text-base font-semibold tracking-[-0.02em] text-ink sm:text-xl">
                         {group.label}
                       </h2>
                       <span className="font-mono text-xs text-muted">

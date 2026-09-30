@@ -26,18 +26,18 @@ type ToolPresentation = {
 
 const defaultToolPresentation: ToolPresentation = {
   icon: Wrench,
-  iconClassName: "bg-stone text-fog",
+  iconClassName: "bg-action-surface text-moss",
   tileClassName: "xl:col-span-1",
 };
 
 const toolPresentation: Partial<Record<string, ToolPresentation>> = {
-  calculator: { icon: Calculator, iconClassName: "bg-action-surface text-action", tileClassName: "md:col-span-2 xl:col-span-4" },
-  "free-plate-layout": { icon: Table2, iconClassName: "bg-success-surface text-success", tileClassName: "md:col-span-2 xl:col-span-2" },
-  "qpcr-plate-layout": { icon: Grid3X3, iconClassName: "bg-info-surface text-info", tileClassName: "xl:col-span-1" },
-  "cnv-plate-layout": { icon: Dna, iconClassName: "bg-pale-sand text-clay", tileClassName: "xl:col-span-1" },
-  "visualization-studio": { icon: ChartSpline, iconClassName: "bg-action-surface text-action", tileClassName: "md:col-span-2 xl:col-span-2" },
-  "qpcr-analysis": { icon: Activity, iconClassName: "bg-info-surface text-info", tileClassName: "xl:col-span-1" },
-  "cnv-analysis": { icon: Binary, iconClassName: "bg-pale-sand text-clay", tileClassName: "xl:col-span-1" },
+  calculator: { icon: Calculator, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-4" },
+  "free-plate-layout": { icon: Table2, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-2" },
+  "qpcr-plate-layout": { icon: Grid3X3, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
+  "cnv-plate-layout": { icon: Dna, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
+  "visualization-studio": { icon: ChartSpline, iconClassName: "bg-action-surface text-moss", tileClassName: "md:col-span-2 xl:col-span-2" },
+  "qpcr-analysis": { icon: Activity, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
+  "cnv-analysis": { icon: Binary, iconClassName: "bg-action-surface text-moss", tileClassName: "xl:col-span-1" },
 };
 
 const categoryOrder: LabToolCategory[] = ["Planning", "Calculators", "Analysis"];
@@ -85,7 +85,7 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
               <Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{tool.category} · v{tool.version}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{tool.category} · v{tool.version}</p>
               <h2 id={`tool-preview-${tool.id}`} className="mt-1 font-serif text-xl font-medium leading-tight text-ink">{tool.name}</h2>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
             <section key={category} aria-labelledby={`tools-${category.toLowerCase()}`} className="space-y-2">
               <div className="flex items-center gap-3">
                 <h2 id={`tools-${category.toLowerCase()}`} className="text-sm font-semibold text-ink">{category}</h2>
-                <span className="font-mono text-[10px] tabular-nums text-muted">{categoryTools.length} {categoryTools.length === 1 ? "tool" : "tools"}</span>
+                <span className="font-mono text-xs tabular-nums text-muted">{categoryTools.length} {categoryTools.length === 1 ? "tool" : "tools"}</span>
                 <span className="h-px flex-1 bg-hairline" aria-hidden />
               </div>
 
@@ -152,18 +152,18 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                     <article key={tool.id} className={`group relative flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className={`ln-tool-card-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden /></div>
-                        <span className="font-mono text-[10px] leading-none tabular-nums text-muted">v{tool.version}</span>
+                        <span className="font-mono text-xs leading-none tabular-nums text-muted">v{tool.version}</span>
                       </div>
                       <div className="mt-3 flex-1">
                         <h3 className="font-serif text-xl font-medium leading-tight tracking-[-0.015em] text-ink">{tool.name}</h3>
                         <p className="mt-1 max-w-[66ch] text-sm leading-5 text-graphite">{tool.description}</p>
                       </div>
-                      <div className="mt-3 grid gap-x-2 gap-y-0.5 border-t border-hairline/80 pt-2 text-[11px] leading-4 text-muted sm:grid-cols-[42px_minmax(0,1fr)]">
+                      <div className="mt-3 grid gap-x-2 gap-y-0.5 border-t border-hairline/80 pt-2 text-xs leading-4 text-muted sm:grid-cols-[42px_minmax(0,1fr)]">
                         <span className="font-semibold text-graphite">Input</span><span>{tool.accepts.join(" · ")}</span>
                         <span className="font-semibold text-graphite">Output</span><span>{tool.produces.join(" · ")}</span>
                       </div>
                       <div className="mt-2 flex min-h-7 items-end justify-between gap-2">
-                        <button type="button" className="ln-tool-preview-trigger relative z-10 focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-[11px] font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>
+                        <button type="button" className="ln-tool-preview-trigger relative z-10 focus-ring inline-flex h-7 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 text-xs font-semibold text-graphite hover:bg-stone hover:text-ink" onClick={(event) => openPreview(tool, event.currentTarget)}>
                           <Eye className="h-3.5 w-3.5" aria-hidden /> Preview
                         </button>
                         <Link href={tool.launchUrl ?? "#"} target={tool.external ? "_blank" : undefined} rel={tool.external ? "noreferrer" : undefined} aria-label={`Open ${tool.name}${tool.external ? " in a new tab" : ""}`} className="focus-ring flex items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 py-1 text-xs font-semibold text-action after:absolute after:inset-0 after:content-['']">

@@ -494,7 +494,7 @@ export function EntryComposer({
               <ChevronRight className="h-4 w-4 transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none" aria-hidden />
             </summary>
             <div className="grid gap-4 border-t border-hairline p-4">
-              {defaultExperimentLabel ? <div className="rounded-[var(--ln-radius-control-lg)] bg-action-surface px-3 py-2"><p className="text-xs font-semibold text-ink">{defaultExperimentLabel}</p>{defaultStepLabel ? <p className="mt-1 text-xs text-muted">Current step · {defaultStepLabel}</p> : null}<p className="mt-1 text-[11px] text-muted">This capture will retain the Experiment and Step association.</p></div> : null}
+              {defaultExperimentLabel ? <div className="rounded-[var(--ln-radius-control-lg)] bg-action-surface px-3 py-2"><p className="text-xs font-semibold text-ink">{defaultExperimentLabel}</p>{defaultStepLabel ? <p className="mt-1 text-xs text-muted">Current step · {defaultStepLabel}</p> : null}<p className="mt-1 text-xs text-muted">This capture will retain the Experiment and Step association.</p></div> : null}
               <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => updateField("projectId", value)} options={[{ value: "", label: "No project" }, ...projects.map((project) => ({ value: project.id, label: project.name }))]} />
               <ComposerSelect label="Research plan" value={fields.researchPlanId} onChange={(value) => {
                 updateField("researchPlanId", value);
@@ -552,7 +552,7 @@ export function EntryComposer({
         </div>
       </StandaloneDocumentEditorViewport>
 
-      <div className="flex items-center justify-between gap-2 text-[11px] text-muted" data-print-hidden>
+      <div className="flex items-center justify-between gap-2 text-xs text-muted" data-print-hidden>
         <span className="flex min-w-0 items-center gap-1.5"><Cloud className="h-3.5 w-3.5 shrink-0" aria-hidden /><span>{draftStatus || "Draft recovery is ready"}</span></span>
         <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting}><RotateCcw className="h-3.5 w-3.5" aria-hidden />Discard draft</Button>
       </div>
@@ -591,7 +591,7 @@ export function EntryComposer({
           </span>
           <span className="min-w-0">
             <span className="block text-[13px] font-medium text-ink">Drop files here or click to browse</span>
-            <span className="mt-0.5 block text-[11px] text-muted">Files upload only when you save the Entry.</span>
+            <span className="mt-0.5 block text-xs text-muted">Files upload only when you save the Entry.</span>
           </span>
         </label>
 
@@ -616,9 +616,9 @@ export function EntryComposer({
                   ) : (
                     <File className="h-10 w-10 text-muted" aria-hidden />
                   )}
-                  <span className="absolute left-2 top-2 rounded-full bg-ink/75 px-2 py-1 font-mono text-[10px] text-white">{index + 1}</span>
+                  <span className="absolute left-2 top-2 rounded-full bg-ink/75 px-2 py-1 font-mono text-xs text-white">{index + 1}</span>
                   {item.kind === "new" ? (
-                    <span className={cn("absolute bottom-2 right-2 rounded-full px-2 py-1 text-[10px] font-semibold", item.status === "error" ? "bg-error text-white" : item.status === "uploading" ? "bg-info text-white" : "bg-surface/90 text-moss")}>{item.status}</span>
+                    <span className={cn("absolute bottom-2 right-2 rounded-full px-2 py-1 text-xs font-semibold", item.status === "error" ? "bg-error text-white" : item.status === "uploading" ? "bg-info text-white" : "bg-surface/90 text-moss")}>{item.status}</span>
                   ) : null}
                 </div>
                 <div className="p-3">
@@ -634,7 +634,7 @@ export function EntryComposer({
             ))}
           </div>
         ) : null}
-        <p className="mt-2 text-[11px] text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
+        <p className="mt-2 text-xs text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
       </section>
       </div>
 
@@ -666,7 +666,7 @@ export function EntryComposer({
 
       {!entry ? (
         <details className="entry-editor-experiment">
-          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Protocol-based experiment")} <span className="ml-1.5 text-[11px] font-normal text-muted">{t("Optional")}</span></summary>
+          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Protocol-based experiment")} <span className="ml-1.5 text-xs font-normal text-muted">{t("Optional")}</span></summary>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => setFields((current) => value ? { ...current, protocolVersionId: value } : { ...current, protocolVersionId: "", createInitialResult: "false", resultTitle: "", resultType: "" })} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
             <ComposerInput label="Experiment title" value={fields.experimentTitle} onChange={(value) => updateField("experimentTitle", value)} placeholder="Defaults to Entry title" />
@@ -693,11 +693,11 @@ export function EntryComposer({
 }
 
 function ComposerInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
+  return <label className="block"><span className="text-xs font-medium uppercase tracking-[0.05em] text-muted">{label}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink" /></label>;
 }
 
 function ComposerSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
-  return <label className="block"><span className="text-[10px] font-medium uppercase tracking-[0.05em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+  return <label className="block"><span className="text-xs font-medium uppercase tracking-[0.05em] text-muted">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="focus-ring mt-1 h-8 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm px-2 text-xs text-ink">{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
 }
 
 function MediaPickerLabel({ htmlFor, disabled, spacious = false, children }: { htmlFor: string; disabled?: boolean; spacious?: boolean; children: React.ReactNode }) {

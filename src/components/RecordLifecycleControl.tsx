@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, Archive, RotateCcw, Trash2, X } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { formInputClass } from "@/components/forms";
@@ -25,6 +26,7 @@ export function RecordLifecycleControl({
   editHref,
   allowLinkedRecycle = false,
   triggerSize = "lg",
+  menuItem = false,
 }: {
   id: string;
   identifier: string;
@@ -39,6 +41,8 @@ export function RecordLifecycleControl({
   editHref?: string;
   allowLinkedRecycle?: boolean;
   triggerSize?: ButtonSize;
+  /** Render the trigger as a row inside PageActionsMenu. */
+  menuItem?: boolean;
 }) {
   const { locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -59,11 +63,14 @@ export function RecordLifecycleControl({
 
   return (
     <>
-      <Button type="button" size={triggerSize} variant="destructive" onClick={() => setOpen(true)}>
-        <Trash2 className="h-4 w-4" aria-hidden />
-        {locale === "zh" ? "删除 / 归档" : "Delete / archive"}
-      </Button>
-      {open ? (
+      {menuItem
+        ? <button type="button" className="ln-menu-danger" onClick={() => setOpen(true)}><Trash2 className="h-4 w-4" aria-hidden />{locale === "zh" ? "删除 / 归档" : "Delete / archive"}</button>
+        : <Button type="button" size={triggerSize} variant="destructive" onClick={() => setOpen(true)}>
+          <Trash2 className="h-4 w-4" aria-hidden />
+          {locale === "zh" ? "删除 / 归档" : "Delete / archive"}
+        </Button>}
+      {/* Portaled so the dialog survives when the menu that opened it closes. */}
+      {open ? createPortal(
         <div
           role="presentation"
           className="ln-modal-layer fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -75,7 +82,7 @@ export function RecordLifecycleControl({
           <section role="dialog" aria-modal="true" aria-labelledby={`record-lifecycle-${id}`} className="ln-modal-card relative w-full max-w-lg rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-error">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-error">
                   {locale === "zh" ? "记录生命周期" : "Record lifecycle"}
                 </p>
                 <h2 id={`record-lifecycle-${id}`} className="mt-1 font-serif text-xl font-medium text-ink">
@@ -148,7 +155,7 @@ export function RecordLifecycleControl({
             {archiveState.error ? <ErrorMessage message={archiveState.error} /> : null}
             {restoreState.error ? <ErrorMessage message={restoreState.error} /> : null}
           </section>
-        </div>
+        </div>, document.body,
       ) : null}
     </>
   );

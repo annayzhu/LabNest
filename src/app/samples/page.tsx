@@ -299,7 +299,7 @@ function SampleMetric({
       <Icon className="h-4 w-4 shrink-0 text-moss" aria-hidden />
       <div>
         <p className="font-serif text-2xl font-medium leading-none text-ink">{value}</p>
-        <p className="mt-2 text-[11px] font-semibold uppercase leading-none tracking-[0.04em] text-muted">{label}</p>
+        <p className="mt-2 text-xs font-semibold uppercase leading-none tracking-[0.04em] text-muted">{label}</p>
       </div>
     </div>
   );

@@ -46,20 +46,20 @@ export function EntryCollectionNav({
           <Link href={collectionHref()} className={itemClass(!activeProject)}>
             <BookOpenText className="h-4 w-4 shrink-0" aria-hidden />
             <span className="whitespace-nowrap">All entries</span>
-            <span className="ml-auto font-mono text-[11px] text-muted">{totalCount}</span>
+            <span className="ml-auto font-mono text-xs text-muted">{totalCount}</span>
           </Link>
           {collections.map((collection) => (
             <Link key={collection.id} href={collectionHref(collection.id)} className={itemClass(activeProject === collection.id)}>
               <FolderClosed className="h-4 w-4 shrink-0" aria-hidden />
               <span className="max-w-44 truncate whitespace-nowrap">{collection.name}</span>
-              <span className="ml-auto font-mono text-[11px] text-muted">{collection.count}</span>
+              <span className="ml-auto font-mono text-xs text-muted">{collection.count}</span>
             </Link>
           ))}
           {unassignedCount ? (
             <Link href={collectionHref("unassigned")} className={itemClass(activeProject === "unassigned")}>
               <Link2 className="h-4 w-4 shrink-0" aria-hidden />
               <span className="whitespace-nowrap">Unassigned</span>
-              <span className="ml-auto font-mono text-[11px] text-muted">{unassignedCount}</span>
+              <span className="ml-auto font-mono text-xs text-muted">{unassignedCount}</span>
             </Link>
           ) : null}
         </nav>
@@ -68,17 +68,17 @@ export function EntryCollectionNav({
           <div>
             <Paperclip className="h-3.5 w-3.5 text-moss" aria-hidden />
             <span className="mt-1 block font-mono text-sm text-ink">{attachmentCount}</span>
-            <span className="text-[11px] text-muted">files</span>
+            <span className="text-xs text-muted">files</span>
           </div>
           <div>
             <FolderClosed className="h-3.5 w-3.5 text-moss" aria-hidden />
             <span className="mt-1 block font-mono text-sm text-ink">{collections.length}</span>
-            <span className="text-[11px] text-muted">projects</span>
+            <span className="text-xs text-muted">projects</span>
           </div>
           <div>
             <ListChecks className="h-3.5 w-3.5 text-moss" aria-hidden />
             <span className="mt-1 block font-mono text-sm text-ink">{pendingActionCount}</span>
-            <span className="text-[11px] text-muted">pending</span>
+            <span className="text-xs text-muted">pending</span>
           </div>
         </div>
       </section>

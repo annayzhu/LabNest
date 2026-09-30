@@ -34,7 +34,7 @@ export function ResultDatasetSchemaView({ datasets, showHeading = true }: {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-warm/60 px-3 py-2.5">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink">{dataset.label}</p>
-          <p className="mt-0.5 break-all font-mono text-[11px] text-muted">{dataset.key}</p>
+          <p className="mt-0.5 break-all font-mono text-xs text-muted">{dataset.key}</p>
         </div>
         <Badge tone={dataset.required ? "warning" : "neutral"}>{dataset.required ? "必填 / Required" : "可选 / Optional"}</Badge>
       </div>

@@ -74,7 +74,7 @@ function ModalDialog({ request, onDone }: { request: DialogRequest; onDone: () =
     <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="ln-modal-card relative z-10 w-full max-w-md overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft">
       <div className="flex items-start justify-between gap-4 border-b border-hairline px-4 py-3.5">
         <div className="min-w-0">
-          {request.tone === "destructive" ? <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-error"><AlertTriangle className="h-3 w-3" aria-hidden />Irreversible</p> : null}
+          {request.tone === "destructive" ? <p className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.08em] text-error"><AlertTriangle className="h-3 w-3" aria-hidden />Irreversible</p> : null}
           <h2 id={titleId} className="font-serif text-lg font-medium leading-tight text-ink">{request.title}</h2>
         </div>
         <button type="button" onClick={() => close(false)} className="focus-ring flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-sm)] text-muted hover:bg-stone hover:text-ink" aria-label="Close dialog"><X className="h-4 w-4" aria-hidden /></button>

@@ -71,8 +71,8 @@ export function MobileInventoryBench({ items, query, attentionCount }: { items: 
         <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
           {items.length ? items.map((item) => <Link key={item.id} href={`/inventory/${item.id}`} className="focus-ring flex min-h-16 items-center gap-3 px-4 py-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><PackageSearch className="h-4 w-4" aria-hidden /></span>
-            <span className="min-w-0 flex-1"><span className="line-clamp-1 block text-sm font-semibold text-ink">{item.name}</span><span className="mt-1 block truncate text-xs text-muted">{item.subtitle} · {item.location}</span>{item.code ? <span className="record-identifier mt-1 block truncate text-[10px] text-muted">{item.code}</span> : null}</span>
-            <span className="shrink-0 text-right"><span className="block font-mono text-xs text-ink">{item.quantity} {item.unit}</span>{item.risk ? <span className="mt-1 block text-[10px] font-semibold text-warning">Review</span> : null}</span>
+            <span className="min-w-0 flex-1"><span className="line-clamp-1 block text-sm font-semibold text-ink">{item.name}</span><span className="mt-1 block truncate text-xs text-muted">{item.subtitle} · {item.location}</span>{item.code ? <span className="record-identifier mt-1 block truncate text-xs text-muted">{item.code}</span> : null}</span>
+            <span className="shrink-0 text-right"><span className="block font-mono text-xs text-ink">{item.quantity} {item.unit}</span>{item.risk ? <span className="mt-1 block text-xs font-semibold text-warning">Review</span> : null}</span>
           </Link>) : <p className="px-4 py-8 text-center text-sm text-muted">No inventory item matches this code or search.</p>}
         </div>
       </section>

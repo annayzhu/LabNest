@@ -282,7 +282,7 @@ const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", clas
 function InventoryColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`normal-case tracking-normal ${className}`}>
-      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
+      <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
       <div className="mt-1.5 hidden md:block">{children}</div>
     </div>
   );
@@ -316,7 +316,7 @@ function InventoryMobileFilters({
       <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite hover:bg-warm">
         <Filter className="h-3.5 w-3.5" aria-hidden />
         Filters
-        {activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-[10px] text-moss">{activeFilterCount}</span> : null}
+        {activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">{activeFilterCount}</span> : null}
       </summary>
       <form action="/inventory" method="get" className="absolute left-0 top-11 z-30 grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-soft">
         <MobileFilterField label="Item">

@@ -1,7 +1,43 @@
-import { describe, expect, it } from "vitest";
-import { groupLocalFontFaces, parseLocalFontFamilies } from "./local-font-catalog";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  discoverLocalFontFamilies,
+  groupLocalFontFaces,
+  noLocalFontFamilies,
+  parseLocalFontFamilies,
+  storedLocalFontFamiliesSnapshot,
+  subscribeToLocalFontFamilies,
+} from "./local-font-catalog";
 
 describe("local font catalog", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("serves a stable stored snapshot that discovery updates through its change event", async () => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+    } as Storage;
+    vi.stubGlobal("window", Object.assign(new EventTarget(), { localStorage: storage }));
+    vi.stubGlobal("document", { documentElement: { style: { setProperty: () => undefined } } });
+    expect(storedLocalFontFamiliesSnapshot()).toBe(noLocalFontFamilies);
+
+    const onChange = vi.fn();
+    const unsubscribe = subscribeToLocalFontFamilies(onChange);
+    await discoverLocalFontFamilies({
+      queryLocalFonts: async () => [{ family: "Device Sans", fullName: "Device Sans Regular", postscriptName: "DeviceSans-Regular", style: "Regular" }],
+    } as unknown as Parameters<typeof discoverLocalFontFamilies>[0], storage);
+    expect(onChange).toHaveBeenCalledOnce();
+    const discovered = storedLocalFontFamiliesSnapshot();
+    expect(discovered).toEqual([expect.objectContaining({ name: "Device Sans", styles: ["Regular"] })]);
+    expect(storedLocalFontFamiliesSnapshot()).toBe(discovered);
+
+    unsubscribe();
+    window.dispatchEvent(new Event("labnest:local-fonts-changed"));
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
   it("groups browser-discovered faces into one family", () => {
     expect(groupLocalFontFaces([
       { family: "Example Sans", fullName: "Example Sans Regular", postscriptName: "ExampleSans-Regular", style: "Regular" },

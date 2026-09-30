@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import Link from "next/link";
 import { EntryContentView } from "@/components/EntryContentView";
 import { DocumentMediaView } from "@/components/DocumentMediaView";
@@ -9,7 +10,7 @@ export function ScientificBlockView({ block }: { block: ScientificContentBlock }
     const execution=block.execution;
     if(execution.role==="group")return <h3 className="document-execution-group font-semibold">{execution.title}</h3>;
     return <div className="document-execution-step" data-execution-role={execution.role}>
-      <p className="flex items-start gap-2"><span aria-label={execution.completed?"Completed":"Not completed"} className="shrink-0">{execution.completed?"☑":"☐"}</span><span>{execution.title}</span></p>
+      <p className="flex items-start gap-2"><span aria-label={execution.completed?"Completed":"Not completed"} className="shrink-0">{execution.completed?"☑":"☐"}</span><span>{execution.title}</span>{execution.completedAt ? <time dateTime={execution.completedAt} suppressHydrationWarning className="ml-auto shrink-0 font-mono text-xs text-muted">{format(new Date(execution.completedAt), "yyyy-MM-dd HH:mm")}</time> : null}</p>
       {execution.deviationNote ? <div className="mt-1 text-sm"><span className="mr-2 inline-block rounded border border-error px-1 text-xs text-error">{execution.deviationLabel}</span><span className="whitespace-pre-wrap text-error">{execution.deviationNote}</span>
         {execution.impact?<p className="mt-1 whitespace-pre-wrap text-graphite">影响评估：{execution.impact}</p>:null}
         {execution.author?<p className="mt-1 text-muted">记录人：{execution.author}</p>:null}

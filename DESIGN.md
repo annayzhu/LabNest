@@ -145,6 +145,8 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 ### Selectable system styles
 
+Settings also offers Light, Dark, and System modes. Dark mode remaps the same semantic roles per style (each style has its own dark accent and selection pair); A4 document paper, print, exported figures, and chart palettes always stay light. It is an appearance preference, not the dark dashboard aesthetic ruled out below.
+
 Settings exposes four browser-local system styles. Each style remaps the same semantic roles rather than changing component behavior: 月白黛青 is the restrained default; 法蓝赪霞 is the brighter cyan-coral option; 青瓷松石 is a soft green work surface; 藕荷砚墨 is a warmer editorial option. Theme selection applies immediately, persists in the current browser, and never changes scientific chart palettes or exported figure colors.
 
 Traditional motifs are a small identity layer, not a replacement for functional iconography. The LabNest brand mark uses an authored 回纹-style geometry; theme previews may use 回纹、祥云、莲瓣 or linked-diamond motifs in one consistent monoline SVG grammar. Navigation, saving, deleting, search, status, and scientific actions retain familiar Lucide icons so cultural character never weakens operational clarity.
@@ -176,7 +178,7 @@ Settings exposes Compact, Standard, and Comfortable interface scales. Compact is
 
 **The Data Is Data Rule.** Do not use monospace decoratively; use it only where fixed-width scanning improves scientific interpretation or provenance.
 
-**The Active Label Rule.** Selected navigation items, document tabs, filters, and palette choices emphasize the label in the current theme action color, with only a low-dose tint or a thin underline behind it. Do not rely on a large rounded color block as the primary selected-state signal.
+**The Active Label Rule.** Selected navigation items, document tabs, filters, and palette choices emphasize the label in the primary (moss) family, with only a low-dose tint or a thin underline or leading bar behind it. Do not rely on a large rounded color block as the primary selected-state signal.
 
 ## Layout
 
@@ -249,6 +251,7 @@ The upload canvas is a large dashed work area with visible detection overlays. A
 - **Do** keep units, method version, warnings, and persistence state visible near the result they qualify.
 - **Do** preserve semantic labels, `role="alert"`, keyboard focus, touch-friendly primary controls, and bilingual wrapping at 390px.
 - **Do** use explicit confirmation for reviewed or persisted scientific outputs.
+- **Do** treat submitted and reviewed Experiments and Entries as read-only: hide editing, disable Run controls, and route changes through the record-status control, where reopening requires a logged reason.
 
 ### Don't:
 

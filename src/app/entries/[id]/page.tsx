@@ -3,6 +3,7 @@ import { ArrowLeft, Download, FileText, Link2, ListChecks, Paperclip, Pencil } f
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { ActivityHistory } from "@/components/ActivityHistory";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
@@ -12,13 +13,14 @@ import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
+import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
 import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { entryDeleteBlockers } from "@/lib/record-lifecycle";
+import { entryDeleteBlockers, isRecordLocked } from "@/lib/record-lifecycle";
 import { archiveEntry, deleteEntry, restoreEntry } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +55,11 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   if (!entry) notFound();
 
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/"));
-  const reportSourceReferences = await prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } });
+  const [reportSourceReferences, activityLogs] = await Promise.all([
+    prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
+    prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
+  ]);
+  const locked = isRecordLocked(entry.recordStatus);
   const deletionBlockers = entryDeleteBlockers(entry.recordStatus, {
     itemLinks: entry.itemLinks.length,
     proposedActions: entry.pendingActions.length,
@@ -69,7 +75,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
             <DocumentPrintButton showLabel />
-            <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
+            {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
             <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
             <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
           </div>}
@@ -201,6 +207,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   </div>
                 </div>
               </dl>
+              <div className="mt-4 border-t border-hairline pt-4"><RecordStatusControl targetType="entry" id={entry.id} recordStatus={entry.recordStatus} /></div>
             </section>
 
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
@@ -225,6 +232,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>
               )}
             </section>
+
+            <ActivityHistory logs={activityLogs} />
           </aside>
         </div>
       </div>

@@ -1828,16 +1828,17 @@ details > summary:active { transform: scale(0.985); }
   }
 }
 
+/* Active Label Rule: the label carries selection in the primary family; a thin leading bar, never a filled block. */
 .sidebar-nav-item-active {
-  background: var(--nav-active-bg);
-  box-shadow: inset 0 0 0 1px var(--nav-active-border);
-  color: var(--nav-active-fg);
+  background: transparent;
+  box-shadow: inset 3px 0 0 var(--moss);
+  color: var(--moss);
   font-weight: 650;
 }
 
 .sidebar-nav-item-active:hover {
-  color: var(--nav-active-fg);
-  filter: saturate(1.04) brightness(0.98);
+  background: color-mix(in srgb, var(--stone) 75%, transparent);
+  color: var(--moss);
 }
 
 .sidebar-nav-item-active svg {
@@ -5522,7 +5523,8 @@ button.focus-ring:active { filter: brightness(.96); }
 @media (prefers-reduced-motion: reduce) { .context-properties, .focus-ring, .ln-tool-card { transition: none; animation: none; } }
 
 .ln-experiment-brief, .document-page-facts.ln-experiment-facts { flex-wrap: nowrap; align-items: baseline; }
-.ln-experiment-brief > span { flex: 0 1 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The ID is short and not expandable, so it never truncates; plan and method keep their tap-to-expand ellipsis. */
+.ln-experiment-brief > span { flex: none; white-space: nowrap; }
 .ln-experiment-brief > details, .ln-experiment-facts > div { flex: 1 1 0; }
 .ln-experiment-brief summary { max-width: 100%; }
 .ln-experiment-brief details[open] { flex-basis: 45%; }

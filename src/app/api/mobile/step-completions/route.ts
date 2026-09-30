@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { assertRecordEditable } from "@/lib/record-lifecycle";
 
 const schema = z.object({
   experimentId: z.string().min(1),
@@ -21,9 +22,10 @@ export async function POST(request: Request) {
     const replay = await prisma.experimentStepEvent.findUnique({ where: { clientMutationId: input.clientMutationId }, select: { id: true } });
     if (replay) return Response.json({ eventId: replay.id, replay: true });
     const event = await prisma.$transaction(async (tx) => {
-      const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, experimentId: input.experimentId }, include: { experiment: { select: { status: true, primaryProtocolVersionId: true } } } });
+      const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, experimentId: input.experimentId }, include: { experiment: { select: { status: true, recordStatus: true, primaryProtocolVersionId: true } } } });
       if (!step) throw new Error("The selected experiment step is no longer available.");
       if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
+      assertRecordEditable(step.experiment.recordStatus);
       if (!step.allowsDeviation && input.deviationNote) throw new Error("This locked Protocol step does not allow a deviation record.");
       const recordedAt = new Date();
       await tx.experimentStep.update({ where: { id: step.id }, data: {

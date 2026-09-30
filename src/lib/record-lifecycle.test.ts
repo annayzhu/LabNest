@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertRecordEditable,
   entryDeleteBlockers,
   experimentDeleteBlockers,
   projectDeleteBlockers,
@@ -59,5 +60,14 @@ describe("two-tier record lifecycle deletion policy", () => {
     expect(reportDeleteBlockers("final", { externalReferences: 0 })[0]?.key).toBe("status");
     expect(entryDeleteBlockers("draft", { itemLinks: 0, proposedActions: 0, reportSourceReferences: 0 })).toEqual([]);
     expect(entryDeleteBlockers("reviewed", { itemLinks: 0, proposedActions: 0, reportSourceReferences: 0 })[0]?.key).toBe("recordStatus");
+  });
+});
+
+describe("record lock", () => {
+  it("locks submitted and reviewed records only", () => {
+    expect(() => assertRecordEditable("draft")).not.toThrow();
+    expect(() => assertRecordEditable("recorded")).not.toThrow();
+    expect(() => assertRecordEditable("submitted")).toThrow(/read-only/);
+    expect(() => assertRecordEditable("reviewed")).toThrow(/read-only/);
   });
 });

@@ -16,6 +16,7 @@ import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording } from "@/lib/experiment-results";
+import { isRecordLocked } from "@/lib/record-lifecycle";
 
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
 
   const lockedProtocol = experiment.primaryProtocolVersion;
   const currentStep = experiment.steps.find((step) => !step.completed);
-  const editable = experiment.status !== "archived";
+  const locked = isRecordLocked(experiment.recordStatus);
+  const editable = experiment.status !== "archived" && !locked;
   const evidenceByStep = Object.fromEntries(experiment.steps.map((step) => [step.id, {
     observations: step._count.entries,
     measurements: step._count.results,
@@ -110,6 +112,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson)} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
         </details>
 
+        {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
         <ProtocolRunProgressForm
           key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
           experimentId={experiment.id}

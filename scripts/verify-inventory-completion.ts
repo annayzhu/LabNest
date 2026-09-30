@@ -31,7 +31,7 @@ async function main() {
     assert.equal(await prisma.inventoryTransaction.count({where:{experimentId:fixture.experimentId}}),before);
     checks.push('Copy Run creates planned draft, resets actual use/execution/timers, carries no transactions, and retries return the same copy');
     await page.goto(`${base}/experiments/${fixture.experimentId}`);
-    await page.getByRole('button',{name:'复制为新实验',exact:true}).click();
+    await page.getByRole('button',{name:'Copy as new experiment',exact:true}).click();
     await page.waitForURL(u=>u.pathname.startsWith('/experiments/')&&!u.pathname.includes(fixture.experimentId));
     checks.push('Copy button opens a distinct experiment detail page');
     const protocol=await prisma.protocol.create({data:{humanCode:'SYN-CONS-'+Date.now(),title:'Synthetic expected materials'}});

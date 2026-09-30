@@ -19,6 +19,7 @@ import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/pro
 import { protocolDeleteBlockers } from "@/lib/record-lifecycle";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { archiveProtocol, deleteProtocol } from "../actions";
+import { ActivityHistory } from "@/components/ActivityHistory";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
@@ -172,7 +173,7 @@ export default async function ProtocolDetailPage({
               </CardBody>
             </Card>
 
-            {activityLogs.length ? <Card><CardHeader title="Activity" eyebrow="Audit trail" /><CardBody><ul className="divide-y divide-hairline">{activityLogs.map((log) => <li key={log.id} className="space-y-1 py-2 text-sm"><span className="font-medium capitalize text-ink">{log.action.replaceAll("_", " ")}</span><time className="block text-xs text-muted">{log.createdAt.toLocaleString()}</time></li>)}</ul></CardBody></Card> : null}
+            <ActivityHistory logs={activityLogs} />
           </aside>
         </div>
       </div>

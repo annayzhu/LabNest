@@ -173,7 +173,13 @@ export function MobileBottomNav() {
     { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];
-  const active = (href: string) => href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const runPage = /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname);
+  // Records is the hub for entries, experiments and results, so their pages light it instead of "More".
+  const active = (href: string) => href === "/" ? pathname === "/"
+    : href === "/protocol-run" ? under(href) || runPage
+    : href === "/records" ? !runPage && ["/records", "/entries", "/experiments", "/results"].some(under)
+    : under(href);
   const moreActive = !items.some((item) => active(item.href));
 
   useEffect(() => {

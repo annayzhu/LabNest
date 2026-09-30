@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 import { ExperimentStatus, RecordLifecycleStatus } from "@/generated/prisma/enums";
 import type { ExperimentFormState } from "@/components/ExperimentForm";
 import { prisma } from "@/lib/db";
@@ -11,7 +12,7 @@ import { experimentSearchText } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshot } from "@/lib/experiments";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
-import { experimentDeleteBlockers } from "@/lib/record-lifecycle";
+import { assertRecordEditable, experimentDeleteBlockers } from "@/lib/record-lifecycle";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
 import { experimentSections, parseScientificDocumentJson } from "@/lib/scientific-document";
@@ -99,6 +100,7 @@ export async function updateExperiment(
     if (!data.parsed.id) throw new Error("Experiment ID is required.");
     const current = await prisma.experiment.findUnique({ where: { id: data.parsed.id } });
     if (!current) throw new Error("Experiment not found.");
+    assertRecordEditable(current.recordStatus);
     if (current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
     await prisma.$transaction(async (tx) => {
       await associateDocumentMedia(tx, data.contentJson, "experiment", data.parsed.id!);
@@ -108,7 +110,11 @@ export async function updateExperiment(
       } });
       // Completion belongs to Run actions; document saves must not replay stale or absent checkboxes.
       if (current.primaryProtocolVersionId) await tx.protocolRun.updateMany({ where: { experimentId: current.id }, data: { status: data.parsed.status } });
-      await tx.activityLog.create({ data: { action: "update", targetType: "experiment", targetId: current.id, metadataJson: { status: data.parsed.status, recordStatus: data.parsed.recordStatus } } });
+      await tx.activityLog.create({ data: { action: "update", targetType: "experiment", targetId: current.id, metadataJson: {
+        status: data.parsed.status, recordStatus: data.parsed.recordStatus,
+        // Pre-save revision: document saves overwrite contentJson, so the log keeps what was replaced.
+        previous: { title: current.title, date: current.date, status: current.status, recordStatus: current.recordStatus, purpose: current.purpose, tags: current.tags, contentJson: current.contentJson },
+      } as Prisma.InputJsonValue } });
     });
     experimentId = current.id;
     researchPlanId = data.parsed.researchPlanId;

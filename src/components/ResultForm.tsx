@@ -146,7 +146,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <FormErrorSummary message={state.error} /> : null}
-      {missingModuleSelection ? <p role="alert" className="text-xs font-medium text-warning">请至少选择一个结果模块。</p> : null}
+      {missingModuleSelection ? <p role="alert" className="text-xs font-medium text-warning">Select at least one result module.</p> : null}
       <Button type="submit" variant="primary" size="lg" disabled={pending || missingModuleSelection || ambiguousTemplate} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Result"}</Button>
     </div>
   </form>;

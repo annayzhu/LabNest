@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.LABNEST_BUILD_DIR || ".next",
   typescript: { tsconfigPath: process.env.LABNEST_TSCONFIG_PATH || "tsconfig.json" },
   allowedDevOrigins: ["127.0.0.1", "192.168.0.101", "192.168.0.102"],
+  // Entry cards resize attachment photos through the built-in optimizer instead of shipping multi-MB originals.
+  images: { localPatterns: [{ pathname: "/api/attachments/**", search: "?inline=1" }] },
   experimental: {
     serverActions: {
       // The Sequence import UI accepts files up to 25 MiB. Leave room for the

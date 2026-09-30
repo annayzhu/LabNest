@@ -219,3 +219,14 @@ export function entryDeleteBlockers(recordStatus: string, counts: EntryDependenc
     ]),
   ];
 }
+
+/** Submitted and reviewed notebook records are read-only until someone reopens them with a logged reason. */
+export function isRecordLocked(recordStatus: string) {
+  return recordStatus === "submitted" || recordStatus === "reviewed";
+}
+
+export const recordLockedMessage = "This record is submitted or reviewed and is read-only. Reopen it from its record page first; the reopen and its reason are kept in the activity history.";
+
+export function assertRecordEditable(recordStatus: string) {
+  if (isRecordLocked(recordStatus)) throw new Error(recordLockedMessage);
+}

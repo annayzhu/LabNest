@@ -11,6 +11,7 @@ import { buildEntryContent } from "@/lib/entry-content";
 import { prisma } from "@/lib/db";
 import type { EntryMutationInput } from "@/lib/entry-mutations";
 import { reserveRecordCode } from "@/lib/record-codes";
+import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { experimentSearchText } from "@/lib/experiment-document";
 import { experimentSections, resultSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
 import { createResultInTransaction } from "@/lib/result-creation";
@@ -354,6 +355,7 @@ export async function updateEntryWithFiles(
     return await prisma.$transaction(async (tx) => {
       const current = await tx.entry.findUnique({ where: { id: entryId } });
       if (!current) throw new Error("Entry no longer exists.");
+      assertRecordEditable(current.recordStatus);
       const context = await resolveContext(tx, input.projectId, input.researchPlanId);
       const existingLinks = await tx.attachmentLink.findMany({
         where: { targetType: "entry", targetId: entryId },
@@ -415,12 +417,14 @@ export async function updateEntryWithFiles(
           action: "update",
           targetType: "entry",
           targetId: entryId,
-          metadataJson: {
+          metadataJson: jsonValue({
             addedAttachmentIds: created.map((attachment) => attachment.id),
             removedAttachmentIds,
             attachmentCount: orderedAttachments.length,
             previousUpdatedAt: current.updatedAt.toISOString(),
-          },
+            // Pre-save revision: entry saves overwrite body/contentJson, so the log keeps what was replaced.
+            previous: { title: current.title, body: current.body, occurredAt: current.occurredAt.toISOString(), tags: current.tags, recordStatus: current.recordStatus, contentJson: current.contentJson },
+          }),
         },
       });
       return { id: entryId };

@@ -2,9 +2,10 @@ import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { ExperimentBrief } from "@/components/ExperimentBrief";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
-import { Play } from "lucide-react";
+import { Lock, Play } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ActivityHistory } from "@/components/ActivityHistory";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
@@ -13,6 +14,7 @@ import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
+import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { ScientificDocumentView } from "@/components/ScientificDocumentView";
 import { Badge, StatusPill } from "@/components/ui/Badge";
@@ -20,7 +22,7 @@ import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording, preferredResultRecordingHref } from "@/lib/experiment-results";
-import { experimentDeleteBlockers } from "@/lib/record-lifecycle";
+import { experimentDeleteBlockers, isRecordLocked } from "@/lib/record-lifecycle";
 import { archiveExperiment, deleteExperiment } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -54,12 +56,14 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     ...experiment.protocolVersions.map((row) => ({ targetType: "protocol", targetId: row.protocolVersion.protocolId })),
     ...experiment.results.map((row) => ({ targetType: "result", targetId: row.id })),
   ];
-  const [reportSourceReferences, entryReferences, proposedActions, recycledAssociations] = await Promise.all([
+  const [reportSourceReferences, entryReferences, proposedActions, recycledAssociations, activityLogs] = await Promise.all([
     prisma.reportSource.count({ where: { sourceType: "experiment", sourceId: experiment.id } }),
     prisma.itemLink.count({ where: { sourceType: "entry", targetType: "experiment", targetId: experiment.id } }),
     experiment.protocolRun ? prisma.proposedAction.count({ where: { sourceType: "protocol", sourceId: experiment.protocolRun.id } }) : Promise.resolve(0),
     recycleConditions.length ? prisma.deletedRecord.findMany({ where: { restoredAt: null, OR: recycleConditions }, select: { targetType: true, targetId: true } }) : Promise.resolve([]),
+    prisma.activityLog.findMany({ where: { targetType: "experiment", targetId: experiment.id }, orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
+  const locked = isRecordLocked(experiment.recordStatus);
   const recycledKeys = new Set(recycledAssociations.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
     ...experiment._count,
@@ -71,7 +75,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     proposedActions,
   });
   return <AppShell><div className="space-y-6">
-    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<><DocumentPrintButton showLabel /><CopyExperimentButton id={experiment.id} />{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={resultRecordingHref} className={secondaryButton}>Record results</Link><Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link><RecordLifecycleControl id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></>} />
+    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "Unassigned plan"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<><DocumentPrintButton showLabel /><CopyExperimentButton id={experiment.id} />{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}<Link href={resultRecordingHref} className={secondaryButton}>Record results</Link>{locked ? null : <Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link>}<RecordLifecycleControl id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></>} />
     {recycledAssociations.some((row) => row.targetType === "research_plan") ? <RecycleBinWarning label="Research Plan" labelZh="研究方案" /> : null}
     {recycledAssociations.some((row) => row.targetType === "protocol") ? <RecycleBinWarning label="Protocol" labelZh="实验规程" /> : null}
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
@@ -82,17 +86,20 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       </main>
 
       <aside className="document-preview-sidebar experiment-detail-sidebar" aria-label="Experiment controls and result recording">
-        <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>} /><CardBody className="space-y-2.5 p-3">
+        <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-[10px] leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">Unassigned</span>}</Control><Control label="Project">{experiment.project?.name ?? "—"}</Control></div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Date" value={experiment.date.toLocaleDateString()} /><CompactStat label="Steps" value={`${completed}/${experiment.steps.length}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
           {experiment.primaryProtocolVersion ? <Link aria-label={`Primary protocol: ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title}`} href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="block border-t border-hairline pt-2 text-moss hover:underline"><ProtocolIdentity compact title={experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} code={experiment.primaryProtocolVersion.protocol.humanCode} version={experiment.primaryProtocolVersion.displayVersion} meta={experiment.tags.join(" · ") || undefined} /></Link> : experiment.tags.length ? <p className="border-t border-hairline pt-2 text-[10px] text-muted">{experiment.tags.join(" · ")}</p> : null}
+          <div className="border-t border-hairline pt-2"><RecordStatusControl targetType="experiment" id={experiment.id} recordStatus={experiment.recordStatus} /></div>
         </CardBody></Card>
 
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
 
-        <Card><CardHeader title="Locked ProtocolVersions" /><CardBody className="py-1"><ul className="divide-y divide-hairline">{experiment.protocolVersions.map((row) => <li key={row.protocolVersionId} className="py-2.5"><div className="flex min-w-0 items-start justify-between gap-2"><Link href={`/protocols/${row.protocolVersion.protocolId}?version=${row.protocolVersionId}`} className="min-w-0 flex-1 text-moss hover:underline"><ProtocolIdentity compact title={row.protocolVersion.protocol.canonicalTitle ?? row.protocolVersion.protocol.title} code={row.protocolVersion.protocol.humanCode} version={row.protocolVersion.displayVersion} /></Link><div className="flex shrink-0 flex-wrap justify-end gap-1"><Badge tone={row.role === "primary" ? "sage" : "neutral"}>{row.role}</Badge><StatusPill status={row.protocolVersion.reviewStage} />{recycledKeys.has(`protocol:${row.protocolVersion.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div></div></li>)}</ul></CardBody></Card>
+        <Card><CardHeader title="Protocol versions" eyebrow="Fixed at creation · badge shows review stage" /><CardBody className="py-1"><ul className="divide-y divide-hairline">{experiment.protocolVersions.map((row) => <li key={row.protocolVersionId} className="py-2.5"><div className="flex min-w-0 items-start justify-between gap-2"><Link href={`/protocols/${row.protocolVersion.protocolId}?version=${row.protocolVersionId}`} className="min-w-0 flex-1 text-moss hover:underline"><ProtocolIdentity compact title={row.protocolVersion.protocol.canonicalTitle ?? row.protocolVersion.protocol.title} code={row.protocolVersion.protocol.humanCode} version={row.protocolVersion.displayVersion} /></Link><div className="flex shrink-0 flex-wrap justify-end gap-1"><Badge tone={row.role === "primary" ? "sage" : "neutral"}>{row.role}</Badge><StatusPill status={row.protocolVersion.reviewStage} />{recycledKeys.has(`protocol:${row.protocolVersion.protocolId}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div></div></li>)}</ul></CardBody></Card>
 
         <Card><CardHeader title="Attachments" eyebrow="Images, videos and instrument files" /><CardBody className="space-y-4"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields />{attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 break-all text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : null}</CardBody></Card>
+
+        <ActivityHistory logs={activityLogs} />
       </aside>
     </div>
   </div></AppShell>;

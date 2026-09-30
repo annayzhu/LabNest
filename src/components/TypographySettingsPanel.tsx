@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronDown, Laptop, RotateCcw, Search, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useI18n } from "@/components/I18nProvider";
 import { useModalDialog } from "@/components/ui/ModalDialogProvider";
 import {
@@ -15,7 +15,9 @@ import {
 import {
   canDiscoverLocalFonts,
   discoverLocalFontFamilies,
-  loadStoredLocalFontFamilies,
+  noLocalFontFamilies,
+  storedLocalFontFamiliesSnapshot,
+  subscribeToLocalFontFamilies,
   type LocalFontFamilyRecord,
 } from "@/lib/local-font-catalog";
 import {
@@ -151,7 +153,8 @@ export function TypographySettingsPanel() {
   const dialog = useModalDialog();
   const [settings, setSettings] = useState<TypographySettings>(defaultTypographySettings);
   const [customFonts, setCustomFonts] = useState<CustomFontRecord[]>([]);
-  const [localFonts, setLocalFonts] = useState<LocalFontFamilyRecord[]>(() => typeof window === "undefined" ? [] : loadStoredLocalFontFamilies());
+  // Read through a store so hydration uses the server's empty list; discovery updates it via its change event.
+  const localFonts = useSyncExternalStore(subscribeToLocalFontFamilies, storedLocalFontFamiliesSnapshot, () => noLocalFontFamilies);
   const [loadingFonts, setLoadingFonts] = useState(true);
   const [discoveringFonts, setDiscoveringFonts] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -210,7 +213,6 @@ export function TypographySettingsPanel() {
     setDiscoveringFonts(true);
     try {
       const families = await discoverLocalFontFamilies();
-      setLocalFonts(families);
       setMessage(copy(`已发现 ${families.length} 个本机字体族，可用于正文和标题。`, `Found ${families.length} device font families for body and headings.`));
     } catch (error) {
       setError(error instanceof DOMException && error.name === "NotAllowedError"

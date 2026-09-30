@@ -15,6 +15,9 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const hydrationErrors = [];
+  page.on("pageerror", (error) => { if (/hydrat/i.test(error.message)) hydrationErrors.push(error.message); });
+  page.on("console", (message) => { if (message.type() === "error" && /hydrat/i.test(message.text())) hydrationErrors.push(message.text()); });
   await page.addInitScript(() => {
     Object.defineProperty(window, "queryLocalFonts", {
       configurable: true,
@@ -83,6 +86,8 @@ try {
   await page.reload();
   await page.waitForFunction(() => !document.querySelector('[data-typography-role="latinDocumentHeading"]')?.disabled);
   if ((await selector("latinDocumentHeading").getAttribute("data-font-value")) !== deviceFontValue) throw new Error("A discovered device font did not persist after reload.");
+  if (!await page.getByRole("button", { name: /Scan again|重新扫描/ }).count()) throw new Error("Stored device fonts were not shown after reload.");
+  if (hydrationErrors.length) throw new Error(`Settings hydration failed with stored device fonts: ${hydrationErrors[0].slice(0, 300)}`);
 
   await selectFont("cjkDocumentHeading", "preset:pingfang");
   await selectFont("cjkDocumentBody", "preset:songti");

@@ -1,4 +1,5 @@
 export const localFontCatalogStorageKey = "labnest.local-font-catalog.v1";
+const localFontsChangedEvent = "labnest:local-fonts-changed";
 
 export type LocalFontFamilyRecord = {
   id: string;
@@ -87,6 +88,29 @@ export function loadStoredLocalFontFamilies(storage: Storage = window.localStora
   return families;
 }
 
+/* useSyncExternalStore source: the server and hydration render see no device fonts, then the stored list. */
+export const noLocalFontFamilies: LocalFontFamilyRecord[] = [];
+let storedSnapshotSource: string | null = null;
+let storedSnapshot = noLocalFontFamilies;
+
+export function storedLocalFontFamiliesSnapshot() {
+  const serialized = window.localStorage.getItem(localFontCatalogStorageKey);
+  if (serialized !== storedSnapshotSource) {
+    storedSnapshotSource = serialized;
+    storedSnapshot = parseLocalFontFamilies(serialized);
+  }
+  return storedSnapshot;
+}
+
+export function subscribeToLocalFontFamilies(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(localFontsChangedEvent, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(localFontsChangedEvent, onChange);
+  };
+}
+
 type LocalFontAccessWindow = Window & typeof globalThis & {
   queryLocalFonts?: () => Promise<BrowserLocalFontData[]>;
 };
@@ -101,6 +125,6 @@ export async function discoverLocalFontFamilies(windowValue: LocalFontAccessWind
   const families = groupLocalFontFaces(await queryLocalFonts.call(windowValue));
   storage.setItem(localFontCatalogStorageKey, JSON.stringify(families));
   applyLocalFontFamilies(families);
-  window.dispatchEvent(new CustomEvent("labnest:local-fonts-changed"));
+  window.dispatchEvent(new CustomEvent(localFontsChangedEvent));
   return families;
 }

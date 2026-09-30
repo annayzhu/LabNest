@@ -232,6 +232,14 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 
 A page header shows at most its primary action, Edit, and one More (⋯) menu. Print, copy, export, secondary links, and Delete/archive live in the menu as plain text rows, with the destructive row last and separated by a hairline.
 
+### Collection Toolbars
+
+List pages share one toolbar row: search (applies on Enter), a Filters disclosure whose badge counts active filters, and sort. Filters apply as soon as a value changes, so there is no Apply button; active filters show as chips beneath with Clear all. On the right sit the record count, one Import / Export menu, and the single primary New action.
+
+### Side Panels
+
+A detail page's right column is one surface with a hairline border; its sections are separated by single hairlines, never by gaps or nested cards, and section headers carry no divider of their own.
+
 ### Navigation
 
 Back, catalog, favorites, and history links remain compact and understated. Icon-only actions require an accessible name; current context is shown with label text or selected-state styling rather than icon color alone.

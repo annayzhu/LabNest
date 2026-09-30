@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
-import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { ResearchPlanRelationCounts } from "@/components/ResearchPlanRelationCounts";
 import { StatusPill } from "@/components/ui/Badge";
@@ -59,8 +59,7 @@ export default async function ResearchPlansPage({ searchParams }: { searchParams
         ]}
         sortOptions={[...researchPlanSortOptions]}
         actions={<>
-          <Link href="/research-plans/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/research-plans/export" />
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/research-plans/export" importHref="/research-plans/import" />
           <Link href="/research-plans/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Research Plan</Link>
         </>}
       />

@@ -86,7 +86,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
 
       </main>
 
-      <aside className="document-preview-sidebar experiment-detail-sidebar" aria-label="Experiment controls and result recording">
+      <aside className="document-preview-sidebar" aria-label="Experiment controls and result recording">
         <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-xs leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">Unassigned</span>}</Control><Control label="Project">{experiment.project?.name ?? "—"}</Control></div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Date" value={experiment.date.toLocaleDateString()} /><CompactStat label="Steps" value={`${completed}/${experiment.steps.length}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>

@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import {
   CollectionToolbar,
   collectionPrimaryActionClass,
-  collectionSecondaryActionClass,
 } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
@@ -62,8 +61,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams?: Pa
           { value: "status_asc", label: "Status" },
         ]}
         actions={<>
-          <Link href="/projects/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/projects/export" />
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/projects/export" importHref="/projects/import" />
           <Link href="/projects/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Project</Link>
         </>}
       />

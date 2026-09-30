@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
-import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
@@ -66,8 +66,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
           { value: "code_asc", label: "Protocol code" },
         ]}
         actions={<>
-          <Link href="/protocols/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-          <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" />
+          <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}
       />

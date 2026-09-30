@@ -1,6 +1,7 @@
 import { newClientMutationId } from "./client-mutation-id";
 import {
   applyTypographySettings,
+  cacheTypographyCss,
   customFontDatabaseName,
   customFontStoreName,
   maxCustomFontBytes,
@@ -196,11 +197,17 @@ export async function importCustomFontFamily(files: readonly File[], options: { 
 }
 
 export async function hydrateTypographyPreferences({ loadAllFonts = false } = {}): Promise<{ settings: TypographySettings; fonts: CustomFontRecord[] }> {
-  const storedSettings = parseTypographySettings(window.localStorage.getItem(typographySettingsStorageKey));
-  applyTypographySettings(storedSettings);
+  const serialized = window.localStorage.getItem(typographySettingsStorageKey);
+  // Loading shows the stored choice (or defaults) without saving it; only the derived pre-paint cache is refreshed.
+  const show = (next: TypographySettings) => {
+    applyTypographySettings(next);
+    if (serialized !== null) cacheTypographyCss(next);
+  };
+  const storedSettings = parseTypographySettings(serialized);
+  show(storedSettings);
   const fonts = await listCustomFonts();
   const settings = reconcileTypographySettings(storedSettings, new Set(fonts.map((font) => font.id)));
-  if (settings !== storedSettings) applyTypographySettings(settings);
+  if (settings !== storedSettings) show(settings);
   const selectedIds = new Set(Object.values(settings).flatMap((selection) => selection.kind === "custom" ? [selection.id] : []));
   const fontsToLoad = loadAllFonts ? fonts : fonts.filter((font) => selectedIds.has(font.id));
   await Promise.allSettled(fontsToLoad.map(loadCustomFont));

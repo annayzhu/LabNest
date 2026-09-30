@@ -69,13 +69,13 @@
   --divider: rgba(32, 40, 37, 0.075); /* 弱分割线颜色。 */
 
   /* 字体：控制文档标题、界面文字和数据/编号显示。 */
-  --font-cjk-ui: "LabNest CJK Source Han Sans", sans-serif; /* 界面中的中文字符；别名仅覆盖中日韩字符。 */
+  --font-cjk-ui: "LabNest CJK Source Han Sans", sans-serif; /* 固定值：外观脚本生效前的界面中文，以及文档内 sans 文本的中文；别名仅覆盖中日韩字符。 */
   --font-cjk-document-body: "LabNest CJK Source Han Serif", serif; /* 文档正文中的中文字符；别名仅覆盖中日韩字符。 */
   --font-cjk-document-heading: "LabNest CJK Source Han Serif", serif; /* 页面与文档标题中的中文字符；别名仅覆盖中日韩字符。 */
-  --font-latin-ui: Arial, "Helvetica Neue", Helvetica; /* 界面中的拉丁字符，默认使用 Arial。 */
+  --font-latin-ui: Arial, "Helvetica Neue", Helvetica; /* 固定值：外观脚本生效前的界面拉丁字符，以及文档内 sans 文本的拉丁字符。 */
   --font-latin-document-body: "Times New Roman", Times; /* 文档正文中的拉丁字符。 */
   --font-latin-document-heading: "Times New Roman", Times; /* 页面与文档标题中的拉丁字符。 */
-  --font-ui: var(--font-latin-ui), var(--font-cjk-ui); /* 按字符覆盖范围组合英文与中文界面字体。 */
+  --font-ui: var(--font-latin-ui), var(--font-cjk-ui); /* 回退值；应用界面字体只由外观设置（data-labnest-ui-font）决定。 */
   --font-ui-base-weight: 350; /* 思源黑体 Normal；缺少该字重时由浏览器选择最接近的可用字重。 */
   --font-document-body: var(--font-latin-document-body), var(--font-cjk-document-body); /* A4 文档正文按字符分别使用中英文字体。 */
   --font-document-heading: var(--font-latin-document-heading), var(--font-cjk-document-heading); /* 页面与文档标题按字符分别使用中英文字体。 */
@@ -1476,7 +1476,7 @@ details > summary:active { transform: scale(0.985); }
 .typography-role-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 0.55rem;
 }
 

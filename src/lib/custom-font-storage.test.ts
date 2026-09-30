@@ -1,5 +1,46 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CustomFontImportError, importCustomFont, inferCustomFontFace, validateCustomFontFamily } from "./custom-font-storage";
+import { CustomFontImportError, hydrateTypographyPreferences, importCustomFont, inferCustomFontFace, validateCustomFontFamily } from "./custom-font-storage";
+import { defaultTypographySettings, typographyCssStorageKey, typographyCssVariables, typographySettingsStorageKey } from "./typography-settings";
+
+function emptyFontLibrary() {
+  const database = {
+    close: () => undefined,
+    transaction: () => {
+      const transaction: { oncomplete?: () => void; objectStore: () => unknown } = {
+        objectStore: () => ({
+          getAll: () => {
+            const request: { result: unknown[]; onsuccess?: () => void } = { result: [] };
+            queueMicrotask(() => {
+              request.onsuccess?.();
+              transaction.oncomplete?.();
+            });
+            return request;
+          },
+        }),
+      };
+      return transaction;
+    },
+  };
+  return {
+    open: () => {
+      const request: { result: typeof database; onsuccess?: () => void } = { result: database };
+      queueMicrotask(() => request.onsuccess?.());
+      return request;
+    },
+  };
+}
+
+function stubTypographyPage(stored: Record<string, string>) {
+  const values = new Map(Object.entries(stored));
+  const localStorage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  };
+  vi.stubGlobal("window", { localStorage, indexedDB: emptyFontLibrary() });
+  vi.stubGlobal("document", { documentElement: { style: { setProperty: () => undefined, removeProperty: () => undefined } } });
+  return values;
+}
 
 describe("custom font import", () => {
   afterEach(() => {
@@ -55,6 +96,25 @@ describe("custom font import", () => {
     expect(add).toHaveBeenCalledTimes(2);
     expect(remove).toHaveBeenCalledTimes(2);
     expect(database.close).toHaveBeenCalledOnce();
+  });
+
+  it("loads default typography without storing it as the user's choice", async () => {
+    const stored = stubTypographyPage({});
+    const { settings } = await hydrateTypographyPreferences();
+    expect(settings).toEqual(defaultTypographySettings);
+    expect(stored.size).toBe(0);
+  });
+
+  it("keeps the stored choice untouched while refreshing the pre-paint cache for a missing imported font", async () => {
+    const serialized = JSON.stringify({
+      ...defaultTypographySettings,
+      latinDocumentBody: { kind: "custom", id: "gone", family: "LabNest Custom gone", name: "Gone" },
+    });
+    const stored = stubTypographyPage({ [typographySettingsStorageKey]: serialized });
+    const { settings } = await hydrateTypographyPreferences();
+    expect(settings).toEqual(defaultTypographySettings);
+    expect(stored.get(typographySettingsStorageKey)).toBe(serialized);
+    expect(JSON.parse(stored.get(typographyCssStorageKey) ?? "{}")).toEqual(typographyCssVariables(defaultTypographySettings));
   });
 
   it("groups common font face filenames into one family with weight and style", () => {

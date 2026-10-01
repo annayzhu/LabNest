@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "viewports": [
+    1440,
+    390
+  ],
+  "checks": [
+    "external new-tab entry",
+    "independent SVG export",
+    "old bookmark redirect",
+    "same-origin old preference download retains original",
+    "independent preference import/project export",
+    "no horizontal overflow",
+    "unconfigured runtime URL shows configuration message",
+    "unreachable target leaves Tools and migration data recoverable"
+  ],
+  "unverified": [
+    "physical phone"
+  ]
+}

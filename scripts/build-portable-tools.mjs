@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -15,20 +15,9 @@ const projects = {
   freePlate: path.join(materialRoot, "plate-layout-studio"),
   qpcrAnalysis: path.join(materialRoot, "qpcr-analysis-studio"),
   cnvAnalysis: path.join(materialRoot, "C_Taqman_CNV", "CopyNumber_Analyzer"),
-  visualization: path.join(workspace, "standalone", "visualization-studio"),
 };
 
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), "labnest-portable-tools-"));
-
-async function findStylesheets(root) {
-  const paths = [];
-  for (const entry of await readdir(root, { withFileTypes: true })) {
-    const entryPath = path.join(root, entry.name);
-    if (entry.isDirectory()) paths.push(...await findStylesheets(entryPath));
-    else if (entry.isFile() && entry.name.endsWith(".css")) paths.push(entryPath);
-  }
-  return paths.sort();
-}
 
 function escapeInline(source, tag) {
   return source.replaceAll(new RegExp(`</${tag}`, "gi"), `<\\/${tag}`);
@@ -112,16 +101,7 @@ try {
     entrySource: `import { createRoot } from "react-dom/client"; import QpcrAnalysisStudio from ${JSON.stringify(path.join(projects.qpcrAnalysis, "app", "QpcrAnalysisStudio.tsx"))}; import { LanguageProvider } from ${JSON.stringify(path.join(projects.qpcrAnalysis, "app", "i18n.tsx"))}; createRoot(document.getElementById("qpcr-analysis-root")).render(<LanguageProvider><QpcrAnalysisStudio /></LanguageProvider>);`,
   });
 
-  await writePortableHtml({
-    folder: "06_Visualization_Studio",
-    filename: "index.html",
-    title: "Visualization Studio",
-    rootId: "visualization-root",
-    projectRoot: path.join(projects.visualization, "src"),
-    dependencyRoot: projects.visualization,
-    cssPaths: await findStylesheets(path.join(projects.visualization, ".next", "static", "chunks")),
-    entrySource: `import { createRoot } from "react-dom/client"; import { VisualizationStudio } from ${JSON.stringify(path.join(projects.visualization, "src", "components", "VisualizationStudio.tsx"))}; createRoot(document.getElementById("visualization-root")).render(<VisualizationStudio />);`,
-  });
+
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
 }

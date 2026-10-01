@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { labToolManifest, standaloneToolDefaultUrls } from "./tool-manifest";
 
 describe("lab tool manifest", () => {
@@ -20,7 +20,7 @@ describe("lab tool manifest", () => {
     expect(standaloneTools.every((tool) => tool.launchUrl?.startsWith("/tools/") && !tool.external)).toBe(true);
   });
 
-  it("keeps both visualization and free plate planning inside LabNest", () => {
+  it("offers the Studio migration route when unconfigured and preserves free plate planning", () => {
     expect(labToolManifest.find((tool) => tool.id === "visualization-studio")?.launchUrl).toBe("/tools/visualization");
     expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toBe("/tools/free-plate-layout/index.html?v=20260826-2");
   });
@@ -28,4 +28,10 @@ describe("lab tool manifest", () => {
   it("connects Calculator to its internal catalog", () => {
     expect(labToolManifest.find((tool) => tool.id === "calculator")?.launchUrl).toBe("/tools/calculator");
   });
+});
+
+it('opens only Studio externally when its independent endpoint is configured',async()=>{
+ vi.stubEnv('VISUALIZATION_STUDIO_URL','https://lab.example/studio/');vi.resetModules();
+ try {const {labToolManifest:configured}=await import('./tool-manifest');expect(configured.find(tool=>tool.id==='visualization-studio')).toMatchObject({launchUrl:'https://lab.example/studio/',external:true});expect(configured.filter(tool=>tool.id!=='visualization-studio')).toEqual(labToolManifest.filter(tool=>tool.id!=='visualization-studio'));}
+ finally {vi.unstubAllEnvs();vi.resetModules();}
 });

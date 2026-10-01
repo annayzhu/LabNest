@@ -1,0 +1,408 @@
+{
+  "baseline": "e16ff99af1d3a8facc7eff54d4352d89bcbeb4d3",
+  "candidates": [
+    "src/components/ScientificAdvancedChartPreview.tsx",
+    "src/components/ScientificChartPreview.tsx",
+    "src/components/ScientificClinicalChartPreview.tsx",
+    "src/components/ScientificEnrichmentSpecializedPreview.tsx",
+    "src/components/ScientificFlowCircularChartPreview.tsx",
+    "src/components/ScientificGenomicChartPreview.tsx",
+    "src/components/ScientificNetworkChartPreview.tsx",
+    "src/components/ScientificSetChartPreview.tsx",
+    "src/components/VisualizationStudio.tsx",
+    "src/lib/plot-module-registry.ts",
+    "src/lib/visualization-advanced.test.ts",
+    "src/lib/visualization-advanced.ts",
+    "src/lib/visualization-bar-analysis.test.ts",
+    "src/lib/visualization-bar-analysis.ts",
+    "src/lib/visualization-clinical.test.ts",
+    "src/lib/visualization-clinical.ts",
+    "src/lib/visualization-enrichment-specialized.test.tsx",
+    "src/lib/visualization-flow-circular.test.tsx",
+    "src/lib/visualization-flow-circular.ts",
+    "src/lib/visualization-genomics.test.ts",
+    "src/lib/visualization-genomics.ts",
+    "src/lib/visualization-network.test.ts",
+    "src/lib/visualization-network.ts",
+    "src/lib/visualization-palette-parity.test.ts",
+    "src/lib/visualization-pca.test.ts",
+    "src/lib/visualization-pca.ts",
+    "src/lib/visualization-sets.test.tsx",
+    "src/lib/visualization-sets.ts",
+    "src/lib/visualization-studio.test.ts",
+    "src/lib/visualization-studio.ts",
+    "standalone/visualization-studio/.gitignore",
+    "standalone/visualization-studio/AGENTS.md",
+    "standalone/visualization-studio/CLAUDE.md",
+    "standalone/visualization-studio/README.md",
+    "standalone/visualization-studio/docs/agents/domain.md",
+    "standalone/visualization-studio/docs/agents/issue-tracker.md",
+    "standalone/visualization-studio/docs/agents/triage-labels.md",
+    "standalone/visualization-studio/docs/engineering-integration.md",
+    "standalone/visualization-studio/docs/release-verification.md",
+    "standalone/visualization-studio/eslint.config.mjs",
+    "standalone/visualization-studio/next.config.ts",
+    "standalone/visualization-studio/package-lock.json",
+    "standalone/visualization-studio/package.json",
+    "standalone/visualization-studio/playwright.config.ts",
+    "standalone/visualization-studio/postcss.config.mjs",
+    "standalone/visualization-studio/scripts/prepare-standalone.mjs",
+    "standalone/visualization-studio/scripts/smoke-standalone.mjs",
+    "standalone/visualization-studio/src/app/globals.css",
+    "standalone/visualization-studio/src/app/layout.tsx",
+    "standalone/visualization-studio/src/app/page.tsx",
+    "standalone/visualization-studio/src/components/PageHeader.tsx",
+    "standalone/visualization-studio/src/components/ScientificAdvancedChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificClinicalChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificEnrichmentSpecializedPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificFlowCircularChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificGenomicChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificNetworkChartPreview.tsx",
+    "standalone/visualization-studio/src/components/ScientificSetChartPreview.tsx",
+    "standalone/visualization-studio/src/components/VisualizationStudio.tsx",
+    "standalone/visualization-studio/src/components/ui/Badge.tsx",
+    "standalone/visualization-studio/src/components/ui/Button.tsx",
+    "standalone/visualization-studio/src/components/ui/Card.tsx",
+    "standalone/visualization-studio/src/lib/cn.ts",
+    "standalone/visualization-studio/src/lib/plot-module-registry.test.ts",
+    "standalone/visualization-studio/src/lib/plot-module-registry.ts",
+    "standalone/visualization-studio/src/lib/plot-module-rendering.test.tsx",
+    "standalone/visualization-studio/src/lib/release-contract.test.tsx",
+    "standalone/visualization-studio/src/lib/visualization-advanced.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-advanced.ts",
+    "standalone/visualization-studio/src/lib/visualization-bar-analysis.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-bar-analysis.ts",
+    "standalone/visualization-studio/src/lib/visualization-clinical.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-clinical.ts",
+    "standalone/visualization-studio/src/lib/visualization-enrichment-specialized.test.tsx",
+    "standalone/visualization-studio/src/lib/visualization-flow-circular.test.tsx",
+    "standalone/visualization-studio/src/lib/visualization-flow-circular.ts",
+    "standalone/visualization-studio/src/lib/visualization-genomics.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-genomics.ts",
+    "standalone/visualization-studio/src/lib/visualization-network.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-network.ts",
+    "standalone/visualization-studio/src/lib/visualization-pca.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-pca.ts",
+    "standalone/visualization-studio/src/lib/visualization-sets.test.tsx",
+    "standalone/visualization-studio/src/lib/visualization-sets.ts",
+    "standalone/visualization-studio/src/lib/visualization-studio.test.ts",
+    "standalone/visualization-studio/src/lib/visualization-studio.ts",
+    "standalone/visualization-studio/tests/e2e/guidance-20260920.spec.ts",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/bar-dual-axis-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/correlation-heatmap-mobile-mobile-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/distribution-layers-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-chinese-red-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-chinese-red-heatmap-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-default-chai-dye-brown-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/radar-profile-mobile-mobile-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/raincloud-dense-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/scatter-association-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/scatter-long-legend-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/sunburst-hierarchy-desktop-desktop-chromium.png",
+    "standalone/visualization-studio/tsconfig.json",
+    "standalone/visualization-studio/vitest.config.mts"
+  ],
+  "externalReferences": [
+    {
+      "file": ".github/workflows/visualization-studio.yml",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": ".github/workflows/visualization-studio.yml",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "docs/visualization/20260920/evidence/parity.json",
+      "references": "src/components/VisualizationStudio.tsx"
+    },
+    {
+      "file": "docs/visualization/20260920/evidence/parity.json",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "docs/visualization/20260920/evidence/parity.json",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "docs/visualization/20260920/evidence/standalone/report.json",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "docs/visualization/20260920/evidence/standalone/report.json",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "scripts/build-portable-tools.mjs",
+      "references": "src/components/VisualizationStudio.tsx"
+    },
+    {
+      "file": "scripts/build-portable-tools.mjs",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "scripts/build-portable-tools.mjs",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "src/app/tools/page.tsx",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "src/app/tools/page.tsx",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "src/app/tools/visualization/page.tsx",
+      "references": "src/components/VisualizationStudio.tsx"
+    },
+    {
+      "file": "src/components/ToolsCatalog.tsx",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "src/components/ToolsCatalog.tsx",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "src/lib/tool-manifest.test.ts",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "src/lib/tool-manifest.test.ts",
+      "references": "src/lib/visualization-studio.ts"
+    },
+    {
+      "file": "src/lib/tool-manifest.ts",
+      "references": "src/lib/visualization-studio.test.ts"
+    },
+    {
+      "file": "src/lib/tool-manifest.ts",
+      "references": "src/lib/visualization-studio.ts"
+    }
+  ],
+  "independentComparisons": [
+    {
+      "file": "src/components/ScientificAdvancedChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificClinicalChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificEnrichmentSpecializedPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificFlowCircularChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificGenomicChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificNetworkChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/ScientificSetChartPreview.tsx",
+      "same": true
+    },
+    {
+      "file": "src/components/VisualizationStudio.tsx",
+      "same": false
+    },
+    {
+      "file": "src/lib/plot-module-registry.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-advanced.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-advanced.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-bar-analysis.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-bar-analysis.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-clinical.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-clinical.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-enrichment-specialized.test.tsx",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-flow-circular.test.tsx",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-flow-circular.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-genomics.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-genomics.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-network.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-network.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-pca.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-pca.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-sets.test.tsx",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-sets.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-studio.test.ts",
+      "same": true
+    },
+    {
+      "file": "src/lib/visualization-studio.ts",
+      "same": false
+    }
+  ],
+  "retirementEvidence": "evidence/link-report.json: independent entry, SVG export and same-origin palette migration passed at 1440 and 390 pixels before removal.",
+  "retiredBlobs": {
+    "src/components/ScientificAdvancedChartPreview.tsx": "1bdd3c1ad76978e5580c4d68cfc27cf6dd403a8f",
+    "src/components/ScientificChartPreview.tsx": "17786234b4feb5e26fd76a6c7e5b36d3d9c3d5cd",
+    "src/components/ScientificClinicalChartPreview.tsx": "0b0242de3f9c1abc801a8902dee5f576c614d91d",
+    "src/components/ScientificEnrichmentSpecializedPreview.tsx": "421698dd609498f8edb57db9006dd152407a76c5",
+    "src/components/ScientificFlowCircularChartPreview.tsx": "d527c6e08dc85bf7b27a72d3d1b3b47e3f652bd2",
+    "src/components/ScientificGenomicChartPreview.tsx": "5560431320352b78a021023511a5aca7b57820ce",
+    "src/components/ScientificNetworkChartPreview.tsx": "9ebd44b4aab481c4dbeb2244d33f92e5d82d3204",
+    "src/components/ScientificSetChartPreview.tsx": "78924c5c1fb687b67c8e193794acb01c1a5f967f",
+    "src/components/VisualizationStudio.tsx": "abd76c811666b62c2e9e2251724ea2ae19b04732",
+    "src/lib/plot-module-registry.ts": "53d8dc74b7e6c62176c13de1e6e5f027a160fa15",
+    "src/lib/visualization-advanced.test.ts": "5ab745ac567457810264900666eaee89773dfc3b",
+    "src/lib/visualization-advanced.ts": "48d2b92f6640e8cc585a24eb22f8078992bc1e2e",
+    "src/lib/visualization-bar-analysis.test.ts": "39fda27fb98d85e869fcf1c1f3271dbb2c44e8da",
+    "src/lib/visualization-bar-analysis.ts": "f31d06e80898a93f51d19abd46c6bd636b0aa918",
+    "src/lib/visualization-clinical.test.ts": "67f123e7b2304a7b47d46d7a6839d50e139e7ae2",
+    "src/lib/visualization-clinical.ts": "4194ba7da85d48f49801f0e9b636b9d511e4cf1e",
+    "src/lib/visualization-enrichment-specialized.test.tsx": "e7d9e43d47c13397e67ae8e3b80d0bed8055f6c3",
+    "src/lib/visualization-flow-circular.test.tsx": "803c57fa0613c42baf2cd0974f4d5575a6b817d4",
+    "src/lib/visualization-flow-circular.ts": "2357324e269776127ab3f879e26963d41183f7f2",
+    "src/lib/visualization-genomics.test.ts": "c68b3d029b22fa143ed9bc93ed42f045ed7aff77",
+    "src/lib/visualization-genomics.ts": "d91d825d3bac415fed561e6d68c2b55f12b98566",
+    "src/lib/visualization-network.test.ts": "cff55539efc306d4c41ae82042d7a8a93122f226",
+    "src/lib/visualization-network.ts": "f86b794c13a8e1d2afcd68a3e2da8f559cdcfc57",
+    "src/lib/visualization-palette-parity.test.ts": "87f0b9f08fc8150c68a22027fe76ddea1addeae6",
+    "src/lib/visualization-pca.test.ts": "add67596be55d66c214df4f5bcb2bacc106f9fdf",
+    "src/lib/visualization-pca.ts": "1a4601c500ad74f37ccc95464ac4ff9e310884c2",
+    "src/lib/visualization-sets.test.tsx": "93d3f63606a5b5ef714228e8e805a8a54c04c4b6",
+    "src/lib/visualization-sets.ts": "557d835faf24458e2c715bd688c82cb8947ad680",
+    "src/lib/visualization-studio.test.ts": "043d308b30bc5095d22382a6baad3f5c647ba967",
+    "src/lib/visualization-studio.ts": "e54737a50b2e307fd8df3cabd2451a887f92b0f1",
+    "standalone/visualization-studio/.gitignore": "7dfe9997190148dc5adfd47f5f930071419808fe",
+    "standalone/visualization-studio/AGENTS.md": "643577dfaef36ee8032915ef80a0f0638f7beda0",
+    "standalone/visualization-studio/CLAUDE.md": "2f2b849f8d17d8df78bc01588dc531739d9b6e04",
+    "standalone/visualization-studio/README.md": "789a00a2917ed4dd56339f09b4fde178b273819d",
+    "standalone/visualization-studio/docs/agents/domain.md": "de2979ee514a98662a78ab66db872410f4b5196b",
+    "standalone/visualization-studio/docs/agents/issue-tracker.md": "8d3668e2648982acb926a4f7f9fcbe9daaa02688",
+    "standalone/visualization-studio/docs/agents/triage-labels.md": "59326c1bf32da0ee4052ffdbbc9a7aaf1502d16d",
+    "standalone/visualization-studio/docs/engineering-integration.md": "0f64b5d32844305a2920c45cdc8f75e4690dad74",
+    "standalone/visualization-studio/docs/release-verification.md": "a911c8748176d4d192f76bfee3d99941e90416bf",
+    "standalone/visualization-studio/eslint.config.mjs": "ac9d10f8ffb6fde03e0519f8360c21c4a4c5d270",
+    "standalone/visualization-studio/next.config.ts": "d697f4e96b6954e650bfcb87ae98af7cc813a805",
+    "standalone/visualization-studio/package-lock.json": "e85aa485f2ce8496bc894a4504e02371314a6157",
+    "standalone/visualization-studio/package.json": "b33ffce9d101d6d96ed6ac687add58063d8b5c77",
+    "standalone/visualization-studio/playwright.config.ts": "6c8cafeec6a6ea10d09f4c66cd98c180eabd2f46",
+    "standalone/visualization-studio/postcss.config.mjs": "61e36849cf7cfa9f1f71b4a3964a4953e3e243d3",
+    "standalone/visualization-studio/scripts/prepare-standalone.mjs": "a5df45862e8d9610d39b369176d6e385a76b8888",
+    "standalone/visualization-studio/scripts/smoke-standalone.mjs": "cbf30ceb101633905067df9f3b0af6648e2b506f",
+    "standalone/visualization-studio/src/app/globals.css": "8e8c58a71cabebb7dd88178f282c712ea18b8748",
+    "standalone/visualization-studio/src/app/layout.tsx": "e9119f251bb214700312fee03407b3f7a6caa044",
+    "standalone/visualization-studio/src/app/page.tsx": "39df36f92876f3683b9cec19e8fd8c723418dc1e",
+    "standalone/visualization-studio/src/components/PageHeader.tsx": "c20a123d829e18371e97e821620fdc482408c42b",
+    "standalone/visualization-studio/src/components/ScientificAdvancedChartPreview.tsx": "1bdd3c1ad76978e5580c4d68cfc27cf6dd403a8f",
+    "standalone/visualization-studio/src/components/ScientificChartPreview.tsx": "17786234b4feb5e26fd76a6c7e5b36d3d9c3d5cd",
+    "standalone/visualization-studio/src/components/ScientificClinicalChartPreview.tsx": "0b0242de3f9c1abc801a8902dee5f576c614d91d",
+    "standalone/visualization-studio/src/components/ScientificEnrichmentSpecializedPreview.tsx": "421698dd609498f8edb57db9006dd152407a76c5",
+    "standalone/visualization-studio/src/components/ScientificFlowCircularChartPreview.tsx": "d527c6e08dc85bf7b27a72d3d1b3b47e3f652bd2",
+    "standalone/visualization-studio/src/components/ScientificGenomicChartPreview.tsx": "5560431320352b78a021023511a5aca7b57820ce",
+    "standalone/visualization-studio/src/components/ScientificNetworkChartPreview.tsx": "9ebd44b4aab481c4dbeb2244d33f92e5d82d3204",
+    "standalone/visualization-studio/src/components/ScientificSetChartPreview.tsx": "78924c5c1fb687b67c8e193794acb01c1a5f967f",
+    "standalone/visualization-studio/src/components/VisualizationStudio.tsx": "d75b7a51d11b7645b5201c1b0ee408c9c7a13331",
+    "standalone/visualization-studio/src/components/ui/Badge.tsx": "101cb0bc86ee4c7098233e945cb7360eb2a494b0",
+    "standalone/visualization-studio/src/components/ui/Button.tsx": "35d24f308c831c56b2a6fda5f78d8fd6efa8fd5c",
+    "standalone/visualization-studio/src/components/ui/Card.tsx": "622937fe533deadd181217a3b22b2d391fd60702",
+    "standalone/visualization-studio/src/lib/cn.ts": "a5ef193506d07d0459fec4f187af08283094d7c8",
+    "standalone/visualization-studio/src/lib/plot-module-registry.test.ts": "bf97e30550d45e9f5e420abac6f9b09eadd28d57",
+    "standalone/visualization-studio/src/lib/plot-module-registry.ts": "53d8dc74b7e6c62176c13de1e6e5f027a160fa15",
+    "standalone/visualization-studio/src/lib/plot-module-rendering.test.tsx": "a9e2ddb83a68f9440d759d0f02e23b7433a79247",
+    "standalone/visualization-studio/src/lib/release-contract.test.tsx": "6eca156fdcf151829168cbff2734b6e6a5bfe79c",
+    "standalone/visualization-studio/src/lib/visualization-advanced.test.ts": "5ab745ac567457810264900666eaee89773dfc3b",
+    "standalone/visualization-studio/src/lib/visualization-advanced.ts": "48d2b92f6640e8cc585a24eb22f8078992bc1e2e",
+    "standalone/visualization-studio/src/lib/visualization-bar-analysis.test.ts": "39fda27fb98d85e869fcf1c1f3271dbb2c44e8da",
+    "standalone/visualization-studio/src/lib/visualization-bar-analysis.ts": "f31d06e80898a93f51d19abd46c6bd636b0aa918",
+    "standalone/visualization-studio/src/lib/visualization-clinical.test.ts": "67f123e7b2304a7b47d46d7a6839d50e139e7ae2",
+    "standalone/visualization-studio/src/lib/visualization-clinical.ts": "4194ba7da85d48f49801f0e9b636b9d511e4cf1e",
+    "standalone/visualization-studio/src/lib/visualization-enrichment-specialized.test.tsx": "e7d9e43d47c13397e67ae8e3b80d0bed8055f6c3",
+    "standalone/visualization-studio/src/lib/visualization-flow-circular.test.tsx": "803c57fa0613c42baf2cd0974f4d5575a6b817d4",
+    "standalone/visualization-studio/src/lib/visualization-flow-circular.ts": "2357324e269776127ab3f879e26963d41183f7f2",
+    "standalone/visualization-studio/src/lib/visualization-genomics.test.ts": "c68b3d029b22fa143ed9bc93ed42f045ed7aff77",
+    "standalone/visualization-studio/src/lib/visualization-genomics.ts": "d91d825d3bac415fed561e6d68c2b55f12b98566",
+    "standalone/visualization-studio/src/lib/visualization-network.test.ts": "cff55539efc306d4c41ae82042d7a8a93122f226",
+    "standalone/visualization-studio/src/lib/visualization-network.ts": "f86b794c13a8e1d2afcd68a3e2da8f559cdcfc57",
+    "standalone/visualization-studio/src/lib/visualization-pca.test.ts": "add67596be55d66c214df4f5bcb2bacc106f9fdf",
+    "standalone/visualization-studio/src/lib/visualization-pca.ts": "1a4601c500ad74f37ccc95464ac4ff9e310884c2",
+    "standalone/visualization-studio/src/lib/visualization-sets.test.tsx": "93d3f63606a5b5ef714228e8e805a8a54c04c4b6",
+    "standalone/visualization-studio/src/lib/visualization-sets.ts": "557d835faf24458e2c715bd688c82cb8947ad680",
+    "standalone/visualization-studio/src/lib/visualization-studio.test.ts": "043d308b30bc5095d22382a6baad3f5c647ba967",
+    "standalone/visualization-studio/src/lib/visualization-studio.ts": "e54737a50b2e307fd8df3cabd2451a887f92b0f1",
+    "standalone/visualization-studio/tests/e2e/guidance-20260920.spec.ts": "e5d2c415b0c34342d29c00d7459493de62a25c0a",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts": "59fec7701d7ad549b2de52eee5276bb3e8062893",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/bar-dual-axis-desktop-desktop-chromium.png": "d43c574ba22dac839eacceba349099dac10344a8",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/correlation-heatmap-mobile-mobile-chromium.png": "ef66014bff97952241f72aa9feeae3324d2a708e",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/distribution-layers-desktop-desktop-chromium.png": "0be5d5af7bf30573cf31e1d15a3f263d6e37cd88",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-chinese-red-desktop-desktop-chromium.png": "2334b16176f2cac830ad61071a5cabb3ba108e91",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-chinese-red-heatmap-desktop-desktop-chromium.png": "9fb448debed00bc16b7ccd73271c2237c0a969a7",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/palette-default-chai-dye-brown-desktop-desktop-chromium.png": "1e8caed3e1bb593fb99b2ee38fbf2d366fb1fa6d",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/radar-profile-mobile-mobile-chromium.png": "8efaecb74786b7b9545ef11b4f9f2abf7dbf1e72",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/raincloud-dense-desktop-desktop-chromium.png": "f291799d59b924950b5c0f02ca6ef3bc88b6d9d3",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/scatter-association-desktop-desktop-chromium.png": "7d434b4bdcb6964a3b17680f296499bd658428e9",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/scatter-long-legend-desktop-desktop-chromium.png": "60f1d9dbe003eafe4c315618544e9bd9be6c9ce3",
+    "standalone/visualization-studio/tests/e2e/visualization-studio.spec.ts-snapshots/sunburst-hierarchy-desktop-desktop-chromium.png": "a7775c69d8003673639713a6e0af46deccbe269b",
+    "standalone/visualization-studio/tsconfig.json": "cf9c65d3e0676a0169374d827f7abb97497789ef",
+    "standalone/visualization-studio/vitest.config.mts": "ad4ea13af9139b1bfc150705f582a3df7d5cc01f"
+  }
+}

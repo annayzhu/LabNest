@@ -1,3 +1,4 @@
+import { visualizationStudioUrl } from "./visualization-link";
 export type LabToolCategory = "Planning" | "Calculators" | "Analysis";
 
 export type LabToolManifestItem = {
@@ -102,12 +103,12 @@ export const labToolManifest: LabToolManifestItem[] = [
   {
     id: "visualization-studio",
     name: "Visualization Studio",
-    version: "0.1",
+    version: "Independent",
     category: "Analysis",
     description: "Create compact, publication-ready figures with editable journal palettes, mappings, and export settings.",
     accepts: ["CSV or TSV data", "column mapping", "figure parameters"],
     produces: ["SVG", "600 dpi PNG", "reproducible config"],
-    launchUrl: "/tools/visualization",
-    external: false,
+    launchUrl: visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL) ?? "/tools/visualization",
+    external: Boolean(visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL)),
   },
 ];

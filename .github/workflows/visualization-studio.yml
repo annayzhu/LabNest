@@ -1,74 +1,21 @@
-name: Visualization Studio CI
-
+name: Studio link integration
 on:
   push:
     branches: [main]
-    paths:
-      - "standalone/visualization-studio/**"
-      - ".github/workflows/visualization-studio.yml"
+    paths: ['src/lib/visualization-link*', 'src/lib/tool-manifest*', 'src/components/VisualizationMigration.tsx', 'src/app/tools/**', '.github/workflows/visualization-studio.yml']
   pull_request:
-    paths:
-      - "standalone/visualization-studio/**"
-      - ".github/workflows/visualization-studio.yml"
-
+    paths: ['src/lib/visualization-link*', 'src/lib/tool-manifest*', 'src/components/VisualizationMigration.tsx', 'src/app/tools/**', '.github/workflows/visualization-studio.yml']
 permissions:
   contents: read
-
-defaults:
-  run:
-    working-directory: standalone/visualization-studio
-
 jobs:
-  verify:
+  integration:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: standalone/visualization-studio/package-lock.json
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build:webpack
-
-  browser:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: standalone/visualization-studio/package-lock.json
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: visualization-studio-playwright-report
-          path: |
-            standalone/visualization-studio/playwright-report/
-            standalone/visualization-studio/test-results/
-          retention-days: 7
-
-  deployment:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: standalone/visualization-studio/package-lock.json
-      - run: npm ci
-      - run: npm run build:webpack
-        env:
-          NEXT_PUBLIC_VISUALIZATION_STUDIO_BASE_PATH: /visualization-studio
-      - run: npm run test:deployment
+      - run: npx vitest run src/lib/visualization-link.test.ts src/lib/tool-manifest.test.ts
+      - run: npx eslint src/components/VisualizationMigration.tsx src/lib/visualization-link.ts src/app/tools/visualization/page.tsx

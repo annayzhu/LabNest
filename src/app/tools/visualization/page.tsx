@@ -1,6 +1,8 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
-import { VisualizationStudio } from "@/components/VisualizationStudio";
+import { VisualizationMigration } from "@/components/VisualizationMigration";
+import { visualizationStudioUrl } from "@/lib/visualization-link";
 
 export const metadata: Metadata = {
   title: "Visualization Studio · LabNest",
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
 export default function VisualizationStudioPage() {
   return (
     <AppShell>
-      <VisualizationStudio />
+      <VisualizationMigration url={visualizationStudioUrl(process.env.VISUALIZATION_STUDIO_URL)} />
     </AppShell>
   );
 }

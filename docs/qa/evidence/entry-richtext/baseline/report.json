@@ -1,0 +1,48 @@
+{
+  "base": "http://localhost:3331",
+  "checks": [
+    {
+      "name": "table-menu",
+      "buttons": [
+        {
+          "text": "TableInsert an editable table",
+          "width": 309.5,
+          "height": 87.3125
+        },
+        {
+          "text": "图片 / Image选择照片、拖拽或粘贴截图 / Upload, drop or paste",
+          "width": 309.5,
+          "height": 40.53125
+        },
+        {
+          "text": "附件 / File文件及音频 / Files and audio",
+          "width": 309.5,
+          "height": 40.53125
+        }
+      ]
+    },
+    {
+      "name": "h2-bottom",
+      "before": {
+        "window": 350,
+        "containers": [
+          {
+            "class": "",
+            "y": 350
+          }
+        ],
+        "selection": 33
+      },
+      "after": {
+        "window": 1382,
+        "containers": [
+          {
+            "class": "",
+            "y": 1382
+          }
+        ],
+        "selection": 79
+      }
+    }
+  ]
+}

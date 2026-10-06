@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "serverTimezone": "America/Los_Angeles",
+  "browserTimezone": "America/Los_Angeles",
+  "status": "通过",
+  "operations": "旧日期编辑→保存→数据库回读，日期不退一天；createdAt未改"
+}

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ChevronDown, Download, FileJson2, FileText } from "lucide-react";
 
 export function ProtocolExportMenu({ docxHref, jsonHref }: { docxHref: string; jsonHref: string }) {
@@ -10,8 +9,8 @@ export function ProtocolExportMenu({ docxHref, jsonHref }: { docxHref: string; j
         <ChevronDown className="protocol-export-menu-chevron" aria-hidden />
       </summary>
       <div className="protocol-export-menu-popover">
-        <Link href={docxHref}><FileText aria-hidden /><span><strong>DOCX</strong><small>Editable document</small></span></Link>
-        <Link href={jsonHref}><FileJson2 aria-hidden /><span><strong>JSON</strong><small>Structured record</small></span></Link>
+        <a download href={docxHref}><FileText aria-hidden /><span><strong>DOCX</strong><small>Editable document</small></span></a>
+        <a download href={jsonHref}><FileJson2 aria-hidden /><span><strong>JSON</strong><small>Structured record</small></span></a>
       </div>
     </details>
   );

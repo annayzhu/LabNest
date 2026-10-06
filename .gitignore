@@ -52,3 +52,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Full Playwright traces are published by CI and retained in private local diagnostics.
+docs/qa/evidence/entry-richtext/**/*.zip

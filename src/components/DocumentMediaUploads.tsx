@@ -39,7 +39,8 @@ function updateAtIdentity(editor: Editor, id: string, block: DocumentMedia, comp
   });
   if (!match || (completedUploadId && match.current.pendingUploadId !== completedUploadId)) return;
   // Finish only this upload; edits made while the request was in flight remain authoritative.
-  const next = completedUploadId ? { ...block, caption: match.current.caption, widthPercent: match.current.widthPercent } : block;
+  const next = completedUploadId ? { ...block, caption: match.current.caption, widthPercent: match.current.widthPercent,
+    imageWidth: match.current.imageWidth ?? block.imageWidth, imageHeight: match.current.imageHeight ?? block.imageHeight } : block;
   editor.view.dispatch(editor.state.tr.setNodeMarkup(match.position, undefined, { ...match.attrs, block: next }));
 }
 
@@ -72,7 +73,9 @@ export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId:
         if (!response.ok || !result.attachment?.id) throw new Error(result.error || "Upload failed");
         const { pendingUploadId: _pending, ...ready } = block;
         void _pending;
-        updateAtIdentity(editor, block.id, { ...ready, attachmentId: result.attachment.id }, block.pendingUploadId);
+        const image = result.attachment.metadataJson?.image;
+        const dimensions = Number.isInteger(image?.width) && image.width > 0 && Number.isInteger(image?.height) && image.height > 0 ? { imageWidth: image.width, imageHeight: image.height } : {};
+        updateAtIdentity(editor, block.id, { ...ready, ...dimensions, attachmentId: result.attachment.id }, block.pendingUploadId);
         uploads.delete(block.id); if (preview) URL.revokeObjectURL(preview); publish();
       } catch (error) {
         if (!abandoned) { uploads.set(block.id, { file, preview, status: "failed", error: error instanceof Error ? error.message : "Upload failed", retry: () => { void run(); }, dispose }); publish(); }
@@ -106,7 +109,7 @@ export function useDocumentMediaUploads(editor: Editor | null, draftId: string) 
       insertDocumentMediaFiles(editor, files, draftId);
     };
     const drop = (event: DragEvent) => {
-      if (!ownsEvent(event)) return;
+      if (!ownsEvent(event) || editor.view.dragging) return;
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (!files.length) return;
       event.preventDefault(); event.stopPropagation();

@@ -1,0 +1,21 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "B16 HTML image plus File in one clipboard event follows a single upload path",
+      "status": "通过",
+      "uploads": 1
+    },
+    {
+      "name": "B16/B21 external drop event with nameless File registers one actual original, separate from same-byte download",
+      "status": "通过",
+      "uploads": 2,
+      "method": "Browser DragEvent/File; physical OS dragging not executed"
+    },
+    {
+      "name": "C01 plain TSV reliably degrades to text retaining row order, values and units",
+      "status": "通过",
+      "nativeWordExcel": "未执行"
+    }
+  ]
+}

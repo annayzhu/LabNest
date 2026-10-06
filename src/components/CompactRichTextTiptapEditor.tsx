@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Table2 } from "lucide-react";
 import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -19,7 +20,7 @@ import { createDocumentBlockLineHeightExtension, createResizableDocumentTableExt
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
 
-export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, insertActions = [], media = false, registerEditor, className }: {
+export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, insertActions = [], media = false, registerEditor, className, isLocalEcho }: {
   content: JSONContent;
   onChange: (content: JSONContent) => void;
   placeholder?: string;
@@ -31,11 +32,13 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
   className?: string;
   media?: boolean;
   registerEditor?: (editor: Editor) => () => void;
+  isLocalEcho?: boolean;
 }) {
   const onChangeRef = useRef(onChange);
   const [mediaDraftId] = useState(newClientMutationId);
   const toolbarTarget = useDocumentToolbarTarget();
   const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
+  const lastEmitted = useRef<string | undefined>(undefined);
   const contentHash = useMemo(() => JSON.stringify(content), [content]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => {
@@ -63,25 +66,25 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
       ...(media ? [DocumentMediaNode] : []),
     ],
     editorProps: { attributes: { class: cn("ln-protocol-tiptap ln-compact-rich-tiptap", minHeightClass), spellcheck: "true" } },
-    onUpdate: ({ editor: nextEditor }) => onChangeRef.current(nextEditor.getJSON()),
+    onUpdate: ({ editor: nextEditor }) => { const json = nextEditor.getJSON(); lastEmitted.current = JSON.stringify(json); onChangeRef.current(json); },
   });
   useDocumentMediaUploads(media ? editor : null, mediaDraftId);
   useEffect(() => { if (editor && registerEditor) return registerEditor(editor); }, [editor, registerEditor]);
   useEffect(() => {
-    if (!editor || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash) return;
+    if (!editor || isLocalEcho || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash || lastEmitted.current === contentHash) return;
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled && !editor.isDestroyed && !editor.isFocused) editor.commands.setContent(content, { emitUpdate: false });
     });
     return () => { cancelled = true; };
-  }, [content, contentHash, editor]);
+  }, [content, contentHash, editor, isLocalEcho]);
   useEffect(() => {
     if (!editor || !toolbarTarget) return;
     return () => toolbarTarget.release(editor);
   }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
-  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={media ? [...(!insertActions.some(action=>action.id==="table")?[{id:"table",label:"Table",icon:null,description:"Insert an editable table",run:(target:Editor)=>target.chain().focus().insertTable({rows:3,cols:3,withHeaderRow:true}).run()}]:[]),...insertActions.filter(action => !["media", "attachment"].includes(action.id)), ...documentMediaInsertActions(mediaDraftId)] : insertActions} className="ln-compact-rich-toolbar" />;
+  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={media ? [...(!insertActions.some(action=>action.id==="table")?[{id:"table",label:"Table",icon:<Table2 aria-hidden />,description:"Insert an editable table",run:(target:Editor)=>target.chain().focus().insertTable({rows:3,cols:3,withHeaderRow:true}).run()}]:[]),...insertActions.filter(action => !["media", "attachment"].includes(action.id)), ...documentMediaInsertActions(mediaDraftId)] : insertActions} className="ln-compact-rich-toolbar" />;
   return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
     {showToolbar ? (toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar) : null}
     <EditorContent editor={editor} />

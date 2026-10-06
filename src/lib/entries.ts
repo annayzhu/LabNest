@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getEntryMarkdown, getOrderedAttachmentIds } from "@/lib/entry-content";
+import { getEntryMarkdown, getOrderedAttachmentIds, selectEntryAttachments } from "@/lib/entry-content";
 import type { Entry, EntryAttachment } from "@/lib/types";
 
 export type EntryItemLinkRecord = {
@@ -62,7 +62,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
   try {
     const records = await prisma.entry.findMany({
       include: { project: true, researchPlan: true },
-      orderBy: { occurredAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
     const entryIds = records.map((entry) => entry.id);
 
@@ -81,7 +81,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
             { targetType: "entry", targetId: { in: entryIds } },
           ],
         },
-        select: { id: true, sourceType: true, sourceId: true, targetType: true, targetId: true },
+        select: { id: true, sourceType: true, sourceId: true, targetType: true, targetId: true, linkType: true },
       }),
       prisma.proposedAction.findMany({
         where: { sourceType: "entry", sourceId: { in: entryIds }, status: "pending" },
@@ -89,13 +89,6 @@ export async function getEntryRecords(): Promise<Entry[]> {
       }),
     ]);
     const entryIdSet = new Set(entryIds);
-
-    const attachmentsByEntry = new Map<string, EntryAttachment[]>();
-    attachmentLinks.forEach((link) => {
-      const attachments = attachmentsByEntry.get(link.targetId) ?? [];
-      attachments.push(serializeAttachment(link.attachment));
-      attachmentsByEntry.set(link.targetId, attachments);
-    });
 
     const linkIdsByEntry = new Map<string, Set<string>>();
     itemLinks.forEach((link) => {
@@ -117,11 +110,12 @@ export async function getEntryRecords(): Promise<Entry[]> {
     });
 
     return records.map((entry) => {
-      const attachments = orderAttachments(attachmentsByEntry.get(entry.id) ?? [], entry.contentJson);
+      const attachments = orderAttachments(selectEntryAttachments(entry.contentJson, attachmentLinks.filter(link => link.targetId === entry.id)).map(serializeAttachment), entry.contentJson);
 
       return {
         id: entry.id,
         title: entry.title,
+        createdAt: entry.createdAt.toISOString(), updatedAt: entry.updatedAt.toISOString(), entryType: entry.entryType, eventTimePrecision: entry.eventTimePrecision,
         body: entry.body,
         occurredAt: entry.occurredAt.toISOString(),
         projectId: entry.projectId ?? undefined,
@@ -139,6 +133,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
         linkedItemCount: linkIdsByEntry.get(entry.id)?.size ?? 0,
         pendingActionCount: pendingCounts.get(entry.id) ?? 0,
         contentMarkdown: getEntryMarkdown(entry.contentJson, entry.body),
+        assigned: itemLinks.some(link => link.sourceId === entry.id && "linkType" in link && link.linkType === "entry_primary"),
       };
     });
   } catch {
@@ -175,14 +170,15 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
         orderBy: { createdAt: "desc" },
       }),
     ]);
-    const attachments = orderAttachments(attachmentLinks.map((link) => ({
-      ...serializeAttachment(link.attachment),
-      linkId: link.id,
+    const attachments = orderAttachments(selectEntryAttachments(entry.contentJson, attachmentLinks).map((attachment) => ({
+      ...serializeAttachment(attachment),
+      linkId: attachmentLinks.find(link => link.attachmentId === attachment.id && link.linkType !== "document_media_history")?.id,
     })), entry.contentJson);
 
     return {
       id: entry.id,
       title: entry.title,
+        createdAt: entry.createdAt.toISOString(), updatedAt: entry.updatedAt.toISOString(), entryType: entry.entryType, eventTimePrecision: entry.eventTimePrecision,
       body: entry.body,
       occurredAt: entry.occurredAt.toISOString(),
       projectId: entry.projectId ?? undefined,
@@ -200,6 +196,7 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
       linkedItemCount: itemLinks.length,
       pendingActionCount: pendingActions.filter((action) => action.status === "pending").length,
       contentMarkdown: getEntryMarkdown(entry.contentJson, entry.body),
+        assigned: itemLinks.some(link => link.sourceId === entry.id && "linkType" in link && link.linkType === "entry_primary"),
       itemLinks: itemLinks.map((link) => {
         const outbound = link.sourceType === "entry" && link.sourceId === id;
         return {

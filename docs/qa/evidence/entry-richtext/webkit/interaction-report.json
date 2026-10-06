@@ -1,0 +1,34 @@
+{
+  "sha": "67e0c1d0fb7a6e353838104c812603229d805893",
+  "browser": "26.5",
+  "base": "http://localhost:3331",
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "RT-01 table picker inserts 3x4, preserves mixed cell text",
+      "status": "通过",
+      "ms": 1559
+    },
+    {
+      "name": "RT-03 four uploads and retry save have four original IDs",
+      "status": "通过",
+      "ms": 1032
+    },
+    {
+      "name": "RT-04 image move via visible control, undo/redo and save use same originals",
+      "status": "通过",
+      "ms": 1273
+    },
+    {
+      "name": "filing existing experiment preserves ID, first time, original content and target body",
+      "status": "通过",
+      "ms": 1667
+    },
+    {
+      "name": "stale content save is rejected and remains a recoverable draft",
+      "status": "通过",
+      "ms": 837
+    }
+  ],
+  "entryId": "cmuwc50uf0029ucosnq42y9ha"
+}

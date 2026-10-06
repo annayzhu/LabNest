@@ -98,3 +98,12 @@ it('retains layout assigned to the paragraph inside a quote',()=>{
  const saved=tiptapToMarkdownRichText({type:'doc',content:[{type:'blockquote',content:[{type:'paragraph',attrs:{textAlign:'center',spaceBeforePt:12},content:[{type:'text',text:'quoted'}]}]}]});
  expect(markdownRichTextToTiptap(saved).content![0].content![0].attrs).toMatchObject({textAlign:'center',spaceBeforePt:12});
 });
+
+it("keeps split narrative blocks around media addressable without duplicate IDs", () => {
+ const original: ScientificDocument = {schemaVersion:1,sections:[{key:"analysis",title:"Analysis",blocks:[]}]};
+ const paragraph=(text:string)=>({type:"paragraph",attrs:{scientificBlockId:"legacy",scientificBlockType:"text"},content:[{type:"text",text}]});
+ const json={type:"doc",content:[{type:"scientificSection",attrs:{sectionKey:"analysis"},content:[paragraph("before"),{type:"documentMedia",attrs:{block:{id:"image",type:"media",mediaType:"image",attachmentId:"original-file",url:"",caption:"测试图"}}},paragraph("after")]}]};
+ const saved=tiptapToScientificDocument(json,original);
+ expect(new Set(saved.sections[0].blocks.map(b=>b.id)).size).toBe(3);
+ expect(tiptapToScientificDocument(scientificDocumentToTiptap(saved),saved)).toEqual(saved);
+});

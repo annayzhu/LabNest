@@ -14,7 +14,7 @@ import { reportStatusOptions } from "@/lib/status-options";
 
 const initialState: FormActionState = {};
 
-export function ReportEditForm({ action, initial }: { action: FormAction; initial: { id: string; projectId: string; researchPlanId: string | null; projectName: string; researchPlanTitle?: string; title: string; status: string; periodStart: string; periodEnd: string; tags: string[]; document: ScientificDocument } }) {
+export function ReportEditForm({ action, initial }: { action: FormAction; initial: { id: string; updatedAt?: Date | string; projectId: string; researchPlanId: string | null; projectName: string; researchPlanTitle?: string; title: string; status: string; periodStart: string; periodEnd: string; tags: string[]; document: ScientificDocument } }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [title, setTitle] = useState(initial.title);
   const [status, setStatus] = useState(initial.status);
@@ -22,7 +22,7 @@ export function ReportEditForm({ action, initial }: { action: FormAction; initia
   const [periodEnd, setPeriodEnd] = useState(initial.periodEnd);
   const scope = `${initial.projectName}${initial.researchPlanTitle ? ` · ${initial.researchPlanTitle}` : " · Entire Project"}`;
   const period = [periodStart, periodEnd].filter(Boolean).join(" – ") || "Not specified";
-  return <form action={formAction} className="space-y-5"><input type="hidden" name="id" value={initial.id} /><input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
+  return <form inert={pending} aria-busy={pending} action={formAction} className="space-y-5"><input type="hidden" name="id" value={initial.id} />{initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}<input type="hidden" name="projectId" value={initial.projectId} /><input type="hidden" name="researchPlanId" value={initial.researchPlanId ?? ""} />
     <DocumentEditorLayout><div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} documentType="Report" title={title} titlePlaceholder="Untitled Report" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Report" aria-label="Report title" />} headerFacts={[
       { label: "Scope", value: scope },
       { label: "Status", value: status.replaceAll("_", " ") },

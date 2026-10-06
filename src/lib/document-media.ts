@@ -14,6 +14,10 @@ export const documentMediaFields = {
   mimeType: z.string().optional(),
   size: z.number().int().nonnegative().optional(),
   widthPercent: z.number().finite().min(10).max(100).optional(),
+  // Optional source dimensions reserve the preview before bytes arrive. Legacy
+  // records use a stable fallback frame and are never rewritten on read.
+  imageWidth: z.number().int().positive().max(1_000_000).optional(),
+  imageHeight: z.number().int().positive().max(1_000_000).optional(),
   // Transient editor state: every server save must reject unresolved uploads.
   pendingUploadId: z.string().uuid().optional(),
   importImageKey: z.string().optional(),
@@ -36,8 +40,8 @@ export function documentMediaUrl(block: DocumentMedia, preview = false): string 
 }
 
 /** The readable link survives outside LabNest; the annotation preserves display metadata. */
-export function documentMediaToMarkdown(block: DocumentMedia): string {
-  const name = (block.filename || block.caption || block.mediaType).replace(/[\[\]\r\n]/g, " ");
+export function documentMediaToMarkdown(block: DocumentMedia, displayLabel?: string): string {
+  const name = (displayLabel || block.filename || block.caption || block.mediaType).replace(/[\[\]\r\n]/g, " ");
   const target = block.attachmentId ? `attachment:${encodeURIComponent(block.attachmentId)}` : block.url;
   return `${block.mediaType === "image" ? "!" : ""}[${name}](${target}) <!--labnest-media:${encodeURIComponent(JSON.stringify(block))}-->`;
 }

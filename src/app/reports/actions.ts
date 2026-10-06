@@ -1,5 +1,6 @@
 "use server";
 
+import { assertDocumentSaveVersion } from "@/lib/document-save-version";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -44,6 +45,8 @@ async function persistReportUpdate(formData: FormData) {
   if (current.projectId !== parsed.projectId || current.researchPlanId !== (parsed.researchPlanId ?? null)) throw new Error("Report scope cannot be moved after its source snapshot is created.");
   const contentJson = parseScientificDocumentJson(formData.get("contentJson"), reportSections);
   await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Report" WHERE id=${current.id} FOR UPDATE`;
+    assertDocumentSaveVersion(formData, await tx.report.findUniqueOrThrow({where:{id:current.id}}));
     await tx.report.update({ where: { id: current.id }, data: { title: parsed.title, status: parsed.status, periodStart: parsed.periodStart, periodEnd: parsed.periodEnd, tags: parseTags(formData.get("tags")), contentJson } });
     await associateDocumentMedia(tx, contentJson, "report", current.id);
     await tx.activityLog.create({ data: { action: "update", targetType: "report", targetId: current.id, metadataJson: { status: parsed.status } } });

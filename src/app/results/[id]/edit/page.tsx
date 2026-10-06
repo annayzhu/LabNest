@@ -13,6 +13,7 @@ export default async function EditResultPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const result = await prisma.result.findUnique({ where: { id } });
   if (!result || !result.experimentId) notFound();
+  if(["submitted","reviewed"].includes(result.recordStatus))redirect(`/results/${id}`);
   if(result.resultType==="Calculation")redirect(`/results/${id}`);
   const [experiments, storedResultTypes] = await Promise.all([
     prisma.experiment.findMany({ where: { id: result.experimentId }, include: { project: { select: { name: true } }, researchPlan: { select: { code: true, title: true } } } }),

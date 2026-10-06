@@ -1,6 +1,8 @@
 "use client";
 
+import { closeHistory } from "@tiptap/pm/history";
 import { Children, cloneElement, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type ReactElement, type ReactNode, type SetStateAction } from "react";
+import { usePortalFormPending } from "./usePortalFormPending";
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
@@ -37,7 +39,7 @@ function ToolbarButton({ editor, active, disabled, label, onClick, children }: {
   onClick: () => void;
   children: ReactNode;
 }) {
-  return <button type="button" className={cn(wysiwygToolbarButtonClass, active && "bg-action-surface/65 font-semibold text-moss")} aria-label={label} title={label} aria-pressed={active || undefined} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { onClick(); editor.commands.focus(); }}>{children}</button>;
+  return <button type="button" className={cn(wysiwygToolbarButtonClass, active && "bg-action-surface/65 font-semibold text-moss")} aria-label={label} title={label} aria-pressed={active || undefined} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => { onClick(); editor.commands.focus(undefined, { scrollIntoView: false }); }}>{children}</button>;
 }
 
 function selectedFontFamily(editor: Editor): string {
@@ -79,12 +81,13 @@ function ToolbarMenu({
   const menuId = useId();
   const [menuPosition, setMenuPosition] = useState<CSSProperties>({ position: "fixed", visibility: "hidden", zIndex: 120 });
   const open = openMenu === id;
+  const formPending = usePortalFormPending(rootRef, menuRef, open);
   const assignMenuRef = useCallback((node: HTMLDivElement | null) => {
     menuRef.current = node;
     // Wait until the opening Enter/Space key has been released. Moving focus
     // during the same key gesture can activate the first menu item and close
     // the menu immediately in Chromium.
-    if (node) window.setTimeout(() => node.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus(), 32);
+    if (node) window.setTimeout(() => node.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true }), 32);
   }, []);
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -131,7 +134,7 @@ function ToolbarMenu({
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpenMenu(null);
-        rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus();
+        rootRef.current?.querySelector<HTMLButtonElement>("button[aria-haspopup]")?.focus({ preventScroll: true });
       }
     };
     globalThis.document.addEventListener("pointerdown", dismiss);
@@ -160,7 +163,7 @@ function ToolbarMenu({
       const nextIndex = event.key === "Home" ? 0
         : event.key === "End" ? buttons.length - 1
           : (currentIndex + (["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1) + buttons.length) % buttons.length;
-      buttons[nextIndex]?.focus();
+      buttons[nextIndex]?.focus({ preventScroll: true });
       return;
     }
     if (event.key === "Tab") {
@@ -171,16 +174,16 @@ function ToolbarMenu({
       const nextIndex = triggerIndex + (event.shiftKey ? -1 : 1);
       if (nextIndex >= 0 && nextIndex < controls.length) {
         event.preventDefault();
-        controls[nextIndex]?.focus();
+        controls[nextIndex]?.focus({ preventScroll: true });
       } else {
-        triggerRef.current?.focus();
+        triggerRef.current?.focus({ preventScroll: true });
       }
     }
   };
 
   return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
     <button ref={triggerRef} type="button" aria-haspopup="menu" aria-controls={menuId} aria-expanded={open} aria-label={ariaLabel ?? label} title={ariaLabel ?? label} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
-    {open && typeof document !== "undefined" ? createPortal(<div ref={assignMenuRef} id={menuId} role="menu" data-toolbar-menu={id} className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onKeyDown={handleMenuKeyDown} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{menuItems}</div>, document.body) : null}
+    {open && typeof document !== "undefined" ? createPortal(<div ref={assignMenuRef} id={menuId} role="menu" inert={formPending} aria-busy={formPending} data-toolbar-menu={id} className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onKeyDown={handleMenuKeyDown} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{menuItems}</div>, document.body) : null}
   </div>;
 }
 
@@ -236,7 +239,7 @@ export function DocumentWysiwygToolbar({
 
   const [clipboardNotice,setClipboardNotice]=useState("");
   const copySelection=(operation:"copy"|"cut")=>{
-    editor.commands.focus();
+    editor.commands.focus(undefined, { scrollIntoView: false });
     try { setClipboardNotice(document.execCommand(operation)?"":"Use the browser Edit menu or keyboard shortcut."); }
     catch { setClipboardNotice("Use the browser Edit menu or keyboard shortcut."); }
   };
@@ -247,7 +250,7 @@ export function DocumentWysiwygToolbar({
       const text=await navigator.clipboard.readText();
       if(!text)return;
       if(editor.isDestroyed || !editor.state.doc.eq(originalDocument)){setClipboardNotice("Document changed. Select the destination and paste again.");return;}
-      editor.chain().focus().setTextSelection({from,to}).insertContent(text.split(/\r?\n/).map(line=>({type:"paragraph",content:line?[{type:"text",text:line}]:[]}))).run();
+      editor.chain().focus(undefined, { scrollIntoView: false }).setTextSelection({from,to}).insertContent(text.split(/\r?\n/).map(line=>({type:"paragraph",content:line?[{type:"text",text:line}]:[]}))).run();
       setClipboardNotice("");
     } catch { setClipboardNotice("Paste unavailable. Use the browser Edit menu; your content is unchanged."); }
   },[editor]);
@@ -286,11 +289,11 @@ export function DocumentWysiwygToolbar({
     const current = editor.getAttributes("link").href as string | undefined;
     const href = await dialog.prompt({ title: "Insert link", inputLabel: "Link URL", defaultValue: current ?? "https://", confirmLabel: "Apply link" });
     if (href === null) return;
-    if (!href.trim()) editor.chain().focus().extendMarkRange("link").unsetLink().run();
-    else editor.chain().focus().extendMarkRange("link").setLink({ href: href.trim() }).run();
+    if (!href.trim()) editor.chain().focus(undefined, { scrollIntoView: false }).extendMarkRange("link").unsetLink().run();
+    else editor.chain().focus(undefined, { scrollIntoView: false }).extendMarkRange("link").setLink({ href: href.trim() }).run();
   };
   const applyNamedStyle = (style: EditorNamedStyle) => {
-    let chain = editor.chain().focus();
+    let chain = editor.chain().focus(undefined, { scrollIntoView: false });
     chain = style.paragraphType === "heading2" ? chain.setHeading({ level: 2 }) : style.paragraphType === "heading3" ? chain.setHeading({ level: 3 }) : chain.setParagraph();
     chain = style.fontFamily ? chain.setFontFamily(style.fontFamily) : chain.unsetFontFamily();
     chain = style.fontSize ? chain.setFontSize(style.fontSize) : chain.unsetFontSize();
@@ -299,12 +302,12 @@ export function DocumentWysiwygToolbar({
     chain.run();
     const mark = (name: "bold" | "italic" | "underline", enabled?: boolean) => {
       if (editor.isActive(name) === Boolean(enabled)) return;
-      if (name === "bold") editor.chain().focus().toggleBold().run();
-      else if (name === "italic") editor.chain().focus().toggleItalic().run();
-      else editor.chain().focus().toggleUnderline().run();
+      if (name === "bold") editor.chain().focus(undefined, { scrollIntoView: false }).toggleBold().run();
+      else if (name === "italic") editor.chain().focus(undefined, { scrollIntoView: false }).toggleItalic().run();
+      else editor.chain().focus(undefined, { scrollIntoView: false }).toggleUnderline().run();
     };
     mark("bold", style.bold); mark("italic", style.italic); mark("underline", style.underline);
-    if (editor.isActive("strike") !== Boolean(style.strike)) editor.chain().focus().toggleStrike().run();
+    if (editor.isActive("strike") !== Boolean(style.strike)) editor.chain().focus(undefined, { scrollIntoView: false }).toggleStrike().run();
   };
   const persistNamedStyles = (next: EditorNamedStyle[]) => {
     setNamedStyles(next);
@@ -346,20 +349,20 @@ export function DocumentWysiwygToolbar({
     persistNamedStyles(upsertEditorNamedStyle(namedStyles, { ...style, name: name.trim(), updatedAt: new Date().toISOString() }));
   };
 
-  return <div className={cn("ln-wysiwyg-toolbar", className)} role="toolbar" aria-label={ariaLabel}>
+  return <div className={cn("ln-wysiwyg-toolbar", className)} onClickCapture={(event) => { const button = (event.target as HTMLElement).closest("button"); if (button && !["Undo", "Redo"].includes(button.getAttribute("aria-label") ?? "")) editor.view.dispatch(closeHistory(editor.state.tr)); }} role="toolbar" aria-label={ariaLabel}>
     <ToolbarMenu id="style" label={paragraphLabel} ariaLabel="Paragraph style" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-style-select">
-      <button type="button" data-active={paragraphType === "paragraph" || undefined} onClick={() => editor.chain().focus().setParagraph().run()}>Body</button>
-      <button type="button" data-active={paragraphType === "heading2" || undefined} onClick={() => editor.chain().focus().setHeading({ level: 2 }).run()}>Heading 2</button>
-      <button type="button" data-active={paragraphType === "heading3" || undefined} onClick={() => editor.chain().focus().setHeading({ level: 3 }).run()}>Heading 3</button>
+      <button type="button" data-active={paragraphType === "paragraph" || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setParagraph().run()}>Body</button>
+      <button type="button" data-active={paragraphType === "heading2" || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setHeading({ level: 2 }).run()}>Heading 2</button>
+      <button type="button" data-active={paragraphType === "heading3" || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setHeading({ level: 3 }).run()}>Heading 3</button>
       {namedStyles.map((style) => <button key={style.id} type="button" onClick={() => applyNamedStyle(style)}>{style.name}</button>)}
     </ToolbarMenu>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
-    <ToolbarButton editor={editor} label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}><Bold aria-hidden /></ToolbarButton>
-    <ToolbarButton editor={editor} label="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic aria-hidden /></ToolbarButton>
-    <ToolbarButton editor={editor} label="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}><Underline aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleBold().run()}><Bold aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleItalic().run()}><Italic aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleUnderline().run()}><Underline aria-hidden /></ToolbarButton>
     <ToolbarMenu id="font" label={fontLabel} ariaLabel="Font" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-font-menu" triggerClassName="ln-wysiwyg-font-select">
-      <button type="button" data-active={!selectedFont || undefined} onClick={() => editor.chain().focus().unsetFontFamily().run()}>Document default</button>
-      {fontOptions.map((option) => <button key={option.value} type="button" data-active={selectedFont === option.value || undefined} style={{ fontFamily: richTextFontFamilyCss(option.value) }} onClick={() => editor.chain().focus().setFontFamily(option.value).run()}>{option.label}</button>)}
+      <button type="button" data-active={!selectedFont || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).unsetFontFamily().run()}>Document default</button>
+      {fontOptions.map((option) => <button key={option.value} type="button" data-active={selectedFont === option.value || undefined} style={{ fontFamily: richTextFontFamilyCss(option.value) }} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setFontFamily(option.value).run()}>{option.label}</button>)}
     </ToolbarMenu>
     <ToolbarMenu id="size" label={selectedSize === "__mixed__" ? "多种字号 / Mixed sizes" : selectedSize.replace("pt", " pt") || "Size"} ariaLabel="Font size" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-size-select">
       <label className="block text-xs">作用范围 / Scope<select aria-label="字号作用范围 / Font size scope" value={fontSizeScope} onMouseDown={event => event.stopPropagation()} onChange={event => setFontSizeScope(event.target.value as FontSizeScope)} className={wysiwygToolbarSelectClass}>
@@ -369,33 +372,33 @@ export function DocumentWysiwygToolbar({
       {RICH_TEXT_FONT_SIZES_PT.map((size) => <button key={size} type="button" data-active={selectedSize === `${size}pt` || undefined} onClick={() => applyDocumentFontSize(fontSizeScope === "document" ? documentEditor ?? editor : editor, size, fontSizeScope)}>{size} pt</button>)}
     </ToolbarMenu>
     <ToolbarMenu id="paragraph-layout" label={alignmentLabel} ariaLabel="Paragraph layout" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu">
-      {(["left","center","right","justify"] as const).map(align => <button type="button" key={align} data-active={editor.isActive({textAlign:align}) || undefined} onClick={() => editor.chain().focus().setTextAlign(align).run()}>{({left:"Align left",center:"Align center",right:"Align right",justify:"Justify"})[align]}</button>)}
-      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus().indentDocumentParagraph(1).run()}>Increase paragraph indent</button>
-      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus().indentDocumentParagraph(-1).run()}>Decrease paragraph indent</button>
-      {(["spaceBeforePt","spaceAfterPt"] as const).map(key => <div key={key}><span className="text-xs text-muted">{key==="spaceBeforePt"?"Before paragraph":"After paragraph"}</span>{[0,6,12,18,24].map(value => <button type="button" key={value} onClick={() => editor.chain().focus().setDocumentParagraphLayout({[key]:value}).run()}>{value} pt</button>)}</div>)}
+      {(["left","center","right","justify"] as const).map(align => <button type="button" key={align} data-active={editor.isActive({textAlign:align}) || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setTextAlign(align).run()}>{({left:"Align left",center:"Align center",right:"Align right",justify:"Justify"})[align]}</button>)}
+      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).indentDocumentParagraph(1).run()}>Increase paragraph indent</button>
+      <button type="button" disabled={editor.isActive("listItem") || editor.isActive("taskItem")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).indentDocumentParagraph(-1).run()}>Decrease paragraph indent</button>
+      {(["spaceBeforePt","spaceAfterPt"] as const).map(key => <div key={key}><span className="text-xs text-muted">{key==="spaceBeforePt"?"Before paragraph":"After paragraph"}</span>{[0,6,12,18,24].map(value => <button type="button" key={value} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setDocumentParagraphLayout({[key]:value}).run()}>{value} pt</button>)}</div>)}
     </ToolbarMenu>
     <ToolbarMenu id="spacing" label={`${activeLineHeight ?? "1.6"}×`} ariaLabel="Line spacing" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu ln-wysiwyg-choice-menu" triggerClassName="ln-wysiwyg-line-height-select">
-      {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus().setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}
+      {RICH_TEXT_LINE_HEIGHTS.map((height) => <button key={height} type="button" data-active={String(activeLineHeight ?? "1.6") === String(height) || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setDocumentBlockLineHeight(String(height)).run()}>{height}×</button>)}
     </ToolbarMenu>
     <span className="ln-wysiwyg-toolbar-divider" aria-hidden />
-    <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}><List aria-hidden /></ToolbarButton>
-    <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
-    {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
+    <ToolbarButton editor={editor} label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleBulletList().run()}><List aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleOrderedList().run()}><ListOrdered aria-hidden /></ToolbarButton>
+    {checklist ? <ToolbarButton editor={editor} label="Checklist" active={editor.isActive("taskList")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleTaskList().run()}><ListChecks aria-hidden /></ToolbarButton> : null}
     <ToolbarMenu id="more" label="More" openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu" triggerClassName="ln-wysiwyg-more-menu-trigger">
         <button type="button" onClick={()=>copySelection("copy")}>Copy selection</button>
         <button type="button" onClick={()=>copySelection("cut")}>Cut selection</button>
         <button type="button" onClick={pastePlainText}>Paste plain text</button>
-        <button type="button" onClick={()=>editor.chain().focus().unsetAllMarks().clearNodes().resetAttributes("paragraph",["textAlign","documentIndent","spaceBeforePt","spaceAfterPt","documentLineHeight"]).run()}>Clear formatting</button>
+        <button type="button" onClick={()=>editor.chain().focus(undefined, { scrollIntoView: false }).unsetAllMarks().clearNodes().resetAttributes("paragraph",["textAlign","documentIndent","spaceBeforePt","spaceAfterPt","documentLineHeight"]).run()}>Clear formatting</button>
         <button type="button" disabled={!collectDocumentMedia(editor.getJSON()).some(block => documentMediaAttachmentId(block)) || collectDocumentMedia(editor.getJSON()).some(block => block.pendingUploadId)} onClick={() => {
           const ids = [...new Set(collectDocumentMedia(editor.getJSON()).flatMap(block => { const id = documentMediaAttachmentId(block); return id ? [id] : []; }))];
           window.location.assign(`/api/attachments/package?ids=${encodeURIComponent(ids.join(","))}`);
         } }><Save aria-hidden />下载附件包 / Download attachments</button>
-        <button type="button" data-active={editor.isActive("strike") || undefined} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough aria-hidden />Strikethrough</button>
-        <button type="button" data-active={editor.isActive("blockquote") || undefined} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote aria-hidden />Quote</button>
+        <button type="button" data-active={editor.isActive("strike") || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleStrike().run()}><Strikethrough aria-hidden />Strikethrough</button>
+        <button type="button" data-active={editor.isActive("blockquote") || undefined} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).toggleBlockquote().run()}><Quote aria-hidden />Quote</button>
         <button type="button" data-active={editor.isActive("link") || undefined} onClick={setLink}><Link2 aria-hidden />Add / edit link</button>
-        <button type="button" disabled={!editor.isActive("link")} onClick={() => editor.chain().focus().unsetLink().run()}><Unlink aria-hidden />Remove link</button>
-        <button type="button" onClick={() => editor.chain().focus().unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
-        <button type="button" onClick={() => editor.chain().focus().setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
+        <button type="button" disabled={!editor.isActive("link")} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).unsetLink().run()}><Unlink aria-hidden />Remove link</button>
+        <button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).unsetColor().run()}><span aria-hidden>A</span>Default gray</button>
+        <button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).setColor(RICH_TEXT_RISK_COLOR_HEX).run()}><span className="text-error" aria-hidden>A</span>Risk red</button>
         <button type="button" onClick={saveCurrentStyle}><Save aria-hidden />Save selection as style</button>
         {namedStyles.flatMap((style) => [
           <button key={`rename-${style.id}`} type="button" onClick={() => renameStyle(style)}><Pencil aria-hidden />Rename style: {style.name}</button>,
@@ -403,12 +406,27 @@ export function DocumentWysiwygToolbar({
         ])}
     </ToolbarMenu>
     {insertActions.length ? <ToolbarMenu id="insert" label="Insert" icon={<Plus aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-insert-popover" triggerClassName="ln-wysiwyg-insert-menu-trigger">
-        {insertActions.map((action) => <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
+        {insertActions.map((action) => action.id === "table" ? <TableInsertPicker key={action.id} editor={editor} /> : <button key={action.id} type="button" onClick={() => action.run(editor)}>{action.icon}<span><strong>{action.label}</strong><small>{action.description}</small></span></button>)}
     </ToolbarMenu> : null}
-    {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus().deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus().deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
+    {editor.isActive("table") ? <ToolbarMenu id="table" label="Table" icon={<Table2 aria-hidden />} openMenu={openMenu} setOpenMenu={setOpenMenu} menuClassName="ln-wysiwyg-compact-menu"><button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).addRowAfter().run()}>+ Row</button><button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).addColumnAfter().run()}>+ Column</button><button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).deleteRow().run()}>− Row</button><button type="button" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).deleteColumn().run()}>− Column</button><button type="button" className="text-error" onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).deleteTable().run()}>Delete table</button></ToolbarMenu> : null}
     {clipboardNotice?<span role="status" className="text-xs text-warning">{clipboardNotice}</span>:null}
     <span className="ln-wysiwyg-toolbar-spacer" />
-    <ToolbarButton editor={editor} label="Undo" disabled={!editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><Undo2 aria-hidden /></ToolbarButton>
-    <ToolbarButton editor={editor} label="Redo" disabled={!editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><Redo2 aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Undo" disabled={!editor.can().chain().focus(undefined, { scrollIntoView: false }).undo().run()} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).undo().run()}><Undo2 aria-hidden /></ToolbarButton>
+    <ToolbarButton editor={editor} label="Redo" disabled={!editor.can().chain().focus(undefined, { scrollIntoView: false }).redo().run()} onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).redo().run()}><Redo2 aria-hidden /></ToolbarButton>
+  </div>;
+}
+
+function TableInsertPicker({ editor }: { editor: Editor }) {
+  const [choice, setChoice] = useState({ rows: 3, cols: 4 });
+  return <div className="ln-table-insert-picker">
+    <p className="flex items-center gap-2 text-sm"><Table2 aria-hidden className="h-4 w-4" />Table · {choice.rows} × {choice.cols}</p>
+    <div className="ln-table-insert-grid" aria-label="Table dimensions">
+      {Array.from({ length: 48 }, (_, index) => {
+        const rows = Math.floor(index / 8) + 1, cols = index % 8 + 1;
+        return <button key={index} type="button" aria-label={`Insert table ${rows} rows ${cols} columns`} data-highlighted={rows <= choice.rows && cols <= choice.cols}
+          onFocus={() => setChoice({ rows, cols })} onPointerEnter={() => setChoice({ rows, cols })}
+          onClick={() => editor.chain().focus(undefined, { scrollIntoView: false }).insertTable({ rows, cols, withHeaderRow: true }).run()} />;
+      })}
+    </div>
   </div>;
 }

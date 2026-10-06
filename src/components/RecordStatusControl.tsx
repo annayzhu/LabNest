@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Lock } from "lucide-react";
 import { useActionState, useState } from "react";
 import { setRecordStatus, type RecordStatusState } from "@/app/records/actions";
@@ -9,10 +10,11 @@ import { isRecordLocked } from "@/lib/record-lifecycle";
 
 const statuses = ["draft", "recorded", "submitted", "reviewed"] as const;
 
-type Props = { targetType: "experiment" | "entry"; id: string; recordStatus: string };
+type Props = { targetType: "experiment" | "entry" | "result"; id: string; recordStatus: string };
 
 // React resets a form after its action; remounting on the saved status keeps the select in sync with the record.
 export function RecordStatusControl(props: Props) {
+  if (props.targetType === "result" && !isRecordLocked(props.recordStatus)) return <p className="text-sm text-muted">Submit after validating required data in the <Link className="text-moss underline" href={`/results/${props.id}/edit`}>Result editor</Link>.</p>;
   return <RecordStatusForm key={props.recordStatus} {...props} />;
 }
 
@@ -28,7 +30,7 @@ function RecordStatusForm({ targetType, id, recordStatus }: Props) {
     <div className="flex items-end gap-2">
       <label className="min-w-0 flex-1"><span className={formLabelClass}>Record status</span>
         <select name="recordStatus" value={next} onChange={(event) => setNext(event.target.value)} disabled={pending} className={`${formInputClass} h-9`}>
-          {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+          {statuses.filter(status => targetType !== "result" || status === recordStatus || !isRecordLocked(status)).map((status) => <option key={status} value={status}>{status}</option>)}
         </select>
       </label>
       <Button type="submit" size="md" disabled={pending || next === recordStatus} className="h-9">{pending ? "Saving…" : "Update"}</Button>

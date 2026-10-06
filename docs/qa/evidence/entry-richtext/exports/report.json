@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "C07 Protocol DOCX via actual export menu contains body, table, caption and embedded image",
+      "status": "通过"
+    },
+    {
+      "name": "C07 Protocol JSON keeps version and original media identity",
+      "status": "通过"
+    },
+    {
+      "name": "C07 Report Markdown preserves body/table/image reference",
+      "status": "通过"
+    }
+  ]
+}

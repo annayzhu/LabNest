@@ -1,0 +1,50 @@
+{
+  "synthetic": true,
+  "projectId": "cmuwadmv20000doosorxisz83",
+  "planId": "cmuwadmvt0001doos9spose1g",
+  "experimentId": "cmuwadmwd0002doosnrogf62e",
+  "resultId": "cmuwadmwl0004doosgzvnwrwq",
+  "reportId": "cmuwadmwp0005doosbvlm3jra",
+  "entryId": "cmuwadmws0006doosmii61fmx",
+  "protocolId": "cmuwadmww0007doos42lqriqz",
+  "versionId": "cmuwadmwz0008dooso13hyyer",
+  "inventoryId": "cmuwadmx30009doos55rresu6",
+  "cases": [
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmuwadmvt0001doos9spose1g/edit",
+      "view": "/research-plans/cmuwadmvt0001doos9spose1g",
+      "save": "Save Research Plan"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmuwadmwd0002doosnrogf62e/edit",
+      "view": "/experiments/cmuwadmwd0002doosnrogf62e",
+      "save": "Save Experiment"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmuwadmwl0004doosgzvnwrwq/edit",
+      "view": "/results/cmuwadmwl0004doosgzvnwrwq",
+      "save": "Save Result"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmuwadmwp0005doosbvlm3jra/edit",
+      "view": "/reports/cmuwadmwp0005doosbvlm3jra",
+      "save": "Save Report"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmuwadmww0007doos42lqriqz/versions/cmuwadmwz0008dooso13hyyer/edit",
+      "view": "/protocols/cmuwadmww0007doos42lqriqz",
+      "save": "Save Protocol"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmuwadmws0006doosmii61fmx/edit",
+      "view": "/entries/cmuwadmws0006doosmii61fmx",
+      "save": "Save changes"
+    }
+  ]
+}

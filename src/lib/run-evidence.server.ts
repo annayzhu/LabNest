@@ -9,7 +9,9 @@ export async function stepsWithExecutionEvidence<T extends {id:string}>(steps:T[
   const ids=steps.map(step=>step.id);
   const [links,entries,results]=await Promise.all([
     prisma.attachmentLink.findMany({where:{targetType:'experiment_step',targetId:{in:ids}},include:{attachment:true},orderBy:[{order:'asc'},{createdAt:'asc'}]}),
-    prisma.entry.findMany({where:{experimentStepId:{in:ids}},orderBy:{occurredAt:'asc'}}),
+    // Signed targets display their captured EntrySourceCards version. Reading live
+    // step Entries here would leak later edits into the same frozen document.
+    prisma.entry.findMany({where:{experimentStepId:{in:ids},experimentStep:{experiment:{recordStatus:{notIn:['submitted','reviewed']}}}},orderBy:{occurredAt:'asc'}}),
     prisma.result.findMany({where:{experimentStepId:{in:ids}},orderBy:{createdAt:'asc'}}),
   ]);
   return steps.map(step=>{

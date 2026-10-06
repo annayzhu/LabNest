@@ -35,9 +35,10 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
           defaultOccurredAt={format(new Date(entry.occurredAt), "yyyy-MM-dd'T'HH:mm")}
           entry={{
             id: entry.id,
+            entryType: entry.entryType, eventTimePrecision: entry.eventTimePrecision, updatedAt: entry.updatedAt,
             title: entry.title,
             contentMarkdown: entry.contentMarkdown ?? entry.body,
-            occurredAt: format(new Date(entry.occurredAt), "yyyy-MM-dd'T'HH:mm"),
+            occurredAt: entry.eventTimePrecision === "date" ? new Date(entry.occurredAt).toISOString().slice(0,10) : format(new Date(entry.occurredAt), "yyyy-MM-dd'T'HH:mm"),
             projectId: entry.projectId,
             researchPlanId: entry.researchPlanId,
             sourceType: entry.sourceType,

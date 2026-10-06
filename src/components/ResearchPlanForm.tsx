@@ -34,7 +34,7 @@ export function ResearchPlanForm({
   projects: ProjectOption[];
   protocols: ResearchPlanProtocolOption[];
   initial: {
-    id?: string;
+    id?: string; updatedAt?: Date | string;
     projectId?: string;
     code?: string | null;
     suggestedCodeSuffix?: string;
@@ -62,8 +62,9 @@ export function ResearchPlanForm({
   const identifier = initial.code ?? (codeSuffix ? `RP-${codeSuffix}` : "Draft Research Plan");
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form inert={pending} aria-busy={pending} action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+    {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
       <DocumentEditorLayout>
         <div className="document-editor-main"><div id={workspaceId} /><ScientificDocumentEditor initialDocument={initial.document} documentType="Research Plan" identifier={identifier} title={title} titlePlaceholder="Untitled Research Plan" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Research Plan" aria-label="Research Plan title" />} headerFacts={[
           { label: "Project", value: project?.name ?? "Not selected" },

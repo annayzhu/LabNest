@@ -49,7 +49,7 @@ export function ProtocolDocumentEditor({
   action: ProtocolEditorAction;
   mode: "create" | "edit";
   protocol: { id?: string; humanCode?: string; suggestedCodeSuffix?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
-  version: { id?: string; displayVersion: string; reviewStage: string; changeSummary?: string };
+  version: { id?: string; expectedDocumentVersion?: string; displayVersion: string; reviewStage: string; changeSummary?: string };
   initialDocument: ProtocolDocument;
   suggestedDisplayVersion?: string;
   projects: ProjectOption[];
@@ -101,9 +101,9 @@ export function ProtocolDocumentEditor({
   };
 
   return (
-    <form action={formAction} className="protocol-density-form">
+    <form inert={pending} aria-busy={pending} action={formAction} className="protocol-density-form">
       {protocol.id ? <input type="hidden" name="protocolId" value={protocol.id} /> : null}
-      {version.id ? <input type="hidden" name="versionId" value={version.id} /> : null}
+      {version.id ? <><input type="hidden" name="versionId" value={version.id} /><input type="hidden" name="expectedDocumentVersion" value={version.expectedDocumentVersion ?? ""} /></> : null}
       <input type="hidden" name="contentJson" value={serialized} />
       <input type="hidden" name="uploadDraftId" value={uploadDraftId} />
       {mode === "edit" ? <><input type="hidden" name="protocolScope" value={protocol.scope} /><input type="hidden" name="projectId" value={protocol.projectId ?? ""} /></> : null}

@@ -1,0 +1,42 @@
+
+ RUN  v4.1.10 $PROJECT_ROOT
+
+ ❯ src/lib/document-media-dimensions.test.ts (2 tests | 1 failed) 8ms
+     × keeps original identity, display width and source dimensions through Markdown, scientific and Protocol documents 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/document-media-dimensions.test.ts > image dimensions survive every persisted editor format > keeps original identity, display width and source dimensions through Markdown, scientific and Protocol documents
+AssertionError: expected { id: 'node-1', type: 'media', …(5) } to match object { id: 'node-1', type: 'media', …(7) }
+
+- Expected
++ Received
+
+  {
+    "attachmentId": "original-1",
+    "caption": "中文图注",
+    "id": "node-1",
+-   "imageHeight": 100,
+-   "imageWidth": 1000,
+    "mediaType": "image",
+    "type": "media",
+    "url": "",
+    "widthPercent": 60,
+  }
+
+ ❯ src/lib/document-media-dimensions.test.ts:8:96
+      6|  it('keeps original identity, display width and source dimensions thro…
+      7|   const image={id:'node-1',type:'media',mediaType:'image',url:'',attac…
+      8|   expect(documentMediaFromMarkdown(documentMediaToMarkdown(documentMed…
+       |                                                                                                ^
+      9|   const scientific=createScientificDocument(resultSections);scientific…
+     10|   expect(normalizeResultDocument(scientific).sections[0].blocks[0]).to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  14:50:45
+   Duration  347ms (transform 89ms, setup 0ms, import 157ms, tests 8ms, environment 0ms)
+

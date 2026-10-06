@@ -1,0 +1,56 @@
+{
+  "synthetic": true,
+  "projectId": "cmuw8pyh00000k0osx2o19qje",
+  "planId": "cmuw8pyhv0001k0os5mczkth0",
+  "experimentId": "cmuw8pyif0002k0os3ehdgbbp",
+  "resultId": "cmuw8pyip0004k0osec0lw14v",
+  "reportId": "cmuw8pyit0005k0osi3fexzpd",
+  "entryId": "cmuw8pyix0006k0os2dg4eqs5",
+  "protocolId": "cmuw8pyj00007k0osqkr1155n",
+  "versionId": "cmuw8pyj40008k0os5pgx4jh5",
+  "inventoryId": "cmuw8pyj70009k0osheub296b",
+  "cases": [
+    {
+      "name": "research-plan",
+      "edit": "/research-plans/cmuw8pyhv0001k0os5mczkth0/edit",
+      "view": "/research-plans/cmuw8pyhv0001k0os5mczkth0",
+      "save": "Save Research Plan"
+    },
+    {
+      "name": "experiment",
+      "edit": "/experiments/cmuw8pyif0002k0os3ehdgbbp/edit",
+      "view": "/experiments/cmuw8pyif0002k0os3ehdgbbp",
+      "save": "Save Experiment"
+    },
+    {
+      "name": "result",
+      "edit": "/results/cmuw8pyip0004k0osec0lw14v/edit",
+      "view": "/results/cmuw8pyip0004k0osec0lw14v",
+      "save": "Save Result"
+    },
+    {
+      "name": "report",
+      "edit": "/reports/cmuw8pyit0005k0osi3fexzpd/edit",
+      "view": "/reports/cmuw8pyit0005k0osi3fexzpd",
+      "save": "Save Report"
+    },
+    {
+      "name": "protocol",
+      "edit": "/protocols/cmuw8pyj00007k0osqkr1155n/versions/cmuw8pyj40008k0os5pgx4jh5/edit",
+      "view": "/protocols/cmuw8pyj00007k0osqkr1155n",
+      "save": "Save Protocol"
+    },
+    {
+      "name": "entry",
+      "edit": "/entries/cmuw8pyix0006k0os2dg4eqs5/edit",
+      "view": "/entries/cmuw8pyix0006k0os2dg4eqs5",
+      "save": "Save changes"
+    }
+  ],
+  "sequenceId": "cmuw8pz3v0000klosx5z909ry",
+  "collectionId": "cmuw8pz4a0002klosnoud8pq6",
+  "pairId": "cmuw8pz4u0005kloscuqhyvsv",
+  "workflowId": "cmuw8pz500008klosa7x5w300",
+  "purchaseId": "cmuw8pz530009klos7v2a5k96",
+  "attachmentId": "cmuw8n0a2000yqxosv1m4cdap"
+}

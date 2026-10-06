@@ -1,3 +1,5 @@
+import { lockEntrySourceGraph } from "@/lib/entry-source-lock";
+import { entrySaveSignature, entryFileIdentities } from "./entry-save-identity";
 import type { Prisma } from "@/generated/prisma/client";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import {
@@ -7,13 +9,14 @@ import {
   type PreparedAttachmentFile,
 } from "@/lib/attachment-files";
 import { calculateConsumption, type ProtocolParameterValues } from "@/lib/protocol";
+import { collectDocumentMedia, documentMediaAttachmentId } from "./document-media";
 import { buildEntryContent } from "@/lib/entry-content";
 import { prisma } from "@/lib/db";
 import type { EntryMutationInput } from "@/lib/entry-mutations";
 import { reserveRecordCode } from "@/lib/record-codes";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { experimentSearchText } from "@/lib/experiment-document";
-import { experimentSections, resultSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
+import { experimentSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
 import { createResultInTransaction } from "@/lib/result-creation";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolParameter, ProtocolStep, ResultTemplate } from "@/lib/types";
@@ -50,6 +53,13 @@ function materialSummary(materials: ProtocolMaterial[]) {
 
 function jsonValue(value: unknown): Prisma.InputJsonValue {
   return cloneJson(value) as Prisma.InputJsonValue;
+}
+
+async function assertEntryOriginalLimits(tx: Prisma.TransactionClient, markdown: string, gallery: PersistedAttachment[]) {
+ const ids = [...new Set([...collectDocumentMedia(markdown).flatMap(block=>{const id=documentMediaAttachmentId(block);return id?[id]:[];}),...gallery.map(a=>a.id)])];
+ const originals = await tx.attachment.findMany({where:{id:{in:ids}},select:{size:true}});
+ if (ids.length > MAX_ENTRY_FILES) throw new Error(`快速记录最多包含 ${MAX_ENTRY_FILES} 个原始附件。`);
+ if (originals.reduce((total,file)=>total+file.size,0) > MAX_ENTRY_TOTAL_BYTES) throw new Error("快速记录附件总量不能超过 100 MB。");
 }
 
 async function resolveContext(
@@ -135,7 +145,7 @@ async function formalizeProtocolEntry(
   const experimentDocument = scientificDocumentFromSectionText(experimentSections, {
     background: `Formalized from entry ${entryId}.`,
     setup: materialSummary(materials),
-    observations: input.body,
+    observations: "",
     conclusion: resultTemplates.length
       ? "Result records registered from the protocol template; measurements pending."
       : "Result registration pending.",
@@ -187,6 +197,7 @@ async function formalizeProtocolEntry(
     },
   });
 
+  await tx.entry.update({where:{id:entryId},data:{experimentId:experiment.id}});
   const protocolRun = await tx.protocolRun.create({
     data: {
       protocolVersionId: version.id,
@@ -204,9 +215,9 @@ async function formalizeProtocolEntry(
         sourceId: entryId,
         targetType: "experiment",
         targetId: experiment.id,
-        linkType: "formalized_as",
+        linkType: "entry_primary",
         createdBy: "user",
-        note: "Entry was recorded as a protocol-based formal experiment.",
+        note: "Entry is referenced by a protocol-based formal experiment.",
       },
       {
         sourceType: "experiment",
@@ -249,9 +260,9 @@ async function formalizeProtocolEntry(
       recordStatus: "recorded",
       sourceType: "manual",
       qualityStatus: "not_assessed",
-      origin: { kind: "entry", entryId, includeAttachments: true },
+      origin: { kind: "entry", entryId, includeAttachments: false },
       templateProtocolVersionId: version.id,
-      contentJson: jsonValue(scientificDocumentFromSectionText(resultSections, { summary: input.contentMarkdown }, `entry-${entryId}`)),
+
       textValue: input.resultTextValue,
       notes: input.resultNotes,
     });
@@ -259,8 +270,18 @@ async function formalizeProtocolEntry(
 }
 
 export async function createEntryWithFiles(input: EntryMutationInput, files: File[]) {
+  const requestSignature = entrySaveSignature(input, await entryFileIdentities(files), []);
+  const findReplay = async () => {
+    if (!input.clientMutationId) return null;
+    const replay = await prisma.entry.findUnique({where:{clientMutationId:input.clientMutationId}});
+    if (!replay) return null;
+    const log = await prisma.activityLog.findFirst({where:{action:"create",targetType:"entry",targetId:replay.id},orderBy:{createdAt:"asc"}});
+    const saved = (log?.metadataJson as Record<string, unknown> | null)?.requestSignature;
+    if (saved ? saved !== requestSignature : replay.title !== input.title || replay.body !== input.body || files.length > 0) throw new Error("同一保存请求的内容发生变化，请重新保存");
+    return {id:replay.id};
+  };
   if (input.clientMutationId) {
-    const replay = await prisma.entry.findUnique({ where: { clientMutationId: input.clientMutationId }, select: { id: true } });
+    const replay = await findReplay();
     if (replay) return replay;
   }
   const prepared = await Promise.all(files.map((file) => prepareAttachmentFile(file)));
@@ -268,21 +289,29 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
   try {
     await writePreparedAttachmentFiles(prepared);
     return await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
       const context = await resolveContext(tx, input.projectId, input.researchPlanId);
-      const stepContext = input.experimentId ? await tx.experiment.findUnique({ where: { id: input.experimentId }, select: { id: true, projectId: true, researchPlanId: true, steps: input.experimentStepId ? { where: { id: input.experimentStepId }, select: { id: true } } : false } }) : undefined;
+      if (input.experimentId) await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${input.experimentId} FOR UPDATE`;
+      const stepContext = input.experimentId ? await tx.experiment.findUnique({ where: { id: input.experimentId }, select: { id: true, projectId: true, researchPlanId: true, recordStatus: true, status: true, steps: input.experimentStepId ? { where: { id: input.experimentStepId }, select: { id: true } } : false } }) : undefined;
       if (input.experimentId && !stepContext) throw new Error("Selected Experiment no longer exists.");
-      if (input.experimentStepId && !stepContext?.steps.length) throw new Error("Selected Step does not belong to this Experiment.");
+      if (stepContext) {
+        assertRecordEditable(stepContext.recordStatus);
+        if (stepContext.status === "archived" || await tx.deletedRecord.findFirst({where:{targetType:"experiment",targetId:stepContext.id,restoredAt:null}})) throw new Error("Selected Experiment is archived or in the Recycle Bin.");
+      }
+      if (input.experimentStepId && !stepContext?.steps?.length) throw new Error("Selected Step does not belong to this Experiment.");
       if (context.projectId && stepContext?.projectId && context.projectId !== stepContext.projectId) throw new Error("The Entry and Experiment belong to different Projects.");
       if (context.researchPlanId && stepContext?.researchPlanId && context.researchPlanId !== stepContext.researchPlanId) throw new Error("The Entry and Experiment belong to different Research Plans.");
       const entry = await tx.entry.create({
         data: {
+          entryType: input.entryType,
+          eventTimePrecision: input.eventTimePrecision,
           title: input.title,
           body: input.body,
           occurredAt: input.occurredAt,
           projectId: context.projectId ?? stepContext?.projectId,
           researchPlanId: context.researchPlanId ?? stepContext?.researchPlanId,
           experimentId: stepContext?.id,
-          experimentStepId: stepContext?.steps[0]?.id,
+          experimentStepId: stepContext?.steps?.[0]?.id,
           tags: input.tags,
           sourceType: input.sourceType,
           recordStatus: input.recordStatus,
@@ -292,8 +321,10 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
           contentJson: jsonValue(buildEntryContent(input.contentMarkdown, [])),
         },
       });
+      if (stepContext) await tx.itemLink.create({data:{sourceType:"entry",sourceId:entry.id,targetType:"experiment",targetId:stepContext.id,linkType:"entry_primary",createdBy:"user"}});
       await associateDocumentMedia(tx, input.contentMarkdown, "entry", entry.id);
       const attachments = await createAttachmentRecords(tx, prepared);
+      await assertEntryOriginalLimits(tx,input.contentMarkdown,attachments);
       const content = buildEntryContent(input.contentMarkdown, attachments);
 
       if (attachments.length) {
@@ -316,6 +347,7 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
           targetType: "entry",
           targetId: entry.id,
           metadataJson: {
+            requestSignature,
             attachmentCount: attachments.length,
             attachmentIds: attachments.map((attachment) => attachment.id),
             attachmentSha256: attachments.flatMap((attachment) => attachment.sha256 ? [attachment.sha256] : []),
@@ -324,7 +356,7 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
             clientMutationId: input.clientMutationId ?? null,
             deviceCreatedAt: input.deviceCreatedAt?.toISOString() ?? null,
             experimentId: stepContext?.id ?? null,
-            experimentStepId: stepContext?.steps[0]?.id ?? null,
+            experimentStepId: stepContext?.steps?.[0]?.id ?? null,
           },
         },
       });
@@ -333,7 +365,7 @@ export async function createEntryWithFiles(input: EntryMutationInput, files: Fil
   } catch (error) {
     await cleanupPreparedAttachmentFiles(prepared);
     if (input.clientMutationId && typeof error === "object" && error && "code" in error && error.code === "P2002") {
-      const replay = await prisma.entry.findUnique({ where: { clientMutationId: input.clientMutationId }, select: { id: true } });
+      const replay = await findReplay();
       if (replay) return replay;
     }
     throw error;
@@ -348,14 +380,25 @@ export async function updateEntryWithFiles(
   order: EntryMediaOrderToken[],
 ) {
   if (newFiles.length !== newFileIds.length) throw new Error("New attachment order is invalid.");
+  const requestSignature = entrySaveSignature(input, await entryFileIdentities(newFiles), order);
   const prepared = await Promise.all(newFiles.map((file) => prepareAttachmentFile(file)));
 
   try {
     await writePreparedAttachmentFiles(prepared);
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
+      await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${entryId} FOR UPDATE`;
       const current = await tx.entry.findUnique({ where: { id: entryId } });
       if (!current) throw new Error("Entry no longer exists.");
+      if (input.clientMutationId) {
+        const replay = await tx.activityLog.findFirst({where:{action:"update",targetType:"entry",targetId:entryId,metadataJson:{path:["clientMutationId"],equals:input.clientMutationId}}});
+        if (replay) {
+          if ((replay.metadataJson as Record<string, unknown>).requestSignature !== requestSignature) throw new Error("同一保存请求的内容发生变化，请重新保存");
+          return {id:entryId,replay:true};
+        }
+      }
       assertRecordEditable(current.recordStatus);
+      if (input.expectedUpdatedAt && input.expectedUpdatedAt.getTime() !== current.updatedAt.getTime()) throw new Error("另一窗口已修改这条快速记录，当前草稿保留，请刷新核对后再保存。 / This entry changed in another window; your draft is retained.");
       const context = await resolveContext(tx, input.projectId, input.researchPlanId);
       const existingLinks = await tx.attachmentLink.findMany({
         where: { targetType: "entry", targetId: entryId },
@@ -380,13 +423,16 @@ export async function updateEntryWithFiles(
         throw new Error("Combined Entry attachments cannot exceed 100 MB.");
       }
 
+      await assertEntryOriginalLimits(tx,input.contentMarkdown,orderedAttachments);
       const content = buildEntryContent(input.contentMarkdown, orderedAttachments);
       await tx.entry.update({
         where: { id: entryId },
         data: {
+          entryType: input.entryType,
+          eventTimePrecision: input.eventTimePrecision,
           title: input.title,
           body: input.body,
-          occurredAt: input.occurredAt,
+          occurredAt: input.eventTimePrecision === "unknown" ? undefined : input.occurredAt,
           projectId: context.projectId,
           researchPlanId: context.researchPlanId,
           tags: input.tags,
@@ -418,6 +464,8 @@ export async function updateEntryWithFiles(
           targetType: "entry",
           targetId: entryId,
           metadataJson: jsonValue({
+            clientMutationId: input.clientMutationId ?? null,
+            requestSignature,
             addedAttachmentIds: created.map((attachment) => attachment.id),
             removedAttachmentIds,
             attachmentCount: orderedAttachments.length,
@@ -427,8 +475,10 @@ export async function updateEntryWithFiles(
           }),
         },
       });
-      return { id: entryId };
+      return { id: entryId, replay:false };
     });
+    if (result.replay) await cleanupPreparedAttachmentFiles(prepared);
+    return {id:result.id};
   } catch (error) {
     await cleanupPreparedAttachmentFiles(prepared);
     throw error;

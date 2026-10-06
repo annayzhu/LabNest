@@ -1,3 +1,4 @@
+import { distinctDocumentBlockIds } from "./document-block-identity";
 import { paragraphLayoutPrefix, parseParagraphLayoutLine } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
@@ -291,7 +292,7 @@ function sectionBlocks(section: JSONContent): ScientificContentBlock[] {
     if (nodes.length) blocks.push({ id: groupId ?? uniqueId("text"), type: "text", text: tiptapNodesToMarkdown(nodes) });
     else index += 1;
   }
-  return blocks.filter(scientificBlockHasContent);
+  return distinctDocumentBlockIds(blocks.filter(scientificBlockHasContent));
 }
 
 export function tiptapToScientificDocument(json: JSONContent, original: ScientificDocument): ScientificDocument {

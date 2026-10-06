@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "name": "A03/A08 new experiment atomic replay and conflict",
+      "status": "通过"
+    },
+    {
+      "name": "A07 reassign and unfile preserve content and first timestamp",
+      "status": "通过"
+    },
+    {
+      "name": "A04/A05 result parent validation and rollback",
+      "status": "通过"
+    },
+    {
+      "name": "A11 mutable source and frozen source are separate versions",
+      "status": "通过"
+    },
+    {
+      "name": "A08 competing requests cannot create two primary links",
+      "status": "通过"
+    },
+    {
+      "name": "C03/C05 mutation identity and stale save protection",
+      "status": "通过"
+    },
+    {
+      "name": "Run context creates one primary source and rejects a frozen parent",
+      "status": "通过"
+    },
+    {
+      "name": "A09/A10 date-only legacy precision survives editing",
+      "status": "通过"
+    }
+  ],
+  "synthetic": true
+}

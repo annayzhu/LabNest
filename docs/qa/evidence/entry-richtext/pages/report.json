@@ -1,0 +1,116 @@
+{
+  "base": "http://localhost:3331",
+  "browser": "149.0.7827.55",
+  "synthetic": true,
+  "sha": "67e0c1d0fb7a6e353838104c812603229d805893",
+  "checks": [
+    {
+      "entry": "research-plan",
+      "width": 1440,
+      "edit": "/research-plans/cmuwadmvt0001doos9spose1g/edit",
+      "view": "/research-plans/cmuwadmvt0001doos9spose1g",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-research-plan-1440-1791270657614"
+    },
+    {
+      "entry": "research-plan",
+      "width": 390,
+      "edit": "/research-plans/cmuwadmvt0001doos9spose1g/edit",
+      "view": "/research-plans/cmuwadmvt0001doos9spose1g",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-research-plan-390-1791270662175"
+    },
+    {
+      "entry": "experiment",
+      "width": 1440,
+      "edit": "/experiments/cmuwadmwd0002doosnrogf62e/edit",
+      "view": "/experiments/cmuwadmwd0002doosnrogf62e",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-experiment-1440-1791270666441"
+    },
+    {
+      "entry": "experiment",
+      "width": 390,
+      "edit": "/experiments/cmuwadmwd0002doosnrogf62e/edit",
+      "view": "/experiments/cmuwadmwd0002doosnrogf62e",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-experiment-390-1791270670941"
+    },
+    {
+      "entry": "result",
+      "width": 1440,
+      "edit": "/results/cmuwadmwl0004doosgzvnwrwq/edit",
+      "view": "/results/cmuwadmwl0004doosgzvnwrwq",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-result-1440-1791270675337"
+    },
+    {
+      "entry": "result",
+      "width": 390,
+      "edit": "/results/cmuwadmwl0004doosgzvnwrwq/edit",
+      "view": "/results/cmuwadmwl0004doosgzvnwrwq",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-result-390-1791270679652"
+    },
+    {
+      "entry": "report",
+      "width": 1440,
+      "edit": "/reports/cmuwadmwp0005doosbvlm3jra/edit",
+      "view": "/reports/cmuwadmwp0005doosbvlm3jra",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-report-1440-1791270683798"
+    },
+    {
+      "entry": "report",
+      "width": 390,
+      "edit": "/reports/cmuwadmwp0005doosbvlm3jra/edit",
+      "view": "/reports/cmuwadmwp0005doosbvlm3jra",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-report-390-1791270688011"
+    },
+    {
+      "entry": "protocol",
+      "width": 1440,
+      "edit": "/protocols/cmuwadmww0007doos42lqriqz/versions/cmuwadmwz0008dooso13hyyer/edit",
+      "view": "/protocols/cmuwadmww0007doos42lqriqz",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-protocol-1440-1791270692236"
+    },
+    {
+      "entry": "protocol",
+      "width": 390,
+      "edit": "/protocols/cmuwadmww0007doos42lqriqz/versions/cmuwadmwz0008dooso13hyyer/edit",
+      "view": "/protocols/cmuwadmww0007doos42lqriqz",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-protocol-390-1791270697213"
+    },
+    {
+      "entry": "entry",
+      "width": 1440,
+      "edit": "/entries/cmuwadmws0006doosmii61fmx/edit",
+      "view": "/entries/cmuwadmws0006doosmii61fmx",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-entry-1440-1791270701464"
+    },
+    {
+      "entry": "entry",
+      "width": 390,
+      "edit": "/entries/cmuwadmws0006doosmii61fmx/edit",
+      "view": "/entries/cmuwadmws0006doosmii61fmx",
+      "status": "通过",
+      "operations": "中文输入/表格3×4/撤销重做/粘贴图片/图注/宽度60/保存/离开/刷新/重新编辑/只读/PDF",
+      "marker": "TEST-entry-390-1791270705726"
+    }
+  ]
+}

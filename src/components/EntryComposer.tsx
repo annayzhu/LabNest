@@ -1,5 +1,8 @@
 "use client";
+import { editedEventPrecision, recoveredDraftVersion } from "@/lib/entry-lifecycle";
 
+import { entryTypes, entryTypeLabels } from "@/lib/entry-assignment";
+import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import {
@@ -43,6 +46,9 @@ export type EntryComposerProtocol = { id: string; label: string };
 export type EntryComposerAttachment = { id: string; originalFilename: string; mimeType: string; size: number };
 
 type EntryComposerFields = {
+  entryType: string;
+  eventTimePrecision: string;
+  expectedUpdatedAt: string;
   title: string;
   contentMarkdown: string;
   occurredAt: string;
@@ -76,6 +82,9 @@ type NewMedia = {
 type ComposerMedia = ExistingMedia | NewMedia;
 
 export type EntryComposerInitialEntry = {
+  entryType?: string;
+  eventTimePrecision?: string;
+  updatedAt?: string;
   id: string;
   title: string;
   contentMarkdown: string;
@@ -115,9 +124,12 @@ function existingMedia(attachment: EntryComposerAttachment): ExistingMedia {
 
 function initialFields(defaultOccurredAt: string, defaultSource: string, defaultProtocolVersionId: string, defaultExperimentId: string, defaultExperimentStepId: string, entry?: EntryComposerInitialEntry): EntryComposerFields {
   return {
+    entryType: entry?.entryType ?? "unclassified",
+    eventTimePrecision: entry?.eventTimePrecision ?? "unknown",
+    expectedUpdatedAt: entry?.updatedAt ?? "",
     title: entry?.title ?? "",
     contentMarkdown: entry?.contentMarkdown ?? "",
-    occurredAt: entry?.occurredAt ?? defaultOccurredAt,
+    occurredAt: entry?.eventTimePrecision === "date" ? entry.occurredAt.slice(0,10) : entry?.eventTimePrecision === "datetime" ? entry.occurredAt : "",
     projectId: entry?.projectId ?? "",
     researchPlanId: entry?.researchPlanId ?? "",
     experimentId: defaultExperimentId,
@@ -163,6 +175,10 @@ export function EntryComposer({
   entry?: EntryComposerInitialEntry;
 }) {
   const router = useRouter();
+  const saveAttempt = useRef<{signature:string;id:string} | undefined>(undefined);
+  const submitting = useRef(false);
+  const fileAfterSave = useRef(false);
+  const [deviceCreatedAt] = useState(() => new Date().toISOString());
   const { t } = useI18n();
   const mediaInputPrefix = useId();
   const toolbarHostId = `${mediaInputPrefix}-document-toolbar`;
@@ -176,7 +192,10 @@ export function EntryComposer({
     () => initialFields(defaultOccurredAt, defaultSource, defaultProtocolVersionId, defaultExperimentId, defaultExperimentStepId, entry),
     [defaultOccurredAt, defaultProtocolVersionId, defaultSource, defaultExperimentId, defaultExperimentStepId, entry],
   );
-  const baselineMedia = useMemo(() => entry?.attachments.map(existingMedia) ?? [], [entry]);
+  const baselineMedia = useMemo(() => {
+    const inline = new Set(collectDocumentMedia(entry?.contentMarkdown).map(documentMediaAttachmentId));
+    return entry?.attachments.filter(file => !inline.has(file.id)).map(existingMedia) ?? [];
+  }, [entry]);
   const [fields, setFields] = useState<EntryComposerFields>(baselineFields);
   const [media, setMedia] = useState<ComposerMedia[]>(baselineMedia);
   const [hydrated, setHydrated] = useState(false);
@@ -229,6 +248,7 @@ export function EntryComposer({
           return item ? [item] : [];
         });
         const restored = migrateEntryDraftFields(baselineFields, draft.fields);
+        restored.fields.expectedUpdatedAt = recoveredDraftVersion(Boolean(entry), draft.fields.expectedUpdatedAt, baselineFields.expectedUpdatedAt);
         setFields(restored.fields);
         setMedia(restoredMedia);
         setDraftStatus(restored.migratedLegacyResult ? t("Recovered legacy initial Result fields into the rich document.") : `Recovered local draft from ${new Date(draft.savedAt).toLocaleString()}.`);
@@ -394,8 +414,10 @@ export function EntryComposer({
       return;
     }
 
-    const generatedTitle = fields.title.trim() || `${fields.contentMarkdown.trim().split(/\r?\n/)[0].slice(0, 72)} · ${new Date(fields.occurredAt).toLocaleDateString()}`;
+    const generatedTitle = fields.title.trim() || `${fields.contentMarkdown.trim().split(/\r?\n/)[0].slice(0, 72)} · ${new Date(fields.occurredAt || defaultOccurredAt).toLocaleDateString()}`;
 
+    if (submitting.current) return;
+    submitting.current = true;
     setIsSubmitting(true);
     setMedia((current) => current.map((item) => item.kind === "new" ? { ...item, status: "uploading" } : item));
     try {
@@ -406,8 +428,14 @@ export function EntryComposer({
       formData.set("newFileIds", JSON.stringify(newItems.map((item) => item.id)));
       formData.set("mediaOrder", JSON.stringify(media.map((item) => ({ kind: item.kind, id: item.id }))));
 
+      const signature = JSON.stringify([fields,media.map(item=>item.id)]);
+      if (saveAttempt.current?.signature !== signature) saveAttempt.current = {signature,id:newId()};
+      const clientMutationId = saveAttempt.current.id;
+      formData.set("clientMutationId", clientMutationId);
+      formData.set("deviceCreatedAt", deviceCreatedAt);
+      // The version belongs to the recovered draft, not the latest page load.
+      if (fields.expectedUpdatedAt) formData.set("expectedUpdatedAt",fields.expectedUpdatedAt);
       if (captureMode && !navigator.onLine) {
-        const clientMutationId = newId();
         await enqueueMobileMutation({
           clientMutationId,
           actionType: "entry.create",
@@ -435,17 +463,18 @@ export function EntryComposer({
       if (!response.ok || !result.entryId) throw new Error(result.error ?? "Entry could not be saved.");
 
       await deleteEntryDraft(draftKey).catch(() => undefined);
-      router.push(`/entries/${result.entryId}`);
+      router.push(`/entries/${result.entryId}${fileAfterSave.current ? "?assign=1" : ""}`);
       router.refresh();
     } catch (error) {
       setMedia((current) => current.map((item) => item.kind === "new" ? { ...item, status: "error" } : item));
       setSubmitStatus(`${error instanceof Error ? error.message : "Entry could not be saved."} Your draft and selected files are still available; choose Try again.`);
       setIsSubmitting(false);
+      submitting.current = false;
     }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={imageInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
@@ -532,7 +561,7 @@ export function EntryComposer({
             aria-label="Entry title"
           />
           <dl className="document-page-facts">
-            <div><dt>Occurred</dt><dd><input required type="datetime-local" value={fields.occurredAt} onChange={(event) => updateField("occurredAt", event.target.value)} className="focus-ring w-full rounded-[4px] border border-transparent bg-transparent p-0 text-graphite hover:border-hairline" /></dd></div>
+            <div><dt>实验／观察时间（可留空）</dt><dd><input type={fields.eventTimePrecision === "date" ? "date" : "datetime-local"} value={fields.occurredAt} onChange={(event) => { updateField("occurredAt", event.target.value); updateField("eventTimePrecision", editedEventPrecision(fields.eventTimePrecision, event.target.value)); }} className="focus-ring w-full rounded-[4px] border border-transparent bg-transparent p-0 text-graphite hover:border-hairline" /></dd></div>
             <div><dt>Project</dt><dd>{selectedProject?.name ?? "Unassigned"}</dd></div>
             <div><dt>Research Plan</dt><dd>{selectedPlan ? selectedPlan.code ?? selectedPlan.title : "Unassigned"}</dd></div>
             <div><dt>Source</dt><dd>{fields.sourceType.replaceAll("_", " ")}</dd></div>
@@ -652,6 +681,7 @@ export function EntryComposer({
             const plan = researchPlans.find((candidate) => candidate.id === value);
             if (plan) updateField("projectId", plan.projectId);
           }} options={[{ value: "", label: "Unassigned" }, ...availablePlans.map((plan) => ({ value: plan.id, label: `${plan.projectName} · ${plan.code ?? plan.title}` }))]} />
+          <ComposerSelect label="记录类型" value={fields.entryType} onChange={(value) => updateField("entryType", value)} options={entryTypes.map(value=>({value,label:entryTypeLabels[value]}))} />
           <ComposerSelect label="Source" value={fields.sourceType} onChange={(value) => updateField("sourceType", value)} options={["text", "photo", "file", "voice", "manual"].map((value) => ({ value, label: value }))} />
           <ComposerInput label="State" value={fields.moodStatus} onChange={(value) => updateField("moodStatus", value)} placeholder="needs follow-up" />
           <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} density="compact" className="md:col-span-2 xl:col-span-5" />
@@ -664,7 +694,7 @@ export function EntryComposer({
         </div>
       </section>
 
-      {!entry ? (
+      {!entry && !fields.experimentId ? (
         <details className="entry-editor-experiment">
           <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Protocol-based experiment")} <span className="ml-1.5 text-xs font-normal text-muted">{t("Optional")}</span></summary>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -683,6 +713,7 @@ export function EntryComposer({
       {submitStatus ? <div role="alert" className="rounded-[var(--ln-radius-panel)] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
         {submitStatus && !isSubmitting ? <Button type="submit" size="lg"><RotateCcw className="h-4 w-4" />Try again</Button> : null}
+        <Button type="submit" size="lg" variant="secondary" disabled={isSubmitting} onClick={() => { fileAfterSave.current = true; }}>保存并归入…</Button>
         <Button type="submit" size="lg" variant="primary" disabled={isSubmitting}>
           <Save className="h-4 w-4" />
           {isSubmitting ? "Saving originals…" : entry ? "Save changes" : "Save Entry"}

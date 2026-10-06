@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { plainTextFromEntryMarkdown } from "@/lib/entry-content";
 import { parseTags } from "@/lib/tags";
+import { entryTypes } from "./entry-assignment";
 import { entrySchema } from "@/lib/validation";
 
 export const entrySourceTypes = ["text", "photo", "file", "voice", "manual"] as const;
@@ -8,6 +9,9 @@ export const entryRecordStatuses = ["draft", "recorded", "submitted", "reviewed"
 export const entryExperimentStatuses = ["planned", "running", "completed", "failed", "archived"] as const;
 
 const entryMutationSchema = entrySchema.omit({ body: true }).extend({
+  entryType: z.enum(entryTypes).default("unclassified"),
+  eventTimePrecision: z.enum(["unknown", "date", "datetime"]).default("unknown"),
+  expectedUpdatedAt: z.coerce.date().optional(),
   contentMarkdown: z.string().trim().min(1, "Entry body is required."),
   occurredAt: z.coerce.date(),
   recordStatus: z.enum(entryRecordStatuses).default("recorded"),
@@ -26,6 +30,7 @@ const entryMutationSchema = entrySchema.omit({ body: true }).extend({
   clientMutationId: z.string().uuid().optional(),
   deviceCreatedAt: z.coerce.date().optional(),
 }).superRefine((value, context) => {
+  if (value.experimentId && value.protocolVersionId) context.addIssue({code:"custom",path:["protocolVersionId"],message:"本记录已属于现有实验，不能同时新建另一个 Protocol 实验。请先保存，再从归属菜单更改目标。"});
   if (value.createInitialResult && !value.protocolVersionId) {
     context.addIssue({ code: "custom", path: ["protocolVersionId"], message: "Choose a Protocol version before creating an initial Result." });
   }
@@ -41,6 +46,9 @@ export function parseEntryMutationFormData(formData: FormData): EntryMutationInp
   const contentMarkdown = String(formData.get("contentMarkdown") ?? "");
   const parsed = entryMutationSchema.parse({
     title: formData.get("title"),
+    entryType: formData.get("entryType") || "unclassified",
+    eventTimePrecision: formData.get("eventTimePrecision") ?? (formData.get("occurredAt") ? "datetime" : "unknown"),
+    expectedUpdatedAt: optionalString(formData.get("expectedUpdatedAt")),
     contentMarkdown,
     occurredAt: formData.get("occurredAt") || new Date(),
     projectId: optionalString(formData.get("projectId")),

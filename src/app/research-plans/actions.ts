@@ -1,5 +1,6 @@
 "use server";
 
+import { assertDocumentSaveVersion } from "@/lib/document-save-version";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -126,6 +127,8 @@ export async function updateResearchPlan(
     if (!parsed.id) throw new Error("Research Plan ID is required.");
     planId = parsed.id;
     await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "ResearchPlan" WHERE id=${planId} FOR UPDATE`;
+      assertDocumentSaveVersion(formData, await tx.researchPlan.findUniqueOrThrow({where:{id:planId}}));
       await tx.researchPlan.update({
         where: { id: planId },
         data: {

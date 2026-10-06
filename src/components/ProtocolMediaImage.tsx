@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 /** Preview failure does not imply the immutable original is missing. */
-export function ProtocolMediaImage({ href, label, originalHref, openOriginal = true }: { href: string; label: string; originalHref?: string; openOriginal?: boolean }) {
+export function ProtocolMediaImage({ href, label, originalHref, openOriginal = true, imageWidth = 1200, imageHeight = 800 }: { href: string; label: string; originalHref?: string; openOriginal?: boolean; imageWidth?: number; imageHeight?: number }) {
   const [failedSource, setFailedSource] = useState<string>();
   const [originalSource, setOriginalSource] = useState<string>();
   const [attempt, setAttempt] = useState(0);
@@ -16,7 +16,7 @@ export function ProtocolMediaImage({ href, label, originalHref, openOriginal = t
     <button type="button" data-print-hidden onClick={retry}>重试 / Retry</button>
     <a data-print-hidden href={originalHref || href} target="_blank" rel="noreferrer">查看原图 / Open original</a>
   </div>;
-  const picture = <Image key={`${source}:${attempt}`} src={source} alt={label} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized onError={() => {
+  const picture = <Image key={`${source}:${attempt}`} src={source} alt={label} loading="eager" draggable={openOriginal} width={imageWidth} height={imageHeight} style={{aspectRatio:`${imageWidth} / ${imageHeight}`,objectFit:"contain"}} sizes="(max-width: 760px) 100vw, 760px" unoptimized onError={() => {
     if (source === href && originalHref && originalHref !== href) setOriginalSource(href);
     else setFailedSource(source);
   }} />;

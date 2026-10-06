@@ -1031,6 +1031,8 @@ details > summary:active { transform: scale(0.985); }
 }
 
 .ln-data-table-frame {
+  /* Keep wide table overflow inside its scroll area, including mobile root metrics. */
+  contain: inline-size layout paint;
   background: var(--surface);
   border: 1px solid var(--ln-list-table-border-color);
   border-radius: var(--ln-list-table-radius);
@@ -5464,7 +5466,7 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 /* Media controls belong to the selection, not to the document's reading flow. */
 .document-media-node { position: relative; outline-offset: var(--ln-form-field-gap); }
 .document-media-node[data-media-active="true"] { outline: 1px solid var(--primary-border); }
-.document-media-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ln-form-field-gap); padding-block: var(--ln-form-field-gap); color: var(--graphite); }
+.document-media-toolbar { position: absolute; inset-inline-end: 0; top: 0; z-index: 20; max-width: 100%; background: var(--surface); border-radius: var(--ln-radius-control-md); box-shadow: var(--ln-shadow-panel); display: flex; flex-wrap: wrap; align-items: center; gap: var(--ln-form-field-gap); padding-block: var(--ln-form-field-gap); color: var(--graphite); }
 .document-media-toolbar[hidden] { display: none; }
 .document-media-settings { display: contents; font-family: var(--font-sans); font-size: var(--ln-control-font-size-md); }
 .document-media-settings > button { cursor: pointer; width: fit-content; padding-block: var(--ln-form-field-gap); }
@@ -5474,8 +5476,8 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 .document-media-error :is(button,a) { min-height: 44px; display: inline-flex; align-items: center; color: var(--primary); }
 @media print { .document-media-node { outline: none !important; } .document-media-toolbar { display: none !important; } }
 
-.document-media-node[data-media-active="true"] figcaption { display: none; }
-@media print { .document-media-node[data-media-active="true"] figcaption { display: block !important; } }
+.document-media-node[data-media-active="true"] figcaption { visibility: hidden; }
+@media print { .document-media-node[data-media-active="true"] figcaption { visibility: visible !important; } }
 
 .document-editor-layout[data-active-view="metadata"] [data-document-metadata="true"] {
   background: var(--surface);
@@ -5650,3 +5652,9 @@ main.embedded-tool-workspace { padding: 0 !important; }
   [data-plot-guidance] { max-height: none; }
   #visualization-guidance-content { overflow-y: visible; }
 }
+
+/* The picker owns its grid; normal insertion rows keep their icon column. */
+.ln-table-insert-picker { padding: var(--ln-space-2, 0.5rem); }
+.ln-table-insert-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--ln-table-picker-gap, 3px); margin-top: var(--ln-space-2, 0.5rem); width: min(19rem, calc(100vw - 48px)); }
+.ln-wysiwyg-insert-popover .ln-table-insert-grid button { display: block; min-height: var(--ln-table-picker-cell, 32px); padding: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); }
+.ln-table-insert-grid button[data-highlighted="true"] { background: var(--action-surface); border-color: var(--moss); }

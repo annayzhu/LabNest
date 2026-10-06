@@ -3,7 +3,7 @@ import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { stripLabNestFontFamilyMarkup } from "./rich-text-font-family";
 import { stripLabNestFontSizeMarkup } from "./rich-text-font-size";
 import { stripLabNestLineHeightMarkup } from "./rich-text-line-height";
-import { documentMediaFromMarkdown } from "./document-media";
+import { collectDocumentMedia, documentMediaAttachmentId, documentMediaFromMarkdown } from "./document-media";
 
 export const ENTRY_CONTENT_SCHEMA_VERSION = 1;
 export const ENTRY_MARKDOWN_FORMAT = "labnest-markdown-v1";
@@ -138,4 +138,24 @@ export function plainTextFromEntryMarkdown(markdown: string): string {
     .replace(/(^|\s)[*_]([^*_\n]+)[*_](?=\s|[.,;:!?)]|$)/g, "$1$2")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/** Current logical originals; historical links and preview derivatives are never extra files. */
+export function selectEntryAttachments<T extends { id: string; derivedFromId?: string | null }>(
+  content: unknown,
+  links: Array<{ attachment: T; linkType: string }>,
+): T[] {
+  const inline = new Set(collectDocumentMedia(content).flatMap(block => {
+    const id = documentMediaAttachmentId(block); return id && !block.pendingUploadId ? [id] : [];
+  }));
+  const history = new Set(links.filter(link => link.linkType === "document_media_history").map(link => link.attachment.id));
+  const explicit = new Set(getOrderedAttachmentIds(content));
+  const selected = new Map<string, T>();
+  for (const link of links) {
+    const file = link.attachment;
+    if (file.derivedFromId) continue;
+    const current = inline.has(file.id) || (!history.has(file.id) && (explicit.has(file.id) || ["entry_content", "attached_to"].includes(link.linkType)));
+    if (current && !selected.has(file.id)) selected.set(file.id, file);
+  }
+  return [...selected.values()];
 }

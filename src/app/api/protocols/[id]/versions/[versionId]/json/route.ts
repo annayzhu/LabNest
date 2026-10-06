@@ -51,5 +51,5 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     document,
     importHistory: await getProtocolImportHistory(id),
     structuredProjection: projectProtocolDocument(document),
-  });
+  }, { headers: { "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`${version.protocol.humanCode}_v${version.displayVersion}.json`)}` } });
 }

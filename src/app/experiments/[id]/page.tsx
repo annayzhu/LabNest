@@ -1,3 +1,4 @@
+import { EntrySourceCards } from "@/components/EntrySourceCards";
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { ExperimentBrief } from "@/components/ExperimentBrief";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
@@ -84,6 +85,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       <main className="document-preview-main space-y-6">
         <ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} />} />
 
+        <EntrySourceCards type="experiment" id={experiment.id} locked={locked} />
       </main>
 
       <aside className="document-preview-sidebar" aria-label="Experiment controls and result recording">

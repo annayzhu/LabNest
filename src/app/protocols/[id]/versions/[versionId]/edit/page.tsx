@@ -1,3 +1,4 @@
+import { protocolSaveVersion } from "@/lib/protocol-save-version";
 import { notFound } from "next/navigation";
 import { GitBranchPlus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -103,6 +104,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
           }}
           version={{
             id: version.id,
+            expectedDocumentVersion: protocolSaveVersion(version),
             displayVersion: version.displayVersion,
             reviewStage: version.reviewStage,
             changeSummary: version.changeSummary ?? undefined,

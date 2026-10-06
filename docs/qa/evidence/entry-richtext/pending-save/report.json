@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "C03 slow response body",
+      "status": "通过"
+    },
+    {
+      "name": "C03 slow response pinned-properties",
+      "status": "通过"
+    },
+    {
+      "name": "C03 slow response format-menu",
+      "status": "通过"
+    }
+  ]
+}

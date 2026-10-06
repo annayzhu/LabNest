@@ -40,7 +40,15 @@ export function loadEntryDraft<TFields>(key: string) {
 }
 
 export function saveEntryDraft<TFields>(key: string, draft: StoredEntryDraft<TFields>) {
-  return withDraftStore<IDBValidKey>("readwrite", (store) => store.put(draft, key));
+  // Read and compare in the same write transaction, including other tabs.
+  return withDraftStore<IDBValidKey>("readwrite", (store) => {
+    const read = store.get(key);
+    read.onsuccess = () => {
+      const current = read.result as StoredEntryDraft<TFields> | undefined;
+      if (!current || current.savedAt <= draft.savedAt) store.put(draft, key);
+    };
+    return read;
+  });
 }
 
 export function deleteEntryDraft(key: string) {

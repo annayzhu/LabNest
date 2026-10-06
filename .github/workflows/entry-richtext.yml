@@ -45,17 +45,23 @@ jobs:
           exit 1
       - run: npx tsx scripts/seed-entry-richtext.ts
       - run: node scripts/verify-entry-richtext-pages.mjs
+      - run: node scripts/verify-entry-keyboard.mjs
       - run: node scripts/verify-entry-richtext-exports.mjs
       - run: node scripts/verify-entry-feedback.mjs
       - run: node scripts/verify-entry-richtext.mjs
       - run: node scripts/verify-entry-richtext-focus.mjs
       - run: node scripts/verify-entry-richtext-drag.mjs
       - run: npx tsx scripts/verify-entry-relations.ts
+      - run: npx tsx scripts/verify-entry-step-freeze.ts
       - run: npx tsx scripts/seed-entry-richtext-advanced.ts && node scripts/verify-entry-richtext-advanced.mjs
       - run: node scripts/verify-entry-richtext-mixed.mjs
+      - run: node scripts/verify-entry-media-loading.mjs
+      - run: node scripts/verify-entry-external-import.mjs
       - run: node scripts/verify-entry-draft-switch.mjs
       - run: node scripts/verify-entry-save-pending.mjs
       - run: node scripts/verify-entry-richtext-viewports.mjs
+      - run: npx tsx scripts/seed-entry-audit-extra.ts
+      - run: node scripts/verify-entry-plain-fields.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

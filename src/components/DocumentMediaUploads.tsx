@@ -72,7 +72,9 @@ export function insertDocumentMediaFiles(editor: Editor, files: File[], draftId:
         if (!response.ok || !result.attachment?.id) throw new Error(result.error || "Upload failed");
         const { pendingUploadId: _pending, ...ready } = block;
         void _pending;
-        updateAtIdentity(editor, block.id, { ...ready, attachmentId: result.attachment.id }, block.pendingUploadId);
+        const image = result.attachment.metadataJson?.image;
+        const dimensions = Number.isInteger(image?.width) && image.width > 0 && Number.isInteger(image?.height) && image.height > 0 ? { imageWidth: image.width, imageHeight: image.height } : {};
+        updateAtIdentity(editor, block.id, { ...ready, ...dimensions, attachmentId: result.attachment.id }, block.pendingUploadId);
         uploads.delete(block.id); if (preview) URL.revokeObjectURL(preview); publish();
       } catch (error) {
         if (!abandoned) { uploads.set(block.id, { file, preview, status: "failed", error: error instanceof Error ? error.message : "Upload failed", retry: () => { void run(); }, dispose }); publish(); }

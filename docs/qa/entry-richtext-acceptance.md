@@ -18,7 +18,7 @@
 - 隔离数据库 `labnest_entry_richtext_test_20261006`；测试资料全部为合成“测试”记录。所有写入脚本限制该数据库或 3331 测试端口。没有将真实记录复制到公开证据。
 - 原故障记录只读访问，七个原件、关联和当前正文实际核对；私有 ID、文件名、正文、原图只留在 Git 忽略的 `.local-runtime/entry-richtext/`，不上传 GitHub、不进入 Docker 镜像。
 - 主环境 macOS Darwin 25.6.0 / Apple M4 Max / Node 22；Chromium 149.0.7827.55。Firefox 151.0、自动化 WebKit 26.5 完成核心表格/四图/移动/归入/旧保存冲突检查；自动化 WebKit 不等同于真机 Safari。
-- 完整生产构建、类型检查、lint（0 错误，11 条既存警告）；109 文件 / 539 测试在 Asia/Shanghai 和 America/Los_Angeles 各通过。应用验证提交、各批证据版本与 CI 链接见 [release.json](evidence/entry-richtext/release.json)。
+- 完整生产构建、类型检查、lint（0 错误，12 条警告；完整列表见 lint 日志，不统称为既存警告）；109 文件 / 539 测试在 Asia/Shanghai 和 America/Los_Angeles 各通过。应用验证提交、各批证据版本与 CI 链接见 [release.json](evidence/entry-richtext/release.json)。
 - 两轮：123 个真实路由 × 桌面/手机 = 246 次基础输入与宽度审计；随后六类正文各走桌面和手机完整操作，及关联/冲突/媒体专项。完整清单见 [入口审计](entry-richtext-input-audit.md)。基础输入审计不等同于每个业务字段保存回读，C08 如实保留待测。
 - 1440×900、1366×768、820×900、390×844、360×844 已执行；100% 实测。125% 桌面快捷键尝试未改变真实浏览器缩放，原生桌面访问受锁屏限制，因此 **125% 未执行**，不以 viewport、DPR 或 CSS 缩放替代。
 

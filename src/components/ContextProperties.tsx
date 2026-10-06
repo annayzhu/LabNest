@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { usePortalFormPending } from "./usePortalFormPending";
 import { Pin, X } from "lucide-react";
 
 type PanelState = { active: string | null; pinned: boolean; select: (id: string | null) => void; togglePin: () => void; dismiss: (id: string) => void };
@@ -53,6 +54,7 @@ export function ContextProperties({ title, children, selected = false, trigger =
     previousSelection.current = selected;
   }, [selected, activation, id, select, dismiss]);
   const open = context?.active === id;
+  const formPending = usePortalFormPending(anchorNode, panel, !!portalTarget);
   useEffect(() => {
     if (!open || !window.matchMedia('(max-width: 639px)').matches) return;
     const previous = document.body.style.overflow;
@@ -88,7 +90,7 @@ export function ContextProperties({ title, children, selected = false, trigger =
   return <>
     <span ref={anchor} hidden />
     {trigger ? <button ref={triggerRef} type="button" className="focus-ring min-h-11 px-2 text-sm text-moss" aria-expanded={open} aria-controls={id} onClick={() => context.select(id)}>{triggerLabel ?? title}</button> : null}
-    {portalTarget ? createPortal(<aside ref={panel} id={id} aria-label={title} aria-hidden={!open} inert={!open} hidden={!open} className="context-properties" data-pinned={context.pinned} data-print-hidden onInvalidCapture={event => { event.preventDefault(); context.select(id); const input = event.target as HTMLElement; setTimeout(() => input.focus(),0); }} onClick={event => event.stopPropagation()}>
+    {portalTarget ? createPortal(<aside ref={panel} id={id} aria-label={title} aria-hidden={!open} inert={!open || formPending} aria-busy={formPending} hidden={!open} className="context-properties" data-pinned={context.pinned} data-print-hidden onInvalidCapture={event => { event.preventDefault(); context.select(id); const input = event.target as HTMLElement; setTimeout(() => input.focus(),0); }} onClick={event => event.stopPropagation()}>
       <header className="context-properties-header"><h2 className="min-w-0 flex-1 font-semibold">{title}</h2><button type="button" aria-label={context.pinned ? "取消固定" : "固定展开"} aria-pressed={context.pinned} className="focus-ring min-h-11 min-w-11" onClick={context.togglePin}><Pin className="mx-auto h-4 w-4" /></button><button type="button" aria-label="收起属性" className="focus-ring min-h-11 min-w-11" onClick={close}><X className="mx-auto h-4 w-4" /></button></header>
       <div className="context-properties-body">{children}</div><footer className="border-t border-hairline px-4 py-2"><button type="button" className="focus-ring min-h-11 text-moss" onClick={close}>返回主界面继续填写或保存</button></footer>
     </aside>, portalTarget) : null}

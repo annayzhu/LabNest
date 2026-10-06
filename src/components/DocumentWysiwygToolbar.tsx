@@ -2,6 +2,7 @@
 
 import { closeHistory } from "@tiptap/pm/history";
 import { Children, cloneElement, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type ReactElement, type ReactNode, type SetStateAction } from "react";
+import { usePortalFormPending } from "./usePortalFormPending";
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/core";
 import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
@@ -80,6 +81,7 @@ function ToolbarMenu({
   const menuId = useId();
   const [menuPosition, setMenuPosition] = useState<CSSProperties>({ position: "fixed", visibility: "hidden", zIndex: 120 });
   const open = openMenu === id;
+  const formPending = usePortalFormPending(rootRef, menuRef, open);
   const assignMenuRef = useCallback((node: HTMLDivElement | null) => {
     menuRef.current = node;
     // Wait until the opening Enter/Space key has been released. Moving focus
@@ -181,7 +183,7 @@ function ToolbarMenu({
 
   return <div ref={rootRef} className="ln-wysiwyg-insert-menu">
     <button ref={triggerRef} type="button" aria-haspopup="menu" aria-controls={menuId} aria-expanded={open} aria-label={ariaLabel ?? label} title={ariaLabel ?? label} className={cn(wysiwygToolbarButtonClass, "border-hairline bg-surface text-graphite", triggerClassName)} onMouseDown={(event) => event.preventDefault()} onClick={() => setOpenMenu((current) => current === id ? null : id)}>{icon}<span>{label}</span><ChevronDown aria-hidden /></button>
-    {open && typeof document !== "undefined" ? createPortal(<div ref={assignMenuRef} id={menuId} role="menu" data-toolbar-menu={id} className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onKeyDown={handleMenuKeyDown} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{menuItems}</div>, document.body) : null}
+    {open && typeof document !== "undefined" ? createPortal(<div ref={assignMenuRef} id={menuId} role="menu" inert={formPending} aria-busy={formPending} data-toolbar-menu={id} className={menuClassName} style={menuPosition} onMouseDown={(event) => event.preventDefault()} onKeyDown={handleMenuKeyDown} onClick={(event) => { if ((event.target as HTMLElement).closest("button")) setOpenMenu(null); }}>{menuItems}</div>, document.body) : null}
   </div>;
 }
 

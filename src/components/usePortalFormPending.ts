@@ -17,7 +17,7 @@ export function usePortalFormPending(
     let active = true;
     const sync = () => {
       const busy = form.inert || form.getAttribute("aria-busy") === "true";
-      element.inert = busy || element.getAttribute("aria-hidden") === "true";
+      element.toggleAttribute("inert", busy || element.getAttribute("aria-hidden") === "true");
       queueMicrotask(() => { if (active) setPending(busy); });
     };
     sync();

@@ -32,7 +32,7 @@ try {
     });
     // Keep an already opened portal open while the native submit event starts.
     // This covers keyboard/programmatic submission as well as a sticky save button.
-    if(portal)await editor.evaluate(el=>el.closest('form').requestSubmit());
+    if(mode==='format-menu')await editor.evaluate(el=>el.closest('form').requestSubmit());
     else await page.getByRole('button',{name:'Save changes',exact:true}).click();
     for(let i=0;i<100&&!started;i++)await page.waitForTimeout(10);
     assert(started);

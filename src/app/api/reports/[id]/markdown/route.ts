@@ -1,15 +1,22 @@
 import { prisma } from "@/lib/db";
-import { documentMediaToMarkdown } from "@/lib/document-media";
+import { documentMediaFromMarkdown, documentMediaToMarkdown } from "@/lib/document-media";
 import { normalizeScientificDocument, reportSections, type ScientificContentBlock } from "@/lib/scientific-document";
+
+function readableCell(value: string) {
+  return value.split("\n").map(line => {
+    const media = documentMediaFromMarkdown(line);
+    return media ? documentMediaToMarkdown(media, media.caption) : line;
+  }).join("<br>").replaceAll("|", "\\|");
+}
 
 function blockMarkdown(block: ScientificContentBlock) {
   if (block.type === "heading") return `### ${block.text}`;
   if (block.type === "text") return block.text;
   if (block.type === "checklist") return block.items.map((item) => `- ${item}`).join("\n");
-  if (block.type === "table") return [block.caption ? `**${block.caption}**` : "", block.rows.map((row) => `| ${row.join(" | ")} |`).join("\n")].filter(Boolean).join("\n\n");
+  if (block.type === "table") return [block.caption ? `**${block.caption}**` : "", block.rows.map((row) => `| ${row.map(readableCell).join(" | ")} |`).join("\n")].filter(Boolean).join("\n\n");
   if (block.type === "callout") return `> ${block.tone.toUpperCase()}: ${block.text}`;
   if (block.type === "metric") return `**${block.label}:** ${block.value} ${block.unit ?? ""}`.trim();
-  if (block.type === "media") return documentMediaToMarkdown(block);
+  if (block.type === "media") return documentMediaToMarkdown(block, block.caption);
   return `Dataset: ${block.label} (${block.datasetId})`;
 }
 

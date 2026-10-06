@@ -22,6 +22,10 @@ try {
     await page.waitForFunction(()=>document.querySelector('[data-document-media]')&&!document.querySelector('[data-document-media] [role="status"]'));
     originals.push(await editor().locator('[data-document-media]').getAttribute('data-document-media'));
     attachments.push((await editor().locator('[data-document-media] img').getAttribute('src')).match(/\/api\/attachments\/([^?]+)/)[1]);
+    await page.getByRole('tab',{name:'Metadata',exact:true}).click();
+    await page.getByRole('combobox',{name:'记录类型',exact:true}).selectOption(index?'observation':'idea');
+    await page.getByRole('textbox',{name:'State',exact:true}).fill('TEST-STATE-'+index);
+    await page.getByRole('button',{name:'收起属性',exact:true}).click();
     await page.waitForTimeout(1000);
     await page.goto(base+'/entries',{waitUntil:'networkidle'});
   }
@@ -34,7 +38,7 @@ try {
     assert.equal(await editor().locator('[data-document-media]').getAttribute('data-document-media'),originals[index]);
     await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.waitForURL(base+'/entries/'+ids[index]);
     const entry=(await(await page.request.get(base+'/api/entries/'+ids[index])).json()).entry;
-    assert(entry.contentMarkdown.includes('DRAFT-'+index));assert.equal(entry.attachments.length,1);assert.equal(entry.attachments[0].id,attachments[index]);
+    assert(entry.contentMarkdown.includes('DRAFT-'+index));assert.equal(entry.entryType,index?'observation':'idea');assert.equal(entry.moodStatus,'TEST-STATE-'+index);assert.equal(entry.attachments.length,1);assert.equal(entry.attachments[0].id,attachments[index]);
     report.checks.push({name:'C04 record '+index+' unsaved body/image recovered and saved to its own record',status:'通过'});
   }
 }catch(error){report.checks.push({status:'失败',error:String(error)});throw error;}

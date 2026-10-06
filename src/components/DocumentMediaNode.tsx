@@ -49,7 +49,7 @@ function MediaNodeView({ node, updateAttributes, editor, selected, getPos }: Nod
       // displayed ratio (including orientation) instead of changing it to a frame.
       if(image.naturalWidth>0 && image.naturalHeight>0 && (block.imageWidth!==image.naturalWidth || block.imageHeight!==image.naturalHeight))updateAttributes({block:{...block,imageWidth:image.naturalWidth,imageHeight:image.naturalHeight}});
     }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
-    {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
+    {block.pendingUploadId ? <div role="status" className={upload?.preview && upload.status === "uploading" ? "absolute left-2 top-2 max-w-[calc(100%-1rem)] break-words rounded-[var(--ln-radius-control-md)] bg-surface/95 px-2 py-1 text-sm text-muted" : "py-2 text-sm text-muted"}>{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
       {upload?.status === "failed" ? <><p className="text-error">{upload.error}</p><button type="button" className="min-h-11 px-2 text-moss" onClick={upload.retry}>重试 / Retry</button></> : null}
       {!upload ? <button type="button" className="min-h-11 px-2 text-moss" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}>重新选择文件 / Reselect file</button> : null}
     </div> : null}

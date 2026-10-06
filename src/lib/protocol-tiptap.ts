@@ -1,3 +1,4 @@
+import { distinctDocumentBlockIds } from "./document-block-identity";
 import { paragraphLayout } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
@@ -358,7 +359,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     blocks.push({ id: identity.id, type: "rich_text", nodes: richNodes.flatMap(tiptapNodeToRichNodes) });
   }
-  return blocks;
+  return distinctDocumentBlockIds(blocks);
 }
 
 export function tiptapToProtocolDocument(json: JSONContent, importWarnings: string[] = []): ProtocolDocument {

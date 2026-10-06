@@ -43,7 +43,7 @@ export function groupEntriesByMonth(entries: Entry[], locale: AppLocale = "en"):
   const groups = new Map<string, EntryMonthGroup>();
 
   entries.forEach((entry) => {
-    const occurredAt = new Date(entry.occurredAt);
+    const occurredAt = new Date(entry.createdAt ?? entry.occurredAt);
     const key = format(occurredAt, "yyyy-MM");
     const existing = groups.get(key);
 

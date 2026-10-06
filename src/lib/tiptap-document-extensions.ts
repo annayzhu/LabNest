@@ -191,6 +191,7 @@ export function createDocumentLegacyAttributesExtension({ name, attributes }: {
         types: documentBlockTypes,
         attributes: Object.fromEntries(attributes.map((attribute) => [attribute.name, {
           default: null,
+          keepOnSplit: !attribute.name.endsWith("BlockId"),
           parseHTML: (element: HTMLElement) => element.getAttribute(attribute.htmlAttribute),
           renderHTML: (values: Record<string, unknown>) => values[attribute.name] ? { [attribute.htmlAttribute]: values[attribute.name] } : {},
         }])),
@@ -200,5 +201,5 @@ export function createDocumentLegacyAttributesExtension({ name, attributes }: {
 }
 
 export function createResizableDocumentTableExtension() {
-  return TableKit.configure({ table: { resizable: true, cellMinWidth: 54, allowTableNodeSelection: true } });
+  return TableKit.configure({ table: { resizable: true, cellMinWidth: 96, allowTableNodeSelection: true } });
 }

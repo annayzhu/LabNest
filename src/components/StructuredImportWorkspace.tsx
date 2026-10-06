@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState, type DragEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -235,9 +234,9 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
                     </p>
                   )) : null}
                 </div>
-                <Link href={`/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`} className="focus-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-sage-surface">
+                <a download href={`/api/structured-import/${module}/template?format=${format}&v=${structuredTemplateVersion}`} className="focus-ring inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-moss hover:bg-sage-surface">
                   <Download className="h-3.5 w-3.5" aria-hidden />Template
-                </Link>
+                </a>
               </div>
             );
           })}

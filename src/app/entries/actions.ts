@@ -1,4 +1,5 @@
 "use server";
+import { lockEntrySourceGraph } from "@/lib/entry-source-lock";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -66,6 +67,8 @@ export async function deleteEntry(
   try {
     const parsed = lifecycleSchema.parse({ id: formData.get("id"), confirmation: formData.get("confirmation") });
     await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
+      await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${parsed.id} FOR UPDATE`;
       const entry = await tx.entry.findUnique({ where: { id: parsed.id }, select: { id: true, title: true, recordStatus: true, projectId: true, researchPlanId: true, archivedAt: true } });
       if (!entry) throw new Error("This Entry no longer exists.");
       if (parsed.confirmation !== entry.title) throw new Error(`Enter ${entry.title} exactly to confirm moving it to the Recycle Bin.`);

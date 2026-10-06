@@ -1031,6 +1031,8 @@ details > summary:active { transform: scale(0.985); }
 }
 
 .ln-data-table-frame {
+  /* Keep wide table overflow inside its scroll area, including mobile root metrics. */
+  contain: inline-size layout paint;
   background: var(--surface);
   border: 1px solid var(--ln-list-table-border-color);
   border-radius: var(--ln-list-table-radius);
@@ -5650,3 +5652,9 @@ main.embedded-tool-workspace { padding: 0 !important; }
   [data-plot-guidance] { max-height: none; }
   #visualization-guidance-content { overflow-y: visible; }
 }
+
+/* The picker owns its grid; normal insertion rows keep their icon column. */
+.ln-table-insert-picker { padding: var(--ln-space-2, 0.5rem); }
+.ln-table-insert-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--ln-table-picker-gap, 3px); margin-top: var(--ln-space-2, 0.5rem); width: min(19rem, calc(100vw - 48px)); }
+.ln-wysiwyg-insert-popover .ln-table-insert-grid button { display: block; min-height: var(--ln-table-picker-cell, 32px); padding: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); }
+.ln-table-insert-grid button[data-highlighted="true"] { background: var(--action-surface); border-color: var(--moss); }

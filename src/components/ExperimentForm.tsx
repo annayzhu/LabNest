@@ -33,7 +33,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   protocolVersions?: ExperimentProtocolVersionOption[];
   lockedPlan?: boolean;
   initial: {
-    id?: string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
+    id?: string; updatedAt?: Date | string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
     purpose?: string | null; tags?: string[]; methodMode?: "protocol" | "custom";
     executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
@@ -60,6 +60,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
 
   return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+    {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>

@@ -7,10 +7,12 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: () => { throw new Error("redirect"); } }));
 vi.mock("@/lib/db", () => {
   const count = async () => 0;
+  let reads = 0;
   const tx = {
+    $queryRaw: async () => [],
     protocol: { update: async () => ({}) },
     protocolVersion: {
-      findUnique: async () => ({ id: "version", protocolId: "protocol", reviewStage: "draft", protocol: { scope: "general" } }),
+      findUnique: async () => ({ id: "version", protocolId: "protocol", reviewStage: reads++ ? "reviewed" : "draft", protocol: { scope: "general", updatedAt: new Date("2026-10-01") } }),
       findFirst: async () => null,
       update: async () => ({}),
       // A competing request committed Reviewed after this request read Draft.
@@ -28,5 +30,5 @@ vi.mock("@/lib/db", () => {
 it("rejects a stale draft save after the version has been reviewed", async () => {
   const form = new FormData();
   Object.entries({ protocolId: "protocol", versionId: "version", canonicalTitle: "Extraction", availability: "active", reviewStage: "draft", displayVersion: "1.0", uploadDraftId: "draft", contentJson: JSON.stringify(createEmptyProtocolDocument()) }).forEach(([key, value]) => form.set(key, value));
-  expect(await saveProtocolDocument({}, form)).toMatchObject({ error: expect.stringMatching(/changed|conflict/i) });
+  expect(await saveProtocolDocument({}, form)).toMatchObject({ error: expect.stringMatching(/changed|conflict|另一窗口/i) });
 });

@@ -47,7 +47,8 @@ export function ContextProperties({ title, children, selected = false, trigger =
   const select = context?.select, dismiss = context?.dismiss;
   const previousSelection = useRef(false);
   useEffect(() => {
-    if (selected || activation > 0) select?.(id);
+    // A selected table should remain editable on phones; its settings open on request.
+    if ((selected && !window.matchMedia("(max-width: 639px)").matches) || activation > 0) select?.(id);
     else if (previousSelection.current) dismiss?.(id);
     previousSelection.current = selected;
   }, [selected, activation, id, select, dismiss]);
@@ -58,7 +59,7 @@ export function ContextProperties({ title, children, selected = false, trigger =
     document.body.style.overflow = 'hidden';
     return () => {document.body.style.overflow = previous;};
   }, [open]);
-  function close() { context?.select(null); triggerRef.current?.focus(); }
+  function close() { context?.select(null); triggerRef.current?.focus({ preventScroll: true }); }
   useEffect(() => {
     if (!open) return;
     const handle = (event: KeyboardEvent) => {
@@ -69,7 +70,7 @@ export function ContextProperties({ title, children, selected = false, trigger =
         if (event.shiftKey && (document.activeElement === first || !panel.current.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && (document.activeElement === last || !panel.current.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
       }
-      if (event.key === "Escape") { event.preventDefault(); select?.(null); triggerRef.current?.focus(); }
+      if (event.key === "Escape") { event.preventDefault(); select?.(null); triggerRef.current?.focus({ preventScroll: true }); }
     };
     document.addEventListener("keydown", handle);
     return () => document.removeEventListener("keydown", handle);

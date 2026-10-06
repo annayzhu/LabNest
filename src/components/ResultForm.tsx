@@ -43,7 +43,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   availableModules?: ExperimentResultModule[];
   lockedExperiment?: boolean;
   initial: {
-    id?: string;
+    id?: string; updatedAt?: Date | string;
     experimentId?: string | null;
     title?: string;
     resultType?: string;
@@ -96,6 +96,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
   return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {ambiguousTemplate ? <p role="alert" className="text-sm text-red-700">{duplicateResultKeysMessage}</p> : null}
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+    {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
     {lockedExperiment ? <input type="hidden" name="experimentId" value={initial.experimentId ?? ""} /> : null}
     <input type="hidden" name="templateValuesJson" value={serializedValues} />
     <input type="hidden" name="legacyValuesPromoted" value="true" />

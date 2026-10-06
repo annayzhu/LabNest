@@ -437,6 +437,8 @@ model ResearchPlanProtocol {
 }
 
 model Entry {
+  entryType        String                @default("unclassified")
+  eventTimePrecision String              @default("unknown")
   id               String                @id @default(cuid())
   title            String
   body             String

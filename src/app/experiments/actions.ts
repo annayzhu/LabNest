@@ -1,5 +1,7 @@
 "use server";
 
+import { assertDocumentSaveVersion } from "@/lib/document-save-version";
+import { lockEntrySourceGraph } from "@/lib/entry-source-lock";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -12,7 +14,8 @@ import { experimentSearchText } from "@/lib/experiment-document";
 import { createExperimentWithProtocolSnapshot } from "@/lib/experiments";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
-import { assertRecordEditable, experimentDeleteBlockers } from "@/lib/record-lifecycle";
+import { freezeEntrySources } from "@/lib/entry-assignment.server";
+import { isRecordLocked, assertRecordEditable, experimentDeleteBlockers } from "@/lib/record-lifecycle";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
 import { experimentSections, parseScientificDocumentJson } from "@/lib/scientific-document";
@@ -103,7 +106,13 @@ export async function updateExperiment(
     assertRecordEditable(current.recordStatus);
     if (current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
     await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
+      await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${current.id} FOR UPDATE`;
       await associateDocumentMedia(tx, data.contentJson, "experiment", data.parsed.id!);
+      const fresh = await tx.experiment.findUniqueOrThrow({where:{id:current.id}});
+      assertRecordEditable(fresh.recordStatus);
+      assertDocumentSaveVersion(formData, fresh);
+      if (isRecordLocked(data.parsed.recordStatus)) await freezeEntrySources(tx, "experiment", current.id);
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
         purpose: data.purpose, tags: data.tags, contentJson: data.contentJson, searchText: data.searchText,
@@ -158,6 +167,7 @@ export async function deleteExperiment(
   try {
     const parsed = lifecycleSchema.parse({ id: formData.get("id"), confirmation: formData.get("confirmation") });
     researchPlanId = await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
       const experiment = await tx.experiment.findUnique({
         where: { id: parsed.id },
         select: {

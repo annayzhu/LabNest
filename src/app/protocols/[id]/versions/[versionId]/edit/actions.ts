@@ -1,4 +1,5 @@
 "use server";
+import { protocolSaveVersion } from "@/lib/protocol-save-version";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -107,6 +108,10 @@ export async function saveProtocolDocument(
       : undefined;
 
     await prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM "Protocol" WHERE id=${parsed.protocolId} FOR UPDATE`;
+      await transaction.$queryRaw`SELECT id FROM "ProtocolVersion" WHERE id=${parsed.versionId} FOR UPDATE`;
+      const current = await transaction.protocolVersion.findUnique({where:{id:parsed.versionId},include:{protocol:true}});
+      if (!current || current.protocolId !== parsed.protocolId || protocolSaveVersion(current) !== (formData.get("expectedDocumentVersion") || protocolSaveVersion(sourceVersion))) throw new Error("另一窗口已修改此实验规程。当前输入保留，请核对最新版本后再保存。");
       await transaction.protocol.update({
         where: { id: parsed.protocolId },
         data: {

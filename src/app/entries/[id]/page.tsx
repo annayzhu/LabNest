@@ -9,6 +9,7 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
+import { EntryAssignmentControl } from "@/components/EntryAssignmentControl";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
@@ -20,6 +21,7 @@ import { getEntryDetailRecord } from "@/lib/entries";
 import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
+import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
 import { prisma } from "@/lib/db";
 import { entryDeleteBlockers, isRecordLocked } from "@/lib/record-lifecycle";
 import { archiveEntry, deleteEntry, restoreEntry } from "../actions";
@@ -49,17 +51,22 @@ const collectionHref: Record<string, (id: string) => string> = {
   attachment: (id) => `/api/attachments/${id}`,
 };
 
-export default async function EntryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EntryDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{assign?:string}> }) {
   const { id } = await params;
+  const autoAssign = (await searchParams).assign === "1";
   const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const entry = await getEntryDetailRecord(id);
   if (!entry) notFound();
 
-  const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/"));
+  const inlineIds = new Set(collectDocumentMedia(entry.contentMarkdown).map(documentMediaAttachmentId));
+  const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/") && !inlineIds.has(attachment.id));
   const [reportSourceReferences, activityLogs] = await Promise.all([
     prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
     prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
+  const primary = entry.itemLinks.find(link => link.direction === "outbound" && link.linkType === "entry_primary");
+  const targetRecord = primary ? primary.counterpartType === "result" ? await prisma.result.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : await prisma.experiment.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : null;
+  const recycledTarget = primary ? await prisma.deletedRecord.findFirst({where:{targetType:primary.counterpartType,targetId:primary.counterpartId,restoredAt:null},select:{id:true}}) : null;
   const locked = isRecordLocked(entry.recordStatus);
   const deletionBlockers = entryDeleteBlockers(entry.recordStatus, {
     itemLinks: entry.itemLinks.length,
@@ -71,15 +78,16 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow={formatEntryDetailTimestamp(entry.occurredAt, locale)}
+          eyebrow={formatEntryDetailTimestamp(entry.createdAt ?? entry.occurredAt, locale)}
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
             {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
-            <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
+            <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="快速记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
           </div>}
         />
 
+        {!locked ? <EntryAssignmentControl initialOpen={autoAssign} id={entry.id} target={primary ? {type:primary.counterpartType,id:primary.counterpartId,title:targetRecord?.title ?? "目标已失效",invalid:!targetRecord || targetRecord.status === "archived" || Boolean(recycledTarget)} : null} /> : null}
         {imageAttachments.length ? (
           <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
             <EntryMediaGrid attachments={imageAttachments} detail />
@@ -91,7 +99,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <DocumentOutlineWorkbench items={[{ id: "entry-preview-content", label: "Record content" }]} className="document-preview-workbench">
             <DocumentCanvas label={entry.title}>
               <header id="entry-preview-content" className="mb-8 border-b border-hairline pb-6">
-                <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(entry.occurredAt), "yyyy-MM-dd HH:mm")}</p>
+                <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(entry.createdAt ?? entry.occurredAt), "yyyy-MM-dd HH:mm")}</p>
                 <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{entry.title}</h1>
               </header>
               <EntryContentView markdown={entry.contentMarkdown ?? entry.body} />

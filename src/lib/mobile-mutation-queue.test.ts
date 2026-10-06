@@ -6,7 +6,7 @@ afterEach(() => vi.unstubAllGlobals());
 it.each(["queue", "draft"])("waits for the %s transaction and rejects an abort after request success", async (kind) => {
   const request: { result: string; onsuccess?: () => void } = { result: "key" };
   const transaction: { onabort?: () => void; oncomplete?: () => void; error: Error; objectStore: () => object } = {
-    error: new Error("Transaction aborted"), objectStore: () => ({ put: () => request }),
+    error: new Error("Transaction aborted"), objectStore: () => ({ get: () => request, put: () => request }),
   };
   vi.stubGlobal("window", { dispatchEvent: () => {} });
   vi.stubGlobal("indexedDB", { open: () => {

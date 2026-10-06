@@ -19,6 +19,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
   const params = searchParams ? await searchParams : undefined;
   const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const entries = await getEntryRecords();
+  const assignment = firstSearchParam(params, "assignment");
   const tag = firstSearchParam(params, "tag");
   const source = firstSearchParam(params, "source");
   const status = firstSearchParam(params, "status");
@@ -28,6 +29,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
 
   const filteredEntries = entries.filter((entry) => {
     return (
+      (!assignment || (assignment === "assigned" ? entry.assigned : !entry.assigned)) &&
       (!tag || entry.tags.includes(tag)) &&
       (!source || entry.sourceType === source) &&
       (!status || (status === "archived" ? Boolean(entry.archivedAt) : !entry.archivedAt && entry.recordStatus === status)) &&
@@ -78,6 +80,7 @@ export default async function EntriesPage({ searchParams }: { searchParams?: Pag
           />
 
           <div className="min-w-0 space-y-7">
+            <nav aria-label="归入筛选" className="flex gap-3 text-sm"><Link href="/entries">全部</Link><Link href="/entries?assignment=unassigned">未归入</Link><Link href="/entries?assignment=assigned">已归入</Link></nav>
             <ActiveFilterBar
               filters={activeFilters}
               clearHref="/entries"

@@ -16,7 +16,7 @@ export function ProtocolMediaImage({ href, label, originalHref, openOriginal = t
     <button type="button" data-print-hidden onClick={retry}>重试 / Retry</button>
     <a data-print-hidden href={originalHref || href} target="_blank" rel="noreferrer">查看原图 / Open original</a>
   </div>;
-  const picture = <Image key={`${source}:${attempt}`} src={source} alt={label} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized onError={() => {
+  const picture = <Image key={`${source}:${attempt}`} src={source} alt={label} loading="eager" draggable={openOriginal} width={1200} height={800} sizes="(max-width: 760px) 100vw, 760px" unoptimized onError={() => {
     if (source === href && originalHref && originalHref !== href) setOriginalSource(href);
     else setFailedSource(source);
   }} />;

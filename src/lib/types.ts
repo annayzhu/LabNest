@@ -237,6 +237,11 @@ export type EntryAttachment = {
 };
 
 export type Entry = {
+  createdAt?: string;
+  updatedAt?: string;
+  entryType?: string;
+  eventTimePrecision?: string;
+  assigned?: boolean;
   id: string;
   title: string;
   body: string;

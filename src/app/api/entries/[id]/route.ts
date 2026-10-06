@@ -43,3 +43,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return Response.json({ error: entryMutationError(error) }, { status: 400 });
   }
 }
+
+/** Same workspace visibility as the detail route; useful for safe version-aware clients. */
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const { getEntryDetailRecord } = await import("@/lib/entries");
+  const entry = await getEntryDetailRecord(id);
+  return entry ? Response.json({ entry }) : Response.json({ error: "快速记录不存在" }, { status: 404 });
+}

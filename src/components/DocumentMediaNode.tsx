@@ -5,7 +5,7 @@ import { ContextProperties } from "./ContextProperties";
 import Image from "next/image";
 import { useState } from "react";
 import { NodeViewWrapper, ReactNodeViewRenderer, useEditorState, type NodeViewProps } from "@tiptap/react";
-import { GripVertical, Replace, Trash2 } from "lucide-react";
+import { ArrowUp, ArrowDown, GripVertical, Replace, Trash2 } from "lucide-react";
 import { createDocumentWidgetExtension } from "@/lib/tiptap-document-extensions";
 import { documentMediaUrl, type DocumentMedia } from "@/lib/document-media";
 import { DocumentMediaView } from "./DocumentMediaView";
@@ -24,7 +24,16 @@ function MediaNodeView({ node, updateAttributes, editor, selected, getPos }: Nod
     if (typeof pos !== "number") return;
     editor.chain().focus().command(({tr}) => { closeHistory(tr); return true; }).deleteRange({from:pos,to:pos+node.nodeSize}).run();
   };
-  const select = () => { setActivation(n => n + 1); const pos = getPos(); if (typeof pos === "number") editor.commands.setNodeSelection(pos); };
+  const move = (direction: -1 | 1) => {
+    const pos = getPos(); if (typeof pos !== "number") return;
+    const $pos = editor.state.doc.resolve(pos), parent = $pos.parent, index = $pos.index();
+    const adjacent = direction < 0 ? parent.maybeChild(index - 1) : parent.maybeChild(index + 1);
+    if (!adjacent) return;
+    const target = direction < 0 ? pos - adjacent.nodeSize : pos + adjacent.nodeSize;
+    const tr = closeHistory(editor.state.tr).delete(pos, pos + node.nodeSize).insert(target, node);
+    editor.view.dispatch(tr); editor.commands.focus(undefined, { scrollIntoView: false });
+  };
+  const select = () => { if (!window.matchMedia("(max-width: 639px)").matches) setActivation(n => n + 1); const pos = getPos(); if (typeof pos === "number") editor.chain().focus(undefined, { scrollIntoView: false }).setNodeSelection(pos).run(); };
   return <NodeViewWrapper data-document-media={block.id} data-widget-type="media" data-media-active={active} className="document-media-node" contentEditable={false} tabIndex={0} role="group" aria-label="编辑附件 / Edit attachment"
     onClick={select} onFocusCapture={() => setFocused(true)} onBlurCapture={(event: React.FocusEvent<HTMLDivElement>) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
     onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -34,13 +43,15 @@ function MediaNodeView({ node, updateAttributes, editor, selected, getPos }: Nod
       } else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); }
     }}>
 
-    {upload?.preview ? <Image src={upload.preview} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
+    {upload?.preview ? <Image src={upload.preview} draggable={false} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
     {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
       {upload?.status === "failed" ? <><p className="text-error">{upload.error}</p><button type="button" className="min-h-11 px-2 text-moss" onClick={upload.retry}>重试 / Retry</button></> : null}
       {!upload ? <button type="button" className="min-h-11 px-2 text-moss" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}>重新选择文件 / Reselect file</button> : null}
     </div> : null}
     <div data-print-hidden className="document-media-toolbar" data-active={active} onPointerDownCapture={() => setFocused(true)} onClick={event => event.stopPropagation()}>
       <button type="button" data-drag-handle aria-label="移动附件 / Move attachment" className="min-h-11 px-2"><GripVertical className="h-4 w-4" /></button>
+      <button type="button" aria-label="上移图片 / Move image earlier" className="min-h-11 px-2" onClick={() => move(-1)}><ArrowUp className="h-4 w-4" /></button>
+      <button type="button" aria-label="下移图片 / Move image later" className="min-h-11 px-2" onClick={() => move(1)}><ArrowDown className="h-4 w-4" /></button>
       <ContextProperties title="图片属性 / Image properties" triggerLabel="图片设置 / Image settings" activation={activation} autoDismiss>
       <input aria-label="图注 / Caption" placeholder="图注 / Caption" className="min-h-9 min-w-0 flex-1 border-b border-hairline bg-transparent text-sm" value={block.caption || ""} onChange={event => updateAttributes({ block: { ...block, caption: event.target.value } })} />
       {block.mediaType === "image" ? <label className="inline-flex items-center gap-1">宽度 / Width <input aria-label="图片显示宽度百分比 / Image width percent" type="number" min={10} max={100} value={block.widthPercent ?? 100} className="w-16 min-h-9 border-b border-hairline bg-transparent" onChange={event => { const width = Number(event.target.value); if (width >= 10 && width <= 100) updateAttributes({ block: { ...block, widthPercent: width } }); }} />%</label> : null}

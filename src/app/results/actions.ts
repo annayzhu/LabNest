@@ -1,5 +1,7 @@
 "use server";
 
+import { assertDocumentSaveVersion } from "@/lib/document-save-version";
+import { lockEntrySourceGraph } from "@/lib/entry-source-lock";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,6 +12,8 @@ import { associateDocumentMedia } from "@/lib/document-media.server";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { createResultInTransaction } from "@/lib/result-creation";
 import { duplicateResultKeysMessage, resultTemplateHasDuplicateKeys, parseResultValuesJson, validateResultRecord } from "@/lib/result-templates";
+import { freezeEntrySources } from "@/lib/entry-assignment.server";
+import { assertRecordEditable, isRecordLocked } from "@/lib/record-lifecycle";
 import { resultRequiresAssociationPreservingRecycle } from "@/lib/record-lifecycle";
 import { withResultLegacyPromotionMarker } from "@/lib/result-document";
 import { captureDeletedRecord } from "@/lib/recycle-bin";
@@ -105,6 +109,13 @@ async function persistResultUpdate(formData: FormData) {
     throw new Error(`This Result cannot be ${data.parsed.recordStatus}: ${validation.errors.join(" ")}`);
   }
   await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
+    await tx.$queryRaw`SELECT id FROM "Result" WHERE id=${current.id} FOR UPDATE`;
+    const fresh = await tx.result.findUniqueOrThrow({ where: { id: current.id } });
+    assertRecordEditable(fresh.recordStatus);
+      assertDocumentSaveVersion(formData, fresh);
+    if (fresh.updatedAt.getTime() !== current.updatedAt.getTime()) throw new Error("Result changed while saving; refresh before retrying.");
+    if (isRecordLocked(data.parsed.recordStatus)) await freezeEntrySources(tx, "result", current.id);
     await tx.result.update({ where: { id: current.id }, data: { title: data.parsed.title, resultType: data.parsed.resultType, recordStatus: data.parsed.recordStatus, sourceType: data.parsed.sourceType, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status, validationJson: validation as unknown as Prisma.InputJsonValue, templateInstanceKey: current.templateKey ? data.templateInstanceKey : current.templateInstanceKey, templateInstanceLabel: current.templateKey ? data.templateInstanceLabel : current.templateInstanceLabel, textValue: data.textValue, numericValue: data.numericValue, unit: data.unit, analysisMethod: data.analysisMethod, notes: data.notes, valuesJson: data.valuesJson as Prisma.InputJsonValue, contentJson: data.contentJson, ...(data.legacyValuesPromoted ? { metadataJson: withResultLegacyPromotionMarker(current.metadataJson) as Prisma.InputJsonValue } : {}) } });
     await associateDocumentMedia(tx, data.contentJson, "result", current.id);
     await tx.activityLog.create({ data: { action: "update", targetType: "result", targetId: current.id, metadataJson: { recordStatus: data.parsed.recordStatus, qualityStatus: data.parsed.qualityStatus, validationStatus: validation.status } } });
@@ -181,6 +192,7 @@ export async function deleteResult(
   try {
     const parsed = lifecycleSchema.parse({ id: formData.get("id"), confirmation: formData.get("confirmation") });
     experimentId = await prisma.$transaction(async (tx) => {
+      await lockEntrySourceGraph(tx);
       const result = await tx.result.findUnique({
         where: { id: parsed.id },
         select: { id: true, title: true, resultType: true, status: true, recordStatus: true, experimentId: true, projectId: true, researchPlanId: true, _count: { select: { datasets: true, reportSources: true } } },

@@ -106,7 +106,7 @@ export function useDocumentMediaUploads(editor: Editor | null, draftId: string) 
       insertDocumentMediaFiles(editor, files, draftId);
     };
     const drop = (event: DragEvent) => {
-      if (!ownsEvent(event)) return;
+      if (!ownsEvent(event) || editor.view.dragging) return;
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (!files.length) return;
       event.preventDefault(); event.stopPropagation();

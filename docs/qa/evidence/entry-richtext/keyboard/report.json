@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "editor": "entry",
+      "status": "通过",
+      "operations": "Enter/Shift+Enter/Backspace join/Delete/Undo/Redo/list/Tab indent/Shift+Tab/save/readback"
+    },
+    {
+      "editor": "research-plan",
+      "status": "通过",
+      "operations": "Enter/Shift+Enter/Backspace join/Delete/Undo/Redo/list/Tab indent/Shift+Tab/save/readback"
+    },
+    {
+      "editor": "protocol",
+      "status": "通过",
+      "operations": "Enter/Shift+Enter/Backspace join/Delete/Undo/Redo/list/Tab indent/Shift+Tab/save/readback"
+    }
+  ]
+}

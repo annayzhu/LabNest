@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 $PROJECT_ROOT
+
+
+ Test Files  109 passed (109)
+      Tests  539 passed (539)
+   Start at  15:13:12
+   Duration  5.51s (transform 11.21s, setup 0ms, import 27.26s, tests 2.87s, environment 12ms)
+

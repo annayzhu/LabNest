@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "B06/B19 delayed wide image, H2 and autosave preserve paragraph, selection and subsequent input",
+      "status": "通过",
+      "before": 445.546875,
+      "pending": 445.546875,
+      "after": 445.546875,
+      "shiftPx": 0
+    },
+    {
+      "name": "B06/B19 upload completion during H2/autosave preserves decoded local ratio, position, selection and saved text",
+      "status": "通过",
+      "before": 445.546875,
+      "after": 445.546875,
+      "shiftPx": 0
+    }
+  ]
+}

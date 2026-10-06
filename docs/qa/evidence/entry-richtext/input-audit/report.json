@@ -1,0 +1,5791 @@
+{
+  "synthetic": true,
+  "base": "http://localhost:3331",
+  "browser": "149.0.7827.55",
+  "scope": "真实页面可见输入/弹层/响应式基础交互；持久化完整链另见 pages/report.json。没有操作隐藏的未展开弹窗。",
+  "checks": [
+    {
+      "route": "/settings",
+      "source": "src/app/settings/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Preview volume",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/settings",
+      "source": "src/app/settings/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Preview volume",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools",
+      "source": "src/app/tools/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools",
+      "source": "src/app/tools/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/records",
+      "source": "src/app/records/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/records",
+      "source": "src/app/records/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory",
+      "source": "src/app/inventory/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Filter Inventory by item",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/inventory",
+      "source": "src/app/inventory/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Search inventory",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools/calculator",
+      "source": "src/app/tools/calculator/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Search calculations",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator",
+      "source": "src/app/tools/calculator/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Search calculations",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/inventory/import",
+      "source": "src/app/inventory/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/inventory/import",
+      "source": "src/app/inventory/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/purchases",
+      "source": "src/app/purchases/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/purchases",
+      "source": "src/app/purchases/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory/cmuw8pyj70009k0osheub296b",
+      "source": "src/app/inventory/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "performedBy",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/inventory/cmuw8pyj70009k0osheub296b",
+      "source": "src/app/inventory/[id]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "performedBy",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/reports",
+      "source": "src/app/reports/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/reports",
+      "source": "src/app/reports/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/purchases/import",
+      "source": "src/app/purchases/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/purchases/import",
+      "source": "src/app/purchases/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory/cmuw8pyj70009k0osheub296b/edit",
+      "source": "src/app/inventory/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "englishName",
+          "status": "通过"
+        },
+        {
+          "name": "Current quantity",
+          "status": "通过"
+        },
+        {
+          "name": "positionCode",
+          "status": "通过"
+        },
+        {
+          "name": "storageCondition",
+          "status": "通过"
+        },
+        {
+          "name": "concentration",
+          "status": "通过"
+        },
+        {
+          "name": "barcode",
+          "status": "通过"
+        },
+        {
+          "name": "aliquotCode",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 10
+    },
+    {
+      "route": "/inventory/cmuw8pyj70009k0osheub296b/edit",
+      "source": "src/app/inventory/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "englishName",
+          "status": "通过"
+        },
+        {
+          "name": "Current quantity",
+          "status": "通过"
+        },
+        {
+          "name": "positionCode",
+          "status": "通过"
+        },
+        {
+          "name": "storageCondition",
+          "status": "通过"
+        },
+        {
+          "name": "concentration",
+          "status": "通过"
+        },
+        {
+          "name": "barcode",
+          "status": "通过"
+        },
+        {
+          "name": "aliquotCode",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 9
+    },
+    {
+      "route": "/purchases/cmuw8pz530009klos7v2a5k96",
+      "source": "src/app/purchases/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/purchases/cmuw8pz530009klos7v2a5k96",
+      "source": "src/app/purchases/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory/export",
+      "source": "src/app/inventory/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/inventory/export",
+      "source": "src/app/inventory/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/reports/import",
+      "source": "src/app/reports/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/reports/import",
+      "source": "src/app/reports/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory/new",
+      "source": "src/app/inventory/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "englishName",
+          "status": "通过"
+        },
+        {
+          "name": "Opening quantity",
+          "status": "通过"
+        },
+        {
+          "name": "positionCode",
+          "status": "通过"
+        },
+        {
+          "name": "storageCondition",
+          "status": "通过"
+        },
+        {
+          "name": "concentration",
+          "status": "通过"
+        },
+        {
+          "name": "barcode",
+          "status": "通过"
+        },
+        {
+          "name": "aliquotCode",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 10
+    },
+    {
+      "route": "/inventory/new",
+      "source": "src/app/inventory/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "englishName",
+          "status": "通过"
+        },
+        {
+          "name": "Opening quantity",
+          "status": "通过"
+        },
+        {
+          "name": "positionCode",
+          "status": "通过"
+        },
+        {
+          "name": "storageCondition",
+          "status": "通过"
+        },
+        {
+          "name": "concentration",
+          "status": "通过"
+        },
+        {
+          "name": "barcode",
+          "status": "通过"
+        },
+        {
+          "name": "aliquotCode",
+          "status": "通过"
+        },
+        {
+          "name": "notes",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 9
+    },
+    {
+      "route": "/purchases/new",
+      "source": "src/app/purchases/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "物料名称",
+          "status": "通过"
+        },
+        {
+          "name": "购买数量",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/purchases/new",
+      "source": "src/app/purchases/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "物料名称",
+          "status": "通过"
+        },
+        {
+          "name": "购买数量",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/reports/cmuw8pyit0005k0osi3fexzpd",
+      "source": "src/app/reports/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/reports/cmuw8pyit0005k0osi3fexzpd",
+      "source": "src/app/reports/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/inventory/locations",
+      "source": "src/app/inventory/locations/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "temperature",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/inventory/locations",
+      "source": "src/app/inventory/locations/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "temperature",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/search",
+      "source": "src/app/search/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/search",
+      "source": "src/app/search/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/reports/cmuw8pyit0005k0osi3fexzpd/edit",
+      "source": "src/app/reports/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Report title",
+          "status": "通过"
+        },
+        {
+          "name": "title",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/reports/cmuw8pyit0005k0osi3fexzpd/edit",
+      "source": "src/app/reports/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Report title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools/visualization",
+      "source": "src/app/tools/visualization/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "Project name",
+          "status": "通过"
+        },
+        {
+          "name": "Custom palette name",
+          "status": "通过"
+        },
+        {
+          "name": "Search plot types",
+          "status": "通过"
+        },
+        {
+          "name": "CSV or TSV data",
+          "status": "通过"
+        },
+        {
+          "name": "Bar title",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "Auto",
+          "status": "通过"
+        },
+        {
+          "name": "Auto",
+          "status": "通过"
+        },
+        {
+          "name": "Width value",
+          "status": "通过"
+        },
+        {
+          "name": "Height value",
+          "status": "通过"
+        },
+        {
+          "name": "Title size value",
+          "status": "通过"
+        },
+        {
+          "name": "Axis label size value",
+          "status": "通过"
+        },
+        {
+          "name": "Tick size value",
+          "status": "通过"
+        },
+        {
+          "name": "Legend size value",
+          "status": "通过"
+        },
+        {
+          "name": "Axis line value",
+          "status": "通过"
+        },
+        {
+          "name": "Grid line value",
+          "status": "通过"
+        },
+        {
+          "name": "Data line value",
+          "status": "通过"
+        },
+        {
+          "name": "Point size value",
+          "status": "通过"
+        },
+        {
+          "name": "Opacity value",
+          "status": "通过"
+        },
+        {
+          "name": "Gap value",
+          "status": "通过"
+        },
+        {
+          "name": "Border width value",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 22
+    },
+    {
+      "route": "/tools/visualization",
+      "source": "src/app/tools/visualization/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Project name",
+          "status": "通过"
+        },
+        {
+          "name": "Search plot types",
+          "status": "通过"
+        },
+        {
+          "name": "CSV or TSV data",
+          "status": "通过"
+        },
+        {
+          "name": "Bar title",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "Auto",
+          "status": "通过"
+        },
+        {
+          "name": "Auto",
+          "status": "通过"
+        },
+        {
+          "name": "Width value",
+          "status": "通过"
+        },
+        {
+          "name": "Height value",
+          "status": "通过"
+        },
+        {
+          "name": "Title size value",
+          "status": "通过"
+        },
+        {
+          "name": "Axis label size value",
+          "status": "通过"
+        },
+        {
+          "name": "Tick size value",
+          "status": "通过"
+        },
+        {
+          "name": "Legend size value",
+          "status": "通过"
+        },
+        {
+          "name": "Axis line value",
+          "status": "通过"
+        },
+        {
+          "name": "Grid line value",
+          "status": "通过"
+        },
+        {
+          "name": "Data line value",
+          "status": "通过"
+        },
+        {
+          "name": "Point size value",
+          "status": "通过"
+        },
+        {
+          "name": "Opacity value",
+          "status": "通过"
+        },
+        {
+          "name": "Gap value",
+          "status": "通过"
+        },
+        {
+          "name": "Border width value",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 21
+    },
+    {
+      "route": "/reports/export",
+      "source": "src/app/reports/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/reports/export",
+      "source": "src/app/reports/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/trash",
+      "source": "src/app/trash/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/trash",
+      "source": "src/app/trash/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences",
+      "source": "src/app/sequences/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Filter Sequences",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences",
+      "source": "src/app/sequences/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/reports/new",
+      "source": "src/app/reports/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "title",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/reports/new",
+      "source": "src/app/reports/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "title",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/protocol-run",
+      "source": "src/app/protocol-run/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocol-run",
+      "source": "src/app/protocol-run/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/collections",
+      "source": "src/app/sequences/collections/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences/collections",
+      "source": "src/app/sequences/collections/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/entities",
+      "source": "src/app/entities/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/entities",
+      "source": "src/app/entities/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/projects",
+      "source": "src/app/projects/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/projects",
+      "source": "src/app/projects/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/collections/cmuw8pz4a0002klosnoud8pq6",
+      "source": "src/app/sequences/collections/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/collections/cmuw8pz4a0002klosnoud8pq6",
+      "source": "src/app/sequences/collections/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/entities/new",
+      "source": "src/app/entities/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "code",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/entities/new",
+      "source": "src/app/entities/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "code",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/projects/import",
+      "source": "src/app/projects/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/projects/import",
+      "source": "src/app/projects/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/collections/cmuw8pz4a0002klosnoud8pq6/edit",
+      "source": "src/app/sequences/collections/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        },
+        {
+          "name": "Member role",
+          "status": "通过"
+        },
+        {
+          "name": "Member note",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/sequences/collections/cmuw8pz4a0002klosnoud8pq6/edit",
+      "source": "src/app/sequences/collections/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        },
+        {
+          "name": "Member role",
+          "status": "通过"
+        },
+        {
+          "name": "Member note",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/samples",
+      "source": "src/app/samples/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/samples",
+      "source": "src/app/samples/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/projects/cmuw8pyh00000k0osx2o19qje",
+      "source": "src/app/projects/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "keyInformation",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/projects/cmuw8pyh00000k0osx2o19qje",
+      "source": "src/app/projects/[id]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "keyInformation",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/collections/export",
+      "source": "src/app/sequences/collections/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/collections/export",
+      "source": "src/app/sequences/collections/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/research-plans",
+      "source": "src/app/research-plans/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/research-plans",
+      "source": "src/app/research-plans/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/collections/new",
+      "source": "src/app/sequences/collections/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences/collections/new",
+      "source": "src/app/sequences/collections/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/projects/cmuw8pyh00000k0osx2o19qje/edit",
+      "source": "src/app/projects/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/projects/cmuw8pyh00000k0osx2o19qje/edit",
+      "source": "src/app/projects/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/exports",
+      "source": "src/app/exports/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Preview volume",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/exports",
+      "source": "src/app/exports/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Preview volume",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/research-plans/import",
+      "source": "src/app/research-plans/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/research-plans/import",
+      "source": "src/app/research-plans/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/import",
+      "source": "src/app/sequences/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Paste Primer name + Sequence rows here…",
+          "status": "通过"
+        },
+        {
+          "name": "defaultOrganism",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences/import",
+      "source": "src/app/sequences/import/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Paste Primer name + Sequence rows here…",
+          "status": "通过"
+        },
+        {
+          "name": "defaultOrganism",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/projects/export",
+      "source": "src/app/projects/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/projects/export",
+      "source": "src/app/projects/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/cmuw8pz3v0000klosx5z909ry",
+      "source": "src/app/sequences/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "role",
+          "status": "通过"
+        },
+        {
+          "name": "note",
+          "status": "通过"
+        },
+        {
+          "name": "note",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/sequences/cmuw8pz3v0000klosx5z909ry",
+      "source": "src/app/sequences/[id]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "role",
+          "status": "通过"
+        },
+        {
+          "name": "note",
+          "status": "通过"
+        },
+        {
+          "name": "note",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/projects/new",
+      "source": "src/app/projects/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/projects/new",
+      "source": "src/app/projects/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences/cmuw8pz3v0000klosx5z909ry/edit",
+      "source": "src/app/sequences/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "targetName",
+          "status": "通过"
+        },
+        {
+          "name": "organism",
+          "status": "通过"
+        },
+        {
+          "name": "meta_application",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "sequence",
+          "status": "通过"
+        },
+        {
+          "name": "validationSummary",
+          "status": "通过"
+        },
+        {
+          "name": "changeSummary",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 10
+    },
+    {
+      "route": "/sequences/cmuw8pz3v0000klosx5z909ry/edit",
+      "source": "src/app/sequences/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "targetName",
+          "status": "通过"
+        },
+        {
+          "name": "organism",
+          "status": "通过"
+        },
+        {
+          "name": "meta_application",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "sequence",
+          "status": "通过"
+        },
+        {
+          "name": "validationSummary",
+          "status": "通过"
+        },
+        {
+          "name": "changeSummary",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 9
+    },
+    {
+      "route": "/sequences/workflows",
+      "source": "src/app/sequences/workflows/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/workflows",
+      "source": "src/app/sequences/workflows/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/research-plans/cmuw8pyhv0001k0os5mczkth0",
+      "source": "src/app/research-plans/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "keyInformation",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/research-plans/cmuw8pyhv0001k0os5mczkth0",
+      "source": "src/app/research-plans/[id]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "keyInformation",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/experiments",
+      "source": "src/app/experiments/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/experiments",
+      "source": "src/app/experiments/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/workflows/cmuw8pz500008klosa7x5w300",
+      "source": "src/app/sequences/workflows/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/workflows/cmuw8pz500008klosa7x5w300",
+      "source": "src/app/sequences/workflows/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/research-plans/cmuw8pyhv0001k0os5mczkth0/edit",
+      "source": "src/app/research-plans/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Research Plan title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/research-plans/cmuw8pyhv0001k0os5mczkth0/edit",
+      "source": "src/app/research-plans/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Research Plan title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/workflows/new",
+      "source": "src/app/sequences/workflows/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/sequences/workflows/new",
+      "source": "src/app/sequences/workflows/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/experiments/import",
+      "source": "src/app/experiments/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/experiments/import",
+      "source": "src/app/experiments/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/research-plans/export",
+      "source": "src/app/research-plans/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/research-plans/export",
+      "source": "src/app/research-plans/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/export",
+      "source": "src/app/sequences/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/export",
+      "source": "src/app/sequences/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/research-plans/new",
+      "source": "src/app/research-plans/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Research Plan title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/research-plans/new",
+      "source": "src/app/research-plans/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Research Plan title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp",
+      "source": "src/app/experiments/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp",
+      "source": "src/app/experiments/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/pairs/cmuw8pz4u0005kloscuqhyvsv",
+      "source": "src/app/sequences/pairs/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/pairs/cmuw8pz4u0005kloscuqhyvsv",
+      "source": "src/app/sequences/pairs/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp/run",
+      "source": "src/app/experiments/[id]/run/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "deviation:cmuw8pyii0003k0osf112bfsc",
+          "status": "通过"
+        },
+        {
+          "name": "quickNote",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp/run",
+      "source": "src/app/experiments/[id]/run/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/protocols",
+      "source": "src/app/protocols/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/protocols",
+      "source": "src/app/protocols/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/new",
+      "source": "src/app/sequences/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/sequences/new",
+      "source": "src/app/sequences/new/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/",
+      "source": "src/app/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/",
+      "source": "src/app/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/sequences/pairs/cmuw8pz4u0005kloscuqhyvsv/edit",
+      "source": "src/app/sequences/pairs/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "geneName",
+          "status": "通过"
+        },
+        {
+          "name": "organism",
+          "status": "通过"
+        },
+        {
+          "name": "meta_application",
+          "status": "通过"
+        },
+        {
+          "name": "meta_transcriptAccession",
+          "status": "通过"
+        },
+        {
+          "name": "meta_exonJunction",
+          "status": "通过"
+        },
+        {
+          "name": "meta_designSource",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 8
+    },
+    {
+      "route": "/sequences/pairs/cmuw8pz4u0005kloscuqhyvsv/edit",
+      "source": "src/app/sequences/pairs/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "geneName",
+          "status": "通过"
+        },
+        {
+          "name": "organism",
+          "status": "通过"
+        },
+        {
+          "name": "meta_application",
+          "status": "通过"
+        },
+        {
+          "name": "meta_transcriptAccession",
+          "status": "通过"
+        },
+        {
+          "name": "meta_exonJunction",
+          "status": "通过"
+        },
+        {
+          "name": "meta_designSource",
+          "status": "通过"
+        },
+        {
+          "name": "description",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 7
+    },
+    {
+      "route": "/protocols/import",
+      "source": "src/app/protocols/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/import",
+      "source": "src/app/protocols/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp/edit",
+      "source": "src/app/experiments/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Experiment title",
+          "status": "通过"
+        },
+        {
+          "name": "title",
+          "status": "通过"
+        },
+        {
+          "name": "purpose",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/experiments/cmuw8pyif0002k0os3ehdgbbp/edit",
+      "source": "src/app/experiments/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Experiment title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/results",
+      "source": "src/app/results/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/results",
+      "source": "src/app/results/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/attachments",
+      "source": "src/app/attachments/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "targetType",
+          "status": "通过"
+        },
+        {
+          "name": "targetId",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/attachments",
+      "source": "src/app/attachments/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "targetType",
+          "status": "通过"
+        },
+        {
+          "name": "targetId",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n",
+      "source": "src/app/protocols/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n",
+      "source": "src/app/protocols/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/experiments/export",
+      "source": "src/app/experiments/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/experiments/export",
+      "source": "src/app/experiments/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/results/import",
+      "source": "src/app/results/import/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/results/import",
+      "source": "src/app/results/import/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/experiments/new",
+      "source": "src/app/experiments/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Experiment title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/experiments/new",
+      "source": "src/app/experiments/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Experiment title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/results/cmuw8pyip0004k0osec0lw14v",
+      "source": "src/app/results/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "name",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/results/cmuw8pyip0004k0osec0lw14v",
+      "source": "src/app/results/[id]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "name",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/new",
+      "source": "src/app/protocols/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Protocol title",
+          "status": "通过"
+        },
+        {
+          "name": "Protocol metadata title",
+          "status": "通过"
+        },
+        {
+          "name": "Protocol ID suffix after PRT-",
+          "status": "通过"
+        },
+        {
+          "name": "shortTitle",
+          "status": "通过"
+        },
+        {
+          "name": "englishTitle",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "changeSummary",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 9
+    },
+    {
+      "route": "/protocols/new",
+      "source": "src/app/protocols/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Protocol title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/attachments/cmuw8n0a2000yqxosv1m4cdap",
+      "source": "src/app/attachments/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/attachments/cmuw8n0a2000yqxosv1m4cdap",
+      "source": "src/app/attachments/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/results/cmuw8pyip0004k0osec0lw14v/edit",
+      "source": "src/app/results/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Result title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/results/cmuw8pyip0004k0osec0lw14v/edit",
+      "source": "src/app/results/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Result title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/entries",
+      "source": "src/app/entries/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/entries",
+      "source": "src/app/entries/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n/versions/cmuw8pyj40008k0os5pgx4jh5/edit",
+      "source": "src/app/protocols/[id]/versions/[versionId]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Protocol title",
+          "status": "通过"
+        },
+        {
+          "name": "Protocol metadata title",
+          "status": "通过"
+        },
+        {
+          "name": "shortTitle",
+          "status": "通过"
+        },
+        {
+          "name": "englishTitle",
+          "status": "通过"
+        },
+        {
+          "name": "tags",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "changeSummary",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 8
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n/versions/cmuw8pyj40008k0os5pgx4jh5/edit",
+      "source": "src/app/protocols/[id]/versions/[versionId]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Protocol title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/export",
+      "source": "src/app/protocols/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/export",
+      "source": "src/app/protocols/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/results/export",
+      "source": "src/app/results/export/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/results/export",
+      "source": "src/app/results/export/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/entries/new",
+      "source": "src/app/entries/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Entry title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/entries/new",
+      "source": "src/app/entries/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Entry title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/entries/cmuw8pyix0006k0os2dg4eqs5",
+      "source": "src/app/entries/[id]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/entries/cmuw8pyix0006k0os2dg4eqs5",
+      "source": "src/app/entries/[id]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/results/new",
+      "source": "src/app/results/new/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Result title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/results/new",
+      "source": "src/app/results/new/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Result title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/actions",
+      "source": "src/app/actions/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/actions",
+      "source": "src/app/actions/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/entries/cmuw8pyix0006k0os2dg4eqs5/edit",
+      "source": "src/app/entries/[id]/edit/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Entry title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/entries/cmuw8pyix0006k0os2dg4eqs5/edit",
+      "source": "src/app/entries/[id]/edit/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Entry title",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n/adapt",
+      "source": "src/app/protocols/[id]/adapt/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "canonicalTitle",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "adaptationRationale",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/protocols/cmuw8pyj00007k0osqkr1155n/adapt",
+      "source": "src/app/protocols/[id]/adapt/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "canonicalTitle",
+          "status": "通过"
+        },
+        {
+          "name": "displayVersion",
+          "status": "通过"
+        },
+        {
+          "name": "adaptationRationale",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/actions/manual",
+      "source": "src/app/actions/manual/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/actions/manual",
+      "source": "src/app/actions/manual/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/calculator/hemocytometer",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/hemocytometer",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/seeding",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/seeding",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/hydrogel",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 7
+    },
+    {
+      "route": "/tools/calculator/hydrogel",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/split",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/split",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/freezing",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/freezing",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/transfection",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "Group name",
+          "status": "通过"
+        },
+        {
+          "name": "Actual wells (including replicates)",
+          "status": "通过"
+        },
+        {
+          "name": "Batch overage",
+          "status": "通过"
+        },
+        {
+          "name": "Final culture volume per well (including mixture)",
+          "status": "通过"
+        },
+        {
+          "name": "Diluent name",
+          "status": "通过"
+        },
+        {
+          "name": "Nucleic acid name",
+          "status": "通过"
+        },
+        {
+          "name": "Stock concentration",
+          "status": "通过"
+        },
+        {
+          "name": "DNA mass per well",
+          "status": "通过"
+        },
+        {
+          "name": "Prepared total per well",
+          "status": "通过"
+        },
+        {
+          "name": "Reagent name",
+          "status": "通过"
+        },
+        {
+          "name": "Reagent amount",
+          "status": "通过"
+        },
+        {
+          "name": "Prepared total per well",
+          "status": "通过"
+        },
+        {
+          "name": "Addition order (custom protocol)",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 14
+    },
+    {
+      "route": "/tools/calculator/transfection",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "Group name",
+          "status": "通过"
+        },
+        {
+          "name": "Actual wells (including replicates)",
+          "status": "通过"
+        },
+        {
+          "name": "Batch overage",
+          "status": "通过"
+        },
+        {
+          "name": "Final culture volume per well (including mixture)",
+          "status": "通过"
+        },
+        {
+          "name": "Diluent name",
+          "status": "通过"
+        },
+        {
+          "name": "Nucleic acid name",
+          "status": "通过"
+        },
+        {
+          "name": "Stock concentration",
+          "status": "通过"
+        },
+        {
+          "name": "DNA mass per well",
+          "status": "通过"
+        },
+        {
+          "name": "Prepared total per well",
+          "status": "通过"
+        },
+        {
+          "name": "Addition order (custom protocol)",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 10
+    },
+    {
+      "route": "/tools/calculator/kill-curve",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/kill-curve",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/viability",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/viability",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/od600",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/od600",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/cfu",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/cfu",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/colony-counter",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools/calculator/colony-counter",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/calculator/reagent-dosing",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/reagent-dosing",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/fold-dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/fold-dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/serial-dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/serial-dilution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/molarity",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/molarity",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/percent-solution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/percent-solution",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/media-recipe",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/media-recipe",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/buffer-recipe",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/buffer-recipe",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/ic50-ec50",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools/calculator/ic50-ec50",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/calculator/master-mix",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 6
+    },
+    {
+      "route": "/tools/calculator/master-mix",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/ligation",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/ligation",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/tm",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/tm",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/dna-rna-conversion",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/dna-rna-conversion",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/bradford-bca",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/bradford-bca",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/elisa-4pl",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/elisa-4pl",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/wb-loading",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 5
+    },
+    {
+      "route": "/tools/calculator/wb-loading",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/moi",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/moi",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/virus-titer",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 4
+    },
+    {
+      "route": "/tools/calculator/virus-titer",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/unit-converter",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/unit-converter",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 1
+    },
+    {
+      "route": "/tools/calculator/centrifuge",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/centrifuge",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/resuspension",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/resuspension",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/calculator/normalization",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 1440,
+      "inputs": [
+        {
+          "name": "q",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 3
+    },
+    {
+      "route": "/tools/calculator/normalization",
+      "source": "src/app/tools/calculator/[calculatorId]/page.tsx",
+      "width": 390,
+      "inputs": [
+        {
+          "name": "text",
+          "status": "通过"
+        },
+        {
+          "name": "text",
+          "status": "通过"
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 2
+    },
+    {
+      "route": "/tools/qpcr-plate-layout",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 1440,
+      "inputs": [],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/qpcr-plate-layout",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/cnv-plate-layout",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 1440,
+      "inputs": [],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/cnv-plate-layout",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/qpcr-analysis",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 1440,
+      "inputs": [],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/qpcr-analysis",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/cnv-analysis",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 1440,
+      "inputs": [],
+      "overflow": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    },
+    {
+      "route": "/tools/cnv-analysis",
+      "source": "src/app/tools/[toolId]/page.tsx",
+      "width": 390,
+      "inputs": [],
+      "overflow": {
+        "viewport": 390,
+        "scrollWidth": 390
+      },
+      "status": "通过",
+      "persisted": "基础审计不等同于保存回读验收",
+      "textInputCount": 0
+    }
+  ]
+}

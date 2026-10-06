@@ -1,0 +1,55 @@
+{
+  "baselineMain": "bc3f3408b68a4d3d9346c1ae490f7d5a673a77e9",
+  "applicationCommit": "67e0c1d0fb7a6e353838104c812603229d805893",
+  "localBuildId": "AlJbCGSAWB7xv6rXDvfhT",
+  "pr": "https://github.com/annayzhu/LabNest/pull/87",
+  "stage": "validated candidate before authorized merge and deployment",
+  "matrix": {
+    "通过": 37,
+    "待测": 8,
+    "失败": 0
+  },
+  "evidenceBatches": [
+    {
+      "applicationCommit": "67e0c1d0fb7a6e353838104c812603229d805893",
+      "reports": [
+        "pages/report.json",
+        "exports/report.json",
+        "pending-save/report.json",
+        "drag/report.json",
+        "media-loading/report.json",
+        "interaction-report.json",
+        "firefox/interaction-report.json",
+        "webkit/interaction-report.json",
+        "toolbar/report.json",
+        "image-recovery/report.json",
+        "input-audit/report.json"
+      ]
+    },
+    {
+      "applicationCommit": "9ab2342f5ca7af05225d9ebc0659868c2c562ace",
+      "reports": [
+        "advanced/report.json",
+        "step-freeze.json",
+        "relations.json",
+        "focus/report.json",
+        "mixed/report.json",
+        "draft-switch/report.json",
+        "viewports/report.json",
+        "feedback/report.json",
+        "external-import/report.json",
+        "keyboard/report.json",
+        "plain-fields/report.json"
+      ],
+      "note": "These scripts completed before the final media-toolbar-only CSS change; final page/drag/pending checks and CI cover the final application."
+    },
+    {
+      "applicationCommit": "160a801f5b4285a1108d85d88a2a4f939667d648",
+      "reports": [
+        "date-los-angeles.json"
+      ],
+      "note": "Date algorithm unchanged; final two-timezone unit tests and advanced date UI regression retained."
+    }
+  ],
+  "ci": "Final evidence commit exact-head results and merge/deployment receipt will be reported in the PR and local private deployment receipt; not inferred from this premerge manifest."
+}

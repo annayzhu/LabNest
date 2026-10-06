@@ -1,0 +1,10 @@
+{
+  "synthetic": true,
+  "experimentId": "cmuwbvq030000m4osj7ya0f67",
+  "checks": [
+    {
+      "name": "Unlocked step shows live source; submitted target hides mutable step evidence, keeps frozen source; reopen shows live source",
+      "status": "通过"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "width": 1440,
+      "status": "通过",
+      "menus": [
+        "Paragraph style",
+        "Font",
+        "Font size",
+        "Paragraph layout",
+        "Line spacing",
+        "More",
+        "Insert"
+      ],
+      "keyboard": "Enter/ArrowDown/Home/Escape and focus restoration",
+      "formats": [
+        "bold",
+        "italic",
+        "underline",
+        "思源黑体",
+        "16pt",
+        "center",
+        "2×",
+        "risk color",
+        "link"
+      ],
+      "persistence": "save/leave/reload/read-only"
+    },
+    {
+      "width": 390,
+      "status": "通过",
+      "menus": [
+        "Paragraph style",
+        "Font",
+        "Font size",
+        "Paragraph layout",
+        "Line spacing",
+        "More",
+        "Insert"
+      ],
+      "keyboard": "Enter/ArrowDown/Home/Escape and focus restoration",
+      "formats": [
+        "bold",
+        "italic",
+        "underline",
+        "思源黑体",
+        "16pt",
+        "center",
+        "2×",
+        "risk color",
+        "link"
+      ],
+      "persistence": "save/leave/reload/read-only"
+    }
+  ]
+}

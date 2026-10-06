@@ -9,9 +9,6 @@ $PROJECT_ROOT/scripts/verify-editor-repair.mjs
   87:173  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
   92:172  warning  'media' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
-$PROJECT_ROOT/scripts/verify-entry-image-recovery.mjs
-  1:42  warning  'assert' is defined but never used  @typescript-eslint/no-unused-vars
-
 $PROJECT_ROOT/scripts/verify-entry-richtext.mjs
   10:665  warning  'source' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
@@ -27,5 +24,5 @@ $PROJECT_ROOT/src/lib/structured-import.ts
   602:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
   602:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
-✖ 12 problems (0 errors, 12 warnings)
+✖ 11 problems (0 errors, 11 warnings)
 

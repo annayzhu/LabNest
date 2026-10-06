@@ -9,7 +9,7 @@ const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
 const browser = await chromium.launch();
 const report = { at: new Date().toISOString(), browser: browser.version(), fixture: '900×900, 225 synthetic circles', phases: [] };
 try {
-  for (const [phase, base] of [['before', process.env.LABNEST_OLD_BASE_URL || 'http://localhost:3000'], ['after', process.env.LABNEST_E2E_BASE_URL || 'http://localhost:3223']]) {
+  for (const [phase, base] of [['before', process.env.LABNEST_OLD_BASE_URL || 'http://localhost:3001'], ['after', process.env.LABNEST_E2E_BASE_URL || 'http://localhost:3223']]) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const samples = [];

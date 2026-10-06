@@ -97,12 +97,12 @@ export function SequenceImportForm({ projects }: { projects: Array<{ id: string;
                     {preview.errors.slice(0, 4).map((error) => <p key={error} className="rounded-[var(--ln-radius-control-md)] bg-error/5 px-2.5 py-2 text-xs leading-4 text-error">{error}</p>)}
                     {preview.entries.slice(0, 6).map((entry) => (
                       <div key={`${entry.sourceRows.join("-")}-${entry.name}`} className="rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 py-2">
-                        <div className="flex items-start justify-between gap-2"><span className="truncate text-xs font-medium text-ink">{entry.name}</span><span className="shrink-0 text-[10px] text-muted">row {entry.sourceRows.join("+")}</span></div>
-                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted">{entry.members.map((member) => <span key={member.role}>{member.role} · {member.sequence.length} {entry.kind === "pair" && entry.pairType === "sirna_duplex" ? "nt" : pasteMode === "single" && moleculeType === "Protein" ? "aa" : "nt"}</span>)}</div>
+                        <div className="flex items-start justify-between gap-2"><span className="truncate text-xs font-medium text-ink">{entry.name}</span><span className="shrink-0 text-xs text-muted">row {entry.sourceRows.join("+")}</span></div>
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">{entry.members.map((member) => <span key={member.role}>{member.role} · {member.sequence.length} {entry.kind === "pair" && entry.pairType === "sirna_duplex" ? "nt" : pasteMode === "single" && moleculeType === "Protein" ? "aa" : "nt"}</span>)}</div>
                       </div>
                     ))}
-                    {preview.entries.length > 6 ? <p className="text-center text-[11px] text-muted">+ {preview.entries.length - 6} more entries</p> : null}
-                    {preview.warnings.map((warning) => <p key={warning} className="text-[11px] leading-4 text-muted">{warning}</p>)}
+                    {preview.entries.length > 6 ? <p className="text-center text-xs text-muted">+ {preview.entries.length - 6} more entries</p> : null}
+                    {preview.warnings.map((warning) => <p key={warning} className="text-xs leading-4 text-muted">{warning}</p>)}
                   </div>
                 )}
               </section>

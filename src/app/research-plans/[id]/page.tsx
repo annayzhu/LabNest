@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ControlKeyInformationForm } from "@/components/ControlKeyInformationForm";
+import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
@@ -50,7 +51,7 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
   const document = normalizeResearchPlanDocument(plan.contentJson, plan.design);
   return (
     <AppShell><div className="space-y-6">
-      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<><DocumentPrintButton showLabel />{recycledKeys.has(`research_plan:${plan.id}`) ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><RecordLifecycleControl id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></>}</>} />
+      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<>{recycledKeys.has(`research_plan:${plan.id}`) ? <><Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link><DocumentPrintButton showLabel /></> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><PageActionsMenu><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></PageActionsMenu></>}</>} />
       {recycledKeys.has(`research_plan:${plan.id}`) ? <RecycleBinWarning kind="self" label="Research Plan" labelZh="研究方案" /> : null}
       {recycledRecords.some((row) => row.targetType !== "research_plan") ? <RecycleBinWarning label="record" labelZh="记录" /> : null}
       <div className="document-preview-layout">
@@ -86,4 +87,4 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
   );
 }
 
-function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }
+function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-medium text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }

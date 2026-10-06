@@ -179,7 +179,7 @@ export function SequenceForm({ action, projects, initial = {}, allowedDesignType
             <label>
               <span className={formLabelClass}>{initial.id ? "New version label" : "Version label"} *</span>
               <input required name="displayVersion" defaultValue={initial.id ? nextVersionLabel(initial.latestVersion?.displayVersion) : initial.latestVersion?.displayVersion ?? "1.0"} maxLength={30} className={formInputClass} />
-              {initial.id && initial.latestVersion ? <span className="mt-1 block text-[11px] text-muted">Current version: {initial.latestVersion.displayVersion}. Used only if sequence content changes.</span> : null}
+              {initial.id && initial.latestVersion ? <span className="mt-1 block text-xs text-muted">Current version: {initial.latestVersion.displayVersion}. Used only if sequence content changes.</span> : null}
             </label>
             <label>
               <span className={formLabelClass}>Topology *</span>

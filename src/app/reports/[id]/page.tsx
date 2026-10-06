@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
+import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
@@ -19,7 +20,6 @@ import { archiveReport, deleteReport, refreshReportSources } from "../actions";
 
 export const dynamic = "force-dynamic";
 const primaryButton = buttonStyles({ variant: "primary", size: "md" });
-const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
 
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,7 +48,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const recycledKeys = new Set(recycledRecords.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = reportDeleteBlockers(report.status, { externalReferences: itemReferences + reportSourceReferences });
   return <AppShell><div className="space-y-6">
-    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><DocumentPrintButton showLabel /><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><Link href={`/api/reports/${report.id}/markdown`} className={secondaryButton}>Export Markdown</Link><RecordLifecycleControl id={report.id} identifier={report.title} title="Report record" recordLabel="Report" recordLabelZh="报告" blockers={deletionBlockers} archived={report.status === "archived"} deleteAction={deleteReport} archiveAction={archiveReport} editHref={`/reports/${report.id}/edit`} /></>} />
+    <PageHeader eyebrow={`${report.project.name} · ${report.researchPlan?.code ?? "Project scope"}`} title={report.title} description="Editable synthesis with a separately maintained, version-aware source snapshot." actions={<><Link href={`/reports/${report.id}/edit`} className={primaryButton}>Edit Report</Link><PageActionsMenu><Link href={`/api/reports/${report.id}/markdown`}>Export Markdown</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={report.id} identifier={report.title} title="Report record" recordLabel="Report" recordLabelZh="报告" blockers={deletionBlockers} archived={report.status === "archived"} deleteAction={deleteReport} archiveAction={archiveReport} editHref={`/reports/${report.id}/edit`} /></PageActionsMenu></>} />
     {recycledRecords.length ? <RecycleBinWarning label="source record" labelZh="来源记录" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main"><ScientificDocumentView document={document} title={report.title} subtitle={`${report.project.name}${report.researchPlan ? ` · ${report.researchPlan.title}` : " · Entire Project"}`} /></main>
@@ -74,4 +74,4 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     <Card><CardHeader title="Attachments" eyebrow="Rendered exports and supporting documents" /><CardBody className="space-y-4"><AttachmentUploadForm targetType="report" targetId={report.id} hideTargetFields />{attachmentLinks.length ? <ul className="space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 text-sm font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : null}</CardBody></Card>
   </div></AppShell>;
 }
-function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }
+function Control({ label, children }: { label: string; children: React.ReactNode }) { return <div><p className="text-xs font-medium text-muted">{label}</p><div className="mt-2 text-sm font-medium text-ink">{children}</div></div>; }

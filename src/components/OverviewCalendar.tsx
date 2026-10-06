@@ -104,7 +104,7 @@ export function OverviewCalendar({
           <section aria-label={t("Monthly calendar")} className="min-w-0 p-3 sm:p-4">
             <div className="grid grid-cols-7 border-b border-hairline pb-1.5">
               {weekdayLabels.map((label, index) => (
-                <span key={`${label}-${index}`} className="text-center text-[11px] font-medium uppercase tracking-[0.08em] text-muted" data-i18n-ignore>
+                <span key={`${label}-${index}`} className="text-center text-xs font-medium uppercase tracking-[0.08em] text-muted" data-i18n-ignore>
                   {label}
                 </span>
               ))}
@@ -148,13 +148,13 @@ export function OverviewCalendar({
                     </span>
                     <span className="mt-auto hidden min-w-0 space-y-1 sm:block">
                       {dayActivities.slice(0, 1).map((activity) => (
-                        <span key={activity.id} className="flex min-w-0 items-center gap-1 text-[10px] leading-4 text-graphite">
+                        <span key={activity.id} className="flex min-w-0 items-center gap-1 text-xs leading-4 text-graphite">
                           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", activityColor(activity.kind))} aria-hidden />
                           <span className="truncate" data-i18n-ignore>{activity.title}</span>
                         </span>
                       ))}
                       {dayActivities.length > 1 ? (
-                        <span className="block pl-2.5 text-[10px] leading-3 text-muted" data-i18n-ignore>+{dayActivities.length - 1}</span>
+                        <span className="block pl-2.5 text-xs leading-3 text-muted" data-i18n-ignore>+{dayActivities.length - 1}</span>
                       ) : null}
                     </span>
                     {dayActivities.length ? (
@@ -180,8 +180,8 @@ export function OverviewCalendar({
         <Card className="overflow-hidden">
           <div className="border-b border-hairline bg-warm/45 px-4 py-3 sm:px-5">
             <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-ink" data-i18n-ignore>{selectedDateLabel}</h3>
-              <span className="shrink-0 font-mono text-[11px] text-muted" data-i18n-ignore>
+              <h3 className="text-base font-semibold tracking-[-0.01em] text-ink" data-i18n-ignore>{selectedDateLabel}</h3>
+              <span className="shrink-0 font-mono text-xs text-muted" data-i18n-ignore>
                 {locale === "zh" ? `${selectedActivities.length} 项` : `${selectedActivities.length} ${selectedActivities.length === 1 ? "item" : "items"}`}
               </span>
             </div>
@@ -192,7 +192,7 @@ export function OverviewCalendar({
               return (
                 <Link key={activity.id} href={activity.href} className="focus-ring group block bg-surface px-4 py-3 transition hover:bg-warm/60 sm:px-5 sm:py-4">
                   <span className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-muted">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
                       <span className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-[var(--ln-radius-control-md)]",
                         activity.kind === "entry" ? "bg-info-surface text-info" : "bg-sage-surface text-moss",
@@ -207,7 +207,7 @@ export function OverviewCalendar({
                   {activity.summary ? (
                     <span className="mt-1.5 line-clamp-3 text-xs leading-5 text-graphite" data-i18n-ignore>{activity.summary}</span>
                   ) : null}
-                  <span className="mt-2 block truncate text-[11px] text-muted">
+                  <span className="mt-2 block truncate text-xs text-muted">
                     {activity.kind === "entry" ? format(new Date(activity.startsAt), "HH:mm") : t("Experiment date")}
                     {activity.context ? <> · <span data-i18n-ignore>{activity.context}</span></> : null}
                   </span>

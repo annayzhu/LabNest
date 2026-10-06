@@ -230,7 +230,7 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
                   <p className="text-sm font-semibold text-ink">{formatLabel(format)}</p>
                   <p className="mt-1 text-xs text-muted">Structured {definition.singular} input</p>
                   {showCompactGuidance ? controlledFields.map((field) => (
-                    <p key={field.key} className="mt-1 truncate text-[11px] text-muted" title={`${field.label}: ${field.allowedValues?.join(", ")}`}>
+                    <p key={field.key} className="mt-1 truncate text-xs text-muted" title={`${field.label}: ${field.allowedValues?.join(", ")}`}>
                       {field.label}: {field.allowedValues?.join(" · ")}
                     </p>
                   )) : null}
@@ -273,12 +273,12 @@ export function StructuredImportWorkspace({ module }: { module: StructuredModule
             <Button type="button" variant="secondary" className="mt-3" onClick={() => fileInput.current?.click()} disabled={Boolean(pending)}>
               Browse files
             </Button>
-            <p className="mt-3 text-[11px] text-muted">Accepted: {definition.importFormats.map(formatLabel).join(" · ")} · Maximum 25 MB and 500 records</p>
+            <p className="mt-3 text-xs text-muted">Accepted: {definition.importFormats.map(formatLabel).join(" · ")} · Maximum 25 MB and 500 records</p>
             {file ? (
               <div className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-moss/25 bg-sage-surface px-3 py-2 text-left" aria-live="polite">
                 <FileCheck2 className="h-4 w-4 shrink-0 text-moss" aria-hidden />
                 <span className="min-w-0 truncate text-xs font-medium text-ink">{file.name}</span>
-                <span className="shrink-0 text-[11px] text-muted">{formatFileSize(file.size)}</span>
+                <span className="shrink-0 text-xs text-muted">{formatFileSize(file.size)}</span>
               </div>
             ) : null}
             <p className="mt-3 text-xs leading-5 text-muted">LabNest revalidates the original file at confirmation and keeps it with a SHA-256 checksum.</p>
@@ -326,7 +326,7 @@ function PreviewPanel({ preview, pending, onConfirm, onRemap }: { preview: Struc
           <div className="grid gap-2 border-t border-hairline p-3 md:grid-cols-2 xl:grid-cols-3">
             {preview.mapping.map((mapping) => (
               <div key={mapping.source} className="grid gap-1 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 py-2 text-xs">
-                <span className="text-[11px] uppercase tracking-[0.06em] text-muted">Source column</span>
+                <span className="text-xs text-muted">Source column</span>
                 <span className="truncate font-mono text-graphite" title={mapping.source}>{mapping.source}</span>
                 {onRemap?<select aria-label={`Map ${mapping.source}`} defaultValue={mapping.target??""} className="focus-ring min-h-11 border border-hairline bg-surface" onChange={e=>onRemap(mapping.source,e.target.value)}><option value="">不导入</option>{structuredModules[preview.module].fields.map(field=><option key={field.key} value={field.key}>{field.label}</option>)}</select>:<span className={mapping.target ? "text-moss" : "text-warning"}>→ {mapping.targetLabel ?? "Not imported"}</span>}
               </div>
@@ -355,7 +355,7 @@ function PreviewMetric({ label, value, tone = "neutral" }: { label: string; valu
   const toneClass = tone === "success" ? "text-moss" : tone === "warning" ? "text-warning" : tone === "error" ? "text-error" : "text-ink";
   return (
     <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{label}</p>
+      <p className="text-xs font-medium text-muted">{label}</p>
       <p className={`mt-1 text-sm font-semibold ${toneClass}`}>{value}</p>
     </div>
   );
@@ -368,7 +368,7 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
     <section className={`rounded-[var(--ln-radius-panel-inner)] border ${row.errors.length ? "border-error/30 bg-error-surface/40" : "border-hairline bg-surface"}`}>
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline px-3 py-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Record {row.index}</p>
+          <p className="text-xs font-medium text-muted">Record {row.index}</p>
           <h3 className="mt-1 break-words text-sm font-semibold text-ink">{title}</h3>
         </div>
         {row.errors.length ? <span className="shrink-0 text-xs font-medium text-error">Needs correction</span> : <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-moss"><Check className="h-3.5 w-3.5" aria-hidden />Ready to import</span>}
@@ -413,7 +413,7 @@ function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: Stru
 function PreviewFieldValue({ field, compact = false }: { field: PreviewField; compact?: boolean }) {
   return (
     <div className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline/70 bg-warm/35 px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{field.label}</p>
+      <p className="text-xs font-medium text-muted">{field.label}</p>
       <p className={`mt-1 break-words text-xs leading-5 text-graphite ${compact ? "" : "max-h-28 overflow-auto pr-1 editorial-scrollbar"}`}>{field.value || "—"}</p>
     </div>
   );

@@ -144,6 +144,6 @@ export function InlineTableEditor({
         </tbody>
       </table>
     </ResizableTableFrame>
-    <p className="border-t border-hairline px-2 py-0.5 text-[10.5px] leading-5 text-muted" data-print-hidden>Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.</p>
+    <p className="border-t border-hairline px-2 py-0.5 text-xs leading-5 text-muted" data-print-hidden>Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.</p>
   </figure>;
 }

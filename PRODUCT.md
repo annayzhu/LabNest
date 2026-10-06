@@ -43,7 +43,7 @@ LabNest combines provenance-aware research records with deterministic, browser-l
 ## Brand Commitments
 
 - Preserve the existing LabNest name and its restrained scientific editorial identity.
-- Calculator belongs visually to LabNest. It should use the incumbent light, cool violet-gray system rather than reproduce the reference app's dark green appearance.
+- Calculator belongs visually to LabNest. It should use the incumbent moon-white and dai-cyan system described in DESIGN.md rather than reproduce the reference app's dark green appearance.
 - Interface language should be concise, explicit, and scientifically conservative. Exploratory or research-use calculations must not be framed as clinical advice.
 
 ## Evidence on Hand

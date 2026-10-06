@@ -13,5 +13,13 @@ const browser=await chromium.launch(),p=await browser.newPage();const report={sh
 try{
  for(const format of ['csv','xlsx','json']){const response=await p.request.get(`${base}/api/structured-export/results?format=${format}&exportScope=selected&id=${fixture.wbResultId}`);assert.equal(response.status(),200);const path=`${dir}/saved-wb.${format}`;await writeFile(path,await response.body());let text,actual;if(format==='json')actual=JSON.parse(await readFile(path,'utf8')).records[0].templateValuesJson;else if(format==='xlsx'){const rows=(await readXlsxFile(path))[0].data;actual=JSON.parse(rows[1][rows[0].indexOf('templateValuesJson')]);}else {text=await readFile(path,'utf8');const rows=csvRows(text);actual=JSON.parse(rows[1][rows[0].indexOf('templateValuesJson')]);for(const term of [snapshot.methodVersion,'Synthetic stock','below configured minimum','operations','source'])assert(text.includes(term),format+' '+term);}
  if(actual)assert.deepEqual(actual,snapshot,format+' complete frozen snapshot');report.files.push({format,path,status:'通过',check:actual?'Full nested snapshot equals independent database read':'Quoted CSV contains methods, component, operation sources and warning; row/cell comparisons are in the calculator CSV/XLSX audit'});}
- await p.goto(`${base}/results/${fixture.wbResultId}`,{waitUntil:'networkidle'});assert.equal(await p.getByRole('button',{name:'Print / PDF',exact:true}).count(),1);await p.emulateMedia({media:'print'});const path=dir+'/saved-wb.pdf';await p.pdf({path,format:'A4',printBackground:true,margin:{top:'12mm',bottom:'12mm',left:'12mm',right:'12mm'}});report.files.push({format:'pdf',path,status:'待文件回读',check:'Chromium print renderer; native OS print dialog not exercised'});
+ await p.goto(`${base}/results/${fixture.wbResultId}`,{waitUntil:'networkidle'});
+ // Printing is a secondary action in the page menu. Exercise the visible user path.
+ await p.getByRole('button',{name:'More actions',exact:true}).click();
+ const printButton=p.getByRole('button',{name:'Print / PDF',exact:true});
+ await printButton.waitFor({state:'visible'});
+ await p.evaluate(()=>{window.__printRequested=false;window.print=()=>{window.__printRequested=true;};});
+ await printButton.click();
+ assert.equal(await p.evaluate(()=>window.__printRequested),true,'Print action invokes browser printing');
+ await p.emulateMedia({media:'print'});const path=dir+'/saved-wb.pdf';await p.pdf({path,format:'A4',printBackground:true,margin:{top:'12mm',bottom:'12mm',left:'12mm',right:'12mm'}});report.files.push({format:'pdf',path,status:'待文件回读',check:'Chromium print renderer; native OS print dialog not exercised'});
 }catch(error){report.error=String(error);throw error;}finally{await writeFile(dir+'/report.json',JSON.stringify(report,null,2));await browser.close();}

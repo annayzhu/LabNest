@@ -104,7 +104,7 @@ export function appendExperimentObservation(
  * The reserved ID prefix permits refreshing the projection without accumulating it. */
 export function experimentExecutionDocument(contentJson: unknown, steps: readonly {
   id: string; protocolStepRef?:string|null;groupKey?:string;groupOrder: number; order: number; groupTitle: string; title: string;
-  completed: boolean; deviationNote?: string | null; deviationType?: string | null;
+  completed: boolean; completedAt?: Date | null; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
   evidence?: ScientificDocument['sections'][number]['blocks'];
 }[], parameters?: unknown, snapshot?:unknown): ScientificDocument {
@@ -120,7 +120,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       group = step.groupOrder;
       blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
     }
-    const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed};
+    const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
     const title = `${step.completed ? '✓' : '未完成'} ${step.title}`;
     if (step.deviationNote?.trim()) {
       blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',execution:{...execution,deviationLabel:['abnormal','incident'].includes(step.deviationType ?? '')?'异常':'偏差',deviationNote:step.deviationNote.trim(),impact:step.deviationImpact??undefined,author:step.deviationAuthor??undefined},text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});

@@ -4,6 +4,7 @@ import { PencilLine } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
+import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
@@ -19,6 +20,7 @@ import { normalizeProtocolDocument, protocolDocumentFromLegacy } from "@/lib/pro
 import { protocolDeleteBlockers } from "@/lib/record-lifecycle";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { archiveProtocol, deleteProtocol } from "../actions";
+import { ActivityHistory } from "@/components/ActivityHistory";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
@@ -108,13 +110,12 @@ export default async function ProtocolDetailPage({
           identifier={`${protocol.humanCode ?? "Uncoded"} · v${version.displayVersion}`}
           title={protocol.canonicalTitle ?? protocol.title}
           description={protocol.englishTitle ?? protocol.description ?? undefined}
-          actions={<><DocumentPrintButton />{
-            recycleEntry ? <Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link> : <>
+          actions={<>{
+            recycleEntry ? <><Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link><DocumentPrintButton /></> : <>
               <Link href={editHref} className={primaryButton}><PencilLine className="h-4 w-4" aria-hidden />Edit Protocol</Link>
               {protocol.researchPlans.length ? <Link href={`/experiments/new?protocolVersionId=${version.id}`} className={secondaryButton}>Use in experiment</Link> : <Link href={editHref} className={secondaryButton}>Link Research Plan</Link>}
-              {protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`} className={secondaryButton}>Adapt to project</Link> : null}
               <ProtocolExportMenu docxHref={`/api/protocols/${protocol.id}/versions/${version.id}/docx`} jsonHref={`/api/protocols/${protocol.id}/versions/${version.id}/json`} />
-              <RecordLifecycleControl id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} allowLinkedRecycle triggerSize="md" />
+              <PageActionsMenu>{protocol.scope === "general" ? <Link href={`/protocols/${protocol.id}/adapt?version=${version.id}`}>Adapt to project</Link> : null}<DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={protocol.id} identifier={protocol.humanCode} title={protocol.canonicalTitle ?? protocol.title} recordLabel="Protocol" recordLabelZh="实验规程" blockers={deletionBlockers} archived={protocol.availability === "archived"} deleteAction={deleteProtocol} archiveAction={archiveProtocol} editHref={editHref} allowLinkedRecycle triggerSize="md" /></PageActionsMenu>
             </>
           }</>}
         />
@@ -172,7 +173,7 @@ export default async function ProtocolDetailPage({
               </CardBody>
             </Card>
 
-            {activityLogs.length ? <Card><CardHeader title="Activity" eyebrow="Audit trail" /><CardBody><ul className="divide-y divide-hairline">{activityLogs.map((log) => <li key={log.id} className="space-y-1 py-2 text-sm"><span className="font-medium capitalize text-ink">{log.action.replaceAll("_", " ")}</span><time className="block text-xs text-muted">{log.createdAt.toLocaleString()}</time></li>)}</ul></CardBody></Card> : null}
+            <ActivityHistory logs={activityLogs} />
           </aside>
         </div>
       </div>

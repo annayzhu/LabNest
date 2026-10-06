@@ -146,7 +146,7 @@ export function CreateMenu() {
           <div className="hidden grid-cols-4 gap-3 sm:grid">
             {groups.map((group) => (
               <div key={group.title} className="rounded-[var(--ln-radius-panel-inner)] bg-warm p-2">
-                <p className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                <p className="px-2 py-1 text-xs font-medium text-muted">
                   {group.title}
                 </p>
                 <div className="mt-1 space-y-1">

@@ -279,7 +279,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
       <section role="dialog" aria-modal="true" aria-labelledby="all-steps-title" className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-soft">
         <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-hairline bg-surface/95 px-4 py-3 backdrop-blur">
-          <div><h2 id="all-steps-title" className="font-serif text-xl font-medium text-ink">All steps</h2><p className="mt-0.5 text-xs text-muted">{completedIds.size} of {steps.length} complete</p></div>
+          <div><h2 id="all-steps-title" className="text-xl font-semibold text-ink">All steps</h2><p className="mt-0.5 text-xs text-muted">{completedIds.size} of {steps.length} complete</p></div>
           <button type="button" onClick={() => setAllStepsOpen(false)} aria-label="Close all steps" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-warm text-muted"><X className="h-4 w-4" aria-hidden /></button>
         </div>
         <ol className="divide-y divide-hairline">
@@ -293,7 +293,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
     <section className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:block">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
-        <h2 className="font-serif text-lg font-medium text-ink">Execution record</h2>
+        <h2 className="text-lg font-semibold text-ink">Execution record</h2>
         <span className="text-xs text-muted">{hasSteps ? "Check planned execution steps or log deviations by step." : "No fixed steps configured; use freeform execution notes."}</span>
       </div>
       {hasSteps ? <div className="divide-y-4 divide-stone/70">
@@ -311,13 +311,13 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                 <div className="min-w-0">
                 <label className="flex min-w-0 cursor-pointer items-start gap-3">
                   <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
-                  <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
+                  <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description && !step.richContent?.blocks.length ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
                 {step.richContent?.blocks.length || step.richContent?.common.length ? <div className="run-step-content mt-3 space-y-3" data-run-step-content>{[...(step.richContent?.common ?? []), ...(step.richContent?.blocks ?? [])].map(block => <ProtocolContentBlockView key={block.id} block={block} />)}</div> : null}
                 </div>
                 <div>
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
-                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label>{editable ? <button type="submit" name="intent" value="save" disabled={pending} className={`${secondaryButton} mt-2 w-full`}>{pending ? "Saving..." : "Save execution record"}</button> : null}</> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
+                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>)}
             </div>

@@ -5,7 +5,7 @@ export function TagFieldLabel() {
   return (
     <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
       <span className={formLabelClass}>Tags</span>
-      <span className="text-[10px] font-normal normal-case tracking-normal text-disabled">{tagSeparatorHint}</span>
+      <span className="text-xs font-normal normal-case tracking-normal text-disabled">{tagSeparatorHint}</span>
     </span>
   );
 }

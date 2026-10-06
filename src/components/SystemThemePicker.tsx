@@ -39,7 +39,7 @@ export function SystemThemePicker() {
                   {theme.name}
                   {selected ? <Check className="h-3.5 w-3.5 text-moss" aria-hidden /> : null}
                 </span>
-                <span className="mt-1 block text-[11px] leading-[1.45] text-muted">{theme.description}</span>
+                <span className="mt-1 block text-xs leading-[1.45] text-muted">{theme.description}</span>
               </span>
             </label>
           );

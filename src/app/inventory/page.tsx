@@ -1,7 +1,7 @@
 import { inventoryQuantityLabel } from "@/lib/inventory";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Filter, MapPin, Plus, Search, ShoppingCart, Upload, X } from "lucide-react";
+import { Filter, MapPin, Plus, Search, ShoppingCart, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import {
@@ -124,8 +124,8 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                     principalInvestigators={piOptions}
                     activeFilterCount={activeFilterCount}
                   />
-                  <span className="whitespace-nowrap font-mono text-xs text-muted">
-                    {items.length === totalCount ? `${totalCount} records` : `${items.length} of ${totalCount}`}
+                  <span className="whitespace-nowrap text-xs text-muted">
+                    {items.length === totalCount ? `${totalCount} ${totalCount === 1 ? "record" : "records"}` : `${items.length} of ${totalCount}`}
                   </span>
                   <div className="hidden items-center gap-1.5 md:flex">
                     <button form={filterFormId} type="submit" className={filterApplyButtonClass}>
@@ -142,8 +142,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                 <div className="flex flex-wrap items-center gap-2">
                   <Link href="/inventory/locations" className={collectionSecondaryActionClass}><MapPin className="h-4 w-4" aria-hidden />Locations</Link>
                   <Link href="/purchases" className={collectionSecondaryActionClass}><ShoppingCart className="h-4 w-4" aria-hidden />Purchases</Link>
-                  <Link href="/inventory/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link>
-                  <CollectionExportMenu filteredHref={exportHref} exportPath="/inventory/export" />
+                  <CollectionExportMenu filteredHref={exportHref} exportPath="/inventory/export" importHref="/inventory/import" />
                   <Link href="/inventory/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Item</Link>
                 </div>
               </div>
@@ -262,7 +261,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
             />
           </section>
 
-          <aside aria-label="Inventory dashboard" className="grid gap-3 sm:grid-cols-2 xl:sticky xl:top-24 xl:grid-cols-1 xl:self-start">
+          <aside aria-label="Inventory dashboard" className="divide-y divide-hairline self-start rounded-[var(--ln-radius-panel)] border border-hairline bg-surface xl:sticky xl:top-24">
             <Metric label="Registered items" value={totalCount} href="/inventory" />
             <Metric label="Low stock" value={lowCount} href="/inventory?flag=low" tone={lowCount ? "warning" : "neutral"} />
             <Metric label="Out of stock" value={depletedCount} href="/inventory?flag=depleted" tone={depletedCount ? "danger" : "neutral"} />
@@ -276,13 +275,13 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
 }
 
 const tableFilterClass = "focus-ring h-8 w-full rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-normal normal-case tracking-normal text-ink";
-const filterApplyButtonClass = buttonStyles({ variant: "primary", size: "sm", className: "font-medium" });
+const filterApplyButtonClass = buttonStyles({ size: "sm", className: "font-medium" });
 const filterClearButtonClass = buttonStyles({ variant: "ghost", size: "sm", className: "font-medium text-muted" });
 
 function InventoryColumnFilter({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`normal-case tracking-normal ${className}`}>
-      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
+      <span className="block text-xs font-medium text-muted">{label}</span>
       <div className="mt-1.5 hidden md:block">{children}</div>
     </div>
   );
@@ -316,7 +315,7 @@ function InventoryMobileFilters({
       <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite hover:bg-warm">
         <Filter className="h-3.5 w-3.5" aria-hidden />
         Filters
-        {activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-[10px] text-moss">{activeFilterCount}</span> : null}
+        {activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">{activeFilterCount}</span> : null}
       </summary>
       <form action="/inventory" method="get" className="absolute left-0 top-11 z-30 grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-soft">
         <MobileFilterField label="Item">
@@ -380,9 +379,9 @@ function MobileFilterField({ label, children }: { label: string; children: React
 function Metric({ label, value, href, tone = "neutral" }: { label: string; value: number; href: string; tone?: "neutral" | "warning" | "danger" | "info" }) {
   const toneClass = tone === "danger" ? "text-error" : tone === "warning" ? "text-warning" : tone === "info" ? "text-info" : "text-ink";
   return (
-    <Link href={href} className="focus-ring rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper transition hover:border-border-strong hover:bg-warm">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
-      <p className={`mt-2 font-serif text-2xl font-medium leading-none ${toneClass}`}>{value}</p>
+    <Link href={href} className="focus-ring flex items-baseline justify-between gap-3 px-4 py-3 transition hover:bg-warm">
+      <span className="text-sm text-graphite">{label}</span>
+      <span className={`text-base font-semibold tabular-nums ${toneClass}`}>{value}</span>
     </Link>
   );
 }

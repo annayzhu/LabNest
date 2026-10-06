@@ -10,7 +10,7 @@ import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
 const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
- role:z.enum(["group","step","confirmation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),
+ role:z.enum(["group","step","confirmation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),completedAt:z.string().optional(),
  deviationLabel:z.enum(["偏差","异常"]).optional(),deviationNote:z.string().optional(),impact:z.string().optional(),author:z.string().optional(),
 }).optional() });
 

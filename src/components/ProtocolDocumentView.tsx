@@ -66,7 +66,7 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
     </div>
     {template.description ? <p className="mt-2 text-xs leading-5 text-graphite">{template.description}</p> : null}
     {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="mt-3 border-t border-sage/30 pt-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p>
       <ProtocolRichTextContent nodes={template.instructions} />
     </div> : null}
     {templateCheck && (templateCheck.errors.length || templateCheck.warnings.length) ? <ul className="mt-2 list-disc pl-5 text-xs text-graphite">{[...templateCheck.errors, ...templateCheck.warnings].map((message) => <li key={message}>{message}</li>)}</ul> : null}
@@ -76,7 +76,7 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
 function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[] }) {
   if (!fields.length) return null;
   return <section data-result-template-fields-preview className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
-    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
     <div className="mt-2 grid gap-[var(--ln-result-template-preview-grid-gap)] md:grid-cols-2">
       {fields.map((field) => {
         const dataType = fieldDataType(field);
@@ -96,7 +96,7 @@ function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[]
 function ResultTemplateArtifactPreview({ artifacts }: { artifacts: ResultTemplateArtifact[] | undefined }) {
   if (!artifacts?.length) return null;
   return <section className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-3">
-    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />文件要求 / File requirements</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />文件要求 / File requirements</p>
     <div className="mt-2 grid gap-2 md:grid-cols-2">
       {artifacts.map((artifact) => <div key={artifact.key} className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-3 py-2">
         <p className="truncate text-sm font-medium text-ink">{artifact.label}</p>

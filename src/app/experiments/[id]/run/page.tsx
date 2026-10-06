@@ -16,6 +16,7 @@ import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
 import { buildExperimentResultRecording } from "@/lib/experiment-results";
+import { isRecordLocked } from "@/lib/record-lifecycle";
 
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
 
   const lockedProtocol = experiment.primaryProtocolVersion;
   const currentStep = experiment.steps.find((step) => !step.completed);
-  const editable = experiment.status !== "archived";
+  const locked = isRecordLocked(experiment.recordStatus);
+  const editable = experiment.status !== "archived" && !locked;
   const evidenceByStep = Object.fromEntries(experiment.steps.map((step) => [step.id, {
     observations: step._count.entries,
     measurements: step._count.results,
@@ -110,6 +112,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson)} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
         </details>
 
+        {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
         <ProtocolRunProgressForm
           key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
           experimentId={experiment.id}
@@ -125,7 +128,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         <details className="rounded-[var(--ln-radius-panel)] border border-hairline px-3 py-2"><summary className="focus-ring cursor-pointer text-sm font-medium text-moss">Files, materials and results</summary>
         <div className="mt-3 grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
-            <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="font-serif text-lg font-medium text-ink">Photos and files</h2></div>
+            <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="text-lg font-semibold text-ink">Photos and files</h2></div>
             {currentStep ? <div className="lg:hidden"><p className="mb-2 text-xs text-muted">Linked to Step {currentStep.order} · {currentStep.title}</p><AttachmentUploadForm targetType="experiment_step" targetId={currentStep.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="step_evidence" /></div> : null}
             <div className="hidden lg:block"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" /></div>
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}

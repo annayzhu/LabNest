@@ -105,9 +105,9 @@ async function assertOperationalTypography(page) {
       cardTitle: Number.parseFloat(getComputedStyle(cardTitle).fontSize),
     };
   });
-  assert.equal(shellMetrics.body, 12.5, `Operational body copy should be 12.5px, got ${shellMetrics.body}px.`);
-  assert.equal(shellMetrics.nav, 12, `Desktop navigation should be 12px, got ${shellMetrics.nav}px.`);
-  assert.equal(shellMetrics.search, 12.5, `Top search copy should be 12.5px, got ${shellMetrics.search}px.`);
+  assert.equal(shellMetrics.body, 13, `Operational body copy should be 13px, got ${shellMetrics.body}px.`);
+  assert.equal(shellMetrics.nav, 13, `Desktop navigation should be 13px, got ${shellMetrics.nav}px.`);
+  assert.equal(shellMetrics.search, 13, `Top search copy should be 13px, got ${shellMetrics.search}px.`);
   assert.equal(shellMetrics.cardTitle, 12.5, `Card headings should be 12.5px, got ${shellMetrics.cardTitle}px.`);
 
   await openRoute(page, "/projects");
@@ -121,9 +121,9 @@ async function assertOperationalTypography(page) {
       localSearch: Number.parseFloat(getComputedStyle(localSearch).fontSize),
     };
   });
-  assert.equal(tableMetrics.body, 11.5, `Shared table copy should be 11.5px, got ${tableMetrics.body}px.`);
-  assert.equal(tableMetrics.heading, 10.5, `Shared table headings should be 10.5px, got ${tableMetrics.heading}px.`);
-  assert.equal(tableMetrics.localSearch, 11.5, `Local collection search should be 11.5px, got ${tableMetrics.localSearch}px.`);
+  assert.equal(tableMetrics.body, 12, `Shared table copy should be 12px, got ${tableMetrics.body}px.`);
+  assert.equal(tableMetrics.heading, 12, `Shared table headings should be 12px, got ${tableMetrics.heading}px.`);
+  assert.equal(tableMetrics.localSearch, 12, `Local collection search should be 12px, got ${tableMetrics.localSearch}px.`);
   assert(shellMetrics.search > tableMetrics.localSearch, "The global search must remain visually above local collection search.");
   assert(shellMetrics.nav > tableMetrics.body, "Navigation must remain visually above table records.");
 

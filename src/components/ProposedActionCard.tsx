@@ -18,12 +18,12 @@ export function ProposedActionCard({ action }: { action: ProposedAction }) {
               </span>
             ) : null}
           </div>
-          <h3 className="mt-3 font-serif text-xl font-medium text-ink">{action.affectedItem ?? action.sourceLabel}</h3>
+          <h3 className="mt-3 text-xl font-semibold text-ink">{action.affectedItem ?? action.sourceLabel}</h3>
           <p className="mt-2 text-sm leading-6 text-graphite">{action.reason}</p>
         </div>
       </div>
       <div className="mt-4 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Payload summary</p>
+        <p className="mb-2 text-xs font-medium text-muted">Payload summary</p>
         <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs leading-5 text-graphite">
           {JSON.stringify(action.payload, null, 2)}
         </pre>

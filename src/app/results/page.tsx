@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
-import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
@@ -55,7 +55,7 @@ export default async function ResultsPage({ searchParams }: { searchParams?: Pag
         { name: "validation", label: "template validation", value: validation, options: resultValidationStatusOptions },
       ]}
       sortOptions={[{ value: "updated_desc", label: "Recently updated" }, { value: "title_asc", label: "Title A–Z" }]}
-      actions={<><Link href="/results/import" className={collectionSecondaryActionClass}><Upload className="h-4 w-4" aria-hidden />Import</Link><CollectionExportMenu filteredHref={exportHref} exportPath="/results/export" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
+      actions={<><CollectionExportMenu filteredHref={exportHref} exportPath="/results/export" importHref="/results/import" /><Link href="/results/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Result</Link></>}
     />
     <DataTable rows={results} getRowKey={(row) => row.id} emptyMessage="No Results match this view." selection={{ exportPath: "/results/export" }} columns={[
       { key: "result", header: "Result", render: (row) => <div><Link href={`/results/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.title}</Link><p className="mt-1 text-xs text-muted">{row.project?.name ?? "No project"}{row.templateInstanceKey ? ` · ${row.templateInstanceLabel ?? row.templateInstanceKey}` : ""}</p></div> },

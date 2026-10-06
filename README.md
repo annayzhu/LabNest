@@ -61,7 +61,9 @@ npm run prisma:seed
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3001. `npm run dev`, `npm run start`, and the Docker app all publish port 3001 by default; `PORT=3002 npm run dev` overrides the npm scripts (needed while the Docker app holds 3001), and `LABNEST_HOST_PORT` overrides the Docker host port. Inside the container the app still listens on 3000, which the HTTPS proxy targets.
+
+Browser drafts, the offline mutation queue, fonts, and appearance settings are stored per address. Before retiring an old address (for example `:3000`), open it once more and let pending items sync — the Entries page shows the pending count — e.g. `LABNEST_HOST_PORT=3000 docker compose up -d app`, then switch back.
 
 Core foundation pages render from PostgreSQL through Prisma. Typed demo data remains only for secondary legacy surfaces and unit fixtures while those modules are migrated incrementally.
 

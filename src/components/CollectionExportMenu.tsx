@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckSquare2, ChevronDown, Download, ListFilter, Rows3 } from "lucide-react";
+import { CheckSquare2, ChevronDown, Download, ListFilter, Rows3, Upload } from "lucide-react";
 import { collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { useI18n } from "@/components/I18nProvider";
 import { allCollectionExportHref, selectedCollectionExportHref } from "@/lib/collection-export";
 
-export function CollectionExportMenu({ filteredHref, exportPath }: { filteredHref: string; exportPath: string }) {
+/** Import sits in the same menu as export so a list toolbar carries one secondary button. */
+export function CollectionExportMenu({ filteredHref, exportPath, importHref }: { filteredHref: string; exportPath: string; importHref?: string }) {
   const { locale } = useI18n();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -60,11 +61,15 @@ export function CollectionExportMenu({ filteredHref, exportPath }: { filteredHre
         }}
       >
         <Download className="h-4 w-4" aria-hidden />
-        {locale === "zh" ? "导出" : "Export"}{selectedIds.length ? ` (${selectedIds.length})` : ""}…
+        {importHref ? (locale === "zh" ? "导入 / 导出" : "Import / Export") : (locale === "zh" ? "导出" : "Export")}{selectedIds.length ? ` (${selectedIds.length})` : ""}
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {open ? (
         <div role="menu" className="absolute right-0 z-30 mt-2 w-72 overflow-hidden rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-1.5 shadow-soft">
+          {importHref ? <Link role="menuitem" href={importHref} onClick={() => setOpen(false)} className="ln-dropdown-motion-item focus-ring mb-1 flex items-start gap-3 rounded-[var(--ln-radius-control-md)] border-b border-hairline px-3 py-2.5 hover:bg-warm">
+            <Upload className="ln-dropdown-motion-icon mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />
+            <span><strong className="block text-sm text-ink">{locale === "zh" ? "导入记录" : "Import records"}</strong><span className="mt-0.5 block text-xs leading-5 text-muted">{locale === "zh" ? "从结构化文件创建记录" : "Create records from a structured file"}</span></span>
+          </Link> : null}
           {selectedIds.length ? (
             <Link role="menuitem" href={selectedHref} onClick={() => setOpen(false)} className="ln-dropdown-motion-item focus-ring flex items-start gap-3 rounded-[var(--ln-radius-control-md)] px-3 py-2.5 hover:bg-sage-surface/60">
               <CheckSquare2 className="ln-dropdown-motion-icon mt-0.5 h-4 w-4 shrink-0 text-moss" aria-hidden />

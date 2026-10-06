@@ -8,6 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { appendExperimentObservation, experimentSearchText } from "@/lib/experiment-document";
 import { formActionErrorMessage } from "@/lib/form-actions";
+import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
 
 export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string };
@@ -73,6 +74,7 @@ export async function saveProtocolRunProgress(
     });
     if (!experiment) throw new Error("Experiment not found.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
+    assertRecordEditable(experiment.recordStatus);
 
     if (parsed.completedCurrentStepId) {
       // A single-step command is not a replacement of the client's full snapshot.
@@ -109,6 +111,8 @@ export async function saveProtocolRunProgress(
       where: { id: experiment.id },
       data: {
         status: nextStatus,
+        // A completed run is a written record; submission stays an explicit step.
+        ...(nextStatus === "completed" && experiment.recordStatus === "draft" ? { recordStatus: "recorded" as const } : {}),
         contentJson: contentJson as Prisma.InputJsonValue,
         searchText: experimentSearchText(experiment.purpose, contentJson),
       },
@@ -212,10 +216,11 @@ export async function updateStepTimer(
     await prisma.$transaction(async (tx) => {
       const step = await tx.experimentStep.findFirst({
         where: { id: parsed.stepId, experimentId: parsed.experimentId },
-        include: { experiment: { select: { status: true } } },
+        include: { experiment: { select: { status: true, recordStatus: true } } },
       });
       if (!step) throw new Error("Experiment step not found.");
       if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot change timers.");
+      assertRecordEditable(step.experiment.recordStatus);
 
       const submittedDuration = parsed.durationMinutes ? Math.round(parsed.durationMinutes * 60) : undefined;
       const durationSeconds = submittedDuration ?? step.timerDurationSeconds ?? 300;
@@ -261,12 +266,13 @@ export async function recordProtocolRunConsumption(formData: FormData) {
 
   await prisma.$transaction(async (tx) => {
     const [experiment, item, step] = await Promise.all([
-      tx.experiment.findUnique({ where: { id: parsed.experimentId }, select: { id: true, status: true } }),
+      tx.experiment.findUnique({ where: { id: parsed.experimentId }, select: { id: true, status: true, recordStatus: true } }),
       tx.inventoryItem.findUnique({ where: { id: parsed.inventoryItemId } }),
       parsed.experimentStepId ? tx.experimentStep.findFirst({ where: { id: parsed.experimentStepId, experimentId: parsed.experimentId }, select: { id: true } }) : null,
     ]);
     if (!experiment) throw new Error("Experiment not found.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot consume Inventory.");
+    assertRecordEditable(experiment.recordStatus);
     if (!item || item.status !== "active") throw new Error("Inventory Item not found or inactive.");
     if (parsed.experimentStepId && !step) throw new Error("The selected Step does not belong to this Experiment.");
 
@@ -323,6 +329,7 @@ export async function saveRunParameters(_previous:ProtocolRunProgressState,form:
   await prisma.$transaction(async tx=>{
    const experiment=await tx.experiment.findUnique({where:{id},include:{protocolRun:true}});
    if(!experiment||experiment.status==='archived'||experiment.status==='completed'||!experiment.primaryProtocolVersionId)throw new Error('This run cannot be edited.');
+   assertRecordEditable(experiment.recordStatus);
    const previous=experiment.protocolRun?.parametersJson??{};
    if(JSON.stringify(previous)!==String(form.get('expected')))throw new Error('Parameters changed elsewhere. Reload and review before saving.');
    const raw=Object.fromEntries([...form.entries()].filter(([key])=>key.startsWith('parameter:')).map(([key,value])=>[key.slice(10),value]));

@@ -173,7 +173,13 @@ export function MobileBottomNav() {
     { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];
-  const active = (href: string) => href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const runPage = /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname);
+  // Records is the hub for entries, experiments and results, so their pages light it instead of "More".
+  const active = (href: string) => href === "/" ? pathname === "/"
+    : href === "/protocol-run" ? under(href) || runPage
+    : href === "/records" ? !runPage && ["/records", "/entries", "/experiments", "/results"].some(under)
+    : under(href);
   const moreActive = !items.some((item) => active(item.href));
 
   useEffect(() => {
@@ -214,7 +220,7 @@ export function MobileBottomNav() {
               href={item.href}
               aria-current={isCurrent ? "page" : undefined}
               className={cn(
-                "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
+                "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
                 isCurrent ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
               )}
             >
@@ -231,7 +237,7 @@ export function MobileBottomNav() {
           aria-controls="mobile-more-navigation"
           onClick={() => setMoreOpen(true)}
           className={cn(
-            "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-[10px] font-normal leading-none tracking-[-0.005em]",
+            "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
             moreOpen || moreActive ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
           )}
         >
@@ -252,7 +258,7 @@ export function MobileBottomNav() {
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 id="mobile-more-navigation-title" className="font-serif text-xl font-medium text-ink">All modules</h2>
+                <h2 id="mobile-more-navigation-title" className="text-xl font-semibold text-ink">All modules</h2>
                 <p className="mt-1 text-xs text-muted">Open any LabNest workspace or utility.</p>
               </div>
               <button ref={closeButtonRef} type="button" onClick={() => closeMoreMenu(true)} aria-label="Close menu" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-warm text-muted">
@@ -287,7 +293,7 @@ export function MobileBottomNav() {
               })}
             </nav>
 
-            <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Utilities</h3>
+            <h3 className="mb-2 mt-5 text-xs font-medium text-muted">Utilities</h3>
             <nav aria-label="Utilities" className="grid grid-cols-2 gap-2">
               {utilityItems.map((item) => {
                 const Icon = item.icon;

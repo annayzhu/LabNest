@@ -40,5 +40,5 @@ export default async function SequenceCollectionPage({ params }: { params: Promi
 }
 
 function Field({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
-  return <div><p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p><div className={`mt-1 text-sm text-ink ${mono ? "font-mono text-xs" : ""}`}>{value || "—"}</div></div>;
+  return <div><p className="text-xs font-medium text-muted">{label}</p><div className={`mt-1 text-sm text-ink ${mono ? "font-mono text-xs" : ""}`}>{value || "—"}</div></div>;
 }

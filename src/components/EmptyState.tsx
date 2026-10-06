@@ -18,7 +18,7 @@ export function EmptyState({
       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-action-surface text-moss">
         <FilePlus2 className="h-5 w-5" aria-hidden />
       </div>
-      <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.015em] text-ink">{title}</h3>
+      <h3 className="mt-4 text-base font-semibold tracking-[-0.015em] text-ink">{title}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-graphite">{body}</p>
       {actionHref ? (
         <Link

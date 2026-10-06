@@ -17,5 +17,5 @@ else
   echo "[LabNest] Reusing the existing production build."
 fi
 
-echo "[LabNest] Starting the production server on ${HOSTNAME:-0.0.0.0}:${PORT:-3000}..."
-exec npm run start -- -H "${HOSTNAME:-0.0.0.0}" -p "${PORT:-3000}"
+echo "[LabNest] Starting the production server on ${HOSTNAME:-0.0.0.0}:${PORT:-3001}..."
+exec npm run start -- -H "${HOSTNAME:-0.0.0.0}"

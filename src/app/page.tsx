@@ -8,7 +8,6 @@ import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
 import { TodayCalculators } from "@/components/calculators/TodayCalculators";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/db";
 import { ExperimentStatus } from "@/generated/prisma/enums";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
@@ -169,20 +168,8 @@ export default async function OverviewPage({
     ? todayKey
     : calendarActivities[0]?.dateKey ?? format(viewMonth, "yyyy-MM-dd");
   const activeRun = activeRuns[0];
-
-  return (
-    <AppShell>
-      {!mobileCalendarOpen ? <section className="bench-mobile space-y-5 lg:hidden">
-        <div>
-          <h1 className="page-header-title font-serif tracking-[-0.02em] text-ink">Today at the bench</h1>
-          <p className="mt-1 text-sm text-muted" data-i18n-ignore>{format(today, "EEEE, MMMM d")}</p>
-        </div>
-
-        <section aria-labelledby="active-run-title" className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-          <div className="border-b border-hairline/70 px-4 py-3">
-            <h2 id="active-run-title" className="text-sm font-semibold text-ink">Active run</h2>
-          </div>
-          {activeRun ? (() => {
+  // Shared by the mobile bench view and the desktop Today panel.
+  const activeRunBody = activeRun ? (() => {
             const completedSteps = activeRun.steps.filter((step) => step.completed).length;
             const currentStep = activeRun.steps.find((step) => !step.completed);
             const activeTimer = activeRun.steps.find((step) => step.timerStartedAt && remainingStepTimerSeconds({ remainingSeconds: step.timerRemainingSeconds ?? 0, startedAt: step.timerStartedAt, now: today }) > 0);
@@ -191,23 +178,23 @@ export default async function OverviewPage({
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="record-identifier text-[11px] text-muted">{activeRun.runCode}</p>
+                    <p className="record-identifier text-xs text-muted">{activeRun.runCode}</p>
                     <h3 className="mt-1 line-clamp-2 text-base font-semibold leading-6 text-ink">{activeRun.title}</h3>
                   </div>
-                  <span className="shrink-0 rounded-full border border-action-border bg-action-surface px-2 py-1 text-[11px] font-semibold text-moss">Running</span>
+                  <span className="shrink-0 rounded-full border border-action-border bg-action-surface px-2 py-1 text-xs font-semibold text-moss">Running</span>
                 </div>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-stone" aria-label={`${progress}% complete`}>
                   <div className="h-full rounded-full bg-moss" style={{ width: `${progress}%` }} />
                 </div>
                 <div className="mt-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">Current step</p>
+                  <p className="text-xs font-medium text-muted">Current step</p>
                   <p className="mt-1 text-sm leading-5 text-graphite">{currentStep?.title ?? "All steps completed"}</p>
                 </div>
                 {activeTimer?.timerStartedAt && activeTimer.timerRemainingSeconds ? <div className="mt-3 flex min-h-11 items-center justify-between gap-3 rounded-[var(--ln-radius-control-lg)] border border-info/25 bg-info-surface px-3">
                   <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-graphite"><Timer className="h-4 w-4 shrink-0 text-info" aria-hidden /><span className="truncate">{activeTimer.title}</span></span>
                   <StepTimerReadout remainingSeconds={activeTimer.timerRemainingSeconds} startedAt={activeTimer.timerStartedAt.toISOString()} />
                 </div> : null}
-                <Link href={`/experiments/${activeRun.id}/run`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-white">
+                <Link href={`/experiments/${activeRun.id}/run`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-warm">
                   Continue run <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
@@ -219,7 +206,33 @@ export default async function OverviewPage({
                 View runs <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
-          )}
+          );
+  const todayPlanRows = todayExperiments.length ? todayExperiments.map((experiment) => (
+              <Link key={experiment.id} href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><FlaskConical className="h-4 w-4" aria-hidden /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block text-sm font-semibold leading-5 text-ink">{experiment.title}</span>
+                  <span className="mt-1 block text-xs text-muted">{experiment.researchPlan?.code ?? experiment.runCode}</span>
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+              </Link>
+            )) : (
+              <p className="px-4 py-5 text-sm leading-6 text-muted">Nothing is scheduled for today.</p>
+            );
+
+  return (
+    <AppShell>
+      {!mobileCalendarOpen ? <section className="bench-mobile space-y-5 lg:hidden">
+        <div>
+          <h1 className="page-header-title tracking-[-0.02em] text-ink">Today at the bench</h1>
+          <p className="mt-1 text-sm text-muted" data-i18n-ignore>{format(today, "EEEE, MMMM d")}</p>
+        </div>
+
+        <section aria-labelledby="active-run-title" className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+          <div className="border-b border-hairline/70 px-4 py-3">
+            <h2 id="active-run-title" className="text-sm font-semibold text-ink">Active run</h2>
+          </div>
+          {activeRunBody}
         </section>
 
         <Link href="/entries/new?mode=capture" className="focus-ring flex min-h-14 items-center gap-3 rounded-[var(--ln-radius-panel)] border border-action-border bg-action-surface px-4 text-moss">
@@ -240,18 +253,7 @@ export default async function OverviewPage({
             <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">All runs</Link>
           </div>
           <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-            {todayExperiments.length ? todayExperiments.map((experiment) => (
-              <Link key={experiment.id} href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><FlaskConical className="h-4 w-4" aria-hidden /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 block text-sm font-semibold leading-5 text-ink">{experiment.title}</span>
-                  <span className="mt-1 block text-xs text-muted">{experiment.researchPlan?.code ?? experiment.runCode}</span>
-                </span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
-              </Link>
-            )) : (
-              <p className="px-4 py-5 text-sm leading-6 text-muted">Nothing is scheduled for today.</p>
-            )}
+            {todayPlanRows}
           </div>
         </section>
 
@@ -272,70 +274,25 @@ export default async function OverviewPage({
       </section>}
 
       <div id="calendar" className="overview-desktop hidden space-y-5 lg:block">
-        <PageHeader
-          eyebrow="Lab workspace"
-          title="Overview"
-          description="A compact operational view of what needs attention now. Detailed work stays in the corresponding module."
-        />
+        <PageHeader title="Overview" />
 
-        <div className="grid items-start gap-5 xl:grid-cols-[240px_minmax(0,1fr)] 2xl:grid-cols-[250px_minmax(0,1fr)]">
-          <aside aria-label="Start here" className="min-w-0 space-y-3">
-            <Card className="overflow-hidden">
-              <CardHeader title="Start here" />
-              <CardBody className="grid gap-1.5 p-2.5 md:grid-cols-2 xl:grid-cols-1">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Link
-                      key={action.href}
-                      href={action.href}
-                      className="ln-quick-action focus-ring group flex h-10 items-center gap-2 rounded-[var(--ln-radius-control-md)] border px-2"
-                    >
-                      <span className="ln-quick-action-icon flex h-5 w-5 shrink-0 items-center justify-center text-action">
-                        <Icon className="h-[15px] w-[15px]" strokeWidth={1.7} aria-hidden />
-                      </span>
-                      <StaggeredText text={action.label} trigger="hover" className="min-w-0 flex-1 truncate text-xs font-semibold text-ink" />
-                      <ArrowUpRight className="h-3 w-3 shrink-0 text-muted transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-action" aria-hidden />
-                    </Link>
-                  );
-                })}
-              </CardBody>
-            </Card>
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="min-w-0 space-y-5">
+            {/* Today first: what is running and what is planned, then the month for context. */}
+            <section aria-label="Today" className="grid overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface md:grid-cols-2 md:divide-x md:divide-hairline">
+              <div className="min-w-0">
+                <h2 className="border-b border-hairline px-4 py-3 text-base font-semibold text-ink">Active run</h2>
+                {activeRunBody}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+                  <h2 className="text-base font-semibold text-ink">Today’s plan <span className="ml-1 text-sm font-normal text-muted" data-i18n-ignore>{format(today, "MMM d")}</span></h2>
+                  <Link href="/protocol-run" className="text-xs font-medium text-moss hover:underline">All runs</Link>
+                </div>
+                <div className="divide-y divide-hairline">{todayPlanRows}</div>
+              </div>
+            </section>
 
-            <Card className="overflow-hidden">
-              <CardHeader
-                title="Active plans"
-                action={<Link href="/research-plans?status=active" className="text-xs font-medium text-moss hover:underline">View all</Link>}
-              />
-              <CardBody className="p-0">
-                {activeResearchPlans.length ? (
-                  <div className="divide-y divide-hairline">
-                    {activeResearchPlans.map((plan) => (
-                      <Link
-                        key={plan.id}
-                        href={`/research-plans/${plan.id}`}
-                        className="focus-ring group block px-3 py-2.5 transition hover:bg-warm/60"
-                      >
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="record-identifier truncate text-[10px] text-muted">{plan.code}</span>
-                          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted" aria-label={`${plan._count.experiments} experiments`}>
-                            <Beaker className="h-3 w-3" aria-hidden />
-                            <span data-i18n-ignore>{plan._count.experiments}</span>
-                          </span>
-                        </span>
-                        <span className="mt-1 line-clamp-2 block text-xs font-semibold leading-4 text-ink group-hover:text-moss">{plan.title}</span>
-                        <span className="mt-1 block truncate text-[10px] text-muted">{plan.project.name}</span>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="px-3 py-4 text-xs leading-5 text-muted">No active research plans.</p>
-                )}
-              </CardBody>
-            </Card>
-          </aside>
-
-          <div className="min-w-0">
             <OverviewCalendar
               key={viewMonthKey}
               monthKey={viewMonthKey}
@@ -344,6 +301,36 @@ export default async function OverviewPage({
               activities={calendarActivities}
             />
           </div>
+
+          <aside aria-label="Start here" className="min-w-0 divide-y divide-hairline rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+            <nav aria-label="Quick actions" className="p-1.5">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link key={action.href} href={action.href} className="ln-quick-action focus-ring group flex h-9 items-center gap-2.5 rounded-[var(--ln-radius-control-md)] px-2.5">
+                    <Icon className="ln-quick-action-icon h-4 w-4 shrink-0 text-moss" strokeWidth={1.7} aria-hidden />
+                    <StaggeredText text={action.label} trigger="hover" className="min-w-0 flex-1 truncate text-sm font-medium text-ink" />
+                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted opacity-0 transition group-hover:opacity-100" aria-hidden />
+                  </Link>
+                );
+              })}
+            </nav>
+            <section aria-labelledby="active-plans-title">
+              <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3">
+                <h2 id="active-plans-title" className="text-sm font-semibold text-ink">Active plans</h2>
+                <Link href="/research-plans?status=active" className="text-xs font-medium text-moss hover:underline">View all</Link>
+              </div>
+              {activeResearchPlans.length ? activeResearchPlans.map((plan) => (
+                <Link key={plan.id} href={`/research-plans/${plan.id}`} className="focus-ring group block px-4 py-2.5 hover:bg-warm/60">
+                  <span className="flex items-center justify-between gap-2 text-xs text-muted">
+                    <span className="record-identifier truncate">{plan.code}</span>
+                    <span className="inline-flex shrink-0 items-center gap-1" aria-label={`${plan._count.experiments} experiments`}><Beaker className="h-3 w-3" aria-hidden /><span data-i18n-ignore>{plan._count.experiments}</span></span>
+                  </span>
+                  <span className="mt-0.5 line-clamp-2 block text-sm font-medium leading-5 text-ink group-hover:text-moss">{plan.title}</span>
+                </Link>
+              )) : <p className="px-4 pb-4 text-xs leading-5 text-muted">No active research plans.</p>}
+            </section>
+          </aside>
         </div>
       </div>
     </AppShell>

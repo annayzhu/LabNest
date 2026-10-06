@@ -42,7 +42,7 @@ export function EntryMediaGrid({
             src={`/api/attachments/${attachment.id}?inline=1`}
             alt={attachment.originalFilename}
             fill
-            unoptimized
+            unoptimized={!/^image\/(jpeg|png|webp|avif|gif)$/.test(attachment.mimeType)}
             sizes={detail ? "(max-width: 768px) 100vw, 900px" : compact ? "(max-width: 768px) 100vw, 420px" : "(max-width: 768px) 100vw, 900px"}
             className="object-cover transition duration-500 group-hover/media:scale-[1.015]"
           />

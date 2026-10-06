@@ -36,8 +36,8 @@ export default async function RecordsPage() {
         const Icon = icons[event.kind];
         return <Link key={event.id} href={event.href} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3 transition hover:bg-warm/60">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><Icon className="h-4 w-4" aria-hidden /></span>
-          <span className="min-w-0 flex-1"><span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{event.kind}</span><span className="mt-0.5 line-clamp-2 block text-sm font-semibold leading-5 text-ink">{event.title}</span>{event.context ? <span className="mt-1 block truncate text-xs text-muted">{event.context}</span> : null}</span>
-          <time className="shrink-0 text-right text-[11px] leading-4 text-muted" dateTime={event.occurredAt.toISOString()}>{format(event.occurredAt, "MMM d")}<br />{format(event.occurredAt, "HH:mm")}</time>
+          <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-muted">{event.kind}</span><span className="mt-0.5 line-clamp-2 block text-sm font-semibold leading-5 text-ink">{event.title}</span>{event.context ? <span className="mt-1 block truncate text-xs text-muted">{event.context}</span> : null}</span>
+          <time className="shrink-0 text-right text-xs leading-4 text-muted" dateTime={event.occurredAt.toISOString()}>{format(event.occurredAt, "MMM d")}<br />{format(event.occurredAt, "HH:mm")}</time>
         </Link>;
       }) : <p className="px-4 py-10 text-center text-sm text-muted">No records yet.</p>}
     </div>

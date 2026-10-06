@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const baseUrl = process.env.LABNEST_E2E_BASE_URL ?? "http://127.0.0.1:3000";
+const baseUrl = process.env.LABNEST_E2E_BASE_URL ?? "http://127.0.0.1:3001";
 const output = process.env.LABNEST_E2E_OUTPUT ?? "/private/tmp/labnest-preview-editor-verification";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });

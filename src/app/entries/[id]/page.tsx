@@ -3,6 +3,7 @@ import { ArrowLeft, Download, FileText, Link2, ListChecks, Paperclip, Pencil } f
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { ActivityHistory } from "@/components/ActivityHistory";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
@@ -10,15 +11,17 @@ import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
+import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
+import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
 import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { entryDeleteBlockers } from "@/lib/record-lifecycle";
+import { entryDeleteBlockers, isRecordLocked } from "@/lib/record-lifecycle";
 import { archiveEntry, deleteEntry, restoreEntry } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +56,11 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
   if (!entry) notFound();
 
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/"));
-  const reportSourceReferences = await prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } });
+  const [reportSourceReferences, activityLogs] = await Promise.all([
+    prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
+    prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
+  ]);
+  const locked = isRecordLocked(entry.recordStatus);
   const deletionBlockers = entryDeleteBlockers(entry.recordStatus, {
     itemLinks: entry.itemLinks.length,
     proposedActions: entry.pendingActions.length,
@@ -68,10 +75,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
-            <DocumentPrintButton showLabel />
-            <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>
-            <Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link>
-            <RecordLifecycleControl id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} />
+            {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
+            <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="实验记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
           </div>}
         />
 
@@ -105,8 +110,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Source files</p>
-                  <h2 className="mt-1 font-serif text-2xl font-medium text-ink">Attachments</h2>
+                  <h2 className="text-base font-semibold text-ink">Attachments</h2>
                 </div>
                 <Badge tone="sage">{entry.attachmentCount}</Badge>
               </div>
@@ -144,8 +148,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
               <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Backlinks</p>
-                  <h2 className="mt-1 font-serif text-2xl font-medium text-ink">Linked records</h2>
+                  <h2 className="text-base font-semibold text-ink">Linked records</h2>
                 </div>
                 <Badge tone="sage">{entry.itemLinks.length}</Badge>
               </div>
@@ -176,7 +179,7 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
 
           <aside className="document-preview-sidebar">
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-moss">Entry context</p>
+              <h2 className="text-base font-semibold text-ink">Entry context</h2>
               <dl className="mt-4 space-y-4 text-sm">
                 <div>
                   <dt className="text-xs text-muted">Project</dt>
@@ -201,12 +204,13 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                   </div>
                 </div>
               </dl>
+              <div className="mt-4 border-t border-hairline pt-4"><RecordStatusControl targetType="entry" id={entry.id} recordStatus={entry.recordStatus} /></div>
             </section>
 
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
               <div className="flex items-center gap-2 text-moss">
                 <ListChecks className="h-4 w-4" aria-hidden />
-                <p className="text-xs font-semibold uppercase tracking-[0.1em]">Proposed actions</p>
+                <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
               </div>
               {entry.pendingActions.length ? (
                 <div className="mt-4 space-y-3">
@@ -225,6 +229,8 @@ export default async function EntryDetailPage({ params }: { params: Promise<{ id
                 <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>
               )}
             </section>
+
+            <ActivityHistory logs={activityLogs} />
           </aside>
         </div>
       </div>

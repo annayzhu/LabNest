@@ -28,7 +28,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
             <time className="font-mono text-xs text-muted" dateTime={entry.occurredAt}>
               {formatEntryCardTimestamp(entry.occurredAt, locale)}
             </time>
-            <h3 className={cn("mt-2 line-clamp-2 font-semibold leading-snug tracking-[-0.02em] text-ink", featured ? "text-[20px] sm:text-[22px]" : "text-[16px] sm:text-[17px]")}>
+            <h3 className={cn("mt-2 line-clamp-2 font-semibold leading-snug tracking-[-0.02em] text-ink", featured ? "text-xl sm:text-2xl" : "text-base")}>
               <Link href={entryHref} className="focus-ring rounded-[var(--ln-radius-control-sm)] transition hover:text-moss">
                 {entry.title}
               </Link>
@@ -42,7 +42,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
             {entry.sourceType}
           </BadgeLink>
         </div>
-        <p className={cn("mt-3 max-w-3xl whitespace-pre-line text-graphite", featured ? "line-clamp-4 text-[15px] leading-7" : "line-clamp-3 text-sm leading-6")}>
+        <p className={cn("mt-3 max-w-3xl whitespace-pre-line text-graphite", featured ? "line-clamp-4 text-sm leading-7" : "line-clamp-3 text-sm leading-6")}>
           {entry.body}
         </p>
 

@@ -56,7 +56,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
               <label key={role} className="rounded-[9px] border border-hairline bg-warm/35 p-3">
                 <span className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold text-ink">{inputPrompt.roleLabels[role]}</span>
-                  <span className="font-mono text-[10px] text-muted">5′ → 3′ · {moleculeType}</span>
+                  <span className="font-mono text-xs text-muted">5′ → 3′ · {moleculeType}</span>
                 </span>
                 <textarea
                   required
@@ -68,7 +68,7 @@ export function SequencePairForm({ action, projects, pairType, initialProjectId 
                   className={`${formMonoTextareaClass} mt-2 min-h-28`}
                   placeholder={inputPrompt.sequencePlaceholders[role]}
                 />
-                <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-hairline pt-2 font-mono text-[11px] text-muted">
+                <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-hairline pt-2 font-mono text-xs text-muted">
                   <span>{metrics[role]?.length ?? 0} nt</span>
                   <span>GC {metrics[role]?.gc ?? 0}%</span>
                   {metrics[role]?.tm === undefined ? null : <span>Tm ≈ {metrics[role].tm} °C</span>}

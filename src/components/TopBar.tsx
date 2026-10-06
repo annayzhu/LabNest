@@ -35,7 +35,7 @@ export function TopBar() {
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
             ) : null}
-            <span className="truncate font-serif text-lg font-medium text-ink">{mobileTitle}</span>
+            <span className="truncate text-lg font-semibold text-ink">{mobileTitle}</span>
           </div>
           <Link
             href="/search"
@@ -57,7 +57,7 @@ export function TopBar() {
               placeholder="Search LabNest..."
               autoComplete="off"
             />
-            <span className="hidden items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-warm px-1.5 py-0.5 font-mono text-[11px] text-muted sm:flex">
+            <span className="hidden items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-warm px-1.5 py-0.5 font-mono text-xs text-muted sm:flex">
               <Command className="h-3 w-3" aria-hidden /> K
             </span>
           </label>

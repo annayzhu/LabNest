@@ -45,6 +45,8 @@ jobs:
           exit 1
       - run: npx tsx scripts/seed-entry-richtext.ts
       - run: node scripts/verify-entry-richtext-pages.mjs
+      - run: node scripts/verify-entry-richtext-exports.mjs
+      - run: node scripts/verify-entry-feedback.mjs
       - run: node scripts/verify-entry-richtext.mjs
       - run: node scripts/verify-entry-richtext-focus.mjs
       - run: node scripts/verify-entry-richtext-drag.mjs

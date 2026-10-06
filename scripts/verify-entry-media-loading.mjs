@@ -38,7 +38,7 @@ try{
  await page.route('**/api/attachments',async route=>{if(route.request().method()==='POST'){await uploadGate;await route.continue();}else await route.continue();});
  await page.locator('input[accept="image/*"][multiple]').setInputFiles({name:'TEST-wide-pending.png',mimeType:'image/png',buffer});
  await page.waitForFunction(()=>{const i=document.querySelector('[data-document-media] img');return i?.complete&&i.naturalWidth===1000&&i.getAttribute('width')==='1000';});
- await editor.locator('[data-document-media] img').click();await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');await page.keyboard.insertText('TEST-SLOW-UPLOAD-AFTER');
+ await editor.locator('[data-document-media] [role=status]').click();await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');await page.keyboard.insertText('TEST-SLOW-UPLOAD-AFTER');
  const panel=page.getByRole('button',{name:'收起属性',exact:true});if(await panel.isVisible()){await panel.click();await page.waitForFunction(()=>getComputedStyle(document.querySelector('.context-properties')).display==='none');}
  const afterUploadParagraph=editor.locator('p,h2').filter({hasText:'TEST-SLOW-UPLOAD-AFTER'}).first();
  await afterUploadParagraph.evaluate(el=>{const r=document.createRange();r.selectNodeContents(el);r.collapse(false);getSelection().removeAllRanges();getSelection().addRange(r);el.closest('[contenteditable=true]').focus({preventScroll:true});});

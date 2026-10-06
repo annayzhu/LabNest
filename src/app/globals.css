@@ -5466,7 +5466,7 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 /* Media controls belong to the selection, not to the document's reading flow. */
 .document-media-node { position: relative; outline-offset: var(--ln-form-field-gap); }
 .document-media-node[data-media-active="true"] { outline: 1px solid var(--primary-border); }
-.document-media-toolbar { position: absolute; inset-inline-start: 0; bottom: 0; z-index: 20; max-width: 100%; background: var(--surface); border-radius: var(--ln-radius-control-md); box-shadow: var(--ln-shadow-paper); display: flex; flex-wrap: wrap; align-items: center; gap: var(--ln-form-field-gap); padding-block: var(--ln-form-field-gap); color: var(--graphite); }
+.document-media-toolbar { position: absolute; inset-inline-start: 0; top: 100%; z-index: 20; max-width: 100%; background: var(--surface); border-radius: var(--ln-radius-control-md); box-shadow: var(--ln-shadow-panel); display: flex; flex-wrap: wrap; align-items: center; gap: var(--ln-form-field-gap); padding-block: var(--ln-form-field-gap); color: var(--graphite); }
 .document-media-toolbar[hidden] { display: none; }
 .document-media-settings { display: contents; font-family: var(--font-sans); font-size: var(--ln-control-font-size-md); }
 .document-media-settings > button { cursor: pointer; width: fit-content; padding-block: var(--ln-form-field-gap); }

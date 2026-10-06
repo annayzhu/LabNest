@@ -43,7 +43,12 @@ function MediaNodeView({ node, updateAttributes, editor, selected, getPos }: Nod
       } else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); }
     }}>
 
-    {upload?.preview ? <Image src={upload.preview} draggable={false} alt={block.filename || "图片预览 / Image preview"} unoptimized width={1200} height={800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%", aspectRatio:"3 / 2", objectFit:"contain" }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
+    {upload?.preview ? <Image src={upload.preview} draggable={false} alt={block.filename || "图片预览 / Image preview"} unoptimized width={block.imageWidth ?? 1200} height={block.imageHeight ?? 800} style={{ width: `${block.widthPercent ?? 100}%`, height: "auto", maxWidth: "100%", aspectRatio:`${block.imageWidth ?? 1200} / ${block.imageHeight ?? 800}`, objectFit:"contain" }} onLoad={event=>{
+      const image=event.currentTarget;
+      // Decode the local preview while upload is in flight. Completion keeps this
+      // displayed ratio (including orientation) instead of changing it to a frame.
+      if(image.naturalWidth>0 && image.naturalHeight>0 && (block.imageWidth!==image.naturalWidth || block.imageHeight!==image.naturalHeight))updateAttributes({block:{...block,imageWidth:image.naturalWidth,imageHeight:image.naturalHeight}});
+    }} /> : !block.pendingUploadId ? <DocumentMediaView block={block} editing /> : null}
     {block.pendingUploadId ? <div role="status" className="py-2 text-sm text-muted">{block.filename} · {!upload ? "本地文件需重新选择，尚未保存 / Reselect the local file; not saved" : upload.status === "failed" ? "上传失败 / Upload failed" : "正在上传，尚未保存 / Uploading, not saved"}
       {upload?.status === "failed" ? <><p className="text-error">{upload.error}</p><button type="button" className="min-h-11 px-2 text-moss" onClick={upload.retry}>重试 / Retry</button></> : null}
       {!upload ? <button type="button" className="min-h-11 px-2 text-moss" onClick={() => chooseFiles(editor, documentMediaDraftId(editor), block.mediaType === "image" ? "image/*" : "", block)}>重新选择文件 / Reselect file</button> : null}

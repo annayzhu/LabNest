@@ -39,7 +39,8 @@ function updateAtIdentity(editor: Editor, id: string, block: DocumentMedia, comp
   });
   if (!match || (completedUploadId && match.current.pendingUploadId !== completedUploadId)) return;
   // Finish only this upload; edits made while the request was in flight remain authoritative.
-  const next = completedUploadId ? { ...block, caption: match.current.caption, widthPercent: match.current.widthPercent } : block;
+  const next = completedUploadId ? { ...block, caption: match.current.caption, widthPercent: match.current.widthPercent,
+    imageWidth: match.current.imageWidth ?? block.imageWidth, imageHeight: match.current.imageHeight ?? block.imageHeight } : block;
   editor.view.dispatch(editor.state.tr.setNodeMarkup(match.position, undefined, { ...match.attrs, block: next }));
 }
 

@@ -15,6 +15,9 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const hydrationErrors = [];
+  page.on("pageerror", (error) => { if (/hydrat/i.test(error.message)) hydrationErrors.push(error.message); });
+  page.on("console", (message) => { if (message.type() === "error" && /hydrat/i.test(message.text())) hydrationErrors.push(message.text()); });
   await page.addInitScript(() => {
     Object.defineProperty(window, "queryLocalFonts", {
       configurable: true,
@@ -34,7 +37,9 @@ try {
   if (navigationRequests !== 0) throw new Error(`Language switching should not refresh the page; observed ${navigationRequests} navigation requests.`);
   const selector = (role) => page.locator(`[data-typography-role="${role}"]`);
   const selectors = page.locator(".typography-role-select");
-  if (await selectors.count() !== 6) throw new Error(`Expected six independent Chinese/English selectors, found ${await selectors.count()}.`);
+  // Typography owns document roles only; the interface font belongs to Appearance.
+  if (await selectors.count() !== 4) throw new Error(`Expected four Chinese/English document selectors, found ${await selectors.count()}.`);
+  if (await page.locator('[data-typography-role$="Ui"]').count()) throw new Error("Typography must not offer interface-font roles; Appearance owns the interface font.");
   const selectFont = async (role, value) => {
     await selector(role).click();
     await page.locator(`[data-font-option="${value}"]`).click();
@@ -47,12 +52,12 @@ try {
     return values;
   };
   const latinRolePresets = [];
-  for (const role of ["latinUi", "latinDocumentBody", "latinDocumentHeading"]) latinRolePresets.push(await presetValues(role));
+  for (const role of ["latinDocumentBody", "latinDocumentHeading"]) latinRolePresets.push(await presetValues(role));
   if (latinRolePresets.some((values) => JSON.stringify(values) !== JSON.stringify(latinRolePresets[0])) || !latinRolePresets[0].includes("preset:arial") || !latinRolePresets[0].includes("preset:times-new-roman") || latinRolePresets[0].length < 8) {
     throw new Error(`Every English role must expose the complete shared font catalog: ${JSON.stringify(latinRolePresets)}`);
   }
   const cjkRolePresets = [];
-  for (const role of ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading"]) cjkRolePresets.push(await presetValues(role));
+  for (const role of ["cjkDocumentBody", "cjkDocumentHeading"]) cjkRolePresets.push(await presetValues(role));
   if (cjkRolePresets.some((values) => JSON.stringify(values) !== JSON.stringify(cjkRolePresets[0])) || !cjkRolePresets[0].includes("preset:pingfang") || cjkRolePresets[0].length < 8) {
     throw new Error(`Every Chinese role must expose the complete shared font catalog: ${JSON.stringify(cjkRolePresets)}`);
   }
@@ -63,11 +68,13 @@ try {
   if (cjkFontFaceIsolation.length < 6 || cjkFontFaceIsolation.some((face) => !face.unicodeRange.includes("U+4E00-9FFF") || face.unicodeRange.includes("U+0000"))) {
     throw new Error(`Built-in Chinese fonts are not isolated from Latin glyphs: ${JSON.stringify(cjkFontFaceIsolation)}`);
   }
-  await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkUi"]')?.disabled);
+  await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkDocumentBody"]')?.disabled);
+  const storedOnLoad = await page.evaluate(() => [localStorage.getItem("labnest.typography-settings.v1"), localStorage.getItem("labnest.typography-css.v2")]);
+  if (storedOnLoad.some((value) => value !== null)) throw new Error(`Loading Settings stored default typography as a choice: ${JSON.stringify(storedOnLoad)}`);
 
   await page.getByRole("button", { name: /Find device fonts|扫描本机字体/ }).click();
   await page.getByText(/Found 1 device font famil(?:y|ies)|已发现 1 个本机字体族/).waitFor();
-  for (const role of ["cjkUi", "cjkDocumentBody", "cjkDocumentHeading", "latinUi", "latinDocumentBody", "latinDocumentHeading"]) {
+  for (const role of ["cjkDocumentBody", "cjkDocumentHeading", "latinDocumentBody", "latinDocumentHeading"]) {
     await selector(role).click();
     if (await page.locator('.typography-font-menu [data-font-option^="local:"]', { hasText: "Device Sans" }).count() !== 1) throw new Error(`${role} does not expose discovered device fonts.`);
     await page.keyboard.press("Escape");
@@ -79,19 +86,32 @@ try {
   await page.reload();
   await page.waitForFunction(() => !document.querySelector('[data-typography-role="latinDocumentHeading"]')?.disabled);
   if ((await selector("latinDocumentHeading").getAttribute("data-font-value")) !== deviceFontValue) throw new Error("A discovered device font did not persist after reload.");
+  if (!await page.getByRole("button", { name: /Scan again|重新扫描/ }).count()) throw new Error("Stored device fonts were not shown after reload.");
+  if (hydrationErrors.length) throw new Error(`Settings hydration failed with stored device fonts: ${hydrationErrors[0].slice(0, 300)}`);
 
-  await selectFont("cjkUi", "preset:pingfang");
+  await selectFont("cjkDocumentHeading", "preset:pingfang");
   await selectFont("cjkDocumentBody", "preset:songti");
   await selectFont("latinDocumentBody", "preset:arial");
   await page.waitForFunction(() => {
     const style = getComputedStyle(document.documentElement);
-    return style.getPropertyValue("--font-cjk-ui").includes("LabNest CJK PingFang")
+    return style.getPropertyValue("--font-cjk-document-heading").includes("LabNest CJK PingFang")
       && style.getPropertyValue("--font-cjk-document-body").includes("LabNest CJK Songti")
       && style.getPropertyValue("--font-latin-document-body").includes("Arial");
   });
   await page.reload();
-  const interfaceFamily = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
-  if (!interfaceFamily.includes("Arial") || !interfaceFamily.includes("LabNest CJK PingFang")) throw new Error(`Independent UI fonts did not persist: ${interfaceFamily}`);
+  await page.waitForFunction(() => !document.querySelector('[data-typography-role="cjkDocumentBody"]')?.disabled);
+  const interfaceFont = async () => page.evaluate(() => ({
+    family: getComputedStyle(document.body).fontFamily,
+    inline: ["--font-ui", "--font-latin-ui", "--font-cjk-ui"].filter((property) => document.documentElement.style.getPropertyValue(property)),
+  }));
+  const sansInterface = await interfaceFont();
+  if (!sansInterface.family.includes("system-ui") || sansInterface.family.includes("LabNest CJK") || sansInterface.inline.length) {
+    throw new Error(`Interface font should follow Appearance (system sans), not Typography: ${JSON.stringify(sansInterface)}`);
+  }
+  await page.getByLabel("Interface font", { exact: true }).selectOption("system-serif");
+  const serifInterface = await interfaceFont();
+  if (!serifInterface.family.includes("Songti SC")) throw new Error(`Appearance interface font did not apply: ${JSON.stringify(serifInterface)}`);
+  await page.getByLabel("Interface font", { exact: true }).selectOption("system-sans");
   const interfaceWeight = await page.evaluate(() => getComputedStyle(document.body).fontWeight);
   if (interfaceWeight !== "350") throw new Error(`Interface Normal weight was not applied: ${interfaceWeight}`);
   const documentVariables = await page.evaluate(() => {
@@ -158,14 +178,14 @@ try {
   await page.getByText(/was removed|已从当前浏览器删除/).waitFor();
   if ((await selector("latinDocumentBody").getAttribute("data-font-value"))?.startsWith("custom:")) throw new Error("Deleting a selected font did not restore the default English role.");
 
-  await selector("cjkUi").click();
+  await selector("cjkDocumentBody").click();
   await page.locator(".typography-font-search input").fill("PingFang");
   if (await page.locator('.typography-font-menu [data-font-option="preset:pingfang"]').count() !== 1) throw new Error("Font search did not retain the matching preset.");
   await page.screenshot({ path: ".impeccable/review/typography-searchable-menu.png", fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  await selector("cjkUi").click();
+  await selector("cjkDocumentBody").click();
   const mobileMenu = await page.locator(".typography-font-menu").evaluate((menu) => {
     const rect = menu.getBoundingClientRect();
     return { left: rect.left, right: rect.right, width: rect.width };
@@ -176,7 +196,7 @@ try {
   const mobileWidths = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
   if (mobileWidths.scroll > mobileWidths.client + 1) throw new Error(`Typography settings overflow on mobile: ${JSON.stringify(mobileWidths)}`);
 
-  console.log(`Typography settings ${fullMatrixRequired ? "release matrix" : "browser seam"} passed: independent CJK/Latin presets, import, apply, reload, delete, and fallback.`);
+  console.log(`Typography settings ${fullMatrixRequired ? "release matrix" : "browser seam"} passed: Appearance-owned interface font, CJK/Latin document presets, import, apply, reload, delete, and fallback.`);
 } finally {
   await browser.close();
 }

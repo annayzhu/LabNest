@@ -4,6 +4,7 @@ import {appearanceThemeCssText} from "@/lib/system-theme";
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { I18nProvider } from "@/components/I18nProvider";
+import { InlineScript } from "@/components/InlineScript";
 import { TypographyBoot } from "@/components/TypographyBoot";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { systemThemeCssText, systemThemes, systemThemeStorageKey } from "@/lib/system-theme";
@@ -38,10 +39,10 @@ export default async function RootLayout({
     <html lang={locale === "zh" ? "zh-CN" : "en"} data-locale={locale} data-labnest-ui-scale={defaultUiScale} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: systemThemeStyles }} />
-        <script dangerouslySetInnerHTML={{ __html: systemThemeBootstrapScript }} />
-        <script dangerouslySetInnerHTML={{ __html: typographyBootstrapScript }} />
-        <script dangerouslySetInnerHTML={{ __html: uiScaleBootstrapScript }} />
-        <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap() }} />
+        <InlineScript html={systemThemeBootstrapScript} />
+        <InlineScript html={typographyBootstrapScript} />
+        <InlineScript html={uiScaleBootstrapScript} />
+        <InlineScript html={appearanceBootstrap()} />
       </head>
       <body className="overflow-x-hidden">
         <TypographyBoot />

@@ -1,0 +1,1 @@
+PASS: independent Studio entry and legacy migration at 1440 and 390 pixels.

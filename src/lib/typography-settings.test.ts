@@ -1,46 +1,98 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  applyTypographySettings,
+  clearTypographySettings,
   defaultTypographySettings,
+  legacyTypographyCssStorageKey,
   parseTypographySettings,
+  saveTypographySettings,
+  typographyCssProperties,
+  typographyCssStorageKey,
   typographyCssVariables,
+  typographySettingsStorageKey,
   settingsWithoutCustomFont,
   reconcileTypographySettings,
   validateCustomFontFile,
   typographyCatalogForRole,
 } from "./typography-settings";
 
+function memoryStorage(initial: Record<string, string> = {}) {
+  const values = new Map(Object.entries(initial));
+  return {
+    values,
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  };
+}
+
+function inlineStyleRoot(initial: Record<string, string> = {}) {
+  const values = new Map(Object.entries(initial));
+  const root = {
+    style: {
+      setProperty: (property: string, value: string) => { values.set(property, value); },
+      removeProperty: (property: string) => { values.delete(property); },
+    },
+  } as unknown as HTMLElement;
+  return { root, values };
+}
+
 describe("typography settings", () => {
-  it("migrates the previous three roles into Chinese roles and gives English independent defaults", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("migrates legacy document roles into Chinese roles and ignores retired interface roles", () => {
     expect(parseTypographySettings(JSON.stringify({
       ui: { kind: "preset", id: "pingfang" },
+      cjkUi: { kind: "preset", id: "pingfang" },
+      latinUi: { kind: "preset", id: "times-new-roman" },
       documentBody: { kind: "preset", id: "not-a-font" },
       documentHeading: { kind: "custom", id: "font-1", family: "LabNest Custom font-1", name: "My Song" },
     }))).toEqual({
-      cjkUi: { kind: "preset", id: "pingfang" },
       cjkDocumentBody: defaultTypographySettings.cjkDocumentBody,
       cjkDocumentHeading: { kind: "custom", id: "font-1", family: "LabNest Custom font-1", name: "My Song" },
-      latinUi: { kind: "preset", id: "arial" },
       latinDocumentBody: { kind: "preset", id: "times-new-roman" },
       latinDocumentHeading: { kind: "preset", id: "times-new-roman" },
     });
   });
 
-  it("maps Chinese and English roles to separate public CSS variables", () => {
+  it("maps Chinese and English document roles to separate public CSS variables", () => {
     expect(typographyCssVariables({
-      cjkUi: { kind: "preset", id: "pingfang" },
       cjkDocumentBody: { kind: "preset", id: "songti" },
       cjkDocumentHeading: { kind: "preset", id: "source-han-serif" },
-      latinUi: { kind: "preset", id: "arial" },
       latinDocumentBody: { kind: "preset", id: "times-new-roman" },
       latinDocumentHeading: { kind: "preset", id: "arial" },
     })).toEqual({
-      "--font-cjk-ui": '"LabNest CJK PingFang", sans-serif',
       "--font-cjk-document-body": '"LabNest CJK Songti", serif',
       "--font-cjk-document-heading": '"LabNest CJK Source Han Serif", serif',
-      "--font-latin-ui": 'Arial, "Helvetica Neue", Helvetica',
       "--font-latin-document-body": '"Times New Roman", Times',
       "--font-latin-document-heading": 'Arial, "Helvetica Neue", Helvetica',
     });
+  });
+
+  it("leaves the interface font to Appearance and clears inline values written by earlier releases", () => {
+    expect(typographyCssProperties.filter((property) => /-ui$/.test(property))).toEqual([]);
+    const { root, values } = inlineStyleRoot({ "--font-ui": "Georgia", "--font-latin-ui": "Georgia", "--font-cjk-ui": "Songti SC" });
+    applyTypographySettings(defaultTypographySettings, root);
+    expect([...values.keys()].sort()).toEqual([...typographyCssProperties].sort());
+  });
+
+  it("applies settings without recording them as a choice; only explicit saves persist", () => {
+    const storage = memoryStorage({ [legacyTypographyCssStorageKey]: "{}" });
+    vi.stubGlobal("window", { localStorage: storage });
+    const settings = { ...defaultTypographySettings, latinDocumentBody: { kind: "preset" as const, id: "arial" as const } };
+
+    applyTypographySettings(settings, inlineStyleRoot().root);
+    expect([...storage.values.keys()]).toEqual([legacyTypographyCssStorageKey]);
+
+    saveTypographySettings(settings);
+    expect(parseTypographySettings(storage.getItem(typographySettingsStorageKey))).toEqual(settings);
+    expect(JSON.parse(storage.getItem(typographyCssStorageKey) ?? "{}")).toEqual(typographyCssVariables(settings));
+    expect(storage.getItem(legacyTypographyCssStorageKey)).toBeNull();
+
+    clearTypographySettings();
+    expect(storage.values.size).toBe(0);
   });
 
   it("keeps built-in Chinese preset stacks behind CJK-only aliases", () => {
@@ -84,12 +136,12 @@ describe("typography settings", () => {
     const custom = { kind: "custom" as const, id: "font-1", family: "LabNest Custom font-1", name: "My Song" };
     expect(settingsWithoutCustomFont({
       ...defaultTypographySettings,
-      cjkUi: { kind: "preset", id: "pingfang" },
+      cjkDocumentHeading: { kind: "preset", id: "pingfang" },
       cjkDocumentBody: custom,
       latinDocumentHeading: custom,
     }, "font-1")).toEqual({
       ...defaultTypographySettings,
-      cjkUi: { kind: "preset", id: "pingfang" },
+      cjkDocumentHeading: { kind: "preset", id: "pingfang" },
     });
   });
 
@@ -98,12 +150,12 @@ describe("typography settings", () => {
     expect(reconcileTypographySettings({ ...defaultTypographySettings, cjkDocumentBody: custom }, new Set())).toEqual(defaultTypographySettings);
   });
 
-  it("offers the complete language catalog to interface, body, and heading roles", () => {
-    expect(typographyCatalogForRole("cjkUi").map((font) => font.id)).toEqual(
+  it("offers the complete language catalog to body and heading roles", () => {
+    expect(typographyCatalogForRole("cjkDocumentBody").map((font) => font.id)).toEqual(
       typographyCatalogForRole("cjkDocumentHeading").map((font) => font.id),
     );
-    expect(typographyCatalogForRole("latinUi").map((font) => font.id)).toEqual(
-      typographyCatalogForRole("latinDocumentBody").map((font) => font.id),
+    expect(typographyCatalogForRole("latinDocumentBody").map((font) => font.id)).toEqual(
+      typographyCatalogForRole("latinDocumentHeading").map((font) => font.id),
     );
   });
 });

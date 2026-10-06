@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { AppShell } from "@/components/AppShell";
 import { ToolsCatalog } from "@/components/ToolsCatalog";
 import { labToolManifest, type LabToolManifestItem } from "@/lib/tool-manifest";

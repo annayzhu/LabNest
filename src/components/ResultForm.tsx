@@ -93,7 +93,7 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
 
   const missingModuleSelection = availableModules.length > 0 && selectedModuleIds.length === 0;
 
-  return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
+  return <form inert={pending} aria-busy={pending} action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {ambiguousTemplate ? <p role="alert" className="text-sm text-red-700">{duplicateResultKeysMessage}</p> : null}
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}

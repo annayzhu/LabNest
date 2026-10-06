@@ -62,7 +62,7 @@ export function ResearchPlanForm({
   const identifier = initial.code ?? (codeSuffix ? `RP-${codeSuffix}` : "Draft Research Plan");
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form inert={pending} aria-busy={pending} action={formAction} className="space-y-5">
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
       <DocumentEditorLayout>

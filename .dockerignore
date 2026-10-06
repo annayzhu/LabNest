@@ -13,3 +13,7 @@ outputs
 standalone
 coverage
 .DS_Store
+
+# Private diagnostics, credentials and database backups never enter release images.
+.local-runtime
+docs/qa/evidence

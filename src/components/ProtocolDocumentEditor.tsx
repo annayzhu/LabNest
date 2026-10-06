@@ -101,7 +101,7 @@ export function ProtocolDocumentEditor({
   };
 
   return (
-    <form action={formAction} className="protocol-density-form">
+    <form inert={pending} aria-busy={pending} action={formAction} className="protocol-density-form">
       {protocol.id ? <input type="hidden" name="protocolId" value={protocol.id} /> : null}
       {version.id ? <><input type="hidden" name="versionId" value={version.id} /><input type="hidden" name="expectedDocumentVersion" value={version.expectedDocumentVersion ?? ""} /></> : null}
       <input type="hidden" name="contentJson" value={serialized} />

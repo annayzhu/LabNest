@@ -58,7 +58,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const protocolMethodSummary = initial.id ? experimentMethodNames(initial.protocolSnapshotJson).join('；') : selectedIds.map(id=>{const version=protocolVersions.find(v=>v.id===id);return version ? `${version.protocol.title} · ${version.displayVersion}` : '规程未记录';}).join('；') || '未选择规程';
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
-  return <form action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
+  return <form inert={pending} aria-busy={pending} action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />

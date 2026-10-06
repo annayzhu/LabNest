@@ -474,7 +474,7 @@ export function EntryComposer({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
+    <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={imageInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />

@@ -20,7 +20,7 @@ try {
       await portal.getByRole('button',{name:'固定展开',exact:true}).click();
       await portal.getByRole('textbox',{name:'State',exact:true}).fill('PRE-SAVE');
     } else if(mode==='format-menu') {
-      await page.getByRole('button',{name:'Format',exact:true}).click();
+      await page.getByRole('button',{name:'Paragraph style',exact:true}).click();
       portal=page.locator('[data-toolbar-menu]:visible');
     }
     let started=false;

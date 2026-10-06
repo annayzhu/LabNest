@@ -5,7 +5,7 @@ import {collectDocumentMedia,documentMediaAttachmentId} from '../src/lib/documen
 import {writeFileSync,mkdirSync} from 'node:fs';
 async function main(){
  const id=process.env.ENTRY_DIAG_ID;if(!id)throw new Error('Set ENTRY_DIAG_ID to the authorized record; no default record is selected.');
- const entry=await prisma.entry.findUniqueOrThrow({where:{id}});
+ const entry=await prisma.entry.findUniqueOrThrow({where:{id},select:{id:true,contentJson:true,body:true,updatedAt:true}});
  const links=await prisma.attachmentLink.findMany({where:{targetType:'entry',targetId:id},include:{attachment:true}});
  const markdown=getEntryMarkdown(entry.contentJson,entry.body),inline=collectDocumentMedia(markdown).map(documentMediaAttachmentId);
  const selected=selectEntryAttachments(entry.contentJson,links),active=new Set(selected.map(x=>x.id));

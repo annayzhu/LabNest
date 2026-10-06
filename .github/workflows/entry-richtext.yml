@@ -51,6 +51,7 @@ jobs:
       - run: npx tsx scripts/verify-entry-relations.ts
       - run: npx tsx scripts/seed-entry-richtext-advanced.ts && node scripts/verify-entry-richtext-advanced.mjs
       - run: node scripts/verify-entry-richtext-mixed.mjs
+      - run: node scripts/verify-entry-draft-switch.mjs
       - run: node scripts/verify-entry-save-pending.mjs
       - run: node scripts/verify-entry-richtext-viewports.mjs
       - uses: actions/upload-artifact@v4

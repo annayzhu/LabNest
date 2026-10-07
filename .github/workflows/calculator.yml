@@ -78,6 +78,7 @@ jobs:
       - run: node scripts/verify-calculator-ui-entries-20261007.mjs
       - run: node scripts/verify-calculator-ui-selectors-20261007.mjs
       - run: node scripts/verify-calculator-ui-modes-20260915.mjs
+      - run: PLATE_EVIDENCE_DIR=docs/calculator/plate-integration-20261007/evidence/ci node scripts/verify-plate-calculator-integration.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,4 +90,5 @@ jobs:
             docs/calculator/v1.3/evidence
             docs/calculator/ui-consistency-20261007/evidence
             docs/calculator/ui-20260915/evidence/modes
+            docs/calculator/plate-integration-20261007/evidence/ci
             calculator-server.log

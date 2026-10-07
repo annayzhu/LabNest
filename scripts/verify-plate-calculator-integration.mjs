@@ -8,8 +8,9 @@ import {DOMParser} from '@xmldom/xmldom';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
 const dir=process.env.PLATE_EVIDENCE_DIR??'docs/calculator/plate-integration-20261007/evidence';
 await mkdir(dir,{recursive:true});
-const report={base,sha:process.env.PLATE_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),checks:[],failures:[]};
+const report={base,sha:process.env.PLATE_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),fixture:'Synthetic local browser workspaces; no production database writes',toolChecks:[],checks:[],failures:[]};
 const key='plate-layout-studio:workspace:v2';
+const toolFixtures=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorDefinition}=require('./src/lib/calculators/calculator-engine.ts');console.log(JSON.stringify(['seeding','hydrogel','kill-curve','fold-dilution','moi'].map(id=>getCalculatorDefinition(id))))"],{encoding:'utf8'}));
 async function saved(page){return page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);}
 async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
 async function recipe(f,n){
@@ -29,7 +30,27 @@ async function calculateAndSave(page,f){assert.notEqual(await f.getByRole('textb
 
 for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'?{chromium}:{chromium,webkit})){
  const browser=await type.launch();
- try{for(const width of [1440,390]){
+ try{
+  const toolsContext=await browser.newContext({viewport:{width:1440,height:900}});const toolsPage=await toolsContext.newPage();
+  await toolsPage.goto(`${base}/tools/free-plate-layout/index.html?v=20261008-main-calculator`,{waitUntil:'networkidle'});
+  for(const definition of toolFixtures){
+   try{
+    await toolsPage.locator(`.plate-calculator-launch[data-plate-calculator="${definition.id}"]`).click();
+    const frame=toolsPage.frameLocator('.plate-calculator-frame');await frame.locator(`[data-calculator="${definition.id}"]`).waitFor();
+    const inputs={...definition.exampleInputs};if('wells' in inputs)inputs.wells=24;
+    for(const field of [...definition.fields.filter(f=>f.type==='select'),...definition.fields.filter(f=>f.type!=='select')]){
+     if(inputs[field.key]===undefined)continue;
+     const target=frame.locator(`[data-field-key="${field.key}"]`).locator(field.type==='select'?'select':'input,textarea').first();
+     if(!await target.count())continue;
+     if(field.type==='select')await target.selectOption(String(inputs[field.key]));else await target.fill(String(inputs[field.key]));
+    }
+    await frame.getByRole('button',{name:'计算',exact:true}).click();await frame.getByRole('button',{name:'保存为当前板方案',exact:true}).click();await toolsPage.locator('#liquidDrawer').waitFor({state:'hidden'});
+    const current=(await saved(toolsPage)).plates[0].liquidPlans;assert.equal(current.length,1);assert.equal(current[0].calculatorId,definition.id);assert(current[0].contributions.length>0);
+    report.toolChecks.push({engine,calculatorId:definition.id,scope:current[0].scopeWellIds.length,methodVersion:current[0].resultSnapshot.methodVersion,outputs:current[0].resultSnapshot.outputs,passed:'Actual editor inputs → calculate → save → current plan and typed contributions'});
+   }catch(error){report.failures.push({engine,calculatorId:definition.id,message:error.message});await toolsPage.locator('#closeLiquidDrawerButton').click().catch(()=>{});}
+  }
+  await toolsContext.close();
+  for(const width of [1440,390]){
   const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});
   await context.addInitScript(()=>localStorage.setItem('labnest.locale','zh'));
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));

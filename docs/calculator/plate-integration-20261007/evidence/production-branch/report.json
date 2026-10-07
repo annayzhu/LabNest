@@ -1,0 +1,443 @@
+{
+  "base": "http://localhost:3223",
+  "sha": "c7b2ce8c14006dc33f4f758dd1d49ae8c5327045",
+  "at": "2026-10-07T16:33:14.557Z",
+  "fixture": "Synthetic local browser workspaces; no production database writes",
+  "toolChecks": [
+    {
+      "engine": "chromium",
+      "calculatorId": "seeding",
+      "scope": 24,
+      "methodVersion": "seeding-v2",
+      "outputs": [
+        {
+          "key": "totalCells",
+          "label": "Total cells",
+          "labelZh": "总细胞数",
+          "value": 1320000,
+          "unit": "cells"
+        },
+        {
+          "key": "stockVolumeMl",
+          "label": "Cell suspension",
+          "labelZh": "细胞悬液",
+          "value": 1.32,
+          "unit": "mL"
+        },
+        {
+          "key": "mediumVolumeMl",
+          "label": "Medium",
+          "labelZh": "培养基",
+          "value": 11.88,
+          "unit": "mL"
+        },
+        {
+          "key": "finalVolumeMl",
+          "label": "Final suspension",
+          "labelZh": "最终悬液",
+          "value": 13.200000000000001,
+          "unit": "mL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "chromium",
+      "calculatorId": "hydrogel",
+      "scope": 24,
+      "methodVersion": "hydrogel-v2",
+      "outputs": [
+        {
+          "key": "totalCells",
+          "label": "Total cells",
+          "labelZh": "总细胞数",
+          "value": 2400000,
+          "unit": "cells"
+        },
+        {
+          "key": "hydrogelUl",
+          "label": "Hydrogel",
+          "labelZh": "水凝胶",
+          "value": 1920,
+          "unit": "µL"
+        },
+        {
+          "key": "cellStockUl",
+          "label": "Cell stock",
+          "labelZh": "细胞原液",
+          "value": 240,
+          "unit": "µL"
+        },
+        {
+          "key": "mediumUl",
+          "label": "Suspension medium",
+          "labelZh": "悬液培养基",
+          "value": 240,
+          "unit": "µL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "chromium",
+      "calculatorId": "kill-curve",
+      "scope": 24,
+      "methodVersion": "kill-curve-v2",
+      "outputs": [
+        {
+          "key": "dosePoints",
+          "label": "Dose points",
+          "labelZh": "浓度点数",
+          "value": 8
+        },
+        {
+          "key": "highestStockAdditionUl",
+          "label": "Highest stock addition",
+          "labelZh": "最高浓度母液加入量",
+          "value": 0.5,
+          "unit": "µL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "chromium",
+      "calculatorId": "fold-dilution",
+      "scope": 24,
+      "methodVersion": "fold-dilution-v2",
+      "outputs": [
+        {
+          "key": "stockVolume",
+          "label": "Take stock",
+          "labelZh": "取母液",
+          "value": 20,
+          "unit": "mL"
+        },
+        {
+          "key": "stockVolumeUl",
+          "label": "Take stock",
+          "labelZh": "取母液",
+          "value": 20000,
+          "unit": "µL"
+        },
+        {
+          "key": "diluentVolume",
+          "label": "Diluent",
+          "labelZh": "稀释液",
+          "value": 80,
+          "unit": "mL"
+        },
+        {
+          "key": "finalVolume",
+          "label": "Final volume",
+          "labelZh": "最终体积",
+          "value": 100,
+          "unit": "mL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "chromium",
+      "calculatorId": "moi",
+      "scope": 24,
+      "methodVersion": "moi-v2",
+      "outputs": [
+        {
+          "key": "virusVolumeUl",
+          "label": "Virus volume",
+          "labelZh": "病毒体积",
+          "value": 10,
+          "unit": "µL"
+        },
+        {
+          "key": "probabilityUninfectedPercent",
+          "label": "Uninfected",
+          "labelZh": "未感染概率",
+          "value": 36.787944117144235,
+          "unit": "%"
+        },
+        {
+          "key": "probabilityExactlyOnePercent",
+          "label": "Exactly one event",
+          "labelZh": "恰好一次感染概率",
+          "value": 36.787944117144235,
+          "unit": "%"
+        },
+        {
+          "key": "probabilityAtLeastOnePercent",
+          "label": "At least one event",
+          "labelZh": "至少一次感染概率",
+          "value": 63.212055882855765,
+          "unit": "%"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "webkit",
+      "calculatorId": "seeding",
+      "scope": 24,
+      "methodVersion": "seeding-v2",
+      "outputs": [
+        {
+          "key": "totalCells",
+          "label": "Total cells",
+          "labelZh": "总细胞数",
+          "value": 1320000,
+          "unit": "cells"
+        },
+        {
+          "key": "stockVolumeMl",
+          "label": "Cell suspension",
+          "labelZh": "细胞悬液",
+          "value": 1.32,
+          "unit": "mL"
+        },
+        {
+          "key": "mediumVolumeMl",
+          "label": "Medium",
+          "labelZh": "培养基",
+          "value": 11.88,
+          "unit": "mL"
+        },
+        {
+          "key": "finalVolumeMl",
+          "label": "Final suspension",
+          "labelZh": "最终悬液",
+          "value": 13.200000000000001,
+          "unit": "mL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "webkit",
+      "calculatorId": "hydrogel",
+      "scope": 24,
+      "methodVersion": "hydrogel-v2",
+      "outputs": [
+        {
+          "key": "totalCells",
+          "label": "Total cells",
+          "labelZh": "总细胞数",
+          "value": 2400000,
+          "unit": "cells"
+        },
+        {
+          "key": "hydrogelUl",
+          "label": "Hydrogel",
+          "labelZh": "水凝胶",
+          "value": 1920,
+          "unit": "µL"
+        },
+        {
+          "key": "cellStockUl",
+          "label": "Cell stock",
+          "labelZh": "细胞原液",
+          "value": 240,
+          "unit": "µL"
+        },
+        {
+          "key": "mediumUl",
+          "label": "Suspension medium",
+          "labelZh": "悬液培养基",
+          "value": 240,
+          "unit": "µL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "webkit",
+      "calculatorId": "kill-curve",
+      "scope": 24,
+      "methodVersion": "kill-curve-v2",
+      "outputs": [
+        {
+          "key": "dosePoints",
+          "label": "Dose points",
+          "labelZh": "浓度点数",
+          "value": 8
+        },
+        {
+          "key": "highestStockAdditionUl",
+          "label": "Highest stock addition",
+          "labelZh": "最高浓度母液加入量",
+          "value": 0.5,
+          "unit": "µL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "webkit",
+      "calculatorId": "fold-dilution",
+      "scope": 24,
+      "methodVersion": "fold-dilution-v2",
+      "outputs": [
+        {
+          "key": "stockVolume",
+          "label": "Take stock",
+          "labelZh": "取母液",
+          "value": 20,
+          "unit": "mL"
+        },
+        {
+          "key": "stockVolumeUl",
+          "label": "Take stock",
+          "labelZh": "取母液",
+          "value": 20000,
+          "unit": "µL"
+        },
+        {
+          "key": "diluentVolume",
+          "label": "Diluent",
+          "labelZh": "稀释液",
+          "value": 80,
+          "unit": "mL"
+        },
+        {
+          "key": "finalVolume",
+          "label": "Final volume",
+          "labelZh": "最终体积",
+          "value": 100,
+          "unit": "mL"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    },
+    {
+      "engine": "webkit",
+      "calculatorId": "moi",
+      "scope": 24,
+      "methodVersion": "moi-v2",
+      "outputs": [
+        {
+          "key": "virusVolumeUl",
+          "label": "Virus volume",
+          "labelZh": "病毒体积",
+          "value": 10,
+          "unit": "µL"
+        },
+        {
+          "key": "probabilityUninfectedPercent",
+          "label": "Uninfected",
+          "labelZh": "未感染概率",
+          "value": 36.787944117144235,
+          "unit": "%"
+        },
+        {
+          "key": "probabilityExactlyOnePercent",
+          "label": "Exactly one event",
+          "labelZh": "恰好一次感染概率",
+          "value": 36.787944117144235,
+          "unit": "%"
+        },
+        {
+          "key": "probabilityAtLeastOnePercent",
+          "label": "At least one event",
+          "labelZh": "至少一次感染概率",
+          "value": 63.212055882855765,
+          "unit": "%"
+        }
+      ],
+      "passed": "Actual editor inputs → calculate → save → current plan and typed contributions"
+    }
+  ],
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "passed": [
+        "Tools current entry",
+        "main row/concentration editor",
+        "multiple groups saved with explicit disjoint well mapping",
+        "save/reopen/refresh",
+        "one current plan",
+        "forged origin-window/session and duplicate apply rejected",
+        "undo/redo",
+        "shared reserve once; separate templates unpooled",
+        "JSON backup/restore and XLSX cell readback",
+        "offline local write and reconnect",
+        "stale exclusion",
+        "synthetic legacy migration/archive retained after refresh"
+      ],
+      "screenshots": [
+        "chromium-1440-editor-light.png",
+        "chromium-1440-summary-light.png",
+        "chromium-1440-editor-dark.png"
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "passed": [
+        "Tools current entry",
+        "main row/concentration editor",
+        "multiple groups saved with explicit disjoint well mapping",
+        "save/reopen/refresh",
+        "one current plan",
+        "forged origin-window/session and duplicate apply rejected",
+        "undo/redo",
+        "shared reserve once; separate templates unpooled",
+        "JSON backup/restore and XLSX cell readback",
+        "offline local write and reconnect",
+        "stale exclusion",
+        "synthetic legacy migration/archive retained after refresh"
+      ],
+      "screenshots": [
+        "chromium-390-editor-light.png",
+        "chromium-390-summary-light.png",
+        "chromium-390-editor-dark.png"
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "passed": [
+        "Tools current entry",
+        "main row/concentration editor",
+        "multiple groups saved with explicit disjoint well mapping",
+        "save/reopen/refresh",
+        "one current plan",
+        "forged origin-window/session and duplicate apply rejected",
+        "undo/redo",
+        "shared reserve once; separate templates unpooled",
+        "JSON backup/restore and XLSX cell readback",
+        "offline local write and reconnect",
+        "stale exclusion",
+        "synthetic legacy migration/archive retained after refresh"
+      ],
+      "screenshots": [
+        "webkit-1440-editor-light.png",
+        "webkit-1440-summary-light.png",
+        "webkit-1440-editor-dark.png"
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "passed": [
+        "Tools current entry",
+        "main row/concentration editor",
+        "multiple groups saved with explicit disjoint well mapping",
+        "save/reopen/refresh",
+        "one current plan",
+        "forged origin-window/session and duplicate apply rejected",
+        "undo/redo",
+        "shared reserve once; separate templates unpooled",
+        "JSON backup/restore and XLSX cell readback",
+        "offline local write and reconnect",
+        "stale exclusion",
+        "synthetic legacy migration/archive retained after refresh"
+      ],
+      "screenshots": [
+        "webkit-390-editor-light.png",
+        "webkit-390-summary-light.png",
+        "webkit-390-editor-dark.png"
+      ]
+    }
+  ],
+  "failures": []
+}

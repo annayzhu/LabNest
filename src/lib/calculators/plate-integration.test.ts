@@ -76,7 +76,7 @@ describe('main Calculator to saved plate preparation',()=>{
 
 describe('one effective preparation per plate without deleting old inputs',()=>{
  it('invalidates generated summaries when removing or duplicating boards',()=>{
-  let ws=workspace.addPlate(workspace.createWorkspace());
+  const ws=workspace.addPlate(workspace.createWorkspace());
   ws.latestLiquidSummary={groups:[{sources:ws.plates.map((p:{id:string})=>({plateId:p.id}))}]};
   expect(workspace.removePlate(ws,ws.plates[1].id).latestLiquidSummary).toBeNull();
   expect(workspace.duplicatePlate(ws,ws.plates[0].id).latestLiquidSummary).toBeNull();

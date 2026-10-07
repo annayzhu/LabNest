@@ -81,10 +81,17 @@ it('retains the flags of an existing structured contract instead of inferring th
 });
 
 it('keeps a paragraph-owned nested list in one operation through the actual editor JSON seam',()=>{
- const document=fixture();document.sections[0].blocks=[{id:'owned',type:'rich_text',execution:{role:'step',stepId:'op',title:'Add reagent'},nodes:[{type:'paragraph',content:[{text:'Add 5 µL'}],childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Keep on ice'}]}]}]}]}]}];
+ const document=fixture();document.sections[0].blocks=[{id:'owned',type:'rich_text',execution:{role:'step',stepId:'op',title:'Add reagent'},nodes:[{type:'paragraph',content:[{text:'Add 5 µL'}],childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Keep on ice'}]}]}]}]},{type:'paragraph',content:[{text:'Incubate 10 min'}]}]}];
  const roundtrip=tiptapToProtocolDocument(protocolDocumentToTiptap(document)),projection=projectProtocolDocument(roundtrip);
  expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('op');expect(projection.executionNeedsReview).toBe(false);
  expect(JSON.stringify(roundtrip)).toContain('childContent');expect(JSON.stringify(roundtrip)).toContain('Keep on ice');
+ expect(projection.steps[0].description).toContain('Incubate 10 min');
+});
+
+it('preserves scripts and links inside an audited title prefix',async()=>{
+ const {executionBodyWithoutTitle}=await import('./protocol-execution');
+ const block={id:'formula',type:'checklist' as const,items:['H2O — Add water'],itemNodes:[[{type:'paragraph' as const,content:[{text:'H'},{text:'2',subscript:true},{text:'O — '},{text:'Add water',bold:true}]}]],execution:{role:'step' as const,stepId:'op',title:'H2O',titlePrefix:'H2O — '}};
+ expect(executionBodyWithoutTitle([block],'H2O')[0]).toEqual(block);
 });
 
 it('preserves scientific scripts/links during title dedup and in visible Word XML rather than only the embedded JSON',async()=>{

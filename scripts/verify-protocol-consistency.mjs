@@ -8,7 +8,7 @@ assert(/localhost|127\.0\.0\.1/.test(new URL(base).hostname),'Acceptance runs on
 const fixture=JSON.parse(await readFile(dir+'/fixtures.json','utf8')),browser=await chromium.launch();
 const context=await browser.newContext({viewport:{width:1440,height:1000},timezoneId:'Asia/Shanghai'});await context.addCookies([{name:'labnest_locale',value:'zh',url:base}]);await context.tracing.start({screenshots:true,snapshots:true});const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
 const report={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),browser:browser.version(),database:'isolated clone or synthetic fixtures only',checks:[],catalog:[]};
-const saved=async id=>{const response=await page.request.get(`${base}/api/experiments/${id}`);assert.equal(response.status(),200);return (await response.json()).experiment;};
+const saved=async id=>{const response=await page.request.get(`${base}/api/experiments/${id}?qaRead=${Date.now()}`,{headers:{'Cache-Control':'no-cache'}});assert.equal(response.status(),200);return (await response.json()).experiment;};
 const go=async url=>{await page.goto(base+url,{waitUntil:'networkidle'});};
 async function check(name,run){const start=Date.now();try{await run();report.checks.push({name,status:'通过',ms:Date.now()-start});}catch(error){report.checks.push({name,status:'失败',error:String(error)});throw error;}finally{await writeFile(dir+'/browser-report.json',JSON.stringify(report,null,2));}}
 async function screenshot(name){await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});}

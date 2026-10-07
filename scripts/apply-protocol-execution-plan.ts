@@ -11,6 +11,7 @@ import {resolveAttachmentPath} from '../src/lib/attachments';
 import {parseProtocolDocxBytes} from '../src/lib/protocol-docx';
 import {isDeepStrictEqual} from 'node:util';
 import {executionBlockText} from '../src/lib/protocol-execution';
+import {assertDocumentMediaReady} from '../src/lib/document-media';
 const hash=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const schema=z.object({baseline:z.string(),entries:z.array(z.object({versionId:z.string(),beforeHash:z.string(),restoreStepsFrom:z.object({attachmentId:z.string(),checksum:z.string(),sections:z.array(z.enum(['steps','result_templates','consumption_rules'])).default(['steps'])}).optional(),decisions:z.record(z.string(),protocolExecutionRoleSchema)}))});
 const args=process.argv.slice(2),planPath=args.find(arg=>arg.startsWith('--plan='))?.slice(7),output=args.find(arg=>arg.startsWith('--output='))?.slice(9)??'.local-runtime/protocol-consistency/plan';
@@ -41,6 +42,9 @@ async function main(){
    const fragments=executionFragments(document);
    if(fragments.some(block=>!entry.decisions[block.id])||Object.keys(entry.decisions).some(id=>!fragments.some(block=>block.id===id)))throw new Error('Every source fragment must be mapped exactly once.');
    const confirmed=confirmExecutionRoles(document,fragments.map(block=>({...block,execution:entry.decisions[block.id]})));
+   // This recovery CLI reuses existing managed media. Embedded Word images must
+   // pass the regular reviewed import pipeline; dry-run must refuse them too.
+   assertDocumentMediaReady(confirmed);
    if(latest?.previousVersionId===source.id&&latest.changeSummary==='2026-10-07: Confirm audited execution ownership; original prose preserved.') {
     if(!isDeepStrictEqual(protocolDocumentSchema.parse(latest.contentJson),protocolDocumentSchema.parse(confirmed)))throw new Error('Previously repaired revision was edited; re-audit instead of skipping it.');
     return {code:source.protocol.humanCode,newVersionId:latest.id,replay:true};

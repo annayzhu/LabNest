@@ -36,6 +36,12 @@ export function executionBodyWithoutTitle(blocks: ProtocolContentBlock[], title:
     if(first.itemNodes?.[0]) {
       const node=first.itemNodes[0][0];
       if(!node||!node.content.map(run=>run.text).join('').startsWith(prefix))return cloned;
+      let prefixRemaining=prefix.length;
+      for(const run of node.content) {
+        if(prefixRemaining<=0)break;
+        if(run.text.length && (run.subscript||run.superscript||run.link||run.code))return cloned;
+        prefixRemaining-=run.text.length;
+      }
       let remaining=prefix.length;
       node.content=node.content.flatMap(run=>{const count=Math.min(remaining,run.text.length);remaining-=count;return run.text.length>count?[{...run,text:run.text.slice(count)}]:[];});
     }

@@ -68,6 +68,7 @@ export async function saveProtocolRunProgress(
     const recordedAt = new Date();
 
     await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
     const experiment = await tx.experiment.findUnique({
       where: { id: parsed.experimentId },
       include: { steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] } },

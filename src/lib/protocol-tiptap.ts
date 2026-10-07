@@ -363,7 +363,11 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
         index += 1;
       }
       const formatted=nodes.flatMap(tiptapNodeToRichNodes);
-      blocks.push({ id: identity.id, ...execution, type: "text", text: nodes.map(plainText).join("\n"), ...(hasExplicitFormatting(formatted)?{nodes:formatted}:{}) });
+      if(parent?.id===identity.id && parent.type==='text') {
+        const previous=parent.nodes??[{type:'paragraph' as const,content:[{text:parent.text}]}];
+        parent.text += `\n${nodes.map(plainText).join('\n')}`;
+        parent.nodes=[...previous,...formatted];
+      } else blocks.push({ id: identity.id, ...execution, type: "text", text: nodes.map(plainText).join("\n"), ...(hasExplicitFormatting(formatted)?{nodes:formatted}:{}) });
       continue;
     }
     const richNodes: JSONContent[] = [];
@@ -378,7 +382,9 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
       index += 1;
       continue;
     }
-    blocks.push({ id: identity.id, ...execution, type: "rich_text", nodes: richNodes.flatMap(tiptapNodeToRichNodes) });
+    const formatted=richNodes.flatMap(tiptapNodeToRichNodes);
+    if(parent?.id===identity.id && parent.type==='rich_text')parent.nodes.push(...formatted);
+    else blocks.push({ id: identity.id, ...execution, type: "rich_text", nodes: formatted });
   }
   return distinctDocumentBlockIds(blocks);
 }

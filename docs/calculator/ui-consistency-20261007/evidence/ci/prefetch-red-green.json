@@ -1,0 +1,7 @@
+{
+  "baselineBuild": "sttEqHmQvAEua_yHuTpSd",
+  "red": "WebKit on old master-mix build observed 2 transfection RSC requests without a click; assert.equal(count,0) failed",
+  "newBuild": "fcAlT1Ig8CxA3UYnNN120",
+  "green": "38 local entry checks passed including no-prefetch request assertions, actual paired-link clicks, Run context and strict pageerror assertion",
+  "underlyingEngineRootCause": "not independently reproduced; no error filtering used"
+}

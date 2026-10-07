@@ -1,6 +1,6 @@
 {
   "base": "http://localhost:3221",
-  "at": "2026-10-07T09:59:39.994Z",
+  "at": "2026-10-07T10:43:45.350Z",
   "checks": [
     {
       "engine": "chromium",

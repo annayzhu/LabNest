@@ -1,6 +1,6 @@
 # Calculator UI 2026-10-07 验收
 
-基线main：`91fc4b6e9159687f529215266654a096fc0c8053`。最终应用源与全部本地自动验收：`81813d5950ff2d7ae454866fb15c918a0e28be63`（之后仅证据/验收脚本修改）；隔离生产构建 `sttEqHmQvAEua_yHuTpSd`。实际目录 `/Users/annayzhu/Documents/Playground/LabNest`，next start端口3221，隔离合成数据库。部署前正式3001的CalculatorWorkspace/globals.css运行hash与基线一致，保证修改前截图来自真实旧版。
+基线main：`91fc4b6e9159687f529215266654a096fc0c8053`。最终PR HEAD：`3ff48da4880215ff62274ac5be21c5df2d50755b`；GitHub CI实际检出测试合并提交 `93086eb8910a00d4b2dad3f6450d1278d32bbf20`，其完整tree与正式main合并 `96894e484de4fa50eead9debdd0cb626a73ff905`相同（`a3ce17b209c16a23e10db9d6b9f2d4b3d0d7aa4a`）。最终CI全部通过，非仅依据本地81813d59结果。正式Docker构建 `GY13uDq0phY99qxMeUtUT` 已部署3001，1027个应用文件与提交逐字节一致。隔离CI及3221/3222使用合成数据库；正式巡检不写实验记录。修改前3001源hash与基线一致，旧截图未改标成新版。
 
 ## 逐项结果
 
@@ -9,7 +9,7 @@
 | A01 | 通过 | 当前31独立、2别名、6独立孔板适配器；TOOL_MATRIX.md |
 | A02 | 通过 | 132个实际页面组合；空白、示例、计算、逐区点击；无异常或页面横向溢出 |
 | A03 | 通过 | Tools/Today/真实合成Run抽屉/孔板/FreePlate共用关系；entries/report.json |
-| A04 | 通过 | comparable16张同例、同视口、同主题前后图；state的8份录屏/trace覆盖反应配液和稀释 |
+| A04 | 通过 | comparable16张同例、同视口、同主题前后图（当时新版81813d59，未改标）；最终正式图另列；state的8份录屏/trace覆盖反应配液和稀释 |
 | B01 | 通过 | icons-small.png查看16/20/24px和反白；透明镂空检查 |
 | B02 | 通过 | 46SVG，31专属工具映射；附件16SVG逐文件hash一致 |
 | B03 | 通过 | 组分、组、样品、曲线点的增加按钮在所属标题右侧，逐页记录 |
@@ -35,16 +35,16 @@
 | F02 | 通过 | 空白、示例、预设、草稿、重复展开、切换；修复嵌套转染及备用模式恢复 |
 | F03 | 通过 | 设备未设置/设置/重复开启，漏报误报/舍入回归；无默认算法变更 |
 | F04 | 自动化通过；真机IME未执行 | 复制/CSV/XLSX/JSON/PDF、中文字符串、单位、窄屏结果及错误定位；真实软键盘另列 |
-| F05 | 通过 | 此表、失败分析、未执行项分列；验证源81813d59 |
+| F05 | 通过 | 此表、失败分析、未执行项分列；最终CI检出93086eb8，与合并main同树 |
 
 ## 证据与页面
 
-- [全部工具矩阵](TOOL_MATRIX.md)、[逐控件巡检](evidence/after/inventory.json)、[入口34项](evidence/entries/report.json)。
+- [全部工具矩阵](TOOL_MATRIX.md)、[逐控件巡检](evidence/after/inventory.json)、[入口38项](evidence/entries/report.json)。
 - [验证版本](evidence/validation-version.json)、[实际数字120组](evidence/numeric-comparison.json)、[54模式的输入/输出回读](evidence/modes/report.json)。数字token比较仅证明渲染内容一致，不替代54用例及算法测试中的独立数值断言。
 - [状态、焦点、字号和稳定标题80项](evidence/state/report.json)。state中8个trace.zip和videos中的8份webm同时录制反应配液/稀释；可用 `npx playwright show-trace <trace.zip>` 回放。静态图不充当动画证据。
 - [选择器状态/键盘](evidence/selectors/report.json)、[图标来源](evidence/icon-provenance.json)、[小尺寸及反白](evidence/icons-small.png)、[科学核心hash](evidence/math-source-hashes.json)。
-- [25组回归及每组日志](evidence/regression/acceptance-run.json)。双时区各559项/114文件通过，TypeScript通过，lint0错误/12已有警告，生产构建通过；日志在evidence/quality。测试数量不替代逐项页面结果。
-- formal-exports的CSV/XLSX/JSON嵌套快照与独立DB回读逐值相等；PDF2页文本包含数值、单位、组分、来源及警告，第一页实际渲染查看。[PDF回读](evidence/regression/regression/v13/formal-exports/pdf-readback.json)。
+- [最终25组回归及每组日志](evidence/ci/final/regression/acceptance-run.json)。双时区各559项/114文件通过，TypeScript通过，lint0错误/12已有警告，生产构建通过；本地日志在evidence/quality，最终CI完整构建/浏览器日志在evidence/ci/final-browser.log。测试数量不替代逐项页面结果。
+- formal-exports的CSV/XLSX/JSON嵌套快照与独立DB回读逐值相等；PDF2页文本包含数值、单位、组分、来源及警告，两页均实际渲染查看。[最终CI文件与PDF回读](evidence/ci/final/regression/formal-exports/pdf-readback.json)。
 - 旧Run/旧快照、离线同步/重复提交/数据库回读沿用科学和保护断言重跑，见regression/core、v12、v13、blockers。使用明确标记的合成记录，未访问原用户故障记录。
 
 同一内置反应配液例题、相同CSS视口及主题的实际viewport截图：
@@ -58,14 +58,14 @@
 
 ## 失败与处理
 
-最终自动验收失败项：无。首次回归的旧文案/选择器定位和旧图标PNG断言失败，已更新为当前radio/disclosure和Settings仍支持的旧资源fallback；科学数值及保护断言保留。旧合成梯度草稿没有单位，保护规则正确拒绝；只为已知单位夹具补充µM，没有绕过真实旧记录确认。别名用例曾尝试保存示例，被写保护拒绝；改为从空白实际输入并回读本机历史。200.00000000000003µL使用1e-9µL浮点容差，没有改变应用输出。
+最终自动验收失败项：无。首轮57f1dcbd CI在34项入口动作后捕获WebKit辅助转染RSC预加载错误；关闭四个配对工具Link预加载，保留实际点击和实验上下文，新增全程零预加载/严格pageerror断言。底层引擎异常未稳定重现，不声称已证实其根因；最终38项入口和完整CI无异常，首轮失败报告保留在evidence/ci。正式巡检首次脚本将导出按钮限定在错误DOM作用域，第二次尝试在手机点击桌面隐藏的语言按钮；已分别按实际工具栏和More菜单修正定位，第三次使用英文dialog名称，在语言切换后名称变为“全部模块”而定位失效；独立页面操作证实真实语言切换成功，改用稳定区域和当前语言关闭按钮。保留三份失败日志，应用代码无需更改。首次回归的旧文案/选择器定位和旧图标PNG断言失败，已更新为当前radio/disclosure和Settings仍支持的旧资源fallback；科学数值及保护断言保留。旧合成梯度草稿没有单位，保护规则正确拒绝；只为已知单位夹具补充µM，没有绕过真实旧记录确认。别名用例曾尝试保存示例，被写保护拒绝；改为从空白实际输入并回读本机历史。200.00000000000003µL使用1e-9µL浮点容差，没有改变应用输出。
 
 54模式页面测试检出基线仅含嵌套转染对象时不提供恢复草稿；已修复并重跑全部54用例。双轴审查还补齐“当前模式为空、备用模式有输入”的恢复保护；见[REVIEW.md](REVIEW.md)。首轮科学计算测试失败与后来修复后的通过分别保留，未把失败覆盖成原本通过。
 
 ## 未执行及影响
 
 - 真实手机OS选择器弹层、软键盘/拼音候选回车、实际触控、实验人员试用：未执行。390px/WebKit是模拟自动验收；D04/F04真机部分仍开放。
-- 最终81813d59的原生桌面200%复测：未执行。此前449ec041在用户Chrome真实200%缩放下计算26反应/514.8µL/18µL、无横向溢出；随后Mac锁定，最终截图、复位及更新后的复测无法完成。[原始receipt](evidence/native-zoom.json)明确保留旧验证版本，没有改标成最终版。最终版320px/768px拥挤布局已重测。
+- 最终3ff48da4的原生桌面200%复测：未执行。此前449ec041在用户Chrome真实200%缩放下计算26反应/514.8µL/18µL、无横向溢出；随后Mac锁定，最终截图、复位及更新后的复测无法完成。[原始receipt](evidence/native-zoom.json)明确保留旧验证版本，没有改标成最终版。最终版320px/768px拥挤布局已重测。
 - 真实打印机/OS打印对话框、原用户故障历史记录：未执行，不以合成PDF/记录代替。
 
 真机快速验收：同局域网打开正式计算器→反应配液载入示例→拼音编辑中文组分→单/多组往返并刷新恢复草稿→展开移液设置输入1和0.5、收起再开→切换单位→计算、复制→手机放大至160%，检查文字完整及无页面横向滚动。桌面用浏览器真实200%重复计算和展开，结束复位100%。记录设备、浏览器、缩放与异常。
@@ -76,4 +76,4 @@
 
 v13用`CALCULATOR_EVIDENCE_DIR`隔离报告，mode用`CALCULATOR_MODE_EVIDENCE_DIR`隔离报告。旧版截图脚本要求明确提供已经核验的旧运行地址/版本；正式部署后不得把当前地址标为旧版。
 
-GitHub精确HEAD CI、合并、正式部署源hash和LAN入口验证另记RELEASE.md。源码存在、页面存在、PR合并均不代替运行验收。
+最终PR关联CI检出版本、合并、正式部署源hash和LAN入口验证见[RELEASE.md](RELEASE.md)。源码存在、页面存在、PR合并均不代替运行验收。

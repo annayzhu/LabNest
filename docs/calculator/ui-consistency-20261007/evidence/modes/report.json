@@ -35,7 +35,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/dilution-final.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-final.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -80,7 +80,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/dilution-add.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-add.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -109,7 +109,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/dilution-fold.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-fold.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -134,7 +134,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/dilution-ratio.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-ratio.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -163,7 +163,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/dilution-parts.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/dilution-parts.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -208,7 +208,7 @@
           "value": "mm"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/hemocytometer-custom-geometry.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/hemocytometer-custom-geometry.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -261,7 +261,7 @@
           "value": "cm²"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/split-different-areas.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/split-different-areas.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -306,7 +306,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/molarity-mass.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-mass.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -351,7 +351,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/molarity-concentration.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-concentration.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -396,7 +396,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/molarity-volume.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/molarity-volume.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -429,7 +429,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/percent-solution-w-v.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-w-v.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -462,7 +462,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/percent-solution-v-v.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-v-v.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -495,7 +495,7 @@
           "value": "g"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/percent-solution-w-w.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/percent-solution-w-w.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -532,7 +532,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/resuspension-amount.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-amount.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -569,7 +569,7 @@
           "value": "mg/mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/resuspension-mass.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-mass.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -610,7 +610,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/resuspension-mass-molar.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/resuspension-mass-molar.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -651,7 +651,7 @@
           "value": "cm"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/centrifuge-rpm-to-rcf.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/centrifuge-rpm-to-rcf.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -692,7 +692,7 @@
           "value": "cm"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/centrifuge-rcf-to-rpm.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/centrifuge-rcf-to-rpm.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -761,7 +761,7 @@
           "value": "µL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-mixed-prepared.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-mixed-prepared.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -838,7 +838,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-mixed-stock.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-mixed-stock.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -907,7 +907,7 @@
           "value": "µL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-retained-prepared.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-retained-prepared.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -984,7 +984,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-retained-stock.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-retained-stock.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1049,7 +1049,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-linear.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-linear.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1094,7 +1094,7 @@
           "value": "µM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/serial-dilution-custom.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/serial-dilution-custom.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1167,7 +1167,7 @@
           "value": "mM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/media-recipe-final.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/media-recipe-final.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1232,7 +1232,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/media-recipe-add.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/media-recipe-add.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1305,7 +1305,7 @@
           "value": "mM"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/buffer-recipe-final.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/buffer-recipe-final.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1370,7 +1370,7 @@
           "value": "mL"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/buffer-recipe-add.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/buffer-recipe-add.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1635,7 +1635,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/normalization-20-samples-with-invalid-row.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/normalization-20-samples-with-invalid-row.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1932,7 +1932,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/wb-loading-20-samples-with-invalid-row.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-20-samples-with-invalid-row.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1969,7 +1969,7 @@
           "value": "on"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/cfu-with-efficiency.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/cfu-with-efficiency.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -1998,7 +1998,7 @@
           "value": "on"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/cfu-without-efficiency.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/cfu-without-efficiency.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2063,7 +2063,7 @@
           "value": "8"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/virus-titer-TCID50.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/virus-titer-TCID50.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2112,7 +2112,7 @@
           "value": "4"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/wb-loading-buffer-already-contains-reducer.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-buffer-already-contains-reducer.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2181,7 +2181,7 @@
           "value": "100"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/wb-loading-target-active-reducer.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/wb-loading-target-active-reducer.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2290,7 +2290,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-dna-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2379,7 +2379,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-dna-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2504,7 +2504,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-multi-dna-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-dna-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2609,7 +2609,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-multi-dna-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-dna-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2710,7 +2710,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-sirna-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-sirna-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2791,7 +2791,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-sirna-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-sirna-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -2908,7 +2908,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-multi-sirna-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-sirna-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3005,7 +3005,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-multi-sirna-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-multi-sirna-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3114,7 +3114,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-shrna-plasmid-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-shrna-plasmid-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3203,7 +3203,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-shrna-plasmid-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-shrna-plasmid-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3324,7 +3324,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-dna-sirna-single.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-sirna-single.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3433,7 +3433,7 @@
           "value": "Add components in the supplied custom order"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-dna-sirna-two-tube.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-dna-sirna-two-tube.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3530,7 +3530,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-each-nm.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-each-nm.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3627,7 +3627,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-each-pmol.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-each-pmol.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3728,7 +3728,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-total-nm.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-total-nm.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3829,7 +3829,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-total-pmol.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-total-pmol.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -3938,7 +3938,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-mass-ratio.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-mass-ratio.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -4071,7 +4071,7 @@
           "value": "Combine A and B"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/transfection-molar-ratio.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/transfection-molar-ratio.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     },
     {
@@ -4140,7 +4140,7 @@
           "value": "on"
         }
       ],
-      "screenshot": "docs/calculator/ui-consistency-20261007/evidence/modes/master-mix-two-groups.png",
+      "screenshot": "docs/calculator/ui-20260915/evidence/modes/master-mix-two-groups.png",
       "fixture": "synthetic draft restored through UI; calculated and read back from local history"
     }
   ]

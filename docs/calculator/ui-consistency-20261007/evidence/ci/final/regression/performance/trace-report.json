@@ -1,0 +1,575 @@
+{
+  "sha": "f813ef67d8018caab9a97eba62a499f26420c2d2",
+  "at": "2026-09-07T09:07:09.582Z",
+  "browser": "149.0.7827.55",
+  "profiles": [
+    {
+      "profile": "cold-local",
+      "coldHomeMs": 639.559334,
+      "homeResources": [
+        {
+          "url": "/icons/lab-soft-v1/dilution.png",
+          "transferBytes": 1288,
+          "duration": 1.699999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/solution-prep.png",
+          "transferBytes": 2199,
+          "duration": 1.699999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/cell-seeding.png",
+          "transferBytes": 2411,
+          "duration": 4.800000000745058
+        },
+        {
+          "url": "/icons/lab-soft-v1/reaction-mix.png",
+          "transferBytes": 1703,
+          "duration": 6.199999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/wb-loading.png",
+          "transferBytes": 1531,
+          "duration": 6.600000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/centrifuge.png",
+          "transferBytes": 3026,
+          "duration": 8.300000000745058
+        },
+        {
+          "url": "/icons/lab-soft-v1/serial-dilution.png",
+          "transferBytes": 2919,
+          "duration": 8.399999998509884
+        },
+        {
+          "url": "/icons/lab-soft-v1/percent-solution.png",
+          "transferBytes": 3035,
+          "duration": 12.399999998509884
+        },
+        {
+          "url": "/icons/lab-soft-v1/media-recipe.png",
+          "transferBytes": 2837,
+          "duration": 11.800000000745058
+        },
+        {
+          "url": "/icons/lab-soft-v1/buffer-recipe.png",
+          "transferBytes": 3060,
+          "duration": 12.100000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/ic50-ec50.png",
+          "transferBytes": 2752,
+          "duration": 13.100000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/resuspension.png",
+          "transferBytes": 2003,
+          "duration": 13.100000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/normalization.png",
+          "transferBytes": 2709,
+          "duration": 14.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/hemocytometer.png",
+          "transferBytes": 2870,
+          "duration": 14.600000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/hydrogel.png",
+          "transferBytes": 3621,
+          "duration": 14.699999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/split.png",
+          "transferBytes": 2452,
+          "duration": 14.699999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/freezing.png",
+          "transferBytes": 3532,
+          "duration": 14.899999998509884
+        },
+        {
+          "url": "/icons/lab-soft-v1/transfection.png",
+          "transferBytes": 4178,
+          "duration": 15
+        },
+        {
+          "url": "/_next/static/chunks/42ekf6roiluwq.css",
+          "transferBytes": 37570,
+          "duration": 4.5
+        },
+        {
+          "url": "/_next/static/chunks/34h43-uxmoxv3.js",
+          "transferBytes": 7813,
+          "duration": 15.900000002235174
+        },
+        {
+          "url": "/_next/static/chunks/turbopack-3l_a8cslirrs2.js",
+          "transferBytes": 4435,
+          "duration": 16.5
+        },
+        {
+          "url": "/_next/static/chunks/0guxlx_z7m313.js",
+          "transferBytes": 12425,
+          "duration": 16.800000000745058
+        },
+        {
+          "url": "/_next/static/chunks/23cjeeceug4j-.js",
+          "transferBytes": 49631,
+          "duration": 21.199999999254942
+        },
+        {
+          "url": "/_next/static/chunks/34oyci46fsc5w.js",
+          "transferBytes": 71345,
+          "duration": 24
+        },
+        {
+          "url": "/_next/static/chunks/1ntn7efqc-iiw.js",
+          "transferBytes": 13238,
+          "duration": 17.099999997764826
+        },
+        {
+          "url": "/_next/static/chunks/0otdtys20kv2p.js",
+          "transferBytes": 10414,
+          "duration": 18.300000000745058
+        },
+        {
+          "url": "/_next/static/chunks/1iz7t--o84mme.js",
+          "transferBytes": 37604,
+          "duration": 20.300000000745058
+        },
+        {
+          "url": "/icons/lab-soft-v1/kill-curve.png",
+          "transferBytes": 2583,
+          "duration": 19.200000002980232
+        },
+        {
+          "url": "/icons/lab-soft-v1/viability.png",
+          "transferBytes": 4654,
+          "duration": 21
+        },
+        {
+          "url": "/icons/lab-soft-v1/od600.png",
+          "transferBytes": 2192,
+          "duration": 22.200000002980232
+        },
+        {
+          "url": "/_next/static/chunks/0wc68nca-ju89.js",
+          "transferBytes": 22700,
+          "duration": 20.100000001490116
+        },
+        {
+          "url": "/_next/static/chunks/1srin938u_em3.js",
+          "transferBytes": 18923,
+          "duration": 20.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/colony-counter.png",
+          "transferBytes": 3598,
+          "duration": 22.100000001490116
+        },
+        {
+          "url": "/icons/lab-soft-v1/cfu.png",
+          "transferBytes": 3665,
+          "duration": 22.199999999254942
+        },
+        {
+          "url": "/icons/lab-soft-v1/moi.png",
+          "transferBytes": 3694,
+          "duration": 22.099999997764826
+        },
+        {
+          "url": "/icons/lab-soft-v1/virus-titer.png",
+          "transferBytes": 2771,
+          "duration": 21.900000002235174
+        },
+        {
+          "url": "/icons/lab-soft-v1/ligation.png",
+          "transferBytes": 2006,
+          "duration": 22.900000002235174
+        },
+        {
+          "url": "/icons/lab-soft-v1/tm.png",
+          "transferBytes": 2837,
+          "duration": 23.400000002235174
+        },
+        {
+          "url": "/icons/lab-soft-v1/dna-rna-conversion.png",
+          "transferBytes": 3606,
+          "duration": 23.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/bradford-bca.png",
+          "transferBytes": 2276,
+          "duration": 23.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/elisa-4pl.png",
+          "transferBytes": 2820,
+          "duration": 23.599999997764826
+        },
+        {
+          "url": "/icons/lab-soft-v1/unit-converter.png",
+          "transferBytes": 3028,
+          "duration": 24.300000000745058
+        },
+        {
+          "url": "/inventory",
+          "transferBytes": 457,
+          "duration": 9.900000002235174
+        },
+        {
+          "url": "/records",
+          "transferBytes": 456,
+          "duration": 9.799999997019768
+        },
+        {
+          "url": "/protocol-run",
+          "transferBytes": 460,
+          "duration": 9.799999997019768
+        },
+        {
+          "url": "/",
+          "transferBytes": 446,
+          "duration": 9.800000000745058
+        },
+        {
+          "url": "/search",
+          "transferBytes": 455,
+          "duration": 3.900000002235174
+        },
+        {
+          "url": "/inventory",
+          "transferBytes": 1086,
+          "duration": 3.5
+        },
+        {
+          "url": "/records",
+          "transferBytes": 1083,
+          "duration": 3.099999997764826
+        },
+        {
+          "url": "/protocol-run",
+          "transferBytes": 1090,
+          "duration": 3.199999999254942
+        },
+        {
+          "url": "/",
+          "transferBytes": 1077,
+          "duration": 2.5
+        },
+        {
+          "url": "/search",
+          "transferBytes": 1082,
+          "duration": 2.100000001490116
+        }
+      ],
+      "openToolMs": 115.26729100000011,
+      "returnHomeMs": 58.34895899999992,
+      "heavy": [
+        {
+          "id": "master-mix",
+          "calculateMs": 49.58162500000003
+        },
+        {
+          "id": "unit-converter",
+          "calculateMs": 23.733999999999924
+        },
+        {
+          "id": "ic50-ec50",
+          "calculateMs": 35.084542000000056
+        }
+      ],
+      "imageDetectionMs": 40.38804200000004,
+      "longTasks": []
+    },
+    {
+      "profile": "weak-4g-cpu4",
+      "coldHomeMs": 3843.332958,
+      "homeResources": [
+        {
+          "url": "/icons/lab-soft-v1/dilution.png",
+          "transferBytes": 1288,
+          "duration": 165
+        },
+        {
+          "url": "/icons/lab-soft-v1/solution-prep.png",
+          "transferBytes": 2199,
+          "duration": 187.60000000149012
+        },
+        {
+          "url": "/icons/lab-soft-v1/cell-seeding.png",
+          "transferBytes": 2411,
+          "duration": 361
+        },
+        {
+          "url": "/icons/lab-soft-v1/reaction-mix.png",
+          "transferBytes": 1703,
+          "duration": 533.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/wb-loading.png",
+          "transferBytes": 1531,
+          "duration": 553.1999999992549
+        },
+        {
+          "url": "/icons/lab-soft-v1/serial-dilution.png",
+          "transferBytes": 2919,
+          "duration": 613.7999999970198
+        },
+        {
+          "url": "/icons/lab-soft-v1/centrifuge.png",
+          "transferBytes": 3026,
+          "duration": 636.3999999985099
+        },
+        {
+          "url": "/icons/lab-soft-v1/percent-solution.png",
+          "transferBytes": 3035,
+          "duration": 644.6999999992549
+        },
+        {
+          "url": "/icons/lab-soft-v1/media-recipe.png",
+          "transferBytes": 2837,
+          "duration": 630
+        },
+        {
+          "url": "/icons/lab-soft-v1/buffer-recipe.png",
+          "transferBytes": 3060,
+          "duration": 718.8000000007451
+        },
+        {
+          "url": "/icons/lab-soft-v1/ic50-ec50.png",
+          "transferBytes": 2752,
+          "duration": 784.7999999970198
+        },
+        {
+          "url": "/icons/lab-soft-v1/normalization.png",
+          "transferBytes": 2709,
+          "duration": 830.2999999970198
+        },
+        {
+          "url": "/icons/lab-soft-v1/resuspension.png",
+          "transferBytes": 2003,
+          "duration": 898.6999999992549
+        },
+        {
+          "url": "/icons/lab-soft-v1/hemocytometer.png",
+          "transferBytes": 2870,
+          "duration": 823
+        },
+        {
+          "url": "/icons/lab-soft-v1/hydrogel.png",
+          "transferBytes": 3621,
+          "duration": 913.6000000014901
+        },
+        {
+          "url": "/icons/lab-soft-v1/split.png",
+          "transferBytes": 2452,
+          "duration": 725.3000000007451
+        },
+        {
+          "url": "/icons/lab-soft-v1/freezing.png",
+          "transferBytes": 3532,
+          "duration": 959.1000000014901
+        },
+        {
+          "url": "/_next/static/chunks/42ekf6roiluwq.css",
+          "transferBytes": 37570,
+          "duration": 385.80000000074506
+        },
+        {
+          "url": "/icons/lab-soft-v1/transfection.png",
+          "transferBytes": 4178,
+          "duration": 837.1999999992549
+        },
+        {
+          "url": "/_next/static/chunks/34h43-uxmoxv3.js",
+          "transferBytes": 7813,
+          "duration": 1105.8999999985099
+        },
+        {
+          "url": "/_next/static/chunks/23cjeeceug4j-.js",
+          "transferBytes": 49631,
+          "duration": 2185.7999999970198
+        },
+        {
+          "url": "/_next/static/chunks/34oyci46fsc5w.js",
+          "transferBytes": 71345,
+          "duration": 2360.39999999851
+        },
+        {
+          "url": "/_next/static/chunks/turbopack-3l_a8cslirrs2.js",
+          "transferBytes": 4435,
+          "duration": 1189.699999999255
+        },
+        {
+          "url": "/_next/static/chunks/0guxlx_z7m313.js",
+          "transferBytes": 12425,
+          "duration": 1391.1000000014901
+        },
+        {
+          "url": "/_next/static/chunks/1ntn7efqc-iiw.js",
+          "transferBytes": 13238,
+          "duration": 1435.300000000745
+        },
+        {
+          "url": "/_next/static/chunks/0otdtys20kv2p.js",
+          "transferBytes": 10414,
+          "duration": 1593.800000000745
+        },
+        {
+          "url": "/_next/static/chunks/0wc68nca-ju89.js",
+          "transferBytes": 22700,
+          "duration": 2178.89999999851
+        },
+        {
+          "url": "/_next/static/chunks/1iz7t--o84mme.js",
+          "transferBytes": 37604,
+          "duration": 2207.60000000149
+        },
+        {
+          "url": "/_next/static/chunks/1srin938u_em3.js",
+          "transferBytes": 18923,
+          "duration": 2102.89999999851
+        },
+        {
+          "url": "/icons/lab-soft-v1/kill-curve.png",
+          "transferBytes": 2583,
+          "duration": 1833.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/viability.png",
+          "transferBytes": 4654,
+          "duration": 2154.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/od600.png",
+          "transferBytes": 2192,
+          "duration": 2283.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/cfu.png",
+          "transferBytes": 3665,
+          "duration": 2343.300000000745
+        },
+        {
+          "url": "/icons/lab-soft-v1/moi.png",
+          "transferBytes": 3694,
+          "duration": 2409.89999999851
+        },
+        {
+          "url": "/icons/lab-soft-v1/colony-counter.png",
+          "transferBytes": 3598,
+          "duration": 2396.199999999255
+        },
+        {
+          "url": "/icons/lab-soft-v1/virus-titer.png",
+          "transferBytes": 2771,
+          "duration": 2402
+        },
+        {
+          "url": "/icons/lab-soft-v1/ligation.png",
+          "transferBytes": 2006,
+          "duration": 2455.400000002235
+        },
+        {
+          "url": "/icons/lab-soft-v1/tm.png",
+          "transferBytes": 2837,
+          "duration": 2514.099999997765
+        },
+        {
+          "url": "/icons/lab-soft-v1/dna-rna-conversion.png",
+          "transferBytes": 3606,
+          "duration": 2538.5
+        },
+        {
+          "url": "/icons/lab-soft-v1/bradford-bca.png",
+          "transferBytes": 2276,
+          "duration": 2559.199999999255
+        },
+        {
+          "url": "/icons/lab-soft-v1/elisa-4pl.png",
+          "transferBytes": 2820,
+          "duration": 2582.800000000745
+        },
+        {
+          "url": "/icons/lab-soft-v1/unit-converter.png",
+          "transferBytes": 3028,
+          "duration": 2598.10000000149
+        },
+        {
+          "url": "/inventory",
+          "transferBytes": 457,
+          "duration": 162.60000000149012
+        },
+        {
+          "url": "/records",
+          "transferBytes": 456,
+          "duration": 169.5
+        },
+        {
+          "url": "/protocol-run",
+          "transferBytes": 460,
+          "duration": 177
+        },
+        {
+          "url": "/",
+          "transferBytes": 446,
+          "duration": 184.09999999776483
+        },
+        {
+          "url": "/search",
+          "transferBytes": 455,
+          "duration": 167.30000000074506
+        },
+        {
+          "url": "/inventory",
+          "transferBytes": 1085,
+          "duration": 170.39999999850988
+        },
+        {
+          "url": "/records",
+          "transferBytes": 1087,
+          "duration": 169
+        },
+        {
+          "url": "/protocol-run",
+          "transferBytes": 1087,
+          "duration": 173
+        },
+        {
+          "url": "/",
+          "transferBytes": 1078,
+          "duration": 161.80000000074506
+        },
+        {
+          "url": "/search",
+          "transferBytes": 1082,
+          "duration": 162.30000000074506
+        }
+      ],
+      "openToolMs": 461.33487500000047,
+      "returnHomeMs": 451.27912500000093,
+      "heavy": [
+        {
+          "id": "master-mix",
+          "calculateMs": 174.4983749999992
+        },
+        {
+          "id": "unit-converter",
+          "calculateMs": 48.60991699999977
+        },
+        {
+          "id": "ic50-ec50",
+          "calculateMs": 82.64387499999975
+        }
+      ],
+      "imageDetectionMs": 76.35299999999916,
+      "longTasks": []
+    }
+  ]
+}

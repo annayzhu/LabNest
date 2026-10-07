@@ -1,11 +1,18 @@
 {
   "base": "http://localhost:3221",
-  "at": "2026-10-07T10:02:44.728Z",
+  "at": "2026-10-07T10:44:42.057Z",
   "checks": [
     {
       "engine": "chromium",
       "width": 1440,
       "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
       "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
     },
     {
@@ -66,6 +73,13 @@
       "engine": "chromium",
       "width": 390,
       "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "status": "passed",
       "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
     },
     {
@@ -115,6 +129,13 @@
       "id": "moi",
       "status": "passed",
       "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
     },
     {
       "engine": "webkit",
@@ -175,6 +196,13 @@
       "id": "moi",
       "status": "passed",
       "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
     },
     {
       "engine": "webkit",

@@ -1,0 +1,16 @@
+{
+  "at": "2026-09-07T09:30:03.800328+00:00",
+  "codeSha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
+  "testSha": "9e58196c1baf692f02e88f8aa268e603bfdf2b15",
+  "baseline": "446bb9bf6ea5dd4f672bc5acd365dc8e4e3808b8",
+  "buildId": "Ew6wRgLpy0fyu83Xb91rM",
+  "node": "v22.23.1",
+  "os": "Darwin 25.6.0",
+  "arch": "arm64",
+  "cpu": "Apple M4 Max",
+  "logicalCpus": 14,
+  "memoryGiB": 36,
+  "appBase": "http://localhost:3223",
+  "database": "synthetic isolated labnest_calculator_acceptance_20260906",
+  "productionUntouched": true
+}

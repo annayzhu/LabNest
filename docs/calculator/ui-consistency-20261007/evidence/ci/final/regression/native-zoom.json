@@ -1,0 +1,36 @@
+{
+  "scope": "earlier native desktop Chrome inspection in this PR, not a final-SHA certification",
+  "codeSha": null,
+  "method": "Native macOS Chrome keyboard zoom controls, CUA screenshots emitted inline",
+  "observed": [
+    {
+      "zoomPercent": 100,
+      "devicePixelRatio": 2,
+      "innerWidth": 1512
+    },
+    {
+      "zoomPercent": 110,
+      "devicePixelRatio": 2.2,
+      "innerWidth": 1374
+    },
+    {
+      "zoomPercent": 125,
+      "devicePixelRatio": 2.5,
+      "innerWidth": 1209
+    },
+    {
+      "zoomPercent": 150,
+      "devicePixelRatio": 3,
+      "innerWidth": 1008
+    }
+  ],
+  "checks": [
+    "150% catalog has no horizontal overflow",
+    "150% dilution example calculated; quantity input/unit controls on same line"
+  ],
+  "finalRecheck": "未执行：CUA getTab returned Debugger unattached",
+  "exact160": "未执行",
+  "realPhone": "未执行",
+  "originalZoomPercent": 110,
+  "restoration": "Prior user-interaction interruption prevented confirming restoration"
+}

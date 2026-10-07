@@ -1,0 +1,19 @@
+{
+  "sourceCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20",
+  "mainTreeMatches": true,
+  "pages": 2,
+  "status": "通过",
+  "textChecks": [
+    "wb-loading-v3",
+    "Synthetic stock",
+    "10 µL",
+    "5 µL",
+    "1 µL",
+    "4 µL",
+    "below configured minimum",
+    "WB-A",
+    "µg/µL"
+  ],
+  "visual": "both pages rendered and inspected; page 1 includes values/components/source/warnings; page 2 preserves inputs metadata",
+  "nativePrinter": "未执行"
+}

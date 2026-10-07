@@ -1,0 +1,24 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('dialog', { name: 'All modules', exact: true }).getByRole('button', { name: '中文', exact: true })[22m
+[2m    - locator resolved to <button type="button" aria-pressed="false" class="focus-ring rounded-[var(--ln-radius-control-sm)] px-2 text-xs! font-normal tracking-[-0.005em] transition h-11 text-muted hover:bg-surface/70 hover:text-ink">中文</button>[22m
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m  - element was detached from the DOM, retrying[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest/docs/calculator/ui-consistency-20261007/evidence/production/verify-release.mjs:23:58 {
+  log: [
+    "  - waiting for getByRole('dialog', { name: 'All modules', exact: true }).getByRole('button', { name: '中文', exact: true })",
+    '    - locator resolved to <button type="button" aria-pressed="false" class="focus-ring rounded-[var(--ln-radius-control-sm)] px-2 text-xs! font-normal tracking-[-0.005em] transition h-11 text-muted hover:bg-surface/70 hover:text-ink">中文</button>',
+    '  - attempting click action',
+    '    - waiting for element to be visible, enabled and stable',
+    '  - element was detached from the DOM, retrying'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

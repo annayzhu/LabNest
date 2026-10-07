@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-07T10:52:01.824Z",
+  "prHead": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+  "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20",
+  "mergeCommit": "96894e484de4fa50eead9debdd0cb626a73ff905",
+  "gitTree": "a3ce17b209c16a23e10db9d6b9f2d4b3d0d7aa4a",
+  "buildId": "GY13uDq0phY99qxMeUtUT",
+  "imageId": "sha256:89825674cf80f0338fe82ff98e4f470c12efe20fbc7fadf81b7ef71a803b3efc",
+  "sourceFiles": 1027,
+  "sourceAggregateSha256": "48eeb825ce949b4d1c18302dd48decb9e09310a2d2ec9e4c3994a2e4158aa282",
+  "attachments": {
+    "files": 49,
+    "bytes": 19067435,
+    "aggregateSha256": "c5e367f0ea4b12364c24377193290b2f68a8b3f0d1018ad965a0b6b43e48115a"
+  },
+  "counts": {
+    "Experiment": 7,
+    "Protocol": 7,
+    "Result": 1,
+    "Entry": 4,
+    "Attachment": 37
+  },
+  "databaseContainerUnchanged": true,
+  "attachmentMountUnchanged": true,
+  "status": "passed"
+}

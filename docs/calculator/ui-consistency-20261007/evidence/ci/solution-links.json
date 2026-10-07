@@ -1,0 +1,19 @@
+{
+  "imageSource": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+  "checks": [
+    {
+      "engine": "chromium",
+      "status": "passed",
+      "scope": "real solution links and synthetic URL context only; no DB writes",
+      "errors": [],
+      "preloads": []
+    },
+    {
+      "engine": "webkit",
+      "status": "passed",
+      "scope": "real solution links and synthetic URL context only; no DB writes",
+      "errors": [],
+      "preloads": []
+    }
+  ]
+}

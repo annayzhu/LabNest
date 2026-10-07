@@ -1,0 +1,72 @@
+Synthetic calculation · wb-loading
+Quality: not assessed · Template: valid
+
+
+计算快照 / Calculation snapshot
+wb-loading · default · wb-loading-v3 · valid
+
+Operations: liquid-operations-v2 · Pipetting: below-minimum
+
+WB-A · 样品量 (µL) / Sample (µL): 10 µL
+stock:sampleUl → wb-loading:WB-A
+WB-A · 缓冲液 (µL) / Buffer (µL): 5 µL
+stock:bufferUl → wb-loading:WB-A
+WB-A · Synthetic stock: 1 µL
+stock:reducingAgentUl → wb-loading:WB-A
+WB-A · 稀释液 (µL) / Diluent (µL): 4 µL
+stock:diluentUl → wb-loading:WB-A
+
+
+有效样本 / Valid samples                                                                                  1
+
+配液明细 / Preparation row 1
+ 样本ID                                                WB-A
+ 状态                                                  有效 / Valid
+ 总量 (µL)                                             20
+ 缓冲液 (µL)                                            5
+ 样品量 (µL)                                            10
+ 稀释液 (µL)                                            4
+ 原始体积单位                                              µL
+ 可用体积 (µL)
+ 添加方式                                                volume-fraction
+ 还原剂原液                                               Synthetic stock
+ 还原剂 (µL)                                            1
+
+ 目标蛋白量 (µg)                                          20
+ 输入浓度单位                                              µg/µL
+                                                     最终体积的 5% v/v 原液；不代表有效成分终浓度 / Fraction of final
+ 原液与目标定义
+                                                     volume, not active concentration
+ 原浓度 (µg/µL)                                         2
+
+
+WB-A · Synthetic stock (theoretical): 1 µL，低于所设 2 µL 下限 / below configured minimum. 调整制备规模，或评估中间液方案
+/ Adjust preparation scale or assess an intermediate dilution.
+
+最终体积的 5% v/v 原液；不代表有效成分终浓度 / Fraction of final volume, not active concentration
+
+Inputs / Units: {
+  "samples": [
+    {
+      "id": "WB-A",
+      "available": "",
+      "concentration": "2"
+    }
+    ],
+    "__context": {
+       "experimentId": "calculator-acceptance-experiment",
+       "experimentStepId": "calculator-acceptance-step"
+    },
+    "bufferFold": 4,
+    "reducingMode": "volume-fraction",
+    "__displayUnits": {
+       "table:sampleUl": "µL"
+    },
+    "targetProteinUg": 20,
+    "pipetteMinimumUl": 2,
+    "reducingAgentName": "Synthetic stock",
+    "finalLoadingVolumeUl": 20,
+    "reducingAgentPercent": 5,
+    "bufferContainsReducingAgent": "no"
+}
+

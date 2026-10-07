@@ -1,0 +1,163 @@
+{
+  "at": "2026-09-07T09:06:56.208Z",
+  "browser": "149.0.7827.55",
+  "fixture": "900×900, 225 synthetic circles",
+  "phases": [
+    {
+      "phase": "before",
+      "base": "http://localhost:3000",
+      "samples": [
+        {
+          "iteration": 0,
+          "inputMs": 37.671749999999975,
+          "calculateMs": 70.03995800000007,
+          "count": 225
+        },
+        {
+          "iteration": 1,
+          "inputMs": 19.37204100000008,
+          "calculateMs": 30.12645899999984,
+          "count": 225
+        },
+        {
+          "iteration": 2,
+          "inputMs": 18.821082999999817,
+          "calculateMs": 34.85145800000009,
+          "count": 225
+        },
+        {
+          "iteration": 3,
+          "inputMs": 20.4401670000002,
+          "calculateMs": 36.66345799999999,
+          "count": 225
+        },
+        {
+          "iteration": 4,
+          "inputMs": 19.166333000000122,
+          "calculateMs": 30.76741600000014,
+          "count": 225
+        },
+        {
+          "iteration": 5,
+          "inputMs": 19.330249999999978,
+          "calculateMs": 31.09166600000026,
+          "count": 225
+        },
+        {
+          "iteration": 6,
+          "inputMs": 19.95587500000056,
+          "calculateMs": 30.777750000000196,
+          "count": 225
+        },
+        {
+          "iteration": 7,
+          "inputMs": 16.146499999999833,
+          "calculateMs": 29.139000000000124,
+          "count": 225
+        },
+        {
+          "iteration": 8,
+          "inputMs": 20.223707999999533,
+          "calculateMs": 36.975374999999985,
+          "count": 225
+        },
+        {
+          "iteration": 9,
+          "inputMs": 20.382292000000234,
+          "calculateMs": 35.77087500000016,
+          "count": 225
+        }
+      ],
+      "stats": {
+        "inputMs": {
+          "median": 19.66395800000032,
+          "max": 37.671749999999975,
+          "n": 10
+        },
+        "calculateMs": {
+          "median": 32.971562000000176,
+          "max": 70.03995800000007,
+          "n": 10
+        }
+      }
+    },
+    {
+      "phase": "after",
+      "base": "http://localhost:3223",
+      "samples": [
+        {
+          "iteration": 0,
+          "inputMs": 31.575667000000067,
+          "calculateMs": 61.86425000000054,
+          "count": 225
+        },
+        {
+          "iteration": 1,
+          "inputMs": 22.994249999999738,
+          "calculateMs": 31.240749999999025,
+          "count": 225
+        },
+        {
+          "iteration": 2,
+          "inputMs": 25.110709000000497,
+          "calculateMs": 32.07666699999936,
+          "count": 225
+        },
+        {
+          "iteration": 3,
+          "inputMs": 19.156833999999435,
+          "calculateMs": 35.38179200000013,
+          "count": 225
+        },
+        {
+          "iteration": 4,
+          "inputMs": 18.956749999999374,
+          "calculateMs": 27.979457999999795,
+          "count": 225
+        },
+        {
+          "iteration": 5,
+          "inputMs": 19.098167000000103,
+          "calculateMs": 31.015667000001486,
+          "count": 225
+        },
+        {
+          "iteration": 6,
+          "inputMs": 20.227124999999432,
+          "calculateMs": 30.510207999999693,
+          "count": 225
+        },
+        {
+          "iteration": 7,
+          "inputMs": 18.062332999999853,
+          "calculateMs": 35.36479200000031,
+          "count": 225
+        },
+        {
+          "iteration": 8,
+          "inputMs": 20.745499999999083,
+          "calculateMs": 31.770667000000685,
+          "count": 225
+        },
+        {
+          "iteration": 9,
+          "inputMs": 19.283000000001266,
+          "calculateMs": 32.67491700000028,
+          "count": 225
+        }
+      ],
+      "stats": {
+        "inputMs": {
+          "median": 19.75506250000035,
+          "max": 31.575667000000067,
+          "n": 10
+        },
+        "calculateMs": {
+          "median": 31.923667000000023,
+          "max": 61.86425000000054,
+          "n": 10
+        }
+      }
+    }
+  ]
+}

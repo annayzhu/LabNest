@@ -1,0 +1,107 @@
+{
+  "head": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+  "workflow_runs": [
+    {
+      "id": 37607866564,
+      "name": "Protocol experiment consistency",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 5,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866564/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866564/logs",
+      "workflow_id": 377147247
+    },
+    {
+      "id": 37607866758,
+      "name": "Entry rich text acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 20,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866758/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866758/logs",
+      "workflow_id": 376071319
+    },
+    {
+      "id": 37607866572,
+      "name": "Document editor acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 82,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866572/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866572/logs",
+      "workflow_id": 352701529
+    },
+    {
+      "id": 37607866601,
+      "name": "Calculator acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 114,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866601/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37607866601/logs",
+      "workflow_id": 351272618
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11477580390,
+      "name": "calculator-browser-evidence",
+      "size_in_bytes": 138988813,
+      "url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11477580390",
+      "archive_download_url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11477580390/zip",
+      "expired": false,
+      "created_at": "2026-10-07T10:46:08Z",
+      "expires_at": "2027-01-05T10:30:35Z",
+      "updated_at": "2026-10-07T10:46:08Z",
+      "digest": "sha256:e5ac5acdbcbc82f6b1fc4087e69177a3ed3db90792ff1235db4f5a493dc835a0",
+      "workflow_run": {
+        "id": 37607866601,
+        "repository_id": 1293025939,
+        "head_repository_id": 1293025939,
+        "head_branch": "codex/calculator-ui-consistency-20261007",
+        "head_sha": "3ff48da4880215ff62274ac5be21c5df2d50755b"
+      }
+    },
+    {
+      "id": 11475568456,
+      "name": "quality-Vancouver",
+      "size_in_bytes": 2568,
+      "url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11475568456",
+      "archive_download_url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11475568456/zip",
+      "expired": false,
+      "created_at": "2026-10-07T10:32:37Z",
+      "expires_at": "2027-01-05T10:30:35Z",
+      "updated_at": "2026-10-07T10:32:37Z",
+      "digest": "sha256:404acddadae6a87878ebe66bb8290634b6bc6dbfce2939124bb92bcf650a68c5",
+      "workflow_run": {
+        "id": 37607866601,
+        "repository_id": 1293025939,
+        "head_repository_id": 1293025939,
+        "head_branch": "codex/calculator-ui-consistency-20261007",
+        "head_sha": "3ff48da4880215ff62274ac5be21c5df2d50755b"
+      }
+    },
+    {
+      "id": 11474954597,
+      "name": "quality-Shanghai",
+      "size_in_bytes": 2548,
+      "url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11474954597",
+      "archive_download_url": "https://api.github.com/repos/annayzhu/LabNest/actions/artifacts/11474954597/zip",
+      "expired": false,
+      "created_at": "2026-10-07T10:32:33Z",
+      "expires_at": "2027-01-05T10:30:35Z",
+      "updated_at": "2026-10-07T10:32:33Z",
+      "digest": "sha256:4d77589addbc44c32404c2c94a4f5600e61530b19968bb5d26e609b9d764ed60",
+      "workflow_run": {
+        "id": 37607866601,
+        "repository_id": 1293025939,
+        "head_repository_id": 1293025939,
+        "head_branch": "codex/calculator-ui-consistency-20261007",
+        "head_sha": "3ff48da4880215ff62274ac5be21c5df2d50755b"
+      }
+    }
+  ],
+  "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20",
+  "actualMergeCommit": "96894e484de4fa50eead9debdd0cb626a73ff905",
+  "artifactSha256": "e5ac5acdbcbc82f6b1fc4087e69177a3ed3db90792ff1235db4f5a493dc835a0"
+}

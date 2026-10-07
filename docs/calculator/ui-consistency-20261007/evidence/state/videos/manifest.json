@@ -3,64 +3,72 @@
     "engine": "chromium",
     "width": 1440,
     "theme": "light",
-    "file": "page@f05f28e975be72b1bc8a2543970fac9e.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@3b763ae68ea40455f660e285fef63582.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "chromium",
     "width": 1440,
     "theme": "dark",
-    "file": "page@ce1ae1d92bbde92d9c6442e55b8ef461.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@ef57355b07ae79c25e1dd64fb665e604.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "chromium",
     "width": 390,
     "theme": "light",
-    "file": "page@f27db89e06dd3acd8f31468a454696a3.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@1f6852cd83fd31d3fb8528723f510f51.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "chromium",
     "width": 390,
     "theme": "dark",
-    "file": "page@7255dd9ba79352935204362776d834a8.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@203a21c5c786bdc5a545e2bf728090bf.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "webkit",
     "width": 1440,
     "theme": "light",
-    "file": "page@97734c0fe92f1906133aacf4d0caee5d.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@436984a73eb398e3fd6e33f07cb39267.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "webkit",
     "width": 1440,
     "theme": "dark",
-    "file": "page@f32f13bd66950e12cf663871b01165c7.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@6d1d4e593d8ed327427839651dc8ec8e.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "webkit",
     "width": 390,
     "theme": "light",
-    "file": "page@159eb9b432cfe3700a478ced60f3047b.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@e5302e185eb0ed52e6e9f3ba8bf65346.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   },
   {
     "engine": "webkit",
     "width": 390,
     "theme": "dark",
-    "file": "page@fd0356ed7783517bc202f37912435b86.webm",
-    "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-    "contextMapping": "sequential context close order and video completion timestamp"
+    "file": "page@f8e5dde67c96b8c96921bc41fd0e27f0.webm",
+    "sourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "contextMapping": "CI sequential context close order and distinct ZIP video completion timestamps",
+    "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20"
   }
 ]

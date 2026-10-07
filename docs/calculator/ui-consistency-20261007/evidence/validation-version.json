@@ -1,14 +1,31 @@
 {
   "baseline": "91fc4b6e9159687f529215266654a096fc0c8053",
-  "applicationSourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
-  "buildId": "sttEqHmQvAEua_yHuTpSd",
+  "applicationSourceCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+  "buildId": "GY13uDq0phY99qxMeUtUT",
   "directory": "/Users/annayzhu/Documents/Playground/LabNest",
-  "applicationBase": "http://localhost:3221",
-  "database": "isolated synthetic acceptance database, not production",
+  "applicationBase": "http://172.17.69.197:3001",
+  "database": "CI and 3221/3222 use isolated synthetic records; formal smoke reads production and changes local browser state only",
   "timezone": "Asia/Shanghai",
   "node": "v22.23.1",
   "browsers": "Playwright Chromium and WebKit",
   "beforeRuntimeParity": "CalculatorWorkspace.tsx and globals.css runtime hashes matched baseline before capture",
   "phonePhysicalDevice": "未执行",
-  "finalNative200Percent": "未执行: Mac locked; earlier actual desktop 200% test used449ec041; not relabeled as final version"
+  "finalNative200Percent": "未执行: Mac locked; earlier actual desktop 200% test used449ec041; not relabeled as final version",
+  "prefetchFollowup": {
+    "applicationSourceCommit": "c40068dd",
+    "testCommit": "3ff48da4880215ff62274ac5be21c5df2d50755b",
+    "buildId": "fcAlT1Ig8CxA3UYnNN120",
+    "localEntryChecks": 38,
+    "pageerrors": [],
+    "fullFinalCI": "all four related workflows passed; run37607866601"
+  },
+  "priorCompleteLocalVerification": {
+    "applicationSourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
+    "buildId": "sttEqHmQvAEua_yHuTpSd",
+    "applicationBase": "http://localhost:3221"
+  },
+  "ciCheckoutCommit": "93086eb8910a00d4b2dad3f6450d1278d32bbf20",
+  "mergeCommit": "96894e484de4fa50eead9debdd0cb626a73ff905",
+  "ciTreeEqualsMergedMain": true,
+  "gitTree": "a3ce17b209c16a23e10db9d6b9f2d4b3d0d7aa4a"
 }

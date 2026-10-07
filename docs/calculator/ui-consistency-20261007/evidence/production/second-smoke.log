@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: '中文', exact: true })[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/calculator-ui-20261007/deployment/smoke.mjs:20:57 {
+  log: [
+    "  - waiting for getByRole('button', { name: '中文', exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

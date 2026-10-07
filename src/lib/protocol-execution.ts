@@ -48,16 +48,20 @@ export function executionBodyWithoutTitle(blocks: ProtocolContentBlock[], title:
     first.items=[first.items[0].slice(prefix.length)];
     return cloned;
   }
-  const hasMeaning=(nodes:Extract<ProtocolContentBlock,{type:'rich_text'}>['nodes']|undefined)=>nodes?.some(node=>node.childContent?.length||node.content.some(run=>run.subscript||run.superscript||run.link||run.code));
-  if ((first.type === 'heading' || first.type === 'text') && (first.type==='heading'?first.text.replace(/^\d+[.、)]\s*/, ''):first.text).trim() === title.trim() && !hasMeaning(first.nodes)) return cloned.slice(1);
-  if (first.type === 'checklist' && first.items.length === 1 && first.items[0].trim() === title.trim() && !first.itemNodes?.some(hasMeaning)) return cloned.slice(1);
-  if (first.type === 'rich_text') {
-    const node = first.nodes[0];
-    if (node && (['heading2','heading3','numbered'].includes(node.type)?node.content.map(r=>r.text).join('').replace(/^\d+[.、)]\s*/, ''):node.content.map(r=>r.text).join('')).trim() === title.trim() && !hasMeaning([node])) {
-      first.nodes = first.nodes.slice(1);
-      return first.nodes.length ? cloned : cloned.slice(1);
+  const nodes=first.type==='rich_text'?first.nodes:(first.type==='heading'||first.type==='text')?first.nodes:first.type==='checklist'&&first.items.length===1?first.itemNodes?.[0]:undefined;
+  if(nodes?.length) {
+    const node=nodes[0],text=node.content.map(run=>run.text).join('');
+    const generatedTitle=['heading2','heading3','numbered'].includes(node.type)?text.replace(/^\d+[.、)]\s*/,''):text;
+    if(generatedTitle.trim()===title.trim()&&!node.content.some(run=>run.subscript||run.superscript||run.link||run.code)) {
+      // A generated title may own a nested list or be followed by paragraphs.
+      // Remove only its text, retaining the actual child/body content in order.
+      const retained=node.childContent?.length?[{...node,type:'paragraph' as const,content:[]},...nodes.slice(1)]:nodes.slice(1);
+      if(!retained.length)return cloned.slice(1);
+      cloned[0]={id:first.id,execution:first.execution,type:'rich_text',nodes:retained};
+      return cloned;
     }
-  }
+  } else if ((first.type === 'heading' || first.type === 'text') && (first.type==='heading'?first.text.replace(/^\d+[.、)]\s*/, ''):first.text).trim() === title.trim()) return cloned.slice(1);
+  else if(first.type==='checklist'&&first.items.length===1&&first.items[0].trim()===title.trim())return cloned.slice(1);
   return cloned;
 }
 

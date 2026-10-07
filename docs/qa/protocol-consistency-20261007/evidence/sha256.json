@@ -6,8 +6,8 @@
   },
   {
     "file": "browser-report.json",
-    "sha256": "638aef5409c1fb1fdf9cc5fc313ef9162f1debb6a59cd12e2deeb8a9c5d413a0",
-    "bytes": 2347
+    "sha256": "dfcc489245f9f4a541b2f76ee057c5e1a4e4f9082e1efd5b43172de761b6bd27",
+    "bytes": 2588
   },
   {
     "file": "build-final.log",
@@ -16,13 +16,13 @@
   },
   {
     "file": "create-preview-1440.png",
-    "sha256": "bf5f8f5d5e5439f765f2285ca5a8d4b7ac3f514e315e6fd8cc3d37e0e0ae48dc",
-    "bytes": 171813
+    "sha256": "cdac74b2658bcaa60afa183f0674529edb03ba3ed9fa2d041a2231c0da8a569f",
+    "bytes": 171831
   },
   {
     "file": "database-report.json",
-    "sha256": "86a60128afa4b55e8874792e675fdd20a210f34fd76ec8509a5b5ee295c1282b",
-    "bytes": 517
+    "sha256": "8452778b42498847e787a8413b74de2c6762fac9167e03bf1b0f2d988fd1199e",
+    "bytes": 654
   },
   {
     "file": "dedup-final-tests.log",
@@ -31,8 +31,8 @@
   },
   {
     "file": "docx-import-preview.png",
-    "sha256": "84dea9c30f57ec65dff35f459cade75b8424d7166534779afbd48fac79bb6a98",
-    "bytes": 162503
+    "sha256": "a9f9ef705ef9e0a71399f999acfa4ece51daf3cbf79fd86df1718e81b77ec610",
+    "bytes": 162043
   },
   {
     "file": "existing-report.json",
@@ -41,43 +41,43 @@
   },
   {
     "file": "experiment-preview-after-parameters.png",
-    "sha256": "f4aeb07506d8ef1a94704d4becaeeddb7cb94730c45be49d2dd0498e9169734c",
-    "bytes": 224280
+    "sha256": "a205504a3299f04d8f832af78fb266014a219f5ad25577e94ed82cf379051337",
+    "bytes": 224338
   },
   {
     "file": "experiment-preview.pdf",
-    "sha256": "2cd7819bddfaf19830e882ff22adc1cb68d6cf1fd47cb95480fadb41a90c8d28",
-    "bytes": 523239
+    "sha256": "ac7461d5002365e6bfb5507d89cd90cbff5b35efbbaeb2124f2b88634553a569",
+    "bytes": 521627
   },
   {
     "file": "experiment-print-page-1.png",
-    "sha256": "7c9c1cf2236bd28c58deba0fa2162c99e682a0da4aed40665028af4fcbc32c8c",
-    "bytes": 62930
+    "sha256": "255ffa36282760392dbf443a000210cc25cea2477c9b992136892d0f0dc4d893",
+    "bytes": 62796
   },
   {
     "file": "experiment-print-page-2.png",
-    "sha256": "f14abcd09cbb0babd52b34dcb47d6908febdbb601978ab2437c8dd21ea6424cb",
-    "bytes": 23252
+    "sha256": "cbb78eaec2c65c2b78d7ff8f577db39d8fd025b8ae2fea3cf8cf6aeb4047d6b8",
+    "bytes": 23193
   },
   {
     "file": "experiment.json",
-    "sha256": "99972eb920e07e7ca9a30cc58929fa70ca59a47e994063c73ead1ca9026e6a98",
+    "sha256": "50738f81ee66844905338fd7cb9af041417ee0f31ff5983208aeac450120e87c",
     "bytes": 1565
   },
   {
     "file": "experiment.md",
-    "sha256": "7f4c6daeb5e6713bb994f3896801e2c7f6b83bcdc0ce56ab1dde51fc76199cb8",
+    "sha256": "9128f518f4c92cc5d5072c62529ea62c2a94fe62312d0f8d19e7be7d172a160c",
     "bytes": 1739
   },
   {
     "file": "experiment.xlsx",
-    "sha256": "b0683a86d7fa65d0a851713579abe35990b2b31a30e238d70af87a73e84053a8",
+    "sha256": "bb860c5f95c75bf0fc91794e87b68dc1c45bcaa34a4ed247c06362c9a62b6bec",
     "bytes": 4063
   },
   {
     "file": "filled-example-run.png",
-    "sha256": "3d38e51d3b7809de3dd80d87bbceb488126f06bcdeae2a9518c9e000b166264a",
-    "bytes": 155354
+    "sha256": "d496283ca232e548b7df367ba584cb945279c7bf9e440136a5e2b0998a478b9f",
+    "bytes": 155203
   },
   {
     "file": "lint-final.log",
@@ -91,13 +91,13 @@
   },
   {
     "file": "run-linked-calculator-390.png",
-    "sha256": "93994f0e4cbdf32982c48bcc35e7481984e66a37d3eef64cec075075de61a2e1",
-    "bytes": 57182
+    "sha256": "dbd6b61964338d7f0e3782e08c9fc39c4092b6531e228af123ed9fe505807755",
+    "bytes": 57184
   },
   {
     "file": "run-parameter-edited-390.png",
-    "sha256": "04c3b4965df13991423b01af5098af4d0e35e8e900e41e8b38ce8da0226a734b",
-    "bytes": 118293
+    "sha256": "bcb46371361e31d64cc1db3351446c2b23ac555b2a19556cdfb63434954959c2",
+    "bytes": 117581
   },
   {
     "file": "template-report.json",
@@ -106,8 +106,8 @@
   },
   {
     "file": "typecheck-final.log",
-    "sha256": "361e3acc241165e8997cb8012cf39f59e815f03e51b4322c9e1865ce8e27296a",
-    "bytes": 43
+    "sha256": "a77f8d6b653431a3d4be5365515af6dc7b42bd7fd309152b9bd744d9871f336f",
+    "bytes": 509
   },
   {
     "file": "unit-los-angeles-final.log",
@@ -118,5 +118,10 @@
     "file": "unit-shanghai-final.log",
     "sha256": "615d746a0520661cc6a6741d0a3c5832ccc0b2a5567b98b8f347fa351d9d3c45",
     "bytes": 274
+  },
+  {
+    "file": "zero-operation-run-390.png",
+    "sha256": "0b3febc322d140ce72c06d0c961dca298418d5ecd55b2350cc95cfbe2802037d",
+    "bytes": 58755
   }
 ]

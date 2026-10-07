@@ -1,50 +1,56 @@
 {
-  "head": "46b58806607a962b9a7d60a61098479e39753d37",
+  "head": "ff5a34590cc70fd7ee0aa01abed398cbae950f5d",
   "browser": "149.0.7827.55",
   "checks": [
     {
       "name": "A05 A06 A10 A14 A21 create preview shows three operations with full rich content, table and actual loaded image",
       "status": "通过",
-      "ms": 1583
+      "ms": 1561
     },
     {
       "name": "A08 A09 author confirmation is visible, grouping saves and reopens without fabricated completion",
       "status": "通过",
-      "ms": 2573
+      "ms": 2559
     },
     {
       "name": "A16 A17 A18 A20 actual Run completion, note, timer, save, refresh and page readback retain step IDs",
       "status": "通过",
-      "ms": 4786
+      "ms": 4721
     },
     {
       "name": "A23 real DOCX file import preserves operation identity and embedded image loading through save and creation",
       "status": "通过",
-      "ms": 3301
+      "ms": 3369
     },
     {
       "name": "A26 built-in v0.3 structure example filled and imported through the actual UI creates exactly two operations",
       "status": "通过",
-      "ms": 3147
+      "ms": 3123
     },
     {
       "name": "A24 A25 all included current production-clone Protocols have actual preview/record/Run checks and full scroll evidence",
       "status": "通过",
-      "ms": 31505
+      "ms": 28377
     },
     {
       "name": "A09 A21 documentation-only captured Protocol stays readable in mixed Run without adding progress",
       "status": "通过",
-      "ms": 822
+      "ms": 844
+    },
+    {
+      "name": "A09 pure information creation is blocked and synthetic old zero-step Run cannot falsely complete",
+      "status": "通过",
+      "ms": 1400
     },
     {
       "name": "A30 existing JSON/Markdown/XLSX exports include operation prose, dose, references and preserve correct count",
       "status": "通过",
-      "ms": 1038
+      "ms": 1065
     }
   ],
   "pdfTextChecked": true,
   "pageErrors": [],
+  "applicationSourceHead": "5a57bdd05aa76cb242309fed27f4b4ca848b85b5",
   "catalog": [
     {
       "code": "PRT-100007",

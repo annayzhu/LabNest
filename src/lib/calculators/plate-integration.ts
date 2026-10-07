@@ -54,7 +54,6 @@ export function buildPlateLiquidPlan(result:CalculatorResult,context:PlateContex
  const add=(data:Omit<PlateContribution,'plateId'|'plateName'|'unit'|'protocolSteps'|'planName'|'warnings'>)=>contributions.push({...data,plateId:context.plateId,plateName:context.plateName,unit:'µL',protocolSteps:steps,planName:name,warnings:verified.warnings,savedPreparedVolume:data.preparedVolume,planOveragePercent:data.applyOverage?Number(input.overagePercent??0):0});
  if(result.calculatorId==='master-mix') {
   const groups=plateReactionScopes(verified,context);
-  const factor=1+Number(input.overagePercent??0)/100;
   for(const group of groups) {
    const additions=group.operations.filter(op=>op.role==='add');
    // Full scientific recipe signature, independent of generated row IDs, counts, reserve and display units.
@@ -69,8 +68,9 @@ export function buildPlateLiquidPlan(result:CalculatorResult,context:PlateContex
     const occurrence=occurrences.get(descriptor)??0;
     if(premix)occurrences.set(descriptor,occurrence+1);
     const prepared=op.quantity.value*(premix?1:op.repetitions);
-    const base=premix?prepared/factor:prepared;
-    add({groupKey:premix?`calculator-premix:${signature}`:`calculator-separate:${context.plateId}:${group.id}:${op.source}`,groupLabel:premix?'Master Mix · 预混液':`${group.name} · ${op.component}（独立加样）`,groupName:group.name,tubeRole:premix?'premix':'separate',component:op.component,componentKey:premix?`${descriptor}:${occurrence}`:`${index}:${op.source}:${op.component}`,scopeWellIds:group.wellIds,perWellVolume:base/Number(group.reactions),baseVolume:base,preparedVolume:prepared,applyOverage:premix,source:op.source});
+    const perWellVolume=Number(group.rows[index].perReactionUl);
+    const base=perWellVolume*Number(group.reactions);
+    add({groupKey:premix?`calculator-premix:${signature}`:`calculator-separate:${context.plateId}:${group.id}:${op.source}`,groupLabel:premix?'Master Mix · 预混液':`${group.name} · ${op.component}（独立加样）`,groupName:group.name,tubeRole:premix?'premix':'separate',component:op.component,componentKey:premix?`${descriptor}:${occurrence}`:`${index}:${op.source}:${op.component}`,scopeWellIds:group.wellIds,perWellVolume,baseVolume:base,preparedVolume:prepared,applyOverage:premix,source:op.source});
    }
   }
  } else {

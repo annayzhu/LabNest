@@ -27,10 +27,11 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   const error=await units.evaluate(style);
   for(const state of [normal,focused,disabled,error]){assert.equal(state.appearance,'none');assert.equal(state.padding,'40px');assert.equal(state.position,normal.position);assert(state.position.includes('12px'));}
   await stock.fill('10');assert.equal(await units.isDisabled(),false);
-  await units.focus();const before=await units.inputValue();await page.keyboard.press('Space');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+  // Native type-ahead works across macOS and Linux without relying on OS popup keys.
+  await units.focus();const before=await units.inputValue();await page.keyboard.press('n');
   const after=await units.inputValue();assert.notEqual(after,before);
   await page.screenshot({path:`${out}/${engine}-${width}.png`,fullPage:true});
-  report.checks.push({engine,width,status:'passed',normal,focused,disabled,error,keyboard:{before,after},description:'real incomplete numeric input disables native unit select; focus/error geometry and ArrowDown selection retained'});
+  report.checks.push({engine,width,status:'passed',normal,focused,disabled,error,keyboard:{before,after,key:'n (native type-ahead)'},description:'real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained'});
   await context.close();
  }}finally{await browser.close();await writeFile(`${out}/report.json`,JSON.stringify(report,null,2));}
 }

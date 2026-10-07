@@ -22,9 +22,11 @@ var LabNestCalculations = (() => {
   var standalone_exports = {};
   __export(standalone_exports, {
     appearanceKey: () => appearanceKey,
+    buildPlateLiquidPlan: () => buildPlateLiquidPlan,
     calculate: () => calculate,
     calculatorSolidSvg: () => calculatorSolidSvg,
     canCopyResult: () => canCopyResult,
+    canonicalPlateInputs: () => canonicalPlateInputs,
     compatibleUnits: () => compatibleUnits,
     copyCalculation: () => copyCalculation,
     displayQuantity: () => displayQuantity,
@@ -32,6 +34,7 @@ var LabNestCalculations = (() => {
     getCalculatorCatalog: () => getCalculatorCatalog,
     getCalculatorDefinition: () => getCalculatorDefinition,
     parseAppearance: () => parseAppearance,
+    plateReactionScopes: () => plateReactionScopes,
     presentedOutputs: () => presentedOutputs,
     presentedTable: () => presentedTable,
     resultAuditText: () => resultAuditText,
@@ -636,6 +639,17 @@ var LabNestCalculations = (() => {
     }
     return lines.join("\n");
   }
+  function reactionMixSteps(result, zh, groupId) {
+    const container = result.rawInputs?.__context?.wellIds ? zh ? "\u5B54\u52A0\u6837" : "wells" : zh ? "\u4E2A\u53CD\u5E94" : "reactions";
+    const steps = [];
+    for (const group of reactionMixGroups(result, zh).filter((g) => groupId === void 0 || g.id === groupId)) {
+      steps.push(`${group.name}${zh ? "\u914D\u5236" : " preparation"}`);
+      for (const op of group.operations.filter((o) => o.role === "add" && o.destination.startsWith("premix:"))) steps.push(`${reactionComponent(op.component, zh)}: ${reactionMixQuantity(op.quantity.value, result)} \u2192 ${group.name}`);
+      if (group.dispense) steps.push(`${group.name}${zh ? "\u9884\u6DF7\u6DB2" : " premix"}: ${reactionMixQuantity(group.dispense.quantity.value, result)} \xD7 ${group.dispense.repetitions} ${container}`);
+      for (const op of group.operations.filter((o) => o.role === "add" && !o.destination.startsWith("premix:"))) steps.push(`${reactionComponent(op.component, zh)}: ${reactionMixQuantity(op.quantity.value, result)} \xD7 ${op.repetitions} ${container}${zh ? "\uFF0C\u5355\u72EC\u52A0\u5165" : ", add separately"}`);
+    }
+    return steps;
+  }
 
   // src/lib/calculators/result-presentation.ts
   var tableQuantityUnits = { perWellUl: "\xB5L", dnaMassUg: "\xB5g", rnaPmol: "pmol", finalNm: "nM", takeUl: "\xB5L", diluentUl: "\xB5L", mixedUl: "\xB5L", transferUl: "\xB5L", remainingUl: "\xB5L", requiredUl: "\xB5L", perReactionUl: "\xB5L", batchUl: "\xB5L", availableUl: "\xB5L", sampleUl: "\xB5L", bufferUl: "\xB5L", reducingAgentUl: "\xB5L", totalUl: "\xB5L", theoreticalUl: "\xB5L", actualUl: "\xB5L", volumeUl: "\xB5L", stockToAddUl: "\xB5L", targetProteinUg: "\xB5g" };
@@ -1233,6 +1247,82 @@ var LabNestCalculations = (() => {
     }
     if (result.outputs.some((output) => typeof output.value === "number" && !Number.isFinite(output.value))) throw new Error("\u8BA1\u7B97\u6EA2\u51FA\u6216\u6761\u4EF6\u65E0\u6548 / Numerical overflow or invalid conditions");
     return { ...result, displayUnits: validateDisplayUnits(result, request.inputs.__displayUnits), schemaVersion: 2, status: ["split", "od600", "tm", "dna-rna-conversion", "moi", "virus-titer", "ic50-ec50", "elisa-4pl", "bradford-bca"].includes(request.calculatorId) ? "estimate" : result.table?.some((row) => typeof row.status === "string" && row.status !== "\u6709\u6548 / Valid") ? "partial" : "valid", mode: String(request.inputs.mode ?? "default"), rawInputs: structuredClone(request.inputs), normalizedInputs };
+  }
+
+  // src/lib/calculators/plate-integration.ts
+  function checkScope(context) {
+    const shape = { 6: [2, 3], 12: [3, 4], 24: [4, 6], 96: [8, 12], 384: [16, 24] };
+    const bounds = shape[context.plateSize];
+    if (!bounds || !context.workspaceId || !context.plateId || !context.wellIds.length || new Set(context.wellIds).size !== context.wellIds.length || context.wellIds.some((id) => {
+      const m = /^([A-P])(\d+)$/.exec(id);
+      return !m || m[1].charCodeAt(0) - 65 >= bounds[0] || Number(m[2]) < 1 || Number(m[2]) > bounds[1];
+    })) throw new Error("\u6240\u9009\u5B54\u4F4D\u65E0\u6548\u6216\u91CD\u590D\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9 / Invalid or duplicate selected wells");
+  }
+  function plateReactionScopes(result, context) {
+    checkScope(context);
+    const groups = reactionMixGroups(result, true);
+    if (!groups.length || groups.some((g) => !Number.isInteger(g.reactions) || Number(g.reactions) < 1) || groups.reduce((sum, g) => sum + Number(g.reactions), 0) !== context.wellIds.length)
+      throw new Error("\u53CD\u5E94\u603B\u6570\u5FC5\u987B\u7B49\u4E8E\u6240\u9009\u5B54\u6570\uFF1B\u8BF7\u8C03\u6574\u5404\u7EC4\u53CD\u5E94\u6570 / Reaction count must match selected wells");
+    let start = 0;
+    return groups.map((g) => {
+      const wellIds = context.wellIds.slice(start, start + Number(g.reactions));
+      start += Number(g.reactions);
+      return { ...g, wellIds };
+    });
+  }
+  function canonicalPlateInputs(calculatorId, input) {
+    const normalized = { ...input };
+    for (const field of getCalculatorDefinition(calculatorId).fields) {
+      if (!field.unit || !isFieldVisible(calculatorId, field.key, input) || !String(input[field.key] ?? "").trim()) continue;
+      const from = String(input[`${field.key}Unit`] ?? field.unit);
+      if (compatibleUnits(field.unit).includes(from)) {
+        normalized[field.key] = convert(parseScalar(input[field.key]), from, field.unit);
+        normalized[`${field.key}Unit`] = field.unit;
+      }
+    }
+    return normalized;
+  }
+  function buildPlateLiquidPlan(result, context) {
+    checkScope(context);
+    const definition = getCalculatorDefinition(result.calculatorId);
+    if (!result.rawInputs || result.status === "partial" || result.methodVersion !== definition.methodVersion)
+      throw new Error("\u8BF7\u7528\u5F53\u524D\u8BA1\u7B97\u65B9\u6CD5\u91CD\u65B0\u8BA1\u7B97\u540E\u4FDD\u5B58 / Recalculate with the current method before saving");
+    const input = structuredClone(result.rawInputs);
+    const verified = calculate({ calculatorId: result.calculatorId, inputs: input });
+    if (verified.status === "partial") throw new Error("\u65E0\u6548\u7ED3\u679C\u4E0D\u80FD\u4FDD\u5B58\u4E3A\u914D\u6DB2\u65B9\u6848 / Invalid results cannot be saved");
+    if (input.wells !== void 0 && (Number(input.wells) !== context.wellIds.length || Number(input.plates ?? 1) !== 1))
+      throw new Error("\u5B54\u6570\u5FC5\u987B\u7B49\u4E8E\u5F53\u524D\u677F\u6240\u9009\u5B54\u6570 / Well count must match this plate selection");
+    const name = definition.nameZh, contributions = [];
+    const steps = result.calculatorId === "master-mix" ? reactionMixSteps(verified, true) : verified.instructions ?? [];
+    const add = (data) => contributions.push({ ...data, plateId: context.plateId, plateName: context.plateName, unit: "\xB5L", protocolSteps: steps, planName: name, warnings: verified.warnings, savedPreparedVolume: data.preparedVolume, planOveragePercent: data.applyOverage ? Number(input.overagePercent ?? 0) : 0 });
+    if (result.calculatorId === "master-mix") {
+      const groups = plateReactionScopes(verified, context);
+      const factor = 1 + Number(input.overagePercent ?? 0) / 100;
+      for (const group of groups) {
+        const additions = group.operations.filter((op) => op.role === "add");
+        const rawRows = Array.isArray(input.groups) ? input.groups[Number(group.id)]?.rows : input.rows;
+        const signature = JSON.stringify({ name: group.name, rows: group.rows.map((row) => ({ name: row.component, volume: row.perReactionUl, premix: row.premix })), concentrations: rawRows?.map((row) => row.inputMode === "concentration" ? { inputMode: "concentration", stock: row.stock, target: row.target, stockUnit: row.stockUnit, targetUnit: row.targetUnit } : { inputMode: "volume" }) });
+        for (const [index, op] of additions.entries()) {
+          const premix = op.destination.startsWith("premix:");
+          const prepared = op.quantity.value * (premix ? 1 : op.repetitions);
+          const base = premix ? prepared / factor : prepared;
+          add({ groupKey: premix ? `calculator-premix:${signature}` : `calculator-separate:${context.plateId}:${group.id}:${op.source}`, groupLabel: premix ? `${group.name} \xB7 \u9884\u6DF7\u6DB2` : `${group.name} \xB7 ${op.component}\uFF08\u72EC\u7ACB\u52A0\u6837\uFF09`, groupName: group.name, tubeRole: premix ? "premix" : "separate", component: op.component, componentKey: `${index}:${op.source}:${op.component}`, scopeWellIds: group.wellIds, perWellVolume: base / Number(group.reactions), baseVolume: base, preparedVolume: prepared, applyOverage: premix, source: op.source });
+        }
+      }
+    } else {
+      const factor = result.calculatorId === "seeding" ? 1 + Number(input.overagePercent ?? 0) / 100 : 1;
+      const operations = (verified.operations ?? []).filter((op) => op.role === "add");
+      for (const [index, op] of operations.entries()) {
+        const levels = [...new Set(operations.map((o) => o.sample).filter(Boolean))];
+        const scope = result.calculatorId === "kill-curve" ? context.wellIds.filter((_, i) => levels[Math.min(levels.length - 1, Math.floor(i * levels.length / context.wellIds.length))] === op.sample) : context.wellIds;
+        if (!scope.length) continue;
+        const prepared = op.quantity.value * op.repetitions * (result.calculatorId === "kill-curve" ? scope.length : 1);
+        const base = prepared / factor;
+        add({ groupKey: `calculator:${context.plateId}:${result.calculatorId}:${op.sample ?? op.destination}`, groupLabel: `${name}${op.sample ? ` \xB7 ${op.sample}` : ""}`, groupName: op.sample ?? name, tubeRole: "standard", component: op.component, componentKey: `${index}:${op.source}`, scopeWellIds: scope, perWellVolume: base / scope.length, baseVolume: base, preparedVolume: prepared, applyOverage: result.calculatorId === "seeding", source: op.source });
+      }
+    }
+    if (!contributions.length) throw new Error("\u6B64\u7ED3\u679C\u6CA1\u6709\u53EF\u4FDD\u5B58\u7684\u6DB2\u4F53\u64CD\u4F5C / No liquid operations to save");
+    return { module: "calculator", calculatorId: result.calculatorId, name, recipeName: name, plateId: context.plateId, plateName: context.plateName, plateSize: context.plateSize, scopeWellIds: [...context.wellIds], input, resultSnapshot: verified, protocolSnapshot: { steps }, contributions, stale: false, status: "saved", createdAt: (/* @__PURE__ */ new Date()).toISOString(), updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
   }
 
   // src/lib/calculators/task-presentation.ts

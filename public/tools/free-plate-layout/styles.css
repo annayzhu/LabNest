@@ -771,3 +771,8 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px
 .plate-calculator-host .standalone-appearance-preview { margin-block:8px; }
 .plate-calculator-host .standalone-appearance-preview summary { cursor:pointer; min-height:var(--calc-control); }
 @media(max-width:767px) { .plate-calculator-host { --calc-control:44px; } .plate-calculator-host :is(select,button,input:not([type=checkbox])) { min-height:var(--calc-control); font-size:16px; } }
+
+/* Host the existing responsive Calculator, without a second form or nested scrolling. */
+.plate-calculator-host.has-main-calculator { padding: 0; overflow: hidden; min-height: 0; }
+.plate-calculator-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--surface); }
+@media (min-width: 768px) { .liquid-drawer:has(.plate-calculator-frame) { grid-template-columns: minmax(0,1fr) minmax(0,min(1120px,100vw)); } }

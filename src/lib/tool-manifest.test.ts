@@ -22,7 +22,7 @@ describe("lab tool manifest", () => {
 
   it("offers the Studio migration route when unconfigured and preserves free plate planning", () => {
     expect(labToolManifest.find((tool) => tool.id === "visualization-studio")?.launchUrl).toBe("/tools/visualization");
-    expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toBe("/tools/free-plate-layout/index.html?v=20260826-2");
+    expect(labToolManifest.find((tool) => tool.id === "free-plate-layout")?.launchUrl).toMatch(/^\/tools\/free-plate-layout\/index\.html\?v=/);
   });
 
   it("connects Calculator to its internal catalog", () => {

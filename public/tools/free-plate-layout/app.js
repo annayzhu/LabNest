@@ -131,6 +131,7 @@
   let activeLiquidModule = "basic";
   let activePlateCalculator = "";
   let lastStandalonePlateResult = null;
+  let activePlateCalculatorBridge = null;
   let lastLiquidResult = null;
   let pendingDrugLayout = null;
   let pendingSerialLayout = null;
@@ -1306,6 +1307,8 @@
   function renderLiquidModule(module = activeLiquidModule, { captureCurrent = true } = {}) {
     if (captureCurrent && !activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = "";
+    activePlateCalculatorBridge = null;
+    elements.plateCalculatorHost.classList.remove("has-main-calculator");
     activeLiquidModule = ["basic", "transfection", "serial", "drug"].includes(module) ? module : "basic";
     lastLiquidResult = null;
     pendingDrugLayout = null;
@@ -1328,7 +1331,7 @@
     elements.closeLiquidDrawerButton.focus({ preventScroll: true });
   }
 
-  function openPlateCalculator(calculatorId) {
+  function openPlateCalculator(calculatorId, savedPlan = null) {
     if (!plateCalculatorDefinitions[calculatorId]) return;
     if (!activePlateCalculator && document.getElementById("liquidActiveForm")) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = calculatorId;
@@ -1338,13 +1341,31 @@
     document.body.style.overflow = "hidden";
     elements.liquidDrawerContent.hidden = true;
     elements.plateCalculatorHost.hidden = false;
-    elements.plateCalculatorHost.innerHTML = standalonePlateCalculatorMarkup(calculatorId);
+    activePlateCalculatorBridge = null;
+    elements.plateCalculatorHost.classList.remove("has-main-calculator");
+    if ((window.location.protocol === "http:" || window.location.protocol === "https:") && window.location.pathname.startsWith("/tools/free-plate-layout/")) {
+      if (savedPlan?.scopeWellIds?.length) selection = new Set(savedPlan.scopeWellIds);
+      const context = {workspaceId:workspace.id,plateId:project.id,plateName:project.name,plateSize:project.plateSize,wellIds:liquidTargetWellIds(),requestId:window.crypto?.randomUUID?.() || `plate-${Date.now()}-${Math.random().toString(36).slice(2)}`};
+      const query = new URLSearchParams({embed:"plate",source:"plate",locale:language,workspaceId:context.workspaceId,plateId:context.plateId,plateName:context.plateName,plateSize:String(context.plateSize),wellIds:context.wellIds.join(","),requestId:context.requestId});
+      const frame = document.createElement("iframe");
+      frame.className = "plate-calculator-frame";
+      frame.title = bilingual("主 Calculator 配液编辑器", "Main Calculator preparation editor");
+      frame.src = `/tools/calculator/${calculatorId}?${query}`;
+      elements.plateCalculatorHost.classList.add("has-main-calculator");
+      elements.plateCalculatorHost.replaceChildren(frame);
+      activePlateCalculatorBridge = {frame,context,boardSnapshot:snapshot(),input:savedPlan?.input};
+    } else {
+      // Downloaded file:// planner keeps the existing offline engine/editor.
+      elements.plateCalculatorHost.innerHTML = standalonePlateCalculatorMarkup(calculatorId);
+    }
     document.querySelectorAll("[data-liquid-module]").forEach((button) => button.classList.remove("active"));
     document.querySelectorAll("[data-plate-calculator]").forEach((button) => button.classList.toggle("active", button.dataset.plateCalculator === calculatorId));
     elements.closeLiquidDrawerButton.focus({ preventScroll: true });
   }
 
   function closeLiquidDrawer() {
+    activePlateCalculatorBridge = null;
+    elements.plateCalculatorHost.classList.remove("has-main-calculator");
     if (!activePlateCalculator) captureLiquidDraft(activeLiquidModule);
     activePlateCalculator = "";
     lastStandalonePlateResult = null;
@@ -1454,14 +1475,15 @@
   function renderSavedLiquidPlans() {
     const plans = project.liquidPlans || [];
     elements.savedLiquidPlansTitle.textContent = bilingual("当前板已保存方案", "Saved plans for this plate");
-    elements.savedLiquidPlansHelp.textContent = bilingual("只有保存到项目且状态有效的方案，才会进入跨板汇总和项目导出。", "Only current plans saved to the project are included in cross-plate summaries and project exports.");
+    elements.savedLiquidPlansHelp.textContent = bilingual("每板只有一个当前方案。保存会替换当前方案；旧项目的其他方案保留在 JSON 备份归档中。", "Each plate has one current plan. Saving replaces it; other legacy plans remain archived in JSON backups.");
     elements.savedLiquidPlanCount.textContent = String(plans.length);
+    if(project.archivedLiquidPlans?.length)elements.savedLiquidPlansHelp.textContent += bilingual(` 已归档 ${project.archivedLiquidPlans.length} 条旧方案。`, ` ${project.archivedLiquidPlans.length} legacy plans archived.`);
     if (!plans.length) {
       elements.savedLiquidPlanList.innerHTML = `<div class="saved-liquid-empty"><strong>${bilingual("还没有已保存方案", "No saved plans yet")}</strong><span>${bilingual("打开配液计算，完成计算后点击“保存到项目”。", "Open the calculator and choose “Save to project” after calculating.")}</span></div>`;
       return;
     }
     elements.savedLiquidPlanList.innerHTML = plans.map((plan) => {
-      const stale = plan.stale === true || plan.status === "stale";
+      const stale = !Workspace.usableLiquidPlan(plan);
       const confirming = pendingLiquidPlanDeleteId === plan.id;
       const time = plan.updatedAt || plan.createdAt;
       const parsedTime = time ? new Date(time) : null;
@@ -1498,7 +1520,7 @@
     const skipped = [];
     for (const plate of plates) {
       for (const plan of plate.liquidPlans || []) {
-        if (plan.stale) continue;
+        if (!Workspace.usableLiquidPlan(plan)) continue;
         if (!Array.isArray(plan.contributions) || !plan.contributions.length) skipped.push(`${plate.name} · ${plan.name || plan.module}`);
         else contributions.push(...plan.contributions.map((item) => ({ ...item, plateId: plate.id, plateName: plate.name })));
       }
@@ -1506,10 +1528,17 @@
     return { merged: Workspace.mergeLiquidContributions(contributions, { overagePercent, minPipetteVolume: 1, maxContainerVolume }), skipped, contributionCount: contributions.length };
   }
 
+  function liquidTubeRoleLabel(role) {
+    return ({separate:bilingual("独立加样", "Separate addition"),premix:bilingual("预混液", "Premix"),cargo:bilingual("目的物管", "Cargo tube"),common:bilingual("公共预混液", "Common premix")})[role] || bilingual("配液", "Preparation");
+  }
+  function liquidSummaryWarnings(group, component) {
+    return [...new Set([...(group.sources || []).flatMap(source=>source.warnings||[]), ...(component.warning?[bilingual("存在移液量低于 1 µL", "A transfer is below 1 µL")]:[])])].join("；");
+  }
+
   function renderProjectLiquidSummary(summary) {
     if (!summary) { elements.projectLiquidSummary.innerHTML = ""; return; }
     const rows = summary.groups.flatMap((group) => group.components.map((component) => [
-      group.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : group.tubeRole === "common" ? bilingual("公共预混液", "Common premix") : bilingual("配液", "Preparation"),
+      liquidTubeRoleLabel(group.tubeRole),
       group.label || group.key,
       component.name,
       (group.sources || group.plates || []).map((source) => `${source.plateName || source.plateId}${source.scopeWellIds?.length ? ` · ${source.scopeWellIds.join(", ")}` : ""}`).join("；"),
@@ -1517,12 +1546,12 @@
       `${liquidNumber(component.baseVolume)} µL`,
       `${liquidNumber(component.preparedVolume)} µL`,
       String(component.containerCount),
-      component.warning ? bilingual("存在移液量低于 1 µL", "A transfer is below 1 µL") : "",
+      liquidSummaryWarnings(group,component),
     ]));
     const skipped = summary.skipped?.length ? `<div class="project-liquid-summary-note warning">${escapeHtml(bilingual(`有 ${summary.skipped.length} 个旧方案没有可合并明细，请重新打开计算并保存：${summary.skipped.join("；")}`, `${summary.skipped.length} legacy plans have no mergeable detail; recalculate and save them: ${summary.skipped.join("; ")}`))}</div>` : "";
-    const note = `<div class="project-liquid-summary-note">${escapeHtml(bilingual(`已汇总 ${summary.plateNames.length} 块板；按实际配液管合并兼容需求，再统一加入 ${summary.overagePercent}% 余量。目的物管按 siRNA/目的物身份计算，不按板号计算。`, `${summary.plateNames.length} plates summarized by physical preparation tube with one ${summary.overagePercent}% overage. Cargo tubes are grouped by cargo identity, never by plate name.`))}</div>`;
-    const cargoTubes = summary.groups.filter((group) => group.tubeRole === "cargo").length;
-    const commonTubes = summary.groups.filter((group) => group.tubeRole === "common").length;
+    const note = `<div class="project-liquid-summary-note">${escapeHtml(bilingual(`已汇总 ${summary.plateNames.length} 块板；兼容预混液加入一次 ${summary.overagePercent}% 余量，独立加样不增加余量。`, `${summary.plateNames.length} plates summarized with one ${summary.overagePercent}% reserve for compatible premixes. Separate additions retain their actual dose.`))}</div>`;
+    const cargoTubes = summary.groups.filter((group) => ["cargo","separate"].includes(group.tubeRole)).length;
+    const commonTubes = summary.groups.filter((group) => ["common","premix","standard"].includes(group.tubeRole)).length;
     const overview = rows.length ? `<div class="project-liquid-summary-overview"><div class="project-liquid-summary-stat"><strong>${summary.plateNames.length}</strong><span>${bilingual("块板", "plates")}</span></div><div class="project-liquid-summary-stat"><strong>${cargoTubes}</strong><span>${bilingual("目的物管", "cargo tubes")}</span></div><div class="project-liquid-summary-stat"><strong>${commonTubes}</strong><span>${bilingual("公共预混管", "common tubes")}</span></div></div>` : "";
     const actions = rows.length ? `<div class="project-liquid-summary-actions"><button type="button" class="primary-button" data-open-liquid-summary>${bilingual("查看完整汇总与导出", "View full summary & export")}</button></div>` : "";
     const empty = rows.length ? "" : `<div class="project-liquid-summary-note warning">${escapeHtml(bilingual("所选板没有可汇总的已保存配液方案。", "The selected plates have no saved liquid plans that can be summarized."))}</div>`;
@@ -1531,10 +1560,10 @@
 
   function fullLiquidSummaryTable(summary) {
     const rows = summary.groups.flatMap((group) => group.components.map((component) => [
-      group.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : bilingual("公共预混液", "Common premix"), group.label || group.key, component.name,
+      liquidTubeRoleLabel(group.tubeRole), group.label || group.key, component.name,
       (group.sources || []).map((source) => `${source.plateName || source.plateId}${source.scopeWellIds?.length ? ` · ${source.scopeWellIds.join(", ")}` : ""}`).join("；"),
       component.perWellVolume ? `${liquidNumber(component.perWellVolume)} µL` : "", `${liquidNumber(component.baseVolume)} µL`, `${liquidNumber(component.preparedVolume)} µL`, String(component.containerCount),
-      component.warning ? bilingual("存在移液量低于 1 µL", "A transfer is below 1 µL") : "",
+      liquidSummaryWarnings(group,component),
     ]));
     return `<div class="project-liquid-table-wrap"><table class="liquid-table"><thead><tr>${[bilingual("配液类型", "Preparation type"), bilingual("配液管", "Tube"), bilingual("组分", "Component"), bilingual("覆盖板与孔", "Plates and wells"), bilingual("每孔", "Per well"), bilingual("基础需求", "Base need"), bilingual("建议准备", "Prepare"), bilingual("容器数", "Containers"), bilingual("提示", "Note")].map((item) => `<th>${item}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   }
@@ -2689,6 +2718,7 @@
     if (!plan) return;
     if (actionButton.dataset.liquidPlanAction === "edit") {
       editingLiquidPlanId = plan.id;
+      if(plan.module === "calculator"){openPlateCalculator(plan.calculatorId,plan);return;}
       liquidDrafts[plan.module] = { ...(plan.input || {}) };
       openLiquidDrawer(plan.module);
       showToast(bilingual("已载入方案；重新计算并保存会更新原条目", "Plan loaded; recalculate and save to update this entry"));
@@ -3136,9 +3166,7 @@
     };
     if (action === "save") {
       commit(() => {
-        const index = project.liquidPlans.findIndex((item) => item.id === saved.id);
-        if (index >= 0) project.liquidPlans[index] = saved;
-        else project.liquidPlans.push(saved);
+        Object.assign(project, Workspace.publishLiquidPlan(project, saved));
         workspace.latestLiquidSummary = null;
       }, { invalidateLiquid: false });
       editingLiquidPlanId = null;
@@ -3302,27 +3330,28 @@
   function summaryRowsForExport(summary, roleFilter = "") {
     const rows = [[bilingual("配液类型", "Preparation type"), bilingual("配液管", "Tube"), bilingual("目的物/分组", "Cargo / group"), bilingual("组分", "Component"), bilingual("每孔用量", "Per well"), bilingual("基础需求量", "Base need"), bilingual("统一余量", "Shared overage"), bilingual("建议准备量", "Suggested preparation"), bilingual("覆盖板", "Source plates"), bilingual("目标孔", "Target wells"), bilingual("方案", "Plan"), bilingual("容器数", "Containers"), bilingual("操作步骤", "Protocol steps"), bilingual("提示", "Note")]];
     for (const group of summary?.groups || []) {
-      if (roleFilter && group.tubeRole !== roleFilter) continue;
+      if (roleFilter === "common" && ["cargo","separate"].includes(group.tubeRole)) continue;
+      if (roleFilter === "cargo" && !["cargo","separate"].includes(group.tubeRole)) continue;
       const sources = group.sources || [];
       const plates = [...new Set(sources.map((source) => source.plateName || source.plateId))].join("；");
       const wells = sources.map((source) => `${source.plateName || source.plateId}: ${(source.scopeWellIds || []).join(", ")}`).join("；");
       const plans = [...new Set([...(group.recipeNames || []), ...sources.map((source) => source.planName).filter(Boolean)])].join("；");
       const protocols = [...new Set(sources.flatMap((source) => source.protocolSteps || []).filter(Boolean))].join(" → ");
       for (const component of group.components || []) rows.push([
-        group.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : group.tubeRole === "common" ? bilingual("公共预混液", "Common premix") : bilingual("配液", "Preparation"),
+        liquidTubeRoleLabel(group.tubeRole),
         group.tube || group.label || "",
         group.cargoIdentity || group.label || "",
         component.name,
         component.perWellVolume ? `${liquidNumber(component.perWellVolume)} µL` : "",
         `${liquidNumber(component.baseVolume)} µL`,
-        `${summary.overagePercent}%`,
+        `${component.applyOverage === false ? 0 : summary.overagePercent}%`,
         `${liquidNumber(component.preparedVolume)} µL`,
         plates,
         wells,
         plans,
         component.containerCount,
         protocols,
-        component.warning ? bilingual("存在移液量低于 1 µL", "A transfer is below 1 µL") : "",
+        liquidSummaryWarnings(group,component),
       ]);
     }
     return rows;
@@ -3335,7 +3364,7 @@
       const sources = group.sources || [];
       rows.push([
         step,
-        group.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : bilingual("公共预混液", "Common premix"),
+        liquidTubeRoleLabel(group.tubeRole),
         group.tube || group.label || "",
         group.cargoIdentity || group.label || "",
         component.name,
@@ -3356,7 +3385,7 @@
   function liquidSummaryWorkbookSheets(summary) {
     return [
       { name: bilingual("跨板公共液", "Cross-plate common mixes"), systemKind: "liquid-common", rows: summaryRowsForExport(summary, "common"), freezeRows: 1, autoFilter: true },
-      { name: bilingual("独立目的物管", "Cargo-specific tubes"), systemKind: "liquid-cargo", rows: summaryRowsForExport(summary, "cargo"), freezeRows: 1, autoFilter: true },
+      { name: bilingual("独立加样与目的物", "Separate additions and cargo"), systemKind: "liquid-cargo", rows: summaryRowsForExport(summary, "cargo"), freezeRows: 1, autoFilter: true },
       { name: bilingual("逐步加样清单", "Pipetting checklist"), systemKind: "pipetting", rows: pipettingRowsForSummary(summary), freezeRows: 1, autoFilter: true },
     ];
   }
@@ -3381,12 +3410,12 @@
       })];
       const rows = [headers, ...exportOrderWellIds(plate).map((wellId) => [wellId, ...plate.dimensions.map((dimension) => plate.plates[plate.plateSize][wellId]?.params?.[dimension.id] ?? "")])];
       sheets.push({ name: plate.name, systemKind: "plate", rows, freezeRows: 1, autoFilter: true });
-      const preparationRows = [[bilingual("方案名称", "Plan name"), bilingual("配方", "Recipe"), bilingual("状态", "Status"), bilingual("配液类型", "Preparation type"), bilingual("管", "Tube"), bilingual("目的物/分组", "Cargo / group"), bilingual("组分", "Component"), bilingual("每孔", "Per well"), bilingual("基础需求", "Base need"), bilingual("本板方案准备量", "Saved-plan preparation"), bilingual("余量", "Overage"), bilingual("目标孔", "Target wells"), bilingual("操作步骤", "Protocol steps")]];
-      for (const plan of plate.liquidPlans || []) for (const contribution of plan.contributions || []) preparationRows.push([
+      const preparationRows = [[bilingual("方案名称", "Plan name"), bilingual("配方", "Recipe"), bilingual("状态", "Status"), bilingual("配液类型", "Preparation type"), bilingual("管", "Tube"), bilingual("目的物/分组", "Cargo / group"), bilingual("组分", "Component"), bilingual("每孔", "Per well"), bilingual("基础需求", "Base need"), bilingual("本板方案准备量", "Saved-plan preparation"), bilingual("余量", "Overage"), bilingual("目标孔", "Target wells"), bilingual("操作步骤", "Protocol steps"), bilingual("取液来源", "Stock source"), bilingual("警告", "Warnings")]];
+      for (const plan of (plate.liquidPlans || []).filter(Workspace.usableLiquidPlan)) for (const contribution of plan.contributions || []) preparationRows.push([
         plan.name || plan.recipeName || plan.module,
         plan.recipeName || plan.module,
         plan.stale ? bilingual("需重算", "Recalculate") : bilingual("有效", "Current"),
-        contribution.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : contribution.tubeRole === "common" ? bilingual("公共预混液", "Common premix") : bilingual("配液", "Preparation"),
+        contribution.tubeRole === "separate" ? bilingual("独立加样", "Separate addition") : contribution.tubeRole === "premix" ? bilingual("预混液", "Premix") : contribution.tubeRole === "cargo" ? bilingual("目的物管", "Cargo tube") : contribution.tubeRole === "common" ? bilingual("公共预混液", "Common premix") : bilingual("配液", "Preparation"),
         contribution.tube || "",
         contribution.cargoIdentity || contribution.groupName || "",
         contribution.component,
@@ -3396,8 +3425,10 @@
         contribution.planOveragePercent !== undefined ? `${contribution.planOveragePercent}%` : "",
         (contribution.scopeWellIds || plan.scopeWellIds || []).join(", "),
         (plan.protocolSnapshot?.steps || contribution.protocolSteps || []).join(" → "),
+        contribution.source || "",
+        (plan.resultSnapshot?.warnings || contribution.warnings || []).join("；"),
       ]);
-      if (preparationRows.length === 1) preparationRows.push([bilingual("尚未保存配液方案", "No saved liquid plan"), "", "", "", "", "", "", "", "", "", "", "", ""]);
+      if (preparationRows.length === 1) preparationRows.push([((plate.liquidPlans || []).length ? bilingual("当前方案需重算；未导出为可执行配液表", "Current plan needs recalculation; no executable preparation exported") : bilingual("尚未保存配液方案", "No saved liquid plan")), "", "", "", "", "", "", "", "", "", "", "", ""]);
       sheets.push({ name: `${plate.name}-${bilingual("配液", "liquid")}`, systemKind: "plate-liquid", rows: preparationRows, freezeRows: 1, autoFilter: true });
     }
     const liquidSummary = workspace.latestLiquidSummary;
@@ -3782,8 +3813,15 @@
       showToast(bilingual("计算结果对应的孔板已不是当前板，请返回原板后重试", "The calculation belongs to another plate. Return to that plate and try again."));
       return;
     }
-    const validWellIds = (payload.plateContext.wellIds || []).filter((wellId) => Core.makeWellIds(project.plateSize).includes(wellId));
-    if (!validWellIds.length || !Array.isArray(payload.outputs)) return;
+    const validWellIds = payload.plateContext.wellIds || [];
+    if (!validWellIds.length || new Set(validWellIds).size !== validWellIds.length || validWellIds.some(id=>!Core.makeWellIds(project.plateSize).includes(id)) || !Array.isArray(payload.outputs)) return;
+    let savedPlan;
+    try {
+      savedPlan = window.LabNestCalculations.buildPlateLiquidPlan({...payload,rawInputs:payload.rawInputs||payload.inputs},payload.plateContext);
+      payload = {...payload,...savedPlan.resultSnapshot,inputs:window.LabNestCalculations.canonicalPlateInputs(payload.calculatorId,savedPlan.input)};
+      const current = Workspace.currentLiquidPlan(project);
+      if(current?.calculatorId === savedPlan.calculatorId)savedPlan.name = current.name;
+    } catch(error) { showToast(error.message); return; }
     let mappings;try{mappings = plateMappingsForCalculator(payload, validWellIds);}catch(error){showToast(error.message);return;}
     commit(() => {
       const wells = currentWells();
@@ -3799,17 +3837,24 @@
       });
       project.calculationLog.push({ at: new Date().toISOString(), plateSize: project.plateSize, calculatorId: payload.calculatorId, outputName: payload.calculatorName, targetWellIds: validWellIds, inputs: payload.inputs, outputs: payload.outputs, table: payload.table, updated: mappings.length ? validWellIds.length : 0, methodVersion: payload.methodVersion });
       project.calculationLog = project.calculationLog.slice(-50);
-    });
+      Object.assign(project,Workspace.publishLiquidPlan(project,savedPlan));
+      workspace.latestLiquidSummary = null;
+    }, { invalidateLiquid: false });
     selection = new Set(validWellIds);
     renderAll();
     closeLiquidDrawer();
-    showToast(mappings.length
-      ? bilingual(`已将 ${mappings.length} 项孔级参数写入 ${validWellIds.length} 个孔；批量结果已保留在计算记录`, `Wrote ${mappings.length} per-well parameter(s) to ${validWellIds.length} wells; batch results remain in the calculation log`)
-      : bilingual("批量计算结果已关联到当前孔位范围，但未把批量总量误写为逐孔参数", "Batch results are linked to the selected well scope without copying batch totals into each well"));
+    showToast(bilingual("已保存为当前板方案，可编辑并生成跨板汇总", "Saved as the current plate plan; reopen to edit or build a cross-plate summary"));
   }
 
   window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin || event.data?.type !== "labnest:calculator-result") return;
+    const bridge = activePlateCalculatorBridge;
+    if (!bridge || event.origin !== window.location.origin || event.source !== bridge.frame.contentWindow || event.data?.calculatorId !== activePlateCalculator || JSON.stringify(event.data?.plateContext) !== JSON.stringify(bridge.context)) return;
+    if (event.data.type === "labnest:calculator-ready") {
+      if(bridge.input)bridge.frame.contentWindow.postMessage({type:"labnest:calculator-inputs",calculatorId:activePlateCalculator,requestId:bridge.context.requestId,inputs:bridge.input},window.location.origin);
+      return;
+    }
+    if(event.data.type !== "labnest:calculator-result")return;
+    if(bridge.boardSnapshot !== snapshot()) {showToast(bilingual("孔板已改变，请关闭并重新打开计算器", "The plate has changed. Close and reopen the calculator."));return;}
     applyPlateCalculatorPayload(event.data);
   });
 

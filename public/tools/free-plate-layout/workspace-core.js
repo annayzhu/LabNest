@@ -51,7 +51,25 @@
     return result;
   }
 
-  function createPlate({ id, name, plateSize = 24, dimensions, wells, colorDimension, calculationLog, calculationOutputs, liquidPlans } = {}) {
+  // Same current/publish/stale contract as the independent planner. Historical inputs remain in JSON backups.
+  function usableLiquidPlan(plan) { return Boolean(plan) && !plan.stale && plan.status !== "stale" && (!plan.status || plan.status === "saved"); }
+  function normalizeLiquidPlanState({ liquidPlan, liquidPlans, archivedLiquidPlans } = {}) {
+    const candidates = [liquidPlan, ...(Array.isArray(liquidPlans) ? liquidPlans : [])].filter(plan => plan && typeof plan === "object").map(plan => ({ ...clone(plan), stale: plan.stale === true || plan.status === "stale", status: plan.status || "saved" }));
+    const unique = [...new Map(candidates.map((plan, index) => [plan.id || `legacy-${index}`, plan])).values()];
+    unique.sort((a,b) => Number(usableLiquidPlan(b))-Number(usableLiquidPlan(a)) || (Date.parse(b.updatedAt || b.createdAt) || 0)-(Date.parse(a.updatedAt || a.createdAt) || 0));
+    const current = unique[0] || null;
+    const archived = [...(Array.isArray(archivedLiquidPlans) ? clone(archivedLiquidPlans) : []), ...unique.slice(1)];
+    return { liquidPlans: current ? [current] : [], archivedLiquidPlans: [...new Map(archived.filter(plan => plan && (!current?.id || plan.id !== current.id)).map((plan,index) => [plan.id || `archive-${index}`,plan])).values()], migrated: unique.length > 1 };
+  }
+  function currentLiquidPlan(plate) { return plate?.liquidPlans?.[0] || null; }
+  function publishLiquidPlan(plate, plan) {
+    const next = clone(plate), current = currentLiquidPlan(next);
+    next.liquidPlans = [{ ...clone(plan), id: current?.id || plan.id || newId("liquid"), createdAt: current?.createdAt || plan.createdAt || new Date().toISOString(), stale: false, status: "saved" }];
+    return next;
+  }
+  function clearLiquidPlan(plate) { const next = clone(plate); next.liquidPlans = []; return next; }
+
+  function createPlate({ id, name, plateSize = 24, dimensions, wells, colorDimension, calculationLog, calculationOutputs, liquidPlan, liquidPlans, archivedLiquidPlans } = {}) {
     const size = PLATE_SIZES.includes(Number(plateSize)) ? Number(plateSize) : 24;
     const normalizedDimensions = normalizeDimensions(dimensions);
     const maps = blankPlateMaps();
@@ -65,7 +83,7 @@
       colorDimension: normalizedDimensions.some((item) => item.id === colorDimension) ? colorDimension : (normalizedDimensions.find((item) => item.id === "treatment")?.id || normalizedDimensions[0]?.id || ""),
       calculationLog: Array.isArray(calculationLog) ? clone(calculationLog).slice(-50) : [],
       calculationOutputs: Array.isArray(calculationOutputs) ? clone(calculationOutputs) : [],
-      liquidPlans: Array.isArray(liquidPlans) ? clone(liquidPlans).slice(-30) : [],
+      ...normalizeLiquidPlanState({ liquidPlan, liquidPlans, archivedLiquidPlans }),
       updatedAt: new Date().toISOString(),
     };
   }
@@ -126,7 +144,7 @@
       name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 80) : "未命名项目",
       activePlateId: plates.some((plate) => plate.id === raw.activePlateId) ? raw.activePlateId : plates[0].id,
       plates,
-      latestLiquidSummary: raw.latestLiquidSummary && typeof raw.latestLiquidSummary === "object" ? clone(raw.latestLiquidSummary) : null,
+      latestLiquidSummary: !plates.some(plate => plate.migrated) && raw.latestLiquidSummary && typeof raw.latestLiquidSummary === "object" ? clone(raw.latestLiquidSummary) : null,
       updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(),
     };
   }
@@ -219,12 +237,14 @@
         groupName: item.groupName || "",
         scopeWellIds: Array.isArray(item.scopeWellIds) ? [...item.scopeWellIds] : [],
         protocolSteps: Array.isArray(item.protocolSteps) ? [...item.protocolSteps] : [],
+        warnings: Array.isArray(item.warnings) ? [...item.warnings] : [],
       });
-      const component = group.components.get(item.component) || { name: item.component, baseVolume: 0, unit: "µL", perWellVolume: Number(item.perWellVolume) || 0, perPlate: [] };
+      const componentKey = item.componentKey || item.component;
+      const component = group.components.get(componentKey) || { name: item.component, baseVolume: 0, unit: "µL", perWellVolume: Number(item.perWellVolume) || 0, applyOverage: item.applyOverage !== false, perPlate: [] };
       const volume = base * factor;
       component.baseVolume += volume;
       component.perPlate.push({ plateId: item.plateId, volume });
-      group.components.set(item.component, component);
+      group.components.set(componentKey, component);
     }
     const multiplier = 1 + Math.max(0, Number(overagePercent) || 0) / 100;
     return {
@@ -238,7 +258,7 @@
         plates: [...group.plates.values()],
         sources: [...group.sources.values()],
         components: [...group.components.values()].map((component) => {
-          const preparedVolume = component.baseVolume * multiplier;
+          const preparedVolume = component.baseVolume * (component.applyOverage ? multiplier : 1);
           return {
             ...component,
             preparedVolume,
@@ -252,5 +272,5 @@
     };
   }
 
-  return { PLATE_SIZES, createPlate, createWorkspace, normalizeWorkspace, activePlate, addPlate, duplicatePlate, reorderPlate, removePlate, mergeLiquidContributions };
+  return { PLATE_SIZES, createPlate, createWorkspace, normalizeWorkspace, activePlate, addPlate, duplicatePlate, reorderPlate, removePlate, mergeLiquidContributions, currentLiquidPlan, usableLiquidPlan, publishLiquidPlan, clearLiquidPlan };
 });

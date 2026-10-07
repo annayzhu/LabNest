@@ -46,6 +46,13 @@ describe('main Calculator to saved plate preparation',()=>{
   expect(one.contributions[0].perWellVolume).toBe(two.contributions[0].perWellVolume);
   expect(one.contributions[0].groupKey).not.toBe(two.contributions[0].groupKey);
  });
+ it('pools the same premix across distinct templates and group labels; templates retain board identity',()=>{
+  const one=buildPlateLiquidPlan(mix({...input,groups:[{name:'Treatment A',reactions:'24',rows:rows.map(row=>row.premix?row:{...row,name:'Template A'})}]}),context);
+  const two=buildPlateLiquidPlan(mix({...input,groups:[{name:'Treatment B',reactions:'24',rows:rows.map(row=>row.premix?row:{...row,name:'Template B'})}]}),{...context,plateId:'p2'});
+  const summary=workspace.mergeLiquidContributions([...one.contributions,...two.contributions],{overagePercent:10});
+  expect(summary.groups.filter((g:{tubeRole:string})=>g.tubeRole==='premix')).toHaveLength(1);
+  expect(summary.groups.filter((g:{tubeRole:string})=>g.tubeRole==='separate')).toHaveLength(2);
+ });
  it.each(['seeding','hydrogel','kill-curve','fold-dilution','moi'])('saves typed liquid operations and provenance for %s without copying display labels',calculatorId=>{
   const example=structuredClone(getCalculatorDefinition(calculatorId).exampleInputs);
   if('wells' in example)example.wells='24';
@@ -60,6 +67,12 @@ describe('main Calculator to saved plate preparation',()=>{
 });
 
 describe('one effective preparation per plate without deleting old inputs',()=>{
+ it('invalidates generated summaries when removing or duplicating boards',()=>{
+  let ws=workspace.addPlate(workspace.createWorkspace());
+  ws.latestLiquidSummary={groups:[{sources:ws.plates.map((p:{id:string})=>({plateId:p.id}))}]};
+  expect(workspace.removePlate(ws,ws.plates[1].id).latestLiquidSummary).toBeNull();
+  expect(workspace.duplicatePlate(ws,ws.plates[0].id).latestLiquidSummary).toBeNull();
+ });
  it('migrates multiple saved plans, preserves archive through JSON and excludes stale plans',()=>{
   const old={id:'old',name:'old recipe',updatedAt:'2026-01-01',input:{retain:'original'}};
   const newer={id:'new',name:'new recipe',updatedAt:'2026-02-01'};

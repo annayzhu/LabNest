@@ -41,6 +41,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    // Follow exactly the link exposed by Tools in an isolated browser context.
    await page.goto(new URL(href,base).href,{waitUntil:'networkidle'});
    let f=await open(page);await recipe(f,24);
+   assert.equal(await f.getByRole('navigation',{name:'Reaction modes'}).count(),0);
    assert.equal(await f.getByRole('combobox',{name:'计算依据',exact:true}).count(),4);
    await page.screenshot({path:`${dir}/${id}-editor-light.png`,fullPage:true});
    await f.getByRole('button',{name:'计算',exact:true}).click();
@@ -54,12 +55,12 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    });
    await f.locator('body').evaluate((node,payload)=>node.ownerDocument.defaultView.parent.postMessage({...payload,plateContext:{...payload.plateContext,requestId:'stale-token'}},location.origin),forged);
    assert.equal((await saved(page))?.plates[0].liquidPlans.length??0,0);
-   await page.evaluate(()=>{window.__plateTestSource=document.querySelector('.plate-calculator-frame').contentWindow;window.addEventListener('message',e=>{if(e.data?.type==='labnest:calculator-result')window.__plateTestPayload=e.data;});});
+   await f.locator('body').evaluate(node=>{const parent=node.ownerDocument.defaultView.parent;const original=parent.postMessage;parent.postMessage=function(message,origin){original.call(parent,message,origin);if(message?.type==='labnest:calculator-result'){original.call(parent,message,origin);parent.postMessage=original;}};});
    await f.getByRole('button',{name:'保存为当前板方案',exact:true}).click();await page.locator('#liquidDrawer').waitFor({state:'hidden'});
    let ws=await saved(page),plan=ws.plates[0].liquidPlans[0];assert.equal(ws.plates[0].liquidPlans.length,1);assert.equal(plan.input.rows.length,4);assert.equal(plan.resultSnapshot.operations.length,6);
    assert(Math.abs(plan.contributions.filter(c=>c.applyOverage).reduce((n,c)=>n+c.savedPreparedVolume,0)-501.6)<1e-8);
    assert.equal(plan.contributions.find(c=>!c.applyOverage).baseVolume,24);
-   await page.evaluate(()=>window.dispatchEvent(new MessageEvent('message',{origin:location.origin,source:window.__plateTestSource,data:window.__plateTestPayload})));assert.equal((await saved(page)).plates[0].calculationLog.length,1,'duplicate apply must not write twice');
+   assert.equal((await saved(page)).plates[0].calculationLog.length,1,'duplicate apply must not write twice');
    await page.reload({waitUntil:'networkidle'});await page.locator('[data-liquid-plan-action="edit"]').click();
    f=page.frameLocator('.plate-calculator-frame');await f.getByRole('textbox',{name:'组分名称',exact:true}).first().waitFor();
    assert.equal(await f.getByRole('textbox',{name:'组分名称',exact:true}).first().inputValue(),'SYBR');assert.equal(await f.getByRole('checkbox',{name:'加入预混',exact:true}).last().isChecked(),false);
@@ -81,6 +82,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    const premixes=summary.groups.filter(g=>g.tubeRole==='premix');assert.equal(premixes.length,1);
    assert(Math.abs(premixes[0].components.reduce((n,c)=>n+c.preparedVolume,0)-752.4)<1e-8);
    assert.equal(summary.groups.filter(g=>g.tubeRole==='separate').reduce((n,g)=>n+g.components.reduce((s,c)=>s+c.preparedVolume,0),0),36);
+   await page.locator('#undoButton').click();assert.equal((await saved(page)).latestLiquidSummary,null,'undo must invalidate generated summary');await page.locator('#redoButton').click();assert.equal((await saved(page)).latestLiquidSummary,null);await page.locator('#projectLiquidSummaryButton').click();
    await page.locator('[data-open-liquid-summary]').click();await page.screenshot({path:`${dir}/${id}-summary-light.png`,fullPage:true});await page.keyboard.press('Escape');
    const downloadEvent=page.waitForEvent('download');await page.locator('#exportXlsxButton').click();const xlsx=await downloadEvent;const xlsxPath=`${dir}/${id}-project.xlsx`;await xlsx.saveAs(xlsxPath);
    const files=unzipSync(await readFile(xlsxPath));const xml=Object.entries(files).filter(([name])=>name.endsWith('.xml')).map(([,data])=>strFromU8(data)).join('\n');
@@ -91,7 +93,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    const backupEvent=page.waitForEvent('download');await page.locator('#exportJsonButton').click();const json=await backupEvent;const jsonPath=`${dir}/${id}-workspace.json`;await json.saveAs(jsonPath);const backup=JSON.parse(await readFile(jsonPath,'utf8'));assert.deepEqual(backup.plates.map(p=>p.liquidPlans[0].input),ws.plates.map(p=>p.liquidPlans[0].input));
    await page.locator('#openBackupRestoreButton').click();await page.locator('#restoreJsonInput').setInputFiles(jsonPath);await page.locator('#confirmRestoreButton').click();
    assert.deepEqual((await saved(page)).plates.map(p=>p.liquidPlans[0].input),backup.plates.map(p=>p.liquidPlans[0].input),'JSON restored through the real import dialog');
-   await page.locator('[data-liquid-plan-action="edit"]').click();f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'多组配液',exact:true}).click();
+   await page.locator('[data-liquid-plan-action="edit"]').click();f=page.frameLocator('.plate-calculator-frame');await f.getByText('多组配液',{exact:true}).click();
    await f.locator('[data-group-name]').fill('A');await f.locator('[data-group-reactions]').fill('5');
    await f.getByRole('button',{name:'添加分组',exact:true}).click();await f.locator('[data-group-name]').fill('B');await f.locator('[data-group-reactions]').fill('7');await recipeRows(f);
    await f.getByRole('button',{name:'计算',exact:true}).click();
@@ -115,7 +117,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    const migrated=await saved(page);assert.equal(migrated.plates[0].liquidPlans.length,1);assert.equal(migrated.plates[0].archivedLiquidPlans.length,2);assert.equal(migrated.latestLiquidSummary,null);
    await page.reload({waitUntil:'networkidle'});assert.equal((await saved(page)).plates[0].archivedLiquidPlans.find(p=>p.id==='legacy-old').input.original,'preserved');
    assert.deepEqual(errors,[]);report.checks.push({engine,width,passed:['Tools current entry','main row/concentration editor','multiple groups saved with explicit disjoint well mapping','save/reopen/refresh','one current plan','forged origin-window/session and duplicate apply rejected','undo/redo','shared reserve once; separate templates unpooled','JSON backup/restore and XLSX cell readback','offline local write and reconnect','stale exclusion','synthetic legacy migration/archive retained after refresh'],screenshots:[`${id}-editor-light.png`,`${id}-summary-light.png`,`${id}-editor-dark.png`]});
-  }catch(error){report.failures.push({engine,width,message:error.message});await page.screenshot({path:`${dir}/${id}-failure.png`,fullPage:true}).catch(()=>{});console.error(id,error.message);}
+  }catch(error){report.failures.push({engine,width,message:error.message});await page.screenshot({path:`${dir}/${id}-failure.png`,fullPage:true}).catch(()=>{});console.error(id,error.stack);}
   await context.close();
  }}finally{await browser.close();}
 }

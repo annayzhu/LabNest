@@ -410,6 +410,7 @@
     const index = workspace.plates.findIndex((plate) => plate.id === project.id);
     workspace.plates[index] = restored;
     project = restored;
+    workspace.latestLiquidSummary = null;
   }
 
   function commit(mutator, { invalidateLiquid = true } = {}) {
@@ -432,6 +433,7 @@
       if (!workspaceUndoStack.length) return;
       workspaceRedoStack.push(structureSnapshot());
       workspace = Workspace.normalizeWorkspace(JSON.parse(workspaceUndoStack.pop()));
+      workspace.latestLiquidSummary = null;
       project = Workspace.activePlate(workspace);
       selection = new Set();
       selectionAnchor = null;
@@ -455,6 +457,7 @@
       if (!workspaceRedoStack.length) return;
       workspaceUndoStack.push(structureSnapshot());
       workspace = Workspace.normalizeWorkspace(JSON.parse(workspaceRedoStack.pop()));
+      workspace.latestLiquidSummary = null;
       project = Workspace.activePlate(workspace);
       selection = new Set();
       selectionAnchor = null;
@@ -481,6 +484,7 @@
     plateHistories.clear();
     mutator();
     workspace = Workspace.normalizeWorkspace(workspace);
+    workspace.latestLiquidSummary = null;
     project = Workspace.activePlate(workspace);
     selection = new Set();
     selectionAnchor = null;

@@ -383,7 +383,10 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
       continue;
     }
     const formatted=richNodes.flatMap(tiptapNodeToRichNodes);
-    if(parent?.id===identity.id && parent.type==='rich_text')parent.nodes.push(...formatted);
+    if(parent?.id===identity.id && (parent.type==='rich_text'||parent.type==='heading')) {
+      if(parent.type==='heading')parent.nodes??=[{type:'heading3',content:[{text:parent.text}]}];
+      parent.nodes!.push(...formatted);
+    }
     else blocks.push({ id: identity.id, ...execution, type: "rich_text", nodes: formatted });
   }
   return distinctDocumentBlockIds(blocks);

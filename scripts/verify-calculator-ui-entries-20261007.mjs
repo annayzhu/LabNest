@@ -10,7 +10,11 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
  const browser=await type.launch();
  try{for(const width of [1440,390]){
   const context=await browser.newContext({viewport:{width,height:width===390?844:900},reducedMotion:'no-preference'});
-  const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
+  const page=await context.newPage();page.on('pageerror',e=>report.errors.push({engine,width,url:page.url(),message:e.message,stack:e.stack}));
+  const alternatePrefetches=[];
+  page.on('request',request=>{
+   if(new URL(request.url()).pathname==='/tools/calculator/transfection'&&request.headers()['next-router-prefetch']==='1')alternatePrefetches.push(request.url());
+  });
   await page.goto(`${base}/tools`,{waitUntil:'networkidle'});
   const entry=page.getByRole('link',{name:'Open Experimental Calculator',exact:true});
   assert.equal(await entry.getAttribute('href'),'/tools/calculator');
@@ -22,6 +26,16 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   await page.waitForURL('**/tools/calculator');
   await page.locator('a[href="/tools/calculator/master-mix"]').last().click();
   await page.getByRole('radio',{name:'Single group',exact:true}).waitFor({state:'attached'});
+  await page.waitForLoadState('networkidle');
+  assert.deepEqual(alternatePrefetches,[],'Do not preload an unselected paired tool during entry/Run navigation');
+  await page.getByRole('navigation',{name:'Reaction modes'}).getByRole('link',{name:'Transfection',exact:true}).click();
+  await page.waitForURL('**/tools/calculator/transfection');
+  const newPlan=page.getByRole('button',{name:'New transfection plan',exact:true});
+  if(await newPlan.count())await newPlan.click();
+  await page.getByRole('group',{name:'Preparation mode',exact:true}).waitFor();
+  await page.getByRole('navigation',{name:'Reaction modes'}).getByRole('link',{name:'PCR / Master Mix',exact:true}).click();
+  await page.getByRole('radio',{name:'Single group',exact:true}).waitFor({state:'attached'});
+  report.checks.push({engine,width,status:'passed',name:'paired reaction tools navigate on demand without alternate-tool prefetch',alternatePrefetches});
   report.checks.push({engine,width,status:'passed',name:'Tools and Today use the current catalog and segmented reaction-mix workspace'});
   if(width===1440){
    const fixture=JSON.parse(await readFile('docs/calculator/v1.2/evidence/run-browser-report.json','utf8'));
@@ -35,8 +49,12 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
    await task.selectOption('master-mix');
    const embedded=page.frameLocator('iframe[title="Step calculation"]');
    await embedded.getByRole('radio',{name:'Single group',exact:true}).waitFor({state:'attached'});
+   const pairedHref=await embedded.getByRole('navigation',{name:'Reaction modes'}).getByRole('link',{name:'Transfection',exact:true}).getAttribute('href');
+   const pairedUrl=new URL(pairedHref,base);
+   assert(pairedUrl.searchParams.get('experimentId')&&pairedUrl.searchParams.get('experimentStepId'),'Paired tool links retain Run context');
    await page.screenshot({path:`${dir}/${engine}-run-drawer.png`,fullPage:true});
    await drawer.getByRole('button',{name:'关闭 / Close',exact:true}).click();
+   assert.deepEqual(alternatePrefetches,[],'Run iframe also avoids unselected alternate-tool prefetch');
    report.checks.push({engine,width,status:'passed',name:'actual Run desktop drawer uses solid trigger, shared selector gutter and current embedded workspace'});
   }
   await page.goto(`${base}/tools/calculator/colony-counter`,{waitUntil:'networkidle'});

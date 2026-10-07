@@ -22,6 +22,7 @@ import {newTransfectionPlan,transfectionPlateValues,type TransfectionPlan} from 
 import { resultClipboard, canCopyResult } from "@/lib/calculators/result-presentation";
 import { CalculatorMore } from "./CalculatorMore";
 import {switchReactionMixMode} from '@/lib/calculators/reaction-mix-mode';
+import {hasRestorableInputs} from '@/lib/calculators/input-draft';
 import {CalculatorButton,CalculatorDisclosure,CalculatorMode} from './CalculatorControls';
 import {CalculatorIcon} from './CalculatorIcon';
 import {ResultExport} from './ResultExport';
@@ -85,7 +86,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     const frame=window.requestAnimationFrame(()=>{
     visitRef.current=true;
     const draft=state.drafts[calculatorId];
-    if(draft&&Object.entries(draft.inputs).some(([key,v])=>!key.startsWith("__")&&!key.endsWith("Unit")&&(Array.isArray(v)?v.length>0:typeof v==="string"?v.trim():typeof v==="number")))setInitialDraft(structuredClone(draft));
+    if(draft&&hasRestorableInputs(draft.inputs))setInitialDraft(structuredClone(draft));
     const previous=draft?.inputs;
     if(previous)setInputs(current=>{const next={...current};for(const field of definition.fields){const unit=previous[`${field.key}Unit`];if(!String(current[field.key]??'').trim()&&typeof unit==='string'&&units[unit])next[`${field.key}Unit`]=unit;}return next;});
     const record=state.history.find(item=>item.id===initialInputs.record);

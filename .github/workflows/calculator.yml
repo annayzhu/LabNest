@@ -76,6 +76,7 @@ jobs:
       - run: UI_PHASE=after node scripts/verify-calculator-ui-consistency-20261007.mjs
       - run: node scripts/verify-calculator-ui-state-20261007.mjs
       - run: node scripts/verify-calculator-ui-entries-20261007.mjs
+      - run: node scripts/verify-calculator-ui-selectors-20261007.mjs
       - run: node scripts/verify-calculator-ui-modes-20260915.mjs
       - uses: actions/upload-artifact@v4
         if: always()

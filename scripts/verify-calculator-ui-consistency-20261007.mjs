@@ -64,7 +64,19 @@ for(const [engine,type] of Object.entries(browsers)){
     report.tools.push(entry);page.off('pageerror',listen);
     console.log(`${phase} ${engine} ${width} ${tool.id}: opened / example / ${entry.expansions.length} disclosures`);
    }
-   for(const [alias,mapping] of Object.entries(aliases)){await page.goto(`${base}/tools/calculator/${alias}`,{waitUntil:'networkidle'});report.tools.push({id:alias,engine,width,compatibility:true,mapping,title:await page.locator('h1').innerText()});}
+   for(const [alias,mapping] of Object.entries(aliases)){
+    await page.goto(`${base}/tools/calculator/${alias}`,{waitUntil:'networkidle'});
+    const mode=page.getByRole('combobox',{name:'模式',exact:true});assert.equal(await mode.inputValue(),mapping.mode);
+    // Enter a new user calculation. Example calculations deliberately cannot be saved.
+    await mode.selectOption(mapping.mode);
+    const values=mapping.mode==='fold'?{stockFold:'10',targetFold:'1',finalVolume:'2'}:{stockConcentration:'10',targetConcentration:'10',finalVolume:'2'};
+    for(const [key,value] of Object.entries(values))await page.locator(`[data-field-key="${key}"] input`).fill(value);
+    await page.getByRole('button',{name:'计算',exact:true}).click();
+    await page.getByRole('button',{name:'保存到本机历史',exact:true}).click();
+    const output=await page.evaluate(()=>JSON.parse(localStorage.getItem('labnest.calculators.v1')).history[0].snapshot.outputMap.stockVolumeUl);
+    assert(Math.abs(output-(mapping.mode==='fold'?200:2))<1e-9,`${alias}: expected stock volume`);
+    report.tools.push({id:alias,engine,width,compatibility:true,mapping,title:await page.locator('h1').innerText(),stockVolumeUl:output,status:'passed'});
+   }
    await context.close();
   }
  }finally{await browser.close();}

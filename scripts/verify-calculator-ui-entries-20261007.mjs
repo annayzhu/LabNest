@@ -1,6 +1,6 @@
 import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
 const dir=process.env.UI_ENTRY_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007/evidence/entries';
@@ -23,6 +23,29 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   await page.locator('a[href="/tools/calculator/master-mix"]').last().click();
   await page.getByRole('radio',{name:'Single group',exact:true}).waitFor({state:'attached'});
   report.checks.push({engine,width,status:'passed',name:'Tools and Today use the current catalog and segmented reaction-mix workspace'});
+  if(width===1440){
+   const fixture=JSON.parse(await readFile('docs/calculator/v1.2/evidence/run-browser-report.json','utf8'));
+   assert.equal(new URL(fixture.runUrl).origin,new URL(base).origin,'Run fixture must belong to this isolated test server');
+   await page.goto(fixture.runUrl,{waitUntil:'networkidle'});
+   await page.getByRole('button',{name:'Calculator',exact:true}).first().click();
+   const drawer=page.getByRole('dialog',{name:'Step calculations',exact:true});await drawer.waitFor();
+   assert.equal(await page.getByRole('button',{name:'Calculator',exact:true}).first().locator('svg[data-calculator-icon=calculator]').count(),1);
+   const task=drawer.getByRole('combobox',{name:'Calculation task',exact:true});
+   const padding=await task.evaluate(n=>getComputedStyle(n).paddingRight);assert.equal(padding,'40px');
+   await task.selectOption('master-mix');
+   const embedded=page.frameLocator('iframe[title="Step calculation"]');
+   await embedded.getByRole('radio',{name:'Single group',exact:true}).waitFor({state:'attached'});
+   await page.screenshot({path:`${dir}/${engine}-run-drawer.png`,fullPage:true});
+   await drawer.getByRole('button',{name:'关闭 / Close',exact:true}).click();
+   report.checks.push({engine,width,status:'passed',name:'actual Run desktop drawer uses solid trigger, shared selector gutter and current embedded workspace'});
+  }
+  await page.goto(`${base}/tools/calculator/colony-counter`,{waitUntil:'networkidle'});
+  await page.keyboard.press('Tab');
+  const file=page.locator('input[type=file]').first();await file.focus();
+  const outline=await file.locator('..').evaluate(n=>({width:getComputedStyle(n).outlineWidth,style:getComputedStyle(n).outlineStyle,color:getComputedStyle(n).outlineColor}));
+  assert.equal(outline.width,'2px');assert.equal(outline.style,'solid');assert(!outline.color.includes('rgba')||!outline.color.endsWith(', 0)')); 
+  await page.screenshot({path:`${dir}/${engine}-${width}-colony-keyboard-focus.png`,fullPage:true});
+  report.checks.push({engine,width,status:'passed',name:'native image upload input exposes visible focus on its label'});
   await page.goto(`${base}/tools/free-plate-layout/index.html`,{waitUntil:'networkidle'});
   await page.locator('[data-well="A1"]').click();
   for(const id of ['seeding','hydrogel','kill-curve','fold-dilution','master-mix','moi']){

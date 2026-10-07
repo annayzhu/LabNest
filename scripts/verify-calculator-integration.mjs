@@ -1,3 +1,4 @@
+import {openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
@@ -6,7 +7,7 @@ const browser=await chromium.launch();const context=await browser.newContext({vi
 try{
  await page.goto(`${base}/tools/calculator/dilution?experimentId=calculator-acceptance-experiment&experimentStepId=calculator-acceptance-step`,{waitUntil:'networkidle'});
  for(const [name,value] of [['Stock concentration','10'],['Target concentration','10'],['Final / initial volume','2'],['Operator','Acceptance fixture operator']])await page.getByRole('textbox',{name:new RegExp(`^${name}`)}).fill(value);
- await page.getByText('Pipetting equipment and rounding (optional)',{exact:true}).click();await page.getByRole('textbox',{name:'Equipment minimum µL',exact:true}).fill('3');await page.getByRole('combobox',{name:'Take stock display unit',exact:true}).last().selectOption('nL');
+ await page.getByText('Pipetting settings (optional)',{exact:true}).click();await page.getByRole('textbox',{name:'Equipment minimum (µL)',exact:true}).fill('3');await page.getByRole('button',{name:'Calculate',exact:true}).click();await openCalculatorDisclosure(page,'Full results');await page.getByRole('combobox',{name:'Take stock display unit',exact:true}).last().selectOption('nL');
  await context.setOffline(true);await page.getByRole('button',{name:'Record in experiment',exact:true}).click();await page.getByText('Added to sync queue; check sync status for completion.').waitFor();
  const queued=await page.evaluate(async()=>{const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('labnest-mobile-mutations',1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return new Promise((resolve,reject)=>{const r=db.transaction('mutations').objectStore('mutations').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});});assert.equal(queued.length,1);
  const mutation=queued[0];assert.equal(mutation.payload.snapshot.displayUnits.stockVolumeUl,'nL');assert(mutation.payload.snapshot.structuredWarnings.length>0);const body={...mutation.payload,clientMutationId:mutation.clientMutationId,deviceCreatedAt:mutation.deviceCreatedAt};

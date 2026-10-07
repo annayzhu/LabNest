@@ -83,8 +83,27 @@ for(const [engine,type] of Object.entries(types)){
   assert.equal(await field('samples').inputValue(),'4');assert.equal(await page.locator('[data-mix-field=name]').inputValue(),'DNA');
   await mode('multiple');assert.equal(await page.getByRole('button',{name:'实验A',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'实验B',exact:true}).count(),1);
   check('multi-only restored fixture requires explicit source group, and all groups survive the conversion');
+  const scales=[];
+  for(const size of ['compact','standard','comfortable']){
+   await page.evaluate(size=>document.documentElement.dataset.labnestUiScale=size,size);
+   const fonts=await page.locator('.calculator-action').first().evaluate(n=>({actual:getComputedStyle(n).fontSize,token:getComputedStyle(n).getPropertyValue('--ln-control-font-size-md').trim()}));
+   assert.equal(fonts.actual,fonts.token);scales.push({size,...fonts});
+  }
+  check('new controls follow all existing interface font scales',{scales});
   for(const w of [1280,768,320]){await page.setViewportSize({width:w,height:w===1280?800:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await page.screenshot({path:`${root}/${engine}-${theme}-stress-${w}.png`,fullPage:true});}
   check('1280, 768 and 320 CSS pixel layout has no horizontal page overflow');
+  await page.goto(`${base}/tools/calculator/dilution`,{waitUntil:'networkidle'});
+  const second=page.getByRole('button',{name:'移液设置（可选）',exact:true});
+  await second.click();const secondMinimum=page.getByRole('textbox',{name:'设备下限（µL）',exact:true});
+  await secondMinimum.fill('0.5');await secondMinimum.focus();await page.keyboard.press('Escape');
+  assert(await second.evaluate(n=>n===document.activeElement));await second.click();assert.equal(await secondMinimum.inputValue(),'0.5');
+  const secondFrames=await page.evaluate(async()=>{
+   const button=[...document.querySelectorAll('button')].find(n=>n.textContent.trim()==='移液设置（可选）'),frames=[];
+   for(let i=0;i<8;i++){button.click();await new Promise(requestAnimationFrame);frames.push({expanded:button.getAttribute('aria-expanded'),animations:button.closest('section').getAnimations({subtree:true}).length});}return frames;
+  });
+  assert(secondFrames.every(f=>f.animations===0));
+  check('second real calculator retains optional settings with safe Escape and eight no-motion frames',{secondFrames});
+  await page.screenshot({path:`${root}/${engine}-${width}-${theme}-dilution-settings.png`,fullPage:true});
   assert.deepEqual(errors,[]);
   await context.tracing.stop({path:`${root}/${engine}-${width}-${theme}-trace.zip`});await context.close();
  }

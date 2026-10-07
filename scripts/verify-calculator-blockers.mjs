@@ -1,4 +1,4 @@
-import {showCalculatorResult,openCalculatorDisclosure} from './calculator-ui-test-helpers.mjs';
+import {showCalculatorResult,openCalculatorDisclosure,selectCalculatorOption} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
@@ -8,7 +8,7 @@ const browser=await chromium.launch();const c=await browser.newContext({permissi
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),checks:[],screenshots:[]};
 try{
  await p.goto(base+'/tools/calculator/serial-dilution',{waitUntil:'networkidle'});
- await p.getByRole('combobox',{name:'Gradient',exact:true}).selectOption('custom');
+ await selectCalculatorOption(p,'Gradient','custom');
  await p.getByRole('textbox',{name:'Targets (one µM value per line)',exact:true}).fill('10\n20');
  await p.getByRole('textbox',{name:/^Source stock concentration/}).fill('100');
  await p.getByRole('textbox',{name:/^Volume per level/}).fill('100');

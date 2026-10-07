@@ -22,7 +22,7 @@ for(const [engine,type] of Object.entries(browsers)){
     const errors=[];const listen=e=>errors.push(e.message);page.on('pageerror',listen);
     await page.goto(`${base}/tools/calculator/${tool.id}`,{waitUntil:'networkidle'});
     await page.getByRole('heading',{name:tool.nameZh,exact:true}).waitFor();
-    const visible=await page.locator('button,summary,select,label:has(input[type=radio])').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.getBoundingClientRect().height).map(n=>({tag:n.tagName,text:n.textContent.trim(),label:n.getAttribute('aria-label'),height:n.getBoundingClientRect().height,transition:getComputedStyle(n).transitionDuration,appearance:getComputedStyle(n).appearance,paddingRight:getComputedStyle(n).paddingRight})));
+    const visible=await page.locator('button,summary,select,label:has(input[type=radio]),label:has(input[type=file])').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.getBoundingClientRect().height).map(n=>({tag:n.tagName,text:n.textContent.trim(),label:n.getAttribute('aria-label'),height:n.getBoundingClientRect().height,transition:getComputedStyle(n).transitionDuration,appearance:getComputedStyle(n).appearance,paddingRight:getComputedStyle(n).paddingRight})));
     const entry={id:tool.id,name:tool.nameZh,route:`/tools/calculator/${tool.id}`,engine,width,empty:visible,errors};
     await page.screenshot({path:`${dir}/${engine}-${tool.id}-${width}-empty.png`,fullPage:true});
     const load=page.getByRole('button',{name:'载入示例',exact:true});

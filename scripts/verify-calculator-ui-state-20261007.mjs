@@ -83,6 +83,12 @@ for(const [engine,type] of Object.entries(types)){
   assert.equal(await field('samples').inputValue(),'4');assert.equal(await page.locator('[data-mix-field=name]').inputValue(),'DNA');
   await mode('multiple');assert.equal(await page.getByRole('button',{name:'实验A',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'实验B',exact:true}).count(),1);
   check('multi-only restored fixture requires explicit source group, and all groups survive the conversion');
+  const alternate={samples:'',replicates:'',controls:'',rows:[],reactionVolumeUl:'',overagePercent:'',__mixModeDrafts:{multiple:fixture.groups}};
+  await page.evaluate(inputs=>{const key='labnest.calculators.v1',s=JSON.parse(localStorage.getItem(key));s.drafts['master-mix']={inputs,updatedAt:new Date().toISOString(),example:false};localStorage.setItem(key,JSON.stringify(s));},alternate);
+  await page.reload({waitUntil:'networkidle'});await page.getByRole('button',{name:'恢复上次草稿',exact:true}).click();
+  await mode('multiple');assert.equal(await page.getByRole('button',{name:'实验A',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'实验B',exact:true}).count(),1);
+  await page.getByRole('button',{name:'实验B',exact:true}).click();assert.equal(await page.locator('[data-mix-field=name]').inputValue(),'DNA');
+  check('empty active draft can restore retained alternate mode groups after a full reload');
   const scales=[];
   for(const size of ['compact','standard','comfortable']){
    await page.evaluate(size=>document.documentElement.dataset.labnestUiScale=size,size);

@@ -99,7 +99,8 @@ it('keeps heading-owned nested content and following paragraphs in one source bl
  const roundtrip=tiptapToProtocolDocument(protocolDocumentToTiptap(document)),projection=projectProtocolDocument(roundtrip);
  expect(projection.steps).toHaveLength(1);expect(projection.executionNeedsReview).toBe(false);expect(JSON.stringify(roundtrip)).toContain('Nested 5 µL');expect(JSON.stringify(roundtrip)).toContain('Incubate 10 min');
  expect(JSON.stringify(projection.steps[0].content_blocks)).not.toContain('"text":"Prepare"');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Nested 5 µL');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Incubate 10 min');
- document.sections[0].blocks[0].nodes![0].childContent=undefined;
+ const heading=document.sections[0].blocks[0];if(heading.type!=='heading')throw new Error('Expected heading fixture');
+ heading.nodes![0].childContent=undefined;
  expect(JSON.stringify(projectProtocolDocument(document).steps[0].content_blocks)).toContain('Incubate 10 min');
 });
 

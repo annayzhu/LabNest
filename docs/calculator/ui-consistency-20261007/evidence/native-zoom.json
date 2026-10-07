@@ -1,0 +1,28 @@
+{
+  "status": "passed for actual desktop calculation and overflow",
+  "applicationCommit": "449ec041",
+  "buildId": "pcKNcSsmPdTbu42BvUKVr",
+  "browser": "user Google Chrome native window via cua_repl",
+  "steps": [
+    "activate newly created isolated localhost:3221 tab",
+    "native Command+0, five Command+Plus presses",
+    "AX toolbar reports Zoom: 200%",
+    "reload final production build, load example, calculate"
+  ],
+  "actual": {
+    "zoom": 200,
+    "devicePixelRatio": 4,
+    "width": 733,
+    "height": 383,
+    "horizontalOverflow": false,
+    "resultVisible": true,
+    "premixUl": 514.8,
+    "reactions": 26,
+    "dispenseUl": 18,
+    "touchHeightMin": 44
+  },
+  "limitations": [
+    "Mac subsequently locked; final native screenshot and reset to 100% could not complete; test tab is ephemeral",
+    "no physical phone test or soft-keyboard/IME trial"
+  ]
+}

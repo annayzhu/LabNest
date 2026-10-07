@@ -1,0 +1,4 @@
+[
+  'I04 replay creates exactly one database Result linked to fixture step',
+  'I06 WB Result database contains complete components, raw inputs, display units, warnings, notes and operator'
+]

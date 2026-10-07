@@ -6,6 +6,7 @@ import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
+import { CalculatorIcon } from "@/components/calculators/CalculatorIcon";
 import { TodayCalculators } from "@/components/calculators/TodayCalculators";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
 import { prisma } from "@/lib/db";
@@ -308,7 +309,7 @@ export default async function OverviewPage({
                 const Icon = action.icon;
                 return (
                   <Link key={action.href} href={action.href} className="ln-quick-action focus-ring group flex h-9 items-center gap-2.5 rounded-[var(--ln-radius-control-md)] px-2.5">
-                    <Icon className="ln-quick-action-icon h-4 w-4 shrink-0 text-moss" strokeWidth={1.7} aria-hidden />
+                    {action.href==="/tools/calculator"?<CalculatorIcon name="calculator" size={16} className="ln-quick-action-icon shrink-0 text-moss"/>:<Icon className="ln-quick-action-icon h-4 w-4 shrink-0 text-moss" strokeWidth={1.7} aria-hidden />}
                     <StaggeredText text={action.label} trigger="hover" className="min-w-0 flex-1 truncate text-sm font-medium text-ink" />
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted opacity-0 transition group-hover:opacity-100" aria-hidden />
                   </Link>

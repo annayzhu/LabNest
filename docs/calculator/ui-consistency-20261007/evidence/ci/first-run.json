@@ -1,0 +1,10 @@
+{
+  "head": "57f1dcbd01568d5472390a0b8eac1dea50cef456",
+  "run": 37605505034,
+  "quality": "passed in both timezones",
+  "browser": "failed",
+  "entryChecksPassed": 34,
+  "error": "WebKit alternate transfection RSC preload access-control error; underlying engine exception not deterministically reproduced",
+  "redRegression": "old production build initiates 2 unselected transfection RSC requests; zero-prefetch assertion fails",
+  "fix": "Disable prefetch on paired tool links; preserve on-demand navigation and strict pageerror assertion"
+}

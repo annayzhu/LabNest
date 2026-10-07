@@ -1,0 +1,145 @@
+{
+  "base": "http://localhost:3221",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
+      "normal": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "focused": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "auto"
+      },
+      "disabled": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "error": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "keyboard": {
+        "before": "mM",
+        "after": "nM",
+        "key": "n (native type-ahead)"
+      },
+      "description": "real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "status": "passed",
+      "normal": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "focused": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "auto"
+      },
+      "disabled": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "error": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "keyboard": {
+        "before": "mM",
+        "after": "nM",
+        "key": "n (native type-ahead)"
+      },
+      "description": "real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "normal": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "focused": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "auto"
+      },
+      "disabled": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "error": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "keyboard": {
+        "before": "mM",
+        "after": "nM",
+        "key": "n (native type-ahead)"
+      },
+      "description": "real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "status": "passed",
+      "normal": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "focused": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "auto"
+      },
+      "disabled": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "error": {
+        "appearance": "none",
+        "padding": "40px",
+        "position": "calc(100% - 12px) 50%",
+        "outline": "none"
+      },
+      "keyboard": {
+        "before": "mM",
+        "after": "nM",
+        "key": "n (native type-ahead)"
+      },
+      "description": "real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained"
+    }
+  ]
+}

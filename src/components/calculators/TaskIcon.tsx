@@ -4,7 +4,11 @@ import {Calculator} from 'lucide-react';
 import {taskLineIcons} from '@/lib/calculators/task-line-icons';
 import {useAppearance} from '@/components/AppearanceProvider';
 import {taskIconResource} from '@/lib/calculators/task-presentation';
-export function TaskIcon({taskId,size=32,pack}:{taskId:string;size?:number;pack?:string}){
+import {CalculatorIcon,calculatorToolIcons} from './CalculatorIcon';
+export function TaskIcon({taskId,size=28,pack,solid=false}:{taskId:string;size?:number;pack?:string;solid?:boolean}){
+ return solid?<span aria-hidden="true" className="task-icon" style={{width:size,height:size,display:'inline-flex'}}><CalculatorIcon name={calculatorToolIcons[taskId as keyof typeof calculatorToolIcons]??'calculator'} size={size}/></span>:<PreferenceTaskIcon taskId={taskId} size={size} pack={pack}/>;
+}
+function PreferenceTaskIcon({taskId,size,pack}:{taskId:string;size:number;pack?:string}){
  const {preferences}=useAppearance();
  const src=taskIconResource(taskId,pack??preferences.iconPackId);
  const [failed,setFailed]=useState<string|null>(null);

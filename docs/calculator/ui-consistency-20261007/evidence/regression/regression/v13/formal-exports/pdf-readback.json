@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
+  "pages": 2,
+  "status": "通过",
+  "textChecks": [
+    "wb-loading-v3",
+    "Synthetic stock",
+    "10 µL",
+    "5 µL",
+    "1 µL",
+    "4 µL",
+    "below configured minimum",
+    "WB-A",
+    "µg/µL"
+  ],
+  "visual": "page 1 rendered and inspected; page 2 retained input metadata read back as text",
+  "nativePrinter": "未执行"
+}

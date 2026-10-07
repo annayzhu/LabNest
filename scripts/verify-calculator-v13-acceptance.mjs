@@ -1,6 +1,7 @@
 import {spawnSync,execFileSync} from 'node:child_process';
+import {resolve} from 'node:path';
 import {mkdirSync,writeFileSync,openSync,closeSync,cpSync,existsSync,readFileSync,readdirSync,statSync} from 'node:fs';
-const out='docs/calculator/v1.3/evidence';mkdirSync(out+'/logs',{recursive:true});
+const out=process.env.CALCULATOR_EVIDENCE_DIR??'docs/calculator/v1.3/evidence';mkdirSync(out+'/logs',{recursive:true});
 const scripts=['reaction-mix-20260916','run-v12','pipetting-v12','v12-database','refactor','legacy','compact-ui','plate','storage-appearance','appearance','integration','database','rejection','visual-v11','standalone-v11','ux-v13','formal-exports','navigation-icons','colony-v13','cache-clear-failure','copy-recent','transfection','transfection-database','presets-20260915','offline-management-20260915'];
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),startedAt:new Date().toISOString(),base:process.env.LABNEST_E2E_BASE_URL,checks:[]};
 for(const name of scripts){const path=`${out}/logs/${name}.log`,fd=openSync(path,'w');const start=Date.now();const result=spawnSync(process.execPath,[`scripts/verify-calculator-${name}.mjs`],{env:process.env,stdio:['ignore',fd,fd]});closeSync(fd);const entry={name,status:result.status===0?'通过':'失败',exitCode:result.status,durationMs:Date.now()-start,log:path};report.checks.push(entry);writeFileSync(out+'/acceptance-run.json',JSON.stringify(report,null,2));console.log(`${entry.status}: ${name} (${entry.durationMs} ms)`);if(result.status!==0)console.error(readFileSync(path,'utf8'));}
@@ -13,4 +14,8 @@ function copyFresh(source,target){
  }
 }
 for(const [source,target] of [['docs/calculator/reaction-mix-20260916/evidence','reaction-mix-20260916'],['docs/calculator/presets-20260915/evidence','presets-20260915'],['docs/calculator/evidence','core'],['docs/calculator/v1.1/evidence','v11'],['docs/calculator/v1.2/evidence','v12'],['docs/calculator/blockers/evidence','blockers'],['docs/appearance/foundation/evidence','appearance']])if(existsSync(source))copyFresh(source,`${out}/regression/${target}`);
+// A separate release folder also needs the v1.3 CSV/XLSX/PDF and per-file reports.
+// Never copy a directory into itself when the historical default output is used.
+const v13='docs/calculator/v1.3/evidence';
+if(resolve(out)!==resolve(v13)&&!resolve(out).startsWith(resolve(v13)+'/'))copyFresh(v13,`${out}/regression/v13`);
 report.finishedAt=new Date().toISOString();writeFileSync(out+'/acceptance-run.json',JSON.stringify(report,null,2));if(report.checks.some(c=>c.status==='失败'))process.exitCode=1;

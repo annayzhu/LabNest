@@ -1,0 +1,24 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/calculators/input-draft.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/calculators/input-draft.test.ts [ src/lib/calculators/input-draft.test.ts ]
+Error: Cannot find module './input-draft' imported from /Users/annayzhu/Documents/Playground/LabNest/src/lib/calculators/input-draft.test.ts
+ ❯ src/lib/calculators/input-draft.test.ts:2:1
+      1| import {describe,it,expect} from 'vitest';
+      2| import {hasRestorableInputs} from './input-draft';
+       | ^
+      3| describe('calculator draft availability',()=>{
+      4|  it('recognizes nested transfection plans and retains scalar/row draft…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  17:54:37
+   Duration  210ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

@@ -1,0 +1,162 @@
+[
+  {
+    "phase": "before",
+    "engine": "chromium",
+    "width": 1440,
+    "theme": "light",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-chromium-1440-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "chromium",
+    "width": 1440,
+    "theme": "dark",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-chromium-1440-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "chromium",
+    "width": 390,
+    "theme": "light",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-chromium-390-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "chromium",
+    "width": 390,
+    "theme": "dark",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-chromium-390-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "chromium",
+    "width": 1440,
+    "theme": "light",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-chromium-1440-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "chromium",
+    "width": 1440,
+    "theme": "dark",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-chromium-1440-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "chromium",
+    "width": 390,
+    "theme": "light",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-chromium-390-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "chromium",
+    "width": 390,
+    "theme": "dark",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-chromium-390-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "webkit",
+    "width": 1440,
+    "theme": "light",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-webkit-1440-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "webkit",
+    "width": 1440,
+    "theme": "dark",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-webkit-1440-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "webkit",
+    "width": 390,
+    "theme": "light",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-webkit-390-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "before",
+    "engine": "webkit",
+    "width": 390,
+    "theme": "dark",
+    "sha": "91fc4b6e9159687f529215266654a096fc0c8053",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/before-webkit-390-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "webkit",
+    "width": 1440,
+    "theme": "light",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-webkit-1440-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "webkit",
+    "width": 1440,
+    "theme": "dark",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-webkit-1440-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "webkit",
+    "width": 390,
+    "theme": "light",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-webkit-390-light.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  },
+  {
+    "phase": "after",
+    "engine": "webkit",
+    "width": 390,
+    "theme": "dark",
+    "sha": "81813d59",
+    "file": "docs/calculator/ui-consistency-20261007/evidence/comparable/after-webkit-390-dark.png",
+    "input": "same built-in reaction preparation example",
+    "capture": "viewport, scroll origin, no edited production record"
+  }
+]

@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Calculator controls: adjust density independently of scientific/document typography. */
+:root {
+  --ln-calculator-control-height: 36px;
+  --ln-calculator-touch-height: 44px;
+  --ln-calculator-control-radius: 8px;
+  --ln-calculator-control-padding: 12px;
+  --ln-calculator-icon-gap: 7px;
+  --ln-calculator-select-gutter: 40px;
+  --ln-calculator-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%234d5955' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+html[data-labnest-mode="dark"] {
+  --ln-calculator-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23dde5e2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 /* 内置中文字体以字符区间隔离，避免字体栈回退时由宋体接管英文字形。 */
 @font-face {
   font-family: "LabNest CJK Source Han Sans";

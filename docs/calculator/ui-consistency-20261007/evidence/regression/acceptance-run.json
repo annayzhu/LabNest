@@ -1,0 +1,183 @@
+{
+  "sha": "81813d5950ff2d7ae454866fb15c918a0e28be63",
+  "startedAt": "2026-10-07T09:58:23.602Z",
+  "base": "http://localhost:3221",
+  "checks": [
+    {
+      "name": "reaction-mix-20260916",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 26758,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/reaction-mix-20260916.log"
+    },
+    {
+      "name": "run-v12",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 13016,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/run-v12.log"
+    },
+    {
+      "name": "pipetting-v12",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6133,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/pipetting-v12.log"
+    },
+    {
+      "name": "v12-database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 84,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/v12-database.log"
+    },
+    {
+      "name": "refactor",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 15409,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/refactor.log"
+    },
+    {
+      "name": "legacy",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 19517,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/legacy.log"
+    },
+    {
+      "name": "compact-ui",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6149,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/compact-ui.log"
+    },
+    {
+      "name": "plate",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1295,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/plate.log"
+    },
+    {
+      "name": "storage-appearance",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 4695,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/storage-appearance.log"
+    },
+    {
+      "name": "appearance",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 27920,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/appearance.log"
+    },
+    {
+      "name": "integration",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2713,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/integration.log"
+    },
+    {
+      "name": "database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 84,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/database.log"
+    },
+    {
+      "name": "rejection",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1258,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/rejection.log"
+    },
+    {
+      "name": "visual-v11",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 6248,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/visual-v11.log"
+    },
+    {
+      "name": "standalone-v11",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1773,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/standalone-v11.log"
+    },
+    {
+      "name": "ux-v13",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 33214,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/ux-v13.log"
+    },
+    {
+      "name": "formal-exports",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1499,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/formal-exports.log"
+    },
+    {
+      "name": "navigation-icons",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 40047,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/navigation-icons.log"
+    },
+    {
+      "name": "colony-v13",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1287,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/colony-v13.log"
+    },
+    {
+      "name": "cache-clear-failure",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1443,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/cache-clear-failure.log"
+    },
+    {
+      "name": "copy-recent",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 4133,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/copy-recent.log"
+    },
+    {
+      "name": "transfection",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2072,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/transfection.log"
+    },
+    {
+      "name": "transfection-database",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 1168,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/transfection-database.log"
+    },
+    {
+      "name": "presets-20260915",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 22092,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/presets-20260915.log"
+    },
+    {
+      "name": "offline-management-20260915",
+      "status": "通过",
+      "exitCode": 0,
+      "durationMs": 2028,
+      "log": "docs/calculator/ui-consistency-20261007/evidence/regression/logs/offline-management-20260915.log"
+    }
+  ],
+  "finishedAt": "2026-10-07T10:02:25.778Z"
+}

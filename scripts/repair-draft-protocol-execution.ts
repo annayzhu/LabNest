@@ -14,6 +14,7 @@ const plan=z.object({experimentId:z.string(),snapshotHash:z.string(),versionId:z
 const apply=args.includes('--apply'),hash=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');mkdirSync(output,{recursive:true});
 async function main(){await prisma.$transaction(async tx=>{
  await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${plan.experimentId} FOR UPDATE`;
+ await tx.$queryRaw`SELECT id FROM "ExperimentStep" WHERE "experimentId"=${plan.experimentId} ORDER BY id FOR UPDATE`;
  const experiment=await tx.experiment.findUniqueOrThrow({where:{id:plan.experimentId},include:{steps:{orderBy:[{groupOrder:'asc'},{order:'asc'}],include:{events:true,inventoryTransactions:true}},protocolRun:true}});
  if(experiment.status!=='planned'||experiment.recordStatus!=='draft')throw new Error('Only a planned Draft may receive an explicitly audited repair.');
  if(experiment.steps.some(step=>step.events.length||step.inventoryTransactions.length))throw new Error('Execution events or inventory transactions must not be rebuilt.');
@@ -27,7 +28,9 @@ async function main(){await prisma.$transaction(async tx=>{
  const projection=projectProtocolDocument(confirmed);if(projection.executionNeedsReview||!projection.steps.length)throw new Error('Incomplete operation contract.');
  const repair=draftExecutionRepair(experiment.steps,projection.steps,plan.mapping,plan.keepers,plan.versionId);
  const links=await tx.attachmentLink.findMany({where:{targetType:'experiment_step',targetId:{in:experiment.steps.map(step=>step.id)}}});
- const backup={experiment,links},backupHash=hash(backup);
+ const entryBindings=await tx.entry.findMany({where:{experimentStepId:{in:experiment.steps.map(step=>step.id)}},select:{id:true,experimentStepId:true}});
+ const resultBindings=await tx.result.findMany({where:{experimentStepId:{in:experiment.steps.map(step=>step.id)}},select:{id:true,experimentStepId:true}});
+ const backup={experiment,links,entryBindings,resultBindings},backupHash=hash(backup);
  writeFileSync(`${output}/original.json`,JSON.stringify(backup,null,2));
  writeFileSync(`${output}/diff.json`,JSON.stringify({beforeSteps:experiment.steps.length,afterSteps:projection.steps.length,backupHash,repair,mapping:plan.mapping,keepers:plan.keepers},null,2));
  if(!apply){console.log(JSON.stringify({apply:false,beforeSteps:experiment.steps.length,afterSteps:projection.steps.length,backupHash}));return;}

@@ -44,11 +44,13 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false }: {
   experimentId: string;
   status: string;
   steps: RunStep[];
   editable: boolean;
+  protocolBased?:boolean;
+  frozenReferenceTitles?:Record<string,string>;
   frozenReferences?: Record<string, ReturnType<typeof import("@/lib/run-step-content").runStepContent>["reference"]>;
   evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
@@ -83,6 +85,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     }
     return [...grouped.values()].sort((a, b) => a.order - b.order);
   }, [steps]);
+  const referenceGroups=Object.keys(frozenReferences??{}).map(key=>({key,title:groups.find(group=>group.key===key)?.title??frozenReferenceTitles?.[key]??"Captured Protocol reference"}));
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
@@ -248,7 +251,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             <p className="mt-1">{evidenceTotals.observations} observations · {evidenceTotals.measurements} measurements · {evidenceTotals.files} files · {evidenceTotals.consumptions} inventory records</p>
             {!totalEvidence ? <p className="mt-1 text-warning">No step-linked evidence has been recorded. Confirm this is appropriate before completing the run.</p> : null}
           </div>
-          {editable ? <><label className="mt-3 flex min-h-11 items-start gap-3 text-sm text-graphite"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" /><span>I reviewed the run evidence and unresolved deviations.</span></label><button type="submit" name="intent" value="complete" disabled={pending || !reviewConfirmed} className={`${primaryButton} mt-3 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button></> : null}
+          {editable ? <><label className="mt-3 flex min-h-11 items-start gap-3 text-sm text-graphite"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" /><span>I reviewed the run evidence and unresolved deviations.</span></label><button type="submit" name="intent" value="complete" disabled={pending || !reviewConfirmed || (protocolBased&&!hasSteps)} className={`${primaryButton} mt-3 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button></> : null}
         </div>
       )}
 
@@ -265,7 +268,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
       <div className="mt-3 space-y-3">
         <OfflineCalculator zh={zh}/>
-        {groups.map(group => <details key={group.key}>
+        {referenceGroups.map(group => <details key={group.key}>
           <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
           <div className="run-step-content mt-2 min-w-0 space-y-3">
             {(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
@@ -336,7 +339,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         <span className="mr-auto text-xs text-muted">{hasSteps ? (remaining ? `${remaining} step${remaining === 1 ? "" : "s"} remaining` : "All planned steps checked") : "No checklist steps configured"}</span>
         {status === "planned" || status === "failed" ? <button type="submit" name="intent" value="start" disabled={pending} className={secondaryButton}><Play className="h-4 w-4" aria-hidden />{pending ? "Working…" : status === "failed" ? "Resume run" : "Start run"}</button> : null}
         <button type="submit" name="intent" value="save" disabled={pending} className={secondaryButton}><Save className="h-4 w-4" aria-hidden />{pending ? "Saving…" : "Save progress"}</button>
-        <button type="submit" name="intent" value="complete" disabled={pending} className={primaryButton}><CheckCircle2 className="h-4 w-4" aria-hidden />{pending ? "Working…" : "Complete run"}</button>
+        <button type="submit" name="intent" value="complete" disabled={pending||(protocolBased&&!hasSteps)} className={primaryButton}><CheckCircle2 className="h-4 w-4" aria-hidden />{pending ? "Working…" : "Complete run"}</button>
       </div>
     </div> : null}
   </form>;

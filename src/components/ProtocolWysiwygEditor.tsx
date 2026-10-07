@@ -125,6 +125,7 @@ const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name:
   { name: "protocolBlockId", htmlAttribute: "data-protocol-block-id" },
   { name: "protocolBlockType", htmlAttribute: "data-protocol-block-type" },
   { name: "protocolExecution", htmlAttribute: "data-protocol-execution" },
+  { name: "protocolRichChild", htmlAttribute: "data-protocol-rich-child" },
   { name: "protocolLineHeight", htmlAttribute: "data-labnest-line-height" },
   { name: "protocolFontFamily", htmlAttribute: "data-labnest-font-family" },
   { name: "protocolCaption", htmlAttribute: "data-protocol-caption" },

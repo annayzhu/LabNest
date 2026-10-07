@@ -79,3 +79,20 @@ it('retains the flags of an existing structured contract instead of inferring th
  const document=protocolDocumentFromLegacy({materials:[],equipment:[],resultTemplates:[],consumptionRules:[],steps:[{source_ref:'stable',order:1,title:'Inspect',description:'Keep original settings',requires_confirmation:false,allows_deviation:false}]});
  expect(projectProtocolDocument(document).steps[0]).toMatchObject({source_ref:'stable',requires_confirmation:false,allows_deviation:false});
 });
+
+it('keeps a paragraph-owned nested list in one operation through the actual editor JSON seam',()=>{
+ const document=fixture();document.sections[0].blocks=[{id:'owned',type:'rich_text',execution:{role:'step',stepId:'op',title:'Add reagent'},nodes:[{type:'paragraph',content:[{text:'Add 5 µL'}],childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Keep on ice'}]}]}]}]}]}];
+ const roundtrip=tiptapToProtocolDocument(protocolDocumentToTiptap(document)),projection=projectProtocolDocument(roundtrip);
+ expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('op');expect(projection.executionNeedsReview).toBe(false);
+ expect(JSON.stringify(roundtrip)).toContain('childContent');expect(JSON.stringify(roundtrip)).toContain('Keep on ice');
+});
+
+it('preserves scientific scripts/links during title dedup and in visible Word XML rather than only the embedded JSON',async()=>{
+ const {executionBodyWithoutTitle}=await import('./protocol-execution'),{exportProtocolDocx}=await import('./protocol-docx-export'),{unzipSync,strFromU8}=await import('fflate');
+ const scientific={id:'formula',type:'text' as const,text:'H2O',nodes:[{type:'paragraph' as const,content:[{text:'H'},{text:'2',subscript:true},{text:'O',link:'https://example.org/method'}]}],execution:{role:'step' as const,stepId:'formula',title:'H2O'}};
+ expect(executionBodyWithoutTitle([scientific],'H2O')).toHaveLength(1);
+ const document=fixture();document.sections[0].blocks=[scientific,{id:'formatted-list',type:'checklist',items:['10⁶ cells'],itemNodes:[[{type:'paragraph',content:[{text:'10'},{text:'6',superscript:true},{text:' cells'}],childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Essential note 5 µL'}]}]}]}]}]]}];
+ const archive=unzipSync(exportProtocolDocx({canonicalTitle:'Visible export test',availability:'draft',reviewStage:'draft',displayVersion:'1.0',scope:'general',tags:[]},document));
+ const visible=strFromU8(archive['word/document.xml']),relationships=strFromU8(archive['word/_rels/document.xml.rels']);
+ expect(visible).toContain('w:val="subscript"');expect(visible).toContain('w:val="superscript"');expect(visible).toContain('Essential note 5 µL');expect(visible).toContain('w:hyperlink');expect(relationships).toContain('https://example.org/method');
+});

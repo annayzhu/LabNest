@@ -9,3 +9,9 @@ it('retains explicitly mapped saved IDs and notes while refusing incomplete mapp
  expect(()=>draftExecutionRepair([{...heading,completed:true}],desired,{title:'op-a'},{'op-a':'title'},'v')).toThrow('Started');
  expect(()=>draftExecutionRepair([heading,body],desired,{title:'op-a'},{'op-a':'title'},'v')).toThrow('explicit mapping');
 });
+it('preserves actual note timestamps and rejects conflicting note categories instead of guessing',()=>{
+ const title=saved('title'),date=new Date('2026-10-06T03:04:05Z'),body={...saved('body'),deviationNote:'Original note',deviationAt:date,deviationType:'method'};
+ const target=[{source_ref:'op',order:1,title:'Prepare',description:'Full body'}],map={title:'op',body:'op'},keepers={op:'title'};
+ expect(draftExecutionRepair([title,body],target,map,keepers,'v').updates[0].data.deviationAt).toEqual(date);
+ expect(()=>draftExecutionRepair([{...title,deviationNote:'Different category',deviationType:'incident'},body],target,map,keepers,'v')).toThrow('categories');
+});

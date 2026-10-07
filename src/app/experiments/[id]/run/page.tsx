@@ -70,13 +70,15 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     files: attachmentLinks.filter((link) => link.targetType === "experiment_step" && link.targetId === step.id).length,
     consumptions: step._count.inventoryTransactions,
   }]));
+  const frozenReferenceTitles:Record<string,string>={};
   const frozenReferences: Record<string, ReturnType<typeof runStepContent>["reference"]> = {};
   const renderedSteps=experiment.steps.map(step=>{
     const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
     frozenReferences[step.groupKey] ??= reference;
     return {...step,richContent};
   });
-  for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown}[]}).versions??[]) {
+  for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown;protocolTitle?:string;displayVersion?:string}[]}).versions??[]) {
+    frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
     frozenReferences[version.protocolVersionId]??=normalizeProtocolDocument(version.contentJson)?.sections??[];
   }
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
@@ -123,6 +125,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           status={experiment.status}
           steps={renderedSteps}
           frozenReferences={frozenReferences}
+          frozenReferenceTitles={frozenReferenceTitles}
+          protocolBased={(experiment.protocolSnapshotJson as {methodMode?:string}).methodMode==="protocol"}
           editable={editable}
           evidenceByStep={evidenceByStep}
         />

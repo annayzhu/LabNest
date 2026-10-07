@@ -16,6 +16,9 @@ async function main(){
  const report=[];
  for(const entry of plan.entries){
   const result=await prisma.$transaction(async tx=>{
+   const identity=await tx.protocolVersion.findUniqueOrThrow({where:{id:entry.versionId},select:{protocolId:true}});
+   await tx.$queryRaw`SELECT id FROM "Protocol" WHERE id=${identity.protocolId} FOR UPDATE`;
+   await tx.$queryRaw`SELECT id FROM "ProtocolVersion" WHERE id=${entry.versionId} FOR UPDATE`;
    const source=await tx.protocolVersion.findUniqueOrThrow({where:{id:entry.versionId},include:{protocol:true}});
    const latest=await tx.protocolVersion.findFirst({where:{protocolId:source.protocolId},orderBy:{revision:'desc'}});
    // Replays are read-only; unrelated new revisions invalidate the audited plan.

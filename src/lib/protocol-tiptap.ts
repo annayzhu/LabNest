@@ -96,8 +96,7 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
     if (node.type !== "bullet" && node.type !== "numbered") {
-      if(node.content.length===0 && node.childContent?.[0]?.type==="table")content.push(...node.childContent);
-      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []));
+      content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []).map(child=>({...child,attrs:{...child.attrs,...legacyAttrs(blockId,'rich_text'),protocolRichChild:true}})));
       index += 1;
       continue;
     }
@@ -329,6 +328,14 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     const identity = blockIdentity(node);
     const execution = node.attrs?.protocolExecution ? {execution:node.attrs.protocolExecution as ProtocolContentBlock["execution"]} : {};
+    const parent=blocks.at(-1);
+    if(node.attrs?.protocolRichChild && parent?.id===identity.id && (parent.type==='rich_text'||parent.type==='text'||parent.type==='heading')) {
+      const nodes=parent.type==='rich_text'?parent.nodes:(parent.nodes??=[{type:parent.type==='heading'?'heading3':'paragraph',content:[{text:parent.text}]}]);
+      const last=nodes.at(-1);
+      if(last)last.childContent=[...(last.childContent??[]),node];
+      index+=1;
+      continue;
+    }
     if (node.type === "table") {
       blocks.push({ id: identity.id, ...execution, type: "table", caption: node.attrs?.protocolCaption ?? "", ...persistedTableFromTiptap(node) });
       index += 1;
@@ -348,7 +355,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     if (identity.type === "text" && node.type === "paragraph") {
       const nodes: JSONContent[] = [];
-      while (content[index] && blockIdentity(content[index]).id === identity.id && content[index].type === "paragraph") {
+      while (content[index] && !content[index].attrs?.protocolRichChild && blockIdentity(content[index]).id === identity.id && content[index].type === "paragraph") {
         nodes.push(content[index]);
         index += 1;
       }
@@ -358,6 +365,7 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
     }
     const richNodes: JSONContent[] = [];
     while (content[index] && richTextNodeTypes.has(content[index].type ?? "")) {
+      if(content[index].attrs?.protocolRichChild)break;
       const nextIdentity = blockIdentity(content[index]);
       if (richNodes.length && nextIdentity.id !== identity.id) break;
       richNodes.push(content[index]);

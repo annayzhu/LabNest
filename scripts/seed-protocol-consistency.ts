@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import path from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
 import sharp from 'sharp';
@@ -32,14 +32,18 @@ async function main(){
  ];
  const create=async(code:string,title:string,doc:ProtocolDocument)=>{const projection=projectProtocolDocument(doc);const protocol=await prisma.protocol.create({data:{humanCode:code,title,canonicalTitle:title}});const version=await prisma.protocolVersion.create({data:{protocolId:protocol.id,revision:1,title,displayVersion:'1.0',stepsJson:projection.steps,contentJson:doc,parametersJson:[{name:'dose',type:'number',default:7,unit:'µL'}]}});return {protocol,version};};
  const main=await create(`PRT-9${String(stamp).slice(-5)}`,'合成多段步骤验收',document),ambiguous=createEmptyProtocolDocument();ambiguous.sections.find(section=>section.key==='steps')!.blocks=[{id:'unknown-a',type:'text',text:'未划分说明 A'},{id:'unknown-b',type:'text',text:'未划分说明 B'}];
+ const referenceDocument=createEmptyProtocolDocument();referenceDocument.executionConfirmed=true;referenceDocument.sections.find(section=>section.key==='steps')!.blocks=[{id:'reference-only',type:'text',text:'资料规程唯一信息 55 µL',execution:{role:'info'}}];
+ const reference=await create(`PRT-6${String(stamp).slice(-5)}`,'合成纯资料规程',referenceDocument);
  const review=await create(`PRT-8${String(stamp).slice(-5)}`,'需作者确认的说明文档',ambiguous);
  const input={researchPlanId:plan.id,title:'重复创建验收',date:new Date('2026-10-07T01:00:00Z'),status:'planned' as const,recordStatus:'draft' as const,tags:[],contentJson:createScientificDocument(experimentSections),methodMode:'protocol' as const,protocolVersionIds:[main.version.id],customSteps:[],creationKey:randomUUID()};
  const [first,replay]=await Promise.all([createExperimentWithProtocolSnapshot(input),createExperimentWithProtocolSnapshot(input)]);assert.equal(first.id,replay.id);
  const firstRead=await prisma.experiment.findUniqueOrThrow({where:{id:first.id},include:{steps:true}});assert.equal(firstRead.steps.length,3);assert(firstRead.steps.every(step=>!step.completed && !step.completedAt));
+ const mixed=await createExperimentWithProtocolSnapshot({...input,title:'混合操作与资料规程',protocolVersionIds:[main.version.id,reference.version.id],creationKey:randomUUID()});
  const protectedExperiment=await createExperimentWithProtocolSnapshot({...input,title:'合成已完成保护记录',creationKey:randomUUID()});await prisma.experiment.update({where:{id:protectedExperiment.id},data:{status:'completed',recordStatus:'reviewed'}});
  const docx=exportProtocolDocx({humanCode:`PRT-7${String(stamp).slice(-5)}`,canonicalTitle:'合成 DOCX 归属验收',availability:'draft',reviewStage:'draft',displayVersion:'1.0',scope:'general',tags:[]},document,{[attachment.id]:{bytes:image,extension:'png',mimeType:'image/png',width:160,height:100}});writeFileSync(output+'/source.docx',docx);
- const inventory=await prisma.protocol.findMany({where:{availability:{not:'archived'},humanCode:{notIn:[main.protocol.humanCode,review.protocol.humanCode]}},include:{versions:{orderBy:{revision:'desc'},take:1}}});
- writeFileSync(output+'/fixtures.json',JSON.stringify({synthetic:true,planId:plan.id,protocolId:main.protocol.id,versionId:main.version.id,reviewProtocolId:review.protocol.id,reviewVersionId:review.version.id,idempotentExperimentId:first.id,protectedExperimentId:protectedExperiment.id,attachmentId:attachment.id,originalProtocols:inventory.map(protocol=>({code:protocol.humanCode,protocolId:protocol.id,versionId:protocol.versions[0].id,steps:Array.isArray(protocol.versions[0].stepsJson)?protocol.versions[0].stepsJson.length:0}))},null,2));
+ let inventory=await prisma.protocol.findMany({where:{availability:{not:'archived'},humanCode:{notIn:[main.protocol.humanCode,review.protocol.humanCode]}},include:{versions:{orderBy:{revision:'desc'},take:1}}});
+ if(process.env.LABNEST_QA_CATALOG_FILE){const catalog=JSON.parse(readFileSync(process.env.LABNEST_QA_CATALOG_FILE,'utf8'));const ids=new Set(catalog.report.map((row:{newVersionId:string})=>row.newVersionId));inventory=inventory.filter(protocol=>ids.has(protocol.versions[0].id));}else inventory=inventory.filter(protocol=>![main.protocol.id,review.protocol.id,reference.protocol.id].includes(protocol.id));
+ writeFileSync(output+'/fixtures.json',JSON.stringify({synthetic:true,mixedExperimentId:mixed.id,referenceVersionId:reference.version.id,planId:plan.id,protocolId:main.protocol.id,versionId:main.version.id,reviewProtocolId:review.protocol.id,reviewVersionId:review.version.id,idempotentExperimentId:first.id,protectedExperimentId:protectedExperiment.id,attachmentId:attachment.id,originalProtocols:inventory.map(protocol=>({code:protocol.humanCode,protocolId:protocol.id,versionId:protocol.versions[0].id,steps:Array.isArray(protocol.versions[0].stepsJson)?protocol.versions[0].stepsJson.length:0}))},null,2));
  console.log(JSON.stringify({synthetic:true,creationReplaySameId:first.id===replay.id,stepCount:firstRead.steps.length,originalProtocolCount:inventory.length}));
 }
 main().finally(()=>prisma.$disconnect());

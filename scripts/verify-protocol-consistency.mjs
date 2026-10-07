@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import readXlsxFile from 'read-excel-file/node';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3332',dir=process.env.LABNEST_QA_DIR??'docs/qa/protocol-consistency-20261007/evidence';
@@ -42,7 +43,7 @@ await check('A08 A09 author confirmation is visible, grouping saves and reopens 
 await check('A16 A17 A18 A20 actual Run completion, note, timer, save, refresh and page readback retain step IDs',async()=>{
  await go(`/experiments/${experimentId}/run`);const first=(await saved(experimentId)).steps[0];
  assert.equal(await page.locator('section.lg\\:block input[type="checkbox"][name="completedStepIds"]').count(),3);
- const row=page.locator(`#step-${first.id}`);await row.locator('textarea').fill('测试备注必须保存');await row.locator('input[type="checkbox"]').check();await page.getByRole('button',{name:/^(Save progress|保存进度)$/}).click();await page.getByRole('status').filter({hasText:/Progress saved|进度已保存/}).waitFor();
+ const row=page.locator(`#step-${first.id}`);await row.locator('textarea').fill('测试备注必须保存');await row.locator('input[type="checkbox"]').check();await page.getByRole('button',{name:/^(Save progress|保存进度)$/}).click();await page.waitForFunction(async id=>{const r=await fetch(`/api/experiments/${id}`),e=(await r.json()).experiment;return e.steps[0].completed&&e.steps[0].deviationNote==='测试备注必须保存';},experimentId);
  const read=await saved(experimentId);assert.equal(read.steps[0].completed,true);assert.equal(read.steps[0].deviationNote,'测试备注必须保存');assert.equal(read.steps[0].id,first.id);await page.reload({waitUntil:'networkidle'});assert(await page.locator(`#step-${first.id} input[type="checkbox"]`).isChecked());await screenshot('run-1440');
  const body=page.locator(`#step-${first.id} [data-run-step-content]`);assert.equal(await body.getByText('准备示例 A',{exact:true}).count(),0);assert((await body.innerText()).includes('200 µL'));
  await page.setViewportSize({width:390,height:844});await page.reload({waitUntil:'networkidle'});const mobile=page.locator('section.lg\\:hidden').first();
@@ -58,10 +59,13 @@ await check('A16 A17 A18 A20 actual Run completion, note, timer, save, refresh a
 });
 await check('A23 real DOCX file import preserves operation identity and embedded image loading through save and creation',async()=>{
  await go('/protocols/import');await page.locator('input[type="file"]').setInputFiles(dir+'/source.docx');await page.getByRole('button',{name:/Preview mapping|预览.*映射/}).click();await page.locator('[data-protocol-import-decision]').waitFor();await screenshot('docx-import-preview');
- const confirm=page.getByRole('button',{name:/^(Confirm import|确认导入)$/});await confirm.click();await page.waitForURL(url=>!url.pathname.endsWith('/import'));
- report.importedAt=page.url();
+ const responsePromise=page.waitForResponse(r=>r.url().endsWith('/api/structured-import/protocols/confirm')&&r.request().method()==='POST');
+ const confirm=page.getByRole('button',{name:/^(Confirm import|确认导入)$/});await confirm.click();const imported=await (await responsePromise).json();assert(imported.result?.href,JSON.stringify(imported));await go(imported.result.href);report.importedAt=page.url();
+ const jsonHref=await page.locator('a[href$="/json"]').getAttribute('href');assert(jsonHref);const importedJson=await (await page.request.get(base+jsonHref)).json();assert.equal(importedJson.structuredProjection.steps.length,3);const versionId=jsonHref.split('/')[5];
+ await go(`/experiments/new?plan=${fixture.planId}&protocolVersionId=${versionId}`);assert.equal(await page.locator('[data-preview-step]').count(),3);await page.waitForFunction(()=>[...document.querySelectorAll('[data-protocol-execution-preview] img')].every(i=>i.complete&&i.naturalWidth>0));await screenshot('docx-imported-create');
+ await page.locator('.document-page-title-input').fill('实际 DOCX 创建实验');await page.getByRole('button',{name:/^(Save Experiment|保存实验)$/}).click();await page.waitForURL(u=>/^\/experiments\/[^/]+$/.test(u.pathname)&&!u.pathname.endsWith('/new'));const id=page.url().split('/').pop();assert.equal((await saved(id)).steps.length,3);await go(`/experiments/${id}/run`);await page.waitForFunction(()=>[...document.querySelectorAll('[data-run-step-content] img')].every(i=>i.complete&&i.naturalWidth>0));await screenshot('docx-imported-run');
 });
-await check('A24 A25 all included current production-clone Protocols have actual preview/record/Run checks and full scroll evidence',async()=>{
+if(fixture.originalProtocols.length)await check('A24 A25 all included current production-clone Protocols have actual preview/record/Run checks and full scroll evidence',async()=>{
  await page.setViewportSize({width:1440,height:1000});
  for(const item of fixture.originalProtocols){
   await go(`/protocols/${item.protocolId}?version=${item.versionId}`);await screenshot(`catalog-${item.code}-protocol`);
@@ -73,8 +77,11 @@ await check('A24 A25 all included current production-clone Protocols have actual
   await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));const info=page.locator('[data-run-information]').first();if(await info.count()&&!await info.getAttribute('open'))await info.locator('summary').click();await screenshot(`catalog-${item.code}-run-bottom`);report.catalog.push({...item,experimentId:id,status:'通过',completed:0});
  }
 });
+if(!fixture.originalProtocols.length)report.checks.push({name:'A24 A25 private current-library catalog',status:'未执行',reason:'Fresh CI database contains synthetic fixtures only; production clone audit is local.'});
+await check('A09 A21 documentation-only captured Protocol stays readable in mixed Run without adding progress',async()=>{await go(`/experiments/${fixture.mixedExperimentId}/run`);assert.equal(await page.locator('input[name="completedStepIds"][type="checkbox"]').count(),3);await page.locator('[data-run-reference] > summary').click();const reference=page.locator('[data-run-reference] details').filter({hasText:'资料规程唯一信息 55 µL'});await reference.locator('summary').click();assert(await reference.getByText('资料规程唯一信息 55 µL',{exact:true}).isVisible());await screenshot('mixed-reference-run');});
 await check('A30 existing JSON/Markdown/XLSX exports include operation prose, dose, references and preserve correct count',async()=>{
- for(const format of ['json','md','xlsx']){const response=await page.request.get(`${base}/api/structured-export/experiments?format=${format}&exportScope=selected&id=${experimentId}`);assert.equal(response.status(),200);const buffer=await response.body();await writeFile(`${dir}/experiment.${format}`,buffer);if(format!=='xlsx'){const text=buffer.toString();assert(text.includes('200 µL'));assert(text.includes('30 µL'));assert(text.includes('40 µL'));assert(text.includes('参考资料'));}}
+ for(const format of ['json','md','xlsx']){const response=await page.request.get(`${base}/api/structured-export/experiments?format=${format}&exportScope=selected&id=${experimentId}`);assert.equal(response.status(),200);const buffer=await response.body();await writeFile(`${dir}/experiment.${format}`,buffer);if(format==='xlsx'){const workbook=await readXlsxFile(buffer);const text=JSON.stringify(workbook);assert(text.includes('200 µL'));assert(text.includes('嵌套说明 5 min'));assert(text.includes('参考资料'));}else{const text=buffer.toString();assert(text.includes('200 µL'));assert(text.includes('30 µL'));assert(text.includes('40 µL'));assert(text.includes('参考资料'));}}
 });
+const pdfText=execFileSync('pdftotext',[dir+'/experiment-preview.pdf','-'],{encoding:'utf8'});assert(pdfText.includes('200 µL'));assert(pdfText.includes('30 µL'));assert(pdfText.includes('40 µL'));execFileSync('pdftoppm',['-f','1','-singlefile','-scale-to','1200','-png',dir+'/experiment-preview.pdf',dir+'/experiment-print-first-page']);report.pdfTextChecked=true;
 assert.deepEqual(errors,[]);report.pageErrors=errors;
 }finally{await context.tracing.stop({path:dir+'/browser-trace.zip'});await browser.close();await writeFile(dir+'/browser-report.json',JSON.stringify(report,null,2));}

@@ -53,8 +53,8 @@ function paragraph(
   return `<w:p><w:pPr>${style ? `<w:pStyle w:val="${style}"/>` : ""}${spacing}${options.align ? `<w:jc w:val="${options.align}"/>` : ""}${options.keepNext ? "<w:keepNext/>" : ""}</w:pPr>${content || run(" ")}</w:p>`;
 }
 
-function richRuns(runs: ProtocolRichTextRun[]) {
-  return runs.map((item) => run(item.text, {
+function richRuns(runs: ProtocolRichTextRun[],media:ReturnType<typeof createDocxMedia>) {
+  return runs.map((item) => {const content=run(item.text, {
     bold: item.bold,
     italic: item.italic,
     underline: item.underline,
@@ -64,7 +64,7 @@ function richRuns(runs: ProtocolRichTextRun[]) {
     code: item.code,
     color: item.color === "risk" ? palette.risk : item.link ? palette.secondaryText : undefined,
     size: item.fontSizePt ? item.fontSizePt * 2 : undefined,
-  })).join("");
+  });return item.link?media.hyperlink(item.link,content):content;}).join("");
 }
 
 type TableKind = "data" | "identity" | "callout";
@@ -149,12 +149,14 @@ function table(
 }
 
 function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, media: ReturnType<typeof createDocxMedia>): string {
+  if((block.type==='heading'||block.type==='text')&&block.nodes)return blockXml({id:block.id,type:'rich_text',nodes:block.nodes},sequence,media);
+  if(block.type==='checklist'&&block.itemNodes)return block.itemNodes.map(nodes=>blockXml({id:block.id,type:'rich_text',nodes:nodes.map(node=>({...node,type:'bullet'}))},sequence,media)).join('');
   if (block.type === "heading") return paragraph(run(block.text, { bold: true, heading: true }), "Heading2", { before: 120, keepNext: true });
   if (block.type === "text") return block.text.split(/\r?\n/).map((line) => paragraph(run(line))).join("");
   if (block.type === "rich_text") return block.nodes.map((node) => {
     const inlineMedia = documentMediaFromMarkdown(node.content.map(item => item.text).join(""));
     if (inlineMedia) return blockXml(inlineMedia, sequence, media);
-    const content=richRuns(node.content);
+    const content=richRuns(node.content,media);
     let main:string;
     if(node.type==='heading2'||node.type==='heading3')main=paragraph(content,node.type==='heading2'?'Heading2':'Heading3',{before:120,keepNext:true,lineHeight:node.lineHeight});
     else if(node.type==='bullet')main=paragraph(run('• ')+content,'ListBullet',{lineHeight:node.lineHeight});

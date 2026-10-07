@@ -216,6 +216,9 @@ export async function updateStepTimer(
     });
     const now = new Date();
     await prisma.$transaction(async (tx) => {
+      // Historical Draft repair uses the same parent lock before inspecting any
+      // execution evidence. A timer may not start between its check and write.
+      await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
       const step = await tx.experimentStep.findFirst({
         where: { id: parsed.stepId, experimentId: parsed.experimentId },
         include: { experiment: { select: { status: true, recordStatus: true } } },

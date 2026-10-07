@@ -11,6 +11,12 @@ export function createDocxMedia(assets: DocxImageAssets) {
   const types = new Map<string, string>();
   return {
     files, relationships,
+    hyperlink(url:string,content:string) {
+      if(!/^(https?:\/\/|mailto:)/i.test(url))return content;
+      const id=`rIdLink${relationships.length+1}`;
+      relationships.push(`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${escapeXml(url)}" TargetMode="External"/>`);
+      return `<w:hyperlink r:id="${id}">${content}</w:hyperlink>`;
+    },
     contentTypes: () => [...types].map(([extension, mime]) => `<Default Extension="${escapeXml(extension)}" ContentType="${escapeXml(mime)}"/>`).join(""),
     image(block: DocumentMedia, maximumWidth = 6080760) {
       const id = documentMediaAttachmentId(block);

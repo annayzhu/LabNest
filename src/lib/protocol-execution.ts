@@ -33,16 +33,21 @@ export function executionBodyWithoutTitle(blocks: ProtocolContentBlock[], title:
   if (!first || !title) return cloned;
   const prefix=first.execution?.titlePrefix;
   if(prefix && prefix===`${title} — ` && first.type==='checklist' && first.items.length===1 && first.items[0].startsWith(prefix)) {
+    if(first.itemNodes?.[0]) {
+      const node=first.itemNodes[0][0];
+      if(!node||!node.content.map(run=>run.text).join('').startsWith(prefix))return cloned;
+      let remaining=prefix.length;
+      node.content=node.content.flatMap(run=>{const count=Math.min(remaining,run.text.length);remaining-=count;return run.text.length>count?[{...run,text:run.text.slice(count)}]:[];});
+    }
     first.items=[first.items[0].slice(prefix.length)];
-    // This prefix is an explicitly audited legacy title/description encoding.
-    if(first.itemNodes)first.itemNodes=undefined;
     return cloned;
   }
-  if ((first.type === 'heading' || first.type === 'text') && (first.type==='heading'?first.text.replace(/^\d+[.、)]\s*/, ''):first.text).trim() === title.trim() && !first.nodes?.some(n => n.childContent?.length)) return cloned.slice(1);
-  if (first.type === 'checklist' && first.items.length === 1 && first.items[0].trim() === title.trim() && !first.itemNodes?.some(nodes => nodes.some(n=>n.childContent?.length))) return cloned.slice(1);
+  const hasMeaning=(nodes:Extract<ProtocolContentBlock,{type:'rich_text'}>['nodes']|undefined)=>nodes?.some(node=>node.childContent?.length||node.content.some(run=>run.subscript||run.superscript||run.link||run.code));
+  if ((first.type === 'heading' || first.type === 'text') && (first.type==='heading'?first.text.replace(/^\d+[.、)]\s*/, ''):first.text).trim() === title.trim() && !hasMeaning(first.nodes)) return cloned.slice(1);
+  if (first.type === 'checklist' && first.items.length === 1 && first.items[0].trim() === title.trim() && !first.itemNodes?.some(hasMeaning)) return cloned.slice(1);
   if (first.type === 'rich_text') {
     const node = first.nodes[0];
-    if (node && (['heading2','heading3','numbered'].includes(node.type)?node.content.map(r=>r.text).join('').replace(/^\d+[.、)]\s*/, ''):node.content.map(r=>r.text).join('')).trim() === title.trim() && !node.childContent?.length) {
+    if (node && (['heading2','heading3','numbered'].includes(node.type)?node.content.map(r=>r.text).join('').replace(/^\d+[.、)]\s*/, ''):node.content.map(r=>r.text).join('')).trim() === title.trim() && !hasMeaning([node])) {
       first.nodes = first.nodes.slice(1);
       return first.nodes.length ? cloned : cloned.slice(1);
     }

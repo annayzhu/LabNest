@@ -1,0 +1,87 @@
+{
+  "sourcePackage": "LabNest_Calculator_UI_2026-10-07_Package.zip",
+  "sha256": "08df2ffde360396a0342d19b42b48825522fcb8e1fe06ce859ebd9a21ed5101a",
+  "suppliedIcons": [
+    {
+      "file": "reset.svg",
+      "sha256": "25bd3cacb3b0c91fb9a25b2410a61e2d3fb8dbc8f181308ac60fb6fed2c544aa",
+      "exactSource": true
+    },
+    {
+      "file": "add-component.svg",
+      "sha256": "10e995af24069cddb555d7f626ddeb9f7cffdd11a1917d8649a203683da3ff83",
+      "exactSource": true
+    },
+    {
+      "file": "settings.svg",
+      "sha256": "e3f781bd7e619d0939596172bea36d1cfa6186d4fbd71bcfa0aadb0be5374839",
+      "exactSource": true
+    },
+    {
+      "file": "import.svg",
+      "sha256": "a6c760ec9068846a31b5a239a2e518b9eccc1545cfa76226b85bf44aa6f68133",
+      "exactSource": true
+    },
+    {
+      "file": "preset.svg",
+      "sha256": "4962a8a884d212033bc0562b3a73bb10f0267c1a3fc5a00cbd7839c6ca362359",
+      "exactSource": true
+    },
+    {
+      "file": "copy.svg",
+      "sha256": "a7bce43714efc12dd12412684f7b6b0fd22eb94e96198f7d67447bf658b475c8",
+      "exactSource": true
+    },
+    {
+      "file": "multi-group.svg",
+      "sha256": "90cb5864b27cad154667946802c90429f11885a713465016f4e0ead3d965cdb7",
+      "exactSource": true
+    },
+    {
+      "file": "plate.svg",
+      "sha256": "df9be05a7bd2703e3f833e4b6892ba0db77ec8c6420c482e2e950cdeb37dd6d4",
+      "exactSource": true
+    },
+    {
+      "file": "single-group.svg",
+      "sha256": "74ffe5a909191754659cea9a1fc1f8cbe898ab030a71212b54be44188331b503",
+      "exactSource": true
+    },
+    {
+      "file": "pipette.svg",
+      "sha256": "c2faf2431189d0eb0463007ddaa027beb518d3f0e6ff16fed42e11a4a53c5718",
+      "exactSource": true
+    },
+    {
+      "file": "reaction-mix.svg",
+      "sha256": "f9a437b499e0041df84290cea45a68983010e4e09528c21892e169a24a61136e",
+      "exactSource": true
+    },
+    {
+      "file": "reagent.svg",
+      "sha256": "2b3e200e7227ab0194da988db1549437409c4f3ba4c595b6ed144767929ab286",
+      "exactSource": true
+    },
+    {
+      "file": "balance.svg",
+      "sha256": "4f3e832202b4094f2d94049ca4ac36610be739e9b150410022cb2c01d158b326",
+      "exactSource": true
+    },
+    {
+      "file": "serial-dilution.svg",
+      "sha256": "b93dd9657813cd1d9f578a10f9e9fce21f88ee4d41cfb0d344b78e93056dea00",
+      "exactSource": true
+    },
+    {
+      "file": "calculator.svg",
+      "sha256": "8913f3f33d18e6af6cc193ed3f741a001bb5016b9b278b920f3a416edb834a8d",
+      "exactSource": true
+    },
+    {
+      "file": "cell.svg",
+      "sha256": "8e41a89f97beaa70609082ec4cd1c22097161866d7e81412e20cea8166aee230",
+      "exactSource": true
+    }
+  ],
+  "totalInstalled": 46
+}

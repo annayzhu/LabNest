@@ -9,7 +9,7 @@ const root=process.env.UI_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007
 const dir=`${root}/${phase}`;
 await mkdir(dir,{recursive:true});
 const {catalog,aliases}=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorCatalog}=require('./src/lib/calculators/catalog.ts');const {legacyTaskMap}=require('./src/lib/calculators/task-definitions.ts');console.log(JSON.stringify({catalog:getCalculatorCatalog(),aliases:legacyTaskMap}))"],{encoding:'utf8'}));
-const report={base,phase,at:new Date().toISOString(),sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),tools:[],aliases,failures:[]};
+const report={base,phase,at:new Date().toISOString(),sha:process.env.UI_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),tools:[],aliases,failures:[]};
 const browsers=process.env.UI_BROWSER==='chromium'||phase==='before'?{chromium}:{chromium,webkit};
 for(const [engine,type] of Object.entries(browsers)){
  const browser=await type.launch();

@@ -1,0 +1,12 @@
+{
+  "icons": 46,
+  "sizes": [
+    16,
+    20,
+    24
+  ],
+  "colors": [
+    "black on transparent/light",
+    "white on transparent/dark"
+  ]
+}

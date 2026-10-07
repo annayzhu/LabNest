@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/calculators/input-draft.test.ts (3 tests | 1 failed) 36ms
+     × offers retained alternate mode inputs even when the active draft is empty 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/calculators/input-draft.test.ts > calculator draft availability > offers retained alternate mode inputs even when the active draft is empty
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/calculators/input-draft.test.ts:13:140
+     11|  });
+     12|  it('offers retained alternate mode inputs even when the active draft …
+     13|   expect(hasRestorableInputs({samples:'',rows:[],__mixModeDrafts:{mult…
+       |                                                                                                                                            ^
+     14|   expect(hasRestorableInputs({__wbSampleDraft:[{id:'样本A',concentration…
+     15|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:56:14
+   Duration  490ms (transform 59ms, setup 0ms, import 88ms, tests 36ms, environment 0ms)
+

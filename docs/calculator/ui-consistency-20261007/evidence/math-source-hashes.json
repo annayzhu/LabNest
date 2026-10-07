@@ -1,0 +1,56 @@
+{
+  "baseline": "91fc4b6e9159687f529215266654a096fc0c8053",
+  "applicationCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
+  "files": [
+    {
+      "file": "src/lib/calculators/calculator-engine.ts",
+      "sha256": "e2360826bd8a25c6f6eb3f0a7ade9ee0882909ad40644cebb4e92abdda6de443",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/planning.ts",
+      "sha256": "070977b1eb4b94f22b0453e0d95ad5b5c3b348db965e2749a761e4988630f4bf",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/operations.ts",
+      "sha256": "2cb7b2f8581c6d9b4c786cf9f3e121b283bfa06a6d8d15caf5dc36d110238644",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/pipetting.ts",
+      "sha256": "76fbf016859339598349bfc35fa0e35852efc9c953b39d973a0205522e681a8b",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/transfection.ts",
+      "sha256": "8aba1a331aab035cac915b0c89ea3074c09c1ccd9f87fbcd362bef15ddb5e7d7",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/quantities.ts",
+      "sha256": "2f3eaf1beabae02aa1e3b5f0b6578297d04e0760446570b6474e65108c135b7d",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/quantity-format.ts",
+      "sha256": "f164f5f6b7149767c134cf4dac05645656ffba81b1dfe6f0f3ebfe79a579f480",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/presentation.ts",
+      "sha256": "b378ff154bef5bfac8034f3a83f5c5448bcbd90a5280acc9451abeabfe4c2501",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/reaction-mix-presentation.ts",
+      "sha256": "c097071fde980cc24e7747387381e682e01a28995a6e7e18a812aa609a623a97",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/calculators/task-definitions.ts",
+      "sha256": "cad5e658578865950a9c48a3fe805f59f45e0bf4bbadd031fbd1e5de6ba86830",
+      "unchanged": true
+    }
+  ]
+}

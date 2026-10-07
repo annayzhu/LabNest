@@ -1,0 +1,1510 @@
+{
+  "base": "http://localhost:3221",
+  "at": "2026-10-07T09:59:39.994Z",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 290,
+        "y": 803.78125,
+        "width": 490,
+        "height": 22
+      },
+      "end": {
+        "x": 290,
+        "y": 803.78125,
+        "width": 490,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 290,
+        "y": 803.78125,
+        "width": 490,
+        "height": 22
+      },
+      "end": {
+        "x": 290,
+        "y": 803.78125,
+        "width": 490,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.78125,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 58,
+        "y": 548.90625,
+        "width": 276,
+        "height": 22
+      },
+      "end": {
+        "x": 58,
+        "y": 548.90625,
+        "width": 276,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 58,
+        "y": 548.90625,
+        "width": 276,
+        "height": 22
+      },
+      "end": {
+        "x": 58,
+        "y": 548.90625,
+        "width": 276,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.90625,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 290,
+        "y": 803.734375,
+        "width": 490,
+        "height": 22
+      },
+      "end": {
+        "x": 290,
+        "y": 803.734375,
+        "width": 490,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 290,
+        "y": 803.734375,
+        "width": 490,
+        "height": 22
+      },
+      "end": {
+        "x": 290,
+        "y": 803.734375,
+        "width": 490,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 290,
+          "y": 803.734375,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 58,
+        "y": 548.84375,
+        "width": 276,
+        "height": 22
+      },
+      "end": {
+        "x": 58,
+        "y": 548.84375,
+        "width": 276,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "single/multiple independently preserve reaction counts, Chinese rows and all groups",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "native radio arrow keyboard changes mode and retains the original counts",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "immediate disclosure, stable title and scroll, retained settings, safe Escape focus",
+      "status": "passed",
+      "start": {
+        "x": 58,
+        "y": 548.84375,
+        "width": 276,
+        "height": 22
+      },
+      "end": {
+        "x": 58,
+        "y": 548.84375,
+        "width": 276,
+        "height": 22
+      },
+      "frames": [
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "false",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        },
+        {
+          "open": "true",
+          "x": 58,
+          "y": 548.84375,
+          "animations": 0
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "7 actual reactions unchanged, narrow successful calculation shows result, output units and native selector gutter work",
+      "status": "passed",
+      "selectStyle": {
+        "appearance": "none",
+        "paddingRight": "40px",
+        "backgroundPosition": "calc(100% - 12px) 50%"
+      }
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "invalid input removes current result, copy and export and leaves narrow inputs visible",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "multi-only restored fixture requires explicit source group, and all groups survive the conversion",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "empty active draft can restore retained alternate mode groups after a full reload",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "new controls follow all existing interface font scales",
+      "status": "passed",
+      "scales": [
+        {
+          "size": "compact",
+          "actual": "13px",
+          "token": "13px"
+        },
+        {
+          "size": "standard",
+          "actual": "14px",
+          "token": "14px"
+        },
+        {
+          "size": "comfortable",
+          "actual": "16px",
+          "token": "16px"
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "1280, 768 and 320 CSS pixel layout has no horizontal page overflow",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "name": "second real calculator retains optional settings with safe Escape and eight no-motion frames",
+      "status": "passed",
+      "secondFrames": [
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        },
+        {
+          "expanded": "false",
+          "animations": 0
+        },
+        {
+          "expanded": "true",
+          "animations": 0
+        }
+      ]
+    }
+  ]
+}

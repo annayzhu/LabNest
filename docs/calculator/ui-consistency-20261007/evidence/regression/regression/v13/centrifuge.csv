@@ -1,0 +1,2 @@
+﻿"name","value","unit","operations","operationVersion","pipettingCheck","context","task","mode","method","resultStatus","warnings","assumptions","inputs","outputs","displayUnits","structuredWarnings"
+"RCF","11180","×g","[]","liquid-operations-v2","{""status"":""not-applicable""}","{}","centrifuge","rpm-to-rcf","centrifuge-v2","valid","","","{""mode"":""rpm-to-rcf"",""rpm"":10000,""rcf"":"""",""radiusCm"":10,""radiusDefinition"":""entered""}","[{""key"":""rcf"",""label"":""RCF"",""labelZh"":""相对离心力"",""value"":11180,""unit"":""×g""}]","{}","[]"

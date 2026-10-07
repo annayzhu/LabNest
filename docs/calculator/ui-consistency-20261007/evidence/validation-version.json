@@ -1,0 +1,14 @@
+{
+  "baseline": "91fc4b6e9159687f529215266654a096fc0c8053",
+  "applicationSourceCommit": "81813d5950ff2d7ae454866fb15c918a0e28be63",
+  "buildId": "sttEqHmQvAEua_yHuTpSd",
+  "directory": "/Users/annayzhu/Documents/Playground/LabNest",
+  "applicationBase": "http://localhost:3221",
+  "database": "isolated synthetic acceptance database, not production",
+  "timezone": "Asia/Shanghai",
+  "node": "v22.23.1",
+  "browsers": "Playwright Chromium and WebKit",
+  "beforeRuntimeParity": "CalculatorWorkspace.tsx and globals.css runtime hashes matched baseline before capture",
+  "phonePhysicalDevice": "未执行",
+  "finalNative200Percent": "未执行: Mac locked; earlier actual desktop 200% test used449ec041; not relabeled as final version"
+}

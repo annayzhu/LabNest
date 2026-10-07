@@ -1,0 +1,356 @@
+{
+  "repository": "annayzhu/LabNest",
+  "testedHead": "83c12793ebca78b4d8d331f84a5634f9a502fe61",
+  "pullRequestMergeRef": "8121ac89f4366fd42a2af007bc09899bcde2ae95",
+  "mergeRefNote": "GitHub pull_request checkout builds the temporary merge ref of testedHead and base main. The associated exact-head workflow and all browser steps passed.",
+  "qualityResults": {"Asia/Shanghai": {"files": 115, "tests": 572}, "America/Vancouver": {"files": 115, "tests": 572}, "lint": {"errors": 0, "existingWarnings": 12}},
+  "checkedAt": "2026-10-07 17:45:49 UTC",
+  "runs": [
+    {
+      "id": 37659661164,
+      "name": "Calculator acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 118,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659661164/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659661164/logs",
+      "workflow_id": 351272618
+    },
+    {
+      "id": 37659660110,
+      "name": "Document editor acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 86,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660110/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660110/logs",
+      "workflow_id": 352701529
+    },
+    {
+      "id": 37659660146,
+      "name": "Studio link integration",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 27,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660146/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660146/logs",
+      "workflow_id": 341362327
+    },
+    {
+      "id": 37659660024,
+      "name": "Protocol experiment consistency",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 9,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660024/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660024/logs",
+      "workflow_id": 377147247
+    },
+    {
+      "id": 37659660178,
+      "name": "Entry rich text acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 24,
+      "jobs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660178/jobs",
+      "logs_url": "https://api.github.com/repos/annayzhu/LabNest/actions/runs/37659660178/logs",
+      "workflow_id": 376071319
+    }
+  ],
+  "calculatorJobs": [
+    {
+      "id": 112923624949,
+      "name": "quality (Asia/Shanghai, Shanghai)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37659661164,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npx prisma generate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run npm test 2>&1 | tee quality-Shanghai.log",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 112923625267,
+      "name": "quality (America/Vancouver, Vancouver)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37659661164,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npx prisma generate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run npm test 2>&1 | tee quality-Vancouver.log",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 112924748583,
+      "name": "browser",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37659661164,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium webkit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run npm run build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Start isolated fixture server",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run node scripts/verify-calculator-v13-acceptance.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Run UI_PHASE=after node scripts/verify-calculator-ui-consistency-20261007.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run node scripts/verify-calculator-ui-state-20261007.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Run node scripts/verify-calculator-ui-entries-20261007.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Run node scripts/verify-calculator-ui-selectors-20261007.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Run node scripts/verify-calculator-ui-modes-20260915.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Run PLATE_EVIDENCE_DIR=docs/calculator/plate-integration-20261007/evidence/ci node scripts/verify-plate-calculator-integration.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        }
+      ]
+    }
+  ]
+}

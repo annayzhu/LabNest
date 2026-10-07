@@ -1,0 +1,9 @@
+Workflow https://github.com/annayzhu/LabNest/actions/runs/37659661164
+Associated PR HEAD 83c12793ebca78b4d8d331f84a5634f9a502fe61
+Extracted quality log; complete log is in the workflow.
+2026-10-07T17:32:04.6845013Z > labnest@0.1.0 lint
+2026-10-07T17:32:42.0763948Z ✖ 12 problems (0 errors, 12 warnings)
+2026-10-07T17:32:42.4892154Z > labnest@0.1.0 typecheck
+2026-10-07T17:33:04.8722315Z > labnest@0.1.0 test
+2026-10-07T17:33:19.1591032Z  Test Files  115 passed (115)
+2026-10-07T17:33:19.1594945Z       Tests  572 passed (572)

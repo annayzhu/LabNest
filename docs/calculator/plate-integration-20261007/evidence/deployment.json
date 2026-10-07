@@ -1,0 +1,74 @@
+{
+  "at": "2026-10-07T17:48:43.164332+00:00",
+  "mergeCommit": "4d2b61d9431d416e4b6f5d408e17dd160eae01f2",
+  "pullRequest": "https://github.com/annayzhu/LabNest/pull/92",
+  "applicationCodeCommit": "c7b2ce8c14006dc33f4f758dd1d49ae8c5327045",
+  "imageSourceCommit": "83c12793ebca78b4d8d331f84a5634f9a502fe61",
+  "productionCompileCommit": "406924c9fde9ae48854dbce5843291d70f9ffc33",
+  "buildNote": "Compiled from clean tracked source at 406924c9; 83c12793 changes only tests/CI/evidence. Thin final image updates those files and revision metadata, reusing the unchanged production build. Application files match current merged main.",
+  "deployment": {
+    "imageId": "sha256:4247296817853f84f215a6034b55a8cea4360e29643e7a87da0584ce72631919",
+    "createdAt": "2026-10-07T17:46:10.904635046Z",
+    "health": "healthy",
+    "mounts": [
+      {
+        "name": "labnest_labnest-attachments",
+        "destination": "/app/storage/attachments"
+      }
+    ],
+    "imageRevision": "83c12793ebca78b4d8d331f84a5634f9a502fe61",
+    "buildId": "dizFVd16xf8WhLykvm0Ap",
+    "sourceHashes": {
+      "src/lib/calculators/plate-integration.ts": "98189682e46d617f93c247bab82aaf2a118339324f9befba4d692fa7cf6f1476",
+      "public/tools/free-plate-layout/app.js": "62668503d27080bbc6912d2d4a9d5fb1fab2751f6e38ae0f86b93d6f60ef01cd",
+      "public/tools/free-plate-layout/workspace-core.js": "0ff857adc35b274a2523d8e97e8c170e8a3b73b07cd690e8b50cd229413f7c66",
+      "public/tools/free-plate-layout/calculator-engine.js": "a461885a93fcae7bb6482fc5f39405e15b789310c0a92d546e7568712b2cff7c",
+      "src/components/calculators/CalculatorWorkspace.tsx": "978a124350bc8029ce3ae1a6d99786cf65e4b90b4e55552879fcee0fdf846211"
+    }
+  },
+  "healthEndpoints": {
+    "http://localhost:3001": {
+      "httpStatus": 200,
+      "response": {
+        "status": "ok",
+        "database": "reachable",
+        "checkedAt": "2026-10-07T17:48:43.157Z"
+      }
+    },
+    "http://192.168.0.108:3001": {
+      "httpStatus": 200,
+      "response": {
+        "status": "ok",
+        "database": "reachable",
+        "checkedAt": "2026-10-07T17:48:43.162Z"
+      }
+    }
+  },
+  "dataBefore": {
+    "phase": "before-switch",
+    "tables": 57,
+    "databaseDigest": "d174bb3a42b0f3e63deec1914303ac9cd24480aab010dd2c36526a84d72c0d0b",
+    "attachmentFiles": 52,
+    "attachmentBytes": 27721255,
+    "attachmentDigest": "6009b5e4a975321a01285a707a7181c2031e3fb2a7b74293e44853caedd7dc84"
+  },
+  "dataAfter": {
+    "phase": "after-acceptance",
+    "tables": 57,
+    "databaseDigest": "d174bb3a42b0f3e63deec1914303ac9cd24480aab010dd2c36526a84d72c0d0b",
+    "attachmentFiles": 52,
+    "attachmentBytes": 27721255,
+    "attachmentDigest": "6009b5e4a975321a01285a707a7181c2031e3fb2a7b74293e44853caedd7dc84"
+  },
+  "dataUnchanged": true,
+  "backupNote": "Private PostgreSQL custom-format backup verified with pg_restore --list. Database rows and attachment names are not published. Existing volumes retained; no reset/seed.",
+  "browserReport": "production-release/report.json",
+  "browserCounts": {
+    "fullFlows": 4,
+    "otherToolFlows": 10,
+    "failures": 0,
+    "screenshots": 12,
+    "xlsxFiles": 4
+  },
+  "physicalPhoneExecuted": false
+}

@@ -2,9 +2,9 @@
 
 ## 准确版本与范围
 
-基线 main `d91d8203c912f1733ce72e3dc1c7fad5ff73bb72`；应用代码与生产浏览器验收版本 `c7b2ce8c14006dc33f4f758dd1d49ae8c5327045`。本轮复用现有 Calculator 表单、算法、单位与结果契约，以及已有 Workspace 方案/汇总系统。独立孔板仓库未修改。后续仅增加验收脚本、CI 和文档，应用版本另见 RELEASE.md。
+基线 main `d91d8203c912f1733ce72e3dc1c7fad5ff73bb72`；最终应用代码 `c7b2ce8c14006dc33f4f758dd1d49ae8c5327045`；PR 最终 HEAD/正式镜像源码 `83c12793ebca78b4d8d331f84a5634f9a502fe61`；合并 main `4d2b61d9431d416e4b6f5d408e17dd160eae01f2`。本轮复用现有 Calculator 表单、算法、单位与结果契约，以及已有 Workspace 方案/汇总系统。独立孔板仓库未修改。c7 之后只改变验收脚本、CI 和证据，准确构建/镜像版本见 [RELEASE.md](RELEASE.md)。
 
-生产构建来自提交的干净源码，使用独立端口 3223。测试只使用合成浏览器项目；没有写入正式科研数据库，也没有读取用户真实旧孔板项目。浏览器结果见 [report.json](evidence/production-branch/report.json)。
+生产构建来自提交的干净源码，先在独立端口 3223/3224 验收；部署后在实际 `http://localhost:3001` 完整重跑 Chromium/WebKit 1440/390 四组流程和其余五工具共10次保存流程，失败项为空。测试只使用合成浏览器项目；没有写入正式科研数据库，也没有读取用户真实旧孔板项目。正式地址结果见 [report.json](evidence/production-release/report.json)，保留此前 [分支验收](evidence/production-branch/report.json)。部署及正式验收前后，57张表与52个附件的摘要完全一致，见 [deployment.json](evidence/deployment.json)。
 
 ## 逐项结果
 
@@ -26,22 +26,29 @@
 | 已打开页面离线编辑、恢复网络 | 通过（限定范围） | 断网修改板名并回读本机存储，联网后刷新仍在。本工具数据本来存于浏览器，没有新建数据库同步系统 |
 | 双时区全量回归 | 通过 | Asia/Shanghai 与 UTC 各115文件/572用例，详见日志；GitHub另使用Shanghai/Vancouver矩阵 |
 | TypeScript、生产构建、Lint | 通过 | TypeScript与干净源码生产构建完成；Lint 0错误，12条已有未使用变量警告，无新增警告 |
-| GitHub CI | 待核对 | 新增本集成浏览器脚本到Calculator CI；PR精确HEAD的结果将在RELEASE.md更新 |
+| GitHub CI | 通过 | PR最终HEAD关联的五条workflow全部成功，Calculator三job及全部浏览器步骤成功；Shanghai/Vancouver各572项。CI实际构建GitHub临时合并引用，准确SHA见 [final-ci.json](evidence/final-ci.json) |
+| 正式部署与数据保护 | 通过 | localhost:3001及当前内网地址健康200；实际容器源码哈希匹配已合并版本；数据库57表及附件52文件在部署、浏览器验收后均与切换前一致。私有数据库备份与旧镜像保留 |
 
 ## 实际截图
 
 | 视图 | 浅色 | 深色 |
 |---|---|---|
-| 电脑1440 | [输入](evidence/production-branch/chromium-1440-editor-light.png)、[跨板汇总](evidence/production-branch/chromium-1440-summary-light.png) | [编辑器](evidence/production-branch/chromium-1440-editor-dark.png) |
-| 手机390视口 | [输入](evidence/production-branch/chromium-390-editor-light.png)、[汇总](evidence/production-branch/chromium-390-summary-light.png) | [WebKit编辑器](evidence/production-branch/webkit-390-editor-dark.png) |
+| 电脑1440 | [输入](evidence/production-release/chromium-1440-editor-light.png)、[跨板汇总](evidence/production-release/chromium-1440-summary-light.png) | [编辑器](evidence/production-release/chromium-1440-editor-dark.png) |
+| 手机390视口 | [输入](evidence/production-release/chromium-390-editor-light.png)、[汇总](evidence/production-release/chromium-390-summary-light.png) | [WebKit编辑器](evidence/production-release/webkit-390-editor-dark.png) |
 
 截图中的数据为合成验收数据。手机是浏览器视口模拟，深色截图验证主Calculator编辑器；外层孔板原有配色保留。
 
 ## 审查与失败处理
 
-Standards：0项硬性违反；1项维护性建议（单位归一化重复）已通过调用同一canonicalPlateInputs关闭。
+### Standards
 
-Spec：发现旧汇总缓存、预混签名包含独立模板、内嵌导航丢关联3项；修复后发现重复组分每孔量回归1项。均先加入可复现失败测试再修复；最终审查确认关闭。没有遗留失败项。早期验收脚本的控件角色、空项目初始化与XLSX合计定位错误已校正，最终生产报告failures为空。
+0项硬性违反；1项维护性建议（单位归一化重复）已通过调用同一canonicalPlateInputs关闭。测试服务器初始化失败时的关闭问题也已修复；故意使用不存在的浏览器路径，两条脚本均快速退出1而不挂住。
+
+### Spec
+
+发现旧汇总缓存、预混签名包含独立模板、内嵌导航丢关联3项；修复后发现重复组分每孔量回归1项。均先加入可复现失败测试再修复；最终审查确认关闭。没有遗留失败项。早期验收脚本的控件角色、空项目初始化与XLSX合计定位错误已校正，最终生产报告failures为空。
+
+此前CI两次因旧测试把LabNest新版主表单当成独立旧表单而失败。独立离线检查和独立六工具检查改为共用的独立静态服务器，全部原断言保留；新版LabNest有独立完整集成验收。最后HEAD在CI全部成功，不将早期失败报告覆盖成通过，详情见RELEASE.md。
 
 ## 未执行与验收影响
 

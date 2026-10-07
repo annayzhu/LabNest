@@ -86,6 +86,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
    report.checks.push({engine,width,id,status:'passed',name:'independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse'});
    await page.locator('#closeLiquidDrawerButton').click();
   }
+  assert.deepEqual(alternatePrefetches,[],'No alternate-tool prefetch through the complete entry and Run flow');
   await context.close();
  }}finally{await browser.close();await writeFile(`${dir}/report.json`,JSON.stringify(report,null,2));}
 }

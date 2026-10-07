@@ -1304,11 +1304,15 @@ var LabNestCalculations = (() => {
         const recipeRows = group.rows.map((row, index) => ({ name: row.component, volume: row.perReactionUl, concentration: rawRows?.[index]?.inputMode === "concentration" ? { stock: rawRows[index].stock, target: rawRows[index].target, stockUnit: rawRows[index].stockUnit, targetUnit: rawRows[index].targetUnit } : null }));
         const premixRecipe = recipeRows.filter((_, index) => group.rows[index].premix === "\u662F / Yes");
         const signature = JSON.stringify([...premixRecipe].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
+        const occurrences = /* @__PURE__ */ new Map();
         for (const [index, op] of additions.entries()) {
           const premix = op.destination.startsWith("premix:");
+          const descriptor = JSON.stringify(recipeRows[index]);
+          const occurrence = occurrences.get(descriptor) ?? 0;
+          if (premix) occurrences.set(descriptor, occurrence + 1);
           const prepared = op.quantity.value * (premix ? 1 : op.repetitions);
           const base = premix ? prepared / factor : prepared;
-          add({ groupKey: premix ? `calculator-premix:${signature}` : `calculator-separate:${context.plateId}:${group.id}:${op.source}`, groupLabel: premix ? "Master Mix \xB7 \u9884\u6DF7\u6DB2" : `${group.name} \xB7 ${op.component}\uFF08\u72EC\u7ACB\u52A0\u6837\uFF09`, groupName: group.name, tubeRole: premix ? "premix" : "separate", component: op.component, componentKey: premix ? JSON.stringify(recipeRows[index]) : `${index}:${op.source}:${op.component}`, scopeWellIds: group.wellIds, perWellVolume: base / Number(group.reactions), baseVolume: base, preparedVolume: prepared, applyOverage: premix, source: op.source });
+          add({ groupKey: premix ? `calculator-premix:${signature}` : `calculator-separate:${context.plateId}:${group.id}:${op.source}`, groupLabel: premix ? "Master Mix \xB7 \u9884\u6DF7\u6DB2" : `${group.name} \xB7 ${op.component}\uFF08\u72EC\u7ACB\u52A0\u6837\uFF09`, groupName: group.name, tubeRole: premix ? "premix" : "separate", component: op.component, componentKey: premix ? `${descriptor}:${occurrence}` : `${index}:${op.source}:${op.component}`, scopeWellIds: group.wellIds, perWellVolume: base / Number(group.reactions), baseVolume: base, preparedVolume: prepared, applyOverage: premix, source: op.source });
         }
       }
     } else {

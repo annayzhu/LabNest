@@ -53,6 +53,14 @@ describe('main Calculator to saved plate preparation',()=>{
   expect(summary.groups.filter((g:{tubeRole:string})=>g.tubeRole==='premix')).toHaveLength(1);
   expect(summary.groups.filter((g:{tubeRole:string})=>g.tubeRole==='separate')).toHaveLength(2);
  });
+ it('keeps repeated identical rows distinct so per-well volumes match batch totals',()=>{
+  const result=mix({...input,rows:[{name:'Buffer',volume:'10',premix:true},{name:'Buffer',volume:'10',premix:true}]});
+  const plan=buildPlateLiquidPlan(result,context);
+  const group=workspace.mergeLiquidContributions(plan.contributions,{overagePercent:10}).groups[0];
+  expect(group.components).toHaveLength(2);
+  expect(group.components.reduce((sum:number,c:{perWellVolume:number})=>sum+c.perWellVolume,0)).toBe(20);
+  expect(group.components.reduce((sum:number,c:{preparedVolume:number})=>sum+c.preparedVolume,0)).toBeCloseTo(528);
+ });
  it.each(['seeding','hydrogel','kill-curve','fold-dilution','moi'])('saves typed liquid operations and provenance for %s without copying display labels',calculatorId=>{
   const example=structuredClone(getCalculatorDefinition(calculatorId).exampleInputs);
   if('wells' in example)example.wells='24';

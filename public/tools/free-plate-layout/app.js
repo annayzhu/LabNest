@@ -3839,7 +3839,7 @@
         });
         project.colorDimension = id;
       });
-      project.calculationLog.push({ at: new Date().toISOString(), plateSize: project.plateSize, calculatorId: payload.calculatorId, outputName: payload.calculatorName, targetWellIds: validWellIds, inputs: payload.inputs, outputs: payload.outputs, table: payload.table, updated: mappings.length ? validWellIds.length : 0, methodVersion: payload.methodVersion });
+      project.calculationLog.push({ at: new Date().toISOString(), plateSize: project.plateSize, calculatorId: payload.calculatorId, outputName: payload.calculatorName, targetWellIds: validWellIds, inputs: payload.inputs, rawInputs: savedPlan.input, resultSnapshot: savedPlan.resultSnapshot, warnings: savedPlan.resultSnapshot.warnings, outputs: payload.outputs, table: payload.table, updated: mappings.length ? validWellIds.length : 0, methodVersion: payload.methodVersion });
       project.calculationLog = project.calculationLog.slice(-50);
       Object.assign(project,Workspace.publishLiquidPlan(project,savedPlan));
       workspace.latestLiquidSummary = null;

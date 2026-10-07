@@ -77,6 +77,7 @@ export async function createExperiment(
       ...data,
       ...data.parsed,
       runCode,
+      creationKey: z.string().uuid().parse(formData.get("creationKey")),
       methodMode: data.parsed.methodMode,
       protocolVersionIds,
       customSteps: data.parsed.methodMode === "custom" ? parseCustomExperimentSteps(String(formData.get("customSteps") ?? "")) : [],

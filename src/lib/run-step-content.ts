@@ -1,3 +1,5 @@
+import {projectLegacyProtocolExecution} from "./protocol-execution-legacy";
+import {executionBodyWithoutTitle} from "./protocol-execution";
 import {protocolDocumentSchema,projectProtocolDocument,type ProtocolContentBlock} from './protocol-document';
 import {renderProtocolTemplate} from './protocol';
 import type {ProtocolStep} from './types';
@@ -27,17 +29,18 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  if(!version)return legacy;
  const captured=version.stepsJson?.find(s=>step.protocolStepRef===`${version.protocolVersionId}:${s.source_ref??s.order}`);
  if(!captured)return legacy;
- const projected=doc.success?projectProtocolDocument(doc.data).steps:[];
+ const projection=doc.success?(doc.data.sections.some(section=>section.blocks.some(block=>block.execution))?projectProtocolDocument(doc.data):projectLegacyProtocolExecution(doc.data)):undefined;
+ const projected=projection?.steps??[];
  // Old order refs are accepted only when the full projected step contract matches.
  const recovered=projected.find(s=>captured.source_ref && s.source_ref===captured.source_ref) ?? projected.find(s=>s.order===captured.order&&s.title===captured.title&&s.description===captured.description);
  const blocks=recovered?.content_blocks??captured.content_blocks??(doc.success?legacyGroupedBlocks(doc.data,version.stepsJson??[],captured.order):undefined);
  if(!blocks)return legacy;
  // Only explicitly projected preparation blocks are shared. Unmatched content
  // must never leak into every step when a legacy mapping cannot be recovered.
- const common=doc.success?projectProtocolDocument(doc.data).commonBlocks:[];
+ const common=projection?.commonBlocks??[];
  // Parameter interpolation traverses textual content, including table rich cells; IDs and URLs are unchanged.
 
- return {reference,blocks:render(blocks) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery'};
+ return {reference,blocks:render(executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery'};
 }
 
 /** Publish only explicit same-origin image resources from this frozen Run. */

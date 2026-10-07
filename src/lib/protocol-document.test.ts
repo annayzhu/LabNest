@@ -32,17 +32,12 @@ describe("Protocol document structured projections", () => {
       expect.objectContaining({
         order: 1,
         title: "Prepare reaction",
-        description: "Mix gently and keep on ice.",
-      }),
-      expect.objectContaining({
-        order: 2,
-        title: "Confirm the tube is labeled.",
-        description: "",
+        description: "Mix gently and keep on ice.\nConfirm the tube is labeled.",
       }),
     ]);
   });
 
-  it("keeps bullet details inside a numbered execution step while projecting every checklist item independently", () => {
+  it("keeps bullet details inside a numbered execution step without counting ordinary checklist details", () => {
     const document = createEmptyProtocolDocument();
     const steps = document.sections.find((section) => section.key === "steps")!;
     steps.blocks = [{
@@ -60,10 +55,8 @@ describe("Protocol document structured projections", () => {
     }];
 
     expect(projectProtocolDocument(document).steps).toEqual([
-      expect.objectContaining({ order: 1, title: "Prepare cells", description: "• Keep the plate on ice." }),
-      expect.objectContaining({ order: 2, title: "Add buffer", description: "" }),
-      expect.objectContaining({ order: 3, title: "Confirm tube label", description: "" }),
-      expect.objectContaining({ order: 4, title: "Record lot number", description: "" }),
+      expect.objectContaining({ order: 1, title: "Prepare cells", description: "Keep the plate on ice." }),
+      expect.objectContaining({ order: 2, title: "Add buffer", description: "Confirm tube label\nRecord lot number" }),
     ]);
   });
 
@@ -76,7 +69,7 @@ describe("Protocol document structured projections", () => {
 
     expect(projectProtocolDocument(document).steps).toEqual([
       expect.objectContaining({ order: 1, title: "Wash cells", description: "" }),
-      expect.objectContaining({ order: 2, title: "Collect pellet", description: "• Keep the tube on ice" }),
+      expect.objectContaining({ order: 2, title: "Collect pellet", description: "Keep the tube on ice" }),
     ]);
   });
 

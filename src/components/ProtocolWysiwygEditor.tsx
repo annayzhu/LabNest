@@ -1,4 +1,5 @@
 "use client";
+import { documentScriptMarks } from "@/lib/tiptap-document-extensions";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -123,6 +124,7 @@ const ProtocolWidget = createDocumentWidgetExtension({ name: "protocolWidget", h
 const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name: "protocolLegacyAttributes", attributes: [
   { name: "protocolBlockId", htmlAttribute: "data-protocol-block-id" },
   { name: "protocolBlockType", htmlAttribute: "data-protocol-block-type" },
+  { name: "protocolExecution", htmlAttribute: "data-protocol-execution" },
   { name: "protocolLineHeight", htmlAttribute: "data-labnest-line-height" },
   { name: "protocolFontFamily", htmlAttribute: "data-labnest-font-family" },
   { name: "protocolCaption", htmlAttribute: "data-protocol-caption" },
@@ -262,6 +264,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       Placeholder.configure({ placeholder: "Write the protocol here…" }),
       Typography,
       ProtocolLegacyAttributes,
+      ...documentScriptMarks,
       ProtocolSection,
       ProtocolWidget,
       DocumentMediaNode,
@@ -279,7 +282,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       },
     },
     onUpdate: ({ editor: nextEditor }) => {
-      onChangeRef.current(tiptapToProtocolDocument(nextEditor.getJSON(), importWarningsRef.current));
+      onChangeRef.current(tiptapToProtocolDocument(nextEditor.getJSON(), importWarningsRef.current,document.executionConfirmed));
     },
   });
   useDocumentMediaUploads(editor, uploadDraftId);

@@ -1,17 +1,20 @@
+import { parseRichTextFontSizePt } from "./rich-text-font-size";
 import { createHash } from "node:crypto";
 import { DOMParser } from "@xmldom/xmldom";
-import { unzipSync } from "fflate";
+import { strFromU8, unzipSync } from "fflate";
 import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
-import { documentMediaFromMarkdown } from "./document-media";
+import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import {
   createEmptyProtocolDocument,
   projectProtocolDocument,
+  protocolDocumentSchema,
   protocolSectionKeys,
   protocolSectionLabels,
   type ProtocolContentBlock,
   type ProtocolDocument,
   type ProtocolSectionKey,
+  type ProtocolRichTextNode,
 } from "./protocol-document";
 
 const headingToKey = new Map(
@@ -101,6 +104,20 @@ function checklistItemText(element: Element, text: string, currentSection: Proto
   return text.replace(checkboxTextPrefix, "").replace(bulletTextPrefix, "").trim();
 }
 
+function paragraphRichContent(element:Element,hyperlinks:Map<string,string>):ProtocolRichTextNode[] | undefined {
+  const content=Array.from(element.getElementsByTagName('w:r')).map(run=> {
+    const property=run.getElementsByTagName('w:rPr')[0];
+    const flag=(tag:string)=>{const node=property?.getElementsByTagName(`w:${tag}`)[0];return Boolean(node && !['0','false','none'].includes(elementValue(node,'val')))||undefined;};
+    const vertical=property?.getElementsByTagName('w:vertAlign')[0];
+    const size=property?.getElementsByTagName('w:sz')[0];
+    let parent=run.parentNode as unknown as Element|undefined;
+    while(parent && parent.tagName!=='w:hyperlink' && parent!==element)parent=parent.parentNode as unknown as Element|undefined;
+    return {text:Array.from(run.getElementsByTagName('w:t')).map(node=>node.textContent??'').join(''),bold:flag('b'),italic:flag('i'),underline:flag('u'),strike:flag('strike'),subscript:vertical?elementValue(vertical,'val')==='subscript'||undefined:undefined,superscript:vertical?elementValue(vertical,'val')==='superscript'||undefined:undefined,fontSizePt:size?parseRichTextFontSizePt(String(Number(elementValue(size,'val'))/2)):undefined,link:parent?.tagName==='w:hyperlink'?hyperlinks.get(parent.getAttribute('r:id')??''):undefined};
+  });
+  const formatted=content.some(run=>Object.entries(run).some(([key,value])=>key!=='text' && value!==undefined));
+  return formatted?[{type:'paragraph',content}]:undefined;
+}
+
 function tableRows(element: Element) {
   return Array.from(element.getElementsByTagName("w:tr")).map((row) =>
     Array.from(row.getElementsByTagName("w:tc")).map((cell) => {
@@ -146,6 +163,7 @@ export function parseProtocolDocumentXml(
   xml: string,
   sourceFileName: string,
   sourceFileChecksum = "test-checksum",
+  hyperlinks: Map<string,string> = new Map(),
 ): ParsedProtocolDocx {
   const dom = new DOMParser().parseFromString(xml, "application/xml");
   const body = dom.getElementsByTagName("w:body")[0];
@@ -157,6 +175,7 @@ export function parseProtocolDocumentXml(
   let identityTable: string[][] | undefined;
   let currentSection: ProtocolSectionKey | undefined;
   let checklistBuffer: string[] = [];
+  let checklistNodes: (ProtocolRichTextNode[]|undefined)[]=[];
 
   const getSection = (key: ProtocolSectionKey) =>
     document.sections.find((section) => section.key === key) as ProtocolDocument["sections"][number];
@@ -167,8 +186,10 @@ export function parseProtocolDocumentXml(
       id: newBlockId(currentSection, section.blocks.length),
       type: "checklist",
       items: checklistBuffer,
+      ...(checklistNodes.some(Boolean)?{itemNodes:checklistNodes.map((nodes,index)=>nodes??[{type:"paragraph",content:[{text:checklistBuffer[index]}]}])}:{}),
     });
     checklistBuffer = [];
+    checklistNodes = [];
   };
   const pushBlock = (block: ProtocolContentBlockInput) => {
     if (!currentSection) return;
@@ -199,13 +220,14 @@ export function parseProtocolDocumentXml(
       if (media) { pushBlock(media); continue; }
       const previous = getSection(currentSection).blocks.at(-1);
       if (previous?.type === "media" && previous.caption === text) continue;
+      const nodes=paragraphRichContent(element,hyperlinks);
       const checklistText = checklistItemText(element, text, currentSection);
       if (checklistText !== undefined) {
-        if (checklistText) checklistBuffer.push(checklistText);
+        if (checklistText) {checklistBuffer.push(checklistText);checklistNodes.push(nodes); }
       } else if (isStepHeadingParagraph(element, text)) {
-        pushBlock({ type: "heading", text });
+        pushBlock({ type: "heading", text, ...(nodes?{nodes:nodes.map(node=>({...node,type:"heading3" as const}))}:{}) });
       } else {
-        pushBlock({ type: "text", text });
+        pushBlock({ type: "text", text, ...(nodes?{nodes}:{}) });
       }
     }
 
@@ -301,7 +323,33 @@ export function parseProtocolDocxBytes(bytes: Uint8Array, fileName: string): Par
   if (!documentXml) throw new Error("This file is not a readable Word DOCX document.");
   const checksum = createHash("sha256").update(bytes).digest("hex");
   const extracted = extractDocxMedia(bytes);
-  const parsed = parseProtocolDocumentXml(extracted.xml, fileName, checksum);
+  const relationships=archive['word/_rels/document.xml.rels']?new DOMParser().parseFromString(strFromU8(archive['word/_rels/document.xml.rels']),'application/xml'):undefined;
+  const hyperlinks=new Map(Array.from(relationships?.getElementsByTagName('Relationship')??[]).filter(rel=>/hyperlink$/.test(rel.getAttribute('Type')??'') && /^(https?:|mailto:)/.test(rel.getAttribute('Target')??'')).map(rel=>[rel.getAttribute('Id')??'',rel.getAttribute('Target')??'']));
+  const parsed = parseProtocolDocumentXml(extracted.xml, fileName, checksum,hyperlinks);
+  const portable=archive['word/labnest-protocol.json'];
+  if(portable && portable.length<=4*1024*1024) {
+    try {
+      const metadata=JSON.parse(strFromU8(portable));
+      const restored=protocolDocumentSchema.safeParse(metadata.document);
+      if(metadata.schemaVersion===1 && restored.success && metadata.documentXmlHash===createHash('sha256').update(documentXml).digest('hex')) {
+        const replaceImages=(value:unknown):unknown=>{
+          if(typeof value==='string') {const media=documentMediaFromMarkdown(value);return media?documentMediaToMarkdown(replaceImages(media) as typeof media):value;}
+          if(Array.isArray(value))return value.map(replaceImages);
+          if(value && typeof value==='object'){
+            const item=value as Record<string,unknown>;
+            if(item.type==='media'&&item.mediaType==='image'){
+              const image=typeof item.attachmentId==='string'?extracted.images.find(image=>image.sourceAttachmentId===item.attachmentId):undefined;
+              if(image)return {...item,url:'',attachmentId:undefined,importImageKey:image.key};
+            }
+            return Object.fromEntries(Object.entries(item).map(([key,child])=>[key,replaceImages(child)]));
+          }
+          return value;
+        };
+        parsed.document=protocolDocumentSchema.parse(replaceImages(restored.data));
+        Object.assign(parsed,projectProtocolDocument(parsed.document));
+      } else parsed.document.importWarnings.push('DOCX_EXECUTION_REVIEW_REQUIRED: Word 内容已改变或结构记录不完整，请重新确认步骤归属。');
+    } catch {parsed.document.importWarnings.push('DOCX_EXECUTION_REVIEW_REQUIRED: 无法读取步骤归属，已保留可见正文供确认。');}
+  }
   parsed.embeddedImages = extracted.images;
   parsed.document.importWarnings = [...(parsed.document.importWarnings ?? []), ...extracted.warnings];
   return parsed;

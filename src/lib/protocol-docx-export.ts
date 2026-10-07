@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { persistedTableFromTiptap } from "./tiptap-table-serialization";
+import type { JSONContent } from "@tiptap/core";
 import { strToU8, zipSync } from "fflate";
 import type { ProtocolContentBlock, ProtocolDocument, ProtocolRichTextRun } from "./protocol-document";
 import { createDocxMedia, type DocxImageAssets } from "./docx-media";
@@ -33,12 +36,12 @@ function xml(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
 }
 
-function run(text: string, options: { bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean; code?: boolean; heading?: boolean; color?: string; size?: number } = {}) {
+function run(text: string, options: { bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean; subscript?:boolean; superscript?:boolean; code?: boolean; heading?: boolean; color?: string; size?: number } = {}) {
   const preserve = /^\s|\s$|\s{2}/.test(text) ? ' xml:space="preserve"' : "";
   const fonts = options.heading
     ? '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Microsoft YaHei"/>'
     : `<w:rFonts w:ascii="${options.code ? "Courier New" : "Times New Roman"}" w:hAnsi="${options.code ? "Courier New" : "Times New Roman"}" w:eastAsia="SimSun"/>`;
-  return `<w:r><w:rPr>${fonts}${options.bold ? "<w:b/>" : ""}${options.italic ? "<w:i/>" : ""}${options.underline ? '<w:u w:val="single"/>' : ""}${options.strike ? "<w:strike/>" : ""}${options.color ? `<w:color w:val="${options.color}"/>` : ""}${options.size ? `<w:sz w:val="${options.size}"/><w:szCs w:val="${options.size}"/>` : ""}</w:rPr><w:t${preserve}>${xml(text)}</w:t></w:r>`;
+  return `<w:r><w:rPr>${fonts}${options.bold ? "<w:b/>" : ""}${options.italic ? "<w:i/>" : ""}${options.underline ? '<w:u w:val="single"/>' : ""}${options.strike ? "<w:strike/>" : ""}${options.subscript?'<w:vertAlign w:val="subscript"/>':options.superscript?'<w:vertAlign w:val="superscript"/>':""}${options.color ? `<w:color w:val="${options.color}"/>` : ""}${options.size ? `<w:sz w:val="${options.size}"/><w:szCs w:val="${options.size}"/>` : ""}</w:rPr><w:t${preserve}>${xml(text)}</w:t></w:r>`;
 }
 
 function paragraph(
@@ -56,6 +59,8 @@ function richRuns(runs: ProtocolRichTextRun[]) {
     italic: item.italic,
     underline: item.underline,
     strike: item.strike,
+    subscript:item.subscript,
+    superscript:item.superscript,
     code: item.code,
     color: item.color === "risk" ? palette.risk : item.link ? palette.secondaryText : undefined,
     size: item.fontSizePt ? item.fontSizePt * 2 : undefined,
@@ -149,17 +154,13 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, m
   if (block.type === "rich_text") return block.nodes.map((node) => {
     const inlineMedia = documentMediaFromMarkdown(node.content.map(item => item.text).join(""));
     if (inlineMedia) return blockXml(inlineMedia, sequence, media);
-    const content = richRuns(node.content);
-    if (node.type === "heading2") return paragraph(content, "Heading2", { before: 120, keepNext: true, lineHeight: node.lineHeight });
-    if (node.type === "heading3") return paragraph(content, "Heading3", { before: 80, keepNext: true, lineHeight: node.lineHeight });
-    if (node.type === "bullet") return paragraph(run("• ") + content, "ListBullet", { lineHeight: node.lineHeight });
-    if (node.type === "numbered") {
-      const prefix = `${sequence.numbered}. `;
-      sequence.numbered += 1;
-      return paragraph(run(prefix) + content, "ListBullet", { lineHeight: node.lineHeight });
-    }
-    if (node.type === "quote") return paragraph(content, "Quote", { lineHeight: node.lineHeight });
-    return paragraph(content, undefined, { lineHeight: node.lineHeight });
+    const content=richRuns(node.content);
+    let main:string;
+    if(node.type==='heading2'||node.type==='heading3')main=paragraph(content,node.type==='heading2'?'Heading2':'Heading3',{before:120,keepNext:true,lineHeight:node.lineHeight});
+    else if(node.type==='bullet')main=paragraph(run('• ')+content,'ListBullet',{lineHeight:node.lineHeight});
+    else if(node.type==='numbered')main=paragraph(run(`${sequence.numbered++}. `)+content,'ListBullet',{lineHeight:node.lineHeight});
+    else main=paragraph(content,node.type==='quote'?'Quote':undefined,{lineHeight:node.lineHeight});
+    return main+childXml(node.childContent??[],sequence,media);
   }).join("");
   if (block.type === "checklist") return block.items.filter(Boolean).map((item) => paragraph(run(`☐ ${item}`), "Checklist")).join("");
   if (block.type === "table") {
@@ -194,6 +195,14 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, m
     : paragraph(run(`${block.filename || block.caption || block.mediaType} — 附件，请从随附附件包打开 / Open from the accompanying attachment package.`));
   if (block.type === "embedded_tool") return paragraph(run(`${block.label}: ${block.url}`));
   return paragraph(run(`${block.label} · ${block.durationMinutes} min${block.notes ? ` · ${block.notes}` : ""}`, { bold: true }));
+}
+
+function childXml(nodes:JSONContent[],sequence:{numbered:number},media:ReturnType<typeof createDocxMedia>):string {
+  return nodes.map((node,index)=> {
+    if(node.type==='table')return blockXml({id:`child-${index}`,type:'table',...persistedTableFromTiptap(node)},sequence,media);
+    if(node.type==='documentMedia')return blockXml(node.attrs?.block as ProtocolContentBlock,sequence,media);
+    return blockXml({id:`child-${index}`,type:'rich_text',nodes:tiptapToProtocolRichText({type:'doc',content:[node]})},sequence,media);
+  }).join('');
 }
 
 const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -259,9 +268,10 @@ export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: Pro
   const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:updateFields w:val="true"/></w:settings>`;
   return zipSync({
     ...media.files,
-    "[Content_Types].xml": strToU8(contentTypes.replace("</Types>", `${media.contentTypes()}</Types>`)),
+    "[Content_Types].xml": strToU8(contentTypes.replace("</Types>", `${media.contentTypes()}<Override PartName="/word/labnest-protocol.json" ContentType="application/json"/></Types>`)),
     "_rels/.rels": strToU8(rootRels),
     "word/document.xml": strToU8(documentXml),
+    "word/labnest-protocol.json": strToU8(JSON.stringify({schemaVersion:1,documentXmlHash:createHash("sha256").update(documentXml).digest("hex"),document})),
     "word/styles.xml": strToU8(stylesXml),
     "word/settings.xml": strToU8(settingsXml),
     "word/header1.xml": strToU8(headerXml(identity)),

@@ -1,3 +1,4 @@
+import { protocolRichTextNodeSchema, richTextPlainText } from "./protocol-document";
 import {decodeDocumentTableToken} from "./document-table-token";
 import { stripParagraphLayoutMarkup } from "./document-paragraph-layout";
 import { z } from "zod";
@@ -17,6 +18,7 @@ const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
   baseBlockSchema.extend({ type: z.literal("heading"), text: z.string() }),
   baseBlockSchema.extend({ type: z.literal("text"), text: z.string() }),
+  baseBlockSchema.extend({ type: z.literal("rich_text"), nodes: z.array(protocolRichTextNodeSchema) }),
   baseBlockSchema.extend({ type: z.literal("checklist"), items: z.array(z.string()) }),
   baseBlockSchema.extend({
     type: z.literal("table"),
@@ -291,6 +293,7 @@ export function documentPlainText(document: ScientificDocument) {
   return document.sections.flatMap((section) => section.blocks.flatMap((block) => {
     if (block.type === "heading" || block.type === "callout") return [block.text];
     if (block.type === "text") return [stripLabNestFontFamilyMarkup(stripLabNestLineHeightMarkup(stripLabNestFontSizeMarkup(stripParagraphLayoutMarkup(block.text))))];
+    if (block.type === "rich_text") return [richTextPlainText(block.nodes)];
     if (block.type === "checklist") return block.items;
     if (block.type === "table") return block.rows.flat();
     if (block.type === "metric") return [`${block.label}: ${block.value} ${block.unit ?? ""}`.trim()];

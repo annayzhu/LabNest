@@ -1,4 +1,8 @@
-import { runStepIsConfirmation } from "./run-step-content";
+import { runStepContent, runStepIsConfirmation } from "./run-step-content";
+import { scientificContentBlockSchema, type ScientificContentBlock } from "./scientific-document";
+import { executionBlockText } from "./protocol-execution";
+import type { ProtocolContentBlock } from "./protocol-document";
+import { protocolDocumentSchema } from "./protocol-document";
 import {
   createScientificDocument,
   documentPlainText,
@@ -103,7 +107,7 @@ export function appendExperimentObservation(
 /** Derived at read/export time: current persisted Run evidence, never authored prose.
  * The reserved ID prefix permits refreshing the projection without accumulating it. */
 export function experimentExecutionDocument(contentJson: unknown, steps: readonly {
-  id: string; protocolStepRef?:string|null;groupKey?:string;groupOrder: number; order: number; groupTitle: string; title: string;
+  id: string; description?:string; protocolStepRef?:string|null;groupKey?:string;groupOrder: number; order: number; groupTitle: string; title: string;
   completed: boolean; completedAt?: Date | null; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
   evidence?: ScientificDocument['sections'][number]['blocks'];
@@ -114,10 +118,28 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     const rows=Object.entries(parameters).filter(([,value])=>['string','number','boolean'].includes(typeof value)).map(([key,value])=>[key,String(value)]);
     if(rows.length)blocks.push({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],...rows]});
   }
+  const scientific = (block:ProtocolContentBlock, prefix:string): ScientificContentBlock => {
+    const content=Object.fromEntries(Object.entries(block).filter(([key])=>key!=='execution'));
+    if((block.type==='text'||block.type==='heading') && block.nodes)return {id:prefix+block.id,type:'rich_text',nodes:block.nodes};
+    if(block.type==='checklist' && block.itemNodes)return {id:prefix+block.id,type:'rich_text',nodes:block.itemNodes.flatMap(nodes=>nodes.map(node=>({...node,type:'bullet' as const})))};
+    const parsed=scientificContentBlockSchema.safeParse({...content,id:prefix+block.id});
+    return parsed.success?parsed.data:{id:prefix+block.id,type:'text',text:executionBlockText(block)};
+  };
   let group: number | undefined;
+  // Preserve a captured documentation-only Protocol in preview/export too. It
+  // has no completion control and must not disappear merely because its count is zero.
+  const versions=(snapshot as {versions?:Array<{protocolVersionId:string;protocolTitle?:string;contentJson?:unknown}>})?.versions??[];
+  for(const version of versions.filter(version=>!steps.some(step=>step.groupKey===version.protocolVersionId))) {
+    const parsed=protocolDocumentSchema.safeParse(version.contentJson);
+    if(!parsed.success)continue;
+    blocks.push({id:`run-derived:reference:${version.protocolVersionId}`,type:'heading',text:version.protocolTitle??'Protocol reference'});
+    blocks.push(...(parsed.data.sections.find(section=>section.key==='steps')?.blocks??[]).map(block=>scientific(block,`run-derived:reference:${version.protocolVersionId}:`)));
+  }
   for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
+    const rich=runStepContent(snapshot,{...step,groupKey:step.groupKey??'manual',protocolStepRef:step.protocolStepRef??null,description:step.description??''},(parameters??{}) as Record<string,string|number|boolean>);
     if (group !== step.groupOrder) {
       group = step.groupOrder;
+      if(rich.common.length)blocks.push(...rich.common.map(block=>scientific(block,`run-derived:info:${group}:`)));
       blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
     }
     const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
@@ -125,6 +147,8 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     if (step.deviationNote?.trim()) {
       blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',execution:{...execution,deviationLabel:['abnormal','incident'].includes(step.deviationType ?? '')?'异常':'偏差',deviationNote:step.deviationNote.trim(),impact:step.deviationImpact??undefined,author:step.deviationAuthor??undefined},text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
     } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title,execution});
+    blocks.push(...rich.blocks.map(block=>scientific(block,`run-derived:${step.id}:body:`)));
+    if(!rich.blocks.length && step.description?.trim())blocks.push({id:`run-derived:${step.id}:description`,type:"text",text:step.description});
     blocks.push(...(step.evidence??[]).map((block,index)=>({...block,id:`run-derived:${step.id}:evidence:${index}`})));
   }
   return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}:section)};

@@ -87,6 +87,8 @@ export async function saveProtocolRunProgress(
     const unknownStep = [...completedStepIds].find((id) => !knownStepIds.has(id));
     if (unknownStep) throw new Error("A submitted step does not belong to this Experiment.");
 
+    if(parsed.intent==="complete" && !experiment.steps.length && (experiment.protocolSnapshotJson as {methodMode?:string}).methodMode==="protocol")throw new Error("No execution steps were planned. This Protocol-only record needs an explicitly organized operation contract before completion.");
+
     if (parsed.intent === "complete" && experiment.steps.some((step) => !completedStepIds.has(step.id))) {
       throw new Error("Complete every execution step before marking the Experiment completed.");
     }

@@ -1,3 +1,4 @@
+import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { runConsumptionSources } from "@/lib/run-consumption";
 import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
@@ -75,6 +76,9 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     frozenReferences[step.groupKey] ??= reference;
     return {...step,richContent};
   });
+  for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown}[]}).versions??[]) {
+    frozenReferences[version.protocolVersionId]??=normalizeProtocolDocument(version.contentJson)?.sections??[];
+  }
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,

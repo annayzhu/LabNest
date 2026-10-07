@@ -58,8 +58,7 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.document.sections.map((section) => section.key)).toHaveLength(7);
     expect(parsed.materials[0].name).toBe("RT Mix");
     expect(parsed.steps).toEqual([
-      expect.objectContaining({ title: "Setup", description: "" }),
-      expect.objectContaining({ title: "Mix gently.", description: "" }),
+      expect.objectContaining({ title: "Setup", description: "Mix gently." }),
     ]);
   });
 
@@ -99,7 +98,8 @@ describe("Protocol DOCX parser", () => {
       type: "checklist",
       items: ["Seed cells.", "Add transfection mix.", "Change medium."],
     }));
-    expect(parsed.steps.slice(1).map((step) => step.title)).toEqual(["Seed cells.", "Add transfection mix.", "Change medium."]);
+    expect(parsed.steps).toHaveLength(1);
+    expect(parsed.steps[0].description).toBe("Seed cells.\nAdd transfection mix.\nChange medium.");
   });
 
   it("exports a valid DOCX that can be imported back into the fixed template", () => {

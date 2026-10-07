@@ -10,6 +10,8 @@ import {createScientificDocument,researchPlanSections,experimentSections} from '
 import {getAttachmentRoot} from '../src/lib/attachments';
 import {createExperimentWithProtocolSnapshot} from '../src/lib/experiments';
 import {exportProtocolDocx} from '../src/lib/protocol-docx-export';
+import {exportProtocolExecutionExample} from '../src/lib/protocol-docx-template';
+import {parseProtocolDocxBytes} from '../src/lib/protocol-docx';
 const database=new URL(process.env.DATABASE_URL!).pathname;assert(database.includes('protocol_consistency') && database!=='/labnest','Synthetic fixtures require an explicitly isolated protocol_consistency database.');
 const output=process.env.LABNEST_QA_DIR??'docs/qa/protocol-consistency-20261007/evidence';mkdirSync(output,{recursive:true});
 async function main(){
@@ -41,6 +43,8 @@ async function main(){
  const mixed=await createExperimentWithProtocolSnapshot({...input,title:'混合操作与资料规程',protocolVersionIds:[main.version.id,reference.version.id],creationKey:randomUUID()});
  const protectedExperiment=await createExperimentWithProtocolSnapshot({...input,title:'合成已完成保护记录',creationKey:randomUUID()});await prisma.experiment.update({where:{id:protectedExperiment.id},data:{status:'completed',recordStatus:'reviewed'}});
  const docx=exportProtocolDocx({humanCode:`PRT-7${String(stamp).slice(-5)}`,canonicalTitle:'合成 DOCX 归属验收',availability:'draft',reviewStage:'draft',displayVersion:'1.0',scope:'general',tags:[]},document,{[attachment.id]:{bytes:image,extension:'png',mimeType:'image/png',width:160,height:100}});writeFileSync(output+'/source.docx',docx);
+ const example=parseProtocolDocxBytes(exportProtocolExecutionExample(),'LabNest_Protocol_Execution_Example_v0.3_Draft.docx').document;
+ writeFileSync(output+'/template-example.docx',exportProtocolDocx({humanCode:`PRT-6${String(stamp).slice(-5)}`,canonicalTitle:'已填写结构示例 '+stamp,availability:'draft',reviewStage:'draft',displayVersion:'0.3',scope:'general',tags:[]},example));
  let inventory=await prisma.protocol.findMany({where:{availability:{not:'archived'},humanCode:{notIn:[main.protocol.humanCode,review.protocol.humanCode]}},include:{versions:{orderBy:{revision:'desc'},take:1}}});
  if(process.env.LABNEST_QA_CATALOG_FILE){const catalog=JSON.parse(readFileSync(process.env.LABNEST_QA_CATALOG_FILE,'utf8'));const ids=new Set(catalog.report.map((row:{newVersionId:string})=>row.newVersionId));inventory=inventory.filter(protocol=>ids.has(protocol.versions[0].id));}else inventory=inventory.filter(protocol=>![main.protocol.id,review.protocol.id,reference.protocol.id].includes(protocol.id));
  writeFileSync(output+'/fixtures.json',JSON.stringify({synthetic:true,mixedExperimentId:mixed.id,referenceVersionId:reference.version.id,planId:plan.id,protocolId:main.protocol.id,versionId:main.version.id,reviewProtocolId:review.protocol.id,reviewVersionId:review.version.id,idempotentExperimentId:first.id,protectedExperimentId:protectedExperiment.id,attachmentId:attachment.id,originalProtocols:inventory.map(protocol=>({code:protocol.humanCode,protocolId:protocol.id,versionId:protocol.versions[0].id,steps:Array.isArray(protocol.versions[0].stepsJson)?protocol.versions[0].stepsJson.length:0}))},null,2));

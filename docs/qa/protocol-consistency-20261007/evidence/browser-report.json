@@ -1,0 +1,92 @@
+{
+  "head": "46b58806607a962b9a7d60a61098479e39753d37",
+  "browser": "149.0.7827.55",
+  "checks": [
+    {
+      "name": "A05 A06 A10 A14 A21 create preview shows three operations with full rich content, table and actual loaded image",
+      "status": "通过",
+      "ms": 1583
+    },
+    {
+      "name": "A08 A09 author confirmation is visible, grouping saves and reopens without fabricated completion",
+      "status": "通过",
+      "ms": 2573
+    },
+    {
+      "name": "A16 A17 A18 A20 actual Run completion, note, timer, save, refresh and page readback retain step IDs",
+      "status": "通过",
+      "ms": 4786
+    },
+    {
+      "name": "A23 real DOCX file import preserves operation identity and embedded image loading through save and creation",
+      "status": "通过",
+      "ms": 3301
+    },
+    {
+      "name": "A26 built-in v0.3 structure example filled and imported through the actual UI creates exactly two operations",
+      "status": "通过",
+      "ms": 3147
+    },
+    {
+      "name": "A24 A25 all included current production-clone Protocols have actual preview/record/Run checks and full scroll evidence",
+      "status": "通过",
+      "ms": 31505
+    },
+    {
+      "name": "A09 A21 documentation-only captured Protocol stays readable in mixed Run without adding progress",
+      "status": "通过",
+      "ms": 822
+    },
+    {
+      "name": "A30 existing JSON/Markdown/XLSX exports include operation prose, dose, references and preserve correct count",
+      "status": "通过",
+      "ms": 1038
+    }
+  ],
+  "pdfTextChecked": true,
+  "pageErrors": [],
+  "catalog": [
+    {
+      "code": "PRT-100007",
+      "steps": 5,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-100021",
+      "steps": 7,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-100009",
+      "steps": 5,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-200001",
+      "steps": 7,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-100008",
+      "steps": 7,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-100018",
+      "steps": 6,
+      "status": "通过",
+      "completed": 0
+    },
+    {
+      "code": "PRT-100023",
+      "steps": 12,
+      "status": "通过",
+      "completed": 0
+    }
+  ]
+}

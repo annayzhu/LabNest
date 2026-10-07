@@ -32,14 +32,19 @@ async function main(){
  const extraInfo=await prisma.experimentStep.create({data:{experimentId:copy.id,groupKey:version.protocolVersionId,groupTitle:record.steps[0].groupTitle,groupOrder:0,order:5,title:'Generated information',description:'Synthetic information',deviationNote:'保留资料备注'}});
  mapping[extraBody.id]=mapping[record.steps[0].id];mapping[extraInfo.id]='info';
  const link=await prisma.attachmentLink.create({data:{attachmentId:fixture.attachmentId,targetType:'experiment_step',targetId:extraBody.id,linkType:'execution_evidence'}});
+ const entry=await prisma.entry.create({data:{title:'Synthetic linked observation',body:'保留原观察正文',experimentId:copy.id,experimentStepId:extraBody.id}});
+ const result=await prisma.result.create({data:{title:'Synthetic information measurement',resultType:'synthetic',numericValue:123,unit:'AU',experimentId:copy.id,experimentStepId:extraInfo.id}});
  const fileBefore=await prisma.attachment.findUniqueOrThrow({where:{id:fixture.attachmentId}});
  const root=path.join('.local-runtime','protocol-consistency',`db-repair-${copy.id}`);mkdirSync(root,{recursive:true});
  const plan={experimentId:copy.id,versionId:version.protocolVersionId,snapshotHash:hash(snapshot),decisions,mapping,keepers};
  writeFileSync(root+'/plan.json',JSON.stringify(plan));
  const invoke=(apply:boolean)=>execFileSync(process.execPath,['--import','tsx','scripts/repair-draft-protocol-execution.ts',`--plan=${root}/plan.json`,`--output=${root}/${apply?'applied':'dry-run'}`,...(apply?['--apply']:[])],{encoding:'utf8'});
- invoke(false);const diff=JSON.parse(readFileSync(root+'/dry-run/diff.json','utf8'));assert.equal(diff.beforeSteps,5);assert.equal(diff.afterSteps,3);assert.equal(diff.repair.updates[0].id,record.steps[0].id);invoke(true);
+ invoke(false);const diff=JSON.parse(readFileSync(root+'/dry-run/diff.json','utf8'));assert.equal(diff.beforeSteps,5);assert.equal(diff.afterSteps,3);assert.equal(diff.repair.updates[0].id,record.steps[0].id);
+ const backup=JSON.parse(readFileSync(root+'/dry-run/original.json','utf8'));assert.deepEqual(backup.entryBindings,[{id:entry.id,experimentStepId:extraBody.id}]);assert.deepEqual(backup.resultBindings,[{id:result.id,experimentStepId:extraInfo.id}]);invoke(true);
  const repaired=await read(copy.id);assert.deepEqual(repaired.steps.map(step=>step.id),record.steps.map(step=>step.id));assert.equal(repaired.steps[0].deviationNote,'保留拆分正文上的备注');assert(JSON.stringify(repaired.contentJson).includes('保留资料备注'));
  assert.equal((await prisma.attachmentLink.findUniqueOrThrow({where:{id:link.id}})).targetId,record.steps[0].id);assert.deepEqual(await prisma.attachment.findUniqueOrThrow({where:{id:fixture.attachmentId}}),fileBefore);
+ const entryRead=await prisma.entry.findUniqueOrThrow({where:{id:entry.id}}),resultRead=await prisma.result.findUniqueOrThrow({where:{id:result.id}});
+ assert.equal(entryRead.experimentStepId,record.steps[0].id);assert.equal(entryRead.body,entry.body);assert.equal(resultRead.experimentStepId,null);assert.equal(resultRead.experimentId,copy.id);assert.equal(resultRead.numericValue,123);assert.equal(resultRead.unit,'AU');
  assert.equal(hash(await read(original.id)),originalHash,'Copy/repair must not alter the originating experiment.');
  // The same CLI refuses completed/started records before changing anything.
  await prisma.experiment.update({where:{id:copy.id},data:{status:'completed',recordStatus:'reviewed'}});const protectedHash=hash(await read(copy.id));
@@ -51,7 +56,7 @@ async function main(){
  await prisma.protocolVersion.create({data:{protocolId:source.protocolId,revision:latest.revision+1,displayVersion:`1.${latest.revision}`,previousVersionId:latest.id,title:source.title,contentJson:changed,stepsJson:source.stepsJson as Prisma.InputJsonValue}});
  assert.equal(hash(await read(original.id)),originalHash);assert(!JSON.stringify((await read(original.id)).protocolSnapshotJson).includes('999 µL'));
  let keyRejected=false;try{await createExperimentWithProtocolSnapshot({creationKey:original.creationKey!,researchPlanId:fixture.planId,title:'Different retry payload',date:new Date(),status:'planned',recordStatus:'draft',tags:[],contentJson:{schemaVersion:1,sections:[]},methodMode:'protocol',protocolVersionIds:[fixture.versionId],customSteps:[]});}catch(error){keyRejected=String(error).includes('already used');}assert(keyRejected);
- const report={synthetic:true,status:'通过',checks:['Separate copied step IDs and unchecked initial state','Explicit Draft 5→3 mapping retains keeper IDs, notes, information notes and original attachment bytes','Completed/reviewed CLI repair rejected without any change','New ProtocolVersion leaves old frozen content/state unchanged','Creation-key reuse with different payload rejected'],privateBackupHash:diff.backupHash};
+ const report={synthetic:true,status:'通过',checks:['Separate copied step IDs and unchecked initial state','Explicit Draft 5→3 mapping retains keeper IDs, notes, information notes and original attachment bytes','Original Entry/Result step bindings backed up; existing IDs, observation body, numeric value and unit retained after reassignment','Completed/reviewed CLI repair rejected without any change','New ProtocolVersion leaves old frozen content/state unchanged','Creation-key reuse with different payload rejected'],privateBackupHash:diff.backupHash};
  writeFileSync(output+'/database-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }
 main().finally(()=>prisma.$disconnect());

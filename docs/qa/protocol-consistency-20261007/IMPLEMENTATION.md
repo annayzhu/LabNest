@@ -12,4 +12,4 @@ Library and historical repair CLIs default to dry-run, require every source bloc
 
 Reproduce on an isolated database whose name contains `protocol_consistency`: migrate, build/start on port 3332, seed synthetic fixtures, run `verify-protocol-consistency-db.ts` and `verify-protocol-consistency.mjs`. Local current-library audit uses a private production clone; CI uses synthetic fixtures and does not claim to audit private production records.
 
-See `ACCEPTANCE.md` for the final results and explicit unexecuted cases. Original TRIzol DOCX availability and physical device/printer testing must be reported separately from browser and synthetic checks.
+See `ACCEPTANCE.md` for the final results and explicit unexecuted cases. Six original DOCXs were found in managed attachments and fingerprint checked, including TRIzol. CCK-8 empty Steps/ResultTemplates/ConsumptionRules are recovered into a new Draft from its exact original. PRT-100008 rev1 original DOCX and physical device/printer testing remain unexecuted. Recovery with unresolved embedded images is rejected in dry-run and apply; use the existing reviewed image import pipeline.

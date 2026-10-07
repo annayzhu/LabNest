@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "status": "通过",
+  "checks": [
+    "Separate copied step IDs and unchecked initial state",
+    "Explicit Draft 5→3 mapping retains keeper IDs, notes, information notes and original attachment bytes",
+    "Completed/reviewed CLI repair rejected without any change",
+    "New ProtocolVersion leaves old frozen content/state unchanged",
+    "Creation-key reuse with different payload rejected"
+  ],
+  "privateBackupHash": "685abe91cbf8f7e7aeb77d226bcadd0927a1dbc08fa8792a8fad2ebffe10c471"
+}

@@ -1,0 +1,112 @@
+[
+  {
+    "name": "实际 v0.2 下载模板",
+    "sha256": "3db66eadd1ae20d89b668a31162e6fe0ecd7cf3c0b79c5d584c7fe1fd170f78a",
+    "stepCount": 0,
+    "sections": [
+      {
+        "key": "description",
+        "blocks": 0
+      },
+      {
+        "key": "purpose",
+        "blocks": 0
+      },
+      {
+        "key": "background",
+        "blocks": 0
+      },
+      {
+        "key": "material",
+        "blocks": 2
+      },
+      {
+        "key": "steps",
+        "blocks": 0
+      },
+      {
+        "key": "result_templates",
+        "blocks": 2
+      },
+      {
+        "key": "consumption_rules",
+        "blocks": 2
+      }
+    ],
+    "warnings": [
+      "Empty required sections: Description, Purpose, Background, Steps."
+    ]
+  },
+  {
+    "name": "服务器空白模板 v0.2",
+    "sha256": "3de8eecf4721bdc5ad05e85994ca7b1bbee5310ff7fc3f0ab50646621f6f8608",
+    "stepCount": 0,
+    "sections": [
+      {
+        "key": "description",
+        "blocks": 1
+      },
+      {
+        "key": "purpose",
+        "blocks": 1
+      },
+      {
+        "key": "background",
+        "blocks": 1
+      },
+      {
+        "key": "material",
+        "blocks": 1
+      },
+      {
+        "key": "steps",
+        "blocks": 1
+      },
+      {
+        "key": "result_templates",
+        "blocks": 1
+      },
+      {
+        "key": "consumption_rules",
+        "blocks": 1
+      }
+    ],
+    "warnings": []
+  },
+  {
+    "name": "服务器结构示例 v0.3",
+    "sha256": "1a2762fd18ed1f9cd3f23e9f720634abb77a8957798eaf676c18468dccfcc23a",
+    "stepCount": 2,
+    "sections": [
+      {
+        "key": "description",
+        "blocks": 1
+      },
+      {
+        "key": "purpose",
+        "blocks": 1
+      },
+      {
+        "key": "background",
+        "blocks": 1
+      },
+      {
+        "key": "material",
+        "blocks": 1
+      },
+      {
+        "key": "steps",
+        "blocks": 5
+      },
+      {
+        "key": "result_templates",
+        "blocks": 1
+      },
+      {
+        "key": "consumption_rules",
+        "blocks": 1
+      }
+    ],
+    "warnings": []
+  }
+]

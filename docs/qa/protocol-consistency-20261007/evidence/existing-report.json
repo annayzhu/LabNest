@@ -1,0 +1,49 @@
+{
+  "head": "5a57bdd0",
+  "database": "private production clone",
+  "readOnly": true,
+  "experiments": [
+    {
+      "code": "EXP-001",
+      "status": "通过",
+      "steps": 14,
+      "frozenHistoricalSnapshotUnchanged": true
+    },
+    {
+      "code": "EXP-002",
+      "status": "通过",
+      "steps": 7,
+      "frozenHistoricalSnapshotUnchanged": true
+    },
+    {
+      "code": "EXP-003",
+      "status": "通过",
+      "steps": 5,
+      "frozenHistoricalSnapshotUnchanged": true
+    },
+    {
+      "code": "EXP-005",
+      "status": "通过",
+      "steps": 5,
+      "frozenHistoricalSnapshotUnchanged": true
+    },
+    {
+      "code": "EXP-006",
+      "status": "通过",
+      "steps": 12,
+      "frozenHistoricalSnapshotUnchanged": true
+    },
+    {
+      "code": "EXP-007",
+      "status": "通过",
+      "steps": 12,
+      "frozenHistoricalSnapshotUnchanged": false
+    },
+    {
+      "code": "EXP-004",
+      "status": "通过",
+      "steps": 32,
+      "frozenHistoricalSnapshotUnchanged": true
+    }
+  ]
+}

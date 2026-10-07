@@ -13,3 +13,9 @@ The independent reviewer confirmed three defects: paragraph childContent could c
 Corrections: child nodes retain their source block and parent ownership through editor serialization; Word renders formatted blocks, nested text, scripts and real hyperlink relationships; Run reference navigation traverses every frozen version independently of progress groups. New tests and browser checks cover these paths.
 
 Original review total: Standards 4 documented findings plus 1 heuristic; Spec 3 implementation findings. Follow-up verification is recorded in ACCEPTANCE.md. The axes remain separate; test totals do not replace either review.
+
+## Follow-up review
+
+Standards: the ordinary progress action also locks the parent before its first read; semantic marks inside a generated title prefix are preserved; dry-run and apply consistently reject recovery with unresolved embedded media. The reviewer found no remaining defect in this corrected scope. Concurrency was verified by lock-order inspection, not race injection.
+
+Spec: additional heading-owned multi-paragraph/nested cases exposed another split and title duplication. Corrected in ee6cfbeb and 5a57bdd0: one stable source ID, only exact first generated title text removed, children and all following paragraphs retained. The reviewer confirmed rich_text/text/heading cases and scientific scripts/links/code preservation, with no remaining finding in that scope. Final real browser results are separate in ACCEPTANCE.md and browser-report.json.

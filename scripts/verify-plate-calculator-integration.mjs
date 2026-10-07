@@ -21,9 +21,15 @@ async function recipeRows(f){
  for(const [index,row] of [['SYBR','10',true],['Forward','0.5',true],['Reverse','0.5',true],['Template','1',false]].entries()){
   await f.getByRole('button',{name:'添加组分',exact:true}).click();
   const r=f.locator(`tr[data-mix-row="${index}"]`).first();
+  // The editor focuses a new name field on the next animation frame. Wait for
+  // that focus before filling another field, so fast automation cannot send a
+  // volume into the name field while focus is still being moved.
+  await r.locator('input[data-component-name]:focus').waitFor();
   await r.getByRole('textbox',{name:'组分名称',exact:true}).fill(row[0]);
   await r.getByRole('textbox',{name:'每反应体积',exact:true}).fill(row[1]);
   await r.getByRole('checkbox',{name:'加入预混',exact:true}).setChecked(row[2]);
+  assert.equal(await r.getByRole('textbox',{name:'组分名称',exact:true}).inputValue(),row[0]);
+  assert.equal(await r.getByRole('textbox',{name:'每反应体积',exact:true}).inputValue(),row[1]);
  }
 }
 async function calculateAndSave(page,f){assert.notEqual(await f.getByRole('textbox',{name:/^预混余量/}).inputValue(),'','reserve input must remain after editing');await f.getByRole('button',{name:'计算',exact:true}).click();await f.getByRole('button',{name:'保存为当前板方案',exact:true}).click();await page.locator('#liquidDrawer').waitFor({state:'hidden'});}

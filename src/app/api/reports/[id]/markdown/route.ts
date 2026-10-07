@@ -1,3 +1,4 @@
+import { richTextPlainText } from "@/lib/protocol-document";
 import { prisma } from "@/lib/db";
 import { documentMediaFromMarkdown, documentMediaToMarkdown } from "@/lib/document-media";
 import { normalizeScientificDocument, reportSections, type ScientificContentBlock } from "@/lib/scientific-document";
@@ -12,6 +13,7 @@ function readableCell(value: string) {
 function blockMarkdown(block: ScientificContentBlock) {
   if (block.type === "heading") return `### ${block.text}`;
   if (block.type === "text") return block.text;
+  if (block.type === "rich_text") return richTextPlainText(block.nodes);
   if (block.type === "checklist") return block.items.map((item) => `- ${item}`).join("\n");
   if (block.type === "table") return [block.caption ? `**${block.caption}**` : "", block.rows.map((row) => `| ${row.map(readableCell).join(" | ")} |`).join("\n")].filter(Boolean).join("\n\n");
   if (block.type === "callout") return `> ${block.tone.toUpperCase()}: ${block.text}`;

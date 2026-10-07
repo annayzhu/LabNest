@@ -114,6 +114,8 @@ function RichRun({ run }: { run: ProtocolRichTextRun }) {
   if (run.italic) content = <em>{content}</em>;
   if (run.underline) content = <u>{content}</u>;
   if (run.strike) content = <s>{content}</s>;
+  if (run.subscript) content=<sub>{content}</sub>;
+  if (run.superscript) content=<sup>{content}</sup>;
   const href = safeLink(run.link);
   if (href) content = <a href={href} className="font-medium text-moss underline decoration-moss/40 underline-offset-2">{content}</a>;
   if (run.fontSizePt) content = <span data-labnest-size={run.fontSizePt} style={{ fontSize: `${run.fontSizePt}pt` }}>{content}</span>;
@@ -151,14 +153,14 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
   return <div className="document-copy document-rich-text-flow text-graphite">{rendered}</div>;
 }
 
-export function ProtocolContentBlockView({ block }: { block: ProtocolContentBlock }) {
+export function ProtocolContentBlockView({ block, executionContext=false }: { block: ProtocolContentBlock; executionContext?:boolean }) {
   if ((block.type==="heading" || block.type==="text") && block.nodes) return <ProtocolRichTextContent nodes={block.nodes}/>;
   if (block.type==="checklist" && block.itemNodes) return <ul className="document-rich-list pl-4">{block.items.map((item,index)=><li key={index}><ProtocolRichTextContent nodes={block.itemNodes?.[index]??[{type:"paragraph",content:[{text:item}]}]}/></li>)}</ul>;
   if (block.type === "heading") return <h3 className="document-content-heading font-serif font-medium text-ink">{block.text}</h3>;
   if (block.type === "text") return <p className="document-copy whitespace-pre-wrap leading-7 text-graphite">{block.text}</p>;
   if (block.type === "rich_text") return <ProtocolRichTextContent nodes={block.nodes} />;
   if (block.type === "checklist") {
-    return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite"><CheckSquare2 className="document-checklist-icon h-4 w-4 text-moss" aria-hidden /><span>{item}</span></li>)}</ul>;
+    return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite">{executionContext?<span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-moss"/>:<CheckSquare2 className="document-checklist-icon h-4 w-4 text-moss" aria-hidden />}<span>{item}</span></li>)}</ul>;
   }
   if (block.type === "callout") {
     return <div className={cn("flex gap-3 rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span>{block.text}</span></div>;
@@ -168,6 +170,7 @@ export function ProtocolContentBlockView({ block }: { block: ProtocolContentBloc
     const href = safeLink(block.url);
     return <div className="ln-protocol-tool-card"><Wrench aria-hidden /><div><p>{block.label || "Embedded tool"}</p><small>{block.sourceKind === "manifest" ? "LabNest tool" : block.sourceKind === "path" ? "Application path" : "External URL"}</small></div>{href ? <a href={href} target="_blank" rel="noreferrer">Open tool</a> : <span>Invalid location</span>}</div>;
   }
+  if (block.type === "timer" && executionContext) return <p className="text-sm text-muted">{block.label} · {block.durationMinutes} min{block.notes ? ` · ${block.notes}` : ""}</p>;
   if (block.type === "timer") return <ProtocolTimer label={block.label} durationMinutes={block.durationMinutes} notes={block.notes} />;
 
   const template = block.resultTemplate ? normalizeResultTemplate(block.resultTemplate) : undefined;

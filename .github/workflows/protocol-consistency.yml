@@ -1,0 +1,58 @@
+name: Protocol experiment consistency
+on:
+  pull_request:
+    paths: ['src/**', 'scripts/*protocol*', 'prisma/**', 'package*.json', '.github/workflows/protocol-consistency.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_protocol_consistency_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_protocol_consistency_ci
+      PORT: '3332'
+      LABNEST_E2E_BASE_URL: http://localhost:3332
+      TZ: Asia/Shanghai
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils fonts-noto-cjk
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx playwright install --with-deps chromium
+      - run: npx prisma migrate deploy
+      - run: TZ=Asia/Shanghai npm test && TZ=America/Los_Angeles npm test
+      - run: npm run lint && npm run typecheck && npm run build
+      - name: Start isolated production server
+        run: |
+          npm run start > protocol-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3332/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat protocol-server.log
+          exit 1
+      - run: npx tsx scripts/seed-protocol-consistency.ts
+      - run: npx tsx scripts/verify-protocol-consistency-db.ts
+      - run: node scripts/verify-protocol-consistency.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: protocol-consistency-synthetic-evidence
+          path: |
+            docs/qa/protocol-consistency-20261007/evidence
+            protocol-server.log

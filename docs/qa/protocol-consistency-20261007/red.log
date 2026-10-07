@@ -1,0 +1,91 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/protocol-execution.test.ts (3 tests | 3 failed) 16ms
+     × counts confirmed operations, retains dosage/reference blocks and removes only the exact leading generated title once 9ms
+     × keeps operation identity and confirmed ownership through editor serialization and reordering 5ms
+     × keeps ordinary checklists under their operation and does not invent steps from unstructured explanation paragraphs 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/protocol-execution.test.ts > Protocol execution contract > counts confirmed operations, retains dosage/reference blocks and removes only the exact leading generated title once
+AssertionError: expected [ '以下为1个样本的工作用量', '计算依据与配比说明', …(6) ] to deeply equal [ '去培养液并原位裂解', '分管并完成裂解' ]
+
+- Expected
++ Received
+
+  [
++   "以下为1个样本的工作用量",
++   "计算依据与配比说明",
++   "去培养液并原位裂解",
+    "去培养液并原位裂解",
++   "加入200 µL，20–25°C。",
++   "轻柔吹打",
++   "核对管号",
+    "分管并完成裂解",
+  ]
+
+ ❯ src/lib/protocol-execution.test.ts:21:50
+     19|     const document = fixture(); const before = JSON.stringify(document…
+     20|     const result = projectProtocolDocument(document);
+     21|     expect(result.steps.map(step => step.title)).toEqual(['去培养液并原位裂解',…
+       |                                                  ^
+     22|     expect(result.steps.map(step => step.source_ref)).toEqual(['operat…
+     23|     expect(result.commonBlocks.map(block => block.id)).toEqual(['dosag…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/lib/protocol-execution.test.ts > Protocol execution contract > keeps operation identity and confirmed ownership through editor serialization and reordering
+AssertionError: expected [ 'dosage:0', 'basis', 'a:0', …(5) ] to deeply equal [ 'operation-a', 'operation-b' ]
+
+- Expected
++ Received
+
+  [
+-   "operation-a",
+-   "operation-b",
++   "dosage:0",
++   "basis",
++   "a:0",
++   "body:0",
++   "body:1",
++   "wash:0",
++   "wash:1",
++   "b",
+  ]
+
+ ❯ src/lib/protocol-execution.test.ts:31:83
+     29|   it('keeps operation identity and confirmed ownership through editor …
+     30|     const document = fixture(); const roundtrip = tiptapToProtocolDocu…
+     31|     expect(projectProtocolDocument(roundtrip).steps.map(step => step.s…
+       |                                                                                   ^
+     32|     const blocks = roundtrip.sections.find(section => section.key === …
+     33|     blocks.splice(3, 0, ...blocks.splice(6, 2));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/lib/protocol-execution.test.ts > Protocol execution contract > keeps ordinary checklists under their operation and does not invent steps from unstructured explanation paragraphs
+AssertionError: expected [ { order: 1, …(6) }, …(3) ] to have a length of 1 but got 4
+
+- Expected
++ Received
+
+- 1
++ 4
+
+ ❯ src/lib/protocol-execution.test.ts:40:53
+     38|     const document = createEmptyProtocolDocument(); const section = do…
+     39|     section.blocks = [{ id: 'heading', type: 'heading', text: '1. Prep…
+     40|     expect(projectProtocolDocument(document).steps).toHaveLength(1);
+       |                                                     ^
+     41|     expect(projectProtocolDocument(document).steps[0].description).toC…
+     42|     section.blocks = [{ id: 'explanation', type: 'text', text: 'Workin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  13:49:01
+   Duration  403ms (transform 106ms, setup 0ms, import 181ms, tests 16ms, environment 0ms)
+

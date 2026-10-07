@@ -68,6 +68,7 @@ export async function saveProtocolRunProgress(
     const recordedAt = new Date();
 
     await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
     const experiment = await tx.experiment.findUnique({
       where: { id: parsed.experimentId },
       include: { steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] } },
@@ -86,6 +87,8 @@ export async function saveProtocolRunProgress(
     const knownStepIds = new Set(experiment.steps.map((step) => step.id));
     const unknownStep = [...completedStepIds].find((id) => !knownStepIds.has(id));
     if (unknownStep) throw new Error("A submitted step does not belong to this Experiment.");
+
+    if(parsed.intent==="complete" && !experiment.steps.length && (experiment.protocolSnapshotJson as {methodMode?:string}).methodMode==="protocol")throw new Error("No execution steps were planned. This Protocol-only record needs an explicitly organized operation contract before completion.");
 
     if (parsed.intent === "complete" && experiment.steps.some((step) => !completedStepIds.has(step.id))) {
       throw new Error("Complete every execution step before marking the Experiment completed.");
@@ -214,6 +217,9 @@ export async function updateStepTimer(
     });
     const now = new Date();
     await prisma.$transaction(async (tx) => {
+      // Historical Draft repair uses the same parent lock before inspecting any
+      // execution evidence. A timer may not start between its check and write.
+      await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
       const step = await tx.experimentStep.findFirst({
         where: { id: parsed.stepId, experimentId: parsed.experimentId },
         include: { experiment: { select: { status: true, recordStatus: true } } },

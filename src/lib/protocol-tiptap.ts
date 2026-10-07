@@ -40,6 +40,8 @@ function marksFromRun(run: ProtocolRichTextRun): TiptapMark[] | undefined {
   if (run.italic) marks.push({ type: "italic" });
   if (run.underline) marks.push({ type: "underline" });
   if (run.strike) marks.push({ type: "strike" });
+  if (run.subscript) marks.push({type:"subscript"});
+  if (run.superscript) marks.push({type:"superscript"});
   if (run.code) marks.push({ type: "code" });
   if (run.link) marks.push({ type: "link", attrs: { href: run.link } });
   const textStyle = {
@@ -89,13 +91,13 @@ function richNodeToTiptap(node: ProtocolRichTextNode, blockId: string): JSONCont
   return { type: "paragraph", attrs, content };
 }
 
-function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSONContent[] {
+function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string, sourceOwnership=true): JSONContent[] {
   const content: JSONContent[] = [];
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
     if (node.type !== "bullet" && node.type !== "numbered") {
-      if(node.content.length===0 && node.childContent?.[0]?.type==="table")content.push(...node.childContent);
-      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []));
+      if(!sourceOwnership&&node.content.length===0&&node.childContent?.[0]?.type==='table')content.push(...node.childContent);
+      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []).map(child=>sourceOwnership?({...child,attrs:{...child.attrs,...legacyAttrs(blockId,'rich_text'),protocolRichChild:true}}):child));
       index += 1;
       continue;
     }
@@ -120,7 +122,9 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
 }
 
 export function protocolRichTextToTiptap(nodes: ProtocolRichTextNode[]): JSONContent {
-  return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text") };
+  // Compact template fields have no execution ownership. Keep their existing
+  // rich-cell JSON contract, including tables without synthetic block attrs.
+  return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text",false) };
 }
 
 function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>): JSONContent {
@@ -134,7 +138,7 @@ function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>):
   };
 }
 
-function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
+function blockContentToTiptap(block: ProtocolContentBlock): JSONContent[] {
   if ((block.type==="heading" || block.type==="text") && block.nodes) return richNodesToTiptap(block.nodes,block.id).map(node=>({...node,attrs:{...node.attrs,protocolBlockId:block.id,protocolBlockType:block.type}}));
   if (block.type === "media") return [{ type: "documentMedia", attrs: { block } }];
   if (block.type === "rich_text") return richNodesToTiptap(block.nodes, block.id);
@@ -161,9 +165,14 @@ function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
   return [{ type: "protocolWidget", attrs: { block } }];
 }
 
+function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
+  return blockContentToTiptap(block).map(node => ({...node,attrs:{...node.attrs,protocolExecution:block.execution ?? null}}));
+}
+
 export function protocolDocumentToTiptap(document: ProtocolDocument): JSONContent {
   return {
     type: "doc",
+    attrs:{executionConfirmed:document.executionConfirmed},
     content: protocolSectionKeys.map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
       const rawContent = section?.blocks.flatMap(blockToTiptap) ?? [];
@@ -222,6 +231,8 @@ function runsFromInlineContent(content: JSONContent[] | undefined): ProtocolRich
         italic: marks.some((mark) => mark.type === "italic") || undefined,
         underline: marks.some((mark) => mark.type === "underline") || undefined,
         strike: marks.some((mark) => mark.type === "strike") || undefined,
+        subscript: marks.some(mark=>mark.type==="subscript") || undefined,
+        superscript: marks.some(mark=>mark.type==="superscript") || undefined,
         code: marks.some((mark) => mark.type === "code") || undefined,
         link: typeof link === "string" ? link : undefined,
         color: parseRichTextColor(textStyle?.attrs?.color),
@@ -319,35 +330,49 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
       continue;
     }
     const identity = blockIdentity(node);
+    const execution = node.attrs?.protocolExecution ? {execution:node.attrs.protocolExecution as ProtocolContentBlock["execution"]} : {};
+    const parent=blocks.at(-1);
+    if(node.attrs?.protocolRichChild && parent?.id===identity.id && (parent.type==='rich_text'||parent.type==='text'||parent.type==='heading')) {
+      const nodes=parent.type==='rich_text'?parent.nodes:(parent.nodes??=[{type:parent.type==='heading'?'heading3':'paragraph',content:[{text:parent.text}]}]);
+      const last=nodes.at(-1);
+      if(last)last.childContent=[...(last.childContent??[]),node];
+      index+=1;
+      continue;
+    }
     if (node.type === "table") {
-      blocks.push({ id: identity.id, type: "table", caption: node.attrs?.protocolCaption ?? "", ...persistedTableFromTiptap(node) });
+      blocks.push({ id: identity.id, ...execution, type: "table", caption: node.attrs?.protocolCaption ?? "", ...persistedTableFromTiptap(node) });
       index += 1;
       continue;
     }
     if (node.type === "taskList") {
       const itemNodes=(node.content??[]).map(item=>{const first=listItemParagraph(item);return [{...tiptapNodeToRichNodes(first)[0],...(item.content && item.content.length>1?{childContent:item.content.slice(1)}:{})}];});
-      blocks.push({ id: identity.id, type: "checklist", items: taskItems(node), ...(itemNodes.some(nodes=>hasExplicitFormatting(nodes)||nodes.some(n=>n.type!=="paragraph"))?{itemNodes}:{} ) });
+      blocks.push({ id: identity.id, ...execution, type: "checklist", items: taskItems(node), ...(itemNodes.some(nodes=>hasExplicitFormatting(nodes)||nodes.some(n=>n.type!=="paragraph"))?{itemNodes}:{} ) });
       index += 1;
       continue;
     }
     if (identity.type === "heading" && node.type === "heading") {
       const nodes=tiptapNodeToRichNodes(node);
-      blocks.push({ id: identity.id, type: "heading", text: plainText(node), ...(hasExplicitFormatting(nodes)?{nodes}:{}) });
+      blocks.push({ id: identity.id, ...execution, type: "heading", text: plainText(node), ...(hasExplicitFormatting(nodes)?{nodes}:{}) });
       index += 1;
       continue;
     }
     if (identity.type === "text" && node.type === "paragraph") {
       const nodes: JSONContent[] = [];
-      while (content[index] && blockIdentity(content[index]).id === identity.id && content[index].type === "paragraph") {
+      while (content[index] && !content[index].attrs?.protocolRichChild && blockIdentity(content[index]).id === identity.id && content[index].type === "paragraph") {
         nodes.push(content[index]);
         index += 1;
       }
       const formatted=nodes.flatMap(tiptapNodeToRichNodes);
-      blocks.push({ id: identity.id, type: "text", text: nodes.map(plainText).join("\n"), ...(hasExplicitFormatting(formatted)?{nodes:formatted}:{}) });
+      if(parent?.id===identity.id && parent.type==='text') {
+        const previous=parent.nodes??[{type:'paragraph' as const,content:[{text:parent.text}]}];
+        parent.text += `\n${nodes.map(plainText).join('\n')}`;
+        parent.nodes=[...previous,...formatted];
+      } else blocks.push({ id: identity.id, ...execution, type: "text", text: nodes.map(plainText).join("\n"), ...(hasExplicitFormatting(formatted)?{nodes:formatted}:{}) });
       continue;
     }
     const richNodes: JSONContent[] = [];
     while (content[index] && richTextNodeTypes.has(content[index].type ?? "")) {
+      if(content[index].attrs?.protocolRichChild)break;
       const nextIdentity = blockIdentity(content[index]);
       if (richNodes.length && nextIdentity.id !== identity.id) break;
       richNodes.push(content[index]);
@@ -357,12 +382,17 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
       index += 1;
       continue;
     }
-    blocks.push({ id: identity.id, type: "rich_text", nodes: richNodes.flatMap(tiptapNodeToRichNodes) });
+    const formatted=richNodes.flatMap(tiptapNodeToRichNodes);
+    if(parent?.id===identity.id && (parent.type==='rich_text'||parent.type==='heading')) {
+      if(parent.type==='heading')parent.nodes??=[{type:'heading3',content:[{text:parent.text}]}];
+      parent.nodes!.push(...formatted);
+    }
+    else blocks.push({ id: identity.id, ...execution, type: "rich_text", nodes: formatted });
   }
   return distinctDocumentBlockIds(blocks);
 }
 
-export function tiptapToProtocolDocument(json: JSONContent, importWarnings: string[] = []): ProtocolDocument {
+export function tiptapToProtocolDocument(json: JSONContent, importWarnings: string[] = [], executionConfirmed: boolean | undefined = json.attrs?.executionConfirmed): ProtocolDocument {
   const empty = createEmptyProtocolDocument();
   const sections = new Map<ProtocolSectionKey, ProtocolContentBlock[]>();
   for (const node of json.content ?? []) {
@@ -372,6 +402,7 @@ export function tiptapToProtocolDocument(json: JSONContent, importWarnings: stri
   }
   return {
     ...empty,
+    executionConfirmed,
     importWarnings,
     sections: empty.sections.map((section) => ({ ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: sections.get(section.key) ?? [] })),
   };

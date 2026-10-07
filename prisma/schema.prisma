@@ -476,6 +476,7 @@ model Experiment {
   inventoryObservations InventoryObservation[]
   id                       String                @id @default(cuid())
   runCode                  String                @unique
+  creationKey              String?               @unique
   title                    String
   projectId                String?
   project                  Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)

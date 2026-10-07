@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { ProtocolExecutionOrganizer } from "./ProtocolExecutionOrganizer";
 import { Download } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorWorkspace, type DocumentEditorWorkspaceTab } from "@/components/DocumentEditorWorkspace";
@@ -63,6 +64,7 @@ export function ProtocolDocumentEditor({
 }) {
   const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const [document, setDocument] = useState(initialDocument);
+  const [editorRevision,setEditorRevision]=useState(0);
   const [canonicalTitle, setCanonicalTitle] = useState(protocol.canonicalTitle);
   const [state, formAction, pending] = useActionState(action, initialState);
   const [scope, setScope] = useState(protocol.scope);
@@ -122,7 +124,8 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          <ProtocolWysiwygEditor document={initialDocument} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
+          <ProtocolWysiwygEditor key={editorRevision} document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
+          <ProtocolExecutionOrganizer document={document} onChange={next=>{setDocument(next);setEditorRevision(value=>value+1);}}/>
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>

@@ -1,0 +1,7 @@
+
+> labnest@0.1.0 typecheck
+> tsc --noEmit
+
+.next/types/cache-life.d 2.ts(3,1): error TS6200: Definitions of the following identifiers conflict with those in another file: unstable_cache, updateTag, revalidateTag, revalidatePath, refresh, unstable_noStore, cacheTag, unstable_cacheTag, unstable_cacheLife
+.next/types/routes.d 2.ts(182,8): error TS2300: Duplicate identifier 'LayoutProps'.
+.next/types/routes.d 2.ts(199,13): error TS2428: All declarations of 'RouteContext' must have identical type parameters.

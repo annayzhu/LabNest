@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "@/lib/document-media.server";
@@ -10,11 +12,9 @@ function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? value as T[] : [];
-}
 
 export type ExperimentSnapshotInput = {
+  creationKey?: string;
   researchPlanId: string;
   runCode?: string;
   title: string;
@@ -33,6 +33,14 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   tx: Prisma.TransactionClient,
   input: ExperimentSnapshotInput,
 ) {
+  const fingerprint = createHash("sha256").update(JSON.stringify({...input,creationKey:undefined})).digest("hex");
+  if(input.creationKey) {
+    const previous=await tx.experiment.findUnique({where:{creationKey:input.creationKey}});
+    if(previous) {
+      if((previous.protocolSnapshotJson as {creationFingerprint?:string}).creationFingerprint!==fingerprint)throw new Error("This creation request was already used for different Experiment data.");
+      return previous;
+    }
+  }
   const plan = await tx.researchPlan.findUnique({
     where: { id: input.researchPlanId },
     include: { project: true, protocols: { select: { protocolId: true } } },
@@ -54,6 +62,14 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   const versionMap = new Map(versions.map((version) => [version.id, version]));
   const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
   const primary = orderedVersions[0];
+  const contracts=new Map(orderedVersions.map(version=>{
+    const document=normalizeProtocolDocument(version.contentJson);
+    const projection=document?projectProtocolDocument(document):undefined;
+    if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);
+    return [version.id,projection] as const;
+  }));
+
+  if(input.methodMode==="protocol" && [...contracts.values()].every(contract=>!contract.steps.length))throw new Error("No execution operations are confirmed. Organize the Protocol steps or select a custom freeform Experiment.");
 
   if (orderedVersions.length) {
     const protocolIds = Array.from(new Set(orderedVersions.map((version) => version.protocolId)));
@@ -77,6 +93,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   }
   const snapshot = {
     schemaVersion: 1,
+    ...(input.creationKey?{creationFingerprint:fingerprint}:{}),
     methodMode: input.methodMode,
     researchPlanTitle: plan.title,
     capturedAt: new Date().toISOString(),
@@ -91,7 +108,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       parametersJson: cloneJson(version.parametersJson),
       materialsJson: cloneJson(version.materialsJson),
       equipmentJson: cloneJson(version.equipmentJson),
-      stepsJson: cloneJson(version.stepsJson),
+      stepsJson: cloneJson(contracts.get(version.id)!.steps),
       resultTemplatesJson: cloneJson(version.resultTemplatesJson),
       contentJson: cloneJson(version.contentJson),
     })),
@@ -100,6 +117,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   const experiment = await tx.experiment.create({
       data: {
         runCode,
+        creationKey: input.creationKey,
         title: input.title,
         projectId: plan.projectId,
         researchPlanId: plan.id,
@@ -138,7 +156,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
                 protocolTitle: version.protocol.title,
                 versionTitle: version.title,
                 displayVersion: version.displayVersion,
-                steps: asArray<ProtocolStep>(version.stepsJson),
+                steps: contracts.get(version.id)!.steps,
               }))),
         },
       },
@@ -159,5 +177,12 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
 }
 
 export async function createExperimentWithProtocolSnapshot(input: ExperimentSnapshotInput) {
-  return prisma.$transaction((tx) => createExperimentWithProtocolSnapshotInTransaction(tx, input));
+  try {return await prisma.$transaction((tx) => createExperimentWithProtocolSnapshotInTransaction(tx, input));}
+  catch(error) {
+    if(input.creationKey && error && typeof error==='object' && 'code' in error && error.code==='P2002') {
+      // A racing retry reuses the durable unique request rather than allocating more steps/files.
+      return prisma.$transaction(tx=>createExperimentWithProtocolSnapshotInTransaction(tx,input));
+    }
+    throw error;
+  }
 }

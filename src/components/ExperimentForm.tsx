@@ -1,6 +1,8 @@
 "use client";
 
 import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { ProtocolExecutionPreview } from "./ProtocolExecutionPreview";
+import { newClientMutationId } from "@/lib/client-mutation-id";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { experimentMethodNames } from "@/lib/experiment-provenance";
 import { useActionState, useState } from "react";
@@ -38,6 +40,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
+  const [creationKey]=useState(()=>newClientMutationId());
   const [state, formAction, pending] = useActionState(action, initialState);
   const initialPlan = initial.researchPlanId ?? plans[0]?.id ?? "";
   const [planId, setPlanId] = useState(initialPlan);
@@ -56,15 +59,18 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const lockedMethodMode = initialSelectedIds.length ? "protocol" : "custom";
   const activeMethodMode = initial.id ? lockedMethodMode : methodMode;
   const protocolMethodSummary = initial.id ? experimentMethodNames(initial.protocolSnapshotJson).join('；') : selectedIds.map(id=>{const version=protocolVersions.find(v=>v.id===id);return version ? `${version.protocol.title} · ${version.displayVersion}` : '规程未记录';}).join('；') || '未选择规程';
+  const selectedVersions=selectedIds.map(id=>protocolVersions.find(version=>version.id===id)).filter(version=>!!version);
+  const executionUnconfirmed=selectedVersions.some(version=>version.execution?.executionNeedsReview) || (selectedVersions.length>0 && selectedVersions.every(version=>version.execution && !version.execution.steps.length));
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
   return <form inert={pending} aria-busy={pending} action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
+    {!initial.id?<input type="hidden" name="creationKey" value={creationKey}/>:null}
     {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
     {initial.updatedAt ? <input type="hidden" name="expectedUpdatedAt" value={new Date(initial.updatedAt).toISOString()} /> : null}
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>
-      <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"})),initial.executionParameters,initial.protocolSnapshotJson).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main">{!initial.id && methodMode==="protocol"?selectedVersions.map(version=>version.execution?<div key={version.id} className="mb-4"><p className="mb-2 text-sm text-muted">{version.protocol.title} · v{version.displayVersion}</p><ProtocolExecutionPreview execution={version.execution} editHref={`/protocols/${version.protocol.id}/versions/${version.id}/edit`}/></div>:null):null}<ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"})),initial.executionParameters,initial.protocolSnapshotJson).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "研究计划", value: plan?.title ?? "未选择" },
         { label: "方法来源", value: activeMethodMode === "protocol" ? protocolMethodSummary : "自行记录" },
       ]} /></div>
@@ -114,7 +120,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">
       {state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}
-      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && !selectedIds.length)} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
+      <Button type="submit" variant="primary" size="lg" disabled={pending || !plans.length || (!initial.id && methodMode === "protocol" && (!selectedIds.length || executionUnconfirmed))} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Experiment"}</Button>
     </div>
   </form>;
 }

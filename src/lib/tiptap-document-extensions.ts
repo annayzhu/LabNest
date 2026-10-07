@@ -1,5 +1,5 @@
 import { paragraphLayout, type ParagraphLayout } from "./document-paragraph-layout";
-import { Extension, mergeAttributes, Node, type NodeViewRenderer } from "@tiptap/core";
+import { Extension, mergeAttributes, Mark, Node, type NodeViewRenderer } from "@tiptap/core";
 import { TableKit } from "@tiptap/extension-table";
 
 const documentBlockTypes = ["paragraph", "heading", "blockquote", "bulletList", "orderedList", "taskList", "table"];
@@ -191,9 +191,13 @@ export function createDocumentLegacyAttributesExtension({ name, attributes }: {
         types: documentBlockTypes,
         attributes: Object.fromEntries(attributes.map((attribute) => [attribute.name, {
           default: null,
-          keepOnSplit: !attribute.name.endsWith("BlockId"),
-          parseHTML: (element: HTMLElement) => element.getAttribute(attribute.htmlAttribute),
-          renderHTML: (values: Record<string, unknown>) => values[attribute.name] ? { [attribute.htmlAttribute]: values[attribute.name] } : {},
+          keepOnSplit: !attribute.name.endsWith("BlockId") && attribute.name !== "protocolExecution",
+          parseHTML: (element: HTMLElement) => {
+            const value=element.getAttribute(attribute.htmlAttribute);
+            if(attribute.name!=="protocolExecution")return value;
+            try{return value?JSON.parse(value):null;}catch{return null;}
+          },
+          renderHTML: (values: Record<string, unknown>) => values[attribute.name] ? { [attribute.htmlAttribute]: attribute.name==="protocolExecution" ? JSON.stringify(values[attribute.name]) : values[attribute.name] } : {},
         }])),
       }];
     },
@@ -203,3 +207,6 @@ export function createDocumentLegacyAttributesExtension({ name, attributes }: {
 export function createResizableDocumentTableExtension() {
   return TableKit.configure({ table: { resizable: true, cellMinWidth: 96, allowTableNodeSelection: true } });
 }
+
+/** Scientific scripts are inline marks, retained independently of execution ownership. */
+export const documentScriptMarks = ([['subscript','sub'],['superscript','sup']] as const).map(([name,tag])=>Mark.create({name,parseHTML(){return [{tag}];},renderHTML(){return [tag,0];}}));

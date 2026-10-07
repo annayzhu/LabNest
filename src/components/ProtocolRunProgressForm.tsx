@@ -44,11 +44,13 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false }: {
   experimentId: string;
   status: string;
   steps: RunStep[];
   editable: boolean;
+  protocolBased?:boolean;
+  frozenReferenceTitles?:Record<string,string>;
   frozenReferences?: Record<string, ReturnType<typeof import("@/lib/run-step-content").runStepContent>["reference"]>;
   evidenceByStep?: Record<string, { observations: number; measurements: number; files: number; consumptions: number }>;
 }) {
@@ -83,6 +85,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     }
     return [...grouped.values()].sort((a, b) => a.order - b.order);
   }, [steps]);
+  const referenceGroups=Object.keys(frozenReferences??{}).map(key=>({key,title:groups.find(group=>group.key===key)?.title??frozenReferenceTitles?.[key]??"Captured Protocol reference"}));
   const remaining = steps.length - completedIds.size;
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
@@ -169,12 +172,14 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     });
   }
 
+  const infoGroups=[...new Map(steps.filter(step=>step.richContent?.common.length).map(step=>[step.groupKey,step])).values()];
   return <form ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
+    {infoGroups.map(step=><details open key={step.groupKey} className="min-w-0 rounded-[var(--ln-radius-panel)] border border-hairline p-3" data-run-information><summary className="focus-ring cursor-pointer text-sm text-moss">规程说明与参考（不计步） · {experimentStepGroupHeading(step.groupTitle).title}</summary><div className="mt-3 min-w-0 space-y-3">{step.richContent?.common.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</div></details>)}
     <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
@@ -192,9 +197,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           {groups.length>1 ? <p className="text-xs text-muted">{experimentStepGroupHeading(selectedStep.groupTitle).title}</p> : null}
           <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>
 
-          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.common.length?<details><summary>{zh ? "共同准备" : "Shared preparation"}</summary>{selectedStep.richContent.common.map(block=><ProtocolContentBlockView key={block.id} block={block}/>)}</details>:null}{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block}/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
+          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
           <div data-run-tools className="mt-3 grid grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
-          <StepTimerControls compact key={`${selectedStep.id}:${selectedStep.timerStartedAt?.toISOString() ?? "idle"}:${selectedStep.timerRemainingSeconds ?? "unset"}`} experimentId={experimentId} step={selectedStep} />
+          <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} />
           <button type="button" aria-expanded={recordOpen} onClick={()=>setRecordOpen(value=>!value)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline px-2 text-sm font-medium text-moss">{zh?"记录":"Record"}</button></div>
           <div hidden={!recordOpen} className="mt-2" data-run-record><div className="grid grid-cols-3 gap-2">
             <Link onClick={()=>window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${selectedStep.id}`} className="focus-ring flex min-h-11 items-center justify-center text-sm text-moss">{zh?"添加观察":"Observe"}</Link>
@@ -237,16 +242,16 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         </div>
       ) : (
         <div className="p-4">
-          <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] bg-success-surface px-3 py-3 text-success">
+          <div className="flex items-start gap-3 rounded-[var(--ln-radius-panel-inner)] bg-warm px-3 py-3 text-graphite">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-            <div><h2 className="text-sm font-semibold">All steps complete</h2><p className="mt-1 text-xs leading-5">Review the run, then mark the experiment complete.</p></div>
+            <div><h2 className="text-sm font-semibold">{hasSteps ? "All steps complete" : "No execution steps"}</h2><p className="mt-1 text-xs leading-5">No fixed steps are configured. This does not mean the Experiment is complete.</p></div>
           </div>
           <div className="mt-3 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-3 text-xs leading-5 text-graphite" aria-label="Run evidence summary">
             <p className="font-semibold text-ink">Evidence review</p>
             <p className="mt-1">{evidenceTotals.observations} observations · {evidenceTotals.measurements} measurements · {evidenceTotals.files} files · {evidenceTotals.consumptions} inventory records</p>
             {!totalEvidence ? <p className="mt-1 text-warning">No step-linked evidence has been recorded. Confirm this is appropriate before completing the run.</p> : null}
           </div>
-          {editable ? <><label className="mt-3 flex min-h-11 items-start gap-3 text-sm text-graphite"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" /><span>I reviewed the run evidence and unresolved deviations.</span></label><button type="submit" name="intent" value="complete" disabled={pending || !reviewConfirmed} className={`${primaryButton} mt-3 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button></> : null}
+          {editable ? <><label className="mt-3 flex min-h-11 items-start gap-3 text-sm text-graphite"><input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" /><span>I reviewed the run evidence and unresolved deviations.</span></label><button type="submit" name="intent" value="complete" disabled={pending || !reviewConfirmed || (protocolBased&&!hasSteps)} className={`${primaryButton} mt-3 min-h-12 w-full`}>{pending ? "Working…" : "Complete run"}</button></> : null}
         </div>
       )}
 
@@ -263,12 +268,12 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
       <div className="mt-3 space-y-3">
         <OfflineCalculator zh={zh}/>
-        {groups.map(group => <details key={group.key}>
+        {referenceGroups.map(group => <details key={group.key}>
           <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
           <div className="run-step-content mt-2 min-w-0 space-y-3">
             {(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
               <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
-              {section.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block}/>)}
+              {section.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}
             </section>)}
           </div>
         </details>)}
@@ -303,7 +308,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           const heading = experimentStepGroupHeading(group.title);
           return <section key={group.key} aria-labelledby={`run-group-${group.key}`}>
             <label className="flex cursor-pointer items-start gap-3 border-b border-hairline bg-sage-surface/55 px-4 py-3">
-              <input type="checkbox" checked={allCompleted} onChange={(event) => setGroup(group.steps, event.target.checked)} disabled={!editable || pending} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
+              <button type="button" onClick={()=>setGroup(group.steps,!allCompleted)} disabled={!editable||pending} className="focus-ring min-h-11 rounded border border-hairline px-2 text-xs">{allCompleted?"取消整组勾选":"勾选整组"}</button>
               <span className="min-w-0"><strong id={`run-group-${group.key}`} className="block text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</strong><span className="mt-0.5 block text-xs text-muted">{heading.detail ? `${heading.detail} · ` : ""}Whole block · {groupCompleted}/{group.steps.length} steps checked</span></span>
             </label>
             <div className="divide-y divide-hairline">
@@ -313,7 +318,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
                   <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description && !step.richContent?.blocks.length ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
-                {step.richContent?.blocks.length || step.richContent?.common.length ? <div className="run-step-content mt-3 space-y-3" data-run-step-content>{[...(step.richContent?.common ?? []), ...(step.richContent?.blocks ?? [])].map(block => <ProtocolContentBlockView key={block.id} block={block} />)}</div> : null}
+                {step.richContent?.blocks.length ? <div className="run-step-content mt-3 space-y-3" data-run-step-content>{(step.richContent?.blocks ?? []).map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext />)}</div> : null}
                 </div>
                 <div>
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
@@ -323,7 +328,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             </div>
           </section>;
         })}
-      </div> : <p className="px-4 py-8 text-center text-sm text-muted">No execution steps were planned. You can still record observations and complete this Experiment.</p>}
+      </div> : <p className="px-4 py-8 text-center text-sm text-muted">No execution steps were planned. Review the Protocol structure before starting a protocol-based run.</p>}
       <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
     </section>
 
@@ -334,7 +339,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         <span className="mr-auto text-xs text-muted">{hasSteps ? (remaining ? `${remaining} step${remaining === 1 ? "" : "s"} remaining` : "All planned steps checked") : "No checklist steps configured"}</span>
         {status === "planned" || status === "failed" ? <button type="submit" name="intent" value="start" disabled={pending} className={secondaryButton}><Play className="h-4 w-4" aria-hidden />{pending ? "Working…" : status === "failed" ? "Resume run" : "Start run"}</button> : null}
         <button type="submit" name="intent" value="save" disabled={pending} className={secondaryButton}><Save className="h-4 w-4" aria-hidden />{pending ? "Saving…" : "Save progress"}</button>
-        <button type="submit" name="intent" value="complete" disabled={pending} className={primaryButton}><CheckCircle2 className="h-4 w-4" aria-hidden />{pending ? "Working…" : "Complete run"}</button>
+        <button type="submit" name="intent" value="complete" disabled={pending||(protocolBased&&!hasSteps)} className={primaryButton}><CheckCircle2 className="h-4 w-4" aria-hidden />{pending ? "Working…" : "Complete run"}</button>
       </div>
     </div> : null}
   </form>;

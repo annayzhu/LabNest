@@ -35,3 +35,16 @@ export function exportProtocolDocxTemplate() {
     templateMode: true,
   }, document);
 }
+
+/** A structural authoring example, not a wet-lab protocol or vendor recommendation. */
+export function createProtocolExecutionExampleDocument() {
+  const document=createProtocolTemplateDocument();document.executionConfirmed=true;
+  document.sections.find(section=>section.key==='steps')!.blocks=[
+    {id:'example-info',type:'text',text:'结构示例：用量依据、适用条件与参考资料放在说明块，不产生执行勾选。此文件不提供科研操作参数。',execution:{role:'info'}},
+    {id:'example-a',type:'heading',text:'准备样本',execution:{role:'step',stepId:'example-operation-a',title:'准备样本'}},
+    {id:'example-body-a',type:'rich_text',nodes:[{type:'paragraph',content:[{text:'在这里填写同一操作的说明、参数和警告。'}]},{type:'bullet',content:[{text:'普通检查项是本操作的说明，不是第二个独立步骤。'}]}],execution:{role:'detail',stepId:'example-operation-a'}},
+    {id:'example-b',type:'heading',text:'记录观察',execution:{role:'step',stepId:'example-operation-b',title:'记录观察'}},
+    {id:'example-table',type:'table',rows:[['记录字段','实际观察'],['样本标识','待填写']],execution:{role:'detail',stepId:'example-operation-b'}},
+  ];return document;
+}
+export function exportProtocolExecutionExample(){return exportProtocolDocx({canonicalTitle:'执行步骤结构示例（非科研操作方案）',availability:'draft',reviewStage:'draft',displayVersion:'0.3',scope:'general',tags:[]},createProtocolExecutionExampleDocument());}

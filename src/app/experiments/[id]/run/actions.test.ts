@@ -9,6 +9,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: () => {} }));
 vi.mock("@/lib/db", () => {
   const tx = {
+    $queryRaw: async () => [],
     experiment: { findUnique: async () => ({ id: "experiment", status: "running", purpose: "", contentJson: {}, steps: state.steps }), update: async () => ({}) },
     experimentStep: { update: async ({ where, data }: { where: { id: string }; data: object }) => Object.assign(state.steps.find((step) => step.id === where.id)!, data) },
     experimentStepEvent: { create: async () => ({}) },

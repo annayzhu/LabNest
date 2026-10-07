@@ -1,0 +1,44 @@
+[
+  {
+    "code": "PRT-100007",
+    "checksum": "38abeee6689feb86639dce81f125840ee1edf7367eeb63f8befa5b2060d6c8b8",
+    "originalAvailable": true,
+    "parsedStepCount": 6
+  },
+  {
+    "code": "PRT-100021",
+    "checksum": "147366eefa053ed2797dcbbfac40e2197f999f2f908865c3775e55ef19a14b14",
+    "originalAvailable": true,
+    "parsedStepCount": 7
+  },
+  {
+    "code": "PRT-100009",
+    "checksum": "8215843f9d11b9e7b593b347c4a88871c5cec6fefa8a20703f639df53d845ff8",
+    "originalAvailable": true,
+    "parsedStepCount": 5
+  },
+  {
+    "code": "PRT-200001",
+    "checksum": "0fe82fcd49fe426acb2d7202033565f0a9f32bd021d86839dde6b13d8d53762b",
+    "originalAvailable": true,
+    "parsedStepCount": 7
+  },
+  {
+    "code": "PRT-100008",
+    "checksum": "5a6743eee5b2b1dc99b1182a75100b5d281aa74cb64cb473ec283177ee32be33",
+    "originalAvailable": false,
+    "parsedStepCount": null
+  },
+  {
+    "code": "PRT-100018",
+    "checksum": "4921feda4e2240ccb1e60167c672cd3990dd0c177299fc5e19a55a13829babe9",
+    "originalAvailable": true,
+    "parsedStepCount": 7
+  },
+  {
+    "code": "PRT-100023",
+    "checksum": "4e568e7edf6d81d0f9f751a87ecf44f546cdf69ea8b64e243c0879dd082804c3",
+    "originalAvailable": true,
+    "parsedStepCount": 0
+  }
+]

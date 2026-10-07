@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  14:39:09
+   Duration  407ms (transform 376ms, setup 0ms, import 550ms, tests 133ms, environment 0ms)
+

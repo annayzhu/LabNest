@@ -1,3 +1,4 @@
+import { projectProtocolExecution } from "./protocol-execution";
 import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
@@ -41,7 +42,15 @@ export const protocolSectionLabels: Record<ProtocolSectionKey, string> = {
   consumption_rules: "Consumption Rules",
 };
 
-const baseBlockSchema = z.object({ id: z.string().min(1) });
+export const protocolExecutionRoleSchema = z.object({
+  role: z.enum(["step", "detail", "info"]),
+  stepId: z.string().min(1).optional(),
+  title: z.string().optional(),
+  titlePrefix: z.string().optional(),
+  requiresConfirmation: z.boolean().optional(),
+  allowsDeviation: z.boolean().optional(),
+});
+const baseBlockSchema = z.object({ id: z.string().min(1), execution: protocolExecutionRoleSchema.optional() });
 
 export const protocolRichTextRunSchema = z.object({
   text: z.string(),
@@ -49,6 +58,8 @@ export const protocolRichTextRunSchema = z.object({
   italic: z.boolean().optional(),
   underline: z.boolean().optional(),
   strike: z.boolean().optional(),
+  subscript: z.boolean().optional(),
+  superscript: z.boolean().optional(),
   code: z.boolean().optional(),
   link: z.string().optional(),
   color: z.enum(RICH_TEXT_COLORS).optional(),
@@ -115,6 +126,7 @@ export type ProtocolContentBlock = z.infer<typeof protocolContentBlockSchema>;
 
 export const protocolDocumentSchema = z.object({
   schemaVersion: z.literal(1),
+  executionConfirmed: z.boolean().optional(),
   sections: z.array(
     z.object({
       key: z.enum(protocolSectionKeys),
@@ -153,7 +165,17 @@ export function richTextFromPlainText(text: string): ProtocolRichTextNode[] {
 }
 
 export function richTextPlainText(nodes: ProtocolRichTextNode[]) {
-  return nodes.map((node) => { const text = node.content.map((run) => run.text).join(""); const media = documentMediaFromMarkdown(text); return media ? [media.filename, media.caption].filter(Boolean).join(" ") : text; }).join("\n");
+  const childText = (value: unknown): string => {
+    if (!value || typeof value !== "object") return "";
+    if (Array.isArray(value)) return value.map(childText).filter(Boolean).join("\n");
+    const node = value as { text?: string; content?: unknown };
+    return typeof node.text === "string" ? node.text : childText(node.content);
+  };
+  return nodes.map((node) => {
+    const text = node.content.map((run) => run.text).join("");
+    const media = documentMediaFromMarkdown(text);
+    return [media ? [media.filename, media.caption].filter(Boolean).join(" ") : text, childText(node.childContent)].filter(Boolean).join("\n");
+  }).join("\n");
 }
 
 export function createProtocolTemplateDocument(): ProtocolDocument {
@@ -178,7 +200,7 @@ export function upgradeProtocolDocumentForEditing(document: ProtocolDocument): P
     sections: document.sections.map((section) => ({
       ...section,
       blocks: section.blocks.map((block) => {
-        if (block.type === "text") return { id: block.id, type: "rich_text" as const, nodes: richTextFromPlainText(block.text) };
+        if (block.type === "text") return { ...block, type: "rich_text" as const, nodes: block.nodes ?? richTextFromPlainText(block.text) };
         if (section.key === "result_templates" && block.type === "table") {
           const template = normalizeResultTemplate(block.resultTemplate ?? projectedTemplates[resultTemplateIndex], resultTemplateIndex);
           resultTemplateIndex += 1;
@@ -248,12 +270,11 @@ export function protocolDocumentFromLegacy({
       ],
     });
   }
-  if (steps.length) {
-    section("steps").blocks.push({
-      id: "steps-1",
-      type: "checklist",
-      items: steps.map((item) => `${item.title}${item.description ? ` — ${item.description}` : ""}`),
-    });
+  for(const [index,step] of steps.entries()) {
+    const ref=step.source_ref??`legacy-step-${index+1}`;
+    section("steps").blocks.push({id:ref,type:"heading",text:step.title || `Step ${index+1}`,execution:{role:"step",stepId:ref,title:step.title,requiresConfirmation:step.requires_confirmation,allowsDeviation:step.allows_deviation}});
+    const detail=step.content_blocks?.length?step.content_blocks:step.description?[{id:`${ref}-detail`,type:"text" as const,text:step.description}]:[];
+    section("steps").blocks.push(...detail.map(block=>({...block,execution:{role:"detail" as const,stepId:ref}})));
   }
   resultTemplates.forEach((template, index) => {
     const normalizedTemplate = normalizeResultTemplate(template, index);
@@ -432,75 +453,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     }
   }
 
-  const steps: ProtocolStep[] = [];
-  const commonBlocks: ProtocolContentBlock[] = [];
-  let startedSteps = false;
-  let currentHeading: string | undefined;
-  let currentBlocks: ProtocolContentBlock[] = [];
-  let currentRef: string | undefined;
-  let currentDescription: string[] = [];
-  const flushStep = () => {
-    const description = currentDescription.filter(Boolean).join("\n").trim();
-    if (currentHeading) steps.push({ order: steps.length + 1, title: currentHeading.replace(/^\d+[.、]\s*/, "") || `Step ${steps.length + 1}`, description, requires_confirmation: true, allows_deviation: true });
-    else if (description) steps.push({ order: steps.length + 1, title: description.split("\n")[0], description: description.split("\n").slice(1).join("\n"), requires_confirmation: true, allows_deviation: true });
-    const projected = (currentHeading || description) ? steps.at(-1) : undefined;
-    if(projected && (currentBlocks.length||currentRef)){projected.content_blocks=structuredClone(currentBlocks);projected.source_ref=currentRef??currentBlocks[0]?.id;}
-    currentBlocks=[]; currentRef=undefined;
-    currentHeading = undefined;
-    currentDescription = [];
-  };
-  const appendToLastProjectedStep = (text: string) => {
-    const lastStep = steps.at(-1);
-    if (!lastStep) return false;
-    lastStep.description = [lastStep.description, text].filter(Boolean).join("\n");
-    return true;
-  };
-  for (const block of stepSection?.blocks ?? []) {
-    if (block.type === "heading") { startedSteps = true; flushStep(); currentHeading = block.text; currentRef=block.id; }
-    if (block.type === "text") {
-      if (!startedSteps && (stepSection?.blocks ?? []).some(b => b.type === "heading" || (b.type === "rich_text" && b.nodes.some(n => ["heading2", "heading3", "numbered"].includes(n.type))))) { commonBlocks.push(block); continue; }
-      startedSteps = true;
-      currentBlocks.push(block); currentRef??=block.id;
-      if (currentHeading) currentDescription.push(block.text);
-      else { currentDescription.push(block.text); flushStep(); }
-    }
-    if (block.type === "rich_text") {
-      for (const [nodeIndex,node] of block.nodes.entries()) {
-        const fragment:ProtocolContentBlock={...block,id:`${block.id}:${nodeIndex}`,nodes:[node]};
-        const text = node.content.map((run) => run.text).join("").trim();
-        if (!text) continue;
-        if (["numbered", "heading2", "heading3"].includes(node.type)) {
-          startedSteps = true;
-          flushStep();
-          currentHeading = text; currentRef=fragment.id;
-          if(node.childContent?.length)currentBlocks.push({...fragment,nodes:[{type:"paragraph",content:[],childContent:node.childContent}]});
-        } else if (currentHeading) {currentDescription.push(node.type === "bullet" ? `• ${text}` : text);currentBlocks.push(fragment);}
-        else if (node.type === "bullet" && appendToLastProjectedStep(`• ${text}`)) {const last=steps.at(-1)!;last.content_blocks=[...(last.content_blocks??[]),fragment];continue;}
-        else if (!startedSteps && (stepSection?.blocks ?? []).some(b => b.type === "heading" || (b.type === "rich_text" && b.nodes.some(n => ["heading2", "heading3", "numbered"].includes(n.type))))) commonBlocks.push(fragment);
-        else { startedSteps = true; currentDescription.push(text);currentBlocks.push(fragment);currentRef=fragment.id; flushStep(); }
-      }
-    }
-    if (block.type === "checklist") {
-      // A checklist is an explicit execution contract: every item must remain
-      // independently confirmable in run mode, even when it follows a heading.
-      startedSteps = true;
-      flushStep();
-      for (const [itemIndex,item] of block.items.entries()) {
-        if (!item.trim()) continue;
-        steps.push({source_ref:`${block.id}:${itemIndex}`,content_blocks:[{id:`${block.id}:${itemIndex}`,type:"text",text:item,...(block.itemNodes?.[itemIndex]?{nodes:block.itemNodes[itemIndex]}:{})}], order: steps.length + 1, title: item, description: "", requires_confirmation: true, allows_deviation: true });
-      }
-    }
-    if(!["heading","text","rich_text","checklist"].includes(block.type)){
-      if(currentHeading)currentBlocks.push(block);
-      else if (!startedSteps) commonBlocks.push(block);
-      else {
-        // Content after an independently confirmed item stays with that item.
-        const last = steps.at(-1);
-        if (last) last.content_blocks = [...(last.content_blocks ?? []), block];
-      }
-    }
-  }
-  flushStep();
+  const { steps, commonBlocks, executionNeedsReview } = projectProtocolExecution(document);
 
   const resultTemplates: ResultTemplate[] = (resultSection?.blocks ?? [])
     .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && block.rows.length > 1)
@@ -575,6 +528,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     equipment,
     steps,
     commonBlocks,
+    executionNeedsReview,
     resultTemplates,
     consumptionRules,
   };

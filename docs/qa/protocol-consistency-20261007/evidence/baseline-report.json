@@ -1,0 +1,33 @@
+{
+  "baseline": "3264c0fcda1847d9091c6c3d1e948b35a5117147",
+  "savedProtocolSteps": 36,
+  "savedExperimentSteps": 37,
+  "readOnly": true,
+  "pages": [
+    {
+      "name": "protocol-editor",
+      "status": 200,
+      "completionCheckboxes": 0
+    },
+    {
+      "name": "protocol-preview",
+      "status": 200,
+      "completionCheckboxes": 0
+    },
+    {
+      "name": "create-preview",
+      "status": 200,
+      "completionCheckboxes": 0
+    },
+    {
+      "name": "experiment-preview",
+      "status": 200,
+      "completionCheckboxes": 0
+    },
+    {
+      "name": "run",
+      "status": 200,
+      "completionCheckboxes": 37
+    }
+  ]
+}

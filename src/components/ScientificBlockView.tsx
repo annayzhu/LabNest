@@ -1,3 +1,4 @@
+import { ProtocolRichTextContent } from "./ProtocolDocumentView";
 import { format } from "date-fns";
 import Link from "next/link";
 import { EntryContentView } from "@/components/EntryContentView";
@@ -19,6 +20,7 @@ export function ScientificBlockView({ block }: { block: ScientificContentBlock }
   }
 
   if (block.type === "heading") return <h3 className="document-content-heading font-serif font-medium text-ink">{block.text}</h3>;
+  if (block.type === "rich_text") return <ProtocolRichTextContent nodes={block.nodes}/>;
   if (block.type === "text") return <EntryContentView markdown={block.text} compact />;
   if (block.type === "checklist") return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite"><span className="document-checklist-icon h-1.5 w-1.5 rounded-full bg-moss" />{item}</li>)}</ul>;
   if (block.type === "table") return <ScientificTableView block={block} />;

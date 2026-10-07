@@ -7,6 +7,7 @@ export function isCellRenderShortcut(event: { key: string; metaKey: boolean; ctr
 
 export function scientificBlockHasContent(block: ScientificContentBlock) {
   if (block.type === "heading" || block.type === "text" || block.type === "callout") return Boolean(block.text.trim());
+  if (block.type === "rich_text") return block.nodes.length>0;
   if (block.type === "checklist") return block.items.some((item) => item.trim());
   if (block.type === "table") return Boolean(block.caption?.trim()) || block.rows.some((row) => row.some((cell) => cell.trim()));
   if (block.type === "metric") return Boolean(block.label.trim() || block.value.trim() || block.unit?.trim());

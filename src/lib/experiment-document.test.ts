@@ -103,3 +103,16 @@ it("labels derived deviations explicitly without styling authored warnings as ex
  expect(blocks.find(b=>b.id==='run-derived:step1')).toMatchObject({execution:{role:'step',stepId:'step1',completed:false,deviationLabel:'偏差',deviationNote:'延长5分钟'}});
  expect(source.sections.find(s=>s.key==='execution')!.blocks).toHaveLength(1);
 });
+
+it('preserves documentation-only frozen references and nested prose in exports without inventing completed operations',()=>{
+ const snapshot = {versions:[{protocolVersionId:'v',protocolTitle:'Reference only',contentJson:{
+  schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{
+   id:'info',type:'rich_text',nodes:[{type:'paragraph',content:[{text:'用量参考 200 µL'}],
+    childContent:[{type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'嵌套说明 5 min'}]}]}]}],
+   }],
+  }]}],
+ }}]};
+ const doc=experimentExecutionDocument(undefined,[],{},snapshot),text=experimentNarrativeFromDocument(doc).steps;
+ expect(text).toContain('用量参考 200 µL');expect(text).toContain('嵌套说明 5 min');
+ expect(doc.sections.flatMap(section=>section.blocks).filter(block=>'execution' in block&&block.execution?.role==='step')).toHaveLength(0);
+});

@@ -1,7 +1,7 @@
 name: Calculator acceptance
 on:
   pull_request:
-    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'package*.json', 'next.config.ts', 'tsconfig*.json', 'prisma/**', '.github/workflows/calculator.yml']
+    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'scripts/test-helpers/**', 'package*.json', 'next.config.ts', 'tsconfig*.json', 'prisma/**', '.github/workflows/calculator.yml']
   workflow_dispatch:
 permissions:
   contents: read

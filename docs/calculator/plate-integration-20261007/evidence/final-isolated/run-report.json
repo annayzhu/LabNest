@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "id": "R05",
+      "status": "passed",
+      "note": "Library edited after experiment creation; assertions below require original table"
+    },
+    {
+      "id": "R01/R07",
+      "width": 320,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 1529.640625,
+          "width": 82,
+          "height": 44
+        },
+        {
+          "x": 119,
+          "y": 1529.640625,
+          "width": 82,
+          "height": 44
+        },
+        {
+          "x": 209,
+          "y": 1529.640625,
+          "width": 82,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R01/R07",
+      "width": 360,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 1503.9375,
+          "width": 95.328125,
+          "height": 44
+        },
+        {
+          "x": 132.328125,
+          "y": 1503.9375,
+          "width": 95.328125,
+          "height": 44
+        },
+        {
+          "x": 235.65625,
+          "y": 1503.9375,
+          "width": 95.34375,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R01/R07",
+      "width": 390,
+      "geometry": [
+        {
+          "x": 29,
+          "y": 1499.9375,
+          "width": 105.328125,
+          "height": 44
+        },
+        {
+          "x": 142.328125,
+          "y": 1499.9375,
+          "width": 105.328125,
+          "height": 44
+        },
+        {
+          "x": 255.65625,
+          "y": 1499.9375,
+          "width": 105.34375,
+          "height": 44
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "R08/R10",
+      "status": "passed",
+      "stepId": "cmuydq9va00080hl9pf24ehde"
+    },
+    {
+      "id": "R11",
+      "status": "passed",
+      "note": "Explicit cached production Run reload restores selected step, rich content and separately uploaded attachment image"
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 320,
+      "metrics": {
+        "left": 638,
+        "scrollWidth": 900,
+        "clientWidth": 262
+      }
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 360,
+      "metrics": {
+        "left": 598,
+        "scrollWidth": 900,
+        "clientWidth": 302
+      }
+    },
+    {
+      "id": "R02/R03",
+      "status": "passed",
+      "width": 390,
+      "metrics": {
+        "left": 568,
+        "scrollWidth": 900,
+        "clientWidth": 332
+      }
+    }
+  ],
+  "startedAt": "2026-10-07T17:26:27.172Z",
+  "syntheticAttachmentId": "cmuydq8bg00000hl907bkznfb",
+  "protocolUrl": "http://localhost:3224/protocols/cmuydq8el00010hl9klke802u",
+  "experimentUrl": "http://localhost:3224/experiments/cmuydq9v700060hl9kzumlirk",
+  "runUrl": "http://localhost:3224/experiments/cmuydq9v700060hl9kzumlirk/run",
+  "stepId": "cmuydq9va00080hl9pf24ehde"
+}

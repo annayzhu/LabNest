@@ -32,6 +32,7 @@ jobs:
           cache: npm
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils fonts-noto-cjk
       - run: npm ci
+      - run: npx prisma generate
       - run: npx playwright install --with-deps chromium
       - run: npx prisma migrate deploy
       - run: TZ=Asia/Shanghai npm test && TZ=America/Los_Angeles npm test

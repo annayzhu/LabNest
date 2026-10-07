@@ -5,6 +5,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
 import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
+import {normalizeResultTemplate,resultTemplateInputSchema} from './result-templates';
 import {
   createEmptyProtocolDocument,
   projectProtocolDocument,
@@ -260,7 +261,18 @@ export function parseProtocolDocumentXml(
         const rawDescription = tableDescription(element);
         let resultTemplate: Extract<ProtocolContentBlockInput, { type: "table" }>["resultTemplate"];
         if (currentSection === "result_templates" && rawDescription?.startsWith("labnest-result-template:")) {
-          try { resultTemplate = JSON.parse(rawDescription.slice("labnest-result-template:".length)); }
+          try {
+            const raw=JSON.parse(rawDescription.slice("labnest-result-template:".length));
+            // Early controlled templates used the instrument category for two
+            // presentation enums. Preserve all measured fields/datasets while
+            // adapting only those obsolete enum labels to the existing model.
+            if(raw.resultKind==='plate_reader'||raw.view?.preset==='plate_reader') {
+              const adapted={...raw,...(raw.resultKind==='plate_reader'?{resultKind:'assay'}:{}),...(raw.view?.preset==='plate_reader'?{view:{...raw.view,preset:'generic'}}:{})};
+              resultTemplateInputSchema.parse(adapted);
+              resultTemplate=normalizeResultTemplate(adapted);
+              warnings.push('Legacy plate_reader presentation labels adapted to assay/generic; original fields and source DOCX retained.');
+            } else resultTemplate=raw;
+          }
           catch { warnings.push(`Result Template metadata for ${caption ?? "unnamed table"} could not be parsed.`); }
         }
         pushBlock({ type: "table", rows, caption, resultTemplate });

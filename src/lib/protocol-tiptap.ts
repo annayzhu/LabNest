@@ -91,12 +91,13 @@ function richNodeToTiptap(node: ProtocolRichTextNode, blockId: string): JSONCont
   return { type: "paragraph", attrs, content };
 }
 
-function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSONContent[] {
+function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string, sourceOwnership=true): JSONContent[] {
   const content: JSONContent[] = [];
   for (let index = 0; index < nodes.length;) {
     const node = nodes[index];
     if (node.type !== "bullet" && node.type !== "numbered") {
-      content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []).map(child=>({...child,attrs:{...child.attrs,...legacyAttrs(blockId,'rich_text'),protocolRichChild:true}})));
+      if(!sourceOwnership&&node.content.length===0&&node.childContent?.[0]?.type==='table')content.push(...node.childContent);
+      else content.push(richNodeToTiptap(node, blockId), ...(node.childContent ?? []).map(child=>sourceOwnership?({...child,attrs:{...child.attrs,...legacyAttrs(blockId,'rich_text'),protocolRichChild:true}}):child));
       index += 1;
       continue;
     }
@@ -121,7 +122,9 @@ function richNodesToTiptap(nodes: ProtocolRichTextNode[], blockId: string): JSON
 }
 
 export function protocolRichTextToTiptap(nodes: ProtocolRichTextNode[]): JSONContent {
-  return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text") };
+  // Compact template fields have no execution ownership. Keep their existing
+  // rich-cell JSON contract, including tables without synthetic block attrs.
+  return { type: "doc", content: richNodesToTiptap(nodes, "standalone-protocol-rich-text",false) };
 }
 
 function tableToTiptap(block: Extract<ProtocolContentBlock, { type: "table" }>): JSONContent {

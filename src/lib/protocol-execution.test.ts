@@ -96,3 +96,11 @@ it('preserves scientific scripts/links during title dedup and in visible Word XM
  const visible=strFromU8(archive['word/document.xml']),relationships=strFromU8(archive['word/_rels/document.xml.rels']);
  expect(visible).toContain('w:val="subscript"');expect(visible).toContain('w:val="superscript"');expect(visible).toContain('Essential note 5 µL');expect(visible).toContain('w:hyperlink');expect(relationships).toContain('https://example.org/method');
 });
+it('adapts the original plate_reader template labels without discarding its measured fields',async()=>{
+ const {exportProtocolDocx}=await import('./protocol-docx-export'),{parseProtocolDocxBytes}=await import('./protocol-docx'),{unzipSync,zipSync,strFromU8,strToU8}=await import('fflate');
+ const document=fixture();document.sections.push({key:'result_templates',title:'Result Templates',blocks:[{id:'legacy',type:'table',rows:[['Key','Label'],['od','OD450']],resultTemplate:{result_type:'CCK8',templateKey:'cck8',resultKind:'assay',fields:[{key:'od',name:'OD450',label:'OD450',type:'number',dataType:'number',unit:'AU'}],view:{preset:'generic',charts:[]}}}]});
+ const archive=unzipSync(exportProtocolDocx({canonicalTitle:'Legacy template test',availability:'draft',reviewStage:'draft',displayVersion:'1.0',scope:'general',tags:[]},document));
+ archive['word/document.xml']=strToU8(strFromU8(archive['word/document.xml']).replaceAll('&quot;resultKind&quot;:&quot;assay&quot;','&quot;resultKind&quot;:&quot;plate_reader&quot;').replaceAll('&quot;preset&quot;:&quot;generic&quot;','&quot;preset&quot;:&quot;plate_reader&quot;'));
+ const parsed=parseProtocolDocxBytes(zipSync(archive),'Legacy_v1.0_Draft.docx');
+ expect(protocolDocumentSchema.safeParse(parsed.document).success).toBe(true);expect(parsed.resultTemplates[0].fields[0]).toMatchObject({key:'od',unit:'AU'});expect(parsed.resultTemplates[0].resultKind).toBe('assay');expect(parsed.document.importWarnings?.join(' ')).toContain('plate_reader');
+});

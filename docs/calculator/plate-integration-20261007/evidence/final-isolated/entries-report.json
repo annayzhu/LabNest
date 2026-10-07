@@ -1,0 +1,264 @@
+{
+  "base": "http://localhost:3224",
+  "standaloneBase": "http://127.0.0.1:57429",
+  "at": "2026-10-07T17:28:05.436Z",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
+      "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
+      "name": "actual Run desktop drawer uses solid trigger, shared selector gutter and current embedded workspace"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "status": "passed",
+      "name": "native image upload input exposes visible focus on its label"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "seeding",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "hydrogel",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "kill-curve",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "fold-dilution",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "master-mix",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "moi",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "status": "passed",
+      "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "status": "passed",
+      "name": "native image upload input exposes visible focus on its label"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "seeding",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "hydrogel",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "kill-curve",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "fold-dilution",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "master-mix",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "moi",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "name": "actual Run desktop drawer uses solid trigger, shared selector gutter and current embedded workspace"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "status": "passed",
+      "name": "native image upload input exposes visible focus on its label"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "seeding",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "hydrogel",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "kill-curve",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "fold-dilution",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "master-mix",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "moi",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "status": "passed",
+      "name": "paired reaction tools navigate on demand without alternate-tool prefetch",
+      "alternatePrefetches": []
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "status": "passed",
+      "name": "Tools and Today use the current catalog and segmented reaction-mix workspace"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "status": "passed",
+      "name": "native image upload input exposes visible focus on its label"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "seeding",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "hydrogel",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "kill-curve",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "fold-dilution",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "master-mix",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "moi",
+      "status": "passed",
+      "name": "independent plate adapter: solid icon, actual default calculation, selectors, stale result protection, safe collapse"
+    }
+  ],
+  "errors": []
+}

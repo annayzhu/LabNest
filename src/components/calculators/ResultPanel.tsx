@@ -11,10 +11,10 @@ import {presentedOutputs,presentedTable,formatQuantity,tableUnitsFor} from '@/li
 import {tableColumnLabel} from '@/lib/calculators/presentation';
 import {ResultExport} from './ResultExport';
 import {FitPlot} from './FitPlot';
-export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit,onCopyGroup}:{result:CalculatorResult;zh:boolean;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onUnit?:(key:string,unit:string)=>void;onCopyGroup?:(id:string)=>void}) {
+export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit,onCopyGroup,applyLabel}:{result:CalculatorResult;zh:boolean;applyLabel?:string;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onUnit?:(key:string,unit:string)=>void;onCopyGroup?:(id:string)=>void}) {
  const picker=(key:string,unit:string,label:string)=>compatibleUnits(unit).length>1&&onUnit?<select aria-label={`${label} ${zh?'显示单位':'display unit'}`} className="max-w-28 rounded border border-hairline bg-transparent px-1 text-xs" value={result.displayUnits?.[key]??unit} onChange={e=>onUnit(key,e.target.value)}>{compatibleUnits(unit).map(value=><option key={value}>{value}</option>)}</select>:<span className="text-xs">{unit}</span>;
  const [selectedGroup,setSelectedGroup]=useState('');
- if(result.calculatorId==='master-mix'&&result.operations?.length)return <ReactionMixResult result={result} zh={zh} onUnit={onUnit} onSave={onSave} disabled={disabled} onApplyToPlate={onApplyToPlate} onCopyGroup={onCopyGroup}/>;
+ if(result.calculatorId==='master-mix'&&result.operations?.length)return <ReactionMixResult applyLabel={applyLabel} result={result} zh={zh} onUnit={onUnit} onSave={onSave} disabled={disabled} onApplyToPlate={onApplyToPlate} onCopyGroup={onCopyGroup}/>;
  const groups=[...new Set((result.table??[]).map(row=>String(row.group??'')).filter(Boolean))];
  const group=groups.includes(selectedGroup)?selectedGroup:groups[0];
  const visibleRows=groups.length>1?result.table?.filter(row=>String(row.group)===group):result.table;
@@ -36,7 +36,7 @@ export function ResultPanel({result,zh,onSave,disabled,onApplyToPlate,onUnit,onC
   {result.status==='partial'?<p role="status" className="text-warning">{zh?'部分样本无效，请查看对应行。':'Some samples are invalid. Review their rows.'}</p>:null}
   {result.pipettingCheck?.status==='below-minimum'?<p role="status" className="text-warning">{zh?'存在低于所设移液下限的步骤':'Some steps are below the configured pipetting minimum'}</p>:null}
   {result.warnings.map(w=><p key={w} className="rounded bg-warning-surface p-2 text-xs text-warning">{calculatorText(w,zh)}</p>)}
-  <div className="calculator-result-actions"><CalculatorButton icon="history" disabled={disabled} onClick={onSave}>{zh?'保存到本机历史':'Save to local history'}</CalculatorButton><ResultExport result={result} zh={zh}/>{onApplyToPlate?<CalculatorButton icon="plate" onClick={onApplyToPlate}>{zh?'写回所选孔位':'Send to selected wells'}</CalculatorButton>:null}</div>
+  <div className="calculator-result-actions"><CalculatorButton icon="history" disabled={disabled} onClick={onSave}>{zh?'保存到本机历史':'Save to local history'}</CalculatorButton><ResultExport result={result} zh={zh}/>{onApplyToPlate?<CalculatorButton icon="plate" onClick={onApplyToPlate}>{applyLabel??(zh?'写回所选孔位':'Send to selected wells')}</CalculatorButton>:null}</div>
   {table.length?<CalculatorDisclosure title={zh?'表格单位':'Table units'}><div className="flex flex-wrap gap-2">{Object.keys(result.table![0]).filter(key=>tableUnitsFor(result)[key]).map(key=><label key={key} className="text-xs">{tableColumnLabel(key,zh)} {picker('table:'+key,tableUnitsFor(result)[key],tableColumnLabel(key,zh))}</label>)}</div></CalculatorDisclosure>:null}
   {curve||table.length>0?<CalculatorDisclosure title={curve?(zh?'完整结果与拟合参数':'Full results and fit parameters'):(zh?'完整结果':'Full results')}>{values(outputs)}{curve?tableView:<div className="calculator-data-scroll"><table><thead><tr>{Object.keys(presentedTable(result,zh)[0]??{}).map(key=><th key={key}>{key}</th>)}</tr></thead><tbody>{presentedTable(result,zh).map((row,i)=><tr key={i}>{Object.values(row).map((v,j)=><td key={j}>{String(v)}</td>)}</tr>)}</tbody></table></div>}</CalculatorDisclosure>:null}
   {result.operations?.length?<CalculatorDisclosure title={zh?'操作详情':'Operation details'}><LiquidOperations operations={result.operations} zh={zh}/></CalculatorDisclosure>:null}

@@ -1,11 +1,14 @@
 import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {startStandalonePlateServer} from './test-helpers/standalone-plate-server.mjs';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
 const dir=process.env.UI_ENTRY_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007/evidence/entries';
 await mkdir(dir,{recursive:true});
-const report={base,at:new Date().toISOString(),checks:[],errors:[]};
+const standalone=await startStandalonePlateServer();
+const report={base,standaloneBase:standalone.base,at:new Date().toISOString(),checks:[],errors:[]};
+try{
 for(const [engine,type] of Object.entries({chromium,webkit})){
  const browser=await type.launch();
  try{for(const width of [1440,390]){
@@ -64,7 +67,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   assert.equal(outline.width,'2px');assert.equal(outline.style,'solid');assert(!outline.color.includes('rgba')||!outline.color.endsWith(', 0)')); 
   await page.screenshot({path:`${dir}/${engine}-${width}-colony-keyboard-focus.png`,fullPage:true});
   report.checks.push({engine,width,status:'passed',name:'native image upload input exposes visible focus on its label'});
-  await page.goto(`${base}/tools/free-plate-layout/index.html`,{waitUntil:'networkidle'});
+  await page.goto(`${standalone.base}/index.html`,{waitUntil:'networkidle'});
   await page.locator('[data-well="A1"]').click();
   for(const id of ['seeding','hydrogel','kill-curve','fold-dilution','master-mix','moi']){
    await page.locator(`[data-plate-calculator="${id}"]`).first().click();
@@ -91,3 +94,4 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
  }}finally{await browser.close();await writeFile(`${dir}/report.json`,JSON.stringify(report,null,2));}
 }
 assert.deepEqual(report.errors,[]);
+}finally{await standalone.close();}

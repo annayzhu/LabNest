@@ -26,7 +26,8 @@ describe("Free Plate unified calculation workspace", () => {
     expect(script).toContain("plateCalculatorDefinitions");
     expect(script).toContain("calculateStandalonePlateCalculator");
     expect(script).not.toContain("板感知计算需要从 LabNest 的 Tools 页面打开");
-    expect(script).not.toContain("plateCalculatorFrame.src");
+    expect(script).toContain("frame.src = `/tools/calculator/${calculatorId}");
+    expect(script).toContain('window.location.protocol === "http:"');
   });
 
   it("uses the selected wells as locked plate context", () => {

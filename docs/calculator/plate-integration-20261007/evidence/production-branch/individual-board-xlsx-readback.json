@@ -1,0 +1,58 @@
+[
+  {
+    "file": "chromium-1440-project.xlsx",
+    "boards": [
+      {
+        "sheet": 3,
+        "preparedIncludingSeparateUl": 525.5999999999999
+      },
+      {
+        "sheet": 5,
+        "preparedIncludingSeparateUl": 262.79999999999995
+      }
+    ],
+    "passed": true
+  },
+  {
+    "file": "chromium-390-project.xlsx",
+    "boards": [
+      {
+        "sheet": 3,
+        "preparedIncludingSeparateUl": 525.5999999999999
+      },
+      {
+        "sheet": 5,
+        "preparedIncludingSeparateUl": 262.79999999999995
+      }
+    ],
+    "passed": true
+  },
+  {
+    "file": "webkit-1440-project.xlsx",
+    "boards": [
+      {
+        "sheet": 3,
+        "preparedIncludingSeparateUl": 525.5999999999999
+      },
+      {
+        "sheet": 5,
+        "preparedIncludingSeparateUl": 262.79999999999995
+      }
+    ],
+    "passed": true
+  },
+  {
+    "file": "webkit-390-project.xlsx",
+    "boards": [
+      {
+        "sheet": 3,
+        "preparedIncludingSeparateUl": 525.5999999999999
+      },
+      {
+        "sheet": 5,
+        "preparedIncludingSeparateUl": 262.79999999999995
+      }
+    ],
+    "passed": true
+  }
+]

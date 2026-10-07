@@ -5,8 +5,8 @@ import type {CalculatorResult} from '@/lib/calculators/calculator-engine';
 import {reactionMixGroups,reactionMixUnit,reactionMixQuantity,reactionMixSteps,reactionComponent} from '@/lib/calculators/reaction-mix-presentation';
 import {calculatorText} from '@/lib/calculators/workspace-presentation';
 
-export function ReactionMixResult({result,zh,onUnit,onSave,disabled,onApplyToPlate,onCopyGroup}:{
- result:CalculatorResult;zh:boolean;onUnit?:(key:string,unit:string)=>void;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onCopyGroup?:(id:string)=>void;
+export function ReactionMixResult({result,zh,onUnit,onSave,disabled,onApplyToPlate,onCopyGroup,applyLabel}:{
+ result:CalculatorResult;zh:boolean;applyLabel?:string;onUnit?:(key:string,unit:string)=>void;onSave:()=>void;disabled:boolean;onApplyToPlate?:()=>void;onCopyGroup?:(id:string)=>void;
 }) {
  const [selected,setSelected]=useState('');
  const groups=reactionMixGroups(result,zh),group=groups.find(g=>g.id===selected)??groups[0];
@@ -28,6 +28,6 @@ export function ReactionMixResult({result,zh,onUnit,onSave,disabled,onApplyToPla
   </section>
   <CalculatorDisclosure title={zh?'操作步骤':'Operation steps'}><ol className="reaction-mix-steps" data-liquid-operations>{reactionMixSteps(result,zh,group.id).map((step,i)=><li key={i}>{step}</li>)}</ol></CalculatorDisclosure>
   {result.rawInputs?.overagePercent!==undefined?<CalculatorDisclosure title={zh?'计算依据':'Calculation basis'}><p>{group.dispense?`${quantity(group.dispense.quantity.value)} × ${group.dispense.repetitions} ${zh?'个反应':'reactions'}; `:''}{zh?'预混余量':'Premix overage'}: {String(result.rawInputs.overagePercent)}%; {zh?'预混配制量':'Premix to prepare'}: {quantity(group.total)}.</p></CalculatorDisclosure>:null}
-  <div className="calculator-result-actions"><CalculatorButton icon="history" disabled={disabled} onClick={onSave}>{zh?'保存到本机历史':'Save to local history'}</CalculatorButton>{onApplyToPlate?<CalculatorButton icon="plate" onClick={onApplyToPlate}>{zh?'写回所选孔位':'Send to selected wells'}</CalculatorButton>:null}</div>
+  <div className="calculator-result-actions"><CalculatorButton icon="history" disabled={disabled} onClick={onSave}>{zh?'保存到本机历史':'Save to local history'}</CalculatorButton>{onApplyToPlate?<CalculatorButton icon="plate" onClick={onApplyToPlate}>{applyLabel??(zh?'写回所选孔位':'Send to selected wells')}</CalculatorButton>:null}</div>
  </div>;
 }

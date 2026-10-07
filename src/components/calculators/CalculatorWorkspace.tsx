@@ -35,7 +35,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { calculate, getCalculatorDefinition, type CalculatorDefinition, type CalculatorResult } from "@/lib/calculators/calculator-engine";
 import { restoreCalculatorResult, addHistoryEntry, addPreset, deletePreset, renamePreset, toggleFavorite, type CalculatorState } from "@/lib/calculators/calculator-storage";
 
-type PlateContext = { workspaceId: string; plateId: string; plateName: string; plateSize: number; wellIds: string[] };
+import {buildPlateLiquidPlan,canonicalPlateInputs,plateReactionScopes,type PlateContext} from '@/lib/calculators/plate-integration';
 
 export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateContext, embedded = false, embeddedLocale }: { calculatorId: string; initialInputs?: Record<string, string | number>; plateContext?: PlateContext; embedded?: boolean; embeddedLocale?: "zh" | "en" }) {
   const contextQuery=new URLSearchParams(Object.fromEntries(["experimentId","experimentStepId"].filter(key=>initialInputs[key]).map(key=>[key,String(initialInputs[key])]))).toString();
@@ -107,6 +107,18 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   function restore(inputs:Record<string,unknown>,version?:string,isExample=false) {const restored=version?.endsWith("-v2")?{inputs}:restoreLegacyInputs(calculatorId,inputs);edit(restored.inputs,isExample,true);if(restored.warning)setError(restored.warning);}
 
 
+  useEffect(()=>{
+    if(!plateContext?.requestId || window.parent===window)return;
+    const receive=(event:MessageEvent)=>{
+      if(event.source!==window.parent||event.origin!==window.location.origin||event.data?.type!=='labnest:calculator-inputs'||event.data?.requestId!==plateContext.requestId||event.data?.calculatorId!==calculatorId)return;
+      if(!event.data.inputs||typeof event.data.inputs!=='object'||Array.isArray(event.data.inputs))return;
+      setInputs({...defaults,...event.data.inputs,__context:plateContext});setResult(null);setError('');setHistorical(false);setExample(false);setSourceRecord(undefined);
+    };
+    window.addEventListener('message',receive);
+    window.parent.postMessage({type:'labnest:calculator-ready',calculatorId,plateContext},window.location.origin);
+    return()=>window.removeEventListener('message',receive);
+  },[calculatorId,defaults,plateContext]);
+
   const transfectionEditor=useRef<TransfectionEditorHandle>(null);
   function runCalculation(event?: FormEvent) {
     event?.preventDefault();copyGeneration.current++;setManualCopy("");setCopied(false);
@@ -162,15 +174,16 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     if (!result || !canCopyResult(result) || !plateContext || historical || example) return;
     if(inputs.transfectionPlan){try{transfectionPlateValues(inputs.transfectionPlan as TransfectionPlan,plateContext.wellIds.length);}catch(e){setError(e instanceof Error?e.message:String(e));return;}}
     else if(inputs.wells!==undefined&&Number(inputs.wells)!==plateContext.wellIds.length){setError(zh?"孔数与所选孔位不一致，请确认关联。":"Well count does not match selection; review context.");return;}
-    const plateInputs={...inputs};
-    for(const field of definition.fields){if(!field.unit||!isFieldVisible(calculatorId,field.key,inputs)||!String(inputs[field.key]??'').trim())continue;const from=String(inputs[`${field.key}Unit`]??field.unit);if(compatibleUnits(field.unit).includes(from)){plateInputs[field.key]=convert(parseScalar(inputs[field.key]),from,field.unit);plateInputs[`${field.key}Unit`]=field.unit;}}
+    if(plateContext.requestId){try{buildPlateLiquidPlan({...result,rawInputs:inputs},plateContext);}catch(e){setError(e instanceof Error?e.message:String(e));return;}}
+    const plateInputs=canonicalPlateInputs(calculatorId,inputs);
     const payload = { ...result, type: "labnest:calculator-result", calculatorId, calculatorName: zh ? definition.nameZh : definition.name, plateContext, inputs:plateInputs, rawInputs:inputs, outputs: result.outputs, table: result.table, methodVersion: result.methodVersion };
+    if (window.parent !== window) {window.parent.postMessage(payload, window.location.origin);return;}
     if (window.opener) {
       window.opener.postMessage(payload, window.location.origin);
       window.close();
       return;
     }
-    if (window.parent !== window) window.parent.postMessage(payload, window.location.origin);
+
   }
 
   async function copyResult(groupId?:string) {
@@ -198,9 +211,11 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
       <CalculatorHeading id={calculatorId} title={zh?definition.nameZh:definition.name} zh={zh} contextQuery={contextQuery} embedded={embedded} actions={<><CalculatorMore zh={zh} history={<Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={(event) => { event.currentTarget.closest("dialog")?.close();setMobilePane("result");setHistorical(true);setSourceRecord(item.id);setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><CalculatorIcon name="history" size={16}/></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>}/>{state && !embedded ? <button type="button" onClick={() => update(toggleFavorite({...state,favorites:state.favoritesConfigured?state.favorites:defaultTasks}, calculatorId))} className="calculator-action calculator-action-manage focus-ring"><CalculatorIcon name="pin" size={18}/>{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}</>}/>
 
       {['molarity','percent-solution'].includes(calculatorId)?<nav aria-label="Solution modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/molarity${contextQuery?`?${contextQuery}`:""}`}>{zh?"摩尔浓度":"Molarity"}</Link><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/percent-solution${contextQuery?`?${contextQuery}`:""}`}>{zh?"百分浓度":"Percentage"}</Link></nav>:null}
-      {['master-mix','transfection'].includes(calculatorId)?<nav aria-label="Reaction modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/master-mix${contextQuery?`?${contextQuery}`:""}`}>PCR / Master Mix</Link><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/transfection${contextQuery?`?${contextQuery}`:""}`}>{zh?"转染":"Transfection"}</Link></nav>:null}
+      {!plateContext?.requestId&&['master-mix','transfection'].includes(calculatorId)?<nav aria-label="Reaction modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/master-mix${contextQuery?`?${contextQuery}`:""}`}>PCR / Master Mix</Link><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/transfection${contextQuery?`?${contextQuery}`:""}`}>{zh?"转染":"Transfection"}</Link></nav>:null}
       {calculatorId==='hemocytometer'&&result&&!example&&!historical?<Link className="block min-h-11 text-moss" href={`/tools/calculator/seeding?stockCellsPerMl=${result.outputMap.viableCellsPerMl}`}>{zh?'用此活细胞浓度铺板':'Seed using this viable-cell concentration'}</Link>:null}
       {initialInputs.experimentId&&initialInputs.experimentStepId?<div className="space-y-2 rounded-lg border border-hairline p-3"><p className="text-xs">{zh?'关联实验 / 步骤':'Linked experiment / step'}: {initialInputs.experimentId} / {initialInputs.experimentStepId}</p><a className="block min-h-11 text-moss" href={`/experiments/${encodeURIComponent(String(initialInputs.experimentId))}/run#step-${encodeURIComponent(String(initialInputs.experimentStepId))}`}>{zh?'返回实验步骤':'Return to experiment step'}</a><input className="min-h-11 w-full rounded border border-hairline px-3" aria-label="Operator" placeholder={zh?'记录人':'Recorded by'} value={operator} onChange={e=>setOperator(e.target.value)}/><button type="button" className="min-h-11 text-moss disabled:opacity-40" disabled={!result||historical||example||!operator.trim()} onClick={recordExperiment}>{zh?'记入实验':'Record in experiment'}</button><p role="status" className="text-xs">{recordStatus}</p></div>:null}
+      {plateContext?.requestId?<p className="text-xs text-muted">{zh?'保存会更新当前板唯一生效方案，并纳入跨板汇总；改变孔位后需重新计算。':'Saving updates this plate’s single current plan and includes it in cross-plate summaries. Recalculate after changing wells.'}</p>:null}
+      {plateContext?.requestId&&result?.calculatorId==='master-mix'?<div className="text-xs text-muted" data-plate-group-scopes>{(()=>{try{return plateReactionScopes(result,plateContext).map(group=><p key={group.id}>{group.name}: {group.wellIds.join(', ')}</p>);}catch(e){return <p className="text-danger">{e instanceof Error?e.message:String(e)}</p>;}})()}</div>:null}
       {plateContext ? <div className="flex items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-info/20 bg-info-surface px-3 py-2 text-xs text-info"><CalculatorIcon name="plate" size={18}/><span>{zh ? `来自“${plateContext.plateName}”的 ${plateContext.wellIds.length} 个孔；结果可回写到这些孔位。` : `${plateContext.wellIds.length} wells from “${plateContext.plateName}”; results can be sent back to these wells.`}</span></div> : null}
       <StorageRecovery message={persistenceWarning} onRetry={retry} zh={zh}/>
 
@@ -239,7 +254,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
             <CardHeader title={calculatorId==='master-mix'?(zh?"配液清单":"Preparation list"):(zh ? "结果" : "Result")} action={result ? <div className="reaction-result-toolbar"><CalculatorButton icon={copied?'check':'copy'} onClick={()=>void copyResult()} disabled={!canCopyResult(result)}>{copied ? (zh ? "已复制" : "Copied") : (calculatorId==='master-mix'&&Number(result.outputMap.groups)>1?(zh?"复制全部":"Copy all"):(zh ? "复制" : "Copy"))}</CalculatorButton>{calculatorId==='master-mix'&&canCopyResult(result)?<ResultExport result={result} zh={zh}/>:null}</div> : undefined} />
             <CardBody>
               {manualCopy&&result?<CopyPanel text={manualCopy} zh={zh} onRetry={()=>void copyResult(copyScope.current)}/>:null}
-              {result ? <><p className="text-xs text-muted">{historical?(zh?'原始快照；单位转换仅临时显示':'Original snapshot; unit conversion is temporary'):''}</p>{historical?<button type="button" className="min-h-11 text-moss" onClick={()=>{const old=state?.history.find(item=>item.id===sourceRecord);if(old)restore(old.inputs,old.methodVersion);}}>{zh?'用当前方法重算（新记录）':'Recalculate with current method (new record)'}</button>:null}<ResultPanel result={result} zh={zh} onCopyGroup={id=>void copyResult(id)} onUnit={(key,unit)=>{copyGeneration.current++;setCopied(false);setManualCopy("");const displayUnits={...result.displayUnits,[key]:unit,...(calculatorId==='master-mix'?{'table:perReactionUl':unit,'table:batchUl':unit}:{} )};if(historical){setResult({...result,displayUnits});return;}const next={...inputs,__displayUnits:displayUnits};setInputs(next);setResult({...result,displayUnits,rawInputs:next});mutationId.current=null;if(state)update(saveDraft(state,calculatorId,next,example),200);}} onSave={saveResult} disabled={historical||example||!canCopyResult(result)} onApplyToPlate={plateContext&&!historical&&!example&&canCopyResult(result) ? applyToPlate : undefined} /></> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}
+              {result ? <><p className="text-xs text-muted">{historical?(zh?'原始快照；单位转换仅临时显示':'Original snapshot; unit conversion is temporary'):''}</p>{historical?<button type="button" className="min-h-11 text-moss" onClick={()=>{const old=state?.history.find(item=>item.id===sourceRecord);if(old)restore(old.inputs,old.methodVersion);}}>{zh?'用当前方法重算（新记录）':'Recalculate with current method (new record)'}</button>:null}<ResultPanel applyLabel={plateContext?.requestId?(zh?"保存为当前板方案":"Save as current plate plan"):undefined} result={result} zh={zh} onCopyGroup={id=>void copyResult(id)} onUnit={(key,unit)=>{copyGeneration.current++;setCopied(false);setManualCopy("");const displayUnits={...result.displayUnits,[key]:unit,...(calculatorId==='master-mix'?{'table:perReactionUl':unit,'table:batchUl':unit}:{} )};if(historical){setResult({...result,displayUnits});return;}const next={...inputs,__displayUnits:displayUnits};setInputs(next);setResult({...result,displayUnits,rawInputs:next});mutationId.current=null;if(state)update(saveDraft(state,calculatorId,next,example),200);}} onSave={saveResult} disabled={historical||example||!canCopyResult(result)} onApplyToPlate={plateContext&&!historical&&!example&&canCopyResult(result) ? applyToPlate : undefined} /></> : <p className="py-5 text-center text-sm text-muted">{zh ? "填写输入并运行计算。" : "Enter values and run the calculation."}</p>}
             </CardBody>
           </Card>
           {calculatorId!=='master-mix'?<CalculatorDisclosure title={zh?'方法与假设':'Method and assumptions'} icon="help"><p className="text-xs leading-5 text-graphite">{zh?definition.methodZh:definition.method}</p><p className="mt-2 text-xs text-muted">{definition.methodVersion}</p></CalculatorDisclosure>:null}

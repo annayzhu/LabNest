@@ -16,6 +16,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { CalculatorIcon } from "./calculators/CalculatorIcon";
 import type { LabToolCategory, LabToolManifestItem } from "@/lib/tool-manifest";
 
 type ToolPresentation = {
@@ -82,7 +83,7 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
         <div className="flex items-start justify-between gap-4 border-b border-hairline p-4 sm:p-5">
           <div className="flex min-w-0 items-start gap-3">
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}>
-              <Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />
+              {tool.id==="calculator"?<CalculatorIcon name="calculator" size={20}/>:<Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />}
             </span>
             <div className="min-w-0">
               <p className="text-xs text-muted">{tool.category} · v{tool.version}</p>
@@ -151,7 +152,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                   return (
                     <article key={tool.id} className={`group relative flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}>
                       <div className="flex items-start justify-between gap-3">
-                        <div className={`ln-tool-card-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden /></div>
+                        <div className={`ln-tool-card-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}>{tool.id==="calculator"?<CalculatorIcon name="calculator" size={18}/>:<Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden />}</div>
                         <span className="font-mono text-xs leading-none tabular-nums text-muted">v{tool.version}</span>
                       </div>
                       <div className="mt-3 flex-1">

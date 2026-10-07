@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p ${PORT:-3001}",
-    "build": "node scripts/build-calculator-icons.mjs && node scripts/build-calculator-standalone.mjs && prisma generate && next build",
+    "build": "node scripts/build-calculator-icons.mjs && node scripts/build-calculator-solid-icons.mjs && node scripts/build-calculator-standalone.mjs && prisma generate && next build",
     "start": "next start -p ${PORT:-3001}",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

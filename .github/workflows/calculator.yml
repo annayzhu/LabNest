@@ -38,7 +38,7 @@ jobs:
   browser:
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:16
@@ -61,7 +61,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run build
       - name: Start isolated fixture server
         run: |
@@ -73,6 +73,10 @@ jobs:
           cat calculator-server.log
           exit 1
       - run: node scripts/verify-calculator-v13-acceptance.mjs
+      - run: UI_PHASE=after node scripts/verify-calculator-ui-consistency-20261007.mjs
+      - run: node scripts/verify-calculator-ui-state-20261007.mjs
+      - run: node scripts/verify-calculator-ui-entries-20261007.mjs
+      - run: node scripts/verify-calculator-ui-modes-20260915.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -82,4 +86,6 @@ jobs:
             docs/calculator/v1.1/evidence
             docs/calculator/v1.2/evidence
             docs/calculator/v1.3/evidence
+            docs/calculator/ui-consistency-20261007/evidence
+            docs/calculator/ui-20260915/evidence/modes
             calculator-server.log

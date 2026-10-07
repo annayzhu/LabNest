@@ -1246,19 +1246,19 @@
   let standaloneIconPack='lab-soft';
   let standaloneAppearanceWarning='';
   try {const raw=localStorage.getItem('labnest.standalone-calculator.appearance');standaloneIconPack=window.LabNestCalculations.parseAppearance(raw,null,null,false).value.iconPackId;}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}
-  function standaloneTaskIcon(id){const resource=window.LabNestCalculations.taskIconResource(id,standaloneIconPack);const fallback=window.LabNestCalculations.taskLineSvg(id);return `<span class="standalone-task-icon" data-task-id="${escapeHtml(id)}" aria-hidden="true" style="display:inline-flex;width:32px;height:32px">${resource?`<img src="${escapeHtml('.'+resource)}" width="32" height="32" alt="" />`:fallback}</span>`;}
+  function standaloneTaskIcon(id,preview=false){if(!preview)return `<span class="standalone-task-icon" data-task-id="${escapeHtml(id)}" aria-hidden="true" style="display:inline-flex;width:28px;height:28px">${window.LabNestCalculations.taskSolidSvg(id)}</span>`;const resource=window.LabNestCalculations.taskIconResource(id,standaloneIconPack);const fallback=window.LabNestCalculations.taskLineSvg(id);return `<span class="standalone-task-icon" data-task-id="${escapeHtml(id)}" aria-hidden="true" style="display:inline-flex;width:32px;height:32px">${resource?`<img src="${escapeHtml('.'+resource)}" width="32" height="32" alt="" />`:fallback}</span>`;}
   function standalonePlateCalculatorMarkup(calculatorId) {
     const definition = plateCalculatorDefinitions[calculatorId];
     const scopeCount = liquidTargetWellIds().length;
     return `<div class="liquid-workspace plate-calculator-workspace">
       <section class="liquid-form-card">
         <h3>${standaloneTaskIcon(calculatorId)} ${escapeHtml(bilingual(definition.nameZh, definition.nameEn))}</h3>
-        <label>任务图标 / Task icons <select data-standalone-icon-pack><option value="lab-soft" ${standaloneIconPack==='lab-soft'?'selected':''}>Lab soft</option><option value="classic-line" ${standaloneIconPack==='classic-line'?'selected':''}>Classic line</option></select></label><p>此独立版当前来源内生效，不自动跨来源同步 / Local to this standalone origin; no automatic cross-origin sync. ${escapeHtml(standaloneAppearanceWarning)}</p>
+        <details class="standalone-appearance-preview"><summary>外观预览 / Appearance preview</summary><label>历史图标偏好 / Previous icon preference <select data-standalone-icon-pack><option value="lab-soft" ${standaloneIconPack==='lab-soft'?'selected':''}>Lab soft</option><option value="classic-line" ${standaloneIconPack==='classic-line'?'selected':''}>Classic line</option></select></label><p>此独立版当前来源内生效，不自动跨来源同步 / Local to this standalone origin; no automatic cross-origin sync. ${escapeHtml(standaloneAppearanceWarning)}</p><div data-standalone-icon-preview>${standaloneTaskIcon(calculatorId,true)}</div></details>
         <p>${escapeHtml(bilingual("当前范围：" + scopeCount + " 孔。直接在此计算，不需要打开 LabNest 其他页面。", `Current scope: ${scopeCount} wells. Calculate here without another LabNest page.`))}</p>
         <form id="standalonePlateCalculatorForm" data-calculator-id="${calculatorId}">
           <div class="liquid-form-grid">${definition.fields.map((field) => standalonePlateFieldMarkup(field, scopeCount)).join("")}<label><span>移液下限 / Pipetting limit (µL)</span><input name="pipetteMinimumUl" type="number" step="any" min="0" placeholder="Optional" /></label></div>
           <div class="plate-calculator-method"><strong>${escapeHtml(bilingual("计算方法", "Method"))}</strong><br />${escapeHtml(bilingual(definition.methodZh, definition.methodEn))}</div>
-          <div class="liquid-action-row"><button class="primary-button" type="submit">${escapeHtml(bilingual("计算", "Calculate"))}</button></div>
+          <div class="liquid-action-row"><button class="primary-button calculator-action" type="submit">${window.LabNestCalculations.calculatorSolidSvg("calculator")}${escapeHtml(bilingual("计算", "Calculate"))}</button></div>
         </form>
       </section>
       <section class="liquid-result-card"><h3>${escapeHtml(bilingual("计算结果", "Result"))}</h3><p>${escapeHtml(bilingual("计算后可将孔级参数直接写回当前选择。", "After calculation, apply per-well parameters directly to the current selection."))}</p><div id="standalonePlateResult"><div class="liquid-result-empty">${escapeHtml(bilingual("填写参数并点击“计算”。", "Enter parameters and select Calculate."))}</div></div></section>
@@ -1295,7 +1295,7 @@
     const columns=Object.keys(result.table?.[0]||{}).filter(k=>shared.tableUnitsFor(result)[k]).map(k=>`<label>${escapeHtml(k)} ${unitSelect('table:'+k,result.displayUnits?.['table:'+k]||shared.tableUnitsFor(result)[k])}</label>`).join('');
     const operations=(result.operations||[]).map(o=>`<li>${escapeHtml(o.groupName||o.sample||'')} ${escapeHtml(o.component)}: ${o.role==='make-up-to'?'Make up to / 定容至 ':''}${shared.formatQuantity(o.quantity.value)} ${escapeHtml(o.quantity.unit)} × ${o.repetitions}</li>`).join('');
     const status=escapeHtml(({passed:'Passed configured minimum / 通过所设下限检查','below-minimum':'Steps below minimum / 存在低量步骤','not-set':'Minimum not set / 未设置移液下限',incomplete:'Pipetting check incomplete / 未完成移液检查','not-applicable':'No pipetting operation / 不适用'})[result.pipettingCheck?.status]||'Legacy snapshot');
-    host.innerHTML = `${outputs}<p>${status}</p><ul>${operations}</ul>${warnings}${notes}${columns}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button><button type="button" data-plate-result-action="copy">Copy</button><button type="button" data-plate-result-action="csv">CSV</button></div>`;
+    host.innerHTML = `${outputs}<p>${status}</p><ul>${operations}</ul>${warnings}${notes}${columns}${table}<div class="liquid-action-row"><button class="primary-button" type="button" data-plate-result-action="apply">${escapeHtml(bilingual("应用到当前孔板", "Apply to current plate"))}</button><button type="button" class="calculator-action" data-plate-result-action="copy">${shared.calculatorSolidSvg("copy")}${escapeHtml(bilingual("复制","Copy"))}</button><button type="button" class="calculator-action" data-plate-result-action="csv">${shared.calculatorSolidSvg("export")}CSV</button></div>`;
   }
 
   function applyStandalonePlateCalculatorResult() {
@@ -3162,6 +3162,20 @@
     }
   });
 
+  elements.plateCalculatorHost.addEventListener("input",event=>{
+    if(!event.target.closest('#standalonePlateCalculatorForm'))return;
+    lastStandalonePlateResult=null;
+    const result=document.getElementById('standalonePlateResult');
+    if(result)result.innerHTML=`<div class="liquid-result-empty">${escapeHtml(bilingual('输入已改变，请重新计算。','Inputs changed. Calculate again.'))}</div>`;
+  });
+  elements.plateCalculatorHost.addEventListener("keydown", event => {
+    if(event.key !== "Escape")return;
+    const details = event.target.closest("details[open]");
+    if(!details)return;
+    event.preventDefault();
+    details.querySelector("summary")?.focus({preventScroll:true});
+    details.open = false;
+  });
   elements.plateCalculatorHost.addEventListener("submit", (event) => {
     if (event.target.id !== "standalonePlateCalculatorForm") return;
     event.preventDefault();
@@ -3187,7 +3201,7 @@
 
   elements.plateCalculatorHost.addEventListener('error',event=>{if(event.target.matches('.standalone-task-icon img')){event.target.outerHTML=window.LabNestCalculations.taskLineSvg(event.target.parentElement.dataset.taskId);}},true);
   elements.plateCalculatorHost.addEventListener("change", event=>{
-    if(event.target.matches('[data-standalone-icon-pack]')){standaloneIconPack=event.target.value==='classic-line'?'classic-line':'lab-soft';try{const key='labnest.standalone-calculator.appearance',raw=localStorage.getItem(key),parsed=window.LabNestCalculations.parseAppearance(raw,null,null,false);if(parsed.preserve)throw Error('protected');localStorage.setItem(key,JSON.stringify({...parsed.value,iconPackId:standaloneIconPack}));standaloneAppearanceWarning='';}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}const container=elements.plateCalculatorHost.querySelector('.standalone-task-icon');if(container)container.outerHTML=standaloneTaskIcon(activePlateCalculator);showToast(standaloneAppearanceWarning||bilingual('仅在此独立版来源保存','Saved for this standalone origin'));return;}
+    if(event.target.matches('[data-standalone-icon-pack]')){standaloneIconPack=event.target.value==='classic-line'?'classic-line':'lab-soft';try{const key='labnest.standalone-calculator.appearance',raw=localStorage.getItem(key),parsed=window.LabNestCalculations.parseAppearance(raw,null,null,false);if(parsed.preserve)throw Error('protected');localStorage.setItem(key,JSON.stringify({...parsed.value,iconPackId:standaloneIconPack}));standaloneAppearanceWarning='';}catch{standaloneAppearanceWarning='Changes not saved / 本次偏好未保存';}const container=elements.plateCalculatorHost.querySelector('[data-standalone-icon-preview] .standalone-task-icon');if(container)container.outerHTML=standaloneTaskIcon(activePlateCalculator,true);showToast(standaloneAppearanceWarning||bilingual('仅在此独立版来源保存','Saved for this standalone origin'));return;}
 
     const key=event.target.dataset.outputUnit;if(!key||!lastStandalonePlateResult)return;
     lastStandalonePlateResult.displayUnits={...lastStandalonePlateResult.displayUnits,[key]:event.target.value};

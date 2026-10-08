@@ -221,7 +221,7 @@ button:focus-visible, .file-button:focus-within, .well:focus-visible {
 .plate-card-heading { display: grid; gap: 9px; margin-bottom: 9px; }
 .plate-heading-copy { display: grid; gap: 6px; }
 .plate-title-line { display: flex; align-items: center; justify-content: space-between; gap: 13px; }
-.plate-name-field { position: relative; flex: 0 1 210px; min-width: 120px; }
+.plate-name-field { position: relative; display: grid; flex: 0 1 210px; min-width: 120px; }
 .plate-name-editor {
   min-height: 42px;
   padding: 4px 8px;
@@ -238,7 +238,12 @@ button:focus-visible, .file-button:focus-within, .well:focus-visible {
 }
 .plate-name-editor:hover { border-bottom-color: var(--pine); border-bottom-style: solid; background: var(--surface-soft); }
 .plate-name-editor:focus { border-color: var(--pine); border-style: solid; border-radius: 8px; background: var(--surface-strong); }
+.plate-name-editor[aria-invalid="true"] { border-color: var(--danger); background: var(--danger-soft); }
+.plate-name-error { margin-top: 3px; padding-inline: 8px; color: var(--danger); font-size: var(--type-meta); font-weight: 720; line-height: 1.35; }
 .history-actions { display: inline-flex; align-items: center; gap: 4px; }
+.plate-reset-button { min-height: 31px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--danger); font-size: var(--type-meta); font-weight: 760; white-space: nowrap; }
+.plate-reset-button:hover { border-color: var(--danger); background: var(--danger-soft); }
+.plate-reset-button.confirming { border-color: var(--danger); background: var(--danger); color: #fff; }
 .history-button {
   display: grid;
   width: 31px;
@@ -271,7 +276,7 @@ button:focus-visible, .file-button:focus-within, .well:focus-visible {
 .color-control select { min-height: 34px; padding: 5px 9px; border-radius: 8px; font-size: var(--type-control); }
 label > span { display: block; margin-bottom: 5px; color: var(--muted); font-size: var(--type-caption); font-weight: 750; }
 
-.plate-scroll { overflow-x: auto; padding: 9px 4px 19px; scrollbar-color: var(--line-strong) transparent; }
+.plate-scroll { overflow: auto; max-height: min(76vh, 940px); padding: 9px 4px 19px; scrollbar-color: var(--line-strong) transparent; }
 .plate-canvas {
   position: relative;
   width: max-content;
@@ -285,7 +290,9 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
   box-shadow: inset 0 0 0 6px rgba(255,255,255,.50), inset 0 0 24px rgba(35,70,66,.07);
   user-select: none;
 }
-.plate-interaction-help { width: 100%; margin: -8px 0 10px; color: var(--muted); font-size: var(--type-caption); line-height: 1.45; pointer-events: none; text-align: right; white-space: nowrap; }
+.plate-view-head { display: flex; align-items: center; justify-content: flex-end; gap: 9px; margin: -8px 0 10px; }
+.plate-interaction-help { margin: 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.45; pointer-events: none; text-align: right; white-space: nowrap; }
+.plate-zoom-indicator { min-width: 44px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); color: var(--pine); font-size: var(--type-meta); font-weight: 800; line-height: 1.25; text-align: center; }
 .plate-canvas::before, .plate-canvas::after { position: absolute; top: 50%; width: 7px; height: 34px; border-radius: 8px; background: #c7d3d1; content: ""; transform: translateY(-50%); }
 .plate-canvas::before { left: -1px; border-radius: 0 8px 8px 0; }
 .plate-canvas::after { right: -1px; border-radius: 8px 0 0 8px; }
@@ -479,12 +486,6 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-module-launch > span { grid-row: 1 / 3; display: grid; width: 26px; height: 26px; place-items: center; border-radius: 7px; background: #fff; color: var(--pine); font-size: var(--type-meta); font-weight: 850; }
 .liquid-module-launch strong { overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
 .liquid-module-launch small { overflow: hidden; color: var(--muted); font-size: var(--type-meta); text-overflow: ellipsis; white-space: nowrap; }
-.liquid-module-group-label { margin: 14px 0 7px; color: var(--muted); font-size: var(--type-meta); font-weight: 820; letter-spacing: .04em; }
-.plate-module-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
-.plate-calculator-launch { display: grid; gap: 2px; min-width: 0; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); color: var(--ink); text-align: left; transition: border-color 140ms ease, background 140ms ease, transform 140ms ease; }
-.plate-calculator-launch:hover { border-color: var(--pine); background: var(--pine-soft); transform: translateY(-1px); }
-.plate-calculator-launch strong { overflow: hidden; font-size: var(--type-caption); text-overflow: ellipsis; white-space: nowrap; }
-.plate-calculator-launch small { overflow: hidden; color: var(--muted); font-size: var(--type-meta); text-overflow: ellipsis; white-space: nowrap; }
 .liquid-card-note { margin: 9px 0 0; color: var(--muted); font-size: var(--type-meta); line-height: 1.5; text-align: center; }
 .saved-liquid-plans { min-width: 0; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .saved-liquid-plans-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -519,8 +520,39 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .project-liquid-controls select { min-height: 34px; padding: 6px 30px 6px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; }
 .project-liquid-controls .secondary-button { min-height: 34px; padding: 7px 12px; }
 .project-liquid-plate-picker { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.project-liquid-plate-picker label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); font-size: var(--type-meta); }
-.project-liquid-plate-picker input { margin: 0; }
+.project-liquid-plate-picker label { display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); font-size: var(--type-meta); line-height: 1.2; white-space: nowrap; cursor: pointer; transition: border-color 140ms ease, background 140ms ease; }
+.project-liquid-plate-picker label:hover { border-color: var(--line-strong); background: var(--surface-soft); }
+.project-liquid-plate-picker label:has(input:checked) { border-color: #b8d2cd; background: var(--pine-soft); color: var(--pine-strong); }
+.project-liquid-plate-picker input[type="checkbox"] {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  min-height: 15px;
+  flex: 0 0 15px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 4px;
+  outline: 0;
+  background: var(--surface-strong);
+  box-shadow: none;
+  cursor: pointer;
+}
+.project-liquid-plate-picker input[type="checkbox"]:checked { border-color: var(--pine); background: var(--pine); }
+.project-liquid-plate-picker input[type="checkbox"]:checked::after {
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  content: "";
+  transform: rotate(45deg);
+}
+.project-liquid-plate-picker input[type="checkbox"]:focus-visible { box-shadow: 0 0 0 3px rgba(15,91,87,.16); }
 .project-liquid-summary { width: 100%; max-width: 100%; min-width: 0; margin-top: 10px; overflow: hidden; }
 .project-liquid-summary:empty { display: none; }
 .project-liquid-summary-note { padding: 9px 10px; border-radius: 9px; background: var(--pine-soft); color: var(--pine); font-size: var(--type-caption); line-height: 1.55; }
@@ -545,6 +577,18 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .summary-drawer-content .liquid-table { min-width: 1120px; }
 .summary-drawer-content .liquid-table td:nth-child(4) { min-width: 260px; white-space: normal; overflow-wrap: anywhere; }
 .summary-drawer-content .liquid-table th { top: 0; }
+.operator-summary-section { display: grid; gap: 11px; min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-soft); }
+.operator-summary-section + .operator-summary-section { margin-top: 16px; }
+.operator-summary-heading { display: flex; align-items: flex-start; gap: 11px; }
+.operator-summary-heading > span { display: grid; flex: 0 0 30px; height: 30px; place-items: center; border-radius: 9px; background: var(--pine); color: #fff; font-size: var(--type-meta); font-weight: 900; }
+.operator-summary-heading h3 { margin: 0; color: var(--ink); font-size: 18px; letter-spacing: -.02em; }
+.operator-summary-heading p { margin: 3px 0 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.5; }
+.summary-drawer-content .operator-preparation-table { min-width: 1420px; }
+.summary-drawer-content .operator-execution-table { min-width: 1280px; }
+.summary-drawer-content .operator-preparation-table td:nth-child(2),
+.summary-drawer-content .operator-preparation-table td:nth-child(11),
+.summary-drawer-content .operator-execution-table td:nth-child(3),
+.summary-drawer-content .operator-execution-table td:nth-child(6) { min-width: 220px; white-space: normal; overflow-wrap: anywhere; }
 
 .project-file-dialog { grid-template-columns: minmax(80px,1fr) minmax(620px,820px); }
 .project-file-panel { grid-template-rows: auto minmax(0,1fr); }
@@ -577,13 +621,6 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-module-tabs button { flex: 0 0 auto; min-height: 34px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-strong); color: var(--ink-soft); font-size: var(--type-caption); font-weight: 780; }
 .liquid-module-tabs button.active { border-color: var(--pine); background: var(--pine); color: #fff; }
 .liquid-drawer-content { overflow: auto; padding: 18px 24px 32px; }
-.plate-calculator-host { grid-row: 3; }
-.plate-calculator-host[hidden] { display: none; }
-.plate-calculator-method { margin-top: 12px; padding: 10px 12px; border-radius: 9px; background: var(--pine-soft); color: var(--pine); font-size: var(--type-caption); line-height: 1.55; }
-.plate-calculator-output-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-.plate-calculator-output { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
-.plate-calculator-output span { display: block; color: var(--muted); font-size: var(--type-meta); }
-.plate-calculator-output strong { display: block; margin-top: 4px; overflow-wrap: anywhere; color: var(--ink); font-family: var(--font-mono); font-size: var(--type-body); }
 .liquid-recipe-library { display: grid; grid-template-columns: minmax(160px,1fr) minmax(180px,1fr) auto; gap: 10px; align-items: center; margin-bottom: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
 .liquid-recipe-library > div:first-child { display: grid; gap: 2px; }
 .liquid-recipe-library strong { font-size: var(--type-body); }
@@ -598,6 +635,26 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .liquid-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .liquid-form-grid label { display: grid; align-content: start; gap: 4px; min-width: 0; color: var(--ink-soft); font-size: var(--type-caption); font-weight: 760; }
 .liquid-form-grid label.wide { grid-column: 1 / -1; }
+.liquid-form-grid > .wide { grid-column: 1 / -1; min-width: 0; }
+.prep-help { font-size: var(--type-caption); line-height: 1.55; color: var(--muted); }
+.prep-rows { display: grid; gap: 8px; }
+.liquid-workspace.preparation-workspace { grid-template-columns: minmax(0,1fr); }
+.prep-component { display: grid; grid-template-columns: minmax(100px,1.2fr) minmax(110px,1fr) 85px auto 28px; gap: 8px; align-items: end; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); }
+.prep-concentrations { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prep-component [hidden] { display: none; }
+.liquid-form-grid .prep-check { display: flex; align-items: center; gap: 5px; min-height: 38px; white-space: nowrap; }
+.liquid-form-grid .prep-check input { width: 16px; height: 16px; min-height: 16px; margin: 0; padding: 0; accent-color: var(--accent); }
+.prep-remove { justify-self: end; align-self: end; color: var(--danger); border-color: var(--line); width: 28px; height: 38px; }
+.prep-samples { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.prep-samples table { width: 100%; border-collapse: collapse; font-size: var(--type-caption); }
+.prep-samples th, .prep-samples td { padding: 5px; text-align: left; }
+.prep-samples thead { position: sticky; top: 0; background: var(--surface-strong); }
+.prep-samples input { width: 100%; min-width: 70px; }
+@media (max-width: 600px) {
+  .prep-component { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 28px; }
+  .prep-remove { grid-column: 3; grid-row: 1; }
+  .prep-component .prep-check { grid-column: 2; }
+}
 .liquid-protocol-editor { grid-column: 1 / -1; }
 .liquid-protocol-editor summary { display: grid; gap: 3px; padding: 4px 0; cursor: pointer; }
 .liquid-protocol-editor summary strong { margin: 0; }
@@ -625,6 +682,12 @@ label > span { display: block; margin-bottom: 5px; color: var(--muted); font-siz
 .fixed-reagent-row > small { grid-column: 1 / -1; color: var(--pine); font-size: var(--type-meta); line-height: 1.5; }
 .liquid-result-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .liquid-result-meta span { padding: 4px 7px; border-radius: 7px; background: var(--pine-soft); color: var(--pine); font-size: var(--type-meta); font-weight: 780; }
+.liquid-result-publish-state { display: grid; gap: 2px; margin-bottom: 12px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; font-size: var(--type-caption); line-height: 1.45; }
+.liquid-result-publish-state strong { color: var(--pine); }
+.liquid-result-publish-state span { color: var(--muted); }
+.liquid-result-publish-state.is-current { border-color: #b9d4ce; background: #f1f8f6; }
+.liquid-result-publish-state.is-draft { border-color: #dfcfaa; background: #fffaf0; }
+.compatibility-explanation ul { display: grid; gap: 6px; margin: 0; padding-left: 22px; color: var(--muted); font-size: var(--type-caption); line-height: 1.5; }
 .liquid-table-wrap { max-width: 100%; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
 .liquid-table { width: 100%; border-collapse: collapse; font-size: var(--type-caption); white-space: nowrap; }
 .liquid-table th, .liquid-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; }
@@ -723,7 +786,6 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px
   .export-actions { justify-content: flex-start; }
   footer { flex-direction: column; gap: 4px; }
   .liquid-module-grid { grid-template-columns: 1fr; }
-  .plate-module-grid { grid-template-columns: 1fr; }
   .liquid-drawer { grid-template-columns: 1fr; }
   .liquid-drawer-backdrop { display: none; }
   .liquid-drawer-panel { width: 100%; border-left: 0; }
@@ -761,18 +823,3 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 18px
   body.liquid-printing .liquid-workspace { display: block; }
   body.liquid-printing .liquid-result-card { border: 0; box-shadow: none; }
 }
-/* Six offline Calculator adapters share the current solid semantics. */
-.plate-calculator-host { --calc-control:36px; --calc-radius:8px; }
-.plate-calculator-host *, .plate-calculator-host { transition:none!important; animation:none!important; }
-.plate-calculator-host select { appearance:none; -webkit-appearance:none; padding-right:40px!important; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%234d5955' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:16px; }
-.plate-calculator-host .calculator-action { display:inline-flex; align-items:center; gap:7px; min-height:var(--calc-control); border-radius:var(--calc-radius); padding-inline:12px; }
-.plate-calculator-host [data-calculator-icon] { width:20px; height:20px; flex-shrink:0; fill:currentColor; }
-.plate-calculator-host .standalone-task-icon > svg { width:28px; height:28px; }
-.plate-calculator-host .standalone-appearance-preview { margin-block:8px; }
-.plate-calculator-host .standalone-appearance-preview summary { cursor:pointer; min-height:var(--calc-control); }
-@media(max-width:767px) { .plate-calculator-host { --calc-control:44px; } .plate-calculator-host :is(select,button,input:not([type=checkbox])) { min-height:var(--calc-control); font-size:16px; } }
-
-/* Host the existing responsive Calculator, without a second form or nested scrolling. */
-.plate-calculator-host.has-main-calculator { padding: 0; overflow: hidden; min-height: 0; }
-.plate-calculator-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--surface); }
-@media (min-width: 768px) { .liquid-drawer:has(.plate-calculator-frame) { grid-template-columns: minmax(0,1fr) minmax(0,min(1120px,100vw)); } }

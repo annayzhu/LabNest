@@ -12,6 +12,7 @@
   const text = (zh, en) => host.context().locale === 'en' ? en : zh;
 
   function open(calculatorId, plan) {
+    if (!plan && session?.calculatorId === calculatorId && session.frame.isConnected) return;
     const { locale, ...context } = host.context();
     if (plan) context.wellIds = [...plan.scopeWellIds];
     context.requestId = crypto.randomUUID();

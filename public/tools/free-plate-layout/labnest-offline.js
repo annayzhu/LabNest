@@ -41,9 +41,16 @@
       }
       const container = document.createElement('div');
       container.id = 'plateCalculatorHost';
+      container.className = 'plate-calculator-host';
       container.innerHTML = `<div class="liquid-workspace"><section class="liquid-form-card"><h3>${escape(definition.nameZh)}</h3><details class="standalone-appearance-preview"><summary>外观预览 / Appearance preview</summary><select data-standalone-icon-pack><option value="lab-soft">Lab soft</option><option value="classic-line">Classic line</option></select><p>此独立版来源内生效 / Local to this origin; no automatic cross-origin sync</p><div data-icon-preview>${icon(calculatorId)}</div></details><form id="standalonePlateCalculatorForm"><div class="liquid-form-grid">${fields.map(f => fieldMarkup(f, inputs[f.key] ?? f.defaultValue ?? '', ['wells','reactions','plates'].includes(f.key))).join('')}${fieldMarkup({key:'pipetteMinimumUl',labelZh:'移液下限',unit:'µL'},inputs.pipetteMinimumUl)}</div><button type="submit" class="primary-button">计算 / Calculate</button></form></section><section class="liquid-result-card"><h3>计算结果 / Results</h3><div id="standalonePlateResult"></div></section></div>`;
       host.open(container);
       activeEditor = {id:calculatorId, container};
+      container.querySelector('h3').insertAdjacentHTML('afterbegin', `<span class="standalone-task-icon">${engine.taskSolidSvg(calculatorId)}</span> `);
+      container.addEventListener('keydown', event => {
+        const details=event.target.closest('details[open]');
+        if(event.key !== 'Escape' || !details)return;
+        event.preventDefault();details.open=false;details.querySelector('summary').focus({preventScroll:true});
+      });
       container.querySelector('[data-standalone-icon-pack]').value = iconPack;
       let result = null;
       const resultNode = container.querySelector('#standalonePlateResult');

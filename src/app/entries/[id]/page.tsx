@@ -9,6 +9,7 @@ import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
+import { EntryAiProposeButton } from "@/components/EntryAiProposeButton";
 import { EntryAssignmentControl } from "@/components/EntryAssignmentControl";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
 import { EntryContentView } from "@/components/EntryContentView";
@@ -17,6 +18,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
+import { getAIAvailability } from "@/lib/ai-server";
 import { getEntryDetailRecord } from "@/lib/entries";
 import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
@@ -60,9 +62,10 @@ export default async function EntryDetailPage({ params, searchParams }: { params
 
   const inlineIds = new Set(collectDocumentMedia(entry.contentMarkdown).map(documentMediaAttachmentId));
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/") && !inlineIds.has(attachment.id));
-  const [reportSourceReferences, activityLogs] = await Promise.all([
+  const [reportSourceReferences, activityLogs, ai] = await Promise.all([
     prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
     prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
+    getAIAvailability(),
   ]);
   const primary = entry.itemLinks.find(link => link.direction === "outbound" && link.linkType === "entry_primary");
   const targetRecord = primary ? primary.counterpartType === "result" ? await prisma.result.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : await prisma.experiment.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : null;
@@ -216,9 +219,12 @@ export default async function EntryDetailPage({ params, searchParams }: { params
             </section>
 
             <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
-              <div className="flex items-center gap-2 text-moss">
-                <ListChecks className="h-4 w-4" aria-hidden />
-                <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 text-moss">
+                  <ListChecks className="h-4 w-4" aria-hidden />
+                  <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
+                </div>
+                {ai.connected && ai.providerName && !locked ? <EntryAiProposeButton entryId={entry.id} providerName={ai.providerName} /> : null}
               </div>
               {entry.pendingActions.length ? (
                 <div className="mt-4 space-y-3">

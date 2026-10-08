@@ -1,4 +1,7 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
+import { AiProviderForm, type AiProviderFormValues } from "@/components/AiProviderForm";
+import { AiProviderTestButton } from "@/components/AiProviderTestButton";
 import { AppShell } from "@/components/AppShell";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { PageHeader } from "@/components/PageHeader";
@@ -9,7 +12,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { isConnectedProviderType, providerTypeLabels, type AIProviderType } from "@/lib/ai";
+import { describeEncryptionKey } from "@/lib/ai-crypto";
 import { prisma } from "@/lib/db";
+import { deleteAIProvider, setAIProviderEnabled } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +47,8 @@ async function updateAISettings(formData: FormData) {
   revalidatePath("/actions/manual");
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams?: Promise<{ provider?: string }> }) {
+  const editingProviderId = (await searchParams)?.provider;
   const [settings, providers, referenceConnectors] = await Promise.all([
     prisma.aISettings.upsert({
       where: { id: "default" },
@@ -51,6 +58,19 @@ export default async function SettingsPage() {
     prisma.aIProvider.findMany({ orderBy: { name: "asc" } }),
     prisma.referenceConnector.findMany({ orderBy: { displayName: "asc" } }),
   ]);
+  const encryptionKey = describeEncryptionKey();
+  const editingProvider = providers.find((provider) => provider.id === editingProviderId);
+  const providerFormValues: AiProviderFormValues | undefined = editingProvider
+    ? {
+        id: editingProvider.id,
+        name: editingProvider.name,
+        type: editingProvider.type as AIProviderType,
+        baseUrl: editingProvider.baseUrl ?? "",
+        defaultModel: editingProvider.defaultModel ?? "",
+        enabled: editingProvider.enabled,
+        hasStoredKey: Boolean(editingProvider.apiKeyEncrypted),
+      }
+    : undefined;
 
   return (
     <AppShell>
@@ -111,19 +131,53 @@ export default async function SettingsPage() {
 
         <Card id="providers">
           <CardHeader title="Model providers" eyebrow="Adapters" />
-          <CardBody>
+          <CardBody className="space-y-6">
+            {!encryptionKey.configured || encryptionKey.placeholder ? (
+              <p className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-3 text-sm leading-6 text-ink">
+                {encryptionKey.configured
+                  ? "LABNEST_AI_ENCRYPTION_KEY still holds the .env.example placeholder. Set a private 32-byte key before storing real API keys."
+                  : "LABNEST_AI_ENCRYPTION_KEY is not set. API keys cannot be stored until it is configured."}
+              </p>
+            ) : null}
             <DataTable
               rows={providers}
               getRowKey={(row) => row.id}
               emptyMessage="No provider is configured. Manual LabNest workflows are unaffected."
               columns={[
-                { key: "provider", header: "Provider", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
-                { key: "type", header: "Type", render: (row) => <Badge tone="sage">{row.type.replaceAll("_", " ")}</Badge> },
-                { key: "endpoint", header: "Endpoint", render: (row) => <span className="font-mono text-xs">{row.baseUrl ?? "manual"}</span> },
+                { key: "provider", header: "Provider", render: (row) => <span className="font-semibold text-ink">{row.name}{settings.defaultProviderId === row.id ? <Badge tone="sage" className="ml-2">default</Badge> : null}</span> },
+                { key: "type", header: "Type", render: (row) => <Badge tone="sage">{providerTypeLabels[row.type as AIProviderType] ?? row.type.replaceAll("_", " ")}</Badge> },
+                { key: "endpoint", header: "Endpoint", render: (row) => <span className="font-mono text-xs">{row.baseUrl ?? (isConnectedProviderType(row.type) ? "default" : "manual")}</span> },
                 { key: "model", header: "Default model", render: (row) => row.defaultModel ?? "—" },
+                { key: "credential", header: "Credential", render: (row) => isConnectedProviderType(row.type) ? <Badge tone={row.apiKeyEncrypted ? "success" : "warning"}>{row.apiKeyEncrypted ? "stored" : "missing"}</Badge> : <span className="text-xs text-muted">none</span> },
                 { key: "enabled", header: "Provider state", render: (row) => <Badge tone={row.enabled ? "success" : "neutral"}>{row.enabled ? "enabled" : "disabled"}</Badge> },
+                {
+                  key: "actions",
+                  header: "Actions",
+                  render: (row) => (
+                    <div className="flex flex-wrap items-start gap-2">
+                      {isConnectedProviderType(row.type) && row.apiKeyEncrypted ? <AiProviderTestButton providerId={row.id} /> : null}
+                      <Link href={`/settings?provider=${row.id}#providers`} className="focus-ring inline-flex h-8 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs font-medium text-moss hover:bg-warm">Edit</Link>
+                      <form action={setAIProviderEnabled}>
+                        <input type="hidden" name="id" value={row.id} />
+                        <input type="hidden" name="enabled" value={row.enabled ? "false" : "true"} />
+                        <Button type="submit" size="sm">{row.enabled ? "Disable" : "Enable"}</Button>
+                      </form>
+                      {row.type !== "manual_copy_paste" ? (
+                        <form action={deleteAIProvider}>
+                          <input type="hidden" name="id" value={row.id} />
+                          <Button type="submit" size="sm" variant="destructive">Delete</Button>
+                        </form>
+                      ) : null}
+                    </div>
+                  ),
+                },
               ]}
             />
+            <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-4">
+              <h3 className="text-sm font-semibold text-ink">{providerFormValues ? `Edit provider · ${providerFormValues.name}` : "Add a connected provider"}</h3>
+              <p className="mt-1 mb-4 text-xs leading-5 text-muted">Keys are encrypted with LABNEST_AI_ENCRYPTION_KEY before they are stored and are only decrypted on the server for a request. Only explicit entry text is ever sent to the model.</p>
+              <AiProviderForm key={providerFormValues?.id ?? "new"} provider={providerFormValues} />
+            </div>
           </CardBody>
         </Card>
 

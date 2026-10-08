@@ -74,7 +74,7 @@ export async function deleteEntry(
       if (parsed.confirmation !== entry.title) throw new Error(`Enter ${entry.title} exactly to confirm moving it to the Recycle Bin.`);
       const [itemLinks, proposedActions, reportSourceReferences, attachmentCount] = await Promise.all([
         tx.itemLink.count({ where: { OR: [{ sourceType: "entry", sourceId: entry.id }, { targetType: "entry", targetId: entry.id }] } }),
-        tx.proposedAction.count({ where: { sourceType: "entry", sourceId: entry.id } }),
+        tx.proposedAction.count({ where: { sourceType: { in: ["entry", "ai"] }, sourceId: entry.id } }),
         tx.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
         tx.attachmentLink.count({ where: { targetType: "entry", targetId: entry.id } }),
       ]);

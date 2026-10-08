@@ -17,7 +17,7 @@
 |---|---|---|---|
 | 1 | 日志条目 → 模型生成拟议操作 → 保存为pending建议 | **适配器与建议保存已实现；收件箱仅展示，审核/执行控件未实现** | 本文第二节与ACCEPTANCE.md |
 | 2 | Protocol DOCX 导入时由 AI 抽取参数、步骤属性、耗材规则、结果模板 | **已实现（2026-10-09），隔离库浏览器验收 8/8 通过** | [PLAN-2](PLAN-2-protocol-import-ai-extraction.md)、[实现记录](../20261009/README.md) |
-| 3 | Visualization Studio 智能作图助手 | 方案已写，未开发；建议只做精简版或写入规划 | [PLAN-3](PLAN-3-studio-figure-assistant.md) |
+| 3 | Visualization Studio 智能作图助手 | **已实现（2026-10-09），在 Studio 仓库分支 `claude/studio-ai-assistant-20261009`**；真实模型评测未跑 | [PLAN-3](PLAN-3-studio-figure-assistant.md)、Studio 仓库 `docs/ai/README.md` |
 
 ## 第 1 项：已实现内容（分支 `claude/ai-provider-adapters-20261008`）
 

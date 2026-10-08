@@ -1,6 +1,18 @@
 # 方案 3：Visualization Studio 智能作图助手
 
-编制日期：2026-10-08。状态：执行方案，尚未开发。补充并落实 [2026-09-30 的 AI 集成评估](../../visualization/20260930/AI_INTEGRATION_REVIEW.md)；本文以代码核对结果为准，评估文中与现状冲突的条目在二中标明。
+编制日期：2026-10-08。状态：**已于 2026-10-09 实现**，代码在 Studio 仓库 `annayzhu/Visualization-studio` 分支 `claude/studio-ai-assistant-20261009`（工作树 `/Users/annayzhu/Documents/Playground/Visualization-studio-ai-20261009`，基于 main `4eece79`），说明见该仓库 `docs/ai/README.md`。
+
+实现与本方案的差异：
+
+- AI-00 至 AI-06 全部实现，不止精简版。可调设置为 20 个展示类键（标题、轴标签、字体、尺寸、字号、线宽、点、透明度、网格、图例位置、轴交换、标签、点显示），统计类设置一律排除。
+- 模型连接设置保存在浏览器 sessionStorage（勾选"记住"时为 localStorage），而非 IndexedDB；密钥只作为请求头发给 Studio 自己的代理路由。
+- 代理增加 `STUDIO_AI_PROXY=off` 与 `STUDIO_AI_ALLOWED_HOSTS` 两个部署开关，用于防止共享部署被用来访问内网。
+- 撤销使用组件内快照栈（最多 10 步），未写入 `StudioProject.history`；后者只记录数据集准备历史。
+- AI-05 出版检查为本地确定性规则（单栏 85 mm 下最小字号、颜色数、图例、灰度明度），结果同时作为上下文发给模型。
+- AI-06 评测：10 个固定用例与真实模型运行入口 `npm run eval:assistant` 已就绪，参考答案 10/10、错误答案 0/10 已验证；**真实模型得分尚未测得**。
+- 未处理五-3 的残留目录 `LabNest/standalone/visualization-studio`（仅 node_modules），未部署到 3400 端口；线上仍是 10-01 的发布快照。
+
+原方案如下。补充并落实 [2026-09-30 的 AI 集成评估](../../visualization/20260930/AI_INTEGRATION_REVIEW.md)；本文以代码核对结果为准，评估文中与现状冲突的条目在二中标明。
 
 ## 一、目标与边界
 

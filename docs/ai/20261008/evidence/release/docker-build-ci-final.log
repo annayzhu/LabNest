@@ -1,0 +1,34 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 235B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/labnest-app:ai-87259882
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 3.62kB done
+#4 DONE 0.0s
+
+#5 [1/2] FROM docker.io/library/labnest-app:ai-87259882@sha256:a2e0ffbaea335463577d3fdd3abbe95d393dc825eb3844b4da0edaa2f42cc3ac
+#5 resolve docker.io/library/labnest-app:ai-87259882@sha256:a2e0ffbaea335463577d3fdd3abbe95d393dc825eb3844b4da0edaa2f42cc3ac 0.0s done
+#5 DONE 0.1s
+
+#6 [2/2] COPY .github/workflows/entry-richtext.yml /app/.github/workflows/entry-richtext.yml
+#6 DONE 0.0s
+
+#7 exporting to image
+#7 exporting layers 0.0s done
+#7 exporting manifest sha256:bd615d8de67fa5412140cd47157545493bedf4459e9c0d6cf5965ccee2b853d6 done
+#7 exporting config sha256:0ba89fcc8fcf5cff319a9bc0bc4c269c07703266773f4f62146c9988b5fa5604 done
+#7 exporting attestation manifest sha256:a87edefd30f70257326f0409d7fdbc68c7aee76431d83dfe88c6472b2f9b95cd 0.0s done
+#7 exporting manifest list sha256:979dcd9c0cc4b79dd0f0113761748281e70d454e8c0acd2b416f5d0591e074d2 done
+#7 naming to docker.io/library/labnest-app:ai-3df9c9b6
+#7 naming to docker.io/library/labnest-app:ai-3df9c9b6 done
+#7 unpacking to docker.io/library/labnest-app:ai-3df9c9b6 0.0s done
+#7 DONE 0.1s

@@ -1,0 +1,35 @@
+{
+  "synthetic": true,
+  "sha": "87259882a0178f7971f7a7c701e15a3a04296511",
+  "browser": "149.0.7827.55",
+  "checks": [
+    {
+      "name": "A01/A03 save first, create one experiment from real mobile filing dialog",
+      "status": "通过"
+    },
+    {
+      "name": "A04/A05/A07 existing result and new result belong selected experiment, unfile preserves source",
+      "status": "通过"
+    },
+    {
+      "name": "A08 lost assignment response retries without duplicating a new result",
+      "status": "通过"
+    },
+    {
+      "name": "A10 date-only edited through actual date control stays date-only",
+      "status": "通过"
+    },
+    {
+      "name": "A12 invalid archived target visible and can detach",
+      "status": "通过"
+    },
+    {
+      "name": "A11/A12 submit → edit source → review preserves first snapshot until explicit reopen",
+      "status": "通过"
+    },
+    {
+      "name": "B17 pending upload blocks saving; fail one import and retry with same original",
+      "status": "通过"
+    }
+  ]
+}

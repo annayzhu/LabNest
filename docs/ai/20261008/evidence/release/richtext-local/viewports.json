@@ -1,0 +1,25 @@
+{
+  "synthetic": true,
+  "browser": "149.0.7827.55",
+  "zoom": "100%; these viewport cases do not substitute for real 125% browser zoom",
+  "checks": [
+    {
+      "width": 1366,
+      "height": 768,
+      "status": "通过",
+      "operations": "菜单/中文表格/增行/增列/撤销/Escape/整页宽度"
+    },
+    {
+      "width": 820,
+      "height": 900,
+      "status": "通过",
+      "operations": "菜单/中文表格/增行/增列/撤销/Escape/整页宽度"
+    },
+    {
+      "width": 360,
+      "height": 844,
+      "status": "通过",
+      "operations": "菜单/中文表格/增行/增列/撤销/Escape/整页宽度"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "Preview failure loads original",
+      "status": "通过"
+    },
+    {
+      "name": "Both sources unavailable then actual Retry recovers original",
+      "status": "通过"
+    }
+  ]
+}

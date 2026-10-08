@@ -18,17 +18,19 @@ Spec and Standards reviewers independently reread these changes; both report no 
 
 ## Verification
 
-Final version and results are recorded after the isolated acceptance run. Tests use synthetic entries, fake credentials and a local mock endpoint only. The dedicated database is `labnest_ai_provider_acceptance_20261008`; production records are not used as fixtures.
+Application code verified: `dd18fb677b616abd71058e9ce0d22705a59349ce`. Follow-up `c5600c4b` changes only a browser-test label locator; application code is identical. Final PR head CI and deployed version will be recorded in RELEASE.md. Tests use synthetic entries, fake credentials and a local mock endpoint only. The dedicated database is `labnest_ai_provider_acceptance_20261008`; production records are not used as fixtures.
 
 Repeatable commands: `npm run typecheck`, `npm run lint`, `TZ=Asia/Shanghai npm test`, `TZ=UTC npm test`, `npm run build`, and `DATABASE_URL=<isolated localhost database> node scripts/verify-ai-provider-adapters.mjs`. The browser script refuses other database names/hosts. CI workflow: `.github/workflows/ai-provider.yml`.
 
-- [ ] Final dual-timezone unit tests, TypeScript, lint and production build.
-- [ ] Chromium and WebKit desktop/mobile real Settings CRUD, connection, blank-key preservation and encrypted DB readback.
-- [ ] Explicit entry generation, pending DB readback and inbox display; no Experiment creation.
-- [ ] Concurrent/ambiguous retries, empty-result replay, source modification/deletion and stale deletion dialog protection.
-- [ ] Same-origin/JSON rejection, malformed/oversized/disallowed output rejection, upstream-token redaction.
-- [ ] Explicit workbench context, three protocol adapters, mobile HTTP UUID fallback.
-- [ ] Exact PR head CI, merge and deployed runtime.
+- [x] Shanghai and UTC each: 117 test files / 597 cases passed. TypeScript passed. Lint: zero errors, 12 existing warnings. Clean-source Docker production build passed.
+- [x] Chromium and WebKit, 1440px desktop and 390px mobile: real Settings create/edit/disable/delete, connection test, blank-key credential preservation and encrypted DB readback.
+- [x] Real entry button creates exactly two pending AI suggestions; DB readback and inbox display verified. Experiment count remains zero.
+- [x] Concurrent same-ID requests call the model once and persist once; later retry replays. Empty results also replay. Changes/deletion during a held model call return 409 without writes. A stale deletion dialog cannot delete an entry with AI suggestions.
+- [x] Foreign/missing Origin and text/plain requests are rejected before any model call. Malformed schema, 51 actions and types outside the requested subset return 422 without writes. An upstream error echoing the fake credential returns a redacted error.
+- [x] Workbench submits only explicit synthetic text and writes no suggestions. OpenAI-compatible, Anthropic and Dify paths verified through real Settings and local mock HTTP. Mobile UUID fallback works with crypto.randomUUID removed.
+- [ ] Exact PR head CI, merge and deployed runtime: pending at this report commit; final results in RELEASE.md.
+
+Browser report: [28 checks, zero failures](evidence/browser/report.json); screenshots in the same directory. Unit/type/lint/build logs: [evidence/logs](evidence/logs). The first browser run stopped at a test selector that expected an exact label despite inline help text; corrected locator and complete rerun passed. This was not an application failure.
 
 ## Not executed
 

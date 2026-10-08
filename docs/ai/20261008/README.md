@@ -36,7 +36,7 @@
 | `src/lib/entries.ts` | 条目页与列表的待审操作统计同时包含 `sourceType=entry` 与 `ai`。 |
 | `src/components/ProposedActionCard.tsx` | 收件箱卡片显示来源标签（例如 `ai:<entryId>`）。 |
 | `prisma/schema.prisma`、`prisma/migrations/20261008090000_ai_provider_dify` | `AIProviderType` 新增 `dify`。 |
-| `src/lib/ai.test.ts`、`src/lib/ai-crypto.test.ts` | 最终适配器、密钥与同源保护共27项单元测试；全量与浏览器验收见ACCEPTANCE.md。 |
+| `src/lib/ai.test.ts`、`src/lib/ai-crypto.test.ts` | 最终适配器、密钥与同源保护共28项单元测试；全量与浏览器验收见ACCEPTANCE.md。 |
 
 ### 不变的安全边界
 

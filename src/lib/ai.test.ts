@@ -211,6 +211,13 @@ describe("DifyProvider", () => {
 });
 
 describe("createAIProviderAdapter", () => {
+  it("redacts plain-text credentials before shortening an upstream error", async () => {
+    const { fetchImpl } = fakeFetch(() => new Response("x".repeat(295) + "secret-key", { status: 401 }));
+    const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });
+    const result = await provider.testConnection();
+    expect(result.ok).toBe(false);
+    expect(result.message).not.toContain("secre");
+  });
   it("maps every provider type to an adapter", () => {
     expect(createAIProviderAdapter(manualCopyPasteProviderConfig)).toBeInstanceOf(ManualCopyPasteProvider);
     expect(createAIProviderAdapter({ ...baseConfig, type: "openai" })).toBeInstanceOf(OpenAICompatibleProvider);

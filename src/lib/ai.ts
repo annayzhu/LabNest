@@ -229,7 +229,7 @@ async function readErrorBody(response: Response): Promise<string> {
     } catch {
       // not JSON
     }
-    return text.slice(0, 300);
+    return text;
   } catch {
     return "";
   }
@@ -292,7 +292,9 @@ abstract class ConnectedProvider implements AIProviderAdapter {
       throw new AIProviderError(this.safeMessage(`Could not reach ${url}: ${describeNetworkError(error)}`), 502);
     }
     if (!response.ok) {
-      const detail = await readErrorBody(response);
+      // Redact the complete text before truncation, so a token crossing the
+      // display boundary cannot leak its prefix.
+      const detail = this.safeMessage(await readErrorBody(response)).slice(0, 300);
       throw new AIProviderError(
         this.safeMessage(`${this.config.name} returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`),
         response.status,

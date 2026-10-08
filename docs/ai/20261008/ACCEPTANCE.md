@@ -6,7 +6,7 @@ This release adds provider configuration and connection tests, explicitly reques
 
 ## Pre-release repairs
 
-- Reject the public encryption placeholder; redact configured tokens in upstream errors.
+- Reject the public encryption placeholder; redact configured tokens before shortening upstream errors, including plain-text tokens crossing the 300-character display boundary. A public-adapter regression first failed then passed.
 - Require same-origin JSON for generation and connection tests.
 - Bound context and output sizes; validate schemas, requested action subset, nonempty payloads and AI attribution. Type-specific executable payload validation is deferred with the absent executor.
 - Persist each client request once under a request lock and cache its response, including zero-action results.
@@ -18,11 +18,11 @@ Spec and Standards reviewers independently reread these changes; both report no 
 
 ## Verification
 
-Application code verified: `dd18fb677b616abd71058e9ce0d22705a59349ce`. Follow-up `c5600c4b` changes only a browser-test label locator; application code is identical. Final PR head CI and deployed version will be recorded in RELEASE.md. Tests use synthetic entries, fake credentials and a local mock endpoint only. The dedicated database is `labnest_ai_provider_acceptance_20261008`; production records are not used as fixtures.
+The submitted browser screenshots/report verify application code `dd18fb677b616abd71058e9ce0d22705a59349ce`; the final error-boundary repair is covered by an additional failing-then-passing unit regression and the extended mock browser script. Final-head browser/CI and deployed results will be recorded in RELEASE.md. Tests use synthetic entries, fake credentials and a local mock endpoint only. The dedicated database is `labnest_ai_provider_acceptance_20261008`; production records are not used as fixtures.
 
 Repeatable commands: `npm run typecheck`, `npm run lint`, `TZ=Asia/Shanghai npm test`, `TZ=UTC npm test`, `npm run build`, and `DATABASE_URL=<isolated localhost database> node scripts/verify-ai-provider-adapters.mjs`. The browser script refuses other database names/hosts. CI workflow: `.github/workflows/ai-provider.yml`.
 
-- [x] Shanghai and UTC each: 117 test files / 597 cases passed. TypeScript passed. Lint: zero errors, 12 existing warnings. Clean-source Docker production build passed.
+- [x] Shanghai and UTC each: 117 test files / 598 cases passed. TypeScript passed. Lint: zero errors, 12 existing warnings. Clean-source Docker production build passed.
 - [x] Chromium and WebKit, 1440px desktop and 390px mobile: real Settings create/edit/disable/delete, connection test, blank-key credential preservation and encrypted DB readback.
 - [x] Real entry button creates exactly two pending AI suggestions; DB readback and inbox display verified. Experiment count remains zero.
 - [x] Concurrent same-ID requests call the model once and persist once; later retry replays. Empty results also replay. Changes/deletion during a held model call return 409 without writes. A stale deletion dialog cannot delete an entry with AI suggestions.

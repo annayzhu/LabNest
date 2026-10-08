@@ -18,5 +18,5 @@
     "preparation-ui.js": "c16ee03313e85e81c50f6d09a2ee65b512aab8ea963b414b61ab7929a6a2ab7c",
     "app.js": "b03c8f4223315f2e2eeb92f881f48e148e13f124e1c58d5f8d1efe3ad22e4f10"
   },
-  "hostInsertion": "<link rel=\"stylesheet\" href=\"labnest-bridge.css?v=20261009\">\n<script src=\"calculator-engine.js?v=20261009\"></script>\n<script src=\"labnest-bridge.js?v=20261009\"></script>"
+  "hostInsertion": "<link rel=\"stylesheet\" href=\"labnest-bridge.css?v=20261009\">\n<script src=\"calculator-engine.js?v=20261009\"></script>\n<script src=\"labnest-offline.js?v=20261009\"></script>\n<script src=\"labnest-bridge.js?v=20261009\"></script>"
 }

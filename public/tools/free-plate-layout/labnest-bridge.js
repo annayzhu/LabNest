@@ -10,8 +10,10 @@
     moi: ['病毒感染 MOI', 'Viral MOI'],
   };
   const text = (zh, en) => host.context().locale === 'en' ? en : zh;
+  const isEmbedded = /^https?:$/.test(location.protocol) && location.pathname.startsWith('/tools/free-plate-layout/');
 
   function open(calculatorId, plan) {
+    if (!isEmbedded) return window.LabNestOffline.open({host, calculatorId, plan, publish: (saved, context) => host.publish(saved, mappings(saved.resultSnapshot, context))});
     if (!plan && session?.calculatorId === calculatorId && session.frame.isConnected) return;
     const { locale, ...context } = host.context();
     if (plan) context.wellIds = [...plan.scopeWellIds];
@@ -41,10 +43,14 @@
   }
 
   window.LabNestPlateBridge = {
-    reset() { session = null; },
+    reset() { session = null; window.LabNestOffline.reset(); },
     edit(plan) { open(plan.calculatorId, plan); },
     connect(api) {
       host = api;
+      if (!isEmbedded) {
+        calculators['fold-dilution'] = ['倍数稀释', 'Fold dilution'];
+        window.LabNestOffline.installCacheControl();
+      }
       const grid = document.querySelector('.liquid-module-grid');
       // A single Master Mix entry opens the full host editor. Offline keeps its own editor.
       const reaction = grid.querySelector('[data-liquid-module="reaction"]');

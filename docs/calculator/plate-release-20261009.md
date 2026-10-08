@@ -33,6 +33,14 @@ Master Mix editors: standalone needs no server; LabNest uses its full Calculator
 Host-created plans retain backup/export snapshots offline; editing those plans
 requires LabNest and is explicitly explained in the offline UI.
 
+Historical LabNest static downloads keep their six Calculator forms and local
+service-worker cache through `labnest-offline.js`. This compatibility adapter is
+loaded only by the declared host insertion and runs only outside the embedded
+LabNest route; it uses the existing engine and canonical plan transaction rather
+than copying formulas or project state. It is not part of the independent r17
+desktop bundle. The original offline-cache regression and six save/reopen/draft
+lifecycle checks remain required.
+
 `node scripts/sync-plate-release.mjs /path/to/verified-release` checks hashes before
 copying. `free-plate-integration.test.ts` detects asset drift. The host adapter
 does not read or mutate localStorage; publishing calls the release's transaction.

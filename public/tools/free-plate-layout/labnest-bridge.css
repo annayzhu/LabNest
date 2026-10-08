@@ -2,3 +2,4 @@
 .liquid-module-card.plate-calculator-launch { min-height: 44px; text-align: left; padding: 9px 12px; color: var(--ink); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: var(--type-caption); font-weight: 600; }
 .liquid-module-card.plate-calculator-launch:hover { background: var(--pine-soft); border-color: var(--pine); }
 .liquid-module-card.plate-calculator-launch:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
+#plateCalculatorHost pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--type-caption); }

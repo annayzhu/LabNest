@@ -17,7 +17,7 @@ for (const file of Object.keys(manifest.files)) {
   await mkdir(dirname(resolve(target, file)), { recursive: true });
   await copyFile(resolve(source, file), resolve(target, file));
 }
-const insertion = '<link rel="stylesheet" href="labnest-bridge.css?v=20261009">\n<script src="calculator-engine.js?v=20261009"></script>\n<script src="labnest-bridge.js?v=20261009"></script>';
+const insertion = '<link rel="stylesheet" href="labnest-bridge.css?v=20261009">\n<script src="calculator-engine.js?v=20261009"></script>\n<script src="labnest-offline.js?v=20261009"></script>\n<script src="labnest-bridge.js?v=20261009"></script>';
 const html = await readFile(resolve(target, 'index.html'), 'utf8');
 if (!html.includes('<!-- host-integration -->')) throw new Error('Release has no host integration seam');
 await writeFile(resolve(target, 'index.html'), html.replace('<!-- host-integration -->', `<!-- host-integration -->${insertion}`));

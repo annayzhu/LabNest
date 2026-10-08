@@ -1,0 +1,2 @@
+.plate-calculator-frame { display: block; width: 100%; min-width: 0; height: min(78vh, 980px); border: 0; border-radius: 10px; background: white; }
+.liquid-module-card.plate-calculator-launch { text-align: left; padding: 12px; color: var(--ink); }

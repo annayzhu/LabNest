@@ -1,0 +1,19 @@
+{
+  "repository": "annayzhu/LabNest",
+  "commit": "d91d8203c912f1733ce72e3dc1c7fad5ff73bb72",
+  "exports": [
+    "mixPlan",
+    "batchPlan",
+    "dilution",
+    "addStock",
+    "convert",
+    "parseScalar"
+  ],
+  "inputs": {
+    "src/lib/calculators/presentation.ts": "b378ff154bef5bfac8034f3a83f5c5448bcbd90a5280acc9451abeabfe4c2501",
+    "src/lib/calculators/quantities.ts": "2f3eaf1beabae02aa1e3b5f0b6578297d04e0760446570b6474e65108c135b7d",
+    "src/lib/calculators/operations.ts": "2cb7b2f8581c6d9b4c786cf9f3e121b283bfa06a6d8d15caf5dc36d110238644",
+    "src/lib/calculators/planning.ts": "070977b1eb4b94f22b0453e0d95ad5b5c3b348db965e2749a761e4988630f4bf"
+  },
+  "sha256": "d2e961e08f33d883e7d83cfacd8c91390f9594a1cb0599e2ffbb1a125d65337e"
+}

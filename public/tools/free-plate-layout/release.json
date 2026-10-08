@@ -1,0 +1,22 @@
+{
+  "product": "Plate Layout Planner",
+  "commit": "92e428e8a96db24df7a60048fb36b7b0f26c264b",
+  "files": {
+    "index.html": "aca6beac3bf308e6ecb7fcc683650b89768bfac8de98f6862ebfcad996881f74",
+    "README.md": "def6b3f082ebdbec55edb393c74f5ab666425b85f33e8b5fd7db5145ad893d4a",
+    "docs/preparation-integration.md": "d4f0687695ff04065aac0237cbc9d02996ac14bb7ac0da4c49c09d0bcbef4443",
+    "vendor/preparation-kernel.provenance.json": "0a6930a5d0c2e3b88e31b8a0c97a76fbf6ce5da662683e75b341d71a3e1dea64",
+    "styles.css": "256208ae93ca9bb261d5fe5c550b9ca537e7b788cd2e8e517e352fe46ff33195",
+    "core.js": "bb3072bb37c4c89ce3e3df7b31c699ab0af92b6d05351b0ff8cc4008f88d1121",
+    "color-core.js": "e08c004e9bb0b3741744921617acc6be9ad138ba456b4238e6a55293df44479b",
+    "liquid-core.js": "406594dd87fed90c4a5f98571a255e93eaf89d3a351d4062637d505cc5fdddc1",
+    "liquid-plan-core.js": "45d9bb39d1f224f3fdd455e8ffe02f660829a99722087cfb04287d386caca0ff",
+    "workspace-core.js": "c224ba039764082afab7c6579311a44371a7fa4cd1aae9195d34dd305cc9997e",
+    "xlsx-core.js": "db453538704e8c294dabab7e00e3eeca2806bd5dda39f07a42460765db14b34a",
+    "vendor/preparation-kernel.js": "d2e961e08f33d883e7d83cfacd8c91390f9594a1cb0599e2ffbb1a125d65337e",
+    "preparation-core.js": "fbbf6559bb311b709defe8e0c4bc339ed121b37d25debb98d73113fe4f329dcf",
+    "preparation-ui.js": "c16ee03313e85e81c50f6d09a2ee65b512aab8ea963b414b61ab7929a6a2ab7c",
+    "app.js": "a4ae5cc79b720ac682d26c2bf5e9c2a36928b38ff9a0d1b44bf331c671a0d518"
+  },
+  "hostInsertion": "<link rel=\"stylesheet\" href=\"labnest-bridge.css?v=20261009\">\n<script src=\"calculator-engine.js?v=20261009\"></script>\n<script src=\"labnest-bridge.js?v=20261009\"></script>"
+}

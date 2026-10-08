@@ -10,9 +10,9 @@ const dir=process.env.PLATE_EVIDENCE_DIR??'docs/calculator/plate-integration-202
 await mkdir(dir,{recursive:true});
 const report={base,sha:process.env.PLATE_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),fixture:'Synthetic local browser workspaces; no production database writes',toolChecks:[],checks:[],failures:[]};
 const key='plate-layout-studio:workspace:v2';
-const toolFixtures=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorDefinition}=require('./src/lib/calculators/calculator-engine.ts');console.log(JSON.stringify(['seeding','hydrogel','kill-curve','fold-dilution','moi'].map(id=>getCalculatorDefinition(id))))"],{encoding:'utf8'}));
+const toolFixtures=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorDefinition}=require('./src/lib/calculators/calculator-engine.ts');console.log(JSON.stringify(['seeding','hydrogel','kill-curve','moi'].map(id=>getCalculatorDefinition(id))))"],{encoding:'utf8'}));
 async function saved(page){return page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);}
-async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
+async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
 async function recipe(f,n){
  for(const [label,value] of [['样本数',String(n)],['每样本重复数','1'],['额外对照反应数','0'],['预混余量','10'],['单反应总体积','20']])await f.getByRole('textbox',{name:new RegExp(`^${label}`)}).fill(value);
  await recipeRows(f);
@@ -38,10 +38,11 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
  const browser=await type.launch();
  try{
   const toolsContext=await browser.newContext({viewport:{width:1440,height:900}});const toolsPage=await toolsContext.newPage();
-  await toolsPage.goto(`${base}/tools/free-plate-layout/index.html?v=20261008-main-calculator`,{waitUntil:'networkidle'});
+  await toolsPage.goto(`${base}/tools/free-plate-layout/index.html?v=20261009-unified-release`,{waitUntil:'networkidle'});
   for(const definition of toolFixtures){
    try{
     await toolsPage.locator(`.plate-calculator-launch[data-plate-calculator="${definition.id}"]`).click();
+    await toolsPage.locator('.plate-calculator-frame[data-ready="true"]').waitFor();
     const frame=toolsPage.frameLocator('.plate-calculator-frame');await frame.locator(`[data-calculator="${definition.id}"]`).waitFor();
     const inputs={...definition.exampleInputs};if('wells' in inputs)inputs.wells=24;
     for(const field of [...definition.fields.filter(f=>f.type==='select'),...definition.fields.filter(f=>f.type!=='select')]){
@@ -64,7 +65,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
   try{
    await page.goto(`${base}/tools`,{waitUntil:'networkidle'});
    const launch=page.locator('a[href*="/tools/free-plate-layout/index.html"]').first();
-   assert(await launch.count(),'Tools must expose the planner');const href=await launch.getAttribute('href');assert(href.includes('v=20261008-main-calculator'));
+   assert(await launch.count(),'Tools must expose the planner');const href=await launch.getAttribute('href');assert(href.includes('v=20261009-unified-release'));
    // Follow exactly the link exposed by Tools in an isolated browser context.
    await page.goto(new URL(href,base).href,{waitUntil:'networkidle'});
    let f=await open(page);await recipe(f,24);

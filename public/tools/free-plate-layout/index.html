@@ -7,7 +7,7 @@
     <meta name="description" content="纯浏览器本地运行的 6、12、24、96、384 孔板布局、标签与批量计算工具。" />
     <title>Plate Layout Planner · 孔板布局规划工具</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f625d'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3Ccircle cx='22' cy='10' r='3'/%3E%3Ccircle cx='10' cy='22' r='3'/%3E%3Ccircle cx='22' cy='22' r='3'/%3E%3C/g%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="styles.css?v=20261008-main-calculator" />
+    <link rel="stylesheet" href="styles.css?v=20261008-42" />
   </head>
   <body>
     <header class="topbar">
@@ -79,9 +79,11 @@
               <div class="plate-title-line">
                 <label class="plate-name-field" title="点击修改孔板名称">
                   <span class="sr-only">孔板名称</span>
-                  <input id="projectName" class="plate-name-editor" type="text" value="未命名孔板" placeholder="未命名孔板" maxlength="80" aria-label="孔板名称，点击修改" />
+                  <input id="projectName" class="plate-name-editor" type="text" value="未命名孔板" placeholder="未命名孔板" maxlength="80" aria-label="孔板名称，点击修改" aria-describedby="plateNameError" />
+                  <span id="plateNameError" class="plate-name-error" role="alert" hidden></span>
                 </label>
                 <div class="history-actions" aria-label="编辑历史">
+                  <button id="clearPlateLayoutButton" class="plate-reset-button" type="button" title="清空当前板布局">清空布局</button>
                   <button id="undoButton" class="history-button" type="button" title="撤销（Ctrl/⌘ Z）" aria-label="撤销">↶</button>
                   <button id="redoButton" class="history-button" type="button" title="重做（Ctrl/⌘ Shift Z）" aria-label="重做">↷</button>
                 </div>
@@ -120,7 +122,10 @@
 
           <div class="plate-scroll">
             <div id="plateCanvas" class="plate-canvas" aria-label="可交互孔板布局">
-              <p class="plate-interaction-help" data-i18n="selectionHelp">单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。</p>
+              <div class="plate-view-head">
+                <p class="plate-interaction-help" data-i18n="selectionHelp">单击单选，Ctrl/⌘ 单击逐个增减，拖动框选，Shift 单击连选；单击空白处取消选择。滚轮缩放视图。</p>
+                <output id="plateZoomIndicator" class="plate-zoom-indicator" aria-live="polite">100%</output>
+              </div>
               <div id="plateGrid" class="plate-grid"></div>
               <div id="selectionBox" class="selection-box" hidden></div>
             </div>
@@ -182,29 +187,21 @@
           <section class="card liquid-card" aria-labelledby="liquidCalculationTitle">
             <div class="liquid-card-heading">
               <div>
-                <span class="eyebrow">PLATE-AWARE PREPARATION</span>
-                <h2 id="liquidCalculationTitle" data-i18n="liquidTitle">配液与板感知计算</h2>
-                <p data-i18n="liquidBody">沿用现有配液流程，并从当前选择直接完成铺板、培养、加药和感染等孔位相关计算。</p>
+                <span class="eyebrow">LIQUID PREPARATION</span>
+                <h2 id="liquidCalculationTitle" data-i18n="liquidTitle">配液计算</h2>
+                <p data-i18n="liquidBody">从当前孔板取孔数，完成常规配液、转染、梯度稀释和药物排板。</p>
               </div>
               <span id="liquidScopeBadge" class="liquid-scope-badge">整板 · 24 孔</span>
             </div>
-            <p class="liquid-module-group-label">现有配液模块</p>
             <div class="liquid-module-grid">
               <button class="liquid-module-launch" type="button" data-liquid-module="basic"><span>01</span><strong>基础常规配液</strong><small>C1V1 与目标浓度配液</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="transfection"><span>02</span><strong>转染体系配液</strong><small>siRNA、质粒与多管 Mix</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="serial"><span>03</span><strong>连续梯度稀释</strong><small>直接或逐级稀释</small></button>
               <button class="liquid-module-launch" type="button" data-liquid-module="drug"><span>04</span><strong>药物浓度梯度</strong><small>配液、预览与排板</small></button>
+              <button class="liquid-module-launch" type="button" data-liquid-module="reaction"><span>05</span><strong>反应配液 · Master Mix</strong><small>自定义组分、预混与独立加样</small></button>
+              <button class="liquid-module-launch" type="button" data-liquid-module="normalization"><span>06</span><strong>批量浓度归一化</strong><small>逐样本稀释到统一浓度</small></button>
             </div>
-            <p class="liquid-module-group-label">新增板相关计算</p>
-            <div class="plate-module-grid">
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="seeding"><strong>细胞铺板</strong><small>细胞数与培养基</small></button>
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="hydrogel"><strong>水凝胶培养</strong><small>细胞与胶体积</small></button>
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="kill-curve"><strong>杀灭曲线</strong><small>浓度梯度排板</small></button>
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="fold-dilution"><strong>倍数稀释</strong><small>工作液倍数换算</small></button>
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="master-mix"><strong>Master Mix</strong><small>按孔数汇总体系</small></button>
-              <button class="plate-calculator-launch" type="button" data-plate-calculator="moi"><strong>MOI</strong><small>病毒用量与感染率</small></button>
-            </div>
-            <button id="openLiquidCalculatorButton" class="primary-button full" type="button">打开现有配液计算</button>
+            <button id="openLiquidCalculatorButton" class="primary-button full" type="button">打开配液计算</button>
             <p class="liquid-card-note">默认余量 10% · 最小可靠移液体积 1 µL · 结果仅保存在当前浏览器</p>
             <section class="saved-liquid-plans" aria-labelledby="savedLiquidPlansTitle">
               <div class="saved-liquid-plans-heading"><div><h3 id="savedLiquidPlansTitle">当前板已保存方案</h3><p id="savedLiquidPlansHelp">只有保存到项目且状态有效的方案，才会进入跨板汇总和项目导出。</p></div><span id="savedLiquidPlanCount" class="count-badge">0</span></div>
@@ -286,15 +283,10 @@
           <button type="button" data-liquid-module="transfection">转染体系</button>
           <button type="button" data-liquid-module="serial">梯度稀释</button>
           <button type="button" data-liquid-module="drug">药物排板</button>
-          <button type="button" data-plate-calculator="seeding">细胞铺板</button>
-          <button type="button" data-plate-calculator="hydrogel">水凝胶</button>
-          <button type="button" data-plate-calculator="kill-curve">杀灭曲线</button>
-          <button type="button" data-plate-calculator="fold-dilution">倍数稀释</button>
-          <button type="button" data-plate-calculator="master-mix">Master Mix</button>
-          <button type="button" data-plate-calculator="moi">MOI</button>
+          <button type="button" data-liquid-module="reaction">Master Mix</button>
+          <button type="button" data-liquid-module="normalization">浓度归一化</button>
         </nav>
         <div id="liquidDrawerContent" class="liquid-drawer-content"></div>
-        <div id="plateCalculatorHost" class="liquid-drawer-content plate-calculator-host" aria-live="polite" hidden></div>
       </section>
     </div>
 
@@ -347,14 +339,18 @@
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <button type="button" id="cacheStandalone">缓存独立版以离线刷新 / Cache for offline reload</button><span id="cacheStandaloneStatus" role="status"></span>
     <script src="core.js?v=20260822-8"></script>
     <script src="color-core.js?v=20260823-15"></script>
     <script src="liquid-core.js?v=20260823-15"></script>
-    <script src="liquid-plan-core.js?v=20260823-18"></script>
-    <script src="workspace-core.js?v=20260823-15"></script>
+    <script src="liquid-plan-core.js?v=20260823-28"></script>
+    <script src="workspace-core.js?v=20261008-42"></script>
     <script src="xlsx-core.js?v=20260822-1"></script>
-    <script src="calculator-engine.js?v=20261008-main-calculator"></script>
-    <script src="app.js?v=20261008-main-calculator"></script>
+    <script src="vendor/preparation-kernel.js?v=20261008-42"></script>
+    <script src="preparation-core.js?v=20261008-42"></script>
+    <script src="preparation-ui.js?v=20261008-42"></script>
+    <!-- host-integration --><link rel="stylesheet" href="labnest-bridge.css?v=20261009">
+<script src="calculator-engine.js?v=20261009"></script>
+<script src="labnest-bridge.js?v=20261009"></script>
+    <script src="app.js?v=20261008-42"></script>
   </body>
 </html>

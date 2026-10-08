@@ -14,7 +14,7 @@ export function AiProviderTestButton({ providerId }: { providerId: string }) {
     setBusy(true);
     setResult(undefined);
     try {
-      const response = await fetch(`/api/ai/providers/${providerId}/test`, { method: "POST" });
+      const response = await fetch(`/api/ai/providers/${providerId}/test`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
       const data = (await response.json()) as TestResult;
       setResult({ ok: Boolean(data.ok), message: data.message ?? (response.ok ? "Connected." : "Connection failed."), latencyMs: data.latencyMs });
     } catch (error) {

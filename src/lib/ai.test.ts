@@ -81,6 +81,32 @@ describe("extractJsonPayload", () => {
 });
 
 describe("OpenAICompatibleProvider", () => {
+  it("redacts a credential echoed by an upstream error", async () => {
+    const { fetchImpl } = fakeFetch(() => json({ error: { message: "invalid secret-key" } }, 401));
+    const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });
+    expect((await provider.testConnection()).message).not.toContain("secret-key");
+    await expect(provider.generateProposedActions!({ entryTitle: "t", entryBody: "b", allowedActionTypes: ["create_experiment"] })).rejects.not.toThrow(/secret-key/);
+  });
+
+  it("rejects model actions outside the explicitly requested types", async () => {
+    const { fetchImpl } = fakeFetch(() => json({ choices: [{ message: { content: JSON.stringify([{ sourceType: "ai", actionType: "receive_purchase", reason: "Not requested", payload: { title: "A purchase" } }]) } }] }));
+    const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });
+    await expect(provider.generateProposedActions!({ entryTitle: "t", entryBody: "b", allowedActionTypes: ["create_experiment"] })).rejects.toThrow(/allowed action/);
+  });
+
+  it("rejects oversized, empty-payload and malformed model actions as provider output errors", async () => {
+    for (const content of [JSON.stringify(Array.from({length:51},()=>JSON.parse(actionsJson)[0])), '[{"sourceType":"ai","actionType":"create_experiment","reason":"draft","payload":{}}]', '[{"invalid":true}]']) {
+      const { fetchImpl } = fakeFetch(() => json({ choices: [{ message: { content } }] }));
+      await expect(new OpenAICompatibleProvider(baseConfig, { fetchImpl }).generateProposedActions!({ entryTitle: "t", entryBody: "b", allowedActionTypes: ["create_experiment"] })).rejects.toBeInstanceOf(AIProviderError);
+    }
+  });
+
+  it("attributes connected-model proposals to AI regardless of an untrusted source label", async () => {
+    const { fetchImpl } = fakeFetch(() => json({ choices: [{ message: { content: actionsJson.replace('"ai"','"system"') } }] }));
+    const result=await new OpenAICompatibleProvider(baseConfig, { fetchImpl }).generateProposedActions!({ entryTitle: "t", entryBody: "b", allowedActionTypes: ["create_experiment"] });
+    expect(result.actions[0].sourceType).toBe("ai");
+  });
+
   it("posts a chat completion with bearer auth and parses proposed actions", async () => {
     const { fetchImpl, calls } = fakeFetch(() => json({ model: "qwen-plus-2026", choices: [{ message: { content: actionsJson } }] }));
     const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });

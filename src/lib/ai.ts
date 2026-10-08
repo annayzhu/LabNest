@@ -31,6 +31,8 @@ export type AIGenerationResult = {
   model?: string;
 };
 
+export const AI_LIMITS = { entryTitle: 160, entryBody: 60_000, responseText: 200_000, actions: 50 } as const;
+
 export const allowedProposedActionTypes: ProposedAction["actionType"][] = [
   "create_experiment",
   "update_experiment",
@@ -129,8 +131,9 @@ export function extractJsonPayload(rawResponse: string) {
 
 export function parseProposedActions(
   rawResponse: string,
-  options: { sourceLabel: string; idPrefix: string },
+  options: { sourceLabel: string; idPrefix: string; allowedActionTypes?: ProposedAction["actionType"][] },
 ): ProposedAction[] {
+  if (rawResponse.length > AI_LIMITS.responseText) throw new AIProviderError("The model response is too large. Nothing was imported.");
   let parsed: unknown;
   try {
     parsed = JSON.parse(extractJsonPayload(rawResponse));
@@ -138,8 +141,17 @@ export function parseProposedActions(
     throw new AIProviderError("The model response was not valid JSON. Nothing was imported.");
   }
   const array = Array.isArray(parsed) ? parsed : [parsed];
+  if (array.length > AI_LIMITS.actions) throw new AIProviderError(`The model returned more than ${AI_LIMITS.actions} actions. Nothing was imported.`);
   return array.map((item, index) => {
-    const validated = proposedActionSchema.parse(item);
+    const result = proposedActionSchema.safeParse(item);
+    if (!result.success) throw new AIProviderError("The model response did not match the proposed-action schema. Nothing was imported.");
+    const validated = result.data;
+    if (options.allowedActionTypes && !options.allowedActionTypes.includes(validated.actionType)) {
+      throw new AIProviderError("The model returned a type outside the allowed action types. Nothing was imported.");
+    }
+    if (options.allowedActionTypes && Object.keys(validated.payload).length === 0) {
+      throw new AIProviderError("The model returned an empty action payload. Nothing was imported.");
+    }
     return {
       id: `${options.idPrefix}-${index + 1}`,
       sourceType: validated.sourceType,
@@ -265,18 +277,24 @@ abstract class ConnectedProvider implements AIProviderAdapter {
     return model;
   }
 
+  protected safeMessage(message: string): string {
+    const key = this.config.apiKey;
+    if (!key) return message;
+    return [...new Set([key, encodeURIComponent(key)])].reduce((text, secret) => text.replaceAll(secret, "[redacted]"), message);
+  }
+
   protected async request(path: string, init: RequestInit): Promise<Response> {
     const url = `${this.baseUrl}${path}`;
     let response: Response;
     try {
       response = await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(this.timeoutMs) });
     } catch (error) {
-      throw new AIProviderError(`Could not reach ${url}: ${describeNetworkError(error)}`);
+      throw new AIProviderError(this.safeMessage(`Could not reach ${url}: ${describeNetworkError(error)}`), 502);
     }
     if (!response.ok) {
       const detail = await readErrorBody(response);
       throw new AIProviderError(
-        `${this.config.name} returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
+        this.safeMessage(`${this.config.name} returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`),
         response.status,
       );
     }
@@ -292,7 +310,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
       const result = await run();
       return { ...result, latencyMs: Date.now() - started };
     } catch (error) {
-      return { ok: false, message: describeNetworkError(error), latencyMs: Date.now() - started };
+      return { ok: false, message: this.safeMessage(describeNetworkError(error)), latencyMs: Date.now() - started };
     }
   }
 
@@ -304,11 +322,21 @@ abstract class ConnectedProvider implements AIProviderAdapter {
       throw new AIProviderError("Provider is disabled.");
     }
     const { system, user } = buildProposedActionPrompt(input);
-    const { text, model } = await this.complete(system, user);
+    if (input.entryTitle.length > AI_LIMITS.entryTitle || input.entryBody.length > AI_LIMITS.entryBody) {
+      throw new AIProviderError("The selected entry text exceeds the AI input limit.");
+    }
+    let completion: { text: string; model?: string };
+    try { completion = await this.complete(system, user); }
+    catch (error) {
+      if (error instanceof AIProviderError) throw new AIProviderError(this.safeMessage(error.message), error.status);
+      throw new AIProviderError(this.safeMessage(describeNetworkError(error)));
+    }
+    const { text, model } = completion;
     const actions = parseProposedActions(text, {
       sourceLabel: `${this.config.name}${model ? ` · ${model}` : ""}`,
       idPrefix: `ai-${this.config.id}`,
-    });
+      allowedActionTypes: input.allowedActionTypes,
+    }).map(action => ({ ...action, sourceType: "ai" as const }));
     return { actions, rawResponse: text, model };
   }
 }

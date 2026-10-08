@@ -30,7 +30,7 @@ const typeHelp: Record<AIProviderType, { baseUrl: string; model: string; key: st
     key: "Bearer token for the endpoint.",
   },
   openai: { baseUrl: `Defaults to ${defaultProviderBaseUrls.openai}.`, model: "e.g. gpt-4.1-mini", key: "OpenAI API key." },
-  anthropic: { baseUrl: `Defaults to ${defaultProviderBaseUrls.anthropic}.`, model: "e.g. claude-sonnet-5-5", key: "Anthropic API key." },
+  anthropic: { baseUrl: `Defaults to ${defaultProviderBaseUrls.anthropic}.`, model: "Use the exact model ID supplied by your provider.", key: "Anthropic API key." },
   manual_copy_paste: { baseUrl: "Not used.", model: "Not used.", key: "Not used. Prompts are copied to an external chat window." },
 };
 

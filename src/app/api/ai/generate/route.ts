@@ -1,8 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { AIProviderError, allowedProposedActionTypes } from "@/lib/ai";
+import { AI_LIMITS, AIProviderError, allowedProposedActionTypes } from "@/lib/ai";
 import { resolveConnectedAdapter } from "@/lib/ai-server";
-import { prisma } from "@/lib/db";
+import { validateAIRequest } from "@/lib/ai-request";
+import { AIProposalConflict, proposalResponse, saveAIProposals } from "@/lib/ai-proposals";
 import { getEntryDetailRecord } from "@/lib/entries";
 import type { ProposedAction } from "@/lib/types";
 
@@ -13,14 +14,18 @@ const actionTypeEnum = z.enum(allowedProposedActionTypes as [ProposedAction["act
 const generateRequestSchema = z
   .object({
     entryId: z.string().trim().min(1).optional(),
-    entryTitle: z.string().trim().min(1).optional(),
-    entryBody: z.string().trim().min(1).optional(),
+    entryTitle: z.string().trim().min(1).max(AI_LIMITS.entryTitle).optional(),
+    entryBody: z.string().trim().min(1).max(AI_LIMITS.entryBody).optional(),
     allowedActionTypes: z.array(actionTypeEnum).min(1).optional(),
     /** Persist the validated actions as pending ProposedAction records linked to the entry. Requires entryId. */
     persist: z.boolean().optional(),
+    clientMutationId: z.string().uuid().optional(),
   })
   .refine((value) => value.entryId || (value.entryTitle && value.entryBody), {
     message: "Provide either entryId or entryTitle and entryBody.",
+  })
+  .refine(value => !value.persist || (value.entryId && value.clientMutationId), {
+    message: "Saving proposals requires entryId and a unique clientMutationId.",
   });
 
 /**
@@ -28,6 +33,8 @@ const generateRequestSchema = z
  * Nothing is executed. With `persist: true` the actions are stored as pending items in the review inbox.
  */
 export async function POST(request: Request) {
+  const boundary = validateAIRequest(request);
+  if (boundary) return Response.json({ error: boundary.error }, { status: boundary.status });
   const resolved = await resolveConnectedAdapter();
   if (!resolved.ok) {
     return Response.json({ error: resolved.error }, { status: resolved.status });
@@ -58,57 +65,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await adapter.generateProposedActions({
+    const input = {
       entryTitle,
       entryBody,
       allowedActionTypes: parsed.data.allowedActionTypes ?? allowedProposedActionTypes,
-    });
-
-    let persisted = 0;
-    if (parsed.data.persist && entryId && result.actions.length) {
-      await prisma.$transaction([
-        ...result.actions.map((action) =>
-          prisma.proposedAction.create({
-            data: {
-              sourceType: "ai",
-              sourceId: entryId,
-              actionType: action.actionType,
-              status: "pending",
-              reason: action.reason,
-              payloadJson: JSON.parse(JSON.stringify(action.payload)),
-            },
-          }),
-        ),
-        prisma.activityLog.create({
-          data: {
-            action: "ai_propose",
-            targetType: "entry",
-            targetId: entryId,
-            metadataJson: { provider: config.name, model: result.model ?? null, count: result.actions.length },
-          },
-        }),
-      ]);
-      persisted = result.actions.length;
+    };
+    const generate = () => adapter.generateProposedActions!(input);
+    const response = parsed.data.persist && entryId && parsed.data.clientMutationId
+      ? await saveAIProposals({ entryId, clientMutationId: parsed.data.clientMutationId, input, provider: config, generate })
+      : proposalResponse(await generate(), config.name);
+    if (response.persisted && entryId) {
       revalidatePath(`/entries/${entryId}`);
       revalidatePath("/entries");
       revalidatePath("/actions");
     }
 
-    return Response.json({
-      status: "validated",
-      provider: config.name,
-      model: result.model ?? null,
-      count: result.actions.length,
-      persisted,
-      actions: result.actions,
-      rawResponse: result.rawResponse,
-      note: persisted
-        ? "Proposed actions were saved as pending items. Review them before anything is executed."
-        : "These are proposed actions only. LabNest has not mutated any record.",
-    });
+    return Response.json(response);
   } catch (error) {
     // Upstream HTTP failures are 502; a reachable model that returned unusable output is 422.
     let status = 500;
+    if (error instanceof AIProposalConflict) status = 409;
     if (error instanceof AIProviderError) status = error.status ? 502 : 422;
     return Response.json(
       { status: "invalid", error: error instanceof Error ? error.message : "The model request failed." },

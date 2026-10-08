@@ -43,6 +43,9 @@ function resolveKey(): Buffer {
       "LABNEST_AI_ENCRYPTION_KEY is not set. Add a 32-byte base64 or hex key to .env before saving provider credentials.",
     );
   }
+  if (raw === PLACEHOLDER_KEY) {
+    throw new Error("LABNEST_AI_ENCRYPTION_KEY uses the public placeholder. Set a private key before storing credentials.");
+  }
   return parseStrictKey(raw) ?? createHash("sha256").update(raw, "utf8").digest();
 }
 

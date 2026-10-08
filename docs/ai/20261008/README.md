@@ -1,6 +1,6 @@
 # LabNest × 浙江大学校园 AI 创新应用大赛：工作总览
 
-日期：2026-10-08。用途：记录参赛决策、已完成的第 1 项（真实模型适配器）、以及第 2、3 项的执行方案入口。
+日期：2026-10-08。用途：记录参赛决策、第1项模型适配器及待审建议的实现，以及第2、3项的执行方案入口。真实厂商服务与校园Dify尚未验证，当前验证使用模拟模型。
 
 | 节点 | 日期 | 距 2026-10-08 |
 |---|---|---|
@@ -15,7 +15,7 @@
 
 | 序号 | 内容 | 状态 | 文档 |
 |---|---|---|---|
-| 1 | 日志条目 → 真实模型生成拟议操作 → 人工审核后入库 | **已实现，本地验证通过** | 本文第二节 |
+| 1 | 日志条目 → 模型生成拟议操作 → 保存为pending建议 | **适配器与建议保存已实现；收件箱仅展示，审核/执行控件未实现** | 本文第二节与ACCEPTANCE.md |
 | 2 | Protocol DOCX 导入时由 AI 抽取参数、步骤属性、耗材规则、结果模板 | 方案已写，未开发 | [PLAN-2](PLAN-2-protocol-import-ai-extraction.md) |
 | 3 | Visualization Studio 智能作图助手 | 方案已写，未开发；建议只做精简版或写入规划 | [PLAN-3](PLAN-3-studio-figure-assistant.md) |
 
@@ -36,35 +36,35 @@
 | `src/lib/entries.ts` | 条目页与列表的待审操作统计同时包含 `sourceType=entry` 与 `ai`。 |
 | `src/components/ProposedActionCard.tsx` | 收件箱卡片显示来源标签（例如 `ai:<entryId>`）。 |
 | `prisma/schema.prisma`、`prisma/migrations/20261008090000_ai_provider_dify` | `AIProviderType` 新增 `dify`。 |
-| `src/lib/ai.test.ts`、`src/lib/ai-crypto.test.ts` | 21 个单元测试：三种适配器的请求构造、响应解析、错误处理、密钥加解密。 |
+| `src/lib/ai.test.ts`、`src/lib/ai-crypto.test.ts` | 最终适配器、密钥与同源保护共27项单元测试；全量与浏览器验收见ACCEPTANCE.md。 |
 
 ### 不变的安全边界
 
 - AI 主开关默认关闭；关闭时所有 AI 路由返回 403。
 - 只发送用户点击时明确指定的条目标题与正文；不发送附件、项目全量数据或库存。
-- 模型输出只能生成 `ProposedAction`，必须由用户在收件箱接受/编辑/拒绝后才会执行；路由与提示词均不允许直接写记录。
-- 密钥加密存储、不回显；服务端解密仅在单次请求内。
+- 模型输出只能生成pending `ProposedAction`，不能自动执行。现有收件箱仅展示与筛选；接受/编辑/拒绝及审核后业务执行仍未实现，本轮没有新增执行器。
+- 密钥加密存储、不回显；服务端解密仅在单次请求内。公共占位密钥不能存储凭据，上游错误中的凭据会脱敏。AI调用要求同源JSON请求；保存采用clientMutationId幂等重放和来源锁。
 
 ### 接入浙大 aihub（Dify）的步骤
 
 1. 在 aihub.zju.edu.cn 创建一个"聊天助手"类应用，系统提示可留空（LabNest 的提示词随请求发送），发布后在"API 访问"页取得 `app-…` 密钥和 API 根地址（形如 `https://aihub.zju.edu.cn/v1`，以页面显示为准）。
 2. 在 `.env` 设置真实的 `LABNEST_AI_ENCRYPTION_KEY`（例如 `openssl rand -hex 32`），重启应用。
-3. LabNest → Settings → Model providers：类型选 Dify，填 Base URL 与 API key，保存后点 Test。
-4. AI access：打开主开关，Default provider 选该服务，保存。
+3. LabNest → Settings → Model providers：类型选Dify，填实际API页面提供的Base URL与API key，保存。
+4. AI access：打开主开关，Default provider选该服务并保存，然后在Model providers中点Test。主开关关闭时Test返回403。
 5. 任意条目页右侧"Proposed actions"出现"Propose with AI"。
 
 如用千问 API：类型选 OpenAI-compatible，Base URL `https://dashscope.aliyuncs.com/compatible-mode/v1`，模型如 `qwen-plus`。
 
 ### 本地验证记录（2026-10-08）
 
-- `npm run typecheck`、`npm run lint`（仅既有警告）、`npm run test`（116 文件 / 591 用例）通过。
-- 用本机模拟的 OpenAI 兼容端点走通：设置页新增服务 → Test 返回"Connected. 1 models available." → 条目页 Propose with AI → 2 条 pending 操作出现在条目页与 `/actions` 收件箱 → 工作台直连返回同样结果。验证后已删除模拟服务与测试数据，AI 主开关恢复关闭。
+- 原分支`4f7eebfe`独立复核：typecheck、lint（12条既有警告）、Shanghai/UTC测试各116文件590用例通过。后续发布前修补与最终验收见ACCEPTANCE.md，不将原报告的591项当作本次证据。
+- 原作者报告（本次不直接用作最终验收）：用本机模拟的 OpenAI 兼容端点走通：设置页新增服务 → Test 返回"Connected. 1 models available." → 条目页 Propose with AI → 2 条 pending 操作出现在条目页与 `/actions` 收件箱 → 工作台直连返回同样结果。验证后已删除模拟服务与测试数据，AI 主开关恢复关闭。
 
 ## 演示脚本建议（≤ 6 分钟核心场景）
 
 1. 30 s：LabNest 总览，强调记录、协议、库存、结果的 provenance。
 2. 60 s：设置页展示连接浙大 aihub，Test 成功；说明密钥加密与默认关闭。
-3. 120 s：打开一条真实实验日志，点 Propose with AI，收件箱出现拟议操作；逐条接受/拒绝/编辑，执行后库存事务与实验记录随之生成。
+3. 120 s：打开经授权的脱敏示例条目，点Propose with AI，展示pending建议与来源；说明尚未实现接受/拒绝/执行，不能演示库存或实验自动写入。
 4. 60 s：若第 2 项完成，展示 DOCX 导入时的 AI 抽取与逐项采纳。
 5. 60 s：Visualization Studio 现有作图能力（与第 3 项规划）。
 6. 30 s：合规与伦理：本地部署、显式上下文、人工审核。

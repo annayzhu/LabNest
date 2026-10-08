@@ -39,6 +39,11 @@ describe("ai-crypto", () => {
     expect(describeEncryptionKey()).toEqual({ configured: true, placeholder: true });
   });
 
+  it("refuses to encrypt real credentials under the published placeholder", () => {
+    process.env.LABNEST_AI_ENCRYPTION_KEY = "replace-with-32-byte-base64-or-hex-key";
+    expect(() => encryptSecret("private-token")).toThrow(/placeholder/);
+  });
+
   it("rejects values encrypted under a different key", () => {
     const stored = encryptSecret("secret");
     process.env.LABNEST_AI_ENCRYPTION_KEY = "another-passphrase";

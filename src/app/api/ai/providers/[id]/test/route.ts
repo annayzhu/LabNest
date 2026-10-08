@@ -1,10 +1,13 @@
 import { resolveAdapterForProvider } from "@/lib/ai-server";
 import { prisma } from "@/lib/db";
+import { validateAIRequest } from "@/lib/ai-request";
 
 export const runtime = "nodejs";
 
 /** Runs the adapter's connection test for one stored provider. Does not send any record content. */
-export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const boundary = validateAIRequest(request);
+  if (boundary) return Response.json({ ok: false, message: boundary.error }, { status: boundary.status });
   const { id } = await context.params;
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
   if (!settings?.enabled) {

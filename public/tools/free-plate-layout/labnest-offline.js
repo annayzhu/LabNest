@@ -49,7 +49,7 @@
       container.addEventListener('keydown', event => {
         const details=event.target.closest('details[open]');
         if(event.key !== 'Escape' || !details)return;
-        event.preventDefault();details.open=false;details.querySelector('summary').focus({preventScroll:true});
+        event.preventDefault();event.stopPropagation();details.open=false;details.querySelector('summary').focus({preventScroll:true});
       });
       container.querySelector('[data-standalone-icon-pack]').value = iconPack;
       let result = null;

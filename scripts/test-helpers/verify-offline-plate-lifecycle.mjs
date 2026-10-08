@@ -4,6 +4,16 @@ import assert from 'node:assert/strict';
 // not merely the existence of its calculation button.
 export async function verifyOfflinePlateLifecycle(page) {
   await page.locator('#closeLiquidDrawerButton').click();
+  await page.locator('[data-well="A1"]').click();
+  await page.locator('[data-plate-calculator="seeding"]').first().click();
+  await page.locator('.standalone-appearance-preview summary').click();
+  await page.locator('[data-standalone-icon-pack]').focus();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.standalone-appearance-preview').evaluate(node => node.open), false);
+  await page.locator('#closeLiquidDrawerButton').click();
+  await page.locator('[data-plate-calculator="seeding"]').first().click();
+  assert.equal(await page.locator('[name="wells"]').inputValue(), '1', 'Appearance Escape must preserve selected-well scope');
+  await page.locator('#closeLiquidDrawerButton').click();
   for (const id of ['seeding', 'hydrogel', 'kill-curve', 'fold-dilution', 'master-mix', 'moi']) {
     await page.locator(`[data-plate-calculator="${id}"]`).first().click();
     await page.locator('[name="pipetteMinimumUl"]').fill('1');

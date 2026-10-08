@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clipboard, RotateCcw, Sparkles } from "lucide-react";
+import { Bot, CheckCircle2, Clipboard, RotateCcw, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,7 @@ type ParseResult = {
   json?: string;
 };
 
-export function ManualAiWorkbench() {
+export function ManualAiWorkbench({ connected }: { connected?: { providerName: string; model?: string } }) {
   const [entryTitle, setEntryTitle] = useState(exampleEntry.title);
   const [entryBody, setEntryBody] = useState(exampleEntry.body);
   const [prompt, setPrompt] = useState("");
@@ -83,6 +83,38 @@ export function ManualAiWorkbench() {
     }
   }
 
+  async function generateWithModel() {
+    setIsBusy(true);
+    setParseResult({ status: "idle" });
+
+    try {
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entryTitle, entryBody }),
+      });
+      const data = (await response.json()) as { count?: number; actions?: unknown; rawResponse?: string; model?: string | null; error?: unknown };
+
+      if (!response.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "The model request failed.");
+      }
+
+      setRawResponse(data.rawResponse ?? "");
+      setParseResult({
+        status: "valid",
+        message: `${data.count ?? 0} proposed action${data.count === 1 ? "" : "s"} returned by ${connected?.providerName ?? "the model"}${data.model ? ` (${data.model})` : ""}. Nothing was executed.`,
+        json: JSON.stringify(data.actions ?? [], null, 2),
+      });
+    } catch (error) {
+      setParseResult({
+        status: "invalid",
+        message: error instanceof Error ? error.message : "The model request failed.",
+      });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function copyPrompt() {
     if (!prompt) return;
     await navigator.clipboard.writeText(prompt);
@@ -117,7 +149,13 @@ export function ManualAiWorkbench() {
           />
         </label>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={createPrompt} disabled={!canCreatePrompt || isBusy} variant="primary">
+          {connected ? (
+            <Button onClick={generateWithModel} disabled={!canCreatePrompt || isBusy} variant="primary" title={`Send to ${connected.providerName}${connected.model ? ` · ${connected.model}` : ""}`}>
+              <Bot className="h-4 w-4" aria-hidden />
+              {isBusy ? "Asking model…" : `Ask ${connected.providerName}`}
+            </Button>
+          ) : null}
+          <Button onClick={createPrompt} disabled={!canCreatePrompt || isBusy} variant={connected ? "secondary" : "primary"}>
             <Sparkles className="h-4 w-4" aria-hidden />
             Make Prompt
           </Button>

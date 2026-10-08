@@ -360,6 +360,7 @@ enum AIProviderType {
   openai
   anthropic
   openai_compatible
+  dify
   manual_copy_paste
 }
 

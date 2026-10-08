@@ -84,7 +84,7 @@ export async function getEntryRecords(): Promise<Entry[]> {
         select: { id: true, sourceType: true, sourceId: true, targetType: true, targetId: true, linkType: true },
       }),
       prisma.proposedAction.findMany({
-        where: { sourceType: "entry", sourceId: { in: entryIds }, status: "pending" },
+        where: { sourceType: { in: ["entry", "ai"] }, sourceId: { in: entryIds }, status: "pending" },
         select: { id: true, sourceId: true },
       }),
     ]);
@@ -166,7 +166,7 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
         orderBy: { createdAt: "desc" },
       }),
       prisma.proposedAction.findMany({
-        where: { sourceType: "entry", sourceId: id },
+        where: { sourceType: { in: ["entry", "ai"] }, sourceId: id },
         orderBy: { createdAt: "desc" },
       }),
     ]);

@@ -59,12 +59,16 @@
         grid.append(button);
       }
       document.addEventListener('click', event => {
-        const button = event.target.closest('[data-plate-calculator]');
+        const button = event.target.closest('[data-plate-calculator], [data-liquid-module="reaction"]');
         if (!button) return;
         // The original reaction button has the release's listener; intercept before it runs.
         event.stopImmediatePropagation();
-        open(button.dataset.plateCalculator);
+        open(button.dataset.plateCalculator || 'master-mix');
       }, true);
+      document.addEventListener('click', event => {
+        if (!event.target.closest('.language-option')) return;
+        for (const button of grid.querySelectorAll('.liquid-module-card[data-plate-calculator]')) button.textContent = text(...calculators[button.dataset.plateCalculator]);
+      });
       window.addEventListener('message', event => {
         const current = session;
         if (!current || event.origin !== location.origin || event.source !== current.frame.contentWindow || event.data?.calculatorId !== current.calculatorId || JSON.stringify(event.data?.plateContext) !== JSON.stringify(current.context)) return;

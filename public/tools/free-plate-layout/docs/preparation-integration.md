@@ -22,6 +22,10 @@ by its host adapter, without copying their state logic into the independent app.
 - Cross-plate Master Mix merging is opt-in. Same group name, full component recipe,
   stock concentration definitions and per-reaction quantities must match. Different
   units may conservatively keep equivalent recipes separate; units are not inferred.
+  This describes the independent Reaction editor. The LabNest host preserves its
+  existing Calculator rule: identical premix components/volumes/concentration
+  definitions pool across group/template labels; separately added templates never
+  pool or receive overage. Its verified typed contributions carry that distinction.
 - Normalization uses one explicit concentration unit for all rows. Every row maps
   to one well; invalid rows retain their identity and cannot publish a partial plan.
   No sample overage is introduced by the cross-plate summary.

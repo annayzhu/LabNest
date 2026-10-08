@@ -69,6 +69,12 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    // Follow exactly the link exposed by Tools in an isolated browser context.
    await page.goto(new URL(href,base).href,{waitUntil:'networkidle'});
    let f=await open(page);await recipe(f,24);
+   // Drawer Master Mix must route to the same host editor, not a second form.
+   await page.locator('#liquidDrawer [data-liquid-module="reaction"]').click();
+   await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();
+   f=page.frameLocator('.plate-calculator-frame');
+   // The host retains its draft on reopen; do not add duplicate rows.
+   await f.locator('input[data-component-name][value="SYBR"]').first().waitFor();
    assert.equal(await f.getByRole('navigation',{name:'Reaction modes'}).count(),0);
    assert.equal(await f.getByRole('combobox',{name:'计算依据',exact:true}).count(),4);
    await page.screenshot({path:`${dir}/${id}-editor-light.png`,fullPage:true});
@@ -110,18 +116,30 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
    const premixes=summary.groups.filter(g=>g.tubeRole==='premix');assert.equal(premixes.length,1);
    assert(Math.abs(premixes[0].components.reduce((n,c)=>n+c.preparedVolume,0)-752.4)<1e-8);
    assert.equal(summary.groups.filter(g=>g.tubeRole==='separate').reduce((n,g)=>n+g.components.reduce((s,c)=>s+c.preparedVolume,0),0),36);
+   assert(summary.executionPlan.steps.some(s=>s.phase==='dispense'&&s.perWellVolume===19));
+   assert(summary.executionPlan.steps.some(s=>s.phase==='separate-sample'&&s.perWellVolume===1));
    await page.locator('#undoButton').click();assert.equal((await saved(page)).latestLiquidSummary,null,'undo must invalidate generated summary');await page.locator('#redoButton').click();assert.equal((await saved(page)).latestLiquidSummary,null);await page.locator('#projectLiquidSummaryButton').click();
    await page.locator('[data-open-liquid-summary]').click();await page.screenshot({path:`${dir}/${id}-summary-light.png`,fullPage:true});await page.keyboard.press('Escape');
    const downloadEvent=page.waitForEvent('download');await page.locator('#exportXlsxButton').click();const xlsx=await downloadEvent;const xlsxPath=`${dir}/${id}-project.xlsx`;await xlsx.saveAs(xlsxPath);
    const files=unzipSync(await readFile(xlsxPath));const xml=Object.entries(files).filter(([name])=>name.endsWith('.xml')).map(([,data])=>strFromU8(data)).join('\n');
    for(const text of ['Template','独立加样','取液来源','stock:0'])assert(xml.includes(text),`XLSX must retain ${text}`);
-   const sumPrepared=(sheet)=>{const doc=new DOMParser().parseFromString(strFromU8(files[sheet]),'text/xml');return [...doc.getElementsByTagName('c')].filter(c=>/^H[2-9]\d*$/.test(c.getAttribute('r'))).reduce((sum,c)=>sum+(parseFloat(c.textContent)||0),0);};
-   assert(Math.abs(sumPrepared('xl/worksheets/sheet6.xml')-752.4)<1e-8,'XLSX premix components must sum to 752.4 µL');
-   assert.equal(sumPrepared('xl/worksheets/sheet7.xml'),36,'XLSX separate templates must total 36 µL');
+   const sumPrepared=(sheetName)=>{
+    const parser=new DOMParser(),book=parser.parseFromString(strFromU8(files['xl/workbook.xml']),'text/xml');
+    const sheet=[...book.getElementsByTagName('sheet')].find(s=>s.getAttribute('name')===sheetName);assert(sheet,`Missing sheet ${sheetName}`);
+    const relations=parser.parseFromString(strFromU8(files['xl/_rels/workbook.xml.rels']),'text/xml');
+    const target=[...relations.getElementsByTagName('Relationship')].find(r=>r.getAttribute('Id')===sheet.getAttribute('r:id')).getAttribute('Target');
+    const doc=parser.parseFromString(strFromU8(files[`xl/${target}`]),'text/xml');
+    const cells=[...doc.getElementsByTagName('c')];
+    const header=cells.find(c=>c.textContent==='建议准备量');assert(header,'Prepared-volume header must be present');
+    const column=header.getAttribute('r').replace(/\d+$/,'');
+    return cells.filter(c=>c.getAttribute('r').replace(/\d+$/,'')===column&&c!==header).reduce((sum,c)=>sum+(parseFloat(c.textContent)||0),0);
+   };
+   assert(Math.abs(sumPrepared('反应预混液')-752.4)<1e-8,'XLSX premix components must sum to 752.4 µL');
+   assert.equal(sumPrepared('独立加样'),36,'XLSX separate templates must total 36 µL');
    const backupEvent=page.waitForEvent('download');await page.locator('#exportJsonButton').click();const json=await backupEvent;const jsonPath=`${dir}/${id}-workspace.json`;await json.saveAs(jsonPath);const backup=JSON.parse(await readFile(jsonPath,'utf8'));assert.deepEqual(backup.plates.map(p=>p.liquidPlans[0].input),ws.plates.map(p=>p.liquidPlans[0].input));
    await page.locator('#openBackupRestoreButton').click();await page.locator('#restoreJsonInput').setInputFiles(jsonPath);await page.locator('#confirmRestoreButton').click();
    assert.deepEqual((await saved(page)).plates.map(p=>p.liquidPlans[0].input),backup.plates.map(p=>p.liquidPlans[0].input),'JSON restored through the real import dialog');
-   await page.locator('[data-liquid-plan-action="edit"]').click();f=page.frameLocator('.plate-calculator-frame');await f.getByText('多组配液',{exact:true}).click();
+   await page.locator('[data-liquid-plan-action="edit"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();f=page.frameLocator('.plate-calculator-frame');await f.locator('input[data-component-name][value="SYBR"]').first().waitFor();await f.getByText('多组配液',{exact:true}).click();
    await f.locator('[data-group-name]').fill('A');await f.locator('[data-group-reactions]').fill('5');
    await f.getByRole('button',{name:'添加分组',exact:true}).click();await f.locator('[data-group-name]').fill('B');await f.locator('[data-group-reactions]').fill('7');await recipeRows(f);
    await f.getByRole('button',{name:'计算',exact:true}).click();

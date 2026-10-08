@@ -94,7 +94,7 @@
     const current = uniqueCandidates[0] || null;
     const archived = [...(Array.isArray(archivedLiquidPlans) ? archivedLiquidPlans : []), ...uniqueCandidates.slice(1)]
       .map(normalizeLiquidPlan).filter(Boolean);
-    const archivedUnique = [...new Map(archived.filter((plan) => !current || plan.id !== current.id).map((plan, index) => [plan.id || `archived-${index}`, plan])).values()].slice(-30);
+    const archivedUnique = [...new Map(archived.filter((plan) => !current || plan.id !== current.id).map((plan, index) => [plan.id || `archived-${index}`, plan])).values()];
     return { current, archived: archivedUnique, migratedCount: Math.max(0, uniqueCandidates.length - 1) };
   }
 
@@ -376,6 +376,7 @@
         groupName: item.groupName || "",
         scopeWellIds: Array.isArray(item.scopeWellIds) ? [...item.scopeWellIds] : [],
         protocolSteps: Array.isArray(item.protocolSteps) ? [...item.protocolSteps] : [],
+        warnings: Array.isArray(item.warnings) ? [...item.warnings] : [],
         displayOrder: Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : Number.MAX_SAFE_INTEGER,
         direction: item.direction === "reverse" ? "reverse" : "forward",
         preset: item.preset || "",

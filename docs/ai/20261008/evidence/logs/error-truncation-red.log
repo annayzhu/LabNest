@@ -1,0 +1,30 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/ai.test.ts (19 tests | 1 failed) 33ms
+     × redacts plain-text credentials before shortening an upstream error 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/ai.test.ts > createAIProviderAdapter > redacts plain-text credentials before shortening an upstream error
+AssertionError: expected 'Test provider returned HTTP 401: xxxx…' not to contain 'secre'
+
+Expected: "secre"
+Received: "Test provider returned HTTP 401: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsecre"
+
+ ❯ src/lib/ai.test.ts:219:32
+    217|     const result = await provider.testConnection();
+    218|     expect(result.ok).toBe(false);
+    219|     expect(result.message).not.toContain("secre");
+       |                                ^
+    220|   });
+    221|   it("maps every provider type to an adapter", () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  23:50:52
+   Duration  319ms (transform 49ms, setup 0ms, import 98ms, tests 33ms, environment 0ms)
+

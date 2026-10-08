@@ -19,6 +19,7 @@ export function ProposedActionCard({ action }: { action: ProposedAction }) {
             ) : null}
           </div>
           <h3 className="mt-3 text-xl font-semibold text-ink">{action.affectedItem ?? action.sourceLabel}</h3>
+          {action.affectedItem ? <p className="mt-1 font-mono text-xs text-muted">source {action.sourceLabel}</p> : null}
           <p className="mt-2 text-sm leading-6 text-graphite">{action.reason}</p>
         </div>
       </div>

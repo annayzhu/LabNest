@@ -1,0 +1,122 @@
+{
+  "sha": "dd18fb677b616abd71058e9ce0d22705a59349ce",
+  "base": "http://localhost:3338",
+  "at": "2026-10-08T15:43:05.163Z",
+  "synthetic": true,
+  "liveProviders": false,
+  "checks": [
+    {
+      "name": "chromium: master off blocks generation and connection tests",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: UI connection, encrypted save and blank-key edit",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: real entry button saves pending only and stale deletion is blocked",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: concurrent replay saves once and calls the model once",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: foreign/missing origin and text/plain never call the model",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: invalid, oversized and disallowed output saves nothing; errors hide credentials",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: empty actions replay without duplicate audit or suggestions",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: changed source during generation rejects publishing",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: deleted source during generation saves no orphan",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: explicit workbench text returns drafts without database writes",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: anthropic through real Settings and HTTP adapter",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: dify through real Settings and HTTP adapter",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: provider disable and delete via real Settings",
+      "status": "passed"
+    },
+    {
+      "name": "chromium: mobile HTTP UUID fallback and pending save",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: master off blocks generation and connection tests",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: UI connection, encrypted save and blank-key edit",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: real entry button saves pending only and stale deletion is blocked",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: concurrent replay saves once and calls the model once",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: foreign/missing origin and text/plain never call the model",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: invalid, oversized and disallowed output saves nothing; errors hide credentials",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: empty actions replay without duplicate audit or suggestions",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: changed source during generation rejects publishing",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: deleted source during generation saves no orphan",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: explicit workbench text returns drafts without database writes",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: anthropic through real Settings and HTTP adapter",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: dify through real Settings and HTTP adapter",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: provider disable and delete via real Settings",
+      "status": "passed"
+    },
+    {
+      "name": "webkit: mobile HTTP UUID fallback and pending save",
+      "status": "passed"
+    }
+  ],
+  "failures": []
+}

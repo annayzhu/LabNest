@@ -23,7 +23,7 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 - Search page and `/api/search` endpoint across notes, experiments, protocols, entities, samples, inventory, results, purchases, procurement quote lines, and sequences.
 - Attachments page with local file upload storage, metadata capture, record links, and download endpoint.
 - Export page with database-backed CSV exports for inventory, results, and entities, JSON protocol export, and a metadata backup snapshot.
-- Optional AI workbench with a database-backed master switch that is off by default.
+- Optional AI workbench with a database-backed master switch that is off by default. Connected adapters for Dify apps (ZJU aihub), OpenAI-compatible endpoints (Qwen, vLLM, Ollama), OpenAI, and Anthropic turn entry text into reviewable proposed actions; API keys are stored encrypted with `LABNEST_AI_ENCRYPTION_KEY`. Manual copy-paste mode remains available.
 - Versioned Tools directory for standalone qPCR/CNV planning and analysis applications.
 - Prisma 7 schema for PostgreSQL, Docker Compose, and seed data.
 - Unit tests for protocol consumption calculation, inventory transaction logic, procurement inquiry conversion, sequence utilities, and manual AI response parsing.
@@ -46,7 +46,7 @@ LabNest is a low-cost, high-quality personal lab record tool for individual rese
 - Sample lifecycle events should capture provenance such as aliquot, store, thaw, consume, QC, discard, and result-link events without adding a hospital-grade approval workflow.
 - Attachment binaries remain in local storage; database backups export attachment metadata and storage paths, not embedded binary payloads.
 - Literature management should remain external. LabNest stores Zotero/EndNote connector configuration and citation links, not a full embedded literature database.
-- ChatGPT/Claude web subscriptions use manual copy-paste mode. LabNest does not automate browser login, scrape subscription pages, or require API keys.
+- ChatGPT/Claude web subscriptions use manual copy-paste mode. LabNest does not automate browser login or scrape subscription pages. Connected providers are optional, configured per deployment in Settings, and only receive the entry text the user explicitly submits.
 - Demo records are not biological conclusions.
 
 ## Local Development
@@ -91,7 +91,9 @@ The default 柴染棕 theme retains the canonical 梧枝绿 `#69A794` as its pro
 - `src/lib/attachments.ts` - local attachment root, filename, and path safety helpers.
 - `src/lib/search.ts` - typed demo search index used by the search page.
 - `src/lib/export.ts` - CSV and download response helpers.
-- `src/lib/ai.ts` - manual copy-paste AI provider boundary and proposed-action parsing.
+- `src/lib/ai.ts` - AI provider adapters (manual copy-paste, OpenAI-compatible, Anthropic, Dify) and proposed-action parsing.
+- `src/lib/ai-server.ts` - resolves the configured provider on the server and decrypts credentials per request.
+- `src/lib/ai-crypto.ts` - AES-256-GCM helpers for stored provider credentials.
 - `src/lib/tool-manifest.ts` - versioned external experimental-tool registry.
 - `src/lib/sequence.ts` - lightweight sequence utilities.
 - `src/lib/demo-data.ts` - V1 demo data used by the UI.
@@ -109,5 +111,4 @@ The default 柴染棕 theme retains the canonical 梧枝绿 `#69A794` as its pro
 - Add action handlers behind the simplified UI surfaces, then restore only the buttons that perform real work.
 - Expand exports with Markdown/PDF report views and scheduled backup rotation.
 - Expand database-backed full-text search, saved filters, and tag facet counts.
-- Implement encrypted API-key persistence and real provider adapters only if API-key mode is needed later.
 - Implement Zotero/EndNote connector adapters for citation lookup and linked attachments.

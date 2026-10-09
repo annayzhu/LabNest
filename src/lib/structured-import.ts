@@ -27,7 +27,7 @@ import type { ParsedStructuredFile } from "@/lib/structured-files";
 import { structuredModules, type StructuredModuleKey } from "@/lib/structured-modules";
 import { parseTags } from "@/lib/tags";
 import { decideProtocolImportState, separateLegacyImportWarnings, type ProtocolImportDecision } from "@/lib/protocol-import-state";
-import { mergeExtraction, verifyAcceptedExtraction, type AcceptedExtraction } from "./protocol-extraction";
+import { mergeExtractionDocument, verifyAcceptedExtraction, type AcceptedExtraction } from "./protocol-extraction";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
 
 export type StructuredImportRowPreview = {
@@ -556,11 +556,12 @@ export async function commitStructuredImport(
         if (data.availability !== decision.importedAvailability || data.reviewStage !== decision.importedReviewStage || JSON.stringify(data.importDecision) !== JSON.stringify(decision)) throw new Error("The Protocol import decision changed. Preview it again.");
         const humanCode = data.humanCode ?? await reserveRecordCode(tx, "protocol");
         const legacy = separateLegacyImportWarnings(data.document.importWarnings);
-        const importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
+        let importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
         const heuristic = projectProtocolDocument(data.document);
         const accepted = aiExtractions.find((entry) => entry.proposal.rowIndex === row.index);
         const acceptedItems = accepted ? verifyAcceptedExtraction(accepted, parsed.checksum, row.index) : [];
-        const merged = acceptedItems.length ? mergeExtraction(heuristic, acceptedItems) : undefined;
+        const merged = acceptedItems.length ? mergeExtractionDocument(importedDocument, acceptedItems) : undefined;
+        if (merged) importedDocument = merged.document;
         const projection = merged ? { ...heuristic, steps: merged.steps, consumptionRules: merged.consumptionRules, resultTemplates: merged.resultTemplates } : heuristic;
         const aiAudit = accepted && merged ? {
           provider: accepted.proposal.provider,

@@ -16,16 +16,16 @@
   10:7  warning  'entityTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
 
 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010/src/lib/protocol-document.ts
-  424:9  warning  'stepSection' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  430:9  warning  'stepSection' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010/src/lib/run-materials.ts
   23:19  warning  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010/src/lib/structured-import.ts
   442:38  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
-  619:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
-  619:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
-  619:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  620:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  620:34  warning  '__' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  620:50  warning  '___' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 ✖ 12 problems (0 errors, 12 warnings)
 

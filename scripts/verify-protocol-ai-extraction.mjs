@@ -169,6 +169,7 @@ try {
       { proposal: tampered, token: signed.token, acceptedIds: ["consumption-1"] },
       { proposal: { ...signed.proposal, rowIndex: 3 }, token: signed.token, acceptedIds: ["parameter-1"] },
       { proposal: signed.proposal, token: signed.token, acceptedIds: ["parameter-4"] },
+      { proposal: signed.proposal, token: signed.token, acceptedIds: ["consumption-1"] },
     ]) {
       const response = await confirm([attempt]);
       assert.equal(response.status(), 400, await response.text());
@@ -228,6 +229,23 @@ try {
     assert.equal(log.protocolImport.ai.provider, "Extraction fixture");
     assert.equal(log.protocolImport.ai.accepted.length, 10);
     assert(log.protocolImport.ai.rejected.includes("consumption-3"));
+  });
+
+  await check("canonical readback: AI fields survive opening the editor and saving again", async () => {
+    const before = (await db.query('SELECT * FROM "ProtocolVersion" WHERE "sourceFileName"=$1', [fixtureName])).rows[0];
+    assert(before.contentJson.sections.find(s => s.key === "consumption_rules").blocks.some(b => b.type === "table" && b.rows.some(r => r.includes("1.5 * well_count * (1 + extra_fraction)"))));
+    await page.goto(`${base}/protocols/${before.protocolId}/versions/${before.id}/edit`, { waitUntil: "networkidle" });
+    const savedDocument = JSON.parse(await page.locator('input[name="contentJson"]').inputValue());
+    assert(savedDocument.sections.find(s => s.key === "result_templates").blocks.some(b => b.resultTemplate?.fields.some(f => f.key === "gfp_positive_percent")));
+    await page.screenshot({ path: `${evidenceDir}/imported-protocol-editor.png`, fullPage: true });
+    await page.getByRole("button", { name: /Save Protocol/ }).click();
+    await page.waitForURL(url => !url.pathname.endsWith("/edit"), { timeout: 60000 });
+    const after = (await db.query('SELECT * FROM "ProtocolVersion" WHERE id=$1', [before.id])).rows[0];
+    assert.deepEqual(after.parametersJson, before.parametersJson);
+    assert.deepEqual(after.consumptionRulesJson, before.consumptionRulesJson);
+    assert.deepEqual(after.resultTemplatesJson, before.resultTemplatesJson);
+    assert.equal(after.stepsJson[0].requires_confirmation, false);
+    assert.equal(after.stepsJson[3].allows_deviation, false);
   });
 
   await check("imported parameters drive the consumption calculation", async () => {

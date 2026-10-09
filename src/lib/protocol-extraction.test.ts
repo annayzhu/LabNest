@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createEmptyProtocolDocument, projectProtocolDocument } from "./protocol-document";
+import { createEmptyProtocolDocument, normalizeProtocolDocument, projectProtocolDocument, upgradeProtocolDocumentForEditing } from "./protocol-document";
 import {
   MAX_CONTEXT_CHARS,
   buildExtractionContext,
   buildExtractionPrompt,
   checkProposal,
   mergeExtraction,
+  mergeExtractionDocument,
   parseAcceptedExtractions,
   parseRawProposal,
   signProposal,
@@ -19,7 +20,7 @@ function fixture() {
   const section = (key: string) => document.sections.find((item) => item.key === key)!;
   section("material").blocks = [
     { id: "materials", type: "table", rows: [["Name", "Unit"], ["Opti-MEM", "µL"], ["Lipofectamine 3000", "µL"]] },
-    { id: "photo", type: "media", url: "/api/attachments/secret-image", mediaKind: "image" } as never,
+    { id: "photo", type: "media", url: "/api/attachments/secret-image", mediaType: "image" },
   ];
   section("steps").blocks = [
     { id: "s1", type: "heading", text: "1. Seed cells" },
@@ -166,4 +167,74 @@ describe("signing and merge", () => {
     expect(template.fields.map((field) => field.key)).toEqual(["gfp_positive"]);
     expect(merged.counts).toEqual({ parameters: 1, consumptionRules: 2, stepAttributes: 1, resultFields: 1 });
   });
+});
+
+
+describe("reviewed extraction integrity", () => {
+  it("rejects wrong default types and select values outside options", () => {
+    const { context, projection } = fixture();
+    const parameters = [
+      { name: "boolean_value", type: "boolean", default: "false" },
+      { name: "text_value", type: "text", default: 4 },
+      { name: "selected", type: "select", options: ["A", "B"], default: "C" },
+      { name: "numeric", type: "number", default: true },
+    ].map(p => ({ ...p, evidence: "Seed cells" }));
+    expect(checkProposal(parseRawProposal(JSON.stringify({ parameters })), context, projection).items.map(i => i.status)).toEqual(Array(4).fill("invalid"));
+  });
+
+  it("does not verify an evidence prefix with fabricated quantities or altered decimals", () => {
+    const { projection } = fixture();
+    for (const [source, quote] of [
+      ["Incubate the sample at room temperature for 10 minutes.", "Incubate the sample at room temperature for 900 minutes."],
+      ["Add 1.5 mL.", "Add 15 mL."],
+    ]) {
+      const raw = parseRawProposal(JSON.stringify({ parameters: [{ name: "dose", type: "number", default: 900, evidence: quote }] }));
+      expect(checkProposal(raw, { text: source }, projection).items[0].status).toBe("unmatched");
+    }
+  });
+
+  it("rejects the accepted subset when its formula parameter was deselected", () => {
+    const { context, projection } = fixture();
+    const { items, warnings } = checkProposal(parseRawProposal(JSON.stringify(modelOutput)), context, projection);
+    const signed = signProposal({ checksum: "subset", rowIndex: 0, provider: "test", model: null, items, warnings, truncated: false });
+    expect(() => verifyAcceptedExtraction({ ...signed, acceptedIds: ["consumption-1"] }, "subset", 0)).toThrow(/well_count/);
+    expect(() => verifyAcceptedExtraction({ ...signed, acceptedIds: ["unknown"] }, "subset", 0)).toThrow(/unknown/i);
+  });
+
+  it("replaces a selected same-template same-key field and leaves other templates alone", () => {
+    const { projection } = fixture();
+    projection.resultTemplates = [
+      { result_type: "Readout", fields: [{ key: "gfp", name: "GFP", type: "text", required: true }] },
+      { result_type: "Other", fields: [{ key: "gfp", name: "GFP", type: "text" }] },
+    ];
+    const merged = mergeExtraction(projection, [{ id: "r", kind: "result_field", status: "duplicate", evidence: "GFP", value: { template_title: "Readout", key: "gfp", label: "GFP", type: "number", unit: "%" } }]);
+    expect(merged.resultTemplates[0].fields[0]).toMatchObject({ type: "number", dataType: "number", unit: "%", required: true });
+    expect(merged.resultTemplates[1].fields[0].type).toBe("text");
+  });
+
+  it("persists accepted rules, step flags and result fields through canonical editor roundtrip without losing source blocks", () => {
+    const { document, context, projection } = fixture();
+    const checked = checkProposal(parseRawProposal(JSON.stringify(modelOutput)), context, projection);
+    const items = checked.items.filter(i => ["parameter-1", "consumption-1", "consumption-2", "step-1", "result-1"].includes(i.id));
+    const lipid = items.find(i => i.id === "consumption-1")!;
+    if (lipid.kind === "consumption_rule") lipid.value.requires_inventory_selection = true;
+    const merged = mergeExtractionDocument(document, items);
+    const saved = normalizeProtocolDocument(JSON.parse(JSON.stringify(upgradeProtocolDocumentForEditing(merged.document))))!;
+    const readback = projectProtocolDocument(saved);
+    expect(readback.consumptionRules).toEqual(merged.consumptionRules);
+    expect(readback.steps[0].requires_confirmation).toBe(false);
+    expect(readback.resultTemplates.at(-1)?.fields[0].key).toBe("gfp_positive");
+    expect(saved.sections.find(s => s.key === "material")).toEqual(document.sections.find(s => s.key === "material"));
+    expect(readback.steps.map(s => s.description)).toEqual(projection.steps.map(s => s.description));
+    expect(readback.executionNeedsReview).toBe(projection.executionNeedsReview);
+    expect(projectProtocolDocument(document).consumptionRules[0].formula).toBe("25 * 2");
+  });
+});
+
+
+it("preserves existing inventory selection when a rule proposal only changes its formula", () => {
+  const { document } = fixture();
+  document.sections.find(s => s.key === "consumption_rules")!.blocks = [{ id: "inventory", type: "table", rows: [["Material", "Formula", "Unit", "Requires inventory selection"], ["Buffer", "25", "µL", "true"]] }];
+  const merged = mergeExtractionDocument(document, [{ id: "rule", kind: "consumption_rule", status: "duplicate", evidence: "Buffer", value: { material_name: "Buffer", formula: "30", unit: "µL" } }]);
+  expect(merged.consumptionRules[0]).toEqual({ material_name: "Buffer", formula: "30", unit: "µL", requires_inventory_selection: true });
 });

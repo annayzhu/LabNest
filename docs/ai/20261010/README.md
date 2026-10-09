@@ -15,10 +15,25 @@ Studio has its own model settings, with a DeepSeek preset. LabNest's navigation 
 
 ## Verification status
 
-- PASS: TypeScript; lint (0 errors, 12 existing warnings); Shanghai and UTC unit tests (118 files / 606 tests each).
+- PASS: TypeScript; lint (0 errors, 12 existing warnings); Shanghai and UTC unit tests (118 files / 612 tests each).
 - PASS: synthetic DeepSeek model-list and chat requests reuse the compatible adapter and produce pending actions. See evidence/deepseek-green.log.
 - PENDING: current browser validation, merge, deployment and production readback. CI workflow protocol-ai-extraction.yml runs the existing isolated DOCX flow and also checks the preset fields before substituting a mock endpoint.
+- PASS: separate Next production webpack build, using versioned generated calculator assets.
 - Local canonical npm build was blocked by tsx's IPC socket permission; separate Next production build status will be recorded. Do not call the canonical build passed until CI or an authorized local rerun completes it.
 - NOT EXECUTED: real DeepSeek quality/speed, physical-phone validation and user trial. User will connect the real API.
 
 Earlier 2026-10-09 browser evidence uses the earlier code and a mock. It is retained as historical evidence, not proof of the current deployment.
+
+
+## Review fixes before release
+
+- Confirmed formulas are checked again using only accepted parameters; missing dependencies and unknown IDs reject the whole confirmation before creating a Protocol.
+- Parameter defaults must match their types and select options.
+- Evidence must match the complete quoted text after whitespace normalization; decimal points and signs remain significant. A match establishes that text exists, not that an AI inference is scientifically correct.
+- Accepted rules, result fields and step attributes now update the canonical rich document before generating database projections. Media/source blocks remain; unreviewed step ownership stays unconfirmed.
+- Same-template same-key result corrections replace the prior field; omitted inventory-selection attributes preserve the existing value.
+- Six new integrity regressions pass. Browser coverage now includes rejected dependency selections and edit/save/database readback, but has not run on this revision yet.
+
+## Execution environment block
+
+The automatic permission reviewer timed out twice for the Studio GitHub tree write and twice for local browser/server execution. No PR, merge or production change has occurred. This is not a security finding and not a functional pass. Unit tests and Next builds ran inside the permitted workspace. Resume from these local Git histories after runtime/GitHub write permissions are available; do not replace the original dirty worktrees.

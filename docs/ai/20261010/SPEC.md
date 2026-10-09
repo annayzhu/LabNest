@@ -9,3 +9,7 @@ Base: current main 54ffc66275f8c83a8c3dfd0fdafff769acf144f0. Protocol implementa
 - Regress protocol import security and selected-item persistence using an isolated database and synthetic data/mock responses. The user's real key is never part of tests or commits.
 - Keep Studio independently owned/deployed and opened through LabNest's existing link; do not pass data or keys in navigation.
 - Typecheck, lint, production build, two time zones and browser acceptance before merge; verify production data preservation and routes after deployment. Report missing evidence explicitly.
+
+## Additional review regressions
+
+Reject formula subsets lacking accepted dependencies and invalid parameter defaults; preserve canonical document roundtrips, precise evidence text, accepted field corrections and omitted inventory selection settings. Keep the source document/media and the execution-review gate.

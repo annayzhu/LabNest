@@ -1,0 +1,32 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010
+
+ ❯ src/lib/protocol-extraction.test.ts (14 tests | 1 failed) 28ms
+   × preserves existing inventory selection when a rule proposal only changes its formula 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > preserves existing inventory selection when a rule proposal only changes its formula
+AssertionError: expected { material_name: 'Buffer', …(2) } to deeply equal { material_name: 'Buffer', …(3) }
+
+- Expected
++ Received
+
+  {
+    "formula": "30",
+    "material_name": "Buffer",
+-   "requires_inventory_selection": true,
+    "unit": "µL",
+  }
+
+ ❯ src/lib/protocol-extraction.test.ts:239:38
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  01:37:27
+   Duration  332ms (transform 113ms, setup 0ms, import 171ms, tests 28ms, environment 0ms)
+

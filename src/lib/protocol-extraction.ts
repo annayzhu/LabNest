@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { AI_LIMITS, extractJsonPayload } from "./ai";
 import { evaluateFormula, type ProtocolParameterValues } from "./protocol";
-import { richTextPlainText, type ProtocolDocument, type projectProtocolDocument } from "./protocol-document";
-import { normalizeResultTemplate, stableResultKey } from "./result-templates";
+import { richTextPlainText, type ProtocolDocument, projectProtocolDocument } from "./protocol-document";
+import { normalizeResultTemplate, resultTemplateFieldsToRows, stableResultKey } from "./result-templates";
+import { protocolTableColumnIndex } from "./protocol-document";
+import { proposeExecutionRoles } from "./protocol-execution";
 import { signature } from "./structured-import-confirmation";
 import type { ConsumptionRule, ProtocolParameter, ProtocolStep, ResultFieldDataType, ResultTemplate } from "./types";
 
@@ -195,15 +197,11 @@ function extractJsonObject(text: string) {
 
 const squash = (value: string) => value.toLowerCase().normalize("NFKC").replace(/[\s\p{P}\p{S}]+/gu, "");
 
-/** Loose check that the quoted evidence comes from the document rather than the model. */
+/** Ignore spacing only: punctuation includes scientifically meaningful decimal/sign symbols. */
 function evidenceFound(quote: string, documentText: string) {
-  const needle = squash(quote);
-  if (!needle) return false;
-  const haystack = squash(documentText);
-  if (haystack.includes(needle)) return true;
-  // Models often trim or merge table cells; accept when most of a long quote is present in order.
-  const probe = needle.slice(0, Math.min(24, needle.length));
-  return needle.length >= 8 && haystack.includes(probe);
+  const normalize = (value: string) => value.normalize("NFKC").replace(/\s+/gu, "");
+  const needle = normalize(quote);
+  return Boolean(needle) && normalize(documentText).includes(needle);
 }
 
 export function checkProposal(raw: RawProposal, context: { text: string }, projection: Projection): { items: ExtractionItem[]; warnings: string[] } {
@@ -224,14 +222,15 @@ export function checkProposal(raw: RawProposal, context: { text: string }, proje
       ...(parameter.options?.length ? { options: parameter.options } : {}),
     };
     if (parameter.default !== undefined) {
-      const coerced = parameter.type === "number" ? Number(parameter.default) : parameter.default;
-      if (parameter.type === "number" && !Number.isFinite(coerced)) {
+      const valid = parameter.type === "number" ? typeof parameter.default === "number" && Number.isFinite(parameter.default)
+        : parameter.type === "boolean" ? typeof parameter.default === "boolean"
+        : typeof parameter.default === "string" && (parameter.type !== "select" || Boolean(parameter.options?.includes(parameter.default)));
+      if (!valid) {
         status = "invalid";
-        message = "Default value is not a number.";
-      } else {
-        value.default = coerced;
-      }
+        message = "Default value must match the parameter type and allowed options.";
+      } else value.default = parameter.default;
     }
+
     if (!FORMULA_IDENTIFIER.test(parameter.name)) {
       status = "invalid";
       message = "Name must use letters, digits, and underscores so formulas can reference it.";
@@ -403,6 +402,8 @@ export function verifyAcceptedExtraction(accepted: AcceptedExtraction, checksum:
   const chosen = proposal.items.filter((item) => wanted.has(item.id));
   const rejected = chosen.find((item) => item.status === "invalid");
   if (rejected) throw new Error(`An invalid AI item was selected (${rejected.id}). Clear it before importing.`);
+  if (chosen.length !== wanted.size) throw new Error("Unknown AI item selected. Run extraction again.");
+  validateAcceptedFormulas(chosen);
   return chosen;
 }
 
@@ -439,6 +440,20 @@ export function parseAcceptedExtractions(value: FormDataEntryValue | null): Acce
 // Merge
 // ---------------------------------------------------------------------------
 
+/** A rule must remain executable using only parameters the user actually accepted. */
+function validateAcceptedFormulas(items: ExtractionItem[]) {
+  const defaults: ProtocolParameterValues = {};
+  for (const item of items) if (item.kind === "parameter" && typeof item.value.default === "number") defaults[item.value.name] = item.value.default;
+  for (const item of items) if (item.kind === "consumption_rule") {
+    try {
+      const value = evaluateFormula(item.value.formula, defaults);
+      if (!Number.isFinite(value) || value < 0) throw new Error("Quantity must be finite and non-negative.");
+    } catch (error) {
+      throw new Error(`Cannot accept ${item.value.material_name}: ${error instanceof Error ? error.message : "invalid formula"}. Select its required parameters or deselect this rule.`);
+    }
+  }
+}
+
 export type ExtractionMerge = {
   parameters: ProtocolParameter[];
   steps: ProtocolStep[];
@@ -449,6 +464,7 @@ export type ExtractionMerge = {
 
 /** Applies accepted items over the importer's own projection. Accepted items win over heuristic ones. */
 export function mergeExtraction(projection: Pick<Projection, "steps" | "consumptionRules" | "resultTemplates">, items: ExtractionItem[]): ExtractionMerge {
+  validateAcceptedFormulas(items);
   const parameters: ProtocolParameter[] = [];
   const consumptionRules = [...projection.consumptionRules];
   const steps = projection.steps.map((step) => ({ ...step }));
@@ -463,7 +479,7 @@ export function mergeExtraction(projection: Pick<Projection, "steps" | "consumpt
     }
     if (item.kind === "consumption_rule") {
       const index = consumptionRules.findIndex((rule) => squash(rule.material_name) === squash(item.value.material_name));
-      if (index >= 0) consumptionRules[index] = item.value;
+      if (index >= 0) consumptionRules[index] = { ...consumptionRules[index], ...item.value };
       else consumptionRules.push(item.value);
       counts.consumptionRules += 1;
     }
@@ -479,7 +495,9 @@ export function mergeExtraction(projection: Pick<Projection, "steps" | "consumpt
       const field = { key: item.value.key, label: item.value.label, name: item.value.label, dataType: item.value.type, type: item.value.type, unit: item.value.unit, content: [] };
       const existing = resultTemplates.find((template) => squash(template.title ?? "") === titleKey || squash(template.result_type) === titleKey);
       if (existing) {
-        if (!existing.fields.some((candidate) => squash(fieldKey(candidate)) === squash(field.key))) existing.fields.push(field);
+        const index = existing.fields.findIndex((candidate) => squash(fieldKey(candidate)) === squash(field.key));
+        if (index < 0) existing.fields.push(field);
+        else existing.fields[index] = { ...existing.fields[index], ...field };
       } else {
         const created = newTemplates.get(titleKey) ?? { result_type: item.value.template_title, title: item.value.template_title, fields: [] };
         created.fields.push(field);
@@ -491,4 +509,87 @@ export function mergeExtraction(projection: Pick<Projection, "steps" | "consumpt
 
   const appended = [...newTemplates.values()].map((template, index) => normalizeResultTemplate(template, resultTemplates.length + index));
   return { parameters, steps, consumptionRules, resultTemplates: [...resultTemplates, ...appended], counts };
+}
+
+/** Update the canonical rich document; derived JSON is always projected from this source. */
+export function mergeExtractionDocument(source: ProtocolDocument, items: ExtractionItem[]) {
+  const original = projectProtocolDocument(source);
+  const merged = mergeExtraction(original, items);
+  const document = structuredClone(source);
+  const section = (key: string) => document.sections.find(s => s.key === key)!;
+  const usedIds = new Set(document.sections.flatMap(s => s.blocks.map(b => b.id)));
+  const id = (prefix: string) => {
+    let index = 1;
+    while (usedIds.has(`${prefix}-${index}`)) index += 1;
+    const value = `${prefix}-${index}`;
+    usedIds.add(value);
+    return value;
+  };
+
+  const attributes = items.filter(item => item.kind === "step_attribute");
+  if (attributes.length) {
+    const bySource = new Map(attributes.map(item => [original.steps.find(s => s.order === item.value.order)?.source_ref, item.value]));
+    section("steps").blocks = proposeExecutionRoles(document).map(block => {
+      const attr = block.execution?.role === "step" ? bySource.get(block.execution.stepId ?? block.id) : undefined;
+      if (!attr) return block;
+      return { ...block, execution: { ...block.execution!,
+        ...(attr.requires_confirmation !== undefined ? { requiresConfirmation: attr.requires_confirmation } : {}),
+        ...(attr.allows_deviation !== undefined ? { allowsDeviation: attr.allows_deviation } : {}),
+      } };
+    });
+    // Inferring ownership for storage must not silently confirm an unreviewed execution plan.
+    if (original.executionNeedsReview) document.executionConfirmed = false;
+  }
+
+  for (const item of items) if (item.kind === "consumption_rule") {
+    const blocks = section("consumption_rules").blocks;
+    let found = false;
+    for (const block of blocks) if (block.type === "table") {
+      const header = block.rows[0] ?? [];
+      const material = protocolTableColumnIndex(header, ["material", "name", "材料", "名称"], 0);
+      const formula = protocolTableColumnIndex(header, ["formula", "calculation", "公式", "计算"], 1);
+      const unit = protocolTableColumnIndex(header, ["unit", "单位"], 2);
+      let inventory = protocolTableColumnIndex(header, ["requiresinventoryselection", "选择库存"], -1);
+      for (let rowIndex = 1; rowIndex < block.rows.length; rowIndex += 1) {
+        const row = block.rows[rowIndex];
+        if (squash(row[material] ?? "") !== squash(item.value.material_name)) continue;
+        row[material] = item.value.material_name;
+        row[formula] = item.value.formula;
+        row[unit] = item.value.unit;
+        if (item.value.requires_inventory_selection !== undefined && inventory < 0) {
+          inventory = Math.max(...block.rows.map(r => r.length));
+          header[inventory] = "Requires inventory selection";
+        }
+        if (inventory >= 0 && item.value.requires_inventory_selection !== undefined) row[inventory] = String(item.value.requires_inventory_selection);
+        // Replace only edited cells' old rich text; keep source blocks and other styling/content.
+        for (const col of [material, formula, unit, ...(item.value.requires_inventory_selection !== undefined ? [inventory] : [])]) if (col >= 0 && block.cellRichContent?.[rowIndex]) block.cellRichContent[rowIndex][col] = null;
+        found = true;
+      }
+    }
+    if (!found) blocks.push({ id: id("ai-consumption"), type: "table", rows: [
+      ["Material", "Formula", "Unit", "Requires inventory selection"],
+      [item.value.material_name, item.value.formula, item.value.unit, item.value.requires_inventory_selection === undefined ? "" : String(item.value.requires_inventory_selection)],
+    ] });
+  }
+
+  const resultItems = items.filter(item => item.kind === "result_field");
+  const changedTitles = new Set(resultItems.map(item => squash(item.value.template_title)));
+  if (changedTitles.size) {
+    const blocks = section("result_templates").blocks;
+    let index = 0;
+    for (const block of blocks) if (block.type === "table" && block.rows.length > 1) {
+      const template = merged.resultTemplates[index++];
+      if (template && (changedTitles.has(squash(template.title ?? "")) || changedTitles.has(squash(template.result_type)))) {
+        block.resultTemplate = normalizeResultTemplate(template);
+        block.caption = template.result_type;
+        block.rows = resultTemplateFieldsToRows(normalizeResultTemplate(template));
+      }
+    }
+    for (const template of merged.resultTemplates.slice(original.resultTemplates.length)) blocks.push({
+      id: id("ai-result-template"), type: "table", caption: template.result_type,
+      resultTemplate: template, rows: resultTemplateFieldsToRows(template),
+    });
+  }
+  const projection = projectProtocolDocument(document);
+  return { ...merged, ...projection, document };
 }

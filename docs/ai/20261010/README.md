@@ -19,7 +19,7 @@ Studio has its own model settings, with a DeepSeek preset. LabNest's navigation 
 - PASS: synthetic DeepSeek model-list and chat requests reuse the compatible adapter and produce pending actions. See evidence/deepseek-green.log.
 - PENDING: current browser validation, merge, deployment and production readback. CI workflow protocol-ai-extraction.yml runs the existing isolated DOCX flow and also checks the preset fields before substituting a mock endpoint.
 - PASS: separate Next production webpack build, using versioned generated calculator assets.
-- Local canonical npm build was blocked by tsx's IPC socket permission; separate Next production build status will be recorded. Do not call the canonical build passed until CI or an authorized local rerun completes it.
+- Local canonical npm build was blocked by tsx's IPC socket permission; separate Next production webpack build passed (evidence/next-build.log). Do not call the canonical build passed until CI or an authorized local rerun completes it.
 - NOT EXECUTED: real DeepSeek quality/speed, physical-phone validation and user trial. User will connect the real API.
 
 Earlier 2026-10-09 browser evidence uses the earlier code and a mock. It is retained as historical evidence, not proof of the current deployment.

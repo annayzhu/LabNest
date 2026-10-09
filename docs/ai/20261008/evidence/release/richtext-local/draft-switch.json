@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "C04 record 0 unsaved body/image recovered and saved to its own record",
+      "status": "通过"
+    },
+    {
+      "name": "C04 record 1 unsaved body/image recovered and saved to its own record",
+      "status": "通过"
+    }
+  ]
+}

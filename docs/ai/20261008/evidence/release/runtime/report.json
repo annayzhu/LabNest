@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-08T16:38:08.359Z",
+  "physicalPhone": false,
+  "checks": [
+    {
+      "engine": "chromium",
+      "base": "http://localhost:3001",
+      "health": "passed",
+      "settings": "passed",
+      "aiOff": "passed",
+      "calculator": "passed"
+    },
+    {
+      "engine": "chromium",
+      "base": "http://192.168.0.102:3001",
+      "health": "passed",
+      "settings": "passed",
+      "aiOff": "passed",
+      "calculator": "passed"
+    },
+    {
+      "engine": "webkit",
+      "base": "http://localhost:3001",
+      "health": "passed",
+      "settings": "passed",
+      "aiOff": "passed",
+      "calculator": "passed"
+    },
+    {
+      "engine": "webkit",
+      "base": "http://192.168.0.102:3001",
+      "health": "passed",
+      "settings": "passed",
+      "aiOff": "passed",
+      "calculator": "passed"
+    }
+  ]
+}

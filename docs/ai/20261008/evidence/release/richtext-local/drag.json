@@ -1,0 +1,28 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "B13 native internal drag",
+      "status": "通过",
+      "nodes": 2,
+      "newUploads": 0
+    },
+    {
+      "name": "B14 drag undo/redo",
+      "status": "通过"
+    },
+    {
+      "name": "B15 same-position drag",
+      "status": "通过"
+    },
+    {
+      "name": "B15 invalid outside drop and Escape cancellation",
+      "status": "通过"
+    },
+    {
+      "name": "B18 390px equivalent move controls 10 repetitions with undo/redo",
+      "status": "通过",
+      "physicalKeyboard": "未执行"
+    }
+  ]
+}

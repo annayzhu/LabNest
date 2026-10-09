@@ -1,0 +1,226 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.release
+#1 transferring dockerfile: 361B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/labnest-app:ai-7761bc0c
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 304B done
+#3 DONE 0.0s
+
+#4 [1/4] FROM docker.io/library/labnest-app:ai-7761bc0c@sha256:cf126a3a5cb5871345ea3be15cecd180bdae236e71286a0b046eebaec1de9aa3
+#4 resolve docker.io/library/labnest-app:ai-7761bc0c@sha256:cf126a3a5cb5871345ea3be15cecd180bdae236e71286a0b046eebaec1de9aa3 0.0s done
+#4 DONE 0.2s
+
+#5 [2/4] WORKDIR /app
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 443.34MB 4.1s done
+#6 DONE 4.1s
+
+#7 [3/4] COPY . .
+#7 DONE 1.9s
+
+#8 [4/4] RUN rm -rf .next && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/labnest_ai_provider_acceptance_20261008 LABNEST_TSCONFIG_PATH=tsconfig.calculator.json npm run build
+#8 0.451 
+#8 0.451 > labnest@0.1.0 build
+#8 0.451 > node scripts/build-calculator-icons.mjs && node scripts/build-calculator-solid-icons.mjs && node scripts/build-calculator-standalone.mjs && prisma generate && next build
+#8 0.451 
+#8 2.976 46 solid calculator icons generated
+#8 3.719 Loaded Prisma config from prisma.config.ts.
+#8 3.719 
+#8 3.771 Prisma schema loaded from prisma/schema.prisma.
+#8 4.449 
+#8 4.449 ✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 407ms
+#8 4.449 
+#8 4.745 ▲ Next.js 16.2.10 (Turbopack)
+#8 4.745 - Experiments (use with caution):
+#8 4.745   · serverActions
+#8 4.745 
+#8 4.780   Creating an optimized production build ...
+#8 14.45 Turbopack build encountered 1 warnings:
+#8 14.45 ./src/lib/result-datasets.ts:89:24
+#8 14.45 The file pattern (<dynamic> '/' <dynamic> '/' <dynamic> '-' <dynamic> | <dynamic> '/' <dynamic> '-' <dynamic> | <dynamic> '/' <dynamic> '-' <dynamic> | <dynamic> '-' <dynamic>) matches 12035 files in [project]/
+#8 14.45   [90m87 |[0m ....name);
+#8 14.45   [90m88 |[0m ...
+#8 14.45 [31m[1m>[0m [90m89 |[0m ...ullYear()), [33mString[0m(now.getUTCMonth() + [35m1[0m).padStart([35m2[0m, [32m"0"[0m), [32m`[0m${randomUUID()[32m}-[0m${safeAtta...
+#8 14.45   [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+#8 14.45   [90m90 |[0m ...ath);
+#8 14.45   [90m91 |[0m ...ve: [36mtrue[0m });
+#8 14.45   [90m92 |[0m ...
+#8 14.45 
+#8 14.45 Overly broad patterns can lead to build performance issues and over bundling.
+#8 14.45 
+#8 14.45 Import trace:
+#8 14.45   App Route:
+#8 14.45     ./src/lib/result-datasets.ts
+#8 14.45     ./src/app/api/results/datasets/[id]/route.ts
+#8 14.45 
+#8 14.45 
+#8 14.47 ✓ Compiled successfully in 9.5s
+#8 14.47   Running TypeScript ...
+#8 30.96   Finished TypeScript in 16.5s ...
+#8 30.96   Collecting page data using 13 workers ...
+#8 32.08   Generating static pages using 13 workers (0/80) ...
+#8 32.18   Generating static pages using 13 workers (20/80) 
+#8 32.22   Generating static pages using 13 workers (40/80) 
+#8 32.24   Generating static pages using 13 workers (60/80) 
+#8 32.30 ✓ Generating static pages using 13 workers (80/80) in 218ms
+#8 32.31   Finalizing page optimization ...
+#8 32.44 
+#8 32.46 Route (app)
+#8 32.46 ┌ ƒ /
+#8 32.46 ├ ƒ /_not-found
+#8 32.46 ├ ƒ /actions
+#8 32.46 ├ ƒ /actions/manual
+#8 32.46 ├ ƒ /api/ai/generate
+#8 32.46 ├ ƒ /api/ai/manual/parse
+#8 32.46 ├ ƒ /api/ai/manual/prompt
+#8 32.46 ├ ƒ /api/ai/providers/[id]/test
+#8 32.46 ├ ƒ /api/attachments
+#8 32.46 ├ ƒ /api/attachments/[id]
+#8 32.46 ├ ƒ /api/attachments/package
+#8 32.46 ├ ƒ /api/entries
+#8 32.46 ├ ƒ /api/entries/[id]
+#8 32.46 ├ ƒ /api/entries/[id]/assignment
+#8 32.46 ├ ƒ /api/experiments/[id]
+#8 32.46 ├ ƒ /api/experiments/[id]/copy
+#8 32.46 ├ ƒ /api/experiments/[id]/materials
+#8 32.46 ├ ƒ /api/experiments/[id]/steps/order
+#8 32.46 ├ ƒ /api/exports/backup.json
+#8 32.46 ├ ƒ /api/exports/entities.csv
+#8 32.46 ├ ƒ /api/exports/inventory.csv
+#8 32.46 ├ ƒ /api/exports/protocols.json
+#8 32.46 ├ ƒ /api/exports/results.csv
+#8 32.46 ├ ƒ /api/health
+#8 32.46 ├ ƒ /api/inventory/[id]/containers
+#8 32.46 ├ ƒ /api/mobile/calculations
+#8 32.46 ├ ƒ /api/mobile/inventory-transactions
+#8 32.46 ├ ƒ /api/mobile/measurements
+#8 32.46 ├ ƒ /api/mobile/step-completions
+#8 32.46 ├ ƒ /api/protocols/[id]/versions/[versionId]/docx
+#8 32.46 ├ ƒ /api/protocols/[id]/versions/[versionId]/json
+#8 32.46 ├ ƒ /api/protocols/relevant-items
+#8 32.46 ├ ƒ /api/protocols/template/docx
+#8 32.46 ├ ƒ /api/purchases
+#8 32.46 ├ ƒ /api/purchases/[id]
+#8 32.46 ├ ƒ /api/purchases/export
+#8 32.46 ├ ƒ /api/purchases/quotes
+#8 32.46 ├ ƒ /api/reports/[id]/markdown
+#8 32.46 ├ ƒ /api/research-plans/[id]/relations
+#8 32.46 ├ ƒ /api/results/[id]/datasets
+#8 32.46 ├ ƒ /api/results/datasets/[id]
+#8 32.46 ├ ƒ /api/search
+#8 32.46 ├ ƒ /api/sequences/export
+#8 32.46 ├ ƒ /api/sequences/template
+#8 32.46 ├ ƒ /api/structured-export/[module]
+#8 32.46 ├ ƒ /api/structured-import/[module]/confirm
+#8 32.46 ├ ƒ /api/structured-import/[module]/preview
+#8 32.46 ├ ƒ /api/structured-import/[module]/template
+#8 32.46 ├ ƒ /attachments
+#8 32.46 ├ ƒ /attachments/[id]
+#8 32.46 ├ ƒ /entities
+#8 32.46 ├ ƒ /entities/new
+#8 32.46 ├ ƒ /entries
+#8 32.46 ├ ƒ /entries/[id]
+#8 32.46 ├ ƒ /entries/[id]/edit
+#8 32.46 ├ ƒ /entries/new
+#8 32.46 ├ ƒ /experiments
+#8 32.46 ├ ƒ /experiments/[id]
+#8 32.46 ├ ƒ /experiments/[id]/edit
+#8 32.46 ├ ƒ /experiments/[id]/run
+#8 32.46 ├ ƒ /experiments/export
+#8 32.46 ├ ƒ /experiments/import
+#8 32.46 ├ ƒ /experiments/new
+#8 32.46 ├ ƒ /exports
+#8 32.46 ├ ƒ /inventory
+#8 32.46 ├ ƒ /inventory/[id]
+#8 32.46 ├ ƒ /inventory/[id]/edit
+#8 32.46 ├ ƒ /inventory/export
+#8 32.46 ├ ƒ /inventory/import
+#8 32.46 ├ ƒ /inventory/locations
+#8 32.46 ├ ƒ /inventory/new
+#8 32.46 ├ ƒ /projects
+#8 32.46 ├ ƒ /projects/[id]
+#8 32.46 ├ ƒ /projects/[id]/edit
+#8 32.46 ├ ƒ /projects/export
+#8 32.46 ├ ƒ /projects/import
+#8 32.46 ├ ƒ /projects/new
+#8 32.46 ├ ƒ /protocol-run
+#8 32.46 ├ ƒ /protocols
+#8 32.46 ├ ƒ /protocols/[id]
+#8 32.46 ├ ƒ /protocols/[id]/adapt
+#8 32.46 ├ ƒ /protocols/[id]/versions/[versionId]/edit
+#8 32.46 ├ ƒ /protocols/export
+#8 32.46 ├ ƒ /protocols/import
+#8 32.46 ├ ƒ /protocols/new
+#8 32.46 ├ ƒ /purchases
+#8 32.46 ├ ƒ /purchases/[id]
+#8 32.46 ├ ƒ /purchases/import
+#8 32.46 ├ ƒ /purchases/new
+#8 32.46 ├ ƒ /purchases/school-template
+#8 32.46 ├ ƒ /records
+#8 32.46 ├ ƒ /reports
+#8 32.46 ├ ƒ /reports/[id]
+#8 32.46 ├ ƒ /reports/[id]/edit
+#8 32.46 ├ ƒ /reports/export
+#8 32.46 ├ ƒ /reports/import
+#8 32.46 ├ ƒ /reports/new
+#8 32.46 ├ ƒ /research-plans
+#8 32.46 ├ ƒ /research-plans/[id]
+#8 32.46 ├ ƒ /research-plans/[id]/edit
+#8 32.46 ├ ƒ /research-plans/export
+#8 32.46 ├ ƒ /research-plans/import
+#8 32.46 ├ ƒ /research-plans/new
+#8 32.46 ├ ƒ /results
+#8 32.46 ├ ƒ /results/[id]
+#8 32.46 ├ ƒ /results/[id]/edit
+#8 32.46 ├ ƒ /results/export
+#8 32.46 ├ ƒ /results/import
+#8 32.46 ├ ƒ /results/new
+#8 32.46 ├ ƒ /samples
+#8 32.46 ├ ƒ /search
+#8 32.46 ├ ƒ /sequences
+#8 32.46 ├ ƒ /sequences/[id]
+#8 32.46 ├ ƒ /sequences/[id]/edit
+#8 32.46 ├ ƒ /sequences/collections
+#8 32.46 ├ ƒ /sequences/collections/[id]
+#8 32.46 ├ ƒ /sequences/collections/[id]/edit
+#8 32.46 ├ ƒ /sequences/collections/export
+#8 32.46 ├ ƒ /sequences/collections/new
+#8 32.46 ├ ƒ /sequences/export
+#8 32.46 ├ ƒ /sequences/import
+#8 32.46 ├ ƒ /sequences/new
+#8 32.46 ├ ƒ /sequences/pairs/[id]
+#8 32.46 ├ ƒ /sequences/pairs/[id]/edit
+#8 32.46 ├ ƒ /sequences/workflows
+#8 32.46 ├ ƒ /sequences/workflows/[id]
+#8 32.46 ├ ƒ /sequences/workflows/new
+#8 32.46 ├ ƒ /settings
+#8 32.46 ├ ƒ /tools
+#8 32.46 ├ ƒ /tools/[toolId]
+#8 32.46 ├ ƒ /tools/calculator
+#8 32.46 ├ ƒ /tools/calculator/[calculatorId]
+#8 32.46 ├ ƒ /tools/visualization
+#8 32.46 └ ƒ /trash
+#8 32.46 
+#8 32.46 
+#8 32.46 ƒ  (Dynamic)  server-rendered on demand
+#8 32.46 
+#8 DONE 32.6s
+
+#9 exporting to image
+#9 exporting layers
+#9 exporting layers 10.4s done
+#9 exporting manifest sha256:68b565c14e516b985b9123f60772148c2412263116f7fe6ff192521b8b04953e done
+#9 exporting config sha256:55cec7d1c530127098682f739981a80f7bbe42a1a823b3375fb4703905b5b763 done
+#9 exporting attestation manifest sha256:178c337b390322c98ed24cc4d4705d2fda7663fe865c66ef1fac2085e38cf3f9 done
+#9 exporting manifest list sha256:a2e0ffbaea335463577d3fdd3abbe95d393dc825eb3844b4da0edaa2f42cc3ac 0.0s done
+#9 naming to docker.io/library/labnest-app:ai-87259882 done
+#9 unpacking to docker.io/library/labnest-app:ai-87259882
+#9 unpacking to docker.io/library/labnest-app:ai-87259882 2.5s done
+#9 DONE 13.0s

@@ -75,11 +75,12 @@ describe('main Calculator to saved plate preparation',()=>{
 });
 
 describe('one effective preparation per plate without deleting old inputs',()=>{
- it('invalidates generated summaries when removing or duplicating boards',()=>{
+ it('resolves summary scope against surviving physical boards, never copied cached rows',()=>{
   const ws=workspace.addPlate(workspace.createWorkspace());
   ws.latestLiquidSummary={groups:[{sources:ws.plates.map((p:{id:string})=>({plateId:p.id}))}]};
-  expect(workspace.removePlate(ws,ws.plates[1].id).latestLiquidSummary).toBeNull();
-  expect(workspace.duplicatePlate(ws,ws.plates[0].id).latestLiquidSummary).toBeNull();
+  const ids=ws.plates.map((p:{id:string})=>p.id);
+  expect(workspace.resolveSummaryPlates(workspace.removePlate(ws,ws.plates[1].id),ids).map((p:{id:string})=>p.id)).toEqual([ids[0]]);
+  expect(workspace.resolveSummaryPlates(workspace.duplicatePlate(ws,ws.plates[0].id),ids).map((p:{id:string})=>p.id)).toEqual(ids);
  });
  it('migrates multiple saved plans, preserves archive through JSON and excludes stale plans',()=>{
   const old={id:'old',name:'old recipe',updatedAt:'2026-01-01',input:{retain:'original'}};
@@ -90,7 +91,7 @@ describe('one effective preparation per plate without deleting old inputs',()=>{
   expect(migrated.latestLiquidSummary).toBeNull();
   const restored=workspace.normalizeWorkspace(JSON.parse(JSON.stringify(migrated)));
   expect(restored.plates[0].archivedLiquidPlans.find((p:{id:string})=>p.id==='old').input).toEqual({retain:'original'});
-  expect(workspace.usableLiquidPlan(stale)).toBe(false);
+  expect(workspace.usableLiquidPlan({liquidPlans:[stale]})).toBeNull();
   const published=workspace.publishLiquidPlan(restored.plates[0],{id:'replacement',name:'replacement'});
   expect(published.liquidPlans).toHaveLength(1);
   expect(published.liquidPlans[0].id).toBe('new');

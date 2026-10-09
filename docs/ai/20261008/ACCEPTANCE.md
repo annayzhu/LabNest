@@ -28,7 +28,7 @@ Repeatable commands: `npm run typecheck`, `npm run lint`, `TZ=Asia/Shanghai npm 
 - [x] Concurrent same-ID requests call the model once and persist once; later retry replays. Empty results also replay. Changes/deletion during a held model call return 409 without writes. A stale deletion dialog cannot delete an entry with AI suggestions.
 - [x] Foreign/missing Origin and text/plain requests are rejected before any model call. Malformed schema, 51 actions and types outside the requested subset return 422 without writes. An upstream error echoing the fake credential returns a redacted error.
 - [x] Workbench submits only explicit synthetic text and writes no suggestions. OpenAI-compatible, Anthropic and Dify paths verified through real Settings and local mock HTTP. Mobile UUID fallback works with crypto.randomUUID removed.
-- [ ] Exact PR head CI, merge and deployed runtime: pending at this report commit; final results in RELEASE.md.
+- [x] Exact PR head CI, merge and deployed runtime passed. Final versions, fixed-commit CI links, screenshots and unchanged-data checks: [RELEASE.md](RELEASE.md).
 
 Browser report: [28 checks, zero failures](evidence/browser/report.json); screenshots in the same directory. Unit/type/lint/build logs: [evidence/logs](evidence/logs). The first browser run stopped at a test selector that expected an exact label despite inline help text; corrected locator and complete rerun passed. This was not an application failure.
 

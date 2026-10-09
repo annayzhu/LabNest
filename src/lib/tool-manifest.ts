@@ -62,7 +62,7 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Plan independent multi-plate experiments, shared liquid preparation, and execution-ready Excel workbooks.",
     accepts: ["sample list", "one or more plate formats", "custom labels", "saved liquid recipes"],
     produces: ["multi-plate map", "shared liquid summary", "pipetting checklist", "XLSX workbook"],
-    launchUrl: "/tools/free-plate-layout/index.html?v=20261008-main-calculator",
+    launchUrl: "/tools/free-plate-layout/index.html?v=20261009-unified-release",
     external: false,
   },
   {

@@ -1,0 +1,12 @@
+[
+  {
+    "url": "http://localhost:3001/",
+    "status": 200,
+    "title": "LabNest"
+  },
+  {
+    "url": "http://192.168.0.102:3001/",
+    "status": 200,
+    "title": "LabNest"
+  }
+]

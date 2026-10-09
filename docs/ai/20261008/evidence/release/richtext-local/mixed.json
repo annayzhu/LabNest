@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "browser": "149.0.7827.55",
+  "checks": [
+    {
+      "name": "B12 S3 four originals + PDF + plain link + same image in two positions = five",
+      "status": "通过"
+    },
+    {
+      "name": "B20 removing local references preserves another document and original file",
+      "status": "通过"
+    },
+    {
+      "name": "C01/C11 S4 long Chinese document, lists, 8×12 table and 12 images survive save/readback",
+      "status": "通过"
+    }
+  ]
+}

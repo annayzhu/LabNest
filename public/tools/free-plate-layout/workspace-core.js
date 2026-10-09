@@ -30,6 +30,28 @@
     return { 6: {}, 12: {}, 24: {}, 96: {}, 384: {} };
   }
 
+  function normalizePlateName(value) {
+    return String(value ?? "").normalize("NFKC").trim().toLocaleLowerCase();
+  }
+
+  function plateNameConflict(workspace, candidate, excludePlateId = "") {
+    const normalizedCandidate = normalizePlateName(candidate);
+    if (!normalizedCandidate) return null;
+    return (workspace?.plates || []).find((plate) => plate.id !== excludePlateId && normalizePlateName(plate.name) === normalizedCandidate) || null;
+  }
+
+  function uniquePlateName(workspace, requestedName) {
+    const base = String(requestedName ?? "").trim().slice(0, 80) || "Untitled plate";
+    if (!plateNameConflict(workspace, base)) return base;
+    let suffix = 2;
+    while (true) {
+      const ending = ` ${suffix}`;
+      const candidate = `${base.slice(0, 80 - ending.length)}${ending}`;
+      if (!plateNameConflict(workspace, candidate)) return candidate;
+      suffix += 1;
+    }
+  }
+
   function normalizeDimensions(source) {
     const seen = new Set();
     const rows = Array.isArray(source) ? source : DEFAULT_DIMENSIONS;
@@ -51,29 +73,39 @@
     return result;
   }
 
-  // Same current/publish/stale contract as the independent planner. Historical inputs remain in JSON backups.
-  function usableLiquidPlan(plan) { return Boolean(plan) && !plan.stale && plan.status !== "stale" && (!plan.status || plan.status === "saved"); }
+  function normalizeLiquidPlan(plan) {
+    if (!plan || typeof plan !== "object" || Array.isArray(plan)) return null;
+    return { ...clone(plan), stale: plan.stale === true || plan.status === "stale", status: plan.stale === true || plan.status === "stale" ? "stale" : (plan.status || "saved") };
+  }
+
+  function liquidPlanTime(plan) {
+    const value = new Date(plan?.updatedAt || plan?.createdAt || 0).getTime();
+    return Number.isFinite(value) ? value : 0;
+  }
+
   function normalizeLiquidPlanState({ liquidPlan, liquidPlans, archivedLiquidPlans } = {}) {
-    const candidates = [liquidPlan, ...(Array.isArray(liquidPlans) ? liquidPlans : [])].filter(plan => plan && typeof plan === "object").map(plan => ({ ...clone(plan), stale: plan.stale === true || plan.status === "stale", status: plan.status || "saved" }));
-    const unique = [...new Map(candidates.map((plan, index) => [plan.id || `legacy-${index}`, plan])).values()];
-    unique.sort((a,b) => Number(usableLiquidPlan(b))-Number(usableLiquidPlan(a)) || (Date.parse(b.updatedAt || b.createdAt) || 0)-(Date.parse(a.updatedAt || a.createdAt) || 0));
-    const current = unique[0] || null;
-    const archived = [...(Array.isArray(archivedLiquidPlans) ? clone(archivedLiquidPlans) : []), ...unique.slice(1)];
-    return { liquidPlans: current ? [current] : [], archivedLiquidPlans: [...new Map(archived.filter(plan => plan && (!current?.id || plan.id !== current.id)).map((plan,index) => [plan.id || `archive-${index}`,plan])).values()], migrated: unique.length > 1 };
+    const candidates = [liquidPlan, ...(Array.isArray(liquidPlans) ? liquidPlans : [])].map(normalizeLiquidPlan).filter(Boolean);
+    const uniqueCandidates = [...new Map(candidates.map((plan, index) => [plan.id || `legacy-${index}`, plan])).values()];
+    uniqueCandidates.sort((left, right) => {
+      const leftCurrent = left.stale ? 0 : 1;
+      const rightCurrent = right.stale ? 0 : 1;
+      return rightCurrent - leftCurrent || liquidPlanTime(right) - liquidPlanTime(left) || String(right.id || "").localeCompare(String(left.id || ""));
+    });
+    const current = uniqueCandidates[0] || null;
+    const archived = [...(Array.isArray(archivedLiquidPlans) ? archivedLiquidPlans : []), ...uniqueCandidates.slice(1)]
+      .map(normalizeLiquidPlan).filter(Boolean);
+    const archivedUnique = [...new Map(archived.filter((plan) => !current || plan.id !== current.id).map((plan, index) => [plan.id || `archived-${index}`, plan])).values()];
+    return { current, archived: archivedUnique, migratedCount: Math.max(0, uniqueCandidates.length - 1) };
   }
-  function currentLiquidPlan(plate) { return plate?.liquidPlans?.[0] || null; }
-  function publishLiquidPlan(plate, plan) {
-    const next = clone(plate), current = currentLiquidPlan(next);
-    next.liquidPlans = [{ ...clone(plan), id: current?.id || plan.id || newId("liquid"), createdAt: current?.createdAt || plan.createdAt || new Date().toISOString(), stale: false, status: "saved" }];
-    return next;
-  }
-  function clearLiquidPlan(plate) { const next = clone(plate); next.liquidPlans = []; return next; }
 
   function createPlate({ id, name, plateSize = 24, dimensions, wells, colorDimension, calculationLog, calculationOutputs, liquidPlan, liquidPlans, archivedLiquidPlans } = {}) {
     const size = PLATE_SIZES.includes(Number(plateSize)) ? Number(plateSize) : 24;
     const normalizedDimensions = normalizeDimensions(dimensions);
     const maps = blankPlateMaps();
-    maps[size] = normalizeWellMap(wells?.[size] || wells);
+    const hasPlateMaps = wells && typeof wells === "object" && PLATE_SIZES.some((candidateSize) => wells[candidateSize] && typeof wells[candidateSize] === "object");
+    if (hasPlateMaps) PLATE_SIZES.forEach((candidateSize) => { maps[candidateSize] = normalizeWellMap(wells[candidateSize]); });
+    else maps[size] = normalizeWellMap(wells);
+    const planState = normalizeLiquidPlanState({ liquidPlan, liquidPlans, archivedLiquidPlans });
     return {
       id: typeof id === "string" && id ? id : newId(),
       name: typeof name === "string" && name.trim() ? name.trim().slice(0, 80) : `Plate ${size}`,
@@ -83,14 +115,16 @@
       colorDimension: normalizedDimensions.some((item) => item.id === colorDimension) ? colorDimension : (normalizedDimensions.find((item) => item.id === "treatment")?.id || normalizedDimensions[0]?.id || ""),
       calculationLog: Array.isArray(calculationLog) ? clone(calculationLog).slice(-50) : [],
       calculationOutputs: Array.isArray(calculationOutputs) ? clone(calculationOutputs) : [],
-      ...normalizeLiquidPlanState({ liquidPlan, liquidPlans, archivedLiquidPlans }),
+      liquidPlans: planState.current ? [planState.current] : [],
+      archivedLiquidPlans: planState.archived,
+      liquidPlanMigration: planState.migratedCount ? { archivedCount: planState.migratedCount, keptPlanName: planState.current?.name || planState.current?.recipeName || planState.current?.module || "Untitled liquid plan" } : null,
       updatedAt: new Date().toISOString(),
     };
   }
 
   function createWorkspace({ name = "未命名项目", plateSize = 24, plateName } = {}) {
     const first = createPlate({ name: plateName || "未命名孔板", plateSize });
-    return { version: 2, id: newId("workspace"), name: String(name).slice(0, 80), activePlateId: first.id, plates: [first], latestLiquidSummary: null, updatedAt: new Date().toISOString() };
+    return { version: 2, id: newId("workspace"), name: String(name).slice(0, 80), activePlateId: first.id, plates: [first], latestLiquidSummary: null, migrationNotices: [], updatedAt: new Date().toISOString() };
   }
 
   function hasLegacyContent(raw, size) {
@@ -113,6 +147,8 @@
       calculationOutputs: (raw.calculationOutputs || []).filter((item) => !item?.plateSize || Number(item.plateSize) === size),
       liquidPlans: (raw.liquidPlans || []).filter((item) => !item?.plateSize || Number(item.plateSize) === size),
     }));
+    const migrationNotices = plates.filter((plate) => plate.liquidPlanMigration).map((plate) => ({ plateId: plate.id, plateName: plate.name, ...plate.liquidPlanMigration }));
+    plates.forEach((plate) => { delete plate.liquidPlanMigration; });
     return {
       version: 2,
       id: newId("workspace"),
@@ -120,6 +156,7 @@
       activePlateId: plates[0].id,
       plates,
       latestLiquidSummary: null,
+      migrationNotices,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -132,21 +169,73 @@
       const normalized = createPlate({
         ...plate,
         id: typeof plate?.id === "string" && plate.id && !seen.has(plate.id) ? plate.id : `plate-${index + 1}-${newId("id")}`,
-        wells: plate?.plates?.[plate?.plateSize] || plate?.wells,
+        wells: plate?.plates || plate?.wells,
       });
       seen.add(normalized.id);
       return normalized;
     });
     if (!plates.length) plates.push(createPlate());
+    const migrationNotices = [...(Array.isArray(raw.migrationNotices) ? clone(raw.migrationNotices) : []), ...plates.filter((plate) => plate.liquidPlanMigration).map((plate) => ({ plateId: plate.id, plateName: plate.name, ...plate.liquidPlanMigration }))];
+    plates.forEach((plate) => { delete plate.liquidPlanMigration; });
     return {
       version: 2,
       id: typeof raw.id === "string" && raw.id ? raw.id : newId("workspace"),
       name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, 80) : "未命名项目",
       activePlateId: plates.some((plate) => plate.id === raw.activePlateId) ? raw.activePlateId : plates[0].id,
       plates,
-      latestLiquidSummary: !plates.some(plate => plate.migrated) && raw.latestLiquidSummary && typeof raw.latestLiquidSummary === "object" ? clone(raw.latestLiquidSummary) : null,
+      latestLiquidSummary: migrationNotices.length ? null : raw.latestLiquidSummary && typeof raw.latestLiquidSummary === "object" ? clone(raw.latestLiquidSummary) : null,
+      migrationNotices,
       updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(),
     };
+  }
+
+  function currentLiquidPlan(plate) {
+    return Array.isArray(plate?.liquidPlans) && plate.liquidPlans[0] ? plate.liquidPlans[0] : null;
+  }
+
+  function usableLiquidPlan(plate) {
+    const plan = currentLiquidPlan(plate);
+    return plan && !plan.stale && plan.status !== "stale" ? plan : null;
+  }
+
+  function publishLiquidPlan(plate, plan) {
+    const next = clone(plate);
+    const current = currentLiquidPlan(next);
+    const normalized = normalizeLiquidPlan({
+      ...plan,
+      id: current?.id || plan?.id || newId("liquid"),
+      createdAt: current?.createdAt || plan?.createdAt || new Date().toISOString(),
+      stale: false,
+      status: "saved",
+    });
+    next.liquidPlans = normalized ? [normalized] : [];
+    next.archivedLiquidPlans = Array.isArray(next.archivedLiquidPlans) ? next.archivedLiquidPlans : [];
+    return next;
+  }
+
+  function markLiquidPlanStale(plate) {
+    const next = clone(plate);
+    const current = currentLiquidPlan(next);
+    next.liquidPlans = current ? [{ ...current, stale: true, status: "stale" }] : [];
+    return next;
+  }
+
+  function clearLiquidPlan(plate) {
+    const next = clone(plate);
+    next.liquidPlans = [];
+    next.archivedLiquidPlans = Array.isArray(next.archivedLiquidPlans) ? next.archivedLiquidPlans : [];
+    return next;
+  }
+
+  function clearPlateLayout(plate) {
+    const next = markLiquidPlanStale(plate);
+    const calculatedDimensionIds = new Set((next.calculationOutputs || []).map((output) => output?.id).filter(Boolean));
+    next.plates = blankPlateMaps();
+    next.dimensions = (next.dimensions || []).filter((dimension) => !calculatedDimensionIds.has(dimension.id));
+    next.calculationLog = [];
+    next.calculationOutputs = [];
+    next.updatedAt = new Date().toISOString();
+    return next;
   }
 
   function activePlate(workspace) {
@@ -156,11 +245,10 @@
   function addPlate(workspace, options = {}) {
     const next = normalizeWorkspace(workspace);
     if (next.plates.length >= 24) throw new Error("A workspace supports at most 24 plates.");
-    const plate = createPlate(options);
+    const plate = createPlate({ ...options, name: uniquePlateName(next, options.name) });
     next.plates.push(plate);
     next.activePlateId = plate.id;
     next.updatedAt = new Date().toISOString();
-    next.latestLiquidSummary = null;
     return next;
   }
 
@@ -171,7 +259,7 @@
     if (!source) throw new Error("Source plate was not found.");
     const copiedWells = mode === "structure" ? {} : source.plates[source.plateSize];
     const plate = createPlate({
-      name: `${source.name} 副本`,
+      name: uniquePlateName(next, `${source.name} 副本`),
       plateSize: source.plateSize,
       dimensions: source.dimensions,
       wells: copiedWells,
@@ -184,7 +272,6 @@
     next.plates.splice(index + 1, 0, plate);
     next.activePlateId = plate.id;
     next.updatedAt = new Date().toISOString();
-    next.latestLiquidSummary = null;
     return next;
   }
 
@@ -195,7 +282,6 @@
     if (index < 0 || target < 0 || target >= next.plates.length) return next;
     [next.plates[index], next.plates[target]] = [next.plates[target], next.plates[index]];
     next.updatedAt = new Date().toISOString();
-    next.latestLiquidSummary = null;
     return next;
   }
 
@@ -207,8 +293,47 @@
     next.plates.splice(index, 1);
     if (next.activePlateId === plateId) next.activePlateId = next.plates[Math.min(index, next.plates.length - 1)].id;
     next.updatedAt = new Date().toISOString();
-    next.latestLiquidSummary = null;
     return next;
+  }
+
+  function importPlates(workspace, incomingPlates, { mode = "add", replacePlateId = "" } = {}) {
+    const source = normalizeWorkspace(workspace);
+    const replacing = mode === "replace";
+    const replaceIndex = replacing ? source.plates.findIndex((plate) => plate.id === replacePlateId) : -1;
+    if (replacing && replaceIndex < 0) return { ok: false, error: { code: "replace-plate-not-found", replacePlateId } };
+
+    const incoming = Array.isArray(incomingPlates) ? incomingPlates : [];
+    const retained = source.plates.filter((_, index) => index !== replaceIndex);
+    const availableCount = 24 - retained.length;
+    if (!incoming.length) return { ok: false, error: { code: "no-plates-to-import", incomingCount: 0, availableCount, maximumCount: 24 } };
+    if (incoming.length > availableCount) {
+      return { ok: false, error: { code: "plate-capacity-exceeded", incomingCount: incoming.length, availableCount, maximumCount: 24 } };
+    }
+
+    const nameWorkspace = { plates: [...retained] };
+    const renamed = [];
+    const prepared = incoming.map((plate, index) => {
+      const normalized = createPlate({ ...plate, id: undefined, wells: plate?.plates || plate?.wells });
+      const originalName = normalized.name;
+      normalized.name = uniquePlateName(nameWorkspace, originalName);
+      if (normalized.name !== originalName) renamed.push({ index, from: originalName, to: normalized.name });
+      nameWorkspace.plates.push(normalized);
+      return normalized;
+    });
+
+    if (replacing) {
+      prepared[0].id = replacePlateId;
+      source.plates.splice(replaceIndex, 1, ...prepared);
+    } else source.plates.push(...prepared);
+    source.activePlateId = prepared[0].id;
+    source.latestLiquidSummary = null;
+    source.updatedAt = new Date().toISOString();
+    return { ok: true, workspace: source, plates: prepared, renamed };
+  }
+
+  function resolveSummaryPlates(workspace, plateIds) {
+    const selectedIds = new Set(Array.isArray(plateIds) ? plateIds : []);
+    return (workspace?.plates || []).filter((plate) => selectedIds.has(plate.id));
   }
 
   const VOLUME_TO_UL = Object.freeze({ nL: 0.001, "µL": 1, uL: 1, mL: 1000, L: 1000000 });
@@ -218,11 +343,20 @@
       const factor = VOLUME_TO_UL[item.unit];
       const base = Number(item.baseVolume);
       if (!factor || !Number.isFinite(base) || base < 0 || !item.groupKey || !item.component) continue;
-      if (!groups.has(item.groupKey)) groups.set(item.groupKey, {
-        key: item.groupKey,
-        label: item.groupLabel || item.groupKey,
+      // Bind plate-local recipes to the current plate, including cloned plans.
+      const key = item.mergeScope === "plate" ? `${item.plateId}:${item.groupKey}` : item.groupKey;
+      if (!groups.has(key)) groups.set(key, {
+        key,
+        label: item.groupLabel || "",
+        module: item.module || "",
+        executionPlanVersion: item.executionPlanVersion || null,
+        compatibilityKey: item.compatibilityKey || "",
+        compatibilityProfile: item.compatibilityProfile ? clone(item.compatibilityProfile) : null,
+        operationCompatibilityKey: item.operationCompatibilityKey || item.compatibilityKey || "",
+        displayOrder: Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : Number.MAX_SAFE_INTEGER,
         tubeRole: item.tubeRole || "standard",
         tube: item.tube || "",
+        overagePolicy: item.overagePolicy === "none" ? "none" : "shared",
         cargoIdentity: item.cargoIdentity || "",
         recipeNames: new Set(),
         plates: new Map(),
@@ -230,7 +364,8 @@
         components: new Map(),
         warnings: [],
       });
-      const group = groups.get(item.groupKey);
+      const group = groups.get(key);
+      if (Number.isFinite(Number(item.displayOrder))) group.displayOrder = Math.min(group.displayOrder, Number(item.displayOrder));
       if (!group.plates.has(item.plateId)) group.plates.set(item.plateId, { plateId: item.plateId, plateName: item.plateName || item.plateId });
       if (item.planName) group.recipeNames.add(item.planName);
       const sourceKey = `${item.plateId}\u0000${item.planName || ""}\u0000${item.groupName || ""}`;
@@ -242,9 +377,18 @@
         scopeWellIds: Array.isArray(item.scopeWellIds) ? [...item.scopeWellIds] : [],
         protocolSteps: Array.isArray(item.protocolSteps) ? [...item.protocolSteps] : [],
         warnings: Array.isArray(item.warnings) ? [...item.warnings] : [],
+        displayOrder: Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : Number.MAX_SAFE_INTEGER,
+        direction: item.direction === "reverse" ? "reverse" : "forward",
+        preset: item.preset || "",
+        protocolMode: item.protocolMode || "preset",
+        finalVolumeUL: Number(item.finalVolumeUL) || 0,
+        complexVolumeUL: Number(item.complexVolumeUL) || 0,
+        cellMediumVolumeUL: Number(item.cellMediumVolumeUL) || 0,
+        incubationMinutes: item.incubationMinutes === null ? null : Number(item.incubationMinutes) || null,
+        preparation: item.preparation ? clone(item.preparation) : null,
       });
       const componentKey = item.componentKey || item.component;
-      const component = group.components.get(componentKey) || { name: item.component, baseVolume: 0, unit: "µL", perWellVolume: Number(item.perWellVolume) || 0, applyOverage: item.applyOverage !== false, perPlate: [] };
+      const component = group.components.get(componentKey) || { name: item.component, baseVolume: 0, unit: "µL", perWellVolume: Number(item.perWellVolume) || 0, applyOverage: item.applyOverage !== false, transferMode: item.transferMode, perPlate: [] };
       const volume = base * factor;
       component.baseVolume += volume;
       component.perPlate.push({ plateId: item.plateId, volume });
@@ -255,19 +399,28 @@
       groups: [...groups.values()].map((group) => ({
         key: group.key,
         label: group.label,
+        module: group.module,
+        executionPlanVersion: group.executionPlanVersion,
+        compatibilityKey: group.compatibilityKey,
+        compatibilityProfile: group.compatibilityProfile,
+        operationCompatibilityKey: group.operationCompatibilityKey,
+        displayOrder: group.displayOrder,
         tubeRole: group.tubeRole,
         tube: group.tube,
+        overagePolicy: group.overagePolicy,
         cargoIdentity: group.cargoIdentity,
         recipeNames: [...group.recipeNames],
         plates: [...group.plates.values()],
         sources: [...group.sources.values()],
         components: [...group.components.values()].map((component) => {
-          const preparedVolume = component.baseVolume * (component.applyOverage ? multiplier : 1);
+          const preparedVolume = component.baseVolume * (group.overagePolicy === "none" || !component.applyOverage ? 1 : multiplier);
           return {
             ...component,
             preparedVolume,
             containerCount: Number.isFinite(maxContainerVolume) && maxContainerVolume > 0 ? Math.max(1, Math.ceil(preparedVolume / maxContainerVolume)) : 1,
-            warning: (component.perWellVolume > 0 && component.perWellVolume < minPipetteVolume) || component.perPlate.some((item) => item.volume < minPipetteVolume)
+            warning: (component.transferMode === "batch"
+              ? preparedVolume > 0 && preparedVolume < minPipetteVolume
+              : (component.perWellVolume > 0 && component.perWellVolume < minPipetteVolume) || component.perPlate.some((item) => item.volume < minPipetteVolume))
               ? "below-minimum-pipette-volume"
               : "",
           };
@@ -276,5 +429,5 @@
     };
   }
 
-  return { PLATE_SIZES, createPlate, createWorkspace, normalizeWorkspace, activePlate, addPlate, duplicatePlate, reorderPlate, removePlate, mergeLiquidContributions, currentLiquidPlan, usableLiquidPlan, publishLiquidPlan, clearLiquidPlan };
+  return { PLATE_SIZES, createPlate, createWorkspace, normalizeWorkspace, activePlate, addPlate, duplicatePlate, reorderPlate, removePlate, importPlates, resolveSummaryPlates, normalizePlateName, plateNameConflict, uniquePlateName, currentLiquidPlan, usableLiquidPlan, publishLiquidPlan, markLiquidPlanStale, clearLiquidPlan, clearPlateLayout, mergeLiquidContributions };
 });

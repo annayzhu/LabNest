@@ -1,0 +1,97 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "module": "project",
+      "route": "/projects/cmuzqh2hw00003ios21zfrx6h/edit",
+      "width": 1440,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description",
+        "tags"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "project",
+      "route": "/projects/cmuzqh2hw00003ios21zfrx6h/edit",
+      "width": 390,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description",
+        "tags"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "inventory",
+      "route": "/inventory/cmuzqh2ju00093iosdkfzce8u/edit",
+      "width": 1440,
+      "status": "通过",
+      "fields": [
+        "name",
+        "notes",
+        "storageCondition"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "inventory",
+      "route": "/inventory/cmuzqh2ju00093iosdkfzce8u/edit",
+      "width": 390,
+      "status": "通过",
+      "fields": [
+        "name",
+        "notes",
+        "storageCondition"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "sequence",
+      "route": "/sequences/cmuzqp91j00003pos9504hp1o/edit",
+      "width": 1440,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "sequence",
+      "route": "/sequences/cmuzqp91j00003pos9504hp1o/edit",
+      "width": 390,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "collection",
+      "route": "/sequences/collections/cmuzqp91y00023posiszy7qdc/edit",
+      "width": 1440,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "operations": "input/save/leave/readback"
+    },
+    {
+      "module": "collection",
+      "route": "/sequences/collections/cmuzqp91y00023posiszy7qdc/edit",
+      "width": 390,
+      "status": "通过",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "operations": "input/save/leave/readback"
+    }
+  ]
+}

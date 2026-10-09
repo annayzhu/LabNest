@@ -76,7 +76,12 @@ const settingsPost = (page) => page.waitForResponse((r) => r.request().method() 
 async function configureProvider(page) {
   await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
   const form = page.locator('form:has(input[name="apiKey"])');
-  await form.locator('[name="type"]').selectOption("openai_compatible");
+  await form.getByRole("button", { name: "Use DeepSeek / 使用 DeepSeek" }).click();
+  assert.equal(await form.locator('[name="type"]').inputValue(), "openai_compatible");
+  assert.equal(await form.locator('[name="baseUrl"]').inputValue(), "https://api.deepseek.com");
+  assert.equal(await form.locator('[name="defaultModel"]').inputValue(), "deepseek-flash");
+  // Replace only the external endpoint/model with a local fixture before submitting.
+
   await form.locator('[name="name"]').fill("Extraction fixture");
   await form.locator('[name="baseUrl"]').fill(`http://127.0.0.1:${mockPort}/v1`);
   await form.locator('[name="defaultModel"]').fill("fixture-model");

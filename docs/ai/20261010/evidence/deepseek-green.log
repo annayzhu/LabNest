@@ -1,0 +1,29 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010
+
+ ✓ src/lib/ai.test.ts > ManualCopyPasteProvider > creates a conservative manual prompt 1ms
+ ✓ src/lib/ai.test.ts > ManualCopyPasteProvider > parses fenced JSON into pending proposed actions 3ms
+ ✓ src/lib/ai.test.ts > extractJsonPayload > recovers an array embedded in prose 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > uses the DeepSeek preset to test and complete via the existing compatible adapter 13ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > redacts a credential echoed by an upstream error 1ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > rejects model actions outside the explicitly requested types 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > rejects oversized, empty-payload and malformed model actions as provider output errors 1ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > attributes connected-model proposals to AI regardless of an untrusted source label 1ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > posts a chat completion with bearer auth and parses proposed actions 1ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > reports HTTP errors with the provider message 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > rejects invalid JSON from the model without importing anything 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > tests the connection through /models and warns about unknown model names 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > falls back to a chat completion when /models is unavailable 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > fails clearly without an API key or when disabled 0ms
+ ✓ src/lib/ai.test.ts > OpenAICompatibleProvider > uses the OpenAI default base URL for the openai type 0ms
+ ✓ src/lib/ai.test.ts > AnthropicProvider > sends the Anthropic headers and joins text blocks 0ms
+ ✓ src/lib/ai.test.ts > DifyProvider > calls chat-messages in blocking mode and reads the answer 0ms
+ ✓ src/lib/ai.test.ts > DifyProvider > requires a base URL 0ms
+ ✓ src/lib/ai.test.ts > createAIProviderAdapter > redacts plain-text credentials before shortening an upstream error 0ms
+ ✓ src/lib/ai.test.ts > createAIProviderAdapter > maps every provider type to an adapter 0ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  01:23:34
+   Duration  249ms (transform 49ms, setup 0ms, import 86ms, tests 26ms, environment 0ms)
+

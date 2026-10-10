@@ -17,7 +17,8 @@ Studio has its own model settings, with a DeepSeek preset. LabNest's navigation 
 
 - PASS: TypeScript; lint (0 errors, 12 existing warnings); Shanghai and UTC unit tests (118 files / 612 tests each).
 - PASS: synthetic DeepSeek model-list and chat requests reuse the compatible adapter and produce pending actions. See evidence/deepseek-green.log.
-- PENDING: current browser validation, merge, deployment and production readback. CI workflow protocol-ai-extraction.yml runs the existing isolated DOCX flow and also checks the preset fields before substituting a mock endpoint.
+- PASS: current isolated browser/database validation: 9 checks, including the actual editor/save roundtrip; canonical full production build also passed. See evidence/protocol-browser/report.json, screenshots and canonical-build.log.
+- PENDING: merge, deployment and production readback. CI workflow protocol-ai-extraction.yml runs the existing isolated DOCX flow and also checks the preset fields before substituting a mock endpoint.
 - PASS: separate Next production webpack build, using versioned generated calculator assets.
 - Local canonical npm build was blocked by tsx's IPC socket permission; separate Next production webpack build passed (evidence/next-build.log). Do not call the canonical build passed until CI or an authorized local rerun completes it.
 - NOT EXECUTED: real DeepSeek quality/speed, physical-phone validation and user trial. User will connect the real API.
@@ -37,3 +38,8 @@ Earlier 2026-10-09 browser evidence uses the earlier code and a mock. It is reta
 ## Execution environment block
 
 The automatic permission reviewer timed out twice for the Studio GitHub tree write and twice for local browser/server execution. No PR, merge or production change has occurred. This is not a security finding and not a functional pass. Unit tests and Next builds ran inside the permitted workspace. Resume from these local Git histories after runtime/GitHub write permissions are available; do not replace the original dirty worktrees.
+
+
+## Permission recovery (2026-10-10)
+
+The user resumed execution; GitHub writes and local runtime permissions now work. PR #95 is open. The complete production build and all nine isolated browser checks passed on d7ddc303 (code unchanged in this evidence commit). Confirmed: deselected parameter dependencies reject without a record, chosen AI fields survive opening the real editor, saving and database readback, DeepSeek presets populate correctly, desktop and 390px pages fit. Source media/reference blocks are covered by canonical roundtrip unit tests; this synthetic DOCX contains no actual embedded image, so it does not re-prove all historical image cases. Existing CI regression suites remain required. Real API quality is still unmeasured.

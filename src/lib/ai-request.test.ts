@@ -12,4 +12,10 @@ describe("explicit AI request boundary", () => {
       expect(validateAIRequest(request(headers))).toBeDefined();
     }
   });
+  it("accepts multipart only when the route asks for it",()=>{
+    const multipart={origin:"http://localhost:3001",host:"localhost:3001","content-type":"multipart/form-data; boundary=x"};
+    expect(validateAIRequest(request(multipart))).toBeDefined();
+    expect(validateAIRequest(request(multipart),"multipart/form-data")).toBeUndefined();
+    expect(validateAIRequest(request({...multipart,origin:"https://foreign.example"}),"multipart/form-data")).toBeDefined();
+  });
 });

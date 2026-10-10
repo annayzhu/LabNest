@@ -1,0 +1,112 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010
+
+ ❯ src/lib/protocol-extraction.test.ts (13 tests | 5 failed) 28ms
+     × rejects wrong default types and select values outside options 6ms
+     × does not verify an evidence prefix with fabricated quantities or altered decimals 1ms
+     × rejects the accepted subset when its formula parameter was deselected 2ms
+     × replaces a selected same-template same-key field and leaves other templates alone 1ms
+     × persists accepted rules, step flags and result fields through canonical editor roundtrip without losing source blocks 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > reviewed extraction integrity > rejects wrong default types and select values outside options
+AssertionError: expected [ 'ok', 'ok', 'ok', 'ok' ] to deeply equal [ 'invalid', 'invalid', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "invalid",
+-   "invalid",
+-   "invalid",
+-   "invalid",
++   "ok",
++   "ok",
++   "ok",
++   "ok",
+  ]
+
+ ❯ src/lib/protocol-extraction.test.ts:182:123
+    180|       { name: "numeric", type: "number", default: true },
+    181|     ].map(p => ({ ...p, evidence: "Seed cells" }));
+    182|     expect(checkProposal(parseRawProposal(JSON.stringify({ parameters …
+       |                                                                                                                           ^
+    183|   });
+    184|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > reviewed extraction integrity > does not verify an evidence prefix with fabricated quantities or altered decimals
+AssertionError: expected 'ok' to be 'unmatched' // Object.is equality
+
+Expected: "unmatched"
+Received: "ok"
+
+ ❯ src/lib/protocol-extraction.test.ts:192:80
+    190|     ]) {
+    191|       const raw = parseRawProposal(JSON.stringify({ parameters: [{ nam…
+    192|       expect(checkProposal(raw, { text: source }, projection).items[0]…
+       |                                                                                ^
+    193|     }
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > reviewed extraction integrity > rejects the accepted subset when its formula parameter was deselected
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/lib/protocol-extraction.test.ts:200:104
+    198|     const { items, warnings } = checkProposal(parseRawProposal(JSON.st…
+    199|     const signed = signProposal({ checksum: "subset", rowIndex: 0, pro…
+    200|     expect(() => verifyAcceptedExtraction({ ...signed, acceptedIds: ["…
+       |                                                                                                        ^
+    201|     expect(() => verifyAcceptedExtraction({ ...signed, acceptedIds: ["…
+    202|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > reviewed extraction integrity > replaces a selected same-template same-key field and leaves other templates alone
+AssertionError: expected { key: 'gfp', name: 'GFP', …(2) } to match object { type: 'number', …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "dataType": "number",
+    "required": true,
+-   "type": "number",
+-   "unit": "%",
++   "type": "text",
+  }
+
+ ❯ src/lib/protocol-extraction.test.ts:211:49
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/lib/protocol-extraction.test.ts > reviewed extraction integrity > persists accepted rules, step flags and result fields through canonical editor roundtrip without losing source blocks
+TypeError: mergeExtractionDocument is not a function
+ ❯ src/lib/protocol-extraction.test.ts:221:20
+    219|     const lipid = items.find(i => i.id === "consumption-1")!;
+    220|     if (lipid.kind === "consumption_rule") lipid.value.requires_invent…
+    221|     const merged = mergeExtractionDocument(document, items);
+       |                    ^
+    222|     const saved = normalizeProtocolDocument(JSON.parse(JSON.stringify(…
+    223|     const readback = projectProtocolDocument(saved);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 8 passed (13)
+   Start at  01:33:24
+   Duration  306ms (transform 111ms, setup 0ms, import 169ms, tests 28ms, environment 0ms)
+

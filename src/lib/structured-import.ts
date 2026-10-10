@@ -27,6 +27,7 @@ import type { ParsedStructuredFile } from "@/lib/structured-files";
 import { structuredModules, type StructuredModuleKey } from "@/lib/structured-modules";
 import { parseTags } from "@/lib/tags";
 import { decideProtocolImportState, separateLegacyImportWarnings, type ProtocolImportDecision } from "@/lib/protocol-import-state";
+import { mergeExtractionDocument, verifyAcceptedExtraction, type AcceptedExtraction } from "./protocol-extraction";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
 
 export type StructuredImportRowPreview = {
@@ -515,9 +516,13 @@ export async function commitStructuredImport(
   validation: StructuredImportValidation,
   attachmentId: string,
   confirmationToken = "",
+  aiExtractions: AcceptedExtraction[] = [],
 ) {
   if (!validation.preview.canImport) throw new Error("Resolve every import validation error before confirming.");
   if (parsed.module === "protocols" && !matchesImportConfirmation(parsed, confirmationToken)) throw new Error("Preview the Protocol file again before confirming.");
+  const protocolRows = new Set(validation.prepared.filter((row) => row.data.kind === "protocols").map((row) => row.index));
+  if (aiExtractions.some((entry) => !protocolRows.has(entry.proposal.rowIndex))) throw new Error("An AI extraction does not match any Protocol record in this file. Run it again.");
+  if (new Set(aiExtractions.map((entry) => entry.proposal.rowIndex)).size !== aiExtractions.length) throw new Error("Each Protocol record accepts one AI extraction. Run it again.");
   const sourceMetadata = { sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceFormat: parsed.format };
   const created = await withPreparedDocxImages(parsed.embeddedImages ?? [], async files => prisma.$transaction(async (tx) => {
     if (["purchases","inventory"].includes(parsed.module)) {
@@ -551,15 +556,28 @@ export async function commitStructuredImport(
         if (data.availability !== decision.importedAvailability || data.reviewStage !== decision.importedReviewStage || JSON.stringify(data.importDecision) !== JSON.stringify(decision)) throw new Error("The Protocol import decision changed. Preview it again.");
         const humanCode = data.humanCode ?? await reserveRecordCode(tx, "protocol");
         const legacy = separateLegacyImportWarnings(data.document.importWarnings);
-        const importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
-        const projection = projectProtocolDocument(data.document);
+        let importedDocument = { ...data.document, importWarnings: legacy.contentWarnings };
+        const heuristic = projectProtocolDocument(data.document);
+        const accepted = aiExtractions.find((entry) => entry.proposal.rowIndex === row.index);
+        const acceptedItems = accepted ? verifyAcceptedExtraction(accepted, parsed.checksum, row.index) : [];
+        const merged = acceptedItems.length ? mergeExtractionDocument(importedDocument, acceptedItems) : undefined;
+        if (merged) importedDocument = merged.document;
+        const projection = merged ? { ...heuristic, steps: merged.steps, consumptionRules: merged.consumptionRules, resultTemplates: merged.resultTemplates } : heuristic;
+        const aiAudit = accepted && merged ? {
+          provider: accepted.proposal.provider,
+          model: accepted.proposal.model,
+          accepted: acceptedItems.map((item) => item.id),
+          rejected: accepted.proposal.items.filter((item) => !acceptedItems.includes(item)).map((item) => item.id),
+          counts: merged.counts,
+        } : undefined;
+        const changeSummary = `Imported from ${parsed.format.toUpperCase()}.${merged ? ` AI-assisted extraction: ${acceptedItems.length} of ${accepted?.proposal.items.length ?? 0} suggestions accepted.` : ""}`;
         const recordStatus = recordStatusForReview(data.reviewStage);
-        const record = await tx.protocol.create({ data: { humanCode, title: data.canonicalTitle, canonicalTitle: data.canonicalTitle, shortTitle: data.shortTitle, englishTitle: data.englishTitle, description: projection.description, scope: data.scope, availability: data.availability, recordStatus, projectId: data.scope === "project" ? data.projectId : null, tags: data.tags, versions: { create: { revision: 1, displayVersion: data.displayVersion, reviewStage: data.reviewStage, recordStatus, title: `${data.canonicalTitle} v${data.displayVersion}`, purpose: projection.purpose, background: projection.background, materialsJson: projection.materials, equipmentJson: projection.equipment, stepsJson: projection.steps, resultTemplatesJson: projection.resultTemplates, consumptionRulesJson: projection.consumptionRules, contentJson: importedDocument as Prisma.InputJsonValue, sourceType: parsed.format === "docx" ? "docx_import" : "manual", sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceImportedAt: new Date(), changeSummary: `Imported from ${parsed.format.toUpperCase()}.` } }, researchPlans: data.researchPlanIds.length ? { create: data.researchPlanIds.map((researchPlanId) => ({ researchPlanId, isPrimary: data.primaryResearchPlanIds.includes(researchPlanId) })) } : undefined }, include: { versions: { select: { id: true } } } });
+        const record = await tx.protocol.create({ data: { humanCode, title: data.canonicalTitle, canonicalTitle: data.canonicalTitle, shortTitle: data.shortTitle, englishTitle: data.englishTitle, description: projection.description, scope: data.scope, availability: data.availability, recordStatus, projectId: data.scope === "project" ? data.projectId : null, tags: data.tags, versions: { create: { revision: 1, displayVersion: data.displayVersion, reviewStage: data.reviewStage, recordStatus, title: `${data.canonicalTitle} v${data.displayVersion}`, purpose: projection.purpose, background: projection.background, materialsJson: projection.materials, equipmentJson: projection.equipment, stepsJson: projection.steps, resultTemplatesJson: projection.resultTemplates, consumptionRulesJson: projection.consumptionRules, ...(merged ? { parametersJson: merged.parameters } : {}), contentJson: importedDocument as Prisma.InputJsonValue, sourceType: parsed.format === "docx" ? "docx_import" : "manual", sourceFileName: parsed.fileName, sourceFileChecksum: parsed.checksum, sourceImportedAt: new Date(), changeSummary } }, researchPlans: data.researchPlanIds.length ? { create: data.researchPlanIds.map((researchPlanId) => ({ researchPlanId, isPrimary: data.primaryResearchPlanIds.includes(researchPlanId) })) } : undefined }, include: { versions: { select: { id: true } } } });
         await tx.activityLog.create({ data: {
           action: "structured_import", targetType: "protocol", targetId: record.id,
           // No authenticated user resolver exists here. Never accept an actor from the upload.
           actorUserId: null,
-          metadataJson: { ...sourceMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId } } as Prisma.InputJsonValue,
+          metadataJson: { ...sourceMetadata, protocolVersionId: record.versions[0].id, rowIndex: row.index + 1, actorResolution: "unidentified", protocolImport: { decision, legacyIssues: legacy.history, confirmation: "preview_confirmed", sourceAttachmentId: attachmentId, ...(aiAudit ? { ai: aiAudit } : {}) } } as Prisma.InputJsonValue,
         } });
         await associateDocumentMedia(tx, importedDocument, "protocol_version", record.versions[0].id);
         createdTargets.push({ targetType: "protocol", targetId: record.id, href: `/protocols/${record.id}` });

@@ -1,0 +1,13 @@
+
+> labnest@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010
+
+
+ Test Files  118 passed (118)
+      Tests  612 passed (612)
+   Start at  01:39:01
+   Duration  4.42s (transform 8.27s, setup 0ms, import 22.42s, tests 2.54s, environment 11ms)
+

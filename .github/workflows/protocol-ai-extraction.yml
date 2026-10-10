@@ -1,0 +1,56 @@
+name: Protocol AI extraction acceptance
+on:
+  pull_request:
+    paths: ['src/lib/ai*', 'src/lib/protocol-extraction*', 'src/lib/structured-import*', 'src/app/api/ai/**', 'src/app/api/structured-import/**', 'src/app/protocols/import/**', 'src/components/AiProviderForm.tsx', 'src/components/ProtocolExtractionPanel.tsx', 'src/components/StructuredImportWorkspace.tsx', 'scripts/*protocol-ai*', '.github/workflows/protocol-ai-extraction.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_protocol_ai_extraction_20261009
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_protocol_ai_extraction_20261009
+      LABNEST_AI_ENCRYPTION_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      LABNEST_E2E_BASE_URL: http://localhost:3339
+      AI_EVIDENCE_DIR: docs/ai/20261010/evidence/protocol-browser
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: TZ=Asia/Shanghai npm test
+      - run: TZ=UTC npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - name: Start isolated application
+        run: |
+          PORT=3339 npm start > protocol-ai-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3339/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat protocol-ai-server.log
+          exit 1
+      - run: node scripts/verify-protocol-ai-extraction.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: protocol-ai-evidence
+          path: |
+            docs/ai/20261010/evidence/protocol-browser
+            protocol-ai-server.log

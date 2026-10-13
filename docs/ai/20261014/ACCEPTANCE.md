@@ -1,8 +1,8 @@
 # AI 模块迁移验收
 
 - 基线：`c79a5fc21a56a9c156cd2356f19fbd79789c18ae`。
-- Provider / cancellation 专项在 `c9566b4b` 通过；其后仅关闭 AI 页链接预取并增加诊断日志。最终迁移页面、Protocol、静态检查、双时区及构建均在下述最终实现重跑。
-- 最终实现及本机生产构建：`b6431e31bd63bc307b33953cfcde123331de8541`；后续证据提交不修改实现。
+- Provider / cancellation 专项在 `c9566b4b` 通过；其后仅关闭 AI 页及其共享导航链接预取并增加诊断日志。Protocol 在 b6431e31 重跑；最终迁移页面、静态检查、双时区及构建在下述最终实现重跑。
+- 最终实现及本机生产构建：`63e4370d2ec8212ce4be1bd3064765e25dfcc19d`；后续证据提交不修改实现。
 - PR：<https://github.com/annayzhu/LabNest/pull/96>。合并 SHA、正式部署和空间清理报告由发布记录补充。
 - 所有写入验收均在明确命名的独立 PostgreSQL 库 `labnest_ai_module_acceptance_20261014`，使用合成历史设置、Entry 和 Protocol；未使用真实研究正文或真实模型密钥。
 - Chromium / WebKit 在实际 Next.js 生产构建页面操作；本地模拟 HTTP 服务只替代外部模型。**模拟成功不表示真实 DeepSeek / Qwen / aihub 调用成功。**
@@ -35,7 +35,7 @@
 | D02 | 通过 | 真实应用接口与独立数据库验证 gate；红绿日志保留明确失败原因。日志和截图不含真实凭据或研究正文 |
 | D03 | 通过 | 本文、`AUDIT.md`、`REVIEW.md`、Git diff 与运行脚本构成文件映射／兼容／结果证据 |
 
-生产 WebKit 曾重复报告 `/actions/review` 自动预取在导航取消时的错误；保留 `browser-production-first.log`，禁用 AI 页非必要链接预取后重新验证。
+生产 WebKit 曾重复报告 `/actions/review` 自动预取在导航取消时的错误；保留 `browser-production-first.log`，本机禁用 AI 页链接预取后通过；Linux CI 继续定位到手机公共导航的相同行为。最终仅在 `/ai` 禁用共享导航预取，并在两浏览器三宽度及手机更多菜单检查无 `_rsc` 请求；未过滤或忽略页面错误。前两次 CI 失败见 runs 38432940635、38434133211。
 
 当前修复后已执行检查没有剩余失败项。历史 red 日志专门保留修复前的失败，不是当前失败。
 

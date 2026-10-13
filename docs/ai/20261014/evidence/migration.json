@@ -1,5 +1,5 @@
 {
-  "revision": "b6431e31bd63bc307b33953cfcde123331de8541",
+  "revision": "63e4370d2ec8212ce4be1bd3064765e25dfcc19d",
   "synthetic": true,
   "liveProvider": false,
   "checks": [
@@ -21,6 +21,10 @@
     },
     {
       "name": "B07 missing/foreign Origin cannot mutate settings",
+      "status": "passed"
+    },
+    {
+      "name": "chromium AI page does not prefetch historical records or navigation data",
       "status": "passed"
     },
     {
@@ -64,6 +68,14 @@
       "status": "passed"
     },
     {
+      "name": "chromium no unhandled page errors",
+      "status": "passed"
+    },
+    {
+      "name": "webkit AI page does not prefetch historical records or navigation data",
+      "status": "passed"
+    },
+    {
       "name": "webkit A01/A03 old review/settings anchors and provider editing links",
       "status": "passed"
     },
@@ -101,6 +113,10 @@
     },
     {
       "name": "webkit A04/A05 390px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "webkit no unhandled page errors",
       "status": "passed"
     }
   ],

@@ -78,13 +78,15 @@ try {
     for(const b of await page.getByRole('button',{name:'Test',exact:true}).all())await eventually(async()=>assert.equal(await b.isDisabled(),true));
    });
    for(const width of [1440,1024,390]) await check(`${engine} A04/A05 ${width}px layout and visible first-screen switch`,async()=>{
+    backgroundRoutes.length=0;
     await page.setViewportSize({width,height:900});await page.goto(base+'/ai',{waitUntil:'networkidle'});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     const box=await toggle.boundingBox();assert(box&&box.y+box.height<900);
     const inputs=await page.locator('input:not([type="hidden"]),select').evaluateAll(elements=>elements.filter(e=>e.getBoundingClientRect().width>0).map(e=>({right:e.getBoundingClientRect().right,left:e.getBoundingClientRect().left})));
     assert(inputs.every(x=>x.left>=0&&x.right<=width));
     await page.screenshot({path:`${dir}/${engine}-ai-${width}.png`,fullPage:true});
-    if(width===390){await page.getByRole('button',{name:'Open more navigation',exact:true}).click();await page.getByRole('link',{name:'AI',exact:true}).waitFor();await page.screenshot({path:`${dir}/${engine}-mobile-navigation.png`,fullPage:true});}
+    if(width===390){await page.getByRole('button',{name:'Open more navigation',exact:true}).click();await page.getByRole('link',{name:'AI',exact:true}).waitFor();await page.screenshot({path:`${dir}/${engine}-mobile-navigation.png`,fullPage:true});await page.waitForLoadState('networkidle');}
+    assert.deepEqual(backgroundRoutes,[],'AI navigation must not prefetch record pages at any viewport');
    });
    await check(`${engine} no unhandled page errors`,async()=>assert.deepEqual(pageErrors,[]));
    await context.close();

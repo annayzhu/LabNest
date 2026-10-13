@@ -15,3 +15,7 @@
 - 证据：`evidence/review-ui-red.log`、`review-ui-green.log`。
 
 首次确认问题：Standards 1 项（另 1 项疑点已排除）、Spec 1 项；复审两轴均无剩余确认问题。
+
+## 生产 WebKit 补充复审
+
+AI 页及该页上的共享导航禁用自动预取；其余页面传 undefined 保持 Next 默认行为。点击、返回与选中状态不变。Standards 只读复审通过。验收扩展为两浏览器 × 三宽度及手机更多菜单零 `_rsc` 请求，全程不允许未处理页面错误。

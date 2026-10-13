@@ -7,7 +7,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 296ms
+✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 297ms
 
 ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
  We detected multiple lockfiles and selected the directory of /Users/annayzhu/Documents/Playground/LabNest/package-lock.json as the root directory.
@@ -24,7 +24,7 @@ Prisma schema loaded from prisma/schema.prisma.
   Using tsconfig file: tsconfig.calculator.json
   Using tsconfig file: tsconfig.calculator.json
   Using tsconfig file: tsconfig.calculator.json
-✓ Compiled successfully in 10.6s
+✓ Compiled successfully in 11.9s
   Running TypeScript ...
   Finished TypeScript in 11.9s ...
   Collecting page data using 13 workers ...
@@ -32,7 +32,7 @@ Prisma schema loaded from prisma/schema.prisma.
   Generating static pages using 13 workers (20/81) 
   Generating static pages using 13 workers (40/81) 
   Generating static pages using 13 workers (60/81) 
-✓ Generating static pages using 13 workers (81/81) in 339ms
+✓ Generating static pages using 13 workers (81/81) in 346ms
   Finalizing page optimization ...
   Collecting build traces ...
 

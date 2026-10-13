@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   if (!resolved.ok) {
     return Response.json({ error: resolved.error }, { status: resolved.status });
   }
-  const { adapter, config } = resolved;
+  const { adapter, config, gate } = resolved;
   if (!adapter.generateProposedActions) {
     return Response.json({ error: `Provider "${config.name}" cannot generate proposed actions.` }, { status: 409 });
   }
@@ -70,14 +70,15 @@ export async function POST(request: Request) {
       entryBody,
       allowedActionTypes: parsed.data.allowedActionTypes ?? allowedProposedActionTypes,
     };
-    const generate = () => adapter.generateProposedActions!(input);
+    const generate = async () => { await gate.assertAllowed(); const result = await adapter.generateProposedActions!(input); await gate.assertAllowed(); return result; };
     const response = parsed.data.persist && entryId && parsed.data.clientMutationId
-      ? await saveAIProposals({ entryId, clientMutationId: parsed.data.clientMutationId, input, provider: config, generate })
+      ? await saveAIProposals({ entryId, clientMutationId: parsed.data.clientMutationId, input, provider: config, generate, authorizePublication: gate.lockForPublication })
       : proposalResponse(await generate(), config.name);
+    await gate.assertAllowed();
     if (response.persisted && entryId) {
       revalidatePath(`/entries/${entryId}`);
       revalidatePath("/entries");
-      revalidatePath("/actions");
+      revalidatePath("/actions/review");
     }
 
     return Response.json(response);
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
     // Upstream HTTP failures are 502; a reachable model that returned unusable output is 422.
     let status = 500;
     if (error instanceof AIProposalConflict) status = 409;
-    if (error instanceof AIProviderError) status = error.status ? 502 : 422;
+    if (error instanceof AIProviderError) status = error.status === 403 ? 403 : error.status ? 502 : 422;
     return Response.json(
       { status: "invalid", error: error instanceof Error ? error.message : "The model request failed." },
       { status },

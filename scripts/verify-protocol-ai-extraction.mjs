@@ -14,7 +14,7 @@ import { chromium } from "playwright";
 import pg from "pg";
 
 const database = new URL(process.env.DATABASE_URL ?? "");
-assert.equal(database.pathname, "/labnest_protocol_ai_extraction_20261009", "Only the isolated acceptance database is permitted");
+assert.equal(["/labnest_protocol_ai_extraction_20261009", "/labnest_ai_module_acceptance_20261014"].includes(database.pathname), true, "Only the isolated acceptance database is permitted");
 assert(["localhost", "127.0.0.1"].includes(database.hostname));
 const base = process.env.LABNEST_E2E_BASE_URL ?? "http://localhost:3339";
 const mockPort = Number(process.env.AI_MOCK_PORT ?? 4849);
@@ -71,10 +71,10 @@ async function check(name, run) {
   catch (error) { report.failures.push({ name, error: String(error) }); throw error; }
   finally { await writeFile(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2)); }
 }
-const settingsPost = (page) => page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/settings");
+const settingsPost = (page) => page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/ai");
 
 async function configureProvider(page) {
-  await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/ai`, { waitUntil: "networkidle" });
   const form = page.locator('form:has(input[name="apiKey"])');
   await form.getByRole("button", { name: "Use DeepSeek / 使用 DeepSeek" }).click();
   assert.equal(await form.locator('[name="type"]').inputValue(), "openai_compatible");
@@ -93,11 +93,12 @@ async function configureProvider(page) {
 }
 
 async function setAI(page, providerId, enabled) {
-  await page.goto(`${base}/settings`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/ai`, { waitUntil: "networkidle" });
   const form = page.locator('form:has(select[name="defaultProviderId"])');
-  await form.locator('[name="enabled"]').setChecked(enabled);
   await form.locator('[name="defaultProviderId"]').selectOption(providerId ?? "");
-  await Promise.all([settingsPost(page), form.getByRole("button", { name: "Save AI settings", exact: true }).click()]);
+  await Promise.all([page.waitForResponse(r => r.request().method() === "PATCH" && r.url().endsWith("/api/ai/settings")), form.getByRole("button", { name: "保存功能设置", exact: true }).click()]);
+  const toggle = page.getByRole("switch", {name:"启用 AI",exact:true});
+  if ((await toggle.getAttribute("aria-checked") === "true") !== enabled) await Promise.all([page.waitForResponse(r => r.request().method() === "PATCH" && r.url().endsWith("/api/ai/settings")), toggle.click()]);
 }
 
 async function protocolCount() {
@@ -132,7 +133,7 @@ try {
     const panel = page.getByRole("region", { name: "AI extraction" });
     await panel.waitFor();
     assert(await panel.getByRole("button", { name: "Extract with AI" }).isDisabled());
-    await panel.getByText("Connect a model provider in Settings").waitFor();
+    await panel.getByText("Connect a model provider on the AI page").waitFor();
   });
 
   const providerId = await configureProvider(page);

@@ -54,7 +54,6 @@ export const zhUi: Record<string, string> = {
   "Experimental Calculator": "实验计算器",
   "Calculators": "计算工具",
   "Search": "搜索",
-  "AI review": "AI 审核",
   "Settings": "设置",
   "Recycle Bin": "回收站",
   "Deleted record": "已删除记录",

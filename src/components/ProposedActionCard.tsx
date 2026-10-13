@@ -8,10 +8,10 @@ export function ProposedActionCard({ action }: { action: ProposedAction }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <BadgeLink href={filterHref("/actions", { type: action.actionType })} tone="sage">
+            <BadgeLink href={filterHref("/actions/review", { type: action.actionType })} tone="sage">
               {action.actionType.replaceAll("_", " ")}
             </BadgeLink>
-            <StatusPill status={action.status} href={filterHref("/actions", { status: action.status })} />
+            <StatusPill status={action.status} href={filterHref("/actions/review", { status: action.status })} />
             {action.confidence !== undefined ? (
               <span className="font-mono text-xs text-muted">
                 confidence {(action.confidence * 100).toFixed(0)}%

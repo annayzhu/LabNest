@@ -34,6 +34,7 @@ const capabilitiesByType: Record<AIProviderType, string[]> = {
 
 function revalidateProviderSurfaces() {
   revalidatePath("/settings");
+  revalidatePath("/ai");
   revalidatePath("/actions/manual");
 }
 
@@ -87,7 +88,7 @@ export async function saveAIProvider(_previous: FormActionState, formData: FormD
     return { error: formActionErrorMessage(error, "The provider could not be saved.") };
   }
   revalidateProviderSurfaces();
-  redirect("/settings#providers");
+  redirect("/ai?saved=provider#providers");
 }
 
 export async function deleteAIProvider(formData: FormData) {
@@ -98,7 +99,7 @@ export async function deleteAIProvider(formData: FormData) {
     prisma.aIProvider.delete({ where: { id } }),
   ]);
   revalidateProviderSurfaces();
-  redirect("/settings#providers");
+  redirect("/ai?saved=provider#providers");
 }
 
 export async function setAIProviderEnabled(formData: FormData) {
@@ -107,5 +108,5 @@ export async function setAIProviderEnabled(formData: FormData) {
   if (!id) return;
   await prisma.aIProvider.update({ where: { id }, data: { enabled } });
   revalidateProviderSurfaces();
-  redirect("/settings#providers");
+  redirect("/ai?saved=provider#providers");
 }

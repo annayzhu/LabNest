@@ -1,0 +1,124 @@
+{
+  "revision": "63e4370d2ec8212ce4be1bd3064765e25dfcc19d",
+  "synthetic": true,
+  "liveProvider": false,
+  "checks": [
+    {
+      "name": "B02 new workspace defaults off without creating an opt-in",
+      "status": "passed"
+    },
+    {
+      "name": "B02 historic synthetic enabled=true preserved",
+      "status": "passed"
+    },
+    {
+      "name": "B02 historic synthetic enabled=false preserved",
+      "status": "passed"
+    },
+    {
+      "name": "B04 concurrent updates reject stale revision rather than overwrite",
+      "status": "passed"
+    },
+    {
+      "name": "B07 missing/foreign Origin cannot mutate settings",
+      "status": "passed"
+    },
+    {
+      "name": "chromium AI page does not prefetch historical records or navigation data",
+      "status": "passed"
+    },
+    {
+      "name": "chromium A01/A03 old review/settings anchors and provider editing links",
+      "status": "passed"
+    },
+    {
+      "name": "chromium B03/B06 switch is immediate and never submits configuration drafts",
+      "status": "passed"
+    },
+    {
+      "name": "chromium A06/B04 keyboard toggle and refreshed database state",
+      "status": "passed"
+    },
+    {
+      "name": "chromium B05 failed switch write rolls back and reports failure",
+      "status": "passed"
+    },
+    {
+      "name": "chromium B05 failed initial read is unknown/disabled and can retry",
+      "status": "passed"
+    },
+    {
+      "name": "chromium B07 another tab and focus re-read the same saved state",
+      "status": "passed"
+    },
+    {
+      "name": "chromium B06/C04 pending configuration, disabled test, no implicit requests",
+      "status": "passed"
+    },
+    {
+      "name": "chromium A04/A05 1440px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "chromium A04/A05 1024px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "chromium A04/A05 390px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "chromium no unhandled page errors",
+      "status": "passed"
+    },
+    {
+      "name": "webkit AI page does not prefetch historical records or navigation data",
+      "status": "passed"
+    },
+    {
+      "name": "webkit A01/A03 old review/settings anchors and provider editing links",
+      "status": "passed"
+    },
+    {
+      "name": "webkit B03/B06 switch is immediate and never submits configuration drafts",
+      "status": "passed"
+    },
+    {
+      "name": "webkit A06/B04 keyboard toggle and refreshed database state",
+      "status": "passed"
+    },
+    {
+      "name": "webkit B05 failed switch write rolls back and reports failure",
+      "status": "passed"
+    },
+    {
+      "name": "webkit B05 failed initial read is unknown/disabled and can retry",
+      "status": "passed"
+    },
+    {
+      "name": "webkit B07 another tab and focus re-read the same saved state",
+      "status": "passed"
+    },
+    {
+      "name": "webkit B06/C04 pending configuration, disabled test, no implicit requests",
+      "status": "passed"
+    },
+    {
+      "name": "webkit A04/A05 1440px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "webkit A04/A05 1024px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "webkit A04/A05 390px layout and visible first-screen switch",
+      "status": "passed"
+    },
+    {
+      "name": "webkit no unhandled page errors",
+      "status": "passed"
+    }
+  ],
+  "failures": []
+}

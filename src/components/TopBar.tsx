@@ -12,7 +12,9 @@ export function TopBar() {
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
   const mobileTitle = pathname === "/"
     ? "LabNest"
-    : pathname.startsWith("/protocol-run") || pathname.includes("/run")
+    : pathname === "/ai" || pathname.startsWith("/actions")
+      ? "AI"
+      : pathname.startsWith("/protocol-run") || pathname.includes("/run")
       ? "Runs"
       : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results")
         ? "Records"
@@ -38,6 +40,7 @@ export function TopBar() {
             <span className="truncate text-lg font-semibold text-ink">{mobileTitle}</span>
           </div>
           <Link
+            prefetch={pathname === "/ai" ? false : undefined}
             href="/search"
             aria-label="Search LabNest"
             className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] text-moss"

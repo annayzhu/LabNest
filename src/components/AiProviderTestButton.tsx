@@ -4,9 +4,12 @@ import { PlugZap } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 
+import { requestAI, useAISettings } from "./useAISettings";
+
 type TestResult = { ok: boolean; message: string; latencyMs?: number };
 
 export function AiProviderTestButton({ providerId }: { providerId: string }) {
+  const { enabled } = useAISettings();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<TestResult>();
 
@@ -14,7 +17,7 @@ export function AiProviderTestButton({ providerId }: { providerId: string }) {
     setBusy(true);
     setResult(undefined);
     try {
-      const response = await fetch(`/api/ai/providers/${providerId}/test`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+      const response = await requestAI(`/api/ai/providers/${providerId}/test`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }, false);
       const data = (await response.json()) as TestResult;
       setResult({ ok: Boolean(data.ok), message: data.message ?? (response.ok ? "Connected." : "Connection failed."), latencyMs: data.latencyMs });
     } catch (error) {
@@ -26,7 +29,7 @@ export function AiProviderTestButton({ providerId }: { providerId: string }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <Button size="sm" onClick={test} disabled={busy}>
+      <Button size="sm" onClick={test} disabled={busy || !enabled} title={!enabled ? "请先启用 AI" : undefined}>
         <PlugZap className="h-4 w-4" aria-hidden />
         {busy ? "Testing…" : "Test"}
       </Button>

@@ -1,3 +1,4 @@
+import { AIProviderError } from "@/lib/ai";
 import { resolveConnectedAdapter } from "@/lib/ai-server";
 import { validateAIRequest } from "@/lib/ai-request";
 import { projectProtocolDocument } from "@/lib/protocol-document";
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   if (boundary) return Response.json({ error: boundary.error }, { status: boundary.status });
   const resolved = await resolveConnectedAdapter();
   if (!resolved.ok) return Response.json({ error: resolved.error }, { status: resolved.status });
-  const { adapter, config } = resolved;
+  const { adapter, config, gate } = resolved;
   if (!adapter.complete) return Response.json({ error: `Provider "${config.name}" cannot run extraction.` }, { status: 409 });
 
   const formData = await request.formData();
@@ -54,8 +55,9 @@ export async function POST(request: Request) {
       warnings: context.truncated ? [`Only the first part of the document was sent to the model.`, ...warnings] : warnings,
       truncated: context.truncated,
     });
+    await gate.assertAllowed();
     return Response.json(signed);
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "The model request failed." }, { status: 502 });
+    return Response.json({ error: error instanceof Error ? error.message : "The model request failed." }, { status: error instanceof AIProviderError && error.status === 403 ? 403 : 502 });
   }
 }

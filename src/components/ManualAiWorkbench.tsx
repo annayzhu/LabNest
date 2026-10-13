@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 
+import { requestAI, useAISettings } from "./useAISettings";
+
 const exampleEntry = {
   title: "Adjusted seeding density before GFP transfection",
   body:
@@ -18,6 +20,8 @@ type ParseResult = {
 };
 
 export function ManualAiWorkbench({ connected }: { connected?: { providerName: string; model?: string } }) {
+  const ai = useAISettings();
+  const availableProvider = ai.connected ? ai.saved?.availability : undefined;
   const [entryTitle, setEntryTitle] = useState(exampleEntry.title);
   const [entryBody, setEntryBody] = useState(exampleEntry.body);
   const [prompt, setPrompt] = useState("");
@@ -31,11 +35,11 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
     setParseResult({ status: "idle" });
 
     try {
-      const response = await fetch("/api/ai/manual/prompt", {
+      const response = await requestAI("/api/ai/manual/prompt", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ entryTitle, entryBody }),
-      });
+      }, false);
       const data = (await response.json()) as { prompt?: string; error?: unknown };
 
       if (!response.ok || !data.prompt) {
@@ -57,11 +61,11 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
     setIsBusy(true);
 
     try {
-      const response = await fetch("/api/ai/manual/parse", {
+      const response = await requestAI("/api/ai/manual/parse", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ rawResponse }),
-      });
+      }, false);
       const data = await response.json();
 
       if (!response.ok) {
@@ -88,7 +92,7 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
     setParseResult({ status: "idle" });
 
     try {
-      const response = await fetch("/api/ai/generate", {
+      const response = await requestAI("/api/ai/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ entryTitle, entryBody }),
@@ -131,6 +135,7 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+      {!ai.enabled ? <p className="text-sm text-muted xl:col-span-2">AI 当前不可用。<a href="/ai" className="focus-ring ml-2 underline">AI 设置 →</a></p> : null}
       <div className="space-y-4">
         <label className="block">
           <span className={formLabelClass}>Entry title</span>
@@ -149,13 +154,13 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
           />
         </label>
         <div className="flex flex-wrap gap-2">
-          {connected ? (
-            <Button onClick={generateWithModel} disabled={!canCreatePrompt || isBusy} variant="primary" title={`Send to ${connected.providerName}${connected.model ? ` · ${connected.model}` : ""}`}>
+          {availableProvider ? (
+            <Button onClick={generateWithModel} disabled={!ai.enabled || !canCreatePrompt || isBusy} variant="primary" title={`Send to ${availableProvider.providerName}${availableProvider.model ? ` · ${availableProvider.model}` : ""}`}>
               <Bot className="h-4 w-4" aria-hidden />
-              {isBusy ? "Asking model…" : `Ask ${connected.providerName}`}
+              {isBusy ? "Asking model…" : `Ask ${availableProvider.providerName}`}
             </Button>
           ) : null}
-          <Button onClick={createPrompt} disabled={!canCreatePrompt || isBusy} variant={connected ? "secondary" : "primary"}>
+          <Button onClick={createPrompt} disabled={!ai.enabled || !canCreatePrompt || isBusy} variant={connected ? "secondary" : "primary"}>
             <Sparkles className="h-4 w-4" aria-hidden />
             Make Prompt
           </Button>
@@ -194,7 +199,7 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
             placeholder='[{"sourceType":"ai","actionType":"create_experiment","reason":"...","payload":{}}]'
           />
         </label>
-        <Button onClick={parseManualResponse} disabled={!rawResponse.trim() || isBusy} variant="primary">
+        <Button onClick={parseManualResponse} disabled={!ai.enabled || !rawResponse.trim() || isBusy} variant="primary">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
           Validate Actions
         </Button>

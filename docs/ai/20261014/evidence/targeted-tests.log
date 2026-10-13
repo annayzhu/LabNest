@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010
+
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  00:27:12
+   Duration  303ms (transform 127ms, setup 0ms, import 201ms, tests 49ms, environment 0ms)
+

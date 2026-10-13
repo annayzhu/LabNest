@@ -1,0 +1,24 @@
+Checking queued-duplicate
+Checking workbench
+Checking connection-test
+Checking protocol-extraction
+Checking publication race
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: A disabled provider must not publish queued suggestions
+
+1 !== 0
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010/scripts/verify-ai-switch-cancellation.mjs:93:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

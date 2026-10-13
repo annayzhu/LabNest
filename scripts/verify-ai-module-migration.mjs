@@ -35,7 +35,7 @@ try {
    const context=await browser.newContext({viewport:{width:1440,height:900}});
    await context.addInitScript(()=>localStorage.setItem('labnest.locale','en'));
    const page=await context.newPage();
-   const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
+   const pageErrors=[];page.on('pageerror',e=>{pageErrors.push(e.message);console.log('Page error',engine,page.url(),e.message);});
    let inferenceRequests=0;page.on('request',r=>{if(/\/api\/ai\/(generate|protocol-extraction|manual|providers)/.test(r.url()))inferenceRequests++;});
    await page.goto(base+'/ai',{waitUntil:'networkidle'});
    const toggle=page.getByRole('switch',{name:'启用 AI',exact:true});

@@ -18,12 +18,12 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
   const query = await searchParams;
   let providers;
   try { providers = await prisma.aIProvider.findMany({ orderBy: { name: "asc" } }); }
-  catch { return <AppShell><PageHeader title="AI" description="管理 AI 功能与相关设置。" /><p role="alert" className="mt-4 text-sm text-error">无法读取连接设置，已保存的设置未改变。<Link className="focus-ring ml-2 underline" href="/ai">重试</Link></p></AppShell>; }
+  catch { return <AppShell><PageHeader title="AI" description="管理 AI 功能与相关设置。" /><p role="alert" className="mt-4 text-sm text-error">无法读取连接设置，已保存的设置未改变。<Link prefetch={false} className="focus-ring ml-2 underline" href="/ai">重试</Link></p></AppShell>; }
   const editing = providers.find(provider => provider.id === query?.provider);
   const values: AiProviderFormValues | undefined = editing ? { id: editing.id, name: editing.name, type: editing.type as AIProviderType, baseUrl: editing.baseUrl ?? "", defaultModel: editing.defaultModel ?? "", enabled: editing.enabled, hasStoredKey: Boolean(editing.apiKeyEncrypted) } : undefined;
   const encryption = describeEncryptionKey();
   return <AppShell><div className="mx-auto max-w-5xl space-y-5">
-    <PageHeader title="AI" actions={<div className="flex gap-4 text-sm"><Link className="focus-ring text-moss hover:underline" href="/actions/review">建议记录</Link><Link className="focus-ring text-moss hover:underline" href="/actions/manual">手动工作台</Link></div>} />
+    <PageHeader title="AI" actions={<div className="flex gap-4 text-sm"><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/review">建议记录</Link><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/manual">手动工作台</Link></div>} />
     <p className="text-sm text-muted">管理 AI 功能与相关设置。</p>
     <AISettingsPanel providers={providers.map(({ id, name }) => ({ id, name }))} />
     <section id="providers" className="scroll-mt-20 space-y-3 border-t border-hairline pt-4" aria-label="连接设置">
@@ -39,7 +39,7 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
             <p className="text-xs text-muted">{isConnectedProviderType(provider.type) ? (provider.apiKeyEncrypted ? "密钥已保存 · 连接需手动测试" : "尚未保存密钥") : "无需 API 密钥"}</p>
             <div className="flex flex-wrap items-start gap-2">
               {isConnectedProviderType(provider.type) && provider.apiKeyEncrypted ? <AiProviderTestButton providerId={provider.id} /> : null}
-              <Link href={`/ai?provider=${provider.id}#providers`} className="focus-ring inline-flex h-8 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs text-moss">Edit</Link>
+              <Link prefetch={false} href={`/ai?provider=${provider.id}#providers`} className="focus-ring inline-flex h-8 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 text-xs text-moss">Edit</Link>
               <form action={setAIProviderEnabled}><input type="hidden" name="id" value={provider.id} /><input type="hidden" name="enabled" value={provider.enabled ? "false" : "true"} /><Button type="submit" size="sm">{provider.enabled ? "Disable" : "Enable"}</Button></form>
               {provider.type !== "manual_copy_paste" ? <form action={deleteAIProvider}><input type="hidden" name="id" value={provider.id} /><Button type="submit" size="sm" variant="destructive">Delete</Button></form> : null}
             </div>

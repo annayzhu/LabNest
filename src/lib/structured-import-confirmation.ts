@@ -4,7 +4,7 @@ import type { ParsedStructuredFile } from "./structured-files";
 // A process-local fallback invalidates previews after restart, rather than accepting unsigned confirmations.
 const processSecrets = globalThis as typeof globalThis & { protocolImportConfirmationSecret?: Buffer };
 const fallbackSecret = processSecrets.protocolImportConfirmationSecret ??= randomBytes(32);
-function signature(payload: string) {
+export function signature(payload: string) {
   return createHmac("sha256", process.env.LABNEST_AI_ENCRYPTION_KEY || fallbackSecret).update(payload).digest("hex");
 }
 function binding(parsed: ParsedStructuredFile, expiresAt: number) {

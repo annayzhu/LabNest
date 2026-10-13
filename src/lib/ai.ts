@@ -80,6 +80,8 @@ export interface AIProviderAdapter {
   readonly config: AIProviderConfig;
   testConnection(): Promise<AIConnectionResult>;
   generateProposedActions?(input: EntryToActionPromptInput): Promise<AIGenerationResult>;
+  /** Raw completion for feature-specific prompts. Absent on manual copy-paste mode. */
+  complete?(system: string, user: string): Promise<{ text: string; model?: string }>;
 }
 
 export class AIProviderError extends Error {

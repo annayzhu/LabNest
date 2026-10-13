@@ -1,7 +1,10 @@
-/** Browser-only AI calls require same-origin consent and JSON, even while AI is enabled. */
-export function validateAIRequest(request: Request): { error: string; status: number } | undefined {
-  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
-    return { error: "AI requests require application/json.", status: 415 };
+/** Browser-only AI calls require same-origin consent and the expected body type, even while AI is enabled. */
+export function validateAIRequest(
+  request: Request,
+  contentType: "application/json" | "multipart/form-data" = "application/json",
+): { error: string; status: number } | undefined {
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== contentType) {
+    return { error: `AI requests require ${contentType}.`, status: 415 };
   }
   try {
     const origin = new URL(request.headers.get("origin") ?? "");

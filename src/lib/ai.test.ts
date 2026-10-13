@@ -43,6 +43,7 @@ describe("ManualCopyPasteProvider", () => {
 
 import { AIProviderError, AnthropicProvider, DifyProvider, OpenAICompatibleProvider, createAIProviderAdapter, extractJsonPayload } from "./ai";
 import type { AIProviderConfig } from "./ai";
+import { deepseekProviderPreset } from "./ai-provider-presets";
 
 type Call = { url: string; init: RequestInit };
 
@@ -81,6 +82,17 @@ describe("extractJsonPayload", () => {
 });
 
 describe("OpenAICompatibleProvider", () => {
+  it("uses the DeepSeek preset to test and complete via the existing compatible adapter", async () => {
+    const { calls, fetchImpl } = fakeFetch(({ url }) => url.endsWith("/models")
+      ? json({ data: [{ id: "deepseek-flash" }] })
+      : json({ model: "deepseek-flash", choices: [{ message: { content: actionsJson } }] }));
+    const provider = createAIProviderAdapter({ ...baseConfig, ...deepseekProviderPreset }, { fetchImpl });
+    expect((await provider.testConnection!()).ok).toBe(true);
+    const result = await provider.generateProposedActions!({ entryTitle: "Synthetic", entryBody: "Synthetic example", allowedActionTypes: ["create_experiment"] });
+    expect(result.actions[0].status).toBe("pending");
+    expect(calls.map(call => call.url)).toEqual(["https://api.deepseek.com/models", "https://api.deepseek.com/chat/completions"]);
+    expect(JSON.parse(String(calls[1].init.body)).model).toBe("deepseek-flash");
+  });
   it("redacts a credential echoed by an upstream error", async () => {
     const { fetchImpl } = fakeFetch(() => json({ error: { message: "invalid secret-key" } }, 401));
     const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });

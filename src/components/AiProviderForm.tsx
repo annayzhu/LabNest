@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { saveAIProvider } from "@/app/settings/actions";
+import { deepseekProviderPreset } from "@/lib/ai-provider-presets";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { defaultProviderBaseUrls, providerTypeLabels, type AIProviderType } from "@/lib/ai";
@@ -37,6 +38,10 @@ const typeHelp: Record<AIProviderType, { baseUrl: string; model: string; key: st
 export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }) {
   const [state, formAction, pending] = useActionState(saveAIProvider, {});
   const [type, setType] = useState<AIProviderType>(provider?.type ?? "dify");
+  const [name, setName] = useState(provider?.name ?? "");
+  const [baseUrl, setBaseUrl] = useState(provider?.baseUrl ?? "");
+  const [defaultModel, setDefaultModel] = useState(provider?.defaultModel ?? "");
+  const [apiKey, setApiKey] = useState("");
   const help = typeHelp[type];
   const isManual = type === "manual_copy_paste";
   const editing = Boolean(provider);
@@ -44,10 +49,18 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
   return (
     <form action={formAction} className="space-y-4" autoComplete="off">
       {provider ? <input type="hidden" name="id" value={provider.id} /> : null}
+      {!editing ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline p-3">
+        <Button type="button" onClick={() => {
+          setType(deepseekProviderPreset.type); setName(deepseekProviderPreset.name);
+          setBaseUrl(deepseekProviderPreset.baseUrl); setDefaultModel(deepseekProviderPreset.defaultModel);
+          setApiKey("");
+        }}>Use DeepSeek / 使用 DeepSeek</Button>
+        <p className="mt-2 text-xs leading-5 text-muted">填入 DeepSeek 官方地址和默认模型；再输入 API 密钥。模型名可按账号可用模型修改。</p>
+      </div> : null}
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block">
           <span className={formLabelClass}>Provider name</span>
-          <input name="name" required defaultValue={provider?.name ?? ""} placeholder="ZJU aihub · lab notebook assistant" className={formInputClass} />
+          <input name="name" required value={name} onChange={(event) => setName(event.target.value)} placeholder="ZJU aihub · lab notebook assistant" className={formInputClass} />
         </label>
         <label className="block">
           <span className={formLabelClass}>Type</span>
@@ -59,12 +72,12 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
         </label>
         <label className="block">
           <span className={formLabelClass}>Base URL</span>
-          <input name="baseUrl" defaultValue={provider?.baseUrl ?? ""} disabled={isManual} placeholder={defaultProviderBaseUrls[type] ?? "https://…/v1"} className={formInputClass} />
+          <input name="baseUrl" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} disabled={isManual} placeholder={defaultProviderBaseUrls[type] ?? "https://…/v1"} className={formInputClass} />
           <span className="mt-1 block text-xs leading-5 text-muted">{help.baseUrl}</span>
         </label>
         <label className="block">
           <span className={formLabelClass}>Default model</span>
-          <input name="defaultModel" defaultValue={provider?.defaultModel ?? ""} disabled={isManual} className={formInputClass} />
+          <input name="defaultModel" value={defaultModel} onChange={(event) => setDefaultModel(event.target.value)} disabled={isManual} className={formInputClass} />
           <span className="mt-1 block text-xs leading-5 text-muted">{help.model}</span>
         </label>
         <label className="block md:col-span-2">
@@ -72,6 +85,8 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
           <input
             name="apiKey"
             type="password"
+            value={apiKey}
+            onChange={(event) => setApiKey(event.target.value)}
             autoComplete="new-password"
             disabled={isManual}
             placeholder={editing && provider?.hasStoredKey ? "Leave blank to keep the stored key" : "Required for connected providers"}

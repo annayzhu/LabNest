@@ -419,6 +419,12 @@ function resultSemanticRoleFromText(value: string | undefined): ResultSemanticRo
   return aliases[normalized];
 }
 
+export const protocolTableColumnIndex = (headers: string[], candidates: string[], fallback: number) => {
+    const normalized = headers.map((header) => header.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, ""));
+    const index = normalized.findIndex((header) => candidates.some((candidate) => header.includes(candidate)));
+    return index >= 0 ? index : fallback;
+  };
+
 export function projectProtocolDocument(document: ProtocolDocument) {
   const materialSection = document.sections.find((item) => item.key === "material");
   const stepSection = document.sections.find((item) => item.key === "steps");
@@ -427,19 +433,14 @@ export function projectProtocolDocument(document: ProtocolDocument) {
 
   const materialTables = (materialSection?.blocks ?? [])
     .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table");
-  const tableIndex = (headers: string[], candidates: string[], fallback: number) => {
-    const normalized = headers.map((header) => header.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, ""));
-    const index = normalized.findIndex((header) => candidates.some((candidate) => header.includes(candidate)));
-    return index >= 0 ? index : fallback;
-  };
   const materials: ProtocolMaterial[] = [];
   const equipment: ProtocolMaterial[] = [];
   for (const block of materialTables) {
     const headers = block.rows[0] ?? [];
-    const nameIndex = tableIndex(headers, ["name", "material", "reagent", "名称", "材料", "试剂", "设备"], 0);
-    const unitIndex = tableIndex(headers, ["unit", "单位"], -1);
-    const roleIndex = tableIndex(headers, ["role", "use", "用途", "作用"], -1);
-    const notesIndex = tableIndex(headers, ["note", "setting", "amount", "备注", "条件", "用量"], -1);
+    const nameIndex = protocolTableColumnIndex(headers, ["name", "material", "reagent", "名称", "材料", "试剂", "设备"], 0);
+    const unitIndex = protocolTableColumnIndex(headers, ["unit", "单位"], -1);
+    const roleIndex = protocolTableColumnIndex(headers, ["role", "use", "用途", "作用"], -1);
+    const notesIndex = protocolTableColumnIndex(headers, ["note", "setting", "amount", "备注", "条件", "用量"], -1);
     const target = /equipment|instrument|设备|仪器/i.test(block.caption ?? "") ? equipment : materials;
     for (const row of block.rows.slice(1)) {
       const name = row[nameIndex]?.trim() ?? "";
@@ -460,15 +461,15 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     .map((block, index) => {
       if (block.resultTemplate) return normalizeResultTemplate({ ...block.resultTemplate, result_type: block.caption || block.resultTemplate.result_type }, index);
       const headers = block.rows[0] ?? [];
-      const fieldIndex = tableIndex(headers, ["fieldkey", "field", "name", "字段键", "字段", "名称"], 0);
-      const labelIndex = tableIndex(headers, ["label", "displayname", "显示名", "标签"], -1);
-      const typeIndex = tableIndex(headers, ["type", "类型"], 1);
-      const unitIndex = tableIndex(headers, ["unit", "单位"], 2);
-      const requiredIndex = tableIndex(headers, ["required", "必填"], 3);
-      const roleIndex = tableIndex(headers, ["role", "semanticrole", "语义角色", "角色"], -1);
-      const optionsIndex = tableIndex(headers, ["options", "选项"], -1);
-      const minIndex = tableIndex(headers, ["min", "minimum", "最小值"], -1);
-      const maxIndex = tableIndex(headers, ["max", "maximum", "最大值"], -1);
+      const fieldIndex = protocolTableColumnIndex(headers, ["fieldkey", "field", "name", "字段键", "字段", "名称"], 0);
+      const labelIndex = protocolTableColumnIndex(headers, ["label", "displayname", "显示名", "标签"], -1);
+      const typeIndex = protocolTableColumnIndex(headers, ["type", "类型"], 1);
+      const unitIndex = protocolTableColumnIndex(headers, ["unit", "单位"], 2);
+      const requiredIndex = protocolTableColumnIndex(headers, ["required", "必填"], 3);
+      const roleIndex = protocolTableColumnIndex(headers, ["role", "semanticrole", "语义角色", "角色"], -1);
+      const optionsIndex = protocolTableColumnIndex(headers, ["options", "选项"], -1);
+      const minIndex = protocolTableColumnIndex(headers, ["min", "minimum", "最小值"], -1);
+      const maxIndex = protocolTableColumnIndex(headers, ["max", "maximum", "最大值"], -1);
       const isLegacyFieldTable = labelIndex < 0 && roleIndex < 0 && optionsIndex < 0 && minIndex < 0 && maxIndex < 0;
       const fields = block.rows.slice(1).map((row) => {
         const dataType = resultFieldDataTypeFromText(row[typeIndex]);
@@ -513,10 +514,13 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table")
     .flatMap((block) => {
       const headers = block.rows[0] ?? [];
-      const materialIndex = tableIndex(headers, ["material", "name", "材料", "名称"], 0);
-      const formulaIndex = tableIndex(headers, ["formula", "calculation", "公式", "计算"], 1);
-      const unitIndex = tableIndex(headers, ["unit", "单位"], 2);
-      return block.rows.slice(1).map((row) => ({ material_name: row[materialIndex] ?? "", formula: row[formulaIndex] ?? "", unit: row[unitIndex] ?? "" }));
+      const materialIndex = protocolTableColumnIndex(headers, ["material", "name", "材料", "名称"], 0);
+      const formulaIndex = protocolTableColumnIndex(headers, ["formula", "calculation", "公式", "计算"], 1);
+      const unitIndex = protocolTableColumnIndex(headers, ["unit", "单位"], 2);
+      const inventoryIndex = protocolTableColumnIndex(headers, ["requiresinventoryselection", "选择库存"], -1);
+      return block.rows.slice(1).map((row) => ({ material_name: row[materialIndex] ?? "", formula: row[formulaIndex] ?? "", unit: row[unitIndex] ?? "",
+        ...(inventoryIndex >= 0 && row[inventoryIndex]?.trim() ? { requires_inventory_selection: /^(true|yes|1|是)$/i.test(row[inventoryIndex].trim()) } : {}),
+      }));
     })
     .filter((item) => item.material_name && item.formula);
 

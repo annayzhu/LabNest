@@ -24,7 +24,7 @@ Production: Docker `labnest-app`, port 3001; independent Studio port 3400 is out
 | Provider API key, capabilitiesJson | Same encrypted provider row and type-derived capabilities | Existing encryption/blank-key preservation; never export secrets |
 | Provider enabled / disable / delete | `/ai#providers` existing provider controls | Existing separate provider state; no forced re-enable |
 
-The prior settings form clears defaultProviderId and attachmentsEnabled on disable. This will be corrected by separate switch/config mutations.
+The prior settings form clears defaultProviderId and attachmentsEnabled on disable. This is corrected by separate switch/config mutations.
 
 ## Actual call paths and test seams
 

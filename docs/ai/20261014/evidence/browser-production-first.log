@@ -1,0 +1,24 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   '/localhost:3338/actions/review?_rsc=GRYw3Bom4IabT3Tl due to access control checks.'
++ ]
+- []
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/.local-runtime/labnest-ai-deepseek-20261010/scripts/verify-ai-module-migration.mjs:87:11 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    '/localhost:3338/actions/review?_rsc=GRYw3Bom4IabT3Tl due to access control checks.'
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

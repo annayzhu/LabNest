@@ -35,10 +35,12 @@ try {
    const context=await browser.newContext({viewport:{width:1440,height:900}});
    await context.addInitScript(()=>localStorage.setItem('labnest.locale','en'));
    const page=await context.newPage();
+   const backgroundRoutes=[];page.on('request',r=>{if(new URL(r.url()).searchParams.has('_rsc'))backgroundRoutes.push(r.url());});
    const pageErrors=[];page.on('pageerror',e=>{pageErrors.push(e.message);console.log('Page error',engine,page.url(),e.message);});
    let inferenceRequests=0;page.on('request',r=>{if(/\/api\/ai\/(generate|protocol-extraction|manual|providers)/.test(r.url()))inferenceRequests++;});
    await page.goto(base+'/ai',{waitUntil:'networkidle'});
    const toggle=page.getByRole('switch',{name:'启用 AI',exact:true});
+   await check(`${engine} AI page does not prefetch historical records or navigation data`,async()=>{assert.deepEqual(backgroundRoutes,[]);});
    await check(`${engine} A01/A03 old review/settings anchors and provider editing links`,async()=>{
     for(const [old,expected] of [['/actions','/ai'],['/settings#ai-access','/ai#ai-access'],['/settings#providers','/ai#providers'],[`/settings?provider=${fixtureId}#providers`,`/ai?provider=${fixtureId}#providers`],['/actions?status=pending','/actions/review?status=pending']]){await page.goto(base+old,{waitUntil:'networkidle'});await eventually(()=>assert.equal(page.url(),base+expected));}
     await page.goto(base+'/settings',{waitUntil:'networkidle'});assert.equal(await page.locator('input[name="apiKey"]').count(),0);await page.getByRole('link',{name:'AI 设置 →'}).click();await toggle.waitFor();
@@ -84,7 +86,7 @@ try {
     await page.screenshot({path:`${dir}/${engine}-ai-${width}.png`,fullPage:true});
     if(width===390){await page.getByRole('button',{name:'Open more navigation',exact:true}).click();await page.getByRole('link',{name:'AI',exact:true}).waitFor();await page.screenshot({path:`${dir}/${engine}-mobile-navigation.png`,fullPage:true});}
    });
-   assert.deepEqual(pageErrors,[]);
+   await check(`${engine} no unhandled page errors`,async()=>assert.deepEqual(pageErrors,[]));
    await context.close();
   } finally {await browser.close();}
  }

@@ -103,6 +103,7 @@ export function Sidebar() {
 
       <div className="h-full overflow-y-auto py-4 [scrollbar-gutter:stable]">
         <Link
+          prefetch={pathname === "/ai" ? false : undefined}
           href="/"
           aria-label="LabNest home"
           title={collapsed ? "LabNest" : undefined}
@@ -125,6 +126,7 @@ export function Sidebar() {
               <Fragment key={item.href}>
                 {item.separated ? <div className="my-3 border-t border-hairline" aria-hidden /> : null}
                 <Link
+                  prefetch={pathname === "/ai" ? false : undefined}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   aria-label={collapsed ? item.label : undefined}
@@ -144,6 +146,7 @@ export function Sidebar() {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
+                prefetch={pathname === "/ai" ? false : undefined}
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
@@ -216,6 +219,7 @@ export function MobileBottomNav() {
           const isCurrent = active(item.href);
           return (
             <Link
+              prefetch={pathname === "/ai" ? false : undefined}
               key={item.href}
               href={item.href}
               aria-current={isCurrent ? "page" : undefined}
@@ -277,6 +281,7 @@ export function MobileBottomNav() {
                 const isCurrent = active(item.href);
                 return (
                   <Link
+                    prefetch={pathname === "/ai" ? false : undefined}
                     key={item.href}
                     href={item.href}
                     onClick={() => closeMoreMenu()}
@@ -300,6 +305,7 @@ export function MobileBottomNav() {
                 const isCurrent = active(item.href);
                 return (
                   <Link
+                    prefetch={pathname === "/ai" ? false : undefined}
                     key={item.href}
                     href={item.href}
                     onClick={() => closeMoreMenu()}

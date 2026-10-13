@@ -46,7 +46,6 @@ export async function saveAIProposals(options: {
       return { ...metadata.response, replayed: true };
     }
     const result = await options.generate();
-    await options.authorizePublication(tx);
     await lockEntrySourceGraph(tx);
     await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${options.entryId} FOR UPDATE`;
     const source = await tx.entry.findUnique({ where: { id: options.entryId }, select: { id: true, title: true, body: true, contentJson: true } });
@@ -56,6 +55,9 @@ export async function saveAIProposals(options: {
     if (source.title !== options.input.entryTitle || getEntryMarkdown(source.contentJson, source.body).trim() !== options.input.entryBody) {
       throw new AIProposalConflict("The source entry changed during generation. Review the new content and start a new request.");
     }
+    // Acquire consent locks only after source locks; revocation can complete
+    // while publication waits, and authorization stays locked through commit.
+    await options.authorizePublication(tx);
     const actions = [];
     for (const action of result.actions) {
       const record = await tx.proposedAction.create({ data: { sourceType: "ai", sourceId: options.entryId,

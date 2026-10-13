@@ -21,6 +21,8 @@ export function createAIGate(revision: string, provider?: { id: string; revision
     // Serialize publication with a switch update; a completed disable cannot be
     // followed by a transaction publishing a result under an older opt-in.
     await tx.$queryRaw`SELECT id FROM "AISettings" WHERE id='default' FOR SHARE`;
+    // Match provider deletion's settings→provider order and protect both rows.
+    if (provider) await tx.$queryRaw`SELECT id FROM "AIProvider" WHERE id=${provider.id} FOR SHARE`;
     await assertAllowed(tx);
   }
   const guardedFetch: typeof fetch = async (input, init) => {

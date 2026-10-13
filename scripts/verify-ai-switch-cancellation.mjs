@@ -47,6 +47,7 @@ try {
  assert.equal(previewResponse.status,200,await previewResponse.clone().text());
  const {preview}=await previewResponse.json();
  for (const scenario of ['queued-duplicate','workbench','connection-test','protocol-extraction']) {
+  console.log('Checking',scenario);
   await setEnabled(true);
   const reached = new Promise(resolve => { entered = resolve; });
   const mutation = randomUUID();
@@ -57,7 +58,7 @@ try {
   const first = scenario === 'protocol-extraction'
    ? fetch(base+'/api/ai/protocol-extraction',{method:'POST',headers:{origin:base},body:extractionForm})
    : call(path,payload);
-  await reached;
+  await Promise.race([reached,first.then(async response=>{throw Error('Before provider: '+response.status+' '+await response.clone().text());}),new Promise((_,reject)=>{const t=setTimeout(()=>reject(Error('Provider was not reached')),20000);t.unref();})]);
   const second = scenario === 'queued-duplicate' ? call(path,payload) : undefined;
   await new Promise(resolve => setTimeout(resolve,100));
   await setEnabled(false);
@@ -69,6 +70,29 @@ try {
   report.checks.push({name:`${scenario}: disable aborts active HTTP, rejects late output, blocks queued dispatch`,status:'passed'});
  }
 
+ // Block publication on the existing source graph, then revoke the provider.
+ // This exercises the real HTTP/transaction path, not a mocked persistence layer.
+ console.log('Checking publication race');
+ await setEnabled(true);
+ const blocker=new pg.Client({connectionString:dbURL.href});await blocker.connect();
+ try {
+  await blocker.query('BEGIN');await blocker.query('SELECT pg_advisory_xact_lock(20261006)');
+  const reached=new Promise(resolve=>{entered=resolve;});
+  const pending=call('/api/ai/generate',{entryId,persist:true,clientMutationId:randomUUID()});
+  await reached;release();
+  let blocked=false;
+  for(let i=0;i<100;i++){
+   const locks=await db.query('SELECT 1 FROM pg_locks WHERE locktype=\'advisory\' AND objid=20261006 AND NOT granted');
+   if(locks.rowCount){blocked=true;break;}await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert(blocked,'Publication must reach the graph lock before revocation');
+  await db.query('UPDATE "AIProvider" SET enabled=false,"updatedAt"=clock_timestamp() WHERE id=$1',[id]);
+  await blocker.query('COMMIT');
+  const rejected=await pending;assert.equal(rejected.status,403,await rejected.text());
+  const readback=await (await fetch(base+'/api/entries/'+entryId)).json();
+  assert.equal(readback.entry.pendingActions.length,0,'A disabled provider must not publish queued suggestions');
+  report.checks.push({name:'provider revocation while publication waits leaves no suggestions',status:'passed'});
+ } finally {await blocker.query('ROLLBACK');await blocker.end();}
  await setEnabled(false);
  const before=calls;
  for(const path of ['/api/ai/generate','/api/ai/manual/prompt','/api/ai/manual/parse',`/api/ai/providers/${id}/test`]) {

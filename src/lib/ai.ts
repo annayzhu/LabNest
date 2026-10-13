@@ -266,7 +266,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
   protected requireApiKey(): string {
     const key = this.config.apiKey?.trim();
     if (!key) {
-      throw new AIProviderError("No API key is stored for this provider. Enter one in Settings before connecting.");
+      throw new AIProviderError("No API key is stored for this provider. Enter one on the AI page before connecting.");
     }
     return key;
   }
@@ -291,6 +291,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
     try {
       response = await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(this.timeoutMs) });
     } catch (error) {
+      if (error instanceof AIProviderError) throw error;
       throw new AIProviderError(this.safeMessage(`Could not reach ${url}: ${describeNetworkError(error)}`), 502);
     }
     if (!response.ok) {

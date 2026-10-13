@@ -1,0 +1,63 @@
+"use client";
+
+import { useRef, useState } from "react";
+import type { AISettingsChange } from "@/lib/ai-settings";
+import { formLabelClass } from "./forms";
+import { Select } from "./ui/Select";
+import { Button } from "./ui/Button";
+import { notifyAISettingsChanged, useAISettings } from "./useAISettings";
+
+export function AISettingsPanel({ providers }: { providers: { id: string; name: string }[] }) {
+  const { saved, error, refresh, accept } = useAISettings();
+  const [editedDraft, setDraft] = useState<{ defaultProviderId: string; attachmentsEnabled: boolean }>();
+  const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
+  const dirty = editedDraft !== undefined;
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string>();
+  const [message, setMessage] = useState("");
+  const submitting = useRef(false);
+  async function save(kind: "enabled" | "configuration") {
+    if (!saved || error || submitting.current) return;
+    submitting.current = true; setBusy(true); setFailure(undefined); setMessage("");
+    const change: AISettingsChange = kind === "enabled"
+      ? { kind, revision: saved.revision, enabled: !saved.enabled }
+      : { kind, revision: saved.revision, defaultProviderId: draft.defaultProviderId || null, attachmentsEnabled: draft.attachmentsEnabled };
+    try {
+      const response = await fetch("/api/ai/settings", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(change) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "保存失败，请重试。");
+      accept(result);
+      if (kind === "configuration") setDraft(undefined);
+      setMessage(kind === "enabled" ? "开关已保存" : "功能设置已保存");
+      notifyAISettingsChanged();
+    } catch (caught) { setFailure(caught instanceof Error ? caught.message : "保存失败，开关保留上次成功保存的状态。请重新读取确认。"); }
+    finally { submitting.current = false; setBusy(false); }
+  }
+  const stateLabel = !saved ? "正在读取设置…" : error ? "设置读取失败" : !saved.enabled ? "已关闭" : saved.availability.connected ? "已开启" : "已开启 · 待配置";
+  return <section className="space-y-4" aria-label="AI 功能设置">
+    <div id="ai-access" className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-4 py-3">
+      <div className="flex items-center justify-between gap-4">
+        <label htmlFor="ai-enabled" className="cursor-pointer text-base font-semibold text-ink">启用 AI</label>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="text-xs text-muted" role="status" data-ai-state>{stateLabel}</span>
+          <button id="ai-enabled" type="button" role="switch" aria-checked={Boolean(saved?.enabled)} aria-label="启用 AI" aria-describedby="ai-switch-help" disabled={busy || !saved || Boolean(error)} onClick={() => save("enabled")} className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border disabled:cursor-wait disabled:opacity-50 ${saved?.enabled ? "border-ink bg-ink" : "border-hairline bg-stone"}`}>
+            <span className={`h-5 w-5 rounded-full bg-surface ${saved?.enabled ? "ml-6" : "ml-1"}`} />
+          </button>
+        </div>
+      </div>
+      <p id="ai-switch-help" className="mt-2 text-xs leading-5 text-muted">{saved && !saved.enabled ? "已关闭 AI，现有记录保持不变。" : "仅按你的操作使用 AI；开启不会扫描或处理历史记录。"}</p>
+      <p className="mt-1 text-xs leading-5 text-muted">作用于当前 LabNest 工作空间，与原设置范围一致；Visualization Studio 使用自己的设置。</p>
+      {failure || error ? <div role="alert" className="mt-2 text-sm text-error">{failure || error} <button type="button" className="focus-ring underline" onClick={() => { setFailure(undefined); void refresh(); }}>重新读取</button></div> : null}
+      {message ? <p role="status" className="mt-2 text-xs text-muted">{message}</p> : null}
+    </div>
+    {saved?.enabled && !saved.availability.connected && !error ? <p className="text-sm text-warning">{saved.availability.reason} <a href={saved.defaultProviderId ? "#providers" : "#default-provider"} className="focus-ring underline">补充配置</a></p> : null}
+    <form onSubmit={event => { event.preventDefault(); void save("configuration"); }} className="space-y-3">
+      <h2 className="text-sm font-semibold text-ink">功能设置</h2>
+      <div className="grid items-end gap-3 sm:grid-cols-2">
+        <label className="block"><span className={formLabelClass}>默认模型服务 / Default provider</span><Select id="default-provider" name="defaultProviderId" disabled={!saved || Boolean(error)} value={draft.defaultProviderId} onChange={event => { setDraft({ ...draft, defaultProviderId: event.target.value }); setMessage(""); }}><option value="">未选择</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select></label>
+        <label className="flex min-h-10 items-center gap-2 text-sm"><input name="attachmentsEnabled" type="checkbox" disabled={!saved || Boolean(error)} checked={draft.attachmentsEnabled} onChange={event => { setDraft({ ...draft, attachmentsEnabled: event.target.checked }); setMessage(""); }} className="h-4 w-4 accent-[var(--ink)]" />允许用户明确选择的附件</label>
+      </div>
+      <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={busy || !saved || Boolean(error)} size="sm">保存功能设置</Button><span className="text-xs text-muted">{dirty ? "有未保存的修改；总开关不会提交这些修改。" : "只发送明确选择的上下文，不授权整个项目上传。"}</span></div>
+    </form>
+  </section>;
+}

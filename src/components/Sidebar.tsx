@@ -20,7 +20,7 @@ import {
   PanelLeftOpen,
   Search,
   Settings,
-  Sparkles,
+  Bot,
   Trash2,
   Wrench,
   X,
@@ -47,7 +47,7 @@ const navItems = [
 
 const utilityItems = [
   { href: "/search", label: "Search", icon: Search },
-  { href: "/actions", label: "AI review", icon: Sparkles },
+  { href: "/ai", label: "AI", icon: Bot },
   { href: "/trash", label: "Recycle Bin", icon: Trash2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

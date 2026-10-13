@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { saveAIProvider } from "@/app/settings/actions";
 import { deepseekProviderPreset } from "@/lib/ai-provider-presets";
 import { formInputClass, formLabelClass } from "@/components/forms";
+import { Select } from "./ui/Select";
 import { Button } from "@/components/ui/Button";
 import { defaultProviderBaseUrls, providerTypeLabels, type AIProviderType } from "@/lib/ai";
 
@@ -64,11 +65,11 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
         </label>
         <label className="block">
           <span className={formLabelClass}>Type</span>
-          <select name="type" value={type} onChange={(event) => setType(event.target.value as AIProviderType)} className={formInputClass}>
+          <Select name="type" value={type} onChange={(event) => setType(event.target.value as AIProviderType)} className={formInputClass}>
             {typeOrder.map((value) => (
               <option key={value} value={value}>{providerTypeLabels[value]}</option>
             ))}
-          </select>
+          </Select>
         </label>
         <label className="block">
           <span className={formLabelClass}>Base URL</span>
@@ -104,7 +105,7 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" variant="primary" disabled={pending}>{editing ? "Save provider" : "Add provider"}</Button>
-        {editing ? <a href="/settings#providers" className="focus-ring inline-flex h-10 items-center rounded-[var(--ln-radius-control-lg)] px-3 text-sm font-medium text-moss">Cancel</a> : null}
+        {editing ? <a href="/ai#providers" className="focus-ring inline-flex h-10 items-center rounded-[var(--ln-radius-control-lg)] px-3 text-sm font-medium text-moss">Cancel</a> : null}
       </div>
     </form>
   );

@@ -6,10 +6,13 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
+import { requestAI, useAISettings } from "./useAISettings";
+
 type Outcome = { ok: boolean; message: string };
 
 /** Sends this entry's text to the connected model and files the result as pending proposed actions. */
-export function EntryAiProposeButton({ entryId, providerName }: { entryId: string; providerName: string }) {
+export function EntryAiProposeButton({ entryId, providerName }: { entryId: string; providerName?: string }) {
+  const status = useAISettings();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>();
@@ -23,7 +26,7 @@ export function EntryAiProposeButton({ entryId, providerName }: { entryId: strin
     setBusy(true);
     setOutcome(undefined);
     try {
-      const response = await fetch("/api/ai/generate", {
+      const response = await requestAI("/api/ai/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ entryId, persist: true, clientMutationId: requestId.current }),
@@ -52,7 +55,7 @@ export function EntryAiProposeButton({ entryId, providerName }: { entryId: strin
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button size="sm" variant="primary" onClick={propose} disabled={busy} title={`Send this entry's text to ${providerName}`}>
+      <Button size="sm" variant="primary" onClick={propose} disabled={busy || !status.connected} title={`Send this entry's text to ${status.saved?.availability.providerName ?? providerName ?? "the model"}`}>
         <Sparkles className="h-4 w-4" aria-hidden />
         {busy ? "Asking model…" : "Propose with AI"}
       </Button>

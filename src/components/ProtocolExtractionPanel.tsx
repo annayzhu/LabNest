@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { ExtractionItem, ExtractionStatus, SignedExtractionProposal } from "@/lib/protocol-extraction";
 
+import { requestAI, useAISettings } from "./useAISettings";
+
 export type ProtocolExtractionState = SignedExtractionProposal & { acceptedIds: string[] };
 
 const groups: { kind: ExtractionItem["kind"]; title: string }[] = [
@@ -51,7 +53,6 @@ export function ProtocolExtractionPanel({
   file,
   checksum,
   rowIndex,
-  providerName,
   value,
   onChange,
 }: {
@@ -62,6 +63,8 @@ export function ProtocolExtractionPanel({
   value?: ProtocolExtractionState;
   onChange: (next: ProtocolExtractionState | undefined) => void;
 }) {
+  const status = useAISettings();
+  const currentProvider = status.connected ? status.saved?.availability.providerName : undefined;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -73,7 +76,7 @@ export function ProtocolExtractionPanel({
     formData.set("checksum", checksum);
     formData.set("rowIndex", String(rowIndex));
     try {
-      const response = await fetch("/api/ai/protocol-extraction", { method: "POST", body: formData });
+      const response = await requestAI("/api/ai/protocol-extraction", { method: "POST", body: formData });
       const payload = (await response.json()) as Partial<SignedExtractionProposal> & { error?: string };
       if (!response.ok || !payload.proposal || !payload.token) throw new Error(payload.error ?? "The extraction failed.");
       onChange({ proposal: payload.proposal, token: payload.token, acceptedIds: defaultAcceptedIds(payload.proposal.items) });
@@ -100,14 +103,14 @@ export function ProtocolExtractionPanel({
         <div className="min-w-0">
           <h4 className="flex items-center gap-2 text-xs font-semibold text-ink"><Bot className="h-4 w-4 text-moss" aria-hidden />AI extraction</h4>
           <p className="mt-1 text-xs leading-5 text-muted">
-            {providerName
-              ? `Sends this document's text (no images) to ${providerName}. Suggestions are checked against the document; only ticked items are written into the new version.`
-              : "Connect a model provider in Settings and turn on AI access to extract parameters, consumption rules, step attributes, and result fields."}
+            {currentProvider
+              ? `Sends this document's text (no images) to ${currentProvider}. Suggestions are checked against the document; only ticked items are written into the new version.`
+              : "Connect a model provider on the AI page and turn on AI to extract parameters, consumption rules, step attributes, and result fields."}
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
           {value ? <Button type="button" size="sm" variant="ghost" onClick={() => onChange(undefined)} disabled={busy}>Discard</Button> : null}
-          <Button type="button" size="sm" variant={value ? "secondary" : "primary"} onClick={run} disabled={!providerName || busy}>
+          <Button type="button" size="sm" variant={value ? "secondary" : "primary"} onClick={run} disabled={!currentProvider || busy}>
             {busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Bot className="h-4 w-4" aria-hidden />}
             {busy ? "Reading document…" : value ? "Run again" : "Extract with AI"}
           </Button>

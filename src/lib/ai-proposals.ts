@@ -1,3 +1,4 @@
+import type { Prisma } from "../generated/prisma/client";
 import { createHash } from "node:crypto";
 import type { AIGenerationResult, AIProviderConfig, EntryToActionPromptInput } from "./ai";
 import { prisma } from "./db";
@@ -27,6 +28,7 @@ export async function saveAIProposals(options: {
   input: EntryToActionPromptInput;
   provider: AIProviderConfig;
   generate: () => Promise<AIGenerationResult>;
+  authorizePublication: (tx: Prisma.TransactionClient) => Promise<void>;
 }): Promise<ProposalResponse> {
   const requestId = `ai-generate-${options.clientMutationId}`;
   const fingerprint = createHash("sha256").update(JSON.stringify({ entryId: options.entryId, input: options.input,
@@ -44,6 +46,7 @@ export async function saveAIProposals(options: {
       return { ...metadata.response, replayed: true };
     }
     const result = await options.generate();
+    await options.authorizePublication(tx);
     await lockEntrySourceGraph(tx);
     await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${options.entryId} FOR UPDATE`;
     const source = await tx.entry.findUnique({ where: { id: options.entryId }, select: { id: true, title: true, body: true, contentJson: true } });

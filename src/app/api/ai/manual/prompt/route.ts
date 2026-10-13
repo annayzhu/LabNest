@@ -1,3 +1,5 @@
+import { createAIGate } from "@/lib/ai-gate";
+import { validateAIRequest } from "@/lib/ai-request";
 import {
   ManualCopyPasteProvider,
   allowedProposedActionTypes,
@@ -16,15 +18,21 @@ const promptRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const boundary = validateAIRequest(request);
+  if (boundary) return Response.json({ error: boundary.error }, { status: boundary.status });
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
   if (!settings?.enabled) {
     return Response.json(
-      { error: "AI is disabled. Enable it explicitly in Settings before preparing external model prompts." },
+      { error: "AI is disabled. Enable it explicitly on the AI page before preparing external model prompts." },
       { status: 403 },
     );
   }
 
-  const parsed = promptRequestSchema.safeParse(await request.json());
+  const gate = createAIGate(settings.updatedAt.toISOString());
+  const parsed = promptRequestSchema.safeParse(await request.json().catch(() => ({})));
+
+  try { await gate.assertAllowed(); }
+  catch { return Response.json({ error: "AI 设置已改变，本次操作已停止。" }, { status: 403 }); }
 
   if (!parsed.success) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });

@@ -224,7 +224,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
                   <ListChecks className="h-4 w-4" aria-hidden />
                   <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
                 </div>
-                {ai.connected && ai.providerName && !locked ? <EntryAiProposeButton entryId={entry.id} providerName={ai.providerName} /> : null}
+                {!locked ? <EntryAiProposeButton entryId={entry.id} providerName={ai.providerName} /> : null}
               </div>
               {entry.pendingActions.length ? (
                 <div className="mt-4 space-y-3">
@@ -237,7 +237,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
                       {action.reason ? <p className="mt-2 text-xs leading-5 text-graphite">{action.reason}</p> : null}
                     </div>
                   ))}
-                  <Link href="/actions?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
+                  <Link href="/actions/review?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>

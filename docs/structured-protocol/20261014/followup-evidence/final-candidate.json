@@ -12,5 +12,14 @@
   "nativeSimulator": "watch-simulator/report.json",
   "physicalValidation": "unexecuted; see ACCEPTANCE.md",
   "secretsOrFormalRecordsChanged": false,
-  "nativeFinalRegression": "watch-simulator/final-regression.json"
+  "nativeFinalRegression": "watch-simulator/final-regression.json",
+  "calculatorRunRegression": {
+    "reports": [
+      "ci-fixes/calculator-run/run-browser-report.json",
+      "ci-fixes/calculator-run/run-compat.json",
+      "ci-fixes/calculator-run/offline.json"
+    ],
+    "helperSha256": "b78ea3f5cac2c135553c7c8829837aa55083351b82c2fe7bfc19a4faa2fd6bff",
+    "actualProductionImageUnchanged": true
+  }
 }

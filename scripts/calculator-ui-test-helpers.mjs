@@ -32,7 +32,11 @@ export async function selectCalculatorOption(page,name,value){
 }
 
 export async function prepareCalculatorOffline(page) {
- await openCalculatorDisclosure(page,'Offline use');
+ // Run exposes an experiment-specific download, while tools use the Offline use dialog.
+ const runDownload=page.locator('[data-run-reference] .calculator-offline > summary');
+ if(await runDownload.count()){
+  if(!(await runDownload.evaluate(el=>el.parentElement.open)))await runDownload.click();
+ }else await openCalculatorDisclosure(page,'Offline use');
  await page.getByRole('button',{name:/^(Prepare offline|Update offline content|Retry)$/}).click();
  await page.getByText(/^Available offline:/).waitFor({timeout:60000});
  const dialog=page.getByRole('dialog',{name:'Offline use',exact:true});

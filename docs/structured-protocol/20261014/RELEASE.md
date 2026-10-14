@@ -30,3 +30,6 @@ watchOS26.5 is now available. The Series11(46mm) simulator passed native install
 
 
 Final native review caught a failed re-pairing being hidden by refresh of the old connection. This was reproduced on the simulator before the fix, then fixed by returning pairing success explicitly and retaining a separate error beside the pairing control. The same invalid-code case now stays open with the error; valid re-pairing changes to the correct A/B experiment. Final screenshots cover the expanded group/step list and Chinese pending label. The final native completion/reconnect again produces one database event; see watch-simulator/final-regression.json. Neither reviewer found remaining blocking changes after the repair; this does not replace physical Watch acceptance.
+
+
+The long Calculator regression subsequently exposed a test helper still opening the old `Offline use` Run disclosure. The app now has an explicit experiment-download disclosure. The shared helper opens that actual control while retaining all offline/cache/image assertions. On the same603067b8 production image, the legacy Run suite, old-snapshot/parameter DB readback and complete offline Run→Calculator→tool→Run passed. Evidence: followup-evidence/ci-fixes/calculator-run. The full final remote Calculator workflow remains mandatory before merge.

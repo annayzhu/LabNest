@@ -1,0 +1,45 @@
+{
+  "base": "http://localhost:3338",
+  "at": "2026-10-14T03:11:54.792Z",
+  "synthetic": true,
+  "liveProviders": false,
+  "checks": [
+    {
+      "name": "import page explains the disabled state when no model is connected",
+      "status": "passed"
+    },
+    {
+      "name": "boundary: foreign origin, JSON body, and AI off never reach the model",
+      "status": "passed"
+    },
+    {
+      "name": "prompt carries document text only, never media or the credential",
+      "status": "passed"
+    },
+    {
+      "name": "tampered, foreign-row and invalid selections are rejected without creating a Protocol",
+      "status": "passed"
+    },
+    {
+      "name": "mobile 390 px: extraction panel fits without horizontal scroll",
+      "status": "passed"
+    },
+    {
+      "name": "UI: extract, review evidence, deselect one rule, and import",
+      "status": "passed"
+    },
+    {
+      "name": "database: accepted items are written, deselected and invalid items are not, audit recorded",
+      "status": "passed"
+    },
+    {
+      "name": "canonical readback: AI fields survive opening the editor and saving again",
+      "status": "passed"
+    },
+    {
+      "name": "imported parameters drive the consumption calculation",
+      "status": "passed"
+    }
+  ],
+  "failures": []
+}

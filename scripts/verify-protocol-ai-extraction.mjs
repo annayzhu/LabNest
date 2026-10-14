@@ -14,7 +14,7 @@ import { chromium } from "playwright";
 import pg from "pg";
 
 const database = new URL(process.env.DATABASE_URL ?? "");
-assert.equal(["/labnest_protocol_ai_extraction_20261009", "/labnest_ai_module_acceptance_20261014"].includes(database.pathname), true, "Only the isolated acceptance database is permitted");
+assert.equal(["/labnest_protocol_ai_extraction_20261009", "/labnest_ai_module_acceptance_20261014", "/labnest_ai_connection_20261014"].includes(database.pathname), true, "Only the isolated acceptance database is permitted");
 assert(["localhost", "127.0.0.1"].includes(database.hostname));
 const base = process.env.LABNEST_E2E_BASE_URL ?? "http://localhost:3339";
 const mockPort = Number(process.env.AI_MOCK_PORT ?? 4849);
@@ -76,7 +76,7 @@ const settingsPost = (page) => page.waitForResponse((r) => r.request().method() 
 async function configureProvider(page) {
   await page.goto(`${base}/ai`, { waitUntil: "networkidle" });
   const form = page.locator('form:has(input[name="apiKey"])');
-  await form.getByRole("button", { name: "Use DeepSeek / 使用 DeepSeek" }).click();
+  await form.getByRole("button", { name: "使用 DeepSeek" }).click();
   assert.equal(await form.locator('[name="type"]').inputValue(), "openai_compatible");
   assert.equal(await form.locator('[name="baseUrl"]').inputValue(), "https://api.deepseek.com");
   assert.equal(await form.locator('[name="defaultModel"]').inputValue(), "deepseek-flash");
@@ -86,7 +86,7 @@ async function configureProvider(page) {
   await form.locator('[name="baseUrl"]').fill(`http://127.0.0.1:${mockPort}/v1`);
   await form.locator('[name="defaultModel"]').fill("fixture-model");
   await form.locator('[name="apiKey"]').fill(token);
-  await Promise.all([settingsPost(page), form.getByRole("button", { name: "Add provider", exact: true }).click()]);
+  await Promise.all([settingsPost(page), form.getByRole("button", { name: "添加服务", exact: true }).click()]);
   const id = (await db.query('SELECT id FROM "AIProvider" WHERE name=$1', ["Extraction fixture"])).rows[0].id;
   await setAI(page, id, true);
   return id;

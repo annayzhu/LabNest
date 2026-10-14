@@ -1,0 +1,19 @@
+{
+  "applicationSource": "7c78d7092096e95893589d153b8773119fcb6233",
+  "image": "labnest-app:ai-connection-7c78d709",
+  "synthetic": true,
+  "liveProvider": false,
+  "calls": 2,
+  "checks": [
+    {
+      "engine": "chromium",
+      "passed": true,
+      "draftGeneration": true
+    },
+    {
+      "engine": "webkit",
+      "passed": true,
+      "draftGeneration": true
+    }
+  ]
+}

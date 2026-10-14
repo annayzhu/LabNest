@@ -1,0 +1,10 @@
+DIAG pagehide about:blank
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium E08 editing in flight cancels only this test and invalidates late success"}
+{"failed":"http://localhost:3338/ai?provider=cmv7j1ffo0005nposmvl4kwat&_rsc=IrD7Y98yjSb9Q_jf","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium opening saved provider"}
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium E08 master-off while testing blocks the late response"}
+DIAG pagehide http://localhost:3338/ai?provider=cmv7j1ffo0005nposmvl4kwat#providers
+DIAG pagehide about:blank
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"cancelled"},"stage":"webkit E08 editing in flight cancels only this test and invalidates late success"}
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"cancelled"},"stage":"webkit E08 master-off while testing blocks the late response"}
+DIAG pagehide http://localhost:3338/ai?provider=cmv7j1ihg0006nposgxg5mben#providers
+{"checks":33,"failures":0,"synthetic":true,"liveProvider":false}

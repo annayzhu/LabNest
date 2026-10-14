@@ -1,0 +1,37 @@
+DIAG pagehide about:blank
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium E08 editing in flight cancels only this test and invalidates late success"}
+DIAG pagehide http://localhost:3338/ai?saved=provider#providers
+{"failed":"http://localhost:3338/api/ai/settings","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium opening saved provider"}
+{"failed":"http://localhost:3338/api/ai/settings","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium opening saved provider"}
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"net::ERR_ABORTED"},"stage":"chromium E08 master-off while testing blocks the late response"}
+DIAG pagehide http://localhost:3338/ai?provider=cmv7j0qi70003npostnli4jcb#providers
+DIAG pagehide about:blank
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"cancelled"},"stage":"webkit E08 editing in flight cancels only this test and invalidates late success"}
+{"pageError":"/localhost:3338/api/ai/settings due to access control checks.","stack":"Fetch API cannot load http://localhost:3338/api/ai/settings due to access control checks.\n    at n (http://localhost:3338/_next/static/chunks/2_0prww2h5fne.js:1:6506)\n    at unknown (http://localhost:3338/_next/static/chunks/2_0prww2h5fne.js:1:7423)\n    at unknown (http://localhost:3338/_next/static/chunks/2_0prww2h5fne.js:1:7592)","stage":"webkit opening saved provider","url":"http://localhost:3338/ai?saved=provider#providers"}
+DIAG pagehide http://localhost:3338/ai?saved=provider#providers
+{"failed":"http://localhost:3338/api/ai/providers/test","reason":{"errorText":"cancelled"},"stage":"webkit E08 master-off while testing blocks the late response"}
+DIAG pagehide http://localhost:3338/ai?provider=cmv7j0tuv0004nposx45y16rg#providers
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   '/localhost:3338/api/ai/settings due to access control checks.'
++ ]
+- []
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:122:69
+    at check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:34:60)
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:122:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [ '/localhost:3338/api/ai/settings due to access control checks.' ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

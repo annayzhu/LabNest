@@ -1,0 +1,38 @@
+{
+  "synthetic": true,
+  "liveProvider": false,
+  "checks": [
+    {
+      "name": "off/on rejects late result and publishes no suggestions",
+      "status": "passed"
+    },
+    {
+      "name": "queued-duplicate: disable aborts active HTTP, rejects late output, blocks queued dispatch",
+      "status": "passed"
+    },
+    {
+      "name": "workbench: disable aborts active HTTP, rejects late output, blocks queued dispatch",
+      "status": "passed"
+    },
+    {
+      "name": "connection-test: disable aborts active HTTP, rejects late output, blocks queued dispatch",
+      "status": "passed"
+    },
+    {
+      "name": "protocol-extraction: disable aborts active HTTP, rejects late output, blocks queued dispatch",
+      "status": "passed"
+    },
+    {
+      "name": "provider revocation while publication waits leaves no suggestions",
+      "status": "passed"
+    },
+    {
+      "name": "all five existing AI HTTP paths blocked while disabled; no upstream request",
+      "status": "passed"
+    },
+    {
+      "name": "off/on preserves provider and attachment choice",
+      "status": "passed"
+    }
+  ]
+}

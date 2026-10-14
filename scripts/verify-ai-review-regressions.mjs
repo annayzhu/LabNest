@@ -4,7 +4,7 @@ import pg from 'pg';
 import { mkdir,writeFile } from 'node:fs/promises';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3338';
 const url=new URL(process.env.DATABASE_URL);
-assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008'].includes(url.pathname.slice(1)));
+assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008','labnest_ai_connection_20261014'].includes(url.pathname.slice(1)));
 assert(['localhost','127.0.0.1'].includes(url.hostname));assert.notEqual(new URL(base).port,'3001');
 const db=new pg.Client({connectionString:url.href});
 const dir=process.env.AI_MODULE_EVIDENCE_DIR??'docs/ai/20261014/evidence';await mkdir(dir,{recursive:true});
@@ -19,14 +19,14 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:900}});await context.addInitScript(()=>localStorage.setItem('labnest.locale','en'));
  const page=await context.newPage();await page.goto(base+'/ai',{waitUntil:'networkidle'});
  await check('provider disable and enable immediately refresh availability without reload/focus',async()=>{
-  const state=page.locator('[data-ai-state]');await eventually(async()=>assert.equal(await state.textContent(),'已开启'));
+  const state=page.locator('[data-ai-state]');await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 配置齐备'));
   const row=page.locator(`[data-provider-row="${id}"]`);
-  await row.getByRole('button',{name:'Disable',exact:true}).click();
-  await row.getByRole('button',{name:'Enable',exact:true}).waitFor();
+  await row.getByRole('button',{name:'停用',exact:true}).click();
+  await row.getByRole('button',{name:'启用',exact:true}).waitFor();
   await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 待配置'));
-  await row.getByRole('button',{name:'Enable',exact:true}).click();
-  await row.getByRole('button',{name:'Disable',exact:true}).waitFor();
-  await eventually(async()=>assert.equal(await state.textContent(),'已开启'));
+  await row.getByRole('button',{name:'启用',exact:true}).click();
+  await row.getByRole('button',{name:'停用',exact:true}).waitFor();
+  await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 配置齐备'));
  });
  await page.reload({waitUntil:'networkidle'});
  await check('pending configuration save prevents a later draft from being silently discarded',async()=>{

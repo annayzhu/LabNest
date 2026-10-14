@@ -5,7 +5,7 @@ import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import pg from 'pg';
 const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
 const dbURL = new URL(process.env.DATABASE_URL);
-assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008'].includes(dbURL.pathname.slice(1)));
+assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008','labnest_ai_connection_20261014'].includes(dbURL.pathname.slice(1)));
 assert(['127.0.0.1','localhost'].includes(dbURL.hostname));
 assert.notEqual(new URL(base).port, '3001');
 const db = new pg.Client({ connectionString: dbURL.href });

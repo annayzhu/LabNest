@@ -33,7 +33,7 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
     } catch (caught) { setFailure(caught instanceof Error ? caught.message : "保存失败，开关保留上次成功保存的状态。请重新读取确认。"); }
     finally { submitting.current = false; setBusy(false); }
   }
-  const stateLabel = !saved ? "正在读取设置…" : error ? "设置读取失败" : !saved.enabled ? "已关闭" : saved.availability.connected ? "已开启" : "已开启 · 待配置";
+  const stateLabel = !saved ? "正在读取设置…" : error ? "设置读取失败" : !saved.enabled ? "已关闭" : saved.availability.connected ? "已开启 · 配置齐备" : "已开启 · 待配置";
   return <section className="space-y-4" aria-label="AI 功能设置">
     <div id="ai-access" className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-4 py-3">
       <div className="flex items-center justify-between gap-4">
@@ -54,7 +54,7 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
     <form onSubmit={event => { event.preventDefault(); void save("configuration"); }} className="space-y-3">
       <h2 className="text-sm font-semibold text-ink">功能设置</h2>
       <div className="grid items-end gap-3 sm:grid-cols-2">
-        <label className="block"><span className={formLabelClass}>默认模型服务 / Default provider</span><Select id="default-provider" name="defaultProviderId" disabled={busy || !saved || Boolean(error)} value={draft.defaultProviderId} onChange={event => { setDraft({ ...draft, defaultProviderId: event.target.value }); setMessage(""); }}><option value="">未选择</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select></label>
+        <label className="block"><span className={formLabelClass}>默认使用的 AI 服务</span><Select id="default-provider" name="defaultProviderId" disabled={busy || !saved || Boolean(error)} value={draft.defaultProviderId} onChange={event => { setDraft({ ...draft, defaultProviderId: event.target.value }); setMessage(""); }}><option value="">未选择</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select></label>
         <label className="flex min-h-10 items-center gap-2 text-sm"><input name="attachmentsEnabled" type="checkbox" disabled={busy || !saved || Boolean(error)} checked={draft.attachmentsEnabled} onChange={event => { setDraft({ ...draft, attachmentsEnabled: event.target.checked }); setMessage(""); }} className="h-4 w-4 accent-[var(--ink)]" />允许用户明确选择的附件</label>
       </div>
       <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={busy || !saved || Boolean(error)} size="sm">保存功能设置</Button><span className="text-xs text-muted">{dirty ? "有未保存的修改；总开关不会提交这些修改。" : "只发送明确选择的上下文，不授权整个项目上传。"}</span></div>

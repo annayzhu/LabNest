@@ -8,7 +8,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const boundary = validateAIRequest(request);
   if (boundary) return Response.json({ ok: false, message: boundary.error }, { status: boundary.status });
   const { id } = await context.params;
-  const resolved = await resolveAdapterForProvider(id);
+  let revision: string | undefined;
+  try { const body = await request.json(); revision = typeof body.revision === "string" ? body.revision : undefined; }
+  catch { return Response.json({ ok: false, message: "测试请求格式无效。" }, { status: 400 }); }
+  const resolved = await resolveAdapterForProvider(id, undefined, { providerRevision: revision, signal: request.signal });
   if (!resolved.ok) {
     return Response.json({ ok: false, message: resolved.error }, { status: resolved.status });
   }

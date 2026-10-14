@@ -4,7 +4,7 @@ import { prisma } from "./db";
 
 type SettingsReader = Pick<Prisma.TransactionClient, "aISettings" | "aIProvider">;
 /** A request is authorized by one saved revision, not by a captured boolean. */
-export function createAIGate(revision: string, provider?: { id: string; revision: string }) {
+export function createAIGate(revision: string, provider?: { id: string; revision: string }, requestSignal?: AbortSignal) {
   async function assertAllowed(reader: SettingsReader = prisma) {
     const settings = await reader.aISettings.findUnique({ where: { id: "default" } });
     if (!settings?.enabled || settings.updatedAt.toISOString() !== revision) {
@@ -38,7 +38,8 @@ export function createAIGate(revision: string, provider?: { id: string; revision
       finally { checking = false; }
     }, 250);
     try {
-      const response = await fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, abort.signal]) : abort.signal });
+      const signals = [abort.signal, init?.signal, requestSignal].filter((signal): signal is AbortSignal => Boolean(signal));
+      const response = await fetch(input, { ...init, signal: AbortSignal.any(signals) });
       // Keep cancellation active while the provider sends the response body too.
       const bytes = await response.arrayBuffer();
       await assertAllowed();

@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import pg from 'pg';
 const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
 const dbURL = new URL(process.env.DATABASE_URL);
-assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008'].includes(dbURL.pathname.slice(1)));
+assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008','labnest_ai_connection_20261014'].includes(dbURL.pathname.slice(1)));
 assert(['127.0.0.1','localhost'].includes(dbURL.hostname));
 assert.notEqual(new URL(base).port,'3001','Never mutate production');
 const db=new pg.Client({connectionString:dbURL.href});
@@ -75,7 +75,7 @@ try {
     await page.locator('[name="defaultProviderId"]').selectOption(fixtureId);await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),page.getByRole('button',{name:'保存功能设置'}).click()]);
     assert.equal(inferenceRequests,0);
     await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),toggle.click()]);
-    for(const b of await page.getByRole('button',{name:'Test',exact:true}).all())await eventually(async()=>assert.equal(await b.isDisabled(),true));
+    for(const b of await page.getByRole('button',{name:'测试连接',exact:true}).all())await eventually(async()=>assert.equal(await b.isDisabled(),true));
    });
    for(const width of [1440,1024,390]) await check(`${engine} A04/A05 ${width}px layout and visible first-screen switch`,async()=>{
     backgroundRoutes.length=0;

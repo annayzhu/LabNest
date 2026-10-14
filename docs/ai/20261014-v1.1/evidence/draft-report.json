@@ -1,0 +1,139 @@
+{
+  "revision": "7c78d7092096e95893589d153b8773119fcb6233",
+  "synthetic": true,
+  "liveProvider": false,
+  "checks": [
+    {
+      "name": "E03/E09 master-off, disabled and manual drafts never contact a provider",
+      "status": "passed"
+    },
+    {
+      "name": "E04/E09 unsaved current draft generates fixed text without persistence or a default provider",
+      "status": "passed"
+    },
+    {
+      "name": "E06/E07 real HTTP rejects unknown model, HTML and empty responses; retains custom prefix and returned model",
+      "status": "passed"
+    },
+    {
+      "name": "E05/E09 server boundary validates URL and origin before sending keys",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E01/E02 DeepSeek preset and draft field validation",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E03/E04 draft test is clickable before save and leaves configuration untouched",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E05 changing a draft target or protocol clears its typed key",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E08 editing in flight cancels only this test and invalidates late success",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E05 edit reuses saved key only for the same protocol and target",
+      "status": "passed"
+    },
+    {
+      "name": "chromium light 1440px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium dark 1440px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium light 1024px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium dark 1024px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium light 390px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium dark 390px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E08 master-off while testing blocks the late response",
+      "status": "passed"
+    },
+    {
+      "name": "chromium E08 a saved-provider change rejects an in-flight draft without changing another request",
+      "status": "passed"
+    },
+    {
+      "name": "chromium no unhandled page errors",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E01/E02 DeepSeek preset and draft field validation",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E03/E04 draft test is clickable before save and leaves configuration untouched",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E05 changing a draft target or protocol clears its typed key",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E08 editing in flight cancels only this test and invalidates late success",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E05 edit reuses saved key only for the same protocol and target",
+      "status": "passed"
+    },
+    {
+      "name": "webkit light 1440px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit dark 1440px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit light 1024px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit dark 1024px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit light 390px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit dark 390px actual API form",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E08 master-off while testing blocks the late response",
+      "status": "passed"
+    },
+    {
+      "name": "webkit E08 a saved-provider change rejects an in-flight draft without changing another request",
+      "status": "passed"
+    },
+    {
+      "name": "webkit no unhandled page errors",
+      "status": "passed"
+    },
+    {
+      "name": "E09 Dify tests actual application generation; Anthropic uses its own message contract",
+      "status": "passed"
+    }
+  ]
+}

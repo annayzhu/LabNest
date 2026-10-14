@@ -51,6 +51,7 @@ jobs:
       - run: node scripts/verify-ai-switch-cancellation.mjs
       - run: node scripts/verify-ai-module-migration.mjs
       - run: node scripts/verify-ai-review-regressions.mjs
+      - run: node scripts/verify-ai-provider-draft.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -58,4 +59,5 @@ jobs:
           path: |
             docs/ai/20261008/evidence/browser
             docs/ai/20261014/evidence
+            docs/ai/20261014-v1.1/evidence
             ai-server.log

@@ -2,27 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
+import { aiProviderInputSchema, sameProviderTarget } from "@/lib/ai-provider-input";
 import { isConnectedProviderType, type AIProviderType } from "@/lib/ai";
 import { encryptSecret } from "@/lib/ai-crypto";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
-
-const providerTypes = ["openai", "openai_compatible", "anthropic", "dify", "manual_copy_paste"] as const satisfies readonly AIProviderType[];
-
-const providerSchema = z.object({
-  id: z.string().trim().optional(),
-  name: z.string().trim().min(1, "Provider name is required.").max(80),
-  type: z.enum(providerTypes),
-  baseUrl: z
-    .string()
-    .trim()
-    .max(300)
-    .refine((value) => !value || /^https?:\/\/\S+$/i.test(value), "Base URL must start with http:// or https://."),
-  defaultModel: z.string().trim().max(120),
-  apiKey: z.string().trim().max(2000),
-  enabled: z.boolean(),
-});
 
 const capabilitiesByType: Record<AIProviderType, string[]> = {
   manual_copy_paste: ["text", "structured_output"],
@@ -40,7 +24,8 @@ function revalidateProviderSurfaces() {
 
 export async function saveAIProvider(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
-    const parsed = providerSchema.parse({
+    const parsed = aiProviderInputSchema.parse({
+      revision: String(formData.get("revision") ?? ""),
       id: String(formData.get("id") ?? ""),
       name: formData.get("name"),
       type: formData.get("type"),
@@ -50,15 +35,10 @@ export async function saveAIProvider(_previous: FormActionState, formData: FormD
       enabled: formData.get("enabled") === "on",
     });
     const isConnected = isConnectedProviderType(parsed.type);
-    if (isConnected && parsed.type !== "openai" && parsed.type !== "anthropic" && !parsed.baseUrl) {
-      throw new Error("A base URL is required for this provider type.");
-    }
-    if (isConnected && parsed.type !== "dify" && !parsed.defaultModel) {
-      throw new Error("A default model name is required for this provider type.");
-    }
-
     const existing = parsed.id ? await prisma.aIProvider.findUnique({ where: { id: parsed.id } }) : null;
-    if (parsed.id && !existing) throw new Error("This provider no longer exists.");
+    if (parsed.id && !existing) throw new Error("该服务已不存在，请重新读取。");
+    if (existing && parsed.revision && parsed.revision !== existing.updatedAt.toISOString()) throw new Error("服务已在其他页面修改，请重新读取后保存。");
+    if (existing && isConnected && !parsed.apiKey && !sameProviderTarget(parsed, existing)) throw new Error("接口类型或基础地址已改变，请填写适用于新目标的 API 密钥。");
 
     let apiKeyEncrypted: string | null | undefined;
     if (!isConnected) {
@@ -66,7 +46,7 @@ export async function saveAIProvider(_previous: FormActionState, formData: FormD
     } else if (parsed.apiKey) {
       apiKeyEncrypted = encryptSecret(parsed.apiKey);
     } else if (!existing?.apiKeyEncrypted) {
-      throw new Error("An API key is required for a connected provider.");
+      throw new Error("请填写 API 密钥。");
     }
 
     const data = {
@@ -80,12 +60,13 @@ export async function saveAIProvider(_previous: FormActionState, formData: FormD
     };
 
     if (existing) {
-      await prisma.aIProvider.update({ where: { id: existing.id }, data });
+      const updated = await prisma.aIProvider.updateMany({ where: { id: existing.id, updatedAt: existing.updatedAt }, data });
+      if (updated.count !== 1) throw new Error("服务配置在保存期间改变，请重新读取后重试。");
     } else {
       await prisma.aIProvider.create({ data });
     }
   } catch (error) {
-    return { error: formActionErrorMessage(error, "The provider could not be saved.") };
+    return { error: formActionErrorMessage(error, "服务配置保存失败，请重试。") };
   }
   revalidateProviderSurfaces();
   redirect("/ai?saved=provider#providers");

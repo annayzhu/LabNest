@@ -23,7 +23,13 @@ export type EntryToActionPromptInput = {
   allowedActionTypes: ProposedAction["actionType"][];
 };
 
-export type AIConnectionResult = { ok: boolean; message: string; latencyMs?: number };
+export type AIConnectionResult = {
+  ok: boolean; message: string; latencyMs?: number;
+  verification?: "model" | "application" | "manual";
+  requestedModel?: string; returnedModel?: string;
+  errorCode?: string; httpStatus?: number;
+};
+type Completion = { text: string; model?: string; returnedModel?: string; truncated?: boolean };
 
 export type AIGenerationResult = {
   actions: ProposedAction[];
@@ -53,11 +59,11 @@ export const defaultProviderBaseUrls: Partial<Record<AIProviderType, string>> = 
 };
 
 export const providerTypeLabels: Record<AIProviderType, string> = {
-  manual_copy_paste: "Manual copy-paste",
-  openai: "OpenAI",
-  openai_compatible: "OpenAI-compatible endpoint",
-  anthropic: "Anthropic",
-  dify: "Dify app (e.g. ZJU aihub)",
+  manual_copy_paste: "手动复制粘贴",
+  openai: "OpenAI 官方接口",
+  openai_compatible: "OpenAI 兼容接口",
+  anthropic: "Anthropic 接口",
+  dify: "Dify 应用",
 };
 
 const connectedProviderTypes: AIProviderType[] = ["openai", "openai_compatible", "anthropic", "dify"];
@@ -86,11 +92,13 @@ export interface AIProviderAdapter {
 
 export class AIProviderError extends Error {
   readonly status?: number;
+  readonly code?: string;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: string) {
     super(message);
     this.name = "AIProviderError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -208,15 +216,17 @@ export type ConnectedProviderOptions = {
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
-function resolveBaseUrl(value: string | undefined, type: AIProviderType): string {
+export function resolveBaseUrl(value: string | undefined, type: AIProviderType): string {
   const resolved = (value?.trim() || defaultProviderBaseUrls[type] || "").replace(/\/+$/, "");
   if (!resolved) {
     throw new AIProviderError(`A base URL is required for ${providerTypeLabels[type]} providers.`);
   }
-  if (!/^https?:\/\//i.test(resolved)) {
-    throw new AIProviderError("The base URL must start with http:// or https://.");
+  let url: URL;
+  try { url = new URL(resolved); } catch { throw new AIProviderError("请检查 API 基础地址。"); }
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash || /\/(chat\/completions|messages|chat-messages|models|parameters)\/?$/i.test(url.pathname)) {
+    throw new AIProviderError("请填写 API 基础地址，不要包含完整调用路径、凭据或查询参数。");
   }
-  return resolved;
+  return url.toString().replace(/\/+$/, "");
 }
 
 async function readErrorBody(response: Response): Promise<string> {
@@ -224,9 +234,9 @@ async function readErrorBody(response: Response): Promise<string> {
     const text = await response.text();
     if (!text) return "";
     try {
-      const json = JSON.parse(text) as { error?: { message?: string } | string; message?: string };
+      const json = JSON.parse(text) as { error?: { message?: string; code?: string; type?: string } | string; message?: string };
       if (typeof json.error === "string") return json.error;
-      if (json.error && typeof json.error === "object" && typeof json.error.message === "string") return json.error.message;
+      if (json.error && typeof json.error === "object" && typeof json.error.message === "string") return [json.error.code || json.error.type, json.error.message].filter(Boolean).join(": ");
       if (typeof json.message === "string") return json.message;
     } catch {
       // not JSON
@@ -246,6 +256,24 @@ function describeNetworkError(error: unknown): string {
     return error.message;
   }
   return "Unknown network error.";
+}
+
+/** Classify the evidence from this request, not a permanent provider health state. */
+function connectionFailure(error: unknown, detail: string): Pick<AIConnectionResult, "message" | "errorCode" | "httpStatus"> {
+  const status = error instanceof AIProviderError ? error.status : undefined;
+  let errorCode = "invalid_response", message = "服务返回的内容不符合接口协议，尚未验证模型生成。";
+  if (error instanceof AIProviderError && error.code === "timeout") { errorCode = "timeout"; message = "LabNest 服务器请求超时，请稍后手动重试。"; }
+  else if (error instanceof AIProviderError && error.code === "network") { errorCode = "network"; message = "LabNest 服务器无法连接该服务，请检查地址与服务器网络。"; }
+  else if (/设置已改变|AI 已关闭/.test(detail)) { errorCode = "cancelled"; message = "AI 或服务设置已改变，本次测试已停止。"; }
+  else if (status === 402 || /insufficient[_ ](?:quota|balance)|credit balance|余额不足/i.test(detail)) { errorCode = "balance"; message = "账户余额不足，请到服务平台检查。"; }
+  else if (status === 401) { errorCode = "authentication"; message = "API 密钥无效或已失效，请检查密钥。"; }
+  else if (/model[_ ]not[_ ]found|invalid[_ ]model|model.*(?:does not exist|not exist|not found|not have access|permission|not available)/i.test(detail)) { errorCode = "model"; message = "模型不存在或当前密钥无权使用，请核对模型 ID 与权限。"; }
+  else if (status === 403) { errorCode = "permission"; message = "服务拒绝访问，请检查账户权限或服务访问策略。"; }
+  else if (status === 429) { errorCode = "rate_limit"; message = "请求过快或已达到服务限流，请稍后手动重试。"; }
+  else if (status && status >= 500) { errorCode = "unavailable"; message = "服务暂时繁忙或不可用，请稍后手动重试。"; }
+  else if (status) { errorCode = "endpoint"; message = "请检查 API 基础地址与接口类型。"; }
+  const safeDetail = error instanceof SyntaxError ? "返回内容不是有效 JSON" : detail.slice(0, 300);
+  return { errorCode, httpStatus: status, message: `${message}${status ? `（HTTP ${status}）` : ""} ${safeDetail}` };
 }
 
 abstract class ConnectedProvider implements AIProviderAdapter {
@@ -289,10 +317,10 @@ abstract class ConnectedProvider implements AIProviderAdapter {
     const url = `${this.baseUrl}${path}`;
     let response: Response;
     try {
-      response = await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(this.timeoutMs) });
+      response = await this.fetchImpl(url, { ...init, redirect: "error", signal: AbortSignal.timeout(this.timeoutMs) });
     } catch (error) {
       if (error instanceof AIProviderError) throw error;
-      throw new AIProviderError(this.safeMessage(`Could not reach ${url}: ${describeNetworkError(error)}`), 502);
+      throw new AIProviderError(this.safeMessage(describeNetworkError(error)), 502, error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "timeout" : "network");
     }
     if (!response.ok) {
       // Redact the complete text before truncation, so a token crossing the
@@ -313,14 +341,27 @@ abstract class ConnectedProvider implements AIProviderAdapter {
     const started = Date.now();
     try {
       const result = await run();
-      return { ...result, latencyMs: Date.now() - started };
+      return { ...result, message: this.safeMessage(result.message), requestedModel: result.requestedModel ? this.safeMessage(result.requestedModel) : undefined, returnedModel: result.returnedModel ? this.safeMessage(result.returnedModel).slice(0, 160) : undefined, latencyMs: Date.now() - started };
     } catch (error) {
-      return { ok: false, message: this.safeMessage(describeNetworkError(error)), latencyMs: Date.now() - started };
+      return { ok: false, ...connectionFailure(error, this.safeMessage(describeNetworkError(error))), latencyMs: Date.now() - started };
     }
   }
 
   abstract testConnection(): Promise<AIConnectionResult>;
-  abstract complete(system: string, user: string): Promise<{ text: string; model?: string }>;
+  abstract complete(system: string, user: string, testing?: boolean): Promise<Completion>;
+
+  protected testGeneration(): Promise<AIConnectionResult> {
+    return this.guarded(async () => {
+      const result = await this.complete("Reply with the single word OK.", "Connection test only. No business data.", true);
+      if (!result.text.trim()) throw new AIProviderError(result.truncated ? "测试输出额度已用完，未获得有效正文；这不表示密钥错误。" : "模型返回了空内容，尚未验证生成。");
+      if (this.config.type === "dify") return { ok: true, verification: "application", message: "应用生成测试成功；实际模型由 Dify 应用配置决定。" };
+      const requestedModel = this.requireModel();
+      const returnedModel = result.returnedModel;
+      const mismatch = returnedModel && returnedModel !== requestedModel;
+      return { ok: true, verification: "model", requestedModel, returnedModel,
+        message: `测试成功 · 请求模型 ${requestedModel}${returnedModel ? ` · 返回模型 ${returnedModel}${mismatch ? "（与请求 ID 不同，请核对服务端映射）" : ""}` : " · 服务未返回模型 ID"}${result.truncated ? " · 输出已截断" : ""}` };
+    });
+  }
 
   async generateProposedActions(input: EntryToActionPromptInput): Promise<AIGenerationResult> {
     if (!this.config.enabled) {
@@ -348,7 +389,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
 
 type OpenAIChatResponse = {
   model?: string;
-  choices?: { message?: { content?: string | { type?: string; text?: string }[] } }[];
+  choices?: { message?: { content?: string | { type?: string; text?: string }[] }; finish_reason?: string }[];
 };
 
 function openAIContentToText(content: OpenAIChatResponse["choices"]): string {
@@ -363,33 +404,10 @@ function openAIContentToText(content: OpenAIChatResponse["choices"]): string {
 /** OpenAI Chat Completions and any compatible endpoint (Qwen/DashScope compatible mode, vLLM, Ollama, etc.). */
 export class OpenAICompatibleProvider extends ConnectedProvider {
   async testConnection(): Promise<AIConnectionResult> {
-    return this.guarded(async () => {
-      const apiKey = this.requireApiKey();
-      const headers = { authorization: `Bearer ${apiKey}` };
-      try {
-        const response = await this.request("/models", { method: "GET", headers });
-        const payload = (await response.json().catch(() => ({}))) as { data?: { id?: string }[] };
-        const models = Array.isArray(payload.data) ? payload.data.map((item) => item.id).filter(Boolean) : [];
-        const configured = this.config.defaultModel?.trim();
-        if (configured && models.length && !models.includes(configured)) {
-          return {
-            ok: true,
-            message: `Connected. The endpoint lists ${models.length} models but not "${configured}"; check the model name before use.`,
-          };
-        }
-        return { ok: true, message: `Connected. ${models.length ? `${models.length} models available.` : "Endpoint reachable."}` };
-      } catch (error) {
-        // Some compatible servers do not expose /models; fall back to a minimal completion.
-        if (error instanceof AIProviderError && (error.status === 404 || error.status === 405)) {
-          const { model } = await this.complete("Reply with the single word OK.", "ping");
-          return { ok: true, message: `Connected via chat completion${model ? ` (${model})` : ""}.` };
-        }
-        throw error;
-      }
-    });
+    return this.testGeneration();
   }
 
-  async complete(system: string, user: string) {
+  async complete(system: string, user: string, testing = false) {
     const apiKey = this.requireApiKey();
     const model = this.requireModel();
     const response = await this.request("/chat/completions", {
@@ -397,7 +415,8 @@ export class OpenAICompatibleProvider extends ConnectedProvider {
       headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({
         model,
-        temperature: 0,
+        ...(testing ? (this.config.type === "openai" ? { max_completion_tokens: 1024 } : { max_tokens: 1024 }) : { temperature: 0 }),
+        ...(testing && new URL(this.baseUrl).hostname === "api.deepseek.com" ? { thinking: { type: "disabled" } } : {}),
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
@@ -405,7 +424,7 @@ export class OpenAICompatibleProvider extends ConnectedProvider {
       }),
     });
     const payload = (await response.json()) as OpenAIChatResponse;
-    return { text: openAIContentToText(payload.choices), model: payload.model ?? model };
+    return { text: openAIContentToText(payload.choices), model: typeof payload.model === "string" ? payload.model : model, returnedModel: typeof payload.model === "string" ? payload.model : undefined, truncated: payload.choices?.[0]?.finish_reason === "length" };
   }
 }
 
@@ -419,14 +438,10 @@ export class AnthropicProvider extends ConnectedProvider {
   }
 
   async testConnection(): Promise<AIConnectionResult> {
-    return this.guarded(async () => {
-      const apiKey = this.requireApiKey();
-      await this.request("/models", { method: "GET", headers: this.headers(apiKey) });
-      return { ok: true, message: "Connected to the Anthropic API." };
-    });
+    return this.testGeneration();
   }
 
-  async complete(system: string, user: string) {
+  async complete(system: string, user: string, testing = false) {
     const apiKey = this.requireApiKey();
     const model = this.requireModel();
     const response = await this.request("/messages", {
@@ -434,8 +449,8 @@ export class AnthropicProvider extends ConnectedProvider {
       headers: this.headers(apiKey),
       body: JSON.stringify({
         model,
-        max_tokens: 4096,
-        temperature: 0,
+        max_tokens: testing ? 256 : 4096,
+        ...(testing ? {} : { temperature: 0 }),
         system,
         messages: [{ role: "user", content: user }],
       }),
@@ -446,7 +461,7 @@ export class AnthropicProvider extends ConnectedProvider {
       .map((block) => block.text)
       .join("");
     if (!text) throw new AIProviderError("The model response did not contain text content.");
-    return { text, model: payload.model ?? model };
+    return { text, model: typeof payload.model === "string" ? payload.model : model, returnedModel: typeof payload.model === "string" ? payload.model : undefined };
   }
 }
 
@@ -458,12 +473,7 @@ type DifyChatResponse = { answer?: string; metadata?: { usage?: unknown } };
  */
 export class DifyProvider extends ConnectedProvider {
   async testConnection(): Promise<AIConnectionResult> {
-    return this.guarded(async () => {
-      const apiKey = this.requireApiKey();
-      const response = await this.request("/parameters", { method: "GET", headers: { authorization: `Bearer ${apiKey}` } });
-      await response.json().catch(() => undefined);
-      return { ok: true, message: "Connected to the Dify application." };
-    });
+    return this.testGeneration();
   }
 
   async complete(system: string, user: string) {

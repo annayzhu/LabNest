@@ -1,0 +1,228 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/ai-connection.test.ts (14 tests | 9 failed) 30ms
+     × classifies HTTP 401 / invalid_api_key without confusing authentication, permissions and endpoint errors 4ms
+     × classifies HTTP 402 / insufficient_balance without confusing authentication, permissions and endpoint errors 1ms
+     × classifies HTTP 429 / insufficient_quota without confusing authentication, permissions and endpoint errors 1ms
+     × classifies HTTP 404 / model_not_found without confusing authentication, permissions and endpoint errors 1ms
+     × classifies HTTP 403 / permission_denied without confusing authentication, permissions and endpoint errors 1ms
+     × classifies HTTP 404 / unknown route without confusing authentication, permissions and endpoint errors 0ms
+     × classifies HTTP 429 / rate_limit without confusing authentication, permissions and endpoint errors 0ms
+     × classifies HTTP 503 / overloaded without confusing authentication, permissions and endpoint errors 0ms
+     × describes a server-side timeout and redacts a credential echoed as the returned model 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 401 / invalid_api_key without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 401, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "authentication",
+-   "httpStatus": 401,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 402 / insufficient_balance without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 402, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "balance",
+-   "httpStatus": 402,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 429 / insufficient_quota without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 429, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "balance",
+-   "httpStatus": 429,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 404 / model_not_found without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 404, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "model",
+-   "httpStatus": 404,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 403 / permission_denied without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 403, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "permission",
+-   "httpStatus": 403,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 404 / unknown route without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 404, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "endpoint",
+-   "httpStatus": 404,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 429 / rate_limit without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 429, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "rate_limit",
+-   "httpStatus": 429,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > classifies HTTP 503 / overloaded without confusing authentication, permissions and endpoint errors
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, httpStatus: 503, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "unavailable",
+-   "httpStatus": 503,
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:44:20
+     42|   ])("classifies HTTP %s / %s without confusing authentication, permis…
+     43|     const result = await createAIProviderAdapter(config, { fetchImpl: …
+     44|     expect(result).toMatchObject({ ok: false, httpStatus: status, erro…
+       |                    ^
+     45|     expect(result.message).toContain(label);
+     46|     expect(JSON.stringify(result)).not.toContain("synthetic-secret");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/lib/ai-connection.test.ts > connection tests verify the requested model > describes a server-side timeout and redacts a credential echoed as the returned model
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, errorCode: 'timeout' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "errorCode": "timeout",
+    "ok": false,
+  }
+
+ ❯ src/lib/ai-connection.test.ts:50:21
+     48|   it("describes a server-side timeout and redacts a credential echoed …
+     49|     const timeout = await createAIProviderAdapter(config, { fetchImpl:…
+     50|     expect(timeout).toMatchObject({ ok: false, errorCode: "timeout" });
+       |                     ^
+     51|     expect(timeout.message).toContain("服务器");
+     52|     const echoed = await createAIProviderAdapter(config, { fetchImpl: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 5 passed (14)
+   Start at  10:43:01
+   Duration  213ms (transform 37ms, setup 0ms, import 79ms, tests 30ms, environment 0ms)
+

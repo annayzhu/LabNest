@@ -90,7 +90,7 @@ describe("OpenAICompatibleProvider", () => {
     expect((await provider.testConnection!()).ok).toBe(true);
     const result = await provider.generateProposedActions!({ entryTitle: "Synthetic", entryBody: "Synthetic example", allowedActionTypes: ["create_experiment"] });
     expect(result.actions[0].status).toBe("pending");
-    expect(calls.map(call => call.url)).toEqual(["https://api.deepseek.com/models", "https://api.deepseek.com/chat/completions"]);
+    expect(calls.map(call => call.url)).toEqual(["https://api.deepseek.com/chat/completions", "https://api.deepseek.com/chat/completions"]);
     expect(JSON.parse(String(calls[1].init.body)).model).toBe("deepseek-flash");
   });
   it("redacts a credential echoed by an upstream error", async () => {
@@ -153,23 +153,17 @@ describe("OpenAICompatibleProvider", () => {
       .rejects.toBeInstanceOf(AIProviderError);
   });
 
-  it("tests the connection through /models and warns about unknown model names", async () => {
-    const { fetchImpl, calls } = fakeFetch(() => json({ data: [{ id: "qwen-max" }] }));
-    const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });
-    const result = await provider.testConnection();
-    expect(calls[0].url).toBe("https://example.test/v1/models");
-    expect(result.ok).toBe(true);
-    expect(result.message).toContain('not "qwen-plus"');
+  it("does not accept model-list-shaped data as a valid completion", async () => {
+    const { fetchImpl } = fakeFetch(() => json({ data: [{ id: "qwen-plus" }] }));
+    expect((await new OpenAICompatibleProvider(baseConfig, { fetchImpl }).testConnection()).ok).toBe(false);
   });
 
-  it("falls back to a chat completion when /models is unavailable", async () => {
-    const { fetchImpl, calls } = fakeFetch(({ url }) =>
-      url.endsWith("/models") ? new Response("nope", { status: 404 }) : json({ choices: [{ message: { content: "OK" } }] }),
-    );
-    const provider = new OpenAICompatibleProvider(baseConfig, { fetchImpl });
-    const result = await provider.testConnection();
-    expect(result.ok).toBe(true);
-    expect(calls).toHaveLength(2);
+  it("does not require a models endpoint when the configured model generates successfully", async () => {
+    const { fetchImpl, calls } = fakeFetch(({ url }) => url.endsWith("/models")
+      ? new Response("nope", { status: 404 }) : json({ choices: [{ message: { content: "OK" } }] }));
+    expect((await new OpenAICompatibleProvider(baseConfig, { fetchImpl }).testConnection()).ok).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("https://example.test/v1/chat/completions");
   });
 
   it("fails clearly without an API key or when disabled", async () => {
@@ -184,7 +178,7 @@ describe("OpenAICompatibleProvider", () => {
   it("uses the OpenAI default base URL for the openai type", async () => {
     const { fetchImpl, calls } = fakeFetch(() => json({ data: [] }));
     await new OpenAICompatibleProvider({ ...baseConfig, type: "openai", baseUrl: undefined }, { fetchImpl }).testConnection();
-    expect(calls[0].url).toBe("https://api.openai.com/v1/models");
+    expect(calls[0].url).toBe("https://api.openai.com/v1/chat/completions");
   });
 });
 

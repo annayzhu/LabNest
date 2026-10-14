@@ -1,0 +1,24 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   '/localhost:3338/api/ai/settings due to access control checks.'
++ ]
+- []
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:109:69
+    at check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:33:42)
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:109:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [ '/localhost:3338/api/ai/settings due to access control checks.' ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

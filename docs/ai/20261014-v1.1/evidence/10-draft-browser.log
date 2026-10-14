@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+409 !== 400
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:89:154
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:33:36)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-ai-provider-draft.mjs:86:4 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 400,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

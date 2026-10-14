@@ -63,7 +63,7 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
     </form>
     <nav aria-label="使用 AI" className="space-y-2 border-t border-hairline pt-4">
       <h2 className="text-base font-semibold">使用 AI</h2>
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm"><Link className="focus-ring inline-flex min-h-11 items-center font-medium text-moss underline" href="/actions/manual">打开 AI 工作台</Link><Link className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/entries">从记录生成建议</Link><Link className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/protocols/import">导入规程并提取参数</Link><Link className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/actions/review">查看待处理建议</Link></div>
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm"><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center font-medium text-moss underline" href="/actions/manual">打开 AI 工作台</Link><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/entries">从记录生成建议</Link><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/protocols/import">导入规程并提取参数</Link><Link prefetch={false} className="focus-ring inline-flex min-h-11 items-center text-moss underline" href="/actions/review">查看待处理建议</Link></div>
       <p className="text-xs text-muted">AI 建议需要人工核对；开启不会处理历史记录。规程体系、普通计算和实验执行均可在 AI 关闭时使用。</p>
     </nav>
   </section>;

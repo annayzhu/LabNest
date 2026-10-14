@@ -71,6 +71,26 @@ await check('E01 mobile/tablet reflow and D02 calculator return preserve unsaved
   await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues?.[steps.dose.id]?.['actual-proteinase']?.value === 50);
   await page.setViewportSize({ width: 1440, height: 1000 }); await page.reload({ waitUntil: 'networkidle' });
 });
+await check('UI A1 actual-value drafts never display a stale saved receipt and clear after save', async () => {
+  const row = page.locator(`#step-${steps.dose.id} [data-structured-step-record]`);
+  const input = row.getByLabel('实际 Proteinase K');
+  await input.fill('55');
+  await row.getByText('未保存修改', { exact: true }).waitFor();
+  assert((await row.innerText()).includes('上次保存：50 µL'));
+  assert.equal((await record(experimentId)).protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value, 50);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
+  await row.getByText('未保存修改', { exact: true }).waitFor(); await shot('actual-value-unsaved-draft');
+  await row.getByRole('button', { name: '保存实际值', exact: true }).click();
+  await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value === 55);
+  await page.waitForFunction(id => !document.querySelector(`#step-${id} [data-structured-step-record]`)?.textContent.includes('未保存修改'), steps.dose.id);
+  assert(await row.getByRole('button', { name: '保存实际值', exact: true }).isDisabled());
+  await page.reload({ waitUntil: 'networkidle' }); assert.equal(await input.inputValue(), '55');
+  assert(!await row.getByText('未保存修改', { exact: true }).count());
+  await input.fill('50'); await row.getByRole('button', { name: '保存实际值', exact: true }).click();
+  await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value === 50);
+  await page.reload({ waitUntil: 'networkidle' });
+});
 await check('B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress', async () => {
   const stale = await context.newPage(); await stale.goto(`${base}/experiments/${experimentId}/run`, { waitUntil: 'networkidle' });
   await page.locator(`#step-${steps.dose.id} input[name="completedStepIds"]`).check();

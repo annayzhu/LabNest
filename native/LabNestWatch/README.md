@@ -4,7 +4,7 @@ This is a separate SwiftUI watchOS client, not a web layout. It uses the same ca
 
 ## Build and install
 
-Open `LabNestWatch.xcodeproj` in Xcode. Select your own signing team and connected Apple Watch (watchOS 10 or later). Build and run on that device. No signing account or provisioning profile is committed; deployment to port3001 does **not** install this app. The user has requested Apple Watch support, but no connected watch or iPhone was discoverable during development. Xcode26.6 / watchOS simulator SDK26.5 compile checks do not prove runtime behavior. The available simulators are iOS26.5 only.
+Open `LabNestWatch.xcodeproj` in Xcode. Select your own signing team and connected Apple Watch (watchOS 10 or later). Build and run on that device. No signing account or provisioning profile is committed; deployment to port3001 does **not** install this app. The user has requested Apple Watch support, but no connected watch or iPhone was discoverable during development. Xcode26.6 / watchOS simulator SDK26.5 compile checks do not prove runtime behavior. The user subsequently installed watchOS26.5. A Series11(46mm) simulator was installed and exercised; see the follow-up evidence below.
 
 For a reproducible unsigned compile:
 
@@ -24,8 +24,16 @@ xcodebuild -project native/LabNestWatch/LabNestWatch.xcodeproj -target LabNestWa
 
 ## Acceptance boundaries
 
-The server tests cover one-use pairing, experiment scope, revoke, independent 50/80µL quantities, shared work once, real completion and repeat-request deduplication. The native target compiles. Installation, native navigation, scrolling at Dynamic Type, disconnection/reconnection, physical timer accuracy and actual notification arrival are **未执行**; E07/E08 remain open until performed. Do not claim that a paired watch receiving a notification can already execute this app.
+The server tests cover one-use pairing, experiment scope, revoke, independent 50/80µL quantities, shared work once, real completion and repeat-request deduplication. The native target compiles. Simulator installation, navigation, full quantities, explicit completion, start/pause, app restart, offline pending persistence and reconnect (one database event) pass. Physical installation, Dynamic Type, physical timer accuracy and actual notification arrival are **未执行**; E07/E08 remain open until performed. Do not claim that a paired watch receiving a notification can already execute this app.
 
 This local LabNest instance has the existing trusted-workspace access model, not new multi-user identity. `local-workspace-user` is an honest actor label, not an authenticated person's identity. Do not expose the existing local application publicly without its own access-control deployment.
 
 Apple references consulted: [Independent watchOS apps](https://developer.apple.com/documentation/watchos-apps/creating-independent-watchos-apps), [local notification scheduling](https://developer.apple.com/documentation/usernotifications/scheduling-a-notification-locally-from-your-app). Exact API compatibility is checked against the installed SDK. No guaranteed background network delivery is asserted.
+
+## watchOS26.5 simulator follow-up (2026-10-14)
+
+The runtime was installed after the initial unsigned compile. The unsigned app launched, but Keychain correctly rejected it with `-34018` (no application identifier); an unsigned compile is therefore **not** the installation recipe. For isolated simulator QA only, Xcode injected an `application-identifier` of `org.labnest.watch` from the evidence file `docs/structured-protocol/20261014/followup-evidence/watch-simulator/simulator-only.entitlements`, with `CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGN_ENTITLEMENTS=<absolute evidence path>`. Real devices must use the actual signing team/provisioning profile. Never use a simulator-only identifier as a device signing configuration. [Apple explains the required app/keychain entitlements](https://developer.apple.com/documentation/security/errsecmissingentitlement).
+
+On the isolated production candidate at localhost:3341, the app was paired via a one-use code generated in the real Run page. It displayed50µL/200µL, completed a step with explicit confirmation, started/paused a10minute timer, retained585seconds after restart, queued a completion while the server was stopped, retained the exact request after restart, and synchronized it once on reconnection (revision6→7, one DB event). The webpage then showed3/3completed. This is a synthetic software fixture, not a biological experiment or a physical Watch measurement.
+
+A collapsed wheel picker discovered during this run was replaced by a navigation-list picker; the actual fixed list and quantity text were inspected. Complex tables/images still remain on the phone. No notification permission was requested in this simulator run, and physical lockscreen delivery remains unexecuted. Evidence: `docs/structured-protocol/20261014/followup-evidence/watch-simulator/`.

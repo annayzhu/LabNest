@@ -1,0 +1,15 @@
+{
+  "webSource": "603067b8c2caacb6f3b96674f4a35b37e9164e78",
+  "nativeSource": "c73febadacef8424644770107d7b96f9e869a07e",
+  "baselineFullAcceptance": "validation.json",
+  "webProductionBuild": "passed",
+  "webImage": "labnest-app:protocol-followup-603067b8",
+  "webManifest": "sha256:9f41df886404da047b66e2c935f761f051aa7d160371f06b3eb8545648d41a8b",
+  "ciCorrections": [
+    "ci-fixes/ai-prefetch.json",
+    "ci-fixes/editor-report.json"
+  ],
+  "nativeSimulator": "watch-simulator/report.json",
+  "physicalValidation": "unexecuted; see ACCEPTANCE.md",
+  "secretsOrFormalRecordsChanged": false
+}

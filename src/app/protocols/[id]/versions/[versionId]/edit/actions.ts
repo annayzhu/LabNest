@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ProtocolAvailability, ProtocolReviewStage } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "@/lib/document-media.server";
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { parseTags } from "@/lib/tags";
@@ -66,7 +67,10 @@ export async function saveProtocolDocument(
       researchPlanIds: formData.getAll("researchPlanIds").map(String),
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
-    const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
+    const rawDocument = JSON.parse(parsed.contentJson);
+    const compatibilityIssue = protocolCompatibilityIssue(rawDocument);
+    if (compatibilityIssue) return { error: compatibilityIssue };
+    const document = protocolDocumentSchema.parse(rawDocument);
     const manualRelevantLinks = normalizeManualRelevantLinks(JSON.parse(parsed.relevantItemLinksJson));
     await assertManualRelevantLinksExist(manualRelevantLinks);
     const projection = projectProtocolDocument(document);
@@ -79,6 +83,8 @@ export async function saveProtocolDocument(
       include: { protocol: true },
     });
     if (!sourceVersion || sourceVersion.protocolId !== parsed.protocolId) return { error: "Protocol version not found." };
+    const sourceCompatibilityIssue = protocolCompatibilityIssue(sourceVersion.contentJson);
+    if (sourceCompatibilityIssue) return { error: sourceCompatibilityIssue };
     if (sourceVersion.reviewStage === "reviewed" && !parsed.changeSummary) {
       return { error: "A reviewed version is immutable. Enter a change summary to create the next revision." };
     }

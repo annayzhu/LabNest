@@ -1,3 +1,4 @@
+import { parameterNodesForEditor, persistParameterNodes } from './protocol-parameter-node';
 import { distinctDocumentBlockIds } from "./document-block-identity";
 import { paragraphLayout } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
@@ -170,9 +171,9 @@ function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
 }
 
 export function protocolDocumentToTiptap(document: ProtocolDocument): JSONContent {
-  return {
+  return parameterNodesForEditor({
     type: "doc",
-    attrs:{executionConfirmed:document.executionConfirmed},
+    attrs:{executionConfirmed:document.executionConfirmed, systems:document.systems},
     content: protocolSectionKeys.map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
       const rawContent = section?.blocks.flatMap(blockToTiptap) ?? [];
@@ -193,7 +194,7 @@ export function protocolDocumentToTiptap(document: ProtocolDocument): JSONConten
         }],
       } satisfies JSONContent;
     }),
-  };
+  }, document.systems);
 }
 
 function plainText(node: JSONContent | undefined): string {
@@ -392,7 +393,8 @@ function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
   return distinctDocumentBlockIds(blocks);
 }
 
-export function tiptapToProtocolDocument(json: JSONContent, importWarnings: string[] = [], executionConfirmed: boolean | undefined = json.attrs?.executionConfirmed): ProtocolDocument {
+export function tiptapToProtocolDocument(json: JSONContent, importWarnings: string[] = [], executionConfirmed: boolean | undefined = json.attrs?.executionConfirmed, systems: ProtocolDocument['systems'] = json.attrs?.systems): ProtocolDocument {
+  json = persistParameterNodes(json);
   const empty = createEmptyProtocolDocument();
   const sections = new Map<ProtocolSectionKey, ProtocolContentBlock[]>();
   for (const node of json.content ?? []) {
@@ -403,6 +405,7 @@ export function tiptapToProtocolDocument(json: JSONContent, importWarnings: stri
   return {
     ...empty,
     executionConfirmed,
+    ...(systems ? {systems} : {}),
     importWarnings,
     sections: empty.sections.map((section) => ({ ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: sections.get(section.key) ?? [] })),
   };

@@ -1,0 +1,86 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/structured-protocol.test.ts (2 tests | 1 failed) 10ms
+     × preserves authored system definitions through save, reopen and editor round-trip 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/structured-protocol.test.ts > confirmed Protocol system contract > preserves authored system definitions through save, reopen and editor round-trip
+AssertionError: expected { schemaVersion: 1, …(2) } to have property "systems" with value { schemaVersion: 1, …(5) }
+
+- Expected:
+{
+  "dimensions": [
+    {
+      "id": "volume",
+      "label": "裂解体积",
+      "options": [
+        {
+          "id": "small",
+          "label": "350 µL",
+        },
+        {
+          "id": "large",
+          "label": "600 µL",
+        },
+      ],
+    },
+  ],
+  "parameters": [
+    {
+      "id": "proteinase",
+      "label": "Proteinase K",
+      "source": {
+        "kind": "lookup",
+        "values": [
+          {
+            "id": "pk-small",
+            "unit": "µL",
+            "value": 50,
+            "when": {
+              "all": [
+                [Object],
+              ],
+            },
+          },
+          {
+            "id": "pk-large",
+            "unit": "µL",
+            "value": 80,
+            "when": {
+              "all": [
+                [Object],
+              ],
+            },
+          },
+        ],
+      },
+      "unit": "µL",
+    },
+  ],
+  "presets": [],
+  "restrictions": [],
+  "rules": [],
+  "schemaVersion": 1,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/structured-protocol.test.ts:20:22
+     18|     const authored = { ...createEmptyProtocolDocument(), systems };
+     19|     const reopened = normalizeProtocolDocument(authored)!;
+     20|     expect(reopened).toHaveProperty('systems', systems);
+       |                      ^
+     21|     expect(tiptapToProtocolDocument(protocolDocumentToTiptap(reopened)…
+     22|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  08:50:17
+   Duration  294ms (transform 98ms, setup 0ms, import 149ms, tests 10ms, environment 0ms)
+

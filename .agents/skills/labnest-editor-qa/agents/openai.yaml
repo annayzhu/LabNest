@@ -1,0 +1,4 @@
+interface:
+  display_name: "LabNest Editor QA"
+  short_description: "Verify LabNest document editing and asset round trips"
+  default_prompt: "Use $labnest-editor-qa to verify the affected LabNest editing routes."

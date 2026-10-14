@@ -1,3 +1,4 @@
+import { protocolCompatibilityIssue } from "./protocol-compatibility";
 import { createHash } from "node:crypto";
 import { normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
 import type { Prisma } from "@/generated/prisma/client";
@@ -63,6 +64,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
   const primary = orderedVersions[0];
   const contracts=new Map(orderedVersions.map(version=>{
+    const compatibilityIssue=protocolCompatibilityIssue(version.contentJson);
+    if(compatibilityIssue)throw new Error(compatibilityIssue);
     const document=normalizeProtocolDocument(version.contentJson);
     const projection=document?projectProtocolDocument(document):undefined;
     if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);

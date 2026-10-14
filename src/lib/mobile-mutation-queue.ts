@@ -63,6 +63,7 @@ export type QueuedStepCompletionMutation = {
   retryCount: number;
   lastError?: string;
   payload: {
+    executionPlanRevision?: number;
     experimentId: string;
     experimentStepId: string;
     deviationType?: string;

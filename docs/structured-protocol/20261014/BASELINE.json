@@ -1,0 +1,67 @@
+{
+  "main": "65500d2e940e1b861ac9ec78950eeb14c7292fdc",
+  "source": "/Users/annayzhu/Documents/Playground/LabNest/docs/structured-protocol/20261014/REQUIREMENTS.md",
+  "sourceSha256": "184eae1460f06d7f12a80f79fa63f66b5e629a633f74bf8d289a9e7e8fbe28f0",
+  "testSeams": "Confirmed by user 2026-10-14; isolated synthetic data only",
+  "photoCountIssue": "User confirms resolved; retain regression",
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "@tiptap/core": "3.30.6",
+    "@prisma/client": "7.8.0",
+    "vitest": "4.1.10",
+    "playwright": "1.61.1"
+  },
+  "skills": {
+    "implement": {
+      "path": "/Users/annayzhu/.agents/skills/implement/SKILL.md",
+      "sha256": "6d3fd9e83b8f36e5213854779db49b256a457a7ebb4a503e53fa7dcff696adc3",
+      "declaredVersion": "not declared"
+    },
+    "tdd": {
+      "path": "/Users/annayzhu/.agents/skills/tdd/SKILL.md",
+      "sha256": "6875cbca6b7d17be635dc9b457cc6363125f85cef26f443991b77c7d9eb430d2",
+      "declaredVersion": "not declared"
+    },
+    "setup-matt-pocock-skills": {
+      "path": "/Users/annayzhu/.agents/skills/setup-matt-pocock-skills/SKILL.md",
+      "sha256": "310fb1a73c0467e617e17d7c41d4a2278b5405c4a27f36d7cd22bb4599aee6bb",
+      "declaredVersion": "not declared"
+    },
+    "domain-modeling": {
+      "path": "/Users/annayzhu/.agents/skills/domain-modeling/SKILL.md",
+      "sha256": "9617041db9b0f6606ecf974e2061c83596b05059b5bb20ddb884c60f147c70e9",
+      "declaredVersion": "not declared"
+    },
+    "codebase-design": {
+      "path": "/Users/annayzhu/.agents/skills/codebase-design/SKILL.md",
+      "sha256": "a8d50abac5a4018f60e1d911d4b6f4e36454ca14d6c390c0695a578c7de65dad",
+      "declaredVersion": "not declared"
+    },
+    "to-tickets": {
+      "path": "/Users/annayzhu/.agents/skills/to-tickets/SKILL.md",
+      "sha256": "7d211a9262a741b62c70e06dafb507732f5927cca6839391a4fd9f47ace98984",
+      "declaredVersion": "not declared"
+    },
+    "code-review": {
+      "path": "/Users/annayzhu/.agents/skills/code-review/SKILL.md",
+      "sha256": "4e8eeefbf3bd32ec2c911ed6c7db103866ce11fedc98b1f8e358d2e1cada3895",
+      "declaredVersion": "not declared"
+    },
+    "impeccable": {
+      "path": "/Users/annayzhu/.agents/skills/impeccable/SKILL.md",
+      "sha256": "f9d9598d85b24037b9ea9a573c2aeced61d223f320f0bf432dc017dc2d5181e2",
+      "declaredVersion": "4.1.1"
+    },
+    "ponytail": {
+      "path": "/Users/annayzhu/.codex/skills/ponytail/SKILL.md",
+      "sha256": "1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2",
+      "declaredVersion": "not declared"
+    },
+    "ponytail-review": {
+      "path": "/Users/annayzhu/.codex/skills/ponytail-review/SKILL.md",
+      "sha256": "40df33b58fc6ef889b93585733feb9566b76e9586efa7f376785c1e995197ac0",
+      "declaredVersion": "not declared"
+    }
+  }
+}

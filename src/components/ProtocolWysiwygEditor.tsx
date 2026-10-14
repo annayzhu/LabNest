@@ -1,5 +1,7 @@
 "use client";
 import { documentScriptMarks } from "@/lib/tiptap-document-extensions";
+import { ProtocolParameterNode } from '@/lib/protocol-parameter-node';
+import { ProtocolEditorIdentities } from '@/lib/protocol-editor-identities';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -242,11 +244,15 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   const [initialContent] = useState(() => protocolDocumentToTiptap(document)); // The form owns one document for the lifetime of this editor.
   const onChangeRef = useRef(onChange);
   const importWarningsRef = useRef(document.importWarnings);
+  // Authoring metadata can change without rebuilding the editor or its selection.
+  const documentRef = useRef(document);
+  documentRef.current = document;
   const inputPrefix = useId();
   const imageInputId = `${inputPrefix}-protocol-images`;
   const fileInputId = `${inputPrefix}-protocol-files`;
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [inspectorTarget, setInspectorTarget] = useState<InspectorTarget | null>(null);
+  const [parameterToInsert, setParameterToInsert] = useState('');
   const openImagePicker = useCallback(() => globalThis.document.getElementById(imageInputId)?.click(), [imageInputId]);
   const openFilePicker = useCallback(() => globalThis.document.getElementById(fileInputId)?.click(), [fileInputId]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -265,6 +271,8 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       Placeholder.configure({ placeholder: "Write the protocol here…" }),
       Typography,
       ProtocolLegacyAttributes,
+      ProtocolEditorIdentities,
+      ProtocolParameterNode,
       ...documentScriptMarks,
       ProtocolSection,
       ProtocolWidget,
@@ -283,10 +291,35 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
       },
     },
     onUpdate: ({ editor: nextEditor }) => {
-      onChangeRef.current(tiptapToProtocolDocument(nextEditor.getJSON(), importWarningsRef.current,document.executionConfirmed));
+      onChangeRef.current(tiptapToProtocolDocument(nextEditor.getJSON(), importWarningsRef.current,documentRef.current.executionConfirmed,documentRef.current.systems));
     },
   });
   useDocumentMediaUploads(editor, uploadDraftId);
+  // Organizer and parameter changes update attributes in place. The editor, selection,
+  // undo history and scroll host remain mounted while these panels are used.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    const blocks = new Map(document.sections.flatMap(section => section.blocks.map(block => [block.id, block] as const)));
+    const tr = editor.state.tr;
+    editor.state.doc.descendants((node, position) => {
+      if (node.type.name === 'protocolParameter') {
+        const parameter = document.systems?.parameters.find(item => item.id === node.attrs.parameterId);
+        const label = parameter?.label ?? '参数引用待处理', unit = parameter?.unit ?? '';
+        if (node.attrs.label !== label || node.attrs.unit !== unit) tr.setNodeMarkup(position, undefined, { ...node.attrs, label, unit });
+        return;
+      }
+      const id = node.attrs.protocolBlockId ?? node.attrs.block?.id;
+      const block = blocks.get(id);
+      if (!block) return;
+      if ('protocolExecution' in node.attrs && JSON.stringify(node.attrs.protocolExecution ?? null) !== JSON.stringify(block.execution ?? null)) {
+        tr.setNodeMarkup(position, undefined, { ...node.attrs, protocolExecution: block.execution ?? null });
+      } else if (node.attrs.block && JSON.stringify(node.attrs.block.execution ?? null) !== JSON.stringify(block.execution ?? null)) {
+        tr.setNodeMarkup(position, undefined, { ...node.attrs, block: { ...node.attrs.block, execution: block.execution } });
+      }
+    });
+    if (tr.docChanged) editor.view.dispatch(tr.setMeta('addToHistory', false));
+  }, [document, editor]);
+
 
   const [toolbarEditor, setToolbarEditor] = useState<Editor | null>(null);
   const activateToolbarEditor = useCallback((target: Editor) => setToolbarEditor(target), []);
@@ -316,6 +349,10 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   return <DocumentToolbarTargetContext.Provider value={toolbarTarget}><>
     <section className={cn("ln-wysiwyg-editor", draggingFiles && "is-dragging-files")} data-print-hidden={undefined}>
     {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
+    {document.systems?.parameters.length ? <div className="protocol-parameter-insert" data-print-hidden>
+      <label>正文参数<select aria-label="待插入参数" value={parameterToInsert} onChange={event => setParameterToInsert(event.target.value)}><option value="">请选择参数</option>{document.systems.parameters.map(parameter => <option key={parameter.id} value={parameter.id}>{parameter.label} · {parameter.unit}</option>)}</select></label>
+      <button type="button" disabled={!parameterToInsert} onMouseDown={event => event.preventDefault()} onClick={() => { const parameter = document.systems?.parameters.find(p => p.id === parameterToInsert); if (parameter) editor.chain().focus().insertContent({ type: 'protocolParameter', attrs: { parameterId: parameter.id, label: parameter.label, unit: parameter.unit } }).run(); }}>插入参数</button>
+    </div> : null}
     <input id={imageInputId} type="file" accept="image/*" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
     <input id={fileInputId} type="file" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
     <div
@@ -329,7 +366,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
     </section>
     {inspectorHost && inspectorTarget ? createPortal(<ProtocolContextInspector editor={editor} target={inspectorTarget} onClose={() => {
       setInspectorTarget(null);
-      editor.chain().setTextSelection(1).blur().run();
+      editor.commands.focus(undefined, { scrollIntoView: false });
     }} />, inspectorHost) : null}
   </></DocumentToolbarTargetContext.Provider>;
 }

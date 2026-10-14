@@ -1,0 +1,46 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/structured-protocol.test.ts (7 tests | 1 failed) 19ms
+     × reuses the dilution calculator and blocks stale or failed calculations until explicitly adopted again 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/structured-protocol.test.ts > confirmed Protocol system contract > reuses the dilution calculator and blocks stale or failed calculations until explicitly adopted again
+ZodError: [
+  {
+    "code": "invalid_union",
+    "errors": [],
+    "note": "No matching discriminator",
+    "discriminator": "kind",
+    "options": [
+      "fixed",
+      "lookup",
+      "actual"
+    ],
+    "path": [
+      "parameters",
+      3,
+      "source",
+      "kind"
+    ],
+    "message": "Invalid discriminator value. Expected 'fixed' | 'lookup' | 'actual'"
+  }
+]
+ ❯ resolveProtocolSystem src/lib/structured-protocol.ts:59:41
+     57| /** Deterministic public boundary shared by previews, execution and ou…
+     58| export function resolveProtocolSystem(input: ProtocolSystems, selectio…
+     59|   const systems = protocolSystemsSchema.parse(input);
+       |                                         ^
+     60|   const result: ProtocolSystemResolution = { parameters: {}, rules: {}…
+     61|   const issue = (code: string, targetId: string, message: string) => r…
+ ❯ src/lib/structured-protocol.test.ts:25:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  09:09:29
+   Duration  397ms (transform 117ms, setup 0ms, import 191ms, tests 19ms, environment 0ms)
+

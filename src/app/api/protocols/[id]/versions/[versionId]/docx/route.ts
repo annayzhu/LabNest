@@ -1,3 +1,4 @@
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
 import { prisma } from "@/lib/db";
 import { loadDocumentImageAssets } from "@/lib/document-media-export.server";
 import { exportProtocolDocx, protocolDocxFilename } from "@/lib/protocol-docx-export";
@@ -10,6 +11,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id, versionId } = await context.params;
   const version = await prisma.protocolVersion.findUnique({ where: { id: versionId }, include: { protocol: { include: { project: true } } } });
   if (!version || version.protocolId !== id) return Response.json({ error: "Protocol version not found." }, { status: 404 });
+  const compatibilityIssue = protocolCompatibilityIssue(version.contentJson);
+  if (compatibilityIssue) return Response.json({ error: compatibilityIssue }, { status: 409 });
   const document = normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
     description: version.protocol.description,
     purpose: version.purpose,

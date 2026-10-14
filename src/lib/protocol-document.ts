@@ -1,6 +1,7 @@
 import { projectProtocolExecution } from "./protocol-execution";
 import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
+import { protocolSystemsSchema } from './protocol-systems-schema';
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
   ConsumptionRule,
@@ -109,6 +110,7 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     type: z.literal("table"),
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
+    rowIds: z.array(z.string().min(1)).optional(),
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
     cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
     cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
@@ -126,6 +128,7 @@ export type ProtocolContentBlock = z.infer<typeof protocolContentBlockSchema>;
 
 export const protocolDocumentSchema = z.object({
   schemaVersion: z.literal(1),
+  systems: protocolSystemsSchema.optional(),
   executionConfirmed: z.boolean().optional(),
   sections: z.array(
     z.object({

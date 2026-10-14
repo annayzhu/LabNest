@@ -1,4 +1,6 @@
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
+import { allSystemProtocolDocument } from '@/lib/structured-protocol';
+import { ProtocolConditionCaption, ProtocolSystemLegend } from './ProtocolSystemLabels';
 import { AlertTriangle, CheckSquare2, FileCheck2, Table2, Wrench } from "lucide-react";
 import { DocumentMediaView } from "./DocumentMediaView";
 import { documentMediaFromMarkdown } from "@/lib/document-media";
@@ -200,6 +202,7 @@ export function ProtocolContentBlockView({ block, executionContext=false }: { bl
 }
 
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
+  const readingDocument = allSystemProtocolDocument(document);
   const { contentWarnings } = separateLegacyImportWarnings(document.importWarnings);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
@@ -207,8 +210,9 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
+      {document.systems ? <><ProtocolSystemLegend systems={document.systems}/><p className="protocol-condition-caption">全部体系预览 · 创建实验后确认实际采用的体系</p></> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
-      {document.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block"><ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
+      {readingDocument.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block">{document.systems?.rules.filter(rule => (rule.target === 'block' && rule.targetId === block.id) || (rule.target === 'step' && block.execution?.role === 'step' && rule.targetId === (block.execution.stepId ?? block.id))).map(rule => <ProtocolConditionCaption key={rule.id} systems={document.systems!} when={rule.when}/>)}<ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
     </div>
   </DocumentCanvas>;
   return <DocumentOutlineWorkbench items={document.sections.map((section) => ({ id: `section-${section.key}`, label: section.title }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;

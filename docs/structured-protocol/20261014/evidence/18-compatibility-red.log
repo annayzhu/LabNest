@@ -1,0 +1,24 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/protocol-compatibility.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/protocol-compatibility.test.ts [ src/lib/protocol-compatibility.test.ts ]
+Error: Cannot find module './protocol-compatibility' imported from /Users/annayzhu/Documents/Playground/LabNest/src/lib/protocol-compatibility.test.ts
+ ❯ src/lib/protocol-compatibility.test.ts:2:1
+      1| import { expect, it } from 'vitest';
+      2| import { protocolCompatibilityIssue } from './protocol-compatibility';
+       | ^
+      3| import { createEmptyProtocolDocument } from './protocol-document';
+      4|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  09:12:29
+   Duration  114ms (transform 13ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

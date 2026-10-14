@@ -1,0 +1,26 @@
+{
+  "activeOutline": "rgb(0, 95, 204) auto 1px",
+  "activeText": "参数",
+  "language": "en",
+  "tabs": [
+    {
+      "controls": null,
+      "name": "体系与预设",
+      "selected": "false",
+      "tabIndex": 0
+    },
+    {
+      "controls": null,
+      "name": "参数",
+      "selected": "true",
+      "tabIndex": 0
+    },
+    {
+      "controls": null,
+      "name": "适用条件",
+      "selected": "false",
+      "tabIndex": 0
+    }
+  ],
+  "url": "http://localhost:3339/protocols/cmv7ghllf000646os6vbc2qb2/versions/cmv7ghlli000746os6vjks36e/edit"
+}

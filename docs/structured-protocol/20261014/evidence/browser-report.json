@@ -1,5 +1,5 @@
 {
-  "head": "6776c7dca98d684adfd3740d0dd63b0a6617c932",
+  "head": "42d6e3218e70f5d8e5221130b395390fde8004f9",
   "dirty": true,
   "browser": "149.0.7827.55",
   "fixture": "synthetic isolated database; AI_ENABLED=false",
@@ -7,37 +7,47 @@
     {
       "name": "A01 A02 all-system and selected preview retain source and existing Run selection",
       "result": "通过",
-      "ms": 1930
+      "ms": 1817
     },
     {
       "name": "B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work",
       "result": "通过",
-      "ms": 3536
+      "ms": 3731
     },
     {
       "name": "E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes",
       "result": "通过",
-      "ms": 6330
+      "ms": 5100
+    },
+    {
+      "name": "UI A1 actual-value drafts never display a stale saved receipt and clear after save",
+      "result": "通过",
+      "ms": 3075
     },
     {
       "name": "B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress",
       "result": "通过",
-      "ms": 2264
+      "ms": 1983
     },
     {
       "name": "D03 D04 start refresh pause resume finish timer retains one instance and never completes step",
       "result": "通过",
-      "ms": 1758
+      "ms": 1367
     },
     {
       "name": "B06 continuation displays original treatment and starts at explicit remaining operation",
       "result": "通过",
-      "ms": 812
+      "ms": 747
     },
     {
       "name": "F03 actual JSON Markdown CSV XLSX DOCX and print files preserve adopted quantities and source",
       "result": "通过",
-      "ms": 2239
+      "ms": 1177
+    },
+    {
+      "name": "E01 actual light/dark responsive Run retains readable system labels and scoped spacing",
+      "result": "通过",
+      "ms": 3069
     }
   ],
   "screenshots": [
@@ -49,15 +59,20 @@
     "run-390.png",
     "run-320.png",
     "run-mobile-draft-and-images.png",
+    "actual-value-unsaved-draft.png",
     "timer-finished-not-completed.png",
-    "continuation-history.png"
+    "continuation-history.png",
+    "final-run-light-1440.png",
+    "final-run-light-390.png",
+    "final-run-dark-1440.png",
+    "final-run-dark-390.png"
   ],
-  "experimentId": "cmv7g3ff4004mxyos6fu2t2um",
+  "experimentId": "cmv7gz5m2000050osdi32e59p",
   "stepIds": {
-    "prepare": "cmv7g3ffb004nxyos3qex8si2",
-    "dose": "cmv7g3ffb004oxyosn1x6anlr",
-    "incubate": "cmv7g3ffb004pxyos3fjnldl4",
-    "lipid": "cmv7g3ffb004qxyosvobc4903"
+    "prepare": "cmv7gz5m6000150osra6hrxks",
+    "dose": "cmv7gz5m6000250osx8183l8l",
+    "incubate": "cmv7gz5m6000350osafh7tutj",
+    "lipid": "cmv7gz5m6000450oso2qgj7jg"
   },
   "pageErrors": []
 }

@@ -1,0 +1,9 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+PASS UI A1 actual-value drafts never display a stale saved receipt and clear after save
+PASS B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress
+PASS D03 D04 start refresh pause resume finish timer retains one instance and never completes step
+PASS B06 continuation displays original treatment and starts at explicit remaining operation
+PASS F03 actual JSON Markdown CSV XLSX DOCX and print files preserve adopted quantities and source
+PASS E01 actual light/dark responsive Run retains readable system labels and scoped spacing

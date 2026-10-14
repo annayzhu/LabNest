@@ -1,0 +1,259 @@
+{
+  "buttons": [
+    {
+      "height": 44,
+      "text": "体系与预设",
+      "width": 81
+    },
+    {
+      "height": 44,
+      "text": "参数",
+      "width": 42
+    },
+    {
+      "height": 44,
+      "text": "适用条件",
+      "width": 68
+    },
+    {
+      "height": 44,
+      "text": "",
+      "width": 44
+    },
+    {
+      "height": 32,
+      "text": "添加条件",
+      "width": 629.1875
+    },
+    {
+      "height": 44,
+      "text": "删除取值",
+      "width": 69.765625
+    },
+    {
+      "height": 44,
+      "text": "",
+      "width": 44
+    },
+    {
+      "height": 32,
+      "text": "添加条件",
+      "width": 629.1875
+    },
+    {
+      "height": 44,
+      "text": "删除取值",
+      "width": 69.765625
+    },
+    {
+      "height": 32,
+      "text": "添加条件取值",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 44,
+      "text": "",
+      "width": 44
+    },
+    {
+      "height": 32,
+      "text": "添加条件",
+      "width": 629.1875
+    },
+    {
+      "height": 44,
+      "text": "删除取值",
+      "width": 69.765625
+    },
+    {
+      "height": 44,
+      "text": "",
+      "width": 44
+    },
+    {
+      "height": 32,
+      "text": "添加条件",
+      "width": 629.1875
+    },
+    {
+      "height": 44,
+      "text": "删除取值",
+      "width": 69.765625
+    },
+    {
+      "height": 32,
+      "text": "添加条件取值",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "删除参数",
+      "width": 629.1875
+    },
+    {
+      "height": 32,
+      "text": "添加参数",
+      "width": 629.1875
+    }
+  ],
+  "fields": [
+    {
+      "height": 40,
+      "label": "参数名称",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "显示单位",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "参数来源固定值按条件查表实验时实际填写已有计算器",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件关系",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的维度",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的选项",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "取值",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "数值单位",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "条件关系",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的维度",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的选项",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "取值",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "数值单位",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "参数名称",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "显示单位",
+      "tag": "INPUT"
+    },
+    {
+      "height": 40,
+      "label": "参数来源固定值按条件查表实验时实际填写已有计算器",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件关系",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的维度",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "条件 1 的选项",
+      "tag": "SELECT"
+    },
+    {
+      "height": 40,
+      "label": "取值",
+      "tag": "INPUT"
+    }
+  ],
+  "panels": 0,
+  "tabs": [
+    {
+      "controls": null,
+      "height": 44,
+      "role": "tab",
+      "selected": "false",
+      "tabIndex": 0,
+      "text": "体系与预设"
+    },
+    {
+      "controls": null,
+      "height": 44,
+      "role": "tab",
+      "selected": "true",
+      "tabIndex": 0,
+      "text": "参数"
+    },
+    {
+      "controls": null,
+      "height": 44,
+      "role": "tab",
+      "selected": "false",
+      "tabIndex": 0,
+      "text": "适用条件"
+    }
+  ],
+  "text": "实验体系与参数 · 2 个选择维度体系与预设参数适用条件每个参数只有一个来源。使用正文上方的“插入参数”将它放到当前光标处。Proteinase K参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器同时满足满足任一均不满足裂解体积样本性质350 µL600 µL添加条件取值数值单位删除取值同时满足满足任一均不满足裂解体积样本性质350 µL600 µL添加条件取值数值单位删除取值添加条件取值删除参数Ethanol参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器同时满足满足任一均不满足裂解体积样本性质350 µL600 µL添加条件取值数值单位删除取值同时满足满足任一均不满足裂解体积样本性质350 µL600 µL添加条件取值数值单位删除取值添加条件取值删除参数孵育时长参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器固定来源数值数值单位删除参数母液浓度参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器固定来源数值数值单位删除参数目标终浓度参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器删除参数稀释总体积参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器固定来源数值数值单位删除参数示例母液取液量参数名称显示单位参数来源固定值按条件查表实验时实际填写已有计算器稀释计算器 · 配至最终体积。输入引用已有参数；执行时计算后人工确认采用。母液浓度选择输入参数Proteinase K · mLEthanol · µL孵育时长 · min母液浓度 · µM目标终浓度 · µM稀释总体积 · µL目标浓度选择输入参数Proteinase K · mLEthanol · µL孵育时长 · min母液浓度 · µM目标终浓度 · µM稀释总体积 · µL最终体积选择输入参数Proteinase K · mLEthanol · µL孵育时长 · min母液浓度 · µM目标终浓度 · µM稀释总体积 · µL采用的输出母液取液体积稀释液加入量删除参数添加参数"
+}

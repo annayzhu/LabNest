@@ -1,0 +1,33 @@
+{
+  "assessment": "B",
+  "timestampUtc": "2026-10-14T01:58:03.292205+00:00",
+  "cwd": "/Users/annayzhu/Documents/Playground/LabNest",
+  "argv": [
+    "node",
+    "/Users/annayzhu/.agents/skills/impeccable/scripts/detect.mjs",
+    "--json",
+    "src/components/ProtocolSystemsEditor.tsx",
+    "src/components/RunSystemPreparation.tsx",
+    "src/components/StructuredStepRecord.tsx"
+  ],
+  "nodeVersion": "v22.23.1",
+  "skillVersion": "4.1.1",
+  "exitCode": 0,
+  "stderr": "",
+  "entrySha256": "cd1c9fa84d1e86fb886b3ae805bbca9771d2dc6628b875043f0dac6715b1efe2",
+  "targets": [
+    {
+      "path": "src/components/ProtocolSystemsEditor.tsx",
+      "sha256": "9443a68c89e3cb28e996735ee4a0b35bcfcb94e44c6fc3204c66ea7118957ee4"
+    },
+    {
+      "path": "src/components/RunSystemPreparation.tsx",
+      "sha256": "41d5062e84fd5395b4a0337b88f1fb63c379c13644615ca9cd4d815328822858"
+    },
+    {
+      "path": "src/components/StructuredStepRecord.tsx",
+      "sha256": "18067f9f8f81be654a733b9d8736ea22ba3b34e084cedd745eb294b6a2842970"
+    }
+  ],
+  "reasonForAdditionalScan": "Existing impeccable-detector.json has no recorded target scope; parent requested bounded scope-proven scan."
+}

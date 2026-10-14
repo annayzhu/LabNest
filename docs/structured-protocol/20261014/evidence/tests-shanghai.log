@@ -6,8 +6,8 @@
  RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
 
 
- Test Files  121 passed (121)
-      Tests  624 passed (624)
-   Start at  09:37:08
-   Duration  4.19s (transform 7.03s, setup 0ms, import 19.46s, tests 2.35s, environment 10ms)
+ Test Files  122 passed (122)
+      Tests  628 passed (628)
+   Start at  10:05:41
+   Duration  6.97s (transform 18.96s, setup 0ms, import 44.23s, tests 3.27s, environment 11ms)
 

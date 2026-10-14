@@ -1,0 +1,47 @@
+{
+  "source": "read-only browser computed styles at 390px; RGB relative-luminance calculation",
+  "pairs": [
+    {
+      "label": "current system choice text",
+      "foreground": [
+        49,
+        93,
+        120
+      ],
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "contrast": 7.08
+    },
+    {
+      "label": "preset button text",
+      "foreground": [
+        71,
+        88,
+        99
+      ],
+      "background": [
+        255,
+        255,
+        255
+      ],
+      "contrast": 7.38
+    },
+    {
+      "label": "input text",
+      "foreground": [
+        32,
+        40,
+        47
+      ],
+      "background": [
+        251,
+        252,
+        253
+      ],
+      "contrast": 14.54
+    }
+  ]
+}

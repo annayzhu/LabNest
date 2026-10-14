@@ -1,0 +1,95 @@
+[
+  {
+    "file": "docs/structured-protocol/20261014/evidence/protocol-docx-render.pdf",
+    "sha256": "b5e6bd915ea6b7681e6fee0505d6190c7e634f3bdf1b265b8c9d34def23eb0f4",
+    "pages": [
+      {
+        "page": 1,
+        "textCharacters": 1297,
+        "images": 4
+      },
+      {
+        "page": 2,
+        "textCharacters": 1458,
+        "images": 4
+      },
+      {
+        "page": 3,
+        "textCharacters": 1400,
+        "images": 4
+      },
+      {
+        "page": 4,
+        "textCharacters": 960,
+        "images": 4
+      },
+      {
+        "page": 5,
+        "textCharacters": 380,
+        "images": 4
+      }
+    ]
+  },
+  {
+    "file": "docs/structured-protocol/20261014/evidence/protocol-preview.pdf",
+    "sha256": "7615af545c3d096ecfda51bcf74807e1fea91725ea4debb618a3453ddcc98329",
+    "pages": [
+      {
+        "page": 1,
+        "textCharacters": 819,
+        "images": 0
+      },
+      {
+        "page": 2,
+        "textCharacters": 1044,
+        "images": 0
+      },
+      {
+        "page": 3,
+        "textCharacters": 1102,
+        "images": 0
+      },
+      {
+        "page": 4,
+        "textCharacters": 1102,
+        "images": 0
+      },
+      {
+        "page": 5,
+        "textCharacters": 425,
+        "images": 0
+      },
+      {
+        "page": 6,
+        "textCharacters": 42,
+        "images": 3
+      },
+      {
+        "page": 7,
+        "textCharacters": 169,
+        "images": 1
+      }
+    ]
+  },
+  {
+    "file": "docs/structured-protocol/20261014/evidence/experiment-preview.pdf",
+    "sha256": "ccebfdee9d14617b228b9cb3e747fcd4cb507d3e95ad00f259595a382ddebab4",
+    "pages": [
+      {
+        "page": 1,
+        "textCharacters": 852,
+        "images": 0
+      },
+      {
+        "page": 2,
+        "textCharacters": 68,
+        "images": 2
+      },
+      {
+        "page": 3,
+        "textCharacters": 147,
+        "images": 2
+      }
+    ]
+  }
+]

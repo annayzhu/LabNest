@@ -14,7 +14,10 @@ context.setDefaultTimeout(15000);
 const page = await context.newPage(), errors = [];
 page.on('pageerror', error => errors.push(error.message));
 const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: Boolean(execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' }).trim()), browser: browser.version(), fixture: 'synthetic isolated database; AI_ENABLED=false', checks: [], screenshots: [] };
-const go = path => page.goto(base + path, { waitUntil: 'networkidle' });
+const go = async path => {
+  await page.goto(base + path, { waitUntil: 'networkidle' });
+  if (path.startsWith('/experiments/new')) await page.getByRole('button', { name: '返回主界面继续填写或保存', exact: true }).click();
+};
 const shot = async name => { await page.screenshot({ path: `${dir}/${name}.png` }); report.screenshots.push(`${name}.png`); };
 const record = async id => (await (await page.request.get(`${base}/api/experiments/${id}?qa=${Date.now()}`)).json()).experiment;
 const waitRecord = async (id, predicate) => { for (let i = 0; i < 100; i++) { const value = await record(id); if (predicate(value)) { if (page.url().endsWith(`/experiments/${id}/run`) && value.protocolRun?.executionPlanJson?.revision !== undefined) await page.waitForFunction(revision => document.querySelector('[data-run-system-selection] input[name="executionPlanRevision"]')?.value === String(revision), value.protocolRun.executionPlanJson.revision); return value; } await new Promise(r => setTimeout(r, 100)); } throw Error('Database readback timed out'); };

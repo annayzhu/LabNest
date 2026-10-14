@@ -25,13 +25,14 @@ function VersionSelection({ experimentId, version, view, editable, embedded }: {
   const prior = resolveProtocolDocument(version.document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations);
   const changes = proposed.steps.filter(step => JSON.stringify(step) !== JSON.stringify(prior.steps.find(s => s.source_ref === step.source_ref)));
   const scope = useRef<HTMLElement | null>(null);
-  function submitEmbedded(intent = 'save') {
+  function submitEmbedded(intent = 'save', calculationId?: string) {
     const form = new FormData();
     scope.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[name], select[name]').forEach(field => {
       if (field.matches(':disabled') || field instanceof HTMLInputElement && ['checkbox', 'radio'].includes(field.type) && !field.checked) return;
       form.append(field.name, field.value);
     });
     form.set('intent', intent);
+    if (calculationId) form.set('confirmCalculations', calculationId);
     startTransition(() => action(form));
   }
   const Container = embedded ? 'div' : 'form';
@@ -46,7 +47,7 @@ function VersionSelection({ experimentId, version, view, editable, embedded }: {
       {systems.parameters.filter(p => p.source.kind === 'actual').map(p => <label key={p.id}>{p.label} · {p.unit}<input aria-label={p.label} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
       <div className="protocol-system-legend">{Object.entries(selections).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={dimensionId} systems={systems} dimensionId={dimensionId} optionId={optionId}/>)}</div>
       {systems.parameters.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th>参数</th><th>采用值</th><th>来源</th></tr></thead><tbody>{systems.parameters.map(p => <tr key={p.id}><td>{p.label}</td><td>{resolution.parameters[p.id]?.status === 'resolved' ? `${resolution.parameters[p.id].value} ${p.unit}` : resolution.parameters[p.id]?.message ?? '待填写'}</td><td>{{ fixed: '固定值', lookup: '条件查表', actual: '本次实际填写', calculator: '计算后确认' }[p.source.kind]}</td></tr>)}</tbody></table></div> : null}
-      {systems.parameters.filter(p => p.source.kind === 'calculator').map(p => <ProtocolCalculationPreview key={p.id} parameter={p} resolution={resolution} receipt={adopted?.calculations[p.id]} disabled={!editable || pending}/>)}
+      {systems.parameters.filter(p => p.source.kind === 'calculator').map(p => <ProtocolCalculationPreview key={p.id} parameter={p} resolution={resolution} receipt={adopted?.calculations[p.id]} disabled={!editable || pending} onConfirm={embedded ? () => submitEmbedded('save', p.id) : undefined}/>)}
       {dirty && adopted ? <p className="text-warning" role="status">选择已修改，以上是变更预览，尚未应用。影响已有执行记录时将拒绝覆盖。</p> : null}
       {dirty && adopted ? <ul aria-label="变更影响">{changes.map(s => <li key={s.source_ref}>{s.title} · {s.applicability === 'not-applicable' ? '改为不适用' : s.blocked ? '参数待确定' : '采用新参数／适用状态'}</li>)}</ul> : null}
       {resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).length ? <ul className="text-error">{resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).map((i, index) => <li key={index}>{i.message}</li>)}</ul> : null}

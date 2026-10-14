@@ -10,7 +10,7 @@ const context=await browser.newContext({viewport:{width:1440,height:1000},timezo
 const report={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),browser:browser.version(),database:'isolated clone or synthetic fixtures only',checks:[],catalog:[]};
 const saved=async id=>{const response=await page.request.get(`${base}/api/experiments/${id}?qaRead=${Date.now()}`,{headers:{'Cache-Control':'no-cache'}});assert.equal(response.status(),200);return (await response.json()).experiment;};
 const waitSaved=async(id,predicate)=>{const until=Date.now()+30000;while(Date.now()<until){const record=await saved(id);if(predicate(record))return record;await new Promise(resolve=>setTimeout(resolve,100));}throw new Error('Timed out waiting for saved database state');};
-const go=async url=>{await page.goto(base+url,{waitUntil:'networkidle'});};
+const go=async url=>{await page.goto(base+url,{waitUntil:'networkidle'});if(url.startsWith('/experiments/new'))await page.getByRole('button',{name:'返回主界面继续填写或保存',exact:true}).click();};
 async function check(name,run){const start=Date.now();try{await run();report.checks.push({name,status:'通过',ms:Date.now()-start});}catch(error){report.checks.push({name,status:'失败',error:String(error)});throw error;}finally{await writeFile(dir+'/browser-report.json',JSON.stringify(report,null,2));}}
 async function screenshot(name){await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});}
 let experimentId;

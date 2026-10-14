@@ -69,8 +69,12 @@ try {
     await page.keyboard.press('End'); await page.keyboard.insertText(' 未保存的中文草稿。');
     const selection = page.locator('[data-run-system-selection]');
     await selection.getByLabel('反应体系').selectOption('small');
-    await selection.getByRole('button', { name: '确认本次体系', exact: true }).click();
+    await selection.getByLabel('目标终浓度', { exact: true }).fill('10');
+    await selection.getByRole('button', { name: '计算并确认采用', exact: true }).click();
     await page.waitForFunction(id => document.querySelector(`[data-execution-step="${id}"]`)?.getAttribute('data-applicability') === 'not-applicable', large.id);
+    assert.equal(new URL(page.url()).pathname, `/experiments/${fixture.experimentId}/edit`, 'Calculation confirmation must not submit the outer experiment form');
+    assert.equal((await record(fixture.experimentId)).protocolRun.executionPlanJson.versions[fixture.versionIds[0]].calculations.take.value, 10);
+    assert.equal(await page.locator('form form').count(), 0);
     assert(await step(large.id).getByRole('checkbox').isDisabled());
     assert((await step(dose.id).innerText()).includes('10 µL'));
     await step(first.id).getByRole('checkbox').click();

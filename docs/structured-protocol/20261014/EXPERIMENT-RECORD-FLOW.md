@@ -43,7 +43,7 @@
 
 - 125 个测试文件、652 项测试通过（`TZ=Asia/Shanghai npm test -- --maxWorkers=4`）。新增测试覆盖无计划创建、规程快照保留、单步勾选/撤销、偏差独立保存、过期版本、外来步骤、记录锁定和体系未确认。
 - TypeScript 通过；全量 ESLint 无错误，12 条既有警告位于未修改的文件。
-- 真实 Next.js 页面 + Chromium、隔离的 PGlite PostgreSQL 协议服务与合成数据：4 组流程通过，页面错误为 0。验证默认元数据、清空计划后创建/回读、3 个长名称规程、体系选择后的用量及置灰、勾选/偏差保存、中文正文草稿保留、最终正文保存、日期页头、目录稳定和 1440/768/390/320 px 布局。
+- 真实 Next.js 页面 + Chromium、隔离的 PGlite PostgreSQL 协议服务与合成数据：4 组流程通过，页面错误为 0。验证默认元数据、清空计划后创建/回读、3 个长名称规程、体系选择后的用量及置灰、嵌入计算确认只保存体系且不提交外层表单、勾选/偏差保存、中文正文草稿保留、最终正文保存、日期页头、目录稳定和 1440/768/390/320 px 布局。
 - 浏览器流程与种子脚本：`scripts/seed-experiment-record-flow.ts`、`scripts/verify-experiment-record-flow.mjs`。本地报告和截图生成在 `outputs/experiment-record-flow/`；document-editor CI 已加入相同流程及证据上传。
 - `npm run build` 在此环境的既有 `npx tsx` 图标脚本处受 Unix socket 权限限制；`next build --webpack` 应用生产构建通过（使用已生成的 Prisma 客户端与静态资源）。不修改与本需求无关的构建脚本。
 - 未操作生产数据、未部署；PGlite 测试不能替代真实 PostgreSQL 并发负载验收。iPhone/iPad 真机、系统软键盘、锁屏、手表和完整历史私有记录迁移未验收。

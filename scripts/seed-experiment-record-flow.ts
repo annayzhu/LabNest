@@ -23,6 +23,16 @@ async function main() {
       { id: 'large', type: 'heading', text: '大体系附加操作', execution: { role: 'step', stepId: 'large', title: '大体系附加操作' } },
     ];
     if (i === 0) doc.systems = { schemaVersion: 1, dimensions: [{ id: 'system', label: '反应体系', options: [{ id: 'small', label: '小体系' }, { id: 'large', label: '大体系' }] }], presets: [], parameters: [{ id: 'volume', label: '示例体积', unit: 'µL', source: { kind: 'lookup', values: [{ id: 'small-volume', when: { all: [{ dimensionId: 'system', optionId: 'small' }] }, value: 10, unit: 'µL' }, { id: 'large-volume', when: { all: [{ dimensionId: 'system', optionId: 'large' }] }, value: 20, unit: 'µL' }] } }], restrictions: [], rules: [{ id: 'large-only', target: 'step', targetId: 'large', when: { all: [{ dimensionId: 'system', optionId: 'large' }] }, parameterIds: [], actualFields: [], optional: false }] };
+    if (doc.systems) {
+      doc.systems.parameters.push(
+        { id: 'stock', label: '母液浓度', unit: 'µM', source: { kind: 'fixed', value: 100, unit: 'µM' } },
+        { id: 'target', label: '目标终浓度', unit: 'µM', source: { kind: 'actual' } },
+        { id: 'total', label: '稀释总体积', unit: 'µL', source: { kind: 'fixed', value: 100, unit: 'µL' } },
+        { id: 'take', label: '示例取液量', unit: 'µL', source: { kind: 'calculator', calculatorId: 'dilution', output: 'stockVolumeUl', inputs: { stockConcentration: 'stock', targetConcentration: 'target', finalVolume: 'total' } } },
+      );
+      const table = doc.sections.find(s => s.key === 'steps')!.blocks.find(b => b.id === 'dose-body');
+      if (table?.type === 'table') table.rows.push(['独立稀释示例', '{{take}}']);
+    }
     const title = `合成验收规程 ${i + 1} · 很长的规程名称用于验证编号和操作按钮不会挤压变形`;
     const protocol = await prisma.protocol.create({ data: { humanCode: `PRT-${stamp}${i}`, title, canonicalTitle: title } });
     versions.push(await prisma.protocolVersion.create({ data: { protocolId: protocol.id, revision: 1, title, displayVersion: '1.0', contentJson: doc, stepsJson: projectProtocolDocument(doc).steps } }));

@@ -38,9 +38,10 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Design sample, target, control, and replicate placement before a qPCR run.",
     accepts: ["sample list", "assay list", "plate format"],
     produces: ["plate map", "run sheet", "layout export"],
-    launchUrl: "/tools/qpcr-plate-layout",
+    // Use the maintained release instead of an independently ageing HTML copy.
+    launchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
     originalLaunchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
-    external: false,
+    external: true,
   },
   {
     id: "cnv-plate-layout",

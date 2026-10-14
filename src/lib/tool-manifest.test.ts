@@ -9,7 +9,7 @@ describe("lab tool manifest", () => {
     expect(labToolManifest.filter((tool) => tool.category === "Analysis")).toHaveLength(3);
   });
 
-  it("opens bundled tools internally and retains original release links", () => {
+  it("opens the qPCR planner at its maintained Site and leaves other bundled tools internal", () => {
     expect(Object.values(standaloneToolDefaultUrls)).toHaveLength(4);
     for (const launchUrl of Object.values(standaloneToolDefaultUrls)) {
       expect(new URL(launchUrl).protocol).toBe("https:");
@@ -17,7 +17,11 @@ describe("lab tool manifest", () => {
 
     const standaloneTools = labToolManifest.filter((tool) => tool.originalLaunchUrl);
     expect(standaloneTools).toHaveLength(4);
-    expect(standaloneTools.every((tool) => tool.launchUrl?.startsWith("/tools/") && !tool.external)).toBe(true);
+    expect(labToolManifest.find((tool) => tool.id === "qpcr-plate-layout")).toMatchObject({
+      launchUrl: standaloneToolDefaultUrls.qpcrLayout,
+      external: true,
+    });
+    expect(standaloneTools.filter((tool) => tool.id !== "qpcr-plate-layout").every((tool) => tool.launchUrl?.startsWith("/tools/") && !tool.external)).toBe(true);
   });
 
   it("offers the Studio migration route when unconfigured and preserves free plate planning", () => {
@@ -28,6 +32,22 @@ describe("lab tool manifest", () => {
   it("connects Calculator to its internal catalog", () => {
     expect(labToolManifest.find((tool) => tool.id === "calculator")?.launchUrl).toBe("/tools/calculator");
   });
+});
+
+it("uses the configured qPCR Site for both the catalog and legacy entry", async () => {
+  vi.stubEnv("QPCR_LAYOUT_TOOL_URL", "https://lab.example/qpcr/");
+  vi.resetModules();
+  try {
+    const { labToolManifest: configured } = await import("./tool-manifest");
+    expect(configured.find((tool) => tool.id === "qpcr-plate-layout")).toMatchObject({
+      launchUrl: "https://lab.example/qpcr/",
+      originalLaunchUrl: "https://lab.example/qpcr/",
+      external: true,
+    });
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
 });
 
 it('opens only Studio externally when its independent endpoint is configured',async()=>{

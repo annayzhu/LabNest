@@ -1,6 +1,6 @@
 import { build } from "esbuild";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
 const workspace = process.cwd();
@@ -10,7 +10,6 @@ if (!materialRoot) {
   throw new Error("Set LABNEST_TOOL_SOURCE_ROOT to the directory containing the portable tool source projects.");
 }
 const projects = {
-  qpcrPlate: path.join(materialRoot, "qpcr-plate-planner"),
   cnvPlate: path.join(materialRoot, "C_Taqman_CNV", "CNV_Plate_Planner"),
   freePlate: path.join(materialRoot, "plate-layout-studio"),
   qpcrAnalysis: path.join(materialRoot, "qpcr-analysis-studio"),
@@ -74,7 +73,7 @@ try {
   await rm(outputRoot, { recursive: true, force: true });
   await mkdir(outputRoot, { recursive: true });
 
-  await cp(path.join(projects.qpcrPlate, "outputs", "portable", "qPCR_Plate_Layout_Planner_Portable"), path.join(outputRoot, "01_qPCR_Plate_Layout_Planner"), { recursive: true });
+  await cp(process.env.QPCR_PORTABLE_DIR || path.join(homedir(), "Desktop", "Tools", "qPCR-Plate-Layout-Planner_Offline_LATEST"), path.join(outputRoot, "01_qPCR_Plate_Layout_Planner"), { recursive: true });
   await cp(path.join(projects.cnvAnalysis, "offline-release", "CNVtool_v1.3_offline_20260803"), path.join(outputRoot, "05_CNV_Analysis_Studio"), { recursive: true });
   await mkdir(path.join(outputRoot, "03_Free_Plate_Layout_Planner"), { recursive: true });
   for (const filename of ["index.html", "styles.css", "core.js", "color-core.js", "liquid-core.js", "liquid-plan-core.js", "workspace-core.js", "xlsx-core.js", "app.js", "README.md"]) {

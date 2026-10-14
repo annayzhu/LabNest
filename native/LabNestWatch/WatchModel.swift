@@ -51,6 +51,7 @@ enum WatchStorage {
     @Published var message = "尚未连接。离线快照仅供核对。"
     @Published var busy = false
     @Published var connected = false
+    @Published var pairingError: String?
     @Published var notificationStatus = "未授权通知"
     @Published var credential = WatchStorage.credential()
     @Published var baseURL = UserDefaults.standard.string(forKey: "server") ?? ""
@@ -83,8 +84,9 @@ enum WatchStorage {
         }
         return data
     }
-    func pair(code: String) async {
-        guard !busy, pending == nil else { return }; busy = true; defer { busy = false }
+    func pair(code: String) async -> Bool {
+        guard !busy, pending == nil else { return false }; busy = true; defer { busy = false }
+        pairingError = nil
         do {
             let destination = try endpoint("/api/watch/pair")
             let body = try JSONSerialization.data(withJSONObject: ["code": code, "deviceId": deviceId])
@@ -95,7 +97,12 @@ enum WatchStorage {
             try? FileManager.default.removeItem(at: WatchStorage.url("snapshot.json"))
             baseURL = URL(string: "/", relativeTo: destination)!.absoluteString
             UserDefaults.standard.set(baseURL, forKey: "server"); message = "已配对，请刷新实验。"
-        } catch { message = error.localizedDescription }
+            return true
+        } catch {
+            pairingError = "配对未成功：\(error.localizedDescription) 当前连接未改变。"
+            message = pairingError!
+            return false
+        }
     }
     func refresh(allowTimerSubmission: Bool = false) async {
         guard let credential, !busy else { return }; busy = true; defer { busy = false }

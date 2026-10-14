@@ -19,7 +19,8 @@ struct WatchRunView: View {
                         Text("在手机 Run 中生成配对码").font(.headline)
                         TextField("服务器地址", text: $model.baseURL).textContentType(.URL).disabled(model.busy)
                         TextField("12 位配对码", text: $code).disabled(model.busy)
-                        Button("配对本次实验") { Task { await model.pair(code: code); await model.refresh(); settings = false } }.disabled(model.busy || model.pending != nil)
+                        Button("配对本次实验") { Task { if await model.pair(code: code) { await model.refresh(); settings = false } } }.disabled(model.busy || model.pending != nil)
+                        if let error = model.pairingError { Text(error).foregroundStyle(.orange).font(.footnote).fixedSize(horizontal: false, vertical: true) }
                         Text("使用手表可访问的内网地址或受信任 HTTPS；localhost 指的是手表自身。").font(.footnote)
                     }
                     if let snapshot = model.snapshot {

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "implement",
+    "path": "/Users/annayzhu/.agents/skills/implement/SKILL.md",
+    "sha256": "6d3fd9e83b8f36e5213854779db49b256a457a7ebb4a503e53fa7dcff696adc3",
+    "version": "not declared"
+  },
+  {
+    "name": "tdd",
+    "path": "/Users/annayzhu/.agents/skills/tdd/SKILL.md",
+    "sha256": "6875cbca6b7d17be635dc9b457cc6363125f85cef26f443991b77c7d9eb430d2",
+    "version": "not declared"
+  },
+  {
+    "name": "domain-modeling",
+    "path": "/Users/annayzhu/.agents/skills/domain-modeling/SKILL.md",
+    "sha256": "9617041db9b0f6606ecf974e2061c83596b05059b5bb20ddb884c60f147c70e9",
+    "version": "not declared"
+  },
+  {
+    "name": "code-review",
+    "path": "/Users/annayzhu/.agents/skills/code-review/SKILL.md",
+    "sha256": "4e8eeefbf3bd32ec2c911ed6c7db103866ce11fedc98b1f8e358d2e1cada3895",
+    "version": "not declared"
+  },
+  {
+    "name": "impeccable",
+    "path": "/Users/annayzhu/.agents/skills/impeccable/SKILL.md",
+    "sha256": "f9d9598d85b24037b9ea9a573c2aeced61d223f320f0bf432dc017dc2d5181e2",
+    "version": "4.1.1"
+  },
+  {
+    "name": "ponytail",
+    "path": "/Users/annayzhu/.codex/skills/ponytail/SKILL.md",
+    "sha256": "1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2",
+    "version": "not declared"
+  }
+]

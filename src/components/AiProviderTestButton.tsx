@@ -54,7 +54,7 @@ function ConnectionTest({ providerId, revision, draft, disabledReason, validate,
     </Button>
     {disabledReason ? <p className="text-xs leading-5 text-muted">{disabledReason}</p> : null}
     <p className="text-xs leading-5 text-muted">将发送一条简短测试消息，可能产生少量 API 费用。</p>
-    {result ? <p role={result.ok ? "status" : "alert"} className={`break-words text-sm leading-6 ${result.ok ? "text-success" : "text-error"}`}>
+    {result ? <p role={result.ok ? "status" : "alert"} className={`rounded-[var(--ln-radius-control-lg)] p-3 break-words text-sm leading-6 ${result.ok ? "bg-success-surface text-success" : "bg-error-surface text-error"}`}>
       {draft && result.ok ? result.message.replace("测试成功", "测试成功，配置尚未保存") : result.message}
       {result.latencyMs !== undefined ? ` · ${result.latencyMs} ms` : ""}{result.ok ? " · 仅代表本次测试" : ""}
     </p> : null}

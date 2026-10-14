@@ -78,11 +78,29 @@ await check('UI A1 actual-value drafts never display a stale saved receipt and c
   await row.getByText('未保存修改', { exact: true }).waitFor();
   assert((await row.innerText()).includes('上次保存：50 µL'));
   assert.equal((await record(experimentId)).protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value, 50);
+  const other = page.locator(`#step-${steps.prepare.id} [data-structured-step-record]`);
+  await other.locator('details > summary').click(); await other.getByLabel('跳过原因').fill('隔离验收暂时跳过');
+  await other.getByRole('button', { name: '记录跳过', exact: true }).click();
+  await waitRecord(experimentId, e => Boolean(e.protocolRun.executionPlanJson.skips[steps.prepare.id]));
+  await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
+  await other.locator('details > summary').click(); await other.getByRole('button', { name: '撤销跳过', exact: true }).click();
+  await waitRecord(experimentId, e => !e.protocolRun.executionPlanJson.skips[steps.prepare.id]);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
   await row.getByText('未保存修改', { exact: true }).waitFor(); await shot('actual-value-unsaved-draft');
-  await row.getByRole('button', { name: '保存实际值', exact: true }).click();
+  await row.locator('details > summary').click();
+  const reason = row.getByLabel('跳过原因'); await reason.fill('未提交的原因草稿');
+  let releaseSave, finishSave; const saveGate = new Promise(resolve => { releaseSave = resolve; });
+  const saveRouted = new Promise(resolve => { finishSave = resolve; });
+  const holdSave = async route => { const saving = route.request().method() === 'POST'; if (saving) await saveGate; await route.continue(); if (saving) finishSave(); };
+  await page.route(`**/experiments/${experimentId}/run`, holdSave);
+  try {
+    await row.getByRole('button', { name: '保存实际值', exact: true }).click();
+    assert(await reason.isDisabled(), 'Reason must not change while its submitted draft snapshot is being reconciled');
+    assert(await input.isDisabled());
+  } finally { releaseSave(); await saveRouted; await page.unroute(`**/experiments/${experimentId}/run`, holdSave); }
   await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value === 55);
+  await reason.waitFor({ state: 'attached' }); assert.equal(await reason.inputValue(), '未提交的原因草稿');
   await page.waitForFunction(id => !document.querySelector(`#step-${id} [data-structured-step-record]`)?.textContent.includes('未保存修改'), steps.dose.id);
   assert(await row.getByRole('button', { name: '保存实际值', exact: true }).isDisabled());
   await page.reload({ waitUntil: 'networkidle' }); assert.equal(await input.inputValue(), '55');

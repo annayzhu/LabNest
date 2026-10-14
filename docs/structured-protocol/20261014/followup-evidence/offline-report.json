@@ -1,0 +1,219 @@
+{
+  "synthetic": true,
+  "browser": "149.0.7827.55",
+  "checks": [
+    {
+      "name": "Production cached Run→offline refresh→actual/completion/photo→refresh persistence→reconnect→DB readback; repeat completion produces no duplicate; photo belongs to selected step",
+      "result": "通过"
+    },
+    {
+      "name": "Browser wall clock +1 hour shows uncertainty; foreground server calibration restores controls without completing step",
+      "result": "通过"
+    },
+    {
+      "name": "Synthetic legacy Run: reorder keeps stable IDs; online timer, offline photo/note/completion remain attached to selected original step; reconnect succeeds with original sourceRef",
+      "result": "通过"
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://localhost:3341/api/mobile/step-records",
+      "status": 503,
+      "body": {
+        "error": "Synthetic temporary outage"
+      }
+    },
+    {
+      "url": "http://localhost:3341/api/mobile/step-completions",
+      "status": 201,
+      "body": {
+        "eventId": "cmv7wnf4i001m6bp34bym3445",
+        "receivedAt": "2026-10-14T09:26:06.162Z",
+        "revision": 2
+      }
+    },
+    {
+      "url": "http://localhost:3341/api/attachments",
+      "status": 201,
+      "body": {
+        "attachment": {
+          "id": "cmv7wnf5l001o6bp36m4tsqch",
+          "filename": "ebeccf04-71b6-4727-85ed-8c99b18c4208-offline-step-evidence.png",
+          "originalFilename": "offline-step-evidence.png",
+          "mimeType": "image/png",
+          "size": 67,
+          "storagePath": "2026/10/ebeccf04-71b6-4727-85ed-8c99b18c4208-offline-step-evidence.png",
+          "sha256": "7d468bc767e6d1ef9c75b4e4030609585f46d9d2b097c779a57c2e97b1e50392",
+          "metadataJson": {
+            "image": {
+              "width": 1,
+              "height": 1
+            },
+            "preview": {
+              "strategy": "original_inline",
+              "available": true
+            }
+          },
+          "derivedFromId": null,
+          "derivativeKind": null,
+          "clientMutationId": "d12212d4-8596-4e1c-8fdf-555a7d9aed44",
+          "deviceCreatedAt": "2026-10-14T09:26:05.887Z",
+          "uploadedAt": "2026-10-14T09:26:06.201Z",
+          "links": [
+            {
+              "id": "cmv7wnf5m001p6bp3sc5k3yj8",
+              "attachmentId": "cmv7wnf5l001o6bp36m4tsqch",
+              "targetType": "experiment_step",
+              "targetId": "cmv7wmwah001lnoosxl2kxp17",
+              "linkType": "step_evidence",
+              "order": 0,
+              "createdAt": "2026-10-14T09:26:06.201Z"
+            }
+          ]
+        },
+        "cleanupWarnings": []
+      }
+    },
+    {
+      "url": "http://localhost:3341/api/mobile/step-records",
+      "status": 201,
+      "body": {
+        "revision": 3
+      }
+    },
+    {
+      "url": "http://localhost:3341/api/mobile/step-completions",
+      "status": 201,
+      "body": null
+    },
+    {
+      "url": "http://localhost:3341/api/attachments",
+      "status": 201,
+      "body": {
+        "attachment": {
+          "id": "cmv7wnjf600216bp3wqo9gw5z",
+          "filename": "9d967679-0115-4b15-adab-763749cb320f-legacy-step.png",
+          "originalFilename": "legacy-step.png",
+          "mimeType": "image/png",
+          "size": 67,
+          "storagePath": "2026/10/9d967679-0115-4b15-adab-763749cb320f-legacy-step.png",
+          "sha256": "7d468bc767e6d1ef9c75b4e4030609585f46d9d2b097c779a57c2e97b1e50392",
+          "metadataJson": {
+            "image": {
+              "width": 1,
+              "height": 1
+            },
+            "preview": {
+              "strategy": "original_inline",
+              "available": true
+            }
+          },
+          "derivedFromId": null,
+          "derivativeKind": null,
+          "clientMutationId": "c28db862-4cc5-4a45-a0af-5b9861231360",
+          "deviceCreatedAt": "2026-10-14T09:26:11.603Z",
+          "uploadedAt": "2026-10-14T09:26:11.730Z",
+          "links": [
+            {
+              "id": "cmv7wnjf800226bp3om98u53f",
+              "attachmentId": "cmv7wnjf600216bp3wqo9gw5z",
+              "targetType": "experiment_step",
+              "targetId": "cmv7wmw9b001anoosylk9xiq4",
+              "linkType": "step_evidence",
+              "order": 0,
+              "createdAt": "2026-10-14T09:26:11.730Z"
+            }
+          ]
+        },
+        "cleanupWarnings": []
+      }
+    },
+    {
+      "url": "http://localhost:3341/api/mobile/step-completions",
+      "status": 201,
+      "body": null
+    }
+  ],
+  "pending": [
+    {
+      "clientMutationId": "622afa98-0170-4d73-85e8-31ac60ecf018",
+      "actionType": "step.complete",
+      "deviceCreatedAt": "2026-10-14T09:26:05.961Z",
+      "state": "pending",
+      "retryCount": 0,
+      "payload": {
+        "experimentId": "cmv7wmwaf001jnoostzuwztp2",
+        "experimentStepId": "cmv7wmwah001lnoosxl2kxp17",
+        "executionPlanRevision": 1,
+        "queueContext": {
+          "deviceId": "5b730c15-eaee-47fc-bd0f-dd49c04a62a2",
+          "actor": "local-workspace-user",
+          "sourceRef": "cmv7wmvxs0003noosrxrdtyd3:dose",
+          "predecessorMutationId": "9ff6955d-70ba-42ac-a8c8-cfa12aaef770"
+        },
+        "deviationType": "method"
+      }
+    },
+    {
+      "clientMutationId": "9ff6955d-70ba-42ac-a8c8-cfa12aaef770",
+      "actionType": "step.record",
+      "deviceCreatedAt": "2026-10-14T09:26:05.779Z",
+      "state": "pending",
+      "retryCount": 0,
+      "payload": {
+        "experimentId": "cmv7wmwaf001jnoostzuwztp2",
+        "experimentStepId": "cmv7wmwah001lnoosxl2kxp17",
+        "executionPlanRevision": 1,
+        "queueContext": {
+          "deviceId": "5b730c15-eaee-47fc-bd0f-dd49c04a62a2",
+          "actor": "local-workspace-user",
+          "sourceRef": "cmv7wmvxs0003noosrxrdtyd3:dose",
+          "predecessorMutationId": "d586c3b4-fc71-4b03-8bf2-791036977396"
+        },
+        "intent": "actual",
+        "reason": "",
+        "values": {
+          "actual-proteinase": {
+            "value": 50,
+            "unit": "µL"
+          }
+        }
+      }
+    },
+    {
+      "clientMutationId": "d12212d4-8596-4e1c-8fdf-555a7d9aed44",
+      "actionType": "attachment.upload",
+      "deviceCreatedAt": "2026-10-14T09:26:05.887Z",
+      "state": "pending",
+      "retryCount": 0,
+      "payload": {
+        "file": {
+          "name": "offline-step-evidence.png",
+          "size": 67
+        },
+        "targetType": "experiment_step",
+        "targetId": "cmv7wmwah001lnoosxl2kxp17",
+        "linkType": "step_evidence"
+      }
+    },
+    {
+      "clientMutationId": "d586c3b4-fc71-4b03-8bf2-791036977396",
+      "actionType": "step.complete",
+      "deviceCreatedAt": "2026-10-14T09:26:05.736Z",
+      "state": "pending",
+      "retryCount": 0,
+      "payload": {
+        "experimentId": "cmv7wmwaf001jnoostzuwztp2",
+        "experimentStepId": "cmv7wmwah001knooswiuj94nn",
+        "executionPlanRevision": 1,
+        "queueContext": {
+          "deviceId": "5b730c15-eaee-47fc-bd0f-dd49c04a62a2",
+          "actor": "local-workspace-user",
+          "sourceRef": "cmv7wmvxs0003noosrxrdtyd3:prepare"
+        },
+        "deviationType": "method"
+      }
+    }
+  ],
+  "experimentId": "cmv7wmwaf001jnoostzuwztp2"
+}

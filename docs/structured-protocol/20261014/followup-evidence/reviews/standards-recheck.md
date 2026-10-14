@@ -1,0 +1,13 @@
+## Standards recheck — uncommitted workspace, second pass
+
+Read-only follow-up to `/tmp/labnest-followup-standards-review.md`; the original report remains intact. The earlier first-pass Watch race is now closed by the changes below.
+
+**Passed by code-path inspection — captured source identity.** `ProtocolRunProgressForm.tsx:25,149` uses the selected step's `protocolStepRef ?? stepId`, independent of structured systems. `experiments/[id]/run/page.tsx:84–89,142` preserves that database property via `...step`. It matches `api/mobile/step-completions/route.ts:42`, including ordinary, manual and null-reference legacy steps. Offline replay was not rerun by this reviewer.
+
+**Passed by code-path inspection — Watch credential isolation and pairing race.** `WatchModel.swift:65–69` rejects a scheme/host/port mismatch before adding Authorization. `:82–85` captures the pairing destination before awaiting, passes it explicitly through `targetURL` with `authenticated:false`, and stores that same destination in the returned credential. `:89–90` restores/persists its root address. The server and code inputs are disabled while busy (`LabNestWatchApp.swift:20–21`). Successful pairing clears old snapshots/reminders; prior unbound credentials decode safely to nil. Changing the editable address can no longer bind A's response token to B via the reported await interleaving.
+
+**Copy data reset passes inspection.** `experiment-copy.ts:21–33` generates new step IDs, retains captured protocol/group identities, remaps stepGroups, and starts from emptyExecutionPlan. Confirmations, actuals, skips, continuation history and execution status are not inherited. Reviewed the meaningful database assertions in `verify-structured-groups.ts:70–78`; I did not independently rerun them.
+
+**P2 — copy source needs one consistent snapshot.** `experiment-copy.ts:13,20` locks only the new mutation ID before reading the source with included relations. It does not join the source Experiment lock used by `configureRunGroups` (`structured-run.server.ts:135`). Under the configured PostgreSQL transaction's normal READ COMMITTED behavior and separate relation reads, configuring groups concurrently with Copy can produce old steps/new executionPlan or the reverse. The filter at `:23` silently discards unmatched mappings; the copied run can retain two groups but lack one group's operations. Acquire the source parent lock before reading it, or enforce a consistent transactional snapshot. This is a concrete concurrency concern, not a style smell; the interleaving has not been runtime reproduced.
+
+No new judgement-only smell. Physical Watch behavior and network interception remain unexecuted; bounded static review is not deployment approval.

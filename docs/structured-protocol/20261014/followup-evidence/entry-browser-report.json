@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "Entry top AI button; filing preserves original times; experiment submit→source edit→review retains text and loaded image; explicit reopen sees latest; reviewed result reads frozen source",
+      "result": "通过"
+    },
+    {
+      "name": "Two writers: stale body rejected; both drafts shown; server remains newer; no automatic revision rebase",
+      "result": "通过"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "applicationSource": "6db0fd869515e9e4e3d4ab2f42916b752f698dd4",
+  "baseline": "15faef6c7a3b63dbdf66f98f16aa7ee1885fb99a",
+  "productionImage": "labnest-app:protocol-followup-6db0fd86",
+  "imageDigest": "sha256:c08d6f67f9cafc925a22d27bb7a78b9aaff0ad917bcc2e15c603d14d999c30dc",
+  "baseUrl": "http://localhost:3341",
+  "synthetic": true,
+  "AIEnabled": false,
+  "unitTests": {
+    "UTC": 653,
+    "Asia/Shanghai": 653,
+    "files": 125
+  },
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "preExistingWarnings": 12
+  },
+  "productionBuild": "passed",
+  "nativeWatch": "unsigned compile passed; simulator runtime installing; physical testing unexecuted",
+  "reports": [
+    {
+      "file": "evidence/browser-report.json",
+      "sha256": "8b89742da3c113d1aca56d18d6c992005f8a10ac36a4b0ad5c93086239c88e56",
+      "checkCount": 9
+    },
+    {
+      "file": "evidence/author-report.json",
+      "sha256": "d5f643c6976aed46fe49e97443eda71d13efcd868d3895f70fb2befc3e2089ab",
+      "checkCount": 2
+    },
+    {
+      "file": "evidence/media-report.json",
+      "sha256": "4aa5a763a49d396137c933f4bb144cf90be8eaf410d3ddb7538b39830c673911",
+      "checkCount": 3
+    },
+    {
+      "file": "followup-evidence/browser-report.json",
+      "sha256": "e1021c708d114720ea5da27653680d7677439ae6f510ee3afe1cb6453e8b6872",
+      "checkCount": 3
+    },
+    {
+      "file": "followup-evidence/editor-report.json",
+      "sha256": "539bb97a19394b7714aed64d8a00d8ad675c02e2df87184c55c364077cd60322",
+      "checkCount": 1
+    },
+    {
+      "file": "followup-evidence/offline-report.json",
+      "sha256": "27a7a8846c2248e87e2e258278dcc79206b4c3a961f44e3564225e18c6d82177",
+      "checkCount": 3
+    },
+    {
+      "file": "followup-evidence/database-readback.json",
+      "sha256": "d255e5370d045d13c5b929ef9e34fe51863c52bbca2822108a896ce8aeb7606e",
+      "checkCount": 4
+    },
+    {
+      "file": "followup-evidence/entry-browser-report.json",
+      "sha256": "03046079d90ba6ec6fc2b1b1cb6206444c0a51f1ec48bdc92d21b59ce8c31b64",
+      "checkCount": 2
+    },
+    {
+      "file": "followup-evidence/editors/roundtrip.json",
+      "sha256": "53fbb9eaf635c274b0435ec33bffbf08c516573783d9cf032694ae7890647a76",
+      "checkCount": 6
+    },
+    {
+      "file": "followup-evidence/editors/template.json",
+      "sha256": "e0daa8d6bbbbd68fb768c013dd3c704bfeeafa5f467a2d7b1fae07d386f2582c",
+      "checkCount": 1
+    },
+    {
+      "file": "followup-evidence/editors/run.json",
+      "sha256": "172b1d535eaf4b9ab1fd3f71b7fcc0c9323c6aab678ce4f4693701828e2c4eaf",
+      "checkCount": 2
+    }
+  ],
+  "render": {
+    "files": 18,
+    "pages": 31,
+    "allVisuallyInspected": true
+  },
+  "physicalDevice": false,
+  "originalPrivateIncidentRecordInspected": false,
+  "recordedAt": "2026-10-14T09:28:06.528831+00:00"
+}

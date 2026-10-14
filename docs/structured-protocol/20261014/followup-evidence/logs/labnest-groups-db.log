@@ -1,0 +1,5 @@
+(node:24180) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS queued actual/completion chain uses exact same-device receipts; duplicate is one event; changed replay and intervening device rejected
+PASS copy retains group topology and immutable source, resets execution and requires fresh confirmation
+PASS shared preparation counted once; 50/80 group isolation; atomic explicit batch rollback; group export; recorded effects protected; continuation stays in selected group; prior actual values unchanged

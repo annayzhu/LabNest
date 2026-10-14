@@ -1,0 +1,1 @@
+PASS DB readback: one event per offline mutation, original device/source/times, one attachment linked to selected immutable step

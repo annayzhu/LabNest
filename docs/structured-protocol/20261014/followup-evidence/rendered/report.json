@@ -1,0 +1,269 @@
+{
+  "files": [
+    {
+      "file": "docs/structured-protocol/20261014/evidence/experiment-preview.pdf",
+      "sha256": "98142be8b7ed0f304c891b3930d9b56f37b2704e3699d7ca55c3d230fd58579f",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 866,
+          "images": 0
+        },
+        {
+          "page": 2,
+          "characters": 68,
+          "images": 2
+        },
+        {
+          "page": 3,
+          "characters": 147,
+          "images": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/evidence/protocol-preview.pdf",
+      "sha256": "d6211e55f3d33df66bcf82ae8e491590c993b487d137a47c5326981064c9cd45",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 819,
+          "images": 0
+        },
+        {
+          "page": 2,
+          "characters": 1044,
+          "images": 0
+        },
+        {
+          "page": 3,
+          "characters": 1102,
+          "images": 0
+        },
+        {
+          "page": 4,
+          "characters": 1102,
+          "images": 0
+        },
+        {
+          "page": 5,
+          "characters": 425,
+          "images": 0
+        },
+        {
+          "page": 6,
+          "characters": 42,
+          "images": 3
+        },
+        {
+          "page": 7,
+          "characters": 169,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/entry-edit.pdf",
+      "sha256": "347305055cc5ba1ae2b77f647afc3ed6eaac940f444378f7e10fdce889357356",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 164,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/entry-view.pdf",
+      "sha256": "fad337ab870914ce909073a588eae931196e7314b6c8a8d2010b1584aa037986",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 89,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/experiment-edit.pdf",
+      "sha256": "3b3d704b447a7b33bcb3e9dfe80e2a4367237374a738ad44a94fe200e1cbb074",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 270,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/experiment-view.pdf",
+      "sha256": "572a2c96a32c44f1b22e49f7eb363b112b79383080b8459fe1ede512195d31ae",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 248,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/protocol-edit.pdf",
+      "sha256": "1bffdbf7fed331c77f340b1dc749ac05c471118b4b3f18c7b10e65d9ef738770",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 289,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/protocol-view.pdf",
+      "sha256": "621c3e6477be03ecfde3bca37b2b2d12b8cd821b6c8cb0861d205a53d7f02569",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 196,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/report-edit.pdf",
+      "sha256": "ceedf618c8cf099dfc2a8d8876930ade61c405de67bf6f61ef3f304ed0860060",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 285,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/report-view.pdf",
+      "sha256": "ae71e0f67e60bc14b8dd32fcf967100f406c32eae84a260407b926b6a1c9cfbb",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 139,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/research-plan-edit.pdf",
+      "sha256": "b05525a750c1a2b0ca9dcf0c11ca8c72c09e3a080896017266bc220673bd5939",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 366,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/research-plan-view.pdf",
+      "sha256": "f15b17d33d0f4e48edef6bf0ff4f1466f72d41a5024c9224ed9f4ea3fd32780f",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 384,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/result-edit.pdf",
+      "sha256": "0f2c9c0579cee2ad114d3de8f70307e701feff9d14c7cfe740959797d0410ce1",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 359,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/result-view.pdf",
+      "sha256": "235b30ef8d77f63a72dfba8e5022a2fa735c13d4dc10c659000faaaf405777b5",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 193,
+          "images": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/template-edit.pdf",
+      "sha256": "78d65d014683123eb30da2748048f30d21299d5413c1e32d6057e4c29238bdb5",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 442,
+          "images": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/editors/template-view.pdf",
+      "sha256": "043ec50d2c1996b3119b449499848a4a0803b02367c84f9eb685cdb228f7c78b",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 349,
+          "images": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/rendered/multi-system-template.pdf",
+      "sha256": "06497f83ad2806fac1c1790331974ec64e314c730e89a72b395d9086ecac80ca",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 1085,
+          "images": 0
+        },
+        {
+          "page": 2,
+          "characters": 487,
+          "images": 0
+        }
+      ]
+    },
+    {
+      "file": "docs/structured-protocol/20261014/followup-evidence/rendered/protocol.pdf",
+      "sha256": "18a2dd2cbbe1f7a2b1fd2db8cdfe1653c682a5efcbd1190256ec1fa1173640b2",
+      "pages": [
+        {
+          "page": 1,
+          "characters": 1297,
+          "images": 4
+        },
+        {
+          "page": 2,
+          "characters": 1458,
+          "images": 4
+        },
+        {
+          "page": 3,
+          "characters": 1400,
+          "images": 4
+        },
+        {
+          "page": 4,
+          "characters": 960,
+          "images": 4
+        },
+        {
+          "page": 5,
+          "characters": 380,
+          "images": 4
+        }
+      ]
+    }
+  ],
+  "totalPages": 31,
+  "contactSheets": 6
+}

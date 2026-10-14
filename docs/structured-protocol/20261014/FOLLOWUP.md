@@ -26,3 +26,14 @@ Source Protocol version groups and experimental treatment groups are different c
 ## Skill application
 
 Loaded project structured-protocol/editor-qa skills, Matt Pocock TDD/implement/domain-modeling/codebase-design/code-review, Impeccable 4.1.1 onboarding guidance and incumbent design tokens, and Ponytail full. Existing user confirmation covers the test interfaces and independent UI critique. No repeated permission request. Review and actual browser/file validation remain required.
+
+## Implemented delivery
+
+- Multi-system Word template v0.4 uses three versioned definition tables and explicit group/experiment scope. Public download is visible in import/editor. Import validates references, units, conflicts and ordinary-table boundaries; roundtrip preserves authored parameter references.
+- Two independent experimental groups adopt50/80µL; explicit batch is atomic, shared work counted once, changes after recorded effects require protected continuation. Copy retains source/group topology and clears execution.
+- Existing IndexedDB/cache/queue carries original source, device, actor, time and revision. Pending writes and photos survive refresh, transient predecessor failure holds dependants, conflicts remain explicit. This remains the existing trusted local-workspace access model, not a multi-user identity service.
+- Entry source receipts keep confirmed versions and actual image references; AI action is visible at the top of the record, with a configuration destination when disabled. No model configuration or research data is modified by rollout.
+- Native Watch client added using existing server resolution/recording rules; one-use pairing, scoped tokens, Keychain origin binding and atomic local queue. Build/server checks pass; actual Watch installation and notification delivery remain unexecuted.
+- Two independent UI reviewers and specification/standards review found and verified fixes. Confirmed preparation folds away, touch targets remain44px, current-step navigation is direct, frozen references are not repeated per group.
+
+Use ACCEPTANCE.md for all original requirements. Use RELEASE.md for PR, CI and runtime evidence; no entry-point existence alone is accepted as a completed workflow.

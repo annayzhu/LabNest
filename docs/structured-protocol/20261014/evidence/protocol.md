@@ -1,12 +1,12 @@
 ---
 schema: labnest/protocols@1
-humanCode: SYN-88d664d2-3767-48f0-a72d-454ea4e871cc
+humanCode: SYN-a6dfc410-c299-44fc-b93b-652f764e1054
 canonicalTitle: 350／600 µL 合成规程
 shortTitle: 
 englishTitle: 
 scope: general
 project: 
-researchPlanCodes: [SYN-88d664d2-3767-48f0-a72d-454ea4e871cc]
+researchPlanCodes: [SYN-a6dfc410-c299-44fc-b93b-652f764e1054]
 primaryResearchPlanCodes: []
 availability: draft
 reviewStage: draft
@@ -199,13 +199,13 @@ Ethanol
 600 µL 体系说明〔裂解体积：600 µL〕
 此行为条件行
 
-![合成图片1.png](attachment:cmv7hc2ye0002doosg7vg6bvz) <!--labnest-media:%7B%22id%22%3A%22sample-photo-0%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%201%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7hc2ye0002doosg7vg6bvz%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%871.png%22%2C%22widthPercent%22%3A70%7D-->
+![合成图片1.png](attachment:cmv7wm0br0002b5oslainy0ij) <!--labnest-media:%7B%22id%22%3A%22sample-photo-0%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%201%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7wm0br0002b5oslainy0ij%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%871.png%22%2C%22widthPercent%22%3A70%7D-->
 
-![合成图片2.png](attachment:cmv7hc2z10003doossm20er1z) <!--labnest-media:%7B%22id%22%3A%22sample-photo-1%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%202%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7hc2z10003doossm20er1z%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%872.png%22%2C%22widthPercent%22%3A70%7D-->
+![合成图片2.png](attachment:cmv7wm0ed0003b5osjav62b1n) <!--labnest-media:%7B%22id%22%3A%22sample-photo-1%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%202%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7wm0ed0003b5osjav62b1n%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%872.png%22%2C%22widthPercent%22%3A70%7D-->
 
-![合成图片3.png](attachment:cmv7hc2zf0004doosg6k3cpcd) <!--labnest-media:%7B%22id%22%3A%22sample-photo-2%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%203%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7hc2zf0004doosg6k3cpcd%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%873.png%22%2C%22widthPercent%22%3A70%7D-->
+![合成图片3.png](attachment:cmv7wm0es0004b5osxxtvlan6) <!--labnest-media:%7B%22id%22%3A%22sample-photo-2%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%203%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7wm0es0004b5osxxtvlan6%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%873.png%22%2C%22widthPercent%22%3A70%7D-->
 
-![合成图片4.png](attachment:cmv7hc31m0005dooscp5is23d) <!--labnest-media:%7B%22id%22%3A%22sample-photo-3%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%204%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7hc31m0005dooscp5is23d%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%874.png%22%2C%22widthPercent%22%3A70%7D-->
+![合成图片4.png](attachment:cmv7wm0gz0005b5osggyla1wc) <!--labnest-media:%7B%22id%22%3A%22sample-photo-3%22%2C%22execution%22%3A%7B%22role%22%3A%22detail%22%2C%22stepId%22%3A%22dose%22%7D%2C%22type%22%3A%22media%22%2C%22mediaType%22%3A%22image%22%2C%22url%22%3A%22%22%2C%22caption%22%3A%22%E4%B8%AD%E6%96%87%E5%9B%BE%E6%B3%A8%204%20%C2%B7%20%E5%90%88%E6%88%90%E9%AA%8C%E6%94%B6%22%2C%22attachmentId%22%3A%22cmv7wm0gz0005b5osggyla1wc%22%2C%22filename%22%3A%22%E5%90%88%E6%88%90%E5%9B%BE%E7%89%874.png%22%2C%22widthPercent%22%3A70%7D-->
 
 独立稀释示例取母液 示例母液取液量：稀释计算器计算后确认（µL）；这是软件测试，不是试剂方案的附加用量。
 

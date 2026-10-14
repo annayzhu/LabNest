@@ -44,6 +44,7 @@ await check('B01 B03 actual experiment creation captures four stable operations 
   await go(`/experiments/${experimentId}/run`);
   assert(await page.locator(`#step-${steps.dose.id} input[name="completedStepIds"]`).isDisabled());
   const form = page.locator('[data-run-system-selection]');
+  if (!await form.isVisible()) await form.locator('..').locator('summary').first().click();
   await form.getByLabel('裂解体积').selectOption('small'); await form.getByLabel('样本性质').selectOption('normal'); await form.getByLabel('目标终浓度', { exact: true }).fill('10');
   await form.getByRole('button', { name: '计算并确认采用', exact: true }).click();
   await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.versions?.[fixture.versionId]?.calculations.take?.value === 10);
@@ -100,7 +101,8 @@ await check('UI A1 actual-value drafts never display a stale saved receipt and c
     assert(await input.isDisabled());
   } finally { releaseSave(); await saveRouted; await page.unroute(`**/experiments/${experimentId}/run`, holdSave); }
   await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues[steps.dose.id]['actual-proteinase'].value === 55);
-  await reason.waitFor({ state: 'attached' }); assert.equal(await reason.inputValue(), '未提交的原因草稿');
+  await page.waitForFunction(id => document.querySelector(`#step-${id} [data-structured-step-record] details input`)?.value === '未提交的原因草稿', steps.dose.id);
+  assert.equal(await reason.inputValue(), '未提交的原因草稿');
   await page.waitForFunction(id => !document.querySelector(`#step-${id} [data-structured-step-record]`)?.textContent.includes('未保存修改'), steps.dose.id);
   assert(await row.getByRole('button', { name: '保存实际值', exact: true }).isDisabled());
   await page.reload({ waitUntil: 'networkidle' }); assert.equal(await input.inputValue(), '55');

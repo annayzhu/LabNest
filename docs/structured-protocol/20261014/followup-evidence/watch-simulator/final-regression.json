@@ -1,0 +1,23 @@
+{
+  "nativeSource": "4f239398bc55be7472b3e9d3e64007ee15c0936e",
+  "invalidRepairErrorPreserved": true,
+  "validRepairTargetChanged": true,
+  "stepListScreenshot": true,
+  "plainChinesePendingScreenshot": true,
+  "synthetic": true,
+  "serverSource": "603067b8c2caacb6f3b96674f4a35b37e9164e78",
+  "runtime": "watchOS 26.5",
+  "simulator": "Apple Watch Series 11 (46mm)",
+  "pairedFromRunUI": true,
+  "explicitNativeCompletion": true,
+  "fullQuantitiesVisible": [
+    "Proteinase K 50 µL",
+    "Ethanol 200 µL"
+  ],
+  "originalRevision": 6,
+  "afterRevision": 7,
+  "serverStepCompleted": true,
+  "eventCountForMutation": 1,
+  "physicalWatch": false,
+  "notificationDelivery": "未执行"
+}

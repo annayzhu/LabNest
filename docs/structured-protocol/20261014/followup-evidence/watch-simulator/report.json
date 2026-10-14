@@ -1,0 +1,24 @@
+{
+  "synthetic": true,
+  "serverSource": "603067b8c2caacb6f3b96674f4a35b37e9164e78",
+  "runtime": "watchOS 26.5",
+  "simulator": "Apple Watch Series 11 (46mm)",
+  "pairedFromRunUI": true,
+  "explicitNativeCompletion": true,
+  "fullQuantitiesVisible": [
+    "Proteinase K 50 µL",
+    "Ethanol 200 µL"
+  ],
+  "timerStartPauseSecondsRemaining": 585,
+  "appRestartPreservesCredentialSnapshot": true,
+  "offlineCompletionPersistsAcrossRestart": true,
+  "originalRevision": 6,
+  "afterRevision": 7,
+  "serverStepCompleted": true,
+  "eventCountForMutation": 1,
+  "physicalWatch": false,
+  "notificationDelivery": "未执行",
+  "nativeSource": "c73febadacef8424644770107d7b96f9e869a07e",
+  "signing": "Simulator-only application identifier injected by Xcode; no real-device signing or provisioning",
+  "finalBuildAndRelaunch": "passed"
+}

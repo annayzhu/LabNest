@@ -1,0 +1,11 @@
+{
+  "xcodeDevices": "== Devices ==\nAnna\u2019s MacBook Pro (device identifier omitted)\n\n== Simulators ==\niPad (A16) Simulator (26.5) (device identifier omitted)\niPad Air 11-inch (M4) Simulator (26.5) (device identifier omitted)\niPad Air 13-inch (M4) Simulator (26.5) (device identifier omitted)\niPad Pro 11-inch (M5) Simulator (26.5) (device identifier omitted)\niPad Pro 13-inch (M5) Simulator (26.5) (device identifier omitted)\niPad mini (A17 Pro) Simulator (26.5) (device identifier omitted)\niPhone 17 Simulator (26.5) (device identifier omitted)\niPhone 17 Pro Simulator (26.5) (device identifier omitted)\niPhone 17 Pro Max Simulator (26.5) (device identifier omitted)\niPhone 17e Simulator (26.5) (device identifier omitted)\niPhone Air Simulator (26.5) (device identifier omitted)\n",
+  "runtimes": [
+    {
+      "name": "iOS 26.5",
+      "version": "26.5",
+      "available": true
+    }
+  ],
+  "physicalWatchValidated": false
+}

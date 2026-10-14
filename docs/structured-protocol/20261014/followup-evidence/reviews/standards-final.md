@@ -1,0 +1,9 @@
+## Standards final recheck
+
+Reviewed `b7e3d7de72688097750a7f46af134842eebceaf2` and the two current dependency-array edits in `ProtocolRunProgressForm.tsx`. Scope: the outstanding copy-consistency P2 and those edits only. Source files were not modified; no tests or full acceptance suite were rerun.
+
+**Closed — prior P2, inconsistent copy source.** `src/lib/experiment-copy.ts:21` now acquires `SELECT id FROM "Experiment" WHERE id=${sourceId} FOR UPDATE` inside the same transaction, before the source Experiment and all included steps/ProtocolRun relations are read at `:22`. Group configuration (`structured-run.server.ts:135`), system selection (`:39`), actual-value/skip recording (`:166`), and mobile completion (`api/mobile/step-completions/route.ts:29`) use the same parent-row lock. These writers therefore cannot interleave their changes with the copy's source reads, even when Prisma reads relations separately. The lock is held through copy creation and transaction completion. The earlier mutation-ID lock and replay check remain intact. The reported old-steps/new-plan interleaving is closed by static inspection.
+
+**No regression identified — two effect dependencies.** `ProtocolRunProgressForm.tsx:105,115` only adds `setSelectedStepId` to the two dependency arrays. It is the direct `useState` setter returned by `RunStepSelection.tsx:7–13`, not a newly allocated callback. Adding it does not cause selection changes to rerun the effects; existing restore logic and cleanup are unchanged. This is a behavioral inspection, not an independent lint-run result.
+
+No outstanding actionable finding in this bounded recheck. The earlier legacy-source and Watch-origin fixes retain the conclusions recorded in `labnest-followup-standards-recheck.md`; they were not fully re-reviewed here. Concurrent runtime reproduction, physical Watch testing and deployment verification remain outside this review.

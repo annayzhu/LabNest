@@ -1,0 +1,30 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/experiment-request-origin.test.ts (4 tests | 2 failed) 18ms
+   × accepts the visible LAN origin for copy behind the container port 16ms
+   × accepts the visible LAN origin for steps/order behind the container port 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/experiment-request-origin.test.ts > accepts the visible LAN origin for copy behind the container port
+ FAIL  src/lib/experiment-request-origin.test.ts > accepts the visible LAN origin for steps/order behind the container port
+AssertionError: expected 403 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 403
+
+ ❯ src/lib/experiment-request-origin.test.ts:9:19
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:22:16
+   Duration  585ms (transform 259ms, setup 0ms, import 393ms, tests 18ms, environment 0ms)
+

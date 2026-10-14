@@ -1,0 +1,30 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "mutationId": "622afa98-0170-4d73-85e8-31ac60ecf018",
+      "type": "step.complete",
+      "count": 1,
+      "stepId": "cmv7wmwah001lnoosxl2kxp17"
+    },
+    {
+      "mutationId": "9ff6955d-70ba-42ac-a8c8-cfa12aaef770",
+      "type": "step.record",
+      "count": 1,
+      "stepId": "cmv7wmwah001lnoosxl2kxp17"
+    },
+    {
+      "mutationId": "d12212d4-8596-4e1c-8fdf-555a7d9aed44",
+      "type": "photo",
+      "count": 1,
+      "target": "cmv7wmwah001lnoosxl2kxp17"
+    },
+    {
+      "mutationId": "d586c3b4-fc71-4b03-8bf2-791036977396",
+      "type": "step.complete",
+      "count": 1,
+      "stepId": "cmv7wmwah001knooswiuj94nn"
+    }
+  ],
+  "result": "通过"
+}

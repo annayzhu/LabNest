@@ -121,7 +121,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
     const resolution = resolveProtocolSystem(systems, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations);
     const choice = systems.dimensions.map(d => `${d.label}：${d.options.find(o => o.id === adopted?.selections[d.id])?.label ?? '待选择'}`).join('；');
-    blocks.push({ id: `run-derived:system:${version.id}`, type: 'text', text: `本次执行记录 · 当前实验组 · 源版本 ${version.title} v${version.displayVersion}（${version.id}）\n${choice}\n${adopted ? '采用确认时间：' + adopted.confirmedAt : '尚未确认体系'} · 计划修订 ${structured.plan.revision}` });
+    blocks.push({ id: `run-derived:system:${version.id}`, type: 'text', text: `本次执行记录 · ${version.groupLabel ?? '当前实验组'} · 源版本 ${version.title} v${version.displayVersion}（${version.id}）\n${choice}\n${adopted ? '采用确认时间：' + adopted.confirmedAt : '尚未确认体系'} · 计划修订 ${structured.plan.revision}` });
     blocks.push({ id: `run-derived:system-parameters:${version.id}`, type: 'table', rows: [['采用参数', '值', '来源'], ...systems.parameters.map(p => { const value = resolution.parameters[p.id]; return [p.label, value?.status === 'resolved' ? `${value.value} ${value.unit}` : value?.message ?? '待确定', { fixed: '固定值', lookup: '体系查表', actual: '本次填写', calculator: '计算后确认' }[p.source.kind]]; })] });
     for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) blocks.push({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${systems.parameters.find(p => p.id === id)?.label} · ${receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认 ${receipt.confirmedAt}\n输入：${JSON.stringify(receipt.snapshot.rawInputs)}\n当时计算结果：${receipt.value} ${receipt.unit}\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` });
   }
@@ -141,7 +141,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     const parsed=scientificContentBlockSchema.safeParse({...content,id:prefix+block.id});
     return parsed.success?parsed.data:{id:prefix+block.id,type:'text',text:executionBlockText(block)};
   };
-  let group: number | undefined;
+  let group: string | undefined;
   // Preserve a captured documentation-only Protocol in preview/export too. It
   // has no completion control and must not disappear merely because its count is zero.
   const versions=(snapshot as {versions?:Array<{protocolVersionId:string;protocolTitle?:string;contentJson?:unknown}>})?.versions??[];
@@ -151,7 +151,8 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     blocks.push({id:`run-derived:reference:${version.protocolVersionId}`,type:'heading',text:version.protocolTitle??'Protocol reference'});
     blocks.push(...(parsed.data.sections.find(section=>section.key==='steps')?.blocks??[]).map(block=>scientific(block,`run-derived:reference:${version.protocolVersionId}:`)));
   }
-  for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
+  const groupIndex = (id: string) => structured.plan.stepGroups[id] === 'shared' ? -1 : structured.plan.groups.findIndex(group => group.id === structured.plan.stepGroups[id]);
+  for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || groupIndex(a.id)-groupIndex(b.id) || a.order-b.order)) {
     let rich=runStepContent(snapshot,{...step,groupKey:step.groupKey??'manual',protocolStepRef:step.protocolStepRef??null,description:step.description??''},(parameters??{}) as Record<string,string|number|boolean>);
     const adoptedStep = structured.steps[step.id];
     if (adoptedStep) rich = { ...rich, blocks: adoptedStep.content_blocks ?? [], common: structured.versions.find(v => v.id === adoptedStep.versionId)?.commonBlocks ?? [] };
@@ -159,10 +160,11 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       blocks.push({ id: `run-derived:inapplicable:${step.id}`, type: 'text', text: `${step.title} · 不适用于本次实验（来源 ${step.protocolStepRef}）` });
       continue;
     }
-    if (group !== step.groupOrder) {
-      group = step.groupOrder;
+    const currentGroup = `${step.groupOrder}:${adoptedStep?.groupId ?? ''}`;
+    if (group !== currentGroup) {
+      group = currentGroup;
       if(rich.common.length)blocks.push(...rich.common.map(block=>scientific(block,`run-derived:info:${group}:`)));
-      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
+      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:[adoptedStep?.groupLabel,step.groupTitle].filter(Boolean).join(' · '),execution:{role:'group',title:[adoptedStep?.groupLabel,step.groupTitle].filter(Boolean).join(' · ')}});
     }
     const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
     const skipped = structured.plan.skips[step.id];

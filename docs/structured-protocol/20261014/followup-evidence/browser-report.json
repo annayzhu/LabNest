@@ -1,0 +1,35 @@
+{
+  "head": "6db0fd869515e9e4e3d4ab2f42916b752f698dd4",
+  "dirty": true,
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "Visible multi-system Word download, import authoring and AI destinations",
+      "result": "通过"
+    },
+    {
+      "name": "Real Run configures two experimental groups; independent 50/80 quantities; shared operation counted once",
+      "result": "通过"
+    },
+    {
+      "name": "Frozen cross-step reference remains accessible; copying groups keeps source and resets execution",
+      "result": "通过"
+    }
+  ],
+  "fixture": {
+    "legacyExperimentId": "cmv7wmw9a0018noosaeteeekx",
+    "copyExperimentId": "8d1c34f2-6ec3-425f-890a-a037a98caef7",
+    "versionId": "cmv7wmvxs0003noosrxrdtyd3",
+    "protocolId": "cmv7wmvxm0002noosm9g79ay9",
+    "experimentId": "cmv7wmw9y001bnoosuljuk5sk",
+    "offlineExperimentId": "cmv7wmwaf001jnoostzuwztp2",
+    "verifiedExperimentId": "cmv7wmvzd0004noosswv86r24",
+    "continuationId": "cmv7wmw4x000lnoosaz2wjrys",
+    "planId": "cmv7wmvxi0001noos26p5s18t",
+    "steps": {
+      "a": "cmv7wmwa0001dnoosckwwb29n",
+      "b": "cmv7wmzqm001c6bp3egiqy22g"
+    }
+  },
+  "copiedExperimentId": "c922763a-6458-4c6f-a591-0e696ab18cc4"
+}

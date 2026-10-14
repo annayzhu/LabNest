@@ -1,0 +1,20 @@
+{
+  "phase": "run",
+  "checks": [
+    {
+      "entry": "run",
+      "width": 1440,
+      "loadedImages": 1,
+      "url": "http://localhost:3341/experiments/cmv7woecn003c6bp3namwylny/run"
+    },
+    {
+      "entry": "run",
+      "width": 390,
+      "loadedImages": 1,
+      "url": "http://localhost:3341/experiments/cmv7woecn003c6bp3namwylny/run"
+    }
+  ],
+  "at": "2026-10-14T09:26:48.291Z",
+  "base": "http://localhost:3341",
+  "clientErrors": []
+}

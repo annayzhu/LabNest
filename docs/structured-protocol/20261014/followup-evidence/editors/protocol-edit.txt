@@ -1,0 +1,37 @@
+Synthetic protocol 1791969982848
+PROTOCOL ID
+
+VERSION
+
+SCOPE
+
+AVAILABILITY
+
+REVIEW
+
+PRT-1791969982848
+
+0.1
+
+General library
+
+draft
+
+draft
+
+执行步骤划分 · 1 个操作 · 待确认
+Description
+
+中文图注 protocol 1791969997842
+
+Purpose
+Background
+Material
+Steps
+Step A
+Editor acceptance body
+
+Result Templates
+Consumption Rules
+
+

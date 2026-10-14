@@ -21,6 +21,7 @@ export const protocolSystemsSchema = z.object({
   restrictions: z.array(z.object({ id, when: protocolConditionSchema, message: z.string().min(1) })),
   rules: z.array(z.object({
     id, target: z.enum(['block', 'step', 'row']), targetId: z.string().min(1),
+    scope: z.enum(['group', 'experiment']).optional(),
     when: protocolConditionSchema, exclusiveGroup: z.string().optional(),
     parameterIds: z.array(id).default([]), optional: z.boolean().default(false),
     actualFields: z.array(z.object({ id, label: z.string().min(1), unit: z.string().min(1), required: z.boolean() })).default([]),

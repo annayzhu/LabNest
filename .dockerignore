@@ -18,5 +18,7 @@ coverage
 .local-runtime
 docs/qa/evidence
 
-.next-structured-release
+.next-*
 docs/structured-protocol/20261014/evidence
+
+docs/structured-protocol/20261014/followup-evidence

@@ -1,5 +1,6 @@
 import { exportProtocolDocx } from "./protocol-docx-export";
 import { createProtocolTemplateDocument } from "./protocol-document";
+import { systemTableCaptions } from './protocol-system-tables';
 
 export const protocolDocxTemplateTitle = "请填写实验规程标题 / Replace with Protocol title";
 export const protocolDocxTemplateEnglishTitle = "Replace with English title (optional)";
@@ -48,3 +49,29 @@ export function createProtocolExecutionExampleDocument() {
   ];return document;
 }
 export function exportProtocolExecutionExample(){return exportProtocolDocx({canonicalTitle:'执行步骤结构示例（非科研操作方案）',availability:'draft',reviewStage:'draft',displayVersion:'0.3',scope:'general',tags:[]},createProtocolExecutionExampleDocument());}
+
+/** Editable tables, not hidden metadata, are authoritative after editing this Word template. */
+export function exportProtocolSystemsTemplate() {
+  const document = createProtocolTemplateDocument();
+  document.sections.find(section => section.key === 'description')!.blocks = [
+    { id: 'systems-guide', type: 'text', text: '多体系填写模板（软件示例，不是实验操作建议）。替换标题、参数和操作。保留三张定义表的表题及表头；标识使用英文字母、数字、下划线或短横线。条件写为 volume=small；多个条件用 & 连接。空条件表示通用，空量值表示待填写，不能当作零。正文以 {{参数标识}} 引用量值；不要按体系体积推算其他参数。导入后逐项核对并确认步骤。执行范围 group 表示每组分别执行，experiment 表示全实验一次；共同操作必须对各组具有一致内容和参数。复杂互斥分支、计算器及组合限制请在编辑器配置。' },
+    { id: 'system-options', type: 'table', caption: systemTableCaptions.dimensions, rows: [
+      ['维度标识', '维度名称', '选项标识', '选项名称'],
+      ['volume', '体积体系', 'small', '350 µL'], ['volume', '体积体系', 'large', '600 µL'],
+      ['sample', '样本属性', 'ordinary', '普通样本'], ['sample', '样本属性', 'fat', '富脂样本'],
+    ] },
+    { id: 'system-parameters', type: 'table', caption: systemTableCaptions.parameters, rows: [
+      ['参数标识', '参数名称', '单位', '适用条件', '量值'],
+      ['proteinase', 'Proteinase K', 'µL', 'volume=small', '50'],
+      ['proteinase', 'Proteinase K', 'µL', 'volume=large', '80'],
+      ['incubation', '共同时间', 'min', '', '10'],
+    ] },
+  ];
+  document.sections.find(section => section.key === 'steps')!.blocks = [{ id: 'system-operations', type: 'table', caption: systemTableCaptions.operations, rows: [
+    ['操作标识', '操作标题', '正文', '适用条件', '引用参数（分号分隔）', '计时参数', '执行范围（group/experiment）'],
+    ['prepare', '共同准备', '核对样本标识与原始说明。', '', '', '', 'experiment'],
+    ['add', '加入试剂', '加入 {{proteinase}}。示例数值应以正式说明书核对。', '', 'proteinase', '', 'group'],
+    ['wait', '共同等待', '按原方案等待 {{incubation}}；计时结束后由操作者确认完成。', '', 'incubation', 'incubation', 'group'],
+  ] }];
+  return exportProtocolDocx({ canonicalTitle: protocolDocxTemplateTitle, availability: 'draft', reviewStage: 'draft', displayVersion: '0.4', scope: 'general', tags: [], templateMode: true }, document);
+}

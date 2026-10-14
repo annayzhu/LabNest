@@ -1,0 +1,32 @@
+{
+  "browser": "149.0.7827.55",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M4 Max",
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "Representative long document: sustained typing, H2/list/bold/parameter edit, clipboard table paste/add row/column, aligned inspector, save/reopen semantics",
+      "result": "通过"
+    }
+  ],
+  "bytes": 16761,
+  "images": 5,
+  "backgroundBlocks": 71,
+  "typingMs": 6756,
+  "characters": 500,
+  "scrollChangePx": 493,
+  "caret": {
+    "inParagraph": true,
+    "top": 154.46875,
+    "bottom": 169.46875,
+    "viewport": 1000
+  },
+  "inputFrames": {
+    "count": 530,
+    "p95ms": 4.100000023841858,
+    "maxMs": 6.200000047683716,
+    "longTasks": []
+  },
+  "saveMs": 143
+}

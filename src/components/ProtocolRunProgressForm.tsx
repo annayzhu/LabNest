@@ -1,5 +1,6 @@
 "use client";
 
+import { useRunStepSelection } from "./RunStepSelection";
 import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
 import Link from "next/link";
 import { useI18n } from "@/components/I18nProvider";
@@ -17,9 +18,11 @@ import { StepTimerControls } from "@/components/StepTimerControls";
 import type { StructuredRunView } from '@/lib/structured-run';
 import { StructuredStepRecord } from './StructuredStepRecord';
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
-import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
+import { useQueuedRunRecords } from "./useQueuedRunRecords";
+import { enqueueMobileMutation, runQueueContext } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
+  protocolStepRef?: string | null;
   richContent?: Omit<ReturnType<typeof import("@/lib/run-step-content").runStepContent>, "reference">;
   id: string;
   groupKey: string;
@@ -59,6 +62,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 }) {
   const { locale } = useI18n();
   const zh = locale === "zh";
+  const queued = useQueuedRunRecords(experimentId);
+  const pendingCompletions = new Set(queued.filter(item => item.actionType === "step.complete").map(item => item.payload.experimentStepId));
   const formRef=useRef<HTMLFormElement>(null);
   const [draftFields,setDraftFields]=useState<Record<string,string>>({});
   const draftInitialized=useRef(false);
@@ -66,7 +71,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const [draftNotice,setDraftNotice]=useState("");
   const [olderDraft, setOlderDraft] = useState<Record<string,string> | null>(null);
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
-  const [selectedStepId, setSelectedStepId] = useState(() => steps.find((step) => !step.completed)?.id ?? steps[0]?.id ?? "");
+  const {selectedStepId, setSelectedStepId} = useRunStepSelection();
   const [state, formAction, pending] = useActionState(async (previous: ProtocolRunProgressState, data: FormData) => {
     const result = await saveProtocolRunProgress(previous, data);
     if (!result.error && result.completedStepIds) {
@@ -83,20 +88,21 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const groups = useMemo(() => {
     const grouped = new Map<string, { key: string; title: string; order: number; steps: RunStep[] }>();
     for (const step of steps) {
-      const group = grouped.get(step.groupKey) ?? { key: step.groupKey, title: step.groupTitle, order: step.groupOrder, steps: [] };
+      const key = structured?.plan.stepGroups[step.id] ? `${step.groupKey}@${structured.plan.stepGroups[step.id]}` : step.groupKey;
+      const group = grouped.get(key) ?? { key, title: step.groupTitle, order: step.groupOrder, steps: [] };
       group.steps.push(step);
-      grouped.set(step.groupKey, group);
+      grouped.set(key, group);
     }
     return [...grouped.values()].sort((a, b) => a.order - b.order);
-  }, [steps]);
+  }, [steps, structured]);
   const referenceGroups=Object.keys(frozenReferences??{}).map(key=>({key,title:groups.find(group=>group.key===key)?.title??frozenReferenceTitles?.[key]??"Captured Protocol reference"}));
   const requiredSteps = steps.filter(s => !structured?.steps[s.id]?.optional);
   const requiredCompleted = requiredSteps.filter(s => completedIds.has(s.id)).length;
   const remaining = requiredSteps.length - requiredCompleted;
-  const unavailable = (id: string) => Boolean(structured?.steps[id]?.blocked || structured?.plan.skips[id] || structured?.steps[id]?.actualFields.some(f => f.required && !structured.plan.actualValues[id]?.[f.id]));
+  const unavailable = (id: string) => Boolean(pendingCompletions.has(id) || structured?.steps[id]?.blocked || structured?.plan.skips[id] || structured?.steps[id]?.actualFields.some(f => f.required && !structured.plan.actualValues[id]?.[f.id] && !queued.some(item => item.actionType === "step.record" && item.state !== "conflict" && item.payload.experimentStepId === id && item.payload.intent === "actual" && item.payload.values[f.id])));
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
-  useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps]);
+  useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps,setSelectedStepId]);
   const [recordOpen,setRecordOpen]=useState(false);
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
@@ -106,7 +112,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     if(draftInitialized.current)return;draftInitialized.current=true;
     const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){if (structured && saved.revision !== structured.plan.revision) { if (Object.keys(saved.fields ?? {}).length) { setOlderDraft(saved.fields); setDraftNotice('执行记录已更新，旧草稿保留供核对。'); } } else { setDraftFields(saved.fields??{}); if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id)))); } if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length && (!structured || saved.revision === structured.plan.revision))setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
-  },[experimentId,steps,structured]);
+  },[experimentId,steps,structured,setSelectedStepId]);
   useEffect(()=>{
     if(!draftReady)return;
     const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({revision:olderDraft ? -1 : structured?.plan.revision,fields:olderDraft ?? draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
@@ -139,6 +145,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     event.preventDefault();
     const data = new FormData(form);
     const optional = (name: string) => String(data.get(name) ?? "").trim() || undefined;
+    let queueContext;
+    try { queueContext = runQueueContext(steps.find(step => step.id === stepId)?.protocolStepRef ?? stepId); } catch { setOfflineStatus("本机存储不可用，未保存。请保留页面。"); return; }
     void enqueueMobileMutation({
       clientMutationId,
       actionType: "step.complete",
@@ -149,6 +157,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         experimentId,
         experimentStepId: stepId,
         executionPlanRevision: structured?.plan.revision,
+        queueContext,
         deviationType: optional(`mobileDeviationType:${stepId}`),
         deviationNote: optional(`mobileDeviation:${stepId}`),
         deviationImpact: optional(`mobileDeviationImpact:${stepId}`),
@@ -180,17 +189,25 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     });
   }
 
-  const infoGroups=[...new Map(steps.filter(step=>step.richContent?.common.length).map(step=>[step.groupKey,step])).values()];
-  return <form ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
+  const information = new Map<string, {step: RunStep; labels: string[]}>();
+  for (const step of steps.filter(step => step.richContent?.common.length)) {
+    const key = `${step.groupKey}:${JSON.stringify(step.richContent?.common)}`;
+    const item = information.get(key) ?? {step, labels: []};
+    const label = structured?.steps[step.id]?.groupLabel ?? step.groupTitle;
+    if (!item.labels.includes(label)) item.labels.push(label);
+    information.set(key, item);
+  }
+  return <form id="run-execution" ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
     {structured ? <input type="hidden" name="executionPlanRevision" value={structured.plan.revision}/> : null}
+    {queued.length ? <p role="status" className="text-warning">本机待同步 {queued.length} 条，其中冲突 {queued.filter(item => item.state === "conflict").length} 条。下方完成计数尚未代表全部已同步。</p> : null}
     {structured ? <p role="status" data-structured-progress>必需操作：{requiredCompleted}/{requiredSteps.length} 完成 · 可选：{steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/{steps.filter(s => structured.steps[s.id]?.optional).length} · 跳过：{Object.keys(structured.plan.skips).length} · 待确定：{steps.filter(s => structured.steps[s.id]?.blocked).length}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
     {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。</p><details><summary>查看旧草稿</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('已恢复核对后的草稿，尚未保存'); }}>已核对，继续使用这些草稿</button></aside> : null}
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
-    {infoGroups.map(step=><details open key={step.groupKey} className="min-w-0 rounded-[var(--ln-radius-panel)] border border-hairline p-3" data-run-information><summary className="focus-ring cursor-pointer text-sm text-moss">规程说明与参考（不计步） · {experimentStepGroupHeading(step.groupTitle).title}</summary><div className="mt-3 min-w-0 space-y-3">{step.richContent?.common.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</div></details>)}
+    {[...information.entries()].map(([key,{step,labels}])=><details open key={key} className="min-w-0 rounded-[var(--ln-radius-panel)] border border-hairline p-3" data-run-information><summary className="focus-ring min-h-11 cursor-pointer text-sm text-moss">共同参考（不计步） · {labels.join('、')}</summary><div className="mt-3 min-w-0 space-y-3">{step.richContent?.common.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</div></details>)}
     <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
@@ -209,7 +226,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>
 
           <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
-          <div data-run-tools className="mt-3 grid grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
+          <div data-run-tools className="mt-3 grid grid-cols-2 min-[360px]:grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
           <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} executionPlanRevision={structured?.plan.revision} disabled={!editable || Boolean(structured?.steps[selectedStep.id] && (selectedStep.completed || structured.steps[selectedStep.id].blocked))}/>
           <button type="button" aria-expanded={recordOpen} onClick={()=>setRecordOpen(value=>!value)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline px-2 text-sm font-medium text-moss">{zh?"记录":"Record"}</button></div>
           <div hidden={!recordOpen} className="mt-2" data-run-record><div className="grid grid-cols-3 gap-2">
@@ -250,7 +267,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             </div>
           </details> : <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted">This locked Protocol step does not allow a deviation record.</p>}
 
-          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending || unavailable(selectedStep.id)} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : null}
+          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending || unavailable(selectedStep.id)} className={`${primaryButton} h-auto! whitespace-normal! min-h-12 w-full py-2!`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : null}
         </div>
       ) : (
         <div className="p-4">
@@ -279,7 +296,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 py-2" data-run-reference>
       <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
       <div className="mt-3 space-y-3">
-        <OfflineCalculator zh={zh}/>
+        <OfflineCalculator run zh={zh}/>
         {referenceGroups.map(group => <details key={group.key}>
           <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
           <div className="run-step-content mt-2 min-w-0 space-y-3">

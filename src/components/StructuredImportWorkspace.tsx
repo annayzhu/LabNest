@@ -225,7 +225,7 @@ export function StructuredImportWorkspace({ module, aiProviderName }: { module: 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader title="Choose a structured format" />
+        <CardHeader title={module === "protocols" ? "其他导入格式与模板（上传时自动识别格式）" : "Choose a structured format"} />
         <CardBody className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {definition.importFormats.map((format) => {
             const showCompactGuidance = (format === "csv" || format === "tsv") && controlledFields.length > 0;

@@ -1,8 +1,9 @@
 "use client";
 import {useI18n} from "@/components/I18nProvider";
 
+import { useRunClock } from "./useRunClock";
 import { Pause, Play, RotateCcw, Timer, Square } from "lucide-react";
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { updateStepTimer, type StepTimerActionState } from "@/app/experiments/[id]/run/actions";
 import { formatStepTimer, remainingStepTimerSeconds } from "@/lib/step-timer";
 
@@ -34,32 +35,17 @@ export function StepTimerControls({ experimentId, step, compact=false, execution
     setExpanded(next);
     try { sessionStorage.setItem(expansionKey, String(next)); } catch {}
   }
-  const [clock, setClock] = useState(() => Date.now());
-  const lastClock = useRef<{ wall: number; monotonic: number } | null>(null);
-  const [clockWarning, setClockWarning] = useState(false);
+  const clock = useRunClock();
+  const clockWarning = clock.uncertain;
   const [durationMinutes, setDurationMinutes] = useState("5");
   const durationSeconds = step.timerDurationSeconds ?? 300;
   const remaining = remainingStepTimerSeconds({
     remainingSeconds: step.timerRemainingSeconds ?? durationSeconds,
     startedAt: step.timerStartedAt,
-    now: new Date(clock),
+    now: new Date(clock.now),
   });
   const running = Boolean(step.timerStartedAt) && remaining > 0;
   const configured = step.timerDurationSeconds !== null;
-
-  useEffect(() => {
-    const refresh = () => {
-      const now = Date.now(), monotonic = performance.now(), previous = lastClock.current;
-      if (previous && Math.abs((now - previous.wall) - (monotonic - previous.monotonic)) > 5000) setClockWarning(true);
-      lastClock.current = { wall: now, monotonic };
-      setClock(now);
-    };
-    refresh();
-    const interval = running ? window.setInterval(refresh, 1000) : undefined;
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    return () => { window.clearInterval(interval); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
-  }, [running]);
 
   function submitTimerIntent(timerIntent: "start" | "pause" | "reset" | "finish") {
     const formData = new FormData();
@@ -78,14 +64,15 @@ export function StepTimerControls({ experimentId, step, compact=false, execution
     </div>
     <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
       {!configured ? <label className="min-w-0"><span className="sr-only">Timer duration in minutes</span><input value={durationMinutes} onChange={(event) => setDurationMinutes(event.target.value)} type="number" min="0.1" max="1440" step="0.1" className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" aria-label="Timer duration in minutes" /></label> : <span className="flex min-h-11 items-center text-xs text-muted">{Math.round(durationSeconds / 60)} min preset</span>}
-      <button type="button" onClick={() => submitTimerIntent(running ? "pause" : "start")} disabled={pending || disabled || clockWarning || remaining === 0} className="focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-info/35 bg-surface px-3 text-sm font-semibold text-info">
+      <button type="button" onClick={() => submitTimerIntent(running ? "pause" : "start")} disabled={pending || disabled || clockWarning || !clock.online || remaining === 0} className="focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-info/35 bg-surface px-3 text-sm font-semibold text-info">
         {running ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}<span className="hidden min-[360px]:inline">{running ? "Pause" : step.timerPausedAt ? "Resume" : "Start"}</span>
       </button>
-      <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending || disabled || clockWarning} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
+      <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending || disabled || clockWarning || !clock.online} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
     </div>
-    {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>结束计时（步骤仍需确认）</button> : null}
+    {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning || !clock.online} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>结束计时（步骤仍需确认）</button> : null}
     {configured && remaining === 0 ? <p role="status" className="mt-2 text-sm">计时已到零，步骤尚未自动完成。重新计时请先重置。</p> : null}
-    {clockWarning ? <p role="alert" className="text-warning">设备时间发生变化，请核对时钟并刷新。</p> : null}
+    {!clock.online ? <p role="status" className="text-warning">离线时保留计时显示；开始、暂停与重置需联网确认，避免重连后延迟执行。</p> : null}
+    {clockWarning ? <p role="alert" className="text-warning">时钟尚未校准或设备时间发生变化，请联网后核对；当前显示不能作为精确计时依据。</p> : null}
     {state.error ? <p role="alert" className="mt-2 text-xs text-error">{state.error}</p> : null}
     {state.message ? <p role="status" className="mt-2 text-xs text-success">{state.message} Synced.</p> : null}
   </section></>;

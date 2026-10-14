@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {writeFile} from 'node:fs/promises';
+import sharp from 'sharp';
+import {prisma} from '../src/lib/db';
+import {assignEntry,freezeEntrySources,getEntrySources} from '../src/lib/entry-assignment.server';
+import {lockEntrySourceGraph} from '../src/lib/entry-source-lock';
+import {createEntryWithFiles,updateEntryWithFiles} from '../src/lib/entry-persistence';
+import {parseEntryMutationFormData} from '../src/lib/entry-mutations';
+const db=new URL(process.env.DATABASE_URL!);assert(['localhost','127.0.0.1'].includes(db.hostname)&&((db.port==='55439'&&db.pathname==='/labnest_structured_20261014')||process.env.CI==='true'&&db.pathname==='/labnest_protocol_consistency_ci'));
+const input=(text:string,extra:Record<string,string>={})=>{const form=new FormData();Object.entries({title:'合成来源时间与冻结验收',contentMarkdown:text,eventTimePrecision:'date',occurredAt:'2026-09-21',...extra}).forEach(([k,v])=>form.set(k,v));return parseEntryMutationFormData(form);};
+async function main(){
+ const experiment=await prisma.experiment.create({data:{title:'合成来源冻结验收',runCode:'SYN-'+randomUUID()}});
+ const bytes=await sharp({create:{width:160,height:80,channels:3,background:'#365f63'}}).png().toBuffer();
+ const entry=await createEntryWithFiles(input('SOURCE-BEFORE · 原始中文记录'),[new File([Uint8Array.from(bytes)],'synthetic.png',{type:'image/png'})]);
+ const before=await prisma.entry.findUniqueOrThrow({where:{id:entry.id}});
+ await assignEntry(entry.id,{mutationId:randomUUID(),type:'experiment',targetId:experiment.id,expectedTarget:null});
+ const after=await prisma.entry.findUniqueOrThrow({where:{id:entry.id}});
+ assert.equal(after.createdAt.toISOString(),before.createdAt.toISOString());assert.equal(after.occurredAt.toISOString(),before.occurredAt.toISOString());
+ const assigned=await prisma.activityLog.findFirstOrThrow({where:{action:'entry_assign',targetId:entry.id}});assert((assigned.metadataJson as {assignedAt:string}).assignedAt);
+ const sources=await getEntrySources('experiment',experiment.id,false);assert.equal(sources.sources[0].attachments.length,1);
+ const result=await prisma.result.create({data:{title:'合成结果冻结',resultType:'text',experimentId:experiment.id}});
+ const resultEntry=await createEntryWithFiles(input('RESULT-SOURCE-BEFORE'),[]);
+ await assignEntry(resultEntry.id,{mutationId:randomUUID(),type:'result',targetId:result.id,experimentId:experiment.id,expectedTarget:null});
+ await prisma.$transaction(async tx=>{await lockEntrySourceGraph(tx);await freezeEntrySources(tx,'result',result.id);await tx.result.update({where:{id:result.id},data:{recordStatus:'reviewed'}});});
+ await updateEntryWithFiles(resultEntry.id,input('RESULT-SOURCE-AFTER',{expectedUpdatedAt:(await prisma.entry.findUniqueOrThrow({where:{id:resultEntry.id}})).updatedAt.toISOString()}),[],[],[]);
+ assert.equal((await getEntrySources('result',result.id,true)).sources[0].markdown,'RESULT-SOURCE-BEFORE');
+ await writeFile('docs/structured-protocol/20261014/followup-evidence/entry-fixture.json',JSON.stringify({experimentId:experiment.id,entryId:entry.id,resultId:result.id,resultEntryId:resultEntry.id,attachmentId:sources.sources[0].attachments[0].id,createdAt:before.createdAt.toISOString(),occurredAt:before.occurredAt.toISOString()},null,2));
+ console.log('PASS Entry filing preserves creation/observation times and original attachment; assignedAt separate; reviewed result retains frozen source after later edit (synthetic records)');
+}
+main().finally(()=>prisma.$disconnect());

@@ -6,6 +6,7 @@ import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
 import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-media";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import {normalizeResultTemplate,resultTemplateInputSchema} from './result-templates';
+import { applyProtocolSystemTables } from './protocol-system-tables';
 import {
   createEmptyProtocolDocument,
   projectProtocolDocument,
@@ -256,7 +257,7 @@ export function parseProtocolDocumentXml(
         if (caption && currentSection) {
           const blocks = getSection(currentSection).blocks;
           const previous = blocks.at(-1);
-          if (previous?.type === "text" && previous.text === caption) blocks.pop();
+          if ((previous?.type === "text" || previous?.type === "heading") && previous.text === caption) blocks.pop();
         }
         const rawDescription = tableDescription(element);
         let resultTemplate: Extract<ProtocolContentBlockInput, { type: "table" }>["resultTemplate"];
@@ -312,6 +313,8 @@ export function parseProtocolDocumentXml(
   if (missingSections.length) warnings.push(`Empty required sections: ${missingSections.join(", ")}.`);
   document.importWarnings = warnings;
 
+  applyProtocolSystemTables(document);
+
   const projection = projectProtocolDocument(document);
   return {
     humanCode: internalCode,
@@ -364,6 +367,7 @@ export function parseProtocolDocxBytes(bytes: Uint8Array, fileName: string): Par
   }
   parsed.embeddedImages = extracted.images;
   parsed.document.importWarnings = [...(parsed.document.importWarnings ?? []), ...extracted.warnings];
+  if (applyProtocolSystemTables(parsed.document)) Object.assign(parsed, projectProtocolDocument(parsed.document));
   return parsed;
 }
 

@@ -1,0 +1,25 @@
+{
+  "webSource": "603067b8c2caacb6f3b96674f4a35b37e9164e78",
+  "nativeSource": "4f239398bc55be7472b3e9d3e64007ee15c0936e",
+  "baselineFullAcceptance": "validation.json",
+  "webProductionBuild": "passed",
+  "webImage": "labnest-app:protocol-followup-603067b8",
+  "webManifest": "sha256:9f41df886404da047b66e2c935f761f051aa7d160371f06b3eb8545648d41a8b",
+  "ciCorrections": [
+    "ci-fixes/ai-prefetch.json",
+    "ci-fixes/editor-report.json"
+  ],
+  "nativeSimulator": "watch-simulator/report.json",
+  "physicalValidation": "unexecuted; see ACCEPTANCE.md",
+  "secretsOrFormalRecordsChanged": false,
+  "nativeFinalRegression": "watch-simulator/final-regression.json",
+  "calculatorRunRegression": {
+    "reports": [
+      "ci-fixes/calculator-run/run-browser-report.json",
+      "ci-fixes/calculator-run/run-compat.json",
+      "ci-fixes/calculator-run/offline.json"
+    ],
+    "helperSha256": "b78ea3f5cac2c135553c7c8829837aa55083351b82c2fe7bfc19a4faa2fd6bff",
+    "actualProductionImageUnchanged": true
+  }
+}

@@ -32,7 +32,7 @@ export function ProtocolConditionEditor({ value, systems, onChange }: { value: P
   </div>;
 }
 
-export function ProtocolSystemsEditor({ document, onChange }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void }) {
+export function ProtocolSystemsEditor({ document, onChange, open, onOpenChange }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const [tab, setTab] = useState('dimensions');
   const systems = document.systems;
   const update = (next: ProtocolSystems) => onChange({ ...document, systems: next });
@@ -44,7 +44,7 @@ export function ProtocolSystemsEditor({ document, onChange }: { document: Protoc
     ...blocks.flatMap(b => b.type === 'table' ? b.rows.slice(1).flatMap((r, i) => b.rowIds?.[i + 1] ? [{ target: 'row' as const, id: b.rowIds[i + 1], label: `表格行 · ${r.join(' · ').slice(0, 60)}` }] : []) : []),
   ];
   const changeParameter = (next: Parameter) => systems && update({ ...systems, parameters: systems.parameters.map(p => p.id === next.id ? next : p) });
-  return <details className="protocol-systems-editor" data-protocol-systems-editor>
+  return <details id="protocol-systems" open={open} onToggle={event => onOpenChange?.(event.currentTarget.open)} className="protocol-systems-editor" data-protocol-systems-editor>
     <summary>实验体系与参数 {systems ? `· ${systems.dimensions.length} 个选择维度` : '· 尚未设置'}</summary>
     {!systems ? <div className="protocol-system-section"><p>在同一份规程中定义体系差异。共同操作只保留一次；实验开始时再确认实际选择。</p><Button type="button" onClick={() => update(blankSystems())}>设置实验体系</Button></div> : <>
       <div role="tablist" aria-label="体系设置" className="protocol-system-tabs">{[['dimensions', '体系与预设'], ['parameters', '参数'], ['rules', '适用条件']].map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
@@ -86,6 +86,7 @@ export function ProtocolSystemsEditor({ document, onChange }: { document: Protoc
           <ProtocolConditionEditor systems={systems} value={rule.when} onChange={when => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, when } : r) })}/>
           <label>互斥组（可留空）<input className={formInputClass} value={rule.exclusiveGroup ?? ''} onChange={e => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, exclusiveGroup: e.target.value || undefined } : r) })}/></label>
           {rule.target === 'step' ? <>
+            <label>执行范围<select className={formInputClass} value={rule.scope ?? 'group'} onChange={e => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, scope: e.target.value as 'group' | 'experiment' } : r) })}><option value="group">每个实验组分别执行</option><option value="experiment">整次实验共同执行一次</option></select></label>
             <label><input type="checkbox" checked={rule.optional} onChange={e => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, optional: e.target.checked } : r) })}/>可选操作</label>
             <label>使用的计时参数<select className={formInputClass} value={rule.timerParameterId ?? ''} onChange={e => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, timerParameterId: e.target.value || undefined } : r) })}><option value="">不绑定</option>{systems.parameters.filter(p => units[p.unit]?.dimension === 'time').map(p => <option key={p.id} value={p.id}>{p.label} · {p.unit}</option>)}</select></label>
             <div>依赖参数{systems.parameters.map(p => <label key={p.id}><input type="checkbox" checked={rule.parameterIds.includes(p.id)} onChange={e => update({ ...systems, rules: systems.rules.map(r => r.id === rule.id ? { ...r, parameterIds: e.target.checked ? [...r.parameterIds, p.id] : r.parameterIds.filter(id => id !== p.id) } : r) })}/>{p.label}</label>)}</div>

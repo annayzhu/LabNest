@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProtocolMediaImage } from "./ProtocolMediaImage";
 import { DocumentCanvas } from "./DocumentCanvas";
 import { EntryContentView } from "./EntryContentView";
 import { getEntrySources } from "@/lib/entry-assignment.server";
@@ -13,7 +14,7 @@ export async function EntrySourceCards({type,id,locked}:{type:"experiment"|"resu
    <h3 className="font-semibold">{source.title}</h3><p className="mt-1 text-xs text-muted">记录于 <time dateTime={source.createdAt}>{new Date(source.createdAt).toLocaleString("zh-CN",{timeZone:process.env.TZ||"Asia/Shanghai"})}</time> · 作者：{source.author??"未记录"} · 修改于 {new Date(source.updatedAt).toLocaleString("zh-CN",{timeZone:process.env.TZ||"Asia/Shanghai"})}</p>
    <p className="text-xs text-muted">实验／观察时间：{source.eventTimePrecision === "datetime" ? new Date(source.occurredAt).toLocaleString("zh-CN", {timeZone:process.env.TZ||"Asia/Shanghai"}) : source.eventTimePrecision === "date" ? source.occurredAt.slice(0,10) + "（仅日期）" : "未记录"}</p>
    <div className="mt-3"><EntryContentView markdown={source.markdown} /></div>
-   {source.attachments.filter(a=>!inline.has(a.id)).map(a=><a key={a.id} className="mt-2 block text-moss underline" href={`/api/attachments/${a.id}`}>{a.originalFilename}</a>)}
+   {source.attachments.filter(a=>!inline.has(a.id)).map(a=>a.mimeType.startsWith("image/") ? <figure key={a.id} className="mt-3"><ProtocolMediaImage href={`/api/attachments/${a.id}?inline=1`} label={a.originalFilename} /><figcaption className="text-sm text-muted">{a.originalFilename}</figcaption></figure> : <a key={a.id} className="mt-2 block text-moss underline" href={`/api/attachments/${a.id}`}>{a.originalFilename}</a>)}
    <div className="mt-3 flex gap-4 text-sm" data-print-hidden><Link href={`/entries/${source.id}`} className="text-moss underline">查看原始记录</Link>{!data.frozen?<Link href={`/entries/${source.id}/edit`} className="text-moss underline">编辑原始记录</Link>:null}</div>
   </article>})}
  </section></DocumentCanvas>;

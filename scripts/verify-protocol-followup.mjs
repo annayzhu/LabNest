@@ -43,11 +43,11 @@ try {
  });
  await check('Frozen cross-step reference remains accessible; copying groups keeps source and resets execution',async()=>{
   await page.setViewportSize({width:1440,height:1000});await page.goto(`${base}/experiments/${f.experimentId}/run`,{waitUntil:'networkidle'});
-  const reference=page.locator('[data-run-reference]');await reference.locator(':scope > summary').click();const frozen=reference.locator('details').filter({has:page.locator('summary').filter({hasText:'SYN-'})}).first();await frozen.locator(':scope > summary').click();assert((await frozen.innerText()).includes('Proteinase K'));
-  const active=page.locator(`#step-${report.fixture.steps.a}`);assert.equal(await active.getByRole('heading',{name:'加入试剂',exact:true}).count(),1);await page.screenshot({path:`${out}/frozen-reference.png`});
+  const reference=page.locator('[data-run-reference]');await reference.locator(':scope > summary').click();const frozen=reference.locator('details').filter({has:page.locator('summary').filter({hasText:'合成多组体系'})}).first();await frozen.locator(':scope > summary').click();assert((await frozen.innerText()).includes('Proteinase K'));
+  const active=page.locator(`#step-${report.fixture.steps.a}`);assert.equal(await active.getByText('加入试剂',{exact:true}).count(),1);await page.screenshot({path:`${out}/frozen-reference.png`});
   await page.goto(`${base}/experiments/${f.experimentId}`,{waitUntil:'networkidle'});await page.getByRole('button',{name:/More actions|更多操作/}).click();await page.getByRole('button',{name:/Copy as new experiment|复制为新实验/}).click();await page.waitForURL(u=>u.pathname.startsWith('/experiments/')&&u.pathname!==`/experiments/${f.experimentId}`);
   const copyId=page.url().split('/').pop(),copy=(await (await page.request.get(`${base}/api/experiments/${copyId}`)).json()).experiment;assert.equal(copy.protocolRun.executionPlanJson.groups.length,2);assert.equal(copy.steps.length,7);assert.deepEqual(copy.protocolRun.executionPlanJson.versions,{});assert.deepEqual(copy.protocolRun.executionPlanJson.actualValues,{});assert(copy.steps.every(s=>!s.completed));
   await page.goto(`${base}/experiments/${copyId}/run`,{waitUntil:'networkidle'});assert.equal(await page.locator('[data-run-system-selection]').count(),2);assert((await page.locator('body').innerText()).includes('尚未确认'));await page.screenshot({path:`${out}/copied-groups-unconfirmed.png`});report.copiedExperimentId=copyId;
  });
-} catch(error) {report.error=String(error);await page.screenshot({path:`${out}/failure.png`});process.exitCode=1;}
+} catch(error) {report.error=String(error.stack??error);await page.screenshot({path:`${out}/failure.png`});process.exitCode=1;}
 finally{await writeFile(`${out}/browser-report.json`,JSON.stringify(report,null,2));await browser.close();}

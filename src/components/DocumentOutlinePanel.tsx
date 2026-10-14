@@ -12,42 +12,63 @@ export function DocumentOutlinePanel({ items, ariaLabel = "Document outline" }: 
   const [selectedItemId, setSelectedItemId] = useState(items[0]?.id ?? "");
   const activeItemId = items.some((item) => item.id === selectedItemId) ? selectedItemId : items[0]?.id ?? "";
   const outlineRef = useRef<HTMLElement>(null);
+  const navigationTargetRef = useRef<string | null>(null);
   const itemsRef = useRef(items);
   const itemIdSignature = items.map((item) => item.id).join("\u0000");
   useEffect(() => { itemsRef.current = items; }, [items]);
 
   useEffect(() => {
     let frameId = 0;
+    const workbench = outlineRef.current?.closest(".document-editor-workbench");
+    const findSection = (id: string) => workbench?.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
     const updateActiveItem = () => {
       frameId = 0;
       const sections = itemsRef.current
-        .map((item) => globalThis.document.getElementById(item.id))
-        .filter((element): element is HTMLElement => Boolean(element));
+        .map((item) => findSection(item.id))
+        .filter((element): element is HTMLElement => Boolean(element?.getClientRects().length));
       if (!sections.length) return;
-      const readingLine = globalThis.innerHeight * 0.22;
+      const target = navigationTargetRef.current && findSection(navigationTargetRef.current);
+      // Short final sections cannot reach the top. Keep the clicked destination
+      // selected until the reader scrolls, rather than bouncing to its neighbour.
+      if (target && target.getBoundingClientRect().bottom > 0 && target.getBoundingClientRect().top < globalThis.innerHeight) return;
+      navigationTargetRef.current = null;
+      const readingLine = (parseFloat(getComputedStyle(sections[0]).scrollMarginTop) || globalThis.innerHeight * 0.22) + 4;
       const activeSection = sections.reduce((active, section) => section.getBoundingClientRect().top <= readingLine ? section : active, sections[0]);
       setSelectedItemId(activeSection.id);
     };
     const scheduleUpdate = () => {
       if (!frameId) frameId = globalThis.requestAnimationFrame(updateActiveItem);
     };
+    const resumeTracking = () => { navigationTargetRef.current = null; scheduleUpdate(); };
+    const handleKey = (event: KeyboardEvent) => {
+      if (["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown", " "].includes(event.key) && !(event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]'))) resumeTracking();
+    };
     const mutationObserver = new MutationObserver(scheduleUpdate);
-    const workbench = outlineRef.current?.closest(".document-editor-workbench");
-    if (workbench) mutationObserver.observe(workbench, { childList: true, subtree: true });
+    const content = workbench?.querySelector(".document-editor-document-panel");
+    if (content) mutationObserver.observe(content, { childList: true, subtree: true });
     globalThis.addEventListener("scroll", scheduleUpdate, { passive: true });
     globalThis.addEventListener("resize", scheduleUpdate);
+    globalThis.addEventListener("wheel", resumeTracking, { passive: true });
+    globalThis.addEventListener("touchmove", resumeTracking, { passive: true });
+    globalThis.addEventListener("keydown", handleKey);
     scheduleUpdate();
     return () => {
       if (frameId) globalThis.cancelAnimationFrame(frameId);
       mutationObserver.disconnect();
       globalThis.removeEventListener("scroll", scheduleUpdate);
       globalThis.removeEventListener("resize", scheduleUpdate);
+      globalThis.removeEventListener("wheel", resumeTracking);
+      globalThis.removeEventListener("touchmove", resumeTracking);
+      globalThis.removeEventListener("keydown", handleKey);
     };
   }, [itemIdSignature]);
 
   function openItem(id: string) {
+    const section = outlineRef.current?.closest(".document-editor-workbench")?.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
+    if (!section) return;
+    navigationTargetRef.current = id;
     setSelectedItemId(id);
-    globalThis.document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    section.scrollIntoView({ behavior: "instant", block: "start", inline: "nearest" });
   }
 
   return <aside ref={outlineRef} className="document-editor-outline" aria-label={ariaLabel} data-print-hidden>

@@ -4,9 +4,10 @@ import { calculationReceiptMatches, protocolCalculationFingerprint, previewProto
 import { Button } from './ui/Button';
 
 /** Lives in the preparation form; the server independently recomputes every adopted result. */
-export function ProtocolCalculationPreview({ parameter, resolution, receipt, disabled }: {
+export function ProtocolCalculationPreview({ parameter, resolution, receipt, disabled, onConfirm }: {
   parameter: ProtocolSystems['parameters'][number]; resolution: ProtocolSystemResolution;
   receipt?: ProtocolCalculation; disabled: boolean;
+  onConfirm?: () => void;
 }) {
   let preview: ReturnType<typeof previewProtocolCalculation> | undefined;
   let current = false;
@@ -27,6 +28,6 @@ export function ProtocolCalculationPreview({ parameter, resolution, receipt, dis
       <small>方法 {current ? receipt!.snapshot.methodVersion : preview.snapshot.methodVersion}{current ? <> · 确认于 <time dateTime={receipt!.confirmedAt} suppressHydrationWarning>{new Date(receipt!.confirmedAt).toLocaleString()}</time></> : null}</small>
     </> : <p role="status" className="text-error">{error}</p>}
     {receipt && !current ? <p className="text-warning">需重新计算。此前采用 {receipt.value} {receipt.unit} 的记录保留，不能用于当前待执行操作。</p> : null}
-    <Button type="submit" name="confirmCalculations" value={parameter.id} size="sm" disabled={disabled || !preview || current}>计算并确认采用</Button>
+    <Button type={onConfirm ? "button" : "submit"} onClick={onConfirm} name="confirmCalculations" value={parameter.id} size="sm" disabled={disabled || !preview || current}>计算并确认采用</Button>
   </section>;
 }

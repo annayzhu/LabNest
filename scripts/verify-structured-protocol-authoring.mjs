@@ -53,7 +53,7 @@ await check('13.1 author two systems and conditional parameter using the real em
   const read = await (await page.request.get(base + jsonHref)).json(); assert.equal(read.document.systems.parameters[0].source.values[0].value, 50); assert.equal(read.structuredProjection.steps.length, 1); assert(read.structuredProjection.steps[0].description.includes('操作确认后继续输入'));
   await page.goto(`${base}/protocols/${createdId}/versions/${createdVersion}/edit`, { waitUntil: 'networkidle' });
   const reopened = await readDocument(); assert.equal(reopened.systems.parameters[0].id, parameterId); assert(reopened.executionConfirmed); assert.equal(reopened.systems.dimensions[0].options.length, 2);
-  await page.goto(`${base}/experiments/new?plan=${fixture.planId}&protocolVersionId=${createdVersion}`, { waitUntil: 'networkidle' }); await page.locator('.document-page-title-input').fill('真实编写规程创建的合成实验');
+  await page.goto(`${base}/experiments/new?plan=${fixture.planId}&protocolVersionId=${createdVersion}`, { waitUntil: 'networkidle' }); await page.getByRole('button', { name: '返回主界面继续填写或保存', exact: true }).click(); await page.locator('.document-page-title-input').fill('真实编写规程创建的合成实验');
   await page.getByRole('button', { name: /^(Save Experiment|保存实验)$/ }).click(); await page.waitForURL(u => /^\/experiments\/[^/]+$/.test(u.pathname) && !u.pathname.endsWith('/new'));
   const id = page.url().split('/').pop(); report.experimentId = id; await page.goto(`${base}/experiments/${id}/run`, { waitUntil: 'networkidle' });
   const form = page.locator('[data-run-system-selection]'); await form.getByLabel('裂解体积').selectOption({ label: '350 µL' }); await form.getByRole('button', { name: '确认本次体系', exact: true }).click();

@@ -16,7 +16,7 @@ function cloneJson<T>(value: T): T {
 
 export type ExperimentSnapshotInput = {
   creationKey?: string;
-  researchPlanId: string;
+  researchPlanId?: string;
   runCode?: string;
   title: string;
   date: Date;
@@ -42,11 +42,11 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       return previous;
     }
   }
-  const plan = await tx.researchPlan.findUnique({
+  const plan = input.researchPlanId ? await tx.researchPlan.findUnique({
     where: { id: input.researchPlanId },
     include: { project: true, protocols: { select: { protocolId: true } } },
-  });
-  if (!plan) throw new Error("Selected Research Plan does not exist.");
+  }) : null;
+  if (input.researchPlanId && !plan) throw new Error("Selected Research Plan does not exist.");
 
   const versionIds = Array.from(new Set(input.protocolVersionIds)).filter(Boolean);
   if (input.methodMode === "protocol" && !versionIds.length) {
@@ -74,7 +74,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
 
   if(input.methodMode==="protocol" && [...contracts.values()].every(contract=>!contract.steps.length))throw new Error("No execution operations are confirmed. Organize the Protocol steps or select a custom freeform Experiment.");
 
-  if (orderedVersions.length) {
+  if (orderedVersions.length && plan) {
     const protocolIds = Array.from(new Set(orderedVersions.map((version) => version.protocolId)));
     await tx.projectProtocol.createMany({
       data: protocolIds.map((protocolId) => ({ projectId: plan.projectId, protocolId })),
@@ -100,7 +100,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     schemaVersion: 1,
     ...(input.creationKey?{creationFingerprint:fingerprint}:{}),
     methodMode: input.methodMode,
-    researchPlanTitle: plan.title,
+    researchPlanTitle: plan?.title ?? null,
     capturedAt: new Date().toISOString(),
     versions: orderedVersions.map((version) => ({
       protocolId: version.protocolId,
@@ -124,8 +124,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
         runCode,
         creationKey: input.creationKey,
         title: input.title,
-        projectId: plan.projectId,
-        researchPlanId: plan.id,
+        projectId: plan?.projectId ?? null,
+        researchPlanId: plan?.id ?? null,
         date: input.date,
         status: input.status,
         recordStatus: input.recordStatus,
@@ -176,7 +176,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       });
     }
 
-    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
+    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan?.id ?? null, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
   await associateDocumentMedia(tx, [input.contentJson, experiment.protocolSnapshotJson], "experiment", experiment.id);
   return experiment;
 }

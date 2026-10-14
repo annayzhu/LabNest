@@ -11,6 +11,8 @@ export function ScientificDocumentView({
   identifier,
   subtitle,
   leadingContent,
+  sectionContent = {},
+  hideDerivedSections = [],
 }: {
   document: ScientificDocument;
   showEmptySections?: boolean;
@@ -18,8 +20,10 @@ export function ScientificDocumentView({
   identifier?: string | null;
   subtitle?: string | null;
   leadingContent?: ReactNode;
+  sectionContent?: Record<string, ReactNode>;
+  hideDerivedSections?: string[];
 }) {
-  const populatedSections = document.sections.filter((section) => section.blocks.length > 0);
+  const populatedSections = document.sections.filter((section) => section.blocks.length > 0 || sectionContent[section.key]);
   const displayedSections = showEmptySections ? document.sections : populatedSections;
 
   const canvas = <DocumentCanvas label={title ?? "Scientific document"}>
@@ -35,9 +39,10 @@ export function ScientificDocumentView({
             <h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className={`document-section-title font-serif font-medium ${section.key === "constraints" ? "text-error" : "text-ink"}`}>{section.title}</h2>
           </header>
           <div>
+            {sectionContent[section.key]}
             {section.blocks.length
-              ? section.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)
-              : <p className="text-sm italic text-muted">Not recorded.</p>}
+              ? section.blocks.filter(block => !hideDerivedSections.includes(section.key) || !block.id.startsWith('run-derived:')).map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)
+              : !sectionContent[section.key] ? <p className="text-sm italic text-muted">Not recorded.</p> : null}
           </div>
         </section>
       )) : <p className="text-sm text-muted">No structured sections have been recorded yet.</p>}

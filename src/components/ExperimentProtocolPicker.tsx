@@ -153,31 +153,31 @@ export function ExperimentProtocolPicker({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {selectedIds.map((id) => <input key={id} type="hidden" name="protocolVersionIds" value={id} />)}
       <div>
         <p className={formLabelClass}>已选规程与版本 · 执行顺序</p>
-        {selectedIds.length ? <ol className="mt-2 space-y-2">
+        {selectedIds.length ? <ol className="mt-1">
           {selectedIds.map((id, index) => {
             const version = versionMap.get(id)!;
-            return <li key={id} className="flex items-center gap-2 border-b border-hairline py-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm">{index + 1}</span>
+            return <li key={id} className="experiment-protocol-selection-row grid grid-cols-[1.75rem_minmax(0,1fr)_auto] items-center gap-2 border-b border-hairline py-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold tabular-nums text-warm">{index + 1}</span>
               <span className="min-w-0">
-                <span className="text-sm font-medium">{version.protocol.title} · {version.displayVersion}</span>
+                <span className="break-words text-sm font-medium">{version.protocol.title} · {version.displayVersion}</span>
               </span>
-              <span className="flex items-center justify-end gap-1">
-                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="上移规程" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
-                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="下移规程" className="focus-ring rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
-                <button type="button" onClick={() => commit(selectedIds.filter((item) => item !== id))} aria-label={`Remove ${version.protocol.title} ${version.versionTitle}`} className="focus-ring rounded p-1.5 text-error hover:bg-error-surface"><X className="h-4 w-4" /></button>
+              <span className="flex shrink-0 items-center justify-end gap-0.5">
+                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="上移规程" className="focus-ring experiment-protocol-order-control rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="下移规程" className="focus-ring experiment-protocol-order-control rounded p-1.5 text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+                <button type="button" onClick={() => commit(selectedIds.filter((item) => item !== id))} aria-label={`Remove ${version.protocol.title} ${version.versionTitle}`} className="focus-ring experiment-protocol-order-control rounded p-1.5 text-error hover:bg-error-surface"><X className="h-4 w-4" /></button>
               </span>
             </li>;
           })}
-        </ol> : <p className="mt-2 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-4 text-sm text-muted">尚未选择规程。</p>}
+        </ol> : <p className="py-1 text-xs text-muted">尚未选择规程。</p>}
       </div>
 
       <div>
-        <label><span className={formLabelClass}>Add from the complete Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Protocol title, version or code…" className={`${formInputClass} pl-9`} /></span></label>
-        <div className="mt-2 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface">
+        <label><span className={formLabelClass}>添加规程</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索规程名称、版本或编号…" className={`${formInputClass} pl-9`} /></span></label>
+        <div className="mt-2 max-h-48 divide-y divide-hairline overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface">
           {protocolGroups.length ? protocolGroups.map((group) => {
             const expanded = group.searchMode || expandedProtocolIds.has(group.protocolId);
             const visibleHistory = expanded ? group.history : [];

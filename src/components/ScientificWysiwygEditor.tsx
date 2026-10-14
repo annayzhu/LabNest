@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
 import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
@@ -34,17 +34,22 @@ import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesE
 
 type ScientificWidgetBlock = Extract<ScientificContentBlock, { type: "callout" | "metric" | "media" | "dataset" }>;
 
+// Live execution evidence belongs to Run, never to the editable JSON or undo stack.
+const SectionContentContext = createContext<Record<string, ReactNode>>({});
+
 function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function ScientificSectionNodeView({ node }: NodeViewProps) {
+  const sectionContent = useContext(SectionContentContext)[node.attrs.sectionKey];
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
       <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{node.attrs.sectionTitle}</h2>
       {node.attrs.sectionKey === "quality_limitations" ? <small>Only record deviations, failed QC, missing data, or limits that change interpretation.</small> : null}
     </header>
+    {sectionContent ? <div contentEditable={false} className="ln-section-live-content">{sectionContent}</div> : null}
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
 }
@@ -145,12 +150,13 @@ function scientificInsertActions(profile: DocumentInsertProfile): WysiwygInsertA
   return actions.filter((action) => allowed.has(action.id));
 }
 
-export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
+export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, sectionContent = {}, onChange }: {
   document: ScientificDocument;
   toolbarHostId?: string;
   hiddenSectionKeys?: string[];
   insertProfile?: DocumentInsertProfile;
   checklist?: boolean;
+  sectionContent?: Record<string, ReactNode>;
   onChange: (document: ScientificDocument) => void;
 }) {
   const [initialContent] = useState(() => scientificDocumentToTiptap(document, hiddenSectionKeys));
@@ -219,6 +225,6 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
     <input type="hidden" name="mediaDraftId" value={mediaDraftId} />
     {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
-    <EditorContent editor={editor} />
+    <SectionContentContext.Provider value={sectionContent}><EditorContent editor={editor} /></SectionContentContext.Provider>
   </section>;
 }

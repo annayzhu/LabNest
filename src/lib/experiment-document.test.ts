@@ -31,7 +31,7 @@ describe("Experiment structured document", () => {
 
   it("appends run notes while preserving migrated and previously authored blocks", () => {
     const original = createScientificDocument(experimentSections);
-    original.sections[3]!.blocks.push({ id: "observations-legacy", type: "text", text: "Legacy observation" });
+    original.sections.find(section => section.key === 'observations')!.blocks.push({ id: "observations-legacy", type: "text", text: "Legacy observation" });
 
     const next = appendExperimentObservation(original, {
       id: "run-note-1",
@@ -39,11 +39,12 @@ describe("Experiment structured document", () => {
       recordedAt: new Date("2026-08-10T01:02:03.000Z"),
     });
 
-    expect(next.sections[3]!.blocks).toEqual([
+    expect(next.sections.find(section => section.key === 'observations')!.blocks).toEqual([
       { id: "observations-legacy", type: "text", text: "Legacy observation" },
       { id: "run-note-1", type: "text", text: "[2026-08-10T01:02:03.000Z]\nCells remained attached after washing." },
     ]);
-    expect(original.sections[3]!.blocks).toHaveLength(1);
+    expect(original.sections.find(section => section.key === 'observations')!.blocks).toHaveLength(1);
+    expect(next.sections.at(-1)?.key).toBe('observations');
   });
 
   it("round-trips portable narrative fields and keeps summary and conclusion distinct", () => {
@@ -80,7 +81,8 @@ it("projects all Run steps in execution order without replacing authored notes",
   const text = experimentNarrativeFromDocument(projected).steps;
   expect(text).toContain("手写实验记录");
   expect(text).toContain("✓ 取样");
-  expect(text).toContain("偏差：实际延长 5 分钟");
+  expect(text).not.toContain("偏差：实际延长 5 分钟");
+  expect(experimentNarrativeFromDocument(projected).deviations).toContain("偏差：实际延长 5 分钟");
   expect(text).toContain("未完成 检测");
   expect(text.indexOf("取样")).toBeLessThan(text.indexOf("培养"));
   expect(experimentNarrativeFromDocument(source).steps).toBe("手写实验记录");
@@ -94,13 +96,15 @@ it('retains stored execution parameters at experiment scope without assigning th
   expect(experimentExecutionDocument(doc,[],{sample_count:4}).sections.find(section=>section.key==='execution')!.blocks).toHaveLength(1);
 });
 
-it("labels derived deviations explicitly without styling authored warnings as execution", () => {
+it("puts concise derived deviations in their section and preserves authored warnings", () => {
  const source=createScientificDocument(experimentSections);
  source.sections.find(s=>s.key==='execution')!.blocks=[{id:'authored',type:'callout',tone:'critical',text:'偏差是观察内容，不是执行状态'}];
  const result=experimentExecutionDocument(source,[{id:'step1',groupOrder:0,order:1,groupTitle:'Method v1',title:'Inspect',completed:false,deviationNote:'延长5分钟'}]);
  const blocks=result.sections.find(s=>s.key==='execution')!.blocks;
  expect(blocks[0]).not.toHaveProperty('execution');
- expect(blocks.find(b=>b.id==='run-derived:step1')).toMatchObject({execution:{role:'step',stepId:'step1',completed:false,deviationLabel:'偏差',deviationNote:'延长5分钟'}});
+ expect(blocks.find(b=>b.id==='run-derived:step1')).toMatchObject({execution:{role:'step',stepId:'step1',completed:false}});
+ expect(result.sections.find(s=>s.key==='deviations')!.blocks).toContainEqual({id:'run-derived:deviation:step1',type:'text',text:'Method v1 · 步骤 1 Inspect\n偏差：延长5分钟'});
+ expect(experimentExecutionDocument(result,[{id:'step1',groupOrder:0,order:1,groupTitle:'Method v1',title:'Inspect',completed:false,deviationNote:'延长5分钟'}]).sections.find(s=>s.key==='deviations')!.blocks).toHaveLength(1);
  expect(source.sections.find(s=>s.key==='execution')!.blocks).toHaveLength(1);
 });
 

@@ -185,9 +185,9 @@ export const experimentSections: ScientificSectionDefinition[] = [
   { key: "background", title: "Background & rationale" },
   { key: "setup", title: "Setup & samples", aliases: ["materials"] },
   { key: "execution", title: "Execution notes", aliases: ["steps"] },
-  { key: "observations", title: "Observations & media" },
   { key: "deviations", title: "Deviations & incidents" },
   { key: "conclusion", title: "Summary & conclusion" },
+  { key: "observations", title: "Observations & media" },
 ];
 
 export const resultSections: ScientificSectionDefinition[] = [

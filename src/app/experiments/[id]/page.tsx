@@ -1,3 +1,4 @@
+import { ExperimentExecutionRecord } from "@/components/ExperimentExecutionRecord";
 import { ExperimentStepOrderEditor } from "@/components/ExperimentStepOrderEditor";
 import { EntrySourceCards } from "@/components/EntrySourceCards";
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
@@ -44,7 +45,8 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
-  const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson);
+  const evidenceSteps = await stepsWithExecutionEvidence(experiment.steps);
+  const document = experimentExecutionDocument(experiment.contentJson, evidenceSteps, experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson);
   const completed = experiment.steps.filter((step) => step.completed).length;
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
@@ -84,7 +86,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main space-y-6">
-        <ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} />} />
+        <ScientificDocumentView document={document} hideDerivedSections={["execution"]} sectionContent={{ execution: <ExperimentExecutionRecord experimentId={experiment.id} steps={evidenceSteps} snapshot={experiment.protocolSnapshotJson} executionPlan={experiment.protocolRun?.executionPlanJson} parameters={experiment.protocolRun?.parametersJson} updatedAt={experiment.updatedAt.toISOString()} editable={!locked && !["archived", "completed"].includes(experiment.status)} /> }} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date.toISOString().slice(0, 10)} />} />
 
         {experiment.status==="planned" && experiment.recordStatus==="draft" && experiment.steps.length?<ExperimentStepOrderEditor experimentId={experiment.id} updatedAt={experiment.updatedAt.toISOString()} steps={experiment.steps.map(({id,groupKey,title})=>({id,groupKey,title}))}/>:null}
         <EntrySourceCards type="experiment" id={experiment.id} locked={locked} />

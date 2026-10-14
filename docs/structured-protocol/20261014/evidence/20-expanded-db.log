@@ -1,0 +1,7 @@
+(node:66558) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: 继续实例请求与原请求不一致
+    at <anonymous> (/Users/annayzhu/Documents/Playground/LabNest/src/lib/structured-run.server.ts:56:290)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Proxy._transactionWithCallback (/Users/annayzhu/Documents/Playground/LabNest/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:810:18)
+    at async main (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-run-transactions.ts:56:18)

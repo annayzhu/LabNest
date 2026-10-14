@@ -1,0 +1,133 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import readXlsxFile from 'read-excel-file/node';
+const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
+assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && new URL(base).port !== '3001', 'Isolated acceptance server only');
+const dir = 'docs/structured-protocol/20261014/evidence', fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
+await mkdir(dir, { recursive: true });
+const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Shanghai' });
+await context.addCookies([{ name: 'labnest_locale', value: 'zh', url: base }]);
+await context.tracing.start({ screenshots: true, snapshots: true });
+context.setDefaultTimeout(15000);
+const page = await context.newPage(), errors = [];
+page.on('pageerror', error => errors.push(error.message));
+const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: Boolean(execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' }).trim()), browser: browser.version(), fixture: 'synthetic isolated database; AI_ENABLED=false', checks: [], screenshots: [] };
+const go = path => page.goto(base + path, { waitUntil: 'networkidle' });
+const shot = async name => { await page.screenshot({ path: `${dir}/${name}.png` }); report.screenshots.push(`${name}.png`); };
+const record = async id => (await (await page.request.get(`${base}/api/experiments/${id}?qa=${Date.now()}`)).json()).experiment;
+const waitRecord = async (id, predicate) => { for (let i = 0; i < 100; i++) { const value = await record(id); if (predicate(value)) { if (page.url().endsWith(`/experiments/${id}/run`) && value.protocolRun?.executionPlanJson?.revision !== undefined) await page.waitForFunction(revision => document.querySelector('[data-run-system-selection] input[name="executionPlanRevision"]')?.value === String(revision), value.protocolRun.executionPlanJson.revision); return value; } await new Promise(r => setTimeout(r, 100)); } throw Error('Database readback timed out'); };
+const check = async (name, action) => { const started = Date.now(); try { await action(); report.checks.push({ name, result: '通过', ms: Date.now() - started }); console.log('PASS', name); } catch (error) { report.checks.push({ name, result: '失败', error: error.message }); await shot('failure'); throw error; } };
+let experimentId, sourceBefore, steps;
+try {
+await check('A01 A02 all-system and selected preview retain source and existing Run selection', async () => {
+  sourceBefore = await record(fixture.experimentId);
+  await go(`/protocols/${fixture.protocolId}?version=${fixture.versionId}`);
+  const main = page.locator('.app-shell-main'); assert((await main.innerText()).includes('50 µL')); assert((await main.innerText()).includes('80 µL'));
+  const preview = page.locator('[data-protocol-system-preview]'); await preview.getByLabel('预览范围').selectOption('selected'); await preview.getByLabel('裂解体积').selectOption('small'); await preview.getByLabel('样本性质').selectOption('normal');
+  assert(!(await main.innerText()).includes('附加盐'));
+  await shot('protocol-selected-desktop');
+  assert.deepEqual((await record(fixture.experimentId)).protocolRun.executionPlanJson, sourceBefore.protocolRun.executionPlanJson);
+  await preview.getByLabel('预览范围').selectOption('all');
+  await page.pdf({ path: `${dir}/protocol-preview.pdf`, format: 'A4', printBackground: true });
+});
+await check('B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work', async () => {
+  await go(`/experiments/new?plan=${fixture.planId}&protocolVersionId=${fixture.versionId}`);
+  assert.equal(await page.locator('[data-preview-step]').count(), 4);
+  await page.locator('.document-page-title-input').fill('合成验收 · 页面创建与执行');
+  await page.getByRole('button', { name: /^(Save Experiment|保存实验)$/ }).click();
+  await page.waitForURL(url => /^\/experiments\/[^/]+$/.test(url.pathname) && !url.pathname.endsWith('/new'));
+  experimentId = page.url().split('/').pop(); report.experimentId = experimentId;
+  const initial = await record(experimentId); steps = Object.fromEntries(initial.steps.map(s => [s.protocolStepRef.split(':').pop(), s]));
+  assert.equal(initial.steps.length, 4); report.stepIds = Object.fromEntries(Object.entries(steps).map(([key, s]) => [key, s.id]));
+  await go(`/experiments/${experimentId}/run`);
+  assert(await page.locator(`#step-${steps.dose.id} input[name="completedStepIds"]`).isDisabled());
+  const form = page.locator('[data-run-system-selection]');
+  await form.getByLabel('裂解体积').selectOption('small'); await form.getByLabel('样本性质').selectOption('normal'); await form.getByLabel('目标终浓度', { exact: true }).fill('10');
+  await form.getByRole('button', { name: '计算并确认采用', exact: true }).click();
+  await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.versions?.[fixture.versionId]?.calculations.take?.value === 10);
+  await page.reload({ waitUntil: 'networkidle' });
+  const text = await page.locator(`#step-${steps.dose.id}`).innerText(); assert(text.includes('50 µL')); assert(text.includes('10 µL'));
+  await shot('run-confirmed-desktop');
+});
+await check('E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes', async () => {
+  for (const width of [1024, 768, 600, 390, 320]) { await page.setViewportSize({ width, height: 1000 }); await page.reload({ waitUntil: 'networkidle' }); assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `overflow ${width}`); await shot(`run-${width}`); }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: /^(Next|下一步)$/ }).click();
+  const mobile = page.locator('section.lg\\:hidden').first();
+  await mobile.getByLabel('实际 Proteinase K').fill('50');
+  await mobile.locator('details > summary').filter({ hasText: '记录偏差' }).click();
+  await mobile.locator('textarea[name^="mobileDeviation:"]').fill('未保存中文备注');
+  await mobile.locator('[data-run-tools]').getByRole('button', { name: /Calculator|计算器/ }).click(); await page.waitForURL(url => url.pathname === '/tools/calculator');
+  await page.locator('a[href^="/tools/calculator/molarity"]').first().click(); await page.waitForURL(url => url.pathname === '/tools/calculator/molarity');
+  await page.locator(`a[href^="/experiments/${experimentId}/run"]`).first().click(); await page.waitForURL(url => url.pathname.endsWith('/run'));
+  await page.waitForFunction(() => document.querySelector('textarea[name^="mobileDeviation:"]')?.value === '未保存中文备注');
+  assert.equal(await mobile.getByLabel('实际 Proteinase K').inputValue(), '50');
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-run-step-content] img')].filter(i => i.getBoundingClientRect().width > 0).every(i => i.complete && i.naturalWidth > 0));
+  assert.equal(await mobile.locator('[data-run-step-content] img').count(), 4);
+  await shot('run-mobile-draft-and-images');
+  await mobile.getByRole('button', { name: '保存实际值', exact: true }).click();
+  await waitRecord(experimentId, e => e.protocolRun.executionPlanJson.actualValues?.[steps.dose.id]?.['actual-proteinase']?.value === 50);
+  await page.setViewportSize({ width: 1440, height: 1000 }); await page.reload({ waitUntil: 'networkidle' });
+});
+await check('B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress', async () => {
+  const stale = await context.newPage(); await stale.goto(`${base}/experiments/${experimentId}/run`, { waitUntil: 'networkidle' });
+  await page.locator(`#step-${steps.dose.id} input[name="completedStepIds"]`).check();
+  await page.locator(`#step-${steps.prepare.id} input[name="completedStepIds"]`).check();
+  await page.getByRole('button', { name: /^(Save progress|保存进度)$/ }).click(); await waitRecord(experimentId, e => [steps.prepare.id, steps.dose.id].every(id => e.steps.find(s => s.id === id).completed));
+  await stale.getByRole('button', { name: /^(Save progress|保存进度)$/ }).click();
+  await stale.getByText(/执行方案已变更，请刷新/).filter({ visible: true }).first().waitFor(); assert((await record(experimentId)).steps.find(s => s.id === steps.dose.id).completed);
+  await stale.screenshot({ path: `${dir}/stale-tab-rejected.png` }); await stale.close(); await page.reload({ waitUntil: 'networkidle' });
+});
+await check('D03 D04 start refresh pause resume finish timer retains one instance and never completes step', async () => {
+  const row = page.locator(`#step-${steps.incubate.id}`);
+  const timer = row.locator('section[aria-label="Step timer"]');
+  if (!await timer.isVisible()) await row.getByRole('button', { name: /计时器|Timer/ }).first().click();
+  await timer.getByRole('button', { name: 'Start', exact: true }).click();
+  const started = await waitRecord(experimentId, e => e.steps.find(s => s.id === steps.incubate.id).timerStartedAt); const start = started.steps.find(s => s.id === steps.incubate.id).timerStartedAt;
+  await page.reload({ waitUntil: 'networkidle' }); assert.equal((await record(experimentId)).steps.find(s => s.id === steps.incubate.id).timerStartedAt, start);
+  if (!await timer.isVisible()) await row.getByRole('button', { name: /计时器|Timer/ }).first().click();
+  await timer.getByRole('button', { name: 'Pause', exact: true }).click(); await waitRecord(experimentId, e => e.steps.find(s => s.id === steps.incubate.id).timerPausedAt);
+  await timer.getByRole('button', { name: 'Resume', exact: true }).click(); await waitRecord(experimentId, e => e.steps.find(s => s.id === steps.incubate.id).timerStartedAt);
+  await timer.getByRole('button', { name: 'Pause', exact: true }).waitFor();
+  await timer.getByRole('button', { name: '结束计时（步骤仍需确认）', exact: true }).click();
+  const finished = await waitRecord(experimentId, e => e.steps.find(s => s.id === steps.incubate.id).timerRemainingSeconds === 0); assert(!finished.steps.find(s => s.id === steps.incubate.id).completed);
+  await shot('timer-finished-not-completed');
+});
+await check('B06 continuation displays original treatment and starts at explicit remaining operation', async () => {
+  await go(`/experiments/${fixture.continuationId}/run`); assert((await page.locator('.app-shell-main').innerText()).includes('此前已完成'));
+  assert((await page.locator('.app-shell-main').innerText()).includes('50 µL'));
+  const continued = await record(fixture.continuationId); assert.equal(continued.steps.length, 2); assert.equal(continued.steps[0].protocolStepRef, `${fixture.versionId}:incubate`);
+  await shot('continuation-history');
+});
+await check('F03 actual JSON Markdown CSV XLSX DOCX and print files preserve adopted quantities and source', async () => {
+  await go(`/experiments/${experimentId}`);
+  await page.pdf({ path: `${dir}/experiment-preview.pdf`, format: 'A4', printBackground: true });
+  for (const format of ['json', 'md', 'csv', 'xlsx']) {
+    const response = await page.request.get(`${base}/api/structured-export/experiments?format=${format}&exportScope=selected&id=${experimentId}`); assert.equal(response.status(), 200, `${format}: ${response.status() === 200 ? '' : await response.text()}`);
+    const bytes = await response.body(); await writeFile(`${dir}/experiment.${format}`, bytes);
+    const text = format === 'xlsx' ? JSON.stringify(await readXlsxFile(bytes)) : bytes.toString(); assert(text.includes('50 µL'), format); assert(text.includes('10 µL'), format); assert(text.includes(fixture.versionId), format);
+  }
+  const docx = await page.request.get(`${base}/api/protocols/${fixture.protocolId}/versions/${fixture.versionId}/docx`); assert.equal(docx.status(), 200); await writeFile(`${dir}/protocol.docx`, await docx.body());
+  for (const format of ['json', 'md', 'xlsx']) {
+    const response = await page.request.get(`${base}/api/structured-export/protocols?format=${format}&exportScope=selected&id=${fixture.protocolId}`); assert.equal(response.status(),200);
+    const bytes = await response.body(); await writeFile(`${dir}/protocol.${format}`,bytes);
+    const text = format === 'xlsx' ? JSON.stringify(await readXlsxFile(bytes)) : bytes.toString();
+    assert(text.includes('50 µL') && text.includes('80 µL'),format);
+  }
+});
+await check('E01 actual light/dark responsive Run retains readable system labels and scoped spacing', async () => {
+  for (const mode of ['light','dark']) for (const width of [1440,390]) {
+    await page.emulateMedia({colorScheme:mode}); await page.setViewportSize({width,height:1000});
+    await go(`/experiments/${experimentId}/run`);
+    assert.equal(await page.locator('html').getAttribute('data-labnest-mode'),mode);
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
+    assert(await page.locator('.protocol-system-preparation').evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=12));
+    await shot(`final-run-${mode}-${width}`);
+  }
+});
+assert.deepEqual(errors, []);
+} finally {
+  report.pageErrors = errors; await context.tracing.stop({ path: `${dir}/browser-trace.zip` }); await browser.close(); await writeFile(`${dir}/browser-report.json`, JSON.stringify(report, null, 2));
+}

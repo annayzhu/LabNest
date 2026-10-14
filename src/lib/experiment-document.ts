@@ -125,7 +125,11 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     blocks.push({ id: `run-derived:system-parameters:${version.id}`, type: 'table', rows: [['采用参数', '值', '来源'], ...systems.parameters.map(p => { const value = resolution.parameters[p.id]; return [p.label, value?.status === 'resolved' ? `${value.value} ${value.unit}` : value?.message ?? '待确定', { fixed: '固定值', lookup: '体系查表', actual: '本次填写', calculator: '计算后确认' }[p.source.kind]]; })] });
     for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) blocks.push({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${systems.parameters.find(p => p.id === id)?.label} · ${receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认 ${receipt.confirmedAt}\n输入：${JSON.stringify(receipt.snapshot.rawInputs)}\n当时计算结果：${receipt.value} ${receipt.unit}\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` });
   }
-  if (structured.plan.continuation) blocks.push({ id: 'run-derived:continuation', type: 'text', text: `继续执行自 ${structured.plan.continuation.experimentId}；原处理历史保留在原记录。受影响来源：${structured.plan.continuation.affectedSourceRefs.join('、')}` });
+  if (structured.plan.continuation) {
+    const prior = structured.plan.continuation;
+    blocks.push({ id: 'run-derived:continuation', type: 'text', text: `继续执行自 ${prior.experimentId}；继续位置来源：${prior.startSourceRef ?? '旧记录未记载'}。以下为此前处理历史，不属于本次已完成操作。` });
+    for (const [index, step] of prior.history.entries()) blocks.push({ id: `run-derived:history-${index}`, type: 'text', text: [step.title, step.completed ? `此前已完成 ${step.completedAt ?? ''}` : '此前未完成', step.description, ...Object.values(step.actualValues).map(value => `原实际记录：${value.value} ${value.unit} · ${value.recordedAt}`), step.deviationNote ?? ''].filter(Boolean).join('\n') });
+  }
   if(parameters && typeof parameters==='object' && !Array.isArray(parameters)) {
     const rows=Object.entries(parameters).filter(([,value])=>['string','number','boolean'].includes(typeof value)).map(([key,value])=>[key,String(value)]);
     if(rows.length)blocks.push({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],...rows]});

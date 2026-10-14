@@ -11,7 +11,7 @@ import { formActionErrorMessage } from "@/lib/form-actions";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
 import { structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
-import { updateRunSystemSelection, recordStructuredStep } from '@/lib/structured-run.server';
+import { advanceExecutionRevision, updateRunSystemSelection, recordStructuredStep } from '@/lib/structured-run.server';
 
 export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string; continuationUrl?: string };
 export type StepTimerActionState = ProtocolRunProgressState;
@@ -27,7 +27,7 @@ export async function saveStructuredStepRecord(_previous: ProtocolRunProgressSta
 
 export async function confirmRunSystems(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
   try {
-    const result = await updateRunSystemSelection({ experimentId: String(form.get('experimentId')), versionId: String(form.get('versionId')), expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) });
+    const result = await updateRunSystemSelection({ experimentId: String(form.get('experimentId')), versionId: String(form.get('versionId')), expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) });
     revalidatePath(`/experiments/${result.experimentId}/run`);
     return { message: '本次体系已确认并保存', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
   } catch (error) { return { error: formActionErrorMessage(error, '体系未保存，请重试') }; }
@@ -78,16 +78,19 @@ export async function saveProtocolRunProgress(
       clientMutationId: optionalText(formData.get("clientMutationId")),
       deviceCreatedAt: optionalText(formData.get("deviceCreatedAt")),
     });
-    if (parsed.clientMutationId) {
-      const replay = await prisma.experimentStepEvent.findUnique({ where: { clientMutationId: parsed.clientMutationId }, select: { id: true } });
-      if (replay) return { message: "Step completion already saved.", savedAt: new Date().toISOString() };
-    }
     const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
     if (parsed.completedCurrentStepId) completedStepIds.add(parsed.completedCurrentStepId);
     const recordedAt = new Date();
 
     await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
+    if (parsed.clientMutationId && parsed.completedCurrentStepId) {
+      const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: parsed.clientMutationId } });
+      if (replay) {
+        if (replay.experimentId !== parsed.experimentId || replay.experimentStepId !== parsed.completedCurrentStepId) throw new Error('重复请求不属于此步骤');
+        return;
+      }
+    }
     const experiment = await tx.experiment.findUnique({
       where: { id: parsed.experimentId },
       include: { protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] } },
@@ -182,7 +185,7 @@ export async function saveProtocolRunProgress(
               experimentStepId: step.id,
               experimentId: experiment.id,
               eventType: completed ? "completed" : "reopened",
-              clientMutationId: parsed.clientMutationId,
+              clientMutationId: parsed.completedCurrentStepId ? parsed.clientMutationId : undefined,
               deviceCreatedAt: parsed.deviceCreatedAt,
               payloadJson: JSON.parse(JSON.stringify({ previousCompleted: step.completed, completed, deviationType: deviationType ?? null, actualExecution: deviationNote ?? null, impactAssessment: deviationImpact ?? null, author: deviationAuthor ?? null, ...(structured.steps[step.id] ? { executionPlanRevision: structured.plan.revision, adopted: structured.steps[step.id], actualValues: structured.plan.actualValues[step.id] ?? {} } : {}) })),
             },
@@ -204,6 +207,7 @@ export async function saveProtocolRunProgress(
         update: { status: nextStatus },
       });
     }
+    await advanceExecutionRevision(tx, experiment.id, structured);
     await tx.activityLog.create({
       data: {
         action: `protocol_run_${parsed.intent}`,
@@ -281,6 +285,7 @@ export async function updateStepTimer(
 
       await tx.experimentStep.update({ where: { id: step.id }, data: timerData });
       if (structured.steps[step.id]) await tx.experimentStepEvent.create({ data: { experimentId: parsed.experimentId, experimentStepId: step.id, eventType: `timer_${parsed.timerIntent}`, payloadJson: JSON.parse(JSON.stringify({ executionPlanRevision: structured.plan.revision, previous: { startedAt: step.timerStartedAt, remainingSeconds: step.timerRemainingSeconds }, timerData })) } });
+      await advanceExecutionRevision(tx, parsed.experimentId, structured);
       await tx.activityLog.create({
         data: {
           action: `experiment_step_timer_${parsed.timerIntent}`,

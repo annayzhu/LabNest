@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "C04 visible move, undo/redo and explicit clipboard copy preserve original assets and unique node IDs",
+      "result": "通过"
+    },
+    {
+      "name": "C04 native pointer drag moves one reference without a new upload",
+      "result": "通过"
+    },
+    {
+      "name": "C06 upload failure is explicit; retry creates one asset, delete/undo retains reference",
+      "result": "通过"
+    }
+  ]
+}

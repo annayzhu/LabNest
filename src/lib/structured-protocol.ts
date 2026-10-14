@@ -1,3 +1,4 @@
+import { formatQuantity } from './calculators/quantity-format';
 import { convert, normalizeUnit, units } from './calculators/quantities';
 import { protocolSystemsSchema, type ProtocolCondition, type ProtocolSystems } from './protocol-systems-schema';
 import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document';
@@ -86,14 +87,14 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
     if (source.kind === 'calculator') continue;
     let candidate: { value: number; unit: string; id?: string } | undefined;
     let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit };
-    if (source.kind === 'fixed') candidate = source;
+    if (source.kind === 'fixed' && source.value !== null) candidate = { ...source, value: source.value };
     if (source.kind === 'actual') candidate = actualValues[parameter.id];
     if (source.kind === 'lookup') {
       const matched = source.values.filter(row => evaluateProtocolCondition(row.when, selections) === 'applicable');
       const unresolved = source.values.some(row => evaluateProtocolCondition(row.when, selections) === 'unknown');
       if (matched.length > 1) resolved = { ...resolved, status: 'conflict', message: `${parameter.label}：多条规则同时匹配 / Multiple matching values` };
       else if (unresolved) resolved.message = `${parameter.label}：条件待确定 / Conditions incomplete`;
-      else if (matched.length === 1) candidate = matched[0];
+      else if (matched.length === 1 && matched[0].value !== null) candidate = { ...matched[0], value: matched[0].value };
       else resolved.message = `${parameter.label}：没有适用值 / Missing value`;
     }
     if (candidate) {
@@ -113,12 +114,16 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
       let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit, message: `${parameter.label}：输入待确定 / Inputs incomplete` };
       if (Object.values(parameter.source.inputs).every(id => result.parameters[id]?.status === 'resolved')) {
         try {
-          const preview = previewProtocolCalculation(parameter, result.parameters);
           const receipt = calculations[parameter.id];
-          // Recompute for validation, but never adopt a new result without its matching confirmation.
-          resolved = receipt?.confirmedAt && receipt.fingerprint === preview.fingerprint
-            ? { status: 'resolved', value: preview.value, unit: preview.unit, sourceId: `${preview.snapshot.calculatorId}:${preview.snapshot.methodVersion}` }
-            : { ...resolved, message: `${parameter.label}：需重新计算并确认 / Recalculate and confirm` };
+          const fingerprint = protocolCalculationFingerprint(parameter, result.parameters);
+          // Confirmed input/binding snapshots survive calculator code upgrades. Only
+          // changed inputs invalidate them; historical adopted values are not recomputed.
+          if (receipt?.confirmedAt && calculationReceiptMatches(receipt.fingerprint, fingerprint) && Number.isFinite(receipt.value) && receipt.snapshot.status === 'valid') {
+            resolved = { status: 'resolved', value: convert(receipt.value, receipt.unit, parameter.unit), unit: parameter.unit, sourceId: `${receipt.snapshot.calculatorId}:${receipt.snapshot.methodVersion}` };
+          } else {
+            previewProtocolCalculation(parameter, result.parameters); // Validate the new proposed inputs only.
+            resolved = { ...resolved, message: `${parameter.label}：需重新计算并确认 / Recalculate and confirm` };
+          }
         } catch (error) { resolved = { ...resolved, status: 'invalid', message: `${parameter.label}：${error instanceof Error ? error.message : '计算失败'}` }; }
       }
       result.parameters[parameter.id] = resolved;
@@ -143,15 +148,32 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
   return result;
 }
 
-/** Typed adapter to the existing engine. No formula or independent unit system lives here. */
-export function previewProtocolCalculation(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']): Omit<ProtocolCalculation, 'confirmedAt'> {
+function protocolCalculationInputs(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']) {
   if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
   const inputs: Record<string, unknown> = { mode: 'final' };
-  for (const [key, id] of Object.entries(parameter.source.inputs)) {
+  for (const [key, id] of Object.entries(parameter.source.inputs).sort(([a], [b]) => a.localeCompare(b))) {
     const input = parameters[id];
     if (input?.status !== 'resolved') throw new Error('请先填写全部计算输入');
     inputs[key] = input.value; inputs[`${key}Unit`] = input.unit;
   }
+  return inputs;
+}
+export function protocolCalculationFingerprint(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']) {
+  if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
+  return JSON.stringify({ tool: parameter.source.calculatorId, inputs: protocolCalculationInputs(parameter, parameters), bindings: Object.fromEntries(Object.entries(parameter.source.inputs).sort(([a], [b]) => a.localeCompare(b))), output: parameter.source.output, unit: parameter.unit });
+}
+export function calculationReceiptMatches(saved: string, current: string) {
+  try {
+    const old = JSON.parse(saved), next = JSON.parse(current);
+    const sorted = (value: Record<string, unknown>) => JSON.stringify(Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))));
+    return old.tool === next.tool && old.output === next.output && old.unit === next.unit && sorted(old.inputs) === sorted(next.inputs) && (!old.bindings || sorted(old.bindings) === sorted(next.bindings));
+  } catch { return false; }
+}
+
+/** Typed adapter to the existing engine. No formula or independent unit system lives here. */
+export function previewProtocolCalculation(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']): Omit<ProtocolCalculation, 'confirmedAt'> {
+  if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
+  const inputs = protocolCalculationInputs(parameter, parameters);
   const snapshot = calculate({ calculatorId: parameter.source.calculatorId, inputs });
   if (snapshot.status !== 'valid') throw new Error('计算结果无效，不能采用');
   const output = snapshot.outputMap[parameter.source.output];
@@ -160,7 +182,7 @@ export function previewProtocolCalculation(parameter: ProtocolSystems['parameter
   const outputUnit = snapshot.outputs.find(item => item.key === outputKey)?.unit;
   if (!outputUnit) throw new Error('计算输出缺少单位');
   const value = convert(output, outputUnit, parameter.unit);
-  const fingerprint = JSON.stringify({ tool: snapshot.calculatorId, method: snapshot.methodVersion, inputs, output: parameter.source.output, unit: parameter.unit });
+  const fingerprint = protocolCalculationFingerprint(parameter, parameters);
   return { value, unit: parameter.unit, snapshot, fingerprint };
 }
 
@@ -196,7 +218,7 @@ export function resolveProtocolDocument(document: ProtocolDocument, selections: 
   };
   const render = <T,>(value: T) => mapParameterText(value, id => {
     const parameter = resolution.parameters[id];
-    return parameter?.status === 'resolved' ? `${parameter.value} ${parameter.unit}` : `〔${systems?.parameters.find(p => p.id === id)?.label ?? id}：待确定〕`;
+    return parameter?.status === 'resolved' ? `${formatQuantity(parameter.value!)} ${parameter.unit}` : `〔${systems?.parameters.find(p => p.id === id)?.label ?? id}：待确定〕`;
   });
   const steps = source.steps.map(step => {
     const id = step.source_ref!;
@@ -204,7 +226,7 @@ export function resolveProtocolDocument(document: ProtocolDocument, selections: 
     const applicability = conjunction([state('step', id), state('block', start?.id ?? '')]);
     const blocks = (step.content_blocks ?? []).flatMap(filterBlock);
     const referenced = new Set(rules.filter(r => r.target === 'step' && r.targetId === id).flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
-    mapParameterText(blocks, key => { referenced.add(key); return key; });
+    mapParameterText([step.title, ...blocks], key => { referenced.add(key); return key; });
     const unknownContent = blocks.some(b => state('block', b.id) === 'unknown' || b.type === 'table' && b.rowIds?.some(rowId => state('row', rowId) === 'unknown'));
     const blocked = globalBlock || applicability !== 'applicable' || unknownContent || [...referenced].some(key => resolution.parameters[key]?.status !== 'resolved');
     const content_blocks = render(blocks);
@@ -230,7 +252,7 @@ export function allSystemProtocolDocument(document: ProtocolDocument): ProtocolD
   if (!systems) return document;
   const parameters = Object.fromEntries(systems.parameters.map(parameter => {
     const { source } = parameter;
-    const quantity = (value: number, unit: string) => { try { return `${convert(value, unit, parameter.unit)} ${parameter.unit}`; } catch { return '单位不兼容'; } };
+    const quantity = (value: number | null, unit: string) => { if (value === null) return '待填写'; try { return `${formatQuantity(convert(value, unit, parameter.unit))} ${parameter.unit}`; } catch { return '单位不兼容'; } };
     const text = source.kind === 'actual' ? `${parameter.label}：执行时填写（${parameter.unit}）` : source.kind === 'calculator' ? `${parameter.label}：稀释计算器计算后确认（${parameter.unit}）` : source.kind === 'fixed' ? quantity(source.value, source.unit)
       : source.values.map(v => `${protocolConditionLabel(v.when, systems)} → ${quantity(v.value, v.unit)}`).join(' / ') || `${parameter.label}：缺少取值`;
     return [parameter.id, text];
@@ -238,10 +260,10 @@ export function allSystemProtocolDocument(document: ProtocolDocument): ProtocolD
   return { ...document, sections: document.sections.map(section => ({ ...section, blocks: section.blocks.map(block => {
     const rendered = mapParameterText(block, id => parameters[id] ?? `〔${id}：引用不存在〕`);
     if (rendered.type !== 'table') return rendered;
-    return { ...rendered, rows: rendered.rows.map((row, index) => {
-      const labels = systems.rules.filter(r => r.target === 'row' && r.targetId === rendered.rowIds?.[index]).map(r => protocolConditionLabel(r.when, systems));
-      return labels.length ? [`${row[0]}〔${labels.join('；')}〕`, ...row.slice(1)] : row;
-    }) };
+    const rowLabel = (index: number) => systems.rules.filter(r => r.target === 'row' && r.targetId === rendered.rowIds?.[index]).map(r => protocolConditionLabel(r.when, systems)).join('；');
+    return { ...rendered, rows: rendered.rows.map((row, index) => rowLabel(index) ? [`${row[0]}〔${rowLabel(index)}〕`, ...row.slice(1)] : row),
+      ...(rendered.cellRichContent ? { cellRichContent: rendered.cellRichContent.map((row, index) => rowLabel(index) && row[0] ? [[...row[0], { type: 'paragraph', content: [{ type: 'text', text: `〔${rowLabel(index)}〕` }] }], ...row.slice(1)] : row) } : {}),
+    };
   }) })) };
 }
 
@@ -250,7 +272,7 @@ export function allSystemProtocolExportDocument(document: ProtocolDocument): Pro
   const systems = document.systems;
   if (!systems) return document;
   const rendered = allSystemProtocolDocument(document);
-  const symbols = ['▲', '■', '●', '◆'];
+  const symbols = ['○', '◇', '□'];
   return { ...rendered, sections: rendered.sections.map(section => ({ ...section, blocks: [
     ...(section.key === 'description' ? [{ id: 'system-export-legend', type: 'text' as const, text: `通用规程 · 全部体系（不是本次执行记录）\n${systems.dimensions.map(d => `${d.label}：${d.options.map((o, i) => `${symbols[i % symbols.length]} ${o.label}`).join('；')}`).join('\n')}` }] : []),
     ...section.blocks.flatMap(block => {

@@ -10,7 +10,16 @@ export const executionPlanSchema = z.object({
   versions: z.record(z.string(), z.object({ selections: z.record(z.string(), z.string()), confirmedAt: z.string(), actualInputs: z.record(z.string(), quantity), calculations: z.record(z.string(), z.object({ fingerprint: z.string(), value: z.number().finite(), unit: z.string(), confirmedAt: z.string(), snapshot: z.custom<CalculatorResult>(value => Boolean(value && typeof value === 'object' && 'methodVersion' in value)) })).default({}) })),
   actualValues: z.record(z.string(), z.record(z.string(), quantity.extend({ recordedAt: z.string() }))),
   skips: z.record(z.string(), z.object({ reason: z.string().min(1), recordedAt: z.string() })),
-  continuation: z.object({ experimentId: z.string(), createdAt: z.string(), affectedSourceRefs: z.array(z.string()), priorRecord: z.unknown() }).optional(),
+  continuation: z.object({
+    experimentId: z.string(), createdAt: z.string(), affectedSourceRefs: z.array(z.string()),
+    startSourceRef: z.string().optional(), priorRecord: z.unknown(),
+    history: z.array(z.object({
+      sourceRef: z.string(), title: z.string(), completed: z.boolean(),
+      completedAt: z.string().nullable(), description: z.string(),
+      actualValues: z.record(z.string(), quantity.extend({ recordedAt: z.string() })),
+      deviationNote: z.string().nullable(),
+    })).default([]),
+  }).optional(),
 });
 export type ExecutionPlan = z.infer<typeof executionPlanSchema>;
 export const emptyExecutionPlan = (): ExecutionPlan => ({ schemaVersion: 1, revision: 0, versions: {}, actualValues: {}, skips: {} });

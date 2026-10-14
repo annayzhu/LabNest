@@ -1,6 +1,7 @@
 import { Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
 import { Mapping } from '@tiptap/pm/transform';
+import { newClientMutationId } from './client-mutation-id';
 
 /** Assign IDs in the editor transaction, not anew during each serialization. */
 export const ProtocolEditorIdentities = Extension.create({
@@ -26,18 +27,18 @@ export const ProtocolEditorIdentities = Extension.create({
       state.doc.descendants((node, pos, parent) => {
         if (node.type.name === 'tableRow') {
           const id = node.attrs.protocolRowId as string | null;
-          if (!id || originals.has(id) && originals.get(id) !== pos || rows.has(id)) { const next = `row-${crypto.randomUUID()}`; tr.setNodeMarkup(pos, undefined, { ...node.attrs, protocolRowId: next }); rows.add(next); }
+          if (!id || originals.has(id) && originals.get(id) !== pos || rows.has(id)) { const next = `row-${newClientMutationId()}`; tr.setNodeMarkup(pos, undefined, { ...node.attrs, protocolRowId: next }); rows.add(next); }
           else rows.add(id);
         } else if (node.type.name === 'documentMedia' && node.attrs.block) {
           const block = node.attrs.block;
           // A move keeps the original reference. A copy receives a new node ID,
           // including when pasted before the source; the attachment ID stays shared.
           if (!block.id || originals.has(block.id) && originals.get(block.id) !== pos || media.has(block.id)) {
-            const id = `media-${crypto.randomUUID()}`;
+            const id = `media-${newClientMutationId()}`;
             tr.setNodeMarkup(pos, undefined, { ...node.attrs, block: { ...block, id, ...(block.execution ? { execution: { role: 'info' } } : {}) } }); media.add(id);
           } else media.add(block.id);
         } else if (parent?.type.name === 'protocolSection' && 'protocolBlockId' in node.attrs && !node.attrs.protocolBlockId) {
-          tr.setNodeMarkup(pos, undefined, { ...node.attrs, protocolBlockId: `block-${crypto.randomUUID()}` });
+          tr.setNodeMarkup(pos, undefined, { ...node.attrs, protocolBlockId: `block-${newClientMutationId()}` });
         }
       });
       return tr.docChanged ? tr.setMeta('addToHistory', false) : null;

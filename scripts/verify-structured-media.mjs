@@ -1,0 +1,61 @@
+import { execFileSync } from 'node:child_process';
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import sharp from 'sharp';
+const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338', dir = 'docs/structured-protocol/20261014/evidence';
+assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && new URL(base).port !== '3001');
+const fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
+const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read','clipboard-write'] });
+const page = await context.newPage(), report = { head: execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), synthetic: true, checks: [] };
+await context.tracing.start({ screenshots: true, snapshots: true });
+context.setDefaultTimeout(15000);
+const doc = async () => JSON.parse(await page.locator('input[name="contentJson"]').inputValue());
+const media = async () => (await doc()).sections.flatMap(s=>s.blocks).filter(b=>b.type==='media');
+const close = async () => { const panel=page.locator('.context-properties[aria-hidden="false"]'); if(await panel.count()) await panel.getByRole('button',{name:'收起属性',exact:true}).click(); };
+const check = async (name, fn) => { try { await fn(); report.checks.push({ name, result:'通过' }); console.log('PASS',name); } catch(e) {report.checks.push({name,result:'失败',error:e.message});await page.screenshot({path:`${dir}/media-failure.png`});throw e;} };
+try {
+await page.goto(`${base}/protocols/${fixture.protocolId}/versions/${fixture.versionId}/edit`,{waitUntil:'networkidle'});
+const nodes = page.locator('#protocol-section-steps [data-document-media]');
+const before = await media();
+await check('C04 visible move, undo/redo and explicit clipboard copy preserve original assets and unique node IDs',async()=>{
+ await nodes.first().locator('img').click(); await close();
+ await nodes.first().getByRole('button',{name:'下移图片 / Move image later',exact:true}).click();
+ assert.deepEqual((await media()).map(b=>b.id),[before[1].id,before[0].id,before[2].id,before[3].id]);
+ await page.getByRole('button',{name:'Undo',exact:true}).click();assert.deepEqual((await media()).map(b=>b.id),before.map(b=>b.id));
+ await page.getByRole('button',{name:'Redo',exact:true}).click();assert.equal((await media()).length,4);
+ await nodes.first().locator('img').click(); await close();
+ await page.keyboard.press('ControlOrMeta+c');
+ const target=page.locator('#protocol-section-steps [data-node-view-content] p').last();await target.click();await page.keyboard.press('ControlOrMeta+v');
+ await page.waitForFunction(()=>document.querySelectorAll('#protocol-section-steps [data-document-media]').length===5);
+ const copied=await media();assert.equal(new Set(copied.map(b=>b.id)).size,5);assert.equal(new Set(copied.map(b=>b.attachmentId)).size,4);
+ const copy=copied.find(b=>!before.some(o=>o.id===b.id));
+ await page.locator(`[data-document-media="${copy.id}"] img`).click();
+ await page.getByRole('button',{name:'移除引用 / Remove reference',exact:true}).filter({visible:true}).click();assert.equal((await media()).length,4);
+ await page.getByRole('button',{name:'Undo',exact:true}).click();assert.equal((await media()).length,5);
+ await page.getByRole('button',{name:'Redo',exact:true}).click();assert.equal((await media()).length,4);
+});
+await check('C04 native pointer drag moves one reference without a new upload',async()=>{
+ const initial=await media();
+ await nodes.first().locator('img').click();await close();
+ await nodes.first().getByRole('button',{name:'移动附件 / Move attachment',exact:true}).dragTo(nodes.nth(1),{targetPosition:{x:30,y:170}});
+ const moved=await media();assert.equal(moved.length,4);assert.deepEqual(new Set(moved.map(b=>b.id)),new Set(initial.map(b=>b.id)));assert.notDeepEqual(moved.map(b=>b.id),initial.map(b=>b.id));
+});
+await check('C06 upload failure is explicit; retry creates one asset, delete/undo retains reference',async()=>{
+ let first=true,posts=0;
+ await page.route('**/api/attachments',async route=>{if(route.request().method()==='POST'){posts++;if(first){first=false;return route.fulfill({status:503,json:{error:'Synthetic upload failure'}});}}return route.continue();});
+ const buffer=await sharp({create:{width:180,height:120,channels:3,background:'#346a80'}}).png().toBuffer();
+ await page.locator('input[type="file"][accept="image/*"][multiple]').setInputFiles({name:'合成重试图.png',mimeType:'image/png',buffer});
+ await page.getByText('上传失败 / Upload failed',{exact:false}).waitFor();assert.equal((await media()).filter(b=>b.pendingUploadId).length,1);
+ await page.getByRole('button',{name:'重试 / Retry',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('[data-document-media] [role="status"]'));
+ assert.equal(posts,2);assert.equal((await media()).length,5);assert.equal(new Set((await media()).map(b=>b.attachmentId)).size,5);
+ const extra=(await media()).find(b=>b.filename==='合成重试图.png');
+ await page.locator(`[data-document-media="${extra.id}"] img`).click();await page.getByRole('button',{name:'移除引用 / Remove reference',exact:true}).filter({visible:true}).click();assert.equal((await media()).length,4);
+ await page.getByRole('button',{name:'Undo',exact:true}).click();assert.equal((await media()).length,5);assert.equal(posts,2);
+ await close();await page.locator('.protocol-workbench-save button[type="submit"]').click();await page.waitForURL(u=>/^\/protocols\/[^/]+$/.test(u.pathname));
+ await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>[...document.querySelectorAll('.ln-protocol-media-preview img')].every(i=>i.complete&&i.naturalWidth>0));
+ assert.equal(await page.locator('.ln-protocol-media-preview img').count(),5);
+ await page.screenshot({path:`${dir}/media-readback.png`});
+});
+} finally {await context.tracing.stop({path:`${dir}/media-trace.zip`});await browser.close();await writeFile(`${dir}/media-report.json`,JSON.stringify(report,null,2));}

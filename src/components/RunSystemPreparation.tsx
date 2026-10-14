@@ -1,5 +1,7 @@
 'use client';
 
+import { newClientMutationId } from '@/lib/client-mutation-id';
+
 import { useActionState, useState } from 'react';
 import { confirmRunSystems, type ProtocolRunProgressState } from '@/app/experiments/[id]/run/actions';
 import { resolveProtocolSystem, resolveProtocolDocument } from '@/lib/structured-protocol';
@@ -16,7 +18,7 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
   const [selections, setSelections] = useState(adopted?.selections ?? {});
   const [actualInputs, setActualInputs] = useState(adopted?.actualInputs ?? {});
   const [state, action, pending] = useActionState<ProtocolRunProgressState, FormData>(confirmRunSystems, {});
-  const [continuationKey] = useState(() => crypto.randomUUID());
+  const [continuationKey] = useState(() => newClientMutationId());
   const resolution = resolveProtocolSystem(systems, selections, actualInputs, adopted?.calculations);
   const dirty = JSON.stringify(selections) !== JSON.stringify(adopted?.selections ?? {}) || JSON.stringify(actualInputs) !== JSON.stringify(adopted?.actualInputs ?? {});
   const proposed = resolveProtocolDocument(version.document, selections, actualInputs, adopted?.calculations);
@@ -38,7 +40,7 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
       {dirty && adopted ? <ul aria-label="变更影响">{changes.map(s => <li key={s.source_ref}>{s.title} · {s.applicability === 'not-applicable' ? '改为不适用' : s.blocked ? '参数待确定' : '采用新参数／适用状态'}</li>)}</ul> : null}
       {resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).length ? <ul className="text-error">{resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).map((i, index) => <li key={index}>{i.message}</li>)}</ul> : null}
       {editable ? <Button type="submit" variant="primary" disabled={pending || Boolean(adopted && !dirty)}>{pending ? '正在保存…' : adopted ? '确认变更并保存' : '确认本次体系'}</Button> : null}
-      {state.error?.includes('继续实例') || state.error?.includes('旧计时器') ? <div className="grid gap-2"><p>原记录将保留。新实例展示此前处理历史，并从受影响操作继续；不会复制完成状态。</p><label><input type="checkbox" name="cancelAffectedTimers" value="yes"/>确认取消受影响步骤的活动计时器，并保留取消记录（若有）</label><Button type="submit" name="intent" value="continue" disabled={pending}>保留原记录，创建继续实例</Button></div> : null}
+      {state.error?.includes('继续实例') || state.error?.includes('旧计时器') ? <div className="grid gap-2"><p>请先核对样本此前已进行的操作。新实例只列出选定位置及之后尚需进行的操作，原完成记录保留在历史中；若选择已经完成的受影响步骤，会要求再次执行，请谨慎确认。</p><label>从哪一步继续<select name="continuationStartRef" className={formInputClass} defaultValue=""><option value="">请选择继续位置</option>{proposed.steps.filter(s => s.applicability !== 'not-applicable').map(s => <option key={`${version.id}:${s.source_ref}`} value={`${version.id}:${s.source_ref}`}>{s.title}</option>)}</select></label><label><input type="checkbox" name="cancelAffectedTimers" value="yes"/>确认取消受影响步骤的活动计时器，并保留取消记录（若有）</label><Button type="submit" name="intent" value="continue" disabled={pending}>保留原记录，创建继续实例</Button></div> : null}
       {state.continuationUrl ? <Link className="text-moss underline" href={state.continuationUrl}>打开继续执行实例</Link> : null}
     </fieldset>
     {state.error ? <p role="alert" className="text-error">{state.error}</p> : null}{state.message ? <p role="status">{state.message}</p> : null}
@@ -47,5 +49,5 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
 
 export function RunSystemPreparation({ experimentId, view, editable }: { experimentId: string; view: StructuredRunView; editable: boolean }) {
   if (!view.hasSystems) return null;
-  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><h2 className="font-semibold">实验准备 · 当前实验组</h2><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).filter(s => view.plan.continuation!.affectedSourceRefs.includes(`${s.versionId}:${s.source_ref}`)).map(s => s.title).join('、')}。此前已完成操作并未复制为本次完成。</p></div> : null}{view.versions.map(version => <VersionSelection key={`${version.id}:${view.plan.revision}`} experimentId={experimentId} version={version} view={view} editable={editable}/>)}</section>;
+  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><h2 className="font-semibold">实验准备 · 当前实验组</h2><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === view.plan.continuation!.startSourceRef)?.title}。此前已完成操作并未复制为本次完成。</p><details open><summary>此前处理与原采用参数（只读历史）</summary>{view.plan.continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? '此前已完成' : '原记录未完成'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>原实际记录：{v.value} {v.unit} · {v.recordedAt}</p>)}{s.deviationNote ? <p>原备注：{s.deviationNote}</p> : null}</div>)}</details></div> : null}{view.versions.map(version => <VersionSelection key={`${version.id}:${view.plan.revision}`} experimentId={experimentId} version={version} view={view} editable={editable}/>)}</section>;
 }

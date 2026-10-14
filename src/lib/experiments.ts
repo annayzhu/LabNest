@@ -94,6 +94,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     const duplicate = await tx.experiment.findUnique({ where: { runCode }, select: { id: true } });
     if (duplicate) throw new Error(`${runCode} is already in use. Enter a different suffix.`);
   }
+  if (versions.some(version => Boolean((version.contentJson as { systems?: unknown })?.systems)) && input.status !== 'planned') throw new Error('结构化实验请从 planned 状态创建，执行状态在 Run 中确认。');
+
   const snapshot = {
     schemaVersion: 1,
     ...(input.creationKey?{creationFingerprint:fingerprint}:{}),

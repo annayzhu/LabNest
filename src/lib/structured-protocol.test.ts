@@ -28,6 +28,10 @@ describe('confirmed Protocol system contract', () => {
     expect(preview).toMatchObject({ value: 10, unit: 'µL', snapshot: { calculatorId: 'dilution', status: 'valid' } });
     const receipts = { take: { ...preview, confirmedAt: '2026-10-14T02:00:00Z' } };
     expect(resolveProtocolSystem(config, {}, actual, receipts).parameters.take).toMatchObject({ status: 'resolved', value: 10 });
+    const historical = structuredClone(receipts);
+    historical.take.snapshot.methodVersion = 'previous-method';
+    historical.take.value = 9.99;
+    expect(resolveProtocolSystem(config, {}, actual, historical).parameters.take).toMatchObject({ status: 'resolved', value: 9.99, sourceId: 'dilution:previous-method' });
     expect(resolveProtocolSystem(config, {}, { target: { value: 20, unit: 'µM' } }, receipts).parameters.take).toMatchObject({ status: 'unknown', message: expect.stringContaining('重新计算') });
     const invalid = resolveProtocolSystem(config, {}, { target: { value: 200, unit: 'µM' } }, receipts);
     expect(invalid.parameters.take.status).toBe('invalid');
@@ -88,4 +92,27 @@ describe('confirmed Protocol system contract', () => {
     config.parameters.push({ id: 'speed', label: '离心', unit: '×g', source: { kind: 'fixed', value: 3000, unit: 'rpm' } });
     expect(resolveProtocolSystem(config, { volume: 'large' }).parameters.speed.status).toBe('invalid');
   });
+});
+
+it('blocks a missing parameter referenced only in a step title and keeps an empty quantity unknown', () => {
+  const document = { ...createEmptyProtocolDocument(), systems: structuredClone(systems), executionConfirmed: true };
+  document.systems.parameters = [{ id: 'dose', label: '剂量', unit: 'mL', source: { kind: 'fixed', value: null, unit: 'µL' } }];
+  document.sections.find(s => s.key === 'steps')!.blocks = [{ id: 'h', type: 'heading', text: '加入 {{dose}}', execution: { role: 'step', stepId: 'add', title: '加入 {{dose}}' } }];
+  expect(resolveProtocolDocument(document, {}).steps[0].blocked).toBe(true);
+  document.systems.parameters[0].source = { kind: 'fixed', value: 50, unit: 'µL' };
+  expect(resolveProtocolDocument(document, {}).steps[0]).toMatchObject({ blocked: false, title: '加入 0.05 mL' });
+  expect(document.systems.parameters[0].source).toMatchObject({ value: 50, unit: 'µL' });
+});
+
+it('retains conditional row captions in rich cells and all-system alternatives without changing source', async () => {
+  const { allSystemProtocolDocument } = await import('./structured-protocol');
+  const document = { ...createEmptyProtocolDocument(), systems: structuredClone(systems) };
+  document.systems.rules = [{ id: 'row-rule', target: 'row', targetId: 'large', when: { all: [{ dimensionId: 'volume', optionId: 'large' }] }, parameterIds: [], actualFields: [], optional: false }];
+  document.sections[0].blocks = [{ id: 'table', type: 'table', rows: [['试剂', '量'], ['试剂A', '{{proteinase}}']], rowIds: ['header', 'large'], cellRichContent: [[null, null], [[{ type: 'paragraph', content: [{ type: 'text', text: '试剂A', marks: [{ type: 'bold' }] }] }], null]] }];
+  const source = JSON.stringify(document), table = allSystemProtocolDocument(document).sections[0].blocks[0];
+  expect(table.type).toBe('table');
+  if (table.type !== 'table') throw new Error('fixture');
+  expect(JSON.stringify(table.cellRichContent?.[1][0])).toContain('600 µL');
+  expect(table.rows[1][1]).toContain('50 µL'); expect(table.rows[1][1]).toContain('80 µL');
+  expect(JSON.stringify(document)).toBe(source);
 });

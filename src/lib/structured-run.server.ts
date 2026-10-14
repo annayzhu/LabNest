@@ -1,8 +1,9 @@
+import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from './db';
 import { assertRecordEditable } from './record-lifecycle';
-import { proposedExecutionPlan, structuredRunView, changedStructuredSteps, assertStructuredStepExecutable } from './structured-run';
+import { proposedExecutionPlan, structuredRunView, changedStructuredSteps, assertStructuredStepExecutable, type StructuredRunView } from './structured-run';
 import { resolveProtocolSystem, previewProtocolCalculation } from './structured-protocol';
 import { convert } from './calculators/quantities';
 import { reserveRecordCode } from './record-codes';
@@ -14,10 +15,17 @@ const selectionInput = z.object({
   selections: z.record(z.string().max(120), z.string().min(1).max(120)),
   actualInputs: z.record(z.string().max(120), z.object({ value: z.number().finite(), unit: z.string().min(1).max(40) })),
   continuationKey: z.string().uuid().optional(),
+  continuationStartRef: z.string().min(1).optional(),
   cancelAffectedTimers: z.boolean().optional(),
   confirmCalculations: z.array(z.string().min(1).max(120)).max(100).default([]),
 });
 function json(value: unknown) { return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue; }
+
+/** Called inside the shared parent lock after an execution write, not only after a selection change. */
+export async function advanceExecutionRevision(tx: Prisma.TransactionClient, experimentId: string, view: StructuredRunView) {
+  if (!view.hasSystems) return;
+  await tx.protocolRun.update({ where: { experimentId }, data: { executionPlanJson: json({ ...view.plan, revision: view.plan.revision + 1 }) } });
+}
 
 /** All selection writes serialize against the same Experiment lock as step/timer writes. */
 export async function updateRunSystemSelection(raw: z.input<typeof selectionInput>) {
@@ -28,6 +36,14 @@ export async function updateRunSystemSelection(raw: z.input<typeof selectionInpu
     assertRecordEditable(experiment.recordStatus);
     if (['archived', 'completed'].includes(experiment.status)) throw new Error('此执行已结束，不能变更采用体系 / Finished execution is fixed');
     const before = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+    if (input.continuationKey) {
+      const previous = await tx.experiment.findUnique({ where: { creationKey: input.continuationKey }, include: { protocolRun: true } });
+      if (previous) {
+        const saved = structuredRunView(previous.protocolSnapshotJson, previous.protocolRun?.executionPlanJson, []);
+        if (saved.plan.continuation?.experimentId !== experiment.id || saved.plan.continuation.startSourceRef !== input.continuationStartRef || !isDeepStrictEqual(saved.plan.versions[input.versionId]?.selections, input.selections) || !isDeepStrictEqual(saved.plan.versions[input.versionId]?.actualInputs, input.actualInputs)) throw new Error('继续实例请求与原请求不一致');
+        return { experimentId: previous.id, revision: saved.plan.revision, changedStepIds: [] };
+      }
+    }
     if (before.plan.revision !== input.expectedRevision) throw new Error('执行方案已变更，请刷新核对 / Execution plan changed');
     const version = before.versions.find(v => v.id === input.versionId);
     if (!version?.document.systems || !experiment.protocolRun) throw new Error('所选规程不属于本次执行 / Protocol is not in this captured execution');
@@ -50,22 +66,20 @@ export async function updateRunSystemSelection(raw: z.input<typeof selectionInpu
     const protectedSteps = experiment.steps.filter(s => changed.includes(s.id) && (s.completed || s.completedAt || s.deviationNote || s.timerStartedAt || s.timerPausedAt || s._count.events || s._count.results || s._count.entries || before.plan.actualValues[s.id] || before.plan.skips[s.id]));
     if (protectedSteps.length && !input.continuationKey) throw new Error('受影响步骤已有执行记录，请保留原执行并创建继续实例 / Recorded effects require a linked continuation');
     if (protectedSteps.length && input.continuationKey) {
-      const previous = await tx.experiment.findUnique({ where: { creationKey: input.continuationKey }, include: { protocolRun: true } });
-      if (previous) {
-        const saved = structuredRunView(previous.protocolSnapshotJson, previous.protocolRun?.executionPlanJson, []);
-        if (saved.plan.continuation?.experimentId !== experiment.id || JSON.stringify(saved.plan.versions[input.versionId]?.selections) !== JSON.stringify(input.selections) || JSON.stringify(saved.plan.versions[input.versionId]?.actualInputs) !== JSON.stringify(input.actualInputs)) throw new Error('继续实例请求与原请求不一致');
-        return { experimentId: previous.id, revision: saved.plan.revision, changedStepIds: changed };
-      }
+      const startIndex = experiment.steps.findIndex(s => s.protocolStepRef === input.continuationStartRef);
+      if (startIndex < 0 || after.steps[experiment.steps[startIndex].id]?.applicability === 'not-applicable') throw new Error('请明确选择继续位置，并核对样本此前已经经历的处理');
+      const remainingSteps = experiment.steps.filter((s, index) => index >= startIndex && (!s.completed || changed.includes(s.id)));
       const active = protectedSteps.filter(s => s.timerStartedAt);
       if (active.length && !input.cancelAffectedTimers) throw new Error('受影响步骤有活动计时器；请明确确认取消旧计时器后继续');
-      const continuationPlan = { ...next, revision: 1, actualValues: {}, skips: {}, continuation: { experimentId: experiment.id, createdAt: now, affectedSourceRefs: experiment.steps.filter(s => changed.includes(s.id)).map(s => s.protocolStepRef ?? s.id), priorRecord: { runCode: experiment.runCode, plan: before.plan, steps: experiment.steps } } };
+      const history = experiment.steps.map(s => ({ sourceRef: s.protocolStepRef ?? s.id, title: before.steps[s.id]?.title ?? s.title, completed: s.completed, completedAt: s.completedAt?.toISOString() ?? null, description: before.steps[s.id]?.description ?? s.description, actualValues: before.plan.actualValues[s.id] ?? {}, deviationNote: s.deviationNote }));
+      const continuationPlan = { ...next, revision: 1, actualValues: {}, skips: {}, continuation: { experimentId: experiment.id, createdAt: now, startSourceRef: input.continuationStartRef, history, affectedSourceRefs: experiment.steps.filter(s => changed.includes(s.id)).map(s => s.protocolStepRef ?? s.id), priorRecord: { runCode: experiment.runCode, plan: before.plan, steps: experiment.steps } } };
       const created = await tx.experiment.create({ data: {
         creationKey: input.continuationKey, runCode: await reserveRecordCode(tx, 'experiment'), title: `${experiment.title} · 继续执行`,
         projectId: experiment.projectId, researchPlanId: experiment.researchPlanId, primaryProtocolVersionId: experiment.primaryProtocolVersionId,
         status: 'planned', recordStatus: 'draft', date: new Date(), purpose: experiment.purpose, tags: experiment.tags,
         contentJson: {}, searchText: experiment.searchText, protocolSnapshotJson: json(experiment.protocolSnapshotJson),
         protocolVersions: { create: experiment.protocolVersions.map(v => ({ protocolVersionId: v.protocolVersionId, role: v.role, order: v.order })) },
-        steps: { create: experiment.steps.map(s => ({ protocolStepRef: s.protocolStepRef, groupKey: s.groupKey, groupTitle: s.groupTitle, groupOrder: s.groupOrder, order: s.order, title: s.title, description: s.description, requiresConfirmation: s.requiresConfirmation, allowsDeviation: s.allowsDeviation })) },
+        steps: { create: remainingSteps.map(s => ({ protocolStepRef: s.protocolStepRef, groupKey: s.groupKey, groupTitle: s.groupTitle, groupOrder: s.groupOrder, order: s.order, title: s.title, description: s.description, requiresConfirmation: s.requiresConfirmation, allowsDeviation: s.allowsDeviation })) },
         protocolRun: { create: { protocolVersionId: experiment.protocolRun.protocolVersionId, executionPlanJson: json(continuationPlan), status: 'planned' } },
       } });
       for (const step of active) {
@@ -73,6 +87,7 @@ export async function updateRunSystemSelection(raw: z.input<typeof selectionInpu
         await tx.experimentStep.update({ where: { id: step.id }, data: { timerStartedAt: null, timerRemainingSeconds: remaining, timerPausedAt: new Date(now) } });
         await tx.experimentStepEvent.create({ data: { experimentId: experiment.id, experimentStepId: step.id, eventType: 'timer_cancelled_for_continuation', payloadJson: json({ priorStartedAt: step.timerStartedAt, remainingSeconds: remaining, continuationId: created.id, confirmedAt: now }) } });
       }
+      if (active.length) await advanceExecutionRevision(tx, experiment.id, before);
       await associateDocumentMedia(tx, experiment.protocolSnapshotJson, 'experiment', created.id);
       await tx.itemLink.create({ data: { sourceType: 'experiment', sourceId: created.id, targetType: 'experiment', targetId: experiment.id, linkType: 'continued_from', createdBy: 'user', note: '体系变更；原执行记录保留，继续实例未复制完成状态。' } });
       await tx.activityLog.create({ data: { action: 'protocol_system_continuation_created', targetType: 'experiment', targetId: created.id, metadataJson: json({ previousExperimentId: experiment.id, affectedSourceRefs: continuationPlan.continuation.affectedSourceRefs, cancelledTimerIds: active.map(s => s.id) }) } });
@@ -91,7 +106,7 @@ export async function recordStructuredStep(raw: z.input<typeof recordInput>) {
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${input.experimentId} FOR UPDATE`;
     const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: input.clientMutationId } });
     if (replay) {
-      if (replay.experimentId !== input.experimentId || replay.experimentStepId !== input.stepId) throw new Error('重复请求与原记录不一致');
+      if (replay.experimentId !== input.experimentId || replay.experimentStepId !== input.stepId || (replay.payloadJson as { request?: unknown }).request && !isDeepStrictEqual((replay.payloadJson as { request?: unknown }).request, { intent: input.intent, values: input.values, reason: input.reason ?? '' })) throw new Error('重复请求与原记录不一致');
       return { revision: (replay.payloadJson as { revision: number }).revision };
     }
     const experiment = await tx.experiment.findUniqueOrThrow({ where: { id: input.experimentId }, include: { steps: true, protocolRun: true } });
@@ -117,7 +132,7 @@ export async function recordStructuredStep(raw: z.input<typeof recordInput>) {
       next.skips[input.stepId] = { reason: input.reason, recordedAt: now };
     } else delete next.skips[input.stepId];
     await tx.protocolRun.update({ where: { experimentId: input.experimentId }, data: { executionPlanJson: json(next) } });
-    await tx.experimentStepEvent.create({ data: { experimentId: input.experimentId, experimentStepId: input.stepId, clientMutationId: input.clientMutationId, eventType: `structured_${input.intent}`, payloadJson: json({ revision: next.revision, values: input.values, reason: input.reason, recordedAt: now }) } });
+    await tx.experimentStepEvent.create({ data: { experimentId: input.experimentId, experimentStepId: input.stepId, clientMutationId: input.clientMutationId, eventType: `structured_${input.intent}`, payloadJson: json({ request: { intent: input.intent, values: input.values, reason: input.reason ?? '' }, revision: next.revision, values: input.values, reason: input.reason, recordedAt: now }) } });
     return { revision: next.revision };
   });
 }

@@ -64,6 +64,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const draftInitialized=useRef(false);
   const [draftReady,setDraftReady]=useState(false);
   const [draftNotice,setDraftNotice]=useState("");
+  const [olderDraft, setOlderDraft] = useState<Record<string,string> | null>(null);
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
   const [selectedStepId, setSelectedStepId] = useState(() => steps.find((step) => !step.completed)?.id ?? steps[0]?.id ?? "");
   const [state, formAction, pending] = useActionState(async (previous: ProtocolRunProgressState, data: FormData) => {
@@ -71,7 +72,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     if (!result.error && result.completedStepIds) {
       const saved = new Set(result.completedStepIds);
       setCompletedIds(saved);
-      setDraftFields({});try{sessionStorage.removeItem(`labnest.run-draft:${experimentId}`);}catch{};setDraftNotice("");
+      setDraftFields({});setOlderDraft(null);try{sessionStorage.removeItem(`labnest.run-draft:${experimentId}`);}catch{};setDraftNotice("");
       if (result.completedCurrentStepId) {
         const next = steps.find((step) => !saved.has(step.id));
         if (next) setSelectedStepId(next.id);
@@ -103,15 +104,15 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
-    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){if (structured && saved.revision !== structured.plan.revision) { if (Object.keys(saved.fields ?? {}).length) { setOlderDraft(saved.fields); setDraftNotice('执行记录已更新，旧草稿保留供核对。'); } } else { setDraftFields(saved.fields??{}); if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id)))); } if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length && (!structured || saved.revision === structured.plan.revision))setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
-  },[experimentId,steps]);
+  },[experimentId,steps,structured]);
   useEffect(()=>{
     if(!draftReady)return;
-    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
+    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({revision:olderDraft ? -1 : structured?.plan.revision,fields:olderDraft ?? draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
     preserve();window.addEventListener('pagehide',preserve);window.addEventListener('labnest:preserve-run-draft',preserve);
     return()=>{window.removeEventListener('pagehide',preserve);window.removeEventListener('labnest:preserve-run-draft',preserve);};
-  },[experimentId,selectedStepId,completedIds,draftFields,draftReady]);
+  },[experimentId,selectedStepId,completedIds,draftFields,draftReady,structured,olderDraft]);
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
   const evidence = selectedStep && evidenceByStep ? evidenceByStep[selectedStep.id] : undefined;
   const evidenceTotals = Object.values(evidenceByStep ?? {}).reduce((total, item) => ({
@@ -186,6 +187,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     {structured ? <p role="status" data-structured-progress>必需操作：{requiredCompleted}/{requiredSteps.length} 完成 · 可选：{steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/{steps.filter(s => structured.steps[s.id]?.optional).length} · 跳过：{Object.keys(structured.plan.skips).length} · 待确定：{steps.filter(s => structured.steps[s.id]?.blocked).length}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
+    {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。</p><details><summary>查看旧草稿</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('已恢复核对后的草稿，尚未保存'); }}>已核对，继续使用这些草稿</button></aside> : null}
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
     {infoGroups.map(step=><details open key={step.groupKey} className="min-w-0 rounded-[var(--ln-radius-panel)] border border-hairline p-3" data-run-information><summary className="focus-ring cursor-pointer text-sm text-moss">规程说明与参考（不计步） · {experimentStepGroupHeading(step.groupTitle).title}</summary><div className="mt-3 min-w-0 space-y-3">{step.richContent?.common.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</div></details>)}
@@ -334,14 +336,14 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>
                   {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
-                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
+                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>)}
             </div>
           </section>;
         })}
       </div> : <p className="px-4 py-8 text-center text-sm text-muted">No execution steps were planned. Review the Protocol structure before starting a protocol-based run.</p>}
-      <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
+      <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" value={draftFields.quickNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, quickNote: e.target.value }))} disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
     </section>
 
     {editable ? <div className="sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 lg:block">

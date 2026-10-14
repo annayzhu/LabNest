@@ -1,0 +1,24 @@
+PASS 13.1 author two systems and conditional parameter using the real empty Protocol UI
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(Math.abs(afterY-beforeY) < 200)
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:65:134
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:12:43)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:56:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

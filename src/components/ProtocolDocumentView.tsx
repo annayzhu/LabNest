@@ -1,5 +1,9 @@
+'use client';
+
+import { useState } from 'react';
+import { formInputClass } from './forms';
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
-import { allSystemProtocolDocument } from '@/lib/structured-protocol';
+import { allSystemProtocolDocument, resolveProtocolDocument } from '@/lib/structured-protocol';
 import { ProtocolConditionCaption, ProtocolSystemLegend } from './ProtocolSystemLabels';
 import { AlertTriangle, CheckSquare2, FileCheck2, Table2, Wrench } from "lucide-react";
 import { DocumentMediaView } from "./DocumentMediaView";
@@ -202,7 +206,11 @@ export function ProtocolContentBlockView({ block, executionContext=false }: { bl
 }
 
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
-  const readingDocument = allSystemProtocolDocument(document);
+  const [previewMode, setPreviewMode] = useState('all');
+  const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
+  const resolved = previewMode === 'selected' ? resolveProtocolDocument(document, previewSelections) : undefined;
+  const excluded = new Set(resolved?.steps.filter(step => step.applicability === 'not-applicable').map(step => step.source_ref));
+  const readingDocument = resolved ? { ...resolved.document, sections: resolved.document.sections.map(section => ({ ...section, blocks: section.blocks.filter(block => !excluded.has(block.execution?.stepId ?? (block.execution?.role === 'step' ? block.id : undefined))) })) } : allSystemProtocolDocument(document);
   const { contentWarnings } = separateLegacyImportWarnings(document.importWarnings);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
@@ -210,7 +218,12 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
-      {document.systems ? <><ProtocolSystemLegend systems={document.systems}/><p className="protocol-condition-caption">全部体系预览 · 创建实验后确认实际采用的体系</p></> : null}
+      {document.systems ? <><ProtocolSystemLegend systems={document.systems}/><div className="protocol-system-section" data-protocol-system-preview>
+        <label>预览范围<select className={formInputClass} value={previewMode} onChange={event => setPreviewMode(event.target.value)}><option value="all">全部体系</option><option value="selected">按体系预览</option></select></label>
+        {previewMode === 'selected' ? <div className="protocol-system-fields">{document.systems.dimensions.map(dimension => <label key={dimension.id}>{dimension.label}<select className={formInputClass} value={previewSelections[dimension.id] ?? ''} onChange={event => { const next = { ...previewSelections }; if (event.target.value) next[dimension.id] = event.target.value; else delete next[dimension.id]; setPreviewSelections(next); }}><option value="">待选择</option>{dimension.options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}</div> : null}
+        <p className="protocol-condition-caption">{previewMode === 'all' ? '全部体系预览' : '选定体系预览'} · 仅影响阅读，不改变任何实验。执行时需单独确认实际采用值。</p>
+        {resolved?.issues.length ? <p role="status" className="text-warning">{resolved.issues.map(issue => issue.message).join('；')}</p> : null}
+      </div></> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       {readingDocument.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block">{document.systems?.rules.filter(rule => (rule.target === 'block' && rule.targetId === block.id) || (rule.target === 'step' && block.execution?.role === 'step' && rule.targetId === (block.execution.stepId ?? block.id))).map(rule => <ProtocolConditionCaption key={rule.id} systems={document.systems!} when={rule.when}/>)}<ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
     </div>

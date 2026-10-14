@@ -1,0 +1,21 @@
+{
+  "checks": [
+    {
+      "name": "13.1 author two systems and conditional parameter using the real empty Protocol UI",
+      "result": "通过"
+    },
+    {
+      "name": "C01 C03 C07 C08 long source formatting, table editing, unit source separation and save/reopen preserve frozen runs",
+      "result": "失败",
+      "error": "Expected values to be strictly equal:\n\n5 !== 4\n"
+    }
+  ],
+  "browser": "149.0.7827.55",
+  "images": [],
+  "protocolId": "cmv7g8lvt005kxyosctfl7cu5",
+  "versionId": "cmv7g8lvu005lxyosrep15fzo",
+  "experimentId": "cmv7g8nhw005nxyosnvs5hrbd",
+  "documentBytes": 16451,
+  "longParagraphs": 70,
+  "scrollChangePx": 0
+}

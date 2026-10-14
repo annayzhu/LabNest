@@ -1,3 +1,4 @@
+import { advanceExecutionRevision } from '@/lib/structured-run.server';
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
         deviceCreatedAt: input.deviceCreatedAt,
         payloadJson: json(JSON.parse(JSON.stringify({ previousCompleted: step.completed, completed: true, deviationType: input.deviationType ?? null, actualExecution: input.deviationNote ?? null, impactAssessment: input.deviationImpact ?? null, author: input.deviationAuthor ?? null, ...(structured.steps[step.id] ? { executionPlanRevision: structured.plan.revision, adopted: structured.steps[step.id], actualValues: structured.plan.actualValues[step.id] ?? {} } : {}) }))),
       } });
+      await advanceExecutionRevision(tx, input.experimentId, structured);
       await tx.activityLog.create({ data: { action: "protocol_run_step_complete", targetType: "experiment_step", targetId: step.id, metadataJson: json({ experimentId: input.experimentId, clientMutationId: input.clientMutationId, offlineCapable: true }) } });
       return created;
     });

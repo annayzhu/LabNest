@@ -1,0 +1,63 @@
+{
+  "head": "6776c7dca98d684adfd3740d0dd63b0a6617c932",
+  "dirty": true,
+  "browser": "149.0.7827.55",
+  "fixture": "synthetic isolated database; AI_ENABLED=false",
+  "checks": [
+    {
+      "name": "A01 A02 all-system and selected preview retain source and existing Run selection",
+      "result": "通过",
+      "ms": 1930
+    },
+    {
+      "name": "B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work",
+      "result": "通过",
+      "ms": 3536
+    },
+    {
+      "name": "E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes",
+      "result": "通过",
+      "ms": 6330
+    },
+    {
+      "name": "B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress",
+      "result": "通过",
+      "ms": 2264
+    },
+    {
+      "name": "D03 D04 start refresh pause resume finish timer retains one instance and never completes step",
+      "result": "通过",
+      "ms": 1758
+    },
+    {
+      "name": "B06 continuation displays original treatment and starts at explicit remaining operation",
+      "result": "通过",
+      "ms": 812
+    },
+    {
+      "name": "F03 actual JSON Markdown CSV XLSX DOCX and print files preserve adopted quantities and source",
+      "result": "通过",
+      "ms": 2239
+    }
+  ],
+  "screenshots": [
+    "protocol-selected-desktop.png",
+    "run-confirmed-desktop.png",
+    "run-1024.png",
+    "run-768.png",
+    "run-600.png",
+    "run-390.png",
+    "run-320.png",
+    "run-mobile-draft-and-images.png",
+    "timer-finished-not-completed.png",
+    "continuation-history.png"
+  ],
+  "experimentId": "cmv7g3ff4004mxyos6fu2t2um",
+  "stepIds": {
+    "prepare": "cmv7g3ffb004nxyos3qex8si2",
+    "dose": "cmv7g3ffb004oxyosn1x6anlr",
+    "incubate": "cmv7g3ffb004pxyos3fjnldl4",
+    "lipid": "cmv7g3ffb004qxyosvobc4903"
+  },
+  "pageErrors": []
+}

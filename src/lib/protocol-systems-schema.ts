@@ -7,7 +7,7 @@ export const protocolConditionSchema = z.object({
   all: z.array(predicate).optional(), any: z.array(predicate).optional(), not: z.array(predicate).optional(),
 });
 export type ProtocolCondition = z.infer<typeof protocolConditionSchema>;
-const quantity = { value: z.number().finite(), unit: z.string().min(1) };
+const quantity = { value: z.number().finite().nullable(), unit: z.string().min(1) };
 export const protocolSystemsSchema = z.object({
   schemaVersion: z.literal(1),
   dimensions: z.array(z.object({ id, label: z.string().min(1), options: z.array(z.object({ id, label: z.string().min(1) })).min(1) })),

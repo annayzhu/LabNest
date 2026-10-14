@@ -1,9 +1,10 @@
 "use client";
 import { documentScriptMarks } from "@/lib/tiptap-document-extensions";
+import { TextSelection } from '@tiptap/pm/state';
 import { ProtocolParameterNode } from '@/lib/protocol-parameter-node';
 import { ProtocolEditorIdentities } from '@/lib/protocol-editor-identities';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
@@ -246,7 +247,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
   const importWarningsRef = useRef(document.importWarnings);
   // Authoring metadata can change without rebuilding the editor or its selection.
   const documentRef = useRef(document);
-  documentRef.current = document;
+  useLayoutEffect(() => { documentRef.current = document; }, [document]);
   const inputPrefix = useId();
   const imageInputId = `${inputPrefix}-protocol-images`;
   const fileInputId = `${inputPrefix}-protocol-files`;
@@ -301,6 +302,26 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, inspe
     if (!editor || editor.isDestroyed) return;
     const blocks = new Map(document.sections.flatMap(section => section.blocks.map(block => [block.id, block] as const)));
     const tr = editor.state.tr;
+    // First-time organization may split an unmarked rich/list block into explicit
+    // source fragments. Replace only that section in one transaction; never remount.
+    const desired = protocolDocumentToTiptap(document).content?.find(node => node.attrs?.sectionKey === 'steps');
+    let replacedSteps = false;
+    editor.state.doc.descendants((section, position) => {
+      if (section.type.name !== 'protocolSection' || section.attrs.sectionKey !== 'steps' || !desired) return;
+      let needsStructure = false;
+      section.forEach(node => { const id = node.attrs.protocolBlockId ?? node.attrs.block?.id; if (id && !blocks.has(id) && [...blocks.keys()].some(nextId => nextId.startsWith(`${id}:`))) needsStructure = true; });
+      if (!needsStructure) return false;
+      const replacement = editor.schema.nodeFromJSON(desired);
+      const { from, to } = editor.state.selection;
+      tr.replaceWith(position + 1, position + section.nodeSize - 1, replacement.content);
+      if (from > position && to < position + section.nodeSize) {
+        const maximum = position + replacement.nodeSize - 2;
+        tr.setSelection(TextSelection.between(tr.doc.resolve(Math.min(from, maximum)), tr.doc.resolve(Math.min(to, maximum))));
+      }
+      replacedSteps = true;
+      return false;
+    });
+    if (replacedSteps) { editor.view.dispatch(tr); return; }
     editor.state.doc.descendants((node, position) => {
       if (node.type.name === 'protocolParameter') {
         const parameter = document.systems?.parameters.find(item => item.id === node.attrs.parameterId);

@@ -1,0 +1,21 @@
+PASS 13.1 author two systems and conditional parameter using the real empty Protocol UI
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+5 !== 4
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:80:10
+    at async check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:12:43)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:61:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 5,
+  expected: 4,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

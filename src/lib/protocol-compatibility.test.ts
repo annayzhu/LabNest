@@ -11,3 +11,9 @@ it('keeps legacy fields readable but prevents unsupported authored content from 
   expect(protocolCompatibilityIssue({ ...document, futureParameters: { value: 50 } })).toContain('futureParameters');
   expect(JSON.stringify(unsupported)).toContain('原文不得丢失');
 });
+
+it('does not send unknown rich table nodes to a schema that would drop them', () => {
+  const document = createEmptyProtocolDocument();
+  document.sections[0].blocks = [{ id: 'table', type: 'table', rows: [['保留']], cellRichContent: [[[{ type: 'futureInstrumentWidget', attrs: { trace: 'original' }, content: [{ type: 'text', text: '保留' }] }]]] }];
+  expect(protocolCompatibilityIssue(document)).toContain('兼容只读');
+});

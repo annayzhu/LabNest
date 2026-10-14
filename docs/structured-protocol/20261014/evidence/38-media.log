@@ -1,0 +1,2 @@
+PASS C04 visible move, undo/redo and explicit clipboard copy preserve original assets and unique node IDs
+PASS C06 upload failure is explicit; retry creates one asset, delete/undo retains reference

@@ -86,3 +86,7 @@ Final matrix: **28通过 / 0当前失败 / 21未执行（含部分已验证的�
 Migration clarification: the actual Prisma/SQL contract is `executionPlanJson JSONB NOT NULL DEFAULT {}`. Existing runs read an empty plan and retain legacy behavior. No historical step/body/attachment values are rewritten; the new column default is an additive schema change.
 
 Final release-image verification additionally sets browser timezone America/Los_Angeles against a UTC container. All page-error assertions remain enabled. Scoped time elements handle locale-sensitive text without changing stored timestamps. Image-smoke confirms frozen Run quantities and the real authoring entry with no page errors.
+
+## Experiment record interface follow-up · 2026-10-14
+
+The user's subsequent experiment-record request is tracked separately in [EXPERIMENT-RECORD-FLOW.md](./EXPERIMENT-RECORD-FLOW.md): optional research plan, default metadata, compact protocol selection, inline execution/deviation controls, selected-system projection, experiment date, stable outline and observations last. Local evidence: 652 tests in125files; four real-page synthetic flows including save/readback and320–1440px layouts. This supplements the named UI checks only; it does not promote the previously unexecuted composite requirements, physical-device acceptance or P2/P3 roadmap to complete.

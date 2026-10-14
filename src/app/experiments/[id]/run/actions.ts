@@ -9,11 +9,12 @@ import { prisma } from "@/lib/db";
 import { appendExperimentObservation, experimentSearchText } from "@/lib/experiment-document";
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
+import { assertDocumentSaveVersion } from "@/lib/document-save-version";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
 import { structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
 import { advanceExecutionRevision, updateRunSystemSelection, recordStructuredStep } from '@/lib/structured-run.server';
 
-export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string; continuationUrl?: string };
+export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; updatedAt?: string; status?: string; completedStepIds?: string[]; completedCurrentStepId?: string; continuationUrl?: string };
 export type StepTimerActionState = ProtocolRunProgressState;
 
 export async function saveStructuredStepRecord(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
@@ -21,6 +22,8 @@ export async function saveStructuredStepRecord(_previous: ProtocolRunProgressSta
     const experimentId = String(form.get('experimentId'));
     await recordStructuredStep({ experimentId, stepId: String(form.get('stepId')), expectedRevision: Number(form.get('executionPlanRevision')), clientMutationId: String(form.get('clientMutationId')), intent: z.enum(['actual', 'skip', 'unskip']).parse(form.get('intent')), reason: String(form.get('reason') ?? ''), values: JSON.parse(String(form.get('values') ?? '{}')) });
     revalidatePath(`/experiments/${experimentId}/run`);
+    revalidatePath(`/experiments/${experimentId}`);
+    revalidatePath(`/experiments/${experimentId}/edit`);
     return { message: '记录已保存', savedAt: new Date().toISOString() };
   } catch (error) { return { error: formActionErrorMessage(error, '记录保存失败') }; }
 }
@@ -29,6 +32,8 @@ export async function confirmRunSystems(_previous: ProtocolRunProgressState, for
   try {
     const result = await updateRunSystemSelection({ experimentId: String(form.get('experimentId')), versionId: String(form.get('versionId')), expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) });
     revalidatePath(`/experiments/${result.experimentId}/run`);
+    revalidatePath(`/experiments/${result.experimentId}`);
+    revalidatePath(`/experiments/${result.experimentId}/edit`);
     return { message: '本次体系已确认并保存', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
   } catch (error) { return { error: formActionErrorMessage(error, '体系未保存，请重试') }; }
 }
@@ -38,6 +43,8 @@ const progressSchema = z.object({
   intent: z.enum(["save", "start", "complete"]),
   quickNote: z.string().trim().max(10_000).optional(),
   completedCurrentStepId: z.string().trim().optional(),
+  changedStepId: z.string().trim().min(1).optional(),
+  stepIntent: z.enum(["complete", "reopen", "deviation"]).optional(),
   clientMutationId: z.string().uuid().optional(),
   deviceCreatedAt: z.coerce.date().optional(),
 });
@@ -69,25 +76,35 @@ export async function saveProtocolRunProgress(
 ): Promise<ProtocolRunProgressState> {
   let parsed: z.infer<typeof progressSchema>;
   let savedCompletedStepIds: string[] = [];
+  let savedUpdatedAt: string | undefined;
+  let savedStatus: string | undefined;
   try {
     parsed = progressSchema.parse({
       experimentId: formData.get("experimentId"),
       intent: optionalText(formData.get("intent")) ?? "save",
       quickNote: optionalText(formData.get("quickNote")),
       completedCurrentStepId: optionalText(formData.get("completedCurrentStepId")),
+      changedStepId: optionalText(formData.get("changedStepId")),
+      stepIntent: optionalText(formData.get("stepIntent")),
       clientMutationId: optionalText(formData.get("clientMutationId")),
       deviceCreatedAt: optionalText(formData.get("deviceCreatedAt")),
     });
+    if (Boolean(parsed.changedStepId) !== Boolean(parsed.stepIntent) || parsed.changedStepId && (parsed.completedCurrentStepId || parsed.intent !== 'save' || parsed.quickNote)) throw new Error('Invalid scoped step command.');
+    if (parsed.changedStepId) {
+      z.string().datetime().parse(formData.get('expectedUpdatedAt'));
+      z.string().uuid().parse(parsed.clientMutationId);
+    }
     const completedStepIds = new Set(formData.getAll("completedStepIds").map(String));
     if (parsed.completedCurrentStepId) completedStepIds.add(parsed.completedCurrentStepId);
     const recordedAt = new Date();
 
     await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
-    if (parsed.clientMutationId && parsed.completedCurrentStepId) {
+    const scopedStepId = parsed.changedStepId ?? parsed.completedCurrentStepId;
+    if (parsed.clientMutationId && scopedStepId) {
       const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: parsed.clientMutationId } });
       if (replay) {
-        if (replay.experimentId !== parsed.experimentId || replay.experimentStepId !== parsed.completedCurrentStepId) throw new Error('重复请求不属于此步骤');
+        if (replay.experimentId !== parsed.experimentId || replay.experimentStepId !== scopedStepId) throw new Error('重复请求不属于此步骤');
         return;
       }
     }
@@ -98,21 +115,22 @@ export async function saveProtocolRunProgress(
     if (!experiment) throw new Error("Experiment not found.");
     if (experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
     assertRecordEditable(experiment.recordStatus);
+    if (parsed.changedStepId) assertDocumentSaveVersion(formData, experiment);
     const structured = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
     const expectedRevision = formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined;
     if (structured.hasSystems && expectedRevision !== structured.plan.revision) throw new Error('执行方案已变更，请刷新 / Execution plan changed');
+    if (scopedStepId) {
+      if (!experiment.steps.some(step => step.id === scopedStepId)) throw new Error('A submitted step does not belong to this Experiment.');
+      completedStepIds.clear();
+      experiment.steps.filter(step => step.completed).forEach(step => completedStepIds.add(step.id));
+      if (parsed.stepIntent === 'reopen') completedStepIds.delete(scopedStepId);
+      else if (parsed.stepIntent !== 'deviation') completedStepIds.add(scopedStepId);
+    }
     for (const step of experiment.steps) if (completedStepIds.has(step.id) && !step.completed) {
       assertStructuredStepExecutable(structured, step.id, expectedRevision, true);
       if (structured.steps[step.id] && step.timerStartedAt) throw new Error('请先结束计时，再确认步骤完成');
     }
     if (structured.hasSystems && experiment.status === 'completed') throw new Error('已结束的执行记录不可改写 / Finished execution is fixed');
-
-    if (parsed.completedCurrentStepId) {
-      // A single-step command is not a replacement of the client's full snapshot.
-      completedStepIds.clear();
-      experiment.steps.filter((step) => step.completed).forEach((step) => completedStepIds.add(step.id));
-      completedStepIds.add(parsed.completedCurrentStepId);
-    }
 
     const knownStepIds = new Set(experiment.steps.map((step) => step.id));
     const unknownStep = [...completedStepIds].find((id) => !knownStepIds.has(id));
@@ -141,7 +159,7 @@ export async function saveProtocolRunProgress(
         })
       : experiment.contentJson;
 
-    await tx.experiment.update({
+    const savedExperiment = await tx.experiment.update({
       where: { id: experiment.id },
       data: {
         status: nextStatus,
@@ -151,18 +169,22 @@ export async function saveProtocolRunProgress(
         searchText: experimentSearchText(experiment.purpose, contentJson),
       },
     });
+    savedUpdatedAt = savedExperiment.updatedAt?.toISOString();
+    savedStatus = nextStatus;
 
     for (const step of experiment.steps) {
-      if (parsed.completedCurrentStepId && step.id !== parsed.completedCurrentStepId) continue;
+      if (scopedStepId && step.id !== scopedStepId) continue;
       const completed = completedStepIds.has(step.id);
-      const deviationNote = parsed.completedCurrentStepId
+      const deviationNote = parsed.changedStepId
+        ? parsed.stepIntent === 'deviation' ? optionalText(formData.get('deviationNote')) : step.deviationNote ?? undefined
+        : parsed.completedCurrentStepId
         ? step.id === parsed.completedCurrentStepId
           ? optionalText(formData.get(`mobileDeviation:${step.id}`))
           : step.deviationNote ?? undefined
         : optionalText(formData.get(`deviation:${step.id}`));
-      const deviationType = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationType:${step.id}`)) : step.deviationType ?? undefined;
-      const deviationImpact = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationImpact:${step.id}`)) : step.deviationImpact ?? undefined;
-      const deviationAuthor = parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationAuthor:${step.id}`)) : step.deviationAuthor ?? undefined;
+      const deviationType = parsed.changedStepId && parsed.stepIntent === 'deviation' ? optionalText(formData.get('deviationType')) ?? step.deviationType ?? 'other' : parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationType:${step.id}`)) : step.deviationType ?? undefined;
+      const deviationImpact = parsed.changedStepId && formData.has('deviationImpact') ? optionalText(formData.get('deviationImpact')) : parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationImpact:${step.id}`)) : step.deviationImpact ?? undefined;
+      const deviationAuthor = parsed.changedStepId && formData.has('deviationAuthor') ? optionalText(formData.get('deviationAuthor')) : parsed.completedCurrentStepId === step.id ? optionalText(formData.get(`mobileDeviationAuthor:${step.id}`)) : step.deviationAuthor ?? undefined;
       if ((deviationNote?.length ?? 0) > 5_000) throw new Error(`Deviation note for step ${step.order} is too long.`);
       if ((deviationImpact?.length ?? 0) > 5_000) throw new Error(`Deviation impact for step ${step.order} is too long.`);
       if (!step.allowsDeviation && deviationNote) throw new Error(`Step ${step.order} does not allow a deviation record.`);
@@ -179,13 +201,13 @@ export async function saveProtocolRunProgress(
             deviationAt: deviationNote ? recordedAt : null,
           },
         });
-        if (parsed.completedCurrentStepId === step.id || structured.steps[step.id] && completed !== step.completed) {
+        if (scopedStepId === step.id || structured.steps[step.id] && completed !== step.completed) {
           await tx.experimentStepEvent.create({
             data: {
               experimentStepId: step.id,
               experimentId: experiment.id,
-              eventType: completed ? "completed" : "reopened",
-              clientMutationId: parsed.completedCurrentStepId ? parsed.clientMutationId : undefined,
+              eventType: parsed.stepIntent === 'deviation' ? 'deviation_recorded' : completed ? "completed" : "reopened",
+              clientMutationId: scopedStepId ? parsed.clientMutationId : undefined,
               deviceCreatedAt: parsed.deviceCreatedAt,
               payloadJson: JSON.parse(JSON.stringify({ previousCompleted: step.completed, completed, deviationType: deviationType ?? null, actualExecution: deviationNote ?? null, impactAssessment: deviationImpact ?? null, author: deviationAuthor ?? null, ...(structured.steps[step.id] ? { executionPlanRevision: structured.plan.revision, adopted: structured.steps[step.id], actualValues: structured.plan.actualValues[step.id] ?? {} } : {}) })),
             },
@@ -231,8 +253,9 @@ export async function saveProtocolRunProgress(
   revalidatePath("/experiments");
   revalidatePath(`/experiments/${parsed.experimentId}`);
   revalidatePath(`/experiments/${parsed.experimentId}/run`);
+  revalidatePath(`/experiments/${parsed.experimentId}/edit`);
   const message = parsed.intent === "start" ? "Run started." : parsed.intent === "complete" ? "Run completed." : "Progress saved.";
-  return { message, savedAt: new Date().toISOString(), completedStepIds: savedCompletedStepIds, completedCurrentStepId: parsed.completedCurrentStepId };
+  return { message, savedAt: new Date().toISOString(), updatedAt: savedUpdatedAt, status: savedStatus, completedStepIds: savedCompletedStepIds, completedCurrentStepId: parsed.completedCurrentStepId };
 }
 
 export async function updateStepTimer(

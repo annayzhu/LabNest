@@ -25,6 +25,7 @@ export function ScientificDocumentEditor({
   headerFacts,
   leadingContent,
   trailingContent,
+  sectionContent,
   titleEditor,
   hiddenSectionKeys = [],
   insertProfile,
@@ -41,6 +42,7 @@ export function ScientificDocumentEditor({
   headerFacts?: DocumentPageHeaderFact[];
   leadingContent?: ReactNode;
   trailingContent?: ReactNode;
+  sectionContent?: Record<string, ReactNode>;
   titleEditor?: ReactNode;
   hiddenSectionKeys?: string[];
   insertProfile?: DocumentInsertProfile;
@@ -74,6 +76,7 @@ export function ScientificDocumentEditor({
           hiddenSectionKeys={hiddenSectionKeys}
           insertProfile={insertProfile}
           checklist={checklist}
+          sectionContent={sectionContent}
           onChange={setDocument}
         />
         {trailingContent}

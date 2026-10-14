@@ -116,6 +116,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
 }[], parameters?: unknown, snapshot?:unknown, executionPlan?:unknown): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificDocument['sections'][number]['blocks'] = [];
+  const deviations: ScientificContentBlock[] = [];
   const structured = structuredRunView(snapshot, executionPlan, steps.map(step => ({ ...step, groupKey: step.groupKey ?? 'manual', protocolStepRef: step.protocolStepRef ?? null })));
   for (const version of structured.versions) {
     const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
@@ -155,26 +156,28 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     let rich=runStepContent(snapshot,{...step,groupKey:step.groupKey??'manual',protocolStepRef:step.protocolStepRef??null,description:step.description??''},(parameters??{}) as Record<string,string|number|boolean>);
     const adoptedStep = structured.steps[step.id];
     if (adoptedStep) rich = { ...rich, blocks: adoptedStep.content_blocks ?? [], common: structured.versions.find(v => v.id === adoptedStep.versionId)?.commonBlocks ?? [] };
+    if (group !== step.groupOrder) {
+      group = step.groupOrder;
+      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
+      if(rich.common.length)blocks.push(...rich.common.map(block=>scientific(block,`run-derived:info:${group}:`)));
+    }
+    if (step.deviationNote?.trim()) deviations.push({
+      id: `run-derived:deviation:${step.id}`, type: 'text',
+      text: [`${step.groupTitle} · 步骤 ${step.order} ${adoptedStep?.title ?? step.title}`, `${['abnormal', 'incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`, step.deviationImpact ? `影响：${step.deviationImpact}` : '', step.deviationAuthor ? `记录人：${step.deviationAuthor}` : ''].filter(Boolean).join('\n'),
+    });
     if (adoptedStep?.applicability === 'not-applicable') {
       blocks.push({ id: `run-derived:inapplicable:${step.id}`, type: 'text', text: `${step.title} · 不适用于本次实验（来源 ${step.protocolStepRef}）` });
       continue;
     }
-    if (group !== step.groupOrder) {
-      group = step.groupOrder;
-      if(rich.common.length)blocks.push(...rich.common.map(block=>scientific(block,`run-derived:info:${group}:`)));
-      blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
-    }
-    const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
+    const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:adoptedStep?.title ?? step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
     const skipped = structured.plan.skips[step.id];
     const title = `${step.completed ? '✓' : skipped ? '已跳过：' + skipped.reason : adoptedStep?.blocked ? '待确定' : '未完成'} ${adoptedStep?.title ?? step.title}`;
-    if (step.deviationNote?.trim()) {
-      blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',execution:{...execution,deviationLabel:['abnormal','incident'].includes(step.deviationType ?? '')?'异常':'偏差',deviationNote:step.deviationNote.trim(),impact:step.deviationImpact??undefined,author:step.deviationAuthor??undefined},text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
-    } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title,execution});
+    blocks.push({id:`run-derived:${step.id}`,type:'text',text:title,execution});
     const values = Object.entries(structured.plan.actualValues[step.id] ?? {});
     if (values.length) blocks.push({ id: `run-derived:actual:${step.id}`, type: 'table', caption: '实际记录（不覆盖规定用量）', rows: [['记录项', '实际值', '记录时间'], ...values.map(([id, v]) => [adoptedStep?.actualFields.find(f => f.id === id)?.label ?? id, `${v.value} ${v.unit}`, v.recordedAt])] });
     blocks.push(...rich.blocks.map(block=>scientific(block,`run-derived:${step.id}:body:`)));
     if(!rich.blocks.length && step.description?.trim())blocks.push({id:`run-derived:${step.id}:description`,type:"text",text:step.description});
     blocks.push(...(step.evidence??[]).map((block,index)=>({...block,id:`run-derived:${step.id}:evidence:${index}`})));
   }
-  return {...document,sections:document.sections.map(section=>section.key==='execution' ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...blocks]}:section)};
+  return {...document,sections:document.sections.map(section=>['execution','deviations'].includes(section.key) ? {...section,blocks:[...section.blocks.filter(block=>!block.id.startsWith('run-derived:')),...(section.key==='execution'?blocks:deviations)]}:section)};
 }

@@ -1,7 +1,7 @@
 name: Document editor acceptance
 on:
   pull_request:
-    paths: ['src/**', 'scripts/*editor-repair*', 'package*.json', 'prisma/**', '.github/workflows/document-editor.yml']
+    paths: ['src/**', 'scripts/*editor-repair*', 'scripts/*experiment-record-flow*', 'package*.json', 'prisma/**', '.github/workflows/document-editor.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,6 +43,13 @@ jobs:
           cat editor-server.log
           exit 1
       - run: npm run test:editor-repair:e2e
+      - name: Verify experiment record creation and inline execution
+        env:
+          LABNEST_QA_ISOLATED: '1'
+          LABNEST_E2E_BASE_URL: http://localhost:3227
+        run: |
+          node --import tsx scripts/seed-experiment-record-flow.ts
+          node scripts/verify-experiment-record-flow.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -50,3 +57,4 @@ jobs:
           path: |
             docs/editor-repair/evidence
             editor-server.log
+            outputs/experiment-record-flow

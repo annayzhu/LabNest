@@ -46,7 +46,7 @@ struct WatchRunView: View {
                     }
                     Text(model.message).font(.footnote).fixedSize(horizontal: false, vertical: true)
                     if let pending = model.pending {
-                        Text("本机待同步：\(pending.request.intent)").foregroundStyle(.orange)
+                        Text("本机待同步：\(["complete": "完成操作", "start": "开始计时", "pause": "暂停计时", "finish": "结束计时"][pending.request.intent] ?? "实验操作")").foregroundStyle(.orange)
                         if let conflict = pending.conflict { Text(conflict).font(.footnote); Button("丢弃本机未同步操作", role: .destructive) { discard = true } }
                     }
                     Button("刷新与同步") { Task { await model.refresh() } }.disabled(model.busy)

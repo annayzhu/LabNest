@@ -30,8 +30,15 @@ enum WatchStorage {
         let updated = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         if updated == errSecItemNotFound {
             var insert = query; insert[kSecValueData as String] = data; insert[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            guard SecItemAdd(insert as CFDictionary, nil) == errSecSuccess else { throw CocoaError(.fileWriteUnknown) }
-        } else if updated != errSecSuccess { throw CocoaError(.fileWriteUnknown) }
+            let added = SecItemAdd(insert as CFDictionary, nil)
+            guard added == errSecSuccess else { throw credentialError(added) }
+        } else if updated != errSecSuccess { throw credentialError(updated) }
+    }
+    static func credentialError(_ status: OSStatus) -> NSError {
+        let detail = status == errSecMissingEntitlement
+            ? "应用签名缺少钥匙串权限，请在 Xcode 选择签名团队后重新安装，并在手机重新生成配对码。"
+            : "无法安全保存手表连接（\(status)），请重新安装后再配对。"
+        return NSError(domain: NSOSStatusErrorDomain, code: Int(status), userInfo: [NSLocalizedDescriptionKey: detail])
     }
     static func url(_ name: String) -> URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(name) }
     static func save<T: Encodable>(_ value: T, _ name: String) throws { try JSONEncoder().encode(value).write(to: url(name), options: .atomic) }

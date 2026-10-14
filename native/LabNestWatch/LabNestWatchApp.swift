@@ -25,7 +25,10 @@ struct WatchRunView: View {
                     if let snapshot = model.snapshot {
                         Text(snapshot.title).font(.headline).fixedSize(horizontal: false, vertical: true)
                         Text(model.connected ? "当前服务器快照" : "离线快照 · 可能已变化").foregroundStyle(model.connected ? Color.secondary : Color.orange)
-                        Picker("当前操作", selection: $selected) { ForEach(snapshot.steps) { step in Text("\(step.group) · \(step.title)").tag(step.id) } }
+                        // A wheel picker collapses inside a watch ScrollView; use a full-screen list.
+                        Picker("当前操作", selection: Binding(get: { snapshot.steps.contains(where: { $0.id == selected }) ? selected : snapshot.steps.first?.id ?? "" }, set: { selected = $0 })) {
+                            ForEach(snapshot.steps) { step in Text("\(step.group) · \(step.title)").tag(step.id) }
+                        }.pickerStyle(.navigationLink).frame(minHeight: 44)
                         if let step = snapshot.steps.first(where: { $0.id == selected }) ?? snapshot.steps.first {
                             Text(step.group).font(.subheadline)
                             Text(step.title).font(.headline).fixedSize(horizontal: false, vertical: true)

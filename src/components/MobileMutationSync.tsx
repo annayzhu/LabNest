@@ -1,17 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { listMobileMutations, mobileSyncRequestedEvent, removeMobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
+import { listMobileMutations, orderMobileMutations, mobileSyncRequestedEvent, removeMobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
 
 let syncInProgress = false;
 
 export function MobileMutationSync() {
+  const router = useRouter();
   useEffect(() => {
     async function sync() {
       if (!navigator.onLine || syncInProgress) return;
       syncInProgress = true;
       try {
-        const mutations = await listMobileMutations();
+        const mutations = orderMobileMutations(await listMobileMutations());
+        let changed = false;
         for (const mutation of mutations.filter((item) => item.state !== "conflict" && item.state !== "synced")) {
           await updateMobileMutation({ ...mutation, state: "syncing" });
           try {
@@ -31,6 +34,8 @@ export function MobileMutationSync() {
               response = await fetch("/api/mobile/inventory-transactions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "measurement.create") {
               response = await fetch("/api/mobile/measurements", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
+            } else if (mutation.actionType === "step.record") {
+              response = await fetch("/api/mobile/step-records", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "step.complete") {
               response = await fetch("/api/mobile/step-completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...mutation.payload, clientMutationId: mutation.clientMutationId, deviceCreatedAt: mutation.deviceCreatedAt }) });
             } else if (mutation.actionType === "calculation.create") {
@@ -53,21 +58,30 @@ export function MobileMutationSync() {
               continue;
             }
             await removeMobileMutation(mutation.clientMutationId);
+            changed = true;
           } catch (error) {
             await updateMobileMutation({ ...mutation, state: "pending", retryCount: mutation.retryCount + 1, lastError: error instanceof Error ? error.message : "Network unavailable." });
           }
         }
+        if (changed) router.refresh();
+      } catch (error) {
+        window.dispatchEvent(new CustomEvent("labnest:mobile-storage-error", { detail: error instanceof Error ? error.message : "本机存储不可用" }));
       } finally {
         syncInProgress = false;
       }
     }
     void sync();
+    const foreground = () => { if (document.visibilityState === "visible") void sync(); };
+    window.addEventListener("focus", foreground);
+    document.addEventListener("visibilitychange", foreground);
     window.addEventListener("online", sync);
     window.addEventListener(mobileSyncRequestedEvent, sync);
     return () => {
+      window.removeEventListener("focus", foreground);
+      document.removeEventListener("visibilitychange", foreground);
       window.removeEventListener("online", sync);
       window.removeEventListener(mobileSyncRequestedEvent, sync);
     };
-  }, []);
+  }, [router]);
   return null;
 }

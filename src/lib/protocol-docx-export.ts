@@ -246,6 +246,7 @@ export function protocolDocxFilename(identity: ProtocolDocxIdentity) {
 }
 
 export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: ProtocolDocument, imageAssets: DocxImageAssets = {}) {
+  const authoredDocument = document;
   document = allSystemProtocolExportDocument(document);
   const media = createDocxMedia(imageAssets);
   const availabilityLabel = displayStatus(identity.availability);
@@ -275,7 +276,7 @@ export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: Pro
     "[Content_Types].xml": strToU8(contentTypes.replace("</Types>", `${media.contentTypes()}<Override PartName="/word/labnest-protocol.json" ContentType="application/json"/></Types>`)),
     "_rels/.rels": strToU8(rootRels),
     "word/document.xml": strToU8(documentXml),
-    "word/labnest-protocol.json": strToU8(JSON.stringify({schemaVersion:1,documentXmlHash:createHash("sha256").update(documentXml).digest("hex"),document})),
+    "word/labnest-protocol.json": strToU8(JSON.stringify({schemaVersion:1,documentXmlHash:createHash("sha256").update(documentXml).digest("hex"),document:authoredDocument})),
     "word/styles.xml": strToU8(stylesXml),
     "word/settings.xml": strToU8(settingsXml),
     "word/header1.xml": strToU8(headerXml(identity)),

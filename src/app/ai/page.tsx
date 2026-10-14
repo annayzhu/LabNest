@@ -23,7 +23,7 @@ export default async function AIPage({ searchParams }: { searchParams?: Promise<
   const values: AiProviderFormValues | undefined = editing ? { id: editing.id, revision: editing.updatedAt.toISOString(), name: editing.name, type: editing.type as AIProviderType, baseUrl: editing.baseUrl ?? "", defaultModel: editing.defaultModel ?? "", enabled: editing.enabled, hasStoredKey: Boolean(editing.apiKeyEncrypted) } : undefined;
   const encryption = describeEncryptionKey();
   return <AppShell><div className="mx-auto max-w-5xl space-y-5">
-    <PageHeader title="AI" actions={<div className="flex gap-4 text-sm"><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/review">建议记录</Link><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/manual">手动工作台</Link></div>} />
+    <PageHeader title="AI" actions={<div className="flex gap-4 text-sm"><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/review">建议记录</Link><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/manual">AI 工作台</Link></div>} />
     <p className="text-sm text-muted">管理 AI 功能与相关设置。</p>
     <AISettingsPanel providers={providers.map(({ id, name }) => ({ id, name }))} />
     <section id="providers" className="scroll-mt-20 space-y-3 border-t border-hairline pt-4" aria-label="连接设置">

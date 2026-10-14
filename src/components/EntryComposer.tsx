@@ -201,6 +201,7 @@ export function EntryComposer({
   const [hydrated, setHydrated] = useState(false);
   const [draftStatus, setDraftStatus] = useState("");
   const [submitStatus, setSubmitStatus] = useState("");
+  const [conflict, setConflict] = useState<{title:string; contentMarkdown:string; updatedAt:string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [draggedMediaId, setDraggedMediaId] = useState<string>();
@@ -460,7 +461,15 @@ export function EntryComposer({
         body: formData,
       });
       const result = await response.json() as { entryId?: string; error?: string };
-      if (!response.ok || !result.entryId) throw new Error(result.error ?? "Entry could not be saved.");
+      if (!response.ok || !result.entryId) {
+        if (entry) {
+          const latest = await fetch(`/api/entries/${entry.id}`, {cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
+          if (latest?.entry?.updatedAt && latest.entry.updatedAt !== fields.expectedUpdatedAt) {
+            setConflict({title:latest.entry.title,contentMarkdown:latest.entry.contentMarkdown,updatedAt:latest.entry.updatedAt});
+          }
+        }
+        throw new Error(result.error ?? "Entry could not be saved.");
+      }
 
       await deleteEntryDraft(draftKey).catch(() => undefined);
       router.push(`/entries/${result.entryId}${fileAfterSave.current ? "?assign=1" : ""}`);
@@ -710,6 +719,16 @@ export function EntryComposer({
       </DocumentEditorLayout>
       </div>
 
+      {conflict ? <section aria-label="正文冲突核对" className="space-y-3 rounded-xl border border-warning p-4">
+        <h2 className="font-semibold">另一窗口已保存新版本，未覆盖任何一方</h2>
+        <p className="text-sm">本机草稿基于 {fields.expectedUpdatedAt}；服务器版本为 {conflict.updatedAt}。请复制需要保留的段落，再打开服务器记录核对。此处不会自动采用新版本号重试。</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label>本机草稿<textarea readOnly aria-label="本机草稿对照" value={fields.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
+          <label>服务器正文<textarea readOnly aria-label="服务器正文对照" value={conflict.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
+        </div>
+        <p className="text-sm">本机标题：{fields.title} · 服务器标题：{conflict.title}；本机文件仍保留在编辑区，请一并核对。</p>
+        <a className="inline-flex min-h-11 items-center text-moss underline" href={`/entries/${entry?.id}`} target="_blank" rel="noreferrer">另开服务器记录</a>
+      </section> : null}
       {submitStatus ? <div role="alert" className="rounded-[var(--ln-radius-panel)] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
         {submitStatus && !isSubmitting ? <Button type="submit" size="lg"><RotateCcw className="h-4 w-4" />Try again</Button> : null}

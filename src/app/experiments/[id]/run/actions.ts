@@ -9,9 +9,9 @@ import { prisma } from "@/lib/db";
 import { appendExperimentObservation, experimentSearchText } from "@/lib/experiment-document";
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
-import { remainingStepTimerSeconds } from "@/lib/step-timer";
+import { updateRunTimer } from "@/lib/run-timer.server";
 import { structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
-import { advanceExecutionRevision, updateRunSystemSelection, recordStructuredStep } from '@/lib/structured-run.server';
+import { advanceExecutionRevision, updateRunSystemSelections, configureRunGroups, recordStructuredStep } from '@/lib/structured-run.server';
 
 export type ProtocolRunProgressState = { error?: string; message?: string; savedAt?: string; completedStepIds?: string[]; completedCurrentStepId?: string; continuationUrl?: string };
 export type StepTimerActionState = ProtocolRunProgressState;
@@ -27,10 +27,20 @@ export async function saveStructuredStepRecord(_previous: ProtocolRunProgressSta
 
 export async function confirmRunSystems(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
   try {
-    const result = await updateRunSystemSelection({ experimentId: String(form.get('experimentId')), versionId: String(form.get('versionId')), expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) });
+    const versionId = String(form.get('versionId'));
+    const result = await updateRunSystemSelections({ experimentId: String(form.get('experimentId')), versionId, expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) }, [versionId, ...form.getAll('applyToVersionIds').map(String)]);
     revalidatePath(`/experiments/${result.experimentId}/run`);
     return { message: '本次体系已确认并保存', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
   } catch (error) { return { error: formActionErrorMessage(error, '体系未保存，请重试') }; }
+}
+
+export async function saveRunGroups(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
+  try {
+    const experimentId = String(form.get('experimentId'));
+    await configureRunGroups({ experimentId, expectedRevision: Number(form.get('executionPlanRevision')), groups: JSON.parse(String(form.get('groups'))) });
+    revalidatePath(`/experiments/${experimentId}/run`);
+    return { message: '实验组已保存，请逐组确认实际采用体系。' };
+  } catch (error) { return { error: formActionErrorMessage(error, '实验组未保存') }; }
 }
 
 const progressSchema = z.object({
@@ -247,54 +257,7 @@ export async function updateStepTimer(
       timerIntent: formData.get("timerIntent"),
       durationMinutes: optionalText(formData.get("durationMinutes")),
     });
-    const now = new Date();
-    await prisma.$transaction(async (tx) => {
-      // Historical Draft repair uses the same parent lock before inspecting any
-      // execution evidence. A timer may not start between its check and write.
-      await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${parsed.experimentId} FOR UPDATE`;
-      const step = await tx.experimentStep.findFirst({
-        where: { id: parsed.stepId, experimentId: parsed.experimentId },
-        include: { experiment: { include: { protocolRun: true, steps: true } } },
-      });
-      if (!step) throw new Error("Experiment step not found.");
-      if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot change timers.");
-      assertRecordEditable(step.experiment.recordStatus);
-      const structured = structuredRunView(step.experiment.protocolSnapshotJson, step.experiment.protocolRun?.executionPlanJson, step.experiment.steps);
-      const expectedRevision = formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined;
-      assertStructuredStepExecutable(structured, step.id, expectedRevision);
-      if (structured.steps[step.id] && (step.completed || step.experiment.status === 'completed')) throw new Error('已完成步骤的计时记录不可覆盖 / Completed operation is fixed');
-
-      const submittedDuration = parsed.durationMinutes ? Math.round(parsed.durationMinutes * 60) : undefined;
-      const durationSeconds = structured.steps[step.id]?.timerDurationSeconds ?? submittedDuration ?? step.timerDurationSeconds ?? 300;
-      if (durationSeconds <= 0) throw new Error('计时时长必须大于零 / Timer duration must be positive');
-      // Repeated Start must never move an already-running deadline.
-      if (parsed.timerIntent === 'start' && step.timerStartedAt) return;
-      if (step.timerStartedAt && step.timerStartedAt.getTime() > now.getTime() + 1000) throw new Error('检测到时钟倒退，请核对时间后重试 / Clock moved backwards');
-      const currentRemaining = remainingStepTimerSeconds({
-        remainingSeconds: step.timerRemainingSeconds ?? durationSeconds,
-        startedAt: step.timerStartedAt,
-        now,
-      });
-      const timerData = parsed.timerIntent === "finish"
-        ? { timerDurationSeconds: durationSeconds, timerRemainingSeconds: 0, timerStartedAt: null, timerPausedAt: now }
-        : parsed.timerIntent === "pause"
-        ? { timerDurationSeconds: durationSeconds, timerRemainingSeconds: currentRemaining, timerStartedAt: null, timerPausedAt: now }
-        : parsed.timerIntent === "reset"
-          ? { timerDurationSeconds: durationSeconds, timerRemainingSeconds: durationSeconds, timerStartedAt: null, timerPausedAt: null }
-          : { timerDurationSeconds: durationSeconds, timerRemainingSeconds: currentRemaining > 0 ? currentRemaining : durationSeconds, timerStartedAt: now, timerPausedAt: null };
-
-      await tx.experimentStep.update({ where: { id: step.id }, data: timerData });
-      if (structured.steps[step.id]) await tx.experimentStepEvent.create({ data: { experimentId: parsed.experimentId, experimentStepId: step.id, eventType: `timer_${parsed.timerIntent}`, payloadJson: JSON.parse(JSON.stringify({ executionPlanRevision: structured.plan.revision, previous: { startedAt: step.timerStartedAt, remainingSeconds: step.timerRemainingSeconds }, timerData })) } });
-      await advanceExecutionRevision(tx, parsed.experimentId, structured);
-      await tx.activityLog.create({
-        data: {
-          action: `experiment_step_timer_${parsed.timerIntent}`,
-          targetType: "experiment_step",
-          targetId: step.id,
-          metadataJson: { experimentId: parsed.experimentId, durationSeconds, remainingSeconds: timerData.timerRemainingSeconds },
-        },
-      });
-    });
+    await updateRunTimer({ ...parsed, expectedRevision: formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined });
   } catch (error) {
     return { error: formActionErrorMessage(error, "Timer could not be updated.") };
   }
@@ -397,4 +360,13 @@ export async function saveRunParameters(_previous:ProtocolRunProgressState,form:
   },{isolationLevel:'Serializable'});
   revalidatePath(`/experiments/${id}/run`);return {message:'参数已保存 / Parameters saved'};
  }catch(error){return {error:formActionErrorMessage(error,'Could not save parameters.')};}
+}
+
+export async function connectWatchRun(_previous: { code?: string; error?: string }, form: FormData): Promise<{ code?: string; error?: string }> {
+  try { const { createWatchPairing } = await import('@/lib/watch-execution.server'); return { code: await createWatchPairing(String(form.get('experimentId'))) }; }
+  catch (error) { return { error: formActionErrorMessage(error, '配对码创建失败') }; }
+}
+export async function disconnectWatchRun(_previous: { message?: string; error?: string }, form: FormData): Promise<{ message?: string; error?: string }> {
+  try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(String(form.get('experimentId'))); return { message: '此实验的已连接手表已断开。' }; }
+  catch (error) { return { error: formActionErrorMessage(error, '断开失败') }; }
 }

@@ -1,7 +1,7 @@
 name: Protocol experiment consistency
 on:
   pull_request:
-    paths: ['src/**', 'scripts/*protocol*', 'scripts/*structured*', 'scripts/fixtures/**', 'prisma/**', 'package*.json', '.github/workflows/protocol-consistency.yml']
+    paths: ['src/**', 'scripts/*protocol*', 'scripts/*structured*', 'scripts/*entry-followup*', 'scripts/*watch-execution*', 'native/**', 'scripts/fixtures/**', 'prisma/**', 'package*.json', '.github/workflows/protocol-consistency.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,6 +53,12 @@ jobs:
       - run: node scripts/verify-structured-protocol-browser.mjs
       - run: node scripts/verify-structured-protocol-authoring.mjs
       - run: node scripts/verify-structured-media.mjs
+      - run: npx tsx scripts/verify-structured-groups.ts
+      - run: npx tsx scripts/verify-watch-execution.ts
+      - run: node scripts/verify-protocol-followup.mjs
+      - run: node scripts/verify-protocol-offline.mjs
+      - run: npx tsx scripts/verify-entry-followup.ts
+      - run: node scripts/verify-entry-followup.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -60,4 +66,5 @@ jobs:
           path: |
             docs/qa/protocol-consistency-20261007/evidence
             docs/structured-protocol/20261014/evidence
+            docs/structured-protocol/20261014/followup-evidence
             protocol-server.log

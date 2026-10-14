@@ -1,3 +1,5 @@
+import { newClientMutationId } from './client-mutation-id';
+import type { QueuedRunContext } from './queued-run-revision.server';
 import type { CalculatorResult } from "./calculators/calculator-engine";
 export type MobileMutationState = "local_only" | "pending" | "syncing" | "synced" | "conflict";
 
@@ -64,6 +66,7 @@ export type QueuedStepCompletionMutation = {
   lastError?: string;
   payload: {
     executionPlanRevision?: number;
+    queueContext?: QueuedRunContext;
     experimentId: string;
     experimentStepId: string;
     deviationType?: string;
@@ -95,7 +98,8 @@ export type QueuedCalculationMutation = {
   payload: { experimentId: string; experimentStepId: string; operator: string; calculatorId: string; inputs: Record<string,unknown>; snapshot: CalculatorResult };
 };
 export type QueuedRunMaterialMutation = {clientMutationId:string;actionType:"run.material";deviceCreatedAt:string;state:MobileMutationState;retryCount:number;lastError?:string;payload:{experimentId:string;row:Record<string,unknown>}};
-export type MobileMutation = QueuedRunMaterialMutation | QueuedCalculationMutation | QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
+export type QueuedStepRecordMutation = {clientMutationId:string;actionType:'step.record';deviceCreatedAt:string;state:MobileMutationState;retryCount:number;lastError?:string;payload:{experimentId:string;experimentStepId:string;executionPlanRevision:number;queueContext?:QueuedRunContext;intent:'actual'|'skip'|'unskip';reason?:string;values:Record<string,{value:number;unit:string}>}};
+export type MobileMutation = QueuedStepRecordMutation | QueuedRunMaterialMutation | QueuedCalculationMutation | QueuedEntryMutation | QueuedInventoryMutation | QueuedMeasurementMutation | QueuedStepCompletionMutation | QueuedAttachmentMutation;
 
 const databaseName = "labnest-mobile-mutations";
 const storeName = "mutations";
@@ -134,7 +138,25 @@ function notifyQueueChanged() {
 }
 
 export async function enqueueMobileMutation(mutation: MobileMutation) {
-  await withQueueStore<IDBValidKey>("readwrite", (store) => store.put(mutation));
+  // One IndexedDB transaction orders dependent writes even when two tabs capture at once.
+  const database = await openQueueDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(storeName, 'readwrite'), store = transaction.objectStore(storeName);
+      const read = store.getAll();
+      read.onsuccess = () => {
+        if ((mutation.actionType === 'step.complete' || mutation.actionType === 'step.record') && mutation.payload.queueContext) {
+          const prior = (read.result as MobileMutation[]).filter(item => (item.actionType === 'step.complete' || item.actionType === 'step.record') && item.payload.experimentId === mutation.payload.experimentId && item.payload.executionPlanRevision === mutation.payload.executionPlanRevision);
+          const predecessorIds = new Set(prior.flatMap(item => ('queueContext' in item.payload && item.payload.queueContext?.predecessorMutationId) ? [item.payload.queueContext.predecessorMutationId] : []));
+          const tail = prior.find(item => !predecessorIds.has(item.clientMutationId));
+          if (tail) mutation.payload.queueContext.predecessorMutationId = tail.clientMutationId;
+        }
+        store.put(mutation);
+      };
+      transaction.oncomplete = () => resolve();
+      transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('本机保存失败，请保留页面并重试。'));
+    });
+  } finally { database.close(); }
   notifyQueueChanged();
 }
 
@@ -162,4 +184,27 @@ export function mobileMutationStatusLabel(state: MobileMutationState) {
       : state === "syncing" ? "Syncing"
         : state === "synced" ? "Synced"
           : "Sync conflict";
+}
+
+export function runQueueContext(sourceRef: string): QueuedRunContext {
+  const key = 'labnest.execution-device-id';
+  let deviceId = localStorage.getItem(key);
+  if (!deviceId) { deviceId = newClientMutationId(); localStorage.setItem(key, deviceId); }
+  return { deviceId, actor: 'local-workspace-user', sourceRef };
+}
+
+/** Stored IDs are UUIDs, not chronological keys. Visit explicit predecessors first. */
+export function orderMobileMutations(items: MobileMutation[]) {
+  const result: MobileMutation[] = [], visited = new Set<string>(), visiting = new Set<string>();
+  const visit = (item: MobileMutation) => {
+    if (visited.has(item.clientMutationId)) return;
+    if (visiting.has(item.clientMutationId)) throw new Error('本机队列依赖异常，请核对记录。');
+    visiting.add(item.clientMutationId);
+    const predecessor = 'queueContext' in item.payload ? item.payload.queueContext?.predecessorMutationId : undefined;
+    const prior = items.find(candidate => candidate.clientMutationId === predecessor);
+    if (prior) visit(prior);
+    visiting.delete(item.clientMutationId); visited.add(item.clientMutationId); result.push(item);
+  };
+  items.forEach(visit);
+  return result;
 }

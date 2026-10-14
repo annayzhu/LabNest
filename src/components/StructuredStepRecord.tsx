@@ -1,5 +1,7 @@
 'use client';
 
+import { useQueuedRunRecords } from './useQueuedRunRecords';
+import { enqueueMobileMutation, runQueueContext } from '@/lib/mobile-mutation-queue';
 import { newClientMutationId } from '@/lib/client-mutation-id';
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react';
 import { reconcileStructuredStepDraft, type StructuredStepDraft } from '@/lib/structured-step-draft';
@@ -10,6 +12,8 @@ import { Button } from './ui/Button';
 
 export function StructuredStepRecord({ experimentId, stepId, structured, editable, completed }: { experimentId: string; stepId: string; structured?: Pick<StructuredRunView, 'steps' | 'plan'>; editable: boolean; completed: boolean }) {
   const [state, action, pending] = useActionState(saveStructuredStepRecord, {});
+  const queued = useQueuedRunRecords(experimentId).filter(item => item.payload.experimentStepId === stepId);
+  const [offlineMessage, setOfflineMessage] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
   const [reason, setReason] = useState('');
   const submitted = useRef<{ key: string; intent: string; values: Record<string, string>; reason: string } | null>(null);
@@ -60,10 +64,18 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
     const form = new FormData();
     form.set('experimentId', experimentId); form.set('stepId', stepId); form.set('executionPlanRevision', String(structured.plan.revision)); form.set('clientMutationId', newClientMutationId()); form.set('intent', intent); form.set('reason', reason);
     form.set('values', JSON.stringify(Object.fromEntries(step.actualFields.filter(f => values[f.id]?.trim()).map(f => [f.id, { value: Number(values[f.id]), unit: f.unit }]))));
+    if (!navigator.onLine) {
+      try {
+        const queueContext = runQueueContext(`${step.versionId.split('@')[0]}:${step.source_ref}`);
+        void enqueueMobileMutation({ clientMutationId: String(form.get('clientMutationId')), actionType: 'step.record', deviceCreatedAt: new Date().toISOString(), state: 'pending', retryCount: 0, payload: { experimentId, experimentStepId: stepId, executionPlanRevision: structured.plan.revision, queueContext, intent, reason, values: JSON.parse(String(form.get('values'))) } }).then(() => setOfflineMessage('已保存至本机，等待同步；服务端实际记录尚未改变。')).catch(error => setOfflineMessage(`本机保存失败：${String(error)}`));
+      } catch { setOfflineMessage('本机存储不可用，未保存。请保留页面。'); }
+      return;
+    }
     submitted.current = { key: draftKey, intent, values, reason };
     startTransition(() => action(form));
   };
   return <section className="mt-3 grid gap-2" data-structured-step-record>
+    {offlineMessage || queued.length ? <p role="status" className="text-warning">{offlineMessage || `本步骤有 ${queued.length} 条本机记录等待核对或同步。`}</p> : null}
     {reviewDraft ? <div role="alert" className="text-warning"><p>此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。</p><ul>{Object.entries(reviewDraft.values).map(([id, value]) => <li key={id}>{reviewDraft.contextChanged ? "此前实际值" : step.actualFields.find(field => field.id === id)?.label ?? "此前实际值"}：{value || "未填写"}{!reviewDraft.contextChanged ? ` ${step.actualFields.find(field => field.id === id)?.unit ?? ""}` : "（请核对原操作单位）"}</li>)}{reviewDraft.reason ? <li>未提交原因：{reviewDraft.reason}</li> : null}</ul>
       {!reviewDraft.contextChanged ? <Button type="button" onClick={() => { setValues(reviewDraft.values); setReason(reviewDraft.reason); preserve(reviewDraft.values, reviewDraft.reason); setReviewDraft(null); }}>核对后保留本机草稿</Button> : <p>操作或单位已变化，请按当前要求重新填写。</p>}
       <Button type="button" onClick={() => { setValues({}); setReason(''); setReviewDraft(null); try { sessionStorage.removeItem(draftKey); } catch { /* Best effort. */ } }}>放弃本机草稿</Button></div> : null}

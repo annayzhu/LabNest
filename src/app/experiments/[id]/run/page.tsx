@@ -1,3 +1,5 @@
+import { RunNotificationStatus } from '@/components/RunNotificationStatus';
+import { WatchRunConnection } from '@/components/WatchRunConnection';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { structuredRunView } from '@/lib/structured-run';
 import { RunSystemPreparation } from '@/components/RunSystemPreparation';
@@ -13,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
+import { RunStepSelectionProvider, RunStepAttachmentUpload } from "@/components/RunStepSelection";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
 import { PageHeader } from "@/components/PageHeader";
@@ -77,11 +80,12 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   }]));
   const frozenReferenceTitles:Record<string,string>={};
   const frozenReferences: Record<string, ReturnType<typeof runStepContent>["reference"]> = {};
-  const renderedSteps=experiment.steps.map(step=>{
+  const groupOrder = (stepId: string) => structured.plan.stepGroups[stepId] === 'shared' ? -1 : structured.plan.groups.findIndex(group => group.id === structured.plan.stepGroups[stepId]);
+  const renderedSteps=[...experiment.steps].sort((a,b) => a.groupOrder-b.groupOrder || groupOrder(a.id)-groupOrder(b.id) || a.order-b.order).map(step=>{
     const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
     frozenReferences[step.groupKey] ??= reference;
     const resolved = structured.steps[step.id];
-    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, description: resolved.description, richContent: { ...richContent, blocks: resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === step.groupKey)?.commonBlocks ?? [] } } : {...step,richContent};
+    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, groupTitle: resolved.groupLabel ? `${resolved.groupLabel} · ${step.groupTitle}` : step.groupTitle, description: resolved.description, richContent: { ...richContent, blocks: resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === resolved.versionId)?.commonBlocks ?? [] } } : {...step,richContent};
   }).filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
   for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown;protocolTitle?:string;displayVersion?:string}[]}).versions??[]) {
     frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
@@ -97,6 +101,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell>
+      <RunStepSelectionProvider key={experiment.id} initialStepId={currentStep?.id ?? renderedSteps[0]?.id ?? ""}>
       {runOfflineImagePaths(experiment.protocolSnapshotJson).map(path=><meta key={path} name="labnest-offline-image" content={path}/>)}
       <div className="space-y-4">
         <PageHeader
@@ -125,8 +130,10 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
+        {editable && structured.hasSystems ? <WatchRunConnection experimentId={id}/> : null}
         <RunSystemPreparation experimentId={id} view={structured} editable={editable}/>
-        {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>当前实验组 · {experiment.runCode}</strong><div className="protocol-system-legend">{structured.versions.flatMap(v => Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>))}</div></div> : null}
+        {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>本次采用体系 · {experiment.runCode}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
+        <RunNotificationStatus/>
         <ProtocolRunProgressForm
           key={`${structured.plan.revision}:${experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}`}
           structured={structured.hasSystems ? { plan: structured.plan, steps: structured.steps } : undefined}
@@ -139,7 +146,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           editable={editable}
           evidenceByStep={evidenceByStep}
         />
-        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>查看其他体系内容（不适用，不计入本次进度）</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={step.source_ref} className="mt-3"><h3>{step.title} · 不适用</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
+        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>查看其他体系内容（不适用，不计入本次进度）</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · 不适用</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 
 
 
@@ -147,7 +154,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         <div className="mt-3 grid gap-4 xl:grid-cols-2">
           <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
             <div className="mb-4 flex items-center gap-2"><Camera className="h-4 w-4 text-moss" aria-hidden /><h2 className="text-lg font-semibold text-ink">Photos and files</h2></div>
-            {currentStep ? <div className="lg:hidden"><p className="mb-2 text-xs text-muted">Linked to Step {currentStep.order} · {currentStep.title}</p><AttachmentUploadForm targetType="experiment_step" targetId={currentStep.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="step_evidence" /></div> : null}
+            <RunStepAttachmentUpload steps={renderedSteps.map(s=>({id:s.id,title:s.title,order:s.order}))}/>
             <div className="hidden lg:block"><AttachmentUploadForm targetType="experiment" targetId={experiment.id} hideTargetFields fileLabel="Photo or file" accept="image/*,video/*,.pdf,.csv,.tsv,.xlsx" linkType="run_evidence" /></div>
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
@@ -160,6 +167,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         </details>
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>
+      </RunStepSelectionProvider>
     </AppShell>
   );
 }

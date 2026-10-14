@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { POST as watchAction } from '../src/app/api/watch/runs/[id]/route';
+import { prisma } from '../src/lib/db';
+import { createWatchPairing, claimWatchPairing, authorizeWatch, revokeWatchPairings, watchRunSnapshot } from '../src/lib/watch-execution.server';
+const db=new URL(process.env.DATABASE_URL!);
+assert(['localhost','127.0.0.1'].includes(db.hostname)&&((db.port==='55439'&&db.pathname==='/labnest_structured_20261014')||(process.env.CI==='true'&&db.pathname==='/labnest_protocol_consistency_ci')));
+async function main(){
+ const fixture=JSON.parse(await readFile('docs/structured-protocol/20261014/followup-evidence/groups-fixture.json','utf8'));
+ const code=await createWatchPairing(fixture.verifiedExperimentId);
+ const paired=await claimWatchPairing(code,randomUUID());
+ assert.equal(paired.experimentId,fixture.verifiedExperimentId);
+ await assert.rejects(claimWatchPairing(code,randomUUID()),/失效|已使用/);
+ await authorizeWatch(paired.token,paired.experimentId);
+ await assert.rejects(authorizeWatch(paired.token,fixture.experimentId));
+ const view=await watchRunSnapshot(paired.experimentId);
+ assert(view.steps.some(step=>step.text.includes('50 µL')));assert(view.steps.some(step=>step.text.includes('80 µL')));
+ assert(view.steps.every(step=>step.sourceRef&&step.id));
+ assert.equal(view.steps.filter(step=>step.group==='共同准备').length,1);
+ const step=view.steps.find(step=>step.canComplete)!;assert(step);
+ const body={intent:'complete',stepId:step.id,revision:view.revision,clientMutationId:randomUUID(),deviceCreatedAt:new Date().toISOString(),sourceRef:step.sourceRef};
+ const request=()=>new Request(`http://localhost/api/watch/runs/${paired.experimentId}`,{method:'POST',headers:{authorization:`Bearer ${paired.token}`},body:JSON.stringify(body)});
+ assert.equal((await watchAction(request(),{params:Promise.resolve({id:paired.experimentId})})).status,201);
+ assert.equal((await watchAction(request(),{params:Promise.resolve({id:paired.experimentId})})).status,201);
+ assert.equal(await prisma.experimentStepEvent.count({where:{clientMutationId:body.clientMutationId}}),1);
+ assert((await prisma.experimentStep.findUniqueOrThrow({where:{id:step.id}})).completed);
+ await revokeWatchPairings(paired.experimentId);
+ await assert.rejects(authorizeWatch(paired.token,paired.experimentId));
+ console.log('PASS one-use pairing, experiment-scoped token, revoke, independent resolved values, full untruncated step content');
+}
+main().finally(()=>prisma.$disconnect());

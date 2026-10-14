@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { enqueueMobileMutation, mobileMutationStatusLabel } from "./mobile-mutation-queue";
+import { enqueueMobileMutation, mobileMutationStatusLabel, orderMobileMutations, type QueuedStepCompletionMutation } from "./mobile-mutation-queue";
 import { saveEntryDraft } from "./entry-draft-store";
 
 afterEach(() => vi.unstubAllGlobals());
 it.each(["queue", "draft"])("waits for the %s transaction and rejects an abort after request success", async (kind) => {
   const request: { result: string; onsuccess?: () => void } = { result: "key" };
   const transaction: { onabort?: () => void; oncomplete?: () => void; error: Error; objectStore: () => object } = {
-    error: new Error("Transaction aborted"), objectStore: () => ({ get: () => request, put: () => request }),
+    error: new Error("Transaction aborted"), objectStore: () => ({ get: () => request, getAll: () => request, put: () => request }),
   };
   vi.stubGlobal("window", { dispatchEvent: () => {} });
   vi.stubGlobal("indexedDB", { open: () => {
@@ -36,4 +36,12 @@ describe("mobile mutation status labels", () => {
       "Sync conflict",
     ]);
   });
+});
+
+const queued = (id:string, predecessor?:string):QueuedStepCompletionMutation => ({clientMutationId:id,actionType:"step.complete",state:"pending",retryCount:0,deviceCreatedAt:"2026-10-14",payload:{experimentId:"experiment",experimentStepId:id,executionPlanRevision:3,queueContext:{deviceId:"device",actor:"local-workspace-user",sourceRef:id,predecessorMutationId:predecessor}}});
+it("replays captured dependencies before lexically earlier UUIDs without trusting device timestamps",()=>{
+  expect(orderMobileMutations([queued("a","z"),queued("z"),queued("b","a")]).map(x=>x.clientMutationId)).toEqual(["z","a","b"]);
+});
+it("blocks a malformed dependency cycle rather than silently dropping an observation",()=>{
+  expect(()=>orderMobileMutations([queued("a","b"),queued("b","a")])).toThrow(/依赖异常/);
 });

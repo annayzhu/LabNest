@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import { queuedRunContextSchema, queuedRunRevision } from '@/lib/queued-run-revision.server';
 import { advanceExecutionRevision } from '@/lib/structured-run.server';
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
@@ -6,6 +8,7 @@ import { assertRecordEditable } from "@/lib/record-lifecycle";
 import { structuredRunView, assertStructuredStepExecutable } from '@/lib/structured-run';
 
 const schema = z.object({
+  queueContext: queuedRunContextSchema.optional(),
   executionPlanRevision: z.number().int().nonnegative().optional(),
   experimentId: z.string().min(1),
   experimentStepId: z.string().min(1),
@@ -27,6 +30,8 @@ export async function POST(request: Request) {
       const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: input.clientMutationId } });
       if (replay) {
         if (replay.experimentId !== input.experimentId || replay.experimentStepId !== input.experimentStepId) throw new Error('重复请求与原执行不一致');
+        const original = (replay.payloadJson as { request?: unknown }).request;
+        if (original && !isDeepStrictEqual(original, JSON.parse(JSON.stringify(input)))) throw new Error('重复请求与原请求内容不一致');
         return replay;
       }
       const step = await tx.experimentStep.findFirst({ where: { id: input.experimentStepId, experimentId: input.experimentId }, include: { experiment: { include: { steps: true, protocolRun: true } } } });
@@ -34,7 +39,9 @@ export async function POST(request: Request) {
       if (step.experiment.status === "archived") throw new Error("An archived Experiment cannot be changed in Run mode.");
       assertRecordEditable(step.experiment.recordStatus);
       const structured = structuredRunView(step.experiment.protocolSnapshotJson, step.experiment.protocolRun?.executionPlanJson, step.experiment.steps);
-      assertStructuredStepExecutable(structured, step.id, input.executionPlanRevision, true);
+      if (input.queueContext && input.queueContext.sourceRef !== (step.protocolStepRef ?? step.id)) throw new Error('离线操作的来源版本与当前步骤不同');
+      const expectedRevision = input.executionPlanRevision === undefined ? undefined : await queuedRunRevision(tx, { experimentId: input.experimentId, expectedRevision: input.executionPlanRevision, queueContext: input.queueContext });
+      assertStructuredStepExecutable(structured, step.id, expectedRevision, true);
       if (structured.steps[step.id] && step.completed) throw new Error('此步骤已完成，不能用新的完成请求覆盖既有记录');
       if (structured.steps[step.id] && step.timerStartedAt) throw new Error('请先结束计时，再确认步骤完成');
       if (structured.hasSystems && step.experiment.status === 'completed') throw new Error('已结束的执行不可改写');
@@ -65,13 +72,13 @@ export async function POST(request: Request) {
         eventType: "completed",
         clientMutationId: input.clientMutationId,
         deviceCreatedAt: input.deviceCreatedAt,
-        payloadJson: json(JSON.parse(JSON.stringify({ previousCompleted: step.completed, completed: true, deviationType: input.deviationType ?? null, actualExecution: input.deviationNote ?? null, impactAssessment: input.deviationImpact ?? null, author: input.deviationAuthor ?? null, ...(structured.steps[step.id] ? { executionPlanRevision: structured.plan.revision, adopted: structured.steps[step.id], actualValues: structured.plan.actualValues[step.id] ?? {} } : {}) }))),
+        payloadJson: json(JSON.parse(JSON.stringify({ request: input, queueContext: input.queueContext, clientBaseRevision: input.executionPlanRevision, resultingRevision: structured.hasSystems ? structured.plan.revision + 1 : undefined, previousCompleted: step.completed, completed: true, deviationType: input.deviationType ?? null, actualExecution: input.deviationNote ?? null, impactAssessment: input.deviationImpact ?? null, author: input.deviationAuthor ?? null, ...(structured.steps[step.id] ? { executionPlanRevision: structured.plan.revision, adopted: structured.steps[step.id], actualValues: structured.plan.actualValues[step.id] ?? {} } : {}) }))),
       } });
       await advanceExecutionRevision(tx, input.experimentId, structured);
       await tx.activityLog.create({ data: { action: "protocol_run_step_complete", targetType: "experiment_step", targetId: step.id, metadataJson: json({ experimentId: input.experimentId, clientMutationId: input.clientMutationId, offlineCapable: true }) } });
       return created;
     });
-    return Response.json({ eventId: event.id }, { status: 201 });
+    return Response.json({ eventId: event.id, receivedAt: event.createdAt, revision: (event.payloadJson as { resultingRevision?: number }).resultingRevision }, { status: 201 });
   } catch (error) {
     const message = error instanceof z.ZodError ? error.issues[0]?.message : error instanceof Error ? error.message : "Step completion could not be saved.";
     return Response.json({ error: message }, { status: 400 });

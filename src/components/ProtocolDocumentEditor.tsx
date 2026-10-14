@@ -78,6 +78,8 @@ export function ProtocolDocumentEditor({
   const [primaryPlanIds, setPrimaryPlanIds] = useState(initialPrimaryResearchPlanIds);
   const [uploadDraftId] = useState(() => `protocol-upload-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`);
   const serialized = useMemo(() => JSON.stringify(document), [document]);
+  const [systemsOpen, setSystemsOpen] = useState(false);
+  const [operationsOpen, setOperationsOpen] = useState(false);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
   const identifier = protocol.humanCode ?? (codeSuffix ? `PRT-${codeSuffix}` : "Draft Protocol");
@@ -124,9 +126,15 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          <ProtocolSystemsEditor document={document} onChange={setDocument}/>
+          <nav aria-label="规程编写" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
+            <Button type="button" aria-expanded={systemsOpen} aria-controls="protocol-systems" onClick={() => setSystemsOpen(value => !value)}>实验体系与参数</Button>
+            <Button type="button" aria-expanded={operationsOpen} aria-controls="protocol-operations" onClick={() => setOperationsOpen(value => !value)}>步骤整理</Button>
+            <a className="focus-ring inline-flex min-h-11 items-center px-2 text-sm text-moss underline" href="/api/protocols/template/docx?example=systems">多体系模板</a>
+            <span className="text-xs text-muted">{document.systems ? `${document.systems.dimensions.length} 个体系维度` : '普通规程也可直接编写；有用量差异时设置体系。'}</span>
+          </nav>
+          <ProtocolSystemsEditor document={document} onChange={setDocument} open={systemsOpen} onOpenChange={setSystemsOpen}/>
+          <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
           <ProtocolWysiwygEditor document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
-          <ProtocolExecutionOrganizer document={document} onChange={setDocument}/>
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>

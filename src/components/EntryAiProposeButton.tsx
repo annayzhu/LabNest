@@ -3,6 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import Link from 'next/link';
 import { Button } from "@/components/ui/Button";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
@@ -59,6 +60,7 @@ export function EntryAiProposeButton({ entryId, providerName }: { entryId: strin
         <Sparkles className="h-4 w-4" aria-hidden />
         {busy ? "Asking model…" : "Propose with AI"}
       </Button>
+      {!status.connected ? <Link href="/ai" className="focus-ring text-xs text-moss underline">配置并启用 AI</Link> : null}
       {outcome ? (
         <span role="status" className={`max-w-xs text-right text-xs leading-5 ${outcome.ok ? "text-success" : "text-error"}`}>{outcome.message}</span>
       ) : null}

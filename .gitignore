@@ -57,5 +57,5 @@ next-env.d.ts
 docs/qa/evidence/entry-richtext/**/*.zip
 
 # Isolated release build and browser traces (CI publishes full traces).
-/.next-structured-release/
+/.next-*/
 docs/structured-protocol/20261014/evidence/*.zip

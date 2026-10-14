@@ -3,9 +3,9 @@ import {revalidatePath} from 'next/cache';
 import {prisma} from '@/lib/db';
 import {assertDocumentSaveVersion} from '@/lib/document-save-version';
 import {experimentStepOrder} from '@/lib/experiment-step-order';
+import {acceptsRequestOrigin} from '@/lib/request-origin';
 export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}) {
- const origin=request.headers.get('origin');
- if(origin && origin!==new URL(request.url).origin)return Response.json({error:'Origin mismatch'},{status:403});
+ if(!acceptsRequestOrigin(request))return Response.json({error:'Origin mismatch'},{status:403});
  try {
   const {id}=await params;
   const input=z.object({ids:z.array(z.string().min(1)),expectedUpdatedAt:z.string().datetime()}).parse(await request.json());

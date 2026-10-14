@@ -28,7 +28,7 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
     <input type="hidden" name="experimentId" value={experimentId}/><input type="hidden" name="versionId" value={version.id}/><input type="hidden" name="executionPlanRevision" value={view.plan.revision}/><input type="hidden" name="selections" value={JSON.stringify(selections)}/><input type="hidden" name="actualInputs" value={JSON.stringify(actualInputs)}/>
     <input type="hidden" name="continuationKey" value={continuationKey}/>
     <h3>{version.title} · v{version.displayVersion}</h3>
-    <p>{adopted ? `已确认 · ${new Date(adopted.confirmedAt).toLocaleString()}` : '尚未确认体系；依赖这些选择的操作暂不可执行。'}</p>
+    <p>{adopted ? <>已确认 · <time dateTime={adopted.confirmedAt} suppressHydrationWarning>{new Date(adopted.confirmedAt).toLocaleString()}</time></> : '尚未确认体系；依赖这些选择的操作暂不可执行。'}</p>
     <fieldset disabled={!editable || pending} className="protocol-system-section">
       {systems.presets.length ? <div className="flex flex-wrap gap-2">{systems.presets.map(p => <Button type="button" key={p.id} size="sm" onClick={() => setSelections({ ...p.selections })}>{p.label}</Button>)}</div> : null}
       <div className="protocol-system-fields">{systems.dimensions.map(d => <label key={d.id}>{d.label}<select className={formInputClass} value={selections[d.id] ?? ''} onChange={event => { const next = { ...selections }; if (event.target.value) next[d.id] = event.target.value; else delete next[d.id]; setSelections(next); }}><option value="">待选择</option>{d.options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>)}</div>

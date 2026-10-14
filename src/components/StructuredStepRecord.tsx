@@ -74,7 +74,7 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
       const dirty = draft !== undefined && (draft.trim() === '' || Number(draft) !== saved?.value);
       return <label key={field.id}>{field.label} · {field.unit}{field.required ? ' · 必填' : ''}<input aria-label={field.label} className={formInputClass} type="number" step="any" disabled={!editable || completed || pending || step.blocked || Boolean(reviewDraft)} value={draft ?? saved?.value ?? ''} onChange={e => { const next = { ...values, [field.id]: e.target.value }; setValues(next); preserve(next, reason); }}/>
         {dirty ? <small role="status" className="text-warning">未保存修改</small> : null}
-        {saved ? <small>{dirty ? `上次保存：${saved.value} ${saved.unit}` : '已保存'} · {new Date(saved.recordedAt).toLocaleString()}</small> : null}
+        {saved ? <small>{dirty ? `上次保存：${saved.value} ${saved.unit}` : '已保存'} · <time dateTime={saved.recordedAt} suppressHydrationWarning>{new Date(saved.recordedAt).toLocaleString()}</time></small> : null}
       </label>;
     })}
     {editable && !completed ? <>

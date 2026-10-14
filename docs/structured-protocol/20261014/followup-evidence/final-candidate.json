@@ -1,6 +1,6 @@
 {
   "webSource": "603067b8c2caacb6f3b96674f4a35b37e9164e78",
-  "nativeSource": "c73febadacef8424644770107d7b96f9e869a07e",
+  "nativeSource": "4f239398bc55be7472b3e9d3e64007ee15c0936e",
   "baselineFullAcceptance": "validation.json",
   "webProductionBuild": "passed",
   "webImage": "labnest-app:protocol-followup-603067b8",
@@ -11,5 +11,6 @@
   ],
   "nativeSimulator": "watch-simulator/report.json",
   "physicalValidation": "unexecuted; see ACCEPTANCE.md",
-  "secretsOrFormalRecordsChanged": false
+  "secretsOrFormalRecordsChanged": false,
+  "nativeFinalRegression": "watch-simulator/final-regression.json"
 }

@@ -1,0 +1,5 @@
+# Final native UI review
+
+Two user-authorized independent reviewers inspected code and saved watchOS26.5 simulator evidence after cf70aec9. Reviewer A found no blocker and requested final step-list/pending screenshots. Reviewer B found one P1: failed re-pairing refreshed the old credential, hid the error and closed settings. The parent reproduced that behavior in the simulator, fixed it in4f239398, and operated both invalid and valid re-pairing. Reviewer B rechecked the patch: closed, no new blocking finding. Both reviewers confirmed the physical-watch/notification limits are stated accurately.
+
+Final evidence: watch-simulator/step-list.png, offline-pending-final.png, repair-before.png, repair-error-preserved.png and final-regression.json. Earlier before-label-fix.png is historical failure context, not final Chinese-label proof. Independent review was read-only. The final application source is4f239398bc55be7472b3e9d3e64007ee15c0936e; physical Watch installation, Dynamic Type and notification arrival remain unexecuted.

@@ -24,9 +24,13 @@ await check('C04 visible move, undo/redo and explicit clipboard copy preserve or
  assert.deepEqual((await media()).map(b=>b.id),[before[1].id,before[0].id,before[2].id,before[3].id]);
  await page.getByRole('button',{name:'Undo',exact:true}).click();assert.deepEqual((await media()).map(b=>b.id),before.map(b=>b.id));
  await page.getByRole('button',{name:'Redo',exact:true}).click();assert.equal((await media()).length,4);
- await nodes.first().locator('img').click(); await close();
+ await nodes.first().locator('img').click();
  await page.keyboard.press('ControlOrMeta+c');
- const target=page.locator('#protocol-section-steps [data-node-view-content] p').last();await target.click();await page.keyboard.press('ControlOrMeta+v');
+ const clipboard = await page.evaluate(async()=>{const items=await navigator.clipboard.read();for(const item of items)if(item.types.includes('text/html'))return (await item.getType('text/html')).text();return '';});
+ assert(clipboard.includes('data-document-media'), 'Copy must finish with the selected media HTML before pasting.');
+ const target=page.locator('#protocol-section-steps [data-node-view-content] p').last();await target.click();
+ await page.waitForFunction(element=>element.contains(document.getSelection()?.anchorNode)&&document.activeElement?.getAttribute('contenteditable')==='true',await target.elementHandle());
+ await page.keyboard.press('ControlOrMeta+v');
  await page.waitForFunction(()=>document.querySelectorAll('#protocol-section-steps [data-document-media]').length===5);
  const copied=await media();assert.equal(new Set(copied.map(b=>b.id)).size,5);assert.equal(new Set(copied.map(b=>b.attachmentId)).size,4);
  const copy=copied.find(b=>!before.some(o=>o.id===b.id));

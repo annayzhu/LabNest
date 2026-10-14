@@ -1,3 +1,4 @@
+import {emptyExecutionPlan, parseExecutionPlan} from "./structured-run";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -16,17 +17,22 @@ export async function copyExperiment(sourceId: string, raw: unknown) {
       if (!origin) throw new Error("Copy request ID is already in use.");
       return replay;
     }
+    // Group configuration and every execution write hold this same parent lock.
+    await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${sourceId} FOR UPDATE`;
     const source = await tx.experiment.findUniqueOrThrow({ where: { id: sourceId }, include: { steps: true, protocolVersions: true, protocolRun: true, materialUses: true } });
+    const stepIds = new Map(source.steps.map(step=>[step.id,randomUUID()]));
+    const capturedPlan = parseExecutionPlan(source.protocolRun?.executionPlanJson);
+    const freshPlan = {...emptyExecutionPlan(),groups:capturedPlan.groups,stepGroups:Object.fromEntries(Object.entries(capturedPlan.stepGroups).filter(([old])=>stepIds.has(old)).map(([old,group])=>[stepIds.get(old)!,group]))};
     const copy = await tx.experiment.create({ data: {
       id, runCode: await reserveRecordCode(tx,"experiment"), title: `${source.title} · 副本`, status: "planned", recordStatus: "draft",
       projectId: source.projectId, researchPlanId: source.researchPlanId, purpose: source.purpose, tags: source.tags,
       contentJson: source.contentJson as Prisma.InputJsonValue, searchText: source.searchText,
       protocolSnapshotJson: source.protocolSnapshotJson as Prisma.InputJsonValue, primaryProtocolVersionId: source.primaryProtocolVersionId,
       protocolVersions: { create: source.protocolVersions.map(v => ({ protocolVersionId: v.protocolVersionId, role: v.role, order: v.order })) },
-      steps: { create: source.steps.map(s => ({ protocolStepRef: s.protocolStepRef, groupKey: s.groupKey, groupTitle: s.groupTitle, groupOrder: s.groupOrder, order: s.order, title: s.title, description: s.description, requiresConfirmation: s.requiresConfirmation, allowsDeviation: s.allowsDeviation, timerDurationSeconds: s.timerDurationSeconds })) },
+      steps: { create: source.steps.map(s => ({ id:stepIds.get(s.id), protocolStepRef: s.protocolStepRef, groupKey: s.groupKey, groupTitle: s.groupTitle, groupOrder: s.groupOrder, order: s.order, title: s.title, description: s.description, requiresConfirmation: s.requiresConfirmation, allowsDeviation: s.allowsDeviation, timerDurationSeconds: s.timerDurationSeconds })) },
       materialUses: { create: source.materialUses.filter(r => !r.correctionOfId).map(r => ({ id: randomUUID(), name: r.name, expected: r.expected, unit: r.unit, source: `Copied plan from ${source.runCode}: ${r.source}`, status: "recorded" })) },
     } });
-    if (source.protocolRun) await tx.protocolRun.create({ data: { experimentId: id, protocolVersionId: source.protocolRun.protocolVersionId, parametersJson: source.protocolRun.parametersJson as Prisma.InputJsonValue, calculatedConsumptionJson: source.protocolRun.calculatedConsumptionJson as Prisma.InputJsonValue } });
+    if (source.protocolRun) await tx.protocolRun.create({ data: { experimentId: id, protocolVersionId: source.protocolRun.protocolVersionId, executionPlanJson:freshPlan as Prisma.InputJsonValue, parametersJson: source.protocolRun.parametersJson as Prisma.InputJsonValue, calculatedConsumptionJson: source.protocolRun.calculatedConsumptionJson as Prisma.InputJsonValue } });
     await associateDocumentMedia(tx, [copy.contentJson,copy.protocolSnapshotJson], "experiment",id);
     await tx.activityLog.create({ data: { action: "copy", targetType: "experiment", targetId: id, metadataJson: { sourceId, sourceRunCode: source.runCode, executionReset: true } } });
     return copy;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueuedRunRecords } from './useQueuedRunRecords';
-import { enqueueMobileMutation, runQueueContext } from '@/lib/mobile-mutation-queue';
+import { enqueueMobileMutation, orderMobileMutations, runQueueContext } from '@/lib/mobile-mutation-queue';
 import { newClientMutationId } from '@/lib/client-mutation-id';
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react';
 import { reconcileStructuredStepDraft, type StructuredStepDraft } from '@/lib/structured-step-draft';
@@ -58,6 +58,9 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
   }, [state.savedAt, draftKey, context, recorded]);
   if (!step || !structured) return null;
   const skipped = structured.plan.skips[stepId];
+  const queuedActual = [...orderMobileMutations(queued)].reverse().find(item=>item.actionType==='step.record' && item.payload.intent==='actual');
+  const pendingValues = queuedActual?.actionType==='step.record' ? queuedActual.payload.values : undefined;
+  const matchesPending = Boolean(pendingValues && step.actualFields.every(field=>values[field.id]?.trim() && Number(values[field.id])===pendingValues[field.id]?.value && field.unit===pendingValues[field.id]?.unit));
   const hasChanges = step.actualFields.some(field => values[field.id] !== undefined &&
     (values[field.id].trim() === '' || Number(values[field.id]) !== structured.plan.actualValues[stepId]?.[field.id]?.value));
   const submit = (intent: 'actual' | 'skip' | 'unskip') => {
@@ -85,12 +88,12 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
       const draft = values[field.id];
       const dirty = draft !== undefined && (draft.trim() === '' || Number(draft) !== saved?.value);
       return <label key={field.id}>{field.label} · {field.unit}{field.required ? ' · 必填' : ''}<input aria-label={field.label} className={formInputClass} type="number" step="any" disabled={!editable || completed || pending || step.blocked || Boolean(reviewDraft)} value={draft ?? saved?.value ?? ''} onChange={e => { const next = { ...values, [field.id]: e.target.value }; setValues(next); preserve(next, reason); }}/>
-        {dirty ? <small role="status" className="text-warning">未保存修改</small> : null}
+        {dirty ? <small role="status" className="text-warning">{pendingValues?.[field.id]?.value===Number(draft) && draft?.trim() ? "本机已保存 · 待同步" : "未保存修改"}</small> : null}
         {saved ? <small>{dirty ? `上次保存：${saved.value} ${saved.unit}` : '已保存'} · <time dateTime={saved.recordedAt} suppressHydrationWarning>{new Date(saved.recordedAt).toLocaleString()}</time></small> : null}
       </label>;
     })}
     {editable && !completed ? <>
-      {step.actualFields.length ? <Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || !hasChanges} onClick={() => submit('actual')}>{pending ? '正在保存…' : '保存实际值'}</Button> : null}
+      {step.actualFields.length ? <Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || !hasChanges || matchesPending} onClick={() => submit('actual')}>{pending ? '正在保存…' : '保存实际值'}</Button> : null}
       <details><summary className="min-h-11 cursor-pointer">跳过操作</summary><label>跳过原因<input className={formInputClass} disabled={pending || Boolean(reviewDraft)} value={reason} onChange={e => { setReason(e.target.value); preserve(values, e.target.value); }}/></label><Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || (!skipped && !reason.trim())} onClick={() => submit(skipped ? 'unskip' : 'skip')}>{skipped ? '撤销跳过' : '记录跳过'}</Button></details>
     </> : null}
     {state.error ? <p role="alert" className="text-error">{state.error}</p> : null}{state.message && !hasChanges ? <p role="status">{state.message}</p> : null}

@@ -5,7 +5,7 @@ import {prisma} from '../src/lib/db';
 import {createScientificDocument, researchPlanSections, experimentSections, resultSections, reportSections} from '../src/lib/scientific-document';
 import {createEmptyProtocolDocument} from '../src/lib/protocol-document';
 import {buildEntryContent} from '../src/lib/entry-content';
-assert(['/labnest_editor66_acceptance','/labnest_stage_a_acceptance','/labnest_debug_20260910'].includes(new URL(process.env.DATABASE_URL!).pathname));
+assert(['/labnest_editor66_acceptance','/labnest_stage_a_acceptance','/labnest_debug_20260910','/labnest_structured_20261014'].includes(new URL(process.env.DATABASE_URL!).pathname));
 async function main(){
 const stamp=Date.now();const project=await prisma.project.create({data:{name:`Synthetic editor ${stamp}`}});
 const doc=(sections:Parameters<typeof createScientificDocument>[0])=>{const d=createScientificDocument(sections);(d.sections.find(section=>section.key==='execution')??d.sections[0]).blocks=[{id:'fixture-body',type:'text',text:'Editor acceptance body / 正文验收'}];return d;};

@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, WifiOff } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
 
 export function OfflineCompanion() {
   const { locale } = useI18n();
+  const pathname = usePathname();
+  const executionPage = /^\/experiments\/[^/]+\/run$/.test(pathname);
   const [offline, setOffline] = useState(false);
   const [jumping, setJumping] = useState(false);
   const [score, setScore] = useState(0);
@@ -23,10 +26,10 @@ export function OfflineCompanion() {
   }, []);
 
   useEffect(() => {
-    if (!offline) return;
+    if (!offline || executionPage) return;
     const timer = window.setInterval(() => setScore((value) => value + 1), 1000);
     return () => window.clearInterval(timer);
-  }, [offline]);
+  }, [offline, executionPage]);
 
   useEffect(() => () => {
     if (jumpTimer.current) clearTimeout(jumpTimer.current);
@@ -39,7 +42,7 @@ export function OfflineCompanion() {
     jumpTimer.current = setTimeout(() => setJumping(false), 640);
   }
 
-  if (!offline) return null;
+  if (!offline || executionPage) return null;
   const zh = locale === "zh";
   return (
     <aside className="ln-offline-companion fixed bottom-20 right-3 z-[65] w-[248px] overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-soft lg:bottom-4 lg:right-4" aria-label={zh ? "离线小游戏" : "Offline mini game"}>

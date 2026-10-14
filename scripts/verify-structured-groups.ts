@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {copyExperiment} from '../src/lib/experiment-copy';
 import { randomUUID } from 'node:crypto';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { prisma } from '../src/lib/db';
@@ -66,11 +67,21 @@ async function main() {
  await recordStructuredStep({experimentId:offline.id,stepId:waitStep.id,expectedRevision:4,clientMutationId:randomUUID(),intent:'skip',reason:'Another device changed this execution'});
  assert.equal((await complete({...first,experimentStepId:waitStep.id,clientMutationId:randomUUID(),queueContext:context(waitStep.protocolStepRef!,last.clientMutationId)})).status,400,'another device must never be silently rebased');
  console.log('PASS queued actual/completion chain uses exact same-device receipts; duplicate is one event; changed replay and intervening device rejected');
+ const copied=await copyExperiment(experiment.id,{clientMutationId:randomUUID()});
+ const copiedRead=await prisma.experiment.findUniqueOrThrow({where:{id:copied.id},include:{steps:true,protocolRun:true}});
+ const copiedView=structuredRunView(copiedRead.protocolSnapshotJson,copiedRead.protocolRun?.executionPlanJson,copiedRead.steps);
+ assert.equal(copiedView.plan.groups.length,2);assert.equal(copiedRead.steps.length,7);
+ assert.equal(Object.values(copiedView.plan.stepGroups).filter(id=>id==='shared').length,1);
+ assert.deepEqual(copiedView.plan.actualValues,{});assert.deepEqual(copiedView.plan.versions,{});
+ assert(copiedRead.steps.every(s=>!s.completed&&!s.timerStartedAt&&!s.deviationNote));
+ const sourceIds=new Set((await load()).e.steps.map(s=>s.id));assert(copiedRead.steps.every(s=>!sourceIds.has(s.id)));
+ console.log('PASS copy retains group topology and immutable source, resets execution and requires fresh confirmation');
+ const legacyBrowser=await prisma.experiment.create({data:{title:'合成旧 Run 离线与重排验收',runCode:'LEG-'+randomUUID(),status:'planned',steps:{create:[{protocolStepRef:'historic:prepare',order:1,title:'旧准备',description:'历史准备说明'},{protocolStepRef:'historic:record',order:2,title:'旧观察',description:'参见旧准备；完整来源保留',timerDurationSeconds:60}]}}});
  const browserExperiment=await create();
  const offlineBrowser=await create();
  await updateRunSystemSelection({...request,experimentId:offlineBrowser.id,versionId:version.id,expectedRevision:0});
  await mkdir('docs/structured-protocol/20261014/followup-evidence',{recursive:true});
- await writeFile('docs/structured-protocol/20261014/followup-evidence/groups-fixture.json',JSON.stringify({versionId:version.id,protocolId:protocol.id,experimentId:browserExperiment.id,offlineExperimentId:offlineBrowser.id,verifiedExperimentId:experiment.id,continuationId:continuation.id,planId:plan.id},null,2));
+ await writeFile('docs/structured-protocol/20261014/followup-evidence/groups-fixture.json',JSON.stringify({legacyExperimentId:legacyBrowser.id,copyExperimentId:copied.id,versionId:version.id,protocolId:protocol.id,experimentId:browserExperiment.id,offlineExperimentId:offlineBrowser.id,verifiedExperimentId:experiment.id,continuationId:continuation.id,planId:plan.id},null,2));
  console.log('PASS shared preparation counted once; 50/80 group isolation; atomic explicit batch rollback; group export; recorded effects protected; continuation stays in selected group; prior actual values unchanged');
 }
 main().finally(()=>prisma.$disconnect());

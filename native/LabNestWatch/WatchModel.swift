@@ -9,7 +9,8 @@ struct RunStep: Codable, Identifiable {
     var completed: Bool; var canComplete: Bool; var blocked: Bool; var skipped: String?; var timer: TimerState; var canTime: Bool
 }
 struct RunSnapshot: Codable { var experimentId: String; var title: String; var revision: Int; var serverTime: Double; var capturedAt: String; var steps: [RunStep] }
-struct WatchCredential: Codable { var token: String; var experimentId: String }
+struct WatchGrant: Codable { var token: String; var experimentId: String }
+struct WatchCredential: Codable { var token: String; var experimentId: String; var serverOrigin: String }
 struct RunMutation: Codable { var intent: String; var stepId: String; var revision: Int; var clientMutationId: String; var deviceCreatedAt: String; var sourceRef: String }
 struct PendingMutation: Codable { var request: RunMutation; var conflict: String? }
 struct ServerMessage: Codable { var error: String? }
@@ -57,11 +58,16 @@ enum WatchStorage {
               let url = URL(string: path, relativeTo: base) else { throw URLError(.badURL) }
         return url
     }
-    func request(_ path: String, body: Data? = nil) async throws -> Data {
-        var request = URLRequest(url: try endpoint(path)); request.timeoutInterval = 15; request.cachePolicy = .reloadIgnoringLocalCacheData
+    func request(_ path: String, body: Data? = nil, authenticated: Bool = true, targetURL: URL? = nil) async throws -> Data {
+        var request = URLRequest(url: try targetURL ?? endpoint(path)); request.timeoutInterval = 15; request.cachePolicy = .reloadIgnoringLocalCacheData
         request.httpMethod = body == nil ? "GET" : "POST"; request.httpBody = body
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
-        if let credential { request.setValue("Bearer \(credential.token)", forHTTPHeaderField: "Authorization") }
+        if authenticated, let credential {
+            guard let url = request.url, let trusted = URL(string: credential.serverOrigin), url.scheme == trusted.scheme, url.host == trusted.host, url.port == trusted.port else {
+                throw NSError(domain: "LabNest", code: 401, userInfo: [NSLocalizedDescriptionKey: "服务器地址已改变，请重新配对；旧凭据不会发送到新地址。"])
+            }
+            request.setValue("Bearer \(credential.token)", forHTTPHeaderField: "Authorization")
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         if !(200..<300).contains(response.statusCode) {
@@ -73,10 +79,14 @@ enum WatchStorage {
     func pair(code: String) async {
         guard !busy, pending == nil else { return }; busy = true; defer { busy = false }
         do {
+            let destination = try endpoint("/api/watch/pair")
             let body = try JSONSerialization.data(withJSONObject: ["code": code, "deviceId": deviceId])
-            let next = try JSONDecoder().decode(WatchCredential.self, from: await request("/api/watch/pair", body: body))
+            let grant = try JSONDecoder().decode(WatchGrant.self, from: await request("/api/watch/pair", body: body, authenticated: false, targetURL: destination))
+            let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString)
             try WatchStorage.saveCredential(next); credential = next; snapshot = nil
+            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             try? FileManager.default.removeItem(at: WatchStorage.url("snapshot.json"))
+            baseURL = URL(string: "/", relativeTo: destination)!.absoluteString
             UserDefaults.standard.set(baseURL, forKey: "server"); message = "已配对，请刷新实验。"
         } catch { message = error.localizedDescription }
     }

@@ -15,7 +15,11 @@ export function MobileMutationSync() {
       try {
         const mutations = orderMobileMutations(await listMobileMutations());
         let changed = false;
+        const unresolved = new Set(mutations.map(item => item.clientMutationId));
         for (const mutation of mutations.filter((item) => item.state !== "conflict" && item.state !== "synced")) {
+          const predecessor = 'queueContext' in mutation.payload ? mutation.payload.queueContext?.predecessorMutationId : undefined;
+          // A transient failure is not a version conflict. Keep dependent observations local until its receipt exists.
+          if (predecessor && unresolved.has(predecessor)) continue;
           await updateMobileMutation({ ...mutation, state: "syncing" });
           try {
             let response: Response;
@@ -58,6 +62,7 @@ export function MobileMutationSync() {
               continue;
             }
             await removeMobileMutation(mutation.clientMutationId);
+            unresolved.delete(mutation.clientMutationId);
             changed = true;
           } catch (error) {
             await updateMobileMutation({ ...mutation, state: "pending", retryCount: mutation.retryCount + 1, lastError: error instanceof Error ? error.message : "Network unavailable." });

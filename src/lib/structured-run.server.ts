@@ -166,6 +166,8 @@ export async function recordStructuredStep(raw: z.input<typeof recordInput>) {
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${input.experimentId} FOR UPDATE`;
     const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: input.clientMutationId } });
     if (replay) {
+      const receipt = replay.payloadJson as {queueContext?:unknown;clientBaseRevision?:number};
+      if ((receipt.clientBaseRevision !== undefined && receipt.clientBaseRevision !== input.expectedRevision) || !isDeepStrictEqual(receipt.queueContext,input.queueContext)) throw new Error('重复请求的来源、设备或版本不同');
       if (replay.experimentId !== input.experimentId || replay.experimentStepId !== input.stepId || (replay.payloadJson as { request?: unknown }).request && !isDeepStrictEqual((replay.payloadJson as { request?: unknown }).request, { intent: input.intent, values: input.values, reason: input.reason ?? '' })) throw new Error('重复请求与原记录不一致');
       return { revision: (replay.payloadJson as { revision: number }).revision };
     }

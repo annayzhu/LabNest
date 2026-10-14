@@ -22,6 +22,7 @@ import { useQueuedRunRecords } from "./useQueuedRunRecords";
 import { enqueueMobileMutation, runQueueContext } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
+  protocolStepRef?: string | null;
   richContent?: Omit<ReturnType<typeof import("@/lib/run-step-content").runStepContent>, "reference">;
   id: string;
   groupKey: string;
@@ -145,7 +146,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     const data = new FormData(form);
     const optional = (name: string) => String(data.get(name) ?? "").trim() || undefined;
     let queueContext;
-    try { queueContext = runQueueContext(structured?.steps[stepId] ? `${structured.steps[stepId].versionId.split('@')[0]}:${structured.steps[stepId].source_ref}` : stepId); } catch { setOfflineStatus("本机存储不可用，未保存。请保留页面。"); return; }
+    try { queueContext = runQueueContext(steps.find(step => step.id === stepId)?.protocolStepRef ?? stepId); } catch { setOfflineStatus("本机存储不可用，未保存。请保留页面。"); return; }
     void enqueueMobileMutation({
       clientMutationId,
       actionType: "step.complete",

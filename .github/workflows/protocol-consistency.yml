@@ -56,7 +56,9 @@ jobs:
       - run: npx tsx scripts/verify-structured-groups.ts
       - run: npx tsx scripts/verify-watch-execution.ts
       - run: node scripts/verify-protocol-followup.mjs
+      - run: node scripts/verify-protocol-editor-followup.mjs
       - run: node scripts/verify-protocol-offline.mjs
+      - run: npx tsx scripts/verify-protocol-followup-readback.ts
       - run: npx tsx scripts/verify-entry-followup.ts
       - run: node scripts/verify-entry-followup.mjs
       - uses: actions/upload-artifact@v4

@@ -4,7 +4,7 @@ Actual installed paths, SHA-256 hashes and declared versions: `BASELINE.json`. N
 
 | Skills | Actual application / output | Verification |
 |---|---|---|
-| Matt Pocock setup, domain-modeling, codebase-design | Existing repository configuration preserved; CONTEXT.md, docs/agents/domain, CONTRACT.md and actual editor inventory define source version / instance / observed record boundaries | New optional systems and nullable plan column; legacy snapshot tests; no parallel editor/units/AI execution engine |
+| Matt Pocock setup, domain-modeling, codebase-design | Existing repository configuration preserved; CONTEXT.md, docs/agents/domain, CONTRACT.md and actual editor inventory define source version / instance / observed record boundaries | New optional systems and plan column with an empty-object default; legacy snapshot tests; no parallel editor/units/AI execution engine |
 | Matt Pocock to-tickets | Local phased tickets under `.scratch`, canonical P0–P3 scope in CONTRACT | 49 requirement IDs tracked in ACCEPTANCE.md; P2/P3 not silently declared delivered |
 | Matt Pocock TDD | User confirmed three public seams; resolver, projection, legacy/identity, continuation and calculator guards developed through saved red/green iterations | evidence/01–19 logs; expanded DB, unit and actual browser runs |
 | Ponytail full / ponytail-review | Traced real action/DB/editor/render callers; reused calculator quantities, frozen protocol capture, timer facts and event recording; follow-up review fixed stale writes, split ownership, lifecycle bypass and historic receipts | STANDARDS-REVIEW.md and SPEC-REVIEW.md; no confirmed remaining code blocker in bounded reviews |

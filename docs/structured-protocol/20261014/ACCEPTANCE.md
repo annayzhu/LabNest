@@ -51,7 +51,7 @@ Baseline: `65500d2e940e1b861ac9ec78950eeb14c7292fdc`. P0/P1 staged release; P2/P
 | F04 | 新导出Word／PDF若纳入本阶段，已按相应skill渲染核查；未实现不写成完成。 | 通过 | render-report.json + export-contact-sheet.png: DOCX converted via LibreOffice (5 pages), Protocol print PDF (7 pages), experiment print PDF (3 pages); all 15 pages visually inspected, Chinese, quantities, tables and images visible. Native Word and physical printer not tested. No new format added; TSV unsupported. |
 | F05 | 两项专项skill已创建并验证、可被实施环境使用；真实使用记录和未具备能力说明齐全。 | 通过 | Two project skills created, validated and actually used; BASELINE.json and SKILLS-USAGE.md. |
 | F06 | 关键条件逻辑、迁移和状态转换有必要自动化检查；跳转、拖动、软键盘和锁屏有实际交互证据。 | 未执行 | Meaningful logic/DB/drag/copy/navigation regressions pass. Physical keyboard and lockscreen interaction evidence not available. |
-| F07 | 交付包含真实改动文件、迁移范围、版本、阶段验收及已知限制，未修改和未测试部分明确列出。 | 通过 | Changes, nullable additive migration, staged boundary, evidence, remaining work documented here and CONTRACT.md. |
+| F07 | 交付包含真实改动文件、迁移范围、版本、阶段验收及已知限制，未修改和未测试部分明确列出。 | 通过 | Changes, additive JSONB NOT NULL DEFAULT {} migration, staged boundary, evidence, remaining work documented here and CONTRACT.md. |
 | F08 | Matt Pocock、Impeccable、Ponytail 已在对应阶段实际加载并应用；记录来源、版本、使用任务、产物与验证证据，未运行或不适用部分明确说明；仅安装、阅读或列链接不算完成。 | 通过 | SKILLS-USAGE.md, independent UI-REVIEW-A/B and synthesis. Critique revealed P1 saved-state/draft issues, now fixed with regression. B used scoped CLI and read-only browser fallback; no overlay or physical-device claim. |
 
 ## Evidence rules
@@ -69,8 +69,8 @@ These physical checks remain required for mobile acceptance; P1 browser verifica
 
 ## Final local application validation
 
-- Application source: `42d6e3218e70f5d8e5221130b395390fde8004f9`; includes independent review follow-up fixes. Production build served on isolated port3339, with AI disabled and synthetic records. Chromium149.0.7827.55 on macOS; no physical-device claim.
-- Unit tests: UTC628/122files and Asia/Shanghai628/122files passed (`tests-utc.log`, `tests-shanghai.log`). TypeScript passed (`typecheck-final.log`). Lint0errors,12existing warnings; the generated `.next-structured-release` directory excluded (`lint-final.log`).
+- Application source: `8b0966c4c189bbc42b1cf9438bf722d78f1897b5`; includes independent review follow-up fixes and locale-sensitive timestamp handling. Final release container served on isolated port3341, with AI disabled and synthetic records. Chromium149.0.7827.55 on macOS; no physical-device claim.
+- Local unit tests at42d6e321: UTC628/122files and Asia/Shanghai628/122files passed (`tests-utc.log`, `tests-shanghai.log`). TypeScript passed (`typecheck-final.log`). Lint0errors,12existing warnings; the generated `.next-structured-release` directory excluded (`lint-final.log`).
 - Production build passed (`build-final.log`); separate Alpine/webpack release image also built successfully.
 - Real pages: all9 lifecycle/browser cases,2 authoring cases and3 media cases passed against the production build. See `final-db.log`, `final-browser.log`, `final-authoring.log`, `final-media.log` and corresponding JSON reports. The 14 cases are evidence for their named requirements, not a claim that all49 requirements passed.
 - Media copy waits for actual editor selection and validates the clipboard HTML before paste. The legacy timer-return test now respects persisted expanded state instead of toggling it closed; this is a test adaptation to the verified UI behavior.
@@ -82,3 +82,5 @@ These physical checks remain required for mobile acceptance; P1 browser verifica
 Review P1: saved receipt could accompany an unsaved value; global revision remounts could lose unrelated drafts. The fix preserves draft state per experiment/step, reconciles server-acknowledged values, requires explicit review after operation/unit or same-field server changes, and disables edits while saving. Unit cases in structured-step-draft.test.ts and real-page case UI A1 cover this. P2/P3 visual backlog remains open in UI-REVIEW.md; no post-fix score inflation.
 
 Final matrix: **28通过 / 0当前失败 / 21未执行（含部分已验证的复合要求及P2/P3路线）**. Interim red logs are retained. This is a P0/P1 staged delivery, not completion of the full49-item roadmap. Real iPhone/iPad acceptance remains required before declaring the mobile stage fully accepted.
+
+Migration clarification: the actual Prisma/SQL contract is `executionPlanJson JSONB NOT NULL DEFAULT {}`. Existing runs read an empty plan and retain legacy behavior. No historical step/body/attachment values are rewritten; the new column default is an additive schema change.

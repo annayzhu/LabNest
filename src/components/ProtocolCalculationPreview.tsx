@@ -24,7 +24,7 @@ export function ProtocolCalculationPreview({ parameter, resolution, receipt, dis
       <p>{current ? '本次已采用' : '计算预览，尚未采用'}：{current ? receipt!.value : preview.value} {preview.unit}</p>
       {preview.snapshot.warnings.length ? <ul className="text-warning">{preview.snapshot.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul> : null}
       {preview.snapshot.notes.length ? <ul>{preview.snapshot.notes.map(note => <li key={note}>{note}</li>)}</ul> : null}
-      <small>方法 {current ? receipt!.snapshot.methodVersion : preview.snapshot.methodVersion}{current ? ` · 确认于 ${new Date(receipt!.confirmedAt).toLocaleString()}` : ''}</small>
+      <small>方法 {current ? receipt!.snapshot.methodVersion : preview.snapshot.methodVersion}{current ? <> · 确认于 <time dateTime={receipt!.confirmedAt} suppressHydrationWarning>{new Date(receipt!.confirmedAt).toLocaleString()}</time></> : null}</small>
     </> : <p role="status" className="text-error">{error}</p>}
     {receipt && !current ? <p className="text-warning">需重新计算。此前采用 {receipt.value} {receipt.unit} 的记录保留，不能用于当前待执行操作。</p> : null}
     <Button type="submit" name="confirmCalculations" value={parameter.id} size="sm" disabled={disabled || !preview || current}>计算并确认采用</Button>

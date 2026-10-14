@@ -21,6 +21,6 @@ No chat, generic workflow engine or watch editor is created. Source references a
 
 ## Data path
 
-Protocol editor → `protocol-tiptap.ts` → `protocolDocumentSchema` / compatibility gate → existing Protocol action → version contentJson → frozen Experiment protocolSnapshotJson → `structuredRunView` → Run and export. New `ProtocolRun.executionPlanJson` is additive and nullable. Legacy records use their original path; no batch parser rewrite or status conversion occurs.
+Protocol editor → `protocol-tiptap.ts` → `protocolDocumentSchema` / compatibility gate → existing Protocol action → version contentJson → frozen Experiment protocolSnapshotJson → `structuredRunView` → Run and export. New `ProtocolRun.executionPlanJson` is additive with NOT NULL DEFAULT {}. Legacy records use their original path; no batch parser rewrite or status conversion occurs.
 
 Media upload → existing `/api/attachments` idempotent upload → DocumentMedia node referencing attachment ID → document media association → original/preview request with fallback. Copy creates a unique node ID sharing one asset; moves retain node ID. Unknown rich node types block destructive editing/export and retain readable original JSON.

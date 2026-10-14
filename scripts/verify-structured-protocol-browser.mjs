@@ -7,7 +7,7 @@ const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
 assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && new URL(base).port !== '3001', 'Isolated acceptance server only');
 const dir = 'docs/structured-protocol/20261014/evidence', fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
 await mkdir(dir, { recursive: true });
-const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Shanghai' });
+const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'America/Los_Angeles' });
 await context.addCookies([{ name: 'labnest_locale', value: 'zh', url: base }]);
 await context.tracing.start({ screenshots: true, snapshots: true });
 context.setDefaultTimeout(15000);

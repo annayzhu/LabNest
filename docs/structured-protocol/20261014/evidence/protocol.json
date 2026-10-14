@@ -1,16 +1,16 @@
 {
   "schemaVersion": "labnest.structured-export/v1",
   "module": "protocols",
-  "exportedAt": "2026-10-14T02:07:36.048Z",
+  "exportedAt": "2026-10-14T02:17:42.779Z",
   "records": [
     {
-      "humanCode": "SYN-79b5ab5c-dbd4-464b-a250-d996a01b0b48",
+      "humanCode": "SYN-88d664d2-3767-48f0-a72d-454ea4e871cc",
       "canonicalTitle": "350／600 µL 合成规程",
       "shortTitle": null,
       "englishTitle": null,
       "scope": "general",
       "researchPlanCodes": [
-        "SYN-79b5ab5c-dbd4-464b-a250-d996a01b0b48"
+        "SYN-88d664d2-3767-48f0-a72d-454ea4e871cc"
       ],
       "primaryResearchPlanCodes": [],
       "availability": "draft",
@@ -1453,7 +1453,7 @@
                   "stepId": "dose"
                 },
                 "mediaType": "image",
-                "attachmentId": "cmv7gz2cy00028fostiqgxiug",
+                "attachmentId": "cmv7hc2ye0002doosg7vg6bvz",
                 "widthPercent": 70
               },
               {
@@ -1467,7 +1467,7 @@
                   "stepId": "dose"
                 },
                 "mediaType": "image",
-                "attachmentId": "cmv7gz2fp00038fosd6vpkxt6",
+                "attachmentId": "cmv7hc2z10003doossm20er1z",
                 "widthPercent": 70
               },
               {
@@ -1481,7 +1481,7 @@
                   "stepId": "dose"
                 },
                 "mediaType": "image",
-                "attachmentId": "cmv7gz2id00048fosxrtqpkuj",
+                "attachmentId": "cmv7hc2zf0004doosg6k3cpcd",
                 "widthPercent": 70
               },
               {
@@ -1495,7 +1495,7 @@
                   "stepId": "dose"
                 },
                 "mediaType": "image",
-                "attachmentId": "cmv7gz2ir00058foslo91s2j6",
+                "attachmentId": "cmv7hc31m0005dooscp5is23d",
                 "widthPercent": 70
               },
               {

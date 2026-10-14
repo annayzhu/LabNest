@@ -1,7 +1,7 @@
 [
   {
     "file": "docs/structured-protocol/20261014/evidence/protocol-docx-render.pdf",
-    "sha256": "b5e6bd915ea6b7681e6fee0505d6190c7e634f3bdf1b265b8c9d34def23eb0f4",
+    "sha256": "a9c8d5a414f9b5c6a10365372f53027ecafe9eecfdddf335ab9cda9a7e36ed45",
     "pages": [
       {
         "page": 1,
@@ -32,7 +32,7 @@
   },
   {
     "file": "docs/structured-protocol/20261014/evidence/protocol-preview.pdf",
-    "sha256": "7615af545c3d096ecfda51bcf74807e1fea91725ea4debb618a3453ddcc98329",
+    "sha256": "ce73ab21e44077b7a1ebe3cc036179655c4ca2a99e71c1d2e56adda405c36807",
     "pages": [
       {
         "page": 1,
@@ -73,7 +73,7 @@
   },
   {
     "file": "docs/structured-protocol/20261014/evidence/experiment-preview.pdf",
-    "sha256": "ccebfdee9d14617b228b9cb3e747fcd4cb507d3e95ad00f259595a382ddebab4",
+    "sha256": "62d135f9f6222da6847385e1a84f0efa29d09c08ee2de5e7ef05ca82c92b7ceb",
     "pages": [
       {
         "page": 1,

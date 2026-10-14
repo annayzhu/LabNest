@@ -69,8 +69,8 @@ These physical checks remain required for mobile acceptance; P1 browser verifica
 
 ## Final local application validation
 
-- Application source: `8b0966c4c189bbc42b1cf9438bf722d78f1897b5`; includes independent review follow-up fixes and locale-sensitive timestamp handling. Final release container served on isolated port3341, with AI disabled and synthetic records. Chromium149.0.7827.55 on macOS; no physical-device claim.
-- Local unit tests at42d6e321: UTC628/122files and Asia/Shanghai628/122files passed (`tests-utc.log`, `tests-shanghai.log`). TypeScript passed (`typecheck-final.log`). Lint0errors,12existing warnings; the generated `.next-structured-release` directory excluded (`lint-final.log`).
+- Application source: `02a32a968662cc861b86865817c9d7cfc1d596d6`; includes independent review follow-up fixes and locale-sensitive timestamp handling. Final release container served on isolated port3341, with AI disabled and synthetic records. Chromium149.0.7827.55 on macOS; no physical-device claim.
+- Local unit tests at02a32a96: UTC628/122files and Asia/Shanghai628/122files passed (`tests-utc.log`, `tests-shanghai.log`). TypeScript passed (`typecheck-final.log`). Lint0errors,12existing warnings; the generated `.next-structured-release` directory excluded (`lint-final.log`).
 - Production build passed (`build-final.log`); separate Alpine/webpack release image also built successfully.
 - Real pages: all9 lifecycle/browser cases,2 authoring cases and3 media cases passed against the production build. See `final-db.log`, `final-browser.log`, `final-authoring.log`, `final-media.log` and corresponding JSON reports. The 14 cases are evidence for their named requirements, not a claim that all49 requirements passed.
 - Media copy waits for actual editor selection and validates the clipboard HTML before paste. The legacy timer-return test now respects persisted expanded state instead of toggling it closed; this is a test adaptation to the verified UI behavior.
@@ -84,3 +84,5 @@ Review P1: saved receipt could accompany an unsaved value; global revision remou
 Final matrix: **28通过 / 0当前失败 / 21未执行（含部分已验证的复合要求及P2/P3路线）**. Interim red logs are retained. This is a P0/P1 staged delivery, not completion of the full49-item roadmap. Real iPhone/iPad acceptance remains required before declaring the mobile stage fully accepted.
 
 Migration clarification: the actual Prisma/SQL contract is `executionPlanJson JSONB NOT NULL DEFAULT {}`. Existing runs read an empty plan and retain legacy behavior. No historical step/body/attachment values are rewritten; the new column default is an additive schema change.
+
+Final release-image verification additionally sets browser timezone America/Los_Angeles against a UTC container. All page-error assertions remain enabled. Scoped time elements handle locale-sensitive text without changing stored timestamps. Image-smoke confirms frozen Run quantities and the real authoring entry with no page errors.

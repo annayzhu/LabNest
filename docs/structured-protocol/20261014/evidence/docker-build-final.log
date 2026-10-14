@@ -1,0 +1,236 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.release
+#1 transferring dockerfile: 689B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-alpine
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 373B done
+#3 DONE 0.0s
+
+#4 [deps 1/5] FROM docker.io/library/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32
+#4 resolve docker.io/library/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 280.00MB 5.0s
+#5 transferring context: 457.80MB 6.8s done
+#5 DONE 6.9s
+
+#6 [deps 2/5] WORKDIR /app
+#6 CACHED
+
+#7 [runner 3/7] RUN apk add --no-cache openssl
+#7 CACHED
+
+#8 [deps 3/5] RUN apk add --no-cache openssl
+#8 CACHED
+
+#9 [deps 4/5] COPY package.json package-lock.json ./
+#9 CACHED
+
+#10 [deps 5/5] RUN npm ci
+#10 CACHED
+
+#11 [runner 4/7] COPY --from=deps /app/node_modules ./node_modules
+#11 CACHED
+
+#12 [runner 5/7] COPY . .
+#12 DONE 1.8s
+
+#13 [runner 6/7] RUN mkdir -p storage/attachments
+#13 DONE 0.2s
+
+#14 [runner 7/7] RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm run build -- --webpack
+#14 0.420 
+#14 0.420 > labnest@0.1.0 build
+#14 0.420 > node scripts/build-calculator-icons.mjs && node scripts/build-calculator-solid-icons.mjs && node scripts/build-calculator-standalone.mjs && prisma generate && next build --webpack
+#14 0.420 
+#14 3.306 46 solid calculator icons generated
+#14 4.042 Loaded Prisma config from prisma.config.ts.
+#14 4.042 
+#14 4.093 Prisma schema loaded from prisma/schema.prisma.
+#14 4.801 
+#14 4.801 ✔ Generated Prisma Client (7.8.0) to ./src/generated/prisma in 434ms
+#14 4.801 
+#14 5.134 ▲ Next.js 16.2.10 (webpack)
+#14 5.134 - Experiments (use with caution):
+#14 5.134   · serverActions
+#14 5.134 
+#14 5.170   Creating an optimized production build ...
+#14 42.93 ✓ Compiled successfully in 35.5s
+#14 42.93   Running TypeScript ...
+#14 62.23   Finished TypeScript in 19.3s ...
+#14 62.23   Collecting page data using 13 workers ...
+#14 67.37   Generating static pages using 13 workers (0/81) ...
+#14 67.60   Generating static pages using 13 workers (20/81) 
+#14 67.60   Generating static pages using 13 workers (40/81) 
+#14 67.64   Generating static pages using 13 workers (60/81) 
+#14 67.69 ✓ Generating static pages using 13 workers (81/81) in 319ms
+#14 68.60   Finalizing page optimization ...
+#14 68.60   Collecting build traces ...
+#14 74.77 
+#14 74.78 Route (app)
+#14 74.78 ┌ ƒ /
+#14 74.78 ├ ƒ /_not-found
+#14 74.78 ├ ƒ /actions
+#14 74.78 ├ ƒ /actions/manual
+#14 74.78 ├ ƒ /actions/review
+#14 74.78 ├ ƒ /ai
+#14 74.78 ├ ƒ /api/ai/generate
+#14 74.78 ├ ƒ /api/ai/manual/parse
+#14 74.78 ├ ƒ /api/ai/manual/prompt
+#14 74.78 ├ ƒ /api/ai/protocol-extraction
+#14 74.78 ├ ƒ /api/ai/providers/[id]/test
+#14 74.78 ├ ƒ /api/ai/settings
+#14 74.78 ├ ƒ /api/attachments
+#14 74.78 ├ ƒ /api/attachments/[id]
+#14 74.78 ├ ƒ /api/attachments/package
+#14 74.78 ├ ƒ /api/entries
+#14 74.78 ├ ƒ /api/entries/[id]
+#14 74.78 ├ ƒ /api/entries/[id]/assignment
+#14 74.78 ├ ƒ /api/experiments/[id]
+#14 74.78 ├ ƒ /api/experiments/[id]/copy
+#14 74.78 ├ ƒ /api/experiments/[id]/materials
+#14 74.78 ├ ƒ /api/experiments/[id]/steps/order
+#14 74.78 ├ ƒ /api/exports/backup.json
+#14 74.78 ├ ƒ /api/exports/entities.csv
+#14 74.78 ├ ƒ /api/exports/inventory.csv
+#14 74.78 ├ ƒ /api/exports/protocols.json
+#14 74.78 ├ ƒ /api/exports/results.csv
+#14 74.78 ├ ƒ /api/health
+#14 74.78 ├ ƒ /api/inventory/[id]/containers
+#14 74.78 ├ ƒ /api/mobile/calculations
+#14 74.78 ├ ƒ /api/mobile/inventory-transactions
+#14 74.78 ├ ƒ /api/mobile/measurements
+#14 74.78 ├ ƒ /api/mobile/step-completions
+#14 74.78 ├ ƒ /api/protocols/[id]/versions/[versionId]/docx
+#14 74.78 ├ ƒ /api/protocols/[id]/versions/[versionId]/json
+#14 74.78 ├ ƒ /api/protocols/relevant-items
+#14 74.78 ├ ƒ /api/protocols/template/docx
+#14 74.78 ├ ƒ /api/purchases
+#14 74.78 ├ ƒ /api/purchases/[id]
+#14 74.78 ├ ƒ /api/purchases/export
+#14 74.78 ├ ƒ /api/purchases/quotes
+#14 74.78 ├ ƒ /api/reports/[id]/markdown
+#14 74.78 ├ ƒ /api/research-plans/[id]/relations
+#14 74.78 ├ ƒ /api/results/[id]/datasets
+#14 74.78 ├ ƒ /api/results/datasets/[id]
+#14 74.78 ├ ƒ /api/search
+#14 74.78 ├ ƒ /api/sequences/export
+#14 74.78 ├ ƒ /api/sequences/template
+#14 74.78 ├ ƒ /api/structured-export/[module]
+#14 74.78 ├ ƒ /api/structured-import/[module]/confirm
+#14 74.78 ├ ƒ /api/structured-import/[module]/preview
+#14 74.78 ├ ƒ /api/structured-import/[module]/template
+#14 74.78 ├ ƒ /attachments
+#14 74.78 ├ ƒ /attachments/[id]
+#14 74.78 ├ ƒ /entities
+#14 74.78 ├ ƒ /entities/new
+#14 74.78 ├ ƒ /entries
+#14 74.78 ├ ƒ /entries/[id]
+#14 74.78 ├ ƒ /entries/[id]/edit
+#14 74.78 ├ ƒ /entries/new
+#14 74.78 ├ ƒ /experiments
+#14 74.78 ├ ƒ /experiments/[id]
+#14 74.78 ├ ƒ /experiments/[id]/edit
+#14 74.78 ├ ƒ /experiments/[id]/run
+#14 74.78 ├ ƒ /experiments/export
+#14 74.78 ├ ƒ /experiments/import
+#14 74.78 ├ ƒ /experiments/new
+#14 74.78 ├ ƒ /exports
+#14 74.78 ├ ƒ /inventory
+#14 74.78 ├ ƒ /inventory/[id]
+#14 74.78 ├ ƒ /inventory/[id]/edit
+#14 74.78 ├ ƒ /inventory/export
+#14 74.78 ├ ƒ /inventory/import
+#14 74.78 ├ ƒ /inventory/locations
+#14 74.78 ├ ƒ /inventory/new
+#14 74.78 ├ ƒ /projects
+#14 74.78 ├ ƒ /projects/[id]
+#14 74.78 ├ ƒ /projects/[id]/edit
+#14 74.78 ├ ƒ /projects/export
+#14 74.78 ├ ƒ /projects/import
+#14 74.78 ├ ƒ /projects/new
+#14 74.78 ├ ƒ /protocol-run
+#14 74.78 ├ ƒ /protocols
+#14 74.78 ├ ƒ /protocols/[id]
+#14 74.78 ├ ƒ /protocols/[id]/adapt
+#14 74.78 ├ ƒ /protocols/[id]/versions/[versionId]/edit
+#14 74.78 ├ ƒ /protocols/export
+#14 74.78 ├ ƒ /protocols/import
+#14 74.78 ├ ƒ /protocols/new
+#14 74.78 ├ ƒ /purchases
+#14 74.78 ├ ƒ /purchases/[id]
+#14 74.78 ├ ƒ /purchases/import
+#14 74.78 ├ ƒ /purchases/new
+#14 74.78 ├ ƒ /purchases/school-template
+#14 74.78 ├ ƒ /records
+#14 74.78 ├ ƒ /reports
+#14 74.78 ├ ƒ /reports/[id]
+#14 74.78 ├ ƒ /reports/[id]/edit
+#14 74.78 ├ ƒ /reports/export
+#14 74.78 ├ ƒ /reports/import
+#14 74.78 ├ ƒ /reports/new
+#14 74.78 ├ ƒ /research-plans
+#14 74.78 ├ ƒ /research-plans/[id]
+#14 74.78 ├ ƒ /research-plans/[id]/edit
+#14 74.78 ├ ƒ /research-plans/export
+#14 74.78 ├ ƒ /research-plans/import
+#14 74.78 ├ ƒ /research-plans/new
+#14 74.78 ├ ƒ /results
+#14 74.78 ├ ƒ /results/[id]
+#14 74.78 ├ ƒ /results/[id]/edit
+#14 74.78 ├ ƒ /results/export
+#14 74.78 ├ ƒ /results/import
+#14 74.78 ├ ƒ /results/new
+#14 74.78 ├ ƒ /samples
+#14 74.78 ├ ƒ /search
+#14 74.78 ├ ƒ /sequences
+#14 74.78 ├ ƒ /sequences/[id]
+#14 74.78 ├ ƒ /sequences/[id]/edit
+#14 74.78 ├ ƒ /sequences/collections
+#14 74.78 ├ ƒ /sequences/collections/[id]
+#14 74.78 ├ ƒ /sequences/collections/[id]/edit
+#14 74.78 ├ ƒ /sequences/collections/export
+#14 74.78 ├ ƒ /sequences/collections/new
+#14 74.78 ├ ƒ /sequences/export
+#14 74.78 ├ ƒ /sequences/import
+#14 74.78 ├ ƒ /sequences/new
+#14 74.78 ├ ƒ /sequences/pairs/[id]
+#14 74.78 ├ ƒ /sequences/pairs/[id]/edit
+#14 74.78 ├ ƒ /sequences/workflows
+#14 74.78 ├ ƒ /sequences/workflows/[id]
+#14 74.78 ├ ƒ /sequences/workflows/new
+#14 74.78 ├ ƒ /settings
+#14 74.78 ├ ƒ /tools
+#14 74.78 ├ ƒ /tools/[toolId]
+#14 74.78 ├ ƒ /tools/calculator
+#14 74.78 ├ ƒ /tools/calculator/[calculatorId]
+#14 74.78 ├ ƒ /tools/visualization
+#14 74.78 └ ƒ /trash
+#14 74.78 
+#14 74.78 
+#14 74.78 ƒ  (Dynamic)  server-rendered on demand
+#14 74.78 
+#14 74.81 npm notice
+#14 74.81 npm notice New major version of npm available! 10.9.8 -> 12.2.0
+#14 74.81 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#14 74.81 npm notice To update run: npm install -g npm@12.2.0
+#14 74.81 npm notice
+#14 DONE 75.1s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 10.8s done
+#15 exporting manifest sha256:daac9b0fc730b15d425dbc4a5b8f78bb0019ca10926cfa77b5aaf37de884b482 done
+#15 exporting config sha256:96398d5c4d63b7da72b7309594208e89078d6b743464c164b30fe7cd6b346c3f done
+#15 exporting attestation manifest sha256:5155edf5011c19caab57f7a0a3627f468c77c97b9b95c179df0d8a68a778e3c8 done
+#15 exporting manifest list sha256:a27290b67e47687266ed4f54e0de14a7366956cfab6a9449e8b60b1a54450491 done
+#15 naming to docker.io/library/labnest-app:structured-02a32a96 done
+#15 unpacking to docker.io/library/labnest-app:structured-02a32a96
+#15 unpacking to docker.io/library/labnest-app:structured-02a32a96 3.6s done
+#15 DONE 14.5s

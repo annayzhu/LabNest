@@ -1,0 +1,64 @@
+http://localhost:3338/experiments/cmv7h6ov90008y3osl17mwstv/run Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <div className="app-shell-...">
+      <Sidebar>
+      <div className="app-shell-...">
+        <TopBar>
+        <main className="app-shell-...">
+          <div className="space-y-4">
+            <header>
+            <details>
+            <RunSystemPreparation experimentId="cmv7h6ov90..." view={{plan:{...}, ...}} editable={true}>
+              <section className="protocol-s..." aria-label="实验准备与体系选择">
+                <h2>
+                <p>
+                <VersionSelection experimentId="cmv7h6ov90..." version={{id:"cmv7h6...", ...}} view={{plan:{...}, ...}} ...>
+                  <form action={function bound dispatchActionState} className="protocol-s..." ...>
+                    <input>
+                    <input>
+                    <input>
+                    <input>
+                    <input>
+                    <input>
+                    <h3>
+                    <p>
+                    <fieldset disabled={false} className="protocol-s...">
+                      <div>
+                      <div>
+                      <label>
+                      <div>
+                      <div>
+                      <ProtocolCalculationPreview parameter={{id:"take", ...}} resolution={{...}} receipt={{...}} ...>
+                        <section className="protocol-s..." aria-label="示例母液取液量计算器">
+                          <h4>
+                          <dl>
+                          <p>
+                          <ul>
+                          <small>
++                           {" · 确认于 10/14/2026, 10:13:11 AM"}
+-                           {" · 确认于 10/14/2026, 2:13:11 AM"}
+                          ...
+                      ...
+            ...
+
+    at throwOnHydrationMismatch (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:3318:56)
+    at completeWork (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:7021:36)
+    at runWithFiberInDEV (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
+    at completeUnitOfWork (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9622:23)
+    at performUnitOfWork (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9557:28)
+    at workLoopConcurrentByScheduler (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9551:58)
+    at renderRootConcurrent (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9534:71)
+    at performWorkOnRoot (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:3338/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js:2647:64)

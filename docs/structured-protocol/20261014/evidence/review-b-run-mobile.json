@@ -1,0 +1,139 @@
+{
+  "controls": [
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(71, 88, 99)",
+      "disabled": false,
+      "fontSize": "12px",
+      "height": 32,
+      "tag": "BUTTON",
+      "text": "350 µL · 普通样本",
+      "width": 115.734375
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(71, 88, 99)",
+      "disabled": false,
+      "fontSize": "12px",
+      "height": 32,
+      "tag": "BUTTON",
+      "text": "600 µL · 高脂样本",
+      "width": 115.734375
+    },
+    {
+      "background": "rgb(251, 252, 253)",
+      "color": "rgb(32, 40, 47)",
+      "disabled": false,
+      "fontSize": "16px",
+      "height": 40,
+      "label": "裂解体积待选择350 µL600 µL",
+      "tag": "SELECT",
+      "text": "待选择350 µL600 µL",
+      "width": 317
+    },
+    {
+      "background": "rgb(251, 252, 253)",
+      "color": "rgb(32, 40, 47)",
+      "disabled": false,
+      "fontSize": "16px",
+      "height": 40,
+      "label": "样本性质待选择普通样本高脂样本",
+      "tag": "SELECT",
+      "text": "待选择普通样本高脂样本",
+      "width": 317
+    },
+    {
+      "background": "rgb(251, 252, 253)",
+      "color": "rgb(32, 40, 47)",
+      "disabled": false,
+      "fontSize": "16px",
+      "height": 40,
+      "label": "目标终浓度",
+      "tag": "INPUT",
+      "text": "",
+      "width": 317
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(71, 88, 99)",
+      "disabled": true,
+      "fontSize": "12px",
+      "height": 32,
+      "tag": "BUTTON",
+      "text": "计算并确认采用",
+      "width": 317
+    },
+    {
+      "background": "rgb(42, 71, 95)",
+      "color": "rgb(251, 252, 253)",
+      "disabled": true,
+      "fontSize": "13px",
+      "height": 36,
+      "tag": "BUTTON",
+      "text": "确认变更并保存",
+      "width": 317
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "rgb(32, 40, 47)",
+      "disabled": false,
+      "fontSize": "13px",
+      "height": 44,
+      "tag": "SUMMARY",
+      "text": "跳过操作",
+      "width": 317
+    },
+    {
+      "background": "rgb(251, 252, 253)",
+      "color": "rgb(32, 40, 47)",
+      "disabled": false,
+      "fontSize": "16px",
+      "height": 40,
+      "label": "跳过原因",
+      "tag": "INPUT",
+      "text": "",
+      "width": 317
+    }
+  ],
+  "labels": [
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(49, 93, 120)",
+      "fontSize": "11.7px",
+      "text": "样本性质：普通样本"
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(49, 93, 120)",
+      "fontSize": "11.7px",
+      "text": "裂解体积：350 µL"
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(49, 93, 120)",
+      "fontSize": "11.7px",
+      "text": "样本性质：普通样本"
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "color": "rgb(49, 93, 120)",
+      "fontSize": "11.7px",
+      "text": "裂解体积：350 µL"
+    }
+  ],
+  "preparation": {
+    "bottom": 1243.171875,
+    "height": 1016.34375,
+    "left": 12,
+    "right": 363,
+    "top": 226.828125,
+    "width": 351,
+    "x": 12,
+    "y": 226.828125
+  },
+  "scrollWidth": 375,
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

@@ -55,3 +55,7 @@ next-env.d.ts
 
 # Full Playwright traces are published by CI and retained in private local diagnostics.
 docs/qa/evidence/entry-richtext/**/*.zip
+
+# Isolated release build and browser traces (CI publishes full traces).
+/.next-structured-release/
+docs/structured-protocol/20261014/evidence/*.zip

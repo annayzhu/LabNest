@@ -1,14 +1,16 @@
 "use client";
 import {useI18n} from "@/components/I18nProvider";
 
-import { Pause, Play, RotateCcw, Timer } from "lucide-react";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { Pause, Play, RotateCcw, Timer, Square } from "lucide-react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { updateStepTimer, type StepTimerActionState } from "@/app/experiments/[id]/run/actions";
 import { formatStepTimer, remainingStepTimerSeconds } from "@/lib/step-timer";
 
 const initialState: StepTimerActionState = {};
 
-export function StepTimerControls({ experimentId, step, compact=false }: {
+export function StepTimerControls({ experimentId, step, compact=false, executionPlanRevision, disabled=false }: {
+  executionPlanRevision?: number;
+  disabled?: boolean;
   compact?:boolean;
   experimentId: string;
   step: {
@@ -22,7 +24,19 @@ export function StepTimerControls({ experimentId, step, compact=false }: {
   const {locale}=useI18n();
   const [state, formAction, pending] = useActionState(updateStepTimer, initialState);
   const [expanded,setExpanded]=useState(false);
+  const expansionKey = `labnest.timer-expanded:${experimentId}:${step.id}`;
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => { try { setExpanded(sessionStorage.getItem(expansionKey) === 'true'); } catch {} });
+    return () => cancelAnimationFrame(frame);
+  }, [expansionKey]);
+  function toggleExpanded() {
+    const next = !expanded;
+    setExpanded(next);
+    try { sessionStorage.setItem(expansionKey, String(next)); } catch {}
+  }
   const [clock, setClock] = useState(() => Date.now());
+  const lastClock = useRef<{ wall: number; monotonic: number } | null>(null);
+  const [clockWarning, setClockWarning] = useState(false);
   const [durationMinutes, setDurationMinutes] = useState("5");
   const durationSeconds = step.timerDurationSeconds ?? 300;
   const remaining = remainingStepTimerSeconds({
@@ -34,32 +48,44 @@ export function StepTimerControls({ experimentId, step, compact=false }: {
   const configured = step.timerDurationSeconds !== null;
 
   useEffect(() => {
-    if (!running) return;
-    const interval = window.setInterval(() => setClock(Date.now()), 1000);
-    return () => window.clearInterval(interval);
+    const refresh = () => {
+      const now = Date.now(), monotonic = performance.now(), previous = lastClock.current;
+      if (previous && Math.abs((now - previous.wall) - (monotonic - previous.monotonic)) > 5000) setClockWarning(true);
+      lastClock.current = { wall: now, monotonic };
+      setClock(now);
+    };
+    refresh();
+    const interval = running ? window.setInterval(refresh, 1000) : undefined;
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(interval); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [running]);
 
-  function submitTimerIntent(timerIntent: "start" | "pause" | "reset") {
+  function submitTimerIntent(timerIntent: "start" | "pause" | "reset" | "finish") {
     const formData = new FormData();
     formData.set("experimentId", experimentId);
     formData.set("stepId", step.id);
     formData.set("timerIntent", timerIntent);
+    if (executionPlanRevision !== undefined) formData.set('executionPlanRevision', String(executionPlanRevision));
     if (!configured) formData.set("durationMinutes", durationMinutes);
     startTransition(() => formAction(formData));
   }
 
-  return <>{compact?<button type="button" aria-expanded={expanded} onClick={()=>setExpanded(!expanded)} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>{locale==="zh"?"计时器":"Timer"}{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
+  return <>{compact?<button type="button" aria-expanded={expanded} onClick={toggleExpanded} className="flex min-h-11 items-center justify-center gap-1 rounded-lg border border-hairline px-2 text-sm text-moss"><Timer className="h-4 w-4" aria-hidden/>{locale==="zh"?"计时器":"Timer"}{configured?<span className="font-mono text-xs">{formatStepTimer(remaining)}</span>:null}</button>:null}<section hidden={compact&&!expanded} aria-label="Step timer" className="col-span-2 rounded-[var(--ln-radius-panel-inner)] border border-info/30 bg-info-surface p-3">
     <div className="flex items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-sm font-semibold text-ink"><Timer className="h-4 w-4 text-info" aria-hidden />Step timer</span>
       <span className="font-mono text-xl font-semibold tabular-nums text-ink" aria-live="off">{formatStepTimer(remaining)}</span>
     </div>
     <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
       {!configured ? <label className="min-w-0"><span className="sr-only">Timer duration in minutes</span><input value={durationMinutes} onChange={(event) => setDurationMinutes(event.target.value)} type="number" min="0.1" max="1440" step="0.1" className="focus-ring h-11 w-full rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-sm text-ink" aria-label="Timer duration in minutes" /></label> : <span className="flex min-h-11 items-center text-xs text-muted">{Math.round(durationSeconds / 60)} min preset</span>}
-      <button type="button" onClick={() => submitTimerIntent(running ? "pause" : "start")} disabled={pending} className="focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-info/35 bg-surface px-3 text-sm font-semibold text-info">
+      <button type="button" onClick={() => submitTimerIntent(running ? "pause" : "start")} disabled={pending || disabled || clockWarning || remaining === 0} className="focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-[var(--ln-radius-control-md)] border border-info/35 bg-surface px-3 text-sm font-semibold text-info">
         {running ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}<span className="hidden min-[360px]:inline">{running ? "Pause" : step.timerPausedAt ? "Resume" : "Start"}</span>
       </button>
-      <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
+      <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending || disabled || clockWarning} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
     </div>
+    {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>结束计时（步骤仍需确认）</button> : null}
+    {configured && remaining === 0 ? <p role="status" className="mt-2 text-sm">计时已到零，步骤尚未自动完成。重新计时请先重置。</p> : null}
+    {clockWarning ? <p role="alert" className="text-warning">设备时间发生变化，请核对时钟并刷新。</p> : null}
     {state.error ? <p role="alert" className="mt-2 text-xs text-error">{state.error}</p> : null}
     {state.message ? <p role="status" className="mt-2 text-xs text-success">{state.message} Synced.</p> : null}
   </section></>;

@@ -1,0 +1,24 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/structured-protocol.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/structured-protocol.test.ts [ src/lib/structured-protocol.test.ts ]
+Error: Cannot find module './structured-protocol' imported from /Users/annayzhu/Documents/Playground/LabNest/src/lib/structured-protocol.test.ts
+ ❯ src/lib/structured-protocol.test.ts:2:1
+      1| import { describe, expect, it } from 'vitest';
+      2| import { resolveProtocolSystem, type ProtocolSystems } from './structu…
+       | ^
+      3|
+      4| const systems: ProtocolSystems = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  08:49:23
+   Duration  320ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

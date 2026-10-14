@@ -5,6 +5,7 @@ import { documentMediaFromMarkdown, documentMediaToMarkdown } from "./document-m
 
 export type PersistedTiptapTable = {
   rows: string[][];
+  rowIds?: string[];
   columnWidths?: Array<number | null>;
   cellFontSizesPt?: Array<Array<RichTextFontSizePt | null>>;
   cellColors?: Array<Array<RichTextColor | null>>;
@@ -45,6 +46,7 @@ export function tiptapTableRows(table: PersistedTiptapTable): JSONContent[] {
   const width = Math.max(1, ...rows.map((row) => row.length));
   return rows.map((row, rowIndex) => ({
     type: "tableRow",
+    ...(table.rowIds?.[rowIndex] ? { attrs: { protocolRowId: table.rowIds[rowIndex] } } : {}),
     content: Array.from({ length: width }, (_, columnIndex) => tiptapTableCell(row[columnIndex] ?? "", rowIndex === 0, table.columnWidths?.[columnIndex], table.cellFontSizesPt?.[rowIndex]?.[columnIndex], table.cellColors?.[rowIndex]?.[columnIndex], table.cellRichContent?.[rowIndex]?.[columnIndex])),
   }));
 }
@@ -109,6 +111,7 @@ export function persistedTableFromTiptap(node: JSONContent): PersistedTiptapTabl
   const cellRichContent = (node.content ?? []).map((row) => (row.content ?? []).map((cell) => needsRichPersistence(cell) ? cloneContent(cell.content ?? []) : null));
   return {
     rows,
+    ...((node.content ?? []).some(row => row.attrs?.protocolRowId) ? { rowIds: (node.content ?? []).map(row => String(row.attrs?.protocolRowId ?? `row-${globalThis.crypto.randomUUID()}`)) } : {}),
     columnWidths: columnWidths.some((value) => value !== null) ? columnWidths : undefined,
     cellFontSizesPt: cellFontSizesPt.some((row) => row.some((value) => value !== null)) ? cellFontSizesPt : undefined,
     cellColors: cellColors.some((row) => row.some((value) => value !== null)) ? cellColors : undefined,

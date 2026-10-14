@@ -1,0 +1,8 @@
+{
+  "image": "labnest-app:structured-02a32a96",
+  "health": true,
+  "runUsesFrozenValues": true,
+  "newAuthoringAvailable": true,
+  "readOnly": true,
+  "pageErrors": []
+}

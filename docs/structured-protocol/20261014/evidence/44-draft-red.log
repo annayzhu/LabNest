@@ -1,0 +1,21 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#step-cmv7gqyfv002icrosdrpo5u8e [data-structured-step-record]').getByText('未保存修改', { exact: true }) to be visible[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:78:49
+    at async check (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:21:75)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:74:1 {
+  log: [
+    "  - waiting for locator('#step-cmv7gqyfv002icrosdrpo5u8e [data-structured-step-record]').getByText('未保存修改', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

@@ -1,0 +1,37 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/structured-protocol.test.ts (9 tests | 1 failed) 27ms
+   × blocks a missing parameter referenced only in a step title and keeps an empty quantity unknown 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/structured-protocol.test.ts > blocks a missing parameter referenced only in a step title and keeps an empty quantity unknown
+AssertionError: expected { source_ref: 'add', order: 1, …(9) } to match object { blocked: false, title: '加入 0.05 mL' }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "blocked": false,
+-   "title": "加入 0.05 mL",
++   "title": "加入 0.049999999999999996 mL",
+  }
+
+ ❯ src/lib/structured-protocol.test.ts:99:58
+     97|   expect(resolveProtocolDocument(document, {}).steps[0].blocked).toBe(…
+     98|   document.systems.parameters[0].source = { kind: 'fixed', value: 50, …
+     99|   expect(resolveProtocolDocument(document, {}).steps[0]).toMatchObject…
+       |                                                          ^
+    100|   expect(document.systems.parameters[0].source).toMatchObject({ value:…
+    101| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 18 passed (19)
+   Start at  09:25:43
+   Duration  404ms (transform 529ms, setup 0ms, import 960ms, tests 51ms, environment 0ms)
+

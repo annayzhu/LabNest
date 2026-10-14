@@ -14,6 +14,8 @@ import { formLabelClass, formTextareaClass } from "@/components/forms";
 import { buttonStyles } from "@/components/ui/Button";
 import { StepCalculator } from "@/components/calculators/StepCalculator";
 import { StepTimerControls } from "@/components/StepTimerControls";
+import type { StructuredRunView } from '@/lib/structured-run';
+import { StructuredStepRecord } from './StructuredStepRecord';
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 
@@ -44,7 +46,8 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured }: {
+  structured?: Pick<StructuredRunView, 'steps' | 'plan'>;
   experimentId: string;
   status: string;
   steps: RunStep[];
@@ -61,6 +64,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const draftInitialized=useRef(false);
   const [draftReady,setDraftReady]=useState(false);
   const [draftNotice,setDraftNotice]=useState("");
+  const [olderDraft, setOlderDraft] = useState<Record<string,string> | null>(null);
   const [completedIds, setCompletedIds] = useState(() => new Set(steps.filter((step) => step.completed).map((step) => step.id)));
   const [selectedStepId, setSelectedStepId] = useState(() => steps.find((step) => !step.completed)?.id ?? steps[0]?.id ?? "");
   const [state, formAction, pending] = useActionState(async (previous: ProtocolRunProgressState, data: FormData) => {
@@ -68,7 +72,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     if (!result.error && result.completedStepIds) {
       const saved = new Set(result.completedStepIds);
       setCompletedIds(saved);
-      setDraftFields({});try{sessionStorage.removeItem(`labnest.run-draft:${experimentId}`);}catch{};setDraftNotice("");
+      setDraftFields({});setOlderDraft(null);try{sessionStorage.removeItem(`labnest.run-draft:${experimentId}`);}catch{};setDraftNotice("");
       if (result.completedCurrentStepId) {
         const next = steps.find((step) => !saved.has(step.id));
         if (next) setSelectedStepId(next.id);
@@ -86,7 +90,10 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     return [...grouped.values()].sort((a, b) => a.order - b.order);
   }, [steps]);
   const referenceGroups=Object.keys(frozenReferences??{}).map(key=>({key,title:groups.find(group=>group.key===key)?.title??frozenReferenceTitles?.[key]??"Captured Protocol reference"}));
-  const remaining = steps.length - completedIds.size;
+  const requiredSteps = steps.filter(s => !structured?.steps[s.id]?.optional);
+  const requiredCompleted = requiredSteps.filter(s => completedIds.has(s.id)).length;
+  const remaining = requiredSteps.length - requiredCompleted;
+  const unavailable = (id: string) => Boolean(structured?.steps[id]?.blocked || structured?.plan.skips[id] || structured?.steps[id]?.actualFields.some(f => f.required && !structured.plan.actualValues[id]?.[f.id]));
   const hasSteps = steps.length > 0;
   const currentStep = steps.find((step) => !completedIds.has(step.id));
   useEffect(()=>{const restore=()=>{const id=decodeURIComponent(window.location.hash.replace(/^#step-/,''));if(steps.some(step=>step.id===id))setSelectedStepId(id);};const frame=requestAnimationFrame(restore);window.addEventListener('hashchange',restore);return()=>{cancelAnimationFrame(frame);window.removeEventListener('hashchange',restore);};},[steps]);
@@ -97,15 +104,15 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
-    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){setDraftFields(saved.fields??{});if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id))));window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length)setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){if (structured && saved.revision !== structured.plan.revision) { if (Object.keys(saved.fields ?? {}).length) { setOlderDraft(saved.fields); setDraftNotice('执行记录已更新，旧草稿保留供核对。'); } } else { setDraftFields(saved.fields??{}); if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id)))); } if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length && (!structured || saved.revision === structured.plan.revision))setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
-  },[experimentId,steps]);
+  },[experimentId,steps,structured]);
   useEffect(()=>{
     if(!draftReady)return;
-    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({fields:draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
+    const preserve=()=>{try{sessionStorage.setItem(`labnest.run-draft:${experimentId}`,JSON.stringify({revision:olderDraft ? -1 : structured?.plan.revision,fields:olderDraft ?? draftFields,selectedStepId,completed:[...completedIds],scrollY:window.scrollY}));}catch{setDraftNotice('Cannot save draft; keep this page');}};
     preserve();window.addEventListener('pagehide',preserve);window.addEventListener('labnest:preserve-run-draft',preserve);
     return()=>{window.removeEventListener('pagehide',preserve);window.removeEventListener('labnest:preserve-run-draft',preserve);};
-  },[experimentId,selectedStepId,completedIds,draftFields,draftReady]);
+  },[experimentId,selectedStepId,completedIds,draftFields,draftReady,structured,olderDraft]);
   const selectedStepIndex = selectedStep ? steps.findIndex((step) => step.id === selectedStep.id) : -1;
   const evidence = selectedStep && evidenceByStep ? evidenceByStep[selectedStep.id] : undefined;
   const evidenceTotals = Object.values(evidenceByStep ?? {}).reduce((total, item) => ({
@@ -141,6 +148,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       payload: {
         experimentId,
         experimentStepId: stepId,
+        executionPlanRevision: structured?.plan.revision,
         deviationType: optional(`mobileDeviationType:${stepId}`),
         deviationNote: optional(`mobileDeviation:${stepId}`),
         deviationImpact: optional(`mobileDeviationImpact:${stepId}`),
@@ -175,8 +183,11 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const infoGroups=[...new Map(steps.filter(step=>step.richContent?.common.length).map(step=>[step.groupKey,step])).values()];
   return <form ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
+    {structured ? <input type="hidden" name="executionPlanRevision" value={structured.plan.revision}/> : null}
+    {structured ? <p role="status" data-structured-progress>必需操作：{requiredCompleted}/{requiredSteps.length} 完成 · 可选：{steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/{steps.filter(s => structured.steps[s.id]?.optional).length} · 跳过：{Object.keys(structured.plan.skips).length} · 待确定：{steps.filter(s => structured.steps[s.id]?.blocked).length}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
+    {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。</p><details><summary>查看旧草稿</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('已恢复核对后的草稿，尚未保存'); }}>已核对，继续使用这些草稿</button></aside> : null}
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
     {infoGroups.map(step=><details open key={step.groupKey} className="min-w-0 rounded-[var(--ln-radius-panel)] border border-hairline p-3" data-run-information><summary className="focus-ring cursor-pointer text-sm text-moss">规程说明与参考（不计步） · {experimentStepGroupHeading(step.groupTitle).title}</summary><div className="mt-3 min-w-0 space-y-3">{step.richContent?.common.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</div></details>)}
@@ -187,7 +198,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           {!zh ? <span>{selectedStep ? `Step ${selectedStepIndex + 1}` : "Ready to finish"}</span> : null}
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone">
-          <div className="h-full rounded-full bg-moss transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${hasSteps ? Math.round((completedIds.size / steps.length) * 100) : 0}%` }} />
+          <div className="h-full rounded-full bg-moss transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${requiredSteps.length ? Math.round((requiredCompleted / requiredSteps.length) * 100) : 0}%` }} />
         </div>
       </div>
 
@@ -199,7 +210,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
           <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
           <div data-run-tools className="mt-3 grid grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
-          <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} />
+          <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} executionPlanRevision={structured?.plan.revision} disabled={!editable || Boolean(structured?.steps[selectedStep.id] && (selectedStep.completed || structured.steps[selectedStep.id].blocked))}/>
           <button type="button" aria-expanded={recordOpen} onClick={()=>setRecordOpen(value=>!value)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline px-2 text-sm font-medium text-moss">{zh?"记录":"Record"}</button></div>
           <div hidden={!recordOpen} className="mt-2" data-run-record><div className="grid grid-cols-3 gap-2">
             <Link onClick={()=>window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${selectedStep.id}`} className="focus-ring flex min-h-11 items-center justify-center text-sm text-moss">{zh?"添加观察":"Observe"}</Link>
@@ -209,6 +220,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
 
 
+          <StructuredStepRecord key={`${selectedStep.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={selectedStep.id} structured={structured} editable={editable} completed={selectedStep.completed}/>
           {evidence && Object.values(evidence).some(count => count > 0) ? <p className="mt-3 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs leading-5 text-graphite" aria-label="Current step evidence">{Object.entries(evidence).filter(([,count])=>count>0).map(([key,count])=>`${zh?({observations:"观察",measurements:"测量",files:"附件",consumptions:"耗材"} as Record<string,string>)[key]:key} ${count}`).join(" · ")}</p> : null}
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -238,7 +250,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
             </div>
           </details> : <p className="mt-4 border-t border-hairline pt-3 text-xs text-muted">This locked Protocol step does not allow a deviation record.</p>}
 
-          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : null}
+          {editable && !completedIds.has(selectedStep.id) ? <button type="submit" name="completedCurrentStepId" value={selectedStep.id} disabled={pending || unavailable(selectedStep.id)} className={`${primaryButton} min-h-12 w-full`}><CheckCircle2 className="h-5 w-5" aria-hidden />{pending ? "Saving…" : selectedStep.requiresConfirmation ? "Confirm step completion" : "Mark step done"}</button> : null}
         </div>
       ) : (
         <div className="p-4">
@@ -308,28 +320,30 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           const heading = experimentStepGroupHeading(group.title);
           return <section key={group.key} aria-labelledby={`run-group-${group.key}`}>
             <label className="flex cursor-pointer items-start gap-3 border-b border-hairline bg-sage-surface/55 px-4 py-3">
-              <button type="button" onClick={()=>setGroup(group.steps,!allCompleted)} disabled={!editable||pending} className="focus-ring min-h-11 rounded border border-hairline px-2 text-xs">{allCompleted?"取消整组勾选":"勾选整组"}</button>
+              <button type="button" onClick={()=>setGroup(group.steps,!allCompleted)} disabled={!editable||pending||group.steps.some(s => unavailable(s.id))} className="focus-ring min-h-11 rounded border border-hairline px-2 text-xs">{allCompleted?"取消整组勾选":"勾选整组"}</button>
               <span className="min-w-0"><strong id={`run-group-${group.key}`} className="block text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</strong><span className="mt-0.5 block text-xs text-muted">{heading.detail ? `${heading.detail} · ` : ""}Whole block · {groupCompleted}/{group.steps.length} steps checked</span></span>
             </label>
             <div className="divide-y divide-hairline">
               {group.steps.map((step) => <div id={`step-${step.id}`} key={step.id} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.45fr)]">
                 <div className="min-w-0">
                 <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                  <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
+                  <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending || unavailable(step.id)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
                   <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description && !step.richContent?.blocks.length ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
                 {step.richContent?.blocks.length ? <div className="run-step-content mt-3 space-y-3" data-run-step-content>{(step.richContent?.blocks ?? []).map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext />)}</div> : null}
                 </div>
                 <div>
+                  <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>
+                  {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
-                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} defaultValue={step.deviationNote ?? ""} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
+                  {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>)}
             </div>
           </section>;
         })}
       </div> : <p className="px-4 py-8 text-center text-sm text-muted">No execution steps were planned. Review the Protocol structure before starting a protocol-based run.</p>}
-      <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
+      <div className="px-4 pb-4 pt-3"><label><span className={formLabelClass}>Execution notes</span><textarea key={state.savedAt ?? "initial"} name="quickNote" value={draftFields.quickNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, quickNote: e.target.value }))} disabled={!editable || pending} placeholder="What happened at this stage? This is timestamped and appended to execution notes." className={`${fieldClass} min-h-24 resize-y`} /></label></div>
     </section>
 
     {editable ? <div className="sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 lg:block">

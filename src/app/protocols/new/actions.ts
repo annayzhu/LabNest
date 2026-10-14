@@ -7,6 +7,7 @@ import { ProtocolAvailability, ProtocolReviewStage, ProtocolScope } from "@/gene
 import type { ProtocolEditorState } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "@/lib/document-media.server";
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
 import { projectProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { checkResultTemplate } from "@/lib/result-templates";
@@ -65,7 +66,10 @@ export async function createProtocolDocument(
       primaryResearchPlanIds: formData.getAll("primaryResearchPlanIds").map(String),
     });
     const humanCode = recordCodeFromSuffix("protocol", String(formData.get("humanCodeSuffix") ?? ""));
-    const document = protocolDocumentSchema.parse(JSON.parse(parsed.contentJson));
+    const rawDocument = JSON.parse(parsed.contentJson);
+    const compatibilityIssue = protocolCompatibilityIssue(rawDocument);
+    if (compatibilityIssue) return { error: compatibilityIssue };
+    const document = protocolDocumentSchema.parse(rawDocument);
     const manualRelevantLinks = normalizeManualRelevantLinks(JSON.parse(parsed.relevantItemLinksJson));
     await assertManualRelevantLinksExist(manualRelevantLinks);
     const projection = projectProtocolDocument(document);

@@ -1,3 +1,5 @@
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
+import { ProtocolCompatibilityView } from "@/components/ProtocolCompatibilityView";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PencilLine } from "lucide-react";
@@ -124,7 +126,7 @@ export default async function ProtocolDetailPage({
 
         <div className="document-preview-layout">
           <main className="document-preview-main">
-            <ProtocolDocumentView document={document} title={protocol.canonicalTitle ?? protocol.title} identifier={protocol.humanCode} version={version.displayVersion} />
+            {protocolCompatibilityIssue(version.contentJson) ? <ProtocolCompatibilityView value={version.contentJson}/> : <ProtocolDocumentView document={document} title={protocol.canonicalTitle ?? protocol.title} identifier={protocol.humanCode} version={version.displayVersion} />}
           </main>
 
           <aside className="document-preview-sidebar" aria-label="Protocol controls and history">

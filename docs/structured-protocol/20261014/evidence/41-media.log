@@ -1,0 +1,36 @@
+PASS C04 visible move, undo/redo and explicit clipboard copy preserve original assets and unique node IDs
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected "actual" not to be strictly deep-equal to:
+
+[
+  'sample-photo-1',
+  'sample-photo-0',
+  'sample-photo-2',
+  'sample-photo-3'
+]
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-media.mjs:41:140
+    at async check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-media.mjs:15:43)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-media.mjs:37:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    'sample-photo-1',
+    'sample-photo-0',
+    'sample-photo-2',
+    'sample-photo-3'
+  ],
+  expected: [
+    'sample-photo-1',
+    'sample-photo-0',
+    'sample-photo-2',
+    'sample-photo-3'
+  ],
+  operator: 'notDeepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

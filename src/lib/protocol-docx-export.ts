@@ -1,3 +1,4 @@
+import { allSystemProtocolExportDocument } from './structured-protocol';
 import { createHash } from "node:crypto";
 import { persistedTableFromTiptap } from "./tiptap-table-serialization";
 import type { JSONContent } from "@tiptap/core";
@@ -245,6 +246,7 @@ export function protocolDocxFilename(identity: ProtocolDocxIdentity) {
 }
 
 export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: ProtocolDocument, imageAssets: DocxImageAssets = {}) {
+  document = allSystemProtocolExportDocument(document);
   const media = createDocxMedia(imageAssets);
   const availabilityLabel = displayStatus(identity.availability);
   const reviewStageLabel = displayStatus(identity.reviewStage);

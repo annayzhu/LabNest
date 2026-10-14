@@ -1,0 +1,5 @@
+Error: 受影响步骤已有执行记录，请保留原执行并创建继续实例 / Recorded effects require a linked continuation
+    at <anonymous> (/Users/annayzhu/Documents/Playground/LabNest/src/lib/structured-run.server.ts:37:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Proxy._transactionWithCallback (/Users/annayzhu/Documents/Playground/LabNest/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:810:18)
+    at async main (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-run-transactions.ts:39:21)

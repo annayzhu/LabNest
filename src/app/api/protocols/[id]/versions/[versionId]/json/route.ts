@@ -1,3 +1,4 @@
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
 import { prisma } from "@/lib/db";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 import { normalizeProtocolDocument, projectProtocolDocument, protocolDocumentFromLegacy } from "@/lib/protocol-document";
@@ -48,8 +49,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       adaptationRationale: version.adaptationRationale,
       createdAt: version.createdAt,
     },
-    document,
+    document: protocolCompatibilityIssue(version.contentJson) ? version.contentJson : document,
+    compatibilityWarning: protocolCompatibilityIssue(version.contentJson),
     importHistory: await getProtocolImportHistory(id),
-    structuredProjection: projectProtocolDocument(document),
+    structuredProjection: protocolCompatibilityIssue(version.contentJson) ? null : projectProtocolDocument(document),
   }, { headers: { "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`${version.protocol.humanCode}_v${version.displayVersion}.json`)}` } });
 }

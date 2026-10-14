@@ -1,0 +1,58 @@
+project,researchPlan,runCode,title,date,status,recordStatus,primaryProtocolCode,protocolVersion,supportingProtocolCodes,researchPlanName,methodSources,purpose,background,materials,steps,observations,deviations,conclusion,tags
+合成体系验收 88d664d2-3767-48f0-a72d-454ea4e871cc,SYN-88d664d2-3767-48f0-a72d-454ea4e871cc,EXP-067,合成验收 · 页面创建与执行,2026-10-14T00:00:00.000Z,running,draft,SYN-88d664d2-3767-48f0-a72d-454ea4e871cc,1.0,,合成规程完整链验证,350／600 µL 合成规程 · 1.0,,,,"本次执行记录 · 当前实验组 · 源版本 350／600 µL 合成规程 v1.0（cmv7hc31z0007doosss2xfg0a）
+裂解体积：350 µL；样本性质：普通样本
+采用确认时间：2026-10-14T02:17:28.042Z · 计划修订 11
+采用参数
+值
+来源
+Proteinase K
+50 µL
+体系查表
+Ethanol
+200 µL
+体系查表
+孵育时长
+10 min
+固定值
+母液浓度
+100 µM
+固定值
+目标终浓度
+10 µM
+本次填写
+稀释总体积
+100 µL
+固定值
+示例母液取液量
+10 µL
+计算后确认
+示例母液取液量 · dilution dilution-v2 · 确认 2026-10-14T02:17:28.042Z
+输入：{""mode"":""final"",""finalVolume"":100,""finalVolumeUnit"":""µL"",""stockConcentration"":100,""targetConcentration"":10,""stockConcentrationUnit"":""µM"",""targetConcentrationUnit"":""µM""}
+当时计算结果：10 µL
+体积可加和近似 / Assumes additive volumes.
+共同准备：核对标签和记录编号。
+SYN-88d664d2-3767-48f0-a72d-454ea4e871cc · 350／600 µL 合成规程 · v1.0
+✓ 核对样本
+标记管号
+确认原始记录时间
+✓ 加入试剂
+记录项
+实际值
+记录时间
+实际 Proteinase K
+50 µL
+2026-10-14T02:17:36.480Z
+组分
+用量
+Proteinase K
+50 µL
+Ethanol
+200 µL
+中文图注 1 · 合成验收
+中文图注 2 · 合成验收
+中文图注 3 · 合成验收
+中文图注 4 · 合成验收
+独立稀释示例取母液 10 µL；这是软件测试，不是试剂方案的附加用量。
+未完成 孵育
+孵育 10 min，计时结束后仍需人工确认。
+高脂样本补充处理 · 不适用于本次实验（来源 cmv7hc31z0007doosss2xfg0a:lipid）",,,,

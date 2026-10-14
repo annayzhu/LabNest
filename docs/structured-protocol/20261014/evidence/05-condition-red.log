@@ -1,0 +1,42 @@
+
+ RUN  v4.1.10 /Users/annayzhu/Documents/Playground/LabNest
+
+ ❯ src/lib/structured-protocol.test.ts (3 tests | 1 failed) 11ms
+     × rejects dangling conditions instead of turning them into not-applicable content 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/structured-protocol.test.ts > confirmed Protocol system contract > rejects dangling conditions instead of turning them into not-applicable content
+AssertionError: expected [ { code: 'parameter-unknown', …(2) } ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "code": "invalid-reference",
+  "targetId": "proteinase",
+}
+
++ Received:
+[
+  {
+    "code": "parameter-unknown",
+    "message": "Proteinase K：条件待确定 / Conditions incomplete",
+    "targetId": "proteinase",
+  },
+]
+
+ ❯ src/lib/structured-protocol.test.ts:26:72
+     24|     const invalid = structuredClone(systems);
+     25|     invalid.parameters[0].source = { kind: 'lookup', values: [{ id: 'o…
+     26|     expect(resolveProtocolSystem(invalid, { volume: 'small' }).issues)…
+       |                                                                        ^
+     27|   });
+     28|   it('uses authored 50/80 µL lookup values without scaling the 350/600…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  08:50:43
+   Duration  314ms (transform 100ms, setup 0ms, import 162ms, tests 11ms, environment 0ms)
+

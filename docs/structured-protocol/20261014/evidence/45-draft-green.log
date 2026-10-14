@@ -1,0 +1,31 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+PASS UI A1 actual-value drafts never display a stale saved receipt and clear after save
+PASS B07 E05 two real tabs reject stale full-form completion instead of undoing newer progress
+PASS D03 D04 start refresh pause resume finish timer retains one instance and never completes step
+PASS B06 continuation displays original treatment and starts at explicit remaining operation
+PASS F03 actual JSON Markdown CSV XLSX DOCX and print files preserve adopted quantities and source
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await page.locator('.protocol-system-preparation').evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=12))
+
+    at file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:146:5
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:452:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async check (file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:21:75)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:140:1 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.23.1

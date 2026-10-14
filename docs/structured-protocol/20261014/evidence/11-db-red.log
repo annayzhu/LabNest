@@ -1,0 +1,24 @@
+node:internal/modules/cjs/loader:1430
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module '../src/lib/structured-run.server'
+Require stack:
+- /Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-run-transactions.ts
+    at node:internal/modules/cjs/loader:1430:15
+    at nextResolveSimple (/Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-BLUABhh3.cjs:10:1017)
+    at /Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-BLUABhh3.cjs:9:4613
+    at /Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-BLUABhh3.cjs:9:3894
+    at resolveTsPaths (/Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-BLUABhh3.cjs:10:770)
+    at /Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-BLUABhh3.cjs:10:1171
+    at T._resolveFilename (file:///Users/annayzhu/Documents/Playground/LabNest/node_modules/tsx/dist/register-D5KIhaFJ.mjs:2:15244)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-run-transactions.ts'
+  ]
+}
+
+Node.js v22.23.1

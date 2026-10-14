@@ -1,3 +1,4 @@
+import { protocolCompatibilityIssue } from "./protocol-compatibility";
 import { createHash } from "node:crypto";
 import { normalizeProtocolDocument, projectProtocolDocument } from "./protocol-document";
 import type { Prisma } from "@/generated/prisma/client";
@@ -63,6 +64,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
   const orderedVersions = versionIds.map((id) => versionMap.get(id)!);
   const primary = orderedVersions[0];
   const contracts=new Map(orderedVersions.map(version=>{
+    const compatibilityIssue=protocolCompatibilityIssue(version.contentJson);
+    if(compatibilityIssue)throw new Error(compatibilityIssue);
     const document=normalizeProtocolDocument(version.contentJson);
     const projection=document?projectProtocolDocument(document):undefined;
     if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);
@@ -91,6 +94,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     const duplicate = await tx.experiment.findUnique({ where: { runCode }, select: { id: true } });
     if (duplicate) throw new Error(`${runCode} is already in use. Enter a different suffix.`);
   }
+  if (versions.some(version => Boolean((version.contentJson as { systems?: unknown })?.systems)) && input.status !== 'planned') throw new Error('结构化实验请从 planned 状态创建，执行状态在 Run 中确认。');
+
   const snapshot = {
     schemaVersion: 1,
     ...(input.creationKey?{creationFingerprint:fingerprint}:{}),

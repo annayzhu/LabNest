@@ -1,3 +1,5 @@
+import { allSystemProtocolExportDocument } from './structured-protocol';
+import { protocolCompatibilityIssue } from './protocol-compatibility';
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { experimentMethodNames, experimentPlanName } from "@/lib/experiment-provenance";
 import writeXlsxFile from "write-excel-file/node";
@@ -87,8 +89,9 @@ export async function structuredExportRecords(
     );
     return rows.map((row) => {
       const version = row.versions[0];
-      const document = normalizeProtocolDocument(version?.contentJson);
-      return { humanCode: row.humanCode, canonicalTitle: row.canonicalTitle ?? row.title, shortTitle: row.shortTitle, englishTitle: row.englishTitle, scope: row.scope, project: row.project?.name, researchPlanCodes: row.researchPlans.map((link) => link.researchPlan.code ?? link.researchPlan.title), primaryResearchPlanCodes: row.researchPlans.filter((link) => link.isPrimary).map((link) => link.researchPlan.code ?? link.researchPlan.title), availability: row.availability, reviewStage: version?.reviewStage, displayVersion: version?.displayVersion, tags: row.tags, description: document ? sectionPlainText(document, "description") : row.description, purpose: document ? sectionPlainText(document, "purpose") : version?.purpose, background: document ? sectionPlainText(document, "background") : version?.background, material: document ? sectionPlainText(document, "material") : "", steps: document ? sectionPlainText(document, "steps") : "", resultTemplates: document ? sectionPlainText(document, "result_templates") : "", consumptionRules: document ? sectionPlainText(document, "consumption_rules") : "", contentJson: document ?? version?.contentJson };
+      const authored = normalizeProtocolDocument(version?.contentJson);
+      const document = authored ? allSystemProtocolExportDocument(authored) : undefined;
+      return { humanCode: row.humanCode, canonicalTitle: row.canonicalTitle ?? row.title, shortTitle: row.shortTitle, englishTitle: row.englishTitle, scope: row.scope, project: row.project?.name, researchPlanCodes: row.researchPlans.map((link) => link.researchPlan.code ?? link.researchPlan.title), primaryResearchPlanCodes: row.researchPlans.filter((link) => link.isPrimary).map((link) => link.researchPlan.code ?? link.researchPlan.title), availability: row.availability, reviewStage: version?.reviewStage, displayVersion: version?.displayVersion, tags: row.tags, description: document ? sectionPlainText(document, "description") : row.description, purpose: document ? sectionPlainText(document, "purpose") : version?.purpose, background: document ? sectionPlainText(document, "background") : version?.background, material: document ? sectionPlainText(document, "material") : "", steps: document ? sectionPlainText(document, "steps") : "", resultTemplates: document ? sectionPlainText(document, "result_templates") : "", consumptionRules: document ? sectionPlainText(document, "consumption_rules") : "", contentJson: version?.contentJson, compatibilityWarning: protocolCompatibilityIssue(version?.contentJson) };
     });
   }
   if (module === "experiments") {
@@ -98,7 +101,7 @@ export async function structuredExportRecords(
       (row) => ({ search: [row.runCode, row.title, row.purpose], filters: { project: row.projectId, plan: row.researchPlanId, status: row.status } }),
     );
     return Promise.all(rows.map(async (row) => {
-      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson);
+      const document = experimentExecutionDocument(row.contentJson, await stepsWithExecutionEvidence(row.steps),row.protocolRun?.parametersJson,row.protocolSnapshotJson,row.protocolRun?.executionPlanJson);
       const narrative = experimentNarrativeFromDocument(document);
       if (preserveMedia) {
         narrative.background = scientificSectionText(document, "background");

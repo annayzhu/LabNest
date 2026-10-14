@@ -1,0 +1,4 @@
+(node:75724) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS: active timer rejects implicit cancellation, explicit cancellation is audited and replay-safe; required skip needs a reason and does not mark completion
+PASS: real isolated database creation, confirmation, stable IDs, frozen source, stale rejection, idempotent actual values, guarded public completion, linked continuation and preserved prior records

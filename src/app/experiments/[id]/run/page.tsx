@@ -1,4 +1,8 @@
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
+import { structuredRunView } from '@/lib/structured-run';
+import { RunSystemPreparation } from '@/components/RunSystemPreparation';
+import { ProtocolContentBlockView } from '@/components/ProtocolDocumentView';
+import { ProtocolSystemChoice } from '@/components/ProtocolSystemLabels';
 import { runConsumptionSources } from "@/lib/run-consumption";
 import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
@@ -61,9 +65,10 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   if (!experiment) notFound();
 
   const lockedProtocol = experiment.primaryProtocolVersion;
-  const currentStep = experiment.steps.find((step) => !step.completed);
+  const structured = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+  const currentStep = experiment.steps.find((step) => !step.completed && !structured.steps[step.id]?.blocked);
   const locked = isRecordLocked(experiment.recordStatus);
-  const editable = experiment.status !== "archived" && !locked;
+  const editable = experiment.status !== "archived" && !locked && !(structured.hasSystems && experiment.status === 'completed');
   const evidenceByStep = Object.fromEntries(experiment.steps.map((step) => [step.id, {
     observations: step._count.entries,
     measurements: step._count.results,
@@ -75,8 +80,9 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const renderedSteps=experiment.steps.map(step=>{
     const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
     frozenReferences[step.groupKey] ??= reference;
-    return {...step,richContent};
-  });
+    const resolved = structured.steps[step.id];
+    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, description: resolved.description, richContent: { ...richContent, blocks: resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === step.groupKey)?.commonBlocks ?? [] } } : {...step,richContent};
+  }).filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
   for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown;protocolTitle?:string;displayVersion?:string}[]}).versions??[]) {
     frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
     frozenReferences[version.protocolVersionId]??=normalizeProtocolDocument(version.contentJson)?.sections??[];
@@ -115,12 +121,15 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           </div>
         </section>
 
-        <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson)} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
+        <RunParameterEditor experimentId={experiment.id} keys={runParameterKeys(experiment.protocolSnapshotJson).filter(key => !structured.versions.some(v => v.document.systems?.parameters.some(p => p.id === key)))} values={(experiment.protocolRun?.parametersJson??{}) as Record<string,unknown>} editable={editable&&experiment.status!=="completed"}/>
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
+        <RunSystemPreparation experimentId={id} view={structured} editable={editable}/>
+        {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>当前实验组 · {experiment.runCode}</strong><div className="protocol-system-legend">{structured.versions.flatMap(v => Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>))}</div></div> : null}
         <ProtocolRunProgressForm
-          key={experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}
+          key={`${structured.plan.revision}:${experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}`}
+          structured={structured.hasSystems ? { plan: structured.plan, steps: structured.steps } : undefined}
           experimentId={experiment.id}
           status={experiment.status}
           steps={renderedSteps}
@@ -130,6 +139,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           editable={editable}
           evidenceByStep={evidenceByStep}
         />
+        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>查看其他体系内容（不适用，不计入本次进度）</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={step.source_ref} className="mt-3"><h3>{step.title} · 不适用</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 
 
 

@@ -1,0 +1,14 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+route.continue: Route is already handled!
+    at holdSave (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:94:114) {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v22.23.1

@@ -1,0 +1,23 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for getByText(/执行方案已变更，请刷新/).first() to be visible[22m
+[2m    32 × locator resolved to hidden <p role="alert" class="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">…</p>[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:80:48
+    at async check (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:21:75)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:74:1 {
+  log: [
+    '  - waiting for getByText(/执行方案已变更，请刷新/).first() to be visible',
+    '    32 × locator resolved to hidden <p role="alert" class="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">…</p>'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

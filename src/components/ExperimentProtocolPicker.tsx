@@ -13,6 +13,7 @@ export type ExperimentProtocolVersionOption = {
   versionTitle: string;
   reviewStage: string;
   stepCount: number;
+  hasSystems?: boolean;
   execution?: import("./ProtocolExecutionPreview").ProtocolExecutionPreviewData;
   protocol: {
     id: string;

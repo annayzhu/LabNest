@@ -2,6 +2,12 @@
 
 /* Calculator controls: adjust density independently of scientific/document typography. */
 :root {
+  --ln-protocol-choice-0: #315d78;
+  --ln-protocol-choice-1: #655174;
+  --ln-protocol-choice-2: #574e43;
+  --ln-protocol-system-gap: 0.75rem;
+  --ln-protocol-system-padding: 1rem;
+
   --ln-calculator-control-height: 36px;
   --ln-calculator-touch-height: 44px;
   --ln-calculator-control-radius: 8px;
@@ -5672,3 +5678,6 @@ main.embedded-tool-workspace { padding: 0 !important; }
 .ln-table-insert-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--ln-table-picker-gap, 3px); margin-top: var(--ln-space-2, 0.5rem); width: min(19rem, calc(100vw - 48px)); }
 .ln-wysiwyg-insert-popover .ln-table-insert-grid button { display: block; min-height: var(--ln-table-picker-cell, 32px); padding: 0; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); }
 .ln-table-insert-grid button[data-highlighted="true"] { background: var(--action-surface); border-color: var(--moss); }
+
+:root[data-labnest-mode="dark"] { --ln-protocol-choice-0: #a8cce4; --ln-protocol-choice-1: #d4bfe4; --ln-protocol-choice-2: #dacdbb; }
+.document-canvas { --ln-protocol-choice-0: #315d78; --ln-protocol-choice-1: #655174; --ln-protocol-choice-2: #574e43; }

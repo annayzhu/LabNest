@@ -1,3 +1,5 @@
+import { protocolCompatibilityIssue } from "@/lib/protocol-compatibility";
+import { ProtocolCompatibilityView } from "@/components/ProtocolCompatibilityView";
 import { protocolSaveVersion } from "@/lib/protocol-save-version";
 import { notFound } from "next/navigation";
 import { GitBranchPlus } from "lucide-react";
@@ -57,6 +59,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
     prisma.itemLink.findMany({ where: { sourceType: "protocol", sourceId: id, linkType: "manually_related", createdBy: "user" }, select: { targetType: true, targetId: true } }),
   ]);
   if (!version || version.protocolId !== id) notFound();
+  if (protocolCompatibilityIssue(version.contentJson)) return <AppShell><ProtocolCompatibilityView value={version.contentJson}/></AppShell>;
   const importHistory = await getProtocolImportHistory(id);
 
   const document = upgradeProtocolDocumentForEditing(normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({

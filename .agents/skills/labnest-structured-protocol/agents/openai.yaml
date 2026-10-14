@@ -1,0 +1,4 @@
+interface:
+  display_name: "LabNest Structured Protocol"
+  short_description: "LabNest conditions, snapshots and execution checks"
+  default_prompt: "Use $labnest-structured-protocol to update and verify this Protocol workflow."

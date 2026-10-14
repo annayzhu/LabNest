@@ -1,0 +1,136 @@
+PASS 13.1 author two systems and conditional parameter using the real empty Protocol UI
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 20000ms exceeded.
+Call log:
+[2m  - waiting for locator('.protocol-workbench-save button[type="submit"]')[22m
+[2m    - locator resolved to <button type="submit" aria-busy="false" data-ui-button="true" data-variant="primary" class="ui-motion-button focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 ln-key-action h-[var(--ln-control-height-sm)] px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-contro…>…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m  2 × retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m  9 × retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m  2 × retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events[22m
+[2m  - retrying click action[22m
+[2m    - waiting 500ms[22m
+
+    at save (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:13:97)
+    at /Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:72:9
+    at async check (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:12:43)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-authoring.mjs:56:1 {
+  log: [
+    `  - waiting for locator('.protocol-workbench-save button[type="submit"]')`,
+    '    - locator resolved to <button type="submit" aria-busy="false" data-ui-button="true" data-variant="primary" class="ui-motion-button focus-ring inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--ln-radius-control-md)] border font-medium tracking-[-0.005em] transition duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 ln-key-action h-[var(--ln-control-height-sm)] px-[var(--ln-control-padding-x-sm)] text-[length:var(--ln-contro…>…</button>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '  2 × retrying click action',
+    '      - waiting 100ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '  9 × retrying click action',
+    '      - waiting 500ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 500ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 500ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 500ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="context-properties-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '  2 × retrying click action',
+    '      - waiting 500ms',
+    '      - waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div class="document-editor-context-body">…</div> from <aside aria-busy="false" aria-hidden="false" data-pinned="false" data-print-hidden="true" class="context-properties" id="_R_1ln8matpesnebn5ritqlb_" aria-label="Selected block settings">…</aside> subtree intercepts pointer events',
+    '  - retrying click action',
+    '    - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1

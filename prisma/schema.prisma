@@ -630,6 +630,7 @@ model ProtocolRun {
   experiment                Experiment       @relation(fields: [experimentId], references: [id], onDelete: Cascade)
   parametersJson            Json             @default("{}")
   calculatedConsumptionJson Json             @default("[]")
+  executionPlanJson         Json             @default("{}")
   status                    ExperimentStatus @default(planned)
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt

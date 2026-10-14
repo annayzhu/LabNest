@@ -1,0 +1,21 @@
+PASS A01 A02 all-system and selected preview retain source and existing Run selection
+PASS B01 B03 actual experiment creation captures four stable operations and blocks unconfirmed dependent work
+PASS E01 mobile/tablet reflow and D02 calculator return preserve unsaved actual values and notes
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Error: strict mode violation: getByText(/执行方案已变更，请刷新/) resolved to 2 elements:
+    1) <p role="alert" class="mx-4 mb-4 flex gap-2 rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">…</p> aka getByText('执行方案已变更，请刷新 / Execution plan').first()
+    2) <p role="alert" class="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">执行方案已变更，请刷新 / Execution plan changed</p> aka getByRole('alert').filter({ hasText: '执行方案已变更，请刷新 / Execution plan' })
+
+Call log:
+[2m  - waiting for getByText(/执行方案已变更，请刷新/) to be visible[22m
+
+    at /Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:79:40
+    at async check (/Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:21:75)
+    at async file:///Users/annayzhu/Documents/Playground/LabNest/scripts/verify-structured-protocol-browser.mjs:74:1 {
+  log: [ '  - waiting for getByText(/执行方案已变更，请刷新/) to be visible' ]
+}
+
+Node.js v22.23.1

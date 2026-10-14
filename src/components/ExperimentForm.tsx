@@ -5,6 +5,7 @@ import { ProtocolExecutionPreview } from "./ProtocolExecutionPreview";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { experimentMethodNames } from "@/lib/experiment-provenance";
+import { structuredRunView } from '@/lib/structured-run';
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
@@ -37,7 +38,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   initial: {
     id?: string; updatedAt?: Date | string; researchPlanId?: string; runCode?: string | null; suggestedCodeSuffix?: string; title?: string; date?: string; status?: string; recordStatus?: string;
     purpose?: string | null; tags?: string[]; methodMode?: "protocol" | "custom";
-    executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
+    executionPlan?: unknown; executionParameters?: unknown; protocolSnapshotJson?: unknown; selectedProtocolVersionIds?: string[]; steps?: StepOption[]; document: ScientificDocument;
   };
 }) {
   const [creationKey]=useState(()=>newClientMutationId());
@@ -61,6 +62,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
   const protocolMethodSummary = initial.id ? experimentMethodNames(initial.protocolSnapshotJson).join('；') : selectedIds.map(id=>{const version=protocolVersions.find(v=>v.id===id);return version ? `${version.protocol.title} · ${version.displayVersion}` : '规程未记录';}).join('；') || '未选择规程';
   const selectedVersions=selectedIds.map(id=>protocolVersions.find(version=>version.id===id)).filter(version=>!!version);
   const executionUnconfirmed=selectedVersions.some(version=>version.execution?.executionNeedsReview) || (selectedVersions.length>0 && selectedVersions.every(version=>version.execution && !version.execution.steps.length));
+  const structuredExecution = initial.id ? structuredRunView(initial.protocolSnapshotJson, initial.executionPlan, []).hasSystems : selectedVersions.some(version => version.hasSystems);
   const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
 
   return <form inert={pending} aria-busy={pending} action={formAction} onKeyDown={preventImplicitEnterSubmit} className="space-y-5">
@@ -70,7 +72,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
     <input type="hidden" name="methodMode" value={activeMethodMode} />
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout>
-      <div className="document-editor-main">{!initial.id && methodMode==="protocol"?selectedVersions.map(version=>version.execution?<div key={version.id} className="mb-4"><p className="mb-2 text-sm text-muted">{version.protocol.title} · v{version.displayVersion}</p><ProtocolExecutionPreview execution={version.execution} editHref={`/protocols/${version.protocol.id}/versions/${version.id}/edit`}/></div>:null):null}<ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"})),initial.executionParameters,initial.protocolSnapshotJson).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
+      <div className="document-editor-main">{!initial.id && methodMode==="protocol"?selectedVersions.map(version=>version.execution?<div key={version.id} className="mb-4"><p className="mb-2 text-sm text-muted">{version.protocol.title} · v{version.displayVersion}</p><ProtocolExecutionPreview execution={version.execution} editHref={`/protocols/${version.protocol.id}/versions/${version.id}/edit`}/></div>:null):null}<ScientificDocumentEditor initialDocument={initial.document} compact trailingContent={initial.steps?.length ? <section aria-label="Run 执行记录" className="document-section"><h2 className="document-section-title">Run 执行记录</h2>{experimentExecutionDocument(undefined,initial.steps.map(step=>({...step,groupOrder:step.groupOrder??0,groupTitle:step.groupTitle??"步骤"})),initial.executionParameters,initial.protocolSnapshotJson,initial.executionPlan).sections.find(section=>section.key==='execution')?.blocks.map(block=><div key={block.id} className="document-block"><ScientificBlockView block={block}/></div>)}</section>:null} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
         { label: "研究计划", value: plan?.title ?? "未选择" },
         { label: "方法来源", value: activeMethodMode === "protocol" ? protocolMethodSummary : "自行记录" },
       ]} /></div>
@@ -107,7 +109,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2 xl:col-span-4"><span className={formLabelClass}>Objective / purpose · optional</span><input name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="One line: what this planned execution is meant to establish" className={formInputClass} /></label>
-      <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
+      {structuredExecution ? <div className="md:col-span-2"><input type="hidden" name="status" value={initial.id ? initial.status : 'planned'}/><p>Execution status · {initial.id ? initial.status : 'planned'}</p><p className="text-xs text-muted">执行状态由 Run 中的操作管理。</p></div> : <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />}
       <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
       <label className="md:col-span-2 xl:col-span-4"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
     </div></section>

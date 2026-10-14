@@ -1,3 +1,5 @@
+import { structuredRunView } from './structured-run';
+import { resolveProtocolSystem } from './structured-protocol';
 import { runStepContent, runStepIsConfirmation } from "./run-step-content";
 import { scientificContentBlockSchema, type ScientificContentBlock } from "./scientific-document";
 import { executionBlockText } from "./protocol-execution";
@@ -111,9 +113,23 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
   completed: boolean; completedAt?: Date | null; deviationNote?: string | null; deviationType?: string | null;
   deviationImpact?: string | null; deviationAuthor?: string | null;
   evidence?: ScientificDocument['sections'][number]['blocks'];
-}[], parameters?: unknown, snapshot?:unknown): ScientificDocument {
+}[], parameters?: unknown, snapshot?:unknown, executionPlan?:unknown): ScientificDocument {
   const document = normalizeScientificDocument(contentJson, experimentSections);
   const blocks: ScientificDocument['sections'][number]['blocks'] = [];
+  const structured = structuredRunView(snapshot, executionPlan, steps.map(step => ({ ...step, groupKey: step.groupKey ?? 'manual', protocolStepRef: step.protocolStepRef ?? null })));
+  for (const version of structured.versions) {
+    const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
+    const resolution = resolveProtocolSystem(systems, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations);
+    const choice = systems.dimensions.map(d => `${d.label}：${d.options.find(o => o.id === adopted?.selections[d.id])?.label ?? '待选择'}`).join('；');
+    blocks.push({ id: `run-derived:system:${version.id}`, type: 'text', text: `本次执行记录 · 当前实验组 · 源版本 ${version.title} v${version.displayVersion}（${version.id}）\n${choice}\n${adopted ? '采用确认时间：' + adopted.confirmedAt : '尚未确认体系'} · 计划修订 ${structured.plan.revision}` });
+    blocks.push({ id: `run-derived:system-parameters:${version.id}`, type: 'table', rows: [['采用参数', '值', '来源'], ...systems.parameters.map(p => { const value = resolution.parameters[p.id]; return [p.label, value?.status === 'resolved' ? `${value.value} ${value.unit}` : value?.message ?? '待确定', { fixed: '固定值', lookup: '体系查表', actual: '本次填写', calculator: '计算后确认' }[p.source.kind]]; })] });
+    for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) blocks.push({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${systems.parameters.find(p => p.id === id)?.label} · ${receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认 ${receipt.confirmedAt}\n输入：${JSON.stringify(receipt.snapshot.rawInputs)}\n当时计算结果：${receipt.value} ${receipt.unit}\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` });
+  }
+  if (structured.plan.continuation) {
+    const prior = structured.plan.continuation;
+    blocks.push({ id: 'run-derived:continuation', type: 'text', text: `继续执行自 ${prior.experimentId}；继续位置来源：${prior.startSourceRef ?? '旧记录未记载'}。以下为此前处理历史，不属于本次已完成操作。` });
+    for (const [index, step] of prior.history.entries()) blocks.push({ id: `run-derived:history-${index}`, type: 'text', text: [step.title, step.completed ? `此前已完成 ${step.completedAt ?? ''}` : '此前未完成', step.description, ...Object.values(step.actualValues).map(value => `原实际记录：${value.value} ${value.unit} · ${value.recordedAt}`), step.deviationNote ?? ''].filter(Boolean).join('\n') });
+  }
   if(parameters && typeof parameters==='object' && !Array.isArray(parameters)) {
     const rows=Object.entries(parameters).filter(([,value])=>['string','number','boolean'].includes(typeof value)).map(([key,value])=>[key,String(value)]);
     if(rows.length)blocks.push({id:'run-derived:parameters',type:'table',caption:'本次执行参数（实验级记录，不推定属于某一步骤）',rows:[['原记录参数','值'],...rows]});
@@ -136,17 +152,26 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     blocks.push(...(parsed.data.sections.find(section=>section.key==='steps')?.blocks??[]).map(block=>scientific(block,`run-derived:reference:${version.protocolVersionId}:`)));
   }
   for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || a.order-b.order)) {
-    const rich=runStepContent(snapshot,{...step,groupKey:step.groupKey??'manual',protocolStepRef:step.protocolStepRef??null,description:step.description??''},(parameters??{}) as Record<string,string|number|boolean>);
+    let rich=runStepContent(snapshot,{...step,groupKey:step.groupKey??'manual',protocolStepRef:step.protocolStepRef??null,description:step.description??''},(parameters??{}) as Record<string,string|number|boolean>);
+    const adoptedStep = structured.steps[step.id];
+    if (adoptedStep) rich = { ...rich, blocks: adoptedStep.content_blocks ?? [], common: structured.versions.find(v => v.id === adoptedStep.versionId)?.commonBlocks ?? [] };
+    if (adoptedStep?.applicability === 'not-applicable') {
+      blocks.push({ id: `run-derived:inapplicable:${step.id}`, type: 'text', text: `${step.title} · 不适用于本次实验（来源 ${step.protocolStepRef}）` });
+      continue;
+    }
     if (group !== step.groupOrder) {
       group = step.groupOrder;
       if(rich.common.length)blocks.push(...rich.common.map(block=>scientific(block,`run-derived:info:${group}:`)));
       blocks.push({id:`run-derived:group:${group}`,type:'heading',text:step.groupTitle,execution:{role:'group',title:step.groupTitle}});
     }
     const execution = {role:runStepIsConfirmation(snapshot,step)?'confirmation' as const:'step' as const,stepId:step.id,title:step.title,completed:step.completed,...(step.completed&&step.completedAt?{completedAt:step.completedAt.toISOString()}:{})};
-    const title = `${step.completed ? '✓' : '未完成'} ${step.title}`;
+    const skipped = structured.plan.skips[step.id];
+    const title = `${step.completed ? '✓' : skipped ? '已跳过：' + skipped.reason : adoptedStep?.blocked ? '待确定' : '未完成'} ${adoptedStep?.title ?? step.title}`;
     if (step.deviationNote?.trim()) {
       blocks.push({id:`run-derived:${step.id}`,type:'callout',tone:'critical',execution:{...execution,deviationLabel:['abnormal','incident'].includes(step.deviationType ?? '')?'异常':'偏差',deviationNote:step.deviationNote.trim(),impact:step.deviationImpact??undefined,author:step.deviationAuthor??undefined},text:[title,`${['abnormal','incident'].includes(step.deviationType ?? '') ? '异常' : '偏差'}：${step.deviationNote.trim()}`,step.deviationImpact ? `影响评估：${step.deviationImpact}` : null,step.deviationAuthor ? `记录人：${step.deviationAuthor}` : null].filter(Boolean).join('\n')});
     } else blocks.push({id:`run-derived:${step.id}`,type:'text',text:title,execution});
+    const values = Object.entries(structured.plan.actualValues[step.id] ?? {});
+    if (values.length) blocks.push({ id: `run-derived:actual:${step.id}`, type: 'table', caption: '实际记录（不覆盖规定用量）', rows: [['记录项', '实际值', '记录时间'], ...values.map(([id, v]) => [adoptedStep?.actualFields.find(f => f.id === id)?.label ?? id, `${v.value} ${v.unit}`, v.recordedAt])] });
     blocks.push(...rich.blocks.map(block=>scientific(block,`run-derived:${step.id}:body:`)));
     if(!rich.blocks.length && step.description?.trim())blocks.push({id:`run-derived:${step.id}:description`,type:"text",text:step.description});
     blocks.push(...(step.evidence??[]).map((block,index)=>({...block,id:`run-derived:${step.id}:evidence:${index}`})));

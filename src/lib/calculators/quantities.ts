@@ -15,12 +15,34 @@ register('mass-concentration', { 'g/L': 1, 'mg/mL': 1, 'µg/mL': 1e-3, 'ng/mL': 
 register('cell-concentration', { 'cells/mL': 1, 'cells/µL': 1000 });
 register('length', { cm: 1, mm: 0.1, m: 100 });
 register('area', { 'cm²': 1, 'mm²': 0.01, 'm²': 10000 });
-register('time', { s: 1, min: 60, h: 3600, day: 86400 });
+register('time', { ms: 1e-3, s: 1, min: 60, h: 3600, day: 86400 });
+// Bench equipment settings. Each stays in its own dimension: rpm is never ×g.
+register('voltage', { kV: 1000, V: 1, mV: 1e-3 });
+register('current', { A: 1, mA: 1e-3, 'µA': 1e-6 });
+register('pressure', { MPa: 1e6, kPa: 1000, Pa: 1, bar: 1e5, mbar: 100, psi: 6894.757, Torr: 133.322, mmHg: 133.322, atm: 101325 });
+register('capacitance', { F: 1, 'µF': 1e-6, nF: 1e-9 });
+register('resistance', { 'MΩ': 1e6, 'kΩ': 1000, 'Ω': 1 });
+register('acidity', { pH: 1 });
+register('count', { cycles: 1, '次': 1 });
+// Wells, folds and MOI are plain numbers with a meaning; each stays its own dimension.
+register('wells', { '孔': 1 });
+register('fold', { '×': 1 });
+register('moi', { MOI: 1 });
 for (const unit of ['U/mL', 'IU/mL', 'TU/mL', 'PFU/mL', 'TCID50/mL', 'VG/mL', '% w/v', '% v/v', '% w/w', 'rpm', '×g', 'g/mol', 'cells', 'nt', 'bp', '%', 'µL/µg']) register(unit, { [unit]: 1 });
 units.K = { dimension: 'temperature', factor: 1 };
 units['°C'] = { dimension: 'temperature', factor: 1, offset: 273.15 };
 units['°F'] = { dimension: 'temperature', factor: 5 / 9, offset: 273.15 - 32 * 5 / 9 };
-export function normalizeUnit(unit: string) { return unit.replace(/μ/g, 'µ').replace(/^u(?=[LMg])/, 'µ').replace(/\/uL$/, '/µL'); }
+/** Common bench spellings of registered units, including Chinese and keyboard substitutes. */
+export const unitAliases: Record<string, string> = {
+  'µl': 'µL', ul: 'µL', ml: 'mL', nl: 'nL', 'ng/µl': 'ng/µL', 'µg/µl': 'µg/µL', 'mg/ml': 'mg/mL', 'µg/ml': 'µg/mL', 'ng/ml': 'ng/mL', 'cells/ml': 'cells/mL',
+  sec: 's', secs: 's', second: 's', seconds: 's', '秒': 's', mins: 'min', minute: 'min', minutes: 'min', '分钟': 'min', hr: 'h', hrs: 'h', hour: 'h', hours: 'h', '小时': 'h', days: 'day', '天': 'day',
+  wells: '孔', well: '孔', x: '×', X: '×', '倍': '×', fold: '×', moi: 'MOI',
+  '℃': '°C', '° C': '°C', xg: '×g', 'x g': '×g', '× g': '×g', Xg: '×g', 'X g': '×g', RPM: 'rpm', uA: 'µA', uF: 'µF', torr: 'Torr',
+};
+export function normalizeUnit(unit: string) {
+  const spelled = unit.replace(/μ/g, 'µ').replace(/^u(?=[LMgAF]|l$)/, 'µ').replace(/\/uL$/, '/µL');
+  return unitAliases[spelled] ?? unitAliases[spelled.toLowerCase()] ?? spelled;
+}
 export function parseScalar(value: unknown, locale = 'en'): number {
   if (typeof value !== 'number' && typeof value !== 'string') throw new Error('请填写数值 / Enter a number');
   let text = String(value).trim();
@@ -36,6 +58,8 @@ export function convert(value: number, from: string, to: string): number {
   if (!a || !b || a.dimension !== b.dimension || !Number.isFinite(value)) throw new Error('单位不兼容 / Incompatible units');
   const canonical = value * a.factor + (a.offset ?? 0);
   if (a.dimension === 'temperature' && canonical < 0) throw new Error('低于绝对零度 / Below absolute zero');
+  // Same unit: exactly the value, without floating-point rounding through the canonical unit (500 µL stays 500).
+  if (a === b) return value;
   return (canonical - (b.offset ?? 0)) / b.factor;
 }
 export function compatibleUnits(unit: string) {

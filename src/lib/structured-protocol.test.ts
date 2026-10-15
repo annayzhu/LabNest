@@ -113,6 +113,6 @@ it('retains conditional row captions in rich cells and all-system alternatives w
   expect(table.type).toBe('table');
   if (table.type !== 'table') throw new Error('fixture');
   expect(JSON.stringify(table.cellRichContent?.[1][0])).toContain('600 µL');
-  expect(table.rows[1][1]).toContain('50 µL'); expect(table.rows[1][1]).toContain('80 µL');
+  expect(table.rows[1][1]).toBe('▲50 / ■80 µL');
   expect(JSON.stringify(document)).toBe(source);
 });

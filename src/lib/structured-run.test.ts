@@ -36,3 +36,19 @@ it('requires the selected frozen plan and its revision before a dependent operat
   plan.versions.v1.selections.volume = 's';
   expect(() => assertStructuredStepExecutable(structuredRunView(snapshot, plan, [step]), step.id, 1)).toThrow();
 });
+
+it('lets a step with only fixed values run without a system choice, while a per-system value waits for the confirmed choice', () => {
+  const source = createEmptyProtocolDocument();
+  source.systems = { schemaVersion: 1, dimensions: [{ id: 'volume', label: '体积', options: [{ id: 's', label: '350 µL' }, { id: 'l', label: '600 µL' }] }], presets: [], restrictions: [], rules: [], parameters: [
+    { id: 'wait', label: '', unit: 'min', origin: 'chip', source: { kind: 'fixed', value: 10, unit: 'min' } },
+    { id: 'dose', label: '', unit: 'µL', origin: 'chip', source: { kind: 'lookup', values: [{ id: 's', when: { all: [{ dimensionId: 'volume', optionId: 's' }] }, value: 50, unit: 'µL' }, { id: 'l', when: { all: [{ dimensionId: 'volume', optionId: 'l' }] }, value: 80, unit: 'µL' }] } }] };
+  source.sections.find(s => s.key === 'steps')!.blocks = [
+    { id: 'w', type: 'rich_text', nodes: [{ type: 'paragraph', content: [{ text: '静置 {{wait}}' }] }], execution: { role: 'step', stepId: 'wait-step', format: 'block' } },
+    { id: 'd', type: 'rich_text', nodes: [{ type: 'paragraph', content: [{ text: '加入 {{dose}}' }] }], execution: { role: 'step', stepId: 'dose-step', format: 'block' } }];
+  const view = structuredRunView({ versions: [{ protocolVersionId: 'v1', contentJson: source }] }, {}, [
+    { id: 'run-wait', protocolStepRef: 'v1:wait-step', groupKey: 'v1', completed: false },
+    { id: 'run-dose', protocolStepRef: 'v1:dose-step', groupKey: 'v1', completed: false }]);
+  expect(view.steps['run-wait']).toMatchObject({ title: '静置 10 min', blocked: false });
+  expect(view.steps['run-dose'].blocked).toBe(true);
+  expect(() => assertStructuredStepExecutable(view, 'run-wait', 0)).not.toThrow();
+});

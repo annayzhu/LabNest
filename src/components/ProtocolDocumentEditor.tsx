@@ -2,7 +2,6 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { ProtocolExecutionOrganizer } from "./ProtocolExecutionOrganizer";
-import { ProtocolSystemsEditor } from './ProtocolSystemsEditor';
 import { Download } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorWorkspace, type DocumentEditorWorkspaceTab } from "@/components/DocumentEditorWorkspace";
@@ -16,6 +15,7 @@ import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ProtocolDocument } from "@/lib/protocol-document";
+import { pruneUnusedChips } from "@/lib/protocol-chips";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
 import type { ManualRelevantLink, RelevantCatalogItem } from "@/lib/protocol-relevant-items";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
@@ -77,8 +77,9 @@ export function ProtocolDocumentEditor({
   const [selectedPlanIds, setSelectedPlanIds] = useState(initialResearchPlanIds);
   const [primaryPlanIds, setPrimaryPlanIds] = useState(initialPrimaryResearchPlanIds);
   const [uploadDraftId] = useState(() => `protocol-upload-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`);
-  const serialized = useMemo(() => JSON.stringify(document), [document]);
-  const [systemsOpen, setSystemsOpen] = useState(false);
+  // Chips the author deleted leave unreferenced parameters behind; only what the text still uses is saved.
+  const serialized = useMemo(() => JSON.stringify(pruneUnusedChips(document)), [document]);
+  const usesStepBlocks = document.sections.some(section => section.key === "steps" && section.blocks.some(block => block.execution?.format === "block"));
   const [operationsOpen, setOperationsOpen] = useState(false);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
@@ -86,7 +87,6 @@ export function ProtocolDocumentEditor({
   const docxExportHref = mode === "edit" && protocol.id && version.id
     ? `/api/protocols/${protocol.id}/versions/${version.id}/docx`
     : undefined;
-  const inspectorHostId = "protocol-document-context-inspector";
   const saveLabel = mode === "create" ? "Create Protocol"
     : activeWorkspaceTab === "metadata" ? reviewed ? "Save metadata as new revision" : "Save metadata"
       : activeWorkspaceTab === "relations" ? reviewed ? "Save links as new revision" : "Save links"
@@ -114,7 +114,6 @@ export function ProtocolDocumentEditor({
 
       <DocumentEditorWorkspace
         outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
-        inspectorHostId={inspectorHostId}
         onActiveTabChange={setActiveWorkspaceTab}
         actions={<div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div>}
         toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}
@@ -126,15 +125,15 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          <nav aria-label="规程编写" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
-            <Button type="button" aria-expanded={systemsOpen} aria-controls="protocol-systems" onClick={() => setSystemsOpen(value => !value)}>实验体系与参数</Button>
-            <Button type="button" aria-expanded={operationsOpen} aria-controls="protocol-operations" onClick={() => setOperationsOpen(value => !value)}>步骤整理</Button>
-            <a className="focus-ring inline-flex min-h-11 items-center px-2 text-sm text-moss underline" href="/api/protocols/template/docx?example=systems">多体系模板</a>
-            <span className="text-xs text-muted">{document.systems ? `${document.systems.dimensions.length} 个体系维度` : '普通规程也可直接编写；有用量差异时设置体系。'}</span>
-          </nav>
-          <ProtocolSystemsEditor document={document} onChange={setDocument} open={systemsOpen} onOpenChange={setSystemsOpen}/>
-          <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
-          <ProtocolWysiwygEditor document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
+          {/* Older protocols keep their organized steps until they are rewritten as step blocks. */}
+          {usesStepBlocks ? null : <>
+            <nav aria-label="旧格式步骤" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
+              <Button type="button" aria-expanded={operationsOpen} aria-controls="protocol-operations" onClick={() => setOperationsOpen(value => !value)}>步骤整理</Button>
+              <span className="text-xs text-muted">这份规程的步骤还是旧格式，执行范围在这里确认。</span>
+            </nav>
+            <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
+          </>}
+          <ProtocolWysiwygEditor document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" uploadDraftId={uploadDraftId} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>

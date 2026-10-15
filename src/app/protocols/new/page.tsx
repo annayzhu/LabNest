@@ -30,7 +30,7 @@ export default async function NewProtocolPage() {
         <PageHeader
           eyebrow="Controlled method"
           title="New Protocol"
-          description="Create a complete scientific method using fixed sections, rich text, structured tables, timers and review governance."
+          description="Create a complete scientific method using fixed sections, step blocks, parameter chips, structured tables and review governance."
         />
         <ProtocolDocumentEditor
           action={createProtocolDocument}

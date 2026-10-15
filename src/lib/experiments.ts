@@ -69,7 +69,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     const document=normalizeProtocolDocument(version.contentJson);
     const projection=document?projectProtocolDocument(document):undefined;
     if(!projection || projection.executionNeedsReview)throw new Error(`${version.protocol.humanCode}: confirm execution ownership in the Protocol editor before creating a new Experiment.`);
-    return [version.id,projection] as const;
+    return [version.id,{...projection,systems:document?.systems}] as const;
   }));
 
   if(input.methodMode==="protocol" && [...contracts.values()].every(contract=>!contract.steps.length))throw new Error("No execution operations are confirmed. Organize the Protocol steps or select a custom freeform Experiment.");
@@ -162,6 +162,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
                 versionTitle: version.title,
                 displayVersion: version.displayVersion,
                 steps: contracts.get(version.id)!.steps,
+                systems: contracts.get(version.id)!.systems,
               }))),
         },
       },

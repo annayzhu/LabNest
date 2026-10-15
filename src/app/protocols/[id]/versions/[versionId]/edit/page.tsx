@@ -79,7 +79,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
         <PageHeader
           identifier={`${version.protocol.humanCode ?? "Protocol"} · v${version.displayVersion}`}
           title={version.reviewStage === "reviewed" ? "Edit Protocol as New Revision" : "Edit Protocol"}
-          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
+          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using step blocks, parameter chips, structured tables, media and callouts."}
         />
         {version.reviewStage === "reviewed" ? (
           <div className="protocol-density-notice flex items-start gap-2.5 border border-sage/45 bg-sage-surface/55 px-3 py-2">

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { normalizeProtocolDocument, type ProtocolDocument } from './protocol-document';
 import { convert } from './calculators/quantities';
 import { resolveProtocolDocument, type ProtocolSelection } from './structured-protocol';
+import { chipParameterIds } from './protocol-chips';
 import type { CalculatorResult } from './calculators/calculator-engine';
 
 const quantity = z.object({ value: z.number().finite(), unit: z.string().min(1) });
@@ -34,9 +35,16 @@ type SourceStep = { id: string; protocolStepRef: string | null; groupKey: string
 type ResolvedStep = ReturnType<typeof resolveProtocolDocument>['steps'][number] & { versionId: string; groupId?: string; groupLabel?: string; timerDurationSeconds?: number };
 export type StructuredRunView = {
   plan: ExecutionPlan; hasSystems: boolean;
-  versions: Array<{ id: string; sourceVersionId: string; groupId?: string; groupLabel?: string; title: string; displayVersion: string; document: ProtocolDocument; commonBlocks: ReturnType<typeof resolveProtocolDocument>['commonBlocks'] }>;
+  versions: Array<{ id: string; sourceVersionId: string; groupId?: string; groupLabel?: string; title: string; displayVersion: string; document: ProtocolDocument; commonBlocks: ReturnType<typeof resolveProtocolDocument>['commonBlocks']; parameters: ReturnType<typeof resolveProtocolDocument>['parameters'] }>;
   steps: Record<string, ResolvedStep>;
 };
+
+/** Fixed values are part of the frozen source; per-system, measured and calculated values need the confirmed plan. */
+function dependsOnAdoptedValue(document: ProtocolDocument, stepId: string) {
+  const ids = new Set<string>();
+  JSON.stringify(document.sections.flatMap(s => s.blocks).filter(b => b.execution?.stepId === stepId)).replace(/\{\{([\w-]+)\}\}/g, (_, id: string) => { chipParameterIds(id, document.systems).forEach(p => ids.add(p)); return ''; });
+  return [...ids].some(id => document.systems?.parameters.find(p => p.id === id)?.source.kind !== 'fixed');
+}
 
 export function structuredRunView(snapshot: unknown, planValue: unknown, steps: SourceStep[]): StructuredRunView {
   const plan = parseExecutionPlan(planValue);
@@ -56,7 +64,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
       const adopted = plan.versions[id];
       const resolved = resolveProtocolDocument(document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations ?? {});
       groupResolutions[scope.id] = resolved;
-      view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks });
+      view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks, parameters: resolved.parameters });
       for (const step of steps.filter(s => s.groupKey === version.protocolVersionId && (!plan.groups.length || plan.stepGroups[s.id] === scope.id))) {
         const source = resolved.steps.find(s => step.protocolStepRef === `${version.protocolVersionId}:${s.source_ref}`);
         if (!source) throw new Error('执行快照缺少已保存步骤 / Captured operation is missing');
@@ -64,7 +72,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
         const timerId = rules.find(r => r.timerParameterId)?.timerParameterId;
         const timer = timerId ? resolved.parameters[timerId] : undefined;
         const timerDurationSeconds = timer?.status === 'resolved' ? Math.round(convert(timer.value!, timer.unit, 's')) : undefined;
-        const dependsOnChoice = rules.some(r => [r.when.all, r.when.any, r.when.not].some(p => p?.length)) || JSON.stringify(document.sections.flatMap(s => s.blocks).filter(b => b.execution?.stepId === source.source_ref)).includes('{{');
+        const dependsOnChoice = rules.some(r => [r.when.all, r.when.any, r.when.not].some(p => p?.length)) || dependsOnAdoptedValue(document, source.source_ref!);
         view.steps[step.id] = { ...source, versionId: id, groupId: scope.id || undefined, groupLabel: scope.label || undefined, blocked: source.blocked || Boolean(dependsOnChoice && !adopted?.confirmedAt), timerDurationSeconds };
       }
     }

@@ -40,7 +40,9 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  const common=projection?.commonBlocks??[];
  // Parameter interpolation traverses textual content, including table rich cells; IDs and URLs are unchanged.
 
- return {reference,blocks:render(executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery'};
+ // A step block's label is derived from its own body; nothing is a separate title to remove.
+ const derived=(recovered??captured).title_source==='derived';
+ return {reference,blocks:render(derived?blocks:executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery',...(derived?{derivedTitle:true}:{})};
 }
 
 /** Publish only explicit same-origin image resources from this frozen Run. */

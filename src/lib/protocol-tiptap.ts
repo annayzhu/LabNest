@@ -1,4 +1,5 @@
 import { parameterNodesForEditor, persistParameterNodes } from './protocol-parameter-node';
+import type { ProtocolStepSettings } from './protocol-step-node';
 import { distinctDocumentBlockIds } from "./document-block-identity";
 import { paragraphLayout } from "./document-paragraph-layout";
 import type { JSONContent } from "@tiptap/core";
@@ -170,13 +171,40 @@ function blockToTiptap(block: ProtocolContentBlock): JSONContent[] {
   return blockContentToTiptap(block).map(node => ({...node,attrs:{...node.attrs,protocolExecution:block.execution ?? null}}));
 }
 
+function unowned(block: ProtocolContentBlock): ProtocolContentBlock {
+  const copy = { ...block };
+  delete copy.execution;
+  return copy;
+}
+
+/** A step block's wrapper owns execution; its children carry no separate ownership marks. */
+function sectionContentToTiptap(blocks: ProtocolContentBlock[]): JSONContent[] {
+  const content: JSONContent[] = [];
+  for (let index = 0; index < blocks.length;) {
+    const block = blocks[index];
+    if (block.execution?.role !== "step" || block.execution.format !== "block") {
+      content.push(...blockToTiptap(block));
+      index += 1;
+      continue;
+    }
+    const stepId = block.execution.stepId ?? block.id;
+    const owned = [block];
+    for (index += 1; blocks[index]?.execution?.role === "detail" && blocks[index].execution?.stepId === stepId; index += 1) owned.push(blocks[index]);
+    const { title, titlePrefix, requiresConfirmation, allowsDeviation } = block.execution;
+    const settings: ProtocolStepSettings = Object.fromEntries(Object.entries({ title, titlePrefix, requiresConfirmation, allowsDeviation }).filter(([, value]) => value !== undefined));
+    content.push({ type: "protocolStep", attrs: { stepId, settings: Object.keys(settings).length ? settings : null }, content: owned.flatMap(block =>
+      blockContentToTiptap(unowned(block)).map(node => ({ ...node, attrs: { ...node.attrs, protocolExecution: null } }))) });
+  }
+  return content;
+}
+
 export function protocolDocumentToTiptap(document: ProtocolDocument): JSONContent {
   return parameterNodesForEditor({
     type: "doc",
     attrs:{executionConfirmed:document.executionConfirmed, systems:document.systems},
     content: protocolSectionKeys.map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
-      const rawContent = section?.blocks.flatMap(blockToTiptap) ?? [];
+      const rawContent = section ? sectionContentToTiptap(section.blocks) : [];
       const firstBlock = section?.blocks[0];
       // The original empty template placeholder has a stable id. Remove only
       // that placeholder once real content follows; intentional blank content
@@ -319,11 +347,24 @@ function hasExplicitFormatting(nodes:ProtocolRichTextNode[]):boolean {
  return nodes.some(node=>Boolean(node.childContent?.length) || Object.entries(node).some(([key,value])=>!["type","content"].includes(key)&&value!==undefined) || node.content.some(run=>Object.entries(run).some(([key,value])=>key!=="text"&&value!==undefined)));
 }
 
-function sectionBlocks(section: JSONContent): ProtocolContentBlock[] {
+function sectionBlocks(section: JSONContent, stepSection = false): ProtocolContentBlock[] {
   const blocks: ProtocolContentBlock[] = [];
   const content = section.content ?? [];
   for (let index = 0; index < content.length;) {
     const node = content[index];
+    if (node.type === "protocolStep") {
+      // Only the Steps section executes; a step pasted elsewhere keeps its content as ordinary blocks.
+      const children = sectionBlocks(node).map(unowned);
+      if (!stepSection) blocks.push(...children);
+      else {
+        const stepId = typeof node.attrs?.stepId === "string" && node.attrs.stepId ? node.attrs.stepId : newBlockId("step");
+        const owned: ProtocolContentBlock[] = children.length ? children : [{ id: newBlockId("rich"), type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }] }];
+        const settings = (node.attrs?.settings ?? {}) as ProtocolStepSettings;
+        blocks.push(...owned.map((block, order) => ({ ...block, execution: order ? { role: "detail" as const, stepId } : { ...settings, role: "step" as const, stepId, format: "block" as const } })));
+      }
+      index += 1;
+      continue;
+    }
     if (node.type === "protocolWidget" || node.type === "documentMedia") {
       const block = safeWidgetBlock(node);
       if (block) blocks.push(block);
@@ -400,11 +441,15 @@ export function tiptapToProtocolDocument(json: JSONContent, importWarnings: stri
   for (const node of json.content ?? []) {
     if (node.type !== "protocolSection") continue;
     const key = node.attrs?.sectionKey;
-    if (protocolSectionKeys.includes(key)) sections.set(key, sectionBlocks(node));
+    if (protocolSectionKeys.includes(key)) sections.set(key, sectionBlocks(node, key === "steps"));
   }
+  // Step blocks are the explicit operations; other Steps-section content is reference, not a guessed step.
+  const stepsContent = sections.get("steps") ?? [];
+  const blockMode = stepsContent.some(block => block.execution?.format === "block");
+  if (blockMode) sections.set("steps", stepsContent.map(block => block.execution ? block : { ...block, execution: { role: "info" as const } }));
   return {
     ...empty,
-    executionConfirmed,
+    executionConfirmed: blockMode || executionConfirmed,
     ...(systems ? {systems} : {}),
     importWarnings,
     sections: empty.sections.map((section) => ({ ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: sections.get(section.key) ?? [] })),

@@ -1,4 +1,5 @@
 import { allSystemProtocolExportDocument } from './structured-protocol';
+import { programSummary } from "./protocol-program";
 import { createHash } from "node:crypto";
 import { persistedTableFromTiptap } from "./tiptap-table-serialization";
 import type { JSONContent } from "@tiptap/core";
@@ -197,6 +198,7 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, m
     ? paragraph(media.image(block)) + (block.caption ? paragraph(run(block.caption, { italic: true, size: block.captionFontSizePt ? block.captionFontSizePt * 2 : undefined })) : "")
     : paragraph(run(`${block.filename || block.caption || block.mediaType} — 附件，请从随附附件包打开 / Open from the accompanying attachment package.`));
   if (block.type === "embedded_tool") return paragraph(run(`${block.label}: ${block.url}`));
+  if (block.type === "program") return paragraph(run(programSummary(block)));
   return paragraph(run(`${block.label} · ${block.durationMinutes} min${block.notes ? ` · ${block.notes}` : ""}`, { bold: true }));
 }
 

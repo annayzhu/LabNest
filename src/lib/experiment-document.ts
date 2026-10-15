@@ -1,4 +1,5 @@
 import { structuredRunView } from './structured-run';
+import { calculationInputSummary, protocolCalculations } from './protocol-calculations';
 import { resolveProtocolSystem } from './structured-protocol';
 import { runStepContent, runStepIsConfirmation } from "./run-step-content";
 import { scientificContentBlockSchema, type ScientificContentBlock } from "./scientific-document";
@@ -123,7 +124,11 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     const choice = systems.dimensions.map(d => `${d.label}：${d.options.find(o => o.id === adopted?.selections[d.id])?.label ?? '待选择'}`).join('；');
     blocks.push({ id: `run-derived:system:${version.id}`, type: 'text', text: `本次执行记录 · ${version.groupLabel ?? '当前实验组'} · 源版本 ${version.title} v${version.displayVersion}（${version.id}）\n${choice}\n${adopted ? '采用确认时间：' + adopted.confirmedAt : '尚未确认体系'} · 计划修订 ${structured.plan.revision}` });
     blocks.push({ id: `run-derived:system-parameters:${version.id}`, type: 'table', rows: [['采用参数', '值', '来源'], ...systems.parameters.map(p => { const value = resolution.parameters[p.id]; return [p.label, value?.status === 'resolved' ? `${value.value} ${value.unit}` : value?.message ?? '待确定', { fixed: '固定值', lookup: '体系查表', actual: '本次填写', calculator: '计算后确认' }[p.source.kind]]; })] });
-    for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) blocks.push({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${systems.parameters.find(p => p.id === id)?.label} · ${receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认 ${receipt.confirmedAt}\n输入：${JSON.stringify(receipt.snapshot.rawInputs)}\n当时计算结果：${receipt.value} ${receipt.unit}\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` });
+    for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) {
+      const parameter = systems.parameters.find(p => p.id === id), calculatorId = parameter?.source.kind === 'calculator' ? parameter.source.calculatorId : undefined;
+      const used = calculatorId ? calculationInputSummary(calculatorId, receipt.snapshot.rawInputs ?? {}) : JSON.stringify(receipt.snapshot.rawInputs);
+      blocks.push({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${parameter?.label} · ${calculatorId ? protocolCalculations[calculatorId].label : receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认 ${receipt.confirmedAt}\n输入：${used}\n当时计算结果：${receipt.value} ${receipt.unit}\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` });
+    }
   }
   if (structured.plan.continuation) {
     const prior = structured.plan.continuation;

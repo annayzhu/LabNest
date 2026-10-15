@@ -64,3 +64,11 @@ describe("experiment planning", () => {
     ]);
   });
 });
+
+it("stores readable step labels for parameter chips instead of internal references", () => {
+  const systems = { schemaVersion: 1 as const, dimensions: [{ id: "volume", label: "体积", options: [{ id: "s", label: "350 µL" }, { id: "l", label: "600 µL" }] }], presets: [], restrictions: [], rules: [], parameters: [
+    { id: "dose", label: "", unit: "µL", source: { kind: "lookup" as const, values: [{ id: "s", when: { all: [{ dimensionId: "volume", optionId: "s" }] }, value: 50, unit: "µL" }, { id: "l", when: { all: [{ dimensionId: "volume", optionId: "l" }] }, value: 80, unit: "µL" }] } }] };
+  const [step] = buildProtocolExperimentSteps([{ versionId: "v1", humanCode: "PRT-001", protocolTitle: "Synthetic", versionTitle: "Synthetic", displayVersion: "1.0", systems,
+    steps: [{ source_ref: "add", order: 1, title: "加入 {{dose}}", title_source: "derived", description: "加入 {{dose}}，混匀。" }] }]);
+  expect([step.title, step.description]).toEqual(["加入 ▲50 / ■80 µL", "加入 ▲50 / ■80 µL，混匀。"]);
+});

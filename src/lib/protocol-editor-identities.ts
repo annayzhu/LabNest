@@ -7,7 +7,11 @@ import { newClientMutationId } from './client-mutation-id';
 export const ProtocolEditorIdentities = Extension.create({
   name: 'protocolEditorIdentities',
   addGlobalAttributes() {
-    return [{ types: ['tableRow'], attributes: { protocolRowId: { default: null, parseHTML: element => element.getAttribute('data-protocol-row-id'), renderHTML: attrs => attrs.protocolRowId ? { 'data-protocol-row-id': attrs.protocolRowId } : {} } } }];
+    return [
+      { types: ['tableRow'], attributes: { protocolRowId: { default: null, parseHTML: element => element.getAttribute('data-protocol-row-id'), renderHTML: attrs => attrs.protocolRowId ? { 'data-protocol-row-id': attrs.protocolRowId } : {} } } },
+      // "dimensionId:optionId" on a header cell: the recipe column belongs to that system option.
+      { types: ['tableHeader', 'tableCell'], attributes: { protocolColumn: { default: null, parseHTML: element => element.getAttribute('data-protocol-column'), renderHTML: attrs => attrs.protocolColumn ? { 'data-protocol-column': attrs.protocolColumn } : {} } } },
+    ];
   },
   onCreate() { this.editor.view.dispatch(this.editor.state.tr.setMeta('protocolIdentityInit', true)); },
   addProseMirrorPlugins() {
@@ -16,10 +20,11 @@ export const ProtocolEditorIdentities = Extension.create({
       const tr = state.tr;
       const rows = new Set<string>();
       const media = new Set<string>();
+      const steps = new Set<string>();
       const mapping = new Mapping(transactions.flatMap(t => t.mapping.maps));
       const originals = new Map<string, number>();
       oldState.doc.descendants((node, position) => {
-        const key = node.type.name === 'tableRow' ? node.attrs.protocolRowId : node.type.name === 'documentMedia' ? node.attrs.block?.id : undefined;
+        const key = node.type.name === 'tableRow' ? node.attrs.protocolRowId : node.type.name === 'documentMedia' ? node.attrs.block?.id : node.type.name === 'protocolStep' ? node.attrs.stepId : undefined;
         if (!key) return;
         const mapped = mapping.mapResult(position);
         if (!mapped.deleted && !originals.has(key)) originals.set(key, mapped.pos);
@@ -37,7 +42,12 @@ export const ProtocolEditorIdentities = Extension.create({
             const id = `media-${newClientMutationId()}`;
             tr.setNodeMarkup(pos, undefined, { ...node.attrs, block: { ...block, id, ...(block.execution ? { execution: { role: 'info' } } : {}) } }); media.add(id);
           } else media.add(block.id);
-        } else if (parent?.type.name === 'protocolSection' && 'protocolBlockId' in node.attrs && !node.attrs.protocolBlockId) {
+        } else if (node.type.name === 'protocolStep') {
+          // A split or copied step gets a new identity; a moved step keeps its own.
+          const id = node.attrs.stepId as string | null;
+          if (!id || originals.has(id) && originals.get(id) !== pos || steps.has(id)) { const next = `step-${newClientMutationId()}`; tr.setNodeMarkup(pos, undefined, { ...node.attrs, stepId: next }); steps.add(next); }
+          else steps.add(id);
+        } else if ((parent?.type.name === 'protocolSection' || parent?.type.name === 'protocolStep') && 'protocolBlockId' in node.attrs && !node.attrs.protocolBlockId) {
           tr.setNodeMarkup(pos, undefined, { ...node.attrs, protocolBlockId: `block-${newClientMutationId()}` });
         }
       });

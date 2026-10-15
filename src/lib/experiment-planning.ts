@@ -1,4 +1,6 @@
 import type { ProtocolStep } from "./types";
+import { renderChipTokens } from "./protocol-chips";
+import type { ProtocolSystems } from "./protocol-systems-schema";
 
 export type ExperimentMethodMode = "protocol" | "custom";
 
@@ -9,6 +11,8 @@ export type ProtocolStepSnapshotSource = {
   versionTitle: string;
   displayVersion: string;
   steps: ProtocolStep[];
+  /** Present for structured Protocols: stored labels show readable chip values, never references. */
+  systems?: ProtocolSystems;
 };
 
 export type ExperimentStepSnapshotDraft = {
@@ -108,8 +112,8 @@ export function buildProtocolExperimentSteps(sources: ProtocolStepSnapshotSource
     groupTitle: buildExperimentStepGroupTitle(source),
     groupOrder,
     order: step.order ?? index + 1,
-    title: step.title || `Step ${index + 1}`,
-    description: step.description ?? "",
+    title: source.systems ? renderChipTokens(step.title || `Step ${index + 1}`, source.systems) : step.title || `Step ${index + 1}`,
+    description: source.systems ? renderChipTokens(step.description ?? "", source.systems) : step.description ?? "",
     requiresConfirmation: step.requires_confirmation ?? true,
     allowsDeviation: step.allows_deviation ?? true,
   })));

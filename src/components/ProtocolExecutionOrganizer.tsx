@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ProtocolContentBlockView } from './ProtocolDocumentView';
+import { ChipRenderContext } from './protocol/ChipText';
 import { formInputClass } from './forms';
 import { projectProtocolDocument, type ProtocolDocument } from '@/lib/protocol-document';
 import { confirmExecutionRoles, proposeExecutionRoles, executionBlockText } from '@/lib/protocol-execution';
@@ -25,7 +26,7 @@ export function ProtocolExecutionOrganizer({document,onChange,open,onOpenChange}
             save(blocks.map(candidate=>candidate.id===block.id?{...candidate,execution}:candidate));
           }}><option value="step">独立执行步骤</option><option value="info">说明／参考（不计步）</option>{prior.map(candidate=><option key={candidate.id} value={candidate.execution?.stepId??candidate.id}>归入：{candidate.execution?.title||'Step'}</option>)}</select></label>
           {role.role==='step'?<label className="min-w-0 flex-1 text-xs">短标题（空白时使用 Step 编号）<input aria-label={`第 ${index+1} 块的步骤标题`} className={formInputClass} value={role.title??''} onChange={event=>save(blocks.map(candidate=>candidate.id===block.id?{...candidate,execution:{...role,title:event.target.value}}:candidate))}/></label>:null}</div>
-          <div className="min-w-0 overflow-hidden text-sm"><ProtocolContentBlockView block={block} executionContext/></div>
+          <div className="min-w-0 overflow-hidden text-sm"><ChipRenderContext.Provider value={{systems:document.systems}}><ProtocolContentBlockView block={block} executionContext/></ChipRenderContext.Provider></div>
         </li>;
       })}</ol>
       <button type="button" className="focus-ring mt-3 min-h-11 rounded-[var(--ln-radius-control-md)] bg-moss px-3 text-sm text-white" onClick={()=>{onChange(confirmExecutionRoles(document,blocks));setOrganizing(false);}}>确认以上划分</button>

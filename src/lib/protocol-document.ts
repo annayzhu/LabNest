@@ -1,7 +1,9 @@
 import { projectProtocolExecution } from "./protocol-execution";
 import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
-import { protocolSystemsSchema } from './protocol-systems-schema';
+import { protocolPredicateSchema, protocolSystemsSchema } from './protocol-systems-schema';
+import { renderChipTokens } from "./protocol-chips";
+import { programSummary } from "./protocol-program";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
   ConsumptionRule,
@@ -46,6 +48,8 @@ export const protocolSectionLabels: Record<ProtocolSectionKey, string> = {
 export const protocolExecutionRoleSchema = z.object({
   role: z.enum(["step", "detail", "info"]),
   stepId: z.string().min(1).optional(),
+  /** A step block owns its whole body; its short label is derived, never stripped from the body. */
+  format: z.literal("block").optional(),
   title: z.string().optional(),
   titlePrefix: z.string().optional(),
   requiresConfirmation: z.boolean().optional(),
@@ -111,11 +115,23 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
     rowIds: z.array(z.string().min(1)).optional(),
+    /** A recipe column that belongs to one system option, e.g. the "12 孔板" amounts. */
+    columnConditions: z.array(protocolPredicateSchema.nullable()).optional(),
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
     cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
     cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
     cellRichContent: z.array(z.array(tiptapCellRichContentSchema.nullable())).optional(),
     resultTemplate: resultTemplateInputSchema.optional(),
+  }),
+  baseBlockSchema.extend({
+    // Thermocycler program: stages of cycled temperature steps; `seconds: null` holds until stopped.
+    type: z.literal("program"),
+    label: z.string(),
+    stages: z.array(z.object({
+      id: z.string().min(1),
+      cycles: z.number().int().positive(),
+      steps: z.array(z.object({ id: z.string().min(1), label: z.string().optional(), temperatureC: z.number().finite(), seconds: z.number().finite().nonnegative().nullable() })).min(1),
+    })).min(1),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),
@@ -188,7 +204,8 @@ export function createProtocolTemplateDocument(): ProtocolDocument {
     section(key).blocks.push({ id: `${key}-rich-1`, type: "rich_text", nodes: richTextFromPlainText("") });
   }
   section("material").blocks.push({ id: "material-table-1", type: "table", caption: "Materials", rows: [["Name", "Unit", "Role", "Notes"], ["", "", "", ""]] });
-  section("steps").blocks.push({ id: "steps-rich-1", type: "rich_text", nodes: [{ type: "numbered", content: [{ text: "" }] }] });
+  // New Protocols start with one step block: Enter makes the next step.
+  section("steps").blocks.push({ id: "steps-step-1", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }], execution: { role: "step", stepId: "step-1", format: "block" } });
   const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", instructions: richTextFromPlainText(""), fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
   section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   section("consumption_rules").blocks.push({ id: "consumption-table-1", type: "table", caption: "Consumption rules", rows: [["Material", "Formula", "Unit"], ["", "", ""]] });
@@ -314,6 +331,7 @@ export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectio
       if (block.type === "table") return block.rows.flat();
       if (block.type === "media") return [block.caption ?? block.url];
       if (block.type === "embedded_tool") return [block.label || block.url];
+      if (block.type === "program") return [programSummary(block)];
       return [`${block.label}: ${block.durationMinutes} min`, block.notes ?? ""];
     })
     .filter(Boolean)
@@ -527,10 +545,12 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     })
     .filter((item) => item.material_name && item.formula);
 
+  // Plain fields feed search and lists: chips read as their values, never as references.
+  const readable = (key: ProtocolSectionKey) => renderChipTokens(sectionPlainText(document, key), document.systems);
   return {
-    description: sectionPlainText(document, "description"),
-    purpose: sectionPlainText(document, "purpose"),
-    background: sectionPlainText(document, "background"),
+    description: readable("description"),
+    purpose: readable("purpose"),
+    background: readable("background"),
     materials,
     equipment,
     steps,

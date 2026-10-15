@@ -50,6 +50,8 @@ export type ProtocolStep = {
   content_blocks?: import("./protocol-document").ProtocolContentBlock[];
   order: number;
   title: string;
+  /** "derived": a step block's short label for lists; the step body is shown instead of a heading. */
+  title_source?: "derived";
   description: string;
   requires_confirmation?: boolean;
   allows_deviation?: boolean;

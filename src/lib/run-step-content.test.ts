@@ -72,3 +72,12 @@ it('keeps numbered item details in its existing Run step',()=>{
  const doc=protocolDocumentSchema.parse({schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{id:'numbered',type:'rich_text',nodes:[{type:'numbered',content:[{text:'Prepare'}],childContent:[{type:'paragraph',content:[{type:'text',text:'Critical dose 5 µL'}]}]}]}]}]});
  const projection=projectLegacyProtocolExecution(doc);expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('numbered:0');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Critical dose 5 µL');
 });
+
+it('shows a one-sentence step block in full when the Protocol has no systems', async () => {
+ const {projectProtocolDocument}=await import('./protocol-document');
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'spin',type:'rich_text',nodes:[{type:'paragraph',content:[{text:'离心'}]}],execution:{role:'step',stepId:'spin-step',format:'block'}}];
+ const steps=projectProtocolDocument(doc).steps;
+ const [run]=buildProtocolExperimentSteps([{versionId:'v1',humanCode:'PRT-001',versionTitle:'Synthetic',displayVersion:'1.0',protocolTitle:'Synthetic',steps}]);
+ expect(run.title).toBe('离心');
+ expect(JSON.stringify(runStepContent({versions:[{protocolVersionId:'v1',stepsJson:steps,contentJson:doc}]},run).blocks)).toContain('离心');
+});

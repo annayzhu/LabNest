@@ -9,9 +9,11 @@ import { resolveProtocolSystem, resolveProtocolDocument } from '@/lib/structured
 import Link from 'next/link';
 import type { StructuredRunView } from '@/lib/structured-run';
 import { ProtocolSystemChoice } from './ProtocolSystemLabels';
+import { calculationGroups } from '@/lib/protocol-calculations';
 import { formInputClass } from './forms';
 import { Button } from './ui/Button';
 import { ProtocolCalculationPreview } from './ProtocolCalculationPreview';
+import { parameterDisplayName, protocolChipText, toolSpecs } from '@/lib/protocol-chips';
 
 function VersionSelection({ experimentId, version, view, editable }: { experimentId: string; version: StructuredRunView['versions'][number]; view: StructuredRunView; editable: boolean }) {
   const systems = version.document.systems!;
@@ -26,6 +28,12 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
   const proposed = resolveProtocolDocument(version.document, selections, actualInputs, adopted?.calculations);
   const prior = resolveProtocolDocument(version.document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations);
   const changes = proposed.steps.filter(step => JSON.stringify(step) !== JSON.stringify(prior.steps.find(s => s.source_ref === step.source_ref)));
+  // Chips are often nameless: name them by material, tool field or what they measure.
+  const nameOf = (parameter: typeof systems.parameters[number]) => {
+    const tool = parameter.ownerToolId ? systems.tools?.find(t => t.id === parameter.ownerToolId) : undefined;
+    const field = tool?.fields.find(f => f.parameterId === parameter.id);
+    return tool ? `${tool.method?.trim() || toolSpecs[tool.kind].label} · ${toolSpecs[tool.kind].fields.find(f => f.key === field?.key)?.label ?? parameterDisplayName(parameter)}` : parameterDisplayName(parameter);
+  };
   return <details className="protocol-system-section" open={expanded || dirty || Boolean(state.error)} onToggle={event => setExpanded(event.currentTarget.open)}>
     <summary className="min-h-11 cursor-pointer font-medium">{version.groupLabel ?? version.title} · {adopted ? '已确认 · 查看／修改体系' : '待确认体系'}{adopted ? <span className="ml-2 text-sm font-normal text-muted">{systems.dimensions.map(d => d.options.find(o => o.id === adopted.selections[d.id])?.label ?? '待选择').join(' · ')}</span> : null}</summary>
     <form action={action} className="protocol-system-section" data-run-system-selection>
@@ -36,10 +44,10 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
     <fieldset disabled={!editable || pending} className="protocol-system-section">
       {systems.presets.length ? <div className="flex flex-wrap gap-2">{systems.presets.map(p => <Button className="min-h-11 whitespace-normal md:min-h-0" type="button" key={p.id} size="sm" onClick={() => setSelections({ ...p.selections })}>{p.label}</Button>)}</div> : null}
       <div className="protocol-system-fields">{systems.dimensions.map(d => <label key={d.id}>{d.label}<select className={formInputClass} value={selections[d.id] ?? ''} onChange={event => { const next = { ...selections }; if (event.target.value) next[d.id] = event.target.value; else delete next[d.id]; setSelections(next); }}><option value="">待选择</option>{d.options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>)}</div>
-      {systems.parameters.filter(p => p.source.kind === 'actual').map(p => <label key={p.id}>{p.label} · {p.unit}<input aria-label={p.label} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
+      {systems.parameters.filter(p => p.source.kind === 'actual').map(p => <label key={p.id}>{nameOf(p)} · {p.unit}<input aria-label={nameOf(p)} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
       <div className="protocol-system-legend">{Object.entries(selections).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={dimensionId} systems={systems} dimensionId={dimensionId} optionId={optionId}/>)}</div>
-      {systems.parameters.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th>参数</th><th>采用值</th><th>来源</th></tr></thead><tbody>{systems.parameters.map(p => <tr key={p.id}><td>{p.label}</td><td>{resolution.parameters[p.id]?.status === 'resolved' ? `${resolution.parameters[p.id].value} ${p.unit}` : resolution.parameters[p.id]?.message ?? '待填写'}</td><td>{{ fixed: '固定值', lookup: '条件查表', actual: '本次实际填写', calculator: '计算后确认' }[p.source.kind]}</td></tr>)}</tbody></table></div> : null}
-      {systems.parameters.filter(p => p.source.kind === 'calculator').map(p => <ProtocolCalculationPreview key={p.id} parameter={p} resolution={resolution} receipt={adopted?.calculations[p.id]} disabled={!editable || pending}/>)}
+      {systems.parameters.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th>参数</th><th>采用值</th><th>来源</th></tr></thead><tbody>{systems.parameters.map(p => <tr key={p.id}><td>{nameOf(p)}</td><td>{resolution.parameters[p.id]?.status === 'resolved' ? protocolChipText(p.id, systems, resolution.parameters) : resolution.parameters[p.id]?.message ?? '待填写'}</td><td>{{ fixed: '固定值', lookup: '条件查表', actual: '本次实际填写', calculator: '计算后确认' }[p.source.kind]}</td></tr>)}</tbody></table></div> : null}
+      {calculationGroups(systems.parameters).map(group => <ProtocolCalculationPreview key={group.results[0].id} group={group} resolution={resolution} receipts={adopted?.calculations ?? {}} disabled={!editable || pending}/>)}
       {dirty && adopted ? <p className="text-warning" role="status">选择已修改，以上是变更预览，尚未应用。影响已有执行记录时将拒绝覆盖。</p> : null}
       {dirty && adopted ? <ul aria-label="变更影响">{changes.map(s => <li key={s.source_ref}>{s.title} · {s.applicability === 'not-applicable' ? '改为不适用' : s.blocked ? '参数待确定' : '采用新参数／适用状态'}</li>)}</ul> : null}
       {resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).length ? <ul className="text-error">{resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).map((i, index) => <li key={index}>{i.message}</li>)}</ul> : null}

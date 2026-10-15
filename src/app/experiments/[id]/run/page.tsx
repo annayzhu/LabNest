@@ -85,7 +85,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
     frozenReferences[step.groupKey] ??= reference;
     const resolved = structured.steps[step.id];
-    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, groupTitle: resolved.groupLabel ? `${resolved.groupLabel} · ${step.groupTitle}` : step.groupTitle, description: resolved.description, richContent: { ...richContent, blocks: resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === resolved.versionId)?.commonBlocks ?? [] } } : {...step,richContent};
+    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, groupTitle: resolved.groupLabel ? `${resolved.groupLabel} · ${step.groupTitle}` : step.groupTitle, description: resolved.description, richContent: { ...richContent, blocks: resolved.source_blocks ?? resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === resolved.versionId)?.commonBlocks ?? [], ...(resolved.title_source === 'derived' ? { derivedTitle: true } : {}), chipVersion: resolved.versionId } } : {...step,richContent};
   }).filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
   for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown;protocolTitle?:string;displayVersion?:string}[]}).versions??[]) {
     frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
@@ -143,6 +143,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           frozenReferences={frozenReferences}
           frozenReferenceTitles={frozenReferenceTitles}
           protocolBased={(experiment.protocolSnapshotJson as {methodMode?:string}).methodMode==="protocol"}
+          // The reference panel reads each captured Protocol across all systems; a step reads its group's adopted values.
+          chipContexts={Object.fromEntries([...structured.versions.map(version => [version.sourceVersionId, { systems: version.document.systems }] as const), ...structured.versions.map(version => [version.id, { systems: version.document.systems, resolution: version.parameters }] as const)])}
           editable={editable}
           evidenceByStep={evidenceByStep}
         />

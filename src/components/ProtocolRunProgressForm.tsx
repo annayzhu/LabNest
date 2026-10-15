@@ -17,13 +17,16 @@ import { StepCalculator } from "@/components/calculators/StepCalculator";
 import { StepTimerControls } from "@/components/StepTimerControls";
 import type { StructuredRunView } from '@/lib/structured-run';
 import { StructuredStepRecord } from './StructuredStepRecord';
+import { ChipRenderContext, type ChipRender } from './protocol/ChipText';
+import './protocol/protocol.css';
 import { experimentStepGroupHeading } from "@/lib/experiment-planning";
 import { useQueuedRunRecords } from "./useQueuedRunRecords";
 import { enqueueMobileMutation, runQueueContext } from "@/lib/mobile-mutation-queue";
 
 type RunStep = {
   protocolStepRef?: string | null;
-  richContent?: Omit<ReturnType<typeof import("@/lib/run-step-content").runStepContent>, "reference">;
+  /** `chipVersion` names the resolved version whose adopted values its chips show. */
+  richContent?: Omit<ReturnType<typeof import("@/lib/run-step-content").runStepContent>, "reference"> & { chipVersion?: string; derivedTitle?: boolean };
   id: string;
   groupKey: string;
   groupTitle: string;
@@ -49,8 +52,9 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {} }: {
   structured?: Pick<StructuredRunView, 'steps' | 'plan'>;
+  chipContexts?: Record<string, ChipRender>;
   experimentId: string;
   status: string;
   steps: RunStep[];
@@ -223,9 +227,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       {selectedStep ? (
         <div className="p-4">
           {groups.length>1 ? <p className="text-xs text-muted">{experimentStepGroupHeading(selectedStep.groupTitle).title}</p> : null}
-          <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>
+          {selectedStep.richContent?.derivedTitle ? <p className="mt-1 font-mono text-xs text-muted">{completedIds.has(selectedStep.id)?"✓ ":""}{zh ? `第 ${selectedStepIndex + 1} 步` : `Step ${selectedStepIndex + 1}`}</p> : <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>}
 
-          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</div>
+          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content><ChipRenderContext.Provider value={chipContexts[selectedStep.richContent?.chipVersion ?? ''] ?? null}>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}</ChipRenderContext.Provider></div>
           <div data-run-tools className="mt-3 grid grid-cols-2 min-[360px]:grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
           <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} executionPlanRevision={structured?.plan.revision} disabled={!editable || Boolean(structured?.steps[selectedStep.id] && (selectedStep.completed || structured.steps[selectedStep.id].blocked))}/>
           <button type="button" aria-expanded={recordOpen} onClick={()=>setRecordOpen(value=>!value)} className="focus-ring min-h-11 rounded-[var(--ln-radius-control-md)] border border-hairline px-2 text-sm font-medium text-moss">{zh?"记录":"Record"}</button></div>
@@ -300,10 +304,10 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         {referenceGroups.map(group => <details key={group.key}>
           <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
           <div className="run-step-content mt-2 min-w-0 space-y-3">
-            {(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
+            <ChipRenderContext.Provider value={chipContexts[group.key] ?? null}>{(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
               <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
               {section.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}
-            </section>)}
+            </section>)}</ChipRenderContext.Provider>
           </div>
         </details>)}
       </div>
@@ -345,9 +349,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                 <div className="min-w-0">
                 <label className="flex min-w-0 cursor-pointer items-start gap-3">
                   <input type="checkbox" name="completedStepIds" value={step.id} checked={completedIds.has(step.id)} onChange={(event) => setStep(step.id, event.target.checked)} disabled={!editable || pending || unavailable(step.id)} className="mt-0.5 h-6 w-6 shrink-0 accent-[var(--moss)]" />
-                  <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span><strong className="mt-1 block font-medium text-ink">{step.title}</strong>{step.description && !step.richContent?.blocks.length ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
+                  <span className="min-w-0"><span className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">Step {step.order}</span>{completedIds.has(step.id) ? <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> : <Circle className="h-4 w-4 text-muted" aria-hidden />}</span>{step.richContent?.derivedTitle ? null : <strong className="mt-1 block font-medium text-ink">{step.title}</strong>}{step.description && !step.richContent?.blocks.length ? <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-graphite">{step.description}</span> : null}</span>
                 </label>
-                {step.richContent?.blocks.length ? <div className="run-step-content mt-3 space-y-3" data-run-step-content>{(step.richContent?.blocks ?? []).map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext />)}</div> : null}
+                {step.richContent?.blocks.length ? <div className={step.richContent.derivedTitle ? "run-step-content mt-1 space-y-3 pl-9" : "run-step-content mt-3 space-y-3"} data-run-step-content><ChipRenderContext.Provider value={chipContexts[step.richContent.chipVersion ?? ''] ?? null}>{step.richContent.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext />)}</ChipRenderContext.Provider></div> : null}
                 </div>
                 <div>
                   <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>

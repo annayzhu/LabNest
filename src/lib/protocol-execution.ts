@@ -1,8 +1,10 @@
 import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document';
 import type { ProtocolStep } from './types';
+import { programSummary } from './protocol-program';
 
 export function executionBlockText(block: ProtocolContentBlock): string {
   if ('text' in block) return block.text;
+  if (block.type === 'program') return programSummary(block);
   if (block.type === 'rich_text') return block.nodes.map(n => n.content.map(r => r.text).join('')).join('\n');
   if (block.type === 'checklist') return block.items.join('\n');
   if (block.type === 'table') return block.rows.map(row => row.join(' · ')).join('\n');
@@ -80,17 +82,57 @@ export function proposeExecutionRoles(document: ProtocolDocument): ProtocolConte
   });
 }
 
+const sentenceEnd = /[。！？!?；;\n]|\.(?=\s|$)/;
+/** A list label for a step block: the author's bold lead, else its first sentence. */
+export function derivedStepTitle(blocks: ProtocolContentBlock[]): string | undefined {
+  const first = blocks[0];
+  const node = first?.type === 'rich_text' ? first.nodes[0]
+    : first?.type === 'text' || first?.type === 'heading' ? first.nodes?.[0] ?? { type: 'paragraph' as const, content: [{ text: first.text }] }
+    : first?.type === 'checklist' ? first.itemNodes?.[0]?.[0] ?? { type: 'paragraph' as const, content: [{ text: first.items[0] ?? '' }] }
+    : undefined;
+  if (!node) return;
+  const lead: string[] = [];
+  for (const run of node.content) { if (!run.bold) break; lead.push(run.text); }
+  const text = (lead.join('').trim() || node.content.map(run => run.text).join('')).trim();
+  if (text.startsWith('![')) return; // Embedded media markdown is not a label.
+  const sentence = text.split(sentenceEnd)[0].trim().replace(/[。.:：;；,，、\s]+$/, '');
+  return sentence ? shortenLabel(sentence) : undefined;
+}
+
+/** About 48 visible characters; a chip counts as one short value and is never cut. */
+function shortenLabel(text: string, limit = 48, chipWidth = 8) {
+  let used = 0, label = '';
+  for (const part of text.split(/(\{\{[\w-]+\}\})/g).filter(Boolean)) {
+    const chip = /^\{\{[\w-]+\}\}$/.test(part), width = chip ? chipWidth : Array.from(part).length;
+    if (used + width <= limit) { label += part; used += width; continue; }
+    return chip ? `${label.trimEnd()}…` : `${label}${Array.from(part).slice(0, Math.max(0, limit - used - 1)).join('')}…`;
+  }
+  return label;
+}
+
 /** Existing ProtocolStep is the sole machine contract. Marks describe source ownership. */
 export function projectProtocolExecution(document: ProtocolDocument) {
   const original = executionFragments(document);
   const executionNeedsReview = original.some(block => !isEmpty(block) && !block.execution);
   const blocks = executionNeedsReview ? proposeExecutionRoles(document) : original;
-  const starts = blocks.filter(block => block.execution?.role === 'step' && !isEmpty(block));
+  const ownedBy = (id: string) => blocks.filter(block => (block.execution?.role === 'step' || block.execution?.role === 'detail') && (block.execution.stepId ?? block.id) === id);
+  // A step block is empty only when its whole body is; an unwritten new step is not an operation.
+  const nonEmpty = (block: ProtocolContentBlock) => block.execution?.format === 'block' ? ownedBy(block.execution.stepId ?? block.id).some(owned => !isEmpty(owned)) : !isEmpty(block);
+  const starts = blocks.filter(block => block.execution?.role === 'step' && nonEmpty(block));
   const ids = starts.map(block => block.execution?.stepId ?? block.id);
-  const invalid = ids.some((id,index)=>ids.indexOf(id)!==index) || blocks.some(block=>block.execution?.role==='detail' && !ids.includes(block.execution.stepId ?? ''));
-  const commonBlocks = blocks.filter(block => block.execution?.role === 'info' || (block.execution?.role==='detail' && !ids.includes(block.execution.stepId ?? '')));
+  const unwritten = new Set(blocks.filter(block => block.execution?.role === 'step' && block.execution.format === 'block' && !starts.includes(block)).map(block => block.execution?.stepId ?? block.id));
+  const orphan = (block: ProtocolContentBlock) => block.execution?.role === 'detail' && !ids.includes(block.execution.stepId ?? '') && !unwritten.has(block.execution.stepId ?? '');
+  const invalid = ids.some((id,index)=>ids.indexOf(id)!==index) || blocks.some(orphan);
+  const commonBlocks = blocks.filter(block => block.execution?.role === 'info' || orphan(block));
   const steps: ProtocolStep[] = starts.map((start, index) => {
     const source_ref = ids[index];
+    if (start.execution?.format === 'block') {
+      const owned = ownedBy(source_ref);
+      const explicit = start.execution.title?.trim();
+      return { source_ref, order: index + 1, title: explicit || derivedStepTitle(owned) || `Step ${index + 1}`, ...(explicit ? {} : { title_source: 'derived' as const }),
+        description: owned.map(executionBlockText).filter(Boolean).join('\n'), content_blocks: structuredClone(owned),
+        requires_confirmation: start.execution.requiresConfirmation ?? true, allows_deviation: start.execution.allowsDeviation ?? true };
+    }
     const title = start.execution?.title?.trim() || `Step ${index + 1}`;
     const owned = blocks.filter(block => block === start || (block.execution?.role === 'detail' && block.execution.stepId === source_ref));
     let content_blocks = executionBodyWithoutTitle(owned, title);

@@ -1,5 +1,5 @@
 import {projectLegacyProtocolExecution} from "./protocol-execution-legacy";
-import {executionBodyWithoutTitle} from "./protocol-execution";
+import {executionBodyWithoutTitle,notesAmongSteps} from "./protocol-execution";
 import {protocolDocumentSchema,projectProtocolDocument,type ProtocolContentBlock} from './protocol-document';
 import {renderProtocolTemplate} from './protocol';
 import type {ProtocolStep} from './types';
@@ -25,7 +25,7 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  const doc=protocolDocumentSchema.safeParse(version?.contentJson);
  const render=(value:unknown,key=''):unknown=>typeof value==='string'&&!['id','url','source_ref','attachmentId'].includes(key)?renderProtocolTemplate(value,parameters):Array.isArray(value)?value.map(v=>render(v,key)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,render(v,k)])):value;
  const reference=doc.success?render(doc.data.sections.filter(section=>section.blocks.length)) as typeof doc.data.sections:[];
- const legacy={blocks:[] as ProtocolContentBlock[],common:[] as ProtocolContentBlock[],reference,source:'legacy-text' as string};
+ const legacy={blocks:[] as ProtocolContentBlock[],notesBefore:[] as ProtocolContentBlock[],notesAfter:[] as ProtocolContentBlock[],reference,source:'legacy-text' as string};
  if(!version)return legacy;
  const captured=version.stepsJson?.find(s=>step.protocolStepRef===`${version.protocolVersionId}:${s.source_ref??s.order}`);
  if(!captured)return legacy;
@@ -35,14 +35,17 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
  const recovered=projected.find(s=>captured.source_ref && s.source_ref===captured.source_ref) ?? projected.find(s=>s.order===captured.order&&s.title===captured.title&&s.description===captured.description);
  const blocks=recovered?.content_blocks??captured.content_blocks??(doc.success?legacyGroupedBlocks(doc.data,version.stepsJson??[],captured.order):undefined);
  if(!blocks)return legacy;
- // Only explicitly projected preparation blocks are shared. Unmatched content
- // must never leak into every step when a legacy mapping cannot be recovered.
- const common=projection?.commonBlocks??[];
+ // The Protocol's notes keep their written place: those before this step, and those after it when it is the last.
+ // Content that cannot be matched to a step never leaks into every step.
+ const key=(projectedStep:ProtocolStep)=>projectedStep.source_ref??String(projectedStep.order);
+ const order=projected.map(key),own=recovered?key(recovered):undefined;
+ const placed=projection&&own?notesAmongSteps(projection.commonBlocks,projection.notePlacement,order):undefined;
+ const notesBefore=own?placed?.before.get(own)??[]:[],notesAfter=own&&own===order.at(-1)?placed?.after??[]:[];
  // Parameter interpolation traverses textual content, including table rich cells; IDs and URLs are unchanged.
 
  // A step block's label is derived from its own body; nothing is a separate title to remove.
  const derived=(recovered??captured).title_source==='derived';
- return {reference,blocks:render(derived?blocks:executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],common:render(common) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery',...(derived?{derivedTitle:true}:{})};
+ return {reference,blocks:render(derived?blocks:executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],notesBefore:render(notesBefore) as ProtocolContentBlock[],notesAfter:render(notesAfter) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery',...(derived?{derivedTitle:true}:{})};
 }
 
 /** Publish only explicit same-origin image resources from this frozen Run. */

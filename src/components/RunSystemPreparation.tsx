@@ -1,9 +1,12 @@
 'use client';
+import { readableError } from '@/lib/form-actions';
 import { RunGroupPreparation } from './RunGroupPreparation';
 
 import { newClientMutationId } from '@/lib/client-mutation-id';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { runQuantityLabels } from '@/lib/protocol-mix';
 import { confirmRunSystems, type ProtocolRunProgressState } from '@/app/experiments/[id]/run/actions';
 import { resolveProtocolSystem, resolveProtocolDocument } from '@/lib/structured-protocol';
 import Link from 'next/link';
@@ -13,7 +16,7 @@ import { calculationGroups } from '@/lib/protocol-calculations';
 import { formInputClass } from './forms';
 import { Button } from './ui/Button';
 import { ProtocolCalculationPreview } from './ProtocolCalculationPreview';
-import { parameterDisplayName, protocolChipText, toolSpecs } from '@/lib/protocol-chips';
+import { parameterLongName } from '@/lib/protocol-chips';
 
 function VersionSelection({ experimentId, version, view, editable }: { experimentId: string; version: StructuredRunView['versions'][number]; view: StructuredRunView; editable: boolean }) {
   const systems = version.document.systems!;
@@ -28,12 +31,13 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
   const proposed = resolveProtocolDocument(version.document, selections, actualInputs, adopted?.calculations);
   const prior = resolveProtocolDocument(version.document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations);
   const changes = proposed.steps.filter(step => JSON.stringify(step) !== JSON.stringify(prior.steps.find(s => s.source_ref === step.source_ref)));
+  const stepChips = new Set(Object.values(view.steps).filter(step => step.versionId === version.id).flatMap(step => step.chipIds ?? []));
+  // A calculation shown in a step is confirmed there, where its result is used; the rest stay here.
+  const groups = calculationGroups(systems.parameters), inSteps = groups.filter(group => group.results.some(result => stepChips.has(result.id)));
+  // Values filled at execution are entered where a step shows them (the chip or its calculation); only the rest stay here.
+  const shownInSteps = new Set([...stepChips, ...inSteps.flatMap(group => Object.values(group.source.inputs))]);
   // Chips are often nameless: name them by material, tool field or what they measure.
-  const nameOf = (parameter: typeof systems.parameters[number]) => {
-    const tool = parameter.ownerToolId ? systems.tools?.find(t => t.id === parameter.ownerToolId) : undefined;
-    const field = tool?.fields.find(f => f.parameterId === parameter.id);
-    return tool ? `${tool.method?.trim() || toolSpecs[tool.kind].label} · ${toolSpecs[tool.kind].fields.find(f => f.key === field?.key)?.label ?? parameterDisplayName(parameter)}` : parameterDisplayName(parameter);
-  };
+  const nameOf = (parameter: typeof systems.parameters[number]) => parameterLongName(parameter, systems);
   return <details className="protocol-system-section" open={expanded || dirty || Boolean(state.error)} onToggle={event => setExpanded(event.currentTarget.open)}>
     <summary className="min-h-11 cursor-pointer font-medium">{version.groupLabel ?? version.title} · {adopted ? '已确认 · 查看／修改体系' : '待确认体系'}{adopted ? <span className="ml-2 text-sm font-normal text-muted">{systems.dimensions.map(d => d.options.find(o => o.id === adopted.selections[d.id])?.label ?? '待选择').join(' · ')}</span> : null}</summary>
     <form action={action} className="protocol-system-section" data-run-system-selection>
@@ -44,10 +48,10 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
     <fieldset disabled={!editable || pending} className="protocol-system-section">
       {systems.presets.length ? <div className="flex flex-wrap gap-2">{systems.presets.map(p => <Button className="min-h-11 whitespace-normal md:min-h-0" type="button" key={p.id} size="sm" onClick={() => setSelections({ ...p.selections })}>{p.label}</Button>)}</div> : null}
       <div className="protocol-system-fields">{systems.dimensions.map(d => <label key={d.id}>{d.label}<select className={formInputClass} value={selections[d.id] ?? ''} onChange={event => { const next = { ...selections }; if (event.target.value) next[d.id] = event.target.value; else delete next[d.id]; setSelections(next); }}><option value="">待选择</option>{d.options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>)}</div>
-      {systems.parameters.filter(p => p.source.kind === 'actual').map(p => <label key={p.id}>{nameOf(p)} · {p.unit}<input aria-label={nameOf(p)} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
+      {systems.parameters.filter(p => p.source.kind === 'actual' && !shownInSteps.has(p.id)).map(p => <label key={p.id}>{nameOf(p)} · {p.unit}<input aria-label={nameOf(p)} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
       <div className="protocol-system-legend">{Object.entries(selections).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={dimensionId} systems={systems} dimensionId={dimensionId} optionId={optionId}/>)}</div>
-      {systems.parameters.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th>参数</th><th>采用值</th><th>来源</th></tr></thead><tbody>{systems.parameters.map(p => <tr key={p.id}><td>{nameOf(p)}</td><td>{resolution.parameters[p.id]?.status === 'resolved' ? protocolChipText(p.id, systems, resolution.parameters) : resolution.parameters[p.id]?.message ?? '待填写'}</td><td>{{ fixed: '固定值', lookup: '条件查表', actual: '本次实际填写', calculator: '计算后确认' }[p.source.kind]}</td></tr>)}</tbody></table></div> : null}
-      {calculationGroups(systems.parameters).map(group => <ProtocolCalculationPreview key={group.results[0].id} group={group} resolution={resolution} receipts={adopted?.calculations ?? {}} disabled={!editable || pending}/>)}
+      {inSteps.length ? <p className="text-sm text-muted">{inSteps.length} 项计算在使用它的步骤里确认：点步骤中的计算结果即可填写并确认。</p> : null}
+      {groups.filter(group => !inSteps.includes(group)).map(group => <ProtocolCalculationPreview key={group.results[0].id} group={group} resolution={resolution} receipts={adopted?.calculations ?? {}} disabled={!editable || pending}/>)}
       {dirty && adopted ? <p className="text-warning" role="status">选择已修改，以上是变更预览，尚未应用。影响已有执行记录时将拒绝覆盖。</p> : null}
       {dirty && adopted ? <ul aria-label="变更影响">{changes.map(s => <li key={s.source_ref}>{s.title} · {s.applicability === 'not-applicable' ? '改为不适用' : s.blocked ? '参数待确定' : '采用新参数／适用状态'}</li>)}</ul> : null}
       {resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).length ? <ul className="text-error">{resolution.issues.filter(i => !i.code.startsWith('parameter-unknown')).map((i, index) => <li key={index}>{i.message}</li>)}</ul> : null}
@@ -62,5 +66,30 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
 
 export function RunSystemPreparation({ experimentId, view, editable }: { experimentId: string; view: StructuredRunView; editable: boolean }) {
   if (!view.hasSystems) return null;
-  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">实验准备 · 体系与分组</h2><a href="#run-execution" className="focus-ring inline-flex min-h-11 items-center text-moss underline">开始／继续当前步骤</a></div><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable}/><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === view.plan.continuation!.startSourceRef)?.title}。此前已完成操作并未复制为本次完成。</p><details open><summary>此前处理与原采用参数（只读历史）</summary>{view.plan.continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? '此前已完成' : '原记录未完成'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>原实际记录：{v.value} {v.unit} · {v.recordedAt}</p>)}{s.deviationNote ? <p>原备注：{s.deviationNote}</p> : null}</div>)}</details></div> : null}{view.versions.map(version => <VersionSelection key={`${version.id}:${view.plan.revision}`} experimentId={experimentId} version={version} view={view} editable={editable}/>)}</section>;
+  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">实验准备 · 体系与分组</h2><a href="#run-execution" className="focus-ring inline-flex min-h-11 items-center text-moss underline">开始／继续当前步骤</a></div><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable}/><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === view.plan.continuation!.startSourceRef)?.title}。此前已完成操作并未复制为本次完成。</p><details open><summary>此前处理与原采用参数（只读历史）</summary>{view.plan.continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? '此前已完成' : '原记录未完成'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>原实际记录：{v.value} {v.unit} · {v.recordedAt}</p>)}{s.deviationNote ? <p>原备注：{s.deviationNote}</p> : null}</div>)}</details></div> : null}{view.versions.map(version => <div key={`${version.id}:${view.plan.revision}`}><VersionSelection experimentId={experimentId} version={version} view={view} editable={editable}/><RunQuantities experimentId={experimentId} version={version} view={view} editable={editable}/></div>)}</section>;
+}
+
+/** 本次数量 for one Protocol (group): the counts its mix cards and material amounts scale by, e.g. 反应数 24, 孔数 6. */
+function RunQuantities({ experimentId, version, view, editable }: { experimentId: string; version: StructuredRunView['versions'][number]; view: StructuredRunView; editable: boolean }) {
+  const router = useRouter();
+  const labels = runQuantityLabels(version.document);
+  const saved = view.plan.quantities[version.id] ?? {};
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState('');
+  if (!labels.length) return null;
+  const changed = Object.entries(draft).filter(([label, text]) => text.trim() !== String(saved[label] ?? ''));
+  const valid = changed.every(([, text]) => !text.trim() || (Number(text) > 0 && Number.isFinite(Number(text))));
+  const save = () => startTransition(async () => {
+    const { setRunQuantities } = await import('@/app/experiments/[id]/run/actions');
+    const result = await setRunQuantities({ experimentId, versionId: version.id, expectedRevision: view.plan.revision, quantities: Object.fromEntries(changed.map(([label, text]) => [label, text.trim() ? Number(text) : null])) });
+    setMessage(result.error ? readableError(result.error) : '已保存；用到它的配液卡需按新数量确认。');
+    if (!result.error) { setDraft({}); router.refresh(); }
+  });
+  return <div className="ln-run-quantities" role="group" aria-label={`${version.groupLabel ?? version.title} · 本次数量`}>
+    <span className="ln-run-quantities-title">本次数量{version.groupLabel ? ` · ${version.groupLabel}` : ''}</span>
+    {labels.map(label => <label key={label}>{label}<input inputMode="numeric" disabled={!editable || pending} value={draft[label] ?? String(saved[label] ?? '')} placeholder="—" onChange={event => setDraft(current => ({ ...current, [label]: event.target.value }))} /></label>)}
+    {editable ? <Button type="button" size="sm" disabled={pending || !changed.length || !valid} onClick={save}>{pending ? '正在保存…' : '保存数量'}</Button> : null}
+    {message ? <small role="status">{message}</small> : null}
+  </div>;
 }

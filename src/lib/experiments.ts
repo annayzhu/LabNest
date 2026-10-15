@@ -16,7 +16,8 @@ function cloneJson<T>(value: T): T {
 
 export type ExperimentSnapshotInput = {
   creationKey?: string;
-  researchPlanId: string;
+  /** An Experiment may start unassigned and join a Research Plan later. */
+  researchPlanId?: string | null;
   runCode?: string;
   title: string;
   date: Date;
@@ -42,11 +43,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       return previous;
     }
   }
-  const plan = await tx.researchPlan.findUnique({
-    where: { id: input.researchPlanId },
-    include: { project: true, protocols: { select: { protocolId: true } } },
-  });
-  if (!plan) throw new Error("Selected Research Plan does not exist.");
+  const plan = input.researchPlanId ? await tx.researchPlan.findUnique({ where: { id: input.researchPlanId } }) : null;
+  if (input.researchPlanId && !plan) throw new Error("Selected Research Plan does not exist.");
 
   const versionIds = Array.from(new Set(input.protocolVersionIds)).filter(Boolean);
   if (input.methodMode === "protocol" && !versionIds.length) {
@@ -74,17 +72,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
 
   if(input.methodMode==="protocol" && [...contracts.values()].every(contract=>!contract.steps.length))throw new Error("No execution operations are confirmed. Organize the Protocol steps or select a custom freeform Experiment.");
 
-  if (orderedVersions.length) {
-    const protocolIds = Array.from(new Set(orderedVersions.map((version) => version.protocolId)));
-    await tx.projectProtocol.createMany({
-      data: protocolIds.map((protocolId) => ({ projectId: plan.projectId, protocolId })),
-      skipDuplicates: true,
-    });
-    await tx.researchPlanProtocol.createMany({
-      data: protocolIds.map((protocolId) => ({ researchPlanId: plan.id, protocolId, isPrimary: false })),
-      skipDuplicates: true,
-    });
-  }
+  if (plan) await linkProtocolsToPlan(tx, plan, orderedVersions.map((version) => version.protocolId));
   const suppliedRunCode = input.runCode?.trim().toUpperCase();
   if (suppliedRunCode && !isValidRecordCode("experiment", suppliedRunCode)) {
     throw new Error("Experiment code must use EXP- followed by at least three digits.");
@@ -100,7 +88,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
     schemaVersion: 1,
     ...(input.creationKey?{creationFingerprint:fingerprint}:{}),
     methodMode: input.methodMode,
-    researchPlanTitle: plan.title,
+    researchPlanTitle: plan?.title ?? null,
     capturedAt: new Date().toISOString(),
     versions: orderedVersions.map((version) => ({
       protocolId: version.protocolId,
@@ -124,8 +112,8 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
         runCode,
         creationKey: input.creationKey,
         title: input.title,
-        projectId: plan.projectId,
-        researchPlanId: plan.id,
+        projectId: plan?.projectId ?? null,
+        researchPlanId: plan?.id ?? null,
         date: input.date,
         status: input.status,
         recordStatus: input.recordStatus,
@@ -177,7 +165,7 @@ export async function createExperimentWithProtocolSnapshotInTransaction(
       });
     }
 
-    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan.id, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
+    await tx.activityLog.create({ data: { action: "create", targetType: "experiment", targetId: experiment.id, metadataJson: { runCode, researchPlanId: plan?.id ?? null, methodMode: input.methodMode, protocolVersionIds: versionIds } } });
   await associateDocumentMedia(tx, [input.contentJson, experiment.protocolSnapshotJson], "experiment", experiment.id);
   return experiment;
 }
@@ -191,4 +179,25 @@ export async function createExperimentWithProtocolSnapshot(input: ExperimentSnap
     }
     throw error;
   }
+}
+
+/** The Protocols an Experiment uses become available to its Research Plan and Project. */
+async function linkProtocolsToPlan(tx: Prisma.TransactionClient, plan: { id: string; projectId: string }, protocolIds: string[]) {
+  const ids = Array.from(new Set(protocolIds));
+  if (!ids.length) return;
+  await tx.projectProtocol.createMany({ data: ids.map((protocolId) => ({ projectId: plan.projectId, protocolId })), skipDuplicates: true });
+  await tx.researchPlanProtocol.createMany({ data: ids.map((protocolId) => ({ researchPlanId: plan.id, protocolId, isPrimary: false })), skipDuplicates: true });
+}
+
+/** An unassigned Experiment joins a Research Plan later; its Project, Protocol links and unassigned Results follow. Moving between plans is refused. */
+export async function assignExperimentResearchPlan(tx: Prisma.TransactionClient, experiment: { id: string; researchPlanId: string | null }, researchPlanId: string) {
+  if (experiment.researchPlanId === researchPlanId) return;
+  if (experiment.researchPlanId) throw new Error("实验已归入研究计划，不能改到其他计划。");
+  const plan = await tx.researchPlan.findUnique({ where: { id: researchPlanId } });
+  if (!plan) throw new Error("所选研究计划不存在。");
+  await tx.experiment.update({ where: { id: experiment.id }, data: { researchPlanId: plan.id, projectId: plan.projectId } });
+  const links = await tx.experimentProtocolVersion.findMany({ where: { experimentId: experiment.id }, select: { protocolVersion: { select: { protocolId: true } } } });
+  await linkProtocolsToPlan(tx, plan, links.map((link) => link.protocolVersion.protocolId));
+  await tx.result.updateMany({ where: { experimentId: experiment.id, researchPlanId: null }, data: { researchPlanId: plan.id, projectId: plan.projectId } });
+  await tx.activityLog.create({ data: { action: "assign_research_plan", targetType: "experiment", targetId: experiment.id, metadataJson: { researchPlanId: plan.id, projectId: plan.projectId } } });
 }

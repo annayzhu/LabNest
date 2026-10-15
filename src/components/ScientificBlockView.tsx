@@ -4,12 +4,19 @@ import Link from "next/link";
 import { EntryContentView } from "@/components/EntryContentView";
 import { DocumentMediaView } from "@/components/DocumentMediaView";
 import { ScientificTableView } from "./ScientificTableView";
+import { ExecutionStepLine } from "./ExecutionRecordSteps";
 import type { ScientificContentBlock } from "@/lib/scientific-document";
 
 export function ScientificBlockView({ block }: { block: ScientificContentBlock }) {
   if (block.execution) {
     const execution=block.execution;
-    if(execution.role==="group")return <h3 className="document-execution-group font-semibold">{execution.title}</h3>;
+    if(execution.role==="group")return execution.index!==undefined
+      ? <div className="ln-execution-protocol-heading document-execution-group"><span className="ln-execution-protocol-index" aria-hidden>{execution.index}</span><h3>{execution.title}</h3>{execution.meta?<span className="ln-execution-protocol-meta">{execution.meta}</span>:null}</div>
+      : <h3 className="document-execution-group font-semibold">{execution.title}</h3>;
+    if(execution.role==="detail")return <div className="ln-execution-detail"><ScientificBlockView block={{...block,execution:undefined}} /></div>;
+    if(execution.role==="note")return <div className="ln-execution-note"><ScientificBlockView block={{...block,execution:undefined}} /></div>;
+    if(execution.role==="deviation"){const text="text" in block?block.text:execution.title;return <p className="ln-deviation-line" id={execution.stepId?`deviation-${execution.stepId}`:undefined}><span className="ln-execution-tag is-deviation">{execution.deviationLabel??"偏差"}</span>{execution.stepId?<a href={`#execution-step-${execution.stepId}`}>{text}</a>:text}</p>;}
+    if(execution.number!==undefined)return <ExecutionStepLine execution={execution} />;
     return <div className="document-execution-step" data-execution-role={execution.role}>
       <p className="flex items-start gap-2"><span aria-label={execution.completed?"Completed":"Not completed"} className="shrink-0">{execution.completed?"☑":"☐"}</span><span>{execution.title}</span>{execution.completedAt ? <time dateTime={execution.completedAt} suppressHydrationWarning className="ml-auto shrink-0 font-mono text-xs text-muted">{format(new Date(execution.completedAt), "yyyy-MM-dd HH:mm")}</time> : null}</p>
       {execution.deviationNote ? <div className="mt-1 text-sm"><span className="mr-2 inline-block rounded border border-error px-1 text-xs text-error">{execution.deviationLabel}</span><span className="whitespace-pre-wrap text-error">{execution.deviationNote}</span>

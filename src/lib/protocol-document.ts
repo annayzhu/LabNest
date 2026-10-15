@@ -4,6 +4,7 @@ import { z } from "zod";
 import { protocolPredicateSchema, protocolSystemsSchema } from './protocol-systems-schema';
 import { renderChipTokens } from "./protocol-chips";
 import { programSummary } from "./protocol-program";
+import { mixSummary } from "./protocol-mix";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
   ConsumptionRule,
@@ -132,6 +133,17 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
       cycles: z.number().int().positive(),
       steps: z.array(z.object({ id: z.string().min(1), label: z.string().optional(), temperatureC: z.number().finite(), seconds: z.number().finite().nonnegative().nullable() })).min(1),
     })).min(1),
+  }),
+  baseBlockSchema.extend({
+    // 配液卡: components with per-reaction amounts (chips, so they may differ by system), scaled for a run by "本次数量".
+    type: z.literal("mix"),
+    title: z.string().max(120).default(""),
+    /** What one portion is: 反应, 孔, 样本, 管. The run's quantity is "<per>数". */
+    per: z.string().trim().max(12).default("反应"),
+    overagePercent: z.number().finite().min(0).max(100).default(10),
+    minPipetteUl: z.number().finite().min(0).max(100).default(0.5),
+    /** `amount` holds the chip reference; `name` is how the component reads in summaries and exports. */
+    components: z.array(z.object({ id: z.string().min(1), name: z.string().max(120).default(""), amount: z.string(), mode: z.enum(["premix", "separate"]).default("premix") })).max(40),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),
@@ -332,6 +344,7 @@ export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectio
       if (block.type === "media") return [block.caption ?? block.url];
       if (block.type === "embedded_tool") return [block.label || block.url];
       if (block.type === "program") return [programSummary(block)];
+      if (block.type === "mix") return [mixSummary(block)];
       return [`${block.label}: ${block.durationMinutes} min`, block.notes ?? ""];
     })
     .filter(Boolean)
@@ -475,7 +488,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     }
   }
 
-  const { steps, commonBlocks, executionNeedsReview } = projectProtocolExecution(document);
+  const { steps, commonBlocks, notePlacement, executionNeedsReview } = projectProtocolExecution(document);
 
   const resultTemplates: ResultTemplate[] = (resultSection?.blocks ?? [])
     .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && block.rows.length > 1)
@@ -555,6 +568,7 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     equipment,
     steps,
     commonBlocks,
+    notePlacement,
     executionNeedsReview,
     resultTemplates,
     consumptionRules,

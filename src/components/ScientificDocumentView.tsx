@@ -3,6 +3,8 @@ import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import type { ScientificDocument } from "@/lib/scientific-document";
+import { executionSegments } from "@/lib/experiment-document";
+import { ExecutionStepLine } from "@/components/ExecutionRecordSteps";
 
 export function ScientificDocumentView({
   document,
@@ -36,7 +38,11 @@ export function ScientificDocumentView({
           </header>
           <div>
             {section.blocks.length
-              ? section.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)
+              ? executionSegments(section.blocks).map((segment) => segment.kind === "block"
+                ? <div key={segment.block.id} className="document-block"><ScientificBlockView block={segment.block} /></div>
+                : segment.kind === "step"
+                  ? <div key={segment.block.id} className="document-block"><ExecutionStepLine execution={segment.block.execution!}>{segment.details.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={{ ...block, execution: undefined }} /></div>)}</ExecutionStepLine></div>
+                  : <details key={segment.blocks[0].id} className="document-block ln-execution-fold"><summary className="focus-ring">{segment.label}</summary>{segment.blocks.map((block) => <div key={block.id} className="document-block"><ScientificBlockView block={block} /></div>)}</details>)
               : <p className="text-sm italic text-muted">Not recorded.</p>}
           </div>
         </section>

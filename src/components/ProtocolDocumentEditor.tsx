@@ -1,4 +1,5 @@
 "use client";
+import type { MixProposal } from "@/lib/protocol-mix";
 
 import { useActionState, useMemo, useState } from "react";
 import { ProtocolExecutionOrganizer } from "./ProtocolExecutionOrganizer";
@@ -35,6 +36,8 @@ const textareaClass = `${formTextareaClass} min-h-16 resize-y leading-[var(--ln-
 export function ProtocolDocumentEditor({
   action,
   mode,
+  mixProposals = [],
+  dismissMixProposal,
   protocol,
   version,
   initialDocument,
@@ -48,6 +51,9 @@ export function ProtocolDocumentEditor({
   initialManualRelevantLinks = [],
   importHistory = [],
 }: {
+  /** Bench-made mix cards offered from runs. */
+  mixProposals?: MixProposal[];
+  dismissMixProposal?: (protocolId: string, proposalId: string) => Promise<{ error?: string }>;
   action: ProtocolEditorAction;
   mode: "create" | "edit";
   protocol: { id?: string; humanCode?: string; suggestedCodeSuffix?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
@@ -115,8 +121,7 @@ export function ProtocolDocumentEditor({
       <DocumentEditorWorkspace
         outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
         onActiveTabChange={setActiveWorkspaceTab}
-        actions={<div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div>}
-        toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}
+        actions={<><div id="protocol-document-actions" className="ln-document-actions-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring ln-document-action" title="导出当前已保存的版本；改动后请先保存。"><Download aria-hidden />导出 Word</a> : null}<DocumentPrintButton /><div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div></>}
         document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"}>
           <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" titleEditor={<input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Protocol" aria-label="Protocol title" />} facts={[
             { label: "Version", value: displayVersion, mono: true },
@@ -133,7 +138,7 @@ export function ProtocolDocumentEditor({
             </nav>
             <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
           </>}
-          <ProtocolWysiwygEditor document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" uploadDraftId={uploadDraftId} />
+          <ProtocolWysiwygEditor document={document} onChange={setDocument} actionsHostId="protocol-document-actions" uploadDraftId={uploadDraftId} mixProposals={mixProposals} onDismissMixProposal={dismissMixProposal && protocol.id ? proposalId => dismissMixProposal(protocol.id!, proposalId) : undefined} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>

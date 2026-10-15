@@ -10,9 +10,16 @@ import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
 import { tiptapCellRichContentSchema } from "./tiptap-json-schema";
 
+/**
+ * Run-derived metadata (never authored): a Protocol part (`group`), a checkable step, content that belongs to a step or part (`detail`),
+ * a Protocol note kept where it was written among the steps (`note`), and a deviation line in 偏差与事件. `fold` groups consecutive
+ * details under one disclosure.
+ */
 const baseBlockSchema = z.object({ id: z.string().min(1), execution: z.object({
- role:z.enum(["group","step","confirmation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),completedAt:z.string().optional(),
+ role:z.enum(["group","step","confirmation","detail","note","deviation"]),stepId:z.string().optional(),title:z.string(),completed:z.boolean().optional(),completedAt:z.string().optional(),
  deviationLabel:z.enum(["偏差","异常"]).optional(),deviationNote:z.string().optional(),impact:z.string().optional(),author:z.string().optional(),
+ index:z.number().int().optional(),meta:z.string().optional(),number:z.number().int().optional(),status:z.string().optional(),blockedReason:z.string().optional(),
+ allowsDeviation:z.boolean().optional(),deviationType:z.string().optional(),deviationAt:z.string().optional(),fold:z.string().optional(),
 }).optional() });
 
 export const scientificContentBlockSchema = z.discriminatedUnion("type", [
@@ -181,13 +188,14 @@ export const researchPlanSections: ScientificSectionDefinition[] = [
   { key: "references", title: "References & working notes" },
 ];
 
+/** 观察与媒体 comes last, after the summary, in every Experiment, editor and export. */
 export const experimentSections: ScientificSectionDefinition[] = [
   { key: "background", title: "Background & rationale" },
   { key: "setup", title: "Setup & samples", aliases: ["materials"] },
   { key: "execution", title: "Execution notes", aliases: ["steps"] },
-  { key: "observations", title: "Observations & media" },
   { key: "deviations", title: "Deviations & incidents" },
   { key: "conclusion", title: "Summary & conclusion" },
+  { key: "observations", title: "Observations & media" },
 ];
 
 export const resultSections: ScientificSectionDefinition[] = [

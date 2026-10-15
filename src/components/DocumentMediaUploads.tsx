@@ -2,10 +2,8 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import type { Editor } from "@tiptap/core";
-import { FilePlus2, ImagePlus } from "lucide-react";
 import type { DocumentMedia } from "@/lib/document-media";
 import { newClientMutationId } from "@/lib/client-mutation-id";
-import type { WysiwygInsertAction } from "./DocumentWysiwygToolbar";
 
 type Upload = { file: File; preview?: string; status: "uploading" | "failed"; error?: string; retry: () => void; dispose: () => void };
 const uploads = new Map<string, Upload>();
@@ -126,11 +124,6 @@ export function useDocumentMediaUploads(editor: Editor | null, draftId: string) 
     form?.addEventListener("submit", submit, true);
     return () => { dom.removeEventListener("paste", paste, true); dom.removeEventListener("drop", drop, true); form?.removeEventListener("submit", submit, true); editor.off("transaction", changed); activeEditors.delete(editor); queueMicrotask(releaseAbandonedUploads); };
   }, [editor, draftId]);
-}
-
-export function documentMediaInsertActions(draftId: string): WysiwygInsertAction[] {
-  return [{ id: "media", label: "图片 / Image", description: "选择照片、拖拽或粘贴截图 / Upload, drop or paste", icon: <ImagePlus aria-hidden />, run: editor => chooseFiles(editor, draftId, "image/*") },
-    { id: "attachment", label: "附件 / File", description: "文件及音频 / Files and audio", icon: <FilePlus2 aria-hidden />, run: editor => chooseFiles(editor, draftId) }];
 }
 
 export function chooseFiles(editor: Editor, draftId: string, accept = "", replacement?: DocumentMedia) {

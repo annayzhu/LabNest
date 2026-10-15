@@ -22,7 +22,7 @@ function NameInput({ value, label, onCommit }: { value: string; label: string; o
 
 /** What deleting changes, in the author's words; nothing to confirm when nothing uses it. */
 function deletionNotice(name: string, references: { values: number; conditions: number }, keepsFirst: boolean) {
-  const parts = [references.values ? `${references.values} 个参数按它取值，${keepsFirst ? '删除后保留第一个选项的数值' : '它的数值一并删除'}` : '', references.conditions ? `${references.conditions} 处“仅…”用到它，删除后这些内容变为通用` : ''].filter(Boolean);
+  const parts = [references.values ? `${references.values} 个参数按它取值，${keepsFirst ? '删除后保留第一个选项的数值' : '它的数值一并删除'}` : '', references.conditions ? `${references.conditions} 处适用范围用到它，删除后这些内容变为通用` : ''].filter(Boolean);
   return parts.length ? `“${name}”：${parts.join('；')}。` : '';
 }
 
@@ -84,7 +84,7 @@ export function SystemsBar() {
   const issues = systems ? [...new Set(validateProtocolSystems(systems).map(issue => issue.message))] : [];
   const savePreset = () => systems && api.updateSystems(current => ({ ...current, presets: [...current.presets, { id: uid('preset'), label: Object.entries(api.lens).map(([d, o]) => current.dimensions.find(x => x.id === d)?.options.find(x => x.id === o)?.label).filter(Boolean).join(' · ') || '常用组合', selections: { ...api.lens } }] }));
   if (!dimensions.length) return <div className="ln-systems-bar is-empty" data-print-hidden>
-    <span>不同体系用量不同时，直接写 <code>50/80 µL</code>；需要单独标注的样本条件，在步骤编号上设置“仅…”。</span>
+    <span>不同体系用量不同时，直接写 <code>50/80 µL</code>；需要单独标注的样本条件，在步骤或段落左侧 ⋮⋮ 的“适用范围”里设置。</span>
     <button className="focus-ring" type="button" onClick={() => { if (!systems) api.updateSystems(() => blankProtocolSystems()); addDimension('system'); }}><Plus aria-hidden />体系</button>
   </div>;
   return <section className="ln-systems-bar" aria-label="体系图例与透镜">

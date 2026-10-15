@@ -1,20 +1,21 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { AlertTriangle, Biohazard, Calculator, ClipboardList, Clock, Dna, FlaskConical, Gauge, Grid3x3, ImagePlus, Layers, LayoutGrid, ListOrdered, MoonStar, Paperclip, Percent, Pipette, RotateCw, Scale, Shuffle, Table2, Tag, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Wrench, Zap, type LucideIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import { AlertTriangle, Beaker, Biohazard, Calculator, ClipboardList, Clock, Dna, FlaskConical, Gauge, Grid3x3, Heading2, Heading3, ImagePlus, Layers, LayoutGrid, List, ListOrdered, MoonStar, Paperclip, Percent, Pilcrow, Pipette, Quote, RotateCw, Scale, Shuffle, Table2, Tag, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Wrench, Zap } from 'lucide-react';
+import type { BlockKind } from '@/lib/editor-blocks';
 import { parameterDisplayName, protocolChipText, type ToolKind } from '@/lib/protocol-chips';
 import type { ProtocolCalculatorId } from '@/lib/protocol-calculations';
 import type { ProtocolSystems } from '@/lib/protocol-systems-schema';
-import { useAnchoredPosition, useDismiss } from './popover';
+import { EditorCommandMenu, type CommandKeyHandler, type EditorCommand, type EditorCommandMenuState } from '../EditorCommandMenu';
 
 export type InsertChoice =
   | { type: 'step' }
+  | { type: 'block'; kind: BlockKind }
   | { type: 'quantity'; unit: string }
   | { type: 'tool'; tool: ToolKind }
   | { type: 'parameter'; id: string }
-  | { type: 'program' } | { type: 'calculation'; calculator: ProtocolCalculatorId }
+  | { type: 'program' } | { type: 'mix' } | { type: 'calculation'; calculator: ProtocolCalculatorId }
   | { type: 'table' } | { type: 'image' } | { type: 'file' } | { type: 'callout' } | { type: 'result-template' } | { type: 'embedded-tool' };
-type Item = { id: string; group: string; label: string; hint: string; keywords: string; icon: LucideIcon; choice: InsertChoice };
+type Item = EditorCommand<InsertChoice>;
 
 const items: Item[] = [
   { id: 'step', group: '步骤', label: '新步骤', hint: '一个块就是一个执行项', keywords: 'buzhou bz step', icon: ListOrdered, choice: { type: 'step' } },
@@ -35,6 +36,7 @@ const items: Item[] = [
   { id: 'electrophoresis', group: '设备操作', label: '电泳', hint: '电压 · 电流 · 时间', keywords: 'dianyong dy electrophoresis gel', icon: Zap, choice: { type: 'tool', tool: 'electrophoresis' } },
   { id: 'electroporation', group: '设备操作', label: '电转', hint: '电压 · 电容 · 电阻', keywords: 'dianzhuan dz electroporation', icon: Zap, choice: { type: 'tool', tool: 'electroporation' } },
   { id: 'pcr', group: '程序', label: 'PCR／热循环', hint: '变性 · 退火 · 延伸 · 循环', keywords: 'pcr rexunhuan rxh thermocycler kuozeng', icon: Thermometer, choice: { type: 'program' } },
+  { id: 'mix-card', group: '程序', label: '配液卡', hint: '每反应用量 · 执行时按数量换算', keywords: 'peiyeka pyk yuhun master mix premix recipe hunhe', icon: Beaker, choice: { type: 'mix' } },
   { id: 'gradient', group: '程序', label: '梯度', hint: '起始 → 终止', keywords: 'tidu td gradient', icon: TrendingUp, choice: { type: 'tool', tool: 'gradient' } },
   // Each reuses an existing calculator; measured inputs are filled in the Run and the result is confirmed there.
   { id: 'dilution', group: '计算', label: '稀释', hint: '母液 → 工作液（C1V1 = C2V2）', keywords: 'jisuan js xishi xs dilution c1v1 calculate', icon: Calculator, choice: { type: 'calculation', calculator: 'dilution' } },
@@ -44,7 +46,13 @@ const items: Item[] = [
   { id: 'seeding', group: '计算', label: '细胞铺板', hint: '细胞悬液 + 培养基', keywords: 'jisuan js puban pb jiezhong seeding plating', icon: LayoutGrid, choice: { type: 'calculation', calculator: 'seeding' } },
   { id: 'transfection', group: '计算', label: '转染体系', hint: 'DNA 原液 · 试剂 · 稀释液', keywords: 'jisuan js zhuanran zr transfection lipo', icon: Dna, choice: { type: 'calculation', calculator: 'transfection' } },
   { id: 'moi', group: '计算', label: '感染 MOI', hint: '滴度 → 病毒液体积', keywords: 'jisuan js ganran gr moi bingdu virus lentivirus', icon: Biohazard, choice: { type: 'calculation', calculator: 'moi' } },
-  // Named parameters (已有参数) come here, between 计算 and 内容.
+  { id: 'paragraph', group: '文字', label: '正文', hint: '普通段落', keywords: 'zhengwen zw body text paragraph', icon: Pilcrow, choice: { type: 'block', kind: 'paragraph' } },
+  { id: 'heading', group: '文字', label: '标题', hint: '也可在行首输入 # 和空格', keywords: 'biaoti bt heading title h2', icon: Heading2, choice: { type: 'block', kind: 'heading' } },
+  { id: 'subheading', group: '文字', label: '小标题', hint: '也可在行首输入 ## 和空格', keywords: 'xiaobiaoti xbt subheading h3', icon: Heading3, choice: { type: 'block', kind: 'subheading' } },
+  { id: 'quote', group: '文字', label: '引用', hint: '摘录或参考', keywords: 'yinyong yy quote blockquote', icon: Quote, choice: { type: 'block', kind: 'quote' } },
+  { id: 'bullet', group: '文字', label: '项目列表', hint: '也可输入 - 和空格', keywords: 'liebiao lb xiangmu xm bullet list', icon: List, choice: { type: 'block', kind: 'bullet' } },
+  { id: 'ordered', group: '文字', label: '编号列表', hint: '步骤请用"新步骤"', keywords: 'bianhao bh numbered ordered list', icon: ListOrdered, choice: { type: 'block', kind: 'ordered' } },
+  // Named parameters (已有参数) come here, between 文字 and 内容.
   { id: 'table', group: '内容', label: '表格', hint: '配方表的列可标体系', keywords: 'biaoge bg table', icon: Table2, choice: { type: 'table' } },
   { id: 'image', group: '内容', label: '图片', hint: '选择或拖入', keywords: 'tupian tp image', icon: ImagePlus, choice: { type: 'image' } },
   { id: 'file', group: '内容', label: '文件', hint: '选择或拖入附件', keywords: 'wenjian wj file attachment fujian', icon: Paperclip, choice: { type: 'file' } },
@@ -52,8 +60,6 @@ const items: Item[] = [
   { id: 'result-template', group: '内容', label: '结果模板', hint: '字段、数据表与文件要求', keywords: 'jieguo jg moban mb result template', icon: ClipboardList, choice: { type: 'result-template' } },
   { id: 'embedded-tool', group: '内容', label: '嵌入工具', hint: '已有工具、链接或应用路径', keywords: 'qianru qr gongju gj embed tool plate', icon: Wrench, choice: { type: 'embedded-tool' } },
 ];
-
-export type InsertMenuState = { mode: 'slash'; from: number; query: string; anchor: { top: number; left: number; bottom: number } } | { mode: 'button'; query: ''; anchor: { top: number; left: number; bottom: number } };
 
 /** Named parameters to place again in the text, e.g. a reagent linked to the material table. */
 function parameterItems(systems: ProtocolSystems | undefined): Item[] {
@@ -63,41 +69,8 @@ function parameterItems(systems: ProtocolSystems | undefined): Item[] {
   });
 }
 
-/** The one insert menu, for "/" while typing and the "＋ 插入" button: steps, quantities, environment, equipment, programs, calculations, parameters, content. */
-export function InsertMenu({ state, stepsAllowed, systems, onChoose, onClose, keyRef }: { state: InsertMenuState; stepsAllowed: boolean; systems: ProtocolSystems | undefined; onChoose: (choice: InsertChoice) => void; onClose: () => void; keyRef: React.MutableRefObject<((event: KeyboardEvent) => boolean) | null> }) {
-  const [active, setActive] = useState(0);
-  const [filter, setFilter] = useState('');
-  const query = (state.mode === 'slash' ? state.query : filter).trim().toLowerCase();
-  const visible = useMemo(() => {
-    const all = items.flatMap(item => item.group === '内容' && item.id === 'table' ? [...parameterItems(systems), item] : [item]);
-    return all.filter(item => (stepsAllowed || item.choice.type !== 'step') && (!query || item.label.toLowerCase().includes(query) || item.keywords.includes(query) || item.hint.toLowerCase().includes(query)));
-  }, [query, stepsAllowed, systems]);
-  const panel = useRef<HTMLDivElement>(null);
-  const list = useRef<HTMLDivElement>(null);
-  const style = useAnchoredPosition(state.anchor, panel, [visible.length]);
-  useDismiss(panel, null, onClose);
-  const [seenQuery, setSeenQuery] = useState(query);
-  if (seenQuery !== query) { setSeenQuery(query); setActive(0); }
-  useEffect(() => {
-    keyRef.current = event => {
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setActive(index => (index + (event.key === 'ArrowDown' ? 1 : -1) + Math.max(1, visible.length)) % Math.max(1, visible.length)); return true; }
-      if (event.key === 'Enter' && visible[active]) { event.preventDefault(); onChoose(visible[active].choice); return true; }
-      if (event.key === 'Escape') { event.preventDefault(); onClose(); return true; }
-      return false;
-    };
-    return () => { keyRef.current = null; };
-  }, [keyRef, visible, active, onChoose, onClose]);
-  useEffect(() => { list.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' }); }, [active]);
-  return createPortal(<div ref={panel} className="ln-insert-menu" style={style} role="dialog" aria-label="插入参数或工具">
-    {state.mode === 'button' ? <input className="ln-insert-filter" autoFocus placeholder="搜索：体积、离心、tj…" aria-label="搜索参数或工具" value={filter} onChange={event => setFilter(event.target.value)}
-      onKeyDown={event => { if (keyRef.current?.(event.nativeEvent)) event.stopPropagation(); }} /> : null}
-    <div ref={list} className="ln-insert-list" role="listbox" aria-label="参数与工具">
-      {visible.map((item, index) => { const header = index === 0 || visible[index - 1].group !== item.group ? item.group : null; const Icon = item.icon; return <div key={item.id}>
-        {header ? <p className="ln-insert-group">{header}</p> : null}
-        <button className="focus-ring" type="button" role="option" aria-selected={index === active} data-index={index} onMouseEnter={() => setActive(index)} onMouseDown={event => event.preventDefault()} onClick={() => onChoose(item.choice)}>
-          <Icon aria-hidden /><span><strong>{item.label}</strong><small>{item.hint}</small></span>
-        </button></div>; })}
-      {!visible.length ? <p className="ln-insert-empty">没有匹配的参数或工具</p> : null}
-    </div>
-  </div>, document.body);
+/** The Protocol's "/" menu (also opened by a block's ＋): steps, quantities, environment, equipment, programs, calculations, text, parameters, content. */
+export function InsertMenu({ state, stepsAllowed, systems, onChoose, onClose, keyRef }: { state: EditorCommandMenuState; stepsAllowed: boolean; systems: ProtocolSystems | undefined; onChoose: (choice: InsertChoice) => void; onClose: () => void; keyRef: CommandKeyHandler }) {
+  const commands = useMemo(() => items.flatMap(item => item.id === 'table' ? [...parameterItems(systems), item] : [item]).filter(item => stepsAllowed || item.choice.type !== 'step'), [stepsAllowed, systems]);
+  return <EditorCommandMenu state={state} commands={commands} label="插入参数或工具" searchPlaceholder="搜索：体积、离心、tj…" emptyText="没有匹配的参数或工具" onChoose={onChoose} onClose={onClose} keyRef={keyRef} />;
 }

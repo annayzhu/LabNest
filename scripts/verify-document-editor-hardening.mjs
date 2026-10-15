@@ -14,135 +14,59 @@ async function findReportEditor(page) {
   return await editLink.count() ? editLink.getAttribute("href") : null;
 }
 
-async function assertToolbar(page, route, ariaLabel) {
+/** Notion-style writing in every editor: no formatting toolbar; a bubble over selected text; ⋮⋮ beside the block; "/" to insert. */
+async function assertWritingSurface(page, route) {
   await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
-  const toolbar = page.getByRole("toolbar", { name: ariaLabel }).first();
-  await toolbar.waitFor();
-  // SSR exposes the toolbar before React has attached its menu handlers. Wait
-  // for route hydration so this assertion tests the interactive application.
+  const surface = page.locator(".ln-editor-surface").first();
+  await surface.waitFor();
+  // SSR shows the page before React attaches the editor's handlers.
   await page.waitForLoadState("networkidle");
+  assert.equal(await page.getByRole("toolbar", { name: /formatting/i }).count(), 0, `${route}: a formatting toolbar is still shown.`);
 
-  // Verify selection-preserving formatting before exercising Insert actions,
-  // because inserted NodeViews can contain their own non-editable paragraphs.
-  const editorParagraph = page.locator(".ProseMirror p").first();
+  const editorParagraph = surface.locator(".ProseMirror p").first();
   if (!(await editorParagraph.textContent())?.trim()) {
     await editorParagraph.click();
     await page.keyboard.type("Regression check");
   }
   await editorParagraph.selectText();
-  await page.waitForTimeout(120);
-  await toolbar.getByRole("button", { name: "Bold", exact: true }).click();
-  await page.waitForFunction((element) => Boolean(element?.querySelector("strong")), await editorParagraph.elementHandle(), { timeout: 2_000 })
-    .catch(() => undefined);
-  assert(await editorParagraph.locator("strong").count(), `${route}: Bold did not apply to the selected text.`);
+  const bubble = page.locator(".ln-selection-bubble");
+  await bubble.waitFor({ state: "visible" });
+  await bubble.getByRole("button", { name: /^加粗/ }).click();
+  await page.waitForFunction((element) => Boolean(element?.querySelector("strong")), await editorParagraph.elementHandle(), { timeout: 2_000 }).catch(() => undefined);
+  assert(await editorParagraph.locator("strong").count(), `${route}: Bold from the selection bubble did not apply.`);
   const boldWeight = Number.parseInt(await editorParagraph.locator("strong").first().evaluate((element) => getComputedStyle(element).fontWeight), 10);
   assert(boldWeight >= 700, `${route}: Bold markup exists but is not visibly rendered: ${boldWeight}.`);
-  await editorParagraph.selectText();
-  await toolbar.getByRole("button", { name: "Font", exact: true }).click();
-  const fontMenu = page.locator('[data-toolbar-menu="font"]');
-  await fontMenu.getByRole("menuitem", { name: "Arial", exact: true }).click();
-  assert(await editorParagraph.locator('span[style*="font-family: arial"]').count(), `${route}: Font choice did not apply to the selected text.`);
-  await editorParagraph.selectText();
-  await toolbar.getByRole("button", { name: "Line spacing", exact: true }).click();
-  await page.locator('[data-toolbar-menu="spacing"]').getByRole("menuitem", { name: "1.3×", exact: true }).click();
+
+  // ⋮⋮ beside the block: 格式 → 行距.
+  await editorParagraph.hover();
+  const grip = page.locator(".ln-block-handle button[aria-haspopup='menu']");
+  await grip.waitFor({ state: "visible" });
+  await grip.click();
+  const blockMenu = page.getByRole("menu", { name: "块操作" });
+  await blockMenu.waitFor();
+  await blockMenu.locator("label", { hasText: "行距" }).locator("select").selectOption("1.3");
   const paragraphLineHeight = await editorParagraph.evaluate((element) => {
     const style = getComputedStyle(element);
     return Number.parseFloat(style.lineHeight) / Number.parseFloat(style.fontSize);
   });
   assert(paragraphLineHeight > 1.25 && paragraphLineHeight < 1.36, `${route}: 1.3× line spacing did not change the paragraph box: ${paragraphLineHeight}.`);
 
-  for (const name of ["Paragraph style", "Font", "Font size", "Line spacing", "More", "Insert"]) {
-    const trigger = toolbar.getByRole("button", { name, exact: true });
-    if (!await trigger.count()) continue;
-    await trigger.focus();
-    await page.keyboard.press("Enter");
-    await page.waitForFunction((element) => element?.getAttribute("aria-expanded") === "true", await trigger.elementHandle(), { timeout: 2_000 })
-      .catch(() => undefined);
-    assert.equal(await trigger.getAttribute("aria-expanded"), "true", `${route}: ${name} did not open from the keyboard.`);
-    const menuId = await trigger.getAttribute("aria-controls");
-    assert(menuId, `${name} does not identify its menu.`);
-    const menu = page.locator(`#${menuId}`);
-    await menu.waitFor({ state: "visible" });
-    const menuBox = await menu.boundingBox();
-    assert(menuBox && menuBox.width > 40 && menuBox.height > 20, `${name} opened but its menu is clipped.`);
-    await page.waitForFunction(() => document.activeElement?.getAttribute("role") === "menuitem");
-    const focusedLabel = await page.locator(":focus").textContent();
-    assert.equal(await page.locator(":focus").getAttribute("role"), "menuitem", `${name} did not move keyboard focus into its menu.`);
-    await page.keyboard.press("ArrowDown");
-    assert.notEqual(await page.locator(":focus").textContent(), focusedLabel, `${name} does not support ArrowDown navigation.`);
-    await page.keyboard.press("Escape");
-    await page.waitForFunction((element) => element?.getAttribute("aria-expanded") === "false", await trigger.elementHandle(), { timeout: 2_000 })
-      .catch(() => undefined);
-    assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} did not close with Escape.`);
-    await trigger.click();
-    await menu.waitFor({ state: "visible" });
-    await menu.getByRole("menuitem").first().waitFor();
-    const firstAction = menu.getByRole("menuitem").first();
-    assert(await firstAction.count(), `${name} has no actionable menu item.`);
-    await firstAction.click();
-    assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} action did not close the menu.`);
-    await trigger.click();
-    await menu.waitFor({ state: "visible" });
-    await page.mouse.click(8, 8);
-    assert.equal(await trigger.getAttribute("aria-expanded"), "false", `${name} did not close after an outside click.`);
-  }
-
-  for (const name of ["Paragraph style", "Font", "Font size", "Line spacing"]) {
-    const control = toolbar.getByRole("button", { name, exact: true });
-    const box = await control.boundingBox();
-    assert(box && box.height >= 24, `${name} is clipped.`);
-  }
-
-  const toolbarHost = toolbar.locator("xpath=ancestor::*[contains(@class, 'ln-document-toolbar-host')]").first();
-  if (await toolbarHost.count() && page.viewportSize()?.width >= 1024) {
-    const toolbarOverflow = await toolbarHost.evaluate((element) => ({ client: element.clientWidth, scroll: element.scrollWidth }));
-    assert(toolbarOverflow.scroll <= toolbarOverflow.client + 2, `Toolbar scrolls horizontally at desktop width: ${JSON.stringify(toolbarOverflow)}`);
-  }
-
-}
-
-async function assertNamedStylesAcrossEditors(page) {
-  const styleName = `QC emphasis ${Date.now()}`;
-  const renamedStyle = `${styleName} revised`;
-  await page.goto(`${baseUrl}/protocols/new`, { waitUntil: "networkidle" });
-  const protocolToolbar = page.getByRole("toolbar", { name: "Protocol formatting" }).first();
-  const paragraph = page.locator(".ProseMirror p").first();
-  await paragraph.click();
-  await page.keyboard.type("Named style cross-editor check");
-  await paragraph.selectText();
-  await protocolToolbar.getByRole("button", { name: "Bold", exact: true }).click();
-  await protocolToolbar.getByRole("button", { name: "More", exact: true }).click();
-  await page.locator('[data-toolbar-menu="more"]').getByRole("menuitem", { name: "Save selection as style" }).click();
-  const saveDialog = page.getByRole("dialog");
-  await saveDialog.getByLabel("Style name").fill(styleName);
-  await saveDialog.getByRole("button", { name: "Save style" }).click();
-
-  await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
-  const resultToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
-  await resultToolbar.getByRole("button", { name: "Paragraph style", exact: true }).click();
-  const styleMenu = page.locator('[data-toolbar-menu="style"]');
-  assert.equal(await styleMenu.getByRole("menuitem", { name: styleName, exact: true }).count(), 1, "A named style created in Protocol is not available in Result.");
-  await styleMenu.getByRole("menuitem", { name: styleName, exact: true }).click();
-
-  await page.reload({ waitUntil: "networkidle" });
-  const reloadedToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
-  await reloadedToolbar.getByRole("button", { name: "More", exact: true }).click();
-  await page.locator('[data-toolbar-menu="more"]').getByRole("menuitem", { name: `Rename style: ${styleName}` }).click();
-  const renameDialog = page.getByRole("dialog");
-  await renameDialog.getByLabel("Style name").fill(renamedStyle);
-  await renameDialog.getByRole("button", { name: "Rename style" }).click();
-  await reloadedToolbar.getByRole("button", { name: "Paragraph style", exact: true }).click();
-  assert.equal(await page.locator('[data-toolbar-menu="style"]').getByRole("menuitem", { name: renamedStyle, exact: true }).count(), 1, "Renamed style was not persisted.");
-  await page.keyboard.press("Escape");
-  await reloadedToolbar.getByRole("button", { name: "More", exact: true }).click();
-  await page.locator('[data-toolbar-menu="more"]').getByRole("menuitem", { name: `Delete style: ${renamedStyle}` }).click();
-  await reloadedToolbar.getByRole("button", { name: "Paragraph style", exact: true }).click();
-  assert.equal(await page.locator('[data-toolbar-menu="style"]').getByText(renamedStyle, { exact: true }).count(), 0, "Deleted style remained in the shared style catalog.");
+  // "/" on a new line offers the editor's inserts, a table among them.
+  await editorParagraph.click();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/");
+  const insert = page.locator(".ln-insert-menu");
+  await insert.waitFor({ state: "visible" });
+  assert(await insert.getByRole("option", { name: /表格/ }).count(), `${route}: "/" does not offer a table.`);
   await page.keyboard.press("Escape");
 }
 
 async function assertZoom(page, route) {
   await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
+  // A new record opens with its metadata drawer; close it to reach the page's zoom.
+  const backToDocument = page.getByRole("button", { name: "返回主界面继续填写或保存" });
+  if (await backToDocument.isVisible().catch(() => false)) await backToDocument.click();
   const paper = page.locator(".document-a4-paper").first();
   const view = page.getByRole("group", { name: "Document view zoom" }).first();
   await view.waitFor();
@@ -193,8 +117,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 980 } });
   const protocolEditor = "/protocols/new";
-  await assertToolbar(page, protocolEditor, "Protocol formatting");
-  await assertNamedStylesAcrossEditors(page);
+  await assertWritingSurface(page, protocolEditor);
 
   await page.goto(`${baseUrl}${protocolEditor}`, { waitUntil: "networkidle" });
 
@@ -226,26 +149,27 @@ try {
   assert.equal(relevantHeaderBorder, metadataHeaderBorder, "Metadata and Relevant items use different divider colors.");
 
   for (const route of ["/research-plans/new", "/experiments/new", "/results/new"]) {
-    await assertToolbar(page, route, "Scientific document formatting");
+    await assertWritingSurface(page, route);
   }
-  await assertToolbar(page, "/entries/new", "Rich text formatting");
+  await assertWritingSurface(page, "/entries/new");
   const reportEditor = await findReportEditor(page);
-  if (reportEditor) await assertToolbar(page, reportEditor, "Scientific document formatting");
+  if (reportEditor) await assertWritingSurface(page, reportEditor);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
-  await page.getByRole("toolbar", { name: "Scientific document formatting" }).waitFor();
+  await page.locator(".ln-editor-surface").first().waitFor();
   const widths = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
   assert(widths.scroll <= widths.client + 1, `Document editor overflows on mobile: ${JSON.stringify(widths)}`);
 
   await page.goto(`${baseUrl}/results/new`, { waitUntil: "networkidle" });
-  const resultToolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
-  await resultToolbar.getByRole("button", { name: "Insert", exact: true }).click();
-  const resultInsertMenu = page.locator(`[data-toolbar-menu="insert"]`);
+  await page.locator(".ln-editor-surface .ProseMirror p").first().click();
+  await page.keyboard.type("/");
+  const resultInsertMenu = page.locator(".ln-insert-menu");
   await resultInsertMenu.waitFor({ state: "visible" });
-  for (const label of ["Table", "Metric", "Callout", "图片 / Image", "Dataset"]) {
-    assert.equal(await resultInsertMenu.getByText(label, { exact: true }).count(), 1, `Result Insert is missing ${label}.`);
+  for (const label of ["表格", "指标", "提示", "图片", "数据集"]) {
+    assert.equal(await resultInsertMenu.getByRole("option").filter({ has: page.getByText(label, { exact: true }) }).count(), 1, `Result "/" is missing ${label}.`);
   }
+  await page.keyboard.press("Escape");
 
   await page.setViewportSize({ width: 1440, height: 980 });
   for (const route of [protocolEditor, "/research-plans/new", "/experiments/new", "/results/new", "/entries/new", ...(reportEditor ? [reportEditor] : [])]) await assertZoom(page, route);

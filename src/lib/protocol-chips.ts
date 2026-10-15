@@ -56,6 +56,13 @@ export function parameterDisplayName(parameter: Pick<Parameter, 'label' | 'unit'
   return parameter.label.trim() || parameter.materialRef?.name || chipKindLabels[parameter.kind ?? chipKindForUnit(parameter.unit)];
 }
 
+/** A chip's full name where it is read alone (a record, a field list): "离心 · 时间" for a tool field, otherwise its name. */
+export function parameterLongName(parameter: Parameter, systems: Pick<ProtocolSystems, 'tools'>) {
+  const tool = parameter.ownerToolId ? systems.tools?.find(t => t.id === parameter.ownerToolId) : undefined;
+  const field = tool?.fields.find(f => f.parameterId === parameter.id);
+  return tool ? `${tool.method?.trim() || toolSpecs[tool.kind].label} · ${toolSpecs[tool.kind].fields.find(f => f.key === field?.key)?.label ?? parameterDisplayName(parameter)}` : parameterDisplayName(parameter);
+}
+
 const superscript = (exponent: number) => String(exponent).replace(/[-0-9]/g, digit => '⁻⁰¹²³⁴⁵⁶⁷⁸⁹'['-0123456789'.indexOf(digit)]);
 // Cell numbers and titers read as 247,500 or 2.5×10⁶, the way they are written at the bench.
 const countLike = (unit: string) => ['cells', 'cell-concentration', 'TU/mL', 'IU/mL', 'PFU/mL', 'TCID50/mL', 'VG/mL'].includes(units[normalizeUnit(unit)]?.dimension ?? '');
@@ -146,6 +153,11 @@ export function chipViewText(view: ChipView): string {
 export function protocolChipText(id: string, systems: ProtocolSystems | undefined, resolution?: Record<string, Resolved>): string {
   return chipViewText(protocolChipView(id, systems, resolution));
 }
+
+/** The parameter a field holding exactly one chip refers to, e.g. a mix card amount "{{p-1}}". */
+export const chipReferenceId = (text: string) => /^\{\{([\w-]+)\}\}$/.exec(text.trim())?.[1];
+/** Amounts that are consumed from stock: volumes, masses and amounts of substance. */
+export const isMaterialAmount = (unit: string) => ['volume', 'mass', 'amount'].includes(units[normalizeUnit(unit)]?.dimension ?? '');
 
 const chipReference = /\{\{([\w-]+)\}\}/g;
 // Identities, links and file names are never authored text, even when they happen to contain braces.

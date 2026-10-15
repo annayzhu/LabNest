@@ -14,5 +14,5 @@ export function experimentMethodNames(snapshot: unknown): string[] {
 
 export function experimentPlanName(snapshot:unknown,currentName:string|null):string {
   const saved=snapshot && typeof snapshot==='object' && 'researchPlanTitle' in snapshot ? snapshot.researchPlanTitle : undefined;
-  return typeof saved==='string' && saved.trim() ? saved : currentName || '未记录';
+  return typeof saved==='string' && saved.trim() ? saved : currentName || '未选择';
 }

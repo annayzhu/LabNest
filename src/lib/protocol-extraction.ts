@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { programSummary } from "./protocol-program";
+import { mixSummary } from "./protocol-mix";
 import { AI_LIMITS, extractJsonPayload } from "./ai";
 import { evaluateFormula, type ProtocolParameterValues } from "./protocol";
 import { richTextPlainText, type ProtocolDocument, projectProtocolDocument } from "./protocol-document";
@@ -112,6 +113,8 @@ export function buildExtractionContext(document: ProtocolDocument, projection: P
           return [`Timer: ${block.label} ${block.durationMinutes} min${block.notes ? ` (${block.notes})` : ""}`];
         case "program":
           return [programSummary(block)];
+        case "mix":
+          return [mixSummary(block)];
         case "table":
           return [tableToMarkdown(block.rows, block.caption)];
         default:

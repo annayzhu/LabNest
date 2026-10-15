@@ -181,7 +181,7 @@ export function EntryComposer({
   const [deviceCreatedAt] = useState(() => new Date().toISOString());
   const { t } = useI18n();
   const mediaInputPrefix = useId();
-  const toolbarHostId = `${mediaInputPrefix}-document-toolbar`;
+  const actionsHostId = `${mediaInputPrefix}-document-actions`;
   const imageInputId = `${mediaInputPrefix}-photos`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
   const fileInputId = `${mediaInputPrefix}-files`;
@@ -555,7 +555,7 @@ export function EntryComposer({
         className="entry-editor-document"
         toolbar={
           <>
-            <div id={toolbarHostId} className="ln-document-toolbar-host" />
+            <div id={actionsHostId} className="ln-document-actions-host" />
             <DocumentPrintButton />
           </>
         }
@@ -585,7 +585,7 @@ export function EntryComposer({
             onChange={(value) => updateField("contentMarkdown", value)}
             placeholder="Observation, decision, deviation, or follow-up…"
             minHeightClass="min-h-[var(--ln-entry-editor-body-min-height)]"
-            toolbarHostId={toolbarHostId}
+            actionsHostId={actionsHostId}
           />
         </div>
       </StandaloneDocumentEditorViewport>

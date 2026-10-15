@@ -1,10 +1,12 @@
 import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document';
 import type { ProtocolStep } from './types';
 import { programSummary } from './protocol-program';
+import { mixSummary } from './protocol-mix';
 
 export function executionBlockText(block: ProtocolContentBlock): string {
   if ('text' in block) return block.text;
   if (block.type === 'program') return programSummary(block);
+  if (block.type === 'mix') return mixSummary(block);
   if (block.type === 'rich_text') return block.nodes.map(n => n.content.map(r => r.text).join('')).join('\n');
   if (block.type === 'checklist') return block.items.join('\n');
   if (block.type === 'table') return block.rows.map(row => row.join(' · ')).join('\n');
@@ -123,7 +125,15 @@ export function projectProtocolExecution(document: ProtocolDocument) {
   const unwritten = new Set(blocks.filter(block => block.execution?.role === 'step' && block.execution.format === 'block' && !starts.includes(block)).map(block => block.execution?.stepId ?? block.id));
   const orphan = (block: ProtocolContentBlock) => block.execution?.role === 'detail' && !ids.includes(block.execution.stepId ?? '') && !unwritten.has(block.execution.stepId ?? '');
   const invalid = ids.some((id,index)=>ids.indexOf(id)!==index) || blocks.some(orphan);
-  const commonBlocks = blocks.filter(block => block.execution?.role === 'info' || orphan(block));
+  // Notes in the Steps section: no number, no check, and an empty line is not a note.
+  const commonBlocks = blocks.filter(block => (block.execution?.role === 'info' || orphan(block)) && !isEmpty(block));
+  const notePlacement: NotePlacement = {};
+  let waiting: string[] = [];
+  for (const block of blocks) {
+    if (commonBlocks.includes(block)) waiting.push(block.id);
+    else if (starts.includes(block)) { for (const id of waiting) notePlacement[id] = block.execution?.stepId ?? block.id; waiting = []; }
+  }
+  for (const id of waiting) notePlacement[id] = null;
   const steps: ProtocolStep[] = starts.map((start, index) => {
     const source_ref = ids[index];
     if (start.execution?.format === 'block') {
@@ -140,7 +150,25 @@ export function projectProtocolExecution(document: ProtocolDocument) {
     content_blocks = executionBodyWithoutTitle(content_blocks, title);
     return {source_ref,order:index+1,title,description:content_blocks.map(executionBlockText).filter(Boolean).join('\n'),content_blocks,requires_confirmation:start.execution?.requiresConfirmation??true,allows_deviation:start.execution?.allowsDeviation??true};
   });
-  return {steps,commonBlocks,executionNeedsReview:executionNeedsReview || invalid || document.executionConfirmed===false};
+  return {steps,commonBlocks,notePlacement,executionNeedsReview:executionNeedsReview || invalid || document.executionConfirmed===false};
+}
+
+/** Where each note sits among the steps: the step it was written before, or `null` after the last step. */
+export type NotePlacement = Record<string, string | null>;
+
+/**
+ * Notes keep their written place during execution: each goes before the first shown step at or after the one it was written
+ * before (a step this run does not show passes its notes on); the rest follow the last shown step.
+ */
+export function notesAmongSteps<T extends { id: string }>(notes: readonly T[], placement: NotePlacement, order: readonly string[], shown: (ref: string) => boolean = () => true) {
+  const before = new Map<string, T[]>(), after: T[] = [];
+  for (const note of notes) {
+    const at = placement[note.id];
+    const target = order.slice(at === null ? order.length : Math.max(0, at === undefined ? 0 : order.indexOf(at))).find(shown);
+    if (target === undefined) after.push(note);
+    else before.set(target, [...(before.get(target) ?? []), note]);
+  }
+  return { before, after };
 }
 
 export function confirmExecutionRoles(document: ProtocolDocument, blocks = proposeExecutionRoles(document)): ProtocolDocument {

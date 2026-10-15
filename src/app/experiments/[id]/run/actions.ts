@@ -66,6 +66,7 @@ const stepTimerSchema = z.object({
   stepId: z.string().min(1),
   timerIntent: z.enum(["start", "pause", "reset", "finish"]),
   durationMinutes: z.coerce.number().finite().min(0.1).max(24 * 60).optional(),
+  parameterId: z.string().min(1).max(120).optional(),
 });
 
 function optionalText(value: FormDataEntryValue | null) {
@@ -256,6 +257,7 @@ export async function updateStepTimer(
       stepId: formData.get("stepId"),
       timerIntent: formData.get("timerIntent"),
       durationMinutes: optionalText(formData.get("durationMinutes")),
+      parameterId: optionalText(formData.get("parameterId")),
     });
     await updateRunTimer({ ...parsed, expectedRevision: formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined });
   } catch (error) {
@@ -370,3 +372,43 @@ export async function disconnectWatchRun(_previous: { message?: string; error?: 
   try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(String(form.get('experimentId'))); return { message: '此实验的已连接手表已断开。' }; }
   catch (error) { return { error: formActionErrorMessage(error, '断开失败') }; }
 }
+
+/** The record and edit pages check one step or record its deviation at a time; the Run page stays the bench view. */
+export async function recordExecutionStep(request: { experimentId: string; stepId: string; clientMutationId: string; expectedRevision?: number; completed?: boolean; deviation?: { type: string; note: string; impact?: string; author?: string } | null }): Promise<{ error?: string }> {
+  try {
+    const { updateExecutionStep } = await import('@/lib/execution-step.server');
+    await updateExecutionStep(request as Parameters<typeof updateExecutionStep>[0]);
+  } catch (error) { return { error: formActionErrorMessage(error, '未保存，请重试') }; }
+  revalidatePath(`/experiments/${request.experimentId}`);
+  revalidatePath(`/experiments/${request.experimentId}/edit`);
+  revalidatePath(`/experiments/${request.experimentId}/run`);
+  return {};
+}
+
+/** A value filled at execution, or a calculation confirmed, from inside a step. Same checks as the preparation form; the adopted system stays as confirmed. */
+export async function updateStepInputs(request: { experimentId: string; versionId: string; expectedRevision: number; actualInputs?: Record<string, { value: number; unit: string }>; confirmCalculations?: string[] }): Promise<{ error?: string }> {
+  try {
+    const experiment = await prisma.experiment.findUniqueOrThrow({ where: { id: request.experimentId }, include: { protocolRun: true, steps: true } });
+    const view = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+    const version = view.versions.find(item => item.id === request.versionId);
+    if (!version?.document.systems) throw new Error('此规程不属于本次执行');
+    const adopted = view.plan.versions[request.versionId];
+    if (!adopted && version.document.systems.dimensions.length) throw new Error('请先在实验准备中确认本次体系');
+    await updateRunSystemSelections({ experimentId: request.experimentId, versionId: request.versionId, expectedRevision: request.expectedRevision, selections: adopted?.selections ?? {}, actualInputs: { ...adopted?.actualInputs, ...request.actualInputs }, confirmCalculations: request.confirmCalculations ?? [] }, [request.versionId]);
+  } catch (error) { return { error: formActionErrorMessage(error, '未保存，请重试') }; }
+  revalidatePath(`/experiments/${request.experimentId}/run`);
+  revalidatePath(`/experiments/${request.experimentId}`);
+  return {};
+}
+
+type MixResult = { error?: string; mixId?: string };
+async function mixAction(experimentId: string, work: () => Promise<unknown>): Promise<MixResult> {
+  try { const value = await work(); revalidatePath(`/experiments/${experimentId}/run`); revalidatePath(`/experiments/${experimentId}`); return typeof value === 'string' ? { mixId: value } : {}; }
+  catch (error) { return { error: formActionErrorMessage(error, '未保存，请重试') }; }
+}
+/** 配液卡: confirm, cross off lines, set 本次数量, make one at the bench, offer it to the Protocol. */
+export async function confirmRunMix(request: Parameters<typeof import('@/lib/run-mix.server').confirmRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).confirmRunMix(request)); }
+export async function strikeRunMixLine(request: Parameters<typeof import('@/lib/run-mix.server').strikeRunMixLine>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).strikeRunMixLine(request)); }
+export async function setRunQuantities(request: Parameters<typeof import('@/lib/run-mix.server').setRunQuantities>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).setRunQuantities(request)); }
+export async function createRunMix(request: Parameters<typeof import('@/lib/run-mix.server').createRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).createRunMix(request)); }
+export async function proposeRunMix(request: Parameters<typeof import('@/lib/run-mix.server').proposeRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).proposeRunMix(request)); }

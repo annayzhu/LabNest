@@ -1,5 +1,4 @@
 "use client";
-import { previewRunConsumption, type RunConsumptionSource } from "@/lib/run-consumption";
 import { QuantityInput } from "./QuantityInput";
 import { convert, parseScalar } from "@/lib/calculators/quantities";
 import {newClientMutationId} from "@/lib/client-mutation-id";
@@ -35,16 +34,11 @@ export function RunMaterials({
   rows,
   stock,
   editable,
-  consumptionSources = [],
-  parameterValues = {},
 }: {
-  consumptionSources?: RunConsumptionSource[];
-  parameterValues?: Record<string,string|number|boolean>;
   experimentId: string;
   rows: Row[];
   stock: Stock[];
   editable: boolean;
-  planned?: {materialName:string;quantity:number;unit:string;formula?:string}[];
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -53,16 +47,16 @@ export function RunMaterials({
   const [selection, setSelection] = useState<string[]>([]);
   const [review, setReview] = useState(false);
   const [sessionKey, setSessionKey] = useState('create');
-  type Draft = {draftId:string|null;name:string;expected:string;actual:string;unit:string;source:string;inventory:string;container:string;correction:string|null;mode:string};
+  type Draft = {draftId:string|null;name:string;expected:string;actual:string;unit:string;source:string;inventory:string;container:string;correction:string|null};
   const drafts = useRef<Record<string,Draft>>({});
   const [dialogActive,setDialogActive] = useState(false);
-  function applyDraft(d:Draft) {setDraftId(d.draftId);setName(d.name);setExpected(d.expected);setActual(d.actual);setUnit(d.unit);setSource(d.source);setInventory(d.inventory);setContainer(d.container);setCorrection(d.correction);setMode(d.mode);}
-  const blankDraft: Draft = {draftId:null,name:'',expected:'',actual:'',unit:'mL',source:'manual',inventory:'',container:'',correction:null,mode:'manual'};
-  function rowDraft(row: Row, correcting=false): Draft {return {draftId:correcting?null:row.id,name:row.name,expected:row.expected===null?'':String(row.expected),actual:row.actual===null?'':String(row.actual),unit:row.unit,source:correcting?`correction:${row.id}`:row.source,inventory:row.inventoryItemId??'',container:correcting?'':row.containerId??'',correction:correcting?row.id:row.correctionOfId,mode:'manual'};}
+  function applyDraft(d:Draft) {setDraftId(d.draftId);setName(d.name);setExpected(d.expected);setActual(d.actual);setUnit(d.unit);setSource(d.source);setInventory(d.inventory);setContainer(d.container);setCorrection(d.correction);}
+  const blankDraft: Draft = {draftId:null,name:'',expected:'',actual:'',unit:'mL',source:'manual',inventory:'',container:'',correction:null};
+  function rowDraft(row: Row, correcting=false): Draft {return {draftId:correcting?null:row.id,name:row.name,expected:row.expected===null?'':String(row.expected),actual:row.actual===null?'':String(row.actual),unit:row.unit,source:correcting?`correction:${row.id}`:row.source,inventory:row.inventoryItemId??'',container:correcting?'':row.containerId??'',correction:correcting?row.id:row.correctionOfId};}
   function openDialog(key='create', initial=blankDraft) {
     if (busy) return;
     if(key!==sessionKey) {
-      drafts.current[sessionKey]={draftId,name,expected,actual,unit,source,inventory,container,correction,mode};
+      drafts.current[sessionKey]={draftId,name,expected,actual,unit,source,inventory,container,correction};
       applyDraft(drafts.current[key] ?? initial);
       setSessionKey(key);
     }
@@ -79,11 +73,6 @@ export function RunMaterials({
     } catch(error) { setStatus(error instanceof Error ? error.message : '删除失败，请重试'); }
     finally {setBusy(false);}
   }
-  const [mode,setMode] = useState('manual');
-  const [versionId,setVersionId] = useState(consumptionSources[0]?.id ?? '');
-  const [parameterDraft,setParameterDraft] = useState(parameterValues);
-  const [preview,setPreview] = useState<ReturnType<typeof previewRunConsumption>>([]);
-  const [previewError,setPreviewError] = useState('');
   const [name, setName] = useState("");
   const [expected, setExpected] = useState("");
   const [actual, setActual] = useState("");
@@ -147,7 +136,7 @@ export function RunMaterials({
       setExpected("");
       setActual("");
       setCorrection(null);
-      setInventory('');setContainer('');setSource('manual');setMode('manual');setPreview([]);
+      setInventory('');setContainer('');setSource('manual');
       delete drafts.current[sessionKey];setSessionKey('create');applyDraft(drafts.current.create ?? blankDraft);
     } catch (error) {
       setStatus(
@@ -241,8 +230,7 @@ export function RunMaterials({
             onKeyDown={preventImplicitEnterSubmit}
             className="mt-4 flex flex-wrap items-end gap-3"
           >
-            <fieldset disabled={busy} className="contents"><label className="text-sm">添加方式<select aria-label="添加方式" className={formInputClass} value={mode} onChange={e=>{setMode(e.target.value);if(e.target.value==='manual')setSource('manual');}}><option value="manual">手动填写</option><option value="protocol">依据规程</option></select></label>
-            {mode==='protocol' ? <div className="w-full space-y-3"><label>规程版本<select aria-label="规程版本" className={formInputClass} value={versionId} onChange={e=>{setVersionId(e.target.value);setPreview([]);}}>{consumptionSources.map(v=><option key={v.id} value={v.id}>{v.label}</option>)}</select></label>{!consumptionSources.length ? <p>锁定版本没有可用的耗材规则。</p> : null}{consumptionSources.find(v=>v.id===versionId)?.keys.map(key=><label key={key} className="block">{key}<input className={formInputClass} value={String(parameterDraft[key]??'')} onChange={e=>{setParameterDraft(p=>({...p,[key]:e.target.value}));setPreview([]);}}/></label>)}<Button type="button" onClick={()=>{try{const selected=consumptionSources.find(v=>v.id===versionId);if(!selected)throw Error('请选择含耗材规则的锁定版本。');setPreview(previewRunConsumption(selected,parameterDraft));setPreviewError('');}catch(e){setPreviewError(e instanceof Error?e.message:'参数无效');}}}>计算预计量</Button>{previewError ? <p role="alert" className="text-error">{previewError}</p>:null}{preview.map(p=><div key={p.source}><p>{p.materialName}：{p.quantity} {p.unit}</p><p className="text-sm text-muted">{p.basis}</p><Button type="button" disabled={rows.some(row=>row.source===p.source || row.source.startsWith(p.source+'|'))} onClick={()=>{setName(p.materialName);setExpected(String(p.quantity));setUnit(p.unit);setSource(p.source+'|'+p.basis);}}>选择此项</Button>{rows.some(row=>row.source===p.source || row.source.startsWith(p.source+'|'))?<span>已添加，请编辑原记录</span>:null}</div>)}</div>:null}
+            <fieldset disabled={busy} className="contents">
             <label className="text-sm">
               名称
               <input
@@ -299,7 +287,7 @@ export function RunMaterials({
               </label>
             ) : null}
             <Button type="button" disabled={!expected.trim()} onClick={()=>setActual(expected)}>将预计量确认为实际量</Button>
-            <Button type="submit" disabled={busy || (mode==='protocol' && !source.startsWith('Consumption:'))}>
+            <Button type="submit" disabled={busy}>
               {correction ? "保存更正" : "保存使用记录"}
             </Button>
             <Button type="submit" data-continue="true" disabled={busy}>添加并继续</Button>

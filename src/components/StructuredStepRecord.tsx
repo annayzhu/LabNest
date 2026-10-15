@@ -57,16 +57,18 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
     return () => cancelAnimationFrame(frame);
   }, [state.savedAt, draftKey, context, recorded]);
   if (!step || !structured) return null;
+  // Fields the Protocol lists for this step; a chip's own actual value is recorded by clicking the chip.
+  const ruleFields = step.actualFields.filter(field => !field.source);
   const skipped = structured.plan.skips[stepId];
   const queuedActual = [...orderMobileMutations(queued)].reverse().find(item=>item.actionType==='step.record' && item.payload.intent==='actual');
   const pendingValues = queuedActual?.actionType==='step.record' ? queuedActual.payload.values : undefined;
-  const matchesPending = Boolean(pendingValues && step.actualFields.every(field=>values[field.id]?.trim() && Number(values[field.id])===pendingValues[field.id]?.value && field.unit===pendingValues[field.id]?.unit));
-  const hasChanges = step.actualFields.some(field => values[field.id] !== undefined &&
+  const matchesPending = Boolean(pendingValues && ruleFields.every(field=>values[field.id]?.trim() && Number(values[field.id])===pendingValues[field.id]?.value && field.unit===pendingValues[field.id]?.unit));
+  const hasChanges = ruleFields.some(field => values[field.id] !== undefined &&
     (values[field.id].trim() === '' || Number(values[field.id]) !== structured.plan.actualValues[stepId]?.[field.id]?.value));
   const submit = (intent: 'actual' | 'skip' | 'unskip') => {
     const form = new FormData();
     form.set('experimentId', experimentId); form.set('stepId', stepId); form.set('executionPlanRevision', String(structured.plan.revision)); form.set('clientMutationId', newClientMutationId()); form.set('intent', intent); form.set('reason', reason);
-    form.set('values', JSON.stringify(Object.fromEntries(step.actualFields.filter(f => values[f.id]?.trim()).map(f => [f.id, { value: Number(values[f.id]), unit: f.unit }]))));
+    form.set('values', JSON.stringify(Object.fromEntries(ruleFields.filter(f => values[f.id]?.trim()).map(f => [f.id, { value: Number(values[f.id]), unit: f.unit }]))));
     if (!navigator.onLine) {
       try {
         const queueContext = runQueueContext(`${step.versionId.split('@')[0]}:${step.source_ref}`);
@@ -79,11 +81,11 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
   };
   return <section className="mt-3 grid gap-2" data-structured-step-record>
     {offlineMessage || queued.length ? <p role="status" className="text-warning">{offlineMessage || `本步骤有 ${queued.length} 条本机记录等待核对或同步。`}</p> : null}
-    {reviewDraft ? <div role="alert" className="text-warning"><p>此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。</p><ul>{Object.entries(reviewDraft.values).map(([id, value]) => <li key={id}>{reviewDraft.contextChanged ? "此前实际值" : step.actualFields.find(field => field.id === id)?.label ?? "此前实际值"}：{value || "未填写"}{!reviewDraft.contextChanged ? ` ${step.actualFields.find(field => field.id === id)?.unit ?? ""}` : "（请核对原操作单位）"}</li>)}{reviewDraft.reason ? <li>未提交原因：{reviewDraft.reason}</li> : null}</ul>
+    {reviewDraft ? <div role="alert" className="text-warning"><p>此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。</p><ul>{Object.entries(reviewDraft.values).map(([id, value]) => <li key={id}>{reviewDraft.contextChanged ? "此前实际值" : ruleFields.find(field => field.id === id)?.label ?? "此前实际值"}：{value || "未填写"}{!reviewDraft.contextChanged ? ` ${ruleFields.find(field => field.id === id)?.unit ?? ""}` : "（请核对原操作单位）"}</li>)}{reviewDraft.reason ? <li>未提交原因：{reviewDraft.reason}</li> : null}</ul>
       {!reviewDraft.contextChanged ? <Button type="button" onClick={() => { setValues(reviewDraft.values); setReason(reviewDraft.reason); preserve(reviewDraft.values, reviewDraft.reason); setReviewDraft(null); }}>核对后保留本机草稿</Button> : <p>操作或单位已变化，请按当前要求重新填写。</p>}
       <Button type="button" onClick={() => { setValues({}); setReason(''); setReviewDraft(null); try { sessionStorage.removeItem(draftKey); } catch { /* Best effort. */ } }}>放弃本机草稿</Button></div> : null}
     <p role="status">{completed ? '已完成' : skipped ? `已跳过 · ${skipped.reason}（不计为完成）` : step.blocked ? '待确定 · 请确认体系及依赖参数' : step.optional ? '可选操作' : '必需操作'}</p>
-    {step.actualFields.map(field => {
+    {ruleFields.map(field => {
       const saved = structured.plan.actualValues[stepId]?.[field.id];
       const draft = values[field.id];
       const dirty = draft !== undefined && (draft.trim() === '' || Number(draft) !== saved?.value);
@@ -93,7 +95,7 @@ export function StructuredStepRecord({ experimentId, stepId, structured, editabl
       </label>;
     })}
     {editable && !completed ? <>
-      {step.actualFields.length ? <Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || !hasChanges || matchesPending} onClick={() => submit('actual')}>{pending ? '正在保存…' : '保存实际值'}</Button> : null}
+      {ruleFields.length ? <Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || !hasChanges || matchesPending} onClick={() => submit('actual')}>{pending ? '正在保存…' : '保存实际值'}</Button> : null}
       <details><summary className="min-h-11 cursor-pointer">跳过操作</summary><label>跳过原因<input className={formInputClass} disabled={pending || Boolean(reviewDraft)} value={reason} onChange={e => { setReason(e.target.value); preserve(values, e.target.value); }}/></label><Button type="button" size="sm" disabled={pending || step.blocked || Boolean(reviewDraft) || (!skipped && !reason.trim())} onClick={() => submit(skipped ? 'unskip' : 'skip')}>{skipped ? '撤销跳过' : '记录跳过'}</Button></details>
     </> : null}
     {state.error ? <p role="alert" className="text-error">{state.error}</p> : null}{state.message && !hasChanges ? <p role="status">{state.message}</p> : null}

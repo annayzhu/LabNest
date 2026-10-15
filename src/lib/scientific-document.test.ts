@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createScientificDocument, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
+import { createScientificDocument, experimentSections, normalizeResearchPlanDocument, normalizeResultDocument, normalizeScientificDocument, researchPlanSections, scientificDocumentFromStructuredRecord } from "./scientific-document";
 
 describe("Research Plan scientific document", () => {
   it("creates the current template modules without persisting compatibility aliases", () => {
@@ -115,5 +115,14 @@ describe("Result scientific document", () => {
     expect(document.sections.find((section) => section.key === "summary")?.blocks).toEqual([
       { id: "user-summary", type: "text", text: "RNA yield met the predefined acceptance criterion." },
     ]);
+  });
+});
+
+describe("Experiment document", () => {
+  it("reads 观察与媒体 last, after the summary, including records saved in the earlier order", () => {
+    const saved = { schemaVersion: 1, sections: ["background", "setup", "execution", "observations", "deviations", "conclusion"].map((key) => ({ key, title: key, blocks: [{ id: `${key}-1`, type: "text", text: key }] })) };
+    const document = normalizeScientificDocument(saved, experimentSections);
+    expect(document.sections.map((section) => section.key)).toEqual(["background", "setup", "execution", "deviations", "conclusion", "observations"]);
+    expect(document.sections.at(-1)!.blocks).toEqual([{ id: "observations-1", type: "text", text: "observations" }]);
   });
 });

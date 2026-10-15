@@ -5,6 +5,9 @@ import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import { resolveProtocolSystem, tableForSelection, targetApplicability, type ProtocolSelection, type ProtocolSystems } from '@/lib/structured-protocol';
 import { optionMarks } from '@/lib/protocol-chips';
 import { ChipRenderContext, ChipText } from './protocol/ChipText';
+import { MixCard } from './protocol/MixCard';
+import { protocolUsage } from '@/lib/protocol-mix';
+import { projectProtocolExecution } from '@/lib/protocol-execution';
 import { ConditionTags } from './protocol/ConditionTags';
 import { SystemMark } from './protocol/SystemMark';
 import { ProgramCard } from './protocol/ProgramCard';
@@ -188,6 +191,7 @@ export function ProtocolContentBlockView({ block, executionContext=false }: { bl
     return <div className="ln-protocol-tool-card"><Wrench aria-hidden /><div><p>{block.label || "Embedded tool"}</p><small>{block.sourceKind === "manifest" ? "LabNest tool" : block.sourceKind === "path" ? "Application path" : "External URL"}</small></div>{href ? <a href={href} target="_blank" rel="noreferrer">Open tool</a> : <span>Invalid location</span>}</div>;
   }
   if (block.type === "program") return <ProgramCard program={block} />;
+  if (block.type === "mix") return <MixCard mix={block} />;
   // Older timer blocks read as their duration; countdowns belong to each Run step.
   if (block.type === "timer") return <p className="text-sm text-muted">{block.label} · {block.durationMinutes} min{block.notes ? ` · ${block.notes}` : ""}</p>;
 
@@ -310,7 +314,7 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
         const body = <div className="ln-protocol-step-body">{owned.map((child, order) => order ? blockView(child) : <div key={child.id} className="document-block"><ProtocolContentBlockView block={readable(child)} /></div>)}</div>;
         const folded = systems && rules.length && (state("step", stepId) === "not-applicable" || state("block", owned[0].id) === "not-applicable");
         steps.push(<li key={stepId} className="ln-protocol-step" data-step-id={stepId}>
-          <span className="ln-protocol-step-gutter" aria-hidden><span className="ln-protocol-step-number is-static" /></span>
+          <span className="ln-protocol-step-gutter" aria-hidden><span className="ln-protocol-step-number" /></span>
           {folded ? <div className="ln-protocol-step-body"><Folded systems={systems!} rules={rules}>{body}</Folded></div> : body}
           {!folded && (rules.length || optional) ? <span className="ln-protocol-step-tags">{systems && rules.length ? <ConditionTags rules={rules} systems={systems} /> : null}{optional ? <span className="ln-condition-tag is-optional">可选</span> : null}</span> : null}
         </li>);
@@ -319,6 +323,8 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
     }
     return nodes;
   };
+  // What one reaction uses, read from the chips; any old formula table stays below as notes.
+  const usage = protocolUsage(document, projectProtocolExecution(document).steps);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
       <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
@@ -329,9 +335,18 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       {resolution?.issues.filter(issue => !issue.code.startsWith("parameter-")).length ? <p role="status" className="text-sm text-warning">{resolution.issues.filter(issue => !issue.code.startsWith("parameter-")).map(issue => issue.message).join("；")}</p> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       <ChipRenderContext.Provider value={chipContext}>
-        {document.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? sectionContent(section) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
+        {document.sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{usageHere ? <PerReactionUsage rows={usage} /> : null}{section.blocks.length ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>; })}
       </ChipRenderContext.Provider>
     </div>
   </DocumentCanvas>;
   return <DocumentOutlineWorkbench items={document.sections.map((section) => ({ id: `section-${section.key}`, label: section.title }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;
+}
+
+/** 每反应用量: the Protocol's material amounts and mix components, as the chips read under the current lens. */
+function PerReactionUsage({ rows }: { rows: ReturnType<typeof protocolUsage> }) {
+  return <figure className="ln-mix-card">
+    <figcaption><strong>每反应用量</strong><span>由参数块汇总；执行时乘以本次数量，完成时可据此扣减库存</span></figcaption>
+    <table><thead><tr><th scope="col">材料</th><th scope="col">用量</th><th scope="col">按</th><th scope="col">步骤</th></tr></thead>
+      <tbody>{rows.map(row => <tr key={row.key}><th scope="row">{row.name}</th><td><ChipText text={row.amount} /></td><td>{row.basis}</td><td>{row.step}</td></tr>)}</tbody></table>
+  </figure>;
 }

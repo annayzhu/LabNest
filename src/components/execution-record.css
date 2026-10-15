@@ -1,0 +1,93 @@
+/* 执行记录：每个规程一段，逐步列出步骤。新建实验的预览、记录页与编辑页共用。 */
+.ln-execution-record { display: grid; gap: 1rem; margin: 0 0 0.85rem; }
+.ln-execution-protocol { display: grid; gap: 0.5rem; min-width: 0; }
+.ln-execution-protocol + .ln-execution-protocol { padding-top: 0.9rem; border-top: 1px solid var(--hairline); }
+.ln-execution-protocol-heading { display: flex; align-items: baseline; gap: 0.55rem; min-width: 0; }
+.ln-execution-protocol-heading h3 { flex: 1; min-width: 0; margin: 0; font: 600 1.02rem/1.4 var(--font-document-heading); color: var(--ink); overflow-wrap: anywhere; }
+.ln-execution-protocol-index {
+  flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 1.45rem; height: 1.45rem;
+  border-radius: 999px; background: var(--moss); color: var(--surface); font: 600 var(--ln-control-font-size-xs)/1 var(--font-data); font-variant-numeric: tabular-nums;
+}
+.ln-execution-protocol-meta { flex: none; font: var(--ln-control-font-size-xs)/1.4 var(--font-data); color: var(--muted); white-space: nowrap; }
+.ln-execution-protocol-alert { margin: 0; padding-left: 2rem; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--warning); }
+.ln-execution-protocol-alert a { margin-left: 0.4rem; color: var(--moss); text-decoration: underline; }
+.ln-execution-disclosure {
+  display: inline-flex; align-items: center; gap: 0.25rem; min-height: 2rem; padding: 0; border: 0; background: none; cursor: pointer;
+  font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--moss);
+}
+.ln-execution-disclosure svg { width: 0.9rem; height: 0.9rem; transition: transform 160ms ease; }
+.ln-execution-disclosure svg[data-open] { transform: rotate(90deg); }
+
+.ln-execution-stretch { display: grid; gap: 0.7rem; min-width: 0; }
+.ln-execution-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.ln-execution-step { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; column-gap: 0.2rem; align-items: start; min-width: 0; }
+/* Numbers start on one line, as in the Protocol editor, so the notes between steps line up with them. */
+.ln-execution-step-number { grid-column: 1; padding: 0.3rem 0 0 var(--ln-step-number-x, 0.6rem); text-align: left; font: 500 var(--ln-control-font-size-xs)/1.4 var(--font-data); color: var(--muted); font-variant-numeric: tabular-nums; }
+/* A Protocol note where it was written among the steps: no number, nothing to check. */
+.ln-execution-note { display: grid; gap: 0.35rem; min-width: 0; margin-top: 0.45rem; color: var(--graphite); }
+.ln-execution-protocol .ln-execution-note { margin-top: 0; padding-left: var(--ln-step-number-x, 0.6rem); }
+.ln-execution-step-body { grid-column: 2; min-width: 0; }
+.ln-execution-step-body > * + * { margin-top: 0.35rem; }
+.ln-execution-step-title { margin: 0; min-width: 0; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.ln-execution-record-note { margin: 0; padding-left: 2rem; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--muted); }
+
+/* A checkable step in the record and edit pages: check, number, then its body in one column, actions at the end. */
+.ln-execution-step-line { display: grid; grid-template-columns: 1.15rem 1.9rem minmax(0, 1fr) auto; column-gap: 0.3rem; align-items: start; margin-top: 0.45rem; border-radius: var(--ln-radius-control-sm); }
+.ln-execution-check {
+  grid-column: 1; margin-top: 0.3em; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.15rem; height: 1.15rem; padding: 0;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 70%, transparent); border-radius: var(--ln-radius-control-sm); background: var(--surface); color: var(--surface); cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+.ln-execution-check svg { width: 0.8rem; height: 0.8rem; stroke-width: 3; }
+.ln-execution-step-line[data-completed] .ln-execution-check { border-color: var(--moss); background: var(--moss); }
+button.ln-execution-check:hover:not(:disabled) { border-color: var(--moss); }
+button.ln-execution-check:disabled { cursor: not-allowed; opacity: 0.45; }
+.ln-execution-step-line[aria-busy] .ln-execution-check { opacity: 0.6; }
+.ln-execution-check[data-static] { cursor: default; }
+.ln-execution-step-line > .ln-execution-step-number { grid-column: 2; padding: 0.2em 0 0; text-align: right; }
+.ln-execution-step-line[data-completed] > .ln-execution-step-number { color: var(--moss); }
+.ln-execution-step-main { grid-column: 3; min-width: 0; }
+.ln-execution-step-main > * + * { margin-top: 0.3rem; }
+.ln-execution-step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.45rem; margin: 0; font: var(--ln-control-font-size-md)/1.6 var(--font-ui); color: var(--graphite); }
+.ln-execution-step-body > .document-block + .document-block { margin-top: 0.35rem; }
+.ln-execution-tag { display: inline-flex; align-items: center; padding: 0 0.4rem; border: 1px solid var(--hairline); border-radius: 999px; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--muted); white-space: nowrap; text-decoration: none; }
+.ln-execution-tag.is-deviation { border-color: color-mix(in srgb, var(--error) 45%, transparent); color: var(--error); }
+.ln-execution-step-end { grid-column: 4; display: inline-flex; align-items: center; gap: 0.4rem; padding-top: 0.15em; padding-left: 0.4rem; font: var(--ln-control-font-size-xs)/1.4 var(--font-data); color: var(--muted); white-space: nowrap; }
+.ln-execution-action { padding: 0.1rem 0.35rem; border: 0; border-radius: var(--ln-radius-control-sm); background: none; font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--moss); cursor: pointer; opacity: 0; transition: opacity 120ms ease; }
+.ln-execution-step-line:hover .ln-execution-action, .ln-execution-step-line:focus-within .ln-execution-action, .ln-execution-action[aria-expanded="true"] { opacity: 1; }
+.ln-execution-action:hover, .ln-execution-action[aria-expanded="true"] { background: var(--action-surface); }
+.ln-execution-hint { margin: 0; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--warning); }
+.ln-execution-hint a { color: var(--moss); text-decoration: underline; }
+.ln-execution-error { margin: 0; font: var(--ln-control-font-size-xs)/1.5 var(--font-ui); color: var(--error); }
+.ln-execution-detail { padding-left: 2rem; }
+.document-block:has(> .ln-execution-protocol-heading) { margin-top: 1.1rem; }
+.document-block:has(> .ln-execution-protocol-heading) + .document-block > .ln-execution-detail { font-size: var(--ln-control-font-size-xs); color: var(--graphite); }
+
+/* Folded: values and their sources, calculation records, other systems' steps. */
+.ln-execution-fold { padding-left: 2rem; }
+.ln-execution-fold > summary { min-height: 2rem; display: flex; align-items: center; cursor: pointer; font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--moss); }
+.ln-execution-fold > .document-block .ln-execution-detail { padding-left: 0; }
+.ln-execution-fold[data-open], .ln-execution-fold[open] { padding-bottom: 0.4rem; }
+
+/* 偏差与事件: one short line per step deviation, above the handwritten notes. */
+.ln-deviation-line { display: flex; align-items: baseline; gap: 0.45rem; margin: 0.25rem 0; font: var(--ln-control-font-size-md)/1.55 var(--font-ui); color: var(--graphite); }
+.ln-deviation-line a { color: inherit; text-decoration: none; overflow-wrap: anywhere; }
+.ln-deviation-line a:hover { color: var(--moss); text-decoration: underline; }
+.ln-deviation-line:target, .ln-execution-step-line:target { animation: ln-execution-flash 1.2s ease; border-radius: var(--ln-radius-control-sm); }
+@keyframes ln-execution-flash { from { background: var(--action-surface); } to { background: transparent; } }
+
+.ln-deviation-form { display: grid; gap: 0.45rem; margin: 0.45rem 0 0.35rem; padding: 0.6rem 0.7rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--warm); font: var(--ln-control-font-size-xs)/1.4 var(--font-ui); color: var(--muted); }
+.ln-deviation-form label { display: grid; gap: 0.2rem; min-width: 0; }
+.ln-deviation-form-row { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: 0.5rem; }
+.ln-deviation-form :is(select, input, textarea) { width: 100%; min-width: 0; padding: 0.3rem 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: var(--ln-control-font-size-md)/1.45 var(--font-ui); }
+.ln-deviation-form :is(select, input) { height: var(--ln-control-height-sm); padding-block: 0; }
+.ln-deviation-form textarea { resize: vertical; }
+.ln-deviation-form-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ln-deviation-form-actions button { min-height: var(--ln-control-height-sm); padding: 0 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--graphite); font: var(--ln-control-font-size-sm)/1 var(--font-ui); cursor: pointer; }
+.ln-deviation-form-actions button.is-primary { border-color: var(--moss); background: var(--moss); color: var(--surface); }
+.ln-deviation-form-actions button.is-danger { margin-left: auto; color: var(--error); }
+.ln-deviation-form-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (pointer: coarse) { .ln-execution-step-line { grid-template-columns: 1.6rem 1.9rem minmax(0, 1fr) auto; } .ln-execution-check { position: relative; width: 1.6rem; height: 1.6rem; margin-top: 0; } .ln-execution-check::after { content: ""; position: absolute; inset: -0.6rem; } /* a 44px target around the visible box */ .ln-execution-action { opacity: 1; } .ln-execution-action, .ln-deviation-form-actions button { min-height: 2.75rem; } }
+@media (max-width: 639px) { .ln-execution-step-line { grid-template-columns: 1.6rem 1.6rem minmax(0, 1fr); } .ln-execution-step-end { grid-column: 3; padding-left: 0; } .ln-execution-detail, .ln-execution-fold { padding-left: 1rem; } }
+@media print { .ln-execution-action, .ln-deviation-form, .ln-execution-hint { display: none; } .ln-execution-fold > :not(summary) { display: block; } }
+@media (prefers-reduced-motion: reduce) { .ln-execution-disclosure svg, .ln-execution-check { transition: none; } .ln-deviation-line:target, .ln-execution-step-line:target { animation: none; } }

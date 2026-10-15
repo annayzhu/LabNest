@@ -221,7 +221,11 @@ function tiptapNodesToMarkdown(nodes: JSONContent[]): string {
         const rest = tiptapNodesToMarkdown(item.content?.slice(1) ?? []);
         if (rest) lines.push(...rest.split("\n").map((line) => `  ${line}`));
       });
-    } else if (node.type === "heading") lines.push(`${typographyPrefix(node)}${Number(node.attrs?.level) === 2 ? "#" : "##"} ${inlineTiptapToMarkdown(node.content)}`);
+    } else if (node.type === "heading") {
+      // An empty heading is no Markdown heading: keep the empty line rather than a stray "#".
+      const text = inlineTiptapToMarkdown(node.content);
+      lines.push(text.trim() ? `${typographyPrefix(node)}${Number(node.attrs?.level) === 2 ? "#" : "##"} ${text}` : "");
+    }
     else if (node.type === "blockquote") {
       const paragraph = node.content?.find((child) => child.type === "paragraph") ?? node;
       lines.push(`${typographyPrefix(paragraph)}> ${inlineTiptapToMarkdown(paragraph.content)}`);

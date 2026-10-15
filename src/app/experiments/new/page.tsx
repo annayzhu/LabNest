@@ -23,7 +23,7 @@ export default async function NewExperimentPage({ searchParams }: { searchParams
   const plans = plansRaw.map((plan) => ({ id: plan.id, code: plan.code, title: plan.title, project: { name: plan.project.name } }));
   const protocolVersions = protocolVersionsRaw.map((version) => {
     const document=normalizeProtocolDocument(version.contentJson);
-    const execution=document?{...projectProtocolDocument(document),systems:document.systems}:{steps:[],commonBlocks:[],executionNeedsReview:true};
+    const execution=document?{...projectProtocolDocument(document),systems:document.systems}:{steps:[],commonBlocks:[],notePlacement:{},executionNeedsReview:true};
     return ({hasSystems: Boolean(document?.systems), execution, id: version.id, researchPlanIds: version.protocol.researchPlans.map(link=>link.researchPlanId), revision: version.revision, displayVersion: version.displayVersion, versionTitle: version.title, reviewStage: version.reviewStage, stepCount: execution.steps.length, protocol: { id: version.protocol.id, humanCode: version.protocol.humanCode, title: version.protocol.canonicalTitle ?? version.protocol.title, scope: version.protocol.scope, projectName: version.protocol.project?.name ?? null } });});
   const selectedPlanId = requestedPlanId;
   const suggestedCode = suggestNextRecordCode("experiment", existingExperimentCodes.map((experiment) => experiment.runCode), counter?.value);

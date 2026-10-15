@@ -239,9 +239,20 @@ export function ChipPopover({ target, onDelete, onClose }: ChipPopoverProps) {
     <ValueEditor parameter={parameter} systems={systems} onChange={setParameter} autoFocus={target.focus === 'value'} />
   </>;
   else body = <p className="ln-chip-note">这个参数已被删除。</p>;
+  // At the bench: whether the actual value must be recorded, and how a material amount counts toward consumption.
+  const fieldParameters = tool ? systems.parameters.filter(p => tool.fields.some(f => f.parameterId === p.id)) : parameter && parameter.source.kind !== 'actual' ? [parameter] : [];
+  const required = fieldParameters.length > 0 && fieldParameters.every(p => p.actual === 'required');
+  const setRequired = (on: boolean) => api.updateSystems(s => ({ ...s, parameters: s.parameters.map(p => fieldParameters.some(f => f.id === p.id) ? { ...p, actual: on ? 'required' as const : undefined } : p) }));
+  const amount = parameter?.materialRef && ['volume', 'mass', 'amount'].includes(parameter.kind ?? chipKindForUnit(parameter.unit));
+  const execution = fieldParameters.length || amount ? <div className="ln-chip-execution">
+    {amount ? <div className="ln-chip-modes" role="radiogroup" aria-label="消耗按"><span className="ln-chip-note">消耗按</span>
+      <button className="focus-ring" type="button" role="radio" aria-checked={!parameter!.perRun} onClick={() => setParameter({ ...parameter!, perRun: undefined })}>每反应</button>
+      <button className="focus-ring" type="button" role="radio" aria-checked={Boolean(parameter!.perRun)} onClick={() => setParameter({ ...parameter!, perRun: true })}>本次总量</button></div> : null}
+    {fieldParameters.length ? <label className="ln-chip-check"><input type="checkbox" checked={required} onChange={event => setRequired(event.target.checked)} />执行时必填实际值</label> : null}
+  </div> : null;
   return createPortal(<div ref={panel} className={parameter?.source.kind === 'calculator' ? 'ln-chip-popover is-wide' : 'ln-chip-popover'} style={style} role="dialog" aria-label={`编辑${kindLabel}`} onMouseDown={event => event.stopPropagation()}>
     <header className="ln-chip-popover-header"><strong>{kindLabel}</strong>{parameter && !tool ? <NameField parameter={parameter} onChange={setParameter} /> : null}<button type="button" className="focus-ring ln-chip-icon-button" aria-label="完成" onClick={onClose}><X aria-hidden /></button></header>
-    <div className="ln-chip-popover-body">{body}</div>
+    <div className="ln-chip-popover-body">{body}{execution}</div>
     <footer className="ln-chip-popover-footer"><button type="button" className="focus-ring ln-chip-link is-danger" onClick={onDelete}><Trash2 aria-hidden />删除参数块</button><button type="button" className="focus-ring ln-chip-done" onClick={onClose}>完成</button></footer>
   </div>, document.body);
 }

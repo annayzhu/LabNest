@@ -6,6 +6,7 @@ import { optionMarks, recognizeQuantity, type RecognizedQuantity } from './proto
 import type { ProtocolSystems } from './protocol-systems-schema';
 import { evaluateProtocolCondition, type ProtocolSelection } from './structured-protocol';
 import { conditionTagLabel } from './protocol-conditions';
+import { slashOpensMenu } from './editor-slash';
 
 /** What the editor's extensions call back into. The React editor refreshes these after every render. */
 export type ProtocolEditorHandlers = {
@@ -77,11 +78,7 @@ export const ProtocolSlashMenu = Extension.create({
     const editor = this.editor;
     return [new Plugin({ key: slashKey, props: {
       handleTextInput(view, from, _to, text) {
-        if (!/^[/、／]/.test(text) || view.composing) return false;
-        const $from = view.state.doc.resolve(from);
-        const before = $from.parent.textBetween(Math.max(0, $from.parentOffset - 1), $from.parentOffset, undefined, '￼');
-        if (!$from.parent.isTextblock || (before && !/[\s，。；：、（(]/.test(before))) return false;
-        queueMicrotask(() => protocolHandlers(editor)?.openMenu(from));
+        if (slashOpensMenu(view, from, text)) queueMicrotask(() => protocolHandlers(editor)?.openMenu(from));
         return false;
       },
       handleKeyDown: (_view, event) => Boolean(protocolHandlers(editor)?.menuOpen() && protocolHandlers(editor)?.menuKey(event)),

@@ -15,7 +15,6 @@ export function DocumentEditorWorkspace({
   document,
   metadata,
   relations,
-  toolbar,
   actions,
   outline = [],
   onActiveTabChange,
@@ -24,7 +23,6 @@ export function DocumentEditorWorkspace({
   document: ReactNode;
   metadata: ReactNode;
   relations: ReactNode;
-  toolbar?: ReactNode;
   actions?: ReactNode;
   outline?: DocumentOutlineItem[];
   onActiveTabChange?: (tab: DocumentEditorWorkspaceTab) => void;
@@ -73,7 +71,6 @@ export function DocumentEditorWorkspace({
           {actions}
         </div>
       </div>
-      {activeTab === "document" && toolbar ? <div className="document-editor-toolbar-row document-canvas-toolbar">{toolbar}</div> : null}
     </div>
 
     <div className="document-editor-workbench" hidden={activeTab === "relations"}>

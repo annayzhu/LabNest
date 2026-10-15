@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
 import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
-import { saveProtocolDocument } from "./actions";
+import { dismissProtocolMixProposal, saveProtocolDocument } from "./actions";
+import { protocolMixProposals } from "@/lib/protocol-mix-proposals.server";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
@@ -113,6 +114,8 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             changeSummary: version.changeSummary ?? undefined,
           }}
           initialDocument={document}
+          mixProposals={await protocolMixProposals(version.protocol.id, version.contentJson)}
+          dismissMixProposal={dismissProtocolMixProposal}
           importHistory={importHistory}
           suggestedDisplayVersion={nextDisplayVersion(version.displayVersion)}
           projects={projects}

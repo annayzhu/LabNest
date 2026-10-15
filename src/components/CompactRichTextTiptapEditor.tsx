@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Table2 } from "lucide-react";
 import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -11,24 +9,31 @@ import TaskList from "@tiptap/extension-task-list";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
-import { DocumentWysiwygToolbar, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
-import { useDocumentToolbarTarget } from "@/components/DocumentToolbarTargetContext";
+import TextAlign from "@tiptap/extension-text-align";
 import { cn } from "@/lib/cn";
 import { newClientMutationId } from "@/lib/client-mutation-id";
-import TextAlign from "@tiptap/extension-text-align";
 import { createDocumentBlockLineHeightExtension, createResizableDocumentTableExtension, createDocumentLegacyAttributesExtension } from "@/lib/tiptap-document-extensions";
+import { SlashCommandTrigger } from "@/lib/editor-slash";
+import { BlockHandles } from "@/lib/editor-block-handle";
+import { HeadingShortcuts, savedBlocksOnly, writingPlaceholder } from "@/lib/editor-writing";
 import { DocumentMediaNode } from "./DocumentMediaNode";
-import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
+import { useDocumentMediaUploads } from "./DocumentMediaUploads";
+import { useCommandMenu } from "./EditorCommandMenu";
+import { EditorSurface } from "./EditorSurface";
+import { WritingCommandMenu } from "./WritingCommandMenu";
+import { DocumentAttachmentsButton } from "./DocumentAttachmentsButton";
 
-export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, showToolbar = true, toolbarHostId, insertActions = [], media = false, registerEditor, className, isLocalEcho }: {
+/** A rich-text field written Notion-style: "/" to insert and a bubble over selected text; as a page of its own (Entry), ＋ and ⋮⋮ beside each block. */
+export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "Start writing…", minHeightClass = "min-h-24", autoFocus = false, page = false, actionsHostId, media = false, registerEditor, className, isLocalEcho }: {
   content: JSONContent;
   onChange: (content: JSONContent) => void;
   placeholder?: string;
   minHeightClass?: string;
   autoFocus?: boolean;
-  showToolbar?: boolean;
-  toolbarHostId?: string;
-  insertActions?: WysiwygInsertAction[];
+  /** A page of its own (Entry): block handles, and a hint on empty lines. */
+  page?: boolean;
+  /** Where the page header shows this document's actions. */
+  actionsHostId?: string;
   className?: string;
   media?: boolean;
   registerEditor?: (editor: Editor) => () => void;
@@ -36,24 +41,16 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
 }) {
   const onChangeRef = useRef(onChange);
   const [mediaDraftId] = useState(newClientMutationId);
-  const toolbarTarget = useDocumentToolbarTarget();
-  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
   const lastEmitted = useRef<string | undefined>(undefined);
   const contentHash = useMemo(() => JSON.stringify(content), [content]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
-  useEffect(() => {
-    let active = true;
-    queueMicrotask(() => {
-      if (active) setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
-    });
-    return () => { active = false; };
-  }, [toolbarHostId]);
   const editor = useEditor({
     immediatelyRender: false,
     content,
     autofocus: autoFocus ? "end" : false,
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
+      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      HeadingShortcuts,
       createResizableDocumentTableExtension(),
       createDocumentLegacyAttributesExtension({name:"compactDocumentIdentity",attributes:[{name:"scientificBlockId",htmlAttribute:"data-scientific-block-id"}]}),
       TextStyleKit.configure({ backgroundColor: false }),
@@ -61,14 +58,18 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
       TextAlign.configure({types:["paragraph","heading"]}),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder }),
-      Typography,
+      Placeholder.configure({ placeholder: page ? writingPlaceholder(placeholder) : placeholder }),
+      // Lab notes write ratios like 1/2 and 1/4; keep them as typed instead of ½ and ¼.
+      Typography.configure({ oneHalf: false, oneQuarter: false, threeQuarters: false }),
+      SlashCommandTrigger,
+      BlockHandles,
       ...(media ? [DocumentMediaNode] : []),
     ],
     editorProps: { attributes: { class: cn("ln-protocol-tiptap ln-compact-rich-tiptap", minHeightClass), spellcheck: "true" } },
     onUpdate: ({ editor: nextEditor }) => { const json = nextEditor.getJSON(); lastEmitted.current = JSON.stringify(json); onChangeRef.current(json); },
   });
   useDocumentMediaUploads(media ? editor : null, mediaDraftId);
+  const commands = useCommandMenu(editor);
   useEffect(() => { if (editor && registerEditor) return registerEditor(editor); }, [editor, registerEditor]);
   useEffect(() => {
     if (!editor || isLocalEcho || editor.isFocused || JSON.stringify(editor.getJSON()) === contentHash || lastEmitted.current === contentHash) return;
@@ -78,15 +79,11 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
     });
     return () => { cancelled = true; };
   }, [content, contentHash, editor, isLocalEcho]);
-  useEffect(() => {
-    if (!editor || !toolbarTarget) return;
-    return () => toolbarTarget.release(editor);
-  }, [editor, toolbarTarget]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
-  const toolbar = <DocumentWysiwygToolbar editor={editor} ariaLabel="Rich text formatting" insertActions={media ? [...(!insertActions.some(action=>action.id==="table")?[{id:"table",label:"Table",icon:<Table2 aria-hidden />,description:"Insert an editable table",run:(target:Editor)=>target.chain().focus().insertTable({rows:3,cols:3,withHeaderRow:true}).run()}]:[]),...insertActions.filter(action => !["media", "attachment"].includes(action.id)), ...documentMediaInsertActions(mediaDraftId)] : insertActions} className="ln-compact-rich-toolbar" />;
-  return <div className={cn("ln-compact-rich-editor", className)} onFocusCapture={() => toolbarTarget?.activate(editor)}>
-    {showToolbar ? (toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar) : null}
-    <EditorContent editor={editor} />
+  return <div className={cn("ln-compact-rich-editor", className)}>
+    <EditorSurface editor={editor} handles={page} openCommands={commands.openSearch}><EditorContent editor={editor} /></EditorSurface>
+    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} media={media} /> : null}
+    {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </div>;
 }

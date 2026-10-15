@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { JSONContent } from '@tiptap/core';
 import { createEmptyProtocolDocument, projectProtocolDocument, protocolDocumentSchema } from './protocol-document';
 import { protocolDocumentToTiptap, tiptapToProtocolDocument } from './protocol-tiptap';
+import { notesAmongSteps } from './protocol-execution';
 
 const stepsSection = (json: JSONContent) => json.content!.find(node => node.attrs?.sectionKey === 'steps')!;
 
@@ -25,6 +26,26 @@ describe('Step blocks (one block = one operation)', () => {
     expect(result.steps.map(step => step.content_blocks?.map(block => block.id))).toEqual([['s1', 's1-list', 's1-table'], ['s2', 's2-check'], ['s3']]);
     expect(JSON.stringify(result.steps[2].content_blocks)).toContain('离心');
     expect(result.commonBlocks.map(block => block.id)).toEqual(['intro']);
+  });
+
+  it('keeps notes written between steps in their place, and passes a hidden step\'s notes on to the next shown step', () => {
+    const document = stepBlocks();
+    const blocks = document.sections[0].blocks;
+    const note = (id: string, text: string) => ({ id, type: 'rich_text' as const, nodes: [{ type: 'paragraph' as const, content: text ? [{ text }] : [] }], execution: { role: 'info' as const } });
+    blocks.splice(4, 0, note('ice', '注：以下步骤在冰上操作。'), note('blank', ''));
+    blocks.push(note('store', '完成后 −80 °C 保存。'));
+    const result = projectProtocolDocument(document);
+    // An empty line between steps is not a note.
+    expect(result.commonBlocks.map(block => block.id)).toEqual(['intro', 'ice', 'store']);
+    expect(result.notePlacement).toEqual({ intro: 'step-a', ice: 'step-b', store: null });
+    const order = result.steps.map(step => step.source_ref!);
+    const placed = notesAmongSteps(result.commonBlocks, result.notePlacement, order);
+    expect([...placed.before].map(([ref, notes]) => [ref, notes.map(n => n.id)])).toEqual([['step-a', ['intro']], ['step-b', ['ice']]]);
+    expect(placed.after.map(n => n.id)).toEqual(['store']);
+    // Step b does not apply to this run: "以下步骤…" still reads before the next step shown.
+    expect(notesAmongSteps(result.commonBlocks, result.notePlacement, order, ref => ref !== 'step-b').before.get('step-c')?.map(n => n.id)).toEqual(['ice']);
+    // No step after it is shown: the note follows the last shown step.
+    expect(notesAmongSteps(result.commonBlocks, result.notePlacement, order, ref => ref === 'step-a').after.map(n => n.id)).toEqual(['ice', 'store']);
   });
 
   it('shortens a long first sentence by what readers see, never cutting a chip reference', () => {

@@ -1,0 +1,79 @@
+/* The page an editor is written on: ＋ / ⋮⋮ beside the block, a bubble over selected text, a bar over the table with the caret. */
+.ln-editor-surface { position: relative; }
+
+.ln-block-handle {
+  position: absolute; z-index: 20; display: flex; align-items: center; gap: 1px;
+  transform: translate(calc(-100% - 0.3rem), -50%); animation: ln-block-handle-in 120ms ease both;
+}
+@keyframes ln-block-handle-in { from { opacity: 0; } to { opacity: 1; } }
+.ln-block-handle button {
+  display: inline-flex; align-items: center; justify-content: center; width: 1.3rem; height: 1.5rem; padding: 0; border: 0;
+  border-radius: var(--ln-radius-control-sm); background: transparent; color: color-mix(in srgb, var(--muted) 75%, transparent); cursor: pointer;
+}
+.ln-block-handle button:hover, .ln-block-handle[data-open] button:last-child { background: var(--stone); color: var(--graphite); }
+.ln-block-handle button:last-child { cursor: grab; }
+.ln-block-handle button:last-child:active { cursor: grabbing; }
+.ln-block-handle svg { width: 15px; height: 15px; }
+
+/* ⋮⋮: change kind, format, move, copy, delete. */
+.ln-block-menu {
+  position: fixed; z-index: 70; width: min(16.5rem, calc(100vw - 16px)); max-height: min(32rem, 78vh); overflow: auto; padding: 0.3rem;
+  background: var(--surface); color: var(--graphite); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel);
+  box-shadow: var(--shadow-soft), 0 2px 6px rgba(32, 40, 37, 0.06); font: var(--ln-control-font-size-md)/1.45 var(--font-ui);
+}
+.ln-block-menu section + section { margin-top: 0.25rem; padding-top: 0.25rem; border-top: 1px solid var(--hairline); }
+.ln-block-menu section > p { margin: 0.3rem 0.45rem 0.2rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-block-menu-kinds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.15rem; }
+.ln-block-menu-kinds button { display: grid; justify-items: center; gap: 0.1rem; padding: 0.35rem 0.1rem; border-radius: var(--ln-radius-control-md); font-size: var(--ln-control-font-size-xs); color: var(--graphite); }
+.ln-block-menu-kinds svg, .ln-block-menu-row svg, .ln-block-menu-item svg { width: 15px; height: 15px; }
+.ln-block-menu-row { display: flex; align-items: center; gap: 0.1rem; padding: 0 0.15rem; }
+.ln-block-menu-row button { display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; border-radius: var(--ln-radius-control-md); color: var(--graphite); }
+.ln-block-menu-row button:disabled { opacity: 0.35; }
+.ln-block-menu-gap { flex: 1; }
+.ln-block-menu-field { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.2rem 0.45rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-block-menu-field select {
+  height: var(--ln-control-height-sm); min-width: 6.5rem; padding: 0 0.4rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md);
+  background: var(--surface); color: var(--ink); font: var(--ln-control-font-size-xs) var(--font-ui);
+}
+.ln-block-menu-item { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.35rem 0.45rem; border-radius: var(--ln-radius-control-md); text-align: left; color: var(--graphite); }
+.ln-block-menu-item svg { color: var(--muted); }
+.ln-block-menu-item kbd { margin-left: auto; font: var(--ln-control-font-size-xs) var(--font-data); color: var(--muted); }
+.ln-block-menu-item:disabled { opacity: 0.4; }
+.ln-block-menu-item.is-danger, .ln-block-menu-item.is-danger svg { color: var(--error); }
+.ln-block-menu-kinds button:hover, .ln-block-menu-row button:hover:not(:disabled), .ln-block-menu-item:hover:not(:disabled) { background: var(--stone); color: var(--ink); }
+.ln-block-menu-kinds button[aria-checked="true"], .ln-block-menu-row button[aria-checked="true"] { background: var(--action-surface); color: var(--moss); }
+
+/* Over selected text, and over the table with the caret. */
+.ln-selection-bubble, .ln-table-bar {
+  display: flex; align-items: center; gap: 0.1rem; padding: 0.2rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg);
+  background: var(--surface); color: var(--graphite); box-shadow: var(--shadow-soft), 0 2px 6px rgba(32, 40, 37, 0.08); font: var(--ln-control-font-size-xs)/1.4 var(--font-ui);
+}
+.ln-selection-bubble button { display: inline-flex; align-items: center; justify-content: center; min-width: 1.85rem; height: 1.85rem; padding: 0 0.3rem; border-radius: var(--ln-radius-control-md); color: var(--graphite); }
+.ln-selection-bubble svg { width: 15px; height: 15px; }
+.ln-selection-bubble button:hover, .ln-table-bar button:hover { background: var(--stone); color: var(--ink); }
+.ln-selection-bubble button[aria-pressed="true"] { background: var(--action-surface); color: var(--moss); }
+.ln-selection-divider { width: 1px; align-self: stretch; margin: 0.25rem 0.15rem; background: var(--hairline); }
+.ln-selection-bubble .ln-selection-risk { font: 700 0.95rem/1 var(--font-document-body, var(--font-ui)); color: var(--error); }
+.ln-selection-bubble .ln-selection-risk[aria-pressed="true"] { background: var(--error-surface); color: var(--error); }
+.ln-selection-link { display: flex; align-items: center; gap: 0.2rem; }
+.ln-selection-link input {
+  width: 16rem; max-width: 62vw; height: 1.85rem; padding: 0 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md);
+  background: var(--warm); color: var(--ink); font: var(--ln-control-font-size-xs) var(--font-ui);
+}
+.ln-table-bar button { height: 1.75rem; padding: 0 0.5rem; border-radius: var(--ln-radius-control-md); color: var(--graphite); white-space: nowrap; }
+
+.ln-block-menu-item.is-touch { display: none; }
+@media (pointer: coarse) {
+  /* Touch: only ⋮⋮ beside the block (its menu has 在下方插入), so it fits a phone's narrow margin. */
+  .ln-block-handle { transform: translate(calc(-100% - 0.1rem), -50%); }
+  .ln-block-handle button:first-child { display: none; }
+  .ln-block-handle button { position: relative; width: 1.4rem; height: 1.9rem; color: var(--muted); }
+  .ln-block-handle button::after { content: ""; position: absolute; inset: -0.45rem -0.35rem; }
+  .ln-block-menu-item.is-touch { display: flex; }
+  .ln-block-menu-item, .ln-block-menu-kinds button, .ln-block-menu-row button { min-height: 2.75rem; }
+  .ln-block-menu-row button { width: 2.75rem; }
+  .ln-block-menu-field select { height: 2.75rem; }
+  .ln-selection-bubble button, .ln-table-bar button { min-width: 2.75rem; min-height: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) { .ln-block-handle { animation: none; } }
+@media print { .ln-block-handle, .ln-selection-bubble, .ln-table-bar { display: none !important; } }

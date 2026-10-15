@@ -27,6 +27,10 @@ export const protocolSystemsSchema = z.object({
     /** "chip": created by typing; dropped on save once no longer referenced. */
     origin: z.literal('chip').optional(), ownerToolId: id.optional(),
     materialRef: z.object({ name: z.string().min(1), rowId: z.string().min(1).optional() }).optional(),
+    /** "执行时必填": the step cannot be completed until its actual value is recorded. Recording is optional otherwise. */
+    actual: z.literal('required').optional(),
+    /** A material amount for the whole run rather than per reaction; consumption does not multiply it by the run's quantity. */
+    perRun: z.literal(true).optional(),
     source: z.discriminatedUnion('kind', [
       z.object({ kind: z.literal('fixed'), ...quantity }),
       z.object({ kind: z.literal('lookup'), values: z.array(z.object({ id, when: protocolConditionSchema, ...quantity })) }),

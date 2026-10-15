@@ -16,21 +16,29 @@ import { ChipNodeView } from './protocol/ChipNodeView';
 import { StepNodeView } from './protocol/StepNodeView';
 import { ChipPopover } from './protocol/ChipPopover';
 import { ConditionMenu } from './protocol/ConditionMenu';
-import { InsertMenu, type InsertChoice, type InsertMenuState } from './protocol/InsertMenu';
+import { InsertMenu, type InsertChoice } from './protocol/InsertMenu';
+import { useSlashQuery, type EditorCommandMenuState } from './EditorCommandMenu';
+import { EditorSurface, type BlockMenuItem } from './EditorSurface';
+import { DocumentAttachmentsButton } from './DocumentAttachmentsButton';
+import { BlockHandles } from '@/lib/editor-block-handle';
+import { HeadingShortcuts, savedBlocksOnly } from '@/lib/editor-writing';
+import { turnInto, type BlockUnit } from '@/lib/editor-blocks';
+import { TableMap } from '@tiptap/pm/tables';
 import { SplitPrompt, type SplitChoice, type SplitPromptState } from './protocol/SplitPrompt';
 import { SystemsBar } from './protocol/SystemsBar';
 import { ProgramEditor } from './protocol/ProgramCard';
 import { defaultPcrProgram } from '@/lib/protocol-program';
+import { newMix, recipeTableToMix, type MixProposal } from '@/lib/protocol-mix';
+import { MixEditor, MixProposals } from './protocol/MixCard';
 import { newCalculation } from '@/lib/protocol-calculations';
 import { ProtocolEditorContext, type ChipTarget, type ConditionTarget, type ProtocolEditorApi } from './protocol/ProtocolEditorContext';
 import './protocol/protocol.css';
 
-import { useCallback, useEffect, useLayoutEffect, useId, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { type Editor, type JSONContent } from "@tiptap/core";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { findParentNodeClosestToPos, type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import { DocumentMediaNode } from "./DocumentMediaNode";
-import { documentMediaInsertActions, insertDocumentMediaFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
+import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import StarterKit from "@tiptap/starter-kit";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
@@ -38,19 +46,8 @@ import TextAlign from "@tiptap/extension-text-align";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
-import {
-  AlertTriangle,
-  FlaskConical,
-  GripVertical,
-  ImagePlus,
-  Paperclip,
-  Filter,
-  Plus,
-  Trash2,
-  Wrench,
-} from "lucide-react";
-import { DocumentWysiwygToolbar, wysiwygWidgetInputClass } from "@/components/DocumentWysiwygToolbar";
-import { DocumentToolbarTargetContext } from "@/components/DocumentToolbarTargetContext";
+import { AlertTriangle, Filter, FlaskConical, ImagePlus, Wrench } from "lucide-react";
+import { wysiwygWidgetInputClass } from "./widget-input";
 import { InlineTableEditor } from "@/components/InlineTableEditor";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { ResultTemplateConfigEditor } from "@/components/ResultTemplateConfigEditor";
@@ -66,7 +63,7 @@ import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/r
 import { labToolManifest } from "@/lib/tool-manifest";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
-type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "embedded_tool" | "table" | "program" }>;
+type WidgetBlock = Extract<ProtocolContentBlock, { type: "timer" | "callout" | "media" | "embedded_tool" | "table" | "program" | "mix" }>;
 
 function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -88,7 +85,7 @@ function ProtocolSectionNodeView({ node }: NodeViewProps) {
   </NodeViewWrapper>;
 }
 
-function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
+function ProtocolWidgetNodeView({ node, updateAttributes, selected, getPos }: NodeViewProps) {
   const block = node.attrs.block as WidgetBlock;
   const updateBlock = (next: WidgetBlock) => updateAttributes({ block: next });
   const isResultTemplate = block.type === "table" && Boolean(block.resultTemplate);
@@ -97,10 +94,6 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
   return <NodeViewWrapper className={cn("ln-protocol-widget", selected && "is-selected")} data-widget-type={block.type}>
     <div className="document-print-only"><ProtocolContentBlockView block={block} /></div>
     <div contentEditable={false} data-print-hidden>
-      <div className="ln-protocol-widget-rail" data-print-hidden>
-        <button type="button" className="ln-protocol-widget-grip" data-drag-handle aria-label="Move block"><GripVertical aria-hidden /></button>
-        <button type="button" className="ln-protocol-widget-delete" onClick={deleteNode} aria-label="Remove block"><Trash2 aria-hidden /></button>
-      </div>
       {/* Older timers are read-only: durations are written as time chips, and every Run step has its own timer. */}
       {block.type === "timer" ? <ProtocolContentBlockView block={block} /> : null}
       {block.type === "callout" ? <div className="ln-protocol-callout-editor">
@@ -128,6 +121,7 @@ function ProtocolWidgetNodeView({ node, updateAttributes, deleteNode, selected }
       </div> : null}
       {block.type === "embedded_tool" && embeddableToolUrl(block.url) ? <details className="ln-protocol-tool-preview"><summary>Embedded preview</summary><iframe src={embeddableToolUrl(block.url)} title={block.label || "Embedded laboratory tool"} sandbox={block.url.startsWith("/") ? "allow-scripts allow-same-origin allow-forms allow-downloads allow-popups" : "allow-scripts allow-forms allow-downloads allow-popups"} loading="lazy" /></details> : null}
       {block.type === "program" ? <ProgramEditor program={block} onChange={updateBlock} /> : null}
+      {block.type === "mix" ? <MixEditor mix={block} onChange={updateBlock} getPos={getPos} /> : null}
       {block.type === "table" && !isResultTemplate ? <InlineTableEditor rows={block.rows} onChange={(rows) => updateBlock({ ...block, rows })} caption={block.caption} onCaptionChange={(caption) => updateBlock({ ...block, caption })} /> : null}
       {block.type === "table" && isResultTemplate ? <details className="ln-protocol-result-template-editor">
         <summary><span><FlaskConical aria-hidden /><strong>{resultTemplate?.title ?? resultTemplate?.result_type ?? "Result template"}</strong></span><small>{resultTemplate?.fields.length ?? 0} fields · {resultTemplate?.datasets?.length ?? 0} data tables · {resultTemplate?.artifacts?.length ?? 0} files</small><em>Edit</em></summary>
@@ -175,7 +169,8 @@ const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name:
 
 function protocolEditorExtensions() {
   return [
-      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
+      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      HeadingShortcuts,
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -197,6 +192,7 @@ function protocolEditorExtensions() {
       EditableStep,
       ProtocolChipInput,
       ProtocolSlashMenu,
+      BlockHandles,
       ProtocolConditionDecorations,
       ...documentScriptMarks,
       ProtocolSection,
@@ -205,7 +201,7 @@ function protocolEditorExtensions() {
   ];
 }
 
-export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploadDraftId }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; toolbarHostId?: string; uploadDraftId: string }) {
+export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploadDraftId, mixProposals, onDismissMixProposal }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; actionsHostId?: string; uploadDraftId: string; mixProposals: MixProposal[]; onDismissMixProposal?: (proposalId: string) => Promise<{ error?: string }> }) {
   const [initialContent] = useState(() => protocolDocumentToTiptap(document)); // The form owns one document for the lifetime of this editor.
   const onChangeRef = useRef(onChange);
   const importWarningsRef = useRef(document.importWarnings);
@@ -214,22 +210,16 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
   // Chips create parameters inside an editor transaction: serialization must already see them.
   const systemsRef = useRef<ProtocolSystems | undefined>(document.systems);
   useLayoutEffect(() => { documentRef.current = document; systemsRef.current = document.systems; }, [document]);
-  const inputPrefix = useId();
-  const imageInputId = `${inputPrefix}-protocol-images`;
-  const fileInputId = `${inputPrefix}-protocol-files`;
-  const [draggingFiles, setDraggingFiles] = useState(false);
   const [lens, setLensState] = useState<ProtocolSelection>({});
   const lensRef = useRef(lens);
   const [chipTarget, setChipTarget] = useState<ChipTarget | null>(null);
   const [conditionTarget, setConditionTarget] = useState<ConditionTarget | null>(null);
-  const [insertMenu, setInsertMenu] = useState<InsertMenuState | null>(null);
+  const [insertMenu, setInsertMenu] = useState<EditorCommandMenuState | null>(null);
   const insertMenuRef = useRef(insertMenu);
   const insertKeyRef = useRef<((event: KeyboardEvent) => boolean) | null>(null);
   const [splitPrompt, setSplitPrompt] = useState<SplitPromptState | null>(null);
   const splitKeyRef = useRef<((event: KeyboardEvent) => boolean) | null>(null);
   const editorRef = useRef<Editor | null>(null);
-  const openImagePicker = useCallback(() => globalThis.document.getElementById(imageInputId)?.click(), [imageInputId]);
-  const openFilePicker = useCallback(() => globalThis.document.getElementById(fileInputId)?.click(), [fileInputId]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => { insertMenuRef.current = insertMenu; }, [insertMenu]);
 
@@ -356,17 +346,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
       stepsAllowed: () => stepsAllowedIn(documentRef.current),
     });
   });
-  useEffect(() => {
-    if (!editor || insertMenu?.mode !== 'slash') return;
-    const track = () => {
-      const { from } = insertMenu, cursor = editor.state.selection.from;
-      const text = cursor > from ? editor.state.doc.textBetween(from, cursor, '\n', '￼') : '';
-      if (!/^[/、／]/.test(text) ||/[\s\n￼]/.test(text) || text.length > 24 || !editor.state.selection.empty) setInsertMenu(null);
-      else if (text.slice(1) !== insertMenu.query) setInsertMenu({ ...insertMenu, query: text.slice(1) });
-    };
-    editor.on('transaction', track);
-    return () => { editor.off('transaction', track); };
-  }, [editor, insertMenu]);
+  useSlashQuery(editor, insertMenu, setInsertMenu);
 
   // The typed values may move while the author keeps writing; the question follows them or closes when they change.
   useEffect(() => {
@@ -429,17 +409,6 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
     if (tr.docChanged) editor.view.dispatch(tr.setMeta('addToHistory', false));
   }, [document, editor]);
 
-
-  const [toolbarEditor, setToolbarEditor] = useState<Editor | null>(null);
-  const activateToolbarEditor = useCallback((target: Editor) => setToolbarEditor(target), []);
-  const releaseToolbarEditor = useCallback((target: Editor) => setToolbarEditor((current) => current === target ? editor : current), [editor]);
-  const toolbarTarget = useMemo(() => ({ activate: activateToolbarEditor, release: releaseToolbarEditor }), [activateToolbarEditor, releaseToolbarEditor]);
-
-  const addFiles = useCallback((files: File[]) => {
-    if (!editor || !files.length) return;
-    insertDocumentMediaFiles(editor, files, uploadDraftId);
-  }, [editor, uploadDraftId]);
-
   const insertChipAfter = useCallback((pos: number, parameterId: string) => {
     const current = editorRef.current, parameter = systemsRef.current?.parameters.find(item => item.id === parameterId);
     if (!current || !parameter || current.state.doc.nodeAt(pos)?.type.name !== 'protocolParameter') return null;
@@ -449,7 +418,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
   const stepsAllowed = stepsAllowedIn(document);
   const api = useMemo<ProtocolEditorApi>(() => ({
     systems: document.systems, updateSystems, lens, setLens, materials: protocolMaterials(document),
-    openChip: setChipTarget, insertChipAfter, openConditions: setConditionTarget, stepsAllowed,
+    openChip: setChipTarget, insertChipAfter, stepsAllowed,
   }), [document, updateSystems, lens, setLens, insertChipAfter, stepsAllowed]);
 
   /** Insert from "/" or "＋": chips open their editor at once so the value is typed next. */
@@ -459,9 +428,10 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
     setInsertMenu(null);
     const chain = current.chain().focus();
     if (menu?.mode === 'slash') chain.deleteRange({ from: menu.from, to: current.state.selection.from });
+    if (choice.type === 'block') { turnInto(current, chain, choice.kind).run(); return; }
     if (choice.type === 'table') { chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); return; }
-    if (choice.type === 'image') { chain.run(); openImagePicker(); return; }
-    if (choice.type === 'file') { chain.run(); openFilePicker(); return; }
+    if (choice.type === 'image') { chain.run(); chooseFiles(current, uploadDraftId, 'image/*'); return; }
+    if (choice.type === 'file') { chain.run(); chooseFiles(current, uploadDraftId); return; }
     if (choice.type === 'result-template') {
       const resultTemplate = createDefaultResultTemplate("measurement");
       chain.insertContent({ type: 'protocolWidget', attrs: { block: { id: uniqueBlockId('result-template'), type: 'table', caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate } } }).run();
@@ -473,6 +443,7 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
       return;
     }
     if (choice.type === 'program') { chain.insertContent({ type: 'protocolWidget', attrs: { block: defaultPcrProgram(uid) } }).run(); return; }
+    if (choice.type === 'mix') { const created = newMix(uid); updateSystems(systems => ({ ...systems, parameters: [...systems.parameters, ...created.parameters] })); chain.insertContent({ type: 'protocolWidget', attrs: { block: created.block } }).run(); return; }
     if (choice.type === 'callout') { chain.insertContent({ type: 'protocolWidget', attrs: { block: { id: uniqueBlockId('callout'), type: 'callout', tone: 'warning', text: '' } } }).run(); return; }
     if (choice.type === 'step') {
       chain.run();
@@ -516,8 +487,32 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
     }
     chain.insertContent([{ type: 'protocolParameter', attrs: { parameterId: id, label: '', unit: '' } }, { type: 'text', text: ' ' }]).run();
     requestAnimationFrame(() => openChipAt(pos, 'value'));
-  }, [openChipAt, openImagePicker, openFilePicker]);
+  }, [openChipAt, uploadDraftId, updateSystems]);
 
+  // A recipe table becomes a mix card: names from the first column, amounts (and per-system columns) as chips.
+  const tableToMix = useCallback(() => {
+    const current = editorRef.current;
+    if (!current) return;
+    const table = findParentNodeClosestToPos(current.state.selection.$from, node => node.type.name === 'table');
+    if (!table) return;
+    const parsed = tiptapToProtocolDocument({ type: 'doc', content: [{ type: 'protocolSection', attrs: { sectionKey: 'material' }, content: [table.node.toJSON()] }] });
+    const block = parsed.sections.flatMap(section => section.blocks).find(item => item.type === 'table');
+    if (!block || block.type !== 'table' || block.rows.length < 2) return;
+    const created = recipeTableToMix(block, uid);
+    if (!created.block.components.length) return;
+    updateSystems(systems => ({ ...systems, parameters: [...systems.parameters, ...created.parameters] }));
+    current.view.dispatch(current.state.tr.replaceWith(table.pos, table.pos + table.node.nodeSize, current.schema.nodes.protocolWidget.create({ block: created.block })));
+  }, [updateSystems]);
+  // A bench-made mix card goes to the end of the step it was made in (or where the caret is). Saving keeps it.
+  const addProposedMix = useCallback((proposal: MixProposal) => {
+    const current = editorRef.current;
+    if (!current) return;
+    let at = -1;
+    current.state.doc.descendants((node, pos) => { if (at < 0 && node.type.name === 'protocolStep' && node.attrs.stepId === proposal.stepRef) at = pos + node.nodeSize - 1; });
+    const widget = current.schema.nodes.protocolWidget.create({ block: proposal.mix });
+    current.view.dispatch(at >= 0 ? current.state.tr.insert(at, widget) : current.state.tr.replaceSelectionWith(widget));
+    current.view.focus();
+  }, []);
   const closeChip = useCallback(() => {
     const target = chipTarget, current = editorRef.current;
     setChipTarget(null);
@@ -534,61 +529,47 @@ export function ProtocolWysiwygEditor({ document, onChange, toolbarHostId, uploa
     const node = current.state.doc.nodeAt(target.pos);
     if (node?.type.name === 'protocolParameter' && node.attrs.parameterId === target.id) current.chain().focus().deleteRange({ from: target.pos, to: target.pos + 1 }).run();
   }, [chipTarget]);
-  const deleteStep = useCallback(() => {
-    const target = conditionTarget, current = editorRef.current;
-    setConditionTarget(null);
-    if (!target || !current) return;
-    const node = current.state.doc.nodeAt(target.pos);
-    if (node?.type.name !== 'protocolStep') return;
-    const section = current.state.doc.resolve(target.pos).parent;
-    const tr = current.state.tr.delete(target.pos, target.pos + node.nodeSize);
-    // A section never becomes empty: keep one empty step to write into.
-    if (section.childCount === 1) tr.insert(target.pos, current.schema.nodes.protocolStep.create({ stepId: null }, current.schema.nodes.paragraph.create()));
-    current.view.dispatch(tr.scrollIntoView());
-    updateSystems(systems => ({ ...systems, rules: systems.rules.filter(rule => !(rule.target === 'step' && rule.targetId === target.id)) }));
-  }, [conditionTarget, updateSystems]);
+  // A block deleted with ⋮⋮ takes its 适用范围 with it, so no rule is left pointing at nothing.
+  const forgetRules = useCallback((unit: BlockUnit) => {
+    const ids = new Set<string>();
+    const own = (node: BlockUnit['node']) => { const id = node.attrs.stepId ?? node.attrs.protocolBlockId ?? node.attrs.block?.id; if (typeof id === 'string') ids.add(id); };
+    own(unit.node);
+    unit.node.descendants(node => { own(node); });
+    if (ids.size) updateSystems(systems => ({ ...systems, rules: systems.rules.filter(rule => !ids.has(rule.targetId)) }));
+  }, [updateSystems]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  const openInsertMenu = (event: React.MouseEvent<HTMLButtonElement>) => { const rect = event.currentTarget.getBoundingClientRect(); setInsertMenu({ mode: 'button', query: '', anchor: { top: rect.top, left: rect.left, bottom: rect.bottom } }); };
-  /** "仅…" for the block holding the cursor; a step's first block speaks for the whole step. */
-  const openScope = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const { $from } = editor.state.selection;
-    for (let depth = $from.depth; depth > 0; depth -= 1) {
-      const parent = $from.node(depth - 1), node = $from.node(depth);
-      // In a table's first row the scope belongs to the column: a recipe column for one system.
-      if ((node.type.name === 'tableHeader' || node.type.name === 'tableCell') && $from.index(depth - 2) === 0) { setConditionTarget({ kind: 'column', id: node.attrs.protocolColumn ?? '', anchor: event.currentTarget, pos: $from.before(depth) }); return; }
-      if (parent.type.name === 'protocolStep' && $from.index(depth - 1) === 0 && parent.attrs.stepId) { setConditionTarget({ kind: 'step', id: parent.attrs.stepId, anchor: event.currentTarget, pos: $from.before(depth - 1) }); return; }
-      if (parent.type.name === 'protocolStep' || parent.type.name === 'protocolSection') {
-        const id = node.attrs.protocolBlockId ?? node.attrs.block?.id;
-        if (id) setConditionTarget({ kind: 'block', id, anchor: event.currentTarget, pos: $from.before(depth) });
-        return;
-      }
-    }
+  /** ⋮⋮ of a step or block: its 适用范围 (and, for a step, whether it is optional). */
+  const blockItems = (unit: BlockUnit): BlockMenuItem[] => {
+    const step = unit.node.type.name === 'protocolStep' ? unit.node.attrs.stepId as string | null : null;
+    const id = step ?? unit.node.attrs.protocolBlockId ?? unit.node.attrs.block?.id;
+    if (typeof id !== 'string') return [];
+    return [{ id: 'scope', label: step ? '适用范围与可选…' : '适用范围…', icon: Filter, run: (target, anchor) => setConditionTarget({ kind: step ? 'step' : 'block', id, anchor, pos: target.pos }) }];
   };
-  const toolbar = <div className="ln-wysiwyg-toolbar-sticky ln-protocol-toolbar" data-print-hidden>
-    <button type="button" className="focus-ring ln-insert-plus" aria-label="插入步骤、参数、工具或内容" title="插入步骤、参数、工具或内容（也可输入 /）" onMouseDown={event => event.preventDefault()} onClick={openInsertMenu}><Plus aria-hidden /><span>插入</span></button>
-    <button type="button" className="focus-ring ln-insert-plus is-quiet" aria-label="设置光标所在内容的适用范围" title="这段内容仅适用于某个体系或条件" onMouseDown={event => event.preventDefault()} onClick={openScope}><Filter aria-hidden /><span>仅…</span></button>
-    <DocumentWysiwygToolbar documentEditor={editor} editor={toolbarEditor ?? editor} ariaLabel="Protocol formatting" checklist={false} insertActions={toolbarEditor && toolbarEditor !== editor ? documentMediaInsertActions(uploadDraftId) : []} />
-  </div>;
-  const toolbarHost = toolbarHostId ? globalThis.document?.getElementById(toolbarHostId) : null;
-  return <ProtocolEditorContext.Provider value={api}><DocumentToolbarTargetContext.Provider value={toolbarTarget}><>
-    <section className={cn("ln-wysiwyg-editor", draggingFiles && "is-dragging-files")} data-print-hidden={undefined} data-lens={Object.keys(lens).length ? '' : undefined}>
-    {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
+  /** A recipe column's 适用范围 is set on its header cell, wherever the caret is in the column. */
+  const columnScope = () => {
+    const { $from } = editor.state.selection;
+    const table = findParentNodeClosestToPos($from, node => node.type.name === 'table');
+    const cell = findParentNodeClosestToPos($from, node => ['tableCell', 'tableHeader'].includes(node.type.name));
+    if (!table || !cell || cell.depth <= table.depth) return;
+    const map = TableMap.get(table.node), pos = table.start + map.map[map.colCount(cell.pos - table.start)];
+    const { top, left, bottom } = editor.view.coordsAtPos($from.pos);
+    setConditionTarget({ kind: 'column', id: editor.state.doc.nodeAt(pos)?.attrs.protocolColumn ?? '', anchor: { top, left, bottom }, pos });
+  };
+  const tableItems = () => [
+    { id: 'column-scope', label: '本列适用范围…', run: columnScope },
+    { id: 'to-mix', label: '转为配液卡', run: tableToMix },
+  ];
+  return <ProtocolEditorContext.Provider value={api}><>
+    <section className="ln-wysiwyg-editor" data-lens={Object.keys(lens).length ? '' : undefined}>
     <SystemsBar />
-    <input id={imageInputId} type="file" accept="image/*" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-    <input id={fileInputId} type="file" multiple hidden onChange={(event) => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-    <div
-      className="ln-protocol-editor-drop-zone"
-      onDragEnter={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) { event.preventDefault(); setDraggingFiles(true); } }}
-      onDragOver={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }}
-      onDragLeave={(event) => { const target = event.relatedTarget; if (!target || !(target instanceof Node) || !event.currentTarget.contains(target)) setDraggingFiles(false); }}
-      onDrop={(event) => { if (!event.dataTransfer.files.length) return; event.preventDefault(); event.stopPropagation(); setDraggingFiles(false); void addFiles(Array.from(event.dataTransfer.files)); }}
-      onFocusCapture={(event) => { if (!(event.target as HTMLElement).closest(".ln-compact-rich-editor")) activateToolbarEditor(editor); }}
-    ><EditorContent editor={editor} />{draggingFiles ? <div className="ln-protocol-drop-overlay"><Paperclip aria-hidden />Drop images or files into the Protocol</div> : null}</div>
+    <MixProposals proposals={mixProposals} onAdd={addProposedMix} onDismiss={onDismissMixProposal} />
+    <EditorSurface editor={editor} kinds={['paragraph', 'heading', 'subheading', 'quote', 'bullet', 'ordered']} openCommands={anchor => setInsertMenu({ mode: 'button', query: '', anchor })} blockItems={blockItems} tableItems={tableItems} afterDelete={forgetRules}><EditorContent editor={editor} /></EditorSurface>
     </section>
     {chipTarget ? <ChipPopover key={`${chipTarget.pos}:${chipTarget.id}`} target={chipTarget} onDelete={deleteChip} onClose={closeChip} /> : null}
     {splitPrompt ? <SplitPrompt prompt={splitPrompt} systems={document.systems} keyRef={splitKeyRef} onChoose={chooseSplit} onClose={closeSplit} /> : null}
-    {conditionTarget ? <ConditionMenu key={`${conditionTarget.kind}:${conditionTarget.pos}`} target={conditionTarget} onDeleteStep={deleteStep} onColumn={value => { const cell = editor.state.doc.nodeAt(conditionTarget.pos); if (cell) editor.view.dispatch(editor.state.tr.setNodeMarkup(conditionTarget.pos, undefined, { ...cell.attrs, protocolColumn: value })); setConditionTarget({ ...conditionTarget, id: value ?? '' }); }} onClose={() => { setConditionTarget(null); editor.view.focus(); }} /> : null}
-    {insertMenu ? <InsertMenu state={insertMenu} stepsAllowed={stepsAllowed && inStepsSection(editor.state.selection.$from)} systems={document.systems} keyRef={insertKeyRef} onChoose={insertChoice} onClose={() => setInsertMenu(null)} /> : null}
-  </></DocumentToolbarTargetContext.Provider></ProtocolEditorContext.Provider>;
+    {conditionTarget ? <ConditionMenu key={`${conditionTarget.kind}:${conditionTarget.pos}`} target={conditionTarget} onColumn={value => { const cell = editor.state.doc.nodeAt(conditionTarget.pos); if (cell) editor.view.dispatch(editor.state.tr.setNodeMarkup(conditionTarget.pos, undefined, { ...cell.attrs, protocolColumn: value })); setConditionTarget({ ...conditionTarget, id: value ?? '' }); }} onClose={() => { setConditionTarget(null); editor.view.focus(); }} /> : null}
+    {insertMenu ? <InsertMenu state={insertMenu} stepsAllowed={stepsAllowed && inStepsSection(editor.state.selection.$from)} systems={document.systems} keyRef={insertKeyRef} onChoose={insertChoice} onClose={() => { setInsertMenu(null); editor.view.focus(); }} /> : null}
+    {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
+  </></ProtocolEditorContext.Provider>;
 }

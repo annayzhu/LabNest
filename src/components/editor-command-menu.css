@@ -1,0 +1,27 @@
+/* The "/" and "＋" command menu of every editor. */
+.ln-insert-menu {
+  position: fixed; z-index: 70; width: min(18rem, calc(100vw - 16px)); overflow: hidden; background: var(--surface); color: var(--graphite);
+  border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); box-shadow: var(--shadow-soft), 0 2px 6px rgba(32, 40, 37, 0.06);
+  font: var(--ln-control-font-size-md)/1.45 var(--font-ui);
+}
+.ln-insert-filter { width: calc(100% - 1rem); margin: 0.5rem; height: var(--ln-control-height-sm); padding: 0 0.55rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--warm); font: var(--ln-control-font-size-md) var(--font-ui); }
+.ln-insert-list { max-height: min(20rem, 55vh); overflow: auto; padding: 0.25rem; }
+.ln-insert-group { margin: 0.45rem 0.45rem 0.15rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-insert-list button { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); align-items: center; gap: 0.55rem; width: 100%; text-align: left; padding: 0.3rem 0.45rem; border-radius: var(--ln-radius-control-md); }
+.ln-insert-icon { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--muted); }
+.ln-insert-icon svg { width: 15px; height: 15px; }
+.ln-insert-list button > span:last-child { display: grid; min-width: 0; }
+.ln-insert-list button strong { font-weight: 600; color: var(--ink); }
+.ln-insert-list button small { font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-insert-list button[aria-selected="true"] { background: var(--action-surface); }
+.ln-insert-list button[aria-selected="true"] .ln-insert-icon { border-color: var(--action-border); color: var(--moss); }
+.ln-insert-empty { padding: 0.75rem; color: var(--muted); font-size: var(--ln-control-font-size-xs); }
+.ln-insert-keys { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0; padding: 0.35rem 0.75rem; border-top: 1px solid var(--hairline); background: var(--warm); color: var(--muted); font-size: var(--ln-control-font-size-xs); }
+.ln-insert-keys span { display: inline-flex; align-items: center; gap: 0.2rem; }
+.ln-insert-keys kbd { min-width: 1.15rem; padding: 0 0.25rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-sm); background: var(--surface); color: var(--graphite); font: inherit; font-family: var(--font-data); line-height: 1.35; text-align: center; }
+@media (pointer: coarse) {
+  .ln-insert-filter { height: 2.75rem; }
+  .ln-insert-list button { min-height: 2.75rem; }
+  /* No keyboard to point at. */
+  .ln-insert-keys { display: none; }
+}

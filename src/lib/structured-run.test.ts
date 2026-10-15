@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
-import { structuredRunView, assertStructuredStepExecutable } from './structured-run';
+import { structuredRunView, assertStructuredStepExecutable, runStepNotes, stepQuantities } from './structured-run';
 
 it('resolves treatment groups independently and never borrows one group value for shared work', () => {
   const source = createEmptyProtocolDocument();
@@ -51,4 +51,33 @@ it('lets a step with only fixed values run without a system choice, while a per-
   expect(view.steps['run-wait']).toMatchObject({ title: '静置 10 min', blocked: false });
   expect(view.steps['run-dose'].blocked).toBe(true);
   expect(() => assertStructuredStepExecutable(view, 'run-wait', 0)).not.toThrow();
+});
+
+it('counts shared preparation once for all groups: its quantities are the sum of the groups\' counts', () => {
+  const steps = { shared: { versionId: 'v1', groupId: 'shared' }, a: { versionId: 'v1@a', groupId: 'a' } } as unknown as Parameters<typeof stepQuantities>[0]['steps'];
+  const plan = { groups: [{ id: 'a', label: 'A组' }, { id: 'b', label: 'B组' }], quantities: { 'v1@a': { 反应数: 12, 孔数: 6 }, 'v1@b': { 反应数: 8 } } } as unknown as Parameters<typeof stepQuantities>[0]['plan'];
+  expect(stepQuantities({ steps, plan }, 'shared')).toEqual({ versionId: 'v1@a', quantities: { 反应数: 20 } });
+  expect(stepQuantities({ steps, plan }, 'a')).toEqual({ versionId: 'v1@a', quantities: { 反应数: 12, 孔数: 6 } });
+});
+
+it('keeps the Protocol\'s notes where they were written, per group: once for shared preparation, passed on past a step the group does not do', () => {
+  const source = createEmptyProtocolDocument();
+  source.executionConfirmed = true;
+  source.systems = { schemaVersion: 1, dimensions: [{ id: 'volume', label: '体积', options: [{ id: 's', label: '350 µL' }, { id: 'l', label: '600 µL' }] }], presets: [], parameters: [], restrictions: [], rules: [{ id: 'only-large', target: 'step', targetId: 'wash', when: { all: [{ dimensionId: 'volume', optionId: 'l' }] }, parameterIds: [], optional: false, actualFields: [] }] };
+  const text = (id: string, value: string, execution: Record<string, string>) => ({ id, type: 'rich_text' as const, nodes: [{ type: 'paragraph' as const, content: [{ text: value }] }], execution: execution as never });
+  source.sections.find(s => s.key === 'steps')!.blocks = [
+    text('intro', '全程戴手套。', { role: 'info' }),
+    text('prep', '预冷离心机。', { role: 'step', stepId: 'prep', format: 'block' }),
+    text('ice', '注：以下步骤在冰上操作。', { role: 'info' }),
+    text('wash', '大体系洗一次。', { role: 'step', stepId: 'wash', format: 'block' }),
+    text('spin', '离心 5 min。', { role: 'step', stepId: 'spin', format: 'block' }),
+    text('store', '完成后 −80 °C 保存。', { role: 'info' }),
+  ];
+  const adopted = (volume: string) => ({ selections: { volume }, actualInputs: {}, confirmedAt: '2026-10-15T01:00:00Z' });
+  const runSteps = [['prep', 'prep'], ['a-wash', 'wash'], ['a-spin', 'spin'], ['b-wash', 'wash'], ['b-spin', 'spin']].map(([id, ref]) => ({ id, groupKey: 'v1', protocolStepRef: `v1:${ref}`, completed: false }));
+  const plan = { schemaVersion: 1, revision: 1, groups: [{ id: 'a', label: '小体系' }, { id: 'b', label: '大体系' }], stepGroups: { prep: 'shared', 'a-wash': 'a', 'a-spin': 'a', 'b-wash': 'b', 'b-spin': 'b' }, versions: { 'v1@a': adopted('s'), 'v1@b': adopted('l') }, actualValues: {}, skips: {} };
+  const notes = runStepNotes(structuredRunView({ versions: [{ protocolVersionId: 'v1', contentJson: source }] }, plan, runSteps));
+  const ids = (record: Record<string, Array<{ id: string }>>) => Object.fromEntries(Object.entries(record).map(([step, blocks]) => [step, blocks.map(block => block.id)]));
+  expect(ids(notes.before)).toEqual({ prep: ['intro'], 'a-spin': ['ice'], 'b-wash': ['ice'] });
+  expect(ids(notes.after)).toEqual({ 'a-spin': ['store'], 'b-spin': ['store'] });
 });

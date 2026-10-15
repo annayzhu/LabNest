@@ -4,7 +4,7 @@ import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document
 import { executionBlockText, projectProtocolExecution } from './protocol-execution';
 import { calculate, type CalculatorResult } from './calculators/calculator-engine';
 import { adoptableCalculation, calculationRequest, calculationIssues, protocolCalculations, readableCalculationError } from './protocol-calculations';
-import { chipParameterIds, mapChipReferences, optionMarks, parameterDisplayName, protocolChipText } from './protocol-chips';
+import { chipParameterIds, mapChipReferences, optionMarks, parameterDisplayName, parameterLongName, protocolChipText } from './protocol-chips';
 export type { ProtocolSystems, ProtocolCondition } from './protocol-systems-schema';
 
 export type Applicability = 'applicable' | 'not-applicable' | 'unknown';
@@ -19,6 +19,8 @@ export type ProtocolSystemResolution = {
   rules: Record<string, Applicability>;
   issues: Array<{ code: string; targetId: string; message: string }>;
 };
+/** A value a step records at the bench: one its rules ask for, or (`source: 'chip'`) one of the step's chips. */
+export type StepActualField = ProtocolSystems['rules'][number]['actualFields'][number] & { source?: 'chip' };
 
 export function validateProtocolSystems(systems: ProtocolSystems): ProtocolSystemResolution['issues'] {
   const issues: ProtocolSystemResolution['issues'] = [];
@@ -213,18 +215,23 @@ export function resolveProtocolDocument(document: ProtocolDocument, selections: 
     const start = document.sections.flatMap(s => s.blocks).find(b => b.execution?.role === 'step' && (b.execution.stepId ?? b.id) === id);
     const applicability = conjunction([state('step', id), state('block', start?.id ?? '')]);
     const blocks = (step.content_blocks ?? []).flatMap(filterBlock);
-    const referenced = new Set(rules.filter(r => r.target === 'step' && r.targetId === id).flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
+    const stepRules = rules.filter(r => r.target === 'step' && r.targetId === id);
+    const referenced = new Set(stepRules.flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
     mapChipReferences([step.title, ...blocks], key => { chipParameterIds(key, systems).forEach(id => referenced.add(id)); return key; });
     const unknownContent = blocks.some(b => state('block', b.id) === 'unknown' || b.type === 'table' && b.rowIds?.some(rowId => state('row', rowId) === 'unknown'));
     const blocked = globalBlock || applicability !== 'applicable' || unknownContent || [...referenced].some(key => resolution.parameters[key]?.status !== 'resolved');
+    // Every chip in the step can take an actual value; those marked "执行时必填" must. A value filled at execution is an input, not an actual.
+    const ruleFields = stepRules.flatMap(r => r.actualFields);
+    const chipFields = [...referenced].flatMap(key => { const parameter = systems?.parameters.find(p => p.id === key); return parameter && parameter.source.kind !== 'actual' && !ruleFields.some(f => f.id === key) ? [{ id: key, label: parameterLongName(parameter, systems!), unit: parameter.unit, required: parameter.actual === 'required', source: 'chip' as const }] : []; });
     const content_blocks = render(blocks);
     // `source_blocks` keep chip references for interface rendering; `content_blocks` are plain reading text.
     return { ...step, title: render(step.title), content_blocks, source_blocks: blocks, description: content_blocks.map(executionBlockText).join('\n'), applicability, blocked,
-      optional: rules.some(r => r.target === 'step' && r.targetId === id && r.optional),
-      actualFields: rules.filter(r => r.target === 'step' && r.targetId === id).flatMap(r => r.actualFields),
+      optional: stepRules.some(r => r.optional),
+      actualFields: [...ruleFields, ...chipFields] as StepActualField[],
+      chipIds: [...referenced],
     };
   });
-  return { ...resolution, steps, commonBlocks: render(source.commonBlocks.flatMap(filterBlock)), document: { ...document, sections: document.sections.map(s => ({ ...s, blocks: render(s.blocks.flatMap(filterBlock)) })) } };
+  return { ...resolution, steps, commonBlocks: render(source.commonBlocks.flatMap(filterBlock)), notePlacement: source.notePlacement, document: { ...document, sections: document.sections.map(s => ({ ...s, blocks: render(s.blocks.flatMap(filterBlock)) })) } };
 }
 
 /** Applicability of a step, block or table row from its rules; content without rules is common. */

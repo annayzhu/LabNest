@@ -1,0 +1,146 @@
+import { convert, normalizeUnit, parseScalar, units } from './calculators/quantities';
+import { chipAmount, chipKindForUnit, chipReferenceId, isMaterialAmount, parameterDisplayName } from './protocol-chips';
+import type { ProtocolContentBlock } from './protocol-document';
+import type { ProtocolSystems } from './protocol-systems-schema';
+
+export type ProtocolMix = Extract<ProtocolContentBlock, { type: 'mix' }>;
+type Parameter = ProtocolSystems['parameters'][number];
+type Resolved = { status: string; value?: number; unit: string };
+
+/** The quantity a mix card is scaled by, named the way the bench counts it: 反应数, 孔数, 样本数. */
+export const mixPer = (mix: Pick<ProtocolMix, 'per'>) => mix.per || '反应';
+export const mixTitle = (mix: Pick<ProtocolMix, 'title'>) => mix.title || '配液卡';
+export const mixQuantityLabel = (mix: Pick<ProtocolMix, 'per'>) => `${mixPer(mix)}数`;
+/** A bench-made mix card offered from a run to its Protocol. */
+export type MixProposal = { id: string; mix: ProtocolMix; stepRef?: string; stepTitle?: string; runCode?: string; createdAt: string };
+const isVolume = (unit: string) => units[normalizeUnit(unit)]?.dimension === 'volume';
+/** Every chip referenced anywhere in `value`, in order of first appearance. */
+const referencedChips = (value: unknown) => new Set([...JSON.stringify(value).matchAll(/\{\{([\w-]+)\}\}/g)].map(match => match[1]));
+
+type MixLine = { id: string; name: string; mode: 'premix' | 'separate'; unit: string; perReaction?: number; total?: number; pending?: string };
+export type MixView = {
+  lines: MixLine[]; quantity?: number; overagePercent: number;
+  /** Premixed volume each reaction receives, when every premixed part is a volume. */
+  premixPerReaction?: { value: number; unit: string };
+  aliquot: string; warnings: string[]; ready: boolean; fingerprint: string;
+};
+
+/**
+ * A mix card for one run: each component's amount per reaction (as adopted), the totals for `quantity` reactions with the
+ * card's overage on the premix, the aliquot instruction, and pipetting warnings. Pure; the server recomputes it on confirmation.
+ */
+export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, resolution: Record<string, Resolved>, quantity?: number): MixView {
+  const per = mixPer(mix), factor = 1 + mix.overagePercent / 100;
+  const lines: MixLine[] = mix.components.map(component => {
+    const id = chipReferenceId(component.amount), parameter = id ? systems?.parameters.find(p => p.id === id) : undefined;
+    const name = component.name.trim() || (parameter ? parameterDisplayName(parameter) : '组分');
+    const resolved = id ? resolution[id] : undefined;
+    if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? '用量已删除' : parameter.source.kind === 'lookup' ? '待选体系' : parameter.source.kind === 'actual' ? '执行时填写' : '待填写' };
+    const perReaction = resolved.value!;
+    return { id: component.id, name, mode: component.mode, unit: resolved.unit, perReaction,
+      ...(quantity ? { total: perReaction * quantity * (component.mode === 'premix' ? factor : 1) } : {}) };
+  });
+  const premix = lines.filter(line => line.mode === 'premix');
+  const premixPerReaction = premix.length && premix.every(line => line.perReaction !== undefined && isVolume(line.unit))
+    ? { value: premix.reduce((sum, line) => sum + convert(line.perReaction!, line.unit, 'µL'), 0), unit: 'µL' } : undefined;
+  const separate = lines.filter(line => line.mode === 'separate');
+  const amount = (line: MixLine) => line.perReaction === undefined ? '—' : chipAmount(line.perReaction, line.unit);
+  const aliquot = [
+    premix.length ? `每${per}分装预混液 ${premixPerReaction ? chipAmount(Number(premixPerReaction.value.toPrecision(6)), 'µL') : '—'}` : '',
+    separate.length ? `${premix.length ? '再加' : '每' + per + '加'} ${separate.map(line => `${line.name} ${amount(line)}`).join('、')}` : '',
+  ].filter(Boolean).join('，') + '。';
+  const warnings: string[] = [];
+  const minimum = mix.minPipetteUl;
+  for (const line of lines) {
+    if (line.perReaction === undefined || !isVolume(line.unit)) continue;
+    const pipetted = line.mode === 'premix' ? line.total : line.perReaction;
+    if (pipetted !== undefined && convert(pipetted, line.unit, 'µL') < minimum) warnings.push(`${line.name}${line.mode === 'premix' ? '合计' : `每${per}`} ${chipAmount(Number(pipetted.toPrecision(4)), line.unit)}，低于移液下限 ${minimum} µL；可先稀释或增加${mixQuantityLabel(mix)}。`);
+  }
+  if (premix.some(line => line.perReaction !== undefined && !isVolume(line.unit))) warnings.push('预混液中有不是体积的组分，分装体积未计入它。');
+  const ready = Boolean(quantity && quantity > 0) && lines.every(line => line.perReaction !== undefined);
+  const fingerprint = JSON.stringify({ quantity: quantity ?? null, overage: mix.overagePercent, lines: lines.map(line => [line.id, line.mode, line.unit, line.perReaction === undefined ? null : Number(line.perReaction.toPrecision(12))]) });
+  return { lines, quantity, overagePercent: mix.overagePercent, premixPerReaction, aliquot, warnings, ready, fingerprint };
+}
+
+/** A new mix card with one empty component; amounts are chips so they can differ by system. */
+export function newMix(newId: (prefix: string) => string): { block: ProtocolMix; parameters: Parameter[] } {
+  const parameter = newMixParameter(newId);
+  return { block: { id: newId('mix'), type: 'mix', title: '预混液', per: '反应', overagePercent: 10, minPipetteUl: 0.5, components: [{ id: newId('component'), name: '', amount: `{{${parameter.id}}}`, mode: 'premix' }] }, parameters: [parameter] };
+}
+export function newMixParameter(newId: (prefix: string) => string, label = '', value: number | null = null, unit = 'µL'): Parameter {
+  return { id: newId('p'), label, unit, kind: chipKindForUnit(unit), origin: 'chip', source: { kind: 'fixed', value, unit } };
+}
+
+/** "10 µL", "4uL", "2.5 mg" as an amount in a registered unit; anything else is not an amount. */
+function cellQuantity(cell: string) {
+  const match = /^\s*([-−]?[\d.,]+)\s*(\S+)\s*$/.exec(cell);
+  if (!match) return undefined;
+  const unit = normalizeUnit(match[2]);
+  try { return units[unit] ? { value: parseScalar(match[1].replace(/,/g, '').replace('−', '-')), unit } : undefined; } catch { return undefined; }
+}
+/**
+ * A recipe table ("组分 | 每反应" or "组分 | 6 孔板 | 12 孔板") as a mix card. The first column names the component; a cell holding a
+ * chip keeps it; "10 µL" becomes a fixed amount; columns marked for a system option become one value per option.
+ */
+export function recipeTableToMix(table: Extract<ProtocolContentBlock, { type: 'table' }>, newId: (prefix: string) => string): { block: ProtocolMix; parameters: Parameter[] } {
+  const parameters: Parameter[] = [];
+  const valueColumns = table.rows[0]?.map((_, index) => index).filter(index => index > 0) ?? [];
+  const systemColumns = valueColumns.filter(index => table.columnConditions?.[index]);
+  const components = table.rows.slice(1).flatMap(row => {
+    const name = row[0]?.replace(/\{\{[\w-]+\}\}/g, '').trim();
+    if (!name) return [];
+    const chip = valueColumns.map(index => chipReferenceId(row[index] ?? '')).find(Boolean);
+    if (chip) return [{ id: newId('component'), name, amount: `{{${chip}}}`, mode: 'premix' as const }];
+    let parameter: Parameter;
+    if (systemColumns.length) {
+      const values = systemColumns.map(index => ({ when: table.columnConditions![index]!, quantity: cellQuantity(row[index] ?? '') }));
+      const unit = values.find(value => value.quantity)?.quantity?.unit ?? 'µL';
+      parameter = { ...newMixParameter(newId, name, null, unit), source: { kind: 'lookup', values: values.map(value => ({ id: newId('value'), when: { all: [value.when] }, value: value.quantity ? convert(value.quantity.value, value.quantity.unit, unit) : null, unit })) } };
+    } else {
+      const quantity = valueColumns.map(index => cellQuantity(row[index] ?? '')).find(Boolean);
+      parameter = newMixParameter(newId, name, quantity?.value ?? null, quantity?.unit ?? 'µL');
+    }
+    parameters.push(parameter);
+    return [{ id: newId('component'), name, amount: `{{${parameter.id}}}`, mode: 'premix' as const }];
+  });
+  return { block: { id: newId('mix'), type: 'mix', title: table.caption?.trim() || '预混液', per: '反应', overagePercent: 10, minPipetteUl: 0.5, components }, parameters };
+}
+
+/** One line of a mix card for plain text and exports; chips in `amount` read as whatever they were rendered to. */
+export function mixSummary(mix: ProtocolMix) {
+  const per = mixPer(mix);
+  return `${mixTitle(mix)}（每${per}，余量 ${mix.overagePercent}%）：${mix.components.map(component => `${component.name ? component.name + ' ' : ''}${component.amount}${component.mode === 'separate' ? '（单独加）' : ''}`).join('；')}`;
+}
+
+/** The counts a run of this Protocol needs: each mix card's (反应数, 孔数…), and 反应数 for material amounts written outside mix cards. */
+export function runQuantityLabels(document: { sections: Array<{ blocks: ProtocolContentBlock[] }>; systems?: ProtocolSystems }) {
+  const blocks = document.sections.flatMap(section => section.blocks);
+  const mixes = blocks.filter((block): block is ProtocolMix => block.type === 'mix');
+  const inMixes = new Set(mixes.flatMap(mix => mix.components.flatMap(component => chipReferenceId(component.amount) ?? [])));
+  const referenced = referencedChips(blocks.filter(block => block.type !== 'mix'));
+  const loose = document.systems?.parameters.some(p => p.materialRef && !p.perRun && referenced.has(p.id) && !inMixes.has(p.id));
+  return [...new Set([...mixes.map(mixQuantityLabel), ...(loose ? ['反应数'] : [])])];
+}
+
+/** What a Protocol uses per reaction, read from its chips: material-linked amounts and every mix card component, with the step they are in. */
+export function protocolUsage(document: { sections: Array<{ key: string; blocks: ProtocolContentBlock[] }>; systems?: ProtocolSystems }, steps: Array<{ order: number; content_blocks?: ProtocolContentBlock[]; title: string }>) {
+  const rows: Array<{ key: string; name: string; amount: string; basis: string; step: number }> = [];
+  for (const step of steps) {
+    const blocks = step.content_blocks ?? [];
+    const mixes = blocks.filter((block): block is ProtocolMix => block.type === 'mix');
+    const inMixes = new Set<string>();
+    for (const mix of mixes) for (const component of mix.components) {
+      const id = chipReferenceId(component.amount);
+      if (id) inMixes.add(id);
+      const parameter = id ? document.systems?.parameters.find(p => p.id === id) : undefined;
+      const name = parameter?.materialRef?.name ?? (component.name.trim() || parameter?.label.trim());
+      if (name) rows.push({ key: `${step.order}:${mix.id}:${component.id}`, name, amount: component.amount, basis: `每${mixPer(mix)} · ${mixTitle(mix)}`, step: step.order });
+    }
+    for (const id of referencedChips([step.title, ...blocks.filter(block => block.type !== 'mix')])) {
+      const parameter = document.systems?.parameters.find(p => p.id === id);
+      if (!parameter?.materialRef || inMixes.has(id) || !isMaterialAmount(parameter.unit)) continue;
+      rows.push({ key: `${step.order}:${id}`, name: parameter.materialRef.name, amount: `{{${id}}}`, basis: parameter.perRun ? '本次总量' : '每反应', step: step.order });
+    }
+  }
+  return rows;
+}

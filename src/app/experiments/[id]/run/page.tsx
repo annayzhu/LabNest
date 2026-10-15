@@ -1,11 +1,12 @@
 import { RunNotificationStatus } from '@/components/RunNotificationStatus';
 import { WatchRunConnection } from '@/components/WatchRunConnection';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
-import { structuredRunView } from '@/lib/structured-run';
+import { runStepNotes, structuredRunView } from '@/lib/structured-run';
 import { RunSystemPreparation } from '@/components/RunSystemPreparation';
+import { RunConsumptionSummary } from "@/components/RunConsumption";
+import { consumptionRecorded, runConsumption } from "@/lib/run-consumption";
 import { ProtocolContentBlockView } from '@/components/ProtocolDocumentView';
 import { ProtocolSystemChoice } from '@/components/ProtocolSystemLabels';
-import { runConsumptionSources } from "@/lib/run-consumption";
 import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
 import {runParameterKeys} from "@/lib/run-parameters";
@@ -70,6 +71,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const lockedProtocol = experiment.primaryProtocolVersion;
   const structured = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
   const currentStep = experiment.steps.find((step) => !step.completed && !structured.steps[step.id]?.blocked);
+  // What this run uses, from mix cards and material-linked chips; offered for deduction at completion.
+  const consumption = runConsumption(structured);
   const locked = isRecordLocked(experiment.recordStatus);
   const editable = experiment.status !== "archived" && !locked && !(structured.hasSystems && experiment.status === 'completed');
   const evidenceByStep = Object.fromEntries(experiment.steps.map((step) => [step.id, {
@@ -81,11 +84,12 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
   const frozenReferenceTitles:Record<string,string>={};
   const frozenReferences: Record<string, ReturnType<typeof runStepContent>["reference"]> = {};
   const groupOrder = (stepId: string) => structured.plan.stepGroups[stepId] === 'shared' ? -1 : structured.plan.groups.findIndex(group => group.id === structured.plan.stepGroups[stepId]);
+  const notes = runStepNotes(structured);
   const renderedSteps=[...experiment.steps].sort((a,b) => a.groupOrder-b.groupOrder || groupOrder(a.id)-groupOrder(b.id) || a.order-b.order).map(step=>{
     const {reference,...richContent}=runStepContent(experiment.protocolSnapshotJson,step,(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>);
     frozenReferences[step.groupKey] ??= reference;
     const resolved = structured.steps[step.id];
-    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, groupTitle: resolved.groupLabel ? `${resolved.groupLabel} · ${step.groupTitle}` : step.groupTitle, description: resolved.description, richContent: { ...richContent, blocks: resolved.source_blocks ?? resolved.content_blocks ?? [], common: structured.versions.find(v => v.id === resolved.versionId)?.commonBlocks ?? [], ...(resolved.title_source === 'derived' ? { derivedTitle: true } : {}), chipVersion: resolved.versionId } } : {...step,richContent};
+    return resolved ? { ...step, timerDurationSeconds: step.timerDurationSeconds ?? resolved.timerDurationSeconds ?? null, title: resolved.title, groupTitle: resolved.groupLabel ? `${resolved.groupLabel} · ${step.groupTitle}` : step.groupTitle, description: resolved.description, richContent: { ...richContent, blocks: resolved.source_blocks ?? resolved.content_blocks ?? [], notesBefore: notes.before[step.id] ?? [], notesAfter: notes.after[step.id] ?? [], ...(resolved.title_source === 'derived' ? { derivedTitle: true } : {}), chipVersion: resolved.versionId } } : {...step,richContent};
   }).filter(step => structured.steps[step.id]?.applicability !== 'not-applicable');
   for(const version of (experiment.protocolSnapshotJson as {versions?:{protocolVersionId:string;contentJson?:unknown;protocolTitle?:string;displayVersion?:string}[]}).versions??[]) {
     frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
@@ -119,7 +123,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>
-              <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "Unassigned plan"} · {experiment.project?.name ?? "Unassigned project"}</p>
+              <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "未分配研究计划"} · {experiment.project?.name ?? "未分配项目"}</p>
               <p className="mt-1 text-xs text-muted">{lockedProtocol ? `${lockedProtocol.protocol.canonicalTitle ?? lockedProtocol.protocol.title} · ${lockedProtocol.protocol.humanCode ?? "Uncoded"} · ${lockedProtocol.displayVersion}` : "No locked ProtocolVersion"}</p>
             </div>
 
@@ -132,6 +136,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
         {editable && structured.hasSystems ? <WatchRunConnection experimentId={id}/> : null}
         <RunSystemPreparation experimentId={id} view={structured} editable={editable}/>
+        <RunConsumptionSummary lines={consumption} rows={experiment.materialUses}/>
         {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>本次采用体系 · {experiment.runCode}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
         <RunNotificationStatus/>
         <ProtocolRunProgressForm
@@ -147,6 +152,8 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           chipContexts={Object.fromEntries([...structured.versions.map(version => [version.sourceVersionId, { systems: version.document.systems }] as const), ...structured.versions.map(version => [version.id, { systems: version.document.systems, resolution: version.parameters }] as const)])}
           editable={editable}
           evidenceByStep={evidenceByStep}
+          consumption={consumption.filter(line => !consumptionRecorded(line, experiment.materialUses))}
+          stock={inventoryItems.map(item => ({ id: item.id, name: item.name, managementMode: item.managementMode, lotNumber: item.lotNumber }))}
         />
         {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>查看其他体系内容（不适用，不计入本次进度）</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · 不适用</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 
@@ -161,7 +168,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
             {attachmentLinks.length ? <ul className="mt-4 space-y-2 border-t border-hairline pt-4">{attachmentLinks.map((link) => <li key={link.id} className="flex items-center gap-2 text-sm"><Link href={`/api/attachments/${link.attachment.id}`} className="min-w-0 flex-1 truncate font-medium text-moss hover:underline">{link.attachment.originalFilename}</Link><span className="text-xs text-muted">{(link.attachment.size / 1024).toFixed(1)} KB</span><AttachmentDeleteButton attachmentId={link.attachment.id} linkId={link.id} filename={link.attachment.originalFilename} /></li>)}</ul> : <p className="mt-4 text-sm text-muted">No run evidence attached.</p>}
           </section>
 
-          <RunMaterials consumptionSources={runConsumptionSources(experiment.protocolSnapshotJson)} parameterValues={(experiment.protocolRun?.parametersJson??{}) as Record<string,string|number|boolean>} experimentId={id} rows={JSON.parse(JSON.stringify(experiment.materialUses))} stock={inventoryItems} editable={editable} planned={Array.isArray(experiment.protocolRun?.calculatedConsumptionJson)?experiment.protocolRun.calculatedConsumptionJson as unknown as {materialName:string;quantity:number;unit:string;formula?:string}[]:[]}/>
+          <RunMaterials experimentId={id} rows={JSON.parse(JSON.stringify(experiment.materialUses))} stock={inventoryItems} editable={editable}/>
 
         </div>
 

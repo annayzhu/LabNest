@@ -23,8 +23,10 @@ async function assertSingleMetadataPath(page, route, titleName) {
   assert.equal(await shell.getByRole("textbox", { name: titleName, exact: true }).count(), 1, `${route}: title is not directly editable.`);
   assert.equal(await shell.getByRole("button", { name: /information/i }).count(), 0, `${route}: duplicate record-information drawer remains.`);
   await shell.getByRole("tab", { name: "Metadata", exact: true }).click();
-  assert.equal(await shell.getAttribute("data-active-view"), "metadata", `${route}: Metadata view did not activate.`);
-  const metadataRegion = shell.locator('[data-document-metadata="true"]');
+  // Metadata opens as a drawer over the page; the document stays where it is.
+  assert.equal(await shell.getByRole("tab", { name: "Metadata", exact: true }).getAttribute("aria-selected"), "true", `${route}: Metadata tab did not activate.`);
+  await page.locator('aside.context-properties[aria-hidden="false"]').waitFor();
+  const metadataRegion = page.locator('[data-document-metadata="true"]');
   assert.equal(await metadataRegion.count(), 1, `${route}: Metadata does not have one explicit region.`);
 }
 
@@ -32,12 +34,16 @@ async function assertManualResultDocument(page) {
   await page.goto(`${baseUrl}/results/new?manual=1`, { waitUntil: "networkidle" });
   assert.equal(await page.getByText("直接结果", { exact: true }).count(), 0, "Manual Result still renders the legacy direct-result textarea.");
   assert.equal(await page.getByText("主要数值 · 可选", { exact: true }).count(), 0, "Manual Result still renders the legacy primary-number field.");
-  const toolbar = page.getByRole("toolbar", { name: "Scientific document formatting" }).first();
-  await toolbar.getByRole("button", { name: "Insert", exact: true }).click();
-  const menu = page.locator('[data-toolbar-menu="insert"]');
-  for (const label of ["Table", "Metric", "Callout", "Media", "Dataset"]) {
-    assert.equal(await menu.getByText(label, { exact: true }).count(), 1, `Manual Result insert menu is missing ${label}.`);
+  // Inserting is "/" in the document itself; there is no formatting toolbar.
+  const paragraph = page.locator(".ln-editor-surface .ProseMirror p").first();
+  await paragraph.click();
+  await page.keyboard.type("/");
+  const menu = page.locator(".ln-insert-menu");
+  await menu.waitFor({ state: "visible" });
+  for (const label of ["表格", "指标", "提示", "数据集", "图片", "附件"]) {
+    assert.equal(await menu.getByRole("option").filter({ has: page.getByText(label, { exact: true }) }).count(), 1, `Manual Result "/" menu is missing ${label}.`);
   }
+  await page.keyboard.press("Escape");
 }
 
 async function assertFitInsideToolbar(page) {

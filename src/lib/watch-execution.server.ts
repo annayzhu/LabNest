@@ -2,10 +2,14 @@ import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { prisma } from './db';
 import { assertRecordEditable } from './record-lifecycle';
-import { structuredRunView, assertStructuredStepExecutable } from './structured-run';
+import { structuredRunView, assertStructuredStepExecutable, mixState, runStepNotes, stepMixes } from './structured-run';
+import { chipAmount } from './protocol-chips';
+import { mixPer, mixTitle } from './protocol-mix';
 import { executionBlockText } from './protocol-execution';
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 const json = (value: unknown) => JSON.parse(JSON.stringify(value));
+/** A mix card as the watch reads it: lines only once confirmed; otherwise a note to confirm on the phone. */
+type WatchMix = { id: string; title: string; per: string; stale: boolean; note?: string; quantity?: number; aliquot?: string; lines?: Array<{ id: string; name: string; mode: 'premix' | 'separate'; total: string; perReaction: string; struck: boolean }> };
 
 /** Pairing is initiated from the existing same-origin Run action, for one experiment only. */
 export async function createWatchPairing(experimentId: string) {
@@ -46,12 +50,22 @@ export async function watchRunSnapshot(experimentId: string) {
   let editable = true;
   try { assertRecordEditable(experiment.recordStatus); } catch { editable = false; }
   editable &&= !['archived', 'completed'].includes(experiment.status);
+  // The Protocol's notes read where they were written: before the step, or after the last one.
+  const notes = runStepNotes(view);
   const steps = experiment.steps.filter(step => view.steps[step.id]?.applicability !== 'not-applicable').map(step => {
     const resolved = view.steps[step.id];
     let canComplete = Boolean(resolved && editable && !step.completed && !step.timerStartedAt);
     try { assertStructuredStepExecutable(view, step.id, view.plan.revision, true); } catch { canComplete = false; }
     const duration = step.timerDurationSeconds ?? resolved?.timerDurationSeconds ?? null;
-    return { id: step.id, sourceRef: step.protocolStepRef ?? step.id, title: resolved?.title ?? step.title, group: resolved?.groupLabel ?? '当前实验组', text: resolved ? (resolved.content_blocks ?? []).map(executionBlockText).join('\n\n') : step.description, completed: step.completed, canComplete, blocked: resolved?.blocked ?? true, skipped: view.plan.skips[step.id]?.reason ?? null, actualFields: resolved?.actualFields ?? [], actualValues: view.plan.actualValues[step.id] ?? {}, timer: { durationSeconds: duration, remainingSeconds: step.timerRemainingSeconds ?? duration, startedAt: step.timerStartedAt, pausedAt: step.timerPausedAt }, canTime: Boolean(resolved && editable && !resolved.blocked && !view.plan.skips[step.id] && !step.completed) };
+    const mixes = resolved ? stepMixes(view, step.id).map((mix): WatchMix => {
+      const state = mixState(view, step.id, mix), card = { id: mix.id, title: mixTitle(mix), per: mixPer(mix) };
+      if (!state.receipt) return { ...card, stale: true, note: '尚未确认，请在手机上确认。' };
+      if (!state.current) return { ...card, stale: true, note: '数值已变化，请在手机上重新确认。' };
+      const struck = new Set(view.plan.mixStrikes[`${step.id}:${mix.id}`] ?? []);
+      return { ...card, stale: false, quantity: state.receipt.quantity, aliquot: state.receipt.aliquot,
+        lines: state.receipt.lines.map(line => ({ id: line.id, name: line.name, mode: line.mode, total: chipAmount(Number(line.total.toPrecision(4)), line.unit), perReaction: chipAmount(line.perReaction, line.unit), struck: struck.has(line.id) })) };
+    }) : [];
+    return { mixes, id: step.id, sourceRef: step.protocolStepRef ?? step.id, title: resolved?.title ?? step.title, group: resolved?.groupLabel ?? '当前实验组', text: resolved ? [...(notes.before[step.id] ?? []), ...(resolved.content_blocks ?? []), ...(notes.after[step.id] ?? [])].map(executionBlockText).join('\n\n') : step.description, completed: step.completed, canComplete, blocked: resolved?.blocked ?? true, skipped: view.plan.skips[step.id]?.reason ?? null, actualFields: resolved?.actualFields ?? [], actualValues: view.plan.actualValues[step.id] ?? {}, timer: { durationSeconds: duration, remainingSeconds: step.timerRemainingSeconds ?? duration, startedAt: step.timerStartedAt, pausedAt: step.timerPausedAt }, canTime: Boolean(resolved && editable && !resolved.blocked && !view.plan.skips[step.id] && !step.completed) };
   });
   return json({ experimentId, title: experiment.title, revision: view.plan.revision, serverTime: Date.now(), capturedAt: new Date().toISOString(), steps }) as { experimentId: string; title: string; revision: number; serverTime: number; capturedAt: string; steps: typeof steps };
 }

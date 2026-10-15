@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { optionMarks } from '@/lib/protocol-chips';
 import { conditionTagLabel } from '@/lib/protocol-conditions';
 import { blankProtocolSystems, type ProtocolSystems } from '@/lib/protocol-systems-schema';
@@ -14,7 +14,8 @@ import { useProtocolEditor, type ConditionTarget } from './ProtocolEditorContext
 type Rule = ProtocolSystems['rules'][number];
 const predicates = (rule: Rule) => [...(rule.when.all ?? []), ...(rule.when.any ?? [])];
 
-export function ConditionMenu({ target, onDeleteStep, onColumn, onClose }: { target: ConditionTarget; onDeleteStep: () => void; onColumn: (value: string | null) => void; onClose: () => void }) {
+/** 适用范围 of a step, block or recipe column; for a step also whether it is optional. Deleting is the block's ⋮⋮. */
+export function ConditionMenu({ target, onColumn, onClose }: { target: ConditionTarget; onColumn: (value: string | null) => void; onClose: () => void }) {
   const api = useProtocolEditor();
   const panel = useRef<HTMLDivElement>(null);
   const style = useAnchoredPosition(target.anchor, panel, [api.systems]);
@@ -52,11 +53,8 @@ export function ConditionMenu({ target, onDeleteStep, onColumn, onClose }: { tar
       <input autoFocus aria-label="条件名称" placeholder="条件名称，如 富脂组织" value={name} onChange={event => setName(event.target.value)} />
       <button className="focus-ring" type="submit" disabled={!name.trim()}>创建</button>
     </form> : <button type="button" className="focus-ring ln-condition-menu-link" onClick={() => setNaming(true)}><Plus aria-hidden />新条件</button>}
-    {target.kind === 'step' ? <>
-      <label className="ln-condition-menu-check"><input type="checkbox" checked={optional} onChange={() => api.updateSystems(current => optional
-        ? { ...current, rules: current.rules.flatMap(rule => rule.target === 'step' && rule.targetId === target.id && rule.optional ? predicates(rule).length ? [{ ...rule, optional: false }] : [] : [rule]) }
-        : { ...current, rules: [...current.rules, { id: uid('rule'), target: 'step' as const, targetId: target.id, when: {}, parameterIds: [], actualFields: [], optional: true }] })} />可选步骤：执行时可跳过，不计入必需进度</label>
-      <button type="button" className="focus-ring ln-condition-menu-link is-danger" onClick={onDeleteStep}><Trash2 aria-hidden />删除这一步</button>
-    </> : null}
+    {target.kind === 'step' ? <label className="ln-condition-menu-check"><input type="checkbox" checked={optional} onChange={() => api.updateSystems(current => optional
+      ? { ...current, rules: current.rules.flatMap(rule => rule.target === 'step' && rule.targetId === target.id && rule.optional ? predicates(rule).length ? [{ ...rule, optional: false }] : [] : [rule]) }
+      : { ...current, rules: [...current.rules, { id: uid('rule'), target: 'step' as const, targetId: target.id, when: {}, parameterIds: [], actualFields: [], optional: true }] })} />可选步骤：执行时可跳过，不计入必需进度</label> : null}
   </div>, document.body);
 }

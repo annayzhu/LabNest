@@ -19,7 +19,6 @@ export const solidIconShapes = {
   "help": <><path fillRule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a4 4 0 0 0-4 4h3a1 1 0 0 1 2 0c0 1-3 2-3 5h3c0-2 3-2 3-5a4 4 0 0 0-4-4Zm-1 11v3h3v-3Z"/></>,
   "hemocytometer": <><path fillRule="evenodd" d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm2 3v3h3V6Zm5 0v3h2V6Zm4 0v3h3V6ZM6 11v2h3v-2Zm5 0v2h2v-2Zm4 0v2h3v-2ZM6 15v3h3v-3Zm5 0v3h2v-3Zm4 0v3h3v-3Z"/></>,
   "history": <><path fillRule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"/><path d="M11 6h2v6l4 2-1 2-5-3Z"/></>,
-  "hydrogel 2": <><path fillRule="evenodd" d="M12 2C9 6 4 10 4 15a8 8 0 0 0 16 0c0-5-5-9-8-13Zm-3 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></>,
   "hydrogel": <><path fillRule="evenodd" d="M12 2C9 6 4 10 4 15a8 8 0 0 0 16 0c0-5-5-9-8-13Zm-3 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></>,
   "ic50-ec50": <><path d="M3 3h3v15h15v3H3Z"/><path d="M7 4h3c5 0 3 11 8 11h3v3h-3c-8 0-5-11-8-11H7Z"/></>,
   "import": <><path d="M10.5 2h3v8H18l-6 6-6-6h4.5Z"/><path d="M3 13h3v6h12v-6h3v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></>,

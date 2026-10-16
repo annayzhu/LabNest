@@ -53,6 +53,10 @@
 .ln-selection-bubble button:hover, .ln-table-bar button:hover { background: var(--stone); color: var(--ink); }
 .ln-selection-bubble button[aria-pressed="true"] { background: var(--action-surface); color: var(--moss); }
 .ln-selection-divider { width: 1px; align-self: stretch; margin: 0.25rem 0.15rem; background: var(--hairline); }
+.ln-selection-bubble { flex-wrap: wrap; max-width: min(34rem, calc(100vw - 16px)); }
+.ln-selection-select { height: 1.85rem; max-width: 6.5rem; padding: 0 0.3rem; border: 1px solid transparent; border-radius: var(--ln-radius-control-md); background: transparent; color: var(--graphite); font: inherit; cursor: pointer; }
+.ln-selection-select:hover { background: var(--stone); color: var(--ink); }
+.ln-selection-select.is-size { max-width: 4.6rem; }
 .ln-selection-bubble .ln-selection-risk { font: 700 0.95rem/1 var(--font-document-body, var(--font-ui)); color: var(--error); }
 .ln-selection-bubble .ln-selection-risk[aria-pressed="true"] { background: var(--error-surface); color: var(--error); }
 .ln-selection-link { display: flex; align-items: center; gap: 0.2rem; }

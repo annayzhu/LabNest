@@ -12,8 +12,12 @@ export function TopBar() {
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
   const mobileTitle = pathname === "/"
     ? "LabNest"
-    : pathname === "/ai" || pathname.startsWith("/actions")
-      ? "AI"
+    : pathname === "/ai"
+      ? "AI settings"
+      : pathname === "/actions"
+        ? "Proposed actions"
+        : pathname.startsWith("/actions")
+          ? "Manual AI"
       : pathname.startsWith("/protocol-run") || pathname.includes("/run")
       ? "Runs"
       : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results")

@@ -11,7 +11,7 @@ export type ConsumptionLine = { key: string; name: string; unit: string; expecte
  * A mix card counts at its totals (confirmed, else as it stands); a material-linked chip elsewhere counts per reaction × 反应数,
  * or once when the author marked it "本次总量". Old formula rules are kept as notes and never computed.
  */
-export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 'versions'>): ConsumptionLine[] {
+export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 'versions'>, stepLabel: (step: StructuredRunView['steps'][string]) => string = step => step.title || '步骤'): ConsumptionLine[] {
   const lines = new Map<string, ConsumptionLine>();
   const add = (name: string, unit: string, value: number | undefined, source: string, pending?: string) => {
     const dimension = units[normalizeUnit(unit)]?.dimension;
@@ -27,7 +27,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
     if (step.applicability === 'not-applicable' || view.plan.skips[stepId]) continue;
     const version = stepVersion(view, stepId), systems = version?.document.systems;
     if (!version || !systems) continue;
-    const where = `${step.groupLabel ? `${step.groupLabel} · ` : ''}${step.title || '步骤'}`;
+    const where = `${step.groupLabel ? `${step.groupLabel} · ` : ''}${stepLabel(step)}`;
     const inMix = new Set<string>();
     for (const mix of stepMixes(view, stepId)) {
       const state = mixState(view, stepId, mix), receipt = state.current ? state.receipt : undefined;

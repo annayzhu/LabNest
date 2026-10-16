@@ -13,18 +13,18 @@ import { prisma } from "@/lib/db";
 import { deleteAIProvider, setAIProviderEnabled } from "../settings/actions";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "AI · LabNest" };
+export const metadata: Metadata = { title: "AI 设置 · LabNest" };
 export default async function AIPage({ searchParams }: { searchParams?: Promise<{ provider?: string; saved?: string }> }) {
   const query = await searchParams;
   let providers;
   try { providers = await prisma.aIProvider.findMany({ orderBy: { name: "asc" } }); }
-  catch { return <AppShell><PageHeader title="AI" description="管理 AI 功能与相关设置。" /><p role="alert" className="mt-4 text-sm text-error">无法读取连接设置，已保存的设置未改变。<Link prefetch={false} className="focus-ring ml-2 underline" href="/ai">重试</Link></p></AppShell>; }
+  catch { return <AppShell><PageHeader title="AI 设置" description="模型连接与 AI 功能设置。" /><p role="alert" className="mt-4 text-sm text-error">无法读取连接设置，已保存的设置未改变。<Link prefetch={false} className="focus-ring ml-2 underline" href="/ai">重试</Link></p></AppShell>; }
   const editing = providers.find(provider => provider.id === query?.provider);
   const values: AiProviderFormValues | undefined = editing ? { id: editing.id, revision: editing.updatedAt.toISOString(), name: editing.name, type: editing.type as AIProviderType, baseUrl: editing.baseUrl ?? "", defaultModel: editing.defaultModel ?? "", enabled: editing.enabled, hasStoredKey: Boolean(editing.apiKeyEncrypted) } : undefined;
   const encryption = describeEncryptionKey();
   return <AppShell><div className="mx-auto max-w-5xl space-y-5">
-    <PageHeader title="AI" actions={<div className="flex gap-4 text-sm"><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/review">建议记录</Link><Link prefetch={false} className="focus-ring text-moss hover:underline" href="/actions/manual">AI 工作台</Link></div>} />
-    <p className="text-sm text-muted">管理 AI 功能与相关设置。</p>
+    <PageHeader title="AI 设置" />
+    <p className="text-sm text-muted">模型连接与 AI 功能设置。待确认的建议在各条记录和实验里查看。</p>
     <AISettingsPanel providers={providers.map(({ id, name }) => ({ id, name }))} />
     <section id="providers" className="scroll-mt-20 space-y-3 border-t border-hairline pt-4" aria-label="连接设置">
       <h2 className="text-sm font-semibold text-ink">连接设置</h2>

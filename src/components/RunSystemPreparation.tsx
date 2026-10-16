@@ -1,6 +1,10 @@
 'use client';
 import { readableError } from '@/lib/form-actions';
 import { RunGroupPreparation } from './RunGroupPreparation';
+import { RunPreparationChecklist } from './RunPreparationChecklist';
+import type { PreparationStock } from '@/lib/run-preparation';
+import type { PlateAttachment } from './PlateLayoutView';
+import { AttachmentUploadForm } from './AttachmentUploadForm';
 
 import { newClientMutationId } from '@/lib/client-mutation-id';
 
@@ -64,9 +68,11 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
   </form></details>;
 }
 
-export function RunSystemPreparation({ experimentId, view, editable }: { experimentId: string; view: StructuredRunView; editable: boolean }) {
+export function RunSystemPreparation({ experimentId, view, editable, plates = [], stock = [], recorded = [] }: { experimentId: string; view: StructuredRunView; editable: boolean; plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }> }) {
   if (!view.hasSystems) return null;
-  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">实验准备 · 体系与分组</h2><a href="#run-execution" className="focus-ring inline-flex min-h-11 items-center text-moss underline">开始／继续当前步骤</a></div><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable}/><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === view.plan.continuation!.startSourceRef)?.title}。此前已完成操作并未复制为本次完成。</p><details open><summary>此前处理与原采用参数（只读历史）</summary>{view.plan.continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? '此前已完成' : '原记录未完成'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>原实际记录：{v.value} {v.unit} · {v.recordedAt}</p>)}{s.deviationNote ? <p>原备注：{s.deviationNote}</p> : null}</div>)}</details></div> : null}{view.versions.map(version => <div key={`${version.id}:${view.plan.revision}`}><VersionSelection experimentId={experimentId} version={version} view={view} editable={editable}/><RunQuantities experimentId={experimentId} version={version} view={view} editable={editable}/></div>)}</section>;
+  return <section className="protocol-system-preparation" aria-label="实验准备与体系选择"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">实验准备 · 体系与分组</h2><a href="#run-execution" className="focus-ring inline-flex min-h-11 items-center text-moss underline">开始／继续当前步骤</a></div><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable}/><p>准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。</p>{view.plan.continuation ? <div className="my-3 border-b border-hairline pb-3"><Link className="text-moss underline" href={`/experiments/${view.plan.continuation.experimentId}/run`}>查看此前执行及原始记录</Link><p>本次继续位置：{Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === view.plan.continuation!.startSourceRef)?.title}。此前已完成操作并未复制为本次完成。</p><details open><summary>此前处理与原采用参数（只读历史）</summary>{view.plan.continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? '此前已完成' : '原记录未完成'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>原实际记录：{v.value} {v.unit} · {v.recordedAt}</p>)}{s.deviationNote ? <p>原备注：{s.deviationNote}</p> : null}</div>)}</details></div> : null}{view.versions.map(version => <div key={`${version.id}:${view.plan.revision}`}><VersionSelection experimentId={experimentId} version={version} view={view} editable={editable}/><RunQuantities experimentId={experimentId} version={version} view={view} editable={editable}/></div>)}<RunPreparationChecklist experimentId={experimentId} view={view} editable={editable} plates={plates} stock={stock} recorded={recorded}/>
+    {editable ? <details className="ln-prep-upload"><summary>附加孔板布局（规划器的“备份项目”JSON，或导出的 SVG／图片）</summary><AttachmentUploadForm targetType="experiment" targetId={experimentId} hideTargetFields fileLabel="孔板布局文件" accept=".json,.svg,image/*" linkType="plate_layout"/></details> : null}
+  </section>;
 }
 
 /** 本次数量 for one Protocol (group): the counts its mix cards and material amounts scale by, e.g. 反应数 24, 孔数 6. */

@@ -4,8 +4,8 @@ import { MAX_ATTACHMENT_BYTES } from "./attachment-limits";
 export function getAttachmentRoot() {
   const configured = process.env.LABNEST_ATTACHMENT_ROOT;
 
-  if (configured && path.isAbsolute(configured)) {
-    return configured;
+  if (configured) {
+    return path.isAbsolute(configured) ? configured : path.resolve(/*turbopackIgnore: true*/ process.cwd(), configured);
   }
 
   return path.join(/*turbopackIgnore: true*/ process.cwd(), "storage", "attachments");

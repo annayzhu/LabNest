@@ -29,6 +29,8 @@ export const executionPlanSchema = z.object({
   mixStrikes: z.record(z.string(), z.array(z.string())).default({}),
   /** Mix cards made at the bench from a step's chips: recorded for this run only. */
   runMixes: z.record(z.string(), z.array(z.custom<ProtocolMix>(value => Boolean(value && typeof value === 'object' && (value as { type?: unknown }).type === 'mix')))).default({}),
+  /** 实验准备清单 check-offs, keyed "kind:ref" (the list itself is always re-derived). A bench aid only: not progress, no revision. */
+  preparation: z.record(z.string(), z.object({ done: z.boolean(), doneAt: z.string().optional(), note: z.string().max(500).optional() })).default({}),
   continuation: z.object({
     experimentId: z.string(), createdAt: z.string(), affectedSourceRefs: z.array(z.string()),
     startSourceRef: z.string().optional(), priorRecord: z.unknown(),
@@ -41,7 +43,7 @@ export const executionPlanSchema = z.object({
   }).optional(),
 });
 export type ExecutionPlan = z.infer<typeof executionPlanSchema>;
-export const emptyExecutionPlan = (): ExecutionPlan => ({ schemaVersion: 1, revision: 0, groups: [], stepGroups: {}, versions: {}, actualValues: {}, skips: {}, timerSources: {}, quantities: {}, mixes: {}, mixStrikes: {}, runMixes: {} });
+export const emptyExecutionPlan = (): ExecutionPlan => ({ schemaVersion: 1, revision: 0, groups: [], stepGroups: {}, versions: {}, actualValues: {}, skips: {}, timerSources: {}, quantities: {}, mixes: {}, mixStrikes: {}, runMixes: {}, preparation: {} });
 export function parseExecutionPlan(value: unknown): ExecutionPlan {
   if (!value || typeof value === 'object' && !Object.keys(value).length) return emptyExecutionPlan();
   // A corrupt/newer plan must not silently become an unconfirmed empty legacy plan.

@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     if (response.persisted && entryId) {
       revalidatePath(`/entries/${entryId}`);
       revalidatePath("/entries");
-      revalidatePath("/actions/review");
+      revalidatePath("/actions");
     }
 
     return Response.json(response);

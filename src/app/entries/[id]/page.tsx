@@ -238,7 +238,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
                       {action.reason ? <p className="mt-2 text-xs leading-5 text-graphite">{action.reason}</p> : null}
                     </div>
                   ))}
-                  <Link href="/actions/review?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
+                  <Link href="/actions?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>

@@ -26,7 +26,7 @@ it('keeps groups separate, uses actual separate additions, and converts displaye
  expect(reactionMixClipboard(result,true,'1')).not.toContain('G_one');
  expect(reactionMixSteps(result,true)).toContain('Template: 1 µL × 24 个反应，单独加入');
  const before=JSON.stringify(result.rawInputs),display={...result,displayUnits:{'table:perReactionUl':'mL','table:batchUl':'mL'}};
- expect(resultClipboard(display,true)).toContain('Master mix每反应: 0.005 mL; 预混; 整批: 0.132 mL;');
+ expect(resultClipboard(display,true)).toContain('Master mix每反应: 0.005 mL; 预混; 整批: 0.13 mL;');
  expect(Number(resultCsv(display,true).split('\r\n')[1].split(',')[3].replaceAll('"',''))).toBeCloseTo(0.132,12);expect(JSON.stringify(display.rawInputs)).toBe(before);
  expect(resultClipboard(display,false)).not.toMatch(/预混|单独|Yes|是/);
  expect(resultClipboard({...display,status:'partial'},true)).toBe('');

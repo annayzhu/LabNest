@@ -30,7 +30,9 @@ export type ExperimentFormAction = (
 
 const initialState: ExperimentFormState = {};
 
-export function ExperimentForm({ action, plans, protocolVersions = [], initial, lockedPlan = false }: {
+export function ExperimentForm({ intro, action, plans, protocolVersions = [], initial, lockedPlan = false }: {
+  /** One line at the top of the metadata drawer: where this Experiment comes from and what to do first. */
+  intro?: string;
   action: ExperimentFormAction;
   plans: PlanOption[];
   protocolVersions?: ExperimentProtocolVersionOption[];
@@ -87,6 +89,7 @@ export function ExperimentForm({ action, plans, protocolVersions = [], initial, 
         { label: "实验日期", value: date || "未填写" },
       ]} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
+      {intro ? <p className="ln-form-intro">{intro}</p> : null}
       <label className="block"><span className={formLabelClass}>研究计划</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan ? `${plan.project.name} · ${plan.title}` : "未选择"}</div> : <select name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}><option value="">未选择</option>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}{!lockedPlan && !planId ? <span className="mt-1 block text-xs leading-5 text-muted">可以先不选，之后在元数据里补选；补选时一并归入该计划的项目。</span> : null}</label>
     {!initial.id ? <section className="ln-method-source space-y-2 border-b border-hairline py-3" aria-label="方法来源"><div className="flex items-center justify-between gap-3"><h3 className={formLabelClass}>方法来源</h3>
       <div className="ln-segmented" role="group" aria-label="方法来源">

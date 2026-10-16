@@ -57,10 +57,12 @@ const secondaryButton = buttonStyles({ size: "lg", className: "bg-surface font-m
 const primaryButton = buttonStyles({ variant: "primary", size: "lg", className: "font-medium disabled:cursor-wait disabled:opacity-50" });
 const fieldClass = `${formTextareaClass} bg-surface`;
 
-export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {}, consumption = [], stock = [] }: {
+export function ProtocolRunProgressForm({ experimentId, status, steps, editable, evidenceByStep, frozenReferences, frozenReferenceTitles, protocolBased=false, structured, chipContexts = {}, consumption = [], stock = [], bench = false }: {
   /** Materials this run used and not yet recorded: completing the run first asks whether to deduct them. */
   consumption?: ConsumptionLine[];
   stock?: ConsumptionStock[];
+  /** 台面模式: one step at a time at any width, with a step rail beside it. */
+  bench?: boolean;
   structured?: Pick<StructuredRunView, 'steps' | 'plan'>;
   chipContexts?: Record<string, ChipRender>;
   experimentId: string;
@@ -242,7 +244,18 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。</p><details><summary>查看旧草稿</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('已恢复核对后的草稿，尚未保存'); }}>已核对，继续使用这些草稿</button></aside> : null}
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
-    <section className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:hidden">
+    <div className={bench ? "ln-bench-grid" : "contents"}>
+    {bench ? <aside className="ln-bench-steps" aria-label={zh ? "步骤列表" : "Steps"}>
+      <header><strong>{zh ? "步骤" : "Steps"}</strong><small>{requiredCompleted}/{requiredSteps.length}{remaining ? ` · ${remaining} ${zh ? "步待做" : "remaining"}` : ` · ${zh ? "全部完成" : "all done"}`}</small></header>
+      <ol>{groups.map(group => <Fragment key={`rail-${group.key}`}>
+        {groups.length > 1 ? <li><span className="ln-bench-group">{experimentStepGroupHeading(group.title).title}</span></li> : null}
+        {group.steps.map(step => { const index = steps.findIndex(item => item.id === step.id); return <li key={`rail-${step.id}`} className={completedIds.has(step.id) ? "is-done" : undefined}>
+          <button type="button" aria-current={selectedStep?.id === step.id ? "step" : undefined} onClick={() => setSelectedStepId(step.id)}><span className="ln-bench-number" aria-hidden>{completedIds.has(step.id) ? "✓" : index + 1}</span><span>{step.title}</span></button>
+        </li>; })}
+      </Fragment>)}</ol>
+      <footer><a className="focus-ring" href="#run-preparation">{zh ? "准备清单" : "Preparation"}</a><a className="focus-ring" href="#result-recording">{zh ? "实验结果" : "Results"}</a></footer>
+    </aside> : null}
+    <section className={`${bench ? "" : "lg:hidden "}overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
       <div className="border-b border-hairline px-4 py-3">
         <div className="flex items-center justify-between gap-3 text-xs text-muted">
           <span>{hasSteps ? zh ? `第${selectedStepIndex+1}/${steps.length}步 · 已完成${completedIds.size}步` : `${completedIds.size} of ${steps.length} complete` : "No fixed steps"}</span>
@@ -328,6 +341,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
 
 
     </section>
+    </div>
 
     <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 py-2" data-run-reference>
       <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
@@ -361,7 +375,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
       </section>
     </div> : null}
 
-    <section className="hidden overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface lg:block">
+    <section className={`${bench ? "hidden" : "hidden lg:block"} overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-4 py-3">
         <h2 className="text-lg font-semibold text-ink">Execution record</h2>
         <span className="text-xs text-muted">{hasSteps ? "Check planned execution steps or log deviations by step." : "No fixed steps configured; use freeform execution notes."}</span>
@@ -389,6 +403,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>
                   {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
+                  <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring inline-flex min-h-9 items-center text-sm text-moss">记一笔</Link>
                   {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</Fragment>)}
@@ -402,7 +417,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     {consumptionReview ? <CompletionConsumptionDialog lines={consumption} stock={stock} onCancel={() => setConsumptionReview(null)}
       onSkip={() => { const button = consumptionReview; consumptionReviewed.current = true; setConsumptionReview(null); formRef.current?.requestSubmit(button); }}
       onDeduct={choices => { const button = consumptionReview; consumptionChoices.current = choices; consumptionReviewed.current = true; setConsumptionReview(null); formRef.current?.requestSubmit(button); }} /> : null}
-    {editable ? <div className="sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 lg:block">
+    {editable ? <div className={`sticky bottom-20 z-30 hidden space-y-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface/95 p-3 shadow-soft backdrop-blur lg:bottom-4 ${bench ? "" : "lg:block"}`}>
       {state.error ? <p role="alert" className="rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error">{state.error}</p> : null}
       {state.message ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-success/30 bg-success-surface px-3 py-2 text-sm text-success">{state.message}</p> : null}
       <div className="flex flex-wrap items-center justify-end gap-2">

@@ -3,7 +3,7 @@ import { WatchRunConnection } from '@/components/WatchRunConnection';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { runStepNotes, structuredRunView } from '@/lib/structured-run';
 import { RunSystemPreparation } from '@/components/RunSystemPreparation';
-import { RunConsumptionSummary } from "@/components/RunConsumption";
+import { RunBenchControls } from "@/components/RunBenchControls";
 import { consumptionRecorded, runConsumption } from "@/lib/run-consumption";
 import { ProtocolContentBlockView } from '@/components/ProtocolDocumentView';
 import { ProtocolSystemChoice } from '@/components/ProtocolSystemLabels';
@@ -32,8 +32,10 @@ export const dynamic = "force-dynamic";
 
 const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
 
-export default async function ProtocolRunPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProtocolRunPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
+  // 台面模式: a layout the user switches on; the run and its actions are the same.
+  const bench = (await searchParams)?.view === 'bench';
   const [experiment, attachmentLinks, inventoryItems, transactions] = await Promise.all([
     prisma.experiment.findUnique({
       where: { id },
@@ -107,11 +109,12 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
     <AppShell>
       <RunStepSelectionProvider key={experiment.id} initialStepId={currentStep?.id ?? renderedSteps[0]?.id ?? ""}>
       {runOfflineImagePaths(experiment.protocolSnapshotJson).map(path=><meta key={path} name="labnest-offline-image" content={path}/>)}
-      <div className="space-y-4">
+      <div className={bench ? "ln-bench space-y-4" : "space-y-4"}>
         <PageHeader
           identifier={experiment.runCode}
           title={experiment.title}
           actions={<>
+            <RunBenchControls bench={bench} />
             <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Runs</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
           </>}
@@ -135,8 +138,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
         {editable && structured.hasSystems ? <WatchRunConnection experimentId={id}/> : null}
-        <RunSystemPreparation experimentId={id} view={structured} editable={editable}/>
-        <RunConsumptionSummary lines={consumption} rows={experiment.materialUses}/>
+        <RunSystemPreparation experimentId={id} view={structured} editable={editable} plates={attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} stock={inventoryItems.map(item => ({ name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }))} recorded={experiment.materialUses.map(row => ({ source: row.source }))}/>
         {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>本次采用体系 · {experiment.runCode}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
         <RunNotificationStatus/>
         <ProtocolRunProgressForm
@@ -151,6 +153,7 @@ export default async function ProtocolRunPage({ params }: { params: Promise<{ id
           // The reference panel reads each captured Protocol across all systems; a step reads its group's adopted values.
           chipContexts={Object.fromEntries([...structured.versions.map(version => [version.sourceVersionId, { systems: version.document.systems }] as const), ...structured.versions.map(version => [version.id, { systems: version.document.systems, resolution: version.parameters }] as const)])}
           editable={editable}
+          bench={bench}
           evidenceByStep={evidenceByStep}
           consumption={consumption.filter(line => !consumptionRecorded(line, experiment.materialUses))}
           stock={inventoryItems.map(item => ({ id: item.id, name: item.name, managementMode: item.managementMode, lotNumber: item.lotNumber }))}

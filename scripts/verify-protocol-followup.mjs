@@ -23,7 +23,7 @@ try {
   await page.getByRole('button',{name:'实验体系与参数',exact:true}).click();assert(await page.locator('#protocol-systems').getAttribute('open')!==null);
   await page.getByRole('button',{name:'步骤整理',exact:true}).click();assert(await page.locator('#protocol-operations').getAttribute('open')!==null);
   await page.screenshot({path:`${out}/authoring-entrances.png`});
-  await page.goto(base+'/ai',{waitUntil:'networkidle'});for(const path of ['/actions/manual','/entries','/protocols/import','/actions/review'])assert(await page.locator(`a[href="${path}"]`).count());await page.screenshot({path:`${out}/ai-entrances.png`});
+  await page.goto(base+'/ai',{waitUntil:'networkidle'});for(const path of ['/actions/manual','/entries','/protocols/import'])assert(await page.locator(`a[href="${path}"]`).count());await page.screenshot({path:`${out}/ai-entrances.png`});
  });
  await check('Real Run configures two experimental groups; independent 50/80 quantities; shared operation counted once',async()=>{
   await page.goto(`${base}/experiments/${f.experimentId}/run`,{waitUntil:'networkidle'});

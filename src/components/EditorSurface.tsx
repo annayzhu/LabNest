@@ -6,13 +6,13 @@ import { useEditorState } from '@tiptap/react';
 import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react/menus';
 import { NodeSelection, TextSelection, type Transaction } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Copy, GripVertical, Heading2, Heading3, IndentDecrease, IndentIncrease, Italic, Link2, List, ListChecks, ListOrdered, Pilcrow, Plus, Quote, RemoveFormatting, Strikethrough, Trash2, Underline, Unlink, type LucideIcon } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Code, Copy, GripVertical, Heading2, Heading3, IndentDecrease, IndentIncrease, Italic, Link2, List, ListChecks, ListOrdered, Pilcrow, Plus, Quote, RemoveFormatting, Strikethrough, Subscript, Superscript, Trash2, Underline, Unlink, type LucideIcon } from 'lucide-react';
 import { setSelectionFontSize } from '@/lib/document-text-formatting';
 import { RICH_TEXT_FONT_SIZES_PT } from '@/lib/rich-text-font-size';
 import { RICH_TEXT_LINE_HEIGHTS } from '@/lib/rich-text-line-height';
 import { RICH_TEXT_RISK_COLOR_HEX } from '@/lib/rich-text-color';
 import { endBlockDrag, setBlockHandleHandlers, startBlockDrag, type BlockHover } from '@/lib/editor-block-handle';
-import { blockKind, blockTakesFormat, blockTakesKinds, canDuplicateBlock, currentBlockUnit, deleteBlock, duplicateBlock, moveBlock, selectBlock, turnInto, type BlockKind, type BlockUnit } from '@/lib/editor-blocks';
+import { blockKind, blockTakesFormat, blockTakesKinds, canDuplicateBlock, currentBlockUnit, deleteBlock, duplicateBlock, lineUnitAt, moveBlock, selectBlock, turnInto, type BlockKind, type BlockUnit } from '@/lib/editor-blocks';
 import type { MenuAnchor } from '@/lib/editor-slash';
 import { useAnchoredPosition, useDismiss } from './protocol/popover';
 import './editor-surface.css';
@@ -74,7 +74,7 @@ export function EditorSurface({ editor, handles = true, kinds = allKinds, openCo
     {children}
     {hover && surface ? <BlockHandle key={hover.unit.pos} editor={editor} hover={hover} surface={surface} menuOpen={Boolean(menu)} onMenu={anchor => setMenu(current => current ? null : { unit: hover.unit, anchor })} openCommands={openCommands} onEnter={stay} /> : null}
     {menu ? <BlockMenu editor={editor} unit={menu.unit} anchor={menu.anchor} kinds={kinds} blockItems={blockItems} afterDelete={afterDelete} openCommands={openCommands} onClose={() => { setMenu(null); setHover(null); }} /> : null}
-    <SelectionBubble editor={editor} linking={linking} setLinking={setLinking} />
+    <SelectionBubble editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} />
     <TableBar editor={editor} items={tableItems} />
   </div>;
 }
@@ -180,22 +180,39 @@ const textSelected: BubbleMenuProps['shouldShow'] = ({ editor, state, from, to }
 // The caret in a table; selected text there gets the text bubble instead.
 const caretInTable: BubbleMenuProps['shouldShow'] = ({ editor, from, to }) => editor.isEditable && from === to && editor.isActive('table');
 
-/** Over selected text: the marks, a link and the risk colour. */
-function SelectionBubble({ editor, linking, setLinking }: { editor: Editor; linking: boolean; setLinking: (value: boolean) => void }) {
-  const state = useEditorState({ editor, selector: ({ editor: current }) => ({
-    bold: current.isActive('bold'), italic: current.isActive('italic'), underline: current.isActive('underline'), strike: current.isActive('strike'),
-    link: current.getAttributes('link').href as string | undefined, risk: current.getAttributes('textStyle').color === RICH_TEXT_RISK_COLOR_HEX,
-  }) });
+/**
+ * Over selected text, Notion-style: the block's kind, the font size, the marks, superscript and subscript, code, a link,
+ * the risk colour, and clearing all of it. Only what this editor's document can keep is offered.
+ */
+function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Editor; linking: boolean; setLinking: (value: boolean) => void; kinds: BlockKind[] }) {
+  const scripts = Boolean(editor.schema.marks.superscript && editor.schema.marks.subscript);
+  const state = useEditorState({ editor, selector: ({ editor: current }) => {
+    const unit = lineUnitAt(current.state.doc, current.state.selection.from);
+    return {
+      bold: current.isActive('bold'), italic: current.isActive('italic'), underline: current.isActive('underline'), strike: current.isActive('strike'), code: current.isActive('code'),
+      superscript: scripts && current.isActive('superscript'), subscript: scripts && current.isActive('subscript'),
+      link: current.getAttributes('link').href as string | undefined, risk: current.getAttributes('textStyle').color === RICH_TEXT_RISK_COLOR_HEX,
+      fontSize: Number.parseInt(String(current.getAttributes('textStyle').fontSize ?? ''), 10) || null,
+      kind: unit && blockTakesKinds(unit.node) ? blockKind(unit.node) : null,
+    };
+  } });
   const [href, setHref] = useState('');
   const chain = () => editor.chain().focus(undefined, { scrollIntoView: false });
   const marks: Array<[keyof typeof state, LucideIcon, string, () => void]> = [
     ['bold', Bold, '加粗 ⌘B', () => chain().toggleBold().run()], ['italic', Italic, '斜体 ⌘I', () => chain().toggleItalic().run()],
     ['underline', Underline, '下划线 ⌘U', () => chain().toggleUnderline().run()], ['strike', Strikethrough, '删除线 ⌘⇧S', () => chain().toggleStrike().run()],
   ];
+  // CO₂ and 10⁶: one of the two at a time.
+  const toggleScript = (mark: 'superscript' | 'subscript') => chain().unsetMark(mark === 'superscript' ? 'subscript' : 'superscript').toggleMark(mark).run();
+  const clearFormatting = () => {
+    const cleared = chain().unsetBold().unsetItalic().unsetUnderline().unsetStrike().unsetCode().unsetColor().unsetFontSize();
+    (scripts ? cleared.unsetMark('superscript').unsetMark('subscript') : cleared).run();
+  };
   // An empty address removes the link.
   const applyLink = (value: string) => { const range = chain().extendMarkRange('link'); (value ? range.setLink({ href: value }) : range.unsetLink()).run(); setLinking(false); };
+  const choices = kindChoices.filter(choice => kinds.includes(choice.kind));
   return <BubbleMenu editor={editor} pluginKey="selectionBubble" appendTo={onPage} style={{ zIndex: 60 }} options={overText} shouldShow={textSelected}>
-    <div className="ln-selection-bubble" role="toolbar" aria-label="文字格式" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement)) event.preventDefault(); }}>
+    <div className="ln-selection-bubble" role="toolbar" aria-label="文字格式" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
       {/* No <form> here: the editor sits inside the page's form, and React would pass a submit up to it. */}
       {linking ? <div className="ln-selection-link">
         <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="粘贴或输入链接，回车确定" aria-label="链接地址" onKeyDown={event => {
@@ -205,10 +222,23 @@ function SelectionBubble({ editor, linking, setLinking }: { editor: Editor; link
         }} />
         {state.link ? <button type="button" aria-label="移除链接" title="移除链接" onClick={() => applyLink('')}><Unlink aria-hidden /></button> : null}
       </div> : <>
+        {state.kind && choices.length ? <select className="ln-selection-select" aria-label="转换为" title="转换为" value={state.kind} onChange={event => { turnInto(editor, chain(), event.target.value as BlockKind).run(); }}>
+          {choices.map(choice => <option key={choice.kind} value={choice.kind}>{choice.label}</option>)}
+        </select> : null}
+        <select className="ln-selection-select is-size" aria-label="字号" title="字号" value={state.fontSize ?? ''} onChange={event => { const value = event.target.value; setSelectionFontSize(editor, value ? Number(value) : null); editor.view.focus(); }}>
+          <option value="">字号</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
+        </select>
+        <span className="ln-selection-divider" aria-hidden />
         {marks.map(([key, Icon, label, toggle]) => <button key={key} type="button" aria-label={label} title={label} aria-pressed={Boolean(state[key])} onClick={toggle}><Icon aria-hidden /></button>)}
+        {scripts ? <>
+          <button type="button" aria-label="上标" title="上标（10⁶、m²）" aria-pressed={state.superscript} onClick={() => toggleScript('superscript')}><Superscript aria-hidden /></button>
+          <button type="button" aria-label="下标" title="下标（CO₂、H₂O）" aria-pressed={state.subscript} onClick={() => toggleScript('subscript')}><Subscript aria-hidden /></button>
+        </> : null}
+        <button type="button" aria-label="代码" title="代码（序列、命令）" aria-pressed={state.code} onClick={() => chain().toggleCode().run()}><Code aria-hidden /></button>
         <span className="ln-selection-divider" aria-hidden />
         <button type="button" aria-label="链接 ⌘K" title="链接 ⌘K" aria-pressed={Boolean(state.link)} onClick={() => { setHref(state.link ?? ''); setLinking(true); }}><Link2 aria-hidden /></button>
         <button type="button" className="ln-selection-risk" aria-label="风险红" title={state.risk ? '恢复默认颜色' : '标为风险红'} aria-pressed={state.risk} onClick={() => (state.risk ? chain().unsetColor() : chain().setColor(RICH_TEXT_RISK_COLOR_HEX)).run()}>A</button>
+        <button type="button" aria-label="清除格式" title="清除格式（链接保留）" onClick={clearFormatting}><RemoveFormatting aria-hidden /></button>
       </>}
     </div>
   </BubbleMenu>;

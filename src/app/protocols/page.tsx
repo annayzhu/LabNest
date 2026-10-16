@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
@@ -67,6 +67,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         ]}
         actions={<>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
+          <Link href="/protocols/design" className={collectionPrimaryActionClass}><Sparkles className="h-4 w-4" aria-hidden />按目标设计</Link>
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}
       />

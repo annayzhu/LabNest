@@ -1,6 +1,6 @@
 import {projectLegacyProtocolExecution} from "./protocol-execution-legacy";
 import {executionBodyWithoutTitle,notesAmongSteps} from "./protocol-execution";
-import {protocolDocumentSchema,projectProtocolDocument,type ProtocolContentBlock} from './protocol-document';
+import {protocolDocumentSchema,projectProtocolDocument,type ProtocolContentBlock, isEmptyTable } from './protocol-document';
 import {renderProtocolTemplate} from './protocol';
 import type {ProtocolStep} from './types';
 /** Old imports grouped each heading with its checklist. Validate the whole frozen
@@ -45,7 +45,7 @@ export function runStepContent(snapshot:unknown,step:{protocolStepRef:string|nul
 
  // A step block's label is derived from its own body; nothing is a separate title to remove.
  const derived=(recovered??captured).title_source==='derived';
- return {reference,blocks:render(derived?blocks:executionBodyWithoutTitle(blocks,step.title)) as ProtocolContentBlock[],notesBefore:render(notesBefore) as ProtocolContentBlock[],notesAfter:render(notesAfter) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery',...(derived?{derivedTitle:true}:{})};
+ return {reference,blocks:render((derived?blocks:executionBodyWithoutTitle(blocks,step.title)).filter(block=>!isEmptyTable(block))) as ProtocolContentBlock[],notesBefore:render(notesBefore) as ProtocolContentBlock[],notesAfter:render(notesAfter) as ProtocolContentBlock[],source:captured.content_blocks?'captured-blocks':'same-version-recovery',...(derived?{derivedTitle:true}:{})};
 }
 
 /** Publish only explicit same-origin image resources from this frozen Run. */

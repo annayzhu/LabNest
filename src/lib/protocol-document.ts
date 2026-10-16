@@ -154,10 +154,31 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
 
 export type ProtocolContentBlock = z.infer<typeof protocolContentBlockSchema>;
 
+/** Where a version's content came from: a paper, protocols.io, a colleague, a Word file, or an Experiment it was tidied from. */
+export const protocolSourceKinds = ["doi", "url", "protocols_io", "pmc", "book", "colleague", "docx", "experiment", "other"] as const;
+export const protocolSourceSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(protocolSourceKinds),
+  title: z.string().max(300).default(""),
+  citation: z.string().max(1000).optional(),
+  url: z.string().max(2000).optional(),
+  license: z.string().max(120).optional(),
+  /** When it was read or fetched (ISO date). */
+  accessedAt: z.string().optional(),
+  note: z.string().max(1000).optional(),
+});
+export type ProtocolSource = z.infer<typeof protocolSourceSchema>;
+
 export const protocolDocumentSchema = z.object({
   schemaVersion: z.literal(1),
   systems: protocolSystemsSchema.optional(),
   executionConfirmed: z.boolean().optional(),
+  sources: z.array(protocolSourceSchema).default([]),
+  /** Experiments whose actual values or deviations were tidied into this version, and the design session a draft was generated from. */
+  provenance: z.object({
+    fromExperimentIds: z.array(z.string()).default([]),
+    design: z.object({ sessionId: z.string(), hitKey: z.string(), unverified: z.number().int().nonnegative().default(0), generatedAt: z.string() }).optional(),
+  }).optional(),
   sections: z.array(
     z.object({
       key: z.enum(protocolSectionKeys),
@@ -183,6 +204,7 @@ export function createEmptyProtocolDocument(): ProtocolDocument {
       title: protocolSectionLabels[key],
       blocks: [],
     })),
+    sources: [],
     importWarnings: [],
   };
 }
@@ -331,6 +353,9 @@ export function protocolDocumentFromLegacy({
 
   return document;
 }
+
+/** A table with body rows that are all blank, e.g. a recipe table the author left for later. A header-only table still says something and stays. */
+export const isEmptyTable = (block: ProtocolContentBlock) => block.type === "table" && block.rows.length > 1 && block.rows.slice(1).every((row) => row.every((cell) => !String(cell ?? "").trim()));
 
 export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectionKey) {
   const section = document.sections.find((item) => item.key === key);

@@ -42,7 +42,7 @@ try {
    const toggle=page.getByRole('switch',{name:'启用 AI',exact:true});
    await check(`${engine} AI page does not prefetch historical records or navigation data`,async()=>{assert.deepEqual(backgroundRoutes,[]);});
    await check(`${engine} A01/A03 old review/settings anchors and provider editing links`,async()=>{
-    for(const [old,expected] of [['/actions','/ai'],['/settings#ai-access','/ai#ai-access'],['/settings#providers','/ai#providers'],[`/settings?provider=${fixtureId}#providers`,`/ai?provider=${fixtureId}#providers`],['/actions?status=pending','/actions/review?status=pending']]){await page.goto(base+old,{waitUntil:'networkidle'});await eventually(()=>assert.equal(page.url(),base+expected));}
+    for(const [old,expected] of [['/settings#ai-access','/ai#ai-access'],['/settings#providers','/ai#providers'],[`/settings?provider=${fixtureId}#providers`,`/ai?provider=${fixtureId}#providers`]]){await page.goto(base+old,{waitUntil:'networkidle'});await eventually(()=>assert.equal(page.url(),base+expected));}
     await page.goto(base+'/settings',{waitUntil:'networkidle'});assert.equal(await page.locator('input[name="apiKey"]').count(),0);await page.getByRole('link',{name:'AI 设置 →'}).click();await toggle.waitFor();
     assert.equal(await page.getByText('AI review',{exact:true}).count(),0);
    });
@@ -85,7 +85,7 @@ try {
     const inputs=await page.locator('input:not([type="hidden"]),select').evaluateAll(elements=>elements.filter(e=>e.getBoundingClientRect().width>0).map(e=>({right:e.getBoundingClientRect().right,left:e.getBoundingClientRect().left})));
     assert(inputs.every(x=>x.left>=0&&x.right<=width));
     await page.screenshot({path:`${dir}/${engine}-ai-${width}.png`,fullPage:true});
-    if(width===390){await page.getByRole('button',{name:'Open more navigation',exact:true}).click();await page.getByRole('link',{name:'AI',exact:true}).waitFor();await page.screenshot({path:`${dir}/${engine}-mobile-navigation.png`,fullPage:true});await page.waitForLoadState('networkidle');}
+    if(width===390){await page.getByRole('button',{name:'Open more navigation',exact:true}).click();await page.getByRole('link',{name:'AI settings',exact:true}).waitFor();await page.screenshot({path:`${dir}/${engine}-mobile-navigation.png`,fullPage:true});await page.waitForLoadState('networkidle');}
     assert.deepEqual(backgroundRoutes,[],'AI navigation must not prefetch record pages at any viewport');
    });
    await check(`${engine} no unhandled page errors`,async()=>assert.deepEqual(pageErrors,[]));

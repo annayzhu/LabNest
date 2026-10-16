@@ -11,18 +11,12 @@ import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolD
 import { dismissProtocolMixProposal, saveProtocolDocument } from "./actions";
 import { protocolMixProposals } from "@/lib/protocol-mix-proposals.server";
 import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
+import { nextDisplayVersion } from "@/lib/protocol";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
-}
-
-function nextDisplayVersion(value: string) {
-  const parts = value.split(".").map(Number);
-  if (parts.length < 2 || parts.some((part) => !Number.isInteger(part))) return "0.1";
-  parts[parts.length - 1] += 1;
-  return parts.join(".");
 }
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
@@ -114,6 +108,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             changeSummary: version.changeSummary ?? undefined,
           }}
           initialDocument={document}
+          fromExperiments={(document.provenance?.fromExperimentIds ?? []).map((experimentId) => experimentCatalog.find((experiment) => experiment.id === experimentId)?.runCode ?? experimentId)}
           mixProposals={await protocolMixProposals(version.protocol.id, version.contentJson)}
           dismissMixProposal={dismissProtocolMixProposal}
           importHistory={importHistory}

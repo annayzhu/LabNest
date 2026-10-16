@@ -1,10 +1,9 @@
 import { format } from 'date-fns';
+import { preparationChecklist, preparationProgress } from './run-preparation';
 import { runStepNotes, stepExecutionBlocker, stepMixes, stepVersion, structuredRunView } from './structured-run';
 import { mixPer, mixSummary, mixTitle } from './protocol-mix';
-import { chipAmount, mapChipReferences, optionMarks, parameterLongName, protocolChipText } from './protocol-chips';
-import { readableError } from './form-actions';
+import { chipAmount, mapChipReferences, optionMarks, protocolChipText } from './protocol-chips';
 import { experimentStepGroupHeading } from './experiment-planning';
-import { calculationInputSummary, protocolCalculations } from './protocol-calculations';
 import { runStepContent, runStepIsConfirmation } from "./run-step-content";
 import { scientificContentBlockSchema, type ScientificContentBlock } from "./scientific-document";
 import { executionBlockText } from "./protocol-execution";
@@ -163,6 +162,11 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
     blocks.push({id:`run-derived:reference:${version.protocolVersionId}`,type:'heading',text:version.protocolTitle??'Protocol reference'});
     blocks.push(...(parsed.data.sections.find(section=>section.key==='steps')?.blocks??[]).map(block=>scientific(block,`run-derived:reference:${version.protocolVersionId}:`)));
   }
+  // 实验准备: what was ticked ready, once the bench used the list. Attached plates are not counted here.
+  if (Object.keys(structured.plan.preparation).length) {
+    const progress = preparationProgress(preparationChecklist(structured).items, structured.plan.preparation);
+    blocks.push(detail({ id: 'run-derived:preparation', type: 'text', text: `实验准备 · 已备 ${progress.done}/${progress.total} 项${progress.pending.length ? `；未备：${progress.pending.map(item => item.kind === 'timer' ? `计时 ${item.label}` : item.label).join('、')}` : ''}` }));
+  }
   const groupIndex = (id: string) => structured.plan.stepGroups[id] === 'shared' ? -1 : structured.plan.groups.findIndex(group => group.id === structured.plan.stepGroups[id]);
   const parts = new Map<string, ExecutionRecordStep[]>();
   for (const step of [...steps].sort((a,b)=>a.groupOrder-b.groupOrder || groupIndex(a.id)-groupIndex(b.id) || a.order-b.order)) {
@@ -217,24 +221,12 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
         blocks.push(detail({ id: `run-derived:mix-aliquot:${step.id}:${mix.id}`, type: 'text', text: `分装：${receipt.aliquot}` }, step.id));
       }
       const values = Object.entries(structured.plan.actualValues[step.id] ?? {});
-      if (values.length) blocks.push(detail({ id: `run-derived:actual:${step.id}`, type: 'table', caption: '实际记录（不覆盖规定用量）', rows: [['记录项', '实际值', '记录时间'], ...values.map(([id, v]) => [adoptedStep?.actualFields.find(f => f.id === id)?.label ?? id, `${v.value} ${v.unit}`, recordTime(v.recordedAt)])] }, step.id));
+      if (values.length) blocks.push(detail({ id: `run-derived:actual:${step.id}`, type: 'table', caption: '实际记录（不覆盖规定用量）', rows: [['记录项', '实际值', '记录时间'], ...values.map(([id, v]) => [adoptedStep?.actualFields.find(f => f.id === id)?.label ?? id, chipAmount(v.value, v.unit), recordTime(v.recordedAt)])] }, step.id));
       blocks.push(...(step.evidence ?? []).map((block, index) => detail({ ...block, id: `run-derived:${step.id}:evidence:${index}` }, step.id)));
       if (deviation) deviations.push({ id: `run-derived:deviation:${step.id}`, type: 'text', text: [parts.size > 1 ? `${partIndex}. ${protocolTitle}` : '', `第 ${step.order} 步`, deviationTypeLabel(step.deviationType), step.deviationImpact ? `${deviation}（影响：${step.deviationImpact}）` : deviation, step.deviationAt ? recordTime(step.deviationAt) : '', step.deviationAuthor ?? ''].filter(Boolean).join(' · '), execution: { role: 'deviation', stepId: step.id, title: `第 ${step.order} 步`, number: step.order, deviationLabel: label, deviationNote: deviation, deviationType: step.deviationType ?? 'other' } });
     }
     const last = applicable.at(-1);
     if (last) blocks.push(...(structured.steps[last.id] ? notes.after[last.id] ?? [] : stepContent(last).notesAfter).map(block => note(scientific(block, `run-derived:note-after:${last.id}:`))));
-    // Provenance of this run's values: the frozen source version, the plan revision, each parameter's adopted value and where it came from, and the calculations behind them.
-    if (version) {
-      const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
-      const sourceLabel = { fixed: '规程固定值', lookup: '按本次体系', actual: '本次填写', calculator: '计算后确认' } as const;
-      blocks.push(detail({ id: `run-derived:parameters:${key}`, type: 'table', caption: `源版本 ${captured?.displayVersion ? `v${captured.displayVersion}` : ''}（${version.sourceVersionId}）· 执行方案修订 ${structured.plan.revision}${adopted ? ` · 体系确认于 ${recordTime(adopted.confirmedAt)}` : ''}`,
-        rows: [['参数', '本次值', '来源'], ...systems.parameters.filter(parameter => !parameter.ownerToolId || version.parameters[parameter.id]?.status === 'resolved').map(parameter => { const value = version.parameters[parameter.id]; return [parameterLongName(parameter, systems), value?.status === 'resolved' ? chipAmount(value.value!, value.unit, parameter.source.kind === 'calculator') : readableError(value?.message ?? '待确定'), sourceLabel[parameter.source.kind]]; })] }, undefined, '采用参数与来源'));
-      for (const [id, receipt] of Object.entries(adopted?.calculations ?? {})) {
-        const parameter = systems.parameters.find(p => p.id === id), calculatorId = parameter?.source.kind === 'calculator' ? parameter.source.calculatorId : undefined;
-        const used = calculatorId ? calculationInputSummary(calculatorId, receipt.snapshot.rawInputs ?? {}) : JSON.stringify(receipt.snapshot.rawInputs);
-        blocks.push(detail({ id: `run-derived:calculation:${version.id}:${id}`, type: 'text', text: `${parameter?.label || '计算结果'}：${receipt.value} ${receipt.unit} · ${calculatorId ? protocolCalculations[calculatorId].label : receipt.snapshot.calculatorId} ${receipt.snapshot.methodVersion} · 确认于 ${recordTime(receipt.confirmedAt)}\n输入：${used}${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].length ? `\n${[...receipt.snapshot.notes, ...receipt.snapshot.warnings].join('\n')}` : ''}` }, undefined, '计算记录'));
-      }
-    }
     const other = partSteps.filter(step => structured.steps[step.id]?.applicability === 'not-applicable');
     if (other.length) blocks.push(detail({ id: `run-derived:inapplicable:${key}`, type: 'text', text: other.map(step => `${step.order}. ${structured.steps[step.id]?.title_source === 'derived' ? stepOpening(structured.steps[step.id]?.content_blocks) : structured.steps[step.id]?.title ?? step.title}`).join('\n') }, undefined, `其他体系的步骤 · 不适用 · ${other.length} 步`));
   }

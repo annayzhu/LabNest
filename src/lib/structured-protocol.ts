@@ -1,4 +1,5 @@
 import { convert, normalizeUnit, units } from './calculators/quantities';
+import { isEmptyTable } from './protocol-document';
 import { protocolSystemsSchema, type ProtocolCondition, type ProtocolSystems } from './protocol-systems-schema';
 import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document';
 import { executionBlockText, projectProtocolExecution } from './protocol-execution';
@@ -207,7 +208,8 @@ export function resolveProtocolDocument(document: ProtocolDocument, selections: 
   const globalBlock = resolution.issues.some(i => ['invalid-reference', 'duplicate-id', 'incompatible-unit', 'invalid-selection', 'illegal-combination', 'exclusive-conflict', 'dependency-cycle'].includes(i.code));
   const filterBlock = (source: ProtocolContentBlock): ProtocolContentBlock[] => {
     if (state('block', source.id) === 'not-applicable') return [];
-    return [source.type === 'table' ? tableForSelection(source, state, selections) : source];
+    // An empty recipe table has nothing to execute (the editor still shows it).
+    return [source.type === 'table' ? tableForSelection(source, state, selections) : source].filter(block => !isEmptyTable(block));
   };
   const render = <T,>(value: T) => mapChipReferences(value, id => protocolChipText(id, systems, resolution.parameters));
   const steps = source.steps.map(step => {

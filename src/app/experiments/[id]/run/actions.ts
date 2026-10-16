@@ -412,3 +412,5 @@ export async function strikeRunMixLine(request: Parameters<typeof import('@/lib/
 export async function setRunQuantities(request: Parameters<typeof import('@/lib/run-mix.server').setRunQuantities>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).setRunQuantities(request)); }
 export async function createRunMix(request: Parameters<typeof import('@/lib/run-mix.server').createRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).createRunMix(request)); }
 export async function proposeRunMix(request: Parameters<typeof import('@/lib/run-mix.server').proposeRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).proposeRunMix(request)); }
+/** 实验准备清单: tick one item "已备" or write its note; a bench aid that never changes progress or the revision. */
+export async function setRunPreparationItem(request: Parameters<typeof import('@/lib/run-preparation.server').setPreparationItem>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-preparation.server')).setPreparationItem(request)); }

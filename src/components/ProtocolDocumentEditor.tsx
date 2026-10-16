@@ -16,6 +16,7 @@ import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ProtocolDocument } from "@/lib/protocol-document";
+import { ProtocolSourcesEditor } from "./ProtocolSourcesEditor";
 import { pruneUnusedChips } from "@/lib/protocol-chips";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
 import type { ManualRelevantLink, RelevantCatalogItem } from "@/lib/protocol-relevant-items";
@@ -41,6 +42,7 @@ export function ProtocolDocumentEditor({
   protocol,
   version,
   initialDocument,
+  fromExperiments = [],
   suggestedDisplayVersion,
   projects,
   researchPlans,
@@ -59,6 +61,8 @@ export function ProtocolDocumentEditor({
   protocol: { id?: string; humanCode?: string; suggestedCodeSuffix?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
   version: { id?: string; expectedDocumentVersion?: string; displayVersion: string; reviewStage: string; changeSummary?: string };
   initialDocument: ProtocolDocument;
+  /** 整理自实验: the run codes behind `contentJson.provenance`, resolved by the page. */
+  fromExperiments?: string[];
   suggestedDisplayVersion?: string;
   projects: ProjectOption[];
   researchPlans: ResearchPlanOption[];
@@ -160,6 +164,7 @@ export function ProtocolDocumentEditor({
               <label><span className={formLabelClass}>{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={formInputClass} /></label>
               <label className="protocol-metadata-span-full"><span className={formLabelClass}>Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
             </div></fieldset>
+            <ProtocolSourcesEditor sources={document.sources ?? []} onChange={sources => setDocument(current => ({ ...current, sources }))} fromExperiments={fromExperiments} />
             <ProtocolImportHistory entries={importHistory} />
           </div>
         </section>}

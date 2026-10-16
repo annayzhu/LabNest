@@ -223,7 +223,8 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   useEffect(() => { insertMenuRef.current = insertMenu; }, [insertMenu]);
 
-  const serialize = useCallback((json: JSONContent, systems = systemsRef.current) => tiptapToProtocolDocument(json, importWarningsRef.current, documentRef.current.executionConfirmed, systems), []);
+  // Sources and provenance live beside the text, not in it: they ride along unchanged through every edit.
+  const serialize = useCallback((json: JSONContent, systems = systemsRef.current) => ({ ...tiptapToProtocolDocument(json, importWarningsRef.current, documentRef.current.executionConfirmed, systems), sources: documentRef.current.sources ?? [], ...(documentRef.current.provenance ? { provenance: documentRef.current.provenance } : {}) }), []);
   const setLens = useCallback((next: ProtocolSelection) => {
     lensRef.current = next;
     setLensState(next);

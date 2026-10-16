@@ -7,11 +7,10 @@ import { newClientMutationId } from "@/lib/client-mutation-id";
 
 import {
   Camera,
-  ChevronLeft,
   ChevronRight,
   Cloud,
+  Download,
   File,
-  ImagePlus,
   Paperclip,
   RotateCcw,
   Save,
@@ -104,6 +103,18 @@ const entryDocumentOutline: DocumentOutlineItem[] = [
   { id: "entry-document-content", label: "Record content" },
 ];
 
+/**
+ * Files from a button outside the page go to its end, above an empty line that takes the caret, so writing continues
+ * under them (the inserted picture itself stays unselected, so typing never replaces it).
+ */
+function appendToPage(editor: Editor, files: File[]) {
+  const last = editor.state.doc.lastChild;
+  if (last?.type.name !== "paragraph" || last.content.size) editor.commands.insertContentAt(editor.state.doc.content.size, { type: "paragraph" });
+  const doc = editor.state.doc;
+  insertDocumentMediaFiles(editor, files, documentMediaDraftId(editor), doc.content.size - doc.lastChild!.nodeSize);
+  editor.chain().setTextSelection(editor.state.doc.content.size - 1).scrollIntoView().run();
+}
+
 function formatBytes(size: number) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -182,7 +193,6 @@ export function EntryComposer({
   const { t } = useI18n();
   const mediaInputPrefix = useId();
   const actionsHostId = `${mediaInputPrefix}-document-actions`;
-  const imageInputId = `${mediaInputPrefix}-photos`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
   const fileInputId = `${mediaInputPrefix}-files`;
   const previewUrls = useRef(new Set<string>());
@@ -203,8 +213,6 @@ export function EntryComposer({
   const [submitStatus, setSubmitStatus] = useState("");
   const [conflict, setConflict] = useState<{title:string; contentMarkdown:string; updatedAt:string} | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
-  const [draggedMediaId, setDraggedMediaId] = useState<string>();
   const draftKey = entryDraftKey(entry?.id, baselineFields);
 
   useEffect(() => () => {
@@ -288,9 +296,10 @@ export function EntryComposer({
     setFields((current) => ({ ...current, [key]: value }));
   }
 
+  /** The camera and file buttons sit outside the page, so what they bring goes into the page at its end. */
   function addFiles(fileList: FileList | File[]) {
     const bodyEditor = [...bodyEditors.current].find(editor => !editor.isDestroyed && editor.view.dom.getClientRects().length > 0);
-    if (bodyEditor) { insertDocumentMediaFiles(bodyEditor, Array.from(fileList), documentMediaDraftId(bodyEditor)); return; }
+    if (bodyEditor) { appendToPage(bodyEditor, Array.from(fileList)); return; }
     const files = Array.from(fileList);
     setSubmitStatus("");
     if (!files.length) return;
@@ -327,37 +336,6 @@ export function EntryComposer({
     // Attachments are evidence, not the Entry's source classification.
   }
 
-  function containsDraggedFiles(event: React.DragEvent<HTMLElement>) {
-    return Array.from(event.dataTransfer.types).includes("Files");
-  }
-
-  function handleMediaDragEnter(event: React.DragEvent<HTMLElement>) {
-    if (!containsDraggedFiles(event)) return;
-    event.preventDefault();
-    setIsDraggingFiles(true);
-  }
-
-  function handleMediaDragOver(event: React.DragEvent<HTMLElement>) {
-    if (!containsDraggedFiles(event)) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
-  }
-
-  function handleMediaDragLeave(event: React.DragEvent<HTMLElement>) {
-    const nextTarget = event.relatedTarget;
-    if (!nextTarget || !(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-      setIsDraggingFiles(false);
-    }
-  }
-
-  function handleMediaDrop(event: React.DragEvent<HTMLElement>) {
-    if (!containsDraggedFiles(event)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDraggingFiles(false);
-    if (event.dataTransfer.files.length) addFiles(event.dataTransfer.files);
-  }
-
   function removeMedia(id: string) {
     setMedia((current) => {
       const removed = current.find((item) => item.id === id);
@@ -366,30 +344,6 @@ export function EntryComposer({
         previewUrls.current.delete(removed.previewUrl);
       }
       return current.filter((item) => item.id !== id);
-    });
-  }
-
-  function moveMedia(id: string, direction: -1 | 1) {
-    setMedia((current) => {
-      const index = current.findIndex((item) => item.id === id);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= current.length) return current;
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  }
-
-  function moveMediaBefore(sourceId: string, targetId: string) {
-    if (sourceId === targetId) return;
-    setMedia((current) => {
-      const sourceIndex = current.findIndex((item) => item.id === sourceId);
-      const targetIndex = current.findIndex((item) => item.id === targetId);
-      if (sourceIndex < 0 || targetIndex < 0) return current;
-      const next = [...current];
-      const [source] = next.splice(sourceIndex, 1);
-      next.splice(sourceIndex < targetIndex ? targetIndex - 1 : targetIndex, 0, source);
-      return next;
     });
   }
 
@@ -484,7 +438,6 @@ export function EntryComposer({
 
   return (
     <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
-      <input id={imageInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       {captureMode ? (
@@ -590,90 +543,49 @@ export function EntryComposer({
         </div>
       </StandaloneDocumentEditorViewport>
 
+      {/* On a touch screen a photo goes straight into the page; elsewhere "/", paste and drop do that inside it. */}
+      <div className="entry-camera" data-print-hidden>
+        <MediaPickerLabel htmlFor={cameraInputId} disabled={isSubmitting} spacious><Camera className="h-5 w-5" />Take photo</MediaPickerLabel>
+        <span className="text-xs text-muted">Added at the end of the page</span>
+      </div>
+
       <div className="flex items-center justify-between gap-2 text-xs text-muted" data-print-hidden>
         <span className="flex min-w-0 items-center gap-1.5"><Cloud className="h-3.5 w-3.5 shrink-0" aria-hidden /><span>{draftStatus || "Draft recovery is ready"}</span></span>
         <Button type="button" size="sm" variant="ghost" onClick={discardDraft} disabled={isSubmitting}><RotateCcw className="h-3.5 w-3.5" aria-hidden />Discard draft</Button>
       </div>
 
-      <section
-        className={cn(
-          "entry-editor-media rounded-[var(--ln-radius-panel)] border bg-surface p-4 transition",
-          isDraggingFiles ? "border-moss ring-2 ring-moss/15" : "border-hairline",
-        )}
-        onDragEnter={handleMediaDragEnter}
-        onDragOver={handleMediaDragOver}
-        onDragLeave={handleMediaDragLeave}
-        onDrop={handleMediaDrop}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Attachments</h2>
-            <p className="mt-0.5 text-xs text-muted">Up to 14 files, 25 MB each. Originals are preserved.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <MediaPickerLabel htmlFor={imageInputId} disabled={isSubmitting}><ImagePlus className="h-4 w-4" />Add photos</MediaPickerLabel>
-            <MediaPickerLabel htmlFor={cameraInputId} disabled={isSubmitting}><Camera className="h-4 w-4" />Take photo</MediaPickerLabel>
-            <MediaPickerLabel htmlFor={fileInputId} disabled={isSubmitting}><Paperclip className="h-4 w-4" />Add files</MediaPickerLabel>
-          </div>
-        </div>
-        <label
-          htmlFor={fileInputId}
-          className={cn(
-            "focus-ring mt-3 flex cursor-pointer items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border border-dashed px-4 py-4 text-left transition",
-            isDraggingFiles ? "border-moss bg-sage-surface/70" : "border-hairline bg-warm/45",
-            isSubmitting && "pointer-events-none cursor-not-allowed opacity-55",
-          )}
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-panel-inner)] bg-action-surface text-moss">
-            <ImagePlus className="h-4 w-4" aria-hidden />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[13px] font-medium text-ink">Drop files here or click to browse</span>
-            <span className="mt-0.5 block text-xs text-muted">Files upload only when you save the Entry.</span>
-          </span>
-        </label>
-
-        {media.length ? (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {media.map((item, index) => (
-              <article
-                key={item.id}
-                draggable
-                onDragStart={() => setDraggedMediaId(item.id)}
-                onDragEnd={() => setDraggedMediaId(undefined)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  if (draggedMediaId) moveMediaBefore(draggedMediaId, item.id);
-                }}
-                className={cn("overflow-hidden rounded-[var(--ln-radius-panel)] border bg-warm", item.kind === "new" && item.status === "error" ? "border-error/50" : "border-hairline")}
-              >
+      {media.length ? (
+        <section className="entry-editor-media rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4" aria-labelledby={`${mediaInputPrefix}-attachments`}>
+          <h2 id={`${mediaInputPrefix}-attachments`} className="text-[14px] font-semibold tracking-[-0.01em] text-ink">Attachments</h2>
+          <p className="mt-0.5 text-xs text-muted">Files kept beside the page. New pictures and files go into the page: type / there, paste, or drop them on it.</p>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {media.map((item) => (
+              <li key={item.id} className={cn("overflow-hidden rounded-[var(--ln-radius-panel)] border bg-warm", item.kind === "new" && item.status === "error" ? "border-error/50" : "border-hairline")}>
                 <div className="relative flex h-36 items-center justify-center overflow-hidden bg-stone">
                   {item.previewUrl ? (
                     <Image src={item.previewUrl} alt={item.originalFilename} fill unoptimized className="object-cover" />
                   ) : (
                     <File className="h-10 w-10 text-muted" aria-hidden />
                   )}
-                  <span className="absolute left-2 top-2 rounded-full bg-ink/75 px-2 py-1 font-mono text-xs text-white">{index + 1}</span>
                   {item.kind === "new" ? (
                     <span className={cn("absolute bottom-2 right-2 rounded-full px-2 py-1 text-xs font-semibold", item.status === "error" ? "bg-error text-white" : item.status === "uploading" ? "bg-info text-white" : "bg-surface/90 text-moss")}>{item.status}</span>
                   ) : null}
                 </div>
-                <div className="p-3">
-                  <p className="truncate text-sm font-semibold text-ink" title={item.originalFilename}>{item.originalFilename}</p>
-                  <p className="mt-1 text-xs text-muted">{formatBytes(item.size)} · {item.kind === "existing" ? "saved original" : "local original"}</p>
-                  <div className="mt-3 flex items-center justify-end gap-1">
-                    <Button type="button" size="icon" variant="ghost" disabled={index === 0 || isSubmitting} title="Move earlier" aria-label={`Move ${item.originalFilename} earlier`} onClick={() => moveMedia(item.id, -1)}><ChevronLeft className="h-4 w-4" /></Button>
-                    <Button type="button" size="icon" variant="ghost" disabled={index === media.length - 1 || isSubmitting} title="Move later" aria-label={`Move ${item.originalFilename} later`} onClick={() => moveMedia(item.id, 1)}><ChevronRight className="h-4 w-4" /></Button>
-                    <Button type="button" size="icon" variant="destructive" disabled={isSubmitting} title="Remove from Entry" aria-label={`Remove ${item.originalFilename}`} onClick={() => removeMedia(item.id)}><X className="h-4 w-4" /></Button>
+                <div className="flex items-center gap-1 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink" title={item.originalFilename}>{item.originalFilename}</p>
+                    <p className="mt-1 text-xs text-muted">{formatBytes(item.size)}</p>
                   </div>
+                  {item.kind === "existing" ? (
+                    <a href={`/api/attachments/${item.id}`} download={item.originalFilename} title="Download" aria-label={`Download ${item.originalFilename}`} className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] text-moss transition hover:bg-stone/70"><Download className="h-4 w-4" aria-hidden /></a>
+                  ) : null}
+                  <Button type="button" size="icon" variant="destructive" disabled={isSubmitting} title="Remove from Entry" aria-label={`Remove ${item.originalFilename}`} onClick={() => removeMedia(item.id)}><X className="h-4 w-4" /></Button>
                 </div>
-              </article>
+              </li>
             ))}
-          </div>
-        ) : null}
-        <p className="mt-2 text-xs text-muted">{media.length} / {MAX_ENTRY_FILES} files · {formatBytes(totalBytes)} combined</p>
-      </section>
+          </ul>
+        </section>
+      ) : null}
       </div>
 
       <div className="entry-editor-sidebar-column" role="region" data-document-metadata="true" aria-label={t("Entry metadata")}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import { ProtocolSourcesView } from './ProtocolSourcesView';
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import { resolveProtocolSystem, tableForSelection, targetApplicability, type ProtocolSelection, type ProtocolSystems } from '@/lib/structured-protocol';
 import { optionMarks } from '@/lib/protocol-chips';
@@ -337,6 +338,7 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       <ChipRenderContext.Provider value={chipContext}>
         {document.sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{usageHere ? <PerReactionUsage rows={usage} /> : null}{section.blocks.length ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>; })}
       </ChipRenderContext.Provider>
+      <ProtocolSourcesView sources={document.sources ?? []} />
     </div>
   </DocumentCanvas>;
   return <DocumentOutlineWorkbench items={document.sections.map((section) => ({ id: `section-${section.key}`, label: section.title }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;

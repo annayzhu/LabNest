@@ -66,14 +66,14 @@ export function parameterLongName(parameter: Parameter, systems: Pick<ProtocolSy
 const superscript = (exponent: number) => String(exponent).replace(/[-0-9]/g, digit => '⁻⁰¹²³⁴⁵⁶⁷⁸⁹'['-0123456789'.indexOf(digit)]);
 // Cell numbers and titers read as 247,500 or 2.5×10⁶, the way they are written at the bench.
 const countLike = (unit: string) => ['cells', 'cell-concentration', 'TU/mL', 'IU/mL', 'PFU/mL', 'TCID50/mL', 'VG/mL'].includes(units[normalizeUnit(unit)]?.dimension ?? '');
-/** How a number reads in a chip. Calculated results keep four significant figures, enough for a pipette or balance; the record keeps the exact value. */
+/** How a number reads in a chip: two decimals at most (the record keeps the exact value); calculated results are first cut to four significant figures. */
 function numberText(value: number, unit: string, calculated = false) {
   if (calculated) value = Number(value.toPrecision(4));
   if (countLike(unit) && Math.abs(value) >= 1e6) {
     const exponent = Math.floor(Math.log10(Math.abs(value)));
     return `${formatQuantity(Number((value / 10 ** exponent).toPrecision(3)))}×10${superscript(exponent)}`;
   }
-  return (['×g', 'rpm'].includes(unit) || countLike(unit)) && Math.abs(value) >= 1000 ? value.toLocaleString('en', { maximumFractionDigits: 6 }) : formatQuantity(value);
+  return (['×g', 'rpm'].includes(unit) || countLike(unit)) && Math.abs(value) >= 1000 ? value.toLocaleString('en', { maximumFractionDigits: 2 }) : formatQuantity(value);
 }
 /** A value with its unit as a chip reads it: "247,500 cells/mL", "5.333 mL". */
 export function chipAmount(value: number, unit: string, calculated = false) {

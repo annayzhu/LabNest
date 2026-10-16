@@ -15,17 +15,23 @@ export function PageActionsMenu({ children, label = "More actions" }: { children
   useEffect(() => {
     const element = panel.current;
     if (!element) return;
-    const close = () => { if (element.matches(":popover-open")) element.hidePopover(); };
-    const onToggle = (event: Event) => {
-      if ((event as ToggleEvent).newState !== "open") return window.removeEventListener("scroll", close);
+    const place = () => {
       const anchor = button.current!.getBoundingClientRect();
+      // Fixed to the viewport: it follows its button while the page scrolls and leaves once the button has left the screen.
+      // Closing on scroll instead would make a click during momentum scrolling look like a dead button.
+      if (anchor.bottom < 0 || anchor.top > window.innerHeight) { if (element.matches(":popover-open")) element.hidePopover(); return; }
       element.style.top = `${anchor.bottom + 6}px`;
       element.style.left = `${Math.max(8, Math.min(anchor.right - element.offsetWidth, window.innerWidth - element.offsetWidth - 8))}px`;
-      // Fixed to the viewport, so a scroll would detach it from its button.
-      window.addEventListener("scroll", close, { once: true, passive: true });
+    };
+    const follow = () => { if (element.matches(":popover-open")) place(); };
+    const onToggle = (event: Event) => {
+      if ((event as ToggleEvent).newState !== "open") { window.removeEventListener("scroll", follow, true); window.removeEventListener("resize", follow); return; }
+      place();
+      window.addEventListener("scroll", follow, { capture: true, passive: true });
+      window.addEventListener("resize", follow);
     };
     element.addEventListener("toggle", onToggle);
-    return () => { element.removeEventListener("toggle", onToggle); window.removeEventListener("scroll", close); };
+    return () => { element.removeEventListener("toggle", onToggle); window.removeEventListener("scroll", follow, true); window.removeEventListener("resize", follow); };
   }, []);
 
   return <span className="contents">

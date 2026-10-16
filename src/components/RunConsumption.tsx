@@ -2,22 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { newClientMutationId } from '@/lib/client-mutation-id';
-import { consumptionAmount, consumptionRecorded, consumptionSource, matchStock, type ConsumptionLine } from '@/lib/run-consumption';
+import { consumptionAmount, consumptionSource, matchStock, type ConsumptionLine } from '@/lib/run-consumption';
 import { Button } from './ui/Button';
 import './protocol/protocol.css';
 
 export type ConsumptionStock = { id: string; name: string; managementMode: string; lotNumber: string | null };
-
-/** 本次用量（预计）: each material this run uses, summed from mix cards and material-linked chips. */
-export function RunConsumptionSummary({ lines, rows }: { lines: ConsumptionLine[]; rows: Array<{ source: string }> }) {
-  if (!lines.length) return null;
-  return <figure className="ln-mix-card ln-usage-card is-run">
-    <figcaption><strong>本次用量（预计）</strong><span>按配液卡合计与本次数量换算；完成实验时可据此扣减库存</span></figcaption>
-    <table><thead><tr><th scope="col">材料</th><th scope="col">本次合计</th><th scope="col">来自</th></tr></thead>
-      <tbody>{lines.map(line => <tr key={line.key}><th scope="row">{line.name}{consumptionRecorded(line, rows) ? <span className="ln-mix-mode">已记录</span> : null}</th><td className={line.expected === undefined ? 'text-warning' : 'ln-mix-total'}>{consumptionAmount(line)}</td><td>{line.sources.join('；')}</td></tr>)}</tbody></table>
-  </figure>;
-}
-
 export type ConsumptionChoice = { line: ConsumptionLine; actual: number; stockId: string };
 
 /** Write the chosen usage rows, then deduct those tied to stock. Runs only after the run was completed. */

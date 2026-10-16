@@ -148,8 +148,9 @@ it("reads as one part per Protocol with this run's values only, folds the other 
   expect(experimentNarrativeFromDocument(record).steps).not.toContain("600 µL");
   expect(execution.at(-1)).toMatchObject({ text: "2. 再洗一次。", execution: { role: "detail", fold: "其他体系的步骤 · 不适用 · 1 步" } });
   expect(experimentNarrativeFromDocument(record).deviations).toMatch(/^第 1 步 · 材料或试剂 · 实际加入 360 µL · 2026-10-15 \d\d:05 · Anna$/);
-  // The report keeps where each value came from, folded away from the steps.
-  expect(execution.find(block => block.id === "run-derived:parameters:0:")).toMatchObject({ type: "table", rows: [["参数", "本次值", "来源"], ["体积", "350 µL", "按本次体系"]], execution: { role: "detail", fold: "采用参数与来源" } });
+  // The record reads as the run: no provenance table or calculation receipts (they stay on the run page).
+  expect(execution.find(block => block.id === "run-derived:parameters:0:")).toBeUndefined();
+  expect(execution.some(block => block.id.startsWith("run-derived:calculation:"))).toBe(false);
 });
 
 it("keeps the Protocol's notes where they were written among the steps, never folded away", async () => {

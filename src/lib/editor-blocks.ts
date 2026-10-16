@@ -1,22 +1,28 @@
 import type { ChainedCommands, Editor, JSONContent } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection, Selection, type EditorState, type Transaction } from '@tiptap/pm/state';
+import { liftTarget } from '@tiptap/pm/transform';
 
 /** Nodes whose children are the blocks a handle moves: the document and the fixed sections of experiment and Protocol documents. */
 const containers = new Set(['doc', 'scientificSection', 'protocolSection']);
+/** Those and a Protocol step: what 转换为 works inside, so a step's lines change kind without leaving the step. */
+const lineContainers = new Set([...containers, 'protocolStep']);
 
 /** One block as a handle sees it: a paragraph, list, table, picture or widget, or a whole Protocol step. */
 export type BlockUnit = { pos: number; node: ProseMirrorNode };
 
 /** The block a handle stands for at `pos`: the outermost block inside the document or one of its sections. */
-export function blockUnitAt(doc: ProseMirrorNode, pos: number): BlockUnit | null {
+export function blockUnitAt(doc: ProseMirrorNode, pos: number, within = containers): BlockUnit | null {
   const $pos = doc.resolve(Math.max(0, Math.min(pos, doc.content.size)));
   for (let depth = 1; depth <= $pos.depth; depth += 1) {
-    if (containers.has($pos.node(depth - 1).type.name) && !containers.has($pos.node(depth).type.name)) return { pos: $pos.before(depth), node: $pos.node(depth) };
+    if (within.has($pos.node(depth - 1).type.name) && !within.has($pos.node(depth).type.name)) return { pos: $pos.before(depth), node: $pos.node(depth) };
   }
   const after = $pos.nodeAfter;
-  return after && containers.has($pos.parent.type.name) && !containers.has(after.type.name) ? { pos: $pos.pos, node: after } : null;
+  return after && within.has($pos.parent.type.name) && !within.has(after.type.name) ? { pos: $pos.pos, node: after } : null;
 }
+
+/** The line 转换为 reads at `pos`: inside a Protocol step that is the step's own line, where the handle reads the whole step. */
+export const lineUnitAt = (doc: ProseMirrorNode, pos: number) => blockUnitAt(doc, pos, lineContainers);
 
 /** The block again after other edits, if it is still there. */
 export function currentBlockUnit(doc: ProseMirrorNode, unit: BlockUnit): BlockUnit | null {
@@ -72,11 +78,33 @@ export function deleteBlock(state: EditorState, unit: BlockUnit): Transaction {
 export type BlockKind = 'paragraph' | 'heading' | 'subheading' | 'quote' | 'bullet' | 'ordered' | 'task';
 const kindNode: Record<BlockKind, string | null> = { paragraph: null, heading: null, subheading: null, quote: 'blockquote', bullet: 'bulletList', ordered: 'orderedList', task: 'taskList' };
 
+/**
+ * Every line in the selection back to a plain paragraph, lifted out of lists and quotes but never out of its section or
+ * step: Tiptap's `clearNodes` lifts to wherever the line fits, which takes a step's line into the section and breaks the step.
+ */
+export function clearToParagraphs(tr: Transaction): Transaction {
+  const { from, to } = tr.selection;
+  const start = tr.doc, base = tr.mapping.maps.length, paragraph = start.type.schema.nodes.paragraph;
+  start.nodesBetween(from, to, (node, pos) => {
+    if (node.isText) return false;
+    const mapping = tr.mapping.slice(base);
+    const $before = tr.doc.resolve(mapping.map(pos)), range = $before.blockRange(tr.doc.resolve(mapping.map(pos + node.nodeSize)));
+    if (!range) return;
+    if (node.isTextblock && node.type !== paragraph) tr.setNodeMarkup(range.start, paragraph);
+    // No higher than the section or step this node is in.
+    let floor = 0;
+    for (let depth = $before.depth; depth > 0; depth -= 1) if (lineContainers.has($before.node(depth).type.name)) { floor = depth; break; }
+    const target = liftTarget(range);
+    if (target !== null && target >= floor) tr.lift(range, target);
+  });
+  return tr;
+}
+
 /** Turn the selected lines into a kind: out of any list or quote first; lines already of that kind stay. */
 export function turnInto(editor: Editor, chain: ChainedCommands, kind: BlockKind) {
   const wrapper = kindNode[kind];
   if (wrapper && editor.isActive(wrapper)) return chain;
-  chain.clearNodes();
+  chain.command(({ tr }) => { clearToParagraphs(tr); return true; });
   if (kind === 'heading') return chain.setHeading({ level: 2 });
   if (kind === 'subheading') return chain.setHeading({ level: 3 });
   if (kind === 'quote') return chain.toggleBlockquote();

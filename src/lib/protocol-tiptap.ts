@@ -451,6 +451,7 @@ export function tiptapToProtocolDocument(json: JSONContent, importWarnings: stri
     ...empty,
     executionConfirmed: blockMode || executionConfirmed,
     ...(systems ? {systems} : {}),
+    sources: [],
     importWarnings,
     sections: empty.sections.map((section) => ({ ...section, titleFontSizePt: json.content?.find(node => node.attrs?.sectionKey === section.key)?.attrs?.titleFontSizePt || undefined, blocks: sections.get(section.key) ?? [] })),
   };

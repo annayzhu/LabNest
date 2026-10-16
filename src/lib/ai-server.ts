@@ -100,7 +100,7 @@ export type ResolvedAdapter =
   | { ok: true; adapter: AIProviderAdapter; config: AIProviderConfig; gate: ReturnType<typeof createAIGate> }
   | { ok: false; status: number; error: string; field?: string };
 
-export async function resolveAdapterForProvider(providerId: string, expectedRevision?: string, options: { providerRevision?: string; signal?: AbortSignal } = {}): Promise<ResolvedAdapter> {
+export async function resolveAdapterForProvider(providerId: string, expectedRevision?: string, options: { providerRevision?: string; signal?: AbortSignal; timeoutMs?: number } = {}): Promise<ResolvedAdapter> {
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
   if (!settings?.enabled || (expectedRevision && settings.updatedAt.toISOString() !== expectedRevision)) {
     return { ok: false, status: 403, error: "AI 已关闭或设置已改变，请在 AI 页面确认设置。" };
@@ -112,7 +112,7 @@ export async function resolveAdapterForProvider(providerId: string, expectedRevi
   try {
     const config = providerConfigFromRecord({ ...record, type: record.type as AIProviderType }, { withSecret: true });
     const gate = createAIGate(settings.updatedAt.toISOString(), { id: record.id, revision: record.updatedAt.toISOString() }, options.signal);
-    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch }), config, gate };
+    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}) }), config, gate };
   } catch (error) {
     return { ok: false, status: 500, error: error instanceof Error ? error.message : "Could not load provider credentials." };
   }
@@ -140,12 +140,13 @@ export async function resolveDraftAdapter(input: unknown, signal?: AbortSignal):
 }
 
 /** The default provider, only when the master switch is on and the provider is a connected adapter. */
-export async function resolveConnectedAdapter(): Promise<ResolvedAdapter> {
+/** `timeoutMs`: a long structured answer (a method card) needs more than the default minute. */
+export async function resolveConnectedAdapter(options: { timeoutMs?: number } = {}): Promise<ResolvedAdapter> {
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" }, include: { defaultProvider: true } });
   const availability = availabilityFromSettings(settings);
   if (!availability.enabled) return { ok: false, status: 403, error: availability.reason ?? "AI is disabled." };
   if (!availability.connected || !availability.providerId) {
     return { ok: false, status: 409, error: availability.reason ?? "No connected model provider." };
   }
-  return resolveAdapterForProvider(availability.providerId, settings!.updatedAt.toISOString());
+  return resolveAdapterForProvider(availability.providerId, settings!.updatedAt.toISOString(), options);
 }

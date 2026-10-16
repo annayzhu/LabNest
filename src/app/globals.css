@@ -4912,6 +4912,9 @@ html[data-labnest-mode="dark"] .task-icon:has(img) {background:var(--ln-icon-pla
 .ln-segmented > button:hover { color: var(--ink); background: color-mix(in srgb, var(--surface) 70%, transparent); }
 .ln-segmented > button[aria-pressed="true"] { background: var(--surface); color: var(--moss); font-weight: 600; box-shadow: inset 0 -2px 0 var(--action); }
 @media (pointer: coarse) { .ln-segmented > button { min-height: 2.5rem; } }
+/* Entry: on a touch screen one button takes a photo straight into the page. */
+.entry-camera { display: none; }
+@media (pointer: coarse) { .entry-camera { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; } }
 @media (min-width: 1024px) { body:has(.context-properties[data-pinned="true"]:not([hidden])) .app-shell-content { padding-right: 24rem; } }
 @media (max-width: 639px) { .context-properties { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .context-properties { animation: none; } }
@@ -5038,3 +5041,6 @@ main.embedded-tool-workspace { padding: 0 !important; }
 
 :root[data-labnest-mode="dark"] { --ln-protocol-choice-0: #a8cce4; --ln-protocol-choice-1: #d4bfe4; --ln-protocol-choice-2: #dacdbb; }
 .document-canvas { --ln-protocol-choice-0: #315d78; --ln-protocol-choice-1: #655174; --ln-protocol-choice-2: #574e43; }
+
+/* The first thing a new Experiment's drawer says: where it comes from and what to fill in first. */
+.ln-form-intro { margin: 0 0 0.75rem; padding: 0.55rem 0.7rem; border-left: 2px solid var(--moss); background: var(--warm); border-radius: 0 var(--ln-radius-control-md) var(--ln-radius-control-md) 0; font-size: var(--ln-control-font-size-md); line-height: 1.55; color: var(--graphite); }

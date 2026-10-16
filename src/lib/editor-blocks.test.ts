@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { Schema, type Node as ProseMirrorNode } from '@tiptap/pm/model';
-import { EditorState } from '@tiptap/pm/state';
-import { blockUnitAt, deleteBlock, duplicateBlock, moveBlock } from './editor-blocks';
+import { EditorState, TextSelection } from '@tiptap/pm/state';
+import { blockUnitAt, clearToParagraphs, deleteBlock, duplicateBlock, lineUnitAt, moveBlock } from './editor-blocks';
 
 const schema = new Schema({ nodes: {
   doc: { content: 'scientificSection+' },
   scientificSection: { content: 'block+' },
   protocolStep: { content: 'block+', group: 'block', attrs: { stepId: { default: null }, settings: { default: null } } },
   paragraph: { content: 'text*', group: 'block', attrs: { scientificBlockId: { default: null } } },
+  heading: { content: 'text*', group: 'block', attrs: { level: { default: 2 } } },
+  bulletList: { content: 'listItem+', group: 'block' },
+  listItem: { content: 'paragraph block*' },
   widget: { group: 'block', atom: true, attrs: { block: { default: null } } },
   text: {},
 } });
@@ -63,5 +66,27 @@ describe('Block handles', () => {
     const emptied = one.apply(deleteBlock(one, blockUnitAt(one.doc, inside(one.doc, 0))!)).doc;
     expect(texts(emptied)).toEqual(['']);
     expect(emptied.firstChild!.firstChild!.type.name).toBe('paragraph');
+  });
+});
+
+describe('转换为 inside a Protocol step', () => {
+  const shape = (doc: ProseMirrorNode) => { const out: string[] = []; doc.firstChild!.forEach(node => { const inner: string[] = []; node.forEach(child => inner.push(child.type.name)); out.push(node.type.name === 'protocolStep' ? `step(${inner.join(' ')})` : node.type.name); }); return out; };
+  const cleared = (from: EditorState, pos: number, to = pos) => shape(clearToParagraphs(from.tr.setSelection(TextSelection.create(from.doc, pos, to))).doc);
+
+  it('changes the step\'s own line in place; nothing is lifted out of the step', () => {
+    const step = schema.node('protocolStep', { stepId: 'mix' }, [schema.node('heading', { level: 3 }, [schema.text('配液')]), schema.node('bulletList', null, [schema.node('listItem', null, [p('加水')])])]);
+    const initial = state(p('前言'), step);
+    const inHeading = inside(initial.doc, 1) + 1, inList = inside(initial.doc, 1) + 4 + 3;
+    expect(shape(initial.doc)).toEqual(['paragraph', 'step(heading bulletList)']);
+    expect(cleared(initial, inHeading)).toEqual(['paragraph', 'step(paragraph bulletList)']);
+    expect(cleared(initial, inList)).toEqual(['paragraph', 'step(heading paragraph)']);
+    // A selection reaching into the step from the line before it: the step's line stays in the step.
+    expect(cleared(initial, 2, inHeading)).toEqual(['paragraph', 'step(paragraph bulletList)']);
+    // A list line outside any step still lifts into the section.
+    const listed = state(schema.node('bulletList', null, [schema.node('listItem', null, [p('独立')])]));
+    expect(cleared(listed, 4)).toEqual(['paragraph']);
+    // The selection bubble reads the step's line where the handle reads the whole step.
+    expect(lineUnitAt(initial.doc, inHeading)?.node.type.name).toBe('heading');
+    expect(blockUnitAt(initial.doc, inHeading)?.node.type.name).toBe('protocolStep');
   });
 });

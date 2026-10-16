@@ -44,7 +44,8 @@ export function canTransitionRecordStatus(
   return getNextRecordStatus(from) === to;
 }
 
-function nextDisplayVersion(displayVersion: string): string {
+/** "0.3" → "0.4", "1.2.9" → "1.2.10"; anything that is not dotted numbers starts again at "0.1". */
+export function nextDisplayVersion(displayVersion: string): string {
   const parts = displayVersion.split(".").map(Number);
   if (parts.length < 2 || parts.some((part) => !Number.isInteger(part) || part < 0)) {
     return "0.1";

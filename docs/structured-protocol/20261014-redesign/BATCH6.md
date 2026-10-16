@@ -38,3 +38,10 @@
 - 本批有一个迁移 `20261015120000_method_design`（枚举值 `ai_design`、两张新表），正式库需 `prisma migrate deploy`。测试库的迁移历史与仓库目录有既有差异（库里记录了 `20260827120000_quick_capture_time_course`、`20260828120000_sequence_pairs` 两个目录里没有的迁移），所以这次在测试库是手工执行 SQL 后用 `prisma migrate resolve --applied` 标记的；正式库若有同样差异，`migrate deploy` 不检查漂移，可直接应用，但请先备份。
 - 新增环境要求：无。protocols.io 令牌在设置里填写，用现有 `LABNEST_AI_ENCRYPTION_KEY` 加密。
 - 外部检索默认关闭；打开后服务端会访问 `www.protocols.io` 与 `www.ebi.ac.uk`。
+
+## 发布到 3001（2026-10-16）
+
+- 用户在 3002 验收第 4–6 批与 2026-10-16 的反馈（含侧栏“建议操作”、Entry 附件统一进正文）后，提交 `198bf124`；提交前跑过 /simplify。分支未推送。Codex 的改动与未跟踪的 docs/ai、docs/visualization 不在提交内，仍留在工作区。
+- 镜像 `labnest-app:protocol-batch4-6-198bf124` 由提交的源码导出构建。3001 只替换 app 容器，环境变量无变化，健康检查通过。启动时自动应用迁移 `20261015120000_method_design`（枚举值 `ai_design`、两张新表），42 个迁移全部成功。上一版 `protocol-batch2-3a8ad911` 保留以便回退。
+- 部署前备份正式库与附件；原有 57 张表行数前后一致（只多迁移记录 1 条和两张空表），60 个附件文件前后一致。
+- 3001 只读检查：19 个页面正常、`/actions/review` 按设计 404，无 `{{ }}`、无错误页；侧栏“建议操作”“AI 设置”、记录页“台面模式”、规程页“使用记录”“版本对比”、Entry 编辑页的触屏拍照行都在。未向正式库写入。回执见 `.local-runtime/deploy-protocol-batch4-6-20261016/DELIVERY.md`。

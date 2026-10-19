@@ -32,18 +32,18 @@ try {
  for(const [engine,type] of Object.entries({chromium,webkit})) {
   const browser=await type.launch();
   try {
-   const context=await browser.newContext({viewport:{width:1440,height:900}});
+   const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}});
    await context.addInitScript(()=>localStorage.setItem('labnest.locale','en'));
    const page=await context.newPage();
    const backgroundRoutes=[];page.on('request',r=>{if(new URL(r.url()).searchParams.has('_rsc'))backgroundRoutes.push(r.url());});
    const pageErrors=[];page.on('pageerror',e=>{pageErrors.push(e.message);console.log('Page error',engine,page.url(),e.message);});
    let inferenceRequests=0;page.on('request',r=>{if(/\/api\/(ai\/(generate|manual|providers)|protocols\/recognize)/.test(r.url()))inferenceRequests++;});
    await page.goto(base+'/ai',{waitUntil:'networkidle'});
-   const toggle=page.getByRole('switch',{name:'启用 AI',exact:true});
+   const toggle=page.getByRole('switch',{name:/^(启用 AI|Enable AI)$/,exact:true});
    await check(`${engine} AI page does not prefetch historical records or navigation data`,async()=>{assert.deepEqual(backgroundRoutes,[]);});
    await check(`${engine} A01/A03 old review/settings anchors and provider editing links`,async()=>{
     for(const [old,expected] of [['/settings#ai-access','/ai#ai-access'],['/settings#providers','/ai#providers'],[`/settings?provider=${fixtureId}#providers`,`/ai?provider=${fixtureId}#providers`]]){await page.goto(base+old,{waitUntil:'networkidle'});await eventually(()=>assert.equal(page.url(),base+expected));}
-    await page.goto(base+'/settings',{waitUntil:'networkidle'});assert.equal(await page.locator('input[name="apiKey"]').count(),0);await page.getByRole('link',{name:'AI 设置 →'}).click();await toggle.waitFor();
+    await page.goto(base+'/settings',{waitUntil:'networkidle'});assert.equal(await page.locator('input[name="apiKey"]').count(),0);await page.getByRole('link',{name:/^(AI 设置 →|AI settings →)$/}).click();await toggle.waitFor();
     assert.equal(await page.getByText('AI review',{exact:true}).count(),0);
    });
    await check(`${engine} B03/B06 switch is immediate and never submits configuration drafts`,async()=>{
@@ -58,24 +58,24 @@ try {
    await check(`${engine} B05 failed switch write rolls back and reports failure`,async()=>{
     const before=await read();await page.route('**/api/ai/settings',async route=>route.request().method()==='PATCH'?route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic save failure'})}):route.continue());
     await toggle.click();await page.getByRole('alert').filter({hasText:'Synthetic save failure'}).waitFor();assert.equal(await toggle.getAttribute('aria-checked'),String(before.enabled));assert.equal((await read()).revision,before.revision);
-    await page.screenshot({path:`${dir}/${engine}-save-failure.png`,fullPage:true});await page.unroute('**/api/ai/settings');await page.getByRole('button',{name:'重新读取',exact:true}).click();
+    await page.screenshot({path:`${dir}/${engine}-save-failure.png`,fullPage:true});await page.unroute('**/api/ai/settings');await page.getByRole('button',{name:/^(重新读取|Read again)$/,exact:true}).click();
    });
-   await check(`${engine} B05 failed initial read is unknown/disabled and can retry`,async()=>{
+   await check(`${engine} B05 failed focus refresh disables stale settings and can retry`,async()=>{
     await page.route('**/api/ai/settings',async route=>route.request().method()==='GET'?route.fulfill({status:503,contentType:'application/json',body:'{"error":"Synthetic read failure"}'}):route.continue());
-    await page.reload({waitUntil:'networkidle'});await page.getByRole('alert').filter({hasText:'无法读取 AI 设置'}).waitFor();assert.equal(await toggle.isDisabled(),true);
-    await page.screenshot({path:`${dir}/${engine}-read-failure.png`,fullPage:true});await page.unroute('**/api/ai/settings');await page.getByRole('button',{name:'重新读取',exact:true}).click();await eventually(async()=>assert.equal(await toggle.isDisabled(),false));
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await page.getByRole('alert').filter({hasText:/无法读取 AI 设置|Cannot read AI settings|Synthetic read failure/}).waitFor();assert.equal(await toggle.isDisabled(),true);
+    await page.screenshot({path:`${dir}/${engine}-read-failure.png`,fullPage:true});await page.unroute('**/api/ai/settings');await page.getByRole('button',{name:/^(重新读取|Read again)$/,exact:true}).click();await eventually(async()=>assert.equal(await toggle.isDisabled(),false));
    });
    await check(`${engine} B07 another tab and focus re-read the same saved state`,async()=>{
-    const other=await context.newPage();await other.goto(base+'/ai',{waitUntil:'networkidle'});const before=await read();await Promise.all([other.waitForResponse(r=>r.request().method()==='PATCH'),other.getByRole('switch',{name:'启用 AI'}).click()]);
+    const other=await context.newPage();await other.goto(base+'/ai',{waitUntil:'networkidle'});const before=await read();await Promise.all([other.waitForResponse(r=>r.request().method()==='PATCH'),other.getByRole('switch',{name:/^(启用 AI|Enable AI)$/}).click()]);
     await page.bringToFront();await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await eventually(async()=>assert.equal(await toggle.getAttribute('aria-checked'),String(!before.enabled)));await other.close();
    });
    await check(`${engine} B06/C04 pending configuration, disabled test, no implicit requests`,async()=>{
     if(!(await read()).enabled) await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),toggle.click()]);
-    await page.locator('[data-ai-state]').filter({hasText:'已开启 · 待配置'}).waitFor();
-    await page.locator('[name="defaultProviderId"]').selectOption(fixtureId);await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),page.getByRole('button',{name:'保存功能设置'}).click()]);
+    await page.locator('[data-ai-state]').filter({hasText:/已开启 · 待配置|On · setup incomplete/}).waitFor();
+    await page.locator('[name="defaultProviderId"]').selectOption(fixtureId);await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),page.getByRole('button',{name:/^(保存功能设置|Save feature settings)$/}).click()]);
     assert.equal(inferenceRequests,0);
     await Promise.all([page.waitForResponse(r=>r.request().method()==='PATCH'),toggle.click()]);
-    for(const b of await page.getByRole('button',{name:'测试连接',exact:true}).all())await eventually(async()=>assert.equal(await b.isDisabled(),true));
+    for(const b of await page.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).all())await eventually(async()=>assert.equal(await b.isDisabled(),true));
    });
    for(const width of [1440,1024,390]) await check(`${engine} A04/A05 ${width}px layout and visible first-screen switch`,async()=>{
     backgroundRoutes.length=0;

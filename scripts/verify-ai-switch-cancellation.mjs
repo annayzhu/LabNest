@@ -37,7 +37,7 @@ try {
  const result=await pending;
  assert.equal(result.status,403,await result.text());
  const record=await (await fetch(base+'/api/entries/'+entryId)).json();
- assert.equal(record.entry.pendingActions.length,0);
+ assert.equal(record.entry.suggestions.length,0);
  report.checks.push({name:'off/on rejects late result and publishes no suggestions',status:'passed'});
  for (const scenario of ['queued-duplicate','workbench','connection-test']) {
   console.log('Checking',scenario);
@@ -80,7 +80,7 @@ try {
   await blocker.query('COMMIT');
   const rejected=await pending;assert.equal(rejected.status,403,await rejected.text());
   const readback=await (await fetch(base+'/api/entries/'+entryId)).json();
-  assert.equal(readback.entry.pendingActions.length,0,'A disabled provider must not publish queued suggestions');
+  assert.equal(readback.entry.suggestions.length,0,'A disabled provider must not publish queued suggestions');
   report.checks.push({name:'provider revocation while publication waits leaves no suggestions',status:'passed'});
  } finally {await blocker.query('ROLLBACK');await blocker.end();}
  await setEnabled(false);

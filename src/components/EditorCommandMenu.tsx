@@ -7,6 +7,7 @@ import { setSlashHandlers, slashQuery, type MenuAnchor } from '@/lib/editor-slas
 import { translateUiText } from '@/lib/i18n';
 import { useAnchoredPosition, useDismiss } from './protocol/popover';
 import './editor-command-menu.css';
+import { useEditorPortalPending } from './useEditorPortalPending';
 
 /** One choice in a "/" or "＋" menu. `keywords` hold pinyin initials and English, so "bg" or "table" finds Table (表格). */
 export type EditorCommand<C> = { id: string; group: string; label: string; hint: string; keywords: string; icon: LucideIcon; choice: C };
@@ -48,8 +49,8 @@ export function useCommandMenu(editor: Editor | null) {
 }
 
 /** The grouped command list behind every editor's "/" and ＋: ↑ ↓ to move, Enter to choose, Esc or a click outside to close. */
-export function EditorCommandMenu<C>({ state, commands, label, searchPlaceholder, emptyText, onChoose, onClose, keyRef }: {
-  state: EditorCommandMenuState; commands: EditorCommand<C>[]; label: string; searchPlaceholder: string; emptyText: string;
+export function EditorCommandMenu<C>({ editor, state, commands, label, searchPlaceholder, emptyText, onChoose, onClose, keyRef }: {
+  editor: Editor; state: EditorCommandMenuState; commands: EditorCommand<C>[]; label: string; searchPlaceholder: string; emptyText: string;
   onChoose: (choice: C) => void; onClose: () => void; keyRef: CommandKeyHandler;
 }) {
   const [active, setActive] = useState(0);
@@ -57,6 +58,7 @@ export function EditorCommandMenu<C>({ state, commands, label, searchPlaceholder
   const query = (state.mode === 'slash' ? state.query : filter).trim().toLowerCase();
   const visible = useMemo(() => commands.filter(command => matches(command, query)), [commands, query]);
   const panel = useRef<HTMLDivElement>(null);
+  const pending = useEditorPortalPending(editor, panel);
   const list = useRef<HTMLDivElement>(null);
   const style = useAnchoredPosition(state.anchor, panel, [visible.length]);
   useDismiss(panel, null, onClose);
@@ -82,7 +84,7 @@ export function EditorCommandMenu<C>({ state, commands, label, searchPlaceholder
   const search = useRef<HTMLInputElement>(null);
   const shown = style.visibility === 'visible';
   useEffect(() => { if (shown) search.current?.focus(); }, [shown]);
-  return createPortal(<div ref={panel} className="ln-insert-menu" style={style} role="dialog" aria-label={label}>
+  return createPortal(<div ref={panel} inert={pending} className="ln-insert-menu" style={style} role="dialog" aria-label={label}>
     {state.mode === 'button' ? <input ref={search} className="ln-insert-filter" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={filter} onChange={event => setFilter(event.target.value)}
       onKeyDown={event => { if (keyRef.current?.(event.nativeEvent)) event.stopPropagation(); }} /> : null}
     <div ref={list} className="ln-insert-list" role="listbox" aria-label={label}>

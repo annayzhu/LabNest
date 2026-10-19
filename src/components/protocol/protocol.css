@@ -393,6 +393,11 @@
 .ln-record-hint { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
 .ln-record-details > summary { cursor: pointer; width: fit-content; font-size: var(--ln-control-font-size-xs); color: var(--moss); }
 .ln-record-details[open] > summary { margin-bottom: 0.4rem; }
+/* The editor's print-only preview starts collapsed; its instructions must still print. */
+@media print {
+  .ln-record-details::details-content { content-visibility: visible !important; display: block !important; }
+  .ln-record-details > summary { display: none !important; }
+}
 @media (pointer: coarse) { .ln-record-name input, .ln-record-input textarea { min-height: 2.75rem; } }
 
 /* ——— "写法": how a step reads, one click away in the Steps heading ——— */

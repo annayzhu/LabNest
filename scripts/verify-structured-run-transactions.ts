@@ -96,7 +96,7 @@ try {
   await assert.rejects(recordStructuredStep({ ...skip, reason: '不同的请求不能复用同一ID' }), /不一致/);
   assert.equal((await prisma.experimentStep.findUniqueOrThrow({ where: { id: skipStep.id } })).completed, false);
   console.log('PASS: active timer rejects implicit cancellation, explicit cancellation is audited and replay-safe; required skip needs a reason and does not mark completion');
-  await writeFile(`${out}/fixtures.json`, JSON.stringify({ projectId: project.id, planId: plan.id, protocolId: protocol.id, versionId: version.id, experimentId: experiment.id, continuationId: continued.experimentId, attachmentIds }, null, 2));
+  await writeFile(`${out}/fixtures.json`, JSON.stringify({ projectId: project.id, planId: plan.id, protocolId: protocol.id, versionId: version.id, protocolCode: protocol.humanCode, displayVersion: version.displayVersion, experimentId: experiment.id, continuationId: continued.experimentId, attachmentIds }, null, 2));
   console.log('PASS: real isolated database creation, confirmation, stable IDs, frozen source, stale rejection, idempotent actual values, guarded public completion, linked continuation and preserved prior records');
 } finally { await prisma.$disconnect(); }
 }

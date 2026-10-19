@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { getSchema, type JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import { ProtocolDocumentNode } from './protocol-document-node';
 import { EditorState, TextSelection } from '@tiptap/pm/state';
 import { createDocumentSectionExtension } from './tiptap-document-extensions';
 import { joinProtocolStepBackward, protocolStepPlacement, ProtocolStepNode, splitProtocolStep } from './protocol-step-node';
 
-const schema = getSchema([StarterKit, ProtocolStepNode, createDocumentSectionExtension({ name: 'protocolSection', tag: 'section[data-protocol-section]', attributes: { sectionKey: { default: 'steps', htmlAttribute: 'data-protocol-section' } }, nodeView: undefined as never, content: '(block | protocolStep)*' })]);
+const schema = getSchema([StarterKit.configure({ document: false }), ProtocolDocumentNode, ProtocolStepNode, createDocumentSectionExtension({ name: 'protocolSection', tag: 'section[data-protocol-section]', attributes: { sectionKey: { default: 'steps', htmlAttribute: 'data-protocol-section' } }, nodeView: undefined as never, content: '(block | protocolStep)*' })]);
 const paragraph = (text = ''): JSONContent => ({ type: 'paragraph', ...(text ? { content: [{ type: 'text', text }] } : {}) });
 const step = (stepId: string | null, ...content: JSONContent[]): JSONContent => ({ type: 'protocolStep', attrs: { stepId }, content });
 const steps = (...content: JSONContent[]) => ({ type: 'doc', content: [{ type: 'protocolSection', attrs: { sectionKey: 'steps' }, content }] });
@@ -62,6 +63,12 @@ describe('Writing steps: Enter makes the next step, Backspace joins it back', ()
 });
 
 describe('Steps belong to the Steps section', () => {
+  it('rejects root-level paragraphs that the section serializer cannot save', () => {
+    const doc = schema.nodeFromJSON(steps(step('a', paragraph('Keep this instruction'))));
+    expect(doc.canReplaceWith(1, 1, schema.nodes.paragraph)).toBe(false);
+    expect(doc.firstChild!.canReplaceWith(1, 1, schema.nodes.paragraph)).toBe(true);
+    expect(() => doc.check()).not.toThrow();
+  });
   const sections = (...list: Array<[string, JSONContent[]]>) => ({ type: 'doc', content: list.map(([sectionKey, content]) => ({ type: 'protocolSection', attrs: { sectionKey }, content })) });
   const sectionOutline = (state: EditorState, index: number) => outline(state.doc.toJSON().content[index].content as JSONContent[]);
 

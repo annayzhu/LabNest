@@ -11,11 +11,11 @@ try {
  const before=await entry();assert.equal(before.createdAt,f.createdAt);assert.equal(before.occurredAt,f.occurredAt);
  const patch=await page.request.patch(`${base}/api/entries/${f.entryId}`,{multipart:{title:before.title,contentMarkdown:'SOURCE-AFTER · 后续更正',eventTimePrecision:'date',occurredAt:'2026-09-21',expectedUpdatedAt:before.updatedAt,mediaOrder:JSON.stringify([{kind:'existing',id:f.attachmentId}]),newFileIds:'[]'}});assert.equal(patch.status(),200,await patch.text());
  await page.reload({waitUntil:'networkidle'});await status('reviewed');
- const source=page.getByRole('region',{name:'来源快速记录'}).last().locator('article').filter({has:page.locator(`a[href="/entries/${f.entryId}"]`)});assert((await source.innerText()).includes('SOURCE-BEFORE'));assert(!(await source.innerText()).includes('SOURCE-AFTER'));
+ const source=page.getByRole('region',{name:/^Source entries/}).last().locator('article').filter({has:page.locator(`a[href="/entries/${f.entryId}"]`)});assert((await source.innerText()).includes('SOURCE-BEFORE'));assert(!(await source.innerText()).includes('SOURCE-AFTER'));
  const image=source.locator('img').first();await image.waitFor();assert(await image.evaluate(i=>i.complete&&i.naturalWidth>0));
  await page.screenshot({path:`${out}/entry-frozen-mobile.png`,fullPage:true});
  await status('draft','合成验收：明确重新打开');assert((await source.innerText()).includes('SOURCE-AFTER'));
- await page.goto(`${base}/results/${f.resultId}`,{waitUntil:'networkidle'});assert((await page.getByRole('region',{name:'来源快速记录'}).last().innerText()).includes('RESULT-SOURCE-BEFORE'));assert(!(await page.locator('body').innerText()).includes('RESULT-SOURCE-AFTER'));
+ await page.goto(`${base}/results/${f.resultId}`,{waitUntil:'networkidle'});assert((await page.getByRole('region',{name:/^Source entries/}).last().innerText()).includes('RESULT-SOURCE-BEFORE'));assert(!(await page.locator('body').innerText()).includes('RESULT-SOURCE-AFTER'));
  report.checks.push({name:'Entry top AI button; filing preserves original times; experiment submit→source edit→review retains text and loaded image; explicit reopen sees latest; reviewed result reads frozen source',result:'通过'});
  await page.goto(`${base}/entries/${f.entryId}/edit`,{waitUntil:'networkidle'});
  const editor=page.locator('.ProseMirror[contenteditable=true]').filter({visible:true}).last();await editor.fill('LOCAL-DRAFT · 本机未同步正文');

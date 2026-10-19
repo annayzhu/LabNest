@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import type { Editor } from '@tiptap/core';
 import { AlertTriangle, Beaker, Biohazard, Calculator, ClipboardList, Clock, Dna, FlaskConical, Gauge, Grid3x3, Heading2, Heading3, ImagePlus, Layers, LayoutGrid, List, ListOrdered, MoonStar, Paperclip, Percent, Pilcrow, Pipette, Quote, RotateCw, Scale, Shuffle, Table2, Tag, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Wrench, Zap } from 'lucide-react';
 import type { BlockKind } from '@/lib/editor-blocks';
 import { parameterDisplayName, protocolChipText, type ToolKind } from '@/lib/protocol-chips';
@@ -70,7 +71,7 @@ function parameterItems(systems: ProtocolSystems | undefined): Item[] {
 }
 
 /** The Protocol's "/" menu (also opened by a block's ＋): steps, quantities, environment, equipment, programs, calculations, text, parameters, content. */
-export function InsertMenu({ state, stepsAllowed, systems, onChoose, onClose, keyRef }: { state: EditorCommandMenuState; stepsAllowed: boolean; systems: ProtocolSystems | undefined; onChoose: (choice: InsertChoice) => void; onClose: () => void; keyRef: CommandKeyHandler }) {
+export function InsertMenu({ editor, state, stepsAllowed, systems, onChoose, onClose, keyRef }: { editor: Editor; state: EditorCommandMenuState; stepsAllowed: boolean; systems: ProtocolSystems | undefined; onChoose: (choice: InsertChoice) => void; onClose: () => void; keyRef: CommandKeyHandler }) {
   const commands = useMemo(() => items.flatMap(item => item.id === 'table' ? [...parameterItems(systems), item] : [item]).filter(item => stepsAllowed || item.choice.type !== 'step'), [stepsAllowed, systems]);
-  return <EditorCommandMenu state={state} commands={commands} label="Insert a parameter or tool" searchPlaceholder="Search: volume, centrifuge, tj…" emptyText="No matching parameter or tool" onChoose={onChoose} onClose={onClose} keyRef={keyRef} />;
+  return <EditorCommandMenu editor={editor} state={state} commands={commands} label="Insert a parameter or tool" searchPlaceholder="Search: volume, centrifuge, tj…" emptyText="No matching parameter or tool" onChoose={onChoose} onClose={onClose} keyRef={keyRef} />;
 }

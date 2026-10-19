@@ -19,14 +19,14 @@ try{
  const context=await browser.newContext({viewport:{width:1440,height:900}});await context.addInitScript(()=>localStorage.setItem('labnest.locale','en'));
  const page=await context.newPage();await page.goto(base+'/ai',{waitUntil:'networkidle'});
  await check('provider disable and enable immediately refresh availability without reload/focus',async()=>{
-  const state=page.locator('[data-ai-state]');await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 配置齐备'));
+  const state=page.locator('[data-ai-state]');await eventually(async()=>assert.equal(await state.textContent(),'On · fully set up'));
   const row=page.locator(`[data-provider-row="${id}"]`);
-  await row.getByRole('button',{name:'停用',exact:true}).click();
-  await row.getByRole('button',{name:'启用',exact:true}).waitFor();
-  await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 待配置'));
-  await row.getByRole('button',{name:'启用',exact:true}).click();
-  await row.getByRole('button',{name:'停用',exact:true}).waitFor();
-  await eventually(async()=>assert.equal(await state.textContent(),'已开启 · 配置齐备'));
+  await row.getByRole('button',{name:/^(停用|Disable service)$/,exact:true}).click();
+  await row.getByRole('button',{name:/^(启用|Enable service)$/,exact:true}).waitFor();
+  await eventually(async()=>assert.equal(await state.textContent(),'On · setup incomplete'));
+  await row.getByRole('button',{name:/^(启用|Enable service)$/,exact:true}).click();
+  await row.getByRole('button',{name:/^(停用|Disable service)$/,exact:true}).waitFor();
+  await eventually(async()=>assert.equal(await state.textContent(),'On · fully set up'));
  });
  await page.reload({waitUntil:'networkidle'});
  await check('pending configuration save prevents a later draft from being silently discarded',async()=>{
@@ -37,7 +37,7 @@ try{
   });
   try{
    const input=page.locator('[name="attachmentsEnabled"]');await input.uncheck();
-   await page.getByRole('button',{name:'保存功能设置'}).click();await reached;
+   await page.getByRole('button',{name:/^(保存功能设置|Save feature settings)$/}).click();await reached;
    assert.equal(await input.isDisabled(),true,'Pending save must not discard a newly edited draft');
    assert.equal(await page.locator('[name="defaultProviderId"]').isDisabled(),true);
   }finally{release?.();await page.unrouteAll({behavior:'wait'});}

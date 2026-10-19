@@ -44,3 +44,17 @@ The remaining runtime differences are `normalization.png` in the main and plate 
 - GitHub CI and merge status must be read from the associated pull request; local tests and an upload do not prove remote CI or a merge to main.
 
 Review guidance: project `AGENTS.md` and `labnest-editor-qa`. Local command logs and the UI screenshot were retained under `/tmp/labnest-20261019-*`; screenshots of production content were not added to the public repository.
+
+## PR #103 CI repair verification (2026-10-19)
+
+Candidate: the CI-repair commit on `codex/review-3001-20261019`, based on `f1864d53b70d23e75f2da13440f3101da7e9eff3`. The exact pushed revision and remote results are recorded by [PR #103](https://github.com/annayzhu/LabNest/pull/103). This section supersedes the earlier review's test coverage only for the checks listed here.
+
+- Updated browser checks to exercise the current slash menu, contextual image/table controls, two-stage system confirmation/calculation, explicit legacy-version conversion, current icons, and English/Chinese labels. Assertions still check saved values, stable IDs, original asset references, and actual exports, including their Protocol code and version.
+- Fixed print-time editor render recursion, missing template instructions in printed output, save-time interaction through editor portals, nested emphasis in saved Entry links, and narrow calculator task controls.
+- Restricted the Protocol editor root to sections that the serializer stores. A real upload-failure/retry test reproduced an image outside a section disappearing on save; after the fix, retry, deletion/undo, save and refresh retain all five image references. A schema regression test prevents root-level paragraphs.
+- Unit tests: 163 files / 1,326 tests passed. Production build and its TypeScript check passed. ESLint has no errors; existing warnings remain.
+- Local isolated synthetic acceptance passed for AI adapters/cancellation/migration/review/drafts, Entry editing and saving, six document entry points, template images and both PDF views, calculator modes and all-tool responsive UI, and offline replay/timer calibration/stable-step identity with database readback. The final Protocol browser run also passed all nine groups: preview, system confirmation and calculation, responsive drafts, save reconciliation, stale tabs, timer lifecycle, continuation, JSON/Markdown/CSV/XLSX/DOCX/PDF exports and light/dark layout.
+- No production database or attachments were used. Local application ports were 3338, 3332, 3331, 3227 and 3221; synthetic PostgreSQL used port 5543. Port 3001 was not redeployed. No real-provider calls or physical-device acceptance was performed.
+- Current synthetic screenshots, traces and PDF files are archived locally under `/tmp/pr103-ci-evidence.tar.gz`; local command logs are `/tmp/pr103-*.log`. Historical checked-in evidence remains historical. GitHub uploads fresh evidence for each new CI run.
+
+Local success is not a claim of GitHub CI success or merge. Merge is conditional on all checks completing successfully on the exact PR head.

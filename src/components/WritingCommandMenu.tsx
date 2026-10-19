@@ -54,6 +54,6 @@ export function WritingCommandMenu({ editor, state, draftId, keyRef, onClose, ch
   // The menu mounts when "/" is typed; its time stamps show that moment.
   const [openedAt] = useState(() => new Date());
   const commands = useMemo(() => writingCommands(openedAt, { checklist, media, inserts }), [openedAt, checklist, media, inserts]);
-  return <EditorCommandMenu state={state} commands={commands} label="Insert" searchPlaceholder="Search: heading, checklist, image, bg…" emptyText="No matching format"
+  return <EditorCommandMenu editor={editor} state={state} commands={commands} label="Insert" searchPlaceholder="Search: heading, checklist, image, bg…" emptyText="No matching format"
     onChoose={choice => { onClose(); runWritingCommand(editor, state, choice, draftId); }} onClose={onClose} keyRef={keyRef} />;
 }

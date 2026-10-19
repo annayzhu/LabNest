@@ -15,6 +15,7 @@ import { endBlockDrag, setBlockHandleHandlers, startBlockDrag, type BlockHover }
 import { blockKind, blockTakesFormat, blockTakesKinds, canDuplicateBlock, currentBlockUnit, deleteBlock, duplicateBlock, lineUnitAt, moveBlock, selectBlock, turnInto, type BlockKind, type BlockUnit } from '@/lib/editor-blocks';
 import type { MenuAnchor } from '@/lib/editor-slash';
 import { useAnchoredPosition, useDismiss } from './protocol/popover';
+import { useEditorPortalPending } from './useEditorPortalPending';
 import './editor-surface.css';
 
 export type BlockMenuItem = { id: string; label: string; icon: LucideIcon; run: (unit: BlockUnit, anchor: MenuAnchor) => void };
@@ -115,8 +116,10 @@ function BlockHandle({ editor, hover, surface, menuOpen, onMenu, openCommands, o
   }, [editor, hover, surface]);
   // A narrow screen has little margin: the handle stays on screen, overlapping the first letters only if it must.
   useLayoutEffect(() => {
-    const left = box.current?.getBoundingClientRect().left;
-    if (place && left !== undefined && left < 2) setPlace({ ...place, left: place.left + (2 - left) / place.scale });
+    const rect = box.current?.getBoundingClientRect();
+    // Print styles hide the handle. Its zero rectangle cannot be moved on screen;
+    // trying to correct it on every layout would cause an infinite render loop.
+    if (place && rect && rect.width > 0 && rect.left < 2) setPlace({ ...place, left: place.left + (2 - rect.left) / place.scale });
   }, [place]);
   if (!place) return null;
   const dragStart = (event: React.DragEvent<HTMLButtonElement>) => { const unit = currentBlockUnit(editor.state.doc, hover.unit); if (unit) startBlockDrag(editor.view, unit, event.dataTransfer, hover.dom); };
@@ -129,6 +132,7 @@ function BlockHandle({ editor, hover, surface, menuOpen, onMenu, openCommands, o
 
 function BlockMenu({ editor, unit: opened, anchor, kinds, blockItems, afterDelete, openCommands, onClose }: { editor: Editor; unit: BlockUnit; anchor: HTMLElement; kinds: BlockKind[]; blockItems?: EditorSurfaceProps['blockItems']; afterDelete?: EditorSurfaceProps['afterDelete']; openCommands: EditorSurfaceProps['openCommands']; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
+  const pending = useEditorPortalPending(editor, panel);
   const style = useAnchoredPosition(anchor, panel);
   useDismiss(panel, anchor, onClose);
   const unit = currentBlockUnit(editor.state.doc, opened);
@@ -140,7 +144,7 @@ function BlockMenu({ editor, unit: opened, anchor, kinds, blockItems, afterDelet
   const media = unit.node.type.name === 'documentMedia';
   const choices = blockTakesKinds(unit.node) ? kindChoices.filter(choice => kinds.includes(choice.kind)) : [];
   const items = blockItems?.(unit) ?? [];
-  return createPortal(<div ref={panel} className="ln-block-menu" style={style} role="menu" aria-label="Block actions">
+  return createPortal(<div ref={panel} inert={pending} className="ln-block-menu" style={style} role="menu" aria-label="Block actions">
     {choices.length ? <section aria-label="Turn into"><p>Turn into</p><div className="ln-block-menu-kinds">
       {choices.map(({ kind, label, icon: Icon }) => <button key={kind} type="button" role="menuitemradio" aria-checked={current === kind} onClick={() => run(() => turnInto(editor, selectBlock(editor, unit), kind).run())}><Icon aria-hidden /><span>{label}</span></button>)}
     </div></section> : null}
@@ -185,6 +189,8 @@ const caretInTable: BubbleMenuProps['shouldShow'] = ({ editor, from, to }) => ed
  * the risk colour, and clearing all of it. Only what this editor's document can keep is offered.
  */
 function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Editor; linking: boolean; setLinking: (value: boolean) => void; kinds: BlockKind[] }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const pending = useEditorPortalPending(editor, panel);
   const scripts = Boolean(editor.schema.marks.superscript && editor.schema.marks.subscript);
   const state = useEditorState({ editor, selector: ({ editor: current }) => {
     const unit = lineUnitAt(current.state.doc, current.state.selection.from);
@@ -212,7 +218,7 @@ function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Edito
   const applyLink = (value: string) => { const range = chain().extendMarkRange('link'); (value ? range.setLink({ href: value }) : range.unsetLink()).run(); setLinking(false); };
   const choices = kindChoices.filter(choice => kinds.includes(choice.kind));
   return <BubbleMenu editor={editor} pluginKey="selectionBubble" appendTo={onPage} style={{ zIndex: 60 }} options={overText} shouldShow={textSelected}>
-    <div className="ln-selection-bubble" role="toolbar" aria-label="Text formatting" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
+    <div ref={panel} inert={pending} className="ln-selection-bubble" role="toolbar" aria-label="Text formatting" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
       {/* No <form> here: the editor sits inside the page's form, and React would pass a submit up to it. */}
       {linking ? <div className="ln-selection-link">
         <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="Paste or type a link, then Enter" aria-label="Link address" onKeyDown={event => {
@@ -246,6 +252,8 @@ function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Edito
 
 /** Over the table with the caret: rows and columns where the caret is. Deleting the table is ⋮⋮. */
 function TableBar({ editor, items }: { editor: Editor; items?: () => TableBarItem[] }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const pending = useEditorPortalPending(editor, panel);
   const chain = () => editor.chain().focus(undefined, { scrollIntoView: false });
   const besideTable = useCallback(() => {
     const { $from } = editor.state.selection;
@@ -256,7 +264,7 @@ function TableBar({ editor, items }: { editor: Editor; items?: () => TableBarIte
     return null;
   }, [editor]);
   return <BubbleMenu editor={editor} pluginKey="tableBar" appendTo={onPage} style={{ zIndex: 55 }} options={overTable} getReferencedVirtualElement={besideTable} shouldShow={caretInTable}>
-    <div className="ln-table-bar" role="toolbar" aria-label="Table" data-print-hidden onMouseDown={event => event.preventDefault()}>
+    <div ref={panel} inert={pending} className="ln-table-bar" role="toolbar" aria-label="Table" data-print-hidden onMouseDown={event => event.preventDefault()}>
       <button type="button" onClick={() => chain().addRowAfter().run()}>＋ Row</button>
       <button type="button" onClick={() => chain().addColumnAfter().run()}>＋ Column</button>
       <button type="button" onClick={() => chain().deleteRow().run()}>－ This row</button>

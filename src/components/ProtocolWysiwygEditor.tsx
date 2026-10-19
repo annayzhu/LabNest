@@ -5,6 +5,7 @@ import type { ResolvedPos } from '@tiptap/pm/model';
 import { ProtocolParameterNode } from '@/lib/protocol-parameter-node';
 import { ProtocolEditorIdentities } from '@/lib/protocol-editor-identities';
 import { ProtocolStepNode } from '@/lib/protocol-step-node';
+import { ProtocolDocumentNode } from '@/lib/protocol-document-node';
 import { ProtocolChipInput, ProtocolConditionDecorations, ProtocolEditorHandlerStorage, ProtocolSlashMenu, setProtocolHandlers } from '@/lib/protocol-editor-extensions';
 import { parameterDisplayName, splitDimension, splitLookupSource, toolSpecs, type RecognizedQuantity } from '@/lib/protocol-chips';
 import { blankProtocolSystems, type ProtocolSystems } from '@/lib/protocol-systems-schema';
@@ -185,7 +186,8 @@ const ProtocolLegacyAttributes = createDocumentLegacyAttributesExtension({ name:
 
 function protocolEditorExtensions() {
   return [
-      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      StarterKit.configure({ document: false, link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      ProtocolDocumentNode,
       HeadingShortcuts,
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
@@ -594,7 +596,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     {chipTarget ? <ChipPopover key={`${chipTarget.pos}:${chipTarget.id}`} target={chipTarget} onDelete={deleteChip} onClose={closeChip} /> : null}
     {splitPrompt ? <SplitPrompt prompt={splitPrompt} systems={document.systems} keyRef={splitKeyRef} onChoose={chooseSplit} onClose={closeSplit} /> : null}
     {conditionTarget ? <ConditionMenu key={`${conditionTarget.kind}:${conditionTarget.pos}`} target={conditionTarget} onColumn={value => { const cell = editor.state.doc.nodeAt(conditionTarget.pos); if (cell) editor.view.dispatch(editor.state.tr.setNodeMarkup(conditionTarget.pos, undefined, { ...cell.attrs, protocolColumn: value })); setConditionTarget({ ...conditionTarget, id: value ?? '' }); }} onClose={() => { setConditionTarget(null); editor.view.focus(); }} /> : null}
-    {insertMenu ? <InsertMenu state={insertMenu} stepsAllowed={stepsAllowed && inStepsSection(editor.state.selection.$from)} systems={document.systems} keyRef={insertKeyRef} onChoose={insertChoice} onClose={() => { setInsertMenu(null); editor.view.focus(); }} /> : null}
+    {insertMenu ? <InsertMenu editor={editor} state={insertMenu} stepsAllowed={stepsAllowed && inStepsSection(editor.state.selection.$from)} systems={document.systems} keyRef={insertKeyRef} onChoose={insertChoice} onClose={() => { setInsertMenu(null); editor.view.focus(); }} /> : null}
     {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </></ProtocolEditorContext.Provider>;
 }

@@ -20,9 +20,9 @@ try {
  await page.goto(`${base}/entries/${f.entryId}/edit`,{waitUntil:'networkidle'});
  const editor=page.locator('.ProseMirror[contenteditable=true]').filter({visible:true}).last();await editor.fill('LOCAL-DRAFT · 本机未同步正文');
  const stale=await entry();const other=await page.request.patch(`${base}/api/entries/${f.entryId}`,{multipart:{title:stale.title,contentMarkdown:'OTHER-WRITER · 服务器新正文',eventTimePrecision:'date',occurredAt:'2026-09-21',expectedUpdatedAt:stale.updatedAt,mediaOrder:JSON.stringify([{kind:'existing',id:f.attachmentId}]),newFileIds:'[]'}});assert.equal(other.status(),200);
- await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('region',{name:'正文冲突核对'}).waitFor();
- assert((await page.getByLabel('本机草稿对照').inputValue()).includes('LOCAL-DRAFT'));assert((await page.getByLabel('服务器正文对照').inputValue()).includes('OTHER-WRITER'));
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('region',{name:/^(正文冲突核对|Compare the conflicting texts)$/}).waitFor();
+ assert((await page.getByLabel(/^(本机草稿对照|This draft, for comparison)$/).inputValue()).includes('LOCAL-DRAFT'));assert((await page.getByLabel(/^(服务器正文对照|Server text, for comparison)$/).inputValue()).includes('OTHER-WRITER'));
  assert((await entry()).contentMarkdown.includes('OTHER-WRITER'));await page.screenshot({path:`${out}/entry-conflict-mobile.png`,fullPage:true});
  report.checks.push({name:'Two writers: stale body rejected; both drafts shown; server remains newer; no automatic revision rebase',result:'通过'});
  console.log('PASS Entry visible AI, original time/image, frozen experiment and result source, explicit reopen');
-} catch(error){report.error=String(error);process.exitCode=1;await page.screenshot({path:`${out}/entry-failure.png`});}finally{await writeFile(`${out}/entry-browser-report.json`,JSON.stringify(report,null,2));await browser.close();}
+} catch(error){report.error=String(error);console.error(error);process.exitCode=1;await page.screenshot({path:`${out}/entry-failure.png`});}finally{await writeFile(`${out}/entry-browser-report.json`,JSON.stringify(report,null,2));await browser.close();}

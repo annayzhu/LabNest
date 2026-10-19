@@ -8,6 +8,7 @@ try{
  const url=`${base}/tools/calculator/seeding?source=plate&workspaceId=fixture-workspace&plateId=fixture-plate&plateName=Synthetic&plateSize=24&wellIds=${wells}&embed=plate&locale=en`;
  await page.evaluate(url=>{window.calculatorPayload=null;window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='labnest:calculator-result')window.calculatorPayload=event.data;});const frame=document.createElement('iframe');frame.src=url;frame.title='Plate calculator';frame.style='width:800px;height:900px';document.body.append(frame);},url);
  const frame=page.frameLocator('iframe[title="Plate calculator"]');
+ await frame.locator('.calculator-workbench[aria-busy="false"]').waitFor();
  const input=name=>frame.getByRole('textbox',{name:new RegExp(`^${name}`)});
  await input('Wells').waitFor();assert.equal(await input('Wells').inputValue(),'12');
  for(const [name,value] of [['Viable-cell concentration','2e6'],['Cells per well','50000'],['Volume per well','500'],['Overage','10']])await input(name).fill(value);

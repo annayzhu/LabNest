@@ -242,6 +242,8 @@
 @media (max-width: 640px) { .ln-program-stages li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; } .ln-program-row { grid-template-columns: minmax(0, 1fr) auto; } }
 
 /* Run page: a chip is a quiet button. Its countdown and this run's actual value read right after it. */
+/* iOS zooms the whole page into any input under 16px; values typed at the bench must not shift the layout. */
+@media (pointer: coarse) { .ln-chip-popover input, .ln-chip-popover select { font-size: 16px; } }
 .ln-run-chip { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; line-height: inherit; text-align: inherit; cursor: pointer; border-radius: var(--ln-radius-control-sm); }
 .ln-run-chip:hover .ln-chip { border-color: var(--moss); }
 .ln-run-chip[aria-expanded="true"] .ln-chip { border-color: var(--moss); box-shadow: 0 0 0 2px color-mix(in srgb, var(--moss) 18%, transparent); }

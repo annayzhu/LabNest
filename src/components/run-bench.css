@@ -53,6 +53,10 @@
 
 /* ——— 现场模式 ——— */
 .ln-bench-controls { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
+/* In the header row (which scrolls sideways on phones) the bench buttons stay on one line with the others. */
+.page-actions .ln-bench-controls { flex-wrap: nowrap; }
+/* At the bench the step card is the point: the adopted-systems summary scrolls away instead of staying pinned over it. */
+.ln-bench .protocol-system-context { position: static; }
 .ln-bench { font-size: 1.08rem; }
 .ln-bench .run-step-content { font-size: 1.04em; line-height: 1.65; }
 .ln-bench .ln-chip { font-size: 0.98em; }

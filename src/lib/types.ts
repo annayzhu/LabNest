@@ -11,6 +11,7 @@ export type ItemType =
   | "experiment"
   | "protocol"
   | "protocol_version"
+  | "protocol_source"
   | "project"
   | "research_plan"
   | "report"

@@ -71,7 +71,9 @@ export function revisionFromExperiment(document: ProtocolDocument, experiment: {
       section.blocks.forEach((block, index) => { if ((block.execution?.stepId ?? (block.execution?.role === 'step' ? block.id : undefined)) === adoption.stepRef) at = index; });
       if (at < 0) continue;
       section.blocks.splice(at + 1, 0, { id: `note-${experiment.id.slice(-6)}-${adoption.stepRef}-${at}`, type: 'callout', tone: 'note', text: `${experiment.runCode} 偏差：${adoption.text}`, execution: { role: 'detail', stepId: adoption.stepRef } });
-      changes.push(`${adoption.stepLabel ?? `步骤 ${adoption.stepRef}`}增加偏差说明`);
+      // The step's number among the step blocks: a step reference is an internal id, never shown.
+      const number = section.blocks.slice(0, at + 1).filter(block => block.execution?.role === 'step').length;
+      changes.push(`${adoption.stepLabel ?? `第 ${number} 步`}增加偏差说明`);
     }
   }
   next.provenance = { ...next.provenance, fromExperimentIds: [...new Set([...(next.provenance?.fromExperimentIds ?? []), experiment.id])] };

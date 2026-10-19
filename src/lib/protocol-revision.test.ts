@@ -56,6 +56,11 @@ describe('整理成规程修订', () => {
     expect(source.sections.find(section => section.key === 'steps')!.blocks).toHaveLength(2);
   });
 
+  it('names the step by its number when the note arrives without a label', () => {
+    const { changes } = revisionFromExperiment(lysis(), { id: 'exp-000012', runCode: 'EXP-012' }, [{ kind: 'note', stepRef: 's2', text: '离心时间延长' }]);
+    expect(changes).toEqual(['第 2 步增加偏差说明']);
+  });
+
   it('adds a value for a system that had none instead of changing another system', () => {
     const source = lysis();
     source.systems!.parameters[0].source = { kind: 'lookup', values: [{ id: 'a', when: { all: [{ dimensionId: 'volume', optionId: 's' }] }, value: 50, unit: 'µL' }] };

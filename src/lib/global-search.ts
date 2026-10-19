@@ -12,6 +12,44 @@ export type GlobalSearchResult = {
   matchedText?: string;
 };
 
+/** One source of a Protocol version that mentions the query, read from the version's stored sources. */
+export type ProtocolSourceMatch = {
+  versionId: string; protocolId: string; humanCode: string; displayVersion: string;
+  sourceId: string; title: string | null; citation: string | null; url: string | null; note: string | null;
+};
+
+/** A source match as a search result: it opens the version's 来源与依据. */
+export function protocolSourceResult(source: ProtocolSourceMatch, query: string): GlobalSearchResult {
+  return {
+    id: `${source.versionId}:${source.sourceId}`,
+    type: "protocol_source",
+    title: source.title || source.citation || source.url || "来源",
+    subtitle: `${source.humanCode} · v${source.displayVersion}`,
+    location: `Protocols / ${source.humanCode} / 来源与依据`,
+    href: `/protocols/${source.protocolId}?version=${source.versionId}#section-sources`,
+    matchedText: firstMatch(query, [source.citation, source.url, source.note, source.title]),
+  };
+}
+
+/**
+ * Sources of each Protocol's current version and of its drafts whose title, citation, link or note mention the query.
+ * Archived Protocols and Protocols in the recycle bin are left out; older reviewed versions are history, not searched.
+ */
+function protocolSourceMatches(query: string, recycledProtocolIds: string[], limit: number) {
+  const pattern = `%${query.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+  return prisma.$queryRaw<ProtocolSourceMatch[]>`
+    SELECT v.id AS "versionId", v."protocolId", p."humanCode", v."displayVersion",
+      s->>'id' AS "sourceId", s->>'title' AS title, s->>'citation' AS citation, s->>'url' AS url, s->>'note' AS note
+    FROM "ProtocolVersion" v
+    JOIN "Protocol" p ON p.id = v."protocolId"
+    CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(v."contentJson"->'sources') = 'array' THEN v."contentJson"->'sources' ELSE '[]'::jsonb END) AS s
+    WHERE p.status <> 'archived' AND p.id <> ALL(${recycledProtocolIds}::text[])
+      AND (v."reviewStage" = 'draft' OR v."versionNumber" = (SELECT max(latest."versionNumber") FROM "ProtocolVersion" latest WHERE latest."protocolId" = v."protocolId"))
+      AND (s->>'title' ILIKE ${pattern} OR s->>'citation' ILIKE ${pattern} OR s->>'url' ILIKE ${pattern} OR s->>'note' ILIKE ${pattern})
+    ORDER BY v."createdAt" DESC
+    LIMIT ${limit}`;
+}
+
 function textFilter(query: string) {
   return { contains: query, mode: "insensitive" as const };
 }
@@ -46,6 +84,7 @@ function typeRank(type: ItemType) {
     experiment: 2,
     protocol: 3,
     protocol_version: 4,
+    protocol_source: 4.5,
     result: 5,
     report: 6,
     entry: 7,
@@ -127,6 +166,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
       sequencePairs,
       attachments,
       referenceConnectors,
+      protocolSources,
     ] = await Promise.all([
       prisma.project.findMany({
         where: {
@@ -452,6 +492,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
         take: perSourceLimit,
         orderBy: { updatedAt: "desc" },
       }),
+      protocolSourceMatches(normalizedQuery, recycledIds("protocol"), perSourceLimit),
     ]);
 
     const merged: GlobalSearchResult[] = [
@@ -617,6 +658,7 @@ export async function searchLabNestRecords(query: string, limit = 50): Promise<G
         href: "/attachments",
         matchedText: firstMatch(normalizedQuery, [attachment.filename, attachment.sha256]),
       })),
+      ...protocolSources.map((source) => protocolSourceResult(source, normalizedQuery)),
       ...referenceConnectors.map((connector) => ({
         id: connector.id,
         type: "reference_connector" as const,

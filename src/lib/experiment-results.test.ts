@@ -50,6 +50,14 @@ describe("experiment result recording", () => {
     expect(recording.additionalResults).toEqual([manual]);
   });
 
+  it("lists results built from an analysis workbook in their own group", () => {
+    const analysis = { ...result, id: "analysis-1", sourceType: "analysis", protocolVersionId: null, templateKey: null };
+    const manual = { ...result, id: "manual-1", sourceType: "manual", protocolVersionId: null, templateKey: null };
+    const recording = buildExperimentResultRecording(sources, [result, analysis, manual]);
+    expect(recording.analysisResults).toEqual([analysis]);
+    expect(recording.additionalResults).toEqual([manual]);
+  });
+
   it("does not let a recycled Result occupy the active template slot", () => {
     const recording = buildExperimentResultRecording(sources, [{ ...result, status: "archived" }]);
     expect(recording.slots[0].records).toEqual([]);

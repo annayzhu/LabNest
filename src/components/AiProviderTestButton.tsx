@@ -17,7 +17,7 @@ type Props = {
 /** Both entry points use the same UI/request lifecycle; changing inputs destroys only the test state. */
 export function AiProviderTestButton(props: Props) {
   const { saved, state, error } = useAiStatus();
-  const reason = props.disabledReason || error || (state === "checking" ? "正在读取 AI 设置…" : state === "off" ? "请先启用 AI，再测试连接。" : props.enabled === false ? "此服务已停用，请先启用。" : "");
+  const reason = props.disabledReason || error || (state === "checking" ? "Reading AI settings…" : state === "off" ? "Enable AI first, then test the connection." : props.enabled === false ? "This service is disabled; enable it first." : "");
   return <ConnectionTest key={`${props.epoch ?? 0}:${props.revision}:${saved?.revision}:${reason}`} {...props} disabledReason={reason} />;
 }
 
@@ -40,10 +40,10 @@ function ConnectionTest({ providerId, revision, draft, disabledReason, validate,
       }, false);
       const data = await response.json() as AIConnectionResult & { field?: string };
       if (!active.current) return;
-      setResult({ ...data, ok: response.ok && data.ok, message: data.message || "连接测试失败，请重试。" });
+      setResult({ ...data, ok: response.ok && data.ok, message: data.message || "Connection test failed; try again." });
       if (data.field) onInvalid?.(data.field);
     } catch (error) {
-      if (active.current) setResult({ ok: false, message: error instanceof Error && error.name === "TimeoutError" ? "LabNest 服务器测试超时，请稍后重试。" : error instanceof Error ? error.message : "连接测试失败，请重试。" });
+      if (active.current) setResult({ ok: false, message: error instanceof Error && error.name === "TimeoutError" ? "The LabNest server test timed out; try again later." : error instanceof Error ? error.message : "Connection test failed; try again." });
     } finally {
       if (active.current) { inFlight.current = false; setBusy(false); }
     }
@@ -51,13 +51,13 @@ function ConnectionTest({ providerId, revision, draft, disabledReason, validate,
 
   return <div className="min-w-0 space-y-1">
     <Button type="button" size="sm" onClick={test} disabled={busy || Boolean(disabledReason)} title={disabledReason}>
-      <PlugZap className="h-4 w-4" aria-hidden />{busy ? "正在测试…" : "测试连接"}
+      <PlugZap className="h-4 w-4" aria-hidden />{busy ? "Testing…" : "Test connection"}
     </Button>
     {disabledReason ? <p className="text-xs leading-5 text-muted">{disabledReason}</p> : null}
-    <p className="text-xs leading-5 text-muted">将发送一条简短测试消息，可能产生少量 API 费用。</p>
+    <p className="text-xs leading-5 text-muted">Sends one short test message, which may cost a little API usage.</p>
     {result ? <p role={result.ok ? "status" : "alert"} className={`rounded-[var(--ln-radius-control-lg)] p-3 break-words text-sm leading-6 ${result.ok ? "bg-success-surface text-success" : "bg-error-surface text-error"}`}>
-      {draft && result.ok ? result.message.replace("测试成功", "测试成功，配置尚未保存") : result.message}
-      {result.latencyMs !== undefined ? ` · ${result.latencyMs} ms` : ""}{result.ok ? " · 仅代表本次测试" : ""}
+      {draft && result.ok ? result.message.replace(/([Tt])est succeeded/, "$1est succeeded, settings not saved yet") : result.message}
+      {result.latencyMs !== undefined ? ` · ${result.latencyMs} ms` : ""}{result.ok ? " · this test only" : ""}
     </p> : null}
   </div>;
 }

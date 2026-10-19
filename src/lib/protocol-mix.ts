@@ -156,12 +156,12 @@ export function protocolUsage(document: { sections: Array<{ key: string; blocks:
       if (id) inMixes.add(id);
       const parameter = id ? document.systems?.parameters.find(p => p.id === id) : undefined;
       const name = parameter?.materialRef?.name ?? (component.name.trim() || parameter?.label.trim());
-      if (name) rows.push({ key: `${step.order}:${mix.id}:${component.id}`, name, amount: component.amount, basis: `每${mixPer(mix)} · ${mixTitle(mix)}`, step: step.order });
+      if (name) rows.push({ key: `${step.order}:${mix.id}:${component.id}`, name, amount: component.amount, basis: `Per ${mixPerText(mixPer(mix))} · ${mixTitle(mix)}`, step: step.order });
     }
     for (const id of referencedChips([step.title, ...blocks.filter(block => block.type !== 'mix')])) {
       const parameter = document.systems?.parameters.find(p => p.id === id);
       if (!parameter?.materialRef || inMixes.has(id) || !isMaterialAmount(parameter.unit)) continue;
-      rows.push({ key: `${step.order}:${id}`, name: parameter.materialRef.name, amount: `{{${id}}}`, basis: parameter.perRun ? '本次总量' : '每反应', step: step.order });
+      rows.push({ key: `${step.order}:${id}`, name: parameter.materialRef.name, amount: `{{${id}}}`, basis: parameter.perRun ? 'Total this run' : 'Per reaction', step: step.order });
     }
   }
   return rows;

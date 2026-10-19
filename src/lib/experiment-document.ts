@@ -1,6 +1,14 @@
 import { format } from 'date-fns';
 import { preparationChecklist, preparationProgress } from './run-preparation';
 import { runStepNotes, stepExecutionBlocker, stepMixes, stepVersion, structuredRunView } from './structured-run';
+import { translateUiText } from './i18n';
+
+/** The document keeps the bench reason as it was always written: Chinese, the first two still bilingual. */
+const bilingualBlockers: Record<string, string> = {
+  'Confirm the applicable system and resolve parameters first': '请先确认体系并解决待确定参数 / Confirm the applicable system and resolve parameters first',
+  'Reopen the skipped operation first': '此步骤已记录跳过；请先撤销跳过 / Reopen the skipped operation first',
+};
+const documentBlocker = (blocker: string) => bilingualBlockers[blocker] ?? translateUiText(blocker, 'zh');
 import { mixPer, mixSummary, mixTitle } from './protocol-mix';
 import { chipAmount, mapChipReferences, optionMarks, protocolChipText } from './protocol-chips';
 import { experimentStepGroupHeading } from './experiment-planning';
@@ -207,7 +215,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       blocks.push({ id: `run-derived:${step.id}`, type: 'text', text: [`${step.order}.`, step.completed ? '✓' : skipped ? '' : '未完成', stepTitle, status, deviation ? `${label}（见偏差与事件）` : ''].filter(Boolean).join(' '), execution: {
         role: runStepIsConfirmation(snapshot, step) ? 'confirmation' : 'step', stepId: step.id, title: stepTitle, number: step.order, completed: step.completed,
         ...(step.completed && step.completedAt ? { completedAt: step.completedAt.toISOString() } : {}),
-        ...(status ? { status } : {}), ...(blocker ? { blockedReason: blocker } : {}), allowsDeviation: step.allowsDeviation ?? true,
+        ...(status ? { status } : {}), ...(blocker ? { blockedReason: documentBlocker(blocker) } : {}), allowsDeviation: step.allowsDeviation ?? true,
         ...(deviation ? { deviationLabel: label, deviationNote: deviation, deviationType: step.deviationType ?? 'other', ...(step.deviationImpact ? { impact: step.deviationImpact } : {}), ...(step.deviationAuthor ? { author: step.deviationAuthor } : {}), ...(step.deviationAt ? { deviationAt: step.deviationAt.toISOString() } : {}) } : {}),
       } });
       blocks.push(...body.filter(block => block.type !== 'mix').map(block => detail(scientific(block, `run-derived:${step.id}:body:`), step.id)));

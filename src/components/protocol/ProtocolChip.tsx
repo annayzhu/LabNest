@@ -2,6 +2,10 @@ import { Calculator, Clock, FlaskConical, Gauge, Hash, MoonStar, Percent, Pipett
 import { chipViewText, unitPlacement, type ChipKind, type ChipView, type OptionMark, type ToolKind } from '@/lib/protocol-chips';
 import type { ProtocolSelection } from '@/lib/structured-protocol';
 import { MarkGroup } from './SystemMark';
+import { useI18n } from '../I18nProvider';
+
+/** A pending chip's reason is stored chip text; it is shown in the interface language. */
+const pendingReasons: Record<Extract<ChipView, { type: 'pending' }>['reason'], string> = { 待选体系: 'System to choose', 待填写: 'To fill in', 执行时填写: 'Filled in at run time', 计算后确认: 'Confirm after calculating', 取值冲突: 'Conflicting values', 单位不兼容: 'Incompatible unit' };
 
 const kindIcons: Record<ChipKind, LucideIcon> = {
   volume: Pipette, mass: Weight, amount: FlaskConical, concentration: FlaskConical, time: Clock, temperature: Thermometer, rcf: RotateCw, speed: RotateCw,
@@ -24,11 +28,13 @@ function Values({ view, lens }: { view: Extract<ChipView, { type: 'value' }>; le
 
 /** The reading form of a chip: compact value and unit with an icon for what it measures. */
 export function ProtocolChip({ view, lens, calculated = false }: { view: ChipView; lens?: ProtocolSelection; calculated?: boolean }) {
+  // Chips render inside the editable page, which the page translator skips.
+  const { t } = useI18n();
   const label = chipViewText(view);
-  if (view.type === 'missing') return <span className="ln-chip" data-state="missing" title="引用的参数已删除">参数已删除</span>;
+  if (view.type === 'missing') return <span className="ln-chip" data-state="missing" title={t('The referenced parameter was deleted')}>{t('Parameter deleted')}</span>;
   if (view.type === 'pending') {
     const Icon = calculated ? Calculator : kindIcons[view.kind];
-    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.name}</span><span className="ln-chip-reason">{view.reason}</span></span>;
+    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.name}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
   }
   if (view.type === 'tool') {
     const Icon = toolIcons[view.tool];

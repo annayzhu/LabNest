@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createAIProviderAdapter, type AIProviderConfig } from "./ai";
+import { translateUiText } from "./i18n";
 
 const config: AIProviderConfig = { id: "draft", name: "Synthetic service", type: "openai_compatible", baseUrl: "https://model.example/v1", defaultModel: "unavailable-model", apiKey: "synthetic-secret", capabilities: ["text"], enabled: true };
 const json = (value: unknown, status = 200) => Response.json(value, { status });
@@ -28,7 +29,8 @@ describe("connection tests verify the requested model", () => {
     expect(result).toMatchObject({ ok: true, requestedModel: "unavailable-model", returnedModel: "served-version", verification: "model" });
     expect(requests).toHaveLength(1);
     expect(requests[0]).toMatchObject({ model: "unavailable-model", max_tokens: 1024 });
-    expect(result.message).toContain("不同");
+    expect(result.message).toContain("differs from the requested ID");
+    expect(translateUiText(result.message, "zh")).toBe("测试成功 · 请求模型 unavailable-model · 返回模型 served-version（与请求 ID 不同，请核对服务端映射）");
   });
   it.each([
     [401, "invalid_api_key", "密钥", "authentication"],

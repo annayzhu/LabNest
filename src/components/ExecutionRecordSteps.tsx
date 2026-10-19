@@ -7,6 +7,7 @@ import { Check, ChevronRight } from 'lucide-react';
 import { newClientMutationId } from '@/lib/client-mutation-id';
 import { deviationTypeLabel, deviationTypeOptions, executionSegments } from '@/lib/experiment-document';
 import { ScientificBlockView } from './ScientificBlockView';
+import { useI18n } from './I18nProvider';
 import type { ScientificContentBlock } from '@/lib/scientific-document';
 import './execution-record.css';
 
@@ -30,6 +31,8 @@ export function ExecutionStepLine({ execution, children }: { execution: Executio
 
 function StepLine({ execution, children }: { execution: Execution; children?: ReactNode }) {
   const controls = useContext(ExecutionRecordControls);
+  // Inside the editable page the translator does not reach; server reasons may come in English.
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState('');
   const [optimistic, setOptimistic] = useState<boolean | null>(null);
@@ -63,7 +66,7 @@ function StepLine({ execution, children }: { execution: Execution; children?: Re
       {children ? <div className="ln-execution-step-body">{children}</div> : null}
       {interactive && blocked ? <p className="ln-execution-hint">{readableError(execution.blockedReason!)}{controls ? <> · <Link href={`/experiments/${controls.experimentId}/run#step-${stepId}`}>去执行页</Link></> : null}</p> : null}
       {editing ? <DeviationForm execution={execution} pending={pending} onCancel={() => setEditing(false)} onSave={deviation => save({ deviation }, () => setEditing(false))} /> : null}
-      {error ? <p role="alert" className="ln-execution-error">{readableError(error)}</p> : null}
+      {error ? <p role="alert" className="ln-execution-error">{t(readableError(error))}</p> : null}
     </div>
     <span className="ln-execution-step-end">
       {execution.completedAt && completed ? <time dateTime={execution.completedAt} suppressHydrationWarning>{format(new Date(execution.completedAt), 'MM-dd HH:mm')}</time> : null}

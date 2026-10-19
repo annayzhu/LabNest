@@ -24,8 +24,8 @@ export function ConditionMenu({ target, onColumn, onClose }: { target: Condition
   const [name, setName] = useState('');
   const systems = api.systems ?? blankProtocolSystems();
   const marks = optionMarks(systems);
-  if (target.kind === 'column') return createPortal(<div ref={panel} className="ln-condition-menu" style={style} role="dialog" aria-label="这一列的适用体系">
-    <p className="ln-condition-menu-title">这一列仅适用于</p>
+  if (target.kind === 'column') return createPortal(<div ref={panel} className="ln-condition-menu" style={style} role="dialog" aria-label="Systems this column applies to">
+    <p className="ln-condition-menu-title">This column only applies to</p>
     {systems.dimensions.filter(d => d.kind !== 'condition').map(dimension => <div key={dimension.id} className="ln-condition-menu-row">
       <span className="ln-condition-menu-dimension">{dimension.label}</span>
       <span className="ln-condition-menu-options">{dimension.options.map(option => { const key = `${dimension.id}:${option.id}`, mark = marks.get(key); return <button className="focus-ring" key={option.id} type="button" aria-pressed={target.id === key} data-tone={mark?.tone} onClick={() => onColumn(target.id === key ? null : key)}>{mark?.symbol ? <SystemMark mark={mark} /> : null}{option.label}</button>; })}</span>
@@ -42,19 +42,19 @@ export function ConditionMenu({ target, onColumn, onClose }: { target: Condition
     api.updateSystems(current => toggleScope({ ...current, dimensions: [...current.dimensions, dimension] }, target as { kind: 'step' | 'block'; id: string }, dimension.id, dimension.options[0].id));
     setNaming(false); setName('');
   };
-  return createPortal(<div ref={panel} className="ln-condition-menu" style={style} role="dialog" aria-label={target.kind === 'step' ? '这一步的适用范围' : '这段内容的适用范围'}>
-    <p className="ln-condition-menu-title">仅适用于</p>
+  return createPortal(<div ref={panel} className="ln-condition-menu" style={style} role="dialog" aria-label={target.kind === 'step' ? 'Where this step applies' : 'Where this content applies'}>
+    <p className="ln-condition-menu-title">Only applies to</p>
     {systems.dimensions.length ? systems.dimensions.map(dimension => <div key={dimension.id} className="ln-condition-menu-row">
       <span className="ln-condition-menu-dimension">{dimension.label}</span>
       <span className="ln-condition-menu-options">{dimension.options.map(option => { const mark = marks.get(`${dimension.id}:${option.id}`); return <button className="focus-ring" key={option.id} type="button" aria-pressed={selected(dimension.id, option.id)} data-tone={mark?.tone}
         onClick={() => api.updateSystems(current => toggleScope(current, target as { kind: 'step' | 'block'; id: string }, dimension.id, option.id))}>{mark?.symbol ? <SystemMark mark={mark} /> : null}{dimension.kind === 'condition' ? conditionTagLabel(dimension.label, option.label) : option.label}</button>; })}</span>
-    </div>) : <p className="ln-condition-menu-note">还没有体系或条件。新建一个条件，例如“富脂组织”。</p>}
+    </div>) : <p className="ln-condition-menu-note">No systems or conditions yet. Create a condition, such as “fatty tissue”.</p>}
     {naming ? <form className="ln-condition-menu-new" onSubmit={event => { event.preventDefault(); createCondition(); }}>
-      <input autoFocus aria-label="条件名称" placeholder="条件名称，如 富脂组织" value={name} onChange={event => setName(event.target.value)} />
-      <button className="focus-ring" type="submit" disabled={!name.trim()}>创建</button>
-    </form> : <button type="button" className="focus-ring ln-condition-menu-link" onClick={() => setNaming(true)}><Plus aria-hidden />新条件</button>}
+      <input autoFocus aria-label="Condition name" placeholder="Condition name, such as fatty tissue" value={name} onChange={event => setName(event.target.value)} />
+      <button className="focus-ring" type="submit" disabled={!name.trim()}>Create</button>
+    </form> : <button type="button" className="focus-ring ln-condition-menu-link" onClick={() => setNaming(true)}><Plus aria-hidden />New condition</button>}
     {target.kind === 'step' ? <label className="ln-condition-menu-check"><input type="checkbox" checked={optional} onChange={() => api.updateSystems(current => optional
       ? { ...current, rules: current.rules.flatMap(rule => rule.target === 'step' && rule.targetId === target.id && rule.optional ? predicates(rule).length ? [{ ...rule, optional: false }] : [] : [rule]) }
-      : { ...current, rules: [...current.rules, { id: uid('rule'), target: 'step' as const, targetId: target.id, when: {}, parameterIds: [], actualFields: [], optional: true }] })} />可选步骤：执行时可跳过，不计入必需进度</label> : null}
+      : { ...current, rules: [...current.rules, { id: uid('rule'), target: 'step' as const, targetId: target.id, when: {}, parameterIds: [], actualFields: [], optional: true }] })} />Optional step: may be skipped at run time and does not count toward required progress</label> : null}
   </div>, document.body);
 }

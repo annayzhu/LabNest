@@ -66,8 +66,8 @@ function dependsOnAdoptedValue(document: ProtocolDocument, stepId: string) {
 
 export function structuredRunView(snapshot: unknown, planValue: unknown, steps: SourceStep[]): StructuredRunView {
   const plan = parseExecutionPlan(planValue);
-  if (new Set(plan.groups.map(group => group.id)).size !== plan.groups.length || plan.groups.some(group => group.id === 'shared')) throw new Error('实验组标识重复或无效');
-  if (Object.values(plan.stepGroups).some(id => id !== 'shared' && !plan.groups.some(group => group.id === id))) throw new Error('步骤引用了不存在的实验组');
+  if (new Set(plan.groups.map(group => group.id)).size !== plan.groups.length || plan.groups.some(group => group.id === 'shared')) throw new Error('Group IDs are duplicated or invalid');
+  if (Object.values(plan.stepGroups).some(id => id !== 'shared' && !plan.groups.some(group => group.id === id))) throw new Error('A step refers to a group that does not exist');
   const view: StructuredRunView = { plan, hasSystems: false, versions: [], steps: {} };
   const versions = (snapshot && typeof snapshot === 'object' ? (snapshot as { versions?: unknown }).versions : []) as Array<{ protocolVersionId: string; humanCode?: string; protocolTitle?: string; title?: string; displayVersion?: string; contentJson: unknown }>;
   if (!Array.isArray(versions)) return view;
@@ -85,7 +85,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
       view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', ...(version.humanCode ? { code: version.humanCode } : {}), displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks, notePlacement: resolved.notePlacement, stepRefs: resolved.steps.map(step => step.source_ref!), parameters: resolved.parameters });
       for (const step of steps.filter(s => s.groupKey === version.protocolVersionId && (!plan.groups.length || plan.stepGroups[s.id] === scope.id))) {
         const source = resolved.steps.find(s => step.protocolStepRef === `${version.protocolVersionId}:${s.source_ref}`);
-        if (!source) throw new Error('执行快照缺少已保存步骤 / Captured operation is missing');
+        if (!source) throw new Error('The run snapshot is missing a saved step');
         const rules = document.systems.rules.filter(r => r.target === 'step' && r.targetId === source.source_ref);
         const timerId = rules.find(r => r.timerParameterId)?.timerParameterId;
         const timer = timerId ? resolved.parameters[timerId] : undefined;
@@ -96,7 +96,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
     }
     for (const step of steps.filter(s => s.groupKey === version.protocolVersionId && plan.groups.length && plan.stepGroups[s.id] === 'shared')) {
       const candidates = scopes.map(scope => groupResolutions[scope.id].steps.find(s => step.protocolStepRef === `${version.protocolVersionId}:${s.source_ref}`));
-      if (candidates.some(candidate => !candidate)) throw new Error('共享操作缺少来源步骤');
+      if (candidates.some(candidate => !candidate)) throw new Error('A shared operation is missing its source steps');
       const first = candidates[0]!;
       const rules = document.systems.rules.filter(rule => rule.target === 'step' && rule.targetId === first.source_ref);
       const timerId = rules.find(rule => rule.timerParameterId)?.timerParameterId;
@@ -108,27 +108,30 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
       view.steps[step.id] = { ...first, versionId: version.protocolVersionId, groupId: 'shared', groupLabel: '共同准备', timerDurationSeconds, blocked: !consistent || !allConfirmed || candidates.some(s => s!.blocked), ...(!consistent ? { description: '各组的共同操作参数或适用条件不同；请在规程中拆为组级操作后创建新实验。', content_blocks: [] } : {}) };
     }
     for (const step of steps.filter(s => s.groupKey === version.protocolVersionId)) {
-      if (!view.steps[step.id]) throw new Error('步骤的实验组归属缺失，请核对保存的执行方案。');
+      if (!view.steps[step.id]) throw new Error('A step’s group is missing; check the saved execution plan.');
     }
   }
   return view;
 }
 
-/** Why a step cannot be done now, in the bench's words; null when it can. Legacy operations keep the captured contract. */
+/**
+ * Why a step cannot be done now, in the bench's words; null when it can. Legacy operations keep the captured contract.
+ * Interface text in English; the experiment document keeps its Chinese wording (see experiment-document.ts).
+ */
 export function stepExecutionBlocker(view: StructuredRunView, stepId: string, requireActualValues = false): string | null {
   const step = view.steps[stepId];
   if (!step) return null;
-  if (step.blocked || step.applicability !== 'applicable') return '请先确认体系并解决待确定参数 / Confirm the applicable system and resolve parameters first';
-  if (view.plan.skips[stepId]) return '此步骤已记录跳过；请先撤销跳过 / Reopen the skipped operation first';
+  if (step.blocked || step.applicability !== 'applicable') return 'Confirm the applicable system and resolve parameters first';
+  if (view.plan.skips[stepId]) return 'Reopen the skipped operation first';
   if (requireActualValues) for (const field of step.actualFields.filter(f => f.required)) {
     const value = view.plan.actualValues[stepId]?.[field.id];
-    if (!value) return `请记录实际值：${field.label}`;
-    try { convert(value.value, value.unit, field.unit); } catch { return `实际值单位不兼容：${field.label}`; }
+    if (!value) return `Record the actual value: ${field.label}`;
+    try { convert(value.value, value.unit, field.unit); } catch { return `Incompatible unit for the actual value: ${field.label}`; }
   }
   if (requireActualValues) for (const mix of stepMixes(view, stepId)) {
     const state = mixState(view, stepId, mix);
-    if (!state.receipt) return `请先确认配液卡：${mixTitle(mix)}`;
-    if (!state.current) return `配液卡数值已变化，请重新确认：${mixTitle(mix)}`;
+    if (!state.receipt) return `Confirm the mix card first: ${mixTitle(mix)}`;
+    if (!state.current) return `The mix card’s values changed; confirm again: ${mixTitle(mix)}`;
   }
   return null;
 }
@@ -205,7 +208,7 @@ export function mixState(view: Pick<StructuredRunView, 'steps' | 'plan' | 'versi
 
 export function assertStructuredStepExecutable(view: StructuredRunView, stepId: string, expectedRevision: number | undefined, requireActualValues = false) {
   if (!view.steps[stepId]) return;
-  if (expectedRevision !== view.plan.revision) throw new Error('执行方案已变更，请刷新核对 / Execution plan changed; reload before continuing');
+  if (expectedRevision !== view.plan.revision) throw new Error('Execution plan changed; reload before continuing');
   const blocker = stepExecutionBlocker(view, stepId, requireActualValues);
   if (blocker) throw new Error(blocker);
 }

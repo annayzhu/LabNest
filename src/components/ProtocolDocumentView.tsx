@@ -38,34 +38,35 @@ function safeLink(value: string | undefined) {
   return /^(https?:\/\/|mailto:|\/)/i.test(trimmed) ? trimmed : undefined;
 }
 
+// Interface words shown inside the document, which the page translator leaves alone: render them through t().
 const resultFieldTypeLabel = {
-  text: "文本",
-  number: "数值",
-  select: "选项",
-  "attachment[]": "附件",
-  boolean: "是/否",
-  date: "日期",
-  datetime: "日期时间",
+  text: "Text",
+  number: "Numeric value",
+  select: "Choice",
+  "attachment[]": "Attachments",
+  boolean: "Yes/No",
+  date: "Date",
+  datetime: "Date & time",
 } as const;
 
 const resultSemanticRoleLabel = {
-  identifier: "标识",
-  design: "设计",
-  group: "分组",
-  label: "标签",
-  measurement: "测量值",
-  qc: "质控",
-  annotation: "注释",
+  identifier: "Identifier",
+  design: "Design factor",
+  group: "Grouping",
+  label: "Label",
+  measurement: "Measurement",
+  qc: "Quality control",
+  annotation: "Annotation",
 } as const;
 
 const artifactKindLabel = {
-  file: "文件",
-  image: "图片",
-  video: "视频",
+  file: "File",
+  image: "Image",
+  video: "Video",
 } as const;
 
 function requiredLabel(required: boolean | undefined) {
-  return required ? "必填" : "可选";
+  return required ? "Required" : "Optional";
 }
 
 function TemplateCheckBadge({ status }: { status: ResultTemplateCheck["status"] | undefined }) {
@@ -73,6 +74,7 @@ function TemplateCheckBadge({ status }: { status: ResultTemplateCheck["status"] 
 }
 
 function ResultTemplateSummaryCard({ template, templateCheck }: { template: ResultTemplate; templateCheck: ResultTemplateCheck | undefined }) {
+  const { t } = useI18n();
   return <div className="rounded-[var(--ln-radius-control-lg)] border border-sage/40 bg-sage-surface/50 p-3">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div>
@@ -83,7 +85,7 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
     </div>
     {template.description ? <p className="mt-2 text-xs leading-5 text-graphite">{template.description}</p> : null}
     {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="mt-3 border-t border-sage/30 pt-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t("Instructions")}</p>
       <ProtocolRichTextContent nodes={template.instructions} />
     </div> : null}
     {templateCheck && (templateCheck.errors.length || templateCheck.warnings.length) ? <ul className="mt-2 list-disc pl-5 text-xs text-graphite">{[...templateCheck.errors, ...templateCheck.warnings].map((message) => <li key={message}>{message}</li>)}</ul> : null}
@@ -91,19 +93,20 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
 }
 
 function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[] }) {
+  const { t } = useI18n();
   if (!fields.length) return null;
   return <section data-result-template-fields-preview className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
-    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{t("Field requirements")}</p>
     <div className="mt-2 grid gap-[var(--ln-result-template-preview-grid-gap)] md:grid-cols-2">
       {fields.map((field) => {
         const dataType = fieldDataType(field);
         const semanticRole = fieldSemanticRole(field);
         const label = field.label ?? field.name ?? field.key ?? "Field";
-        const metadata = [field.key, resultFieldTypeLabel[dataType], field.unit, requiredLabel(field.required), resultSemanticRoleLabel[semanticRole]].filter(Boolean).join(" · ");
+        const metadata = [field.key, t(resultFieldTypeLabel[dataType]), field.unit, t(requiredLabel(field.required)), t(resultSemanticRoleLabel[semanticRole])].filter(Boolean).join(" · ");
         const title = field.description ? `${label}\n${metadata}\n${field.description}` : `${label}\n${metadata}`;
         return <div key={field.key ?? label} title={title} className="flex min-w-0 items-center justify-between gap-[var(--ln-result-template-preview-field-meta-gap)] rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-[var(--ln-result-template-preview-field-padding-x)] py-[var(--ln-result-template-preview-field-padding-y)]">
           <p data-result-template-field-name className="min-w-0 flex-1 truncate font-medium leading-tight text-ink">{label}</p>
-          <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{resultFieldTypeLabel[dataType]}{field.unit ? ` · ${field.unit}` : ""} · {requiredLabel(field.required)} · {resultSemanticRoleLabel[semanticRole]}</p>
+          <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{t(resultFieldTypeLabel[dataType])}{field.unit ? ` · ${field.unit}` : ""} · {t(requiredLabel(field.required))} · {t(resultSemanticRoleLabel[semanticRole])}</p>
         </div>;
       })}
     </div>
@@ -111,16 +114,17 @@ function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[]
 }
 
 function ResultTemplateArtifactPreview({ artifacts }: { artifacts: ResultTemplateArtifact[] | undefined }) {
+  const { t } = useI18n();
   if (!artifacts?.length) return null;
   return <section className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-3">
-    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />文件要求 / File requirements</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />{t("File requirements")}</p>
     <div className="mt-2 grid gap-2 md:grid-cols-2">
       {artifacts.map((artifact) => <div key={artifact.key} className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-3 py-2">
         <p className="truncate text-sm font-medium text-ink">{artifact.label}</p>
-        <p className="mt-1 text-xs text-muted"><span className="font-mono">{artifact.key}</span> · {artifactKindLabel[artifact.kind]} · {requiredLabel(artifact.required)}</p>
+        <p className="mt-1 text-xs text-muted"><span className="font-mono">{artifact.key}</span> · {t(artifactKindLabel[artifact.kind])} · {t(requiredLabel(artifact.required))}</p>
       </div>)}
     </div>
-    <p className="mt-2 text-xs leading-5 text-muted">这里定义需要保留或上传的原始文件；实际文件在创建 / 打开 Result 记录后上传。</p>
+    <p className="mt-2 text-xs leading-5 text-muted">{t("These are the raw files to keep or upload; the files themselves are uploaded after creating or opening the Result record.")}</p>
   </section>;
 }
 
@@ -172,8 +176,9 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
 
 /** "仅 ▲ 350 µL" above a recipe column header that belongs to one system option. */
 function ColumnTag({ systems, column }: { systems: ProtocolSystems; column: { dimensionId: string; optionId: string } }) {
+  const { t } = useI18n();
   const mark = optionMarks(systems).get(`${column.dimensionId}:${column.optionId}`);
-  return mark ? <span className="ln-column-tag" data-tone={mark.tone}>仅 {mark.symbol ? <SystemMark mark={mark} /> : null}{mark.label}</span> : null;
+  return mark ? <span className="ln-column-tag" data-tone={mark.tone}>{t("Only ")}{mark.symbol ? <SystemMark mark={mark} /> : null}{mark.label}</span> : null;
 }
 
 export function ProtocolContentBlockView({ block, executionContext=false }: { block: ProtocolContentBlock; executionContext?:boolean }) {
@@ -266,9 +271,10 @@ const scopedRules = (systems: ProtocolSystems | undefined, target: "step" | "blo
 
 /** Content another system needs: folded in a lens preview, one click away. */
 function Folded({ systems, rules, children }: { systems: ProtocolSystems; rules: Rule[]; children: React.ReactNode }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return <div className="ln-protocol-folded" data-open={open ? "" : undefined}>
-    <button type="button" className="focus-ring ln-protocol-folded-toggle" aria-expanded={open} onClick={() => setOpen(value => !value)}><ConditionTags rules={rules} systems={systems} /><span>{open ? "收起" : "不适用于当前预览 · 展开"}</span></button>
+    <button type="button" className="focus-ring ln-protocol-folded-toggle" aria-expanded={open} onClick={() => setOpen(value => !value)}><ConditionTags rules={rules} systems={systems} /><span>{open ? t("Collapse") : t("Not in this preview · expand")}</span></button>
     {open ? <div className="ln-protocol-folded-body">{children}</div> : null}
   </div>;
 }
@@ -324,7 +330,7 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
         steps.push(<li key={stepId} className="ln-protocol-step" data-step-id={stepId}>
           <span className="ln-protocol-step-gutter" aria-hidden><span className="ln-protocol-step-number" /></span>
           {folded ? <div className="ln-protocol-step-body"><Folded systems={systems!} rules={rules}>{body}</Folded></div> : body}
-          {!folded && (rules.length || optional) ? <span className="ln-protocol-step-tags">{systems && rules.length ? <ConditionTags rules={rules} systems={systems} /> : null}{optional ? <span className="ln-condition-tag is-optional">可选</span> : null}</span> : null}
+          {!folded && (rules.length || optional) ? <span className="ln-protocol-step-tags">{systems && rules.length ? <ConditionTags rules={rules} systems={systems} /> : null}{optional ? <span className="ln-condition-tag is-optional">{t("Optional")}</span> : null}</span> : null}
         </li>);
       }
       nodes.push(<ol key={`steps-${index}`} className="ln-protocol-document-steps" start={first} style={{ counterReset: `ln-step ${first - 1}` }}>{steps}</ol>);
@@ -345,7 +351,7 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
       {resolution?.issues.filter(issue => !issue.code.startsWith("parameter-")).length ? <p role="status" className="text-sm text-warning">{resolution.issues.filter(issue => !issue.code.startsWith("parameter-")).map(issue => issue.message).join("；")}</p> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       <ChipRenderContext.Provider value={chipContext}>
-        {sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; const formulas = section.key === "consumption_rules" && legacyFormulas; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{sectionTitle(section)}</h2></header><div data-i18n-ignore>{usageHere ? <PerReactionUsage rows={usage} /> : null}{formulas ? <p className="mb-2 text-xs text-muted">旧公式表，仅作说明：执行时不再按它计算，用量来自步骤里的参数块和配液卡。</p> : null}{section.blocks.length && (section.key !== "consumption_rules" || formulas) ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">{t("Not recorded.")}</p>}</div></section>; })}
+        {sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; const formulas = section.key === "consumption_rules" && legacyFormulas; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{sectionTitle(section)}</h2></header><div data-i18n-ignore>{usageHere ? <PerReactionUsage rows={usage} /> : null}{formulas ? <p className="mb-2 text-xs text-muted">{t("Old formula table, for reference only: runs no longer calculate from it; amounts come from the parameters and mix cards in the steps.")}</p> : null}{section.blocks.length && (section.key !== "consumption_rules" || formulas) ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">{t("Not recorded.")}</p>}</div></section>; })}
       </ChipRenderContext.Provider>
       <ProtocolSourcesView sources={document.sources ?? []} />
     </div>
@@ -355,10 +361,11 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
 
 /** 每反应用量: the Protocol's material amounts and mix components, as the chips read under the current lens. */
 function PerReactionUsage({ rows }: { rows: ReturnType<typeof protocolUsage> }) {
+  const { t } = useI18n();
   return <figure className="ln-mix-card">
-    <figcaption><strong>每反应用量</strong><span>由参数块汇总；执行时乘以本次数量，完成时可据此扣减库存</span></figcaption>
-    <table><thead><tr><th scope="col">材料</th><th scope="col">用量</th><th scope="col">按</th><th scope="col">步骤</th></tr></thead>
-      <tbody>{rows.map(row => <tr key={row.key}><th scope="row">{row.name}</th><td><ChipText text={row.amount} /></td><td>{row.basis}</td><td>{row.step}</td></tr>)}</tbody></table>
+    <figcaption><strong>{t("Usage per reaction")}</strong><span>{t("Summed from the parameters; multiplied by the run quantity at run time and usable to deduct stock on completion")}</span></figcaption>
+    <table><thead><tr><th scope="col">{t("Material")}</th><th scope="col">{t("Amount used")}</th><th scope="col">{t("Basis")}</th><th scope="col">{t("Step")}</th></tr></thead>
+      <tbody>{rows.map(row => <tr key={row.key}><th scope="row">{row.name}</th><td><ChipText text={row.amount} /></td><td>{t(row.basis)}</td><td>{row.step}</td></tr>)}</tbody></table>
   </figure>;
 }
 

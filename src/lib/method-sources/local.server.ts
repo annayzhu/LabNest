@@ -37,7 +37,7 @@ export const localAdapter: MethodSourceAdapter = {
   },
   async fetch(externalId): Promise<MethodText> {
     const version = await prisma.protocolVersion.findUnique({ where: { id: externalId }, include: { protocol: { select: { humanCode: true, canonicalTitle: true, title: true } } } });
-    if (!version) throw new Error('规程版本不存在');
+    if (!version) throw new Error('Protocol version not found');
     const document = normalizeProtocolDocument(version.contentJson);
     const sections = document ? protocolSectionKeys.map(key => ({ title: document.sections.find(section => section.key === key)?.title ?? key, text: sectionPlainText(document, key) })).filter(section => section.text.trim()) : [];
     return { title: `${version.protocol.humanCode} · ${version.protocol.canonicalTitle ?? version.protocol.title} v${version.displayVersion}`, sections, text: joinSections(sections), url: `/protocols/${version.protocolId}?version=${version.id}`, fetchedAt: new Date().toISOString() };

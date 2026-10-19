@@ -50,11 +50,14 @@ describe("protocol tables in reading and execution views", () => {
     expect(html).not.toContain("p-pk");
     expect(html.match(/>50</g)?.length).toBe(2);
     const head = html.slice(html.indexOf("<thead"), html.indexOf("</thead>"));
-    expect(head).toContain("仅");
+    expect(head).toContain("Only ");
     expect(head).toContain("350 µL");
     expect(head).toContain("600 µL");
     const extraRow = html.slice(html.lastIndexOf("<tr"));
-    expect(extraRow).toContain("仅");
+    expect(extraRow).toContain("Only");
     expect(extraRow).toContain("600 µL");
+    // The column tag sits inside the document, which the page translator skips: it follows the interface language itself.
+    const zh = renderToStaticMarkup(createElement(I18nProvider, { initialLocale: "zh" } as Parameters<typeof I18nProvider>[0], createElement(ChipRenderContext.Provider, { value: { systems } }, createElement(ProtocolContentBlockView, { block }))));
+    expect(zh.slice(zh.indexOf("<thead"), zh.indexOf("</thead>"))).toContain("仅 ");
   });
 });

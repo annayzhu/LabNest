@@ -23,8 +23,8 @@ describe("Reading a Protocol across all systems", () => {
     ]);
     const steps = html.split('class="ln-protocol-legacy-step"').slice(1);
     expect(steps).toHaveLength(2);
-    expect(steps[0]).not.toContain("仅");
-    expect(steps[1]).toMatch(/仅[\s\S]*600 µL[\s\S]*补加缓冲液[\s\S]*再加 100 µL/);
+    expect(steps[0]).not.toContain("Only");
+    expect(steps[1]).toMatch(/Only[\s\S]*600 µL[\s\S]*补加缓冲液[\s\S]*再加 100 µL/);
   });
 
   it("keeps numbering steps after a note between them", () => {

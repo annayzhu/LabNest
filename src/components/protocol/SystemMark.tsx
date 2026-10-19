@@ -1,4 +1,5 @@
 import type { OptionMark } from '@/lib/protocol-chips';
+import { useI18n } from '../I18nProvider';
 
 const shapes: Record<string, string> = {
   triangle: 'M6 1.2 11 10.4H1z',
@@ -19,8 +20,10 @@ export function SystemMark({ mark, className }: { mark: Pick<OptionMark, 'symbol
 
 /** Marks of one value: system symbols, then named conditions as text. */
 export function MarkGroup({ marks }: { marks: OptionMark[] }) {
+  // Marks render inside the editable page, which the page translator skips.
+  const { t } = useI18n();
   return <>{marks.map((mark, index) => <span key={index} className="ln-mark-group" data-tone={mark.tone}>
-    {mark.any && marks[index - 1]?.any ? '/' : null}{mark.negated ? '非' : null}
+    {mark.any && marks[index - 1]?.any ? '/' : null}{mark.negated ? t('non-') : null}
     {mark.symbol ? <SystemMark mark={mark} /> : <span className="ln-mark-label">{mark.label}</span>}
   </span>)}</>;
 }

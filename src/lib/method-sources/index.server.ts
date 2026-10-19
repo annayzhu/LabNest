@@ -11,16 +11,16 @@ const timeoutMs = 15_000, maxBytes = 2_000_000;
 
 async function fetchLimited(url: string, init?: RequestInit) {
   const host = new URL(url).hostname;
-  if (!allowedHosts.has(host)) throw new Error(`不在白名单内的地址：${host}`);
+  if (!allowedHosts.has(host)) throw new Error(`Address not on the allow list: ${host}`);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...init, signal: controller.signal, headers: { 'User-Agent': 'LabNest method search (self-hosted lab notebook)', ...(init?.headers as Record<string, string> | undefined) } });
-    if (!response.ok) throw new Error(`${host} 返回 ${response.status}`);
+    if (!response.ok) throw new Error(`${host} returned ${response.status}`);
     const length = Number(response.headers.get('content-length') ?? 0);
-    if (length > maxBytes) throw new Error('响应过大，已放弃');
+    if (length > maxBytes) throw new Error('Response too large; abandoned');
     const body = await response.text();
-    if (body.length > maxBytes) throw new Error('响应过大，已放弃');
+    if (body.length > maxBytes) throw new Error('Response too large; abandoned');
     return body;
   } finally { clearTimeout(timer); }
 }
@@ -63,7 +63,7 @@ export async function searchMethods(sessionId: string, query: string): Promise<{
       if (adapter.id !== 'local') await prisma.activityLog.create({ data: { action: 'method_search', targetType: 'method_design_session', targetId: sessionId, metadataJson: { source: adapter.id, query, results: found.length } } });
     } catch (error) {
       failed.push(adapter.id);
-      errors.push(`${adapter.id}：${error instanceof Error ? error.message : '检索失败'}`);
+      errors.push(`${adapter.id}: ${error instanceof Error ? error.message : 'Search failed'}`);
       if (adapter.id !== 'local') await prisma.activityLog.create({ data: { action: 'method_search_failed', targetType: 'method_design_session', targetId: sessionId, metadataJson: { source: adapter.id, query, error: String(error instanceof Error ? error.message : error) } } });
     }
   }
@@ -71,9 +71,9 @@ export async function searchMethods(sessionId: string, query: string): Promise<{
 }
 
 export async function fetchMethodText(sessionId: string, hit: Pick<MethodHit, 'source' | 'externalId'>) {
-  if (hit.source === 'manual') throw new Error('粘贴的原文没有可抓取的来源');
+  if (hit.source === 'manual') throw new Error('Pasted text has no source to fetch');
   const adapter = (await enabledAdapters()).find(item => item.id === hit.source);
-  if (!adapter) throw new Error('这个来源现在没有开启');
+  if (!adapter) throw new Error('This source is not turned on now');
   const text = await adapter.fetch(hit.externalId);
   if (hit.source !== 'local') await prisma.activityLog.create({ data: { action: 'method_fetch', targetType: 'method_design_session', targetId: sessionId, metadataJson: { source: hit.source, externalId: hit.externalId, chars: text.text.length, license: text.license ?? null } } });
   return text;

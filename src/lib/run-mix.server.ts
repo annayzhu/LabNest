@@ -13,9 +13,9 @@ async function withRun<T>(experimentId: string, work: (tx: Prisma.TransactionCli
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${experimentId} FOR UPDATE`;
     const experiment = await load(tx, experimentId);
-    if (['archived', 'completed'].includes(experiment.status)) throw new Error('此执行已结束，配液卡不能再修改');
+    if (['archived', 'completed'].includes(experiment.status)) throw new Error('This run has ended; its mix cards can no longer change');
     assertRecordEditable(experiment.recordStatus);
-    if (!experiment.protocolRun) throw new Error('此实验没有执行方案');
+    if (!experiment.protocolRun) throw new Error('This experiment has no execution plan');
     return work(tx, { experiment, view: structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun.executionPlanJson, experiment.steps) });
   });
 }
@@ -27,18 +27,18 @@ const confirmInput = z.object({ experimentId: z.string().min(1), stepId: z.strin
 export async function confirmRunMix(raw: z.input<typeof confirmInput>) {
   const input = confirmInput.parse(raw);
   return withRun(input.experimentId, async (tx, { experiment, view }) => {
-    if (view.plan.revision !== input.expectedRevision) throw new Error('执行方案已变更，请刷新后再确认');
+    if (view.plan.revision !== input.expectedRevision) throw new Error('Execution plan changed; reload before confirming');
     const step = view.steps[input.stepId], source = experiment.steps.find(item => item.id === input.stepId);
-    if (!step || !source) throw new Error('此步骤不属于本次执行');
-    if (source.completed) throw new Error('步骤已完成，配液卡不再修改');
-    if (step.blocked) throw new Error('请先确认体系和这一步的参数');
+    if (!step || !source) throw new Error('This step is not part of this run');
+    if (source.completed) throw new Error('The step is complete; its mix cards no longer change');
+    if (step.blocked) throw new Error('Confirm the systems and this step’s parameters first');
     const mix = stepMixes(view, input.stepId).find(item => item.id === input.mixId);
-    if (!mix) throw new Error('配液卡不属于此步骤');
+    if (!mix) throw new Error('The mix card does not belong to this step');
     const state = mixState(view, input.stepId, mix);
-    if (input.quantitySource === 'run' && state.runQuantity !== input.quantity) throw new Error('本次数量已变化，请刷新核对');
+    if (input.quantitySource === 'run' && state.runQuantity !== input.quantity) throw new Error('The run quantity changed; reload and check');
     const live = mixView(mix, state.version?.document.systems, state.version?.parameters ?? {}, input.quantity);
-    if (!live.ready) throw new Error('配液卡还有未确定的用量');
-    if (live.fingerprint !== input.fingerprint) throw new Error('配液卡数值已变化，请核对后重新确认');
+    if (!live.ready) throw new Error('The mix card still has undetermined amounts');
+    if (live.fingerprint !== input.fingerprint) throw new Error('The mix card’s values changed; check them and confirm again');
     const now = new Date().toISOString();
     const receipt = { fingerprint: live.fingerprint, quantity: input.quantity, quantitySource: input.quantitySource, overagePercent: mix.overagePercent, aliquot: live.aliquot, confirmedAt: now,
       lines: live.lines.map(line => ({ id: line.id, name: line.name, mode: line.mode, unit: line.unit, perReaction: line.perReaction!, total: line.total! })) };
@@ -59,9 +59,9 @@ export async function strikeRunMixLine(raw: z.input<typeof strikeInput>) {
   const input = strikeInput.parse(raw);
   return withRun(input.experimentId, async (tx, { view }) => {
     const mix = stepMixes(view, input.stepId).find(item => item.id === input.mixId);
-    if (!mix) throw new Error('配液卡不属于此步骤');
-    if (!mix.components.some(component => component.id === input.lineId)) throw new Error('组分不属于此配液卡');
-    if (!mixState(view, input.stepId, mix).current) throw new Error('配液卡尚未确认或数值已变化，请先确认');
+    if (!mix) throw new Error('The mix card does not belong to this step');
+    if (!mix.components.some(component => component.id === input.lineId)) throw new Error('The component does not belong to this mix card');
+    if (!mixState(view, input.stepId, mix).current) throw new Error('The mix card is not confirmed or its values changed; confirm it first');
     const key = `${input.stepId}:${mix.id}`, current = new Set(view.plan.mixStrikes[key] ?? []);
     if (input.struck) current.add(input.lineId); else current.delete(input.lineId);
     await savePlan(tx, input.experimentId, { ...view.plan, mixStrikes: { ...view.plan.mixStrikes, [key]: [...current] } });
@@ -73,8 +73,8 @@ const quantityInput = z.object({ experimentId: z.string().min(1), versionId: z.s
 export async function setRunQuantities(raw: z.input<typeof quantityInput>) {
   const input = quantityInput.parse(raw);
   return withRun(input.experimentId, async (tx, { view }) => {
-    if (view.plan.revision !== input.expectedRevision) throw new Error('执行方案已变更，请刷新后再保存');
-    if (!view.versions.some(version => version.id === input.versionId)) throw new Error('此规程不属于本次执行');
+    if (view.plan.revision !== input.expectedRevision) throw new Error('Execution plan changed; reload before saving');
+    if (!view.versions.some(version => version.id === input.versionId)) throw new Error('This protocol is not part of this run');
     const current = { ...view.plan.quantities[input.versionId] };
     for (const [label, value] of Object.entries(input.quantities)) { if (value === null) delete current[label]; else current[label] = value; }
     await savePlan(tx, input.experimentId, { ...view.plan, revision: view.plan.revision + 1, quantities: { ...view.plan.quantities, [input.versionId]: current } });
@@ -87,11 +87,11 @@ const createInput = z.object({ experimentId: z.string().min(1), stepId: z.string
 export async function createRunMix(raw: z.input<typeof createInput>) {
   const input = createInput.parse(raw);
   return withRun(input.experimentId, async (tx, { view }) => {
-    if (view.plan.revision !== input.expectedRevision) throw new Error('执行方案已变更，请刷新后再生成');
+    if (view.plan.revision !== input.expectedRevision) throw new Error('Execution plan changed; reload before making it');
     const step = view.steps[input.stepId];
-    if (!step) throw new Error('此步骤不属于本次执行');
+    if (!step) throw new Error('This step is not part of this run');
     const systems = view.versions.find(version => version.id === step.versionId)?.document.systems;
-    if (input.parameterIds.some(id => !step.chipIds?.includes(id))) throw new Error('只能选用这一步里的参数块');
+    if (input.parameterIds.some(id => !step.chipIds?.includes(id))) throw new Error('Only parameters in this step can be chosen');
     const mix: ProtocolMix = { id: prefixedClientId('mix'), type: 'mix', title: input.title, per: input.per, overagePercent: 10, minPipetteUl: 0.5,
       components: input.parameterIds.map(id => { const parameter = systems?.parameters.find(p => p.id === id);
         return { id: prefixedClientId('component'), name: parameter?.label.trim() || parameter?.materialRef?.name || '', amount: `{{${id}}}`, mode: 'premix' as const }; }) };
@@ -109,10 +109,10 @@ export async function proposeRunMix(raw: z.input<typeof proposeInput>) {
   const view = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
   const step = view.steps[input.stepId];
   const mix = view.plan.runMixes[input.stepId]?.find(item => item.id === input.mixId);
-  if (!step || !mix) throw new Error('只能提议执行时补充的配液卡');
+  if (!step || !mix) throw new Error('Only mix cards added during the run can be proposed');
   const protocolVersionId = step.versionId.split('@')[0];
   const version = await prisma.protocolVersion.findUniqueOrThrow({ where: { id: protocolVersionId }, select: { protocolId: true } });
-  if (await prisma.activityLog.findFirst({ where: { action: 'protocol_mix_proposed', targetType: 'protocol', targetId: version.protocolId, metadataJson: { path: ['mix', 'id'], equals: mix.id } } })) throw new Error('这张配液卡已提议过');
+  if (await prisma.activityLog.findFirst({ where: { action: 'protocol_mix_proposed', targetType: 'protocol', targetId: version.protocolId, metadataJson: { path: ['mix', 'id'], equals: mix.id } } })) throw new Error('This mix card has already been proposed');
   await prisma.activityLog.create({ data: { action: 'protocol_mix_proposed', targetType: 'protocol', targetId: version.protocolId, metadataJson: json({ mix, protocolVersionId, stepRef: step.source_ref, stepTitle: step.title, experimentId: experiment.id, runCode: experiment.runCode }) } });
 }
 

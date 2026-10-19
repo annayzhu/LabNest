@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readSheet } from "read-excel-file/node";
 import writeXlsxFile from "write-excel-file/node";
 import type { SheetData } from "write-excel-file/node";
@@ -10,6 +10,7 @@ import {
   sanitizeTextContent,
 } from "write-excel-file/utility";
 import { parseProtocolDocxBytes } from "./protocol-docx";
+import { convertLegacyProtocol, isLegacyProtocol } from "./protocol-conversion";
 import { extractDocxMedia, type DocxEmbeddedImage } from "./docx-media-import";
 import { decideProtocolImportState, type ProtocolImportDecision } from "./protocol-import-state";
 import { exportProtocolDocxTemplate, protocolDocxTemplateFilename } from "./protocol-docx-template";
@@ -225,6 +226,13 @@ function protocolDocumentFromMarkdown(record: Record<string, unknown>): Protocol
 
 function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
   const parsed = parseProtocolDocxBytes(bytes, fileName);
+  // A Word file is written by habit: its steps become step blocks, its amounts chips, its "记录：" lines result templates.
+  // Step ownership is then explicit, so the parser's "re-confirm step ownership" warning no longer applies.
+  let document = parsed.document;
+  if (isLegacyProtocol(document)) {
+    const { document: converted } = convertLegacyProtocol(document, prefix => `${prefix}-${randomUUID()}`);
+    document = { ...converted, importWarnings: converted.importWarnings.filter((warning) => !warning.startsWith("DOCX_EXECUTION_REVIEW_REQUIRED")) };
+  }
   return {
     humanCode: parsed.humanCode,
     canonicalTitle: parsed.canonicalTitle,
@@ -236,8 +244,8 @@ function protocolDocxRecord(bytes: Uint8Array, fileName: string) {
     description: parsed.description,
     purpose: parsed.purpose,
     background: parsed.background,
-    contentJson: parsed.document,
-    __importWarnings: parsed.document.importWarnings,
+    contentJson: document,
+    __importWarnings: document.importWarnings,
   };
 }
 

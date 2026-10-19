@@ -4,6 +4,8 @@ import {
   calculateQuantityFromTransactions,
   directQuantityEditToAdjustTransaction,
   getInventoryRiskFlags,
+  inventoryNoteText,
+  inventoryQuantityLabel,
 } from "./inventory";
 
 describe("inventory transaction logic", () => {
@@ -44,6 +46,30 @@ describe("inventory transaction logic", () => {
     expect(adjustment.type).toBe("adjust");
     expect(adjustment.quantityChange).toBe(16);
     expect(adjustment.unit).toBe("g");
+  });
+});
+
+describe("inventory display", () => {
+  it("shows stock by the site-wide quantity rule: at most two decimals from 1 up, two significant figures below 1", () => {
+    // 5 mL less two confirmed 0.264 mL uses, as the stored float sum.
+    expect(inventoryQuantityLabel({ currentQuantity: 5 - 0.264 - 0.264, unit: "mL" })).toBe("4.47 mL");
+    expect(inventoryQuantityLabel({ currentQuantity: 0.63008, unit: "mL" })).toBe("0.63 mL");
+    expect(inventoryQuantityLabel({ currentQuantity: 0.005, unit: "mL" })).toBe("0.005 mL");
+    expect(inventoryQuantityLabel({ currentQuantity: 500, unit: "mL" })).toBe("500 mL");
+    expect(inventoryQuantityLabel({ currentQuantity: 0, unit: "mL", quantityRecorded: false })).toBe("数量未记录 / Quantity not recorded");
+  });
+
+  it("reads a run's ledger notes by run code and step, never by record IDs", () => {
+    const experiment = { id: "cmveqhp6u00066crfl7wqt1zd", runCode: "EXP-002" };
+    const use = "Confirmed material use 402bdf2d-cb69-45e3-b9dd-79917f5a36a5; source";
+    expect(inventoryNoteText(`${use} Chip:2× sybr 预混液#volume|按下表配制反应液 · qPCR 反应液`, experiment)).toBe("Confirmed material use · EXP-002 · 按下表配制反应液 · qPCR 反应液");
+    expect(inventoryNoteText(`${use} manual`, experiment)).toBe("Confirmed material use · EXP-002");
+    expect(inventoryNoteText("Explicit correction of material use 402bdf2d-cb69-45e3-b9dd-79917f5a36a5", experiment)).toBe("Explicit correction of material use · EXP-002");
+    expect(inventoryNoteText(`Consumed during ${experiment.id}.`, experiment)).toBe("Consumed during EXP-002.");
+    // The experiment is gone: its ID means nothing to a reader.
+    expect(inventoryNoteText(`Consumed during ${experiment.id}.`, null)).toBe("Consumed during an experiment.");
+    expect(inventoryNoteText("Opening balance recorded when the item was registered.", null)).toBe("Opening balance recorded when the item was registered.");
+    expect(inventoryNoteText(null, experiment)).toBeNull();
   });
 });
 

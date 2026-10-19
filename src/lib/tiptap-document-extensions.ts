@@ -36,16 +36,19 @@ export function createDocumentSectionExtension({
   tag,
   attributes,
   nodeView,
+  content = "block*",
 }: {
   name: string;
   tag: string;
   attributes: Record<string, SectionAttribute>;
   nodeView: NodeViewRenderer;
+  /** Protocol sections also hold step blocks, which are not ordinary blocks and never nest. */
+  content?: string;
 }) {
   return Node.create({
     name,
     group: "block",
-    content: "block*",
+    content,
     defining: true,
     isolating: true,
     addAttributes() {

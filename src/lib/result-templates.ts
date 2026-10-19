@@ -114,6 +114,8 @@ export const resultTemplateInputSchema = z.object({
   instructions: z.array(resultTemplateInstructionNodeSchema).optional(),
   resultKind: z.enum(resultKinds).optional(),
   cardinality: z.enum(cardinalities).optional(),
+  /** The "记录：…" and "每个样本：…" lines the template was written as; absent for templates made field by field. */
+  authored: z.object({ record: z.string().max(4000).optional(), perSample: z.string().max(4000).optional() }).optional(),
   fields: z.array(resultTemplateFieldInputSchema).default([]),
   datasets: z.array(resultTemplateDatasetInputSchema).optional(),
   artifacts: z.array(resultTemplateArtifactInputSchema).optional(),
@@ -295,6 +297,7 @@ export function normalizeResultTemplate(value: unknown, index = 0): ResultTempla
   }));
   const evidenceShape = { result_type: resultType, title: input.title, fields, datasets, artifacts };
   const preset = input.view?.preset ?? inferResultViewPreset(evidenceShape);
+  const record = cleanText(input.authored?.record), perSample = cleanText(input.authored?.perSample);
   return {
     result_type: resultType,
     templateKey,
@@ -304,6 +307,7 @@ export function normalizeResultTemplate(value: unknown, index = 0): ResultTempla
     instructions: input.instructions?.length ? input.instructions : undefined,
     resultKind: input.resultKind ?? inferResultKind(evidenceShape, preset),
     cardinality: input.cardinality ?? "per_run",
+    authored: record || perSample ? { record, perSample } : undefined,
     fields,
     datasets,
     artifacts,

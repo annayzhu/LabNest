@@ -1,4 +1,7 @@
 import { allSystemProtocolExportDocument } from './structured-protocol';
+import { formatProtocolSource, sourceHref } from "./protocol-sources";
+import { programSummary } from "./protocol-program";
+import { mixSummary } from "./protocol-mix";
 import { createHash } from "node:crypto";
 import { persistedTableFromTiptap } from "./tiptap-table-serialization";
 import type { JSONContent } from "@tiptap/core";
@@ -197,6 +200,8 @@ function blockXml(block: ProtocolContentBlock, sequence: { numbered: number }, m
     ? paragraph(media.image(block)) + (block.caption ? paragraph(run(block.caption, { italic: true, size: block.captionFontSizePt ? block.captionFontSizePt * 2 : undefined })) : "")
     : paragraph(run(`${block.filename || block.caption || block.mediaType} — 附件，请从随附附件包打开 / Open from the accompanying attachment package.`));
   if (block.type === "embedded_tool") return paragraph(run(`${block.label}: ${block.url}`));
+  if (block.type === "program") return paragraph(run(programSummary(block)));
+  if (block.type === "mix") return paragraph(run(mixSummary(block)));
   return paragraph(run(`${block.label} · ${block.durationMinutes} min${block.notes ? ` · ${block.notes}` : ""}`, { bold: true }));
 }
 
@@ -264,7 +269,9 @@ export function exportProtocolDocx(identity: ProtocolDocxIdentity, document: Pro
     ["Tag", identity.tags.join("; ")],
   ];
   const sequence = { numbered: 1 };
-  const sections = document.sections.map((section) => `${paragraph(run(section.title, { bold: true, heading: true, size: section.titleFontSizePt ? section.titleFontSizePt * 2 : undefined }), "SectionHeading", { before: 160, after: 60, keepNext: true })}${section.blocks.length ? section.blocks.map((block) => blockXml(block, sequence, media)).join("") : paragraph(run("Not recorded.", { italic: true, color: palette.secondaryText }))}`).join("");
+  // 来源与依据: numbered, with the link a reader can follow.
+  const sourcesXml = (authoredDocument.sources ?? []).length ? [`${paragraph(run("来源与依据", { bold: true, heading: true }), "SectionHeading", { before: 160, after: 60, keepNext: true })}${(authoredDocument.sources ?? []).map((source, index) => paragraph(run(`${index + 1}. ${formatProtocolSource(source)}${sourceHref(source) ? ` ${sourceHref(source)}` : ""}`), undefined, { after: 40 })).join("")}`] : [];
+  const sections = [...document.sections.map((section) => `${paragraph(run(section.title, { bold: true, heading: true, size: section.titleFontSizePt ? section.titleFontSizePt * 2 : undefined }), "SectionHeading", { before: 160, after: 60, keepNext: true })}${section.blocks.length ? section.blocks.map((block) => blockXml(block, sequence, media)).join("") : paragraph(run("Not recorded.", { italic: true, color: palette.secondaryText }))}`), ...sourcesXml].join("");
   const body = `${paragraph(run(identity.humanCode ?? "PRT-XXXXXX", { bold: true }), "ProtocolCode", { before: 120, after: 20, align: "center" })}${paragraph(run(identity.canonicalTitle, { bold: true, heading: true }), "Title", { after: 40, align: "center" })}${identity.englishTitle ? paragraph(run(identity.englishTitle, { italic: true, color: palette.secondaryText }), "Subtitle", { after: 100, align: "center" }) : ""}${table(identityRows, undefined, { kind: "identity" })}${sections}`;
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>${body}<w:sectPr><w:headerReference w:type="default" r:id="rId2"/><w:footerReference w:type="default" r:id="rId3"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1020" w:right="1077" w:bottom="964" w:left="1077" w:header="454" w:footer="454" w:gutter="0"/></w:sectPr></w:body></w:document>`;
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`;

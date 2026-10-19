@@ -64,13 +64,70 @@ var LabNestCalculations = (() => {
   register("cell-concentration", { "cells/mL": 1, "cells/\xB5L": 1e3 });
   register("length", { cm: 1, mm: 0.1, m: 100 });
   register("area", { "cm\xB2": 1, "mm\xB2": 0.01, "m\xB2": 1e4 });
-  register("time", { s: 1, min: 60, h: 3600, day: 86400 });
+  register("time", { ms: 1e-3, s: 1, min: 60, h: 3600, day: 86400 });
+  register("voltage", { kV: 1e3, V: 1, mV: 1e-3 });
+  register("current", { A: 1, mA: 1e-3, "\xB5A": 1e-6 });
+  register("pressure", { MPa: 1e6, kPa: 1e3, Pa: 1, bar: 1e5, mbar: 100, psi: 6894.757, Torr: 133.322, mmHg: 133.322, atm: 101325 });
+  register("capacitance", { F: 1, "\xB5F": 1e-6, nF: 1e-9 });
+  register("resistance", { "M\u03A9": 1e6, "k\u03A9": 1e3, "\u03A9": 1 });
+  register("acidity", { pH: 1 });
+  register("count", { cycles: 1, "\u6B21": 1 });
+  register("wells", { "\u5B54": 1 });
+  register("fold", { "\xD7": 1 });
+  register("moi", { MOI: 1 });
   for (const unit of ["U/mL", "IU/mL", "TU/mL", "PFU/mL", "TCID50/mL", "VG/mL", "% w/v", "% v/v", "% w/w", "rpm", "\xD7g", "g/mol", "cells", "nt", "bp", "%", "\xB5L/\xB5g"]) register(unit, { [unit]: 1 });
   units.K = { dimension: "temperature", factor: 1 };
   units["\xB0C"] = { dimension: "temperature", factor: 1, offset: 273.15 };
   units["\xB0F"] = { dimension: "temperature", factor: 5 / 9, offset: 273.15 - 32 * 5 / 9 };
+  var unitAliases = {
+    "\xB5l": "\xB5L",
+    ul: "\xB5L",
+    ml: "mL",
+    nl: "nL",
+    "ng/\xB5l": "ng/\xB5L",
+    "\xB5g/\xB5l": "\xB5g/\xB5L",
+    "mg/ml": "mg/mL",
+    "\xB5g/ml": "\xB5g/mL",
+    "ng/ml": "ng/mL",
+    "cells/ml": "cells/mL",
+    sec: "s",
+    secs: "s",
+    second: "s",
+    seconds: "s",
+    "\u79D2": "s",
+    mins: "min",
+    minute: "min",
+    minutes: "min",
+    "\u5206\u949F": "min",
+    hr: "h",
+    hrs: "h",
+    hour: "h",
+    hours: "h",
+    "\u5C0F\u65F6": "h",
+    days: "day",
+    "\u5929": "day",
+    wells: "\u5B54",
+    well: "\u5B54",
+    x: "\xD7",
+    X: "\xD7",
+    "\u500D": "\xD7",
+    fold: "\xD7",
+    moi: "MOI",
+    "\u2103": "\xB0C",
+    "\xB0 C": "\xB0C",
+    xg: "\xD7g",
+    "x g": "\xD7g",
+    "\xD7 g": "\xD7g",
+    Xg: "\xD7g",
+    "X g": "\xD7g",
+    RPM: "rpm",
+    uA: "\xB5A",
+    uF: "\xB5F",
+    torr: "Torr"
+  };
   function normalizeUnit(unit) {
-    return unit.replace(/μ/g, "\xB5").replace(/^u(?=[LMg])/, "\xB5").replace(/\/uL$/, "/\xB5L");
+    const spelled = unit.replace(/μ/g, "\xB5").replace(/^u(?=[LMgAF]|l$)/, "\xB5").replace(/\/uL$/, "/\xB5L");
+    return unitAliases[spelled] ?? unitAliases[spelled.toLowerCase()] ?? spelled;
   }
   function parseScalar(value, locale = "en") {
     if (typeof value !== "number" && typeof value !== "string") throw new Error("\u8BF7\u586B\u5199\u6570\u503C / Enter a number");
@@ -87,6 +144,7 @@ var LabNestCalculations = (() => {
     if (!a || !b || a.dimension !== b.dimension || !Number.isFinite(value)) throw new Error("\u5355\u4F4D\u4E0D\u517C\u5BB9 / Incompatible units");
     const canonical = value * a.factor + (a.offset ?? 0);
     if (a.dimension === "temperature" && canonical < 0) throw new Error("\u4F4E\u4E8E\u7EDD\u5BF9\u96F6\u5EA6 / Below absolute zero");
+    if (a === b) return value;
     return (canonical - (b.offset ?? 0)) / b.factor;
   }
   function compatibleUnits(unit) {
@@ -597,7 +655,10 @@ var LabNestCalculations = (() => {
 
   // src/lib/calculators/quantity-format.ts
   function formatQuantity(value) {
-    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+    if (value === 0 || !Number.isFinite(value)) return String(value);
+    if (Math.abs(value) >= 1e9) return value.toExponential(2);
+    const rounded = Math.abs(value) >= 1 ? Number(value.toFixed(2)) : Number(value.toPrecision(2));
+    return rounded.toLocaleString("en", { maximumFractionDigits: 12, useGrouping: false });
   }
 
   // src/lib/calculators/reaction-mix-presentation.ts
@@ -1348,12 +1409,15 @@ var LabNestCalculations = (() => {
   function defineSystemTheme(theme) {
     return {
       ...theme,
-      colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]],
-      navigation: {
-        background: theme.tokens["--nav-active-bg"],
-        foreground: theme.tokens["--nav-active-fg"]
-      }
+      tokens: { ...theme.tokens, "--ai-hover": hoverShade(theme.tokens["--ai"], theme.tokens["--ai-fg"]) },
+      colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]]
     };
+  }
+  function hoverShade(fill, label) {
+    const channels = (hex) => hex.replace("#", "").match(/../g).map((part) => Number.parseInt(part, 16));
+    const sum = (hex) => channels(hex).reduce((total, value) => total + value, 0);
+    const toward = sum(label) < sum(fill) ? 255 : 0;
+    return `#${channels(fill).map((value) => Math.round(value + (toward - value) * 0.14).toString(16).padStart(2, "0")).join("")}`;
   }
   var establishedThemes = [
     defineSystemTheme({
@@ -1391,9 +1455,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#2a475f",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#213a4e",
-        "--nav-active-bg": "#a5441b",
-        "--nav-active-fg": "#ffffff",
-        "--nav-active-border": "#8d3716"
+        "--ai": "#a5441b",
+        "--ai-fg": "#ffffff"
       }
     }),
     defineSystemTheme({
@@ -1431,9 +1494,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#147d99",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#116b83",
-        "--nav-active-bg": "#de7565",
-        "--nav-active-fg": "#2b1815",
-        "--nav-active-border": "#bd5d50"
+        "--ai": "#de7565",
+        "--ai-fg": "#2b1815"
       }
     }),
     defineSystemTheme({
@@ -1471,9 +1533,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#397978",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#2e6665",
-        "--nav-active-bg": "#986524",
-        "--nav-active-fg": "#ffffff",
-        "--nav-active-border": "#7c5019"
+        "--ai": "#986524",
+        "--ai-fg": "#ffffff"
       }
     }),
     defineSystemTheme({
@@ -1511,9 +1572,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#75556b",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#624659",
-        "--nav-active-bg": "#7aa35a",
-        "--nav-active-fg": "#15210f",
-        "--nav-active-border": "#638948"
+        "--ai": "#7aa35a",
+        "--ai-fg": "#15210f"
       }
     }),
     defineSystemTheme({
@@ -1551,9 +1611,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#1661ab",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#0f4f91",
-        "--nav-active-bg": "#f8c471",
-        "--nav-active-fg": "#2f240e",
-        "--nav-active-border": "#d29b42"
+        "--ai": "#f8c471",
+        "--ai-fg": "#2f240e"
       }
     }),
     defineSystemTheme({
@@ -1591,9 +1650,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#20894d",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#176b3b",
-        "--nav-active-bg": "#ef475d",
-        "--nav-active-fg": "#2c1015",
-        "--nav-active-border": "#ca3347"
+        "--ai": "#ef475d",
+        "--ai-fg": "#2c1015"
       }
     }),
     defineSystemTheme({
@@ -1631,9 +1689,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#356fdc",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#285bb9",
-        "--nav-active-bg": "#fed71a",
-        "--nav-active-fg": "#1f2a44",
-        "--nav-active-border": "#d8b400"
+        "--ai": "#fed71a",
+        "--ai-fg": "#1f2a44"
       }
     })
   ];
@@ -1757,7 +1814,6 @@ var LabNestCalculations = (() => {
     help: '<svg aria-hidden="true" focusable="false" data-calculator-icon="help" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a4 4 0 0 0-4 4h3a1 1 0 0 1 2 0c0 1-3 2-3 5h3c0-2 3-2 3-5a4 4 0 0 0-4-4Zm-1 11v3h3v-3Z"/></svg>\n',
     hemocytometer: '<svg aria-hidden="true" focusable="false" data-calculator-icon="hemocytometer" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm2 3v3h3V6Zm5 0v3h2V6Zm4 0v3h3V6ZM6 11v2h3v-2Zm5 0v2h2v-2Zm4 0v2h3v-2ZM6 15v3h3v-3Zm5 0v3h2v-3Zm4 0v3h3v-3Z"/></svg>\n',
     history: '<svg aria-hidden="true" focusable="false" data-calculator-icon="history" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"/><path d="M11 6h2v6l4 2-1 2-5-3Z"/></svg>\n',
-    "hydrogel 2": '<svg aria-hidden="true" focusable="false" data-calculator-icon="hydrogel 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2C9 6 4 10 4 15a8 8 0 0 0 16 0c0-5-5-9-8-13Zm-3 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></svg>\n',
     hydrogel: '<svg aria-hidden="true" focusable="false" data-calculator-icon="hydrogel" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2C9 6 4 10 4 15a8 8 0 0 0 16 0c0-5-5-9-8-13Zm-3 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></svg>\n',
     "ic50-ec50": '<svg aria-hidden="true" focusable="false" data-calculator-icon="ic50-ec50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h3v15h15v3H3Z"/><path d="M7 4h3c5 0 3 11 8 11h3v3h-3c-8 0-5-11-8-11H7Z"/></svg>\n',
     import: '<svg aria-hidden="true" focusable="false" data-calculator-icon="import" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">\n  <path d="M10.5 2h3v8H18l-6 6-6-6h4.5Z"/><path d="M3 13h3v6h12v-6h3v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>\n</svg>\n',

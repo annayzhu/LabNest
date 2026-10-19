@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { createProtocolDocument } from "@/app/protocols/new/actions";
 import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { createProtocolTemplateDocument } from "@/lib/protocol-document";
 import { suggestNextRecordCode } from "@/lib/record-codes";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
@@ -27,17 +29,13 @@ export default async function NewProtocolPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader
-          eyebrow="Controlled method"
-          title="New Protocol"
-          description="Create a complete scientific method using fixed sections, rich text, structured tables, timers and review governance."
-        />
+        <PageHeader eyebrow="Protocol" title="New Protocol" />
         <ProtocolDocumentEditor
           action={createProtocolDocument}
           mode="create"
           protocol={{ canonicalTitle: "", suggestedCodeSuffix: suggestedCode.slice("PRT-".length), availability: "draft", tags: [], scope: "general" }}
           version={{ displayVersion: "0.1", reviewStage: "draft", changeSummary: "Initial version." }}
-          initialDocument={createProtocolTemplateDocument()}
+          initialDocument={createProtocolTemplateDocument(resolveAppLocale((await cookies()).get(localeCookieName)?.value))}
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({
             id: plan.id,

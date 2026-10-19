@@ -11,8 +11,12 @@ await mkdir(dir,{recursive:true});
 const report={base,sha:process.env.PLATE_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),fixture:'Synthetic local browser workspaces; no production database writes',toolChecks:[],checks:[],failures:[]};
 const key='plate-layout-studio:workspace:v2';
 const toolFixtures=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorDefinition}=require('./src/lib/calculators/calculator-engine.ts');console.log(JSON.stringify(['seeding','hydrogel','kill-curve','moi'].map(id=>getCalculatorDefinition(id))))"],{encoding:'utf8'}));
+async function observeReadiness(context){
+ await context.addInitScript(()=>{window.calculatorReadyStates=[];new MutationObserver(()=>{const frame=document.querySelector('.plate-calculator-frame[data-ready="true"]');if(frame)window.calculatorReadyStates.push(frame.contentDocument?.querySelector('.calculator-workbench')?.getAttribute('aria-busy'));}).observe(document,{subtree:true,attributes:true,attributeFilter:['data-ready']});});
+}
+async function assertReady(page){const states=await page.evaluate(()=>window.calculatorReadyStates);assert(states.length>0&&states.every(state=>state==='false'),'The host must receive ready only after the calculator accepts input');}
 async function saved(page){return page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);}
-async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
+async function open(page){await page.locator('.plate-calculator-launch[data-plate-calculator="master-mix"]').click();await page.locator('.plate-calculator-frame[data-ready="true"]').waitFor();await assertReady(page);const f=page.frameLocator('.plate-calculator-frame');await f.getByRole('button',{name:'添加组分',exact:true}).waitFor();return f;}
 async function recipe(f,n){
  for(const [label,value] of [['样本数',String(n)],['每样本重复数','1'],['额外对照反应数','0'],['预混余量','10'],['单反应总体积','20']])await f.getByRole('textbox',{name:new RegExp(`^${label}`)}).fill(value);
  await recipeRows(f);
@@ -37,12 +41,12 @@ async function calculateAndSave(page,f){assert.notEqual(await f.getByRole('textb
 for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'?{chromium}:{chromium,webkit})){
  const browser=await type.launch();
  try{
-  const toolsContext=await browser.newContext({viewport:{width:1440,height:900}});const toolsPage=await toolsContext.newPage();
+  const toolsContext=await browser.newContext({viewport:{width:1440,height:900}});await observeReadiness(toolsContext);const toolsPage=await toolsContext.newPage();
   await toolsPage.goto(`${base}/tools/free-plate-layout/index.html?v=20261009-unified-release`,{waitUntil:'networkidle'});
   for(const definition of toolFixtures){
    try{
     await toolsPage.locator(`.plate-calculator-launch[data-plate-calculator="${definition.id}"]`).click();
-    await toolsPage.locator('.plate-calculator-frame[data-ready="true"]').waitFor();
+    await toolsPage.locator('.plate-calculator-frame[data-ready="true"]').waitFor();await assertReady(toolsPage);
     const frame=toolsPage.frameLocator('.plate-calculator-frame');await frame.locator(`[data-calculator="${definition.id}"]`).waitFor();
     const inputs={...definition.exampleInputs};if('wells' in inputs)inputs.wells=24;
     for(const field of [...definition.fields.filter(f=>f.type==='select'),...definition.fields.filter(f=>f.type!=='select')]){
@@ -59,6 +63,7 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
   await toolsContext.close();
   for(const width of [1440,390]){
   const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});
+  await observeReadiness(context);
   await context.addInitScript(()=>localStorage.setItem('labnest.locale','zh'));
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const id=`${engine}-${width}`;

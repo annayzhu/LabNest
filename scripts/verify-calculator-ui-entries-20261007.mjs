@@ -22,7 +22,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   const entry=page.getByRole('link',{name:'Open Experimental Calculator',exact:true});
   assert.equal(await entry.getAttribute('href'),'/tools/calculator');
   await entry.click();await page.waitForURL('**/tools/calculator');
-  assert.equal(await page.locator('.calculator-category-tools svg[data-calculator-icon]').count(),31);
+  assert.equal(await page.locator('.calculator-category-tools .task-icon').count(),31);await page.waitForFunction(()=>[...document.querySelectorAll('.calculator-category-tools .task-icon img')].every(i=>i.complete&&i.naturalWidth>0));
   await page.screenshot({path:`${dir}/${engine}-${width}-tools-entry.png`,fullPage:true});
   await page.goto(base,{waitUntil:'networkidle'});
   await page.locator('a[href="/tools/calculator"]:visible').first().click();
@@ -46,7 +46,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
    await page.goto(fixture.runUrl,{waitUntil:'networkidle'});
    await page.getByRole('button',{name:'Calculator',exact:true}).first().click();
    const drawer=page.getByRole('dialog',{name:'Step calculations',exact:true});await drawer.waitFor();
-   assert.equal(await page.getByRole('button',{name:'Calculator',exact:true}).first().locator('svg[data-calculator-icon=calculator]').count(),1);
+   assert.equal(await page.getByRole('button',{name:'Calculator',exact:true}).first().locator('svg[data-calculator-icon=pipette]').count(),1);
    const task=drawer.getByRole('combobox',{name:'Calculation task',exact:true});
    const padding=await task.evaluate(n=>getComputedStyle(n).paddingRight);assert.equal(padding,'40px');
    await task.selectOption('master-mix');

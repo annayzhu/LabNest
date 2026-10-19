@@ -3,18 +3,16 @@
 import { useMemo, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { CompactRichTextTiptapEditor } from "@/components/CompactRichTextTiptapEditor";
-import type { WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
 import { markdownRichTextToTiptap, tiptapToMarkdownRichText } from "@/lib/scientific-tiptap";
 
-/** Compatibility adapter for legacy fields that still persist LabNest Markdown. */
+/** Entry's page, kept as LabNest Markdown. */
 export function MarkdownRichTextEditor({
   value,
   onChange,
   placeholder = "Start writing…",
   minHeightClass = "min-h-48",
   autoFocus = false,
-  toolbarHostId,
-  insertActions,
+  actionsHostId,
   className,
   registerEditor,
 }: {
@@ -23,8 +21,7 @@ export function MarkdownRichTextEditor({
   placeholder?: string;
   minHeightClass?: string;
   autoFocus?: boolean;
-  toolbarHostId?: string;
-  insertActions?: WysiwygInsertAction[];
+  actionsHostId?: string;
   className?: string;
   registerEditor?: (editor: Editor) => () => void;
 }) {
@@ -32,6 +29,7 @@ export function MarkdownRichTextEditor({
   const content = useMemo(() => markdownRichTextToTiptap(value), [value]);
   return <CompactRichTextTiptapEditor
     media
+    page
     isLocalEcho={emittedMarkdown === value}
     registerEditor={registerEditor}
     content={content}
@@ -39,8 +37,7 @@ export function MarkdownRichTextEditor({
     placeholder={placeholder}
     minHeightClass={minHeightClass}
     autoFocus={autoFocus}
-    toolbarHostId={toolbarHostId}
-    insertActions={insertActions}
+    actionsHostId={actionsHostId}
     className={className}
   />;
 }

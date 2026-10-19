@@ -78,3 +78,7 @@ Xcode discovery found only the Mac, no attached iPhone/Watch. Unsigned native co
 ## Data protection
 
 No new schema migration or bulk historical rewrite. Existing executionPlanJson stores additive groups, adopted values, receipts and watch grants. Source version identity is distinct from treatment-group identity. Actuals never write back to the source. Copy keeps source/group topology with fresh step IDs and clears execution. Shared work is explicitly authored and compatible across selected groups. The deployment preservation report compares all existing database fields and attachment hashes.
+
+## PR #103 verification refresh — 2026-10-19
+
+The original matrix and evidence above describe their historical revisions. The current repair candidate is based on `f1864d53` on `codex/review-3001-20261019`; see [the CI repair record](../../releases/20261019-github-sync.md) for source changes, test coverage, exact-commit CI links and local logs. Fresh browser screenshots, traces and rendered PDF evidence are retained in `/tmp/pr103-ci-evidence.tar.gz`. Physical iPhone/iPad/Watch, hardware input/camera and real-provider checks remain unexecuted.

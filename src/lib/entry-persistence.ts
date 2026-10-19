@@ -8,18 +8,16 @@ import {
   writePreparedAttachmentFiles,
   type PreparedAttachmentFile,
 } from "@/lib/attachment-files";
-import { calculateConsumption, type ProtocolParameterValues } from "@/lib/protocol";
 import { collectDocumentMedia, documentMediaAttachmentId } from "./document-media";
 import { buildEntryContent } from "@/lib/entry-content";
 import { prisma } from "@/lib/db";
 import type { EntryMutationInput } from "@/lib/entry-mutations";
-import { reserveRecordCode } from "@/lib/record-codes";
 import { assertRecordEditable } from "@/lib/record-lifecycle";
-import { experimentSearchText } from "@/lib/experiment-document";
+import { createExperimentWithProtocolSnapshotInTransaction } from "@/lib/experiments";
 import { experimentSections, scientificDocumentFromSectionText } from "@/lib/scientific-document";
 import { createResultInTransaction } from "@/lib/result-creation";
 import { associateDocumentMedia } from "@/lib/document-media.server";
-import type { ConsumptionRule, ProtocolMaterial, ProtocolParameter, ProtocolStep, ResultTemplate } from "@/lib/types";
+import type { ProtocolMaterial, ResultTemplate } from "@/lib/types";
 import { normalizeResultTemplates } from "@/lib/result-templates";
 
 type PersistedAttachment = {
@@ -38,13 +36,6 @@ function asArray<T>(value: unknown): T[] {
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
-}
-
-function parameterDefaults(parameters: ProtocolParameter[]): ProtocolParameterValues {
-  return parameters.reduce<ProtocolParameterValues>((values, parameter) => {
-    if (parameter.default !== undefined) values[parameter.name] = parameter.default;
-    return values;
-  }, {});
 }
 
 function materialSummary(materials: ProtocolMaterial[]) {
@@ -101,6 +92,10 @@ async function createAttachmentRecords(
   return records;
 }
 
+/**
+ * An Entry made formal against a Protocol version. The Experiment comes from the same service as 新建实验 (snapshot, step
+ * blocks, systems, preparation), so both start alike; what a run uses comes from the run itself.
+ */
 async function formalizeProtocolEntry(
   tx: Prisma.TransactionClient,
   entryId: string,
@@ -115,19 +110,8 @@ async function formalizeProtocolEntry(
   });
   if (!version) throw new Error("Selected Protocol version no longer exists.");
 
-  const parameters = asArray<ProtocolParameter>(version.parametersJson);
   const materials = asArray<ProtocolMaterial>(version.materialsJson);
-  const steps = asArray<ProtocolStep>(version.stepsJson);
   const resultTemplates = normalizeResultTemplates(asArray<ResultTemplate>(version.resultTemplatesJson));
-  const consumptionRules = asArray<ConsumptionRule>(version.consumptionRulesJson);
-  const parameterValues = parameterDefaults(parameters);
-  const calculatedConsumption = (() => {
-    try {
-      return calculateConsumption(consumptionRules, parameterValues);
-    } catch {
-      return [];
-    }
-  })();
   const experimentTitle = input.experimentTitle || input.title;
   const projectId = context.projectId ?? version.protocol.projectId ?? undefined;
   const researchPlanId = context.researchPlanId ?? (
@@ -139,7 +123,6 @@ async function formalizeProtocolEntry(
         }))?.id
       : undefined
   );
-  const runCode = await reserveRecordCode(tx, "experiment");
   // The entry's own text carries over into the Experiment document so the field
   // note and the formal record stay one continuous document, not two copies.
   const experimentDocument = scientificDocumentFromSectionText(experimentSections, {
@@ -151,106 +134,44 @@ async function formalizeProtocolEntry(
       : "Result registration pending.",
   }, "from-entry");
 
-  const experiment = await tx.experiment.create({
-    data: {
-      runCode,
+  let experiment;
+  try {
+    experiment = await createExperimentWithProtocolSnapshotInTransaction(tx, {
+      researchPlanId: researchPlanId ?? null,
       title: experimentTitle,
-      projectId,
-      researchPlanId,
-      status: input.experimentStatus,
+      date: input.occurredAt,
+      // A Protocol with chips or systems runs step by step from 计划中, as with 新建实验; the run records how it went.
+      status: (version.contentJson as { systems?: unknown } | null)?.systems ? "planned" : input.experimentStatus,
       recordStatus: "recorded",
       purpose: input.title,
-      contentJson: jsonValue(experimentDocument),
-      searchText: experimentSearchText(input.title, experimentDocument),
-      primaryProtocolVersionId: version.id,
-      protocolSnapshotJson: jsonValue({
-        schemaVersion: 1,
-        capturedAt: new Date().toISOString(),
-        versions: [{
-          protocolId: version.protocolId,
-          protocolVersionId: version.id,
-          humanCode: version.protocol.humanCode,
-          protocolTitle: version.protocol.canonicalTitle ?? version.protocol.title,
-          revision: version.revision,
-          displayVersion: version.displayVersion,
-          reviewStage: version.reviewStage,
-          parametersJson: version.parametersJson,
-          materialsJson: version.materialsJson,
-          equipmentJson: version.equipmentJson,
-          stepsJson: version.stepsJson,
-          resultTemplatesJson: version.resultTemplatesJson,
-          contentJson: version.contentJson,
-        }],
-      }),
       tags: Array.from(new Set([...input.tags, "from-entry", "protocol-based"])),
-      steps: {
-        create: steps.map((step) => ({
-          protocolStepRef: String(step.order),
-          order: step.order,
-          title: step.title,
-          description: step.description,
-          requiresConfirmation: step.requires_confirmation ?? true,
-          allowsDeviation: step.allows_deviation ?? true,
-        })),
-      },
-      protocolVersions: { create: { protocolVersionId: version.id, role: "primary", order: 0 } },
-    },
-  });
+      contentJson: jsonValue(experimentDocument),
+      methodMode: "protocol",
+      protocolVersionIds: [version.id],
+      customSteps: [],
+    });
+  } catch (error) {
+    // The same rule as 新建实验: an old Protocol whose steps were never confirmed is converted first.
+    if (error instanceof Error && /confirm execution ownership|No execution operations/.test(error.message)) {
+      throw new Error(`${version.protocol.humanCode} 还是旧格式、步骤未确认：请先在规程编辑页点“转换为步骤块”，再从这条记录建实验。`);
+    }
+    throw error;
+  }
+  // Without a Research Plan the service leaves the project empty; the Entry's project still holds.
+  if (!researchPlanId && projectId) await tx.experiment.update({ where: { id: experiment.id }, data: { projectId } });
 
   await tx.entry.update({where:{id:entryId},data:{experimentId:experiment.id}});
-  const protocolRun = await tx.protocolRun.create({
+  await tx.itemLink.create({
     data: {
-      protocolVersionId: version.id,
-      experimentId: experiment.id,
-      parametersJson: jsonValue(parameterValues),
-      calculatedConsumptionJson: jsonValue(calculatedConsumption),
-      status: input.experimentStatus,
+      sourceType: "entry",
+      sourceId: entryId,
+      targetType: "experiment",
+      targetId: experiment.id,
+      linkType: "entry_primary",
+      createdBy: "user",
+      note: "Entry is referenced by a protocol-based formal experiment.",
     },
   });
-
-  await tx.itemLink.createMany({
-    data: [
-      {
-        sourceType: "entry",
-        sourceId: entryId,
-        targetType: "experiment",
-        targetId: experiment.id,
-        linkType: "entry_primary",
-        createdBy: "user",
-        note: "Entry is referenced by a protocol-based formal experiment.",
-      },
-      {
-        sourceType: "experiment",
-        sourceId: experiment.id,
-        targetType: "protocol_version",
-        targetId: version.id,
-        linkType: "derived_from",
-        createdBy: "system",
-        note: "Experiment was created from a locked Protocol version.",
-      },
-    ],
-  });
-
-  if (calculatedConsumption.length) {
-    await tx.proposedAction.createMany({
-      data: calculatedConsumption.map((item) => ({
-        sourceType: "protocol" as const,
-        sourceId: protocolRun.id,
-        actionType: "consume_inventory" as const,
-        status: "pending" as const,
-        confidence: 1,
-        reason: `Calculated from ${item.formula}; review inventory source before execution.`,
-        payloadJson: {
-          protocol_run_id: protocolRun.id,
-          experiment_id: experiment.id,
-          material_name: item.materialName,
-          quantity_change: -item.quantity,
-          unit: item.unit,
-          requires_inventory_selection: item.requiresInventorySelection,
-        },
-      })),
-    });
-  }
 
   if (input.createInitialResult) {
     await createResultInTransaction(tx, {

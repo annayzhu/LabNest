@@ -7,22 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
-import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
-import { saveProtocolDocument } from "./actions";
-import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
+import { storedProtocolDocument, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
+import { dismissProtocolMixProposal, saveProtocolDocument } from "./actions";
+import { protocolMixProposals } from "@/lib/protocol-mix-proposals.server";
+import { nextDisplayVersion } from "@/lib/protocol";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
-
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? value as T[] : [];
-}
-
-function nextDisplayVersion(value: string) {
-  const parts = value.split(".").map(Number);
-  if (parts.length < 2 || parts.some((part) => !Number.isInteger(part))) return "0.1";
-  parts[parts.length - 1] += 1;
-  return parts.join(".");
-}
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await params;
@@ -62,16 +52,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
   if (protocolCompatibilityIssue(version.contentJson)) return <AppShell><ProtocolCompatibilityView value={version.contentJson}/></AppShell>;
   const importHistory = await getProtocolImportHistory(id);
 
-  const document = upgradeProtocolDocumentForEditing(normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
-    description: version.protocol.description,
-    purpose: version.purpose,
-    background: version.background,
-    materials: asArray<ProtocolMaterial>(version.materialsJson),
-    equipment: asArray<ProtocolMaterial>(version.equipmentJson),
-    steps: asArray<ProtocolStep>(version.stepsJson),
-    resultTemplates: asArray<ResultTemplate>(version.resultTemplatesJson),
-    consumptionRules: asArray<ConsumptionRule>(version.consumptionRulesJson),
-  }));
+  const document = upgradeProtocolDocumentForEditing(storedProtocolDocument(version));
 
   return (
     <AppShell>
@@ -79,7 +60,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
         <PageHeader
           identifier={`${version.protocol.humanCode ?? "Protocol"} · v${version.displayVersion}`}
           title={version.reviewStage === "reviewed" ? "Edit Protocol as New Revision" : "Edit Protocol"}
-          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using rich text, structured tables, checklists, media, timers and callouts."}
+          description={version.reviewStage === "reviewed" ? "Reviewed versions are immutable. Saving creates a linked revision and leaves the reviewed source unchanged." : "Edit fixed scientific sections using step blocks, parameter chips, structured tables, media and callouts."}
         />
         {version.reviewStage === "reviewed" ? (
           <div className="protocol-density-notice flex items-start gap-2.5 border border-sage/45 bg-sage-surface/55 px-3 py-2">
@@ -113,6 +94,9 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
             changeSummary: version.changeSummary ?? undefined,
           }}
           initialDocument={document}
+          fromExperiments={(document.provenance?.fromExperimentIds ?? []).map((experimentId) => experimentCatalog.find((experiment) => experiment.id === experimentId)?.runCode ?? experimentId)}
+          mixProposals={await protocolMixProposals(version.protocol.id, version.contentJson)}
+          dismissMixProposal={dismissProtocolMixProposal}
           importHistory={importHistory}
           suggestedDisplayVersion={nextDisplayVersion(version.displayVersion)}
           projects={projects}

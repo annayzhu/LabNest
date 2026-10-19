@@ -7,9 +7,42 @@ export function resolveAppLocale(value: unknown, fallback: AppLocale = "en"): Ap
   return value === "zh" || value === "en" ? value : fallback;
 }
 
+/**
+ * Chip labels LabNest writes into Protocols in Chinese (chipKindLabels, toolSpecs, calculation inputs and results, mix
+ * methods), by English name. protocolLabelText (protocol-label-text.ts) reads them backwards for display; the stored
+ * label stays Chinese. Each English name is unique, so the Chinese interface shows the stored label byte for byte.
+ */
+export const protocolLabelsZh: Record<string, string> = {
+  // What a chip measures
+  Volume: "体积", Mass: "质量", "Amount of substance": "物质的量", Concentration: "浓度", Time: "时间", Temperature: "温度",
+  "Centrifugal force": "离心力", "Rotation speed": "转速", Voltage: "电压", "Electric current": "电流", Pressure: "压力",
+  "Electrical value": "电参数", Repetitions: "次数", Percentage: "比例", Parameter: "参数",
+  // Equipment and their settings
+  Centrifuge: "离心", Mix: "混匀", Incubate: "孵育", Shaker: "摇床", Vacuum: "真空", Electrophoresis: "电泳",
+  Electroporation: "电转", Gas: "气体", "Protect from light": "避光", Gradient: "梯度",
+  "Spin speed": "离心力／转速", "Shaking speed": "摇速", Capacitance: "电容", Resistance: "电阻", Pulse: "脉冲",
+  "Start value": "起始", "End value": "终止",
+  "Vortex mix": "涡旋混匀", "Invert to mix": "颠倒混匀", "Pipette to mix": "吹打混匀", "Flick to mix": "轻弹混匀",
+  Vortex: "涡旋", Invert: "颠倒", Pipette: "吹打", Flick: "轻弹",
+  // Calculation inputs and results
+  "Stock concentration": "母液浓度", "Target concentration": "目标浓度", "Final volume": "终体积", "Stock volume": "母液取液体积",
+  "Diluent to add": "稀释液加入量", "Concentrate fold": "浓缩倍数", "Target fold": "目标倍数", Concentrate: "浓缩液", "Water to add": "补水",
+  "Molecular weight": "分子量", "Make-up volume": "定容体积", Purity: "纯度", "Mass to weigh": "称取质量",
+  "Count 1": "计数 1", "Count 2": "计数 2", "Count 3": "计数 3", "Count 4": "计数 4", "Dilution factor": "稀释倍数", "Cell viability": "活率",
+  "Viable cell concentration": "活细胞浓度", "Cell concentration": "细胞浓度", "Number of wells": "孔数", "Cells per well": "每孔细胞数",
+  "Volume per well": "每孔体积", Overage: "余量", "Cell suspension": "细胞悬液", "Culture medium": "培养基", "DNA per well": "每孔 DNA",
+  "DNA stock concentration": "DNA 母液浓度", "Reagent per µg DNA": "每 µg DNA 试剂量", "Complex volume per well": "每孔复合物体积",
+  "DNA stock": "DNA 原液", "Transfection reagent": "转染试剂", Diluent: "稀释液", "Cell number": "细胞数", "Target MOI": "目标 MOI",
+  "Virus titer": "病毒滴度", "Virus volume": "病毒液",
+  // Calculations (interface text in protocolCalculations; listed for "Cell count calculation" and the like)
+  Dilution: "稀释", "Fold dilution": "倍数稀释", "Solution by weight": "称量配液", "Cell count": "细胞计数", "Cell seeding": "细胞铺板",
+  "Transfection mix": "转染体系", "Infection MOI": "感染 MOI",
+};
+
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  ...protocolLabelsZh,
   "Unsaved draft restored": "已恢复未提交草稿",
   "Draft storage unavailable": "草稿存储不可用",
   "Cannot save draft; keep this page": "无法保存草稿，请保留页面",
@@ -251,10 +284,6 @@ export const zhUi: Record<string, string> = {
   "Show information": "显示实验信息",
   "Hide information": "收起实验信息",
   "Close information": "关闭实验信息",
-  "Block settings": "模块设置",
-  "Show block settings": "显示模块设置",
-  "Hide block settings": "收起模块设置",
-  "Selected block settings": "所选模块设置",
   "Experiment information": "实验信息",
   "Research Plan information": "研究方案信息",
   "Result information": "结果信息",
@@ -300,7 +329,6 @@ export const zhUi: Record<string, string> = {
   "Active plans": "在研方案",
   "No active research plans.": "暂无进行中的研究方案。",
   "Capture a quick observation or note.": "快速记录观察、备注或现场信息。",
-  "Experiment run mode": "实验现场模式",
   "Open a planned or running Experiment at the bench.": "打开计划中或执行中的实验，进入现场操作。",
   "New experiment result": "新建实验结果",
   "Record structured evidence from an Experiment.": "为实验新建结构化结果记录。",
@@ -370,6 +398,7 @@ export const zhUi: Record<string, string> = {
   "attachments": "附件",
   "links": "关联",
   "protocol version": "实验规程版本",
+  "protocol source": "规程来源",
   "derived from": "来源于",
   "system": "系统",
   "entity": "对象",
@@ -515,6 +544,24 @@ export const zhUi: Record<string, string> = {
   "All fields remain editable": "所有字段仍可编辑",
   "This reviewed version remains protected. Edit any field below; saving creates a linked revision and preserves the current version.": "此已审核版本会继续受到保护。你可以编辑下方任意字段；保存时将建立关联的新修订版，并保留当前版本。",
   "Save as new revision": "保存为新修订版",
+  "Protocol metadata": "实验规程元数据",
+  "Outline": "大纲",
+  "Experiment ID": "实验 ID",
+  "Only record deviations, failed QC, missing data, or limits that change interpretation.": "仅记录偏差、未通过的质控、缺失数据，或会改变结论解读的限制。",
+  "Protocol metadata title": "实验规程标题",
+  "cell-culture, qc": "细胞培养, 质控",
+  "Governance and revision details.": "可用状态、审核与修订信息。",
+  "Save metadata": "保存元数据",
+  "Save metadata as new revision": "将元数据保存为新修订版",
+  "Save links": "保存关联项",
+  "Save links as new revision": "将关联项保存为新修订版",
+  "Use Adapt to project to preserve lineage.": "如需用于具体项目，请使用“适配到项目”，以保留来源关系。",
+  "Governance": "可用与审核",
+  "Revision": "修订",
+  "Identity": "基本信息",
+  "Metadata and other unsaved edits are recorded together.": "元数据与其他未保存的修改会一起记录。",
+  "Links and other unsaved edits are recorded together.": "关联项与其他未保存的修改会一起记录。",
+  "Unsaved changes are not recorded until you save.": "保存前，修改不会被记录。",
   "Saving…": "正在保存……",
   "Table caption": "表格标题",
   "Paste tab-separated cells; one row per line": "粘贴制表符分隔的单元格；每行对应一行数据",
@@ -632,11 +679,51 @@ export const zhUi: Record<string, string> = {
   "Today at the bench": "今日实验台",
   "Active run": "正在进行的实验",
   "Current step": "当前步骤",
-  "Continue run": "继续实验",
-  "View runs": "查看实验运行",
+  "All steps completed": "步骤已全部完成",
+  "No experiment is running. Start from today’s plan when you reach the bench.": "现在没有进行中的实验。到实验台后，从今日计划开始。",
+  "Nothing is scheduled for today.": "今天没有安排实验。",
+  "Run mode": "现场模式",
+  "Enter run mode": "进入现场模式",
+  "Exit run mode": "退出现场模式",
+  "Continue in run mode": "在现场模式中继续",
+  "Open on this device": "在这台设备上打开",
+  "Work with a tablet, phone and Apple Watch together": "平板、手机和 Apple Watch 一起做实验",
+  "Run experiments at the bench on a tablet, phone or Apple Watch: choose an experiment, open it on this device, or scan to send it to another device.": "在实验台上用平板、手机和 Apple Watch 做实验：选一个实验，在这台设备上打开，或扫码发到其他设备。",
+  "For a tablet on the bench: steps, mix cards, plates and timers side by side": "适合平板放在实验台上：步骤、配液卡、孔板和计时并排",
+  "Keeps the screen awake while you work; restored when you leave the page": "操作期间屏幕不熄灭；离开页面后自动恢复",
+  "Keep screen on": "屏幕常亮",
+  "Screen stays on": "常亮中",
+  "Full screen": "全屏",
+  "Exit full screen": "退出全屏",
+  "Other devices": "其他设备",
+  "Scan to open on a tablet or phone, or pair an Apple Watch": "扫码在平板或手机上打开，或配对 Apple Watch",
+  "Continue on another device": "在其他设备上继续",
+  "LAN address": "局域网地址",
+  "This computer opened LabNest as localhost. Tablets, phones and watches need the computer’s LAN address to connect.": "这台电脑是用 localhost 打开的，平板、手机和手表需要电脑在局域网里的地址才能连上。",
+  "e.g. http://192.168.0.102:3001": "例如 http://192.168.0.102:3001",
+  "Use this address": "使用这个地址",
+  "Invalid address: enter the computer’s LAN IP and port, e.g. 192.168.0.102:3001.": "地址无效：请填写电脑在局域网中的 IP 和端口，例如 192.168.0.102:3001。",
+  "Tablet or phone": "平板或手机",
+  "Scan with the camera to open this experiment in run mode.": "用相机扫码，直接打开这次实验的现场模式。",
+  "Copied": "已复制",
+  "Copy link": "复制链接",
+  "Enter the LAN address above first.": "先在上方填写局域网地址。",
+  "Run mode QR code": "现场模式二维码",
+  "Could not create a pairing code": "配对码创建失败",
+  "This experiment uses a Protocol in the old format, which the watch does not support. Once the Protocol is converted to step blocks, new experiments can run on the watch.": "这次实验用的是旧格式规程，手表暂不支持。规程转换为步骤块后，新建的实验就能在手表上执行。",
+  "The experiment is submitted or finished, so a watch can no longer be paired.": "实验已提交或已结束，不能再配对手表。",
+  "Watch connected": "手表已连接",
+  "The watch shows the current step and timers; tick off the mix card line by line.": "手表上可以看当前步骤和计时，逐行划掉配液卡。",
+  "Disconnect watch": "断开手表",
+  "The watch follows this experiment: the current step and timers, and the mix card ticked off line by line.": "手表会跟着这次实验：看当前步骤和计时，逐行划掉配液卡。",
+  "On the watch, open LabNest and tap “连接设置” (connection settings).": "在手表上打开 LabNest，点「连接设置」。",
+  "Server address:": "服务器地址填",
+  "the computer’s LAN address (enter it above first)": "电脑的局域网地址（先在上方填写）",
+  "Pairing code: the 12 characters above, then tap “配对本次实验” (pair this experiment).": "配对码填上面的 12 位字符，点「配对本次实验」。",
+  "Code expired. Generate a new one": "配对码已失效，重新生成",
+  "Generate pairing code": "生成配对码",
   "Photo, observation, or measurement": "照片、观察或测量",
   "Today’s plan": "今日计划",
-  "All runs": "全部运行",
   "Open monthly calendar": "打开月历",
   "Back to Today": "返回今日",
   "Quick capture": "快速记录",
@@ -933,6 +1020,7 @@ export const zhUi: Record<string, string> = {
   "AI is optional and disabled by default. The switch only permits AI workflows; users must still choose the exact text or files sent to an external model.": "AI 为可选功能且默认关闭。总开关只允许 AI 工作流运行；用户仍须明确选择发送给外部模型的文本或文件。",
   "Explicit opt-in": "明确授权",
   "AI access": "AI 访问",
+  "AI settings": "AI 设置",
   "Allow AI-assisted workflows": "允许 AI 辅助工作流",
   "When off, prompt generation and response import return an explicit blocked response. Core LabNest features remain available.": "关闭时，提示词生成和响应导入会明确返回阻止状态；LabNest 核心功能仍可使用。",
   "Default provider": "默认提供商",
@@ -1026,12 +1114,8 @@ export const zhUi: Record<string, string> = {
   "procurement inquiry": "采购询价",
   "procurement quote line": "采购报价行",
   "reference connector": "参考文献连接器",
-  "Review inbox": "审核收件箱",
-  "Proposed Actions": "建议操作",
-  "Protocol calculations, imports, manual review, and future AI tasks can propose actions. Nothing mutates core records until the user confirms execution.": "实验规程计算、导入、人工审核和未来 AI 任务可以提出操作建议；只有用户确认执行后才会修改核心记录。",
   "Manual AI": "手动 AI",
   "confidence": "置信度",
-  "Payload summary": "载荷摘要",
   "Files": "文件",
   "Upload local files and link them to records without leaving the notebook.": "在工作空间内上传本地文件并关联到记录。",
   "Local storage": "本地存储",
@@ -1223,10 +1307,6 @@ export const zhUi: Record<string, string> = {
   "plasmid": "质粒",
   "primer": "引物",
   "sample": "样本",
-  "Protocol Run": "实验现场执行",
-  "Run mode": "现场模式",
-  "Runs": "执行列表",
-  "Open run": "打开执行",
   "Run": "执行",
   "Run progress": "执行进度",
   "Experiment record": "实验记录",
@@ -1386,8 +1466,6 @@ export const zhUi: Record<string, string> = {
   "No Dataset schema. Small scalar or media-only Results do not require one.": "尚未设置数据集结构；只有少量标量或媒体内容的结果不必配置数据集。",
   "No formal records are linked to this entry yet.": "这条记录尚未关联正式科研记录。",
   "No inventory locations have been created.": "尚未创建库存位置。",
-  "No proposed actions match the current filters.": "没有符合当前筛选条件的建议操作。",
-  "No proposed actions originate from this entry.": "没有由这条记录产生的建议操作。",
   "No sequences yet": "暂无序列",
   "Occurred": "发生时间",
   "Open entry media": "打开记录媒体",
@@ -1399,7 +1477,6 @@ export const zhUi: Record<string, string> = {
   "Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.": "单元格会自动换行并随内容增高；可直接从 Excel 粘贴矩形区域，行列将自动扩展。",
   "Plan control": "方案管理",
   "plans ·": "个方案 ·",
-  "primary runs": "次主要执行",
   "Principal investigator": "负责人",
   "Principal investigator (PI)": "负责人（PI）",
   "Prof. Zhang / Zhang Lab": "张教授 / 张老师课题组",
@@ -1433,6 +1510,8 @@ export const zhUi: Record<string, string> = {
   "Structured": "结构化",
   "Summary unit": "摘要单位",
   "Take photo": "拍照",
+  "Added at the end of the page": "插到正文末尾",
+  "Files kept beside the page. New pictures and files go into the page: type / there, paste, or drop them on it.": "这些文件存放在正文之外。新的图片和文件直接放进正文：在正文里输入 /，或粘贴、拖入。",
   "Temperature": "温度",
   "This Research Plan has no associated Protocol with a version. Edit the plan and associate a Protocol before creating an Experiment.": "该研究方案尚未关联带版本的实验规程。请先编辑方案并关联实验规程，再创建实验。",
   "This schema is frozen into each Result created from the ProtocolVersion.": "该结构会冻结在基于此实验规程版本创建的每条结果中。",
@@ -1544,7 +1623,6 @@ export const zhUi: Record<string, string> = {
   "Report record": "报告记录",
   "Result controls and supporting files": "结果管理与支持文件",
   "Reusable methods": "可复用方法",
-  "Review actions": "审核操作",
   "Revise the structured note, add or reorder original media, and preserve removed originals in the attachment archive.": "修订结构化记录、添加或调整原始媒体顺序；移除的原始文件仍保留在附件归档中。",
   "Short summary": "简短摘要",
   "Snapshot retained independently of future Protocol edits": "快照独立保存，不受后续实验规程编辑影响",
@@ -1844,6 +1922,7 @@ export const zhUi: Record<string, string> = {
   "Continue result": "继续填写",
   "Result modules": "结果模块",
   "Legacy standalone results": "历史独立结果",
+  "Analysis results": "分析结果",
   "Copy as new experiment": "复制为新实验",
   "Copying…": "复制中…",
   "Copy failed": "复制失败",
@@ -1858,7 +1937,990 @@ export const zhUi: Record<string, string> = {
   "· revision kept": "· 已保留修订",
   "Give a reason for reopening a submitted or reviewed record.": "重新打开已提交或已审核的记录时需填写原因。",
   "reopen": "重新打开",
+  // Editors ("/" menu, ＋ and ⋮⋮ handles, block menu, selection bubble, table bar), run preparation, the stock deduction
+  // dialog, Version comparison and Revise protocol from this run.
+  "Deduct this run’s use from stock?": "按本次用量扣减库存？",
+  "Change any actual amount; only ticked lines with a stock item are deducted. Nothing is written until the experiment is completed; you can also complete without deducting and record use later under “Reagents and consumables used in this run”.": "实际用量可逐项修改；只有勾选且选了库存的项目会扣减。实验完成后才写入；不扣减也可以直接完成，之后仍能在“本次使用的试剂与耗材”中登记。",
+  "Deduct": "扣减",
+  "Expected use": "预计",
+  "Actual use": "实际",
+  "Record only, don’t deduct": "只记录，不扣库存",
+  "Back": "返回",
+  "Complete without deducting": "不扣减，直接完成",
+  "Added": "新增",
+  "Removed": "删除",
+  "Changed": "修改",
+  "Part": "项",
+  "Change type": "变化",
+  "changed": "处修改",
+  "added": "处新增",
+  "removed": "处删除",
+  "The two versions are identical.": "两版内容相同。",
+  "Parameters": "参数",
+  "Sources and evidence": "来源与依据",
+  "Back to Protocol": "返回规程",
+  "Choose versions to compare": "选择要对比的版本",
+  "Older version": "旧版",
+  "Newer version": "新版",
+  "Compare": "对比",
+  "One of the versions is in the old format and can’t be compared block by block; open it in the editor and save it in the current format first.": "其中一版是旧格式，无法逐块对比；请先在编辑器中打开并保存为当前格式。",
+  "Compare versions": "版本对比",
+  "By system (not filled)": "按体系（未填）",
+  "Filled in at run time": "执行时填写",
+  "Actual value": "实际值",
+  "Deviation": "偏差",
+  "Creating the revision…": "正在生成…",
+  "Create draft revision": "生成草稿修订",
+  "Each Protocol gets a new draft version; the versions this experiment used stay unchanged.": "每份规程生成一个新的草稿版本；本次实验用过的版本不变。",
+  "Revise protocol from this run": "整理成规程修订",
+  "Back to experiment record": "返回实验记录",
+  "Every actual value recorded in this run matches the Protocol and there are no deviation notes, so there is nothing to revise.": "本次实验记录的实际值都与规程一致，也没有偏差说明，没有需要整理的内容。",
+  "Experiment not found": "实验不存在",
+  "Choose at least one item to adopt": "请至少选择一项要采纳的内容",
+  "The Protocol version this experiment used no longer exists": "本次实验所用的规程版本已不存在",
+  "Couldn’t create the revision. Try again": "未能生成修订，请重试",
+  "Back to tools": "返回工具目录",
+  "Subheading": "小标题",
+  "Bullet points": "项目列表",
+  "To-do list": "待办清单",
+  "Insert below (hold ⌥ for above)": "在下方插入（按住 ⌥ 在上方）",
+  "Insert below · ⌥ above": "在下方插入 · ⌥ 在上方",
+  "Drag to move, click for the menu": "拖动移动，点击打开菜单",
+  "Drag to move · click for the menu": "拖动移动 · 点击打开菜单",
+  "Block actions": "块操作",
+  "Turn into": "转换为",
+  "Text alignment": "对齐",
+  "Decrease indent": "减少缩进",
+  "Increase indent": "增加缩进",
+  "Choose…": "选择…",
+  "Default": "默认",
+  "This block": "此块",
+  "Block": "块",
+  "Insert below…": "在下方插入…",
+  "Duplicate": "复制",
+  "Remove (keeps the file)": "移除（保留原文件）",
+  "Text formatting": "文字格式",
+  "Bold ⌘B": "加粗 ⌘B",
+  "Italic ⌘I": "斜体 ⌘I",
+  "Underline ⌘U": "下划线 ⌘U",
+  "Strikethrough ⌘⇧S": "删除线 ⌘⇧S",
+  "Paste or type a link, then Enter": "粘贴或输入链接，回车确定",
+  "Link address": "链接地址",
+  "Superscript": "上标",
+  "Superscript (10⁶, m²)": "上标（10⁶、m²）",
+  "Subscript": "下标",
+  "Subscript (CO₂, H₂O)": "下标（CO₂、H₂O）",
+  "Inline code": "代码",
+  "Inline code (sequences, commands)": "代码（序列、命令）",
+  "Link ⌘K": "链接 ⌘K",
+  "Risk red": "风险红",
+  "Restore default color": "恢复默认颜色",
+  "Mark in risk red": "标为风险红",
+  "Clear formatting (links kept)": "清除格式（链接保留）",
+  "＋ Row": "＋ 行",
+  "＋ Column": "＋ 列",
+  "－ This row": "－ 本行",
+  "－ This column": "－ 本列",
+  "Insert a parameter or tool": "插入参数或工具",
+  "Search: volume, centrifuge, tj…": "搜索：体积、离心、tj…",
+  "No matching parameter or tool": "没有匹配的参数或工具",
+  "Existing parameters": "已有参数",
+  "New step": "新步骤",
+  "Each block is one action to carry out": "一个块就是一个执行项",
+  "Amounts": "用量",
+  "Volume": "体积",
+  "Mass": "质量",
+  "Percentage": "比例",
+  "Time": "时间",
+  "Environment": "环境",
+  "Gas": "气体",
+  "Protect from light": "避光",
+  "Keep out of light while working": "操作时避光",
+  "Equipment operations": "设备操作",
+  "Centrifuge": "离心",
+  "×g or rpm · time · temperature": "×g 或 rpm · 时间 · 温度",
+  "Mix": "混匀",
+  "Vortex · invert · pipette": "涡旋 · 颠倒 · 吹打",
+  "Incubate": "孵育",
+  "Temperature · time": "温度 · 时间",
+  "Shaker": "摇床",
+  "rpm · time": "rpm · 时间",
+  "Vacuum": "真空",
+  "mbar · time": "mbar · 时间",
+  "Electrophoresis": "电泳",
+  "Voltage · current · time": "电压 · 电流 · 时间",
+  "Electroporation": "电转",
+  "Voltage · capacitance · resistance": "电压 · 电容 · 电阻",
+  "Programs": "程序",
+  "PCR / thermal cycler": "PCR／热循环",
+  "Denature · anneal · extend · cycles": "变性 · 退火 · 延伸 · 循环",
+  "Mix card": "配液卡",
+  "Per-reaction amounts · scaled to the run": "每反应用量 · 执行时按数量换算",
+  "Gradient": "梯度",
+  "Start → end": "起始 → 终止",
+  "Calculations": "计算",
+  "Dilution": "稀释",
+  "Stock → working solution (C1V1 = C2V2)": "母液 → 工作液（C1V1 = C2V2）",
+  "Fold dilution": "倍数稀释",
+  "Solution by weight": "称量配液",
+  "MW × concentration × volume": "分子量 × 浓度 × 体积",
+  "Cell count": "细胞计数",
+  "Hemocytometer → cell density": "计数板 → 细胞浓度",
+  "Cell seeding": "细胞铺板",
+  "Cell suspension + medium": "细胞悬液 + 培养基",
+  "Transfection mix": "转染体系",
+  "DNA stock · reagent · diluent": "DNA 原液 · 试剂 · 稀释液",
+  "Infection MOI": "感染 MOI",
+  "Titer → virus volume": "滴度 → 病毒液体积",
+  "Basic blocks": "文字",
+  "Plain paragraph": "普通段落",
+  "Or type # and a space at the start of a line": "也可在行首输入 # 和空格",
+  "Or type ## and a space at the start of a line": "也可在行首输入 ## 和空格",
+  "Excerpt or reference": "摘录或参考",
+  "Or type - and a space": "也可输入 - 和空格",
+  "For steps, use \"New step\"": "步骤请用\"新步骤\"",
+  "Content": "内容",
+  "Recipe table columns can be tagged by system": "配方表的列可标体系",
+  "Choose or drop in": "选择或拖入",
+  "Choose or drop in an attachment": "选择或拖入附件",
+  "Tip": "提示",
+  "Caution or risk": "注意事项或风险",
+  "Fields, data tables and file requirements": "字段、数据表与文件要求",
+  "An existing tool, link or app path": "已有工具、链接或应用路径",
+  "Lists": "列表",
+  "Excerpt, quotation or reference": "摘录、原话或参考",
+  "Or type 1. and a space": "也可输入 1. 和空格",
+  "Follow-ups to tick off": "可勾选的后续事项",
+  "Choose a photo, or drop in or paste a screenshot": "选择照片；也可拖入或粘贴截图",
+  "File attachment": "附件",
+  "File or audio": "文件或音频",
+  "3 × 3 with a header row": "3 × 3，带表头",
+  "Timestamps": "记录",
+  "Current time": "当前时间",
+  "Date and time": "日期与时间",
+  "Search: heading, checklist, image, bg…": "搜索：标题、清单、图片、bg…",
+  "No matching format": "没有匹配的格式",
+  "Value with unit": "数值与单位",
+  "Qualifier, caution or risk": "限定条件、注意或风险",
+  "Reference structured data": "引用结构化数据",
+  "One sentence on what this Protocol does and which samples it suits": "一句话说明这份规程做什么、适用于什么样本",
+  "What it should give, e.g. total RNA from cultured cells for qPCR": "要得到什么，如：从培养细胞中提取总 RNA，用于 qPCR",
+  "Principle, rationale or cautions; may stay empty": "原理、依据或注意事项，可以留空",
+  "Old formula table (reference only)": "旧公式表（仅说明）",
+  "No longer used to calculate at run time: amounts come from the parameter blocks and mix cards in the steps. Converting to step blocks merges it into the materials table.": "执行时不再按它计算；用量来自步骤里的参数块和配液卡。转换为步骤块时并入材料表。",
+  "How to write": "写法",
+  "One step per paragraph; Enter starts the next step. Write values as they are, e.g. “50 µL”, “10 min”; when systems differ write “50/80 µL”. Start a step done on only some samples with “仅富脂样本：…” (lipid-rich samples only). Put results to record in the “Result template”: “记录：浓度 ng/µL、A260/280、胶图”.": "一步一段，回车新建下一步。数值直接写，如“50 µL”“10 min”；不同体系写“50/80 µL”；只对部分样本的操作写“仅富脂样本：…”。要记录的结果写在“结果模板”里：“记录：浓度 ng/µL、A260/280、胶图”。",
+  "Write the first step, e.g. Add 50 µL Proteinase K and mix. Enter starts the next step": "写下第一步，如：加入 Proteinase K 50 µL，混匀。回车新建下一步",
+  "Write this step. Enter starts the next one, Shift+Enter breaks the line": "写下这一步。回车新建下一步，Shift+回车换行",
+  "Type / to insert a parameter, tool or content": "输入 / 插入参数、工具或内容",
+  "Applies to & optional…": "适用范围与可选…",
+  "Applies to…": "适用范围…",
+  "Column applies to…": "本列适用范围…",
+  "Turn into mix card": "转为配液卡",
+  "Enter the experiment name, research plan and date first. The method can follow a Protocol (steps generated from it) or be recorded freely.": "先填实验名称、研究计划和日期。方法来源可以依据实验规程（步骤按规程生成），也可以自行记录。",
+  "Loading the plate layout…": "正在读取孔板布局…",
+  "Not a planner project backup;": "不是规划器的项目备份；",
+  "Download the file": "下载文件",
+  "Research plan not assigned": "未分配研究计划",
+  "Project not assigned": "未分配项目",
+  "Systems in this run": "当前实验体系",
+  "Show other systems’ content (not applicable, not counted in this run’s progress)": "查看其他体系内容（不适用，不计入本次进度）",
+  "Inventory transactions made": "已执行库存交易",
+  "Confirmed · view or change systems": "已确认 · 查看／修改体系",
+  "Systems to confirm": "待确认体系",
+  "Confirmed ·": "已确认 ·",
+  "Systems not confirmed yet; operations that depend on these choices can’t run yet.": "尚未确认体系；依赖这些选择的操作暂不可执行。",
+  "Not chosen": "待选择",
+  "Selection changed: above is a preview of the change, not yet applied. It is refused if it would overwrite existing run records.": "选择已修改，以上是变更预览，尚未应用。影响已有执行记录时将拒绝覆盖。",
+  "Effect of the change": "变更影响",
+  "Becomes not applicable": "改为不适用",
+  "Parameters still to be determined": "参数待确定",
+  "Takes new parameters or applicability": "采用新参数／适用状态",
+  "Also apply to other groups (ticked groups only)": "同时应用到其他组（仅勾选的组）",
+  "Saving selection…": "正在保存…",
+  "Confirm and save changes": "确认变更并保存",
+  "Confirm systems for this run": "确认本次体系",
+  "First check what has already been done to the samples. The new run lists only the operations still needed from the chosen point on, and the original completion records stay in the history; choosing an affected step that was already completed means doing it again, so confirm with care.": "请先核对样本此前已进行的操作。新实例只列出选定位置及之后尚需进行的操作，原完成记录保留在历史中；若选择已经完成的受影响步骤，会要求再次执行，请谨慎确认。",
+  "Continue from step": "从哪一步继续",
+  "Choose where to continue": "请选择继续位置",
+  "Cancel running timers on the affected steps and keep a record of the cancellation (if any)": "确认取消受影响步骤的活动计时器，并保留取消记录（若有）",
+  "Keep the original record and create a continuation": "保留原记录，创建继续实例",
+  "Open the continuation run": "打开继续执行实例",
+  "Preparation and system choice": "实验准备与体系选择",
+  "Preparation · systems and groups": "实验准备 · 体系与分组",
+  "Start or continue the current step": "开始／继续当前步骤",
+  "Preparation items don’t count toward step progress. The adopted source versions are fixed; the run works with AI turned off.": "准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。",
+  "View the earlier run and its original records": "查看此前执行及原始记录",
+  "Earlier handling and adopted parameters (read-only history)": "此前处理与原采用参数（只读历史）",
+  "Completed earlier": "此前已完成",
+  "Not completed in the original record": "原记录未完成",
+  "Attach a plate layout (the planner’s “Back up project” JSON, or an exported SVG or image)": "附加孔板布局（规划器的“备份项目”JSON，或导出的 SVG／图片）",
+  "Plate layout file": "孔板布局文件",
+  "Saved; mix cards that use it need confirming for the new quantity.": "已保存；用到它的配液卡需按新数量确认。",
+  "Run quantities": "本次数量",
+  "Saving quantities…": "正在保存…",
+  "Save quantities": "保存数量",
+  "Experiment groups set up": "已配置实验组",
+  "Running as a single group. If you need different treatment groups, set them up before you start.": "当前按单组执行。需要不同处理组时，请在开始操作前建立分组。",
+  "Set up several groups": "设置多个实验组",
+  "Groups in this run": "本次实验分组",
+  "Remove": "移除",
+  "Add group": "添加组",
+  "Confirm groups": "确认分组",
+  "Confirming fixes the groups and step identities. Groups don’t inherit systems already confirmed for the single group; check them again.": "确认后固定分组与步骤身份。各组不会自动继承已经确认的单组体系，需重新核对。",
+  "Materials and amounts": "材料与用量",
+  "Mix cards": "配液卡",
+  "Plate layouts": "孔板布局",
+  "Equipment setup": "设备准备",
+  "Timers": "计时",
+  "Plate layout attachment": "孔板布局附件",
+  "To be determined": "待确定",
+  "Run preparation checklist": "实验准备清单",
+  "Preparation checklist": "准备清单",
+  "Awaiting system confirmation": "待体系确认",
+  "Checks before running": "执行前检查",
+  "Once the systems are confirmed and the run quantities filled in, the materials, mixes, plates, equipment and timers to prepare are listed here.": "确认体系并填写本次数量后，这里列出要准备的材料、配液、孔板、设备和计时。",
+  "Note, e.g. lot number or where it is": "备注，如批号、放哪里",
+  // Method design and recognition pages, the run page and mix cards, the New Experiment and Entry forms, Protocol usage.
+  "Searching methods": "检索中",
+  "Comparing methods": "比较中",
+  "Draft generated": "已生成草稿",
+  "Method design": "方案设计",
+  "Design a Protocol from an experiment goal": "按实验目标设计方案",
+  "Experiment goal": "实验目标",
+  "turn it on in AI settings": "在 AI 设置中开启",
+  "Recent designs": "最近的设计",
+  "New design": "新的设计",
+  "Sample type": "样本类型",
+  "Experiment conditions": "实验条件",
+  "e.g. check how well siRNA knocks down LRP1 in KYSE150 cells (qPCR)": "例如：验证 siRNA 转染 KYSE150 后 LRP1 的敲低效率（qPCR）",
+  "e.g. adherent cells, mouse liver tissue, plasma": "例如：贴壁细胞、小鼠肝组织、血浆",
+  "e.g. 20 µL reaction, 500 ng RNA input, TRIzol method already in use": "例如：20 µL 反应体系、起始量 500 ng RNA、已有 TRIzol 法",
+  "Searching…": "正在检索…",
+  "Search methods": "检索方法",
+  "The group’s Protocol library is always searched; the open databases go online only once they are on in “Search settings” and you click search. Only the goal, the sample and the conditions are sent out.": "课题组规程库总会检索；开放数据库只在“检索设置”打开后、并且你点击检索时才联网。发送出去的只有目标、样本与条件。",
+  "Search settings": "检索设置",
+  "Allow searching outside sources (when off, only the group’s Protocol library is searched)": "允许外部方法检索（关闭时只搜课题组规程库）",
+  "Group Protocol library": "课题组规程库",
+  "Europe PMC (open access full text)": "Europe PMC（开放获取全文）",
+  "Pasted text": "粘贴的原文",
+  "protocols.io developer token": "protocols.io 开发者令牌",
+  "protocols.io developer token (saved; leave empty to keep it)": "protocols.io 开发者令牌（已保存，留空则不变）",
+  "Request one at protocols.io → Settings → Developer": "在 protocols.io → Settings → Developer 申请",
+  "Clear the saved token": "清除已保存的令牌",
+  "Every outside search and fetch is written to the activity log (source, query, number of results).": "每次外部检索与抓取都会记入活动日志（来源、查询词、结果数）。",
+  "Saving settings…": "保存中…",
+  "Fetch the original text first": "请先抓取原文",
+  "The fetched original can’t be read; fetch it again": "原文附件不可读，请重新抓取",
+  "Search settings saved.": "检索设置已保存。",
+  "Settings not saved": "设置未保存",
+  "Write the experiment goal": "请写出实验目标",
+  "Couldn’t start the search": "无法开始检索",
+  "Design session not found": "设计会话不存在",
+  "Search failed": "检索失败",
+  "Search result not found": "结果不存在",
+  "Method card generated; everything verified": "方法卡已生成，全部核实",
+  "Method card saved": "方法卡已保存",
+  "Method card not saved": "方法卡未保存",
+  "Write a title": "请写标题",
+  "Paste the method text (a few sentences at least)": "请粘贴方法原文（至少几句话）",
+  "Couldn’t add the pasted text": "未能加入粘贴的原文",
+  "Choice not saved": "未保存选择",
+  "Couldn’t generate the draft": "无法生成草稿",
+  "Protocol version not found": "规程版本不存在",
+  "Only a draft version can be scaled; derive a revision from a reviewed version first": "只能调整草稿版本；已审阅的版本请先派生修订",
+  "A Protocol in the old format can’t be scaled": "旧格式规程无法调整",
+  "Written into the draft as a new system dimension; choose it at run time": "已写入草稿：新的“反应体系”维度，执行时选择即可",
+  "Scaling failed": "体系调整失败",
+  "The new system must be a positive number in a unit that converts from the original’s": "目标体系必须是正数，且与原体系单位可换算",
+  "Couldn’t generate the method card": "无法生成方法卡",
+  "Fetch failed": "抓取失败",
+  "Search again": "再次检索",
+  "Search again with other keywords": "换个关键词再搜",
+  "e.g. siRNA transfection qPCR knockdown": "例如：siRNA transfection qPCR knockdown",
+  "Searching again…": "检索中…",
+  "Run the search": "检索",
+  "No model connected: searching, fetching, comparing, generating a draft and scaling the system work as usual; for method cards use “Fill in a method card by hand”.": "没有连接模型：检索、抓取、比较、生成草稿和体系换算照常可用；方法卡用“手工填写方法卡”。",
+  "Working…": "处理中…",
+  "Fetch the original again": "重新抓取原文",
+  "Fetch the original": "抓取原文",
+  "View the fetched original": "查看抓取的原文",
+  "Summarize again": "重新归纳",
+  "Summarize as a method card": "归纳为方法卡",
+  "Generate a draft Protocol": "生成规程草稿",
+  "Not fetched yet": "尚未抓取",
+  "No methods found. Try other keywords, or turn on the open databases in Search settings.": "没有找到方法。换个关键词，或在检索设置里打开开放数据库。",
+  "Compare candidates": "候选比较",
+  "Compare candidates ·": "候选比较 ·",
+  "Compared aspect": "项",
+  "One-line summary": "概括",
+  "Not summarized yet": "尚未归纳",
+  "Time needed": "用时",
+  "Not verified": "未核实",
+  "Reason for the choice (optional)": "选择理由（可选）",
+  "e.g. follows on from our TRIzol method; reagents on hand": "例如：与现有 TRIzol 法衔接，试剂已有",
+  "Saving the choice…": "保存中…",
+  "Save choice": "保存选择",
+  "Paste the original text": "粘贴原文",
+  "Sites without an API (JoVE, Bio-protocol…)": "没有 API 的网站（JoVE、Bio-protocol…）",
+  "Search on the site and paste the method text here; method cards, comparison and draft generation then work the same:": "到网站上搜，把方法原文粘贴进来，之后的方法卡、比较、生成草稿一样用：",
+  "Paste the original text…": "粘贴原文…",
+  "e.g. JoVE 62123 · Lipofectamine siRNA transfection of adherent cells": "例如：JoVE 62123 · Lipofectamine siRNA transfection of adherent cells",
+  "Link (optional)": "链接（可选）",
+  "License (optional)": "许可（可选）",
+  "e.g. CC BY-NC-ND 3.0, or “subscription content”": "如 CC BY-NC-ND 3.0，或“订阅内容”",
+  "Method text": "方法原文",
+  "Paste the Protocol part; one step per paragraph works best.": "粘贴 Protocol 部分；一段一个步骤效果最好。",
+  "Add to candidates": "加入候选",
+  "Pasted text is kept only as an attachment on this site and is never sent to an outside service; it goes to the model only when you click “Summarize as a method card”.": "粘贴的内容只保存在本站附件里，不会发到任何外部服务；只有你点“归纳为方法卡”时才交给模型。",
+  "Method card": "方法卡",
+  "Filled in by hand": "手工填写",
+  "Edit the hand-written method card": "修改手工方法卡",
+  "Fill in a method card by hand": "手工填写方法卡",
+  "Hand-written method card": "手工方法卡",
+  "One-sentence summary": "一句话概括",
+  "Save method card": "保存方法卡",
+  "Draft Protocol": "规程草稿",
+  "Tidy up in the editor": "在编辑器中整理",
+  "Start an Experiment (with the pre-run check)": "建实验（含执行前检查）",
+  "Scaling the system: volumes, masses and amounts of substance scale in proportion; times, temperatures, concentrations and equipment settings stay; cell numbers and enzyme units are listed for you to confirm; lookup values (values by system) are not changed. The result is written into the draft as an optional system dimension, chosen at run time.": "体系调整：体积、质量、物质的量按比例换算，时间、温度、浓度、设备设定保持，细胞数与酶活单位列出请人工确认；查表值（按体系的值）不改。结果写入草稿，作为可选的“反应体系”维度，执行时选择。",
+  "Original system": "原体系",
+  "New system": "新体系",
+  "Dimension name": "维度名称",
+  "Ask the model to explain (numbers unchanged)": "请模型解释（不改数值）",
+  "Needs AI turned on": "需开启 AI",
+  "Scaling…": "换算中…",
+  "Scale and write into the draft": "换算并写入草稿",
+  "When it applies": "适用条件",
+  "Sample requirements": "样本要求",
+  "Materials and equipment": "材料与设备",
+  "Key parameters": "关键参数",
+  "Differences and key points": "操作差异与要点",
+  "Risks and cautions": "风险与注意",
+  "Organize instructions or a non-template Protocol": "整理说明书或非模板规程",
+  "Back to import": "返回导入",
+  "AI organizing didn’t finish": "AI 整理没有完成",
+  "AI organizing didn’t finish; try again": "AI 整理没有完成，请重试",
+  "Choose the source": "选择来源",
+  "Protocol name (optional; you can change it after reading)": "规程名称（可留空，读取后可改）",
+  "e.g. Total RNA extraction from cells (Vazyme RC112)": "例如：细胞总 RNA 提取（Vazyme RC112）",
+  "Instructions or Protocol file (PDF, Word, TXT, Markdown)": "说明书或规程文件（PDF、Word、TXT、Markdown）",
+  "Or paste the text": "或粘贴文字",
+  "Paste the procedure part of the instructions, or the whole Protocol": "把说明书的操作部分或规程全文粘贴进来",
+  "Reading the source…": "读取中…",
+  "Read source": "读取",
+  "It is first read as written, without AI; if that reads badly, click “Organize with AI”: only then is the text sent to the model.": "先按写法读取，不用 AI；读得不好再点“用 AI 整理”，只有那时文字才会发给模型。",
+  "Reading result": "读取结果",
+  "This PDF has almost no readable text; it may be a scan. Convert it to text first, then paste it in.": "这份 PDF 里几乎没有可读的文字，可能是扫描件：请先转成文字，再粘贴进来。",
+  "No result templates (you can write “记录：…” in the editor)": "没有结果模板（可在编辑器里写“记录：…”）",
+  "No steps were read: the original may have no numbered steps. Organize it with AI, or edit the text and read it again.": "没有读出步骤：原文可能没有编号步骤，可以用 AI 整理，或修改文字后重新读取。",
+  "Line-by-line check": "逐行核对",
+  "The line has a source in the original, and every number comes from it.": "1 行都在原文中找到出处，数值都来自原文。",
+  "These sentences of the original carry amounts but don’t appear (perhaps notes left out on purpose; check them):": "原文中这些含用量的句子没有出现（可能是有意删去的说明，请核对）：",
+  "The original is long: only its first 30,000 characters went to the model.": "原文较长，只有前 30,000 字交给了模型。",
+  "Save as a draft Protocol": "存为草稿规程",
+  "Organizing with AI… (may take a minute or two)": "AI 整理中…（可能要一两分钟）",
+  "Organize again with AI": "让 AI 重新整理",
+  "Organize with AI": "用 AI 整理",
+  "Hide the text": "收起文字",
+  "Edit the text": "修改文字",
+  "Text to organize (edit it the way “步骤：1. …”, “体系：…”, “仅…：” and “记录：…” are written)": "整理用的文字（按“步骤：1. …”“体系：…”“仅…：”“记录：…”的写法修改）",
+  "Read again from the edited text": "按修改后的文字重新读取",
+  "Choose a file, or paste the text": "请选择文件，或粘贴文字",
+  "The file can’t be larger than 25 MB": "文件不能超过 25 MB",
+  "Couldn’t read this file": "未能读取这份文件",
+  "Couldn’t read it again": "未能重新读取",
+  "Couldn’t save it as a Protocol": "未能保存为规程",
+  "The original file is missing": "原始文件不存在",
+  "There is no readable text in this file": "这份文件里没有可读的文字",
+  "The model request failed": "模型请求失败",
+  "The original file is missing; upload it again": "原始文件不存在，请重新上传",
+  "Only PDF, Word (.docx), TXT and Markdown files are supported": "只支持 PDF、Word（.docx）、TXT 和 Markdown 文件",
+  "Design from a goal": "按目标设计",
+  "Protocol import template": "规程导入模板",
+  "Write it the way you usually do, or import an existing Protocol": "按平常的写法写，或导入现有规程",
+  "Download the Word template": "下载 Word 模板",
+  "One paragraph per step, numbers written as they are; for different systems write “350/600 µL” and put the line “体系：350 µL / 600 µL” before the first step; start an operation for some samples only with “仅…：”; write what to record as “记录：浓度 ng/µL、A260/280、胶图”. On import, steps become step blocks and numbers become parameter blocks, to check in the editor. For instructions or a Protocol not written to the template (PDF, Word or pasted text), use “Organize instructions or a non-template Protocol”: it is first read as written, and organized with AI only if that reads badly.": "一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：350 µL / 600 µL”；只对部分样本的操作写“仅…：”；要记录的写“记录：浓度 ng/µL、A260/280、胶图”。导入后步骤成为步骤块、数值成为参数块，在编辑器里核对。说明书或没按模板写的规程（PDF、Word 或粘贴的文字），用“整理说明书或非模板规程”：先按写法读取，读得不好再用 AI 整理。",
+  "A PDF, Word file or pasted text made into a Protocol, every line checked against the original": "PDF、Word 或粘贴的文字整理成规程，每行都回查原文",
+  "Design a Protocol from a goal": "按目标设计规程",
+  "Search methods by experiment goal, have AI summarize them as method cards, then generate a draft Protocol": "按实验目标检索方法，AI 归纳成方法卡，再生成规程草稿",
+  "Reading AI settings…": "正在读取 AI 设置…",
+  "AI is off: click to see how to set it up": "AI 未开启：点击查看如何配置",
+  "AI is off: the AI features inside are unavailable for now; everything else works": "AI 未开启：里面的 AI 功能暂不可用，其余照常",
+  "Plan": "研究计划",
+  "No plan chosen": "未选择",
+  "Not set": "未填写",
+  "You can leave it empty and choose a plan later in the metadata; the experiment then also joins that plan’s project.": "可以先不选，之后在元数据里补选；补选时一并归入该计划的项目。",
+  "Follow a Protocol": "依据实验规程",
+  "Write my own steps": "自行记录",
+  "Tick off step by step during the run": "执行时逐步勾选",
+  "When ticked, each line below becomes a step to tick off during the run.": "勾选后，下面每行成为执行时可勾选的一步。",
+  "Steps · one per line": "执行步骤 · 每行一步",
+  "Seed cells | 2.0 × 10^5 cells per well\nIncubate overnight\nImage | 20× objective": "铺板 | 每孔 2.0 × 10^5 个细胞\n孵育过夜\n拍照 | 20× 物镜",
+  "After a vertical bar, add a note for that step.": "竖线后可写这一步的补充说明。",
+  "The execution status follows what is done in Run.": "执行状态由 Run 中的操作管理。",
+  "Earlier version": "历史版本",
+  "Chosen Protocols · in run order": "已选规程 · 按执行顺序",
+  "Move Protocol up": "上移规程",
+  "Move Protocol down": "下移规程",
+  "No Protocol chosen yet.": "尚未选择规程。",
+  "Search by name, version or code…": "搜索名称、版本或编号…",
+  "Hide earlier versions": "收起历史版本",
+  "All versions are chosen.": "全部版本已选择。",
+  "No matching Protocol version.": "没有匹配的规程版本。",
+  "Unpin the panel": "取消固定",
+  "Keep the panel open": "固定展开",
+  "Hide properties": "收起属性",
+  "Back to the page to keep editing or save": "返回主界面继续填写或保存",
+  "Experiment / observation time (optional)": "实验／观察时间（可留空）",
+  "Entry type": "记录类型",
+  "Idea": "想法",
+  "Observation / result": "观察/结果",
+  "Compare the conflicting texts": "正文冲突核对",
+  "Another window saved a newer version; neither was overwritten": "另一窗口已保存新版本，未覆盖任何一方",
+  "This draft": "本机草稿",
+  "This draft, for comparison": "本机草稿对照",
+  "Server text": "服务器正文",
+  "Server text, for comparison": "服务器正文对照",
+  "Open the server record": "另开服务器记录",
+  "Save and file…": "保存并归入…",
+  "Source entries": "来源快速记录",
+  "Source entries · frozen version": "来源快速记录 · 已冻结版本",
+  "This locked record from before source versions were kept has no saved source version. Check the original entries; the current text is not shown as what was reviewed.": "历史锁定记录未保存来源版本，请核对原始记录；不以当前正文冒充审核时的内容。",
+  "View the original entry": "查看原始记录",
+  "Edit the original entry": "编辑原始记录",
+  "No experiment has used this Protocol yet.": "还没有实验用过这份规程。",
+  "Systems · run quantities": "体系 · 本次数量",
+  "Actual values": "实际值",
+  "Usage history": "使用记录",
+  "System legend and preview": "体系图例与预览",
+  "Preview changes only what you read, never an experiment": "预览只改变阅读，不改变任何实验",
+  "Usage record deleted; stock unchanged.": "使用记录已删除；库存未改变。",
+  "Couldn’t delete. Try again": "删除失败，请重试",
+  "Saved on this device, waiting to sync; stock not deducted yet.": "已存本机，等待同步；尚未扣减库存。",
+  "Usage record saved; stock not deducted yet.": "使用记录已保存，尚未执行库存扣减。",
+  "Couldn’t save; your input is kept": "保存失败，输入仍保留",
+  "Some deductions are still pending; the usage records are kept.": "部分扣减待处理，使用记录已保留。",
+  "Deduction confirmed.": "已完成确认。",
+  "Couldn’t submit; you can try again": "提交失败，可重试",
+  "Reagents and consumables used in this run": "本次使用的试剂与耗材",
+  "Nothing recorded yet": "尚未记录",
+  "Reagent or consumable": "物料",
+  "Stock handling": "库存处理",
+  "not recorded": "未记录",
+  "not confirmed": "未确认",
+  "Deduction to confirm": "待确认扣减",
+  "Deducted": "已扣减",
+  "Recorded only": "仅记录",
+  "Source and details": "来源与详情",
+  "Entered by hand": "手动填写",
+  "Correction": "更正记录",
+  "From the Protocol": "依据规程",
+  "Stock not managed": "不管理库存",
+  "View holder and remaining amount": "查看持有状态与余量观察",
+  "Record a correction": "登记更正",
+  "Add consumable": "添加耗材",
+  "Correct consumable record": "更正耗材记录",
+  "Edit consumable": "编辑耗材",
+  "Fill in the actual amount before switching units.": "请先完成实际用量，再切换单位。",
+  "Fill in the expected amount before switching units.": "请先完成预计用量，再切换单位。",
+  "Correcting a deducted record: after saving, confirm the stock adjustment explicitly.": "更正已扣减记录：保存后仍需明确确认库存调整。",
+  "Stock source": "库存来源",
+  "Container used": "实际瓶",
+  "Choose a container you took out": "请选择已领用的瓶",
+  "Use the expected amount as actual": "将预计量确认为实际量",
+  "Save correction": "保存更正",
+  "Save usage record": "保存使用记录",
+  "Add and continue": "添加并继续",
+  "Only the selected amounts below are deducted; saving a record never deducts stock.": "仅扣减以下已选用量；保存记录本身不会扣库。",
+  "Deduct the selected items": "确认扣减所选项",
+  "AI is off; existing records stay as they are.": "已关闭 AI，现有记录保持不变。",
+  "Choose a default model service first.": "请先选择默认模型服务。",
+  "The default service uses manual copy and paste and makes no network calls.": "当前默认服务使用手动复制粘贴，不进行联网调用。",
+  "Enter the model service address.": "请填写模型服务地址。",
+  "Enter the model name.": "请填写模型名称。",
+  "Thermal cycling program": "热循环程序",
+  "Hold": "保持",
+  "Write 15 s, 3 min or hold": "写成 15 s、3 min 或 保持",
+  "Program name": "程序名称",
+  "PCR program": "PCR 程序",
+  "Cycles": "循环",
+  "times": "次",
+  "Program step name": "步骤名称",
+  "Denature": "变性",
+  "Temperature step": "温度步骤",
+  "Program stage": "程序段",
+  "Add an analysis result": "添加分析结果",
+  "Exported from": "来自",
+  "qPCR analysis workbench": "qPCR 分析工作台",
+  "CNV analysis workbench": "CNV 分析工作台",
+  "Exported workbook (.xlsx, .xls or .csv)": "导出的工作簿（.xlsx、.xls 或 .csv）",
+  "Result name (optional)": "结果名称（可留空）",
+  "e.g. GAPDH relative expression": "例如：GAPDH 相对表达",
+  "The workbook goes into a new result as a file; LabNest neither reads nor changes its values.": "工作簿作为文件放进新结果，LabNest 不读取也不改动其中的数值。",
+  "Adding the result…": "添加中…",
+  "Added as a draft result.": "已添加为草稿结果。",
+  "Open the result": "打开结果",
+  "Choose the exported workbook": "请选择导出的工作簿",
+  "Only .xlsx, .xls or .csv files exported from an analysis workbench are accepted": "只接受分析工作台导出的 .xlsx、.xls 或 .csv 文件",
+  "Couldn’t add the result. Try again": "没有添加成功，请重试",
+  "Condition name": "条件名称",
+  "System name": "体系名称",
+  "Change symbol": "更换符号",
+  "Change color": "更换颜色",
+  "Option": "选项",
+  "Done": "完成",
+  "When systems use different amounts, write": "不同体系用量不同时，直接写",
+  "; set sample conditions that need their own label in “Applies to…” from ⋮⋮ beside a step or paragraph.": "；需要单独标注的样本条件，在步骤或段落左侧 ⋮⋮ 的“适用范围”里设置。",
+  "System legend and lens": "体系图例与透镜",
+  "Edit the name, options, symbols and colors": "编辑名称、选项、符号和颜色",
+  "Save as a preset": "存为常用组合",
+  "Delete this preset": "删除此组合",
+  "Condition": "条件",
+  "Exports the saved version; save your changes first.": "导出当前已保存的版本；改动后请先保存。",
+  "Export Word": "导出 Word",
+  "Checking what reminders this device supports…": "正在检查本设备提醒能力…",
+  "Timer reminders on this device": "本设备的计时提醒能力",
+  "A reminder does not complete the step. While offline, a timer cancelled or reset on another device may not withdraw this device’s reminder right away; check against the server once reconnected.": "提醒不代表步骤完成。离线期间其他设备取消或重置的计时器无法保证立即撤销本机提醒，重连后以服务器状态核对。",
+  "Saved on this device, waiting to sync; the actual values on the server have not changed yet.": "已保存至本机，等待同步；服务端实际记录尚未改变。",
+  "Storage on this device is unavailable; nothing was saved. Keep this page open.": "本机存储不可用，未保存。请保留页面。",
+  "This operation or its saved record has changed, so the draft on this device was not applied. Check it first.": "此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。",
+  "Keep the draft on this device after checking": "核对后保留本机草稿",
+  "The operation or its unit has changed; fill it in again as now required.": "操作或单位已变化，请按当前要求重新填写。",
+  "Discard the draft on this device": "放弃本机草稿",
+  "To be determined · confirm the systems and the parameters it depends on": "待确定 · 请确认体系及依赖参数",
+  "Optional operation": "可选操作",
+  "Required operation": "必需操作",
+  "· required": "· 必填",
+  "Saved on this device · waiting to sync": "本机已保存 · 待同步",
+  "Unsaved change": "未保存修改",
+  "Saved": "已保存",
+  "Saving the values…": "正在保存…",
+  "Save actual values": "保存实际值",
+  "Skip this operation": "跳过操作",
+  "Reason for skipping": "跳过原因",
+  "Undo skip": "撤销跳过",
+  "Record skip": "记录跳过",
+  "Record saved": "记录已保存",
+  "Systems for this run confirmed and saved": "本次体系已确认并保存",
+  "Groups saved; confirm the systems actually used for each group.": "实验组已保存，请逐组确认实际采用体系。",
+  "The run record was updated; the older draft is kept for checking.": "执行记录已更新，旧草稿保留供核对。",
+  "The run record was updated. Compare the server record with the older draft before deciding whether to keep using it.": "执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。",
+  "Show the older draft": "查看旧草稿",
+  "Checked draft restored, not saved yet": "已恢复核对后的草稿，尚未保存",
+  "Checked; keep using these drafts": "已核对，继续使用这些草稿",
+  "Untick the whole group": "取消整组勾选",
+  "Tick the whole group": "勾选整组",
+  "Jot a note": "记一笔",
+  "record it under “Reagents and consumables used in this run”": "请在“本次使用的试剂与耗材”中登记",
+  "Save failed": "保存失败",
+  "Component": "组分",
+  "Per reaction": "每反应",
+  "Per well": "每孔",
+  "Per sample": "每样本",
+  "Per tube": "每管",
+  "How it is added": "加入方式",
+  "Separately": "单独加",
+  "Total amount": "合计",
+  "This run": "本次",
+  "Values changed; confirm again": "数值已变化，需重新确认",
+  "Not confirmed yet": "尚未确认",
+  "Tap to cross off once added (not counted as progress)": "加完后点一下划掉（不计入进度）",
+  "Confirmed": "已确认",
+  "Confirm again": "重新确认",
+  "Confirm mix card": "确认配液卡",
+  "Tap an item once it is added to cross it off; the watch stays in sync.": "加完一项点一下划掉；手表同步。",
+  "Could not copy; select the text by hand": "无法复制，请手动选择文字",
+  "The browser blocked the print window": "浏览器阻止了打印窗口",
+  "Amount deleted": "用量已删除",
+  "System to choose": "待选体系",
+  "To fill in": "待填写",
+  "The premix has a component that is not a volume; the aliquot volume leaves it out.": "预混液中有不是体积的组分，分装体积未计入它。",
+  "Mix card name": "配液卡名称",
+  "Premix": "预混液",
+  "Per": "每",
+  "What one portion is": "每份是什么",
+  "Overage": "余量",
+  "Overage percentage": "余量百分比",
+  "Min. pipetting volume": "移液下限",
+  "Minimum pipetting volume (µL)": "移液下限（µL）",
+  "Component name": "组分名称",
+  "e.g. 2× SYBR Mix": "如 2× SYBR Mix",
+  "Edit amount": "编辑用量",
+  "In premix": "预混",
+  "Delete component": "删除组分",
+  "Proposed: the Protocol’s author can add it to the next version in one click on the edit page.": "已提议：规程作者在编辑页可一键加入下一个版本。",
+  "Added during the run": "执行时补充",
+  "Propose for the Protocol": "提议加入规程",
+  "Make a mix card at the bench": "现场生成配液卡",
+  "Make mix card": "生成配液卡",
+  "Bench mix card": "现场配液卡",
+  "Mix cards added during runs": "执行时补充的配液卡",
+  "From a run": "来自执行",
+  "Add to this step": "加入该步骤",
+  "Dismiss": "忽略",
+  "Number of reactions": "反应数",
+  "Number of wells": "孔数",
+  "Number of samples": "样本数",
+  "Number of tubes": "管数",
+  "System": "体系",
+  "New condition": "新条件",
+  "not chosen": "待选择",
+  "All systems": "全部体系",
+  "Add systems above first, then mark the recipe table’s columns with their options.": "先在上方添加体系，再把配方表的列标给对应选项。",
+  "At run time only the chosen system’s columns are kept; when reading all systems the column headers carry symbols.": "执行时只保留所选体系的列；阅读全部体系时表头带符号。",
+  "Field details": "字段详情",
+  "Result name, e.g. RNA QC": "结果名称，如 RNA 质检",
+  "Items to record": "记录",
+  "记录：concentration ng/µL, A260/280, gel image": "记录：浓度 ng/µL、A260/280、胶图",
+  "每个样本：sample name, Ct value (only when there is one row per sample)": "每个样本：样本名、Ct 值（每个样本一行时才写）",
+  "An item with a unit is a number; one ending in 图, 照片, image or photo is an image; one ending in 文件, 原始数据, file or raw data is a file; one starting with “是否” or ending in ? is yes/no; write options in brackets, e.g. (positive/negative); a * after the name makes it required.": "带单位的是数值；图、照片是图片；文件、原始数据是文件；“是否…”是是否；写选项用（阳性/阴性）；名称后加 * 表示必填。",
+  "Nothing to record yet.": "还没有要记录的项目。",
+  "Will record": "将记录",
+  "One row per sample": "每个样本一行",
+
+  // Run chips, protocol read view, AI assistant and settings, run and method-source errors
+  // Run chip popovers
+  "To record": "待记录",
+  "This run’s values": "本次执行",
+  "This step is complete; its record no longer changes.": "此步骤已完成，记录不再修改。",
+  "Value this run": "本次数值",
+  "Specified": "规定",
+  "Actual": "实际",
+  "Actual (required)": "实际（必填）",
+  "Record value": "记录",
+  "Pause": "暂停",
+  "Resume": "继续",
+  "Start countdown": "开始倒计时",
+  "Finish": "结束",
+  "Restart timer": "重新计时",
+  "Another timer is running in this step.": "这一步正在进行另一个计时。",
+  "Time is up; the step still needs checking off.": "计时已到，步骤仍需勾选完成。",
+  "Calculation failed": "计算失败",
+  "Adopted": "已采用",
+  "Preview, not adopted yet": "预览，尚未采用",
+  "Calculate and adopt": "计算并确认采用",
+  // Condition menu
+  "Systems this column applies to": "这一列的适用体系",
+  "This column only applies to": "这一列仅适用于",
+  "Where this step applies": "这一步的适用范围",
+  "Where this content applies": "这段内容的适用范围",
+  "Only applies to": "仅适用于",
+  "No systems or conditions yet. Create a condition, such as “fatty tissue”.": "还没有体系或条件。新建一个条件，例如“富脂组织”。",
+  "Condition name, such as fatty tissue": "条件名称，如 富脂组织",
+  "Optional step: may be skipped at run time and does not count toward required progress": "可选步骤：执行时可跳过，不计入必需进度",
+  // Chip popover (protocol editor)
+  "Not a number; not used": "不是数字，未采用",
+  "Dilute the stock to the target concentration (C1V1 = C2V2).": "母液稀释到目标浓度（C1V1 = C2V2）。",
+  "Make the working solution from a 10× (or other) concentrate.": "由 10× 等浓缩液配成工作液。",
+  "Weigh, dissolve and make up to volume; for a hydrate or salt form, enter that form’s molecular weight.": "称取后溶解并定容；含结晶水或盐形式时填写对应分子量。",
+  "Hemocytometer large squares: average cells per square × dilution factor × 10⁴ cells/mL; counting 1–4 squares is enough.": "血球计数板标准大方格：平均每格细胞数 × 稀释倍数 × 10⁴ cells/mL；可只数 1–4 格。",
+  "Make the cell suspension for all wells (overage included), mix, then dispense into each well.": "按总孔数（含余量）配制细胞悬液，混匀后分装到各孔。",
+  "Reagents, diluent and mixing order follow the transfection reagent’s instructions.": "试剂、稀释液及混合顺序按所用转染试剂说明书。",
+  "The titer must be a functional titer (TU, IU or PFU); VG cannot be used for MOI.": "滴度须为功能性滴度（TU、IU 或 PFU）；VG 不能用于 MOI。",
+  "Unit suggestions": "单位建议",
+  "Some inputs are filled in or confirmed at run time; it is calculated then and adopted once confirmed.": "有输入在执行时填写或确认：届时计算，确认后采用。",
+  "This parameter shows": "这个参数块显示",
+  "Fill in here": "在此填写",
+  "Also in the text:": "也写入正文：",
+  "The actual value is recorded in the experiment at run time": "执行时在实验中记录实际值",
+  "This parameter takes its value from combined conditions and cannot be edited item by item here; above, switch it to a fixed value or to values by one system.": "此参数按组合条件取值，这里不能逐项修改；可在上方改为固定值或按单个体系取值。",
+  "Also split by": "再按",
+  "Value source": "取值方式",
+  "Fixed value": "固定值",
+  "Name (optional)": "名称（可选）",
+  "Name (optional), such as Proteinase K": "名称（可选），如 Proteinase K",
+  "Linked to the materials table": "已关联材料表",
+  "Materials table": "材料表",
+  "Mixing method": "混匀方式",
+  "Values by system": "按体系取值",
+  "A reminder to work protected from light; no values.": "提醒操作时避光，没有数值。",
+  "Parameter": "参数",
+  "This parameter has been deleted.": "这个参数已被删除。",
+  "Count consumption by": "消耗按",
+  "Total this run": "本次总量",
+  "Actual value required at run time": "执行时必填实际值",
+  "Delete parameter": "删除参数块",
+  // Chips (rendered with t() inside the editable page)
+  "The referenced parameter was deleted": "引用的参数已删除",
+  "Parameter deleted": "参数已删除",
+  "Confirm after calculating": "计算后确认",
+  "Conflicting values": "取值冲突",
+  "Incompatible unit": "单位不兼容",
+  "non-": "非",
+  // Step timer notices
+  "End timer (the step still needs confirming)": "结束计时（步骤仍需确认）",
+  "The timer reached zero; the step is not completed automatically. Reset before timing again.": "计时已到零，步骤尚未自动完成。重新计时请先重置。",
+  "Offline, the timer keeps showing; start, pause and reset need a connection to confirm, so nothing runs late after reconnecting.": "离线时保留计时显示；开始、暂停与重置需联网确认，避免重连后延迟执行。",
+  "The clock is not calibrated yet or the device time changed; check it once online. The current display is not a precise timing reference.": "时钟尚未校准或设备时间发生变化，请联网后核对；当前显示不能作为精确计时依据。",
+  // Protocol read view (inside the document, rendered with t())
+  "Text": "文本",
+  "Choice": "选项",
+  "Yes/No": "是/否",
+  "Date & time": "日期时间",
+  "Identifier": "标识",
+  "Design factor": "设计",
+  "Grouping": "分组",
+  "Quality control": "质控",
+  "Annotation": "注释",
+  "Instructions": "填写说明 / Instructions",
+  "Field requirements": "字段要求 / Fields",
+  "File requirements": "文件要求 / File requirements",
+  "These are the raw files to keep or upload; the files themselves are uploaded after creating or opening the Result record.": "这里定义需要保留或上传的原始文件；实际文件在创建 / 打开 Result 记录后上传。",
+  "Only": "仅",
+  "Not in this preview · expand": "不适用于当前预览 · 展开",
+  "Old formula table, for reference only: runs no longer calculate from it; amounts come from the parameters and mix cards in the steps.": "旧公式表，仅作说明：执行时不再按它计算，用量来自步骤里的参数块和配液卡。",
+  "Usage per reaction": "每反应用量",
+  "Summed from the parameters; multiplied by the run quantity at run time and usable to deduct stock on completion": "由参数块汇总；执行时乘以本次数量，完成时可据此扣减库存",
+  "Amount used": "用量",
+  "Basis": "按",
+  // AI assistant panel
+  "AI assistant": "AI 助手",
+  "AI assistant · AI is off": "AI 助手 · AI 未开启",
+  "AI is ready": "AI 已就绪",
+  "AI is not on yet": "AI 还没有开启",
+  "Once it is on, the AI buttons in the places below work. Protocols, calculations and runs do not need AI and work as usual.": "开启后，下面这些地方的 AI 按钮才能用。规程、计算和实验执行不需要 AI，照常可用。",
+  "AI is on, one step to go": "AI 已开启，还差一步",
+  "The default service is not set up yet.": "默认服务还没有配好。",
+  "Cannot read AI settings": "读不到 AI 设置",
+  "Close AI assistant": "关闭 AI 助手",
+  "Read again": "重新读取",
+  "Where you can use AI": "可以用 AI 的地方",
+  "This page": "这一页",
+  "Until AI is on, the AI buttons on these pages are gray; everything else works as usual.": "AI 开启前，这些页面里的 AI 按钮是灰色的，其余功能照常。",
+  "Check what AI generates; text is sent to a model only when you click an AI button.": "AI 生成的内容需要你核对；只有点击 AI 按钮时，文字才会发给模型。",
+  "Turn on AI": "开启 AI",
+  "One step left to turn on AI": "开启 AI 只差一步",
+  "(done)": "（已完成）",
+  "(not done)": "（未完成）",
+  "Go to AI settings": "去 AI 设置",
+  "You can open AI settings any time from the gear at the top right.": "随时可以点右上角的齿轮打开 AI 设置。",
+  "Add a model service": "添加一个模型服务",
+  "Make it the default service and fill in its key and model": "选为默认服务，并填好密钥和模型",
+  "Turn on “Enable AI”": "打开“启用 AI”",
+  "Propose next steps from a quick entry": "从快速记录提议后续操作",
+  "On a quick entry, click “Propose with AI” at the top right; proposals take effect only after you confirm them": "在快速记录页右上角点“Propose with AI”，提议等你确认后才生效",
+  "AI workbench": "AI 工作台",
+  "Without a connected model, copy the prompt to any AI and paste the answer back": "没有联网的模型时，复制提示词给任意 AI，再把回答贴回来",
+  // AI settings
+  "Reading settings…": "正在读取设置…",
+  "Settings could not be read": "设置读取失败",
+  "Off": "已关闭",
+  "On · setup incomplete": "已开启 · 待配置",
+  "On · fully set up": "已开启 · 配置齐备",
+  "Saving failed; try again.": "保存失败，请重试。",
+  "Switch saved": "开关已保存",
+  "Feature settings saved": "功能设置已保存",
+  "Saving failed; the switch keeps its last saved state. Read the settings again to check.": "保存失败，开关保留上次成功保存的状态。请重新读取确认。",
+  "AI feature settings": "AI 功能设置",
+  "Enable AI": "启用 AI",
+  "AI is used only when you act; turning it on does not scan or process past records.": "仅按你的操作使用 AI；开启不会扫描或处理历史记录。",
+  "Applies to this LabNest workspace, the same scope as before; Visualization Studio uses its own settings.": "作用于当前 LabNest 工作空间，与原设置范围一致；Visualization Studio 使用自己的设置。",
+  "Next: add a model service, then choose it as the default service.": "下一步：添加一个模型服务，再选择为默认服务。",
+  "Next: choose the default service below and click “Save feature settings”. A service card being enabled does not do this step for you.": "下一步：在下方选择默认服务，点击“保存功能设置”。服务卡片的启用状态不会替你完成这一步。",
+  "Next: turn on the “Enable AI” switch above. The default service is kept.": "下一步：打开上方“启用 AI”总开关。默认服务已保留。",
+  "Ready. Choose one of the entry points below to start an AI action yourself.": "已准备好。选择下方一个入口，主动发起 AI 操作。",
+  "Complete the setup": "补充配置",
+  "Feature settings": "功能设置",
+  "Default AI service": "默认使用的 AI 服务",
+  "None chosen": "未选择",
+  "Allow attachments the user explicitly chooses": "允许用户明确选择的附件",
+  "Save feature settings": "保存功能设置",
+  "Unsaved changes; the main switch does not submit them.": "有未保存的修改；总开关不会提交这些修改。",
+  "Only explicitly chosen context is sent; it does not authorize uploading the whole project.": "只发送明确选择的上下文，不授权整个项目上传。",
+  "Use AI": "使用 AI",
+  "Open the AI workbench": "打开 AI 工作台",
+  "Generate suggestions from entries": "从记录生成建议",
+  "Import a protocol and extract parameters": "导入规程并提取参数",
+  "AI suggestions need a human check; turning AI on does not process past records. Protocol systems, ordinary calculations and runs all work with AI off.": "AI 建议需要人工核对；开启不会处理历史记录。规程体系、普通计算和实验执行均可在 AI 关闭时使用。",
+  "AI settings · LabNest": "AI 设置 · LabNest",
+  "Model connections and AI feature settings.": "模型连接与 AI 功能设置。",
+  "Cannot read the connection settings; saved settings are unchanged.": "无法读取连接设置，已保存的设置未改变。",
+  "Model connections and AI feature settings. Suggestions waiting for you are shown on each entry and experiment.": "模型连接与 AI 功能设置。待确认的建议在各条记录和实验里查看。",
+  "Connection settings": "连接设置",
+  "Model service settings saved": "模型服务设置已保存",
+  "Configure the server encryption key first to store API keys safely.": "需先配置服务器加密密钥，才能安全保存 API 密钥。",
+  "No model service configured yet. Add one alongside or below.": "尚未配置模型服务。可在右侧或下方添加。",
+  "Service enabled": "服务已启用",
+  "Service disabled": "服务已停用",
+  "Default service URL": "默认服务地址",
+  "Manual mode": "手动模式",
+  "Key saved · test the connection by hand": "密钥已保存 · 连接需手动测试",
+  "No key saved yet": "尚未保存密钥",
+  "No API key needed": "无需 API 密钥",
+  "Disable service": "停用",
+  "Enable service": "启用",
+  "New model service": "添加模型服务",
+  "Keys stay encrypted on the server and are never shown on the page. Saving the setup does not connect to the model.": "密钥沿用服务器加密保存，页面不会回显。保存配置不会连接模型。",
+  "Manual copy and paste": "手动复制粘贴",
+  "Official OpenAI API": "OpenAI 官方接口",
+  "OpenAI-compatible API": "OpenAI 兼容接口",
+  "Anthropic API": "Anthropic 接口",
+  "Dify app": "Dify 应用",
+  "Enable AI first, then test the connection.": "请先启用 AI，再测试连接。",
+  "This service is disabled; enable it first.": "此服务已停用，请先启用。",
+  "Connection test failed; try again.": "连接测试失败，请重试。",
+  "The LabNest server test timed out; try again later.": "LabNest 服务器测试超时，请稍后重试。",
+  "Testing…": "正在测试…",
+  "Test connection": "测试连接",
+  "Sends one short test message, which may cost a little API usage.": "将发送一条简短测试消息，可能产生少量 API 费用。",
+  "· this test only": "· 仅代表本次测试",
+  "The test used up its output allowance before any text came back; this does not mean the key is wrong.": "测试输出额度已用完，未获得有效正文；这不表示密钥错误。",
+  "The model returned empty content; generation is not verified yet.": "模型返回了空内容，尚未验证生成。",
+  "Connects a published Dify app, such as the matching ZJU AIHub app.": "连接已发布的 Dify 应用，例如相应的浙大 AIHub 应用。",
+  "Enter the API address the app provides, such as https://aihub.zju.edu.cn/v1.": "填写应用提供的 API 地址，例如 https://aihub.zju.edu.cn/v1。",
+  "An optional note; it does not change the actual model, which the Dify app sets.": "可选说明，不改变实际模型；模型由 Dify 应用配置决定。",
+  "Enter the app-… key issued on the app’s API access page.": "填写该应用 API 访问页颁发的 app-… 密钥。",
+  "Choose this when the provider explicitly supports Chat Completions; use it to connect DeepSeek directly.": "服务方明确支持 Chat Completions 时选择；直连 DeepSeek 使用此项。",
+  "Enter the public address prefix; keep the /v1 or custom prefix the provider requires, without /chat/completions.": "填写公共地址前缀；保留服务方要求的 /v1 或自定义前缀，不填写 /chat/completions。",
+  "Enter the exact model ID, such as deepseek-flash or deepseek-v4-pro; what is actually available depends on account permissions and testing.": "填写精确模型 ID，例如 deepseek-flash 或 deepseek-v4-pro，实际可用性以账号权限及测试为准。",
+  "Enter the API credential the platform issued, not a chat account password.": "填写服务平台颁发的调用凭据，不是聊天账户密码。",
+  "Connects the official OpenAI API.": "连接 OpenAI 官方 API。",
+  "Enter the exact model ID the provider gives.": "填写服务方提供的精确模型 ID。",
+  "Enter an OpenAI API key.": "填写 OpenAI API 密钥。",
+  "Choose this when the provider offers the Anthropic Messages format.": "服务方提供 Anthropic Messages 格式时选择。",
+  "Enter an API key that works with this interface.": "填写适用于该接口的 API 密钥。",
+  "Generates a prompt to run by hand in an outside chat tool; no network interface to configure.": "生成提示词，手动到外部聊天工具运行；无需配置联网接口。",
+  "Not needed.": "无需填写。",
+  "Use DeepSeek": "使用 DeepSeek",
+  "Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro.": "填入官方地址和 deepseek-flash；使用 V4 Pro 时将模型 ID 改为 deepseek-v4-pro。",
+  "Service name": "服务名称",
+  "Such as DeepSeek official": "例如 DeepSeek 官方",
+  "Only for you to recognize it; it does not set the provider or protocol.": "仅供自己识别，不决定服务商或协议。",
+  "Interface type": "接口类型",
+  "API base URL": "API 基础地址",
+  "Model note (optional)": "模型说明（可选）",
+  "Default model / model ID": "默认模型 / 模型 ID",
+  "Leave empty to keep the saved key": "留空保留已保存的密钥",
+  "Enter the API key for this target": "填写当前目标的 API 密钥",
+  "The service was changed on another page; reload before testing.": "服务已在其他页面修改，请重新加载后测试。",
+  "This service is disabled; save it enabled first.": "此服务已停用，请先保存启用此服务。",
+  "Saving the setup.": "正在保存配置。",
+  "Enable this service": "启用此服务",
+  "The service setup changed on another page and this draft is not saved. Copy what you want to keep first, then": "服务配置已在其他页面改变，本页草稿尚未保存。请先复制需要保留的内容，再",
+  "reload": "重新加载",
+  "(full stop)": "。",
+  "Saving the service…": "正在保存…",
+  "Save service": "保存服务",
+  "Add service": "添加服务",
+  "Testing does not save. After adding or saving a service, choose it under “Default AI service” and click “Save feature settings”.": "测试不会保存。添加或保存服务后，还需在“默认使用的 AI 服务”中选择，并点击“保存功能设置”。",
+  "Cannot read AI settings; try again. Saved settings are unchanged.": "无法读取 AI 设置，请重试；已保存的设置未改变。",
+  "Cannot read AI settings.": "无法读取 AI 设置。",
+  "On · setup incomplete; finish the connection settings on the AI page first.": "已开启 · 待配置，请先在 AI 页面完成连接设置。",
+  "AI settings changed; this result was not applied. Check the settings and try again.": "AI 设置已改变，本次返回结果未应用。请确认设置后重试。",
+  "AI is off or its settings changed; check them on the AI page.": "AI 已关闭或设置已改变，请在 AI 页面确认设置。",
+  "The service setup was changed on another page; read it again before testing.": "服务配置已在其他页面修改，请重新读取后测试。",
+  "Enable AI first; saving a connection setup does not turn AI on.": "请先启用 AI；保存连接配置不会自动开启 AI。",
+  "Enable this service first.": "请先启用此服务。",
+  "Manual copy and paste needs no connection test.": "手动复制粘贴模式无需联网测试。",
+  "The service is disabled or its setup changed; read it again before testing.": "服务已停用或配置已改变，请重新读取后测试。",
+  "Enter a new key for this address and interface type; the old key is never sent to a new target.": "请填写适用于当前地址和接口类型的新密钥；旧密钥不会发往新目标。",
+  "Enter the API key.": "请填写 API 密钥。",
+  "Cannot read the connection credentials; check the server encryption setup.": "无法读取连接凭据，请检查服务器加密配置。",
+  // Run page server action errors (bilingual ones read as their Chinese half, as readableError showed them)
+  "Record not saved": "记录保存失败",
+  "Systems not saved; try again": "体系未保存，请重试",
+  "Groups not saved": "实验组未保存",
+  "The repeated request does not belong to this step": "重复请求不属于此步骤",
+  "Execution plan changed; reload": "执行方案已变更，请刷新",
+  "End the timer before confirming the step complete": "请先结束计时，再确认步骤完成",
+  "A finished run record cannot be changed": "已结束的执行记录不可改写",
+  "This item does not support precise deduction; use a physical movement or count it first.": "该物料不支持精确扣减；请使用实物流转或先盘点。",
+  "Confirm system parameters in run preparation; the old parameter table cannot override them.": "体系参数请在实验准备中确认，不能通过旧参数表覆盖。",
+  "Parameters saved": "参数已保存",
+  "Disconnect failed": "断开失败",
+  "Not saved; try again": "未保存，请重试",
+  "This protocol is not part of this run": "此规程不属于本次执行",
+  "Confirm this run’s systems in run preparation first": "请先在实验准备中确认本次体系",
+  "This run has ended; its mix cards can no longer change": "此执行已结束，配液卡不能再修改",
+  "This experiment has no execution plan": "此实验没有执行方案",
+  "Execution plan changed; reload before confirming": "执行方案已变更，请刷新后再确认",
+  "This step is not part of this run": "此步骤不属于本次执行",
+  "The step is complete; its mix cards no longer change": "步骤已完成，配液卡不再修改",
+  "Confirm the systems and this step’s parameters first": "请先确认体系和这一步的参数",
+  "The mix card does not belong to this step": "配液卡不属于此步骤",
+  "The run quantity changed; reload and check": "本次数量已变化，请刷新核对",
+  "The mix card still has undetermined amounts": "配液卡还有未确定的用量",
+  "The mix card’s values changed; check them and confirm again": "配液卡数值已变化，请核对后重新确认",
+  "The component does not belong to this mix card": "组分不属于此配液卡",
+  "The mix card is not confirmed or its values changed; confirm it first": "配液卡尚未确认或数值已变化，请先确认",
+  "Execution plan changed; reload before saving": "执行方案已变更，请刷新后再保存",
+  "Execution plan changed; reload before making it": "执行方案已变更，请刷新后再生成",
+  "Only parameters in this step can be chosen": "只能选用这一步里的参数块",
+  "Only mix cards added during the run can be proposed": "只能提议执行时补充的配液卡",
+  "This mix card has already been proposed": "这张配液卡已提议过",
+  "Group IDs are duplicated or invalid": "实验组标识重复或无效",
+  "A step refers to a group that does not exist": "步骤引用了不存在的实验组",
+  "The run snapshot is missing a saved step": "执行快照缺少已保存步骤",
+  "A shared operation is missing its source steps": "共享操作缺少来源步骤",
+  "A step’s group is missing; check the saved execution plan.": "步骤的实验组归属缺失，请核对保存的执行方案。",
+  "Confirm the applicable system and resolve parameters first": "请先确认体系并解决待确定参数",
+  "Reopen the skipped operation first": "此步骤已记录跳过；请先撤销跳过",
+  "Execution plan changed; reload before continuing": "执行方案已变更，请刷新核对",
+  // Method sources
+  "Response too large; abandoned": "响应过大，已放弃",
+  "Pasted text has no source to fetch": "粘贴的原文没有可抓取的来源",
+  "This source is not turned on now": "这个来源现在没有开启",
 };
+
+// Run preparation (run-preparation.ts) names a step "Step 2", or "PRT-100003 step 2" when the run has several Protocols;
+// names, codes and amounts pass through untouched.
+const stepRefPattern = String.raw`(?:Step \d+|[A-Z][A-Z0-9]*-[\w.-]+ step \d+)`;
+const stepRefList = new RegExp(String.raw`^(?:([\s\S]+) · )?(${stepRefPattern}(?:, ${stepRefPattern})*)$`);
+const calculationToConfirm = new RegExp(String.raw`^Calculation to confirm: ([\s\S]+?)(?: \((${stepRefPattern})\))?$`);
+const runReminder = new RegExp(String.raw`^(Required|Filled in) at run time: (${stepRefPattern}) · ([\s\S]*)$`);
+const zhStepRef = (ref: string) => ref.replace(/^Step (\d+)$/, "第 $1 步").replace(/^(.+) step (\d+)$/, "$1 第 $2 步");
+const zhPending = (text: string) => text === "To be determined" ? "待确定" : text.replace(/^Not filled in: (.+)$/, (_, label: string) => `未填写${zhRunQuantityLabel(label)}`);
+const zhConsumptionSource = (source: string) => source.replace(/(^|· )Step (\d+)(?= · |$)/, "$1第 $2 步").replace(/ step (\d+)(?= · |$)/, " 第 $1 步");
+/** Tool fields by English name; run-preparation.ts reads it backwards. Kept out of zhUi: "Start" or "Current" mean other things elsewhere. */
+export const toolFieldNamesZh: Record<string, string> = { "Spin speed": "离心力／转速", Time: "时间", Temperature: "温度", Count: "次数", "Shaking speed": "摇速", Pressure: "压力", Voltage: "电压", Current: "电流", Capacitance: "电容", Resistance: "电阻", Pulse: "脉冲", Start: "起始", End: "终止" };
+/** One part of an equipment line: "Pre-cool to 4 °C", "Set to 5 %", "Time to be determined". */
+const zhEquipmentPart = (part: string) => part.replace(/^Pre-cool to /, "预冷至 ").replace(/^Pre-warm to /, "预热至 ").replace(/^Set to /, "设定 ")
+  .replace(/^(.+) to be determined$/, (_, field: string) => `${toolFieldNamesZh[field] ?? field}待定`);
+const equipmentLine = /^(Centrifuge|Mix|Incubate|Shaker|Vacuum|Electrophoresis|Electroporation|Gas|Protect from light|Gradient) · ([\s\S]+)$/;
+const deviationKindsZh: Record<string, string> = { "Method change": "方法变更", Timing: "时间", "Material or reagent": "材料或试剂", Equipment: "设备", Incident: "异常事件", Abnormal: "异常", Other: "其他" };
+/** A Version comparison condition: option names joined by " + ", "or X", "not X", or "Default". */
+const zhSystemCondition = (when: string) => when === "Default" ? "默认" : when.split(" + ").map((part) => part.replace(/^or /, "或 ").replace(/^not /, "非 ")).join(" + ");
+
+// Organize instructions (RecognitionWorkspace): conversionSummaryLine's parts and the line check's problems; numbers, names and
+// quoted words pass through.
+const zhConversionSummary = (text: string) => text.split(", ").map((part) => part
+  .replace(/^Converted to step blocks: (\d+) steps?$/, "转换为步骤块：$1 步")
+  .replace(/^(\d+) parameter blocks?$/, "$1 个参数块")
+  .replace(/^(\d+) systems?$/, "$1 个体系")
+  .replace(/^old formula table: (\d+) rows? moved into the material table$/, "旧公式表 $1 行并入材料表")).join("，");
+const zhRecognitionProblem = (problem: string): string => {
+  const condition = problem.match(/^Condition “([^”]*)”: ([\s\S]+)$/);
+  if (condition) return `条件“${condition[1]}”${zhRecognitionProblem(condition[2])}`;
+  return problem.replace(/^No source in the original \(the closest place matches only (\d+)%\)$/, "原文中找不到出处（最接近的一处只对上 $1%）")
+    .replace(/^Numbers not in the original: ([\s\S]+)$/, (_, numbers: string) => `数值不在原文：${numbers.split(", ").join("、")}`)
+    .replace(/^Record item not found in the original: ([\s\S]+)$/, "记录项原文中找不到：$1");
+};
+/** Protocol review states as protocolStateLabel writes them in English. */
+const protocolStatesZh: Record<string, string> = { Draft: "草稿", Active: "启用", Retired: "已停用", Archived: "已归档", "Ready for review": "待审核", Reviewed: "已审核" };
+/** One clause of the systems bar's deletion notice. */
+const zhDeletionPart = (part: string) => part
+  .replace(/^(\d+) parameters? takes? (?:its|their) value from it, and the first option’s values are kept$/, "$1 个参数按它取值，删除后保留第一个选项的数值")
+  .replace(/^(\d+) parameters? takes? (?:its|their) value from it, and those values are deleted with it$/, "$1 个参数按它取值，它的数值一并删除")
+  .replace(/^(\d+) applicability rules? uses? it, and that content becomes general$/, "$1 处适用范围用到它，删除后这些内容变为通用");
+/** A system or option label as systemLabelText shows it in English: the stored default back (体系, 体系 2, 是, 否), anything typed as is. */
+const zhSystemLabel = (label: string) => ({ System: "体系", "New condition": "新条件", Yes: "是", No: "否" } as Record<string, string>)[label] ?? label.replace(/^System (\d+)$/, "体系 $1");
+// Mix cards store their per word (反应, 孔, 样本, 管) and run quantity key (反应数…) in Chinese; protocol-mix.ts shows them as
+// "reaction(s)" and "number of reactions" / "24 reactions". These read them back; a word someone typed passes through.
+const perWordsZh = new Map([["reaction", "反应"], ["reactions", "反应"], ["well", "孔"], ["wells", "孔"], ["sample", "样本"], ["samples", "样本"], ["tube", "管"], ["tubes", "管"]]);
+const zhPer = (per: string) => perWordsZh.get(per) ?? per;
+const zhRunQuantityLabel = (label: string) => label.replace(/^[Nn]umber of (reactions|wells|samples|tubes)$/, (_, per: string) => `${perWordsZh.get(per)}数`);
+const zhRunQuantity = (text: string) => text.replace(/^(\S+) (reactions?|wells?|samples?|tubes?)$/, (_, count: string, per: string) => `${count} ${perWordsZh.get(per)}数`);
+const notificationPermissionZh: Record<string, string> = { granted: "已允许", denied: "已拒绝", "not requested yet": "尚未申请", "not available here": "此环境不提供通知接口" };
+/** Result template read-back (result-record-line.ts): "浓度 (number, ng/µL, required)" reads "浓度 · 数值 · ng/µL · 必填". */
+const readBackTypesZh = new Map([["text", "文字"], ["number", "数值"], ["choice", "选项"], ["yes/no", "是否"], ["date", "日期"], ["time", "时间"], ["attachments", "附件"], ["category", "分类"], ["image", "图片"], ["file", "文件"], ["video", "视频"]]);
+const readBackItemSource = String.raw`(?:((?:(?! ｜ )[\s\S])+?) )?\((text|number|choice|yes\/no|date|time|attachments|category|image|file|video)(?:, ([^()]*?))??(, required)?\)`;
+const readBackItem = new RegExp(`^${readBackItemSource}$`);
+const readBackLine = new RegExp(`^${readBackItemSource}(?: ｜ ${readBackItemSource})*$`);
+const zhReadBack = (line: string) => line.split(" ｜ ").map((item) => {
+  const parts = item.match(readBackItem);
+  return parts ? [parts[1], readBackTypesZh.get(parts[2]), parts[3]].filter(Boolean).join(" · ") + (parts[4] ? " · 必填" : "") : item;
+}).join(" ｜ ");
 
 const dynamicNouns: Record<string, string> = {
   Entry: "记录",
@@ -1871,10 +2933,409 @@ const dynamicNouns: Record<string, string> = {
 };
 
 function translateDynamic(value: string): string {
-  let match = value.match(/^Edit (.+)$/);
+  let match = value.match(/^Expires in (\d+:\d{2}) · single use$/);
+  if (match) return `${match[1]} 后失效 · 只能用一次`;
+  match = value.match(/^Watch connected since (\d{2}:\d{2})$/);
+  if (match) return `手表已连接（${match[1]} 起）`;
+  match = value.match(/^Pairing code ([A-Z0-9]{12})$/);
+  if (match) return `配对码 ${match[1]}`;
+  // Run chips, chip popovers, AI panel and settings, run and method-source errors
+  match = value.match(/^(\d{2,}:\d{2}) left$/);
+  if (match) return `剩余 ${match[1]}`;
+  match = value.match(/^Actual ((?:[\d.,−-]|—)[\s\S]*)$/);
+  if (match) return `实际 ${match[1]}`;
+  match = value.match(/^([\s\S]*[\u3400-\u9fff][\s\S]*) calculation$/);
+  if (match) return `${match[1]}计算`;
+  // Chip labels shown in English (protocolLabelText) read back as the stored Chinese, joined as before.
+  match = value.match(/^(Dilution|Fold dilution|Solution by weight|Cell count|Cell seeding|Transfection mix|Infection MOI) calculation$/);
+  if (match) return `${protocolLabelsZh[match[1]]}计算`;
+  match = value.match(/^([\s\S]+) \(optional\)$/);
+  if (match && protocolLabelsZh[match[1]]) return `${protocolLabelsZh[match[1]]}（可选）`;
+  match = value.match(/^([\s\S]+) source$/);
+  if (match && protocolLabelsZh[match[1]]) return `${protocolLabelsZh[match[1]]}来源`;
+  match = value.match(/^(?:Edit|Remove) ([\s\S]+)$/);
+  if (match && protocolLabelsZh[match[1]]) return `${value.startsWith("Edit") ? "编辑" : "移除"}${protocolLabelsZh[match[1]]}`;
+  match = value.match(/^([^·]+) · ([^·]+)$/);
+  if (match && protocolLabelsZh[match[1]] && protocolLabelsZh[match[2]]) return `${protocolLabelsZh[match[1]]} · ${protocolLabelsZh[match[2]]}`;
+  match = value.match(/^Method version (\S+)(?: · confirmed ([\s\S]+))?$/);
+  if (match) return `方法版本 ${match[1]}${match[2] ? ` · 确认于 ${match[2]}` : ""}`;
+  match = value.match(/^Unrecognized unit; still ([\s\S]+)$/);
+  if (match) return `未识别的单位，仍按 ${match[1]}`;
+  match = value.match(/^Fill in ([\s\S]+) to see the expected result\.$/);
+  if (match) return `填写${match[1].split(", ").map((label) => protocolLabelsZh[label] ?? label).join("、")}后显示预计结果。`;
+  match = value.match(/^About ([\s\S]+) with the current inputs; adopted once confirmed at run time\.$/);
+  if (match) return `按当前输入约 ${match[1]}，执行时确认后采用。`;
+  match = value.match(/^([\s\S]*[㐀-鿿][\s\S]*) \(optional\)$/);
+  if (match) return `${match[1]}（可选）`;
+  match = value.match(/^([\s\S]*[㐀-鿿][\s\S]*) source$/);
+  if (match) return `${match[1]}来源`;
+  match = value.match(/^Split by ([\s\S]+) only$/);
+  if (match) return `只按${match[1]}区分`;
+  match = value.match(/^By (?!system: )([\s\S]+)$/);
+  if (match) return `按${match[1]}`;
+  match = value.match(/^Remove ([\s\S]*[㐀-鿿][\s\S]*)$/);
+  if (match) return `移除${match[1]}`;
+  match = value.match(/^Edit parameter: ([\s\S]+)$/);
+  if (match) return `编辑参数：${match[1]}`;
+  match = value.match(/^Edit ((?:[\s\S]*[㐀-鿿][\s\S]*)|pH)$/);
+  if (match) return `编辑${match[1]}`;
+  match = value.match(/^Per ([^·]+?) · (?![\s\S]*% overage$)([\s\S]+)$/);
+  if (match) return `每${zhPer(match[1])} · ${match[2]}`;
+  match = value.match(/^AI assistant, (\d+) AI suggestions? waiting for you$/);
+  if (match) return `AI 助手，${match[1]} 条 AI 建议等你确认`;
+  match = value.match(/^Default service: ([\s\S]+)\. Use the AI buttons in the places below\.$/);
+  if (match) return `默认服务：${match[1] === "model" ? "模型" : match[1]}。在下面这些地方点 AI 按钮就能用。`;
+  match = value.match(/^AI suggestions waiting for you · (\d+)$/);
+  if (match) return `等你确认的 AI 建议 · ${match[1]} 条`;
+  match = value.match(/^(\d+) to accept or dismiss$/);
+  if (match) return `${match[1]} 条待采纳或忽略`;
+  match = value.match(/^(\d+) more quick entries have suggestions waiting\.$/);
+  if (match) return `还有 ${match[1]} 条快速记录有待确认的建议。`;
+  match = value.match(/^(\d+) steps left to turn on AI$/);
+  if (match) return `开启 AI 还差 ${match[1]} 步`;
+  match = value.match(/^Edit model service · ([\s\S]+)$/);
+  if (match) return `编辑模型服务 · ${match[1]}`;
+  match = value.match(/^(Official OpenAI API|OpenAI-compatible API|Anthropic API|Dify app|Manual copy and paste) · ([\s\S]+)$/);
+  if (match) return `${zhUi[match[1]]} · ${match[2]}`;
+  match = value.match(/^Test succeeded(, settings not saved yet)? · requested model ([\s\S]+?)(?: · returned model ([\s\S]+?)( \(differs from the requested ID; check the service’s mapping\))?|( · the service returned no model ID))( · output truncated)?$/);
+  if (match) return `测试成功${match[1] ? "，配置尚未保存" : ""} · 请求模型 ${match[2]}${match[3] ? ` · 返回模型 ${match[3]}${match[4] ? "（与请求 ID 不同，请核对服务端映射）" : ""}` : " · 服务未返回模型 ID"}${match[6] ? " · 输出已截断" : ""}`;
+  match = value.match(/^App generation test succeeded(, settings not saved yet)?; the actual model is set by the Dify app\.$/);
+  if (match) return `应用生成测试成功${match[1] ? "，配置尚未保存" : ""}；实际模型由 Dify 应用配置决定。`;
+  match = value.match(/^Leave empty to use (\S+)\.$/);
+  if (match) return `留空使用 ${match[1]}。`;
+  match = value.match(/^The official default address is (\S+); for other services, follow their instructions\.$/);
+  if (match) return `官方默认地址为 ${match[1]}；其他服务按其说明填写。`;
+  match = value.match(/^([\s\S]+) After changing the address or interface type, enter a key that works with them again\.$/);
+  if (match) return `${zhUi[match[1]] ?? translateDynamic(match[1])} 更换地址或接口类型后，需重新填写适用的密钥。`;
+  match = value.match(/^([\s\S]+) The key is stored only encrypted on the server and never shown again\.$/);
+  if (match) return `${zhUi[match[1]] ?? translateDynamic(match[1])} 密钥只在服务器加密保存，不回显。`;
+  match = value.match(/^Record the actual value: ([\s\S]+)$/);
+  if (match) return `请记录实际值：${match[1]}`;
+  match = value.match(/^Incompatible unit for the actual value: ([\s\S]+)$/);
+  if (match) return `实际值单位不兼容：${match[1]}`;
+  match = value.match(/^Confirm the mix card first: ([\s\S]+)$/);
+  if (match) return `请先确认配液卡：${match[1]}`;
+  match = value.match(/^The mix card’s values changed; confirm again: ([\s\S]+)$/);
+  if (match) return `配液卡数值已变化，请重新确认：${match[1]}`;
+  match = value.match(/^Address not on the allow list: (\S+)$/);
+  if (match) return `不在白名单内的地址：${match[1]}`;
+  match = value.match(/^(\S+) returned (\d{3})$/);
+  if (match) return `${match[1]} 返回 ${match[2]}`;
+  if (/^(?:local|protocols_io|europe_pmc): /.test(value)) {
+    const parts = value.split(/(?:；|; )(?=(?:local|protocols_io|europe_pmc): )/);
+    if (parts.every((part) => /^(?:local|protocols_io|europe_pmc): /.test(part))) return parts.map((part) => {
+      const [, id, message] = part.match(/^(local|protocols_io|europe_pmc): ([\s\S]*)$/)!;
+      return `${id}：${zhUi[message] ?? translateDynamic(message)}`;
+    }).join("；");
+  }
+  match = value.match(/^Edit (.+)$/);
   if (match) return `编辑 ${match[1]}`;
   match = value.match(/^New (Entry|Experiment|Result|Report|Protocol|Research Plan|Project)$/);
   if (match) return `新建${dynamicNouns[match[1]]}`;
+  match = value.match(/^Insert (\d{2}:\d{2}|\d{4}-\d{2}-\d{2} \d{2}:\d{2})$/);
+  if (match) return `插入 ${match[1]}`;
+  match = value.match(/^New from Protocol (.+?) v(\S+) “([\s\S]+)”\. Confirm the experiment name, research plan and date; once saved, the steps come from the Protocol and are ticked off one by one on the run page\.$/);
+  if (match) return `从规程 ${match[1]} v${match[2]}「${match[3]}」新建。先确认实验名称、所属研究计划和日期；保存后，步骤按规程生成，在执行页逐步勾选。`;
+  match = value.match(/^Systems for this run not confirmed: ([\s\S]+)$/);
+  if (match) return `尚未确认本次体系：${match[1]}`;
+  match = value.match(/^([\s\S]+) was generated by method design; its method card has (\d+) unverified items\. Check the original first$/);
+  if (match) return `${match[1]} 由方案设计生成，方法卡有 ${match[2]} 条未核实，请先核对原文`;
+  match = value.match(/^([\s\S]+) was generated by AI from instructions; (\d+) lines have no source in the original\. Check the original first$/);
+  if (match) return `${match[1]} 由 AI 整理说明书生成，有 ${match[2]} 行未在原文中找到出处，请先核对原文`;
+  match = value.match(/^Run quantity not filled in: (.+?) · ([\s\S]+)$/);
+  if (match) return `尚未填写${zhRunQuantityLabel(match[1])}：${match[2]}`;
+  match = value.match(calculationToConfirm);
+  if (match) return `计算待确认：${match[1]}${match[2] ? `（${zhStepRef(match[2])}）` : ""}`;
+  match = value.match(/^Stock short: ([\s\S]+) \(in stock (.+?), this run needs about (.+)\)$/);
+  if (match) return `库存不足：${match[1]}（库存 ${match[2]}，本次约需 ${match[3]}）`;
+  match = value.match(/^Stock (.+), short of this run’s use$/);
+  if (match) return `库存 ${match[1]}，不足本次用量`;
+  match = value.match(/^(.+?) · used in ([\s\S]+)$/);
+  if (match) return `${zhPending(match[1])} · ${match[2].split("; ").map(zhConsumptionSource).join("；")}`;
+  match = value.match(/^(.+) · (Confirmed|Not confirmed)$/);
+  if (match) return `${zhPending(zhRunQuantity(match[1]))} · ${match[2] === "Confirmed" ? "已确认" : "待确认"}`;
+  match = value.match(/^Not filled in: (.+)$/);
+  if (match) return `未填写${zhRunQuantityLabel(match[1])}`;
+  if (/^(?:Required|Filled in) at run time: /.test(value)) {
+    return value.split(/; (?=(?:Required|Filled in) at run time: )/).map((piece) => {
+      const parts = piece.match(runReminder);
+      return parts ? `${parts[1] === "Required" ? "执行时必填" : "执行时填写"}：${zhStepRef(parts[2])} · ${parts[3]}` : piece.replace(/^Required at run time: /, "执行时必填：").replace(/^Filled in at run time: /, "执行时填写：");
+    }).join("；");
+  }
+  match = value.match(stepRefList);
+  if (match) return `${match[1] ? `${match[1].split(" · ").map(zhEquipmentPart).join(" · ")} · ` : ""}${match[2].split(", ").map(zhStepRef).join("、")}`;
+  match = value.match(equipmentLine);
+  if (match) return `${zhUi[match[1]]} · ${match[2]}`;
+  match = value.match(/^Ready (\d+)\/(\d+)$/);
+  if (match) return `已备 ${match[1]}/${match[2]}`;
+  match = value.match(/^Note for ([\s\S]+)$/);
+  if (match) return `${match[1]} 备注`;
+  match = value.match(/^Deduct (.+)$/);
+  if (match) return `扣减 ${match[1]}`;
+  match = value.match(/^Actual amount of (.+)$/);
+  if (match) return `${match[1]} 实际用量`;
+  match = value.match(/^Stock item for (.+)$/);
+  if (match) return `${match[1]} 库存`;
+  match = value.match(/^(.+) · Lot not recorded( \(not precisely tracked\))?$/);
+  if (match) return `${match[1]} · 批号未记录${match[2] ? '（非精确管理）' : ''}`;
+  match = value.match(/^(.+) \(not precisely tracked\)$/);
+  if (match) return `${match[1]}（非精确管理）`;
+  match = value.match(/^Complete and record use \((\d+)\)$/);
+  if (match) return `完成并记录用量（${match[1]} 项）`;
+  match = value.match(/^(.+) · Version comparison$/);
+  if (match) return `${match[1]} · 版本对比`;
+  match = value.match(/^Step (\d+) · details$/);
+  if (match) return `第 ${match[1]} 步 · 说明`;
+  match = value.match(/^Block (\d+)$/);
+  if (match) return `第 ${match[1]} 块`;
+  match = value.match(/^Not filled \((.*)\)$/);
+  if (match) return `未填（${match[1]}）`;
+  match = value.match(/^Calculated \((.+) → (.+)\)$/);
+  if (match) return `计算（${match[1]} → ${match[2]}）`;
+  match = value.match(/^By system: ([\s\S]+)$/);
+  if (match) return match[1].split('; ').map(part => { const [when, ...rest] = part.split(' → '); return `${zhSystemCondition(when)}：${rest.join(' → ').replace(/^Not filled \((.*)\)$/, '未填（$1）')}`; }).join('；');
+  match = value.match(/^(.+) → (.+) \(step (\d+)((?: · .+)?)\)$/);
+  if (match) return `${match[1]} → ${match[2]}（第 ${match[3]} 步${match[4]}）`;
+  match = value.match(/^Step (\d+) · (Method change|Timing|Material or reagent|Equipment|Incident|Abnormal|Other)$/);
+  if (match) return `第 ${match[1]} 步 · ${deviationKindsZh[match[2]]}`;
+  match = value.match(/^(.+) · based on v(\S+)$/);
+  if (match) return `${match[1]} · 基于 v${match[2]}`;
+  match = value.match(/^This Protocol already has a newer v(\S+); the revision still derives from v(\S+), the version this experiment used\. Check it in Compare versions after saving\.$/);
+  if (match) return `这份规程已有更新的 v${match[1]}；修订仍从本次实验用过的 v${match[2]} 派生，保存后可在版本对比里核对。`;
+  match = value.match(/^(.+) is a Protocol in the old format: open it in the editor and save it before revising$/);
+  if (match) return `${match[1]} 是旧格式规程，请先在编辑器中打开并保存，再整理`;
+  match = value.match(/^(\d+)-well plate$/);
+  if (match) return `${match[1]} 孔板`;
+  match = value.match(/^(\d+)-well(?: · colored by (.+))?$/);
+  if (match) return `${match[1]} 孔${match[2] ? ` · 按${match[2]}着色` : ''}`;
+  match = value.match(/^(.+), (\d+) marked wells$/);
+  if (match) return `${match[1]}，${match[2]} 个已标记的孔`;
+  match = value.match(/^Systems adopted · (.+)$/);
+  if (match) return `本次采用体系 · ${match[1]}`;
+  match = value.match(/^(\d+) calculations? (?:is|are) confirmed in the steps that use them: click a calculation result in a step to fill it in and confirm\.$/);
+  if (match) return `${match[1]} 项计算在使用它的步骤里确认：点步骤中的计算结果即可填写并确认。`;
+  match = value.match(/^Continuing from: ([\s\S]*)\. Operations completed earlier are not copied as completed in this run\.$/);
+  if (match) return `本次继续位置：${match[1]}。此前已完成操作并未复制为本次完成。`;
+  match = value.match(/^Original actual value: ([\s\S]+)$/);
+  if (match) return `原实际记录：${match[1]}`;
+  match = value.match(/^Original note: ([\s\S]+)$/);
+  if (match) return `原备注：${match[1]}`;
+  match = value.match(/^(.+) · Run quantities$/);
+  if (match) return `${match[1]} · 本次数量`;
+  match = value.match(/^Groups: ([\s\S]+)\. Shared preparation counts once; each group confirms its own systems\.$/);
+  if (match) return `实验组：${match[1]}。共同准备只计一次，各组分别确认体系。`;
+  match = value.match(/^Group (\d+)$/);
+  if (match) return `第 ${match[1]} 组`;
+  match = value.match(/^Method cards are summarized by ([\s\S]+?); every statement is checked against the original, and those that don’t match are marked unverified\.$/);
+  if (match) return `方法卡由 ${match[1]} 归纳；每条表述都会与原文核对，对不上的标为未核实。`;
+  match = value.match(/^No model connected \(([\s\S]+)\): you can still search and fetch the original texts, and fill in method cards by hand\.$/);
+  if (match) return `未连接模型（${zhUi[match[1]] ?? translateDynamic(match[1])}）：仍可检索与抓取原文，方法卡手工填写。`;
+  match = value.match(/^(?![\s\S]* → )(?:Sample: ([\s\S]+?)(?: · |$))?(?:Conditions: ([\s\S]+))?$/);
+  if (match) return [match[1] ? `样本：${match[1]}` : "", match[2] ? `条件：${match[2]}` : ""].filter(Boolean).join(" · ");
+  match = value.match(/^Add “([\s\S]+)” to the comparison$/);
+  if (match) return `选择 ${match[1]}`;
+  match = value.match(/^(?:([\s\S]+) · )?License: ([\s\S]+)$/);
+  if (match) return `${match[1] ? `${match[1]} · ` : ""}许可：${match[2]}`;
+  match = value.match(/^Summarize as a method card \(([\s\S]+)\)$/);
+  if (match) return `归纳为方法卡（${match[1]}）`;
+  match = value.match(/^Fetch failed: ([\s\S]+)$/);
+  if (match) return `抓取失败：${match[1]}`;
+  match = value.match(/^(Pasted|Fetched) (\d+) characters((?: · [\s\S]+)?)$/);
+  if (match) return `${match[1] === "Pasted" ? "已粘贴" : "已抓取"} ${match[2]} 字${match[3]}`;
+  match = value.match(/^Search (JoVE|Bio-protocol|protocols\.io website|Google Scholar) ↗$/);
+  if (match) return `在 ${match[1] === "protocols.io website" ? "protocols.io 网页" : match[1]} 搜索 ↗`;
+  match = value.match(/^(\d+) statements?$/);
+  if (match) return `${match[1]} 条`;
+  match = value.match(/^· takes ([\s\S]+)$/);
+  if (match) return `· 用时 ${match[1]}`;
+  match = value.match(/^Summarized by ([\s\S]+?); (?:(\d+) statements? (?:has|have) no support in the original|every statement is supported by the original)$/);
+  if (match) return `${match[1].replace(/^the model(?= · |$)/, "模型")} 归纳，${match[2] ? `${match[2]} 条未在原文找到依据` : "每条都在原文找到依据"}`;
+  match = value.match(/^([\s\S]+) \(one per line\)$/);
+  if (match) return `${zhUi[match[1]] ?? match[1]}（每行一条）`;
+  match = value.match(/^Draft Protocol · ([\s\S]+) v(\S+) \(([a-z_]+)\)$/);
+  if (match) return `规程草稿 · ${match[1]} v${match[2]}（${match[3] === "draft" ? "草稿" : match[3]}）`;
+  match = value.match(/^Method card generated; (\d+) unverified$/);
+  if (match) return `方法卡已生成，${match[1]} 条未核实`;
+  match = value.match(/^Added “([\s\S]+)”, (\d+) characters$/);
+  if (match) return `已加入「${match[1]}」，${match[2]} 字`;
+  match = value.match(/^The model service “([\s\S]+)” can’t summarize; fill in the method card by hand$/);
+  if (match) return `模型服务“${match[1]}”不支持归纳；请手工填写方法卡`;
+  match = value.match(/^The model service “([\s\S]+)” can’t organize text$/);
+  if (match) return `模型服务“${match[1]}”不支持整理文本`;
+  match = value.match(/^· (Word|PDF|Text)(?: · (\d+) pages?)? · (\d+) characters$/);
+  if (match) return `· ${match[1] === "Text" ? "文字" : match[1]}${match[2] ? ` · ${match[2]} 页` : ""} · ${match[3]} 字`;
+  match = value.match(/^organized \(([\s\S]+?)(, redone once after the check)?\): (Converted to step blocks: [\s\S]+)$/);
+  if (match) return `整理（${match[1] === "the model" ? "模型" : match[1]}${match[2] ? "，核对后重做了一次" : ""}）：${zhConversionSummary(match[3])}`;
+  match = value.match(/^(Read as written \(no AI\)|Read from the edited text): (Converted to step blocks: [\s\S]+)$/);
+  if (match) return `${match[1] === "Read from the edited text" ? "按修改后的文字读取" : "按写法读取（未用 AI）"}：${zhConversionSummary(match[2])}`;
+  match = value.match(/^Steps for some samples only: ([\s\S]+)$/);
+  if (match) return `只对部分样本的步骤：${match[1].split("; ").map((step) => step.replace(/^Step (\d+) · only /, "第 $1 步 · 仅")).join("；")}`;
+  match = value.match(/^Kept as text \(sizes\): ([\s\S]+)$/);
+  if (match) return `按规格保持为文字：${match[1].split(", ").join("、")}`;
+  match = value.match(/^(\d+) result templates?$/);
+  if (match) return `${match[1]} 个结果模板`;
+  match = value.match(/^(\d+) lines? (?:has|have) no source in the original and will be marked unverified when saved:$/);
+  if (match) return `${match[1]} 行在原文中找不到出处，保存后会标为未核实：`;
+  match = value.match(/^(?:Condition “[^”]*”: )?(?:No source in the original \(|Numbers not in the original: |Record item not found in the original: )/);
+  if (match) return value.split("; ").map(zhRecognitionProblem).join("；");
+  match = value.match(/^Each of the (\d+) lines has a source in the original, and every number comes from it\.$/);
+  if (match) return `${match[1]} 行都在原文中找到出处，数值都来自原文。`;
+  match = value.match(/^(.*?)v(\S+) · (Draft|Active|Retired|Archived|Ready for review|Reviewed) · (.+) · (\d+) steps?$/);
+  if (match) return `${match[1]}v${match[2]} · ${protocolStatesZh[match[3]]} · ${match[4] === "Protocol library" ? "规程库" : match[4]} · ${match[5]} 步`;
+  match = value.match(/^v(\S+) · (\d+) steps?$/);
+  if (match) return `v${match[1]} · ${match[2]} 步`;
+  match = value.match(/^Position (\d+)$/);
+  if (match) return `第 ${match[1]} 个`;
+  match = value.match(/^Remove (.+) from the chosen Protocols$/);
+  if (match) return `移除 ${match[1]}`;
+  match = value.match(/^Latest version v(\S+) is chosen; open earlier versions if you need one\.$/);
+  if (match) return `最新版本 v${match[1]} 已选；需要时可展开历史版本。`;
+  match = value.match(/^(\d+) matching versions$/);
+  if (match) return `匹配到 ${match[1]} 个版本`;
+  match = value.match(/^Show earlier versions \((\d+)\)$/);
+  if (match) return `显示历史版本（${match[1]}）`;
+  match = value.match(/^This draft is based on ([\s\S]+); the server version is ([\s\S]+)\. Copy the paragraphs you want to keep, then open the server record to compare\. Nothing is retried here with the new version number\.$/);
+  if (match) return `本机草稿基于 ${match[1]}；服务器版本为 ${match[2]}。请复制需要保留的段落，再打开服务器记录核对。此处不会自动采用新版本号重试。`;
+  match = value.match(/^This title: ([\s\S]*) · Server title: ([\s\S]*)\. Files added here stay in the editor; check them too\.$/);
+  if (match) return `本机标题：${match[1]} · 服务器标题：${match[2]}；本机文件仍保留在编辑区，请一并核对。`;
+  match = value.match(/^Recorded (.+) · Author: (.+) · Modified (.+)$/);
+  if (match) return `记录于 ${match[1]} · 作者：${match[2] === "not recorded" ? "未记录" : match[2]} · 修改于 ${match[3]}`;
+  match = value.match(/^Experiment \/ observation time: (.+)$/);
+  if (match) return `实验／观察时间：${match[1] === "not recorded" ? "未记录" : match[1].replace(/ \(date only\)$/, "（仅日期）")}`;
+  match = value.match(/^Preview by (.+)$/);
+  if (match) return `预览：${zhSystemLabel(match[1])}`;
+  match = value.match(/^Read as (.+): the rest folds away$/);
+  if (match) return `按${zhSystemLabel(match[1])}阅读：其余内容折叠`;
+  match = value.match(/^Select (.+) for deduction$/);
+  if (match) return `选择扣减 ${match[1]}`;
+  match = value.match(/^Container taken: (.+)$/);
+  if (match) return `已领实物：${match[1]}`;
+  match = value.match(/^Holder: (.+)$/);
+  if (match) return `持有人：${match[1] === "see the container record" ? "请查看实物记录" : match[1]}`;
+  match = value.match(/^From the Protocol: (.+)$/);
+  if (match) return `依据规程：${match[1] === "the saved version rule" ? "已保存的版本规则" : match[1]}`;
+  match = value.match(/^(.+) · Lot not recorded · (\w{6})$/);
+  if (match) return `${match[1]} · 批号未记录 · ${match[2]}`;
+  match = value.match(/^(.+) · Holder not recorded$/);
+  if (match) return `${match[1]} · 持有人未记录`;
+  match = value.match(/^Review (\d+) selected deductions$/);
+  if (match) return `核对所选 ${match[1]} 项扣减`;
+  match = value.match(/^(.+) — deduct (not confirmed|\S+) (\S*)((?:; .+)?)$/);
+  if (match) return `${match[1]}：${match[2] === "not confirmed" ? "未确认" : match[2]} ${match[3]}${match[4].replace(/^; book adjustment (.+) \(corrected use, not a physical return\)$/, "；账面调整 $1（更正用量，不代表实物退库）").replace(/^; units are not compatible, cannot deduct$/, "；单位不兼容，不能扣减")}`;
+  match = value.match(/^The service “(.+)” is turned off\.$/);
+  if (match) return `服务“${match[1]}”已停用。`;
+  match = value.match(/^The service “(.+)” has no saved API key yet\.$/);
+  if (match) return `服务“${match[1]}”尚未保存 API 密钥。`;
+  match = value.match(/^(\d+) cycles$/);
+  if (match) return `${match[1]} 个循环`;
+  match = value.match(/^Cycles in stage (\d+)$/);
+  if (match) return `第 ${match[1]} 段的循环次数`;
+  match = value.match(/^Delete stage (\d+)$/);
+  if (match) return `删除第 ${match[1]} 段`;
+  match = value.match(/^Delete program step (\d+)$/);
+  if (match) return `删除第 ${match[1]} 步`;
+  match = value.match(/^Photo for step (\d+) · ([\s\S]*)$/);
+  if (match) return `照片归属：第 ${match[1]} 步 · ${match[2]}`;
+  match = value.match(/^“([\s\S]+)”: ((?:\d+ (?:parameters? takes?|applicability rules? uses?) [^;]+)(?:; \d+ applicability rules? uses? [^;]+)?)\.$/);
+  if (match) return `“${match[1]}”：${match[2].split("; ").map(zhDeletionPart).join("；")}。`;
+  match = value.match(/^Delete option “([\s\S]+)”\?$/);
+  if (match) return `删除选项“${match[1]}”？`;
+  match = value.match(/^Delete “([\s\S]+)”\?$/);
+  if (match) return `删除“${match[1]}”？`;
+  match = value.match(/^Editing (.+)$/);
+  if (match) return `编辑${match[1]}`;
+  match = value.match(/^Open (.+) for editing$/);
+  if (match) return `编辑${match[1]}`;
+  match = value.match(/^Change the symbol of (.+)$/);
+  if (match) return `更换${match[1]}的符号`;
+  match = value.match(/^Change the color of (.+)$/);
+  if (match) return `更换${match[1]}的颜色`;
+  match = value.match(/^Option name: (.+)$/);
+  if (match) return `选项名称：${match[1]}`;
+  match = value.match(/^Delete option (.+)$/);
+  if (match) return `删除选项${match[1]}`;
+  match = value.match(/^Lens by (.+)$/);
+  if (match) return `透镜：${zhSystemLabel(match[1])}`;
+  match = value.match(/^Only (.+): fade the rest$/);
+  if (match) return `只看${zhSystemLabel(match[1])}：其余淡化`;
+  match = value.match(/^Running (as a home screen app|in a browser tab); notification permission (granted|denied|not requested yet|not available here)\. This web version only alerts while the page is open; background Web Push is off\. For lock-screen reminders use the installed, authorized watch app, and check it on a real device\.$/);
+  if (match) return `网页：${match[1] === "as a home screen app" ? "主屏幕应用" : "浏览器页面"}；通知权限：${notificationPermissionZh[match[2]]}。本版网页仅提供前台到时提示，未启用后台 Web Push；锁屏提醒请使用已安装并授权的手表端，并另做真机验证。`;
+  match = value.match(/^Not saved on this device · ([\s\S]+)$/);
+  if (match) return `本机保存失败：${match[1]}`;
+  match = value.match(/^(\d+) records? on this device for this step, waiting to be checked or synced\.$/);
+  if (match) return `本步骤有 ${match[1]} 条本机记录等待核对或同步。`;
+  match = value.match(/^Draft value for ([\s\S]+) \(([^()]*)\) · ([^·]*)$/);
+  if (match) return `${match[1]}：${match[3] === "not filled in" ? "未填写" : match[3]} ${match[2]}`;
+  match = value.match(/^Earlier actual value · ([^·]*?)( · check the unit of the original operation)?$/);
+  if (match) return `此前实际值：${match[1] === "not filled in" ? "未填写" : match[1]}${match[2] ? "（请核对原操作单位）" : ""}`;
+  match = value.match(/^Skip reason not submitted · ([\s\S]*)$/);
+  if (match) return `未提交原因：${match[1]}`;
+  match = value.match(/^Skipped · ([\s\S]*) \(not counted as complete\)$/);
+  if (match) return `已跳过 · ${match[1]}（不计为完成）`;
+  match = value.match(/^Last saved value ([\s\S]+)$/);
+  if (match) return `上次保存：${match[1]}`;
+  match = value.match(/^(\d+) records? on this device waiting to sync, (\d+) in conflict\. The completion count below does not cover them all yet\.$/);
+  if (match) return `本机待同步 ${match[1]} 条，其中冲突 ${match[2]} 条。下方完成计数尚未代表全部已同步。`;
+  match = value.match(/^Required (\d+)\/(\d+) done · optional (\d+)\/(\d+) · skipped (\d+) · to be determined (\d+)$/);
+  if (match) return `必需操作：${match[1]}/${match[2]} 完成 · 可选：${match[3]}/${match[4]} · 跳过：${match[5]} · 待确定：${match[6]}`;
+  match = value.match(/^(?:([\s\S]+?) )?This run’s use is recorded( and deducted from stock)?\.$/);
+  if (match) return `${match[1] ? `${zhUi[match[1]] ?? match[1]} ` : ""}已记录本次用量${match[2] ? "并扣减库存" : ""}。`;
+  match = value.match(/^The run is complete, but not all of its use was written · ([\s\S]+)$/);
+  if (match) return `实验已完成，但用量未全部写入：${zhUi[match[1]] ?? translateDynamic(match[1])}`;
+  match = value.match(/^Some deductions did not go through · ([\s\S]*)\. The use records are kept; retry under “Reagents and consumables used in this run”\.$/);
+  if (match) return `部分扣减未完成：${match[1].split("; ").join("；")}。使用记录已保留，可在“本次使用的试剂与耗材”中重试。`;
+  match = value.match(/^Per ([\s\S]+) · ([\d.]+)% overage$/);
+  if (match) return `每${zhPer(match[1])} · 余量 ${match[2]}%`;
+  match = value.match(/^([\d.]+)% overage$/);
+  if (match) return `余量 ${match[1]}%`;
+  match = value.match(/^This run’s (number of (?:reactions|wells|samples|tubes)|[\s\S]*数)$/);
+  if (match) return `本次${zhRunQuantityLabel(match[1])}`;
+  match = value.match(/^Fill in the ([\s\S]+) under “Preparation”, or enter a quantity for this card here for now\.$/);
+  if (match) return `请在“实验准备”填写${zhRunQuantityLabel(match[1])}，或在此临时填写本卡的数量。`;
+  match = value.match(/^This card uses ([\d.]+) ([\s\S]+), not the ([\d.]+) in Preparation\.$/);
+  if (match) return `本卡按 ${match[1]} ${zhPer(match[2])}，与实验准备的 ${match[3]} 不同。`;
+  match = value.match(/^Confirmed · (\d{1,2}:\d{2})$/);
+  if (match) return `已确认 · ${match[1]}`;
+  match = value.match(/^Added ([\s\S]+); tap to undo$/);
+  if (match) return `${match[1]}已加，点按撤销`;
+  match = value.match(/^Cross off ([\s\S]+) once added$/);
+  if (match) return `${match[1]}加完后划掉`;
+  match = value.match(/^At run time the totals are worked out from this run’s ([\s\S]+) and the aliquoting is written out\.$/);
+  if (match) return `执行时按本次${zhRunQuantityLabel(match[1])}换算合计并写出分装操作。`;
+  match = value.match(/^Aliquot ([\s\S]+?) of premix per ([\s\S]+?)(?:, then add ([\s\S]+))?\.$/);
+  if (match) return `每${zhPer(match[2])}分装预混液 ${match[1]}${match[3] ? `，再加 ${match[3].split(", ").join("、")}` : ""}。`;
+  match = value.match(/^Add ([\s\S]+) per ([\s\S]+?)\.$/);
+  if (match) return `每${zhPer(match[2])}加 ${match[1].split(", ").join("、")}。`;
+  match = value.match(/^([\s\S]+) (total|per [\s\S]+?) (\S+ \S+) is below the pipetting minimum of (\S+) µL; dilute it first or increase the ([\s\S]+)\.$/);
+  if (match) return `${match[1]}${match[2] === "total" ? "合计" : `每${zhPer(match[2].slice(4))}`} ${match[3]}，低于移液下限 ${match[4]} µL；可先稀释或增加${zhRunQuantityLabel(match[5])}。`;
+  match = value.match(/^([\s\S]+) · (\S+) ([\s\S]+?) \(([\d.]+)% overage\)$/);
+  if (match) return `${match[1]} · ${match[2]} ${zhPer(match[3])}（余量 ${match[4]}%）`;
+  match = value.match(/^([\s\S]+) \(add separately\)$/);
+  if (match) return `${match[1]}（单独加）`;
+  match = value.match(/^Not in the premix; added to each ([\s\S]+) on its own$/);
+  if (match) return `不进预混液，每${zhPer(match[1])}单独加入`;
+  match = value.match(/^Delete component ([\s\S]+)$/);
+  if (match) return `删除${match[1]}`;
+  match = value.match(/^Write the amount per ([\s\S]+); it can differ by system\. At run time it is scaled by this run’s ([\s\S]+) and the overage, and the aliquoting is written out\.$/);
+  if (match) return `用量写每${zhPer(match[1])}的量，可以按体系取值；执行时按本次${zhRunQuantityLabel(match[2])}和余量换算合计，并写出分装操作。`;
+  match = value.match(/^Pick the amounts to mix together; totals are worked out per ([\s\S]*)\. Recorded for this run only\.$/);
+  if (match) return `选几个用量一起配，按每${zhPer(match[1])}的量换算合计。只记入本次执行。`;
+  match = value.match(/^· (\d+) components?$/);
+  if (match) return `· ${match[1]} 个组分`;
+  match = value.match(/^· (\d+) amounts? (?:was|were) deleted in this version; fill (?:it|them) in again after adding$/);
+  if (match) return `· ${match[1]} 个用量在此版本中已删除，加入后需重新填写`;
+  match = value.match(/^System (\d+)$/);
+  if (match) return `体系 ${match[1]}`;
+  match = value.match(/^([\s\S]+?): ([\s\S]+?) → ([\s\S]+?)(?: \((kept|confirm by hand)\))?(?:, (?:below the pipetting minimum of (\S+) µL; use a premix or another system|(cell numbers, enzyme units and the like don’t scale; confirm by hand)))?$/);
+  if (match) return `${match[1]}：${match[2]} → ${match[3]}${match[4] ? `（${match[4] === "kept" ? "保持" : "请人工确认"}）` : ""}${match[5] ? `，低于移液下限 ${match[5]} µL，建议配预混液或换体系` : match[6] ? "，细胞数、酶活单位等不按比例换算，请人工确认" : ""}`;
+  match = value.match(/^Per ([\s\S]*[\u3400-\u9fff][\s\S]*)$/);
+  if (match) return `每${match[1]}`;
+  match = value.match(/^From (\S+)$/);
+  if (match) return `来自 ${match[1]}`;
+  match = value.match(/^: ([\s\S]+)$/);
+  if (match) return `：${zhUi[match[1]] ?? match[1]}`;
+  match = value.match(readBackLine);
+  if (match) return zhReadBack(value);
   match = value.match(/^Filter by (.+)$/);
   if (match) return `按${zhUi[match[1]] ?? match[1]}筛选`;
   match = value.match(/^Updated (.+)$/);
@@ -1899,8 +3360,6 @@ function translateDynamic(value: string): string {
   if (match) return `记录于 ${translateDynamic(match[1])} · 已重试 ${match[2]} 次`;
   match = value.match(/^(.+) saved on this device · waiting to sync\.$/);
   if (match) return `${match[1]} 已保存在本机 · 等待同步。`;
-  match = value.match(/^(\d+) primary runs?$/);
-  if (match) return `${match[1]} 次主要实验`;
   match = value.match(/^(\d+) experiments?$/);
   if (match) return `${match[1]} 个实验`;
   match = value.match(/^(\d+) experiments? · (\d+) entries$/);
@@ -1911,8 +3370,8 @@ function translateDynamic(value: string): string {
   if (match) return `${match[1]} 个附件`;
   match = value.match(/^(\d+) links?$/);
   if (match) return `${match[1]} 个关联`;
-  match = value.match(/^(\d+) pending actions?$/);
-  if (match) return `${match[1]} 个待处理操作`;
+  match = value.match(/^(\d+) AI suggestions?$/);
+  if (match) return `${match[1]} 条 AI 建议`;
   match = value.match(/^(\d+) assigned items$/);
   if (match) return `${match[1]} 个已分配物品`;
   match = value.match(/^(\d+) movement references$/);
@@ -2014,6 +3473,9 @@ function translateDynamic(value: string): string {
   if (match) return `结构化${zhUi[match[1]] ?? match[1]}导入`;
   match = value.match(/^Export (.+) with stable field names$/);
   if (match) return `使用稳定字段名导出${zhUi[match[1]] ?? match[1]}`;
+  // A yes/no condition answered no (conditionTagLabel): "not fatty tissue" reads 非富脂组织.
+  match = value.match(/^not ([\s\S]+)$/);
+  if (match) return `非${zhSystemLabel(match[1])}`;
   return value;
 }
 

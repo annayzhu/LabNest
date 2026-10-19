@@ -3,17 +3,16 @@
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import Link from 'next/link';
-import { Button } from "@/components/ui/Button";
+import { AiButton, useAiStatus } from "@/components/AiAssistant";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
-import { requestAI, useAISettings } from "./useAISettings";
+import { requestAI } from "./useAISettings";
 
 type Outcome = { ok: boolean; message: string };
 
-/** Sends this entry's text to the connected model and files the result as pending proposed actions. */
-export function EntryAiProposeButton({ entryId, providerName }: { entryId: string; providerName?: string }) {
-  const status = useAISettings();
+/** Sends this entry's text to the connected model; the suggestions appear under the entry and run only once taken. */
+export function EntryAiProposeButton({ entryId }: { entryId: string }) {
+  const ai = useAiStatus();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome>();
@@ -42,8 +41,8 @@ export function EntryAiProposeButton({ entryId, providerName }: { entryId: strin
       setOutcome({
         ok: true,
         message: count
-          ? `${count} proposed action${count === 1 ? "" : "s"} added for review. Nothing was executed.`
-          : "The model found nothing actionable in this entry.",
+          ? `已在下方“AI 建议”列出 ${count} 条，采纳后才会执行。`
+          : "模型没有在这条记录里找到可执行的建议。",
       });
       router.refresh();
     } catch (error) {
@@ -56,11 +55,10 @@ export function EntryAiProposeButton({ entryId, providerName }: { entryId: strin
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button size="sm" variant="primary" onClick={propose} disabled={busy || !status.connected} title={`Send this entry's text to ${status.saved?.availability.providerName ?? providerName ?? "the model"}`}>
+      <AiButton size="sm" aria-busy={busy} onClick={propose} disabled={busy} title={`Send this entry's text to ${ai.saved?.availability.providerName ?? "the model"}`}>
         <Sparkles className="h-4 w-4" aria-hidden />
         {busy ? "Asking model…" : "Propose with AI"}
-      </Button>
-      {!status.connected ? <Link href="/ai" className="focus-ring text-xs text-moss underline">配置并启用 AI</Link> : null}
+      </AiButton>
       {outcome ? (
         <span role="status" className={`max-w-xs text-right text-xs leading-5 ${outcome.ok ? "text-success" : "text-error"}`}>{outcome.message}</span>
       ) : null}

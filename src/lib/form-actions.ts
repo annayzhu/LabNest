@@ -17,3 +17,6 @@ export function formActionErrorMessage(error: unknown, fallback: string, uniqueC
   const message = error instanceof Error ? error.message.trim() : "";
   return message || fallback;
 }
+
+/** The Chinese half of a bilingual server message ("中文 / English") for a Chinese interface. */
+export const readableError = (message: string) => message.split(' / ')[0];

@@ -1,9 +1,11 @@
-import { formatQuantity } from './calculators/quantity-format';
 import { convert, normalizeUnit, units } from './calculators/quantities';
+import { isEmptyTable } from './protocol-document';
 import { protocolSystemsSchema, type ProtocolCondition, type ProtocolSystems } from './protocol-systems-schema';
 import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document';
 import { executionBlockText, projectProtocolExecution } from './protocol-execution';
 import { calculate, type CalculatorResult } from './calculators/calculator-engine';
+import { adoptableCalculation, calculationRequest, calculationIssues, protocolCalculations, readableCalculationError } from './protocol-calculations';
+import { chipParameterIds, mapChipReferences, optionMarks, parameterDisplayName, parameterLongName, protocolChipText } from './protocol-chips';
 export type { ProtocolSystems, ProtocolCondition } from './protocol-systems-schema';
 
 export type Applicability = 'applicable' | 'not-applicable' | 'unknown';
@@ -18,23 +20,29 @@ export type ProtocolSystemResolution = {
   rules: Record<string, Applicability>;
   issues: Array<{ code: string; targetId: string; message: string }>;
 };
+/** A value a step records at the bench: one its rules ask for, or (`source: 'chip'`) one of the step's chips. */
+export type StepActualField = ProtocolSystems['rules'][number]['actualFields'][number] & { source?: 'chip' };
 
 export function validateProtocolSystems(systems: ProtocolSystems): ProtocolSystemResolution['issues'] {
   const issues: ProtocolSystemResolution['issues'] = [];
   const add = (code: string, targetId: string, message: string) => issues.push({ code, targetId, message });
-  const unique = (ids: string[]) => ids.forEach((id, index) => { if (ids.indexOf(id) !== index) add('duplicate-id', id, `重复标识：${id} / Duplicate identifier`); });
+  const unique = (ids: string[]) => ids.forEach((id, index) => { if (ids.indexOf(id) !== index) add('duplicate-id', id, '体系、参数或条件的内部标识重复，请删除重复项 / Duplicate identifier'); });
   unique(systems.dimensions.map(d => d.id)); unique(systems.parameters.map(p => p.id)); unique(systems.rules.map(r => r.id));
   systems.dimensions.forEach(d => unique(d.options.map(o => o.id)));
   const condition = (when: ProtocolCondition, targetId: string) => {
     for (const predicate of [...(when.all ?? []), ...(when.any ?? []), ...(when.not ?? [])]) {
-      if (!systems.dimensions.find(d => d.id === predicate.dimensionId)?.options.some(o => o.id === predicate.optionId)) add('invalid-reference', targetId, `条件引用不存在：${predicate.dimensionId}/${predicate.optionId}`);
+      if (!systems.dimensions.find(d => d.id === predicate.dimensionId)?.options.some(o => o.id === predicate.optionId)) add('invalid-reference', targetId, '条件引用了已删除的体系或选项 / Condition refers to a removed option');
     }
   };
   for (const parameter of systems.parameters) {
     if (parameter.source.kind === 'lookup') { unique(parameter.source.values.map(v => v.id)); parameter.source.values.forEach(v => condition(v.when, parameter.id)); }
-    if (parameter.source.kind === 'calculator') for (const id of Object.values(parameter.source.inputs)) {
-      if (!systems.parameters.some(p => p.id === id)) add('invalid-reference', parameter.id, `计算输入引用不存在：${id}`);
+    if (parameter.source.kind === 'calculator') {
+      for (const id of Object.values(parameter.source.inputs)) if (!systems.parameters.some(p => p.id === id)) add('invalid-reference', parameter.id, `${parameterDisplayName(parameter)}：计算输入已删除 / Calculation input removed`);
+      calculationIssues(parameter.source.calculatorId, parameter.source.output, parameter.source.inputs, parameterDisplayName(parameter)).forEach(message => add('invalid-reference', parameter.id, message));
     }
+  }
+  for (const tool of systems.tools ?? []) for (const field of tool.fields) {
+    if (!systems.parameters.some(p => p.id === field.parameterId)) add('invalid-reference', tool.id, '设备参数块的字段已删除 / Tool field removed');
   }
   const visiting = new Set<string>(), visited = new Set<string>();
   const visit = (id: string) => {
@@ -48,7 +56,7 @@ export function validateProtocolSystems(systems: ProtocolSystems): ProtocolSyste
   systems.parameters.forEach(p => visit(p.id));
   for (const rule of systems.rules) {
     condition(rule.when, rule.id);
-    for (const id of [...rule.parameterIds, ...(rule.timerParameterId ? [rule.timerParameterId] : [])]) if (!systems.parameters.some(p => p.id === id)) add('invalid-reference', rule.id, `参数引用不存在：${id}`);
+    for (const id of [...rule.parameterIds, ...(rule.timerParameterId ? [rule.timerParameterId] : [])]) if (!systems.parameters.some(p => p.id === id)) add('invalid-reference', rule.id, '条件绑定的参数已删除 / Condition refers to a removed parameter');
     if (rule.timerParameterId && units[normalizeUnit(systems.parameters.find(p => p.id === rule.timerParameterId)?.unit ?? '')]?.dimension !== 'time') add('incompatible-unit', rule.id, '计时参数必须使用时间单位 / Timer requires a time unit');
   }
   for (const targetId of new Set(systems.rules.filter(r => r.timerParameterId).map(r => r.targetId))) {
@@ -79,31 +87,32 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
   const result: ProtocolSystemResolution = { parameters: {}, rules: {}, issues: validateProtocolSystems(systems) };
   const issue = (code: string, targetId: string, message: string) => result.issues.push({ code, targetId, message });
   for (const [key, value] of Object.entries(selections)) {
-    if (!systems.dimensions.find(d => d.id === key)?.options.some(o => o.id === value)) issue('invalid-selection', key, `无效选择：${key} / Invalid selection`);
+    if (!systems.dimensions.find(d => d.id === key)?.options.some(o => o.id === value)) issue('invalid-selection', key, '选择的体系已不存在，请重新选择 / Invalid selection');
   }
   for (const restriction of systems.restrictions) if (evaluateProtocolCondition(restriction.when, selections) === 'applicable') issue('illegal-combination', restriction.id, restriction.message);
   for (const parameter of systems.parameters) {
     const { source } = parameter;
     if (source.kind === 'calculator') continue;
     let candidate: { value: number; unit: string; id?: string } | undefined;
+    const label = parameterDisplayName(parameter);
     let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit };
     if (source.kind === 'fixed' && source.value !== null) candidate = { ...source, value: source.value };
     if (source.kind === 'actual') candidate = actualValues[parameter.id];
     if (source.kind === 'lookup') {
       const matched = source.values.filter(row => evaluateProtocolCondition(row.when, selections) === 'applicable');
       const unresolved = source.values.some(row => evaluateProtocolCondition(row.when, selections) === 'unknown');
-      if (matched.length > 1) resolved = { ...resolved, status: 'conflict', message: `${parameter.label}：多条规则同时匹配 / Multiple matching values` };
-      else if (unresolved) resolved.message = `${parameter.label}：条件待确定 / Conditions incomplete`;
+      if (matched.length > 1) resolved = { ...resolved, status: 'conflict', message: `${label}：多条规则同时匹配 / Multiple matching values` };
+      else if (unresolved) resolved.message = `${label}：条件待确定 / Conditions incomplete`;
       else if (matched.length === 1 && matched[0].value !== null) candidate = { ...matched[0], value: matched[0].value };
-      else resolved.message = `${parameter.label}：没有适用值 / Missing value`;
+      else resolved.message = `${label}：没有适用值 / Missing value`;
     }
     if (candidate) {
       try { resolved = { status: 'resolved', value: convert(candidate.value, candidate.unit, parameter.unit), unit: normalizeUnit(parameter.unit), sourceId: candidate.id ?? source.kind }; }
-      catch { resolved = { ...resolved, status: 'invalid', message: `${parameter.label}：单位不兼容 / Incompatible units` }; }
+      catch { resolved = { ...resolved, status: 'invalid', message: `${label}：单位不兼容 / Incompatible units` }; }
     }
-    if (!units[normalizeUnit(parameter.unit)]) resolved = { ...resolved, status: 'invalid', message: `${parameter.label}：未知单位 / Unknown unit` };
+    if (!units[normalizeUnit(parameter.unit)]) resolved = { ...resolved, status: 'invalid', message: `${label}：未知单位 / Unknown unit` };
     result.parameters[parameter.id] = resolved;
-    if (resolved.status !== 'resolved') issue(`parameter-${resolved.status}`, parameter.id, resolved.message ?? `${parameter.label}：待填写 / Required value`);
+    if (resolved.status !== 'resolved') issue(`parameter-${resolved.status}`, parameter.id, resolved.message ?? `${label}：待填写 / Required value`);
   }
   const remaining = systems.parameters.filter(p => p.source.kind === 'calculator');
   for (let pass = 0; pass < systems.parameters.length && remaining.length; pass++) {
@@ -111,20 +120,23 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
       if (parameter.source.kind !== 'calculator') continue;
       if (Object.values(parameter.source.inputs).some(id => !result.parameters[id])) continue;
       remaining.splice(remaining.indexOf(parameter), 1);
-      let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit, message: `${parameter.label}：输入待确定 / Inputs incomplete` };
-      if (Object.values(parameter.source.inputs).every(id => result.parameters[id]?.status === 'resolved')) {
+      // Optional inputs (a second count, purity) may stay empty; required ones must be known first.
+      const source = parameter.source;
+      const waiting = protocolCalculations[source.calculatorId].inputs.filter(input => !input.optional && result.parameters[source.inputs[input.key] ?? '']?.status !== 'resolved').map(input => input.label);
+      let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit, message: `${parameterDisplayName(parameter)}：请先填写或确认 ${waiting.join('、')} / Inputs incomplete` };
+      if (!waiting.length) {
         try {
           const receipt = calculations[parameter.id];
           const fingerprint = protocolCalculationFingerprint(parameter, result.parameters);
           // Confirmed input/binding snapshots survive calculator code upgrades. Only
           // changed inputs invalidate them; historical adopted values are not recomputed.
-          if (receipt?.confirmedAt && calculationReceiptMatches(receipt.fingerprint, fingerprint) && Number.isFinite(receipt.value) && receipt.snapshot.status === 'valid') {
+          if (receipt?.confirmedAt && calculationReceiptMatches(receipt.fingerprint, fingerprint) && Number.isFinite(receipt.value) && adoptableCalculation(receipt.snapshot)) {
             resolved = { status: 'resolved', value: convert(receipt.value, receipt.unit, parameter.unit), unit: parameter.unit, sourceId: `${receipt.snapshot.calculatorId}:${receipt.snapshot.methodVersion}` };
           } else {
             previewProtocolCalculation(parameter, result.parameters); // Validate the new proposed inputs only.
-            resolved = { ...resolved, message: `${parameter.label}：需重新计算并确认 / Recalculate and confirm` };
+            resolved = { ...resolved, message: `${parameterDisplayName(parameter)}：需重新计算并确认 / Recalculate and confirm` };
           }
-        } catch (error) { resolved = { ...resolved, status: 'invalid', message: `${parameter.label}：${error instanceof Error ? error.message : '计算失败'}` }; }
+        } catch (error) { resolved = { ...resolved, status: 'invalid', message: `${parameterDisplayName(parameter)}：${error instanceof Error ? error.message : '计算失败'}` }; }
       }
       result.parameters[parameter.id] = resolved;
       if (resolved.status !== 'resolved') issue(`parameter-${resolved.status}`, parameter.id, resolved.message!);
@@ -150,13 +162,8 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
 
 function protocolCalculationInputs(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']) {
   if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
-  const inputs: Record<string, unknown> = { mode: 'final' };
-  for (const [key, id] of Object.entries(parameter.source.inputs).sort(([a], [b]) => a.localeCompare(b))) {
-    const input = parameters[id];
-    if (input?.status !== 'resolved') throw new Error('请先填写全部计算输入');
-    inputs[key] = input.value; inputs[`${key}Unit`] = input.unit;
-  }
-  return inputs;
+  const source = parameter.source;
+  return calculationRequest(source.calculatorId, key => { const input = parameters[source.inputs[key] ?? '']; return input?.status === 'resolved' ? { value: input.value!, unit: input.unit } : undefined; }).inputs;
 }
 export function protocolCalculationFingerprint(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']) {
   if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
@@ -165,7 +172,8 @@ export function protocolCalculationFingerprint(parameter: ProtocolSystems['param
 export function calculationReceiptMatches(saved: string, current: string) {
   try {
     const old = JSON.parse(saved), next = JSON.parse(current);
-    const sorted = (value: Record<string, unknown>) => JSON.stringify(Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))));
+    // Twelve significant figures: unit conversion noise (500.00000000000006 µL) is not a changed input.
+    const sorted = (value: Record<string, unknown>) => JSON.stringify(Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, typeof item === 'number' ? Number(item.toPrecision(12)) : item])));
     return old.tool === next.tool && old.output === next.output && old.unit === next.unit && sorted(old.inputs) === sorted(next.inputs) && (!old.bindings || sorted(old.bindings) === sorted(next.bindings));
   } catch { return false; }
 }
@@ -173,12 +181,14 @@ export function calculationReceiptMatches(saved: string, current: string) {
 /** Typed adapter to the existing engine. No formula or independent unit system lives here. */
 export function previewProtocolCalculation(parameter: ProtocolSystems['parameters'][number], parameters: ProtocolSystemResolution['parameters']): Omit<ProtocolCalculation, 'confirmedAt'> {
   if (parameter.source.kind !== 'calculator') throw new Error('此参数不是计算来源');
+  const { calculatorId, output: outputKey } = parameter.source;
   const inputs = protocolCalculationInputs(parameter, parameters);
-  const snapshot = calculate({ calculatorId: parameter.source.calculatorId, inputs });
-  if (snapshot.status !== 'valid') throw new Error('计算结果无效，不能采用');
-  const output = snapshot.outputMap[parameter.source.output];
-  if (typeof output !== 'number' || !Number.isFinite(output)) throw new Error('计算器没有返回有效体积');
-  const outputKey = parameter.source.output;
+  let snapshot: CalculatorResult;
+  try { snapshot = calculate({ calculatorId: protocolCalculations[calculatorId].engine, inputs }); }
+  catch (error) { throw new Error(readableCalculationError(calculatorId, error)); }
+  if (!adoptableCalculation(snapshot)) throw new Error('计算结果无效，不能采用');
+  const output = snapshot.outputMap[outputKey];
+  if (typeof output !== 'number' || !Number.isFinite(output)) throw new Error('计算器没有返回有效结果');
   const outputUnit = snapshot.outputs.find(item => item.key === outputKey)?.unit;
   if (!outputUnit) throw new Error('计算输出缺少单位');
   const value = convert(output, outputUnit, parameter.unit);
@@ -186,56 +196,72 @@ export function previewProtocolCalculation(parameter: ProtocolSystems['parameter
   return { value, unit: parameter.unit, snapshot, fingerprint };
 }
 
-const literalKeys = new Set(['id', 'stepId', 'source_ref', 'attachmentId', 'url', 'link', 'filename', 'rowIds', 'execution']);
-function mapParameterText<T>(value: T, replace: (id: string) => string, key = ''): T {
-  if (literalKeys.has(key)) return value;
-  if (typeof value === 'string') return value.replace(/\{\{([\w-]+)\}\}/g, (_, id: string) => replace(id)) as T;
-  if (Array.isArray(value)) return value.map(item => mapParameterText(item, replace)) as T;
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, mapParameterText(v, replace, k)])) as T;
-  return value;
-}
-
 /** Projects a view, never mutates the authored snapshot or reassigns source ownership. */
 export function resolveProtocolDocument(document: ProtocolDocument, selections: ProtocolSelection, actualValues: Record<string, { value: number; unit: string }> = {}, calculations: Record<string, ProtocolCalculation> = {}) {
   const systems = document.systems;
   const resolution = systems ? resolveProtocolSystem(systems, selections, actualValues, calculations) : { parameters: {}, rules: {}, issues: [] } as ProtocolSystemResolution;
   const rules = systems?.rules ?? [];
-  const state = (target: 'step' | 'block' | 'row', id: string) => conjunction(rules.filter(r => r.target === target && r.targetId === id).map(r => resolution.rules[r.id]));
+  const state = targetApplicability(systems, resolution.rules);
   const source = projectProtocolExecution(document);
   const known = { step: new Set(source.steps.map(s => s.source_ref)), block: new Set(document.sections.flatMap(s => s.blocks.map(b => b.id))), row: new Set(document.sections.flatMap(s => s.blocks.flatMap(b => b.type === 'table' ? b.rowIds ?? [] : []))) };
   for (const rule of rules) if (!known[rule.target].has(rule.targetId)) resolution.issues.push({ code: 'invalid-reference', targetId: rule.id, message: '条件目标已删除或不存在 / Missing condition target' });
   const globalBlock = resolution.issues.some(i => ['invalid-reference', 'duplicate-id', 'incompatible-unit', 'invalid-selection', 'illegal-combination', 'exclusive-conflict', 'dependency-cycle'].includes(i.code));
-  const filterBlock = (block: ProtocolContentBlock): ProtocolContentBlock[] => {
-    if (state('block', block.id) === 'not-applicable') return [];
-    if (block.type !== 'table') return [block];
-    // Keep the header and every cell-format matrix aligned to stable retained rows.
-    const retained = block.rows.flatMap((_, index) => index === 0 || state('row', block.rowIds?.[index] ?? '') !== 'not-applicable' ? [index] : []);
-    return [{ ...block, rows: retained.map(i => block.rows[i]), ...(block.rowIds ? { rowIds: retained.map(i => block.rowIds![i]) } : {}),
-      ...(block.cellColors ? { cellColors: retained.map(i => block.cellColors![i]) } : {}),
-      ...(block.cellFontSizesPt ? { cellFontSizesPt: retained.map(i => block.cellFontSizesPt![i]) } : {}),
-      ...(block.cellRichContent ? { cellRichContent: retained.map(i => block.cellRichContent![i]) } : {}),
-    }];
+  const filterBlock = (source: ProtocolContentBlock): ProtocolContentBlock[] => {
+    if (state('block', source.id) === 'not-applicable') return [];
+    // An empty recipe table has nothing to execute (the editor still shows it).
+    return [source.type === 'table' ? tableForSelection(source, state, selections) : source].filter(block => !isEmptyTable(block));
   };
-  const render = <T,>(value: T) => mapParameterText(value, id => {
-    const parameter = resolution.parameters[id];
-    return parameter?.status === 'resolved' ? `${formatQuantity(parameter.value!)} ${parameter.unit}` : `〔${systems?.parameters.find(p => p.id === id)?.label ?? id}：待确定〕`;
-  });
+  const render = <T,>(value: T) => mapChipReferences(value, id => protocolChipText(id, systems, resolution.parameters));
   const steps = source.steps.map(step => {
     const id = step.source_ref!;
     const start = document.sections.flatMap(s => s.blocks).find(b => b.execution?.role === 'step' && (b.execution.stepId ?? b.id) === id);
     const applicability = conjunction([state('step', id), state('block', start?.id ?? '')]);
     const blocks = (step.content_blocks ?? []).flatMap(filterBlock);
-    const referenced = new Set(rules.filter(r => r.target === 'step' && r.targetId === id).flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
-    mapParameterText([step.title, ...blocks], key => { referenced.add(key); return key; });
+    const stepRules = rules.filter(r => r.target === 'step' && r.targetId === id);
+    const referenced = new Set(stepRules.flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
+    mapChipReferences([step.title, ...blocks], key => { chipParameterIds(key, systems).forEach(id => referenced.add(id)); return key; });
     const unknownContent = blocks.some(b => state('block', b.id) === 'unknown' || b.type === 'table' && b.rowIds?.some(rowId => state('row', rowId) === 'unknown'));
     const blocked = globalBlock || applicability !== 'applicable' || unknownContent || [...referenced].some(key => resolution.parameters[key]?.status !== 'resolved');
+    // Every chip in the step can take an actual value; those marked "执行时必填" must. A value filled at execution is an input, not an actual.
+    const ruleFields = stepRules.flatMap(r => r.actualFields);
+    const chipFields = [...referenced].flatMap(key => { const parameter = systems?.parameters.find(p => p.id === key); return parameter && parameter.source.kind !== 'actual' && !ruleFields.some(f => f.id === key) ? [{ id: key, label: parameterLongName(parameter, systems!), unit: parameter.unit, required: parameter.actual === 'required', source: 'chip' as const }] : []; });
     const content_blocks = render(blocks);
-    return { ...step, title: render(step.title), content_blocks, description: content_blocks.map(executionBlockText).join('\n'), applicability, blocked,
-      optional: rules.some(r => r.target === 'step' && r.targetId === id && r.optional),
-      actualFields: rules.filter(r => r.target === 'step' && r.targetId === id).flatMap(r => r.actualFields),
+    // `source_blocks` keep chip references for interface rendering; `content_blocks` are plain reading text.
+    return { ...step, title: render(step.title), content_blocks, source_blocks: blocks, description: content_blocks.map(executionBlockText).join('\n'), applicability, blocked,
+      optional: stepRules.some(r => r.optional),
+      actualFields: [...ruleFields, ...chipFields] as StepActualField[],
+      chipIds: [...referenced],
     };
   });
-  return { ...resolution, steps, commonBlocks: render(source.commonBlocks.flatMap(filterBlock)), document: { ...document, sections: document.sections.map(s => ({ ...s, blocks: render(s.blocks.flatMap(filterBlock)) })) } };
+  return { ...resolution, steps, commonBlocks: render(source.commonBlocks.flatMap(filterBlock)), notePlacement: source.notePlacement, document: { ...document, sections: document.sections.map(s => ({ ...s, blocks: render(s.blocks.flatMap(filterBlock)) })) } };
+}
+
+/** Applicability of a step, block or table row from its rules; content without rules is common. */
+export function targetApplicability(systems: ProtocolSystems | undefined, ruleStates: Record<string, Applicability>) {
+  return (target: 'step' | 'block' | 'row', id: string) => conjunction((systems?.rules ?? []).filter(r => r.target === target && r.targetId === id).map(r => ruleStates[r.id]));
+}
+
+/** A table as one selection reads it: header kept, inapplicable rows and system columns removed, formats aligned. */
+export function tableForSelection(source: Extract<ProtocolContentBlock, { type: 'table' }>, state: ReturnType<typeof targetApplicability>, selections: ProtocolSelection): typeof source {
+  const block = applicableColumns(source, selections);
+  const retained = block.rows.flatMap((_, index) => index === 0 || state('row', block.rowIds?.[index] ?? '') !== 'not-applicable' ? [index] : []);
+  return { ...block, rows: retained.map(i => block.rows[i]), ...(block.rowIds ? { rowIds: retained.map(i => block.rowIds![i]) } : {}),
+    ...(block.cellColors ? { cellColors: retained.map(i => block.cellColors![i]) } : {}),
+    ...(block.cellFontSizesPt ? { cellFontSizesPt: retained.map(i => block.cellFontSizesPt![i]) } : {}),
+    ...(block.cellRichContent ? { cellRichContent: retained.map(i => block.cellRichContent![i]) } : {}),
+  };
+}
+
+/** Keep a recipe table's common columns and the columns of the chosen (or still pending) system. */
+function applicableColumns(block: Extract<ProtocolContentBlock, { type: 'table' }>, selections: ProtocolSelection): typeof block {
+  const conditions = block.columnConditions;
+  if (!conditions?.some(Boolean)) return block;
+  const pick = <T,>(row: T[]) => row.filter((_, index) => !conditions[index] || evaluateProtocolCondition({ all: [conditions[index]!] }, selections) !== 'not-applicable');
+  return { ...block, rows: block.rows.map(pick), columnConditions: pick(conditions),
+    ...(block.columnWidths ? { columnWidths: pick(block.columnWidths) } : {}),
+    ...(block.cellFontSizesPt ? { cellFontSizesPt: block.cellFontSizesPt.map(pick) } : {}),
+    ...(block.cellColors ? { cellColors: block.cellColors.map(pick) } : {}),
+    ...(block.cellRichContent ? { cellRichContent: block.cellRichContent.map(pick) } : {}) };
 }
 
 export function protocolConditionLabel(when: ProtocolCondition, systems: ProtocolSystems): string {
@@ -250,16 +276,13 @@ export function protocolConditionLabel(when: ProtocolCondition, systems: Protoco
 export function allSystemProtocolDocument(document: ProtocolDocument): ProtocolDocument {
   const systems = document.systems;
   if (!systems) return document;
-  const parameters = Object.fromEntries(systems.parameters.map(parameter => {
-    const { source } = parameter;
-    const quantity = (value: number | null, unit: string) => { if (value === null) return '待填写'; try { return `${formatQuantity(convert(value, unit, parameter.unit))} ${parameter.unit}`; } catch { return '单位不兼容'; } };
-    const text = source.kind === 'actual' ? `${parameter.label}：执行时填写（${parameter.unit}）` : source.kind === 'calculator' ? `${parameter.label}：稀释计算器计算后确认（${parameter.unit}）` : source.kind === 'fixed' ? quantity(source.value, source.unit)
-      : source.values.map(v => `${protocolConditionLabel(v.when, systems)} → ${quantity(v.value, v.unit)}`).join(' / ') || `${parameter.label}：缺少取值`;
-    return [parameter.id, text];
-  }));
   return { ...document, sections: document.sections.map(section => ({ ...section, blocks: section.blocks.map(block => {
-    const rendered = mapParameterText(block, id => parameters[id] ?? `〔${id}：引用不存在〕`);
-    if (rendered.type !== 'table') return rendered;
+    const chipped = mapChipReferences(block, id => protocolChipText(id, systems));
+    if (chipped.type !== 'table') return chipped;
+    const marks = optionMarks(systems);
+    const header = (text: string, index: number) => { const column = chipped.columnConditions?.[index]; const mark = column && marks.get(`${column.dimensionId}:${column.optionId}`); return !mark ? text : mark.glyph ? `${mark.glyph} ${text}` : `${text}（${mark.label}）`; };
+    const rendered = chipped.columnConditions?.some(Boolean) ? { ...chipped, rows: chipped.rows.map((row, index) => index ? row : row.map(header)),
+      ...(chipped.cellRichContent?.[0] ? { cellRichContent: chipped.cellRichContent.map((row, index) => index ? row : row.map((cell, column) => cell && chipped.columnConditions?.[column] ? [{ type: 'paragraph', content: [{ type: 'text', text: header('', column).trim() }] }, ...cell] : cell)) } : {}) } : chipped;
     const rowLabel = (index: number) => systems.rules.filter(r => r.target === 'row' && r.targetId === rendered.rowIds?.[index]).map(r => protocolConditionLabel(r.when, systems)).join('；');
     return { ...rendered, rows: rendered.rows.map((row, index) => rowLabel(index) ? [`${row[0]}〔${rowLabel(index)}〕`, ...row.slice(1)] : row),
       ...(rendered.cellRichContent ? { cellRichContent: rendered.cellRichContent.map((row, index) => rowLabel(index) && row[0] ? [[...row[0], { type: 'paragraph', content: [{ type: 'text', text: `〔${rowLabel(index)}〕` }] }], ...row.slice(1)] : row) } : {}),
@@ -272,9 +295,9 @@ export function allSystemProtocolExportDocument(document: ProtocolDocument): Pro
   const systems = document.systems;
   if (!systems) return document;
   const rendered = allSystemProtocolDocument(document);
-  const symbols = ['○', '◇', '□'];
+  const marks = optionMarks(systems);
   return { ...rendered, sections: rendered.sections.map(section => ({ ...section, blocks: [
-    ...(section.key === 'description' ? [{ id: 'system-export-legend', type: 'text' as const, text: `通用规程 · 全部体系（不是本次执行记录）\n${systems.dimensions.map(d => `${d.label}：${d.options.map((o, i) => `${symbols[i % symbols.length]} ${o.label}`).join('；')}`).join('\n')}` }] : []),
+    ...(section.key === 'description' ? [{ id: 'system-export-legend', type: 'text' as const, text: `通用规程 · 全部体系（不是本次执行记录）\n${systems.dimensions.map(d => `${d.label}：${d.options.map(o => [marks.get(`${d.id}:${o.id}`)?.glyph, o.label].filter(Boolean).join(' ')).join('；')}`).join('\n')}` }] : []),
     ...section.blocks.flatMap(block => {
       const labels = systems.rules.filter(r => r.target === 'block' && r.targetId === block.id || r.target === 'step' && block.execution?.role === 'step' && r.targetId === (block.execution.stepId ?? block.id)).map(r => protocolConditionLabel(r.when, systems));
       return [...(labels.length ? [{ id: `${block.id}-condition-export`, type: 'text' as const, text: `适用条件：${labels.join('；')}` }] : []), block];

@@ -20,18 +20,20 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   const normal=await units.evaluate(style);
   await units.focus();const focused=await units.evaluate(style);
   assert.equal(focused.position,normal.position);assert.notEqual(focused.outline,'none');
-  await stock.fill('1e');assert(await units.isDisabled());
-  const disabled=await units.evaluate(style);
+  await stock.fill('1e');assert.equal(await units.isDisabled(),false);
+  // The current mix form edits units independently, without converting a half-typed quantity.
+  await units.selectOption('nM');assert.equal(await stock.inputValue(),'1e');
+  const incomplete=await units.evaluate(style);
   await page.getByRole('button',{name:'计算',exact:true}).click();
   assert(await page.locator('.calculator-input-form [role=alert]').count()>0);
   const error=await units.evaluate(style);
-  for(const state of [normal,focused,disabled,error]){assert.equal(state.appearance,'none');assert.equal(state.padding,'40px');assert.equal(state.position,normal.position);assert(state.position.includes('12px'));}
-  await stock.fill('10');assert.equal(await units.isDisabled(),false);
+  for(const state of [normal,focused,incomplete,error]){assert.equal(state.appearance,'none');assert.equal(state.padding,'40px');assert.equal(state.position,normal.position);assert(state.position.includes('12px'));}
+  await stock.fill('10');await units.selectOption('mM');assert.equal(await units.isDisabled(),false);
   // Native type-ahead works across macOS and Linux without relying on OS popup keys.
   await units.focus();const before=await units.inputValue();await page.keyboard.press('n');
   const after=await units.inputValue();assert.notEqual(after,before);
   await page.screenshot({path:`${out}/${engine}-${width}.png`,fullPage:true});
-  report.checks.push({engine,width,status:'passed',normal,focused,disabled,error,keyboard:{before,after,key:'n (native type-ahead)'},description:'real incomplete numeric input disables native unit select; focus/error geometry and keyboard selection retained'});
+  report.checks.push({engine,width,status:'passed',normal,focused,incomplete,error,keyboard:{before,after,key:'n (native type-ahead)'},description:'incomplete numeric input is retained during unit edits and rejected on calculate; focus/error geometry and keyboard selection retained'});
   await context.close();
  }}finally{await browser.close();await writeFile(`${out}/report.json`,JSON.stringify(report,null,2));}
 }

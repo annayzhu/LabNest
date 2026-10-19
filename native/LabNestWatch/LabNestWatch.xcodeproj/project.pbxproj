@@ -51,6 +51,9 @@
 			<array>
 				<string>000000000000000000000006</string>
 				<string>000000000000000000000007</string>
+				<string>000000000000000000000014</string>
+				<string>000000000000000000000016</string>
+				<string>000000000000000000000032</string>
 				<string>000000000000000000000003</string>
 			</array>
 			<key>isa</key>
@@ -153,6 +156,8 @@
 			<array>
 				<string>000000000000000000000008</string>
 				<string>000000000000000000000009</string>
+				<string>000000000000000000000015</string>
+				<string>000000000000000000000017</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -175,7 +180,9 @@
 			<key>buildActionMask</key>
 			<string>2147483647</string>
 			<key>files</key>
-			<array/>
+			<array>
+				<string>000000000000000000000033</string>
+			</array>
 			<key>isa</key>
 			<string>PBXResourcesBuildPhase</string>
 			<key>runOnlyForDeploymentPostprocessing</key>
@@ -277,6 +284,8 @@
 				<string>4</string>
 				<key>WATCHOS_DEPLOYMENT_TARGET</key>
 				<string>10.0</string>
+				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+				<string>AppIcon</string>
 			</dict>
 			<key>isa</key>
 			<string>XCBuildConfiguration</string>
@@ -319,11 +328,67 @@
 				<string>4</string>
 				<key>WATCHOS_DEPLOYMENT_TARGET</key>
 				<string>10.0</string>
+				<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+				<string>AppIcon</string>
 			</dict>
 			<key>isa</key>
 			<string>XCBuildConfiguration</string>
 			<key>name</key>
 			<string>Release</string>
+		</dict>
+		<key>000000000000000000000014</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>PairingLink.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000000000000000000000015</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000014</string>
+		</dict>
+		<key>000000000000000000000016</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>WatchPhoneReceiver.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000000000000000000000017</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000016</string>
+		</dict>
+		<key>000000000000000000000032</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>folder.assetcatalog</string>
+			<key>path</key>
+			<string>../SharedAssets.xcassets</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000000000000000000000033</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000032</string>
 		</dict>
 	</dict>
 	<key>rootObject</key>

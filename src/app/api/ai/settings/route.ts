@@ -11,7 +11,7 @@ const changeSchema = z.discriminatedUnion("kind", [
 ]);
 export async function GET() {
   try { return Response.json(await readAISettings(), { headers: { "Cache-Control": "no-store" } }); }
-  catch { return Response.json({ error: "无法读取 AI 设置，请重试；已保存的设置未改变。" }, { status: 503 }); }
+  catch { return Response.json({ error: "Cannot read AI settings; try again. Saved settings are unchanged." }, { status: 503 }); }
 }
 export async function PATCH(request: Request) {
   const boundary = validateAIRequest(request);

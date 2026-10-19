@@ -12,7 +12,7 @@ import type { ExperimentFormState } from "@/components/ExperimentForm";
 import { prisma } from "@/lib/db";
 import { associateDocumentMedia } from "@/lib/document-media.server";
 import { experimentSearchText } from "@/lib/experiment-document";
-import { createExperimentWithProtocolSnapshot } from "@/lib/experiments";
+import { assignExperimentResearchPlan, createExperimentWithProtocolSnapshot } from "@/lib/experiments";
 import { orderedUniqueIds, parseCustomExperimentSteps } from "@/lib/experiment-planning";
 import { recordCodeFromSuffix } from "@/lib/record-codes";
 import { freezeEntrySources } from "@/lib/entry-assignment.server";
@@ -24,7 +24,7 @@ import { parseTags } from "@/lib/tags";
 
 const schema = z.object({
   id: z.string().optional(),
-  researchPlanId: z.string().min(1, "Research Plan is required."),
+  researchPlanId: z.string().min(1).optional(),
   title: z.string().trim().min(1, "Title is required.").max(180),
   date: z.coerce.date(),
   status: z.enum(ExperimentStatus),
@@ -37,7 +37,7 @@ const lifecycleSchema = z.object({ id: z.string().min(1, "Experiment ID is requi
 function optionalText(value: FormDataEntryValue | null) { const text = String(value ?? "").trim(); return text || undefined; }
 function fields(formData: FormData) {
   const parsed = schema.parse({
-    id: optionalText(formData.get("id")), researchPlanId: formData.get("researchPlanId"), title: formData.get("title"), date: formData.get("date"), status: formData.get("status"), recordStatus: formData.get("recordStatus"), methodMode: formData.get("methodMode"),
+    id: optionalText(formData.get("id")), researchPlanId: optionalText(formData.get("researchPlanId")), title: formData.get("title"), date: formData.get("date"), status: formData.get("status"), recordStatus: formData.get("recordStatus"), methodMode: formData.get("methodMode"),
   });
   const purpose = optionalText(formData.get("purpose"));
   const document = parseScientificDocumentJson(formData.get("contentJson"), experimentSections);
@@ -67,7 +67,7 @@ export async function createExperiment(
   formData: FormData,
 ): Promise<ExperimentFormState> {
   let experimentId: string;
-  let researchPlanId: string;
+  let researchPlanId: string | undefined;
   try {
     const data = fields(formData);
     const runCode = recordCodeFromSuffix("experiment", String(formData.get("runCodeSuffix") ?? ""));
@@ -90,7 +90,7 @@ export async function createExperiment(
   }
   revalidatePath("/experiments");
   revalidatePath("/results");
-  revalidatePath(`/research-plans/${researchPlanId}`);
+  if (researchPlanId) revalidatePath(`/research-plans/${researchPlanId}`);
   redirect(`/experiments/${experimentId}`);
 }
 
@@ -99,14 +99,15 @@ export async function updateExperiment(
   formData: FormData,
 ): Promise<ExperimentFormState> {
   let experimentId: string;
-  let researchPlanId: string;
+  let researchPlanId: string | undefined;
   try {
     const data = fields(formData);
     if (!data.parsed.id) throw new Error("Experiment ID is required.");
     const current = await prisma.experiment.findUnique({ where: { id: data.parsed.id } });
     if (!current) throw new Error("Experiment not found.");
     assertRecordEditable(current.recordStatus);
-    if (current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
+    // An unassigned Experiment may join a plan later; an assigned one never moves.
+    if (current.researchPlanId && current.researchPlanId !== data.parsed.researchPlanId) throw new Error("An Experiment cannot be moved to a different Research Plan after its ProtocolVersion snapshot is locked.");
     await prisma.$transaction(async (tx) => {
       await lockEntrySourceGraph(tx);
       await tx.$queryRaw`SELECT id FROM "Experiment" WHERE id=${current.id} FOR UPDATE`;
@@ -115,6 +116,7 @@ export async function updateExperiment(
       if (structuredRunView(fresh.protocolSnapshotJson, fresh.protocolRun?.executionPlanJson, fresh.steps).hasSystems && data.parsed.status !== fresh.status) throw new Error('此实验的执行状态由 Run 操作管理，请在执行页面完成或继续。');
       assertRecordEditable(fresh.recordStatus);
       assertDocumentSaveVersion(formData, fresh);
+      if (data.parsed.researchPlanId) await assignExperimentResearchPlan(tx, fresh, data.parsed.researchPlanId);
       if (isRecordLocked(data.parsed.recordStatus)) await freezeEntrySources(tx, "experiment", current.id);
       await tx.experiment.update({ where: { id: current.id }, data: {
         title: data.parsed.title, date: data.parsed.date, status: data.parsed.status, recordStatus: data.parsed.recordStatus,
@@ -135,7 +137,7 @@ export async function updateExperiment(
   }
   revalidatePath("/experiments");
   revalidatePath(`/experiments/${experimentId}`);
-  revalidatePath(`/research-plans/${researchPlanId}`);
+  if (researchPlanId) revalidatePath(`/research-plans/${researchPlanId}`);
   redirect(`/experiments/${experimentId}`);
 }
 

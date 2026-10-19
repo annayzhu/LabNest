@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
-export default async function ActionsPage({ searchParams }: { searchParams?: PageSearchParams }) {
-  const params = searchParams ? await searchParams : undefined;
-  const filters = new URLSearchParams();
-  for (const key of ["status", "type"]) { const value = firstSearchParam(params, key); if (value) filters.set(key, value); }
-  redirect(filters.size ? `/actions/review?${filters}` : "/ai");
+
+/** AI suggestions wait on the quick entry they came from; old links to the former inbox land on the entry list. */
+export default function ActionsPage() {
+  redirect("/entries");
 }

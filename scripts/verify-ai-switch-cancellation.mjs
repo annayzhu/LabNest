@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createCipheriv, randomBytes, randomUUID } from 'node:crypto';
-import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import pg from 'pg';
 const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
 const dbURL = new URL(process.env.DATABASE_URL);
@@ -37,16 +37,9 @@ try {
  const result=await pending;
  assert.equal(result.status,403,await result.text());
  const record=await (await fetch(base+'/api/entries/'+entryId)).json();
- assert.equal(record.entry.pendingActions.length,0);
+ assert.equal(record.entry.suggestions.length,0);
  report.checks.push({name:'off/on rejects late result and publishes no suggestions',status:'passed'});
- const fixtureDir='docs/ai/20261009/fixtures';
- const fixture=(await readdir(fixtureDir)).find(name=>name.endsWith('.docx'));
- const file=new File([await readFile(`${fixtureDir}/${fixture}`)],fixture);
- const previewForm=new FormData();previewForm.set('file',file);
- const previewResponse=await fetch(base+'/api/structured-import/protocols/preview',{method:'POST',body:previewForm});
- assert.equal(previewResponse.status,200,await previewResponse.clone().text());
- const {preview}=await previewResponse.json();
- for (const scenario of ['queued-duplicate','workbench','connection-test','protocol-extraction']) {
+ for (const scenario of ['queued-duplicate','workbench','connection-test']) {
   console.log('Checking',scenario);
   await setEnabled(true);
   const reached = new Promise(resolve => { entered = resolve; });
@@ -54,10 +47,7 @@ try {
   const countBefore = calls;
   const payload = scenario === 'workbench' ? {entryTitle:'Synthetic',entryBody:'Synthetic'} : {entryId,persist:true,clientMutationId:mutation};
   const path = scenario === 'connection-test' ? `/api/ai/providers/${id}/test` : '/api/ai/generate';
-  const extractionForm=new FormData();extractionForm.set('file',file);extractionForm.set('checksum',preview.checksum);extractionForm.set('rowIndex','0');
-  const first = scenario === 'protocol-extraction'
-   ? fetch(base+'/api/ai/protocol-extraction',{method:'POST',headers:{origin:base},body:extractionForm})
-   : call(path,payload);
+  const first = call(path,payload);
   await Promise.race([reached,first.then(async response=>{throw Error('Before provider: '+response.status+' '+await response.clone().text());}),new Promise((_,reject)=>{const t=setTimeout(()=>reject(Error('Provider was not reached')),20000);t.unref();})]);
   const second = scenario === 'queued-duplicate' ? call(path,payload) : undefined;
   await new Promise(resolve => setTimeout(resolve,100));
@@ -90,7 +80,7 @@ try {
   await blocker.query('COMMIT');
   const rejected=await pending;assert.equal(rejected.status,403,await rejected.text());
   const readback=await (await fetch(base+'/api/entries/'+entryId)).json();
-  assert.equal(readback.entry.pendingActions.length,0,'A disabled provider must not publish queued suggestions');
+  assert.equal(readback.entry.suggestions.length,0,'A disabled provider must not publish queued suggestions');
   report.checks.push({name:'provider revocation while publication waits leaves no suggestions',status:'passed'});
  } finally {await blocker.query('ROLLBACK');await blocker.end();}
  await setEnabled(false);
@@ -99,7 +89,7 @@ try {
   const r=await call(path,{entryTitle:'Synthetic',entryBody:'Synthetic',rawResponse:'[]'});
   assert.equal(r.status,403,`${path}: ${await r.text()}`);
  }
- const f=new FormData();const r=await fetch(base+'/api/ai/protocol-extraction',{method:'POST',headers:{origin:base},body:f});assert.equal(r.status,403);
+ const r=await fetch(base+'/api/protocols/recognize',{method:'POST',headers:{origin:base,'content-type':'application/json'},body:JSON.stringify({sourceId:'missing'})});assert.equal(r.status,403,await r.text());
  assert.equal(calls,before);
  report.checks.push({name:'all five existing AI HTTP paths blocked while disabled; no upstream request',status:'passed'});
  const read=await settings();assert.equal(read.defaultProviderId,id);assert.equal(read.attachmentsEnabled,true);

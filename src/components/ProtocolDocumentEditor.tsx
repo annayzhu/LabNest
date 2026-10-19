@@ -1,8 +1,7 @@
 "use client";
+import type { MixProposal } from "@/lib/protocol-mix";
 
 import { useActionState, useMemo, useState } from "react";
-import { ProtocolExecutionOrganizer } from "./ProtocolExecutionOrganizer";
-import { ProtocolSystemsEditor } from './ProtocolSystemsEditor';
 import { Download } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorWorkspace, type DocumentEditorWorkspaceTab } from "@/components/DocumentEditorWorkspace";
@@ -15,7 +14,10 @@ import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
-import type { ProtocolDocument } from "@/lib/protocol-document";
+import { hasLegacyFormulas, type ProtocolDocument } from "@/lib/protocol-document";
+import { isLegacyProtocol } from "@/lib/protocol-conversion";
+import { ProtocolSourcesEditor } from "./ProtocolSourcesEditor";
+import { pruneUnusedChips } from "@/lib/protocol-chips";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
 import type { ManualRelevantLink, RelevantCatalogItem } from "@/lib/protocol-relevant-items";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
@@ -35,9 +37,12 @@ const textareaClass = `${formTextareaClass} min-h-16 resize-y leading-[var(--ln-
 export function ProtocolDocumentEditor({
   action,
   mode,
+  mixProposals = [],
+  dismissMixProposal,
   protocol,
   version,
   initialDocument,
+  fromExperiments = [],
   suggestedDisplayVersion,
   projects,
   researchPlans,
@@ -48,11 +53,16 @@ export function ProtocolDocumentEditor({
   initialManualRelevantLinks = [],
   importHistory = [],
 }: {
+  /** Bench-made mix cards offered from runs. */
+  mixProposals?: MixProposal[];
+  dismissMixProposal?: (protocolId: string, proposalId: string) => Promise<{ error?: string }>;
   action: ProtocolEditorAction;
   mode: "create" | "edit";
   protocol: { id?: string; humanCode?: string; suggestedCodeSuffix?: string; canonicalTitle: string; shortTitle?: string; englishTitle?: string; availability: string; tags: string[]; scope: "general" | "project"; projectId?: string; projectName?: string };
   version: { id?: string; expectedDocumentVersion?: string; displayVersion: string; reviewStage: string; changeSummary?: string };
   initialDocument: ProtocolDocument;
+  /** 整理自实验: the run codes behind `contentJson.provenance`, resolved by the page. */
+  fromExperiments?: string[];
   suggestedDisplayVersion?: string;
   projects: ProjectOption[];
   researchPlans: ResearchPlanOption[];
@@ -77,16 +87,14 @@ export function ProtocolDocumentEditor({
   const [selectedPlanIds, setSelectedPlanIds] = useState(initialResearchPlanIds);
   const [primaryPlanIds, setPrimaryPlanIds] = useState(initialPrimaryResearchPlanIds);
   const [uploadDraftId] = useState(() => `protocol-upload-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`);
-  const serialized = useMemo(() => JSON.stringify(document), [document]);
-  const [systemsOpen, setSystemsOpen] = useState(false);
-  const [operationsOpen, setOperationsOpen] = useState(false);
+  // Chips the author deleted leave unreferenced parameters behind; only what the text still uses is saved.
+  const serialized = useMemo(() => JSON.stringify(pruneUnusedChips(document)), [document]);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
   const identifier = protocol.humanCode ?? (codeSuffix ? `PRT-${codeSuffix}` : "Draft Protocol");
   const docxExportHref = mode === "edit" && protocol.id && version.id
     ? `/api/protocols/${protocol.id}/versions/${version.id}/docx`
     : undefined;
-  const inspectorHostId = "protocol-document-context-inspector";
   const saveLabel = mode === "create" ? "Create Protocol"
     : activeWorkspaceTab === "metadata" ? reviewed ? "Save metadata as new revision" : "Save metadata"
       : activeWorkspaceTab === "relations" ? reviewed ? "Save links as new revision" : "Save links"
@@ -113,11 +121,9 @@ export function ProtocolDocumentEditor({
       {mode === "edit" ? <><input type="hidden" name="protocolScope" value={protocol.scope} /><input type="hidden" name="projectId" value={protocol.projectId ?? ""} /></> : null}
 
       <DocumentEditorWorkspace
-        outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
-        inspectorHostId={inspectorHostId}
+        outline={document.sections.filter((section) => section.key !== "consumption_rules" || hasLegacyFormulas(document)).map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
         onActiveTabChange={setActiveWorkspaceTab}
-        actions={<div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div>}
-        toolbar={<><div id="protocol-document-toolbar" className="ln-document-toolbar-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--ln-radius-control-sm)] border border-hairline bg-surface px-2 text-xs font-medium text-muted transition-colors hover:bg-stone hover:text-ink" title="Exports the currently saved version. Save first if you changed this page."><Download className="h-3.5 w-3.5" />Export DOCX</a> : null}<DocumentPrintButton /></>}
+        actions={<><div id="protocol-document-actions" className="ln-document-actions-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring ln-document-action" title="Exports the saved version; save your changes first."><Download aria-hidden />Export Word</a> : null}<DocumentPrintButton /><div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div></>}
         document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"}>
           <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" titleEditor={<input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Protocol" aria-label="Protocol title" />} facts={[
             { label: "Version", value: displayVersion, mono: true },
@@ -126,15 +132,12 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          <nav aria-label="规程编写" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
-            <Button type="button" aria-expanded={systemsOpen} aria-controls="protocol-systems" onClick={() => setSystemsOpen(value => !value)}>实验体系与参数</Button>
-            <Button type="button" aria-expanded={operationsOpen} aria-controls="protocol-operations" onClick={() => setOperationsOpen(value => !value)}>步骤整理</Button>
-            <a className="focus-ring inline-flex min-h-11 items-center px-2 text-sm text-moss underline" href="/api/protocols/template/docx?example=systems">多体系模板</a>
-            <span className="text-xs text-muted">{document.systems ? `${document.systems.dimensions.length} 个体系维度` : '普通规程也可直接编写；有用量差异时设置体系。'}</span>
-          </nav>
-          <ProtocolSystemsEditor document={document} onChange={setDocument} open={systemsOpen} onOpenChange={setSystemsOpen}/>
-          <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
-          <ProtocolWysiwygEditor document={document} onChange={setDocument} toolbarHostId="protocol-document-toolbar" inspectorHostId={inspectorHostId} uploadDraftId={uploadDraftId} />
+          {/* An old-format Protocol is converted as a whole into step blocks, previewed first and saved as a new draft. */}
+          {isLegacyProtocol(document) ? <nav aria-label="旧格式步骤" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
+            {protocol.id && version.id ? <a href={`/protocols/${protocol.id}/versions/${version.id}/convert`} className="focus-ring inline-flex min-h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 text-sm font-medium text-moss hover:bg-warm">转换为步骤块</a> : null}
+            <span className="text-xs text-muted">这份规程还是旧格式。转换后每步一块、数值成为参数块，可用配液卡、准备清单和体系调整；先预览，再存为新草稿。请先保存这里的改动。</span>
+          </nav> : null}
+          <ProtocolWysiwygEditor document={document} onChange={setDocument} actionsHostId="protocol-document-actions" uploadDraftId={uploadDraftId} mixProposals={mixProposals} onDismissMixProposal={dismissMixProposal && protocol.id ? proposalId => dismissMixProposal(protocol.id!, proposalId) : undefined} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>
@@ -156,6 +159,7 @@ export function ProtocolDocumentEditor({
               <label><span className={formLabelClass}>{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={formInputClass} /></label>
               <label className="protocol-metadata-span-full"><span className={formLabelClass}>Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
             </div></fieldset>
+            <ProtocolSourcesEditor sources={document.sources ?? []} onChange={sources => setDocument(current => ({ ...current, sources }))} fromExperiments={fromExperiments} />
             <ProtocolImportHistory entries={importHistory} />
           </div>
         </section>}

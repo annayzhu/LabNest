@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Layers3 } from "lucide-react";
+import { AnalysisResultUpload } from "@/components/AnalysisResultUpload";
 import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -27,6 +28,12 @@ export function ExperimentResultRecordingCard({ experimentId, recording }: {
           </summary>
           <ul className="divide-y divide-hairline border-t border-hairline px-3">{recording.modules.map((module) => <li key={module.id} className="min-w-0 py-2"><p className="break-words text-xs font-medium leading-5 text-graphite">{module.template.title}</p><p className="mt-0.5 break-words text-xs leading-4 text-muted">{module.protocolTitle}<span className="record-identifier ml-1 text-xs">{module.protocolCode ? `· ${module.protocolCode} ` : ""}· v{module.displayVersion}</span></p></li>)}</ul>
         </details> : null}
+
+        {recording.analysisResults.length ? <div className="border-t border-hairline bg-surface px-3 py-2">
+          <p className="text-xs font-medium text-graphite">Analysis results <span className="ml-1 text-muted">{recording.analysisResults.length}</span></p>
+          <ul className="mt-1 space-y-1">{recording.analysisResults.map((result) => <li key={result.id}><Link href={existingResultHref(result)} className="text-xs text-moss hover:underline">{result.title}</Link></li>)}</ul>
+        </div> : null}
+        <AnalysisResultUpload experimentId={experimentId} />
 
         {legacyCount ? <details className="border-t border-hairline bg-surface">
           <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted">Legacy standalone results <span className="ml-1">{legacyCount}</span></summary>

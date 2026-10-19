@@ -1,7 +1,10 @@
 import { projectProtocolExecution } from "./protocol-execution";
 import { paragraphLayoutFields } from "./document-paragraph-layout";
 import { z } from "zod";
-import { protocolSystemsSchema } from './protocol-systems-schema';
+import { protocolPredicateSchema, protocolSystemsSchema } from './protocol-systems-schema';
+import { renderChipTokens } from "./protocol-chips";
+import { programSummary } from "./protocol-program";
+import { mixSummary } from "./protocol-mix";
 import { documentMediaFields, documentMediaFromMarkdown } from "./document-media";
 import type {
   ConsumptionRule,
@@ -16,6 +19,7 @@ import {
   resultTemplateFieldsToRows,
   resultTemplateInputSchema,
 } from "./result-templates";
+import { emptyRecordTemplate, templateFromRecordLines } from "./result-record-line";
 import { parseRichTextFontFamily, type RichTextFontFamily } from "./rich-text-font-family";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
@@ -46,6 +50,8 @@ export const protocolSectionLabels: Record<ProtocolSectionKey, string> = {
 export const protocolExecutionRoleSchema = z.object({
   role: z.enum(["step", "detail", "info"]),
   stepId: z.string().min(1).optional(),
+  /** A step block owns its whole body; its short label is derived, never stripped from the body. */
+  format: z.literal("block").optional(),
   title: z.string().optional(),
   titlePrefix: z.string().optional(),
   requiresConfirmation: z.boolean().optional(),
@@ -111,11 +117,34 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
     caption: z.string().optional(),
     rows: z.array(z.array(z.string())),
     rowIds: z.array(z.string().min(1)).optional(),
+    /** A recipe column that belongs to one system option, e.g. the "12 孔板" amounts. */
+    columnConditions: z.array(protocolPredicateSchema.nullable()).optional(),
     columnWidths: z.array(z.number().finite().positive().nullable()).optional(),
     cellFontSizesPt: z.array(z.array(richTextFontSizeSchema.nullable())).optional(),
     cellColors: z.array(z.array(z.enum(RICH_TEXT_COLORS).nullable())).optional(),
     cellRichContent: z.array(z.array(tiptapCellRichContentSchema.nullable())).optional(),
     resultTemplate: resultTemplateInputSchema.optional(),
+  }),
+  baseBlockSchema.extend({
+    // Thermocycler program: stages of cycled temperature steps; `seconds: null` holds until stopped.
+    type: z.literal("program"),
+    label: z.string(),
+    stages: z.array(z.object({
+      id: z.string().min(1),
+      cycles: z.number().int().positive(),
+      steps: z.array(z.object({ id: z.string().min(1), label: z.string().optional(), temperatureC: z.number().finite(), seconds: z.number().finite().nonnegative().nullable() })).min(1),
+    })).min(1),
+  }),
+  baseBlockSchema.extend({
+    // 配液卡: components with per-reaction amounts (chips, so they may differ by system), scaled for a run by "本次数量".
+    type: z.literal("mix"),
+    title: z.string().max(120).default(""),
+    /** What one portion is: 反应, 孔, 样本, 管. The run's quantity is "<per>数". */
+    per: z.string().trim().max(12).default("反应"),
+    overagePercent: z.number().finite().min(0).max(100).default(10),
+    minPipetteUl: z.number().finite().min(0).max(100).default(0.5),
+    /** `amount` holds the chip reference; `name` is how the component reads in summaries and exports. */
+    components: z.array(z.object({ id: z.string().min(1), name: z.string().max(120).default(""), amount: z.string(), mode: z.enum(["premix", "separate"]).default("premix") })).max(40),
   }),
   baseBlockSchema.extend({
     type: z.literal("callout"),
@@ -126,10 +155,33 @@ export const protocolContentBlockSchema = z.discriminatedUnion("type", [
 
 export type ProtocolContentBlock = z.infer<typeof protocolContentBlockSchema>;
 
+/** Where a version's content came from: a paper, protocols.io, a colleague, a Word file, or an Experiment it was tidied from. */
+export const protocolSourceKinds = ["doi", "url", "protocols_io", "pmc", "book", "colleague", "docx", "experiment", "other"] as const;
+export const protocolSourceSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(protocolSourceKinds),
+  title: z.string().max(300).default(""),
+  citation: z.string().max(1000).optional(),
+  url: z.string().max(2000).optional(),
+  license: z.string().max(120).optional(),
+  /** When it was read or fetched (ISO date). */
+  accessedAt: z.string().optional(),
+  note: z.string().max(1000).optional(),
+});
+export type ProtocolSource = z.infer<typeof protocolSourceSchema>;
+
 export const protocolDocumentSchema = z.object({
   schemaVersion: z.literal(1),
   systems: protocolSystemsSchema.optional(),
   executionConfirmed: z.boolean().optional(),
+  sources: z.array(protocolSourceSchema).default([]),
+  /** Experiments whose actual values or deviations were tidied into this version, and the design session a draft was generated from. */
+  provenance: z.object({
+    fromExperimentIds: z.array(z.string()).default([]),
+    design: z.object({ sessionId: z.string(), hitKey: z.string(), unverified: z.number().int().nonnegative().default(0), generatedAt: z.string() }).optional(),
+    /** AI 识别: the kept source file, the model and prompt that laid it out, and how many lines the check could not find in it. */
+    recognition: z.object({ sourceAttachmentId: z.string(), model: z.string().optional(), promptVersion: z.string().optional(), unverified: z.number().int().nonnegative().default(0), recognizedAt: z.string() }).optional(),
+  }).optional(),
   sections: z.array(
     z.object({
       key: z.enum(protocolSectionKeys),
@@ -155,6 +207,7 @@ export function createEmptyProtocolDocument(): ProtocolDocument {
       title: protocolSectionLabels[key],
       blocks: [],
     })),
+    sources: [],
     importWarnings: [],
   };
 }
@@ -181,17 +234,19 @@ export function richTextPlainText(nodes: ProtocolRichTextNode[]) {
   }).join("\n");
 }
 
-export function createProtocolTemplateDocument(): ProtocolDocument {
+/** The starting document of a new Protocol, its table headings and result name in the interface language. */
+export function createProtocolTemplateDocument(locale: "zh" | "en" = "zh"): ProtocolDocument {
   const document = createEmptyProtocolDocument();
   const section = (key: ProtocolSectionKey) => document.sections.find((item) => item.key === key)!;
   for (const key of ["description", "purpose", "background"] as const) {
     section(key).blocks.push({ id: `${key}-rich-1`, type: "rich_text", nodes: richTextFromPlainText("") });
   }
-  section("material").blocks.push({ id: "material-table-1", type: "table", caption: "Materials", rows: [["Name", "Unit", "Role", "Notes"], ["", "", "", ""]] });
-  section("steps").blocks.push({ id: "steps-rich-1", type: "rich_text", nodes: [{ type: "numbered", content: [{ text: "" }] }] });
-  const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", instructions: richTextFromPlainText(""), fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
-  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
-  section("consumption_rules").blocks.push({ id: "consumption-table-1", type: "table", caption: "Consumption rules", rows: [["Material", "Formula", "Unit"], ["", "", ""]] });
+  section("material").blocks.push({ id: "material-table-1", type: "table", caption: locale === "en" ? "Materials" : "材料", rows: [locale === "en" ? ["Name", "Amount", "Description"] : ["名称", "用量", "说明"], ["", "", ""]] });
+  // New Protocols start with one step block: Enter makes the next step.
+  section("steps").blocks.push({ id: "steps-step-1", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }], execution: { role: "step", stepId: "step-1", format: "block" } });
+  // What to record is one written line ("记录：…"); amounts used come from the steps, so there is no formula table.
+  const resultTemplate = locale === "en" ? templateFromRecordLines({}, undefined, "Result record") : emptyRecordTemplate();
+  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.title, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   return document;
 }
 
@@ -226,6 +281,19 @@ export function normalizeProtocolDocument(value: unknown): ProtocolDocument | un
       byKey.get(key) ?? { key, title: protocolSectionLabels[key], blocks: [] },
     ),
   };
+}
+
+/** A stored version as a document: its own, or one built from the fields of a version saved before documents existed. */
+export function storedProtocolDocument(version: {
+  contentJson: unknown; purpose: string | null; background: string | null; protocol: { description: string | null };
+  materialsJson: unknown; equipmentJson: unknown; stepsJson: unknown; resultTemplatesJson: unknown; consumptionRulesJson: unknown;
+}): ProtocolDocument {
+  const list = <T,>(value: unknown) => (Array.isArray(value) ? value : []) as T[];
+  return normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
+    description: version.protocol.description, purpose: version.purpose, background: version.background,
+    materials: list<ProtocolMaterial>(version.materialsJson), equipment: list<ProtocolMaterial>(version.equipmentJson), steps: list<ProtocolStep>(version.stepsJson),
+    resultTemplates: list<ResultTemplate>(version.resultTemplatesJson), consumptionRules: list<ConsumptionRule>(version.consumptionRulesJson),
+  });
 }
 
 export function protocolDocumentFromLegacy({
@@ -303,6 +371,16 @@ export function protocolDocumentFromLegacy({
   return document;
 }
 
+/**
+ * The old formula table (消耗规则) only shows while it holds something: amounts now come from the steps, so an empty one
+ * is left out of the editor and the view.
+ */
+export const hasLegacyFormulas = (document: ProtocolDocument) => (document.sections.find((section) => section.key === "consumption_rules")?.blocks ?? [])
+  .some((block) => block.type === "table" ? !isEmptyTable(block) && block.rows.length > 1 : block.type === "rich_text" ? Boolean(richTextPlainText(block.nodes).trim()) : true);
+
+/** A table with body rows that are all blank, e.g. a recipe table the author left for later. A header-only table still says something and stays. */
+export const isEmptyTable = (block: ProtocolContentBlock) => block.type === "table" && block.rows.length > 1 && block.rows.slice(1).every((row) => row.every((cell) => !String(cell ?? "").trim()));
+
 export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectionKey) {
   const section = document.sections.find((item) => item.key === key);
   if (!section) return "";
@@ -314,6 +392,8 @@ export function sectionPlainText(document: ProtocolDocument, key: ProtocolSectio
       if (block.type === "table") return block.rows.flat();
       if (block.type === "media") return [block.caption ?? block.url];
       if (block.type === "embedded_tool") return [block.label || block.url];
+      if (block.type === "program") return [programSummary(block)];
+      if (block.type === "mix") return [mixSummary(block)];
       return [`${block.label}: ${block.durationMinutes} min`, block.notes ?? ""];
     })
     .filter(Boolean)
@@ -444,6 +524,8 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     const unitIndex = protocolTableColumnIndex(headers, ["unit", "单位"], -1);
     const roleIndex = protocolTableColumnIndex(headers, ["role", "use", "用途", "作用"], -1);
     const notesIndex = protocolTableColumnIndex(headers, ["note", "setting", "amount", "备注", "条件", "用量"], -1);
+    // "名称 / 用量 / 说明": the amount and the remark both reach the notes.
+    const remarkIndex = protocolTableColumnIndex(headers, ["说明", "描述", "remark", "description"], -1);
     const target = /equipment|instrument|设备|仪器/i.test(block.caption ?? "") ? equipment : materials;
     for (const row of block.rows.slice(1)) {
       const name = row[nameIndex]?.trim() ?? "";
@@ -452,15 +534,19 @@ export function projectProtocolDocument(document: ProtocolDocument) {
         name,
         unit: unitIndex >= 0 ? row[unitIndex]?.trim() || undefined : undefined,
         role: roleIndex >= 0 ? row[roleIndex]?.trim() || undefined : undefined,
-        notes: (notesIndex >= 0 ? row[notesIndex]?.trim() : "") || row.filter((_, index) => ![nameIndex, unitIndex, roleIndex].includes(index)).filter(Boolean).join(" | ") || undefined,
+        notes: [...new Set([notesIndex, remarkIndex])].filter((index) => index >= 0).map((index) => row[index]?.trim()).filter(Boolean).join(" · ")
+          || row.filter((_, index) => ![nameIndex, unitIndex, roleIndex].includes(index)).filter(Boolean).join(" | ") || undefined,
       });
     }
   }
 
-  const { steps, commonBlocks, executionNeedsReview } = projectProtocolExecution(document);
+  const { steps, commonBlocks, notePlacement, executionNeedsReview } = projectProtocolExecution(document);
 
   const resultTemplates: ResultTemplate[] = (resultSection?.blocks ?? [])
-    .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && block.rows.length > 1)
+    // A written template counts once it records anything (a picture alone is enough); an unwritten one is left out.
+    .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && (block.resultTemplate
+      ? Boolean(block.resultTemplate.fields.length || block.resultTemplate.artifacts?.length || block.resultTemplate.datasets?.length)
+      : block.rows.length > 1))
     .map((block, index) => {
       if (block.resultTemplate) return normalizeResultTemplate({ ...block.resultTemplate, result_type: block.caption || block.resultTemplate.result_type }, index);
       const headers = block.rows[0] ?? [];
@@ -527,14 +613,17 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     })
     .filter((item) => item.material_name && item.formula);
 
+  // Plain fields feed search and lists: chips read as their values, never as references.
+  const readable = (key: ProtocolSectionKey) => renderChipTokens(sectionPlainText(document, key), document.systems);
   return {
-    description: sectionPlainText(document, "description"),
-    purpose: sectionPlainText(document, "purpose"),
-    background: sectionPlainText(document, "background"),
+    description: readable("description"),
+    purpose: readable("purpose"),
+    background: readable("background"),
     materials,
     equipment,
     steps,
     commonBlocks,
+    notePlacement,
     executionNeedsReview,
     resultTemplates,
     consumptionRules,

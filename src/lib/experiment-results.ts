@@ -47,6 +47,8 @@ export type ExperimentResultRecording = {
   modules: ExperimentResultModule[];
   report?: ExperimentResultRecordSummary;
   legacyTemplateResults: ExperimentResultRecordSummary[];
+  /** Results made from a workbook exported by an analysis tool. */
+  analysisResults: ExperimentResultRecordSummary[];
   additionalResults: ExperimentResultRecordSummary[];
 };
 
@@ -237,7 +239,8 @@ export function buildExperimentResultRecording(
     modules,
     report,
     legacyTemplateResults: availableResults.filter((result) => matchedResultIds.has(result.id)),
-    additionalResults: availableResults.filter((result) => result.id !== report?.id && !matchedResultIds.has(result.id)),
+    analysisResults: availableResults.filter((result) => result.sourceType === "analysis" && result.id !== report?.id),
+    additionalResults: availableResults.filter((result) => result.id !== report?.id && !matchedResultIds.has(result.id) && result.sourceType !== "analysis"),
   };
 }
 

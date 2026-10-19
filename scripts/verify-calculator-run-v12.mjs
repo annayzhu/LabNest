@@ -1,3 +1,4 @@
+import {convertLegacySteps,closeProperties} from './test-helpers/editor-controls.mjs';
 import {prepareCalculatorOffline} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';import {readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/calculator/v1.2/evidence';
@@ -16,12 +17,10 @@ await p.locator('button[type=submit]').first().click();await p.waitForURL(/\/pro
 // Legacy rich headings are only a grouping proposal until the author confirms.
 // Confirm the visible three-step plan before exercising Run and calculator flows.
 await p.getByRole('link',{name:'Edit Protocol',exact:true}).click();
-await p.locator('[data-execution-organizer] > summary').click();
-await p.getByRole('button',{name:'整理／拆分步骤',exact:true}).click();
-assert.equal(await p.locator('[data-execution-block-list] select').evaluateAll(selects=>selects.filter(select=>select.value==='step').length),3);
-await p.getByRole('button',{name:'确认以上划分',exact:true}).click();
+await convertLegacySteps(p);
+assert.equal(await p.locator('.ln-protocol-step').count(),3);
 await p.getByRole('button',{name:'Save Protocol',exact:true}).click();await p.waitForURL(/\/protocols\/[^/]+$/);
-await p.goto(base+'/experiments/new',{waitUntil:'networkidle'});await p.getByRole('tab',{name:'Metadata',exact:true}).click();await p.getByRole('button').filter({hasText:title}).click();await p.locator('[name=title]').fill('V12 synthetic run');if(await p.getByRole('button',{name:'收起属性',exact:true}).isVisible())await p.getByRole('button',{name:'收起属性',exact:true}).click();await p.getByRole('button',{name:'Save Experiment',exact:true}).click();await p.waitForURL(/\/experiments\/(?!new)/,{timeout:15000});report.experimentUrl=p.url();await p.goto(p.url()+'/run',{waitUntil:'networkidle'});report.runUrl=p.url();
+await p.goto(base+'/experiments/new',{waitUntil:'networkidle'});await p.getByRole('tab',{name:'Metadata',exact:true}).click();await p.getByRole('button').filter({hasText:title}).click();await p.locator('[name=title]').fill('V12 synthetic run');await closeProperties(p);await p.getByRole('button',{name:'Save Experiment',exact:true}).click();await p.waitForURL(/\/experiments\/(?!new)/,{timeout:15000});report.experimentUrl=p.url();await p.goto(p.url()+'/run',{waitUntil:'networkidle'});report.runUrl=p.url();
 await p.goto(report.protocolUrl,{waitUntil:'networkidle'});await p.getByRole('link',{name:'Edit Protocol',exact:true}).click();const changed=structuredClone(doc);changed.sections[0].blocks.find(b=>b.id==='mix-table').rows[2][2]='CHANGED LIBRARY VALUE';await p.locator('input[name=contentJson]').evaluate((el,value)=>el.value=JSON.stringify(value),changed);await p.locator('button[type=submit]').first().click();await p.waitForURL(/\/protocols\/[^/]+$/);await p.goto(report.runUrl,{waitUntil:'networkidle'});report.checks.push({id:'R05',status:'passed',note:'Library edited after experiment creation; assertions below require original table'});
 // Desktop keeps every step mounted; mobile assertions target only the displayed step.
 const content=p.locator('[data-run-step-content]:visible');

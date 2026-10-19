@@ -14,16 +14,16 @@ const read=async()=> (await (await page.request.get(`${base}/api/experiments/${f
 const wait=async predicate=>{for(let n=0;n<150;n++){const e=await read();if(predicate(e))return e;await page.waitForTimeout(100);}throw Error('readback timeout');};
 const check=async(name,run)=>{await run();report.checks.push({name,result:'通过'});console.log('PASS',name);};
 try {
- await check('Visible multi-system Word download, import authoring and AI destinations',async()=>{
+ await check('Word template written by habit, new-Protocol guidance and AI destinations',async()=>{
   await page.goto(base+'/protocols/import',{waitUntil:'networkidle'});
-  const [file]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'下载多体系 Word 模板'}).click()]);await file.saveAs(`${out}/multi-system-template.docx`);
-  assert((await readFile(`${out}/multi-system-template.docx`)).length>2000);
+  const [file]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'下载 Word 模板'}).click()]);await file.saveAs(`${out}/protocol-template.docx`);
+  assert((await readFile(`${out}/protocol-template.docx`)).length>2000);
   await page.screenshot({path:`${out}/import-template-desktop.png`});
   await page.goto(base+'/protocols/new',{waitUntil:'networkidle'});
-  await page.getByRole('button',{name:'实验体系与参数',exact:true}).click();assert(await page.locator('#protocol-systems').getAttribute('open')!==null);
-  await page.getByRole('button',{name:'步骤整理',exact:true}).click();assert(await page.locator('#protocol-operations').getAttribute('open')!==null);
+  await page.getByText('写法',{exact:true}).click();await page.getByText('一步一段',{exact:false}).first().waitFor();
+  assert(await page.getByPlaceholder('记录：浓度 ng/µL、A260/280、胶图').count());
   await page.screenshot({path:`${out}/authoring-entrances.png`});
-  await page.goto(base+'/ai',{waitUntil:'networkidle'});for(const path of ['/actions/manual','/entries','/protocols/import','/actions/review'])assert(await page.locator(`a[href="${path}"]`).count());await page.screenshot({path:`${out}/ai-entrances.png`});
+  await page.goto(base+'/ai',{waitUntil:'networkidle'});for(const path of ['/actions/manual','/entries','/protocols/import'])assert(await page.locator(`a[href="${path}"]`).count());await page.screenshot({path:`${out}/ai-entrances.png`});
  });
  await check('Real Run configures two experimental groups; independent 50/80 quantities; shared operation counted once',async()=>{
   await page.goto(`${base}/experiments/${f.experimentId}/run`,{waitUntil:'networkidle'});
@@ -31,12 +31,13 @@ try {
   await wait(e=>e.protocolRun.executionPlanJson.groups?.length===2);await page.reload({waitUntil:'networkidle'});
   const forms=page.locator('[data-run-system-selection]');assert.equal(await forms.count(),2);
   for(let index=0;index<2;index++){
-   const form=forms.nth(index);if(!await form.isVisible())await form.locator('..').locator('summary').first().click();await form.getByLabel('裂解体积').selectOption(index?'large':'small');await form.getByLabel('样本性质').selectOption('normal');await form.getByLabel('目标终浓度',{exact:true}).fill('10');await form.getByRole('button',{name:'计算并确认采用',exact:true}).click();
+   const form=forms.nth(index);if(!await form.isVisible())await form.locator('..').locator('summary').first().click();await form.getByLabel('裂解体积').selectOption(index?'large':'small');await form.getByLabel('样本性质').selectOption('normal');await form.getByRole('button',{name:/^(确认本次体系|Confirm systems for this run)$/,exact:true}).click();
    await wait(e=>Object.keys(e.protocolRun.executionPlanJson.versions).length===index+1);await page.reload({waitUntil:'networkidle'});
+   const confirmed=await read(),plan=confirmed.protocolRun.executionPlanJson;const dose=confirmed.steps.find(s=>plan.stepGroups[s.id]===plan.groups[index].id&&s.protocolStepRef.endsWith(':dose'));await page.locator(`#step-${dose.id}`).getByRole('button',{name:/示例母液取液量/}).click();const dialog=page.getByRole('dialog');await dialog.getByLabel(/^(Target concentration|目标浓度)$/).fill('10');await dialog.getByRole('button',{name:/^(Calculate and adopt|计算并确认采用)$/}).click();await wait(e=>Object.values(e.protocolRun.executionPlanJson.versions).filter(v=>v.calculations?.take).length===index+1);await page.keyboard.press('Escape');await page.reload({waitUntil:'networkidle'});
   }
   const e=await read(),plan=e.protocolRun.executionPlanJson;assert.equal(e.steps.length,7);
   const a=e.steps.find(s=>plan.stepGroups[s.id]===plan.groups[0].id&&s.protocolStepRef.endsWith(':dose')),b=e.steps.find(s=>plan.stepGroups[s.id]===plan.groups[1].id&&s.protocolStepRef.endsWith(':dose'));
-  assert((await page.locator(`#step-${a.id}`).innerText()).includes('50 µL'));assert((await page.locator(`#step-${b.id}`).innerText()).includes('80 µL'));
+  assert((await page.locator(`#step-${a.id}`).innerText()).replace(/\s/g,'').includes('50µL'));assert((await page.locator(`#step-${b.id}`).innerText()).replace(/\s/g,'').includes('80µL'));
   assert.equal(Object.values(plan.stepGroups).filter(id=>id==='shared').length,1);
   for(const mode of ['light','dark'])for(const width of [1440,390,244]) {await page.setViewportSize({width,height:1000});await page.evaluate(mode=>document.documentElement.dataset.labnestMode=mode,mode);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`overflow ${width}`);await page.screenshot({path:`${out}/groups-${mode}-${width}.png`,fullPage:true});}
   report.fixture={...f,steps:{a:a.id,b:b.id}};

@@ -83,32 +83,26 @@ async function assertDesktopSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const editRoot = page.locator('[data-density-slice="protocol"]');
   await editRoot.waitFor();
-  await page.getByRole("toolbar", { name: "Protocol formatting" }).waitFor();
+  await page.locator(".ln-editor-surface").first().waitFor();
+  assert.equal(await page.getByRole("toolbar", { name: /formatting/i }).count(), 0, "The Protocol editor still shows a formatting toolbar; formatting is in the document (\"/\", ⋮⋮, selection bubble).");
   const editMetrics = await editRoot.evaluate((root) => {
     const header = root.querySelector(":scope > header");
     const viewbar = root.querySelector(".document-editor-viewbar");
     const viewbarInner = root.querySelector(".document-editor-viewbar-inner");
-    const toolbar = root.querySelector(".document-canvas-toolbar");
     const paper = root.querySelector(".document-a4-paper");
     const saveAction = root.querySelector(".protocol-workbench-save");
-    const toolbarControl = root.querySelector(".ln-wysiwyg-toolbar button");
     const contextRail = root.querySelector(".document-editor-context-rail");
     const editableBody = root.querySelector('.document-a4-paper [contenteditable="true"]');
     return {
       headerHeight: header?.getBoundingClientRect().height ?? 0,
       viewbarHeight: viewbarInner?.getBoundingClientRect().height ?? viewbar?.getBoundingClientRect().height ?? 0,
-      toolbarHeight: toolbar?.getBoundingClientRect().height ?? 0,
       paperWidth: paper?.getBoundingClientRect().width ?? 0,
       viewbarLeft: viewbarInner?.getBoundingClientRect().left ?? 0,
-      viewbarWidth: viewbarInner?.getBoundingClientRect().width ?? 0,
-      toolbarLeft: toolbar?.getBoundingClientRect().left ?? 0,
-      toolbarWidth: toolbar?.getBoundingClientRect().width ?? 0,
       paperLeft: paper?.getBoundingClientRect().left ?? 0,
       saveActionTop: saveAction?.getBoundingClientRect().top ?? 0,
       saveActionHeight: saveAction?.querySelector("button")?.getBoundingClientRect().height ?? 0,
       viewbarTop: viewbarInner?.getBoundingClientRect().top ?? 0,
       viewbarBottom: viewbarInner?.getBoundingClientRect().bottom ?? 0,
-      toolbarFontSize: toolbarControl ? Number.parseFloat(getComputedStyle(toolbarControl).fontSize) : 0,
       outlineVisible: Boolean(root.querySelector(".document-editor-outline")) && getComputedStyle(root.querySelector(".document-editor-outline")).display !== "none",
       contextHidden: Boolean(contextRail) && getComputedStyle(contextRail).display === "none",
       copyLineHeightRatio: editableBody ? Number.parseFloat(getComputedStyle(editableBody).lineHeight) / Number.parseFloat(getComputedStyle(editableBody).fontSize) : 0,
@@ -116,14 +110,10 @@ async function assertDesktopSlice(page, routes) {
   });
   assert(editMetrics.headerHeight <= 34, `Editor page header is too tall: ${editMetrics.headerHeight}px.`);
   assert(editMetrics.viewbarHeight <= 34, `Editor view tabs are too tall: ${editMetrics.viewbarHeight}px.`);
-  assert(editMetrics.toolbarHeight <= 42, `Editor toolbar is too tall: ${editMetrics.toolbarHeight}px.`);
   assert(editMetrics.paperWidth >= 790 && editMetrics.paperWidth <= 798, `Editor A4 width changed: ${editMetrics.paperWidth}px.`);
   assert(Math.abs(editMetrics.viewbarLeft - editMetrics.paperLeft) <= 1, `Editor tabs are not aligned with the A4 page: ${editMetrics.viewbarLeft}px vs ${editMetrics.paperLeft}px.`);
-  assert(Math.abs(editMetrics.toolbarLeft - editMetrics.paperLeft) <= 1, `Editor toolbar is not aligned with the A4 page: ${editMetrics.toolbarLeft}px vs ${editMetrics.paperLeft}px.`);
-  assert(Math.abs(editMetrics.viewbarWidth - editMetrics.toolbarWidth) <= 1, `Editor tabs and toolbar use different widths: ${editMetrics.viewbarWidth}px vs ${editMetrics.toolbarWidth}px.`);
   assert(editMetrics.saveActionHeight >= 28 && editMetrics.saveActionHeight <= 32, `Top workbench save action should stay compact: ${editMetrics.saveActionHeight}px.`);
   assert(editMetrics.saveActionTop >= editMetrics.viewbarTop - 1 && editMetrics.saveActionTop + editMetrics.saveActionHeight <= editMetrics.viewbarBottom + 1, "Save action is not contained in the sticky top workbench.");
-  assert(editMetrics.toolbarFontSize >= 11.5 && editMetrics.toolbarFontSize <= 12.5, `Editor toolbar text is outside the compact readable 11.5–12.5px range: ${editMetrics.toolbarFontSize}px.`);
   assert(editMetrics.outlineVisible, "The desktop document outline is not visible.");
   assert(editMetrics.contextHidden, "The desktop contextual inspector must stay hidden before a supported block is selected.");
   assert(editMetrics.copyLineHeightRatio >= 1.58 && editMetrics.copyLineHeightRatio <= 1.62, `Protocol editor copy should use the requested 1.6 line-height ratio: ${editMetrics.copyLineHeightRatio}.`);
@@ -183,19 +173,15 @@ async function assertDesktopSlice(page, routes) {
   const stickyState = await editRoot.evaluate((root) => {
     const topbar = document.querySelector("header.sticky");
     const viewbar = root.querySelector(".document-editor-viewbar-inner");
-    const toolbar = root.querySelector(".document-canvas-toolbar");
     const topbarBottom = topbar?.getBoundingClientRect().bottom ?? 0;
     const viewbarRect = viewbar?.getBoundingClientRect();
-    const toolbarRect = toolbar?.getBoundingClientRect();
     return {
       topbarBottom,
       viewbarTop: viewbarRect?.top ?? 0,
       viewbarBottom: viewbarRect?.bottom ?? 0,
-      toolbarTop: toolbarRect?.top ?? 0,
     };
   });
   assert(stickyState.viewbarTop >= stickyState.topbarBottom - 1, `Editor tabs overlap the global top bar: ${JSON.stringify(stickyState)}.`);
-  assert(stickyState.toolbarTop >= stickyState.viewbarBottom - 1, `Editor toolbar overlaps the tabs after scrolling: ${JSON.stringify(stickyState)}.`);
   await assertNoPageOverflow(page, "Protocol editor desktop");
 
   if (screenshotDir) {
@@ -268,19 +254,15 @@ async function assertMobileSlice(page, routes) {
   await page.goto(`${baseUrl}${routes.editHref}`, { waitUntil: "domcontentloaded" });
   const root = page.locator('[data-density-slice="protocol"]');
   await root.waitFor();
-  await page.getByRole("toolbar", { name: "Protocol formatting" }).waitFor();
+  await page.locator(".ln-editor-surface").first().waitFor();
+  assert.equal(await page.getByRole("toolbar", { name: /formatting/i }).count(), 0, "The Protocol editor still shows a formatting toolbar; formatting is in the document (\"/\", ⋮⋮, selection bubble).");
   const mobileState = await root.evaluate((slice) => ({
     outlineDisplay: getComputedStyle(slice.querySelector(".document-editor-outline")).display,
     contextDisplay: getComputedStyle(slice.querySelector(".document-editor-context-rail")).display,
-    toolbarClientWidth: slice.querySelector(".document-canvas-toolbar").clientWidth,
-    toolbarScrollWidth: slice.querySelector(".document-canvas-toolbar").scrollWidth,
-    toolbarFontSize: Number.parseFloat(getComputedStyle(slice.querySelector(".ln-wysiwyg-toolbar button")).fontSize),
     tabCount: slice.querySelectorAll('[role="tab"]').length,
   }));
   assert(mobileState.outlineDisplay === "none", `Mobile outline should be hidden, got ${mobileState.outlineDisplay}.`);
   assert(mobileState.contextDisplay === "none", `Mobile inspector should be hidden, got ${mobileState.contextDisplay}.`);
-  assert(mobileState.toolbarScrollWidth <= mobileState.toolbarClientWidth + 1, `Mobile toolbar should wrap without horizontal scrolling: ${JSON.stringify(mobileState)}.`);
-  assert(mobileState.toolbarFontSize >= 11.5 && mobileState.toolbarFontSize <= 12.5, `Mobile editor toolbar labels should stay within the compact readable 11.5–12.5px range: ${mobileState.toolbarFontSize}px.`);
   assert(mobileState.tabCount === 3, `Expected three accessible editor tabs, found ${mobileState.tabCount}.`);
   assert(await page.getByRole("tab", { name: "Relevant items" }).count() === 1, "Mobile editor must expose the full Relevant items label.");
   await page.evaluate(() => scrollTo(0, Math.min(640, document.documentElement.scrollHeight - innerHeight)));
@@ -288,19 +270,15 @@ async function assertMobileSlice(page, routes) {
   const mobileStickyState = await root.evaluate((slice) => {
     const topbar = document.querySelector("header.sticky");
     const viewbar = slice.querySelector(".document-editor-viewbar-inner");
-    const toolbar = slice.querySelector(".document-canvas-toolbar");
     const topbarBottom = topbar?.getBoundingClientRect().bottom ?? 0;
     const viewbarRect = viewbar?.getBoundingClientRect();
-    const toolbarRect = toolbar?.getBoundingClientRect();
     return {
       topbarBottom,
       viewbarTop: viewbarRect?.top ?? 0,
       viewbarBottom: viewbarRect?.bottom ?? 0,
-      toolbarTop: toolbarRect?.top ?? 0,
     };
   });
   assert(mobileStickyState.viewbarTop >= mobileStickyState.topbarBottom - 1, `Mobile editor tabs overlap the global top bar: ${JSON.stringify(mobileStickyState)}.`);
-  assert(mobileStickyState.toolbarTop >= mobileStickyState.viewbarBottom - 1, `Mobile editor toolbar overlaps the tabs: ${JSON.stringify(mobileStickyState)}.`);
   await assertNoPageOverflow(page, "Protocol editor mobile");
 
   if (screenshotDir) {

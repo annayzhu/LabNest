@@ -1,0 +1,60 @@
+/* 方案设计: search, method cards, comparison, draft and scaling. */
+.ln-design-form { display: grid; gap: 0.75rem; }
+.ln-design-form label { display: grid; gap: 0.25rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-design-form input, .ln-design-form textarea, .ln-design-form select { min-height: var(--ln-control-height-sm); padding: 0.35rem 0.55rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: var(--ln-control-font-size-md) var(--font-ui); }
+.ln-design-form textarea { min-height: 4.5rem; resize: vertical; }
+.ln-design-form .ln-source-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem; }
+@media (max-width: 640px) { .ln-design-form .ln-source-pair { grid-template-columns: minmax(0, 1fr); } }
+.ln-design-settings { display: grid; gap: 0.5rem; padding: 0.65rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--warm); font-size: var(--ln-control-font-size-md); color: var(--graphite); }
+.ln-design-settings label.is-check { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; cursor: pointer; }
+.ln-design-settings input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: var(--moss); }
+.ln-design-settings input[type="password"], .ln-design-settings input[type="text"] { min-height: var(--ln-control-height-sm); padding: 0 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); font: var(--ln-control-font-size-md) var(--font-ui); }
+.ln-design-note { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+
+.ln-hits { display: grid; gap: 0.6rem; }
+.ln-hit { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.6rem; padding: 0.65rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); }
+.ln-hit[data-chosen] { border-color: var(--action-border); background: color-mix(in srgb, var(--action-surface) 60%, var(--surface)); }
+.ln-hit input[type="checkbox"] { width: 1.2rem; height: 1.2rem; margin-top: 0.2rem; accent-color: var(--moss); }
+.ln-hit-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.6rem; }
+.ln-hit-head strong { color: var(--ink); }
+.ln-hit-meta { font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-hit-source { padding: 0 0.45em; border: 1px solid var(--hairline); border-radius: 999px; font: 500 var(--ln-control-font-size-xs)/1.6 var(--font-ui); color: var(--graphite); }
+.ln-hit-snippet { margin: 0.2rem 0 0; font-size: var(--ln-control-font-size-xs); color: var(--graphite); line-height: 1.5; }
+.ln-hit-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.45rem; }
+.ln-hit-actions a { display: inline-flex; align-items: center; min-height: 1.9rem; padding: 0 0.5rem; color: var(--moss); font-size: var(--ln-control-font-size-xs); text-decoration: underline; text-underline-offset: 2px; }
+.ln-hit-status { font-size: var(--ln-control-font-size-xs); color: var(--muted); align-self: center; }
+.ln-hit-status.is-error { color: var(--error); }
+
+.ln-card { display: grid; gap: 0.35rem; margin-top: 0.5rem; padding: 0.55rem 0.65rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); background: var(--warm); font-size: var(--ln-control-font-size-md); }
+.ln-card-summary { margin: 0; color: var(--ink); }
+.ln-card-section { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.3rem 0.6rem; }
+.ln-card-section dt { font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-card-section dd { margin: 0; }
+.ln-card-section ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.15rem; }
+.ln-card-line[data-unverified] { color: var(--warning); }
+:root { --ln-unverified-label: " (unverified)"; }
+:root[data-locale="zh"] { --ln-unverified-label: "（未核实）"; }
+.ln-card-line[data-unverified]::after { content: var(--ln-unverified-label); font-size: var(--ln-control-font-size-xs); }
+/* Cards made since numbers are checked say why; the bare label stays for older cards. */
+.ln-card-line[data-unverified]:has(.ln-card-problem)::after { content: none; }
+.ln-card-problem { font-size: var(--ln-control-font-size-xs); }
+.ln-card-quote { display: block; font-size: var(--ln-control-font-size-xs); color: var(--muted); font-style: italic; }
+.ln-card-foot { font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-card-manual { display: grid; gap: 0.35rem; }
+.ln-card-manual textarea { min-height: 3rem; }
+
+.ln-compare { overflow-x: auto; }
+.ln-compare table { width: 100%; border-collapse: collapse; font-size: var(--ln-control-font-size-xs); line-height: 1.45; }
+.ln-compare th { text-align: left; padding: 0.4rem; border-bottom: 1px solid var(--hairline); color: var(--muted); font-weight: 600; vertical-align: top; }
+.ln-compare td { padding: 0.4rem; border-bottom: 1px solid var(--hairline); vertical-align: top; color: var(--graphite); min-width: 12rem; }
+.ln-compare td ul { margin: 0; padding-left: 1rem; }
+.ln-compare th.is-row { white-space: nowrap; color: var(--ink); }
+
+.ln-scale { display: grid; gap: 0.5rem; padding: 0.65rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); }
+.ln-scale-row { display: flex; flex-wrap: wrap; align-items: end; gap: 0.5rem; }
+.ln-scale-row label { display: grid; gap: 0.2rem; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
+.ln-scale-row input, .ln-scale-row select { min-height: var(--ln-control-height-sm); width: 7rem; padding: 0 0.5rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); font: var(--ln-control-font-size-md) var(--font-ui); }
+.ln-scale-changes { margin: 0; padding-left: 1.1rem; font-size: var(--ln-control-font-size-xs); color: var(--graphite); display: grid; gap: 0.15rem; }
+.ln-scale-changes li[data-rule="manual"] { color: var(--warning); }
+.ln-scale-explanation { margin: 0; white-space: pre-wrap; font-size: var(--ln-control-font-size-xs); color: var(--graphite); border-left: 2px solid var(--hairline); padding-left: 0.6rem; }
+@media (pointer: coarse) { .ln-hit input[type="checkbox"], .ln-design-settings input[type="checkbox"] { width: 1.5rem; height: 1.5rem; } .ln-hit-actions a, .ln-hit-actions button { min-height: 2.75rem; } }

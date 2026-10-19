@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
+import { AiLink } from "@/components/AiAssistant";
 import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
@@ -67,6 +68,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         ]}
         actions={<>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
+          <AiLink href="/protocols/design"><Sparkles className="h-4 w-4" aria-hidden />Design from a goal</AiLink>
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}
       />

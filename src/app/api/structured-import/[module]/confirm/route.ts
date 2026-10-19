@@ -5,7 +5,6 @@ import { parseStructuredFile, parseColumnOverrides } from "@/lib/structured-file
 import { commitStructuredImport, validateStructuredImport } from "@/lib/structured-import";
 import { isStructuredModuleKey } from "@/lib/structured-modules";
 import { matchesImportConfirmation } from "@/lib/structured-import-confirmation";
-import { parseAcceptedExtractions } from "@/lib/protocol-extraction";
 
 export const runtime = "nodejs";
 
@@ -39,8 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
       metadataJson: { ...preparedFile.metadataJson, importModule: module, importFormat: parsed.format },
     } });
     attachmentId = attachment.id;
-    const aiExtractions = module === "protocols" ? parseAcceptedExtractions(formData.get("aiExtractions")) : [];
-    const result = await commitStructuredImport(parsed, validation, attachment.id, confirmationToken, aiExtractions);
+    const result = await commitStructuredImport(parsed, validation, attachment.id, confirmationToken);
     revalidatePath(`/${module}`);
     revalidatePath("/");
     return Response.json({ result }, { status: 201 });

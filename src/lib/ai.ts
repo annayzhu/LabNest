@@ -59,11 +59,11 @@ export const defaultProviderBaseUrls: Partial<Record<AIProviderType, string>> = 
 };
 
 export const providerTypeLabels: Record<AIProviderType, string> = {
-  manual_copy_paste: "手动复制粘贴",
-  openai: "OpenAI 官方接口",
-  openai_compatible: "OpenAI 兼容接口",
-  anthropic: "Anthropic 接口",
-  dify: "Dify 应用",
+  manual_copy_paste: "Manual copy and paste",
+  openai: "Official OpenAI API",
+  openai_compatible: "OpenAI-compatible API",
+  anthropic: "Anthropic API",
+  dify: "Dify app",
 };
 
 const connectedProviderTypes: AIProviderType[] = ["openai", "openai_compatible", "anthropic", "dify"];
@@ -229,6 +229,19 @@ export function resolveBaseUrl(value: string | undefined, type: AIProviderType):
   return url.toString().replace(/\/+$/, "");
 }
 
+/**
+ * Provider text as shown to people: the key never appears in it. Services echo a key whole, cut ("sk-live-0123…") or masked
+ * ("sk-****WXYZ"), so besides the key itself (as sent, and URL-encoded) any word that carries its first 8 or last 6
+ * characters, or a run of asterisks, is hidden.
+ */
+export function redactSecret(message: string, secret?: string): string {
+  const key = secret?.trim();
+  if (!key) return message;
+  const text = [...new Set([encodeURIComponent(key), key])].reduce((out, value) => out.replaceAll(value, "[redacted]"), message);
+  const fragments = key.length >= 12 ? [key.slice(0, 8), key.slice(-6)] : [];
+  return text.replace(/\S+/g, word => word !== "[redacted]" && (/\*{3,}/.test(word) || fragments.some(fragment => word.includes(fragment))) ? "[redacted]" : word);
+}
+
 async function readErrorBody(response: Response): Promise<string> {
   try {
     const text = await response.text();
@@ -264,10 +277,10 @@ function connectionFailure(error: unknown, detail: string): Pick<AIConnectionRes
   let errorCode = "invalid_response", message = "服务返回的内容不符合接口协议，尚未验证模型生成。";
   if (error instanceof AIProviderError && error.code === "timeout") { errorCode = "timeout"; message = "LabNest 服务器请求超时，请稍后手动重试。"; }
   else if (error instanceof AIProviderError && error.code === "network") { errorCode = "network"; message = "LabNest 服务器无法连接该服务，请检查地址与服务器网络。"; }
-  else if (/设置已改变|AI 已关闭/.test(detail)) { errorCode = "cancelled"; message = "AI 或服务设置已改变，本次测试已停止。"; }
+  else if (/设置已改变|AI 已关闭|settings changed|AI is off/i.test(detail)) { errorCode = "cancelled"; message = "AI 或服务设置已改变，本次测试已停止。"; }
   else if (status === 402 || /insufficient[_ ](?:quota|balance)|credit balance|余额不足/i.test(detail)) { errorCode = "balance"; message = "账户余额不足，请到服务平台检查。"; }
   else if (status === 401) { errorCode = "authentication"; message = "API 密钥无效或已失效，请检查密钥。"; }
-  else if (/model[_ ]not[_ ]found|invalid[_ ]model|model.*(?:does not exist|not exist|not found|not have access|permission|not available)/i.test(detail)) { errorCode = "model"; message = "模型不存在或当前密钥无权使用，请核对模型 ID 与权限。"; }
+  else if (/model[_ ]not[_ ]found|invalid[_ ]model|model.*(?:does not exist|not exist|not found|not have access|permission|not available)|(?:no|not have) access to (?:the )?model|无权(?:使用|访问)模型/i.test(detail)) { errorCode = "model"; message = "模型不存在或当前密钥无权使用，请核对模型 ID 与权限。"; }
   else if (status === 403) { errorCode = "permission"; message = "服务拒绝访问，请检查账户权限或服务访问策略。"; }
   else if (status === 429) { errorCode = "rate_limit"; message = "请求过快或已达到服务限流，请稍后手动重试。"; }
   else if (status && status >= 500) { errorCode = "unavailable"; message = "服务暂时繁忙或不可用，请稍后手动重试。"; }
@@ -308,9 +321,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
   }
 
   protected safeMessage(message: string): string {
-    const key = this.config.apiKey;
-    if (!key) return message;
-    return [...new Set([key, encodeURIComponent(key)])].reduce((text, secret) => text.replaceAll(secret, "[redacted]"), message);
+    return redactSecret(message, this.config.apiKey);
   }
 
   protected async request(path: string, init: RequestInit): Promise<Response> {
@@ -353,13 +364,13 @@ abstract class ConnectedProvider implements AIProviderAdapter {
   protected testGeneration(): Promise<AIConnectionResult> {
     return this.guarded(async () => {
       const result = await this.complete("Reply with the single word OK.", "Connection test only. No business data.", true);
-      if (!result.text.trim()) throw new AIProviderError(result.truncated ? "测试输出额度已用完，未获得有效正文；这不表示密钥错误。" : "模型返回了空内容，尚未验证生成。");
-      if (this.config.type === "dify") return { ok: true, verification: "application", message: "应用生成测试成功；实际模型由 Dify 应用配置决定。" };
+      if (!result.text.trim()) throw new AIProviderError(result.truncated ? "The test used up its output allowance before any text came back; this does not mean the key is wrong." : "The model returned empty content; generation is not verified yet.");
+      if (this.config.type === "dify") return { ok: true, verification: "application", message: "App generation test succeeded; the actual model is set by the Dify app." };
       const requestedModel = this.requireModel();
       const returnedModel = result.returnedModel;
       const mismatch = returnedModel && returnedModel !== requestedModel;
       return { ok: true, verification: "model", requestedModel, returnedModel,
-        message: `测试成功 · 请求模型 ${requestedModel}${returnedModel ? ` · 返回模型 ${returnedModel}${mismatch ? "（与请求 ID 不同，请核对服务端映射）" : ""}` : " · 服务未返回模型 ID"}${result.truncated ? " · 输出已截断" : ""}` };
+        message: `Test succeeded · requested model ${requestedModel}${returnedModel ? ` · returned model ${returnedModel}${mismatch ? " (differs from the requested ID; check the service’s mapping)" : ""}` : " · the service returned no model ID"}${result.truncated ? " · output truncated" : ""}` };
     });
   }
 

@@ -16,7 +16,7 @@ const defaultRoutes = [
   "/reports", "/reports/new", "/reports/import", "/reports/export",
   "/inventory", "/inventory/new", "/inventory/import", "/inventory/export", "/inventory/locations",
   "/sequences", "/sequences/new", "/sequences/import", "/sequences/export", "/sequences/collections", "/sequences/collections/new",
-  "/tools", "/tools/visualization", "/search", "/actions", "/actions/manual", "/trash", "/settings",
+  "/tools", "/tools/visualization", "/search", "/actions/manual", "/trash", "/settings",
   "/attachments", "/entities", "/samples", "/exports", "/purchases", "/protocol-run",
 ];
 const requestedRoutes = process.env.LABNEST_AUDIT_ROUTES

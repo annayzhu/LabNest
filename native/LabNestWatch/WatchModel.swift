@@ -3,15 +3,20 @@ import SwiftUI
 import Security
 import UserNotifications
 
+/// A mix card line as confirmed on the phone: this run's total in large type, per-reaction amount below.
+struct MixLine: Codable, Identifiable { var id: String; var name: String; var mode: String; var total: String; var perReaction: String; var struck: Bool }
+/// Only confirmed cards carry lines; an unconfirmed or changed card is `stale` and its `note` asks for confirmation on the phone.
+struct RunMix: Codable, Identifiable { var id: String; var title: String; var per: String; var stale: Bool; var note: String?; var quantity: Double?; var aliquot: String?; var lines: [MixLine]? }
 struct RunStep: Codable, Identifiable {
     struct TimerState: Codable { var durationSeconds: Int?; var remainingSeconds: Int?; var startedAt: String?; var pausedAt: String? }
     var id: String; var sourceRef: String; var title: String; var group: String; var text: String
     var completed: Bool; var canComplete: Bool; var blocked: Bool; var skipped: String?; var timer: TimerState; var canTime: Bool
+    var mixes: [RunMix]?
 }
 struct RunSnapshot: Codable { var experimentId: String; var title: String; var revision: Int; var serverTime: Double; var capturedAt: String; var steps: [RunStep] }
 struct WatchGrant: Codable { var token: String; var experimentId: String }
-struct WatchCredential: Codable { var token: String; var experimentId: String; var serverOrigin: String }
-struct RunMutation: Codable { var intent: String; var stepId: String; var revision: Int; var clientMutationId: String; var deviceCreatedAt: String; var sourceRef: String }
+struct WatchCredential: Codable { var token: String; var experimentId: String; var serverOrigin: String; var pairingRequestId: String? = nil }
+struct RunMutation: Codable { var intent: String; var stepId: String; var revision: Int; var clientMutationId: String; var deviceCreatedAt: String; var sourceRef: String; var mixId: String? = nil; var lineId: String? = nil; var struck: Bool? = nil }
 struct PendingMutation: Codable { var request: RunMutation; var conflict: String? }
 struct ServerMessage: Codable { var error: String? }
 
@@ -57,6 +62,10 @@ enum WatchStorage {
     @Published var baseURL = UserDefaults.standard.string(forKey: "server") ?? ""
     @Published var reminders = UserDefaults.standard.bool(forKey: "reminders")
     private var serverOffset: TimeInterval = 0
+    private var phoneReceiver: WatchPhoneReceiver?
+    func startPhoneConnection() {
+        if phoneReceiver == nil { phoneReceiver = WatchPhoneReceiver(model: self) }
+    }
     private var deviceId: String {
         if let value = UserDefaults.standard.string(forKey: "deviceId") { return value }
         let value = UUID().uuidString; UserDefaults.standard.set(value, forKey: "deviceId"); return value
@@ -84,15 +93,16 @@ enum WatchStorage {
         }
         return data
     }
-    func pair(code: String) async -> Bool {
+    func pair(code: String, server: URL? = nil, requestId: String? = nil) async -> Bool {
         guard !busy, pending == nil else { return false }; busy = true; defer { busy = false }
         pairingError = nil
         do {
-            let destination = try endpoint("/api/watch/pair")
-            let body = try JSONSerialization.data(withJSONObject: ["code": code, "deviceId": deviceId])
+            let destination = try server.map { $0.appendingPathComponent("api/watch/pair") } ?? endpoint("/api/watch/pair")
+            let normalizedCode = code.filter { !$0.isWhitespace }.uppercased()
+            let body = try JSONSerialization.data(withJSONObject: ["code": normalizedCode, "deviceId": deviceId])
             let grant = try JSONDecoder().decode(WatchGrant.self, from: await request("/api/watch/pair", body: body, authenticated: false, targetURL: destination))
-            let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString)
-            try WatchStorage.saveCredential(next); credential = next; snapshot = nil
+            let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString, pairingRequestId: requestId)
+            try WatchStorage.saveCredential(next); credential = next; snapshot = nil; connected = false
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             try? FileManager.default.removeItem(at: WatchStorage.url("snapshot.json"))
             baseURL = URL(string: "/", relativeTo: destination)!.absoluteString
@@ -135,6 +145,16 @@ enum WatchStorage {
         let operation = RunMutation(intent: intent, stepId: step.id, revision: snapshot.revision, clientMutationId: UUID().uuidString, deviceCreatedAt: ISO8601DateFormatter().string(from: Date()), sourceRef: step.sourceRef)
         do { let queued = PendingMutation(request: operation, conflict: nil); try WatchStorage.save(queued, "pending.json"); pending = queued; message = "已保存至本机，等待同步。"; await refresh(allowTimerSubmission: true) }
         catch { message = "本机保存失败，操作未确认：\(error.localizedDescription)" }
+    }
+    /// Cross a line off (or back on) while pipetting. A bench aid shared with the phone: online only, never queued, not progress.
+    func strike(_ mix: RunMix, step: RunStep, line: MixLine) async {
+        guard let credential, let snapshot, connected, !busy else { message = "划掉需要联网；可在手机上操作。"; return }
+        // One line per request, so the phone's own crossings are never overwritten.
+        let operation = RunMutation(intent: "strike", stepId: step.id, revision: snapshot.revision, clientMutationId: UUID().uuidString, deviceCreatedAt: ISO8601DateFormatter().string(from: Date()), sourceRef: step.sourceRef, mixId: mix.id, lineId: line.id, struck: !line.struck)
+        do {
+            _ = try await request("/api/watch/runs/\(credential.experimentId)", body: JSONEncoder().encode(operation))
+            await refresh()
+        } catch { message = "未划掉：\(error.localizedDescription)" }
     }
     func discardPending() {
         do { try FileManager.default.removeItem(at: WatchStorage.url("pending.json")); pending = nil; message = "已丢弃未同步操作，请在手机核对当前状态。" }

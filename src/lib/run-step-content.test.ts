@@ -9,7 +9,7 @@ it('R01 R02 R04 stable block mapping retains tables, notes, and distinct same-ti
  expect(steps).toHaveLength(4);expect(steps[0].content_blocks?.map(b=>b.id)).toEqual(['p','t','note']);expect(steps[1].content_blocks?.map(b=>b.id)).toEqual(['material']);
  const runs=buildProtocolExperimentSteps([{versionId:'v1',humanCode:'PRT-001',versionTitle:'Synthetic',displayVersion:'1.0',protocolTitle:'Synthetic',steps}]);expect(runs[0].protocolStepRef).toBe('v1:a');expect(runs[1].protocolStepRef).toBe('v1:b');
  const snapshot={versions:[{protocolVersionId:'v1',stepsJson:steps,contentJson:doc}]};const original=JSON.stringify(snapshot);
- const content=runStepContent(snapshot,runs[0],{dose:.1});expect(JSON.stringify(content)).toContain('.1 µL');expect(JSON.stringify(content)).toContain('{{unknown}}');expect(content.common[0].id).toBe('shared');expect(JSON.stringify(snapshot)).toBe(original);
+ const content=runStepContent(snapshot,runs[0],{dose:.1});expect(JSON.stringify(content)).toContain('.1 µL');expect(JSON.stringify(content)).toContain('{{unknown}}');expect(content.notesBefore.map(b=>b.id)).toEqual(['shared']);expect(JSON.stringify(snapshot)).toBe(original);
 });
 it('R05 R06 recovery uses captured same-version document and leaves text-only records intact',()=>{
  const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'a',type:'heading',text:'Frozen'},{id:'t',type:'table',rows:[['Frozen content']]}];const projected=projectLegacyProtocolExecution(doc).steps;const legacy=projected.map(({order,title,description})=>({order,title,description}));
@@ -29,14 +29,17 @@ it.each(['heading','heading2','heading3'] as const)('%s binds tables, images and
  expect(projection.steps[1].content_blocks?.map(b=>b.id)).toEqual(['tb']);
  expect(projection.commonBlocks.map(b=>b.id)).toEqual(['prep']);
  const source={versions:[{protocolVersionId:'v',stepsJson:projection.steps,contentJson:doc}]};
- const s=projection.steps[1];const resolved=runStepContent(source,{protocolStepRef:'v:'+s.source_ref,groupKey:'v',order:2,title:'B',description:''});
- expect(resolved.common.map(b=>b.id)).toEqual(['prep']);expect(JSON.stringify({blocks:resolved.blocks,common:resolved.common})).not.toContain('Table A');
+ const at=(index:number)=>{const s=projection.steps[index];return runStepContent(source,{protocolStepRef:'v:'+s.source_ref,groupKey:'v',order:index+1,title:s.title,description:''});};
+ // The preparation note stays before the first step; later steps do not repeat it.
+ expect(at(0).notesBefore.map(b=>b.id)).toEqual(['prep']);
+ const resolved=at(1);
+ expect(resolved.notesBefore).toEqual([]);expect(JSON.stringify({blocks:resolved.blocks,notes:[...resolved.notesBefore,...resolved.notesAfter]})).not.toContain('Table A');
 });
 it('recovers a v1.2 rich heading with missing table from its frozen source ID, never as shared preparation',()=>{
  const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'h',type:'rich_text',nodes:[{type:'heading2',content:[{text:'Old heading'}]}]},{id:'t',type:'table',rows:[['Frozen table']]}];
  const old=[{order:1,title:'Old heading',description:'',source_ref:'h:0',content_blocks:[{id:'h:0',type:'rich_text',nodes:[{type:'heading2',content:[{text:'Old heading'}]}]}]}];
  const r=runStepContent({versions:[{protocolVersionId:'v',stepsJson:old,contentJson:doc}]},{protocolStepRef:'v:h:0',groupKey:'v',order:1,title:'Old heading',description:''});
- expect(r.blocks.map(b=>b.id)).toEqual(['t']);expect(r.common).toEqual([]);
+ expect(r.blocks.map(b=>b.id)).toEqual(['t']);expect([...r.notesBefore,...r.notesAfter]).toEqual([]);
 });
 
 it('offline image manifest deduplicates only frozen local attachment images',()=>{const image=(url:string)=>({type:'media',mediaType:'image',url});expect(runOfflineImagePaths({versions:[{blocks:[image('/api/attachments/a?inline=1'),image('/api/attachments/a?inline=1'),image('https://outside.test/private.png'),image('/api/mobile/calculations'),{type:'media',mediaType:'video',url:'/api/attachments/movie'}]}]})).toEqual(['/api/attachments/a?inline=1']);});
@@ -71,4 +74,13 @@ it('identifies confirmation hierarchy only from frozen checklist identity',async
 it('keeps numbered item details in its existing Run step',()=>{
  const doc=protocolDocumentSchema.parse({schemaVersion:1,sections:[{key:'steps',title:'Steps',blocks:[{id:'numbered',type:'rich_text',nodes:[{type:'numbered',content:[{text:'Prepare'}],childContent:[{type:'paragraph',content:[{type:'text',text:'Critical dose 5 µL'}]}]}]}]}]});
  const projection=projectLegacyProtocolExecution(doc);expect(projection.steps).toHaveLength(1);expect(projection.steps[0].source_ref).toBe('numbered:0');expect(JSON.stringify(projection.steps[0].content_blocks)).toContain('Critical dose 5 µL');
+});
+
+it('shows a one-sentence step block in full when the Protocol has no systems', async () => {
+ const {projectProtocolDocument}=await import('./protocol-document');
+ const doc=createEmptyProtocolDocument();doc.sections.find(s=>s.key==='steps')!.blocks=[{id:'spin',type:'rich_text',nodes:[{type:'paragraph',content:[{text:'离心'}]}],execution:{role:'step',stepId:'spin-step',format:'block'}}];
+ const steps=projectProtocolDocument(doc).steps;
+ const [run]=buildProtocolExperimentSteps([{versionId:'v1',humanCode:'PRT-001',versionTitle:'Synthetic',displayVersion:'1.0',protocolTitle:'Synthetic',steps}]);
+ expect(run.title).toBe('离心');
+ expect(JSON.stringify(runStepContent({versions:[{protocolVersionId:'v1',stepsJson:steps,contentJson:doc}]},run).blocks)).toContain('离心');
 });

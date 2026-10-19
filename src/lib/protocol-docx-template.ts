@@ -1,41 +1,60 @@
 import { exportProtocolDocx } from "./protocol-docx-export";
-import { createProtocolTemplateDocument } from "./protocol-document";
+import { createEmptyProtocolDocument, createProtocolTemplateDocument, type ProtocolContentBlock, type ProtocolDocument, type ProtocolSectionKey } from "./protocol-document";
+import { sectionTitles } from './protocol-habit-text';
 import { systemTableCaptions } from './protocol-system-tables';
 
 export const protocolDocxTemplateTitle = "请填写实验规程标题 / Replace with Protocol title";
 export const protocolDocxTemplateEnglishTitle = "Replace with English title (optional)";
-export const protocolDocxTemplateFilename = "LabNest_Protocol_Import_Template_v0.2_Draft.docx";
+export const protocolDocxTemplateFilename = "LabNest_Protocol_Template_v1.0.docx";
 
 export function isUnfilledProtocolDocxTemplateTitle(title: string) {
   return title === protocolDocxTemplateTitle
     || /replace with protocol title|请填写实验规程标题/i.test(title);
 }
 
+
+/**
+ * The Word template: a Protocol written the way people write one. Numbered steps with amounts as written, a "体系：…" line
+ * for the systems that "350/600 µL" follows, a "仅…：" step, and "记录：…" for what to record. Import reads exactly this.
+ */
+function createProtocolHabitTemplateDocument(): ProtocolDocument {
+  const document = createEmptyProtocolDocument();
+  for (const section of document.sections) section.title = sectionTitles[section.key];
+  const section = (key: ProtocolSectionKey) => document.sections.find((item) => item.key === key)!;
+  const text = (id: string, value: string): ProtocolContentBlock => ({ id, type: "text", text: value });
+  section("description").blocks = [text("description-1", "写法示例，不是实验操作建议。请替换为你的规程：一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：…”；只对部分样本的操作写“仅…：”；要记录的写在“结果”里：“记录：…”。")];
+  section("purpose").blocks = [text("purpose-1", "例：从培养细胞中提取总 RNA，用于 qPCR。")];
+  section("background").blocks = [text("background-1", "原理、依据或注意事项，可以留空。")];
+  section("material").blocks = [{ id: "material-1", type: "table", rows: [["名称", "用量", "说明"], ["Buffer RL", "350/600 µL", "按体系"], ["无水乙醇", "与上清等体积", ""], ["RNase-free 水", "50 µL", "洗脱"]] }];
+  section("steps").blocks = [
+    text("steps-0", "体系：350 µL / 600 µL"),
+    text("steps-1", "1. 加入 Buffer RL 350/600 µL，涡旋混匀 15 s。"),
+    text("steps-2", "2. 仅富脂样本：加入氯仿 200 µL，剧烈振荡 15 s。"),
+    text("steps-3", "3. 12,000 ×g 离心 2 min，将上清转入新的 1.5 mL 离心管。"),
+    text("steps-4", "4. 加入与上清等体积的无水乙醇，混匀后转入吸附柱。"),
+    text("steps-5", "5. 室温静置 5 min，12,000 ×g 离心 1 min，弃滤液。"),
+  ];
+  section("result_templates").blocks = [text("result-0", "RNA 质检"), text("result-1", "记录：浓度 ng/µL、A260/280、A260/230、胶图"), text("result-2", "每个样本：样本名、浓度 ng/µL")];
+  return document;
+}
+
 export function exportProtocolDocxTemplate() {
-  const document = createProtocolTemplateDocument();
-  const steps = document.sections.find((section) => section.key === "steps");
-
-  // A blank rich-text paragraph keeps the section editable without creating a
-  // synthetic numbered step when the DOCX is imported again.
-  if (steps) {
-    steps.blocks = [{
-      id: "steps-rich-1",
-      type: "rich_text",
-      nodes: [{ type: "paragraph", content: [{ text: "" }] }],
-    }];
-  }
-
   return exportProtocolDocx({
     canonicalTitle: protocolDocxTemplateTitle,
     englishTitle: protocolDocxTemplateEnglishTitle,
     availability: "draft",
     reviewStage: "draft",
-    displayVersion: "0.2",
+    displayVersion: "0.1",
     scope: "general",
     tags: [],
     templateMode: true,
-  }, document);
+  }, createProtocolHabitTemplateDocument());
 }
+
+/*
+ * Fixtures: files written from these older templates still import, and the step example also seeds
+ * scripts/seed-protocol-consistency.ts.
+ */
 
 /** A structural authoring example, not a wet-lab protocol or vendor recommendation. */
 export function createProtocolExecutionExampleDocument() {

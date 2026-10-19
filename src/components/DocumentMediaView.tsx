@@ -1,13 +1,14 @@
 import { File, FileAudio, FileVideo } from "lucide-react";
 import { ProtocolMediaImage } from "./ProtocolMediaImage";
 import { documentMediaUrl, type DocumentMedia } from "@/lib/document-media";
+import { mediaDisplayWidth } from "@/lib/document-media-resize";
 
 /** Shared by editable previews, read-only documents and immutable Run snapshots. */
 export function DocumentMediaView({ block, editing = false }: { block: DocumentMedia; editing?: boolean }) {
   const href = documentMediaUrl(block);
   const label = block.filename || block.caption || "附件 / Attachment";
   if (!href) return <p role="status" className="text-sm text-muted">附件尚未关联 / Attachment not linked</p>;
-  if (block.mediaType === "image") return <figure className="ln-protocol-media-preview" style={{ width: `${block.widthPercent ?? 100}%`, maxWidth: "100%" }}>
+  if (block.mediaType === "image") return <figure className="ln-protocol-media-preview" style={{ width: mediaDisplayWidth(block), maxWidth: "100%" }}>
     <ProtocolMediaImage openOriginal={!editing} href={`${documentMediaUrl(block, true)!}${block.attachmentId ? "&preview=1" : ""}`} originalHref={documentMediaUrl(block, true)!} label={block.caption || label} imageWidth={block.imageWidth} imageHeight={block.imageHeight} />
     {block.caption ? <figcaption style={block.captionFontSizePt ? {fontSize: `${block.captionFontSizePt}pt`} : undefined}>{block.caption}</figcaption> : null}
   </figure>;

@@ -3,7 +3,10 @@ import { availabilityFromSettings } from "./ai-server";
 
 /** The existing deployment-wide singleton; reading a missing row must never opt in. */
 export async function readAISettings() {
-  const settings = await prisma.aISettings.findUnique({ where: { id: "default" }, include: { defaultProvider: true } });
+  const [settings, providerCount] = await Promise.all([
+    prisma.aISettings.findUnique({ where: { id: "default" }, include: { defaultProvider: true } }),
+    prisma.aIProvider.count(),
+  ]);
   return {
     enabled: settings?.enabled ?? false,
     defaultProviderId: settings?.defaultProviderId ?? null,
@@ -11,6 +14,9 @@ export async function readAISettings() {
     externalDataPolicy: settings?.externalDataPolicy ?? "explicit_context",
     revision: settings?.updatedAt.toISOString() ?? "unset",
     availability: availabilityFromSettings(settings),
+    /** For the setup guide: how many services exist, and whether the default one would work once the switch is on. */
+    providerCount,
+    setup: availabilityFromSettings({ enabled: true, defaultProvider: settings?.defaultProvider ?? null }),
   };
 }
 

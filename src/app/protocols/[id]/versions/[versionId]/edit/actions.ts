@@ -223,3 +223,9 @@ export async function saveProtocolDocument(
     return { error: error instanceof Error ? error.message : "The Protocol could not be saved." };
   }
 }
+
+/** Dismiss a bench-made mix card offered from a run; adding it happens in the editor and is kept by saving. */
+export async function dismissProtocolMixProposal(protocolId: string, proposalId: string): Promise<{ error?: string }> {
+  try { const { dismissMixProposal } = await import("@/lib/protocol-mix-proposals.server"); await dismissMixProposal(protocolId, proposalId); return {}; }
+  catch (error) { return { error: error instanceof Error ? error.message : "未能忽略，请重试" }; }
+}

@@ -6,6 +6,7 @@ import { parseRichTextColor } from "@/lib/rich-text-color";
 import { parseRichTextFontSizePt } from "@/lib/rich-text-font-size";
 import { documentMediaFromMarkdown, documentMediaSchema } from "@/lib/document-media";
 import { DocumentMediaView } from "./DocumentMediaView";
+import { ChipText } from "./protocol/ChipText";
 
 function safeHref(value: unknown) {
   if (typeof value !== "string") return undefined;
@@ -18,7 +19,8 @@ function renderNode(node: JSONContent, key: string): ReactNode {
     return media.success ? <DocumentMediaView key={key} block={media.data} /> : null;
   }
   if (node.type === "hardBreak") return <br key={key} />;
-  let content: ReactNode = node.text ?? node.content?.map((child, index) => renderNode(child, `${key}-${index}`)) ?? null;
+  // Protocol parameter chips are stored as references in text; a protocol view supplies how they read.
+  let content: ReactNode = node.text !== undefined ? <ChipText text={node.text} /> : node.content?.map((child, index) => renderNode(child, `${key}-${index}`)) ?? null;
 
   for (const [index, mark] of (node.marks ?? []).entries()) {
     const markKey = `${key}-mark-${index}`;
@@ -54,6 +56,6 @@ function renderNode(node: JSONContent, key: string): ReactNode {
 export function TiptapCellContentView({ content, fallback }: { content?: JSONContent[] | null; fallback: string }) {
   return content ? <>{content.map((node, index) => renderNode(node, `cell-${index}`))}</> : <>{fallback.split("\n").map((line, index) => {
     const media = documentMediaFromMarkdown(line);
-    return media ? <DocumentMediaView key={index} block={media} /> : <span key={index}>{index ? "\n" : ""}{line}</span>;
+    return media ? <DocumentMediaView key={index} block={media} /> : <span key={index}>{index ? "\n" : ""}<ChipText text={line} /></span>;
   })}</>;
 }

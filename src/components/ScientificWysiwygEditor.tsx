@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useI18n } from "@/components/I18nProvider";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
-import { documentMediaInsertActions, useDocumentMediaUploads } from "./DocumentMediaUploads";
-import { createPortal } from "react-dom";
+import { useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -14,16 +14,15 @@ import TextAlign from "@tiptap/extension-text-align";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
-import {
-  AlertTriangle,
-  BarChart3,
-  Database,
-  GripVertical,
-  ImagePlus,
-  Table2,
-  Trash2,
-} from "lucide-react";
-import { DocumentWysiwygToolbar, wysiwygWidgetInputClass, type WysiwygInsertAction } from "@/components/DocumentWysiwygToolbar";
+import { AlertTriangle, BarChart3, Database, ImagePlus } from "lucide-react";
+import { wysiwygWidgetInputClass } from "./widget-input";
+import { SlashCommandTrigger } from "@/lib/editor-slash";
+import { BlockHandles } from "@/lib/editor-block-handle";
+import { HeadingShortcuts, savedBlocksOnly, writingPlaceholder } from "@/lib/editor-writing";
+import { useCommandMenu } from "./EditorCommandMenu";
+import { EditorSurface } from "./EditorSurface";
+import { WritingCommandMenu, type WritingInsert } from "./WritingCommandMenu";
+import { DocumentAttachmentsButton } from "./DocumentAttachmentsButton";
 import { insertActionIdsForProfile, type DocumentInsertProfile } from "@/lib/document-editor-workbench";
 import { ScientificBlockView } from "@/components/ScientificBlockView";
 import { cn } from "@/lib/cn";
@@ -38,27 +37,30 @@ function uniqueBlockId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Read-only content shown at the top of a section, e.g. the Protocol steps inside 执行记录. Never part of the saved document. */
+export const ScientificSectionAddons = createContext<Record<string, ReactNode>>({});
+
 function ScientificSectionNodeView({ node }: NodeViewProps) {
+  const { t } = useI18n();
+  const addon = useContext(ScientificSectionAddons)[node.attrs.sectionKey];
+  // Section titles are stored in English; the page translator skips editable content, so translate here.
   return <NodeViewWrapper as="section" id={scientificSectionAnchorId(node.attrs.sectionKey)} className="ln-protocol-section ln-scientific-section" data-section-key={node.attrs.sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{node.attrs.sectionTitle}</h2>
-      {node.attrs.sectionKey === "quality_limitations" ? <small>Only record deviations, failed QC, missing data, or limits that change interpretation.</small> : null}
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{t(node.attrs.sectionTitle)}</h2>
+      {node.attrs.sectionKey === "quality_limitations" ? <small>{t("Only record deviations, failed QC, missing data, or limits that change interpretation.")}</small> : null}
     </header>
+    {addon ? <div className="ln-scientific-section-addon" contentEditable={false}>{addon}</div> : null}
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
 }
 
-function ScientificWidgetNodeView({ node, updateAttributes, deleteNode, selected }: NodeViewProps) {
+function ScientificWidgetNodeView({ node, updateAttributes, selected }: NodeViewProps) {
   const block = node.attrs.block as ScientificWidgetBlock;
   const updateBlock = (next: ScientificWidgetBlock) => updateAttributes({ block: next });
   return <NodeViewWrapper className={cn("ln-protocol-widget ln-scientific-widget", selected && "is-selected")} data-widget-type={block.type}>
     <div className="document-print-only"><ScientificBlockView block={block} /></div>
     <div contentEditable={false} data-print-hidden>
-      <div className="ln-protocol-widget-rail">
-        <button type="button" className="ln-protocol-widget-grip" data-drag-handle aria-label="Move block"><GripVertical aria-hidden /></button>
-        <button type="button" className="ln-protocol-widget-delete" onClick={deleteNode} aria-label="Remove block"><Trash2 aria-hidden /></button>
-      </div>
       {block.type === "callout" ? <div className="ln-protocol-callout-editor">
         <AlertTriangle className="ln-protocol-widget-icon" aria-hidden />
         <select value={block.tone} onChange={(event) => updateBlock({ ...block, tone: event.target.value as typeof block.tone })} className={wysiwygWidgetInputClass} aria-label="Callout level"><option value="note">Note</option><option value="warning">Warning</option><option value="critical">Critical</option></select>
@@ -103,51 +105,22 @@ function insertWidget(editor: Editor, block: ScientificWidgetBlock) {
   editor.chain().focus().insertContent({ type: "scientificWidget", attrs: { block } }).run();
 }
 
-function scientificInsertActions(profile: DocumentInsertProfile): WysiwygInsertAction[] {
+/** What an experiment record, result, plan or report adds to "/" → Insert, by its insert profile. */
+function scientificInserts(profile: DocumentInsertProfile): WritingInsert[] {
   const allowed = new Set(insertActionIdsForProfile(profile));
-  const actions: WysiwygInsertAction[] = [
-    {
-      id: "table",
-      label: "Table",
-      description: "Editable, resizable, paste from Excel",
-      icon: <Table2 aria-hidden />,
-      run: (editor) => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
-    },
-    {
-      id: "metric",
-      label: "Metric",
-      description: "Value with explicit unit",
-      icon: <BarChart3 aria-hidden />,
-      run: (editor) => insertWidget(editor, { id: uniqueBlockId("metric"), type: "metric", label: "Metric", value: "", unit: "" }),
-    },
-    {
-      id: "callout",
-      label: "Callout",
-      description: "Qualification, warning, or risk",
-      icon: <AlertTriangle aria-hidden />,
-      run: (editor) => insertWidget(editor, { id: uniqueBlockId("callout"), type: "callout", tone: "note", text: "" }),
-    },
-    {
-      id: "media",
-      label: "Media",
-      description: "Image, video, or file",
-      icon: <ImagePlus aria-hidden />,
-      run: (editor) => insertWidget(editor, { id: uniqueBlockId("media"), type: "media", mediaType: "image", url: "", caption: "" }),
-    },
-    {
-      id: "dataset",
-      label: "Dataset",
-      description: "Reference a structured dataset",
-      icon: <Database aria-hidden />,
-      run: (editor) => insertWidget(editor, { id: uniqueBlockId("dataset"), type: "dataset", datasetId: "", label: "" }),
-    },
+  const inserts: WritingInsert[] = [
+    { id: "metric", label: "Metric", hint: "Value with unit", keywords: "zhibiao zb metric value shuzhi", icon: BarChart3, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("metric"), type: "metric", label: "Metric", value: "", unit: "" }) },
+    { id: "callout", label: "Tip", hint: "Qualifier, caution or risk", keywords: "tishi ts callout warning zhuyi", icon: AlertTriangle, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("callout"), type: "callout", tone: "note", text: "" }) },
+    { id: "dataset", label: "Dataset", hint: "Reference structured data", keywords: "shujuji sjj dataset data", icon: Database, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("dataset"), type: "dataset", datasetId: "", label: "" }) },
   ];
-  return actions.filter((action) => allowed.has(action.id));
+  return inserts.filter((insert) => allowed.has(insert.id));
 }
 
-export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
+/** An experiment record, result, research plan or report, written Notion-style: "/" to insert, ＋ and ⋮⋮ beside each block, a bubble over selected text. */
+export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSectionKeys = [], insertProfile = "scientific-full", checklist = true, onChange }: {
   document: ScientificDocument;
-  toolbarHostId?: string;
+  /** Where the page header shows this document's actions. */
+  actionsHostId?: string;
   hiddenSectionKeys?: string[];
   insertProfile?: DocumentInsertProfile;
   checklist?: boolean;
@@ -160,35 +133,31 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   const hiddenSectionSignature = hiddenSectionKeys.join("\u0000");
   const previousHiddenSectionSignatureRef = useRef(hiddenSectionSignature);
   const onChangeRef = useRef(onChange);
-  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
+  const [inserts] = useState(() => scientificInserts(insertProfile));
   useEffect(() => { originalRef.current = document; }, [document]);
   useEffect(() => { hiddenSectionKeysRef.current = hiddenSectionKeys; }, [hiddenSectionSignature, hiddenSectionKeys]);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
-  useEffect(() => {
-    let active = true;
-    queueMicrotask(() => {
-      if (active) setToolbarHost(toolbarHostId ? globalThis.document.getElementById(toolbarHostId) : null);
-    });
-    return () => { active = false; };
-  }, [toolbarHostId]);
 
   const editor = useEditor({
     immediatelyRender: false,
     content: initialContent as JSONContent,
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false }),
+      StarterKit.configure({ link: { openOnClick: false, autolink: false }, trailingNode: false, ...savedBlocksOnly }),
+      HeadingShortcuts,
       TextStyleKit.configure({ backgroundColor: false }),
       createDocumentBlockLineHeightExtension(),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       createResizableDocumentTableExtension(),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder: "Write directly in the document…" }),
+      Placeholder.configure({ placeholder: writingPlaceholder("Write directly in the document…") }),
       Typography,
       ScientificLegacyAttributes,
       ScientificSection,
       ScientificWidget,
       DocumentMediaNode,
+      SlashCommandTrigger,
+      BlockHandles,
     ],
     editorProps: {
       attributes: { class: "ln-protocol-tiptap ln-scientific-tiptap", spellcheck: "true", "aria-label": "Scientific document body" },
@@ -196,6 +165,7 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
     onUpdate: ({ editor: nextEditor }) => onChangeRef.current(tiptapToScientificDocument(nextEditor.getJSON(), originalRef.current)),
   });
   useDocumentMediaUploads(editor, mediaDraftId);
+  const commands = useCommandMenu(editor);
 
   useEffect(() => {
     if (!editor || previousHiddenSectionSignatureRef.current === hiddenSectionSignature) return;
@@ -208,17 +178,10 @@ export function ScientificWysiwygEditor({ document, toolbarHostId, hiddenSection
   }, [editor, hiddenSectionSignature]);
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
-  const toolbar = <div className="ln-wysiwyg-toolbar-sticky" data-print-hidden>
-    <DocumentWysiwygToolbar
-      editor={editor}
-      ariaLabel="Scientific document formatting"
-      checklist={checklist}
-      insertActions={[...scientificInsertActions(insertProfile).filter(action => action.id !== "media"), ...documentMediaInsertActions(mediaDraftId)]}
-    />
-  </div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
     <input type="hidden" name="mediaDraftId" value={mediaDraftId} />
-    {toolbarHost ? createPortal(toolbar, toolbarHost) : toolbar}
-    <EditorContent editor={editor} />
+    <EditorSurface editor={editor} kinds={checklist ? undefined : ["paragraph", "heading", "subheading", "quote", "bullet", "ordered"]} openCommands={commands.openSearch}><EditorContent editor={editor} /></EditorSurface>
+    {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} checklist={checklist} inserts={inserts} /> : null}
+    {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </section>;
 }

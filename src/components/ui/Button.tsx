@@ -1,12 +1,16 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+export type ButtonVariant = "primary" | "ai" | "ai-off" | "secondary" | "ghost" | "destructive";
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
     "ln-key-action",
+  /** Hands work to a model: the theme's second color, so AI is recognizable at a glance. */
+  ai: "ln-ai-action",
+  /** The same place while AI cannot run (switch off or no working service): gray, still focusable. */
+  "ai-off": "ln-ai-off",
   secondary:
     "border-hairline bg-surface text-graphite hover:border-border-strong hover:bg-warm hover:text-ink",
   ghost: "border-transparent bg-transparent text-graphite hover:bg-stone/75 hover:text-ink",

@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Download, FileCheck2, FileSearch, FileUp, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ProtocolExtractionPanel, type ProtocolExtractionState } from "@/components/ProtocolExtractionPanel";
 import { ProtocolImportDecisionNotice } from "@/components/ProtocolImportDecisionNotice";
 import { useI18n } from "@/components/I18nProvider";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -102,8 +101,7 @@ function recordPreviewTitle(module: StructuredModuleKey, values: Record<string, 
   return `Record ${index}`;
 }
 
-/** `aiProviderName` is set when a connected model is available; Protocol imports then offer AI extraction. */
-export function StructuredImportWorkspace({ module, aiProviderName }: { module: StructuredModuleKey; aiProviderName?: string }) {
+export function StructuredImportWorkspace({ module }: { module: StructuredModuleKey }) {
   const definition = structuredModules[module];
   const router = useRouter();
   const { locale } = useI18n();
@@ -114,13 +112,11 @@ export function StructuredImportWorkspace({ module, aiProviderName }: { module: 
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState<"preview" | "confirm">();
   const [dragActive, setDragActive] = useState(false);
-  const [extractions, setExtractions] = useState<Record<number, ProtocolExtractionState>>({});
   const accept = useMemo(() => definition.importFormats.map((format) => acceptByFormat[format]).join(","), [definition.importFormats]);
   const controlledFields = definition.fields.filter((field) => field.allowedValues?.length);
 
   function chooseFile(nextFile?: File, source: "picker" | "drop" = "picker") {
     setPreview(undefined);
-    setExtractions({});
     setColumnOverrides({});
     setError(undefined);
 
@@ -190,7 +186,7 @@ export function StructuredImportWorkspace({ module, aiProviderName }: { module: 
   const [columnOverrides,setColumnOverrides]=useState<Record<string,string>>({});
   async function requestPreview() {
     if (!file) { setError("Choose an import file first."); return; }
-    setPending("preview"); setError(undefined); setPreview(undefined); setExtractions({});
+    setPending("preview"); setError(undefined); setPreview(undefined);
     const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(columnOverrides));
     try {
       const response = await fetch(`/api/structured-import/${module}/preview`, { method: "POST", body: formData });
@@ -207,8 +203,6 @@ export function StructuredImportWorkspace({ module, aiProviderName }: { module: 
     setPending("confirm"); setError(undefined);
     const formData = new FormData(); formData.set("file", file); formData.set("mapping",JSON.stringify(columnOverrides)); formData.set("checksum", preview.checksum);
     formData.set("confirmationToken", preview.confirmationToken ?? "");
-    const accepted = Object.values(extractions).filter((entry) => entry.acceptedIds.length);
-    if (accepted.length) formData.set("aiExtractions", JSON.stringify(accepted));
     try {
       const response = await fetch(`/api/structured-import/${module}/confirm`, { method: "POST", body: formData });
       const payload = await response.json() as { error?: string; errorCode?: string; preview?: StructuredImportPreview; result?: { href: string } };
@@ -298,33 +292,14 @@ export function StructuredImportWorkspace({ module, aiProviderName }: { module: 
         </CardBody>
       </Card>
 
-      {preview ? <PreviewPanel preview={preview} pending={pending === "confirm"} onConfirm={confirmImport} renderRecordExtra={module === "protocols" && file ? (row) => {
-        if (row.errors.length) return null;
-        // Preview rows count from 1; the server addresses records from 0.
-        const recordIndex = row.index - 1;
-        return (
-          <ProtocolExtractionPanel
-            file={file}
-            checksum={preview.checksum}
-            rowIndex={recordIndex}
-            providerName={aiProviderName}
-            value={extractions[recordIndex]}
-            onChange={(next) => setExtractions((current) => {
-              const updated = { ...current };
-              if (next) updated[recordIndex] = next;
-              else delete updated[recordIndex];
-              return updated;
-            })}
-          />
-        );
-      } : undefined} onRemap={["inventory","purchases"].includes(module)?(source,target)=>{setColumnOverrides(current=>({...current,[source]:target}));setPreview(current=>current?{...current,canImport:false,confirmationToken:undefined}:current);}:undefined} /> : null}
+      {preview ? <PreviewPanel preview={preview} pending={pending === "confirm"} onConfirm={confirmImport} onRemap={["inventory","purchases"].includes(module)?(source,target)=>{setColumnOverrides(current=>({...current,[source]:target}));setPreview(current=>current?{...current,canImport:false,confirmationToken:undefined}:current);}:undefined} /> : null}
     </div>
   );
 }
 
 type PreviewRow = StructuredImportPreview["rows"][number];
 
-function PreviewPanel({ preview, pending, onConfirm, onRemap, renderRecordExtra }: { preview: StructuredImportPreview; pending: boolean; onConfirm: () => void; onRemap?:(source:string,target:string)=>void; renderRecordExtra?: (row: PreviewRow) => ReactNode }) {
+function PreviewPanel({ preview, pending, onConfirm, onRemap }: { preview: StructuredImportPreview; pending: boolean; onConfirm: () => void; onRemap?:(source:string,target:string)=>void }) {
   const mappedCount = preview.mapping.filter((mapping) => mapping.target).length;
   const ignoredCount = preview.mapping.length - mappedCount;
   const readyCount = preview.rows.filter((row) => !row.errors.length).length;
@@ -362,7 +337,7 @@ function PreviewPanel({ preview, pending, onConfirm, onRemap, renderRecordExtra 
 
         <div className="space-y-3">
           {preview.rows.map((row) => (
-            <PreviewRecord key={row.index} module={preview.module} row={row} extra={renderRecordExtra?.(row)} />
+            <PreviewRecord key={row.index} module={preview.module} row={row} />
           ))}
         </div>
         <div className="flex flex-col gap-3 border-t border-hairline pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -387,7 +362,7 @@ function PreviewMetric({ label, value, tone = "neutral" }: { label: string; valu
   );
 }
 
-function PreviewRecord({ module, row, extra }: { module: StructuredModuleKey; row: PreviewRow; extra?: ReactNode }) {
+function PreviewRecord({ module, row }: { module: StructuredModuleKey; row: PreviewRow }) {
   const grouped = groupPreviewFields(module, row.values);
   const title = recordPreviewTitle(module, row.values, row.index);
   return (
@@ -402,7 +377,6 @@ function PreviewRecord({ module, row, extra }: { module: StructuredModuleKey; ro
 
       <div className="space-y-4 p-3">
         {row.protocolDecision ? <ProtocolImportDecisionNotice decision={row.protocolDecision} /> : null}
-        {extra}
         {grouped.core.length ? (
           <section>
             <h4 className="text-xs font-semibold text-ink">Core fields</h4>

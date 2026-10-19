@@ -101,6 +101,9 @@ enum ProtocolVersionSourceType {
   manual
   docx_import
   derived
+  ai_design
+  /// Laid out by the AI from a manual or a free-form Protocol, checked line by line against it (AI 识别).
+  ai_recognized
 }
 
 enum ExperimentProtocolRole {
@@ -1614,4 +1617,32 @@ model RunMaterialUse {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([experimentId])
+}
+
+/// 方案设计: a goal, what was found for it, the method cards and the draft it became. Fetched texts hang off it as attachments.
+model MethodDesignSession {
+  id             String   @id @default(cuid())
+  goal           String
+  sampleType     String?
+  conditions     String?
+  status         String   @default("searching")
+  inputsJson     Json     @default("{}")
+  hitsJson       Json     @default("[]")
+  cardsJson      Json     @default("[]")
+  chosenJson     Json     @default("[]")
+  draftVersionId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// 外部方法检索 is off by default and reaches outside only when the user searches.
+model MethodSearchSettings {
+  id                        String   @id @default("default")
+  enabled                   Boolean  @default(false)
+  sourcesJson               Json     @default("[\"local\"]")
+  protocolsIoTokenEncrypted String?
+  updatedAt                 DateTime @updatedAt
 }

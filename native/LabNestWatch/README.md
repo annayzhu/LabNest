@@ -4,6 +4,8 @@ This is a separate SwiftUI watchOS client, not a web layout. It uses the same ca
 
 ## Build and install
 
+For easier pairing, use the new [iPhone companion project](../LabNestMobile/README.md): open `../LabNestMobile/LabNestMobile.xcodeproj`. It embeds this Watch app and sends the server address and one-use code from the phone through WatchConnectivity. The Watch needs no browser. The standalone project below remains available for manual pairing. Physical installation still requires a real signing team and paired devices; TestFlight has not been published.
+
 Open `LabNestWatch.xcodeproj` in Xcode. Select your own signing team and connected Apple Watch (watchOS 10 or later). Build and run on that device. No signing account or provisioning profile is committed; deployment to port3001 does **not** install this app. The user has requested Apple Watch support, but no connected watch or iPhone was discoverable during development. Xcode26.6 / watchOS simulator SDK26.5 compile checks do not prove runtime behavior. The user subsequently installed watchOS26.5. A Series11(46mm) simulator was installed and exercised; see the follow-up evidence below.
 
 For a reproducible unsigned compile:
@@ -39,3 +41,11 @@ On the isolated production candidate at localhost:3341, the app was paired via a
 A collapsed wheel picker discovered during this run was replaced by a navigation-list picker; the actual fixed list and quantity text were inspected. Complex tables/images still remain on the phone. No notification permission was requested in this simulator run, and physical lockscreen delivery remains unexecuted. Evidence: `docs/structured-protocol/20261014/followup-evidence/watch-simulator/`.
 
 A failed re-pair now keeps the existing connection, shows the error beside the pairing control and leaves settings open. Only a successful pair triggers refresh/close. Both invalid-code and valid-code paths were operated in the simulator; `final-regression.json` and `repair-error-preserved.png` capture the result.
+
+## Mix cards on the watch (2026-10-15)
+
+A step whose mix card (配液卡) was confirmed on the phone or computer shows **配液卡 · <name>**. It opens one component per screen: the name and this run's total in large type, the per-reaction amount beneath. Turn the digital crown, or double tap (watchOS 11 and later, via `handGestureShortcut(.primaryAction)` on **下一项**), to move on; tap a screen to cross the component off (and tap again to undo). Crossing off is shared with the phone, needs a connection, is never queued offline and never counts as progress. The last screen is the aliquot instruction. An unconfirmed card, or one changed after confirmation, only shows a note asking to confirm it on the phone.
+
+Server contract: `GET /api/watch/runs/:id` adds `mixes` to each step (`stale`, `note`, `quantity`, `aliquot`, `lines[{ id, name, mode, total, perReaction, struck }]`); `POST` accepts `intent: "strike"` with `mixId`, one `lineId` and its new `struck` state (one line per request, so phone and watch never undo each other). Older snapshots without `mixes` still decode.
+
+Verification so far: the unsigned watchsimulator build compiles, and the server snapshot was checked against a confirmed 24-reaction card. The new screens have **not** been exercised in the simulator or on a device.

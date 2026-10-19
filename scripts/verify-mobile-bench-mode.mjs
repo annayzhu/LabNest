@@ -18,7 +18,7 @@ try {
   await mobileNav.waitFor();
   assert.deepEqual(
     await mobileNav.locator("a, button").allTextContents(),
-    ["Today", "Runs", "Records", "Inventory", "More"],
+    ["Today", "Run mode", "Records", "Inventory", "More"],
     "Mobile navigation must use task-oriented Bench Mode destinations.",
   );
 

@@ -1,17 +1,21 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { addDays, addMonths, format, startOfDay, startOfMonth } from "date-fns";
-import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical, Timer } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical, TabletSmartphone, Timer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
-import { CalculatorIcon } from "@/components/calculators/CalculatorIcon";
+import { CalculatorIcon, calculatorToolIcon } from "@/components/calculators/CalculatorIcon";
 import { TodayCalculators } from "@/components/calculators/TodayCalculators";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
+import "@/components/field-devices.css";
 import { prisma } from "@/lib/db";
+import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
 import { ExperimentStatus } from "@/generated/prisma/enums";
 import { remainingStepTimerSeconds } from "@/lib/step-timer";
+import { runProgressFromSource } from "@/lib/structured-run";
 import {
   calendarDateKey,
   calendarMonthKey,
@@ -28,9 +32,9 @@ const quickActions = [
     icon: BookOpen,
   },
   {
-    label: "Experiment run mode",
+    label: "Run mode",
     href: "/protocol-run",
-    icon: FlaskConical,
+    icon: TabletSmartphone,
   },
   {
     label: "New experiment result",
@@ -50,6 +54,8 @@ export default async function OverviewPage({
   searchParams?: Promise<{ month?: string | string[]; view?: string | string[] }>;
 }) {
   const params = searchParams ? await searchParams : undefined;
+  // Quick actions animate letter by letter, so the page-wide translator cannot match their words; translate them here.
+  const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const requestedMonth = typeof params?.month === "string" ? params.month : undefined;
   const mobileCalendarOpen = params?.view === "calendar";
   const today = new Date();
@@ -113,8 +119,10 @@ export default async function OverviewPage({
         researchPlan: { select: { code: true, title: true } },
         steps: {
           orderBy: [{ groupOrder: "asc" }, { order: "asc" }],
-          select: { id: true, title: true, completed: true, timerStartedAt: true, timerRemainingSeconds: true },
+          select: { id: true, title: true, completed: true, timerStartedAt: true, timerRemainingSeconds: true, protocolStepRef: true, groupKey: true },
         },
+        protocolSnapshotJson: true,
+        protocolRun: { select: { executionPlanJson: true } },
       },
     }),
     prisma.experiment.findMany({
@@ -171,10 +179,10 @@ export default async function OverviewPage({
   const activeRun = activeRuns[0];
   // Shared by the mobile bench view and the desktop Today panel.
   const activeRunBody = activeRun ? (() => {
-            const completedSteps = activeRun.steps.filter((step) => step.completed).length;
+            const { done, total } = runProgressFromSource(activeRun.protocolSnapshotJson, activeRun.protocolRun?.executionPlanJson, activeRun.steps);
             const currentStep = activeRun.steps.find((step) => !step.completed);
             const activeTimer = activeRun.steps.find((step) => step.timerStartedAt && remainingStepTimerSeconds({ remainingSeconds: step.timerRemainingSeconds ?? 0, startedAt: step.timerStartedAt, now: today }) > 0);
-            const progress = activeRun.steps.length ? Math.round((completedSteps / activeRun.steps.length) * 100) : 0;
+            const progress = total ? Math.round((done / total) * 100) : 0;
             return (
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -195,8 +203,8 @@ export default async function OverviewPage({
                   <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-graphite"><Timer className="h-4 w-4 shrink-0 text-info" aria-hidden /><span className="truncate">{activeTimer.title}</span></span>
                   <StepTimerReadout remainingSeconds={activeTimer.timerRemainingSeconds} startedAt={activeTimer.timerStartedAt.toISOString()} />
                 </div> : null}
-                <Link href={`/experiments/${activeRun.id}/run`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-warm">
-                  Continue run <ArrowRight className="h-4 w-4" aria-hidden />
+                <Link href={`/experiments/${activeRun.id}/run?view=bench`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-warm">
+                  Continue in run mode <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
             );
@@ -204,10 +212,16 @@ export default async function OverviewPage({
             <div className="px-4 py-5">
               <p className="text-sm leading-6 text-muted">No experiment is running. Start from today’s plan when you reach the bench.</p>
               <Link href="/protocol-run" className="focus-ring mt-3 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] border border-hairline px-4 text-sm font-semibold text-moss">
-                View runs <ArrowRight className="h-4 w-4" aria-hidden />
+                Enter run mode <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
           );
+  // 现场模式 is the way to the bench from any device: the first thing on the home page, on the phone and on the computer.
+  const fieldModeEntry = <Link href="/protocol-run" className="ln-field-entry focus-ring">
+    <span className="ln-field-entry-icon"><TabletSmartphone className="h-5 w-5" aria-hidden /></span>
+    <span className="min-w-0 flex-1"><span className="block font-semibold">Enter run mode</span><span className="block text-xs opacity-80">Work with a tablet, phone and Apple Watch together</span></span>
+    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+  </Link>;
   const todayPlanRows = todayExperiments.length ? todayExperiments.map((experiment) => (
               <Link key={experiment.id} href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><FlaskConical className="h-4 w-4" aria-hidden /></span>
@@ -228,6 +242,8 @@ export default async function OverviewPage({
           <h1 className="page-header-title tracking-[-0.02em] text-ink">Today at the bench</h1>
           <p className="mt-1 text-sm text-muted" data-i18n-ignore>{format(today, "EEEE, MMMM d")}</p>
         </div>
+
+        {fieldModeEntry}
 
         <section aria-labelledby="active-run-title" className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
           <div className="border-b border-hairline/70 px-4 py-3">
@@ -251,7 +267,7 @@ export default async function OverviewPage({
         <section aria-labelledby="today-plan-title">
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 id="today-plan-title" className="text-base font-semibold text-ink">Today’s plan</h2>
-            <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">All runs</Link>
+            <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">Run mode</Link>
           </div>
           <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
             {todayPlanRows}
@@ -275,7 +291,7 @@ export default async function OverviewPage({
       </section>}
 
       <div id="calendar" className="overview-desktop hidden space-y-5 lg:block">
-        <PageHeader title="Overview" />
+        <PageHeader title="Overview" actions={fieldModeEntry} />
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_260px]">
           <div className="min-w-0 space-y-5">
@@ -288,7 +304,7 @@ export default async function OverviewPage({
               <div className="min-w-0">
                 <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
                   <h2 className="text-base font-semibold text-ink">Today’s plan <span className="ml-1 text-sm font-normal text-muted" data-i18n-ignore>{format(today, "MMM d")}</span></h2>
-                  <Link href="/protocol-run" className="text-xs font-medium text-moss hover:underline">All runs</Link>
+                  <Link href="/protocol-run" className="text-xs font-medium text-moss hover:underline">Run mode</Link>
                 </div>
                 <div className="divide-y divide-hairline">{todayPlanRows}</div>
               </div>
@@ -309,8 +325,8 @@ export default async function OverviewPage({
                 const Icon = action.icon;
                 return (
                   <Link key={action.href} href={action.href} className="ln-quick-action focus-ring group flex h-9 items-center gap-2.5 rounded-[var(--ln-radius-control-md)] px-2.5">
-                    {action.href==="/tools/calculator"?<CalculatorIcon name="calculator" size={16} className="ln-quick-action-icon shrink-0 text-moss"/>:<Icon className="ln-quick-action-icon h-4 w-4 shrink-0 text-moss" strokeWidth={1.7} aria-hidden />}
-                    <StaggeredText text={action.label} trigger="hover" className="min-w-0 flex-1 truncate text-sm font-medium text-ink" />
+                    {action.href==="/tools/calculator"?<CalculatorIcon name={calculatorToolIcon} size={16} className="ln-quick-action-icon shrink-0 text-moss"/>:<Icon className="ln-quick-action-icon h-4 w-4 shrink-0 text-moss" strokeWidth={1.7} aria-hidden />}
+                    <StaggeredText text={translateUiText(action.label, locale)} trigger="hover" className="min-w-0 flex-1 truncate text-sm font-medium text-ink" />
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted opacity-0 transition group-hover:opacity-100" aria-hidden />
                   </Link>
                 );

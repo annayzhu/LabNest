@@ -13,6 +13,6 @@ try{
  await page.close();
  }
  const printed=execFileSync('pdftotext',['docs/debug-20260909/evidence/run-document.pdf','-'],{encoding:'utf8'});
- assert.ok(printed.includes('合成固定规程 · 1.2') && printed.includes('方法来源：'),'PDF must retain the complete labelled method provenance');
+ assert.ok(printed.includes('合成固定规程') && printed.includes('v1.2') && printed.includes('实验日期：'),'PDF must name each Protocol with its version in 执行记录 and show the Experiment date');
  writeFileSync('docs/debug-20260909/evidence/run-document-browser.json',JSON.stringify({experimentId,checks:['Persisted all three steps and handwritten text survive reload','Deviation text and incomplete status visible','No whole-page horizontal overflow at 390 and 1440','PDF uses CSS page size']},null,2));
 }finally{await browser.close();}

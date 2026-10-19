@@ -69,10 +69,10 @@ export function StepTimerControls({ experimentId, step, compact=false, execution
       </button>
       <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending || disabled || clockWarning || !clock.online} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
     </div>
-    {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning || !clock.online} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>结束计时（步骤仍需确认）</button> : null}
-    {configured && remaining === 0 ? <p role="status" className="mt-2 text-sm">计时已到零，步骤尚未自动完成。重新计时请先重置。</p> : null}
-    {!clock.online ? <p role="status" className="text-warning">离线时保留计时显示；开始、暂停与重置需联网确认，避免重连后延迟执行。</p> : null}
-    {clockWarning ? <p role="alert" className="text-warning">时钟尚未校准或设备时间发生变化，请联网后核对；当前显示不能作为精确计时依据。</p> : null}
+    {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning || !clock.online} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>End timer (the step still needs confirming)</button> : null}
+    {configured && remaining === 0 ? <p role="status" className="mt-2 text-sm">The timer reached zero; the step is not completed automatically. Reset before timing again.</p> : null}
+    {!clock.online ? <p role="status" className="text-warning">Offline, the timer keeps showing; start, pause and reset need a connection to confirm, so nothing runs late after reconnecting.</p> : null}
+    {clockWarning ? <p role="alert" className="text-warning">The clock is not calibrated yet or the device time changed; check it once online. The current display is not a precise timing reference.</p> : null}
     {state.error ? <p role="alert" className="mt-2 text-xs text-error">{state.error}</p> : null}
     {state.message ? <p role="status" className="mt-2 text-xs text-success">{state.message} Synced.</p> : null}
   </section></>;

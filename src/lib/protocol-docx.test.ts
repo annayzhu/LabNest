@@ -9,7 +9,8 @@ import {
   protocolDocxTemplateFilename,
   protocolDocxTemplateTitle,
 } from "./protocol-docx-template";
-import { createProtocolTemplateDocument } from "./protocol-document";
+import { createProtocolTemplateDocument, projectProtocolDocument } from "./protocol-document";
+import { convertLegacyProtocol } from "./protocol-conversion";
 import { normalizeResultTemplate, resultTemplateFieldsToRows } from "./result-templates";
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -140,17 +141,22 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.document.sections).toHaveLength(7);
   });
 
-  it("provides a blank import template that round-trips without fake steps or result fields", () => {
-    const bytes = exportProtocolDocxTemplate();
-    const parsed = parseProtocolDocxBytes(bytes, protocolDocxTemplateFilename);
-
+  it("provides a Word template written by habit that imports as step blocks, a system, a scoped step and a result template", () => {
+    const parsed = parseProtocolDocxBytes(exportProtocolDocxTemplate(), protocolDocxTemplateFilename);
     expect(parsed.canonicalTitle).toBe(protocolDocxTemplateTitle);
     expect(isUnfilledProtocolDocxTemplateTitle(parsed.canonicalTitle)).toBe(true);
     expect(parsed.englishTitle).toBeUndefined();
     expect(parsed.document.sections).toHaveLength(7);
-    expect(parsed.steps).toEqual([]);
-    expect(parsed.materials).toEqual([]);
-    expect(parsed.resultTemplates[0]).toEqual(expect.objectContaining({ fields: [] }));
+    let n = 0;
+    const { document, summary } = convertLegacyProtocol(parsed.document, (prefix) => `${prefix}-${++n}`);
+    expect(summary).toMatchObject({ steps: 5, systems: ["体系：350 µL / 600 µL"], conditions: ["Step 2 · only 富脂样本"], keptAsText: ["1.5 mL"], recordLines: 1, resultTemplates: 1 });
+    expect(summary.chips).toContain("350/600 µL");
+    const projection = projectProtocolDocument(document);
+    expect(projection.steps.map((step) => step.title.replace(/\{\{[\w-]+\}\}/g, "〔〕"))).toEqual([
+      "加入 Buffer RL 〔〕，涡旋混匀 〔〕", "加入氯仿 〔〕，剧烈振荡 〔〕", "〔〕 离心 〔〕，将上清转入新的 1.5 mL 离心管", "加入与上清等体积的无水乙醇，混匀后转入吸附柱", "室温静置 〔〕，〔〕 离心 〔〕，弃滤液",
+    ]);
+    expect(projection.materials.map((item) => item.name)).toEqual(["Buffer RL", "无水乙醇", "RNase-free 水"]);
+    expect(projection.resultTemplates[0]).toMatchObject({ title: "RNA 质检", authored: { record: "记录：浓度 ng/µL、A260/280、A260/230、胶图", perSample: "每个样本：样本名、浓度 ng/µL" } });
   });
 
   it("matches the reference protocol typography, grayscale tables, and page furniture", () => {

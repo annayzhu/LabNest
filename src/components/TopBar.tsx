@@ -4,23 +4,20 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Command, Search } from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { AiAssistantButton } from "@/components/AiAssistant";
 
 export function TopBar() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
-  const mobileTitle = pathname === "/"
-    ? "LabNest"
-    : pathname === "/ai" || pathname.startsWith("/actions")
-      ? "AI"
-      : pathname.startsWith("/protocol-run") || pathname.includes("/run")
-      ? "Runs"
-      : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results")
-        ? "Records"
-        : pathname.startsWith("/inventory")
-          ? "Inventory"
-          : "LabNest";
+  const mobileTitle = pathname === "/" ? "LabNest"
+    : pathname === "/ai" ? "AI settings"
+    : pathname.startsWith("/actions") ? "Manual AI"
+    : pathname.startsWith("/protocol-run") || pathname.includes("/run") ? "Run mode"
+    : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results") ? "Records"
+    : pathname.startsWith("/inventory") ? "Inventory"
+    : "LabNest";
 
   return (
     <header className="sticky top-0 z-30 border-b border-hairline/80 bg-paper/92 px-3 py-2 backdrop-blur-xl md:px-5">
@@ -39,6 +36,8 @@ export function TopBar() {
             ) : null}
             <span className="truncate text-lg font-semibold text-ink">{mobileTitle}</span>
           </div>
+          <div className="flex shrink-0 items-center gap-1">
+          <AiAssistantButton large />
           <Link
             prefetch={pathname === "/ai" ? false : undefined}
             href="/search"
@@ -47,6 +46,7 @@ export function TopBar() {
           >
             <Search className="h-5 w-5" aria-hidden />
           </Link>
+          </div>
         </div>
         <form action="/search" className="hidden min-w-0 flex-1 lg:block">
           <label className="ln-global-search flex h-9 max-w-xl items-center gap-2 rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-2.5 text-[length:var(--ln-ui-search-font-size)] text-muted transition focus-within:border-fog focus-within:ring-[3px] focus-within:ring-info/10">
@@ -65,7 +65,7 @@ export function TopBar() {
             </span>
           </label>
         </form>
-        <div className="hidden lg:block"><LanguageToggle /></div>
+        <div className="hidden items-center gap-2 lg:flex"><AiAssistantButton /><LanguageToggle /></div>
       </div>
     </header>
   );

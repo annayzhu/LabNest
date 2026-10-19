@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const entryTypes = ["unclassified", "experiment", "observation", "idea"] as const;
-export const entryTypeLabels = { unclassified: "未分类", experiment: "实验记录", observation: "观察/结果", idea: "想法" };
+export const entryTypeLabels = { unclassified: "Unclassified", experiment: "Experiment record", observation: "Observation / result", idea: "Idea" };
 export const entryAssignmentSchema = z.object({
   mutationId: z.string().uuid(),
   expectedTarget: z.string().nullable(),

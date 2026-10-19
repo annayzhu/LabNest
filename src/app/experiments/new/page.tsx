@@ -23,9 +23,13 @@ export default async function NewExperimentPage({ searchParams }: { searchParams
   const plans = plansRaw.map((plan) => ({ id: plan.id, code: plan.code, title: plan.title, project: { name: plan.project.name } }));
   const protocolVersions = protocolVersionsRaw.map((version) => {
     const document=normalizeProtocolDocument(version.contentJson);
-    const execution=document?projectProtocolDocument(document):{steps:[],commonBlocks:[],executionNeedsReview:true};
+    const execution=document?{...projectProtocolDocument(document),systems:document.systems}:{steps:[],commonBlocks:[],notePlacement:{},executionNeedsReview:true};
     return ({hasSystems: Boolean(document?.systems), execution, id: version.id, researchPlanIds: version.protocol.researchPlans.map(link=>link.researchPlanId), revision: version.revision, displayVersion: version.displayVersion, versionTitle: version.title, reviewStage: version.reviewStage, stepCount: execution.steps.length, protocol: { id: version.protocol.id, humanCode: version.protocol.humanCode, title: version.protocol.canonicalTitle ?? version.protocol.title, scope: version.protocol.scope, projectName: version.protocol.project?.name ?? null } });});
   const selectedPlanId = requestedPlanId;
   const suggestedCode = suggestNextRecordCode("experiment", existingExperimentCodes.map((experiment) => experiment.runCode), counter?.value);
-  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Experiment planning" title="New Experiment" description="Plan a future Experiment from any ordered set of ProtocolVersions, or create it independently with a fully custom method." /><ExperimentForm action={createExperiment} plans={plans} protocolVersions={protocolVersions} initial={{ researchPlanId: selectedPlanId, methodMode: "protocol", selectedProtocolVersionIds: selectedProtocolVersionId ? [selectedProtocolVersionId] : [], suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
+  const fromVersion = protocolVersionsRaw.find((version) => version.id === selectedProtocolVersionId);
+  const intro = fromVersion
+    ? `New from Protocol ${fromVersion.protocol.humanCode} v${fromVersion.displayVersion} “${fromVersion.protocol.canonicalTitle ?? fromVersion.protocol.title}”. Confirm the experiment name, research plan and date; once saved, the steps come from the Protocol and are ticked off one by one on the run page.`
+    : "Enter the experiment name, research plan and date first. The method can follow a Protocol (steps generated from it) or be recorded freely.";
+  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Experiment" title="New Experiment" /><ExperimentForm intro={intro} action={createExperiment} plans={plans} protocolVersions={protocolVersions} initial={{ researchPlanId: selectedPlanId, methodMode: "protocol", selectedProtocolVersionIds: selectedProtocolVersionId ? [selectedProtocolVersionId] : [], suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
 }

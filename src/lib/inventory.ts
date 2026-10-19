@@ -1,3 +1,4 @@
+import { formatQuantity } from "./calculators/quantity-format";
 import type { InventoryItem, InventoryTransaction } from "./types";
 
 export const inventoryCategories = [
@@ -108,5 +109,26 @@ export function directQuantityEditToAdjustTransaction({
 }
 
 export function inventoryQuantityLabel(item: {currentQuantity:number;unit:string;quantityRecorded?:boolean}) {
-  return item.quantityRecorded === false ? "数量未记录 / Quantity not recorded" : `${item.currentQuantity} ${item.unit}`;
+  return item.quantityRecorded === false ? "数量未记录 / Quantity not recorded" : `${formatQuantity(item.currentQuantity)} ${item.unit}`;
+}
+
+const recordId = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+/**
+ * A movement's note as people read it. Notes written by a run carry record IDs and the Protocol rule key
+ * ("Confirmed material use <id>; source Chip:<key>|<step>", "Consumed during <experiment id>."); they read as the
+ * run code and the step instead. Every other note is shown as written.
+ */
+export function inventoryNoteText(notes: string | null, experiment?: { id: string; runCode: string } | null) {
+  if (!notes) return notes;
+  const confirmed = notes.match(new RegExp(`^Confirmed material use ${recordId}; source ([\\s\\S]*)$`));
+  if (confirmed) {
+    // As the run's material list reads a source: the step after "|"; nothing for a manual entry or a correction.
+    const source = confirmed[1];
+    const step = /^(Chip|Consumption):/.test(source) ? source.split("|").slice(1).join("|") : source === "manual" || source.startsWith("correction:") ? "" : source;
+    return ["Confirmed material use", experiment?.runCode, step].filter(Boolean).join(" · ");
+  }
+  if (new RegExp(`^Explicit correction of material use ${recordId}$`).test(notes)) return ["Explicit correction of material use", experiment?.runCode].filter(Boolean).join(" · ");
+  const consumed = notes.match(/^Consumed during (c[a-z0-9]{24})\.$/);
+  if (consumed) return consumed[1] === experiment?.id ? `Consumed during ${experiment.runCode}.` : "Consumed during an experiment.";
+  return notes;
 }

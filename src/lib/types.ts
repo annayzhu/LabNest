@@ -11,6 +11,7 @@ export type ItemType =
   | "experiment"
   | "protocol"
   | "protocol_version"
+  | "protocol_source"
   | "project"
   | "research_plan"
   | "report"
@@ -50,6 +51,8 @@ export type ProtocolStep = {
   content_blocks?: import("./protocol-document").ProtocolContentBlock[];
   order: number;
   title: string;
+  /** "derived": a step block's short label for lists; the step body is shown instead of a heading. */
+  title_source?: "derived";
   description: string;
   requires_confirmation?: boolean;
   allows_deviation?: boolean;
@@ -151,6 +154,8 @@ export type ResultTemplate = {
   instructions?: ResultTemplateInstructionNode[];
   resultKind?: ResultKind;
   cardinality?: ResultCardinality;
+  /** The "记录：…" and "每个样本：…" lines the template was written as. */
+  authored?: { record?: string; perSample?: string };
   fields: ResultTemplateField[];
   datasets?: ResultTemplateDataset[];
   artifacts?: ResultTemplateArtifact[];

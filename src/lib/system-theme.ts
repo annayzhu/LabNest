@@ -8,7 +8,7 @@ type SystemThemeTokens = Readonly<Record<
   | "--sage" | "--sage-surface" | "--fog" | "--fog-surface"
   | "--clay" | "--pale-sand" | "--hairline" | "--border-strong"
   | "--brand-mark-bg" | "--brand-mark-fg" | "--brand-mark-border"
-  | "--nav-active-bg" | "--nav-active-fg" | "--nav-active-border",
+  | "--ai" | "--ai-fg",
   string
 >>;
 
@@ -23,12 +23,20 @@ function defineSystemTheme<const Id extends string>(theme: {
 }) {
   return {
     ...theme,
+    tokens: { ...theme.tokens, "--ai-hover": hoverShade(theme.tokens["--ai"], theme.tokens["--ai-fg"]) },
     colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]] as const,
-    navigation: {
-      background: theme.tokens["--nav-active-bg"],
-      foreground: theme.tokens["--nav-active-fg"],
-    },
   } as const;
+}
+
+/**
+ * The second color of a theme marks AI. Its hover fill moves 14% away from the label color (toward white under a dark
+ * label, toward black under a light one), so the label never loses contrast; darkening alone would fail on coral or gold.
+ */
+function hoverShade(fill: string, label: string) {
+  const channels = (hex: string) => hex.replace("#", "").match(/../g)!.map(part => Number.parseInt(part, 16));
+  const sum = (hex: string) => channels(hex).reduce((total, value) => total + value, 0);
+  const toward = sum(label) < sum(fill) ? 255 : 0;
+  return `#${channels(fill).map(value => Math.round(value + (toward - value) * 0.14).toString(16).padStart(2, "0")).join("")}`;
 }
 
 const establishedThemes = [
@@ -43,7 +51,7 @@ const establishedThemes = [
       "--sage":"#2a475f","--sage-surface":"#eaf1f5","--fog":"#526f83","--fog-surface":"#edf2f6",
       "--clay":"#a5441b","--pale-sand":"#f6e9e2","--hairline":"#dce4e9","--border-strong":"#c4d0d8",
       "--brand-mark-bg":"#2a475f","--brand-mark-fg":"#ffffff","--brand-mark-border":"#213a4e",
-      "--nav-active-bg":"#a5441b","--nav-active-fg":"#ffffff","--nav-active-border":"#8d3716",
+      "--ai":"#a5441b","--ai-fg":"#ffffff",
     },
   }),
   defineSystemTheme({
@@ -57,7 +65,7 @@ const establishedThemes = [
       "--sage":"#30aecf","--sage-surface":"#e4f6fa","--fog":"#4a7f8c","--fog-surface":"#e8f4f6",
       "--clay":"#de7565","--pale-sand":"#f9e7e3","--hairline":"#d8e6e9","--border-strong":"#bdd3d8",
       "--brand-mark-bg":"#147d99","--brand-mark-fg":"#ffffff","--brand-mark-border":"#116b83",
-      "--nav-active-bg":"#de7565","--nav-active-fg":"#2b1815","--nav-active-border":"#bd5d50",
+      "--ai":"#de7565","--ai-fg":"#2b1815",
     },
   }),
   defineSystemTheme({
@@ -71,7 +79,7 @@ const establishedThemes = [
       "--sage":"#4a9d9c","--sage-surface":"#e5f3f1","--fog":"#5c7d78","--fog-surface":"#edf3ef",
       "--clay":"#c1651a","--pale-sand":"#f8eadb","--hairline":"#dde5da","--border-strong":"#c7d2c3",
       "--brand-mark-bg":"#397978","--brand-mark-fg":"#ffffff","--brand-mark-border":"#2e6665",
-      "--nav-active-bg":"#986524","--nav-active-fg":"#ffffff","--nav-active-border":"#7c5019",
+      "--ai":"#986524","--ai-fg":"#ffffff",
     },
   }),
   defineSystemTheme({
@@ -85,7 +93,7 @@ const establishedThemes = [
       "--sage":"#75556b","--sage-surface":"#f3ebf0","--fog":"#796674","--fog-surface":"#f3edef",
       "--clay":"#7aa35a","--pale-sand":"#edf3e6","--hairline":"#e8dedf","--border-strong":"#d5c7ca",
       "--brand-mark-bg":"#75556b","--brand-mark-fg":"#ffffff","--brand-mark-border":"#624659",
-      "--nav-active-bg":"#7aa35a","--nav-active-fg":"#15210f","--nav-active-border":"#638948",
+      "--ai":"#7aa35a","--ai-fg":"#15210f",
     },
   }),
   defineSystemTheme({
@@ -99,7 +107,7 @@ const establishedThemes = [
       "--sage":"#1661ab","--sage-surface":"#eaf2fc","--fog":"#526b89","--fog-surface":"#edf2f8",
       "--clay":"#f8c471","--pale-sand":"#fcf0dc","--hairline":"#d9e2ef","--border-strong":"#bdcbe0",
       "--brand-mark-bg":"#1661ab","--brand-mark-fg":"#ffffff","--brand-mark-border":"#0f4f91",
-      "--nav-active-bg":"#f8c471","--nav-active-fg":"#2f240e","--nav-active-border":"#d29b42",
+      "--ai":"#f8c471","--ai-fg":"#2f240e",
     },
   }),
   defineSystemTheme({
@@ -113,7 +121,7 @@ const establishedThemes = [
       "--sage":"#20894d","--sage-surface":"#edf4e7","--fog":"#5c7b63","--fog-surface":"#edf3ee",
       "--clay":"#ef475d","--pale-sand":"#fde9ed","--hairline":"#dce6d8","--border-strong":"#c4d2bf",
       "--brand-mark-bg":"#20894d","--brand-mark-fg":"#ffffff","--brand-mark-border":"#176b3b",
-      "--nav-active-bg":"#ef475d","--nav-active-fg":"#2c1015","--nav-active-border":"#ca3347",
+      "--ai":"#ef475d","--ai-fg":"#2c1015",
     },
   }),
   defineSystemTheme({
@@ -127,7 +135,7 @@ const establishedThemes = [
       "--sage":"#4f84ff","--sage-surface":"#edf2ff","--fog":"#5a7199","--fog-surface":"#eff2f8",
       "--clay":"#fed71a","--pale-sand":"#fff8cf","--hairline":"#dce3f0","--border-strong":"#c5cede",
       "--brand-mark-bg":"#356fdc","--brand-mark-fg":"#ffffff","--brand-mark-border":"#285bb9",
-      "--nav-active-bg":"#fed71a","--nav-active-fg":"#1f2a44","--nav-active-border":"#d8b400",
+      "--ai":"#fed71a","--ai-fg":"#1f2a44",
     },
   }),
 ] as const;
@@ -171,7 +179,7 @@ export function resolvedThemeTokens(themeId:string,mode:'light'|'dark'):Record<s
  // Each existing scheme has its own dark palette; IDs and user selections stay stable.
  const darkPalettes=[['#aac9e1','#e2b99d','#151d24'],['#89d5e8','#f2ada3','#132126'],['#a7d2b4','#e4c29b','#17221c'],['#d6b9df','#b9d6a2','#231b24'],['#aacbff','#f2d294','#182033'],['#97d5af','#f2aebe','#17231d'],['#b4c9ff','#efda86','#1c2032']];
  const [accent,selection,paper]=darkPalettes[index < establishedThemes.length ? index : referenceThemes[index-establishedThemes.length].base];
- return {...theme.tokens,'--paper':paper,'--warm':'#1a242d','--stone':'#202c35','--sand-panel':'#283641','--surface':'#1c2730','--ink':'#edf2f5','--graphite':'#d0dce4','--muted':'#b3c2cd','--disabled':'#7d8a94','--moss':accent,'--moss-hover':'#d8e9f4','--action':accent,'--action-hover':'#d8e9f4','--sage':accent,'--moss-surface':'#263b46','--moss-surface-hover':'#304754','--moss-border':'#678493','--sage-surface':'#263b46','--action-surface':'#263b46','--action-surface-hover':'#304754','--action-border':'#678493','--fog':'#b4cedd','--fog-surface':'#263844','--pale-sand':'#3b302a','--clay':'#e2b99d','--hairline':'#455966','--border-strong':'#8aa2b1','--control-border':'#8aa2b1','--brand-mark-bg':accent,'--brand-mark-fg':'#15212a','--brand-mark-border':accent,'--nav-active-bg':selection,'--nav-active-fg':'#251c16','--nav-active-border':selection,'--warning':'#f1ce92','--warning-surface':'#3b3020','--success':'#a6dfb3','--success-surface':'#203b2b','--error':'#ffb8bf','--error-surface':'#402b33','--info':'#b7d9e8','--info-surface':'#233844'};
+ return {...theme.tokens,'--paper':paper,'--warm':'#1a242d','--stone':'#202c35','--sand-panel':'#283641','--surface':'#1c2730','--ink':'#edf2f5','--graphite':'#d0dce4','--muted':'#b3c2cd','--disabled':'#7d8a94','--moss':accent,'--moss-hover':'#d8e9f4','--action':accent,'--action-hover':'#d8e9f4','--sage':accent,'--moss-surface':'#263b46','--moss-surface-hover':'#304754','--moss-border':'#678493','--sage-surface':'#263b46','--action-surface':'#263b46','--action-surface-hover':'#304754','--action-border':'#678493','--fog':'#b4cedd','--fog-surface':'#263844','--pale-sand':'#3b302a','--clay':'#e2b99d','--hairline':'#455966','--border-strong':'#8aa2b1','--control-border':'#8aa2b1','--brand-mark-bg':accent,'--brand-mark-fg':'#15212a','--brand-mark-border':accent,'--ai':selection,'--ai-fg':'#251c16','--ai-hover':hoverShade(selection,'#251c16'),'--warning':'#f1ce92','--warning-surface':'#3b3020','--success':'#a6dfb3','--success-surface':'#203b2b','--error':'#ffb8bf','--error-surface':'#402b33','--info':'#b7d9e8','--info-surface':'#233844'};
 }
 export function appearanceThemeCssText(){
  return systemThemes.map(theme=>['light','dark'].map(mode=>{const tokens=resolvedThemeTokens(theme.id,mode as 'light'|'dark');const declarations=Object.entries(tokens).map(([key,value])=>`${key}:${value}`).join(';');const documentTokens=Object.entries(resolvedThemeTokens(theme.id,'light')).map(([key,value])=>`${key}:${value}`).join(';');return `html[data-labnest-theme="${theme.id}"][data-labnest-mode="${mode}"]{${declarations};color-scheme:${mode}}html[data-labnest-theme="${theme.id}"] :is(.document-a4-paper,.scientific-document-view,.tiptap.document-editor-content){${documentTokens};color-scheme:light}`;}).join('')).join('');

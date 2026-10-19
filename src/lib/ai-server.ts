@@ -65,11 +65,11 @@ export async function getAIAvailability(): Promise<AIAvailability> {
 }
 export function availabilityFromSettings(settings: AvailabilitySettings): AIAvailability {
   if (!settings?.enabled) {
-    return { enabled: false, connected: false, reason: "已关闭 AI，现有记录保持不变。" };
+    return { enabled: false, connected: false, reason: "AI is off; existing records stay as they are." };
   }
   const provider = settings.defaultProvider;
   if (!provider) {
-    return { enabled: true, connected: false, reason: "请先选择默认模型服务。" };
+    return { enabled: true, connected: false, reason: "Choose a default model service first." };
   }
   const base = {
     enabled: true,
@@ -79,19 +79,19 @@ export function availabilityFromSettings(settings: AvailabilitySettings): AIAvai
     model: provider.defaultModel ?? undefined,
   };
   if (!provider.enabled) {
-    return { ...base, connected: false, reason: `服务“${provider.name}”已停用。` };
+    return { ...base, connected: false, reason: `The service “${provider.name}” is turned off.` };
   }
   if (!isConnectedProviderType(provider.type)) {
-    return { ...base, connected: false, reason: "当前默认服务使用手动复制粘贴，不进行联网调用。" };
+    return { ...base, connected: false, reason: "The default service uses manual copy and paste and makes no network calls." };
   }
   if (!isEncryptedSecret(provider.apiKeyEncrypted)) {
-    return { ...base, connected: false, reason: `服务“${provider.name}”尚未保存 API 密钥。` };
+    return { ...base, connected: false, reason: `The service “${provider.name}” has no saved API key yet.` };
   }
   if ((provider.type === "openai_compatible" || provider.type === "dify") && !provider.baseUrl?.trim()) {
-    return { ...base, connected: false, reason: "请填写模型服务地址。" };
+    return { ...base, connected: false, reason: "Enter the model service address." };
   }
   if (provider.type !== "dify" && !provider.defaultModel?.trim()) {
-    return { ...base, connected: false, reason: "请填写模型名称。" };
+    return { ...base, connected: false, reason: "Enter the model name." };
   }
   return { ...base, connected: true };
 }
@@ -100,19 +100,19 @@ export type ResolvedAdapter =
   | { ok: true; adapter: AIProviderAdapter; config: AIProviderConfig; gate: ReturnType<typeof createAIGate> }
   | { ok: false; status: number; error: string; field?: string };
 
-export async function resolveAdapterForProvider(providerId: string, expectedRevision?: string, options: { providerRevision?: string; signal?: AbortSignal } = {}): Promise<ResolvedAdapter> {
+export async function resolveAdapterForProvider(providerId: string, expectedRevision?: string, options: { providerRevision?: string; signal?: AbortSignal; timeoutMs?: number } = {}): Promise<ResolvedAdapter> {
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
   if (!settings?.enabled || (expectedRevision && settings.updatedAt.toISOString() !== expectedRevision)) {
-    return { ok: false, status: 403, error: "AI 已关闭或设置已改变，请在 AI 页面确认设置。" };
+    return { ok: false, status: 403, error: "AI is off or its settings changed; check them on the AI page." };
   }
   const record = await prisma.aIProvider.findUnique({ where: { id: providerId } });
   if (!record) return { ok: false, status: 404, error: "Provider not found." };
   if (!record.enabled) return { ok: false, status: 409, error: "Provider is disabled." };
-  if (options.providerRevision && record.updatedAt.toISOString() !== options.providerRevision) return { ok: false, status: 409, error: "服务配置已在其他页面修改，请重新读取后测试。" };
+  if (options.providerRevision && record.updatedAt.toISOString() !== options.providerRevision) return { ok: false, status: 409, error: "The service setup was changed on another page; read it again before testing." };
   try {
     const config = providerConfigFromRecord({ ...record, type: record.type as AIProviderType }, { withSecret: true });
     const gate = createAIGate(settings.updatedAt.toISOString(), { id: record.id, revision: record.updatedAt.toISOString() }, options.signal);
-    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch }), config, gate };
+    return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}) }), config, gate };
   } catch (error) {
     return { ok: false, status: 500, error: error instanceof Error ? error.message : "Could not load provider credentials." };
   }
@@ -121,31 +121,32 @@ export async function resolveAdapterForProvider(providerId: string, expectedRevi
 /** A draft test does not persist credentials or require a default provider. */
 export async function resolveDraftAdapter(input: unknown, signal?: AbortSignal): Promise<ResolvedAdapter> {
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" } });
-  if (!settings?.enabled) return { ok: false, status: 403, error: "请先启用 AI；保存连接配置不会自动开启 AI。" };
+  if (!settings?.enabled) return { ok: false, status: 403, error: "Enable AI first; saving a connection setup does not turn AI on." };
   const parsed = aiProviderInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, status: 400, error: parsed.error.issues[0].message, field: String(parsed.error.issues[0].path[0] ?? "") };
   const draft = parsed.data;
-  if (!draft.enabled) return { ok: false, status: 409, error: "请先启用此服务。" };
-  if (!isConnectedProviderType(draft.type)) return { ok: false, status: 400, error: "手动复制粘贴模式无需联网测试。" };
+  if (!draft.enabled) return { ok: false, status: 409, error: "Enable this service first." };
+  if (!isConnectedProviderType(draft.type)) return { ok: false, status: 400, error: "Manual copy and paste needs no connection test." };
   const record = draft.id ? await prisma.aIProvider.findUnique({ where: { id: draft.id } }) : null;
-  if (draft.id && (!record || !record.enabled || record.updatedAt.toISOString() !== draft.revision)) return { ok: false, status: 409, error: "服务已停用或配置已改变，请重新读取后测试。" };
-  if (!draft.apiKey && (!record || !sameProviderTarget(draft, record))) return { ok: false, status: 400, field: "apiKey", error: "请填写适用于当前地址和接口类型的新密钥；旧密钥不会发往新目标。" };
+  if (draft.id && (!record || !record.enabled || record.updatedAt.toISOString() !== draft.revision)) return { ok: false, status: 409, error: "The service is disabled or its setup changed; read it again before testing." };
+  if (!draft.apiKey && (!record || !sameProviderTarget(draft, record))) return { ok: false, status: 400, field: "apiKey", error: "Enter a new key for this address and interface type; the old key is never sent to a new target." };
   try {
     const apiKey = draft.apiKey || (record && isEncryptedSecret(record.apiKeyEncrypted) ? decryptSecret(record.apiKeyEncrypted) : "");
-    if (!apiKey) return { ok: false, status: 400, field: "apiKey", error: "请填写 API 密钥。" };
+    if (!apiKey) return { ok: false, status: 400, field: "apiKey", error: "Enter the API key." };
     const config: AIProviderConfig = { ...draft, id: draft.id || "unsaved-provider", apiKey, capabilities: ["text"] };
     const gate = createAIGate(settings.updatedAt.toISOString(), record ? { id: record.id, revision: record.updatedAt.toISOString() } : undefined, signal);
     return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, timeoutMs: 30_000 }), config, gate };
-  } catch { return { ok: false, status: 500, error: "无法读取连接凭据，请检查服务器加密配置。" }; }
+  } catch { return { ok: false, status: 500, error: "Cannot read the connection credentials; check the server encryption setup." }; }
 }
 
 /** The default provider, only when the master switch is on and the provider is a connected adapter. */
-export async function resolveConnectedAdapter(): Promise<ResolvedAdapter> {
+/** `timeoutMs`: a long structured answer (a method card) needs more than the default minute. */
+export async function resolveConnectedAdapter(options: { timeoutMs?: number } = {}): Promise<ResolvedAdapter> {
   const settings = await prisma.aISettings.findUnique({ where: { id: "default" }, include: { defaultProvider: true } });
   const availability = availabilityFromSettings(settings);
   if (!availability.enabled) return { ok: false, status: 403, error: availability.reason ?? "AI is disabled." };
   if (!availability.connected || !availability.providerId) {
     return { ok: false, status: 409, error: availability.reason ?? "No connected model provider." };
   }
-  return resolveAdapterForProvider(availability.providerId, settings!.updatedAt.toISOString());
+  return resolveAdapterForProvider(availability.providerId, settings!.updatedAt.toISOString(), options);
 }

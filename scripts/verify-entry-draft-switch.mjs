@@ -1,3 +1,4 @@
+import {uploadImages,closeProperties} from './test-helpers/editor-controls.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -18,14 +19,14 @@ try {
     await editor().locator('p').first().click();await page.keyboard.press('End');await page.keyboard.insertText(' DRAFT-'+index);
     await page.keyboard.press('Enter');
     const buffer=await sharp({create:{width:120,height:60,channels:3,background:index?'#315f72':'#753241'}}).png().toBuffer();
-    await page.locator('input[accept="image/*"][multiple]').setInputFiles({name:'测试草稿-'+index+'.png',mimeType:'image/png',buffer});
+    await uploadImages(page,{name:'测试草稿-'+index+'.png',mimeType:'image/png',buffer});
     await page.waitForFunction(()=>document.querySelector('[data-document-media]')&&!document.querySelector('[data-document-media] [role="status"]'));
     originals.push(await editor().locator('[data-document-media]').getAttribute('data-document-media'));
     attachments.push((await editor().locator('[data-document-media] img').getAttribute('src')).match(/\/api\/attachments\/([^?]+)/)[1]);
     await page.getByRole('tab',{name:'Metadata',exact:true}).click();
-    await page.getByRole('combobox',{name:'记录类型',exact:true}).selectOption(index?'observation':'idea');
+    await page.getByRole('combobox',{name:'Entry type',exact:true}).selectOption(index?'observation':'idea');
     await page.getByRole('textbox',{name:'State',exact:true}).fill('TEST-STATE-'+index);
-    await page.getByRole('button',{name:'收起属性',exact:true}).click();
+    await closeProperties(page);
     await page.waitForTimeout(1000);
     await page.goto(base+'/entries',{waitUntil:'networkidle'});
   }

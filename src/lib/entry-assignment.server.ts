@@ -27,63 +27,66 @@ async function assertTargetOpen(tx: Prisma.TransactionClient, type: string, id: 
 
 /** The Entry row serializes requests; the partial unique index additionally enforces one primary target. */
 export async function assignEntry(entryId: string, input: EntryAssignmentInput) {
-  return prisma.$transaction(async tx => {
-    await lockEntrySourceGraph(tx);
-    await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${entryId} FOR UPDATE`;
-    const entry = await tx.entry.findUnique({ where: { id: entryId } });
-    if (!entry) throw new Error("快速记录不存在");
-    assertRecordEditable(entry.recordStatus);
-    const signature = JSON.stringify(input);
-    const replay = await tx.activityLog.findFirst({ where: { action: "entry_assign", targetType: "entry", targetId: entryId, metadataJson: { path: ["mutationId"], equals: input.mutationId } } });
-    if (replay) {
-      if ((replay.metadataJson as Record<string, unknown>).request !== signature) throw new Error("重试请求内容不同，请重新确认归属");
-      return { replay: true };
+  return prisma.$transaction(tx => assignEntryInTransaction(tx, entryId, input));
+}
+
+/** 归入 inside a caller's transaction: accepting an AI suggestion records its outcome in the same one. */
+export async function assignEntryInTransaction(tx: Prisma.TransactionClient, entryId: string, input: EntryAssignmentInput) {
+  await lockEntrySourceGraph(tx);
+  await tx.$queryRaw`SELECT id FROM "Entry" WHERE id=${entryId} FOR UPDATE`;
+  const entry = await tx.entry.findUnique({ where: { id: entryId } });
+  if (!entry) throw new Error("快速记录不存在");
+  assertRecordEditable(entry.recordStatus);
+  const signature = JSON.stringify(input);
+  const replay = await tx.activityLog.findFirst({ where: { action: "entry_assign", targetType: "entry", targetId: entryId, metadataJson: { path: ["mutationId"], equals: input.mutationId } } });
+  if (replay) {
+    if ((replay.metadataJson as Record<string, unknown>).request !== signature) throw new Error("重试请求内容不同，请重新确认归属");
+    return { replay: true };
+  }
+  const current = await tx.itemLink.findFirst({ where: { sourceType: "entry", sourceId: entryId, linkType: "entry_primary" } });
+  if (entryTargetKey(current) !== input.expectedTarget) throw new Error("归属已被另一窗口更改，请刷新后再确认");
+  if (current) {
+    const exists = current.targetType === "experiment" ? await tx.experiment.findUnique({where:{id:current.targetId}}) : await tx.result.findUnique({where:{id:current.targetId}});
+    // Invalid/removed targets can be detached. Frozen targets cannot be silently altered.
+    if (exists) await lockTarget(tx, current.targetType, current.targetId);
+    const latest = exists ? current.targetType === "experiment" ? await tx.experiment.findUnique({where:{id:current.targetId}}) : await tx.result.findUnique({where:{id:current.targetId}}) : null;
+    if (latest && current.targetType === "result" && "experimentId" in latest && latest.experimentId) {
+      await lockTarget(tx, "experiment", latest.experimentId);
+      const parent = await tx.experiment.findUnique({where:{id:latest.experimentId}});
+      if (parent && isRecordLocked(parent.recordStatus)) throw new Error("所属实验的来源已冻结，请先重新打开实验");
     }
-    const current = await tx.itemLink.findFirst({ where: { sourceType: "entry", sourceId: entryId, linkType: "entry_primary" } });
-    if (entryTargetKey(current) !== input.expectedTarget) throw new Error("归属已被另一窗口更改，请刷新后再确认");
-    if (current) {
-      const exists = current.targetType === "experiment" ? await tx.experiment.findUnique({where:{id:current.targetId}}) : await tx.result.findUnique({where:{id:current.targetId}});
-      // Invalid/removed targets can be detached. Frozen targets cannot be silently altered.
-      if (exists) await lockTarget(tx, current.targetType, current.targetId);
-      const latest = exists ? current.targetType === "experiment" ? await tx.experiment.findUnique({where:{id:current.targetId}}) : await tx.result.findUnique({where:{id:current.targetId}}) : null;
-      if (latest && current.targetType === "result" && "experimentId" in latest && latest.experimentId) {
-        await lockTarget(tx, "experiment", latest.experimentId);
-        const parent = await tx.experiment.findUnique({where:{id:latest.experimentId}});
-        if (parent && isRecordLocked(parent.recordStatus)) throw new Error("所属实验的来源已冻结，请先重新打开实验");
-      }
-      if (latest && isRecordLocked(latest.recordStatus)) throw new Error("已提交或审核目标的来源已冻结，请先按现有流程重新打开目标");
+    if (latest && isRecordLocked(latest.recordStatus)) throw new Error("已提交或审核目标的来源已冻结，请先按现有流程重新打开目标");
+  }
+  let targetId = input.targetId;
+  let experimentId: string | null = null;
+  if (input.type === "result") {
+    const experiment = await assertTargetOpen(tx, "experiment", input.experimentId!);
+    experimentId = experiment.id;
+    if (targetId) {
+      const result = await assertTargetOpen(tx, "result", targetId);
+      if (!("experimentId" in result) || result.experimentId !== experimentId) throw new Error("该结果不属于所选实验");
+    } else {
+      const result = await createResultInTransaction(tx, { experimentId, title: input.newTitle!, resultType: "Observation", recordStatus: "draft", sourceType: "manual", qualityStatus: "not_assessed", origin: { kind: "manual" } });
+      targetId = result.resultId;
     }
-    let targetId = input.targetId;
-    let experimentId: string | null = null;
-    if (input.type === "result") {
-      const experiment = await assertTargetOpen(tx, "experiment", input.experimentId!);
-      experimentId = experiment.id;
-      if (targetId) {
-        const result = await assertTargetOpen(tx, "result", targetId);
-        if (!("experimentId" in result) || result.experimentId !== experimentId) throw new Error("该结果不属于所选实验");
-      } else {
-        const result = await createResultInTransaction(tx, { experimentId, title: input.newTitle!, resultType: "Observation", recordStatus: "draft", sourceType: "manual", qualityStatus: "not_assessed", origin: { kind: "manual" } });
-        targetId = result.resultId;
-      }
-    } else if (input.type === "experiment") {
-      if (targetId) experimentId = (await assertTargetOpen(tx, "experiment", targetId)).id;
-      else {
-        const experiment = await tx.experiment.create({ data: { title: input.newTitle!, runCode: await reserveRecordCode(tx, "experiment"), projectId: entry.projectId, researchPlanId: entry.researchPlanId, status: "planned", recordStatus: "draft" } });
-        targetId = experiment.id; experimentId = experiment.id;
-      }
+  } else if (input.type === "experiment") {
+    if (targetId) experimentId = (await assertTargetOpen(tx, "experiment", targetId)).id;
+    else {
+      const experiment = await tx.experiment.create({ data: { title: input.newTitle!, runCode: await reserveRecordCode(tx, "experiment"), projectId: entry.projectId, researchPlanId: entry.researchPlanId, status: "planned", recordStatus: "draft" } });
+      targetId = experiment.id; experimentId = experiment.id;
     }
-    if (experimentId) {
-      const experiment = await tx.experiment.findUniqueOrThrow({ where: { id: experimentId } });
-      if (entry.projectId && entry.projectId !== experiment.projectId) throw new Error("快速记录与目标实验不属于同一研究项目");
-      if (entry.researchPlanId && entry.researchPlanId !== experiment.researchPlanId) throw new Error("快速记录与目标实验不属于同一研究方案");
-    }
-    await tx.itemLink.deleteMany({ where: { sourceType: "entry", sourceId: entryId, linkType: "entry_primary" } });
-    if (input.type !== "none") await tx.itemLink.create({ data: { sourceType: "entry", sourceId: entryId, targetType: input.type, targetId: targetId!, linkType: "entry_primary", createdBy: "user" } });
-    // Relationship-only update: never submit a cached body, contentJson or timestamp.
-    await tx.entry.update({ where: { id: entryId }, data: { experimentId, experimentStepId: current?.targetId === targetId ? entry.experimentStepId : null } });
-    await tx.activityLog.create({ data: { action: "entry_assign", targetType: "entry", targetId: entryId, metadataJson: json({ mutationId: input.mutationId, request: signature, from: entryTargetKey(current), to: input.type === "none" ? null : `${input.type}:${targetId}`, assignedAt: new Date().toISOString() }) } });
-    return { replay: false, targetType: input.type, targetId };
-  });
+  }
+  if (experimentId) {
+    const experiment = await tx.experiment.findUniqueOrThrow({ where: { id: experimentId } });
+    if (entry.projectId && entry.projectId !== experiment.projectId) throw new Error("快速记录与目标实验不属于同一研究项目");
+    if (entry.researchPlanId && entry.researchPlanId !== experiment.researchPlanId) throw new Error("快速记录与目标实验不属于同一研究方案");
+  }
+  await tx.itemLink.deleteMany({ where: { sourceType: "entry", sourceId: entryId, linkType: "entry_primary" } });
+  if (input.type !== "none") await tx.itemLink.create({ data: { sourceType: "entry", sourceId: entryId, targetType: input.type, targetId: targetId!, linkType: "entry_primary", createdBy: "user" } });
+  // Relationship-only update: never submit a cached body, contentJson or timestamp.
+  await tx.entry.update({ where: { id: entryId }, data: { experimentId, experimentStepId: current?.targetId === targetId ? entry.experimentStepId : null } });
+  await tx.activityLog.create({ data: { action: "entry_assign", targetType: "entry", targetId: entryId, metadataJson: json({ mutationId: input.mutationId, request: signature, from: entryTargetKey(current), to: input.type === "none" ? null : `${input.type}:${targetId}`, assignedAt: new Date().toISOString() }) } });
+  return { replay: false, targetType: input.type, targetId };
 }
 
 export async function liveEntrySources(tx: Prisma.TransactionClient, type: "experiment" | "result", id: string): Promise<EntrySource[]> {

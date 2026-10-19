@@ -25,6 +25,8 @@ import { archiveProtocol, deleteProtocol } from "../actions";
 import { ActivityHistory } from "@/components/ActivityHistory";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
+import { protocolUsageHistory } from "@/lib/protocol-usage.server";
+import { ProtocolUsageHistory } from "@/components/ProtocolUsageHistory";
 
 export const dynamic = "force-dynamic";
 
@@ -56,13 +58,13 @@ export default async function ProtocolDetailPage({
         include: {
           derivedFromVersion: { include: { protocol: true } },
           previousVersion: true,
-          _count: { select: { primaryExperiments: true, experimentLinks: true, protocolRuns: true, results: true } },
+          _count: { select: { experimentLinks: true, protocolRuns: true, results: true } },
         },
       },
     },
   });
   if (!protocol) notFound();
-  const importHistory = await getProtocolImportHistory(id);
+  const [importHistory, usage] = await Promise.all([getProtocolImportHistory(id), protocolUsageHistory(id)]);
   const version = protocol.versions.find((item) => item.id === selectedVersionId) ?? protocol.versions[0];
   if (!version) notFound();
   const versionIds = protocol.versions.map((item) => item.id);
@@ -137,7 +139,8 @@ export default async function ProtocolDetailPage({
                 <Control label="Review stage"><StatusPill status={version.reviewStage} /></Control>
                 <Control label="Scope"><Badge tone={protocol.scope === "general" ? "info" : "sage"}>{protocol.scope}</Badge></Control>
                 <Control label="Source"><Badge>{version.sourceType.replaceAll("_", " ")}</Badge></Control>
-                <Control label="Usage">{version._count.primaryExperiments} primary runs</Control>
+                {/* Every Experiment that ran this version, as its first Protocol or alongside another one. */}
+                <Control label="Usage">{`${version._count.experimentLinks} ${version._count.experimentLinks === 1 ? "experiment" : "experiments"}`}</Control>
                 <Control label="Updated">{protocol.updatedAt.toLocaleDateString()}</Control>
                 <div className="sm:col-span-2 flex flex-wrap gap-2 border-t border-hairline pt-3">
                   {protocol.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
@@ -159,7 +162,13 @@ export default async function ProtocolDetailPage({
             </Card>
 
             <Card>
-              <CardHeader title="Version history" eyebrow="Immutable lineage" />
+              <details open={Boolean(firstSearchParam(query, "usage"))}><summary className="focus-ring cursor-pointer px-3 py-2 text-sm font-medium"><span>Usage history</span> · {usage.length}</summary>
+              <CardBody><ProtocolUsageHistory rows={usage} /></CardBody>
+              </details>
+            </Card>
+
+            <Card>
+              <CardHeader title="Version history" eyebrow="Immutable lineage" action={protocol.versions.length > 1 ? <Link href={`/protocols/${protocol.id}/compare`} className="text-xs font-medium text-moss hover:underline">Compare versions</Link> : undefined} />
               <CardBody>
                 <ul className="divide-y divide-hairline">
                   {protocol.versions.map((row) => <li key={row.id} className="space-y-2 py-4 first:pt-0 last:pb-0">
@@ -167,7 +176,7 @@ export default async function ProtocolDetailPage({
                       <Link href={`/protocols/${protocol.id}?version=${row.id}`} className="record-identifier font-semibold text-moss hover:underline">{row.displayVersion}</Link>
                       <StatusPill status={row.reviewStage} />
                     </div>
-                    <p className="text-xs text-muted">{row.sourceType.replaceAll("_", " ")} · {row.createdAt.toLocaleDateString()}</p>
+                    <p className="text-xs text-muted">{row.sourceType.replaceAll("_", " ")} · {row.createdAt.toLocaleDateString()}{row.previousVersionId ? <> · <Link href={`/protocols/${protocol.id}/compare?a=${row.previousVersionId}&b=${row.id}`} className="text-moss hover:underline">与上一版对比</Link></> : null}</p>
                     <p className="text-sm leading-6 text-graphite">{row.changeSummary ?? "No change summary."}</p>
                     <Link href={`/protocols/${protocol.id}/versions/${row.id}/edit`} className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-2.5 py-1.5 text-xs font-medium text-moss hover:bg-warm"><PencilLine className="h-3.5 w-3.5" aria-hidden />{row.reviewStage === "reviewed" ? "Edit as new revision" : "Edit version"}</Link>
                   </li>)}

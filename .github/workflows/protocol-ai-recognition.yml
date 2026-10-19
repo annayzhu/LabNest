@@ -1,0 +1,56 @@
+name: Protocol AI recognition acceptance
+on:
+  pull_request:
+    paths: ['src/lib/ai*', 'src/lib/protocol-recognition*', 'src/lib/protocol-habit-text*', 'src/lib/protocol-conversion*', 'src/lib/protocol-source-text*', 'src/app/api/ai/**', 'src/app/api/protocols/recognize/**', 'src/app/protocols/import/**', 'src/components/AiProviderForm.tsx', 'src/components/RecognitionWorkspace.tsx', 'scripts/verify-protocol-recognition.mjs', '.github/workflows/protocol-ai-recognition.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_protocol_ai_extraction_20261009
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_protocol_ai_extraction_20261009
+      LABNEST_AI_ENCRYPTION_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      LABNEST_E2E_BASE_URL: http://localhost:3339
+      AI_EVIDENCE_DIR: protocol-recognition-evidence
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: TZ=Asia/Shanghai npm test
+      - run: TZ=UTC npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - name: Start isolated application
+        run: |
+          PORT=3339 npm start > protocol-recognition-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://localhost:3339/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat protocol-recognition-server.log
+          exit 1
+      - run: node scripts/verify-protocol-recognition.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: protocol-recognition-evidence
+          path: |
+            protocol-recognition-evidence
+            protocol-recognition-server.log

@@ -1,22 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import { formInputClass } from './forms';
+import { useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import { ProtocolSourcesView } from './ProtocolSourcesView';
+import { RecordTemplateSummary } from './protocol/RecordTemplate';
+import { useI18n } from './I18nProvider';
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
-import { allSystemProtocolDocument, resolveProtocolDocument } from '@/lib/structured-protocol';
-import { ProtocolConditionCaption, ProtocolSystemLegend } from './ProtocolSystemLabels';
+import { resolveProtocolSystem, tableForSelection, targetApplicability, type ProtocolSelection, type ProtocolSystems } from '@/lib/structured-protocol';
+import { optionMarks } from '@/lib/protocol-chips';
+import { systemLabelText } from '@/lib/protocol-conditions';
+import { ChipRenderContext, ChipText } from './protocol/ChipText';
+import { MixCard } from './protocol/MixCard';
+import { protocolUsage } from '@/lib/protocol-mix';
+import { projectProtocolExecution } from '@/lib/protocol-execution';
+import { ConditionTags } from './protocol/ConditionTags';
+import { SystemMark } from './protocol/SystemMark';
+import { ProgramCard } from './protocol/ProgramCard';
+import { LensPresets, LensRow } from './protocol/Lens';
+import './protocol/protocol.css';
 import { AlertTriangle, CheckSquare2, FileCheck2, Table2, Wrench } from "lucide-react";
 import { DocumentMediaView } from "./DocumentMediaView";
 import { documentMediaFromMarkdown } from "@/lib/document-media";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { separateLegacyImportWarnings } from "@/lib/protocol-import-state";
 import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
-import { ProtocolTimer } from "@/components/ProtocolTimer";
 import { ResultDatasetSchemaView } from "@/components/ResultDatasetSchemaView";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 import { TiptapCellContentView } from "@/components/TiptapCellContentView";
 import { cn } from "@/lib/cn";
-import { richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
+import { hasLegacyFormulas, protocolSectionLabels, richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
 import { richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { checkResultTemplate, fieldDataType, fieldSemanticRole, normalizeResultTemplate, resultTemplateCardinalityLabel, type ResultTemplateCheck } from "@/lib/result-templates";
 import type { ResultTemplate, ResultTemplateArtifact, ResultTemplateField } from "@/lib/types";
@@ -27,34 +38,35 @@ function safeLink(value: string | undefined) {
   return /^(https?:\/\/|mailto:|\/)/i.test(trimmed) ? trimmed : undefined;
 }
 
+// Interface words shown inside the document, which the page translator leaves alone: render them through t().
 const resultFieldTypeLabel = {
-  text: "文本",
-  number: "数值",
-  select: "选项",
-  "attachment[]": "附件",
-  boolean: "是/否",
-  date: "日期",
-  datetime: "日期时间",
+  text: "Text",
+  number: "Numeric value",
+  select: "Choice",
+  "attachment[]": "Attachments",
+  boolean: "Yes/No",
+  date: "Date",
+  datetime: "Date & time",
 } as const;
 
 const resultSemanticRoleLabel = {
-  identifier: "标识",
-  design: "设计",
-  group: "分组",
-  label: "标签",
-  measurement: "测量值",
-  qc: "质控",
-  annotation: "注释",
+  identifier: "Identifier",
+  design: "Design factor",
+  group: "Grouping",
+  label: "Label",
+  measurement: "Measurement",
+  qc: "Quality control",
+  annotation: "Annotation",
 } as const;
 
 const artifactKindLabel = {
-  file: "文件",
-  image: "图片",
-  video: "视频",
+  file: "File",
+  image: "Image",
+  video: "Video",
 } as const;
 
 function requiredLabel(required: boolean | undefined) {
-  return required ? "必填" : "可选";
+  return required ? "Required" : "Optional";
 }
 
 function TemplateCheckBadge({ status }: { status: ResultTemplateCheck["status"] | undefined }) {
@@ -62,6 +74,7 @@ function TemplateCheckBadge({ status }: { status: ResultTemplateCheck["status"] 
 }
 
 function ResultTemplateSummaryCard({ template, templateCheck }: { template: ResultTemplate; templateCheck: ResultTemplateCheck | undefined }) {
+  const { t } = useI18n();
   return <div className="rounded-[var(--ln-radius-control-lg)] border border-sage/40 bg-sage-surface/50 p-3">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div>
@@ -72,7 +85,7 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
     </div>
     {template.description ? <p className="mt-2 text-xs leading-5 text-graphite">{template.description}</p> : null}
     {template.instructions?.length && richTextPlainText(template.instructions).trim() ? <div className="mt-3 border-t border-sage/30 pt-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">填写说明 / Instructions</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t("Instructions")}</p>
       <ProtocolRichTextContent nodes={template.instructions} />
     </div> : null}
     {templateCheck && (templateCheck.errors.length || templateCheck.warnings.length) ? <ul className="mt-2 list-disc pl-5 text-xs text-graphite">{[...templateCheck.errors, ...templateCheck.warnings].map((message) => <li key={message}>{message}</li>)}</ul> : null}
@@ -80,19 +93,20 @@ function ResultTemplateSummaryCard({ template, templateCheck }: { template: Resu
 }
 
 function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[] }) {
+  const { t } = useI18n();
   if (!fields.length) return null;
   return <section data-result-template-fields-preview className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-[var(--ln-result-template-preview-section-padding)]">
-    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />字段要求 / Fields</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{t("Field requirements")}</p>
     <div className="mt-2 grid gap-[var(--ln-result-template-preview-grid-gap)] md:grid-cols-2">
       {fields.map((field) => {
         const dataType = fieldDataType(field);
         const semanticRole = fieldSemanticRole(field);
         const label = field.label ?? field.name ?? field.key ?? "Field";
-        const metadata = [field.key, resultFieldTypeLabel[dataType], field.unit, requiredLabel(field.required), resultSemanticRoleLabel[semanticRole]].filter(Boolean).join(" · ");
+        const metadata = [field.key, t(resultFieldTypeLabel[dataType]), field.unit, t(requiredLabel(field.required)), t(resultSemanticRoleLabel[semanticRole])].filter(Boolean).join(" · ");
         const title = field.description ? `${label}\n${metadata}\n${field.description}` : `${label}\n${metadata}`;
         return <div key={field.key ?? label} title={title} className="flex min-w-0 items-center justify-between gap-[var(--ln-result-template-preview-field-meta-gap)] rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-[var(--ln-result-template-preview-field-padding-x)] py-[var(--ln-result-template-preview-field-padding-y)]">
           <p data-result-template-field-name className="min-w-0 flex-1 truncate font-medium leading-tight text-ink">{label}</p>
-          <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{resultFieldTypeLabel[dataType]}{field.unit ? ` · ${field.unit}` : ""} · {requiredLabel(field.required)} · {resultSemanticRoleLabel[semanticRole]}</p>
+          <p data-result-template-field-meta className="min-w-0 flex-[1.15] truncate text-right leading-tight text-muted">{field.key ? <span className="font-mono">{field.key}</span> : null}{field.key ? " · " : ""}{t(resultFieldTypeLabel[dataType])}{field.unit ? ` · ${field.unit}` : ""} · {t(requiredLabel(field.required))} · {t(resultSemanticRoleLabel[semanticRole])}</p>
         </div>;
       })}
     </div>
@@ -100,21 +114,22 @@ function ResultTemplateFieldsPreview({ fields }: { fields: ResultTemplateField[]
 }
 
 function ResultTemplateArtifactPreview({ artifacts }: { artifacts: ResultTemplateArtifact[] | undefined }) {
+  const { t } = useI18n();
   if (!artifacts?.length) return null;
   return <section className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface/70 p-3">
-    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />文件要求 / File requirements</p>
+    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><FileCheck2 className="h-4 w-4" aria-hidden />{t("File requirements")}</p>
     <div className="mt-2 grid gap-2 md:grid-cols-2">
       {artifacts.map((artifact) => <div key={artifact.key} className="min-w-0 rounded-[var(--ln-radius-control-md)] border border-hairline bg-warm/60 px-3 py-2">
         <p className="truncate text-sm font-medium text-ink">{artifact.label}</p>
-        <p className="mt-1 text-xs text-muted"><span className="font-mono">{artifact.key}</span> · {artifactKindLabel[artifact.kind]} · {requiredLabel(artifact.required)}</p>
+        <p className="mt-1 text-xs text-muted"><span className="font-mono">{artifact.key}</span> · {t(artifactKindLabel[artifact.kind])} · {t(requiredLabel(artifact.required))}</p>
       </div>)}
     </div>
-    <p className="mt-2 text-xs leading-5 text-muted">这里定义需要保留或上传的原始文件；实际文件在创建 / 打开 Result 记录后上传。</p>
+    <p className="mt-2 text-xs leading-5 text-muted">{t("These are the raw files to keep or upload; the files themselves are uploaded after creating or opening the Result record.")}</p>
   </section>;
 }
 
 function RichRun({ run }: { run: ProtocolRichTextRun }) {
-  let content: React.ReactNode = run.text;
+  let content: React.ReactNode = run.text.includes("{{") ? <ChipText text={run.text} /> : run.text;
   if (run.code) content = <code className="rounded bg-stone px-1 py-0.5 font-mono text-[0.86em]">{content}</code>;
   if (run.bold) content = <strong>{content}</strong>;
   if (run.italic) content = <em>{content}</em>;
@@ -159,74 +174,203 @@ export function ProtocolRichTextContent({ nodes }: { nodes: ProtocolRichTextNode
   return <div className="document-copy document-rich-text-flow text-graphite">{rendered}</div>;
 }
 
+/** "仅 ▲ 350 µL" above a recipe column header that belongs to one system option. */
+function ColumnTag({ systems, column }: { systems: ProtocolSystems; column: { dimensionId: string; optionId: string } }) {
+  const { t } = useI18n();
+  const mark = optionMarks(systems).get(`${column.dimensionId}:${column.optionId}`);
+  return mark ? <span className="ln-column-tag" data-tone={mark.tone}>{t("Only ")}{mark.symbol ? <SystemMark mark={mark} /> : null}{mark.label}</span> : null;
+}
+
 export function ProtocolContentBlockView({ block, executionContext=false }: { block: ProtocolContentBlock; executionContext?:boolean }) {
+  const systems = useContext(ChipRenderContext)?.systems;
   if ((block.type==="heading" || block.type==="text") && block.nodes) return <ProtocolRichTextContent nodes={block.nodes}/>;
   if (block.type==="checklist" && block.itemNodes) return <ul className="document-rich-list pl-4">{block.items.map((item,index)=><li key={index}><ProtocolRichTextContent nodes={block.itemNodes?.[index]??[{type:"paragraph",content:[{text:item}]}]}/></li>)}</ul>;
-  if (block.type === "heading") return <h3 className="document-content-heading font-serif font-medium text-ink">{block.text}</h3>;
-  if (block.type === "text") return <p className="document-copy whitespace-pre-wrap leading-7 text-graphite">{block.text}</p>;
+  if (block.type === "heading") return <h3 className="document-content-heading font-serif font-medium text-ink"><ChipText text={block.text} /></h3>;
+  if (block.type === "text") return <p className="document-copy whitespace-pre-wrap leading-7 text-graphite"><ChipText text={block.text} /></p>;
   if (block.type === "rich_text") return <ProtocolRichTextContent nodes={block.nodes} />;
   if (block.type === "checklist") {
-    return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite">{executionContext?<span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-moss"/>:<CheckSquare2 className="document-checklist-icon h-4 w-4 text-moss" aria-hidden />}<span>{item}</span></li>)}</ul>;
+    return <ul className="document-checklist">{block.items.filter(Boolean).map((item, index) => <li key={`${block.id}-${index}`} className="document-checklist-item text-sm text-graphite">{executionContext?<span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-moss"/>:<CheckSquare2 className="document-checklist-icon h-4 w-4 text-moss" aria-hidden />}<span><ChipText text={item} /></span></li>)}</ul>;
   }
   if (block.type === "callout") {
-    return <div className={cn("flex gap-3 rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span>{block.text}</span></div>;
+    return <div className={cn("flex gap-3 rounded-[var(--ln-radius-panel-inner)] border px-4 py-3 text-sm leading-6", block.tone === "critical" ? "border-error/40 bg-error-surface text-error" : block.tone === "warning" ? "border-warning/40 bg-warning-surface text-graphite" : "border-info/30 bg-info-surface text-graphite")}><AlertTriangle className="mt-1 h-4 w-4 shrink-0" aria-hidden /><span><ChipText text={block.text} /></span></div>;
   }
   if (block.type === "media") return <DocumentMediaView block={block} />;
   if (block.type === "embedded_tool") {
     const href = safeLink(block.url);
     return <div className="ln-protocol-tool-card"><Wrench aria-hidden /><div><p>{block.label || "Embedded tool"}</p><small>{block.sourceKind === "manifest" ? "LabNest tool" : block.sourceKind === "path" ? "Application path" : "External URL"}</small></div>{href ? <a href={href} target="_blank" rel="noreferrer">Open tool</a> : <span>Invalid location</span>}</div>;
   }
-  if (block.type === "timer" && executionContext) return <p className="text-sm text-muted">{block.label} · {block.durationMinutes} min{block.notes ? ` · ${block.notes}` : ""}</p>;
-  if (block.type === "timer") return <ProtocolTimer label={block.label} durationMinutes={block.durationMinutes} notes={block.notes} />;
+  if (block.type === "program") return <ProgramCard program={block} />;
+  if (block.type === "mix") return <MixCard mix={block} />;
+  // Older timer blocks read as their duration; countdowns belong to each Run step.
+  if (block.type === "timer") return <p className="text-sm text-muted">{block.label} · {block.durationMinutes} min{block.notes ? ` · ${block.notes}` : ""}</p>;
 
   const template = block.resultTemplate ? normalizeResultTemplate(block.resultTemplate) : undefined;
   const templateCheck = template ? checkResultTemplate(template) : undefined;
+  // Read as written ("记录：…") with what it records; the field-by-field detail stays one click away.
   if (template) {
-    return <figure className="space-y-2">
+    return <RecordTemplateSummary template={template} details={<div className="space-y-2">
       <ResultTemplateSummaryCard template={template} templateCheck={templateCheck} />
       <ResultTemplateFieldsPreview fields={template.fields} />
       <ResultTemplateArtifactPreview artifacts={template.artifacts} />
       {template.datasets?.length ? <ResultDatasetSchemaView datasets={template.datasets} /> : null}
-    </figure>;
+    </div>} />;
   }
 
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
   const [headerRow = [], ...bodyRows] = block.rows;
+  const column = (index: number) => systems && block.columnConditions?.[index] ? <ColumnTag systems={systems} column={block.columnConditions[index]!} /> : null;
+  const rowRules = (index: number) => systems ? scopedRules(systems, "row", block.rowIds?.[index] ?? "") : [];
   return <figure className="space-y-2">
-    <p className="text-xs text-muted">Scroll sideways for all columns</p>
+    <ScrollHint />
     {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}
     <ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar">
       <table className="document-three-line-table min-w-full table-fixed text-left text-sm">
         <colgroup>{Array.from({ length: columnCount }).map((_, columnIndex) => <col key={columnIndex} data-resizable-column-index={columnIndex} style={{ width: block.columnWidths?.[columnIndex] ? `${block.columnWidths[columnIndex]}px` : "var(--ln-document-table-col-width)" }} />)}</colgroup>
-        {headerRow.length ? <thead><tr>{Array.from({ length: columnCount }).map((_, columnIndex) => <th key={columnIndex} data-resizable-column-cell={columnIndex} scope="col" className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] pr-4 align-top font-semibold", !block.cellRichContent?.[0]?.[columnIndex] && block.cellColors?.[0]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[0]?.[columnIndex] && block.cellFontSizesPt?.[0]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[0][columnIndex]}pt` } : undefined}><TiptapCellContentView content={block.cellRichContent?.[0]?.[columnIndex]} fallback={headerRow[columnIndex] ?? ""} /><span data-column-resize-handle={columnIndex} data-min-width="var(--ln-document-table-min-col-width)" aria-hidden /></th>)}</tr></thead> : null}
-        <tbody>{bodyRows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex + 1}`}>{Array.from({ length: columnCount }).map((_, columnIndex) => <td key={columnIndex} className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] align-top", !block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellColors?.[rowIndex + 1]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellFontSizesPt?.[rowIndex + 1]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[rowIndex + 1][columnIndex]}pt` } : undefined}><TiptapCellContentView content={block.cellRichContent?.[rowIndex + 1]?.[columnIndex]} fallback={row[columnIndex] ?? ""} /></td>)}</tr>)}</tbody>
+        {headerRow.length ? <thead><tr>{Array.from({ length: columnCount }).map((_, columnIndex) => <th key={columnIndex} data-resizable-column-cell={columnIndex} scope="col" className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] pr-4 align-top font-semibold", !block.cellRichContent?.[0]?.[columnIndex] && block.cellColors?.[0]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[0]?.[columnIndex] && block.cellFontSizesPt?.[0]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[0][columnIndex]}pt` } : undefined}>{column(columnIndex)}<TiptapCellContentView content={block.cellRichContent?.[0]?.[columnIndex]} fallback={headerRow[columnIndex] ?? ""} /><span data-column-resize-handle={columnIndex} data-min-width="var(--ln-document-table-min-col-width)" aria-hidden /></th>)}</tr></thead> : null}
+        <tbody>{bodyRows.map((row, rowIndex) => <tr key={`${block.id}-${rowIndex + 1}`}>{Array.from({ length: columnCount }).map((_, columnIndex) => <td key={columnIndex} className={cn("min-w-[var(--ln-document-table-min-col-width)] px-[var(--ln-document-table-cell-padding-x)] py-[var(--ln-document-table-cell-padding-y)] align-top", !block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellColors?.[rowIndex + 1]?.[columnIndex] === "risk" && "text-error")} style={!block.cellRichContent?.[rowIndex + 1]?.[columnIndex] && block.cellFontSizesPt?.[rowIndex + 1]?.[columnIndex] ? { fontSize: `${block.cellFontSizesPt[rowIndex + 1][columnIndex]}pt` } : undefined}>{columnIndex === 0 && systems && rowRules(rowIndex + 1).length ? <span className="ln-row-tag"><ConditionTags rules={rowRules(rowIndex + 1)} systems={systems} /></span> : null}<TiptapCellContentView content={block.cellRichContent?.[rowIndex + 1]?.[columnIndex]} fallback={row[columnIndex] ?? ""} /></td>)}</tr>)}</tbody>
       </table>
     </ResizableTableFrame>
   </figure>;
 }
 
+const lensEvent = "labnest:protocol-lens";
+const readLens = (key: string) => { try { return localStorage.getItem(`labnest.protocol-lens:${key}`); } catch { return null; } };
+const subscribeLens = (notify: () => void) => { window.addEventListener(lensEvent, notify); window.addEventListener("storage", notify); return () => { window.removeEventListener(lensEvent, notify); window.removeEventListener("storage", notify); }; };
+
+/** The preview lens is a reading aid remembered only in this browser; it never changes an Experiment. */
+function useRememberedLens(key: string | undefined, systems: ProtocolSystems | undefined) {
+  const [unsaved, setUnsaved] = useState<ProtocolSelection | null>(null);
+  const saved = useSyncExternalStore(subscribeLens, () => key ? readLens(key) : null, () => null);
+  const lens = useMemo(() => {
+    if (unsaved) return unsaved;
+    try {
+      const parsed = JSON.parse(saved ?? "null") as ProtocolSelection | null;
+      return parsed && typeof parsed === "object" && systems ? Object.fromEntries(Object.entries(parsed).filter(([dimension, option]) => systems.dimensions.some(d => d.id === dimension && d.options.some(o => o.id === option)))) : {};
+    } catch { return {}; }
+  }, [saved, systems, unsaved]);
+  const update = (next: ProtocolSelection) => {
+    try { if (!key) throw new Error("no key"); localStorage.setItem(`labnest.protocol-lens:${key}`, JSON.stringify(next)); setUnsaved(null); window.dispatchEvent(new Event(lensEvent)); }
+    catch { setUnsaved(next); /* Storage unavailable: keep the choice for this page only. */ }
+  };
+  return [lens, update] as const;
+}
+
+function PreviewLens({ systems, lens, onChange }: { systems: ProtocolSystems; lens: ProtocolSelection; onChange: (lens: ProtocolSelection) => void }) {
+  const marks = optionMarks(systems);
+  return <section className="ln-systems-bar" aria-label="System legend and preview">
+    {systems.dimensions.map(dimension => <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={lens} onChange={onChange} label={`Preview by ${systemLabelText(dimension.label)}`} optionTitle={option => `Read as ${systemLabelText(option.label)}: the rest folds away`} />)}
+    <div className="ln-systems-footer" data-print-hidden>
+      <LensPresets systems={systems} lens={lens} onChange={onChange} />
+      <span className="ln-systems-spacer" /><span className="text-xs text-muted">Preview changes only what you read, never an experiment</span>
+    </div>
+  </section>;
+}
+
+type Rule = ProtocolSystems["rules"][number];
+const scopedRules = (systems: ProtocolSystems | undefined, target: "step" | "block" | "row", id: string): Rule[] => (systems?.rules ?? []).filter(rule => rule.target === target && rule.targetId === id && [rule.when.all, rule.when.any, rule.when.not].some(p => p?.length));
+
+/** Content another system needs: folded in a lens preview, one click away. */
+function Folded({ systems, rules, children }: { systems: ProtocolSystems; rules: Rule[]; children: React.ReactNode }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  return <div className="ln-protocol-folded" data-open={open ? "" : undefined}>
+    <button type="button" className="focus-ring ln-protocol-folded-toggle" aria-expanded={open} onClick={() => setOpen(value => !value)}><ConditionTags rules={rules} systems={systems} /><span>{open ? t("Collapse") : t("Not in this preview · expand")}</span></button>
+    {open ? <div className="ln-protocol-folded-body">{children}</div> : null}
+  </div>;
+}
+
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
-  const [previewMode, setPreviewMode] = useState('all');
-  const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
-  const resolved = previewMode === 'selected' ? resolveProtocolDocument(document, previewSelections) : undefined;
-  const excluded = new Set(resolved?.steps.filter(step => step.applicability === 'not-applicable').map(step => step.source_ref));
-  const readingDocument = resolved ? { ...resolved.document, sections: resolved.document.sections.map(section => ({ ...section, blocks: section.blocks.filter(block => !excluded.has(block.execution?.stepId ?? (block.execution?.role === 'step' ? block.id : undefined))) })) } : allSystemProtocolDocument(document);
+  const { t } = useI18n();
+  // The standard section names are the app's words and follow the interface language; a title the author changed stays as written.
+  const sectionTitle = (section: ProtocolDocument["sections"][number]) => section.title === protocolSectionLabels[section.key] ? t(section.title) : section.title;
+  const systems = document.systems;
+  const [lens, setLens] = useRememberedLens([identifier, version].filter(Boolean).join("@") || undefined, systems);
+  const lensActive = Object.keys(lens).length > 0;
+  const resolution = useMemo(() => systems && lensActive ? resolveProtocolSystem(systems, lens) : undefined, [systems, lens, lensActive]);
+  const state = targetApplicability(systems, resolution?.rules ?? {});
+  const chipContext = useMemo(() => ({ systems, resolution: resolution?.parameters, lens, preview: true }), [systems, resolution, lens]);
   const { contentWarnings } = separateLegacyImportWarnings(document.importWarnings);
+  const readable = (block: ProtocolContentBlock) => block.type === "table" && lensActive ? tableForSelection(block, state, lens) : block;
+  const blockView = (block: ProtocolContentBlock) => {
+    const rules = scopedRules(systems, "block", block.id);
+    const view = <div key={block.id} className="document-block">{rules.length && systems ? <p className="ln-protocol-block-scope"><ConditionTags rules={rules} systems={systems} /></p> : null}<ProtocolContentBlockView block={readable(block)} /></div>;
+    return rules.length && systems && state("block", block.id) === "not-applicable" ? <Folded key={block.id} systems={systems} rules={rules}>{view}</Folded> : view;
+  };
+  /** A step's own blocks: the block that starts it, then its details in order. */
+  const ownedFrom = (blocks: ProtocolContentBlock[], start: number) => {
+    const stepId = blocks[start].execution?.stepId ?? blocks[start].id, owned = [blocks[start]];
+    for (let index = start + 1; blocks[index]?.execution?.role === "detail" && blocks[index].execution?.stepId === stepId; index += 1) owned.push(blocks[index]);
+    return { stepId, owned };
+  };
+  const sectionContent = (section: ProtocolDocument["sections"][number]) => {
+    const nodes: React.ReactNode[] = [];
+    // One number sequence per section, continuing after notes between steps.
+    let number = 0;
+    for (let index = 0; index < section.blocks.length;) {
+      const block = section.blocks[index];
+      if (block.execution?.role === "step" && block.execution.format !== "block") {
+        // An older, organized step: its scope shows above it and it folds with its details under a lens.
+        const { stepId, owned } = ownedFrom(section.blocks, index);
+        index += owned.length;
+        const rules = scopedRules(systems, "step", stepId);
+        const body = <div key={stepId} className="ln-protocol-legacy-step">{rules.length && systems ? <p className="ln-protocol-block-scope"><ConditionTags rules={rules} systems={systems} /></p> : null}{owned.map(blockView)}</div>;
+        nodes.push(rules.length && systems && state("step", stepId) === "not-applicable" ? <Folded key={stepId} systems={systems} rules={rules}>{body}</Folded> : body);
+        continue;
+      }
+      if (block.execution?.role !== "step") { nodes.push(blockView(block)); index += 1; continue; }
+      const steps: React.ReactNode[] = [], first = number + 1;
+      while (section.blocks[index]?.execution?.role === "step" && section.blocks[index].execution?.format === "block") {
+        const { stepId, owned } = ownedFrom(section.blocks, index);
+        index += owned.length;
+        number += 1;
+        const rules = scopedRules(systems, "step", stepId);
+        const optional = systems?.rules.some(rule => rule.target === "step" && rule.targetId === stepId && rule.optional);
+        const body = <div className="ln-protocol-step-body">{owned.map((child, order) => order ? blockView(child) : <div key={child.id} className="document-block"><ProtocolContentBlockView block={readable(child)} /></div>)}</div>;
+        const folded = systems && rules.length && (state("step", stepId) === "not-applicable" || state("block", owned[0].id) === "not-applicable");
+        steps.push(<li key={stepId} className="ln-protocol-step" data-step-id={stepId}>
+          <span className="ln-protocol-step-gutter" aria-hidden><span className="ln-protocol-step-number" /></span>
+          {folded ? <div className="ln-protocol-step-body"><Folded systems={systems!} rules={rules}>{body}</Folded></div> : body}
+          {!folded && (rules.length || optional) ? <span className="ln-protocol-step-tags">{systems && rules.length ? <ConditionTags rules={rules} systems={systems} /> : null}{optional ? <span className="ln-condition-tag is-optional">{t("Optional")}</span> : null}</span> : null}
+        </li>);
+      }
+      nodes.push(<ol key={`steps-${index}`} className="ln-protocol-document-steps" start={first} style={{ counterReset: `ln-step ${first - 1}` }}>{steps}</ol>);
+    }
+    return nodes;
+  };
+  // What one reaction uses, read from the chips; any old formula table stays below as notes.
+  const usage = protocolUsage(document, projectProtocolExecution(document).steps);
+  const legacyFormulas = hasLegacyFormulas(document);
+  const sections = document.sections.filter((section) => section.key !== "consumption_rules" || usage.length > 0 || legacyFormulas);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
       <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
-      <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
+      <h1 data-i18n-ignore className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
-      {document.systems ? <><ProtocolSystemLegend systems={document.systems}/><div className="protocol-system-section" data-protocol-system-preview>
-        <label>预览范围<select className={formInputClass} value={previewMode} onChange={event => setPreviewMode(event.target.value)}><option value="all">全部体系</option><option value="selected">按体系预览</option></select></label>
-        {previewMode === 'selected' ? <div className="protocol-system-fields">{document.systems.dimensions.map(dimension => <label key={dimension.id}>{dimension.label}<select className={formInputClass} value={previewSelections[dimension.id] ?? ''} onChange={event => { const next = { ...previewSelections }; if (event.target.value) next[dimension.id] = event.target.value; else delete next[dimension.id]; setPreviewSelections(next); }}><option value="">待选择</option>{dimension.options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>)}</div> : null}
-        <p className="protocol-condition-caption">{previewMode === 'all' ? '全部体系预览' : '选定体系预览'} · 仅影响阅读，不改变任何实验。执行时需单独确认实际采用值。</p>
-        {resolved?.issues.length ? <p role="status" className="text-warning">{resolved.issues.map(issue => issue.message).join('；')}</p> : null}
-      </div></> : null}
+      {systems?.dimensions.length ? <PreviewLens systems={systems} lens={lens} onChange={setLens} /> : null}
+      {resolution?.issues.filter(issue => !issue.code.startsWith("parameter-")).length ? <p role="status" className="text-sm text-warning">{resolution.issues.filter(issue => !issue.code.startsWith("parameter-")).map(issue => issue.message).join("；")}</p> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
-      {readingDocument.sections.map((section) => <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{section.blocks.length ? section.blocks.map((block) => <div key={block.id} className="document-block">{document.systems?.rules.filter(rule => (rule.target === 'block' && rule.targetId === block.id) || (rule.target === 'step' && block.execution?.role === 'step' && rule.targetId === (block.execution.stepId ?? block.id))).map(rule => <ProtocolConditionCaption key={rule.id} systems={document.systems!} when={rule.when}/>)}<ProtocolContentBlockView block={block} /></div>) : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>)}
+      <ChipRenderContext.Provider value={chipContext}>
+        {sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; const formulas = section.key === "consumption_rules" && legacyFormulas; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{sectionTitle(section)}</h2></header><div data-i18n-ignore>{usageHere ? <PerReactionUsage rows={usage} /> : null}{formulas ? <p className="mb-2 text-xs text-muted">{t("Old formula table, for reference only: runs no longer calculate from it; amounts come from the parameters and mix cards in the steps.")}</p> : null}{section.blocks.length && (section.key !== "consumption_rules" || formulas) ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">{t("Not recorded.")}</p>}</div></section>; })}
+      </ChipRenderContext.Provider>
+      <ProtocolSourcesView sources={document.sources ?? []} />
     </div>
   </DocumentCanvas>;
-  return <DocumentOutlineWorkbench items={document.sections.map((section) => ({ id: `section-${section.key}`, label: section.title }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;
+  return <DocumentOutlineWorkbench items={sections.map((section) => ({ id: `section-${section.key}`, label: sectionTitle(section) }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;
+}
+
+/** 每反应用量: the Protocol's material amounts and mix components, as the chips read under the current lens. */
+function PerReactionUsage({ rows }: { rows: ReturnType<typeof protocolUsage> }) {
+  const { t } = useI18n();
+  return <figure className="ln-mix-card">
+    <figcaption><strong>{t("Usage per reaction")}</strong><span>{t("Summed from the parameters; multiplied by the run quantity at run time and usable to deduct stock on completion")}</span></figcaption>
+    <table><thead><tr><th scope="col">{t("Material")}</th><th scope="col">{t("Amount used")}</th><th scope="col">{t("Basis")}</th><th scope="col">{t("Step")}</th></tr></thead>
+      <tbody>{rows.map(row => <tr key={row.key}><th scope="row">{row.name}</th><td><ChipText text={row.amount} /></td><td>{t(row.basis)}</td><td>{row.step}</td></tr>)}</tbody></table>
+  </figure>;
+}
+
+/** Interface words inside the author's content, which the page translator leaves alone, are translated here. */
+function ScrollHint() {
+  const { t } = useI18n();
+  return <p className="text-xs text-muted">{t("Scroll sideways for all columns")}</p>;
 }

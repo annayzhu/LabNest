@@ -55,7 +55,7 @@ try{
  });
  await check('E06/E07 real HTTP rejects unknown model, HTML and empty responses; retains custom prefix and returned model',async()=>{
   for(const model of ['invalid-model','html','empty']){const response=await api('/api/ai/providers/test',{...draft,defaultModel:model});assert.equal(response.status,502);assert.equal((await response.json()).ok,false);}
-  const response=await api('/api/ai/providers/test',{...draft,defaultModel:'alias'});const result=await response.json();assert.equal(result.requestedModel,'alias');assert.equal(result.returnedModel,'actual-version');assert.match(result.message,/不同/);
+  const response=await api('/api/ai/providers/test',{...draft,defaultModel:'alias'});const result=await response.json();assert.equal(result.requestedModel,'alias');assert.equal(result.returnedModel,'actual-version');assert.match(result.message,/不同|differs/);
   assert(!requests.some(r=>r.path.endsWith('/models')));
  });
  await check('E05/E09 server boundary validates URL and origin before sending keys',async()=>{
@@ -68,13 +68,13 @@ try{
    const context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage();const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error(JSON.stringify({pageError:error.message,stack:error.stack,stage:currentCheck,url:page.url()}));});page.on('requestfailed',request=>console.error(JSON.stringify({failed:request.url(),reason:request.failure(),stage:currentCheck})));
    await page.goto(base+'/ai',{waitUntil:'networkidle'});const form=page.locator('form:has(input[name="apiKey"])');
    await check(`${engine} E01/E02 DeepSeek preset and draft field validation`,async()=>{
-    await form.getByRole('button',{name:'使用 DeepSeek',exact:true}).click();assert.equal(await form.locator('[name="type"]').inputValue(),'openai_compatible');assert.equal(await form.locator('[name="baseUrl"]').inputValue(),'https://api.deepseek.com');assert.equal(await form.locator('[name="defaultModel"]').inputValue(),'deepseek-flash');
-    await form.getByRole('button',{name:'测试连接',exact:true}).click();assert.equal(await form.locator('[name="apiKey"]').evaluate(e=>document.activeElement===e),true);
+    await form.getByRole('button',{name:/^(使用 DeepSeek|Use DeepSeek)$/,exact:true}).click();assert.equal(await form.locator('[name="type"]').inputValue(),'openai_compatible');assert.equal(await form.locator('[name="baseUrl"]').inputValue(),'https://api.deepseek.com');assert.equal(await form.locator('[name="defaultModel"]').inputValue(),'deepseek-flash');
+    await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();assert.equal(await form.locator('[name="apiKey"]').evaluate(e=>document.activeElement===e),true);
    });
    const name=`Draft ${engine} ${randomUUID().slice(0,8)}`;
    await form.locator('[name="name"]').fill(name);await form.locator('[name="baseUrl"]').fill(address);await form.locator('[name="defaultModel"]').fill('fixture-model');await form.locator('[name="apiKey"]').fill(token);
    await check(`${engine} E03/E04 draft test is clickable before save and leaves configuration untouched`,async()=>{
-    const before=await snapshot();await form.getByRole('button',{name:'测试连接',exact:true}).click();await form.getByRole('status').filter({hasText:'配置尚未保存'}).waitFor();assert.equal(await snapshot(),before);await page.screenshot({path:`${dir}/${engine}-draft-success.png`,fullPage:true});
+    const before=await snapshot();await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await form.getByRole('status').filter({hasText:/配置尚未保存|settings not saved yet/}).waitFor();assert.equal(await snapshot(),before);await page.screenshot({path:`${dir}/${engine}-draft-success.png`,fullPage:true});
    });
    await check(`${engine} E05 changing a draft target or protocol clears its typed key`,async()=>{
     await form.locator('[name="baseUrl"]').fill(address+'/other');assert.equal(await form.locator('[name="apiKey"]').inputValue(),'');
@@ -83,26 +83,26 @@ try{
     await form.locator('[name="type"]').selectOption('openai_compatible');await form.locator('[name="apiKey"]').fill(token);
    });
    await check(`${engine} E08 editing in flight cancels only this test and invalidates late success`,async()=>{
-    hold=true;const wait=reached();await form.getByRole('button',{name:'测试连接',exact:true}).click();await wait;assert.equal(await form.getByRole('button',{name:'正在测试…'}).isDisabled(),true);
+    hold=true;const wait=reached();await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await wait;assert.equal(await form.getByRole('button',{name:/^(正在测试…|Testing…)$/}).isDisabled(),true);
     await form.locator('[name="defaultModel"]').fill('invalid-model');release();await eventually(async()=>assert.equal(await form.getByRole('status').count(),0));
-    await form.getByRole('button',{name:'测试连接',exact:true}).click();await form.getByRole('alert').filter({hasText:'模型不存在'}).waitFor();assert.equal(await form.getByRole('status').count(),0);
+    await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await form.getByRole('alert').filter({hasText:/模型不存在|model.*not found|Model.*not found/}).waitFor();assert.equal(await form.getByRole('status').count(),0);
    });
    await form.locator('[name="defaultModel"]').fill('fixture-model');
    currentCheck=`${engine} saving provider`;
-   await Promise.all([page.waitForURL(/saved=provider/),form.getByRole('button',{name:'添加服务',exact:true}).click()]);
+   await Promise.all([page.waitForURL(/saved=provider/),form.getByRole('button',{name:/^(添加服务|Add service)$/,exact:true}).click()]);
    // Wait for the completed save page before opening its edit link. A forced
    // second navigation during hydration unloads WebKit's pending effect reads.
    await page.waitForLoadState('networkidle');
    const record=(await db.query('SELECT id,"updatedAt","apiKeyEncrypted" FROM "AIProvider" WHERE name=$1',[name])).rows[0];assert(record.apiKeyEncrypted.startsWith('v1:'));assert(!record.apiKeyEncrypted.includes(token));
    currentCheck=`${engine} opening saved provider`;
-   await page.locator(`[data-provider-row="${record.id}"]`).getByRole('link',{name:'编辑',exact:true}).click();
+   await page.locator(`[data-provider-row="${record.id}"]`).getByRole('link',{name:/^(编辑|Edit)$/,exact:true}).click();
    await page.waitForURL(`**/ai?provider=${record.id}#providers`);await page.waitForLoadState('networkidle');record.revision=await form.locator('[name="revision"]').inputValue();
    await check(`${engine} E05 edit reuses saved key only for the same protocol and target`,async()=>{
-    assert.equal(await form.locator('[name="apiKey"]').inputValue(),'');await form.getByRole('button',{name:'测试连接',exact:true}).click();await form.getByRole('status').filter({hasText:'配置尚未保存'}).waitFor();
+    assert.equal(await form.locator('[name="apiKey"]').inputValue(),'');await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await form.getByRole('status').filter({hasText:/配置尚未保存|settings not saved yet/}).waitFor();
     const stored={...draft,id:record.id,revision:record.revision,apiKey:''};const n=requests.length;
     for(const change of [{baseUrl:address+'/other'},{type:'anthropic'}]){const response=await api('/api/ai/providers/test',{...stored,...change});assert.equal(response.status,400);assert.equal((await response.json()).field,'apiKey');}assert.equal(requests.length,n);
-    await form.locator('[name="baseUrl"]').fill(address+'/other');await form.getByRole('button',{name:'测试连接',exact:true}).click();assert.equal(await form.locator('[name="apiKey"]').evaluate(e=>document.activeElement===e),true);
-    await form.locator('[name="apiKey"]').fill(token);await form.getByRole('button',{name:'测试连接',exact:true}).click();await form.getByRole('status').filter({hasText:'配置尚未保存'}).waitFor();assert.equal(requests.at(-1).path,'/custom/v1/other/chat/completions');
+    await form.locator('[name="baseUrl"]').fill(address+'/other');await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();assert.equal(await form.locator('[name="apiKey"]').evaluate(e=>document.activeElement===e),true);
+    await form.locator('[name="apiKey"]').fill(token);await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await form.getByRole('status').filter({hasText:/配置尚未保存|settings not saved yet/}).waitFor();assert.equal(requests.at(-1).path,'/custom/v1/other/chat/completions');
     await form.locator('[name="baseUrl"]').fill(address);await form.locator('[name="apiKey"]').fill('');assert(!(await page.content()).includes(token));
    });
    for(const width of [1440,1024,390])for(const theme of ['light','dark'])await check(`${engine} ${theme} ${width}px actual API form`,async()=>{
@@ -111,14 +111,14 @@ try{
     await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:`${dir}/${engine}-${theme}-${width}.png`,fullPage:true});
    });
    await check(`${engine} E08 master-off while testing blocks the late response`,async()=>{
-    hold=true;const wait=reached();await form.getByRole('button',{name:'测试连接',exact:true}).click();await wait;await page.getByRole('switch',{name:'启用 AI',exact:true}).click();await eventually(async()=>assert.equal((await settings()).enabled,false));release();await eventually(async()=>assert.equal(await form.getByRole('button',{name:'测试连接',exact:true}).isDisabled(),true));assert.equal(await form.getByRole('status').count(),0);await enabled(true);await page.reload({waitUntil:'networkidle'});
+    hold=true;const wait=reached();await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).click();await wait;await page.getByRole('switch',{name:/^(启用 AI|Enable AI)$/,exact:true}).click();await eventually(async()=>assert.equal((await settings()).enabled,false));release();await eventually(async()=>assert.equal(await form.getByRole('button',{name:/^(测试连接|Test connection)$/,exact:true}).isDisabled(),true));assert.equal(await form.getByRole('status').count(),0);await enabled(true);await page.reload({waitUntil:'networkidle'});
    });
    await check(`${engine} E08 a saved-provider change rejects an in-flight draft without changing another request`,async()=>{
     hold=true;const wait=reached();const pending=api('/api/ai/providers/test',{...draft,id:record.id,revision:record.revision,apiKey:''});await wait;
     await db.query('UPDATE "AIProvider" SET "defaultModel"=\'new-model\',"updatedAt"=now() WHERE id=$1',[record.id]);release();assert.equal((await pending).status,403);
     const stale=await api('/api/ai/providers/test',{...draft,id:record.id,revision:record.revision});assert.equal(stale.status,409);
     const unaffected=await api('/api/ai/providers/test',draft);assert.equal(unaffected.status,200);
-    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await form.getByRole('alert').filter({hasText:'配置已在其他页面改变'}).waitFor();assert.equal(await form.getByRole('button',{name:'保存服务'}).isDisabled(),true);
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await form.getByRole('alert').filter({hasText:/配置已在其他页面改变|setup changed on another page/}).waitFor();assert.equal(await form.getByRole('button',{name:/^(保存服务|Save service)$/}).isDisabled(),true);
    });
    await check(`${engine} no unhandled page errors`,async()=>assert.deepEqual(errors,[]));await context.close();
   }finally{release();await browser.close();}

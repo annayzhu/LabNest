@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { ArrowLeft, Download, FileText, Link2, ListChecks, Paperclip, Pencil } from "lucide-react";
+import { ArrowLeft, Download, FileText, Link2, Paperclip, Pencil } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -12,13 +12,13 @@ import { DocumentOutlineWorkbench } from "@/components/DocumentOutlinePanel";
 import { EntryAiProposeButton } from "@/components/EntryAiProposeButton";
 import { EntryAssignmentControl } from "@/components/EntryAssignmentControl";
 import { EntryMediaGrid } from "@/components/EntryMediaGrid";
+import { EntrySuggestions } from "@/components/EntrySuggestions";
 import { EntryContentView } from "@/components/EntryContentView";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
-import { getAIAvailability } from "@/lib/ai-server";
 import { getEntryDetailRecord } from "@/lib/entries";
 import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
@@ -62,10 +62,9 @@ export default async function EntryDetailPage({ params, searchParams }: { params
 
   const inlineIds = new Set(collectDocumentMedia(entry.contentMarkdown).map(documentMediaAttachmentId));
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/") && !inlineIds.has(attachment.id));
-  const [reportSourceReferences, activityLogs, ai] = await Promise.all([
+  const [reportSourceReferences, activityLogs] = await Promise.all([
     prisma.reportSource.count({ where: { sourceType: "entry", sourceId: entry.id } }),
     prisma.activityLog.findMany({ where: { targetType: "entry", targetId: entry.id }, orderBy: { createdAt: "desc" }, take: 12 }),
-    getAIAvailability(),
   ]);
   const primary = entry.itemLinks.find(link => link.direction === "outbound" && link.linkType === "entry_primary");
   const targetRecord = primary ? primary.counterpartType === "result" ? await prisma.result.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : await prisma.experiment.findUnique({where:{id:primary.counterpartId},select:{title:true,status:true}}) : null;
@@ -73,7 +72,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
   const locked = isRecordLocked(entry.recordStatus);
   const deletionBlockers = entryDeleteBlockers(entry.recordStatus, {
     itemLinks: entry.itemLinks.length,
-    proposedActions: entry.pendingActions.length,
+    proposedActions: entry.suggestions.length,
     reportSourceReferences,
   });
 
@@ -85,13 +84,14 @@ export default async function EntryDetailPage({ params, searchParams }: { params
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
-            {!locked ? <EntryAiProposeButton entryId={entry.id} providerName={ai.providerName} /> : null}
+            {!locked ? <EntryAiProposeButton entryId={entry.id} /> : null}
             {locked ? null : <Link href={`/entries/${entry.id}/edit`} className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-moss bg-moss px-4 text-sm font-medium text-warm shadow-paper transition hover:brightness-95"><Pencil className="h-4 w-4" aria-hidden />Edit Entry</Link>}
             <PageActionsMenu><Link href="/entries" className="focus-ring inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-4 text-sm font-medium text-graphite shadow-paper transition hover:bg-sage-surface/60 hover:text-ink"><ArrowLeft className="h-4 w-4" aria-hidden />All Entries</Link><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={entry.id} identifier={entry.title} title="Journal entry" recordLabel="Entry" recordLabelZh="快速记录" blockers={deletionBlockers} archived={Boolean(entry.archivedAt)} deleteAction={deleteEntry} archiveAction={archiveEntry} restoreAction={restoreEntry} /></PageActionsMenu>
           </div>}
         />
 
-        {!locked ? <EntryAssignmentControl initialOpen={autoAssign} id={entry.id} target={primary ? {type:primary.counterpartType,id:primary.counterpartId,title:targetRecord?.title ?? "目标已失效",invalid:!targetRecord || targetRecord.status === "archived" || Boolean(recycledTarget)} : null} /> : null}
+        {!locked ? <EntryAssignmentControl key={primary ? `${primary.counterpartType}:${primary.counterpartId}` : "none"} initialOpen={autoAssign} id={entry.id} target={primary ? {type:primary.counterpartType,id:primary.counterpartId,title:targetRecord?.title ?? "目标已失效",invalid:!targetRecord || targetRecord.status === "archived" || Boolean(recycledTarget)} : null} /> : null}
+        <EntrySuggestions entryId={entry.id} locked={locked} suggestions={entry.suggestions.filter(suggestion => suggestion.status === "pending")} />
         {imageAttachments.length ? (
           <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface shadow-paper">
             <EntryMediaGrid attachments={imageAttachments} detail />
@@ -219,31 +219,6 @@ export default async function EntryDetailPage({ params, searchParams }: { params
               <div className="mt-4 border-t border-hairline pt-4"><RecordStatusControl targetType="entry" id={entry.id} recordStatus={entry.recordStatus} /></div>
             </section>
 
-            <section className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 shadow-paper">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 text-moss">
-                  <ListChecks className="h-4 w-4" aria-hidden />
-                  <h2 className="text-base font-semibold text-ink">Proposed actions</h2>
-                </div>
-
-              </div>
-              {entry.pendingActions.length ? (
-                <div className="mt-4 space-y-3">
-                  {entry.pendingActions.map((action) => (
-                    <div key={action.id} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone={action.status === "pending" ? "warning" : "neutral"}>{action.status}</Badge>
-                        <span className="text-xs font-semibold text-ink">{action.actionType.replaceAll("_", " ")}</span>
-                      </div>
-                      {action.reason ? <p className="mt-2 text-xs leading-5 text-graphite">{action.reason}</p> : null}
-                    </div>
-                  ))}
-                  <Link href="/actions/review?status=pending" className="focus-ring inline-flex rounded-[var(--ln-radius-control-sm)] text-sm font-semibold text-moss hover:underline">Review actions</Link>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-muted">No proposed actions originate from this entry.</p>
-              )}
-            </section>
 
             <ActivityHistory logs={activityLogs} />
           </aside>

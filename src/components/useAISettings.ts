@@ -11,13 +11,21 @@ export function notifyAISettingsChanged() {
 }
 export async function fetchAISettings(signal?: AbortSignal): Promise<AISettingsView> {
   const response = await fetch("/api/ai/settings", { cache: "no-store", signal });
-  if (!response.ok) throw new Error("无法读取 AI 设置，请重试；已保存的设置未改变。");
+  if (!response.ok) throw new Error("Cannot read AI settings; try again. Saved settings are unchanged.");
   return response.json();
 }
 
-/** DB-backed state only. Browser storage carries a notification, never a second configuration. */
-export function useAISettings() {
-  const [saved, setSaved] = useState<AISettingsView>();
+/**
+ * DB-backed state only. Browser storage carries a notification, never a second configuration. `initial` is the server's
+ * read for this page: it saves the first request, and a newer server read (after a refresh) replaces an older state.
+ */
+export function useAISettings(initial?: AISettingsView) {
+  const [saved, setSaved] = useState(initial);
+  const [seed, setSeed] = useState(initial);
+  if (initial !== seed) {
+    setSeed(initial);
+    if (initial && (!saved || initial.revision >= saved.revision)) setSaved(initial);
+  }
   const [error, setError] = useState<string>();
   const sequence = useRef(0);
   const reading = useRef<AbortController | null>(null);
@@ -30,10 +38,11 @@ export function useAISettings() {
     reading.current?.abort();
     const controller = new AbortController(); reading.current = controller;
     try { const next = await fetchAISettings(controller.signal); if (request === sequence.current) { setSaved(next); setError(undefined); } }
-    catch (caught) { if (request === sequence.current) setError(caught instanceof Error ? caught.message : "无法读取 AI 设置。"); }
+    catch (caught) { if (request === sequence.current) setError(caught instanceof Error ? caught.message : "Cannot read AI settings."); }
   }, []);
+  const seeded = useRef(Boolean(initial));
   useEffect(() => {
-    const initialRead = setTimeout(() => { void refresh(); }, 0);
+    const initialRead = seeded.current ? undefined : setTimeout(() => { void refresh(); }, 0);
     const requestSequence = sequence;
     const requestController = reading;
     const visible = () => { if (document.visibilityState === "visible") void refresh(); };
@@ -52,17 +61,17 @@ export function useAISettings() {
       window.removeEventListener(changeEvent, refresh);
     };
   }, [refresh]);
-  return { saved, error, refresh, accept, enabled: !error && Boolean(saved?.enabled), connected: !error && Boolean(saved?.availability.connected) };
+  return { saved, error, refresh, accept };
 }
 
 /** Stale tabs and late replies cannot apply results after the persisted opt-in changes. */
 export async function requestAI(input: string, init: RequestInit, needsConnection = true) {
   const before = await fetchAISettings(init.signal ?? undefined);
-  if (!before.enabled) throw new Error("已关闭 AI，现有记录保持不变。");
-  if (needsConnection && !before.availability.connected) throw new Error("已开启 · 待配置，请先在 AI 页面完成连接设置。");
+  if (!before.enabled) throw new Error("AI is off; existing records stay as they are.");
+  if (needsConnection && !before.availability.connected) throw new Error("On · setup incomplete; finish the connection settings on the AI page first.");
   const response = await fetch(input, init);
   await response.clone().arrayBuffer();
   const after = await fetchAISettings(init.signal ?? undefined);
-  if (!after.enabled || after.revision !== before.revision) throw new Error("AI 设置已改变，本次返回结果未应用。请确认设置后重试。");
+  if (!after.enabled || after.revision !== before.revision) throw new Error("AI settings changed; this result was not applied. Check the settings and try again.");
   return response;
 }

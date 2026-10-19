@@ -1,5 +1,6 @@
 import type { ProtocolContentBlock, ProtocolDocument } from "./protocol-document";
 import type { ProtocolStep } from "./types";
+import type { NotePlacement } from "./protocol-execution";
 /** Frozen pre-20261007 projection, used only to recover existing historical snapshots. */
 export function projectLegacyProtocolExecution(document: ProtocolDocument) {
   const stepSection=document.sections.find(section=>section.key==="steps");
@@ -72,6 +73,9 @@ export function projectLegacyProtocolExecution(document: ProtocolDocument) {
     }
   }
   flushStep();
+  // Old documents only had preparation notes before the first step.
+  const first = steps[0];
+  const notePlacement: NotePlacement = Object.fromEntries(commonBlocks.map(block => [block.id, first ? first.source_ref ?? String(first.order) : null]));
 
-  return {steps, commonBlocks};
+  return {steps, commonBlocks, notePlacement};
 }

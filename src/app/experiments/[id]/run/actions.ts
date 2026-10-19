@@ -21,17 +21,17 @@ export async function saveStructuredStepRecord(_previous: ProtocolRunProgressSta
     const experimentId = String(form.get('experimentId'));
     await recordStructuredStep({ experimentId, stepId: String(form.get('stepId')), expectedRevision: Number(form.get('executionPlanRevision')), clientMutationId: String(form.get('clientMutationId')), intent: z.enum(['actual', 'skip', 'unskip']).parse(form.get('intent')), reason: String(form.get('reason') ?? ''), values: JSON.parse(String(form.get('values') ?? '{}')) });
     revalidatePath(`/experiments/${experimentId}/run`);
-    return { message: '记录已保存', savedAt: new Date().toISOString() };
-  } catch (error) { return { error: formActionErrorMessage(error, '记录保存失败') }; }
+    return { message: 'Record saved', savedAt: new Date().toISOString() };
+  } catch (error) { return { error: formActionErrorMessage(error, 'Record not saved') }; }
 }
 
 export async function confirmRunSystems(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
   try {
     const versionId = String(form.get('versionId'));
-    const result = await updateRunSystemSelections({ experimentId: String(form.get('experimentId')), versionId, expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').map(String), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) }, [versionId, ...form.getAll('applyToVersionIds').map(String)]);
+    const result = await updateRunSystemSelections({ experimentId: String(form.get('experimentId')), versionId, expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').flatMap(value => String(value).split(/\s+/)).filter(Boolean), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) }, [versionId, ...form.getAll('applyToVersionIds').map(String)]);
     revalidatePath(`/experiments/${result.experimentId}/run`);
-    return { message: '本次体系已确认并保存', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
-  } catch (error) { return { error: formActionErrorMessage(error, '体系未保存，请重试') }; }
+    return { message: 'Systems for this run confirmed and saved', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
+  } catch (error) { return { error: formActionErrorMessage(error, 'Systems not saved; try again') }; }
 }
 
 export async function saveRunGroups(_previous: ProtocolRunProgressState, form: FormData): Promise<ProtocolRunProgressState> {
@@ -39,8 +39,8 @@ export async function saveRunGroups(_previous: ProtocolRunProgressState, form: F
     const experimentId = String(form.get('experimentId'));
     await configureRunGroups({ experimentId, expectedRevision: Number(form.get('executionPlanRevision')), groups: JSON.parse(String(form.get('groups'))) });
     revalidatePath(`/experiments/${experimentId}/run`);
-    return { message: '实验组已保存，请逐组确认实际采用体系。' };
-  } catch (error) { return { error: formActionErrorMessage(error, '实验组未保存') }; }
+    return { message: 'Groups saved; confirm the systems actually used for each group.' };
+  } catch (error) { return { error: formActionErrorMessage(error, 'Groups not saved') }; }
 }
 
 const progressSchema = z.object({
@@ -66,6 +66,7 @@ const stepTimerSchema = z.object({
   stepId: z.string().min(1),
   timerIntent: z.enum(["start", "pause", "reset", "finish"]),
   durationMinutes: z.coerce.number().finite().min(0.1).max(24 * 60).optional(),
+  parameterId: z.string().min(1).max(120).optional(),
 });
 
 function optionalText(value: FormDataEntryValue | null) {
@@ -97,7 +98,7 @@ export async function saveProtocolRunProgress(
     if (parsed.clientMutationId && parsed.completedCurrentStepId) {
       const replay = await tx.experimentStepEvent.findUnique({ where: { clientMutationId: parsed.clientMutationId } });
       if (replay) {
-        if (replay.experimentId !== parsed.experimentId || replay.experimentStepId !== parsed.completedCurrentStepId) throw new Error('重复请求不属于此步骤');
+        if (replay.experimentId !== parsed.experimentId || replay.experimentStepId !== parsed.completedCurrentStepId) throw new Error('The repeated request does not belong to this step');
         return;
       }
     }
@@ -110,12 +111,12 @@ export async function saveProtocolRunProgress(
     assertRecordEditable(experiment.recordStatus);
     const structured = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
     const expectedRevision = formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined;
-    if (structured.hasSystems && expectedRevision !== structured.plan.revision) throw new Error('执行方案已变更，请刷新 / Execution plan changed');
+    if (structured.hasSystems && expectedRevision !== structured.plan.revision) throw new Error('Execution plan changed; reload');
     for (const step of experiment.steps) if (completedStepIds.has(step.id) && !step.completed) {
       assertStructuredStepExecutable(structured, step.id, expectedRevision, true);
-      if (structured.steps[step.id] && step.timerStartedAt) throw new Error('请先结束计时，再确认步骤完成');
+      if (structured.steps[step.id] && step.timerStartedAt) throw new Error('End the timer before confirming the step complete');
     }
-    if (structured.hasSystems && experiment.status === 'completed') throw new Error('已结束的执行记录不可改写 / Finished execution is fixed');
+    if (structured.hasSystems && experiment.status === 'completed') throw new Error('A finished run record cannot be changed');
 
     if (parsed.completedCurrentStepId) {
       // A single-step command is not a replacement of the client's full snapshot.
@@ -256,6 +257,7 @@ export async function updateStepTimer(
       stepId: formData.get("stepId"),
       timerIntent: formData.get("timerIntent"),
       durationMinutes: optionalText(formData.get("durationMinutes")),
+      parameterId: optionalText(formData.get("parameterId")),
     });
     await updateRunTimer({ ...parsed, expectedRevision: formData.has('executionPlanRevision') ? Number(formData.get('executionPlanRevision')) : undefined });
   } catch (error) {
@@ -289,7 +291,7 @@ export async function recordProtocolRunConsumption(formData: FormData) {
     if (!item || item.status !== "active") throw new Error("Inventory Item not found or inactive.");
     if (parsed.experimentStepId && !step) throw new Error("The selected Step does not belong to this Experiment.");
 
-    if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("该物料不支持精确扣减；请使用实物流转或先盘点。 / Item requires physical management or an opening count.");
+    if (!item.quantityRecorded || item.managementMode !== "precise") throw new Error("This item does not support precise deduction; use a physical movement or count it first.");
     const nextQuantity = Number((item.currentQuantity - parsed.quantity).toFixed(6));
     if (nextQuantity < 0) throw new Error(`Available stock is ${item.currentQuantity} ${item.unit}.`);
 
@@ -349,7 +351,7 @@ export async function saveRunParameters(_previous:ProtocolRunProgressState,form:
    const raw=Object.fromEntries([...form.entries()].filter(([key])=>key.startsWith('parameter:')).map(([key,value])=>[key.slice(10),value]));
    const structured=structuredRunView(experiment.protocolSnapshotJson,experiment.protocolRun?.executionPlanJson,experiment.steps);
    const reserved=new Set(structured.versions.flatMap(v=>v.document.systems?.parameters.map(p=>p.id)??[]));
-   if(Object.keys(raw).some(key=>reserved.has(key)))throw new Error('体系参数请在实验准备中确认，不能通过旧参数表覆盖。');
+   if(Object.keys(raw).some(key=>reserved.has(key)))throw new Error('Confirm system parameters in run preparation; the old parameter table cannot override them.');
    const edited=validateRunParameters(experiment.protocolSnapshotJson,raw);
    const values={...(previous as Record<string,string|number|boolean>),...edited};
    for(const key of runParameterKeys(experiment.protocolSnapshotJson))if(!edited[key])delete values[key];
@@ -358,15 +360,61 @@ export async function saveRunParameters(_previous:ProtocolRunProgressState,form:
    const content=appendExperimentObservation(experiment.contentJson,{text:`Run parameters changed: ${JSON.stringify(previous)} → ${JSON.stringify(values)}`,id:randomUUID(),recordedAt:new Date()});
    await tx.experiment.update({where:{id},data:{contentJson:content as Prisma.InputJsonValue}});
   },{isolationLevel:'Serializable'});
-  revalidatePath(`/experiments/${id}/run`);return {message:'参数已保存 / Parameters saved'};
+  revalidatePath(`/experiments/${id}/run`);return {message:'Parameters saved'};
  }catch(error){return {error:formActionErrorMessage(error,'Could not save parameters.')};}
 }
 
-export async function connectWatchRun(_previous: { code?: string; error?: string }, form: FormData): Promise<{ code?: string; error?: string }> {
-  try { const { createWatchPairing } = await import('@/lib/watch-execution.server'); return { code: await createWatchPairing(String(form.get('experimentId'))) }; }
-  catch (error) { return { error: formActionErrorMessage(error, '配对码创建失败') }; }
+export async function connectWatchRun(experimentId: string): Promise<{ code?: string; expiresAt?: string; error?: string }> {
+  try { const { createWatchPairing } = await import('@/lib/watch-execution.server'); return await createWatchPairing(experimentId); }
+  catch (error) { return { error: formActionErrorMessage(error, 'Could not create a pairing code') }; }
 }
-export async function disconnectWatchRun(_previous: { message?: string; error?: string }, form: FormData): Promise<{ message?: string; error?: string }> {
-  try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(String(form.get('experimentId'))); return { message: '此实验的已连接手表已断开。' }; }
-  catch (error) { return { error: formActionErrorMessage(error, '断开失败') }; }
+export async function watchRunConnection(experimentId: string): Promise<{ connected: boolean; since?: string }> {
+  const { watchConnection } = await import('@/lib/watch-execution.server');
+  return watchConnection(experimentId);
 }
+export async function disconnectWatchRun(experimentId: string): Promise<{ error?: string }> {
+  try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(experimentId); return {}; }
+  catch (error) { return { error: formActionErrorMessage(error, 'Disconnect failed') }; }
+}
+
+/** The record and edit pages check one step or record its deviation at a time; the Run page stays the bench view. */
+export async function recordExecutionStep(request: { experimentId: string; stepId: string; clientMutationId: string; expectedRevision?: number; completed?: boolean; deviation?: { type: string; note: string; impact?: string; author?: string } | null }): Promise<{ error?: string }> {
+  try {
+    const { updateExecutionStep } = await import('@/lib/execution-step.server');
+    await updateExecutionStep(request as Parameters<typeof updateExecutionStep>[0]);
+  } catch (error) { return { error: formActionErrorMessage(error, 'Not saved; try again') }; }
+  revalidatePath(`/experiments/${request.experimentId}`);
+  revalidatePath(`/experiments/${request.experimentId}/edit`);
+  revalidatePath(`/experiments/${request.experimentId}/run`);
+  return {};
+}
+
+/** A value filled at execution, or a calculation confirmed, from inside a step. Same checks as the preparation form; the adopted system stays as confirmed. */
+export async function updateStepInputs(request: { experimentId: string; versionId: string; expectedRevision: number; actualInputs?: Record<string, { value: number; unit: string }>; confirmCalculations?: string[] }): Promise<{ error?: string }> {
+  try {
+    const experiment = await prisma.experiment.findUniqueOrThrow({ where: { id: request.experimentId }, include: { protocolRun: true, steps: true } });
+    const view = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+    const version = view.versions.find(item => item.id === request.versionId);
+    if (!version?.document.systems) throw new Error('This protocol is not part of this run');
+    const adopted = view.plan.versions[request.versionId];
+    if (!adopted && version.document.systems.dimensions.length) throw new Error('Confirm this run’s systems in run preparation first');
+    await updateRunSystemSelections({ experimentId: request.experimentId, versionId: request.versionId, expectedRevision: request.expectedRevision, selections: adopted?.selections ?? {}, actualInputs: { ...adopted?.actualInputs, ...request.actualInputs }, confirmCalculations: request.confirmCalculations ?? [] }, [request.versionId]);
+  } catch (error) { return { error: formActionErrorMessage(error, 'Not saved; try again') }; }
+  revalidatePath(`/experiments/${request.experimentId}/run`);
+  revalidatePath(`/experiments/${request.experimentId}`);
+  return {};
+}
+
+type MixResult = { error?: string; mixId?: string };
+async function mixAction(experimentId: string, work: () => Promise<unknown>): Promise<MixResult> {
+  try { const value = await work(); revalidatePath(`/experiments/${experimentId}/run`); revalidatePath(`/experiments/${experimentId}`); return typeof value === 'string' ? { mixId: value } : {}; }
+  catch (error) { return { error: formActionErrorMessage(error, 'Not saved; try again') }; }
+}
+/** 配液卡: confirm, cross off lines, set 本次数量, make one at the bench, offer it to the Protocol. */
+export async function confirmRunMix(request: Parameters<typeof import('@/lib/run-mix.server').confirmRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).confirmRunMix(request)); }
+export async function strikeRunMixLine(request: Parameters<typeof import('@/lib/run-mix.server').strikeRunMixLine>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).strikeRunMixLine(request)); }
+export async function setRunQuantities(request: Parameters<typeof import('@/lib/run-mix.server').setRunQuantities>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).setRunQuantities(request)); }
+export async function createRunMix(request: Parameters<typeof import('@/lib/run-mix.server').createRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).createRunMix(request)); }
+export async function proposeRunMix(request: Parameters<typeof import('@/lib/run-mix.server').proposeRunMix>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-mix.server')).proposeRunMix(request)); }
+/** 实验准备清单: tick one item "已备" or write its note; a bench aid that never changes progress or the revision. */
+export async function setRunPreparationItem(request: Parameters<typeof import('@/lib/run-preparation.server').setPreparationItem>[0]) { return mixAction(request.experimentId, async () => (await import('@/lib/run-preparation.server')).setPreparationItem(request)); }

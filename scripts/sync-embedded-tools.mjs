@@ -10,7 +10,7 @@ const copy=(source,target)=>{mkdirSync(path.dirname(target),{recursive:true});co
 // qPCR layout opens its maintained Site; do not recreate a stale embedded copy.
 copy(path.join(root,'qpcr-analysis-studio/outputs/offline/qPCR-Analysis-Studio_Offline_20260828/index.html'),'public/tools/qpcr-analysis/index.html');
 const analyzer=path.join(root,'C_Taqman_CNV/CopyNumber_Analyzer');
-for(const file of ['cnvtool.html','app.js','diagnostics.js','core.js','styles.css','vendor/xlsx.full.min.js','THIRD_PARTY_NOTICES.md'])copy(path.join(analyzer,file),'public/tools/cnv-analysis/'+(file==='cnvtool.html'?'index.html':file));
+for(const file of ['cnvtool.html','app.js','diagnostics.js','core.js','layout.js','styles.css','vendor/xlsx.full.min.js','THIRD_PARTY_NOTICES.md'])copy(path.join(analyzer,file),'public/tools/cnv-analysis/'+(file==='cnvtool.html'?'index.html':file));
 const planner=path.join(root,'C_Taqman_CNV/CNV_Plate_Planner');
 execFileSync(path.join(planner,'node_modules/.bin/vite'),['build','scripts/embedded-cnv-planner','--config','scripts/embedded-cnv-planner/vite.config.mjs'],{stdio:'inherit',env:{...process.env,CNV_PLANNER_SOURCE:planner,LABNEST_ROOT:process.cwd()}});
 for(const file of ['app/CnvPlanner.tsx','lib/cnvPlanner.ts','lib/reactionCalculator.ts','lib/exportWorkbook.ts','package-lock.json'])records.push({source:path.join(planner,file),sha256:createHash('sha256').update(readFileSync(path.join(planner,file))).digest('hex')});

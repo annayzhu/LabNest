@@ -1,3 +1,4 @@
+import {openBlockMenu} from './test-helpers/editor-controls.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -17,11 +18,10 @@ try {
     if(mode==='pinned-properties') {
       await page.getByRole('tab',{name:'Metadata',exact:true}).click();
       portal=page.locator('.context-properties:visible');
-      await portal.getByRole('button',{name:'固定展开',exact:true}).click();
+      await portal.getByRole('button',{name:'Keep the panel open',exact:true}).click();
       await portal.getByRole('textbox',{name:'State',exact:true}).fill('PRE-SAVE');
     } else if(mode==='format-menu') {
-      await page.getByRole('button',{name:'Paragraph style',exact:true}).click();
-      portal=page.locator('[data-toolbar-menu]:visible');
+      portal=await openBlockMenu(page,editor.locator('p').first());
     }
     let started=false;
     await page.route('**/api/entries/'+id,async route=>{

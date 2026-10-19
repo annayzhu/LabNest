@@ -1,5 +1,6 @@
 import { InventoryContainers } from "@/components/InventoryContainers";
-import { inventoryQuantityLabel } from "@/lib/inventory";
+import { inventoryNoteText, inventoryQuantityLabel } from "@/lib/inventory";
+import { formatQuantity } from "@/lib/calculators/quantity-format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, ShoppingCart } from "lucide-react";
@@ -34,7 +35,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           include: {
             fromLocation: { select: { name: true } },
             toLocation: { select: { name: true } },
-            experiment: { select: { id: true, title: true, project: { select: { name: true } } } },
+            experiment: { select: { id: true, runCode: true, title: true, project: { select: { name: true } } } },
             purchase: { select: { id: true, title: true } },
           },
           orderBy: { createdAt: "desc" },
@@ -81,7 +82,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
         />
 
         <section className="grid gap-4 md:grid-cols-3">
-          <Metric label="Current stock" value={inventoryQuantityLabel(item)} detail={item.lowThreshold == null ? "No safety stock set" : `Safety stock ${item.lowThreshold} ${item.unit}`} />
+          <Metric label="Current stock" value={inventoryQuantityLabel(item)} detail={item.lowThreshold == null ? "No safety stock set" : `Safety stock ${formatQuantity(item.lowThreshold)} ${item.unit}`} />
           <Metric label="Location" value={item.location?.name ?? "Unassigned"} detail={item.positionCode ?? item.location?.temperature ?? "No position recorded"} />
           <Metric label="Risk status" value={<InventoryRiskBadges flags={riskFlags} showHealthy />} detail={item.expiryDate ? `Expires ${item.expiryDate.toLocaleDateString()}` : "No expiry date recorded"} />
         </section>
@@ -146,7 +147,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
               columns={[
                 { key: "date", header: "Date", render: (row) => <span className="whitespace-nowrap font-mono text-xs">{row.createdAt.toLocaleString()}{row.deviceCreatedAt ? <span className="block">盘点/发生日期 {row.deviceCreatedAt.toISOString().slice(0,10)}</span>:null}</span> },
                 { key: "type", header: "Movement", render: (row) => <StatusPill status={row.type} /> },
-                { key: "change", header: "Change", render: (row) => <span className={`font-mono font-semibold ${row.quantityChange < 0 ? "text-error" : "text-success"}`}>{row.quantityChange > 0 ? "+" : ""}{row.quantityChange} {row.unit}</span> },
+                { key: "change", header: "Change", render: (row) => <span className={`font-mono font-semibold ${row.quantityChange < 0 ? "text-error" : "text-success"}`}>{row.quantityChange > 0 ? "+" : ""}{formatQuantity(row.quantityChange)} {row.unit}</span> },
                 { key: "handler", header: "Handled by", render: (row) => row.performedBy ?? "—" },
                 {
                   key: "source",
@@ -156,7 +157,7 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
                   ) : row.purchase ? <span>{row.purchase.title}</span> : "—",
                 },
                 { key: "location", header: "Location", render: (row) => row.toLocation?.name ?? row.fromLocation?.name ?? "—" },
-                { key: "notes", header: "Notes", render: (row) => row.notes ?? "—" },
+                { key: "notes", header: "Notes", render: (row) => inventoryNoteText(row.notes, row.experiment) ?? "—" },
               ]}
             />
           </CardBody>

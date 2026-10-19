@@ -63,3 +63,7 @@
 3. 截图：`EDITOR_CHECK=visual node scripts/verify-editor-repair.mjs`；补充模板/Run：`node docs/editor-repair/capture-extra.mjs`。
 4. 真机：在实验和结果正文插图，输入拼音、回车选词，再输入英文和中文，修改图注并保存。刷新、重新编辑、只读查看后核对内容；打开系统打印预览，确认标题/正文/图片完整且无空白尾页。
 5. 原问题：拿到一条受影响记录后，回读正文引用并检查预览和原图请求，保留响应状态及浏览器截图，再判断请求故障、引用失效或原文件问题。
+
+## PR #103 verification refresh — 2026-10-19
+
+The original matrix and evidence above describe their historical revisions. The current repair candidate is based on `f1864d53` on `codex/review-3001-20261019`; see [the CI repair record](../releases/20261019-github-sync.md) for source changes, test coverage, exact-commit CI links and local logs. Fresh browser screenshots, traces and rendered PDF evidence are retained in `/tmp/pr103-ci-evidence.tar.gz`. Physical iPhone/iPad/Watch, hardware input/camera and real-provider checks remain unexecuted.

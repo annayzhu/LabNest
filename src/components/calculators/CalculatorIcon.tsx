@@ -1,6 +1,8 @@
 import {solidIconShapes} from './solid-icon-shapes';
 
 export type CalculatorIconName=keyof typeof solidIconShapes;
+/** The Calculator tool's own icon wherever the tool is offered: a lab pipette, not a pocket calculator. */
+export const calculatorToolIcon:CalculatorIconName='pipette';
 export {calculatorToolIcons} from '@/lib/calculators/solid-icon-map';
 
 export function CalculatorIcon({name,size=20,className=''}:{name:CalculatorIconName;size?:number;className?:string}){

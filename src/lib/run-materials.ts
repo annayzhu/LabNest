@@ -24,7 +24,8 @@ export async function saveRunMaterial(experimentId: string, raw: unknown) {
   return prisma.$transaction(async (tx) => {
     // Save and confirmation share one lock, including the first save when no row exists.
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`run-material:${input.id}`},0))::text`;
-    const ruleKey = input.source.startsWith('Consumption:') ? input.source.split('|')[0] : null;
+    // One record per Protocol rule or per material of this run; corrections are separate rows.
+    const ruleKey = input.source.startsWith('Consumption:') || input.source.startsWith('Chip:') ? input.source.split('|')[0] : null;
     if (ruleKey && !input.correctionOfId) {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`run-rule:${experimentId}:${ruleKey}`},0))::text`;
       const duplicate = await tx.runMaterialUse.findFirst({where:{experimentId,id:{not:input.id},OR:[{source:ruleKey},{source:{startsWith:ruleKey+'|'}}]}});

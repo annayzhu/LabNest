@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { extractJsonPayload } from './ai';
+import { numbersIn } from './source-numbers';
 
 /** One statement the model makes about a method, with the words of the source it rests on. */
 const field = z.object({ text: z.string().trim().min(1).max(500), quote: z.string().trim().max(600).default('') });
@@ -14,7 +15,8 @@ export const methodCardSchema = z.object({
   duration: z.string().trim().max(120).default(''),
 });
 export type MethodCardRaw = z.infer<typeof methodCardSchema>;
-export type CheckedField = { text: string; quote: string; verified: boolean };
+/** `problem` says why a statement is 未核实: no quote, a quote not in the source, or a number its quote does not give. */
+export type CheckedField = { text: string; quote: string; verified: boolean; problem?: string };
 export type MethodCard = {
   summary: string; duration: string;
   applicability: CheckedField[]; sampleRequirements: CheckedField[]; materials: CheckedField[]; keyParameters: CheckedField[]; differences: CheckedField[]; risks: CheckedField[];
@@ -50,12 +52,23 @@ export function parseMethodCard(raw: string): MethodCardRaw {
 }
 
 /**
- * Every statement is checked against the text it claims to rest on:
- * a quote that is not in the source leaves the statement marked 未核实, never dropped silently.
+ * Every statement is checked against the text it claims to rest on: its quote must be in the source, and every number
+ * it states must be in its quote (a converted unit counts as a different number). A statement that fails stays on the
+ * card marked 未核实 with the reason, never dropped silently.
  */
 export function checkMethodCard(raw: MethodCardRaw, sourceText: string, meta: { provider?: string; model?: string } = {}): MethodCard {
   const haystack = fold(sourceText);
-  const check = (fields: Array<{ text: string; quote: string }>): CheckedField[] => fields.map(item => ({ text: item.text, quote: item.quote, verified: item.quote.length >= 4 && haystack.includes(fold(item.quote)) }));
+  const problemOf = (item: { text: string; quote: string }) => {
+    if (item.quote.length < 4) return '没有引文';
+    if (!haystack.includes(fold(item.quote))) return '引文不在原文中';
+    const quoted = new Set(numbersIn(item.quote));
+    const absent = [...new Set(numbersIn(item.text).filter(number => !quoted.has(number)))];
+    return absent.length ? `数值不在引文中：${absent.join('、')}` : undefined;
+  };
+  const check = (fields: Array<{ text: string; quote: string }>): CheckedField[] => fields.map(item => {
+    const problem = problemOf(item);
+    return { text: item.text, quote: item.quote, verified: !problem, ...(problem ? { problem } : {}) };
+  });
   const card = { summary: raw.summary, duration: raw.duration, applicability: check(raw.applicability), sampleRequirements: check(raw.sampleRequirements), materials: check(raw.materials), keyParameters: check(raw.keyParameters), differences: check(raw.differences), risks: check(raw.risks) };
   const unverified = methodCardSections.reduce((count, section) => count + card[section.key].filter(item => !item.verified).length, 0);
   return { ...card, unverified, ...meta, madeAt: new Date().toISOString() };

@@ -35,6 +35,9 @@
 :root { --ln-unverified-label: " (unverified)"; }
 :root[data-locale="zh"] { --ln-unverified-label: "（未核实）"; }
 .ln-card-line[data-unverified]::after { content: var(--ln-unverified-label); font-size: var(--ln-control-font-size-xs); }
+/* Cards made since numbers are checked say why; the bare label stays for older cards. */
+.ln-card-line[data-unverified]:has(.ln-card-problem)::after { content: none; }
+.ln-card-problem { font-size: var(--ln-control-font-size-xs); }
 .ln-card-quote { display: block; font-size: var(--ln-control-font-size-xs); color: var(--muted); font-style: italic; }
 .ln-card-foot { font-size: var(--ln-control-font-size-xs); color: var(--muted); }
 .ln-card-manual { display: grid; gap: 0.35rem; }

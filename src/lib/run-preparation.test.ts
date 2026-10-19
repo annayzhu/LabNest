@@ -3,6 +3,7 @@ import { createEmptyProtocolDocument } from './protocol-document';
 import { structuredRunView } from './structured-run';
 import { translateUiText } from './i18n';
 import { formatDuration, preparationChecklist, preparationProgress } from './run-preparation';
+import { preparationWorkbook } from './run-preparation-workbook';
 
 /** A qPCR Protocol: a mix card (SYBR premixed, cDNA added separately), a pre-cooled centrifuge, a 10 min incubation and a value to record. */
 function qpcr() {
@@ -93,5 +94,26 @@ describe('实验准备清单', () => {
 
   it('formats durations the way a bench reads them', () => {
     expect([600, 5400, 45, 3600].map(formatDuration)).toEqual(['10 min', '1 h 30 min', '45 s', '1 h']);
+  });
+});
+
+describe('操作工作簿', () => {
+  it('writes the checklist with what is ticked, every mix card line with its totals, and what still needs care', () => {
+    const { snapshot, steps, adopted } = qpcr();
+    const view = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
+    const list = preparationChecklist(view);
+    const tick = list.items.find(item => item.kind === 'material')!;
+    const sheets = preparationWorkbook(view, list, { [tick.key]: { done: true, note: '冰上放置' } });
+    expect(sheets.map(sheet => sheet.name)).toEqual(['准备清单', '配液卡', '注意事项']);
+    const [checklist, mixes, notes] = sheets;
+    expect(checklist.rows[0]).toEqual(['类别', '项目', '说明', '提醒', '已备', '备注']);
+    expect(checklist.rows.find(row => row[1] === tick.label)).toEqual(['材料与用量', tick.label, tick.detail, '', '是', '冰上放置']);
+    // 24 reactions: SYBR premixed with the card's 10% overage, cDNA added separately without it.
+    expect(mixes.rows).toContainEqual(['组分', '加法', '每反应', '总量']);
+    expect(mixes.rows).toContainEqual(['2× SYBR Mix', '预混', '10 µL', '264 µL']);
+    expect(mixes.rows).toContainEqual(['cDNA', '单独加', '2 µL', '48 µL']);
+    expect(notes.rows[0]).toEqual(['类型', '内容']);
+    expect(notes.rows.slice(1).every(row => ['开始前要处理', '执行时要记录'].includes(row[0]))).toBe(true);
+    expect(notes.rows.some(row => row[0] === '执行时要记录' && row[1].includes('OD600'))).toBe(true);
   });
 });

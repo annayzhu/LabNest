@@ -84,7 +84,7 @@ export function MethodDesignWorkspace({ sessionId, hits, cards, chosen, searchEr
         <tbody>
           <tr><th scope="row" className="is-row">One-line summary</th>{chosenHits.map(hit => <td key={hit.key}>{cards[hit.key]?.summary || 'Not summarized yet'}</td>)}</tr>
           <tr><th scope="row" className="is-row">Time needed</th>{chosenHits.map(hit => <td key={hit.key}>{cards[hit.key]?.duration || '—'}</td>)}</tr>
-          {methodCardSections.map(section => <tr key={section.key}><th scope="row" className="is-row">{section.label}</th>{chosenHits.map(hit => <td key={hit.key}>{cards[hit.key]?.[section.key].length ? <ul>{cards[hit.key][section.key].map((item, index) => <li key={index} className="ln-card-line" data-unverified={item.verified ? undefined : ''}>{item.text}</li>)}</ul> : '—'}</td>)}</tr>)}
+          {methodCardSections.map(section => <tr key={section.key}><th scope="row" className="is-row">{section.label}</th>{chosenHits.map(hit => <td key={hit.key}>{cards[hit.key]?.[section.key].length ? <ul>{cards[hit.key][section.key].map((item, index) => <li key={index} className="ln-card-line" data-unverified={item.verified ? undefined : ''} title={item.problem}>{item.text}</li>)}</ul> : '—'}</td>)}</tr>)}
           <tr><th scope="row" className="is-row">Not verified</th>{chosenHits.map(hit => <td key={hit.key}>{cards[hit.key] ? `${cards[hit.key].unverified} ${cards[hit.key].unverified === 1 ? 'statement' : 'statements'}` : '—'}</td>)}</tr>
         </tbody>
       </table></div>
@@ -122,7 +122,7 @@ function PasteMethod({ sessionId, query, pending, onDone }: { sessionId: string;
 function MethodCardView({ card }: { card: MethodCard }) {
   return <div className="ln-card" aria-label="Method card">
     {card.summary ? <p className="ln-card-summary">{card.summary}{card.duration ? ` · takes ${card.duration}` : ''}</p> : null}
-    <dl className="ln-card-section">{methodCardSections.filter(section => card[section.key].length).map(section => <div key={section.key} className="contents"><dt>{section.label}</dt><dd><ul>{card[section.key].map((item, index) => <li key={index} className="ln-card-line" data-unverified={item.verified ? undefined : ''}>{item.text}{item.quote ? <span className="ln-card-quote">“{item.quote}”</span> : null}</li>)}</ul></dd></div>)}</dl>
+    <dl className="ln-card-section">{methodCardSections.filter(section => card[section.key].length).map(section => <div key={section.key} className="contents"><dt>{section.label}</dt><dd><ul>{card[section.key].map((item, index) => <li key={index} className="ln-card-line" data-unverified={item.verified ? undefined : ''}>{item.text}{item.problem ? <span className="ln-card-problem">（未核实：{item.problem}）</span> : null}{item.quote ? <span className="ln-card-quote">“{item.quote}”</span> : null}</li>)}</ul></dd></div>)}</dl>
     <p className="ln-card-foot">{card.byHand ? 'Filled in by hand' : <><span className="ln-ai-tag">AI</span> {`Summarized by ${card.provider ?? 'the model'}${card.model ? ` · ${card.model}` : ''}; ${card.unverified ? `${card.unverified} ${card.unverified === 1 ? 'statement has' : 'statements have'} no support in the original` : 'every statement is supported by the original'}`}</>} · {card.madeAt.slice(0, 16).replace('T', ' ')}</p>
   </div>;
 }

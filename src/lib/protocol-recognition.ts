@@ -1,6 +1,7 @@
 import { convertLegacyProtocol, onlyFor } from './protocol-conversion';
 import { sectionFromHeading } from './protocol-docx';
 import { habitTextToDocument } from './protocol-habit-text';
+import { numbersIn } from './source-numbers';
 
 /**
  * AI 识别: a manual or a free-form Protocol laid out "by habit" by the model, then read by the same code as a
@@ -137,7 +138,6 @@ function buildRepairPrompt(source: string, previous: string, check: RecognitionC
 }
 
 const fold = (text: string) => text.normalize('NFKC').toLowerCase().replace(/×/g, 'x');
-const numbersIn = (text: string) => (fold(text).match(/\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g) ?? []).map(number => number.replace(/,/g, ''));
 /** The words of a text without its numbers or punctuation: Latin words whole, Chinese as overlapping pairs. */
 function tokens(text: string) {
   const out: string[] = [];

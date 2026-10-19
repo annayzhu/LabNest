@@ -13,7 +13,6 @@ const projects = {
   cnvPlate: path.join(materialRoot, "C_Taqman_CNV", "CNV_Plate_Planner"),
   freePlate: path.join(materialRoot, "plate-layout-studio"),
   qpcrAnalysis: path.join(materialRoot, "qpcr-analysis-studio"),
-  cnvAnalysis: path.join(materialRoot, "C_Taqman_CNV", "CopyNumber_Analyzer"),
 };
 
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), "labnest-portable-tools-"));
@@ -74,7 +73,7 @@ try {
   await mkdir(outputRoot, { recursive: true });
 
   await cp(process.env.QPCR_PORTABLE_DIR || path.join(homedir(), "Desktop", "Tools", "qPCR-Plate-Layout-Planner_Offline_LATEST"), path.join(outputRoot, "01_qPCR_Plate_Layout_Planner"), { recursive: true });
-  await cp(path.join(projects.cnvAnalysis, "offline-release", "CNVtool_v1.3_offline_20260803"), path.join(outputRoot, "05_CNV_Analysis_Studio"), { recursive: true });
+  await cp(process.env.CNV_PORTABLE_DIR || path.join(homedir(), "Desktop", "Tools", "CNVtool_LATEST"), path.join(outputRoot, "05_CNV_Analysis_Studio"), { recursive: true });
   await mkdir(path.join(outputRoot, "03_Free_Plate_Layout_Planner"), { recursive: true });
   for (const filename of ["index.html", "styles.css", "core.js", "color-core.js", "liquid-core.js", "liquid-plan-core.js", "workspace-core.js", "xlsx-core.js", "app.js", "README.md"]) {
     await cp(path.join(projects.freePlate, filename), path.join(outputRoot, "03_Free_Plate_Layout_Planner", filename));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMethodCardPrompt, checkMethodCard, manualMethodCard, parseMethodCard } from './method-card';
+import { buildMethodCardPrompt, checkMethodCard, manualMethodCard, methodCardSchema, parseMethodCard } from './method-card';
 
 const source = `Materials\nProteinase K (20 mg/mL), Buffer ATL.\n\nStep 1\nAdd 20 µL Proteinase K to 180 µL Buffer ATL and incubate at 56 °C for 1 h, or until the tissue is completely lysed.\n\nStep 2\nAdd 200 µL Buffer AL, vortex, then add 200 µL ethanol.`;
 
@@ -20,6 +20,18 @@ describe('方法卡', () => {
     expect(card.unverified).toBe(2);
     expect(card.sampleRequirements).toEqual([]);
     expect(card).toMatchObject({ provider: 'test', model: 'm', summary: '柱式提取组织 DNA', duration: '约 2 h' });
+  });
+
+  it('marks a statement whose numbers are not in its own quote, and says why each one is unverified', () => {
+    const card = checkMethodCard(methodCardSchema.parse({
+      keyParameters: [{ text: '56 °C 裂解 2 h', quote: 'incubate at 56 °C for 1 h' }, { text: 'Proteinase K 20 µL', quote: 'Add 20 µL Proteinase K' }],
+      materials: [{ text: 'Buffer AL', quote: 'Buffer AL from another kit' }],
+      risks: [{ text: '裂解不完全会降低产量', quote: '' }],
+    }), source);
+    expect(card.keyParameters.map(item => [item.verified, item.problem])).toEqual([[false, '数值不在引文中：2'], [true, undefined]]);
+    expect(card.materials[0]).toMatchObject({ verified: false, problem: '引文不在原文中' });
+    expect(card.risks[0]).toMatchObject({ verified: false, problem: '没有引文' });
+    expect(card.unverified).toBe(3);
   });
 
   it('ignores case, quotes and whitespace when matching, and rejects output that is not a card', () => {

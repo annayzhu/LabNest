@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fieldRunUrl, groupPairingCode, isLocalHost, lanOrigin } from './field-mode';
+import { fieldRunUrl, groupPairingCode, isLocalHost, lanOrigin, watchPairingLink } from './field-mode';
 
 describe('现场模式 addresses for other devices', () => {
   it('treats the computer\'s own names as unreachable from a tablet, phone or watch', () => {
@@ -23,5 +23,17 @@ describe('现场模式 addresses for other devices', () => {
 
   it('groups the 12-character pairing code in fours', () => {
     expect(groupPairingCode('A1B2C3D4E5F6')).toBe('A1B2 C3D4 E5F6');
+  });
+
+  it('hands the iPhone only a normalized server and a one-use code', () => {
+    const link = new URL(watchPairingLink('http://192.168.1.10:3001/experiments/x', 'a1b2 c3d4 e5f6')!);
+    expect(link.protocol).toBe('labnest:');
+    expect(link.hostname).toBe('watch-pair');
+    expect([...link.searchParams]).toEqual([['server', 'http://192.168.1.10:3001'], ['code', 'A1B2C3D4E5F6']]);
+  });
+
+  it('does not produce a handoff for invalid codes, loopback or embedded credentials', () => {
+    for (const origin of ['http://localhost:3001', 'http://user:secret@192.168.1.10', 'javascript:alert(1)']) expect(watchPairingLink(origin, 'A1B2C3D4E5F6')).toBeUndefined();
+    for (const code of ['', 'not-a-code', 'A1B2C3D4E5F600']) expect(watchPairingLink('https://lab.example', code)).toBeUndefined();
   });
 });

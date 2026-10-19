@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
-import { createScientificDocument, type ScientificDocument, reportSections } from "@/lib/scientific-document";
+import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { experimentReportBlocks, resultReportBlocks } from "@/lib/report-content";
+import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
+import { createScientificDocument, normalizeResultDocument, type ScientificDocument, reportSections } from "@/lib/scientific-document";
 
 export type ReportSourceDraft = {
   sourceType: string; sourceId: string; titleSnapshot: string; versionSnapshot?: string; hrefSnapshot?: string; resultId?: string; metadataJson?: Prisma.InputJsonObject; order: number;
@@ -12,7 +15,7 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
   const planWhere = researchPlanId ? { id: researchPlanId, projectId } : { projectId };
   const [plans, experiments, results, entries] = await Promise.all([
     prisma.researchPlan.findMany({ where: planWhere, orderBy: { updatedAt: "asc" } }),
-    prisma.experiment.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, include: { protocolVersions: { include: { protocolVersion: { include: { protocol: true } } } } }, orderBy: { date: "asc" } }),
+    prisma.experiment.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, include: { protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, protocolVersions: { include: { protocolVersion: { include: { protocol: true } } } } }, orderBy: { date: "asc" } }),
     prisma.result.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, orderBy: { updatedAt: "asc" } }),
     prisma.entry.findMany({ where: { projectId, ...(researchPlanId ? { researchPlanId } : {}) }, orderBy: { occurredAt: "asc" } }),
   ]);
@@ -37,7 +40,10 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
     counts: { researchPlans: plans.length, protocolVersions: versionMap.size, experiments: experiments.length, results: results.length, entries: entries.length },
     sourceIds: sources.map((source) => ({ type: source.sourceType, id: source.sourceId })),
   };
-  return { project, plans, experiments, results, entries, sources, snapshot };
+  // Each run's record as the Experiment page shows it, so the report can carry its steps, values and deviations.
+  const records = Object.fromEntries(await Promise.all(experiments.map(async (experiment) => [experiment.id,
+    experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson, experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson)] as const)));
+  return { project, plans, experiments, results, entries, sources, snapshot, records };
 }
 
 export function buildReportDraft(input: Awaited<ReturnType<typeof collectReportSources>>): ScientificDocument {
@@ -47,10 +53,16 @@ export function buildReportDraft(input: Awaited<ReturnType<typeof collectReportS
   section("research_question").blocks.push(...input.plans.map((plan, index) => ({ id: `plan-${index}`, type: "text" as const, text: [plan.title, plan.objective, plan.hypothesis ? `Hypothesis: ${plan.hypothesis}` : ""].filter(Boolean).join("\n") })));
   const methods = Array.from(new Map(input.sources.filter((source) => source.sourceType === "protocol_version").map((source) => [source.sourceId, `${source.titleSnapshot} · version ${source.versionSnapshot ?? "unknown"}`])).values());
   if (methods.length) section("methods").blocks.push({ id: "method-list", type: "checklist", items: methods });
-  const experimentItems = input.experiments.map((experiment) => `${experiment.runCode ? `${experiment.runCode} · ` : ""}${experiment.title} — ${experiment.status}`);
-  if (experimentItems.length) section("methods").blocks.push({ id: "experiment-list", type: "checklist", items: experimentItems });
-  const resultItems = input.results.map((result) => `${result.title} — ${result.resultType}; QC ${result.qualityStatus}; record ${result.recordStatus}`);
-  if (resultItems.length) section("results").blocks.push({ id: "result-list", type: "checklist", items: resultItems });
+  // Each run and each result brings its own content: steps and values, deviations, measured values and summaries.
+  input.experiments.forEach((experiment, index) => section("methods").blocks.push(...experimentReportBlocks({
+    key: `experiment-${index + 1}`, title: experiment.title, runCode: experiment.runCode,
+    methods: experiment.protocolVersions.map(({ protocolVersion: version }) => `${version.protocol.humanCode ? `${version.protocol.humanCode} · ` : ""}${version.protocol.canonicalTitle ?? version.protocol.title} v${version.displayVersion}`),
+    record: input.records[experiment.id],
+  })));
+  input.results.forEach((result, index) => section("results").blocks.push(...resultReportBlocks({
+    key: `result-${index + 1}`, title: result.title, qualityStatus: result.qualityStatus, numericValue: result.numericValue, textValue: result.textValue, unit: result.unit, sampleLabel: result.sampleLabel,
+    template: result.templateSnapshotJson, values: result.valuesJson, summaryBlocks: normalizeResultDocument(result.contentJson).sections.find((item) => item.key === "summary")?.blocks ?? [],
+  })));
   section("interpretation").blocks.push({ id: "interpretation-placeholder", type: "callout", tone: "note", text: "Add scientific interpretation here. LabNest does not infer a conclusion from source counts or result titles." });
   const unassessed = input.results.filter((result) => result.qualityStatus === "not_assessed").length;
   section("limitations_next_steps").blocks.push({ id: "review-checklist", type: "checklist", items: [`Review every linked source before changing report status.`, `${unassessed} Result(s) have not yet received a QC assessment.`, "State unresolved limitations and planned validation explicitly."] });

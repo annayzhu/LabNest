@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import { Check, Copy, QrCode, Watch } from 'lucide-react';
 import { connectWatchRun, disconnectWatchRun, watchRunConnection } from '@/app/experiments/[id]/run/actions';
-import { fieldRunUrl, groupPairingCode, isLocalHost, lanOrigin } from '@/lib/field-mode';
+import { fieldRunUrl, groupPairingCode, isLocalHost, lanOrigin, watchPairingLink } from '@/lib/field-mode';
 import { Button } from './ui/Button';
 import './field-devices.css';
 
@@ -74,12 +74,12 @@ function TabletCard({ origin, experimentId }: { origin?: string; experimentId: s
 }
 
 /** The modules of the QR symbol drawn as one path: crisp at any size, no image service, nothing sent anywhere. */
-function QrImage({ text }: { text: string }) {
+function QrImage({ text, label = 'Run mode QR code' }: { text: string; label?: string }) {
   const { modules } = QRCode.create(text, { errorCorrectionLevel: 'M' });
-  const quiet = 2, size = modules.size;
+  const quiet = 4, size = modules.size;
   let path = '';
   for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) if (modules.get(row, col)) path += `M${col + quiet} ${row + quiet}h1v1h-1z`;
-  return <svg className="ln-field-qr" viewBox={`0 0 ${size + quiet * 2} ${size + quiet * 2}`} role="img" aria-label="Run mode QR code" shapeRendering="crispEdges"><rect width="100%" height="100%" fill="#fff" /><path d={path} fill="#111" /></svg>;
+  return <svg className="ln-field-qr" viewBox={`0 0 ${size + quiet * 2} ${size + quiet * 2}`} role="img" aria-label={label} shapeRendering="crispEdges"><rect width="100%" height="100%" fill="#fff" /><path d={path} fill="#111" /></svg>;
 }
 
 function WatchCard({ origin, experimentId, watch }: { origin?: string; experimentId: string; watch: WatchSupport }) {
@@ -116,6 +116,7 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
     setBusy(false);
     if (result.error) setError(result.error); else { setPairing(undefined); setStatus({ connected: false }); }
   };
+  const phoneLink = origin && pairing ? watchPairingLink(origin, pairing.code) : undefined;
   return <section className="ln-field-card" aria-labelledby="field-watch-title">
     <h3 id="field-watch-title"><Watch className="h-4 w-4" aria-hidden />Apple Watch</h3>
     {watch === 'legacy' ? <p className="text-muted">This experiment uses a Protocol in the old format, which the watch does not support. Once the Protocol is converted to step blocks, new experiments can run on the watch.</p>
@@ -127,8 +128,14 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
       </> : <>
         <p className="text-muted">The watch follows this experiment: the current step and timers, and the mix card ticked off line by line.</p>
         {pairing && left > 0 ? <>
+          {phoneLink ? <>
+            <QrImage text={phoneLink} label="iPhone 连接 Apple Watch 二维码" />
+            <p className="text-muted">已安装 iPhone 和手表 App：用 iPhone 相机扫码，在手机确认连接。手表上的 LabNest 请保持打开。</p>
+            <a className="text-moss underline" href={phoneLink}>在此 iPhone 的 LabNest App 中连接</a>
+          </> : null}
           <p className="ln-field-code" aria-label={`Pairing code ${pairing.code}`} data-i18n-ignore>{groupPairingCode(pairing.code)}</p>
           <p className="ln-field-expiry" role="status">{`Expires in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · single use`}</p>
+          <p className="text-muted">也可以在手表上手动输入：</p>
           <ol className="ln-field-steps">
             <li>On the watch, open LabNest and tap “连接设置” (connection settings).</li>
             <li>Server address: {origin ? <strong data-i18n-ignore>{origin}</strong> : 'the computer’s LAN address (enter it above first)'}</li>

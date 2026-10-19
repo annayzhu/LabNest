@@ -58,3 +58,7 @@ Candidate: the CI-repair commit on `codex/review-3001-20261019`, based on `f1864
 - Current synthetic screenshots, traces and PDF files are archived locally under `/tmp/pr103-ci-evidence.tar.gz`; local command logs are `/tmp/pr103-*.log`. Historical checked-in evidence remains historical. GitHub uploads fresh evidence for each new CI run.
 
 Local success is not a claim of GitHub CI success or merge. Merge is conditional on all checks completing successfully on the exact PR head.
+
+### Calculator first-edit persistence
+
+A later remote run exposed an intermittent first-render race: loading an example before the initial storage read/visit write finished could lose the first draft or trigger the existing concurrent-change protection. Slow-render reproduction observed 14 missing drafts in 20 attempts. `CalculatorWorkspace.tsx` now keeps the workbench inert until initialization completes; storage conflict checks remain unchanged. `verify-calculator-transfection.mjs` adds four fresh slow-render sessions that must persist and restore the first nested draft. After the fix, all 20 slow-load attempts saved a draft without a false conflict; the four-session regression, full transfection flow, storage-failure protection, production build and all 1,326 unit tests passed. CI must pass again on that exact revision.

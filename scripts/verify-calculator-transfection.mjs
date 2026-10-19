@@ -11,6 +11,21 @@ const browser=await chromium.launch(),context=await browser.newContext({permissi
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base,at:new Date().toISOString(),checks:[],unexecuted:['Real phone soft keyboard and 160% zoom','Wet-lab user validation']};
 const fill=(name,value)=>p.getByRole('textbox',{name,exact:true}).fill(value);const select=(name,value)=>selectCalculatorOption(p,name,value);const calc=async()=>{await p.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(p);};const check=(name)=>report.checks.push({name,status:'passed'});
 try{
+ // A slower first render must not let an edit race the initial storage/visit write.
+ for(let attempt=0;attempt<4;attempt++){
+  const cold=await browser.newContext(),page=await cold.newPage();
+  try{
+   const session=await cold.newCDPSession(page);await session.send('Emulation.setCPUThrottlingRate',{rate:4});
+   await page.goto(base+'/tools/calculator/transfection');
+   await page.getByRole('button',{name:'Load example',exact:true}).click();
+   await page.getByRole('button',{name:'Calculate',exact:true}).click();
+   await page.waitForFunction(()=>Boolean(JSON.parse(localStorage.getItem('labnest.calculators.v1')||'{}').drafts?.transfection?.inputs?.transfectionPlan?.groups?.length));
+   assert(!(await page.locator('body').innerText()).includes('concurrent-change'));
+   await page.reload();await page.getByRole('button',{name:'Restore draft',exact:true}).click();
+   assert.equal(await page.getByRole('textbox',{name:'Nucleic acid name',exact:true}).first().inputValue(),'Plasmid');
+  }finally{await cold.close();}
+ }
+ check('Four slow first renders preserve the first edit and restore its nested draft without a false conflict');
  await p.goto(base+'/tools/calculator/transfection');await p.getByRole('button',{name:'Load example',exact:true}).click();await calc();await p.locator('.transfection-result').waitFor();
  for(const [name,width] of [['desktop-dna',1440],['phone-dna',390]]){await p.setViewportSize({width,height:1000});const rects=await p.locator('.transfection-editor .transfection-tubes>section').evaluateAll(ns=>ns.map(n=>({x:n.getBoundingClientRect().x,y:n.getBoundingClientRect().y})));assert(width>767?Math.abs(rects[0].y-rects[1].y)<1:await p.locator('.transfection-edit-tubes>section').nth(1).isHidden());assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await p.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await p.screenshot({path:`${dir}/${name}.png`,fullPage:true});}check('DNA example; desktop side-by-side / mobile stacked input and result tubes');
  await p.emulateMedia({colorScheme:'dark'});await p.waitForFunction(()=>document.documentElement.dataset.labnestMode==='dark');await p.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await p.screenshot({path:`${dir}/phone-dark.png`,fullPage:true});await p.emulateMedia({colorScheme:'light'});

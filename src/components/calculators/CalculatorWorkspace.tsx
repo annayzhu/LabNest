@@ -82,6 +82,8 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   const [sourceRecord,setSourceRecord]=useState<string>();
   const [historical,setHistorical]=useState(false);
   const visitRef=useRef(false);
+  // Finish the initial storage read and visit write before edits can derive a stale save token.
+  const [initialized,setInitialized]=useState(false);
   useEffect(()=>{
     if(!state||visitRef.current)return;
     const frame=window.requestAnimationFrame(()=>{
@@ -93,6 +95,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     const record=state.history.find(item=>item.id===initialInputs.record);
     if(record){setResult(restoreCalculatorResult(record));setHistorical(true);setSourceRecord(record.id);}
     update(recordVisit(state,calculatorId,zh?definition.shortDescriptionZh:definition.shortDescription));
+    setInitialized(true);
     });return ()=>window.cancelAnimationFrame(frame);
   },[state,calculatorId,definition,initialInputs.record,update,zh]);
   function edit(next:Record<string,unknown>, nextExample=example,restoreUnits=false) {
@@ -208,7 +211,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
   const loadControls=<div className="flex flex-wrap gap-3"><CalculatorButton type="button" variant="secondary" icon="import" onClick={()=>{setMixSource(null);edit({...defaults,...definition.exampleInputs},true);}}>{zh?'载入示例':'Load example'}</CalculatorButton>{initialDraft?<CalculatorButton icon="history" type="button" onClick={()=>{const draft=initialDraft;setMixSource(null);if(draft)restore(draft.inputs,undefined,draft.example);}}>{zh?'恢复上次草稿':'Restore draft'}</CalculatorButton>:null}</div>;
 
   return (
-    <div className="calculator-workbench calculator-compact calculator-stack" data-calculator={calculatorId} data-layout={layout} data-pane={mobilePane}>
+    <div className="calculator-workbench calculator-compact calculator-stack" inert={!initialized} aria-busy={!initialized} data-calculator={calculatorId} data-layout={layout} data-pane={mobilePane}>
       <CalculatorHeading id={calculatorId} title={zh?definition.nameZh:definition.name} zh={zh} contextQuery={contextQuery} embedded={embedded} actions={<><CalculatorMore zh={zh} history={<Card><CardHeader title={zh ? "最近结果" : "Recent results"} /><CardBody className="space-y-2">{history.length ? history.map((item) => <button type="button" key={item.id} onClick={(event) => { event.currentTarget.closest("dialog")?.close();setMobilePane("result");setHistorical(true);setSourceRecord(item.id);setResult(restoreCalculatorResult(item)); }} className="flex w-full items-center justify-between gap-3 rounded-[var(--ln-radius-control-md)] px-2 py-1.5 text-left text-xs hover:bg-warm"><span className="truncate text-graphite">{new Date(item.createdAt).toLocaleString(locale)}</span><CalculatorIcon name="history" size={16}/></button>) : <p className="text-xs text-muted">{zh ? "保存后的结果会显示在这里。" : "Saved results appear here."}</p>}</CardBody></Card>}/>{state && !embedded ? <button type="button" onClick={() => update(toggleFavorite({...state,favorites:state.favoritesConfigured?state.favorites:defaultTasks}, calculatorId))} className="calculator-action calculator-action-manage focus-ring"><CalculatorIcon name="pin" size={18}/>{favorite ? (zh ? "取消固定" : "Unpin") : (zh ? "固定" : "Pin")}</button> : null}</>}/>
 
       {['molarity','percent-solution'].includes(calculatorId)?<nav aria-label="Solution modes" className="flex gap-4 text-sm"><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/molarity${contextQuery?`?${contextQuery}`:""}`}>{zh?"摩尔浓度":"Molarity"}</Link><Link className="min-h-11 text-moss" prefetch={false} href={`/tools/calculator/percent-solution${contextQuery?`?${contextQuery}`:""}`}>{zh?"百分浓度":"Percentage"}</Link></nav>:null}

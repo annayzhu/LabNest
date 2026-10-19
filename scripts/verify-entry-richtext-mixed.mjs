@@ -1,10 +1,10 @@
-import {uploadImages,openBlockMenu} from './test-helpers/editor-controls.mjs';
+import {uploadImages,openBlockMenu,caretAtEnd} from './test-helpers/editor-controls.mjs';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';import sharp from 'sharp';
 const base='http://localhost:3331',dir='docs/qa/evidence/entry-richtext/mixed';mkdirSync(dir,{recursive:true});
 const b=await chromium.launch(),c=await b.newContext({viewport:{width:1440,height:900}});await c.tracing.start({screenshots:true,snapshots:true});const p=await c.newPage();p.setDefaultTimeout(15000);const report={synthetic:true,browser:b.version(),checks:[]};
 const get=async id=>(await(await p.request.get(base+'/api/entries/'+id)).json()).entry;
 async function check(name,fn){try{await fn();report.checks.push({name,status:'通过'});}catch(error){report.checks.push({name,status:'失败',error:String(error)});await p.screenshot({path:dir+'/error.png'});throw error;}finally{writeFileSync(dir+'/report.json',JSON.stringify(report,null,2));}}
-async function paste(editor,html){const paragraph=editor.locator('p').last();await paragraph.click();await p.keyboard.press('End');await p.keyboard.press('Enter');await editor.evaluate((el,html)=>{const d=new DataTransfer();d.setData('text/html',html);el.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:d}));},html);}
+async function paste(editor,html){await caretAtEnd(editor);await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');await editor.evaluate((el,html)=>{const d=new DataTransfer();d.setData('text/html',html);el.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:d}));},html);}
 async function saveNew(){await p.getByRole('button',{name:'Save Entry',exact:true}).click();await p.waitForURL(/\/entries\/(?!new)[^/?]+$/);return p.url().split('/').pop();}
 async function save(id){await p.getByRole('button',{name:'Save changes',exact:true}).click();await p.waitForURL(base+'/entries/'+id);}
 const photo=await sharp({create:{width:180,height:120,channels:3,background:'#315f72'}}).png().toBuffer();let id,block,shared;

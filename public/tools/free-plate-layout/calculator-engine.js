@@ -655,7 +655,10 @@ var LabNestCalculations = (() => {
 
   // src/lib/calculators/quantity-format.ts
   function formatQuantity(value) {
-    return value !== 0 && (Math.abs(value) < 1e-3 || Math.abs(value) >= 1e7) ? value.toExponential(5) : value.toLocaleString("en", { maximumSignificantDigits: 9, useGrouping: false });
+    if (value === 0 || !Number.isFinite(value)) return String(value);
+    if (Math.abs(value) >= 1e9) return value.toExponential(2);
+    const rounded = Math.abs(value) >= 1 ? Number(value.toFixed(2)) : Number(value.toPrecision(2));
+    return rounded.toLocaleString("en", { maximumFractionDigits: 12, useGrouping: false });
   }
 
   // src/lib/calculators/reaction-mix-presentation.ts
@@ -1406,12 +1409,15 @@ var LabNestCalculations = (() => {
   function defineSystemTheme(theme) {
     return {
       ...theme,
-      colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]],
-      navigation: {
-        background: theme.tokens["--nav-active-bg"],
-        foreground: theme.tokens["--nav-active-fg"]
-      }
+      tokens: { ...theme.tokens, "--ai-hover": hoverShade(theme.tokens["--ai"], theme.tokens["--ai-fg"]) },
+      colors: [theme.tokens["--paper"], theme.tokens["--sage"], theme.tokens["--clay"]]
     };
+  }
+  function hoverShade(fill, label) {
+    const channels = (hex) => hex.replace("#", "").match(/../g).map((part) => Number.parseInt(part, 16));
+    const sum = (hex) => channels(hex).reduce((total, value) => total + value, 0);
+    const toward = sum(label) < sum(fill) ? 255 : 0;
+    return `#${channels(fill).map((value) => Math.round(value + (toward - value) * 0.14).toString(16).padStart(2, "0")).join("")}`;
   }
   var establishedThemes = [
     defineSystemTheme({
@@ -1449,9 +1455,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#2a475f",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#213a4e",
-        "--nav-active-bg": "#a5441b",
-        "--nav-active-fg": "#ffffff",
-        "--nav-active-border": "#8d3716"
+        "--ai": "#a5441b",
+        "--ai-fg": "#ffffff"
       }
     }),
     defineSystemTheme({
@@ -1489,9 +1494,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#147d99",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#116b83",
-        "--nav-active-bg": "#de7565",
-        "--nav-active-fg": "#2b1815",
-        "--nav-active-border": "#bd5d50"
+        "--ai": "#de7565",
+        "--ai-fg": "#2b1815"
       }
     }),
     defineSystemTheme({
@@ -1529,9 +1533,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#397978",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#2e6665",
-        "--nav-active-bg": "#986524",
-        "--nav-active-fg": "#ffffff",
-        "--nav-active-border": "#7c5019"
+        "--ai": "#986524",
+        "--ai-fg": "#ffffff"
       }
     }),
     defineSystemTheme({
@@ -1569,9 +1572,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#75556b",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#624659",
-        "--nav-active-bg": "#7aa35a",
-        "--nav-active-fg": "#15210f",
-        "--nav-active-border": "#638948"
+        "--ai": "#7aa35a",
+        "--ai-fg": "#15210f"
       }
     }),
     defineSystemTheme({
@@ -1609,9 +1611,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#1661ab",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#0f4f91",
-        "--nav-active-bg": "#f8c471",
-        "--nav-active-fg": "#2f240e",
-        "--nav-active-border": "#d29b42"
+        "--ai": "#f8c471",
+        "--ai-fg": "#2f240e"
       }
     }),
     defineSystemTheme({
@@ -1649,9 +1650,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#20894d",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#176b3b",
-        "--nav-active-bg": "#ef475d",
-        "--nav-active-fg": "#2c1015",
-        "--nav-active-border": "#ca3347"
+        "--ai": "#ef475d",
+        "--ai-fg": "#2c1015"
       }
     }),
     defineSystemTheme({
@@ -1689,9 +1689,8 @@ var LabNestCalculations = (() => {
         "--brand-mark-bg": "#356fdc",
         "--brand-mark-fg": "#ffffff",
         "--brand-mark-border": "#285bb9",
-        "--nav-active-bg": "#fed71a",
-        "--nav-active-fg": "#1f2a44",
-        "--nav-active-border": "#d8b400"
+        "--ai": "#fed71a",
+        "--ai-fg": "#1f2a44"
       }
     })
   ];

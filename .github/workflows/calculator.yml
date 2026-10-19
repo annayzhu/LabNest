@@ -1,7 +1,7 @@
 name: Calculator acceptance
 on:
   pull_request:
-    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'scripts/test-helpers/**', 'package*.json', 'next.config.ts', 'tsconfig*.json', 'prisma/**', '.github/workflows/calculator.yml']
+    paths: ['src/**', 'public/tools/**', 'public/icons/**', 'scripts/*calculator*', 'scripts/verify-protocol-mix-review.ts', 'scripts/test-helpers/**', 'package*.json', 'next.config.ts', 'tsconfig*.json', 'prisma/**', '.github/workflows/calculator.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -73,6 +73,9 @@ jobs:
           cat calculator-server.log
           exit 1
       - run: node scripts/verify-calculator-v13-acceptance.mjs
+      - run: npx tsx scripts/verify-protocol-mix-review.ts
+        env:
+          CALCULATOR_REVIEW_EVIDENCE_DIR: docs/calculator/review-evidence
       - run: UI_PHASE=after node scripts/verify-calculator-ui-consistency-20261007.mjs
       - run: node scripts/verify-calculator-ui-state-20261007.mjs
       - run: node scripts/verify-calculator-ui-entries-20261007.mjs
@@ -91,4 +94,5 @@ jobs:
             docs/calculator/ui-consistency-20261007/evidence
             docs/calculator/ui-20260915/evidence/modes
             docs/calculator/plate-integration-20261007/evidence/ci
+            docs/calculator/review-evidence
             calculator-server.log

@@ -203,7 +203,7 @@ export function mixState(view: Pick<StructuredRunView, 'steps' | 'plan' | 'versi
   const runQuantity = stepQuantities(view, stepId).quantities[mixQuantityLabel(mix)];
   const quantity = receipt?.quantitySource === 'card' ? receipt.quantity : runQuantity;
   const live = mixView(mix, version?.document.systems, version?.parameters ?? {}, quantity);
-  return { version, receipt, runQuantity, quantity, live, current: Boolean(receipt && receipt.fingerprint === live.fingerprint) };
+  return { version, receipt, runQuantity, quantity, live, current: Boolean(live.ready && receipt && receipt.fingerprint === live.fingerprint) };
 }
 
 export function assertStructuredStepExecutable(view: StructuredRunView, stepId: string, expectedRevision: number | undefined, requireActualValues = false) {

@@ -240,6 +240,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
   const lensRef = useRef(lens);
   const [chipTarget, setChipTarget] = useState<ChipTarget | null>(null);
   const [conditionTarget, setConditionTarget] = useState<ConditionTarget | null>(null);
+  const [conversionError, setConversionError] = useState('');
   const [insertMenu, setInsertMenu] = useState<EditorCommandMenuState | null>(null);
   const insertMenuRef = useRef(insertMenu);
   const insertKeyRef = useRef<((event: KeyboardEvent) => boolean) | null>(null);
@@ -525,10 +526,13 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     const parsed = tiptapToProtocolDocument({ type: 'doc', content: [{ type: 'protocolSection', attrs: { sectionKey: 'material' }, content: [table.node.toJSON()] }] });
     const block = parsed.sections.flatMap(section => section.blocks).find(item => item.type === 'table');
     if (!block || block.type !== 'table' || block.rows.length < 2) return;
-    const created = recipeTableToMix(block, uid);
-    if (!created.block.components.length) return;
-    updateSystems(systems => ({ ...systems, parameters: [...systems.parameters, ...created.parameters] }));
-    current.view.dispatch(current.state.tr.replaceWith(table.pos, table.pos + table.node.nodeSize, current.schema.nodes.protocolWidget.create({ block: created.block })));
+    setConversionError('');
+    try {
+      const created = recipeTableToMix(block, uid, systemsRef.current);
+      if (!created.block.components.length) return;
+      updateSystems(systems => ({ ...systems, parameters: [...systems.parameters, ...created.parameters] }));
+      current.view.dispatch(current.state.tr.replaceWith(table.pos, table.pos + table.node.nodeSize, current.schema.nodes.protocolWidget.create({ block: created.block })));
+    } catch (error) { setConversionError(error instanceof Error ? error.message : String(error)); }
   }, [updateSystems]);
   // A bench-made mix card goes to the end of the step it was made in (or where the caret is). Saving keeps it.
   const addProposedMix = useCallback((proposal: MixProposal) => {
@@ -590,6 +594,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
   return <ProtocolEditorContext.Provider value={api}><>
     <section className="ln-wysiwyg-editor" data-lens={Object.keys(lens).length ? '' : undefined}>
     <SystemsBar />
+    {conversionError ? <p role="alert" className="ln-chip-error">{conversionError}</p> : null}
     <MixProposals proposals={mixProposals} onAdd={addProposedMix} onDismiss={onDismissMixProposal} />
     <EditorSurface editor={editor} kinds={['paragraph', 'heading', 'subheading', 'quote', 'bullet', 'ordered']} openCommands={anchor => setInsertMenu({ mode: 'button', query: '', anchor })} blockItems={blockItems} tableItems={tableItems} afterDelete={forgetRules}><EditorContent editor={editor} /></EditorSurface>
     </section>

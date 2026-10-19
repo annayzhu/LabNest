@@ -658,7 +658,7 @@ var LabNestCalculations = (() => {
     if (value === 0 || !Number.isFinite(value)) return String(value);
     if (Math.abs(value) >= 1e9) return value.toExponential(2);
     const rounded = Math.abs(value) >= 1 ? Number(value.toFixed(2)) : Number(value.toPrecision(2));
-    return rounded.toLocaleString("en", { maximumFractionDigits: 12, useGrouping: false });
+    return String(rounded);
   }
 
   // src/lib/calculators/reaction-mix-presentation.ts

@@ -65,7 +65,7 @@ function RunMixCard({ mix, step }: { mix: ProtocolMix; step: RunChipStep }) {
   const quantity = typedQuantity ?? (receipt?.quantitySource === 'card' ? receipt.quantity : runQuantity);
   const quantitySource = typedQuantity !== undefined && typedQuantity !== runQuantity ? 'card' as const : receipt?.quantitySource === 'card' && typed === null ? 'card' as const : 'run' as const;
   const view = mixView(mix, step.systems, stepResolution(step), quantity);
-  const current = Boolean(receipt && receipt.fingerprint === view.fingerprint);
+  const current = Boolean(view.ready && receipt && receipt.fingerprint === view.fingerprint);
   const crossed = struck ?? new Set(step.strikes[key] ?? []);
   const editable = step.editable && !step.completed;
   const confirm = () => startTransition(async () => {

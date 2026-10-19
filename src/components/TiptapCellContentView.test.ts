@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { ChipRenderContext } from "@/components/protocol/ChipText";
+import { I18nProvider } from "@/components/I18nProvider";
 import type { ProtocolContentBlock } from "@/lib/protocol-document";
 
 describe("rich table cell rendering", () => {
@@ -19,7 +20,7 @@ describe("rich table cell rendering", () => {
       ] }]]],
     };
 
-    const html = renderToStaticMarkup(createElement(ProtocolContentBlockView, { block }));
+    const html = renderToStaticMarkup(createElement(I18nProvider, null, createElement(ProtocolContentBlockView, { block })));
     const tableCell = html.match(/<th[^>]*>/)?.[0] ?? "";
     expect(tableCell).not.toContain("text-error");
     expect(tableCell).not.toContain("font-size");
@@ -44,7 +45,7 @@ describe("protocol tables in reading and execution views", () => {
   };
 
   it("reads parameter chips in table cells and marks system columns and rows, never showing a raw reference", () => {
-    const html = renderToStaticMarkup(createElement(ChipRenderContext.Provider, { value: { systems } }, createElement(ProtocolContentBlockView, { block })));
+    const html = renderToStaticMarkup(createElement(I18nProvider, null, createElement(ChipRenderContext.Provider, { value: { systems } }, createElement(ProtocolContentBlockView, { block }))));
     expect(html).not.toContain("{{");
     expect(html).not.toContain("p-pk");
     expect(html.match(/>50</g)?.length).toBe(2);

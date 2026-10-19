@@ -153,6 +153,8 @@ export type ResultTemplate = {
   instructions?: ResultTemplateInstructionNode[];
   resultKind?: ResultKind;
   cardinality?: ResultCardinality;
+  /** The "记录：…" and "每个样本：…" lines the template was written as. */
+  authored?: { record?: string; perSample?: string };
   fields: ResultTemplateField[];
   datasets?: ResultTemplateDataset[];
   artifacts?: ResultTemplateArtifact[];

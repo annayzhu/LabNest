@@ -6,10 +6,14 @@ import type { AISettingsChange } from "@/lib/ai-settings";
 import { formLabelClass } from "./forms";
 import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
-import { notifyAISettingsChanged, useAISettings } from "./useAISettings";
+import { useAiStatus } from "./AiAssistant";
+import { notifyAISettingsChanged } from "./useAISettings";
+import type { AiState } from "@/lib/ai-readiness";
+
+const stateLabels: Record<AiState, string> = { checking: "正在读取设置…", error: "设置读取失败", off: "已关闭", incomplete: "已开启 · 待配置", ready: "已开启 · 配置齐备" };
 
 export function AISettingsPanel({ providers }: { providers: { id: string; name: string }[] }) {
-  const { saved, error, refresh, accept } = useAISettings();
+  const { saved, error, refresh, accept, state } = useAiStatus();
   const [editedDraft, setDraft] = useState<{ defaultProviderId: string; attachmentsEnabled: boolean }>();
   const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
   const dirty = editedDraft !== undefined;
@@ -34,15 +38,15 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
     } catch (caught) { setFailure(caught instanceof Error ? caught.message : "保存失败，开关保留上次成功保存的状态。请重新读取确认。"); }
     finally { submitting.current = false; setBusy(false); }
   }
-  const stateLabel = !saved ? "正在读取设置…" : error ? "设置读取失败" : !saved.enabled ? "已关闭" : saved.availability.connected ? "已开启 · 配置齐备" : "已开启 · 待配置";
+  const stateLabel = saved ? stateLabels[state] : stateLabels.checking;
   return <section className="space-y-4" aria-label="AI 功能设置">
     <div id="ai-access" className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         <label htmlFor="ai-enabled" className="cursor-pointer text-base font-semibold text-ink">启用 AI</label>
         <div className="flex shrink-0 items-center gap-3">
           <span className="text-xs text-muted" role="status" data-ai-state>{stateLabel}</span>
-          <button id="ai-enabled" type="button" role="switch" aria-checked={Boolean(saved?.enabled)} aria-label="启用 AI" aria-describedby="ai-switch-help" disabled={busy || !saved || Boolean(error)} onClick={() => save("enabled")} className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border disabled:cursor-wait disabled:opacity-50 ${saved?.enabled ? "border-ink bg-ink" : "border-hairline bg-stone"}`}>
-            <span className={`h-5 w-5 rounded-full bg-surface ${saved?.enabled ? "ml-6" : "ml-1"}`} />
+          <button id="ai-enabled" type="button" role="switch" aria-checked={Boolean(saved?.enabled)} aria-label="启用 AI" aria-describedby="ai-switch-help" disabled={busy || !saved || Boolean(error)} onClick={() => save("enabled")} className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border disabled:cursor-wait disabled:opacity-50 ${saved?.enabled ? "border-ai bg-ai" : "border-hairline bg-stone"}`}>
+            <span className={`h-5 w-5 rounded-full ${saved?.enabled ? "ml-6 bg-ai-fg" : "ml-1 bg-surface"}`} />
           </button>
         </div>
       </div>

@@ -2,6 +2,8 @@
 
 import { useContext, useMemo, useState, useSyncExternalStore } from 'react';
 import { ProtocolSourcesView } from './ProtocolSourcesView';
+import { RecordTemplateSummary } from './protocol/RecordTemplate';
+import { useI18n } from './I18nProvider';
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import { resolveProtocolSystem, tableForSelection, targetApplicability, type ProtocolSelection, type ProtocolSystems } from '@/lib/structured-protocol';
 import { optionMarks } from '@/lib/protocol-chips';
@@ -24,7 +26,7 @@ import { ResultDatasetSchemaView } from "@/components/ResultDatasetSchemaView";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
 import { TiptapCellContentView } from "@/components/TiptapCellContentView";
 import { cn } from "@/lib/cn";
-import { richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
+import { hasLegacyFormulas, protocolSectionLabels, richTextPlainText, type ProtocolContentBlock, type ProtocolDocument, type ProtocolRichTextNode, type ProtocolRichTextRun } from "@/lib/protocol-document";
 import { richTextFontFamilyCss } from "@/lib/rich-text-font-family";
 import { checkResultTemplate, fieldDataType, fieldSemanticRole, normalizeResultTemplate, resultTemplateCardinalityLabel, type ResultTemplateCheck } from "@/lib/result-templates";
 import type { ResultTemplate, ResultTemplateArtifact, ResultTemplateField } from "@/lib/types";
@@ -198,13 +200,14 @@ export function ProtocolContentBlockView({ block, executionContext=false }: { bl
 
   const template = block.resultTemplate ? normalizeResultTemplate(block.resultTemplate) : undefined;
   const templateCheck = template ? checkResultTemplate(template) : undefined;
+  // Read as written ("记录：…") with what it records; the field-by-field detail stays one click away.
   if (template) {
-    return <figure className="space-y-2">
+    return <RecordTemplateSummary template={template} details={<div className="space-y-2">
       <ResultTemplateSummaryCard template={template} templateCheck={templateCheck} />
       <ResultTemplateFieldsPreview fields={template.fields} />
       <ResultTemplateArtifactPreview artifacts={template.artifacts} />
       {template.datasets?.length ? <ResultDatasetSchemaView datasets={template.datasets} /> : null}
-    </figure>;
+    </div>} />;
   }
 
   const columnCount = Math.max(1, ...block.rows.map((row) => row.length));
@@ -212,7 +215,7 @@ export function ProtocolContentBlockView({ block, executionContext=false }: { bl
   const column = (index: number) => systems && block.columnConditions?.[index] ? <ColumnTag systems={systems} column={block.columnConditions[index]!} /> : null;
   const rowRules = (index: number) => systems ? scopedRules(systems, "row", block.rowIds?.[index] ?? "") : [];
   return <figure className="space-y-2">
-    <p className="text-xs text-muted">Scroll sideways for all columns</p>
+    <ScrollHint />
     {block.caption ? <figcaption className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><Table2 className="h-4 w-4" aria-hidden />{block.caption}</figcaption> : null}
     <ResizableTableFrame storageKey={`protocol-block:${block.id}`} className="max-h-[480px] overflow-auto editorial-scrollbar">
       <table className="document-three-line-table min-w-full table-fixed text-left text-sm">
@@ -270,6 +273,9 @@ function Folded({ systems, rules, children }: { systems: ProtocolSystems; rules:
 }
 
 export function ProtocolDocumentView({ document, title, identifier, version }: { document: ProtocolDocument; title?: string; identifier?: string | null; version?: string | null }) {
+  const { t } = useI18n();
+  // The standard section names are the app's words and follow the interface language; a title the author changed stays as written.
+  const sectionTitle = (section: ProtocolDocument["sections"][number]) => section.title === protocolSectionLabels[section.key] ? t(section.title) : section.title;
   const systems = document.systems;
   const [lens, setLens] = useRememberedLens([identifier, version].filter(Boolean).join("@") || undefined, systems);
   const lensActive = Object.keys(lens).length > 0;
@@ -326,22 +332,24 @@ export function ProtocolDocumentView({ document, title, identifier, version }: {
   };
   // What one reaction uses, read from the chips; any old formula table stays below as notes.
   const usage = protocolUsage(document, projectProtocolExecution(document).steps);
+  const legacyFormulas = hasLegacyFormulas(document);
+  const sections = document.sections.filter((section) => section.key !== "consumption_rules" || usage.length > 0 || legacyFormulas);
   const canvas = <DocumentCanvas label={title ?? "Protocol document"}>
     {title ? <header className="document-page-header">
       <p className="record-identifier text-xs font-semibold uppercase text-muted">{[identifier, version].filter(Boolean).join(" · ")}</p>
-      <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
+      <h1 data-i18n-ignore className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{title}</h1>
     </header> : null}
     <div className="min-w-0">
       {systems?.dimensions.length ? <PreviewLens systems={systems} lens={lens} onChange={setLens} /> : null}
       {resolution?.issues.filter(issue => !issue.code.startsWith("parameter-")).length ? <p role="status" className="text-sm text-warning">{resolution.issues.filter(issue => !issue.code.startsWith("parameter-")).map(issue => issue.message).join("；")}</p> : null}
       {contentWarnings.length ? <div className="rounded-[var(--ln-radius-panel-inner)] border border-warning/40 bg-warning-surface p-4"><h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><AlertTriangle className="h-4 w-4 text-warning" aria-hidden />Import review required</h2><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-graphite">{contentWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}
       <ChipRenderContext.Provider value={chipContext}>
-        {document.sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{section.title}</h2></header><div>{usageHere ? <PerReactionUsage rows={usage} /> : null}{section.blocks.length ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">Not recorded.</p>}</div></section>; })}
+        {sections.map((section) => { const usageHere = section.key === "consumption_rules" && usage.length > 0; const formulas = section.key === "consumption_rules" && legacyFormulas; return <section key={section.key} id={`section-${section.key}`} className="document-section"><header className="mb-5"><h2 style={section.titleFontSizePt ? {fontSize: `${section.titleFontSizePt}pt`} : undefined} className="document-section-title font-serif font-medium text-ink">{sectionTitle(section)}</h2></header><div data-i18n-ignore>{usageHere ? <PerReactionUsage rows={usage} /> : null}{formulas ? <p className="mb-2 text-xs text-muted">旧公式表，仅作说明：执行时不再按它计算，用量来自步骤里的参数块和配液卡。</p> : null}{section.blocks.length && (section.key !== "consumption_rules" || formulas) ? sectionContent(section) : usageHere ? null : <p className="text-sm italic text-muted">{t("Not recorded.")}</p>}</div></section>; })}
       </ChipRenderContext.Provider>
       <ProtocolSourcesView sources={document.sources ?? []} />
     </div>
   </DocumentCanvas>;
-  return <DocumentOutlineWorkbench items={document.sections.map((section) => ({ id: `section-${section.key}`, label: section.title }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;
+  return <DocumentOutlineWorkbench items={sections.map((section) => ({ id: `section-${section.key}`, label: sectionTitle(section) }))} className="document-preview-workbench">{canvas}</DocumentOutlineWorkbench>;
 }
 
 /** 每反应用量: the Protocol's material amounts and mix components, as the chips read under the current lens. */
@@ -351,4 +359,10 @@ function PerReactionUsage({ rows }: { rows: ReturnType<typeof protocolUsage> }) 
     <table><thead><tr><th scope="col">材料</th><th scope="col">用量</th><th scope="col">按</th><th scope="col">步骤</th></tr></thead>
       <tbody>{rows.map(row => <tr key={row.key}><th scope="row">{row.name}</th><td><ChipText text={row.amount} /></td><td>{row.basis}</td><td>{row.step}</td></tr>)}</tbody></table>
   </figure>;
+}
+
+/** Interface words inside the author's content, which the page translator leaves alone, are translated here. */
+function ScrollHint() {
+  const { t } = useI18n();
+  return <p className="text-xs text-muted">{t("Scroll sideways for all columns")}</p>;
 }

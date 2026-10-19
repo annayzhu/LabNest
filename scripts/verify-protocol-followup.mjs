@@ -14,14 +14,14 @@ const read=async()=> (await (await page.request.get(`${base}/api/experiments/${f
 const wait=async predicate=>{for(let n=0;n<150;n++){const e=await read();if(predicate(e))return e;await page.waitForTimeout(100);}throw Error('readback timeout');};
 const check=async(name,run)=>{await run();report.checks.push({name,result:'通过'});console.log('PASS',name);};
 try {
- await check('Visible multi-system Word download, import authoring and AI destinations',async()=>{
+ await check('Word template written by habit, new-Protocol guidance and AI destinations',async()=>{
   await page.goto(base+'/protocols/import',{waitUntil:'networkidle'});
-  const [file]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'下载多体系 Word 模板'}).click()]);await file.saveAs(`${out}/multi-system-template.docx`);
-  assert((await readFile(`${out}/multi-system-template.docx`)).length>2000);
+  const [file]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'下载 Word 模板'}).click()]);await file.saveAs(`${out}/protocol-template.docx`);
+  assert((await readFile(`${out}/protocol-template.docx`)).length>2000);
   await page.screenshot({path:`${out}/import-template-desktop.png`});
   await page.goto(base+'/protocols/new',{waitUntil:'networkidle'});
-  await page.getByRole('button',{name:'实验体系与参数',exact:true}).click();assert(await page.locator('#protocol-systems').getAttribute('open')!==null);
-  await page.getByRole('button',{name:'步骤整理',exact:true}).click();assert(await page.locator('#protocol-operations').getAttribute('open')!==null);
+  await page.getByText('写法',{exact:true}).click();await page.getByText('一步一段',{exact:false}).first().waitFor();
+  assert(await page.getByPlaceholder('记录：浓度 ng/µL、A260/280、胶图').count());
   await page.screenshot({path:`${out}/authoring-entrances.png`});
   await page.goto(base+'/ai',{waitUntil:'networkidle'});for(const path of ['/actions/manual','/entries','/protocols/import'])assert(await page.locator(`a[href="${path}"]`).count());await page.screenshot({path:`${out}/ai-entrances.png`});
  });

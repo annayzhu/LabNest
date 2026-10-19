@@ -1,7 +1,7 @@
 name: AI provider acceptance
 on:
   pull_request:
-    paths: ['src/lib/ai*', 'src/lib/entries.ts', 'src/app/api/ai/**', 'src/app/settings/**', 'src/app/ai/**', 'src/app/actions/**', 'src/components/AISettingsPanel.tsx', 'src/components/useAISettings.ts', 'src/components/SettingsAILink.tsx', 'src/components/Sidebar.tsx', 'src/components/ui/Select.tsx', 'scripts/verify-ai-module*', 'scripts/verify-ai-switch*', 'scripts/verify-ai-review*', 'src/app/entries/**', 'src/app/actions/manual/**', 'src/components/*Ai*', 'src/components/ProposedActionCard.tsx', 'scripts/*ai-provider*', 'prisma/**', '.github/workflows/ai-provider.yml']
+    paths: ['src/lib/ai*', 'src/lib/entries.ts', 'src/app/api/ai/**', 'src/app/settings/**', 'src/app/ai/**', 'src/app/actions/**', 'src/components/AISettingsPanel.tsx', 'src/components/useAISettings.ts', 'src/components/SettingsAILink.tsx', 'src/components/Sidebar.tsx', 'src/components/ui/Select.tsx', 'scripts/verify-ai-module*', 'scripts/verify-ai-switch*', 'scripts/verify-ai-review*', 'src/app/entries/**', 'src/app/actions/manual/**', 'src/components/*Ai*', 'src/components/EntrySuggestions.tsx', 'scripts/*ai-provider*', 'prisma/**', '.github/workflows/ai-provider.yml']
   workflow_dispatch:
 permissions:
   contents: read

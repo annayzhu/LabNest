@@ -19,9 +19,17 @@ import {
   type ProtocolRichTextNode,
 } from "./protocol-document";
 
-const headingToKey = new Map(
-  protocolSectionKeys.map((key) => [protocolSectionLabels[key], key] as const),
-);
+/** Section headings as LabNest writes them, and as people write them in Chinese ("一、材料", "实验步骤："). */
+const headingToKey = new Map<string, ProtocolSectionKey>([
+  ...protocolSectionKeys.map((key) => [protocolSectionLabels[key], key] as const),
+  ...([["说明", "description"], ["简介", "description"], ["概述", "description"], ["目的", "purpose"], ["实验目的", "purpose"],
+    ["背景", "background"], ["原理", "background"], ["背景与原理", "background"], ["材料", "material"], ["试剂", "material"],
+    ["材料与试剂", "material"], ["试剂与耗材", "material"], ["材料与设备", "material"], ["仪器与试剂", "material"],
+    ["步骤", "steps"], ["操作步骤", "steps"], ["实验步骤", "steps"], ["结果", "result_templates"], ["结果记录", "result_templates"],
+    ["结果模板", "result_templates"], ["消耗规则", "consumption_rules"]] as const),
+]);
+// "1. 材料" stays a step: only Chinese numerals ("一、材料") are read as section numbers.
+export const sectionFromHeading = (text: string) => headingToKey.get(text) ?? headingToKey.get(text.replace(/^\s*[一二三四五六七八九十]+[、.．]\s*/, "").replace(/[：:]\s*$/, "").trim());
 
 export type ParsedProtocolDocx = {
   embeddedImages?: DocxEmbeddedImage[];
@@ -208,7 +216,7 @@ export function parseProtocolDocumentXml(
     if (name === "w:p") {
       const text = elementText(element);
       if (!text) continue;
-      const sectionKey = headingToKey.get(text);
+      const sectionKey = sectionFromHeading(text);
       if (sectionKey) {
         flushChecklist();
         currentSection = sectionKey;

@@ -89,8 +89,8 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
           </span>
           <StatusPill status={entry.archivedAt ? "archived" : entry.recordStatus} href={filterHref("/entries", { status: entry.archivedAt ? "archived" : entry.recordStatus })} />
           {entry.pendingActionCount ? (
-            <BadgeLink href={filterHref("/actions", { status: "pending" })} tone="warning">
-              {entry.pendingActionCount} pending {entry.pendingActionCount === 1 ? "action" : "actions"}
+            <BadgeLink href={`${entryHref}#ai-suggestions`} tone="warning">
+              {`${entry.pendingActionCount} AI ${entry.pendingActionCount === 1 ? "suggestion" : "suggestions"}`}
             </BadgeLink>
           ) : null}
           <Link href={entryHref} className="focus-ring ml-auto inline-flex items-center justify-end gap-1 rounded-[var(--ln-radius-control-sm)] font-medium text-moss hover:underline">

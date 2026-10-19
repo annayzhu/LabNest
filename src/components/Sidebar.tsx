@@ -14,7 +14,6 @@ import {
   Dna,
   FolderKanban,
   Home,
-  Inbox,
   Lightbulb,
   Menu,
   PanelLeftClose,
@@ -46,10 +45,8 @@ const navItems = [
   { href: "/tools", label: "Tools", icon: Wrench },
 ];
 
-// The inbox lights on /actions only: the copy-paste workbench under /actions/manual is opened from AI settings.
-const utilityItems: Array<{ href: string; label: string; icon: typeof Search; exact?: boolean }> = [
+const utilityItems = [
   { href: "/search", label: "Search", icon: Search },
-  { href: "/actions", label: "Proposed actions", icon: Inbox, exact: true },
   { href: "/ai", label: "AI settings", icon: Bot },
   { href: "/trash", label: "Recycle Bin", icon: Trash2 },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -146,7 +143,7 @@ export function Sidebar() {
         <nav aria-label="Utilities" className="mt-5 space-y-1 border-t border-hairline pt-3">
           {utilityItems.map((item) => {
             const Icon = item.icon;
-            const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 prefetch={pathname === "/ai" ? false : undefined}
@@ -305,7 +302,7 @@ export function MobileBottomNav() {
             <nav aria-label="Utilities" className="grid grid-cols-2 gap-2">
               {utilityItems.map((item) => {
                 const Icon = item.icon;
-                const isCurrent = item.exact ? pathname === item.href : active(item.href);
+                const isCurrent = active(item.href);
                 return (
                   <Link
                     prefetch={pathname === "/ai" ? false : undefined}

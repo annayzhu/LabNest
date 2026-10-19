@@ -37,7 +37,7 @@ try {
    const page=await context.newPage();
    const backgroundRoutes=[];page.on('request',r=>{if(new URL(r.url()).searchParams.has('_rsc'))backgroundRoutes.push(r.url());});
    const pageErrors=[];page.on('pageerror',e=>{pageErrors.push(e.message);console.log('Page error',engine,page.url(),e.message);});
-   let inferenceRequests=0;page.on('request',r=>{if(/\/api\/ai\/(generate|protocol-extraction|manual|providers)/.test(r.url()))inferenceRequests++;});
+   let inferenceRequests=0;page.on('request',r=>{if(/\/api\/(ai\/(generate|manual|providers)|protocols\/recognize)/.test(r.url()))inferenceRequests++;});
    await page.goto(base+'/ai',{waitUntil:'networkidle'});
    const toggle=page.getByRole('switch',{name:'启用 AI',exact:true});
    await check(`${engine} AI page does not prefetch historical records or navigation data`,async()=>{assert.deepEqual(backgroundRoutes,[]);});

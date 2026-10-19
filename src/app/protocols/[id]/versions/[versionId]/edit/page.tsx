@@ -7,17 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
-import { normalizeProtocolDocument, protocolDocumentFromLegacy, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
+import { storedProtocolDocument, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
 import { dismissProtocolMixProposal, saveProtocolDocument } from "./actions";
 import { protocolMixProposals } from "@/lib/protocol-mix-proposals.server";
-import type { ConsumptionRule, ProtocolMaterial, ProtocolStep, ResultTemplate } from "@/lib/types";
 import { nextDisplayVersion } from "@/lib/protocol";
 import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
-
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? value as T[] : [];
-}
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await params;
@@ -57,16 +52,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
   if (protocolCompatibilityIssue(version.contentJson)) return <AppShell><ProtocolCompatibilityView value={version.contentJson}/></AppShell>;
   const importHistory = await getProtocolImportHistory(id);
 
-  const document = upgradeProtocolDocumentForEditing(normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
-    description: version.protocol.description,
-    purpose: version.purpose,
-    background: version.background,
-    materials: asArray<ProtocolMaterial>(version.materialsJson),
-    equipment: asArray<ProtocolMaterial>(version.equipmentJson),
-    steps: asArray<ProtocolStep>(version.stepsJson),
-    resultTemplates: asArray<ResultTemplate>(version.resultTemplatesJson),
-    consumptionRules: asArray<ConsumptionRule>(version.consumptionRulesJson),
-  }));
+  const document = upgradeProtocolDocumentForEditing(storedProtocolDocument(version));
 
   return (
     <AppShell>

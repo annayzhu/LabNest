@@ -15,6 +15,8 @@ colors:
   primary-surface: "#eaf1ef"
   primary-surface-hover: "#e1ebe8"
   primary-border: "#cadbd6"
+  ai: "#a5441b"
+  ai-fg: "#ffffff"
   info: "#526d73"
   info-surface: "#eaf1f2"
   success: "#526f60"
@@ -76,6 +78,12 @@ components:
     rounded: "{rounded.control-lg}"
     padding: "0 16px"
     height: "40px"
+  button-ai:
+    backgroundColor: "{colors.ai}"
+    textColor: "{colors.ai-fg}"
+    rounded: "{rounded.control-lg}"
+    padding: "0 16px"
+    height: "40px"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.graphite}"
@@ -107,7 +115,7 @@ Calculator extends this world with a deliberate sequence: discover a narrowly na
 
 **Key Characteristics:**
 
-- Moon-white and blue-green neutrals with one restrained dai-cyan accent; color otherwise only carries status.
+- Moon-white and blue-green neutrals with a restrained dai-cyan accent for actions and the style's second color for AI; color otherwise only carries status.
 - Flat, bordered panels and compact controls optimized for repeated work.
 - Editorial headings paired with utilitarian UI copy and monospaced measurements.
 - State changes expressed through color, text, icons, and explicit confirmation.
@@ -119,6 +127,11 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 ### Primary
 
 - **Dai Cyan:** Use the primary family for the main action, active selections, links, and focused control borders. The lighter surfaces support selected chips and low-intensity hover states.
+
+### AI
+
+- **Second color:** Each system style pairs its accent with a second color, the third swatch in the style picker (韎韐 red in 月白黛青, coral in 法蓝赪霞, gold in 靛青缃绮). It marks AI and nothing else: buttons that hand work to a model are filled with it and carry the Sparkles icon, a small filled "AI" tag marks text a model wrote, and the 启用 AI switch takes it when on. Its label color `--ai-fg` is contrast-tested on the fill and on the hover fill in every style and mode; the hover moves away from the label color rather than always darkening. Never use it as text or icon color on a light surface: in the coral, gold and yellow styles it is too light to read.
+- **AI not ready:** While the switch is off or the default service is incomplete, every AI action turns gray (stone fill, muted label, gray icon) but stays focusable; pressing it opens the AI 助手 setup guide and never sends anything. Entries into tools that also work without AI (整理说明书或非模板规程, 按目标设计) turn gray the same way but still open. One server read per page seeds this state, so buttons never flash between colors.
 
 ### Secondary
 
@@ -132,9 +145,9 @@ The palette is quiet and cool; white and near-white surfaces carry most of the i
 
 ### Named Rules
 
-**The One-Action Rule.** A panel has one visually filled primary action; secondary actions remain bordered, quiet, or textual.
+**The One-Action Rule.** A panel has one visually filled primary action; an AI action may sit beside it filled with the second color, because it is a different path rather than a competing emphasis; other secondary actions remain bordered, quiet, or textual.
 
-**The One-Accent Rule.** Each system theme has exactly one accent: its dai-cyan (moss/action) family. Decisive actions are filled with it, links, tabs, selection, and focus use it quietly, and nothing else is colored except semantic status. Destructive actions keep the semantic error family and live in the page's More menu.
+**The Two-Color Rule.** Each system theme has exactly two colors: its dai-cyan (moss/action) family and its second color for AI. Decisive actions are filled with the accent, links, tabs, selection, and focus use it quietly, AI actions and AI-written text are marked with the second color, and nothing else is colored except semantic status. Destructive actions keep the semantic error family and live in the page's More menu.
 
 **The Quiet Status Rule.** Settled states (completed, active, pass, valid, reviewed, running, archived) read as plain muted text. Only states that ask for attention (draft, planned, submitted, warning, failed) keep a tinted pill, so a table row carries at most one pill.
 
@@ -206,10 +219,15 @@ The shape language is gently technical: 8px outer panels, 6px inputs and primary
 ### Buttons
 
 - **Primary:** Filled primary color, high-contrast label, 36–40px height, and 6px corners. Use for Calculate, Confirm, Detect, or Send.
+- **AI:** Filled with the second color, its tested label color, and the Sparkles icon. Use only for actions that send work to a model (用 AI 整理, 归纳为方法卡, Propose with AI) and for entries into AI tools (整理说明书或非模板规程, 按目标设计, Manual AI). Settings diagnostics such as a connection test stay secondary.
 - **Secondary:** White or transparent with a hairline or primary border; use for Save, Pin, Reset, Back, and other reversible actions.
 - **States:** Hover shifts either the fill or pale surface; active controls may move by one pixel. Disabled controls retain their label and reduce opacity. Every keyboard-operable button uses the shared visible focus treatment.
 - **Motion:** Decisive buttons change fill on hover and show a bottom progress tracer only while a real action is pending. Dropdown icons use a short, directional micro-motion. Tool cards may expand into a focused preview modal; routine content never animates merely for decoration. All spatial motion is removed by `prefers-reduced-motion`.
 - **Shared motion grammar:** Dialogs use one 340ms card-and-backdrop entrance; selection surfaces use a 220ms trigger-connected reveal; disclosures use a 240ms spring response; and the sidebar icon crossfades while the rail changes width. These patterns preserve focus, document flow, and reduced-motion preferences.
+
+### AI 助手
+
+A sparkle button in the top bar, filled with the second color when AI is ready and gray otherwise, opens the AI 助手: a floating card under the top bar, like a popover. It never dims or blocks the page, and closes on Escape, its close button, or a press outside. From top to bottom it shows a pill title with a gear to AI 设置, a greeting that says whether AI is ready and which service answers, the quick entries whose AI suggestions wait for 采纳 or 忽略 (the trigger carries their count; each row opens the entry at its suggestions), a setup card in the concierge style while AI is not ready (three steps with what is still missing, and one filled 去 AI 设置 action), a list of the places that use AI with the current page first, and a footer reminding that AI output needs checking and that text is sent only when an AI button is pressed. There is no chat box: LabNest has no general assistant.
 
 ### Chips
 

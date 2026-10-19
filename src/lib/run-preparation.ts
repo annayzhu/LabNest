@@ -63,6 +63,7 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
     if (!adopted && systems?.dimensions.length) warnings.push(`尚未确认本次体系：${name}`);
     // A draft generated from a search still carries what the method card could not verify.
     if (version.document.provenance?.design?.unverified) warnings.push(`${name} 由方案设计生成，方法卡有 ${version.document.provenance.design.unverified} 条未核实，请先核对原文`);
+    if (version.document.provenance?.recognition?.unverified) warnings.push(`${name} 由 AI 整理说明书生成，有 ${version.document.provenance.recognition.unverified} 行未在原文中找到出处，请先核对原文`);
     for (const label of runQuantityLabels(version.document)) if (run.plan.quantities[version.id]?.[label] === undefined) warnings.push(`尚未填写${label}：${name}`);
     if (!systems) continue;
     const used = new Set(steps.filter(([id]) => versionOf(id)?.id === version.id).flatMap(([, step]) => step.chipIds ?? []));

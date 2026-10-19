@@ -1,14 +1,19 @@
 import type { MethodCard } from './method-card';
 import type { MethodHit, MethodText } from './method-sources/types';
-import { recognizeQuantity } from './protocol-chips';
+import { recognizeQuantity, splitDimension, splitLookupSource } from './protocol-chips';
 import { createEmptyProtocolDocument, type ProtocolContentBlock, type ProtocolDocument, type ProtocolSource } from './protocol-document';
 import { blankProtocolSystems, type ProtocolSystems } from './protocol-systems-schema';
 
+/** Words that make the number before them a size: "1.5 mL 离心管", "96 孔板", "10 cm 皿". */
+const containerAfter = /^\s*(?:离心管|收集管|冻存管|PCR\s*管|EP\s*管|管|孔板|深孔板|板|培养皿|皿|培养瓶|瓶|吸附柱|柱|枪头|吸头|滤器|tubes?|plates?|dish(?:es)?|flasks?|columns?|tips?)/i;
+
 /**
- * Every quantity in a line becomes a chip with a fixed value, the way typing it in the editor would.
- * "50/80 µL" (one value per system) stays as text: the author decides the systems in the editor.
+ * Every quantity in a line becomes a chip, the way typing it in the editor would: one value is a fixed chip; "50/80 µL"
+ * gives one value per option of the only system with that many options, and stays text when there is no such system.
+ * Container sizes ("1.5 mL 离心管") stay text too: they are not amounts. `kept` collects those sizes, so a conversion can
+ * say so.
  */
-export function chipifyText(text: string, systems: ProtocolSystems, newId: (prefix: string) => string) {
+export function chipifyText(text: string, systems: ProtocolSystems, newId: (prefix: string) => string, kept?: string[]) {
   const padded = `${text} `;
   const found = new Map<number, ReturnType<typeof recognizeQuantity> & object>();
   for (let end = 1; end <= padded.length; end += 1) {
@@ -17,9 +22,17 @@ export function chipifyText(text: string, systems: ProtocolSystems, newId: (pref
   }
   let out = text;
   for (const quantity of [...found.values()].sort((a, b) => b.index - a.index)) {
-    if (quantity.values.length !== 1 || quantity.index + quantity.source.length > text.length) continue;
+    if (quantity.index + quantity.source.length > text.length) continue;
+    if (containerAfter.test(text.slice(quantity.index + quantity.source.length))) { kept?.push(quantity.source.trim()); continue; }
+    let source: ProtocolSystems['parameters'][number]['source'] = { kind: 'fixed', value: quantity.values[0], unit: quantity.unit };
+    if (quantity.values.length > 1) {
+      const choice = splitDimension(quantity.values.length, systems);
+      const dimension = 'dimensionId' in choice ? systems.dimensions.find(item => item.id === choice.dimensionId) : undefined;
+      if (!dimension) continue;
+      source = splitLookupSource(quantity.values, quantity.unit, dimension, () => newId('value'));
+    }
     const id = newId('p');
-    systems.parameters.push({ id, label: '', unit: quantity.unit, kind: quantity.kind, origin: 'chip', source: { kind: 'fixed', value: quantity.values[0], unit: quantity.unit } });
+    systems.parameters.push({ id, label: '', unit: quantity.unit, kind: quantity.kind, origin: 'chip', source });
     out = `${out.slice(0, quantity.index)}{{${id}}}${out.slice(quantity.index + quantity.source.length)}`;
   }
   return out;

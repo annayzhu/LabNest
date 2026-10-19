@@ -1041,12 +1041,8 @@ export const zhUi: Record<string, string> = {
   "procurement inquiry": "采购询价",
   "procurement quote line": "采购报价行",
   "reference connector": "参考文献连接器",
-  "Review inbox": "审核收件箱",
-  "Proposed Actions": "建议操作",
-  "Protocol calculations, imports, manual review, and future AI tasks can propose actions. Nothing mutates core records until the user confirms execution.": "实验规程计算、导入、人工审核和未来 AI 任务可以提出操作建议；只有用户确认执行后才会修改核心记录。",
   "Manual AI": "手动 AI",
   "confidence": "置信度",
-  "Payload summary": "载荷摘要",
   "Files": "文件",
   "Upload local files and link them to records without leaving the notebook.": "在工作空间内上传本地文件并关联到记录。",
   "Local storage": "本地存储",
@@ -1401,8 +1397,6 @@ export const zhUi: Record<string, string> = {
   "No Dataset schema. Small scalar or media-only Results do not require one.": "尚未设置数据集结构；只有少量标量或媒体内容的结果不必配置数据集。",
   "No formal records are linked to this entry yet.": "这条记录尚未关联正式科研记录。",
   "No inventory locations have been created.": "尚未创建库存位置。",
-  "No proposed actions match the current filters.": "没有符合当前筛选条件的建议操作。",
-  "No proposed actions originate from this entry.": "没有由这条记录产生的建议操作。",
   "No sequences yet": "暂无序列",
   "Occurred": "发生时间",
   "Open entry media": "打开记录媒体",
@@ -1561,7 +1555,6 @@ export const zhUi: Record<string, string> = {
   "Report record": "报告记录",
   "Result controls and supporting files": "结果管理与支持文件",
   "Reusable methods": "可复用方法",
-  "Review actions": "审核操作",
   "Revise the structured note, add or reorder original media, and preserve removed originals in the attachment archive.": "修订结构化记录、添加或调整原始媒体顺序；移除的原始文件仍保留在附件归档中。",
   "Short summary": "简短摘要",
   "Snapshot retained independently of future Protocol edits": "快照独立保存，不受后续实验规程编辑影响",
@@ -1928,8 +1921,8 @@ function translateDynamic(value: string): string {
   if (match) return `${match[1]} 个附件`;
   match = value.match(/^(\d+) links?$/);
   if (match) return `${match[1]} 个关联`;
-  match = value.match(/^(\d+) pending actions?$/);
-  if (match) return `${match[1]} 个待处理操作`;
+  match = value.match(/^(\d+) AI suggestions?$/);
+  if (match) return `${match[1]} 条 AI 建议`;
   match = value.match(/^(\d+) assigned items$/);
   if (match) return `${match[1]} 个已分配物品`;
   match = value.match(/^(\d+) movement references$/);

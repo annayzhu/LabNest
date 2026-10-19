@@ -19,6 +19,7 @@ import {
   resultTemplateFieldsToRows,
   resultTemplateInputSchema,
 } from "./result-templates";
+import { emptyRecordTemplate } from "./result-record-line";
 import { parseRichTextFontFamily, type RichTextFontFamily } from "./rich-text-font-family";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
@@ -178,6 +179,8 @@ export const protocolDocumentSchema = z.object({
   provenance: z.object({
     fromExperimentIds: z.array(z.string()).default([]),
     design: z.object({ sessionId: z.string(), hitKey: z.string(), unverified: z.number().int().nonnegative().default(0), generatedAt: z.string() }).optional(),
+    /** AI 识别: the kept source file, the model and prompt that laid it out, and how many lines the check could not find in it. */
+    recognition: z.object({ sourceAttachmentId: z.string(), model: z.string().optional(), promptVersion: z.string().optional(), unverified: z.number().int().nonnegative().default(0), recognizedAt: z.string() }).optional(),
   }).optional(),
   sections: z.array(
     z.object({
@@ -237,12 +240,12 @@ export function createProtocolTemplateDocument(): ProtocolDocument {
   for (const key of ["description", "purpose", "background"] as const) {
     section(key).blocks.push({ id: `${key}-rich-1`, type: "rich_text", nodes: richTextFromPlainText("") });
   }
-  section("material").blocks.push({ id: "material-table-1", type: "table", caption: "Materials", rows: [["Name", "Unit", "Role", "Notes"], ["", "", "", ""]] });
+  section("material").blocks.push({ id: "material-table-1", type: "table", caption: "材料", rows: [["名称", "用量", "说明"], ["", "", ""]] });
   // New Protocols start with one step block: Enter makes the next step.
   section("steps").blocks.push({ id: "steps-step-1", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }], execution: { role: "step", stepId: "step-1", format: "block" } });
-  const resultTemplate = normalizeResultTemplate({ result_type: "result_type", templateKey: "result_type", instructions: richTextFromPlainText(""), fields: [], datasets: [], artifacts: [], view: { preset: "generic", charts: [] } });
-  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
-  section("consumption_rules").blocks.push({ id: "consumption-table-1", type: "table", caption: "Consumption rules", rows: [["Material", "Formula", "Unit"], ["", "", ""]] });
+  // What to record is one written line ("记录：…"); amounts used come from the steps, so there is no formula table.
+  const resultTemplate = emptyRecordTemplate();
+  section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.title, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   return document;
 }
 
@@ -277,6 +280,19 @@ export function normalizeProtocolDocument(value: unknown): ProtocolDocument | un
       byKey.get(key) ?? { key, title: protocolSectionLabels[key], blocks: [] },
     ),
   };
+}
+
+/** A stored version as a document: its own, or one built from the fields of a version saved before documents existed. */
+export function storedProtocolDocument(version: {
+  contentJson: unknown; purpose: string | null; background: string | null; protocol: { description: string | null };
+  materialsJson: unknown; equipmentJson: unknown; stepsJson: unknown; resultTemplatesJson: unknown; consumptionRulesJson: unknown;
+}): ProtocolDocument {
+  const list = <T,>(value: unknown) => (Array.isArray(value) ? value : []) as T[];
+  return normalizeProtocolDocument(version.contentJson) ?? protocolDocumentFromLegacy({
+    description: version.protocol.description, purpose: version.purpose, background: version.background,
+    materials: list<ProtocolMaterial>(version.materialsJson), equipment: list<ProtocolMaterial>(version.equipmentJson), steps: list<ProtocolStep>(version.stepsJson),
+    resultTemplates: list<ResultTemplate>(version.resultTemplatesJson), consumptionRules: list<ConsumptionRule>(version.consumptionRulesJson),
+  });
 }
 
 export function protocolDocumentFromLegacy({
@@ -353,6 +369,13 @@ export function protocolDocumentFromLegacy({
 
   return document;
 }
+
+/**
+ * The old formula table (消耗规则) only shows while it holds something: amounts now come from the steps, so an empty one
+ * is left out of the editor and the view.
+ */
+export const hasLegacyFormulas = (document: ProtocolDocument) => (document.sections.find((section) => section.key === "consumption_rules")?.blocks ?? [])
+  .some((block) => block.type === "table" ? !isEmptyTable(block) && block.rows.length > 1 : block.type === "rich_text" ? Boolean(richTextPlainText(block.nodes).trim()) : true);
 
 /** A table with body rows that are all blank, e.g. a recipe table the author left for later. A header-only table still says something and stays. */
 export const isEmptyTable = (block: ProtocolContentBlock) => block.type === "table" && block.rows.length > 1 && block.rows.slice(1).every((row) => row.every((cell) => !String(cell ?? "").trim()));
@@ -500,6 +523,8 @@ export function projectProtocolDocument(document: ProtocolDocument) {
     const unitIndex = protocolTableColumnIndex(headers, ["unit", "单位"], -1);
     const roleIndex = protocolTableColumnIndex(headers, ["role", "use", "用途", "作用"], -1);
     const notesIndex = protocolTableColumnIndex(headers, ["note", "setting", "amount", "备注", "条件", "用量"], -1);
+    // "名称 / 用量 / 说明": the amount and the remark both reach the notes.
+    const remarkIndex = protocolTableColumnIndex(headers, ["说明", "描述", "remark", "description"], -1);
     const target = /equipment|instrument|设备|仪器/i.test(block.caption ?? "") ? equipment : materials;
     for (const row of block.rows.slice(1)) {
       const name = row[nameIndex]?.trim() ?? "";
@@ -508,7 +533,8 @@ export function projectProtocolDocument(document: ProtocolDocument) {
         name,
         unit: unitIndex >= 0 ? row[unitIndex]?.trim() || undefined : undefined,
         role: roleIndex >= 0 ? row[roleIndex]?.trim() || undefined : undefined,
-        notes: (notesIndex >= 0 ? row[notesIndex]?.trim() : "") || row.filter((_, index) => ![nameIndex, unitIndex, roleIndex].includes(index)).filter(Boolean).join(" | ") || undefined,
+        notes: [...new Set([notesIndex, remarkIndex])].filter((index) => index >= 0).map((index) => row[index]?.trim()).filter(Boolean).join(" · ")
+          || row.filter((_, index) => ![nameIndex, unitIndex, roleIndex].includes(index)).filter(Boolean).join(" | ") || undefined,
       });
     }
   }
@@ -516,7 +542,10 @@ export function projectProtocolDocument(document: ProtocolDocument) {
   const { steps, commonBlocks, notePlacement, executionNeedsReview } = projectProtocolExecution(document);
 
   const resultTemplates: ResultTemplate[] = (resultSection?.blocks ?? [])
-    .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && block.rows.length > 1)
+    // A written template counts once it records anything (a picture alone is enough); an unwritten one is left out.
+    .filter((block): block is Extract<ProtocolContentBlock, { type: "table" }> => block.type === "table" && (block.resultTemplate
+      ? Boolean(block.resultTemplate.fields.length || block.resultTemplate.artifacts?.length || block.resultTemplate.datasets?.length)
+      : block.rows.length > 1))
     .map((block, index) => {
       if (block.resultTemplate) return normalizeResultTemplate({ ...block.resultTemplate, result_type: block.caption || block.resultTemplate.result_type }, index);
       const headers = block.rows[0] ?? [];

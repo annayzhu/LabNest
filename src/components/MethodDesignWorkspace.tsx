@@ -1,4 +1,5 @@
 'use client';
+import { Sparkles } from 'lucide-react';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -6,15 +7,18 @@ import { addPastedMethod, chooseMethods, fetchMethod, generateDraft, saveManualC
 import { methodCardSections, type MethodCard } from '@/lib/method-card';
 import { describeScaleChange, type ScaleChange } from '@/lib/method-scaling';
 import { methodSourceLabels, type MethodHit, type MethodHitSource } from '@/lib/method-sources/types';
+import { AiButton, useAiStatus } from './AiAssistant';
 import { Button } from './ui/Button';
 import './method-design.css';
 
 type Draft = { protocolId: string; versionId: string; humanCode: string; title: string; displayVersion: string; reviewStage: string };
-type Props = { sessionId: string; hits: MethodHit[]; cards: Record<string, MethodCard>; chosen: Array<{ key: string; reason?: string }>; aiReady: boolean; aiName?: string; searchErrors: string[]; lastQuery: string; draft: Draft | null };
+type Props = { sessionId: string; hits: MethodHit[]; cards: Record<string, MethodCard>; chosen: Array<{ key: string; reason?: string }>; searchErrors: string[]; lastQuery: string; draft: Draft | null };
 const order: MethodHitSource[] = ['local', 'protocols_io', 'europe_pmc', 'manual'];
 const volumeUnits = ['µL', 'mL', 'L'];
 
-export function MethodDesignWorkspace({ sessionId, hits, cards, chosen, aiReady, aiName, searchErrors, lastQuery, draft }: Props) {
+export function MethodDesignWorkspace({ sessionId, hits, cards, chosen, searchErrors, lastQuery, draft }: Props) {
+  const ai = useAiStatus();
+  const aiName = ai.saved?.availability.providerName;
   const router = useRouter();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
@@ -38,7 +42,7 @@ export function MethodDesignWorkspace({ sessionId, hits, cards, chosen, aiReady,
       </div>
       {notes.search ? <p role="status" className="ln-design-note">{notes.search}</p> : null}
       {searchErrors.length ? <p role="status" className="text-sm text-warning">{searchErrors.join('；')}</p> : null}
-      {!aiReady ? <p className="ln-design-note">没有连接模型：检索、抓取、比较、生成草稿和体系换算照常可用；方法卡用“手工填写方法卡”。</p> : null}
+      {!ai.ready ? <p className="ln-design-note">没有连接模型：检索、抓取、比较、生成草稿和体系换算照常可用；方法卡用“手工填写方法卡”。</p> : null}
     </section>
 
     <PasteMethod sessionId={sessionId} query={query} pending={pending} onDone={text => { note('paste', text); router.refresh(); }} />
@@ -60,7 +64,7 @@ export function MethodDesignWorkspace({ sessionId, hits, cards, chosen, aiReady,
             <div className="ln-hit-actions">
               {hit.source !== 'manual' ? <Button type="button" size="sm" disabled={pending} onClick={() => run(hit.key, () => fetchMethod(sessionId, hit.key))}>{busy === hit.key ? '处理中…' : hit.attachmentId ? '重新抓取原文' : '抓取原文'}</Button> : null}
               {hit.attachmentId ? <a href={`/api/attachments/${hit.attachmentId}`} target="_blank" rel="noreferrer">查看抓取的原文</a> : null}
-              {hit.attachmentId && aiReady ? <Button type="button" size="sm" disabled={pending} onClick={() => run(hit.key, () => summarizeMethod(sessionId, hit.key))}>{card && !card.byHand ? '重新归纳' : `归纳为方法卡${aiName ? `（${aiName}）` : ''}`}</Button> : null}
+              {hit.attachmentId ? <AiButton type="button" size="sm" disabled={pending} onClick={() => run(hit.key, () => summarizeMethod(sessionId, hit.key))}><Sparkles className="h-4 w-4" aria-hidden />{card && !card.byHand ? '重新归纳' : `归纳为方法卡${ai.ready && aiName ? `（${aiName}）` : ''}`}</AiButton> : null}
               {hit.attachmentId ? <Button type="button" size="sm" variant="primary" disabled={pending || Boolean(draft)} onClick={() => run(hit.key, () => generateDraft(sessionId, hit.key))}>生成规程草稿</Button> : null}
               <span className={`ln-hit-status${hit.fetchError ? ' is-error' : ''}`}>{hit.fetchError ? `抓取失败：${hit.fetchError}` : hit.fetchedAt ? `${hit.source === 'manual' ? '已粘贴' : '已抓取'} ${hit.textChars} 字 · ${hit.fetchedAt.slice(0, 16).replace('T', ' ')}` : '尚未抓取'}</span>
             </div>
@@ -118,7 +122,7 @@ function MethodCardView({ card }: { card: MethodCard }) {
   return <div className="ln-card" aria-label="方法卡">
     {card.summary ? <p className="ln-card-summary">{card.summary}{card.duration ? ` · 用时 ${card.duration}` : ''}</p> : null}
     <dl className="ln-card-section">{methodCardSections.filter(section => card[section.key].length).map(section => <div key={section.key} className="contents"><dt>{section.label}</dt><dd><ul>{card[section.key].map((item, index) => <li key={index} className="ln-card-line" data-unverified={item.verified ? undefined : ''}>{item.text}{item.quote ? <span className="ln-card-quote">“{item.quote}”</span> : null}</li>)}</ul></dd></div>)}</dl>
-    <p className="ln-card-foot">{card.byHand ? '手工填写' : `${card.provider ?? '模型'}${card.model ? ` · ${card.model}` : ''} 归纳，${card.unverified ? `${card.unverified} 条未在原文找到依据` : '每条都在原文找到依据'}`} · {card.madeAt.slice(0, 16).replace('T', ' ')}</p>
+    <p className="ln-card-foot">{card.byHand ? '手工填写' : <><span className="ln-ai-tag">AI</span> {`${card.provider ?? '模型'}${card.model ? ` · ${card.model}` : ''} 归纳，${card.unverified ? `${card.unverified} 条未在原文找到依据` : '每条都在原文找到依据'}`}</>} · {card.madeAt.slice(0, 16).replace('T', ' ')}</p>
   </div>;
 }
 
@@ -136,9 +140,11 @@ function ManualCardForm({ sessionId, hitKey, card, pending, onDone }: { sessionI
 
 /** The draft exists: open it, adapt its system, or start an Experiment from it (which runs the preparation check first). */
 function DraftPanel({ draft, pending }: { draft: Draft; pending: boolean }) {
+  const ai = useAiStatus();
   const [working, start] = useTransition();
   const [form, setForm] = useState({ fromValue: '20', fromUnit: 'µL', toValue: '10', toUnit: 'µL', label: '反应体系', explain: true });
   const [result, setResult] = useState<{ error?: string; message?: string; changes?: ScaleChange[]; explanation?: string } | null>(null);
+  const explain = form.explain && ai.ready;
   return <section className="ln-scale" aria-label="规程草稿">
     <h2 className="text-sm font-semibold text-ink">规程草稿 · {draft.humanCode} · {draft.title} v{draft.displayVersion}（{draft.reviewStage === 'draft' ? '草稿' : draft.reviewStage}）</h2>
     <div className="ln-hit-actions">
@@ -153,8 +159,8 @@ function DraftPanel({ draft, pending }: { draft: Draft; pending: boolean }) {
       <label>新体系<input inputMode="decimal" value={form.toValue} onChange={event => setForm({ ...form, toValue: event.target.value })} /></label>
       <label>单位<select value={form.toUnit} onChange={event => setForm({ ...form, toUnit: event.target.value })}>{volumeUnits.map(unit => <option key={unit}>{unit}</option>)}</select></label>
       <label>维度名称<input value={form.label} onChange={event => setForm({ ...form, label: event.target.value })} /></label>
-      <label className="is-check" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><input type="checkbox" checked={form.explain} onChange={event => setForm({ ...form, explain: event.target.checked })} />请模型解释（不改数值）</label>
-      <Button type="button" variant="primary" disabled={pending || working || draft.reviewStage !== 'draft'} onClick={() => start(async () => { setResult(await scaleDraft({ versionId: draft.versionId, fromValue: Number(form.fromValue), fromUnit: form.fromUnit, toValue: Number(form.toValue), toUnit: form.toUnit, label: form.label, explain: form.explain })); })}>{working ? '换算中…' : '换算并写入草稿'}</Button>
+      <label className="is-check" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><input type="checkbox" checked={explain} disabled={!ai.ready} onChange={event => setForm({ ...form, explain: event.target.checked })} />请模型解释（不改数值）{!ai.ready ? <button type="button" className="focus-ring text-xs text-muted underline" onClick={ai.openPanel}>需开启 AI</button> : null}</label>
+      <Button type="button" variant="primary" disabled={pending || working || draft.reviewStage !== 'draft'} onClick={() => start(async () => { setResult(await scaleDraft({ versionId: draft.versionId, fromValue: Number(form.fromValue), fromUnit: form.fromUnit, toValue: Number(form.toValue), toUnit: form.toUnit, label: form.label, explain: explain })); })}>{working ? '换算中…' : '换算并写入草稿'}</Button>
     </div>
     {result?.error ? <p role="alert" className="text-sm text-error">{result.error}</p> : null}
     {result?.message ? <p role="status" className="text-sm text-success">{result.message}</p> : null}

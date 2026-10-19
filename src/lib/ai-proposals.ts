@@ -18,7 +18,7 @@ export type ProposalResponse = AIGenerationResult & {
 
 export function proposalResponse(result: AIGenerationResult, providerName: string, persisted = 0): ProposalResponse {
   return { ...result, status: "validated", provider: providerName, count: result.actions.length, persisted,
-    note: persisted ? "Saved as pending suggestions. Review and execution controls are not implemented yet; nothing was executed." : "These are proposed actions only. LabNest has not mutated any record." };
+    note: persisted ? "Saved as pending suggestions under the entry. Nothing changes until one is accepted there." : "These are proposed actions only. LabNest has not mutated any record." };
 }
 
 /** One browser request produces one pending batch, including concurrent or ambiguous retries. */

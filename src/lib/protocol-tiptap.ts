@@ -6,6 +6,7 @@ import type { JSONContent } from "@tiptap/core";
 import { documentMediaFromMarkdown, documentMediaToMarkdown, documentMediaSchema } from "./document-media";
 import {
   createEmptyProtocolDocument,
+  hasLegacyFormulas,
   protocolContentBlockSchema,
   protocolSectionKeys,
   type ProtocolContentBlock,
@@ -202,7 +203,7 @@ export function protocolDocumentToTiptap(document: ProtocolDocument): JSONConten
   return parameterNodesForEditor({
     type: "doc",
     attrs:{executionConfirmed:document.executionConfirmed, systems:document.systems},
-    content: protocolSectionKeys.map((sectionKey) => {
+    content: protocolSectionKeys.filter((sectionKey) => sectionKey !== "consumption_rules" || hasLegacyFormulas(document)).map((sectionKey) => {
       const section = document.sections.find((item) => item.key === sectionKey);
       const rawContent = section ? sectionContentToTiptap(section.blocks) : [];
       const firstBlock = section?.blocks[0];

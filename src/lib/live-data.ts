@@ -4,7 +4,6 @@ import type {
   InventoryItem,
   ProcurementInquiry,
   ProcurementQuoteLine,
-  ProposedAction,
   PurchaseRequest,
   SampleLifecycleEvent,
   SampleProfile,
@@ -14,12 +13,6 @@ import type {
 
 function optional<T>(value: T | null): T | undefined {
   return value ?? undefined;
-}
-
-function jsonRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
 }
 
 export async function getEntityRecords(): Promise<EntityRecord[]> {
@@ -64,35 +57,6 @@ export async function getSequenceRecords(): Promise<SequenceRecord[]> {
       description: record.description ?? "",
       linkedEntity: record.entityLinks.map((link) => link.entity.name).join(", ") || undefined,
     }];
-  });
-}
-
-export async function getProposedActionRecords(): Promise<ProposedAction[]> {
-  const records = await prisma.proposedAction.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return records.map((record) => {
-    const payload = jsonRecord(record.payloadJson);
-    const affectedItem = [
-      payload.inventory_item_name,
-      payload.title,
-      payload.product_name,
-      payload.entity_name,
-    ].find((value): value is string => typeof value === "string" && value.length > 0);
-
-    return {
-      id: record.id,
-      sourceType: record.sourceType,
-      sourceLabel: record.sourceId ? `${record.sourceType}:${record.sourceId}` : record.sourceType,
-      actionType: record.actionType,
-      status: record.status,
-      confidence: optional(record.confidence),
-      reason: record.reason ?? "No reason recorded.",
-      payload,
-      affectedItem,
-      createdAt: record.createdAt.toISOString(),
-    };
   });
 }
 

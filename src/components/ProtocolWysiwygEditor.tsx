@@ -46,7 +46,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import { TextStyleKit } from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
-import { AlertTriangle, Filter, FlaskConical, ImagePlus, Wrench } from "lucide-react";
+import { AlertTriangle, Filter, ImagePlus, Wrench } from "lucide-react";
 import { wysiwygWidgetInputClass } from "./widget-input";
 import { InlineTableEditor } from "@/components/InlineTableEditor";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
@@ -59,7 +59,10 @@ import {
   type ProtocolSectionKey,
 } from "@/lib/protocol-document";
 import { protocolDocumentToTiptap, tiptapToProtocolDocument } from "@/lib/protocol-tiptap";
-import { createDefaultResultTemplate, resultTemplateFieldsToRows } from "@/lib/result-templates";
+import { resultTemplateFieldsToRows } from "@/lib/result-templates";
+import { emptyRecordTemplate, keepWrittenLines } from "@/lib/result-record-line";
+import { RecordTemplateEditor } from "./protocol/RecordTemplate";
+import { useI18n } from "@/components/I18nProvider";
 import { labToolManifest } from "@/lib/tool-manifest";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
@@ -74,12 +77,25 @@ function embeddableToolUrl(value: string) {
   return /^(https:\/\/|\/)/i.test(trimmed) ? trimmed : undefined;
 }
 
+/** What each opening section is for, shown on its empty line. */
+const sectionPlaceholders: Partial<Record<ProtocolSectionKey, string>> = {
+  description: '一句话说明这份规程做什么、适用于什么样本',
+  purpose: '要得到什么，如：从培养细胞中提取总 RNA，用于 qPCR',
+  background: '原理、依据或注意事项，可以留空',
+};
+
 function ProtocolSectionNodeView({ node }: NodeViewProps) {
   const sectionKey = node.attrs.sectionKey as ProtocolSectionKey;
+  // The page translator leaves the editable page alone, so the headings are translated here.
+  const { t } = useI18n();
   return <NodeViewWrapper as="section" id={`protocol-section-${sectionKey}`} className="ln-protocol-section" data-section-key={sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{protocolSectionLabels[sectionKey] ?? sectionKey}</h2>
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{sectionKey === "consumption_rules" ? "旧公式表（仅说明）" : t(protocolSectionLabels[sectionKey] ?? sectionKey)}</h2>
+      {sectionKey === "consumption_rules" ? <small>执行时不再按它计算；用量来自步骤里的参数块和配液卡。转换为步骤块时并入材料表。</small> : null}
+      {sectionKey === "steps" ? <details className="ln-writing-hint" data-print-hidden><summary>写法</summary>
+        <p>一步一段，回车新建下一步。数值直接写，如“50 µL”“10 min”；不同体系写“50/80 µL”；只对部分样本的操作写“仅富脂样本：…”。要记录的结果写在“结果模板”里：“记录：浓度 ng/µL、A260/280、胶图”。</p>
+      </details> : null}
     </header>
     <NodeViewContent as="div" className="ln-protocol-section-content" />
   </NodeViewWrapper>;
@@ -89,7 +105,6 @@ function ProtocolWidgetNodeView({ node, updateAttributes, selected, getPos }: No
   const block = node.attrs.block as WidgetBlock;
   const updateBlock = (next: WidgetBlock) => updateAttributes({ block: next });
   const isResultTemplate = block.type === "table" && Boolean(block.resultTemplate);
-  const resultTemplate = block.type === "table" ? block.resultTemplate : undefined;
 
   return <NodeViewWrapper className={cn("ln-protocol-widget", selected && "is-selected")} data-widget-type={block.type}>
     <div className="document-print-only"><ProtocolContentBlockView block={block} /></div>
@@ -123,10 +138,8 @@ function ProtocolWidgetNodeView({ node, updateAttributes, selected, getPos }: No
       {block.type === "program" ? <ProgramEditor program={block} onChange={updateBlock} /> : null}
       {block.type === "mix" ? <MixEditor mix={block} onChange={updateBlock} getPos={getPos} /> : null}
       {block.type === "table" && !isResultTemplate ? <InlineTableEditor rows={block.rows} onChange={(rows) => updateBlock({ ...block, rows })} caption={block.caption} onCaptionChange={(caption) => updateBlock({ ...block, caption })} /> : null}
-      {block.type === "table" && isResultTemplate ? <details className="ln-protocol-result-template-editor">
-        <summary><span><FlaskConical aria-hidden /><strong>{resultTemplate?.title ?? resultTemplate?.result_type ?? "Result template"}</strong></span><small>{resultTemplate?.fields.length ?? 0} fields · {resultTemplate?.datasets?.length ?? 0} data tables · {resultTemplate?.artifacts?.length ?? 0} files</small><em>Edit</em></summary>
-        <div className="ln-protocol-result-template-editor-body"><ResultTemplateConfigEditor block={block} onChange={updateBlock} /></div>
-      </details> : null}
+      {block.type === "table" && isResultTemplate ? <RecordTemplateEditor block={block} onChange={updateBlock}
+        advanced={<ResultTemplateConfigEditor block={block} onChange={next => updateBlock(keepWrittenLines(block, next))} />} /> : null}
     </div>
   </NodeViewWrapper>;
 }
@@ -180,7 +193,15 @@ function protocolEditorExtensions() {
       Placeholder.configure({ includeChildren: true, placeholder: ({ editor: current, node, pos }) => {
         if (node.type.name !== 'paragraph') return '';
         const $pos = current.state.doc.resolve(pos);
-        for (let depth = $pos.depth; depth > 0; depth -= 1) if ($pos.node(depth).type.name === 'protocolStep') return '写下这一步。回车新建下一步，Shift+回车换行';
+        for (let depth = $pos.depth; depth > 0; depth -= 1) {
+          const ancestor = $pos.node(depth);
+          if (ancestor.type.name === 'protocolStep') {
+            // The first step of an empty section shows how a step reads; later ones only say how to go on.
+            const section = $pos.node(depth - 1);
+            return section.childCount === 1 && !section.textContent.trim() ? '写下第一步，如：加入 Proteinase K 50 µL，混匀。回车新建下一步' : '写下这一步。回车新建下一步，Shift+回车换行';
+          }
+          if (ancestor.type.name === 'protocolSection') return sectionPlaceholders[ancestor.attrs.sectionKey as ProtocolSectionKey] ?? '输入 / 插入参数、工具或内容';
+        }
         return '输入 / 插入参数、工具或内容';
       } }),
       // "1/2" must stay a split value, never become "½".
@@ -434,8 +455,8 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     if (choice.type === 'image') { chain.run(); chooseFiles(current, uploadDraftId, 'image/*'); return; }
     if (choice.type === 'file') { chain.run(); chooseFiles(current, uploadDraftId); return; }
     if (choice.type === 'result-template') {
-      const resultTemplate = createDefaultResultTemplate("measurement");
-      chain.insertContent({ type: 'protocolWidget', attrs: { block: { id: uniqueBlockId('result-template'), type: 'table', caption: resultTemplate.result_type, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate } } }).run();
+      const resultTemplate = emptyRecordTemplate();
+      chain.insertContent({ type: 'protocolWidget', attrs: { block: { id: uniqueBlockId('result-template'), type: 'table', caption: resultTemplate.title, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate } } }).run();
       return;
     }
     if (choice.type === 'embedded-tool') {

@@ -31,7 +31,7 @@ export function SystemThemePicker() {
               <span className="system-theme-preview" data-preview-mode={mode} aria-hidden>
                 <span style={{ backgroundColor: tokens['--paper'] }} />
                 <span style={{ backgroundColor: tokens['--moss'] }} />
-                <span style={{ backgroundColor: tokens['--nav-active-bg'] }} />
+                <span style={{ backgroundColor: tokens['--ai'] }} />
                 <TraditionalMotif motif={theme.motif as TraditionalMotifName} className="system-theme-preview-motif" />
               </span>
               <span className="min-w-0 flex-1 text-left">

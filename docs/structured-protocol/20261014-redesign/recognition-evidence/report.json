@@ -1,0 +1,21 @@
+{
+  "base": "http://localhost:3339",
+  "at": "2026-10-19T02:11:09.403Z",
+  "synthetic": true,
+  "liveProviders": false,
+  "checks": [
+    {
+      "name": "without a model the page reads as written, and the gray AI button opens the setup guide instead",
+      "status": "passed"
+    },
+    {
+      "name": "AI 整理 repairs once and every line is found in the original",
+      "status": "passed"
+    },
+    {
+      "name": "存为草稿规程 saves an ai_recognized draft that keeps its source and its check",
+      "status": "passed"
+    }
+  ],
+  "failures": []
+}

@@ -1,11 +1,12 @@
 "use client";
 
-import { Bot, CheckCircle2, Clipboard, RotateCcw, Sparkles } from "lucide-react";
+import { CheckCircle2, Clipboard, RotateCcw, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formInputClass, formLabelClass, formMonoTextareaClass, formTextareaClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 
-import { requestAI, useAISettings } from "./useAISettings";
+import { AiButton, useAiStatus } from "./AiAssistant";
+import { requestAI } from "./useAISettings";
 
 const exampleEntry = {
   title: "Adjusted seeding density before GFP transfection",
@@ -20,8 +21,8 @@ type ParseResult = {
 };
 
 export function ManualAiWorkbench({ connected }: { connected?: { providerName: string; model?: string } }) {
-  const ai = useAISettings();
-  const availableProvider = ai.connected ? ai.saved?.availability : undefined;
+  const ai = useAiStatus();
+  const availableProvider = ai.ready ? ai.saved?.availability : undefined;
   const [entryTitle, setEntryTitle] = useState(exampleEntry.title);
   const [entryBody, setEntryBody] = useState(exampleEntry.body);
   const [prompt, setPrompt] = useState("");
@@ -135,7 +136,6 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-      {!ai.enabled ? <p className="text-sm text-muted xl:col-span-2">AI 当前不可用。<a href="/ai" className="focus-ring ml-2 underline">AI 设置 →</a></p> : null}
       <div className="space-y-4">
         <label className="block">
           <span className={formLabelClass}>Entry title</span>
@@ -155,15 +155,15 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
         </label>
         <div className="flex flex-wrap gap-2">
           {availableProvider ? (
-            <Button onClick={generateWithModel} disabled={!ai.enabled || !canCreatePrompt || isBusy} variant="primary" title={`Send to ${availableProvider.providerName}${availableProvider.model ? ` · ${availableProvider.model}` : ""}`}>
-              <Bot className="h-4 w-4" aria-hidden />
+            <AiButton onClick={generateWithModel} disabled={!canCreatePrompt || isBusy} title={`Send to ${availableProvider.providerName}${availableProvider.model ? ` · ${availableProvider.model}` : ""}`}>
+              <Sparkles className="h-4 w-4" aria-hidden />
               {isBusy ? "Asking model…" : `Ask ${availableProvider.providerName}`}
-            </Button>
+            </AiButton>
           ) : null}
-          <Button onClick={createPrompt} disabled={!ai.enabled || !canCreatePrompt || isBusy} variant={connected ? "secondary" : "primary"}>
+          <AiButton needs="switch" onClick={createPrompt} disabled={!canCreatePrompt || isBusy} variant={connected ? "secondary" : "ai"}>
             <Sparkles className="h-4 w-4" aria-hidden />
             Make Prompt
-          </Button>
+          </AiButton>
           <Button onClick={reset} disabled={isBusy}>
             <RotateCcw className="h-4 w-4" aria-hidden />
             Reset
@@ -199,10 +199,10 @@ export function ManualAiWorkbench({ connected }: { connected?: { providerName: s
             placeholder='[{"sourceType":"ai","actionType":"create_experiment","reason":"...","payload":{}}]'
           />
         </label>
-        <Button onClick={parseManualResponse} disabled={!ai.enabled || !rawResponse.trim() || isBusy} variant="primary">
+        <AiButton needs="switch" onClick={parseManualResponse} disabled={!rawResponse.trim() || isBusy} variant="primary">
           <CheckCircle2 className="h-4 w-4" aria-hidden />
           Validate Actions
-        </Button>
+        </AiButton>
         {parseResult.status !== "idle" ? (
           <div
             className={

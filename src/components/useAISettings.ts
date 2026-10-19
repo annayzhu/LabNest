@@ -15,9 +15,17 @@ export async function fetchAISettings(signal?: AbortSignal): Promise<AISettingsV
   return response.json();
 }
 
-/** DB-backed state only. Browser storage carries a notification, never a second configuration. */
-export function useAISettings() {
-  const [saved, setSaved] = useState<AISettingsView>();
+/**
+ * DB-backed state only. Browser storage carries a notification, never a second configuration. `initial` is the server's
+ * read for this page: it saves the first request, and a newer server read (after a refresh) replaces an older state.
+ */
+export function useAISettings(initial?: AISettingsView) {
+  const [saved, setSaved] = useState(initial);
+  const [seed, setSeed] = useState(initial);
+  if (initial !== seed) {
+    setSeed(initial);
+    if (initial && (!saved || initial.revision >= saved.revision)) setSaved(initial);
+  }
   const [error, setError] = useState<string>();
   const sequence = useRef(0);
   const reading = useRef<AbortController | null>(null);
@@ -32,8 +40,9 @@ export function useAISettings() {
     try { const next = await fetchAISettings(controller.signal); if (request === sequence.current) { setSaved(next); setError(undefined); } }
     catch (caught) { if (request === sequence.current) setError(caught instanceof Error ? caught.message : "无法读取 AI 设置。"); }
   }, []);
+  const seeded = useRef(Boolean(initial));
   useEffect(() => {
-    const initialRead = setTimeout(() => { void refresh(); }, 0);
+    const initialRead = seeded.current ? undefined : setTimeout(() => { void refresh(); }, 0);
     const requestSequence = sequence;
     const requestController = reading;
     const visible = () => { if (document.visibilityState === "visible") void refresh(); };
@@ -52,7 +61,7 @@ export function useAISettings() {
       window.removeEventListener(changeEvent, refresh);
     };
   }, [refresh]);
-  return { saved, error, refresh, accept, enabled: !error && Boolean(saved?.enabled), connected: !error && Boolean(saved?.availability.connected) };
+  return { saved, error, refresh, accept };
 }
 
 /** Stale tabs and late replies cannot apply results after the persisted opt-in changes. */

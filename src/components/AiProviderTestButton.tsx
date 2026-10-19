@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import type { AIConnectionResult } from "@/lib/ai";
 import type { AIProviderInput } from "@/lib/ai-provider-input";
 import { Button } from "@/components/ui/Button";
-import { requestAI, useAISettings } from "./useAISettings";
+import { useAiStatus } from "./AiAssistant";
+import { requestAI } from "./useAISettings";
 
 type Props = {
   providerId?: string; revision?: string; draft?: AIProviderInput;
@@ -15,8 +16,8 @@ type Props = {
 
 /** Both entry points use the same UI/request lifecycle; changing inputs destroys only the test state. */
 export function AiProviderTestButton(props: Props) {
-  const { saved, enabled, error } = useAISettings();
-  const reason = props.disabledReason || error || (!saved ? "正在读取 AI 设置…" : !enabled ? "请先启用 AI，再测试连接。" : props.enabled === false ? "此服务已停用，请先启用。" : "");
+  const { saved, state, error } = useAiStatus();
+  const reason = props.disabledReason || error || (state === "checking" ? "正在读取 AI 设置…" : state === "off" ? "请先启用 AI，再测试连接。" : props.enabled === false ? "此服务已停用，请先启用。" : "");
   return <ConnectionTest key={`${props.epoch ?? 0}:${props.revision}:${saved?.revision}:${reason}`} {...props} disabledReason={reason} />;
 }
 

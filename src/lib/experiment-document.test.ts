@@ -131,10 +131,11 @@ it("reads as one part per Protocol with this run's values only, folds the other 
     { id: "b2", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "再洗一次。" }] }], execution: { role: "step", stepId: "extra", format: "block" } },
   ];
   const snapshot = { versions: [{ protocolVersionId: "v1", protocolTitle: "组织 DNA 提取", displayVersion: "0.1", contentJson: protocol }] };
-  const plan = { schemaVersion: 1, revision: 3, versions: { v1: { selections: { volume: "s" }, actualInputs: {}, confirmedAt: "2026-10-15T01:00:00Z" } }, actualValues: {}, skips: {} };
+  // Around noon UTC, so the dates read 2026-10-15 wherever the machine running the tests is (UTC−11 to UTC+11).
+  const plan = { schemaVersion: 1, revision: 3, versions: { v1: { selections: { volume: "s" }, actualInputs: {}, confirmedAt: "2026-10-15T11:00:00Z" } }, actualValues: {}, skips: {} };
   const steps = [
-    { id: "run-lyse", protocolStepRef: "v1:lyse", groupKey: "v1", groupOrder: 0, order: 1, groupTitle: "PRT-1 · 组织 DNA 提取 · v0.1", title: "加入裂解液", completed: true, completedAt: new Date("2026-10-15T02:00:00Z"),
-      deviationNote: "实际加入 360 µL", deviationType: "material", deviationAuthor: "Anna", deviationAt: new Date("2026-10-15T02:05:00Z") },
+    { id: "run-lyse", protocolStepRef: "v1:lyse", groupKey: "v1", groupOrder: 0, order: 1, groupTitle: "PRT-1 · 组织 DNA 提取 · v0.1", title: "加入裂解液", completed: true, completedAt: new Date("2026-10-15T12:00:00Z"),
+      deviationNote: "实际加入 360 µL", deviationType: "material", deviationAuthor: "Anna", deviationAt: new Date("2026-10-15T12:05:00Z") },
     { id: "run-extra", protocolStepRef: "v1:extra", groupKey: "v1", groupOrder: 0, order: 2, groupTitle: "PRT-1 · 组织 DNA 提取 · v0.1", title: "再洗一次", completed: false },
   ];
   const record = experimentExecutionDocument(undefined, steps, {}, snapshot, plan);

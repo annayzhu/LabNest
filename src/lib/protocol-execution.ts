@@ -70,7 +70,7 @@ export function executionBodyWithoutTitle(blocks: ProtocolContentBlock[], title:
 }
 
 /** Produce a reviewable proposal. Formatting is evidence for grouping, never confirmation. */
-export function proposeExecutionRoles(document: ProtocolDocument): ProtocolContentBlock[] {
+function proposeExecutionRoles(document: ProtocolDocument): ProtocolContentBlock[] {
   const fragments = executionFragments(document);
   const hasHeadings = fragments.some(isHeading);
   let precedingStep: string | undefined;
@@ -112,11 +112,16 @@ function shortenLabel(text: string, limit = 48, chipWidth = 8) {
   return label;
 }
 
+/** The Steps section as fragments with their roles: the author's own, or proposed from headings and lists when some are missing. */
+export function executionRoleBlocks(document: ProtocolDocument) {
+  const original = executionFragments(document);
+  const proposed = original.some(block => !isEmpty(block) && !block.execution);
+  return { blocks: proposed ? proposeExecutionRoles(document) : original, proposed };
+}
+
 /** Existing ProtocolStep is the sole machine contract. Marks describe source ownership. */
 export function projectProtocolExecution(document: ProtocolDocument) {
-  const original = executionFragments(document);
-  const executionNeedsReview = original.some(block => !isEmpty(block) && !block.execution);
-  const blocks = executionNeedsReview ? proposeExecutionRoles(document) : original;
+  const { blocks, proposed: executionNeedsReview } = executionRoleBlocks(document);
   const ownedBy = (id: string) => blocks.filter(block => (block.execution?.role === 'step' || block.execution?.role === 'detail') && (block.execution.stepId ?? block.id) === id);
   // A step block is empty only when its whole body is; an unwritten new step is not an operation.
   const nonEmpty = (block: ProtocolContentBlock) => block.execution?.format === 'block' ? ownedBy(block.execution.stepId ?? block.id).some(owned => !isEmpty(owned)) : !isEmpty(block);

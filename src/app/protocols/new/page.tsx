@@ -27,11 +27,7 @@ export default async function NewProtocolPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader
-          eyebrow="Controlled method"
-          title="New Protocol"
-          description="Create a complete scientific method using fixed sections, step blocks, parameter chips, structured tables and review governance."
-        />
+        <PageHeader eyebrow="实验规程" title="新建实验规程" />
         <ProtocolDocumentEditor
           action={createProtocolDocument}
           mode="create"

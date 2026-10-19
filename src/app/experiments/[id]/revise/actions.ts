@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage } from "@/lib/form-actions";
-import { normalizeProtocolDocument, projectProtocolDocument } from "@/lib/protocol-document";
-import { nextDisplayVersion } from "@/lib/protocol";
+import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { revisionCandidates, revisionFromExperiment } from "@/lib/protocol-revision";
+import { createDraftRevision } from "@/lib/protocol-revision.server";
 import { structuredRunView } from "@/lib/structured-run";
 
 export type ReviseState = { error?: string };
@@ -36,22 +36,7 @@ export async function createRevisionFromExperiment(_previous: ReviseState, formD
         const document = normalizeProtocolDocument(source.contentJson);
         if (!document) throw new Error(`${source.protocol.humanCode} 是旧格式规程，请先在编辑器中打开并保存，再整理`);
         const { document: revised, changes } = revisionFromExperiment(document, { id: experiment.id, runCode: experiment.runCode }, group.map(candidate => candidate.adoption));
-        const latest = await tx.protocolVersion.findFirst({ where: { protocolId: source.protocolId }, orderBy: { revision: "desc" } });
-        const taken = new Set((await tx.protocolVersion.findMany({ where: { protocolId: source.protocolId }, select: { displayVersion: true } })).map(version => version.displayVersion));
-        let displayVersion = nextDisplayVersion(latest?.displayVersion ?? source.displayVersion);
-        while (taken.has(displayVersion)) displayVersion = nextDisplayVersion(displayVersion);
-        const projection = projectProtocolDocument(revised);
-        const title = source.protocol.canonicalTitle ?? source.protocol.title;
-        const version = await tx.protocolVersion.create({ data: {
-          protocolId: source.protocolId, revision: (latest?.revision ?? source.revision) + 1, previousVersionId: source.id, sourceType: "manual",
-          reviewStage: "draft", recordStatus: "draft", displayVersion, title: `${title} v${displayVersion}`,
-          scope: source.scope, notes: source.notes, parametersJson: json(source.parametersJson), adaptationRationale: source.adaptationRationale,
-          purpose: projection.purpose, background: projection.background, materialsJson: json(projection.materials), equipmentJson: json(projection.equipment), stepsJson: json(projection.steps),
-          resultTemplatesJson: json(projection.resultTemplates), consumptionRulesJson: json(projection.consumptionRules), contentJson: json(revised),
-          changeSummary: `来自 ${experiment.runCode} 的整理：${changes.join("；")}`,
-        } });
-        const inherited = await tx.attachmentLink.findMany({ where: { targetType: "protocol_version", targetId: source.id }, select: { attachmentId: true, linkType: true, order: true } });
-        if (inherited.length) await tx.attachmentLink.createMany({ data: inherited.map(link => ({ ...link, targetType: "protocol_version", targetId: version.id })) });
+        const { version, displayVersion } = await createDraftRevision(tx, source, revised, `来自 ${experiment.runCode} 的整理：${changes.join("；")}`);
         await tx.activityLog.create({ data: { action: "create_revision", targetType: "protocol", targetId: source.protocolId, metadataJson: json({ sourceVersionId: source.id, savedVersionId: version.id, displayVersion, fromExperimentId: experiment.id, changes }) } });
         await tx.activityLog.create({ data: { action: "experiment_tidied_into_revision", targetType: "experiment", targetId: experiment.id, metadataJson: json({ protocolId: source.protocolId, versionId: version.id, displayVersion, adopted: group.map(candidate => candidate.key) }) } });
         return { protocolId: source.protocolId, versionId: version.id };

@@ -26,10 +26,10 @@ describe("system themes", () => {
     expect(systemThemes.length).toBeGreaterThanOrEqual(7);
   });
 
-  it("gives every theme a contrasting, readable navigation selection color", () => {
+  it("gives every theme a second color for AI that keeps its label readable", () => {
     systemThemes.forEach((theme) => {
       expect(rgbDistance(theme.colors[1], theme.colors[2]), theme.name).toBeGreaterThan(75);
-      expect(contrastRatio(theme.navigation.background, theme.navigation.foreground), theme.name).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.tokens["--ai"], theme.tokens["--ai-fg"]), theme.name).toBeGreaterThanOrEqual(4.5);
     });
   });
 
@@ -44,7 +44,7 @@ describe("system themes", () => {
     const css = systemThemeCssText();
     systemThemes.forEach((theme) => {
       expect(css).toContain(`data-labnest-theme="${theme.id}"`);
-      expect(css).toContain(`--nav-active-bg:${theme.navigation.background}`);
+      expect(css).toContain(`--ai:${theme.tokens["--ai"]}`);
     });
   });
 });

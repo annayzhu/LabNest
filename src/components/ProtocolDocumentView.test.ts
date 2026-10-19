@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ProtocolDocumentView } from "@/components/ProtocolDocumentView";
+import { I18nProvider } from "@/components/I18nProvider";
 import { createEmptyProtocolDocument, protocolDocumentSchema } from "@/lib/protocol-document";
 
 const systems = {
@@ -10,7 +11,7 @@ const systems = {
   rules: [{ id: "only-600", target: "step", targetId: "legacy-b", when: { all: [{ dimensionId: "volume", optionId: "v600" }] }, parameterIds: [], optional: false, actualFields: [] }],
 };
 const paragraph = (text: string) => ({ type: "paragraph", content: [{ text }] });
-const render = (blocks: unknown[]) => renderToStaticMarkup(createElement(ProtocolDocumentView, { document: protocolDocumentSchema.parse({ ...createEmptyProtocolDocument(), systems, sections: [{ key: "steps", title: "Steps", blocks }] }) }));
+const render = (blocks: unknown[]) => renderToStaticMarkup(createElement(I18nProvider, null, createElement(ProtocolDocumentView, { document: protocolDocumentSchema.parse({ ...createEmptyProtocolDocument(), systems, sections: [{ key: "steps", title: "Steps", blocks }] }) })));
 
 describe("Reading a Protocol across all systems", () => {
   it("shows which system an older, organized step is for, above the step and its details", () => {

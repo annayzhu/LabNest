@@ -2,7 +2,6 @@
 import type { MixProposal } from "@/lib/protocol-mix";
 
 import { useActionState, useMemo, useState } from "react";
-import { ProtocolExecutionOrganizer } from "./ProtocolExecutionOrganizer";
 import { Download } from "lucide-react";
 import { DocumentCanvas } from "@/components/DocumentCanvas";
 import { DocumentEditorWorkspace, type DocumentEditorWorkspaceTab } from "@/components/DocumentEditorWorkspace";
@@ -15,7 +14,8 @@ import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
-import type { ProtocolDocument } from "@/lib/protocol-document";
+import { hasLegacyFormulas, type ProtocolDocument } from "@/lib/protocol-document";
+import { isLegacyProtocol } from "@/lib/protocol-conversion";
 import { ProtocolSourcesEditor } from "./ProtocolSourcesEditor";
 import { pruneUnusedChips } from "@/lib/protocol-chips";
 import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/status-options";
@@ -89,8 +89,6 @@ export function ProtocolDocumentEditor({
   const [uploadDraftId] = useState(() => `protocol-upload-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`);
   // Chips the author deleted leave unreferenced parameters behind; only what the text still uses is saved.
   const serialized = useMemo(() => JSON.stringify(pruneUnusedChips(document)), [document]);
-  const usesStepBlocks = document.sections.some(section => section.key === "steps" && section.blocks.some(block => block.execution?.format === "block"));
-  const [operationsOpen, setOperationsOpen] = useState(false);
   const visiblePlans = useMemo(() => scope === "project" && projectId ? researchPlans.filter((plan) => plan.projectId === projectId) : researchPlans, [projectId, researchPlans, scope]);
   const project = projects.find((item) => item.id === projectId);
   const identifier = protocol.humanCode ?? (codeSuffix ? `PRT-${codeSuffix}` : "Draft Protocol");
@@ -123,7 +121,7 @@ export function ProtocolDocumentEditor({
       {mode === "edit" ? <><input type="hidden" name="protocolScope" value={protocol.scope} /><input type="hidden" name="projectId" value={protocol.projectId ?? ""} /></> : null}
 
       <DocumentEditorWorkspace
-        outline={document.sections.map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
+        outline={document.sections.filter((section) => section.key !== "consumption_rules" || hasLegacyFormulas(document)).map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
         onActiveTabChange={setActiveWorkspaceTab}
         actions={<><div id="protocol-document-actions" className="ln-document-actions-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring ln-document-action" title="导出当前已保存的版本；改动后请先保存。"><Download aria-hidden />导出 Word</a> : null}<DocumentPrintButton /><div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div></>}
         document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"}>
@@ -134,14 +132,11 @@ export function ProtocolDocumentEditor({
             { label: "Availability", value: availability.replaceAll("_", " ") },
             { label: "Review", value: reviewStage.replaceAll("_", " ") },
           ]} />
-          {/* Older protocols keep their organized steps until they are rewritten as step blocks. */}
-          {usesStepBlocks ? null : <>
-            <nav aria-label="旧格式步骤" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
-              <Button type="button" aria-expanded={operationsOpen} aria-controls="protocol-operations" onClick={() => setOperationsOpen(value => !value)}>步骤整理</Button>
-              <span className="text-xs text-muted">这份规程的步骤还是旧格式，执行范围在这里确认。</span>
-            </nav>
-            <ProtocolExecutionOrganizer document={document} onChange={setDocument} open={operationsOpen} onOpenChange={setOperationsOpen}/>
-          </>}
+          {/* An old-format Protocol is converted as a whole into step blocks, previewed first and saved as a new draft. */}
+          {isLegacyProtocol(document) ? <nav aria-label="旧格式步骤" className="mb-3 flex flex-wrap items-center gap-2 border-y border-hairline py-2 print:hidden">
+            {protocol.id && version.id ? <a href={`/protocols/${protocol.id}/versions/${version.id}/convert`} className="focus-ring inline-flex min-h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 text-sm font-medium text-moss hover:bg-warm">转换为步骤块</a> : null}
+            <span className="text-xs text-muted">这份规程还是旧格式。转换后每步一块、数值成为参数块，可用配液卡、准备清单和体系调整；先预览，再存为新草稿。请先保存这里的改动。</span>
+          </nav> : null}
           <ProtocolWysiwygEditor document={document} onChange={setDocument} actionsHostId="protocol-document-actions" uploadDraftId={uploadDraftId} mixProposals={mixProposals} onDismissMixProposal={dismissMixProposal && protocol.id ? proposalId => dismissMixProposal(protocol.id!, proposalId) : undefined} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">

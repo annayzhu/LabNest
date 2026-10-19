@@ -28,7 +28,7 @@ try {
       if (!current) return false;
       const style = getComputedStyle(current);
       const probe = document.createElement("span");
-      probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--nav-active-bg");
+      probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--ai");
       document.body.append(probe);
       const expectedBackground = getComputedStyle(probe).color;
       probe.remove();

@@ -5,7 +5,7 @@ const entry=async()=> (await (await page.request.get(`${base}/api/entries/${f.en
 const status=async(next,reason)=>{await page.locator('select[name="recordStatus"]').selectOption(next);if(reason)await page.locator('textarea[name="reason"]').fill(reason);const saved=page.waitForResponse(r=>r.request().method()==='POST'&&!!r.request().headers()['next-action']);await page.getByRole('button',{name:'Update',exact:true}).click();await saved;await page.reload({waitUntil:'networkidle'});assert.equal(await page.locator('select[name="recordStatus"]').inputValue(),next);};
 try {
  await page.goto(`${base}/entries/${f.entryId}`,{waitUntil:'networkidle'});
- const ai=page.getByRole('button',{name:'Propose with AI',exact:true});assert(await ai.isVisible());assert((await ai.boundingBox()).y<500);assert(await page.getByRole('link',{name:'配置并启用 AI'}).isVisible());
+ const ai=page.getByRole('button',{name:'Propose with AI',exact:true});assert(await ai.isVisible());assert((await ai.boundingBox()).y<500);assert.equal(await ai.getAttribute('data-ai-off'),'true');
  await page.screenshot({path:`${out}/entry-ai-mobile.png`});
  await page.goto(`${base}/experiments/${f.experimentId}`,{waitUntil:'networkidle'});await status('submitted');
  const before=await entry();assert.equal(before.createdAt,f.createdAt);assert.equal(before.occurredAt,f.occurredAt);

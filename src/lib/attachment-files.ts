@@ -5,6 +5,8 @@ import sharp from "sharp";
 import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { assertUploadSize, getAttachmentRoot, safeAttachmentFilename } from "@/lib/attachments";
 import { buildAttachmentMetadata } from "@/lib/media-metadata";
+import { prisma } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 
 export type PreparedAttachmentFile = {
   buffer: Buffer;
@@ -82,4 +84,17 @@ export async function writePreparedAttachmentFiles(files: PreparedAttachmentFile
 
 export async function cleanupPreparedAttachmentFiles(files: PreparedAttachmentFile[]) {
   await Promise.allSettled(files.flatMap((file) => [unlink(file.absolutePath), ...(file.previewFile ? [unlink(file.previewFile.absolutePath)] : [])]));
+}
+
+/** Writes one file and records it as an attachment linked to one target; the written file is removed if recording fails. */
+export async function keepAttachment(file: File, link: { targetType: string; targetId: string; linkType: string }) {
+  const prepared = await prepareAttachmentFile(file);
+  try {
+    await writePreparedAttachmentFiles([prepared]);
+    const attachment = await prisma.attachment.create({ data: {
+      filename: prepared.filename, originalFilename: prepared.originalFilename, mimeType: prepared.mimeType, size: prepared.size, storagePath: prepared.storagePath, sha256: prepared.sha256,
+      metadataJson: JSON.parse(JSON.stringify(prepared.metadataJson)) as Prisma.InputJsonValue, links: { create: link },
+    } });
+    return attachment.id;
+  } catch (error) { await cleanupPreparedAttachmentFiles([prepared]); throw error; }
 }

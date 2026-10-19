@@ -14,19 +14,27 @@ export type EntryItemLinkRecord = {
   createdAt: string;
 };
 
-export type EntryPendingActionRecord = {
+function jsonRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+/** An AI suggestion that came from the entry, in any status: pending ones wait for 采纳 or 忽略 on the entry page. */
+export type EntrySuggestionRecord = {
   id: string;
   actionType: string;
   status: string;
   confidence?: number;
   reason?: string;
+  payload: Record<string, unknown>;
   createdAt: string;
 };
 
 export type EntryDetailRecord = Entry & {
   attachments: EntryAttachment[];
   itemLinks: EntryItemLinkRecord[];
-  pendingActions: EntryPendingActionRecord[];
+  suggestions: EntrySuggestionRecord[];
 };
 
 function serializeAttachment(attachment: {
@@ -211,12 +219,13 @@ export async function getEntryDetailRecord(id: string): Promise<EntryDetailRecor
           createdAt: link.createdAt.toISOString(),
         };
       }),
-      pendingActions: pendingActions.map((action) => ({
+      suggestions: pendingActions.map((action) => ({
         id: action.id,
         actionType: action.actionType,
         status: action.status,
         confidence: action.confidence ?? undefined,
         reason: action.reason ?? undefined,
+        payload: jsonRecord(action.payloadJson),
         createdAt: action.createdAt.toISOString(),
       })),
     };

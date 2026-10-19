@@ -50,7 +50,7 @@ export function parseMethodCard(raw: string): MethodCardRaw {
 }
 
 /**
- * Every statement is checked against the text it claims to rest on (the same idea as the extraction proposal check):
+ * Every statement is checked against the text it claims to rest on:
  * a quote that is not in the source leaves the statement marked 未核实, never dropped silently.
  */
 export function checkMethodCard(raw: MethodCardRaw, sourceText: string, meta: { provider?: string; model?: string } = {}): MethodCard {

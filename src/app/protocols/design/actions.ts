@@ -8,6 +8,7 @@ import { resolveConnectedAdapter } from "@/lib/ai-server";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage } from "@/lib/form-actions";
 import { buildMethodCardPrompt, checkMethodCard, manualMethodCard, methodCardSections, parseMethodCard } from "@/lib/method-card";
+import { mergeSearchHits } from "@/lib/method-design";
 import { createDesignDraft, keepMethodText, loadDesignSession, readMethodText, saveCards, saveChosen, saveHits } from "@/lib/method-design.server";
 import { buildScalingPrompt, describeScaleChange, scaleProtocol } from "@/lib/method-scaling";
 import { fetchMethodText, searchMethods, writeMethodSearchSettings } from "@/lib/method-sources/index.server";
@@ -58,8 +59,8 @@ export async function searchAgain(sessionId: string, query: string): Promise<Des
   try {
     const session = await loadDesignSession(sessionId);
     if (!session) throw new Error("设计会话不存在");
-    const { hits, errors } = await searchMethods(sessionId, query.trim() || session.goal);
-    const merged = [...session.hits, ...hits.filter(hit => !session.hits.some(known => known.key === hit.key))];
+    const { hits, errors, failed } = await searchMethods(sessionId, query.trim() || session.goal);
+    const merged = mergeSearchHits(session.hits, hits, { keys: [...Object.keys(session.cards), ...session.chosen.map(item => item.key)], failedSources: failed });
     await prisma.methodDesignSession.update({ where: { id: sessionId }, data: { hitsJson: json(merged), inputsJson: json({ query, errors }) } });
     revalidatePath(`/protocols/design/${sessionId}`);
     return { hits: hits.length, ...(errors.length ? { error: errors.join("；") } : {}) };

@@ -6,7 +6,7 @@ import { resolveAttachmentPath } from './attachments';
 import { prisma } from './db';
 import { designDraft } from './method-design';
 import type { MethodCard } from './method-card';
-import type { MethodHit, MethodText } from './method-sources/types';
+import { plainHit, type MethodHit, type MethodText } from './method-sources/types';
 import { createDraftProtocol } from './protocol-draft.server';
 
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -16,7 +16,7 @@ export type ChosenHit = { key: string; reason?: string };
 export async function loadDesignSession(id: string) {
   const session = await prisma.methodDesignSession.findUnique({ where: { id } });
   if (!session) return null;
-  return { ...session, hits: (Array.isArray(session.hitsJson) ? session.hitsJson : []) as MethodHit[], cards: (session.cardsJson && typeof session.cardsJson === 'object' && !Array.isArray(session.cardsJson) ? session.cardsJson : {}) as Record<string, MethodCard>, chosen: (Array.isArray(session.chosenJson) ? session.chosenJson : []) as ChosenHit[] };
+  return { ...session, hits: ((Array.isArray(session.hitsJson) ? session.hitsJson : []) as MethodHit[]).map(plainHit), cards: (session.cardsJson && typeof session.cardsJson === 'object' && !Array.isArray(session.cardsJson) ? session.cardsJson : {}) as Record<string, MethodCard>, chosen: (Array.isArray(session.chosenJson) ? session.chosenJson : []) as ChosenHit[] };
 }
 
 export const saveHits = (id: string, hits: MethodHit[]) => prisma.methodDesignSession.update({ where: { id }, data: { hitsJson: json(hits) } });

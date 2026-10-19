@@ -1,4 +1,4 @@
-import { joinSections, stripHtml, textOf, type MethodHit, type MethodSourceAdapter, type MethodText } from './types';
+import { joinSections, plainTitle, stripHtml, textOf, type MethodHit, type MethodSourceAdapter, type MethodText } from './types';
 
 export const protocolsIoHost = 'www.protocols.io';
 type FetchJson = (url: string, init?: RequestInit) => Promise<unknown>;
@@ -27,7 +27,7 @@ export function parseSearchItem(item: unknown): MethodHit[] {
   if (id === undefined || id === null) return [];
   const creator = record.creator && typeof record.creator === 'object' ? (record.creator as { name?: unknown }).name : undefined;
   const published = typeof record.published_on === 'number' ? new Date(record.published_on * 1000).getFullYear() : undefined;
-  return [{ key: `protocols_io:${id}`, source: 'protocols_io', externalId: String(id), title: textOf(record.title) || `protocols.io #${id}`, authors: textOf(creator) || undefined, year: published ? String(published) : undefined,
+  return [{ key: `protocols_io:${id}`, source: 'protocols_io', externalId: String(id), title: plainTitle(textOf(record.title)) || `protocols.io #${id}`, authors: plainTitle(textOf(creator)) || undefined, year: published ? String(published) : undefined,
     venue: 'protocols.io', url: record.uri ? `https://${protocolsIoHost}/view/${textOf(record.uri)}` : record.doi ? `https://doi.org/${textOf(record.doi)}` : undefined, license: licenseOf(record), snippet: stripHtml(textOf(record.description)).slice(0, 240) || undefined }];
 }
 
@@ -40,7 +40,7 @@ const licenseOf = (record: Record<string, unknown>) => {
 /** Steps come as HTML in `step` (v3) or as components with HTML bodies (v4); either way one step is one section. */
 export function parseProtocol(raw: unknown): MethodText {
   const record = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
-  const title = textOf(record.title) || 'protocols.io protocol';
+  const title = plainTitle(textOf(record.title)) || 'protocols.io protocol';
   const steps = Array.isArray(record.steps) ? record.steps : [];
   const sections = steps.flatMap((step, index) => {
     if (!step || typeof step !== 'object') return [];

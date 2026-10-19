@@ -229,6 +229,19 @@ export function resolveBaseUrl(value: string | undefined, type: AIProviderType):
   return url.toString().replace(/\/+$/, "");
 }
 
+/**
+ * Provider text as shown to people: the key never appears in it. Services echo a key whole, cut ("sk-live-0123…") or masked
+ * ("sk-****WXYZ"), so besides the key itself (as sent, and URL-encoded) any word that carries its first 8 or last 6
+ * characters, or a run of asterisks, is hidden.
+ */
+export function redactSecret(message: string, secret?: string): string {
+  const key = secret?.trim();
+  if (!key) return message;
+  const text = [...new Set([encodeURIComponent(key), key])].reduce((out, value) => out.replaceAll(value, "[redacted]"), message);
+  const fragments = key.length >= 12 ? [key.slice(0, 8), key.slice(-6)] : [];
+  return text.replace(/\S+/g, word => word !== "[redacted]" && (/\*{3,}/.test(word) || fragments.some(fragment => word.includes(fragment))) ? "[redacted]" : word);
+}
+
 async function readErrorBody(response: Response): Promise<string> {
   try {
     const text = await response.text();
@@ -267,7 +280,7 @@ function connectionFailure(error: unknown, detail: string): Pick<AIConnectionRes
   else if (/设置已改变|AI 已关闭/.test(detail)) { errorCode = "cancelled"; message = "AI 或服务设置已改变，本次测试已停止。"; }
   else if (status === 402 || /insufficient[_ ](?:quota|balance)|credit balance|余额不足/i.test(detail)) { errorCode = "balance"; message = "账户余额不足，请到服务平台检查。"; }
   else if (status === 401) { errorCode = "authentication"; message = "API 密钥无效或已失效，请检查密钥。"; }
-  else if (/model[_ ]not[_ ]found|invalid[_ ]model|model.*(?:does not exist|not exist|not found|not have access|permission|not available)/i.test(detail)) { errorCode = "model"; message = "模型不存在或当前密钥无权使用，请核对模型 ID 与权限。"; }
+  else if (/model[_ ]not[_ ]found|invalid[_ ]model|model.*(?:does not exist|not exist|not found|not have access|permission|not available)|(?:no|not have) access to (?:the )?model|无权(?:使用|访问)模型/i.test(detail)) { errorCode = "model"; message = "模型不存在或当前密钥无权使用，请核对模型 ID 与权限。"; }
   else if (status === 403) { errorCode = "permission"; message = "服务拒绝访问，请检查账户权限或服务访问策略。"; }
   else if (status === 429) { errorCode = "rate_limit"; message = "请求过快或已达到服务限流，请稍后手动重试。"; }
   else if (status && status >= 500) { errorCode = "unavailable"; message = "服务暂时繁忙或不可用，请稍后手动重试。"; }
@@ -308,9 +321,7 @@ abstract class ConnectedProvider implements AIProviderAdapter {
   }
 
   protected safeMessage(message: string): string {
-    const key = this.config.apiKey;
-    if (!key) return message;
-    return [...new Set([key, encodeURIComponent(key)])].reduce((text, secret) => text.replaceAll(secret, "[redacted]"), message);
+    return redactSecret(message, this.config.apiKey);
   }
 
   protected async request(path: string, init: RequestInit): Promise<Response> {

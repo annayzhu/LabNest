@@ -1,4 +1,4 @@
-import { joinSections, stripHtml, textOf, type MethodHit, type MethodSourceAdapter, type MethodText } from './types';
+import { joinSections, plainTitle, stripHtml, textOf, type MethodHit, type MethodSourceAdapter, type MethodText } from './types';
 
 export const europePmcHost = 'www.ebi.ac.uk';
 type FetchText = (url: string, init?: RequestInit) => Promise<string>;
@@ -38,8 +38,8 @@ export function parseSearchResult(item: unknown): MethodHit[] {
   const record = item as Record<string, unknown>;
   const pmcid = textOf(record.pmcid);
   if (!pmcid) return [];
-  return [{ key: `europe_pmc:${pmcid}`, source: 'europe_pmc', externalId: pmcid, title: textOf(record.title) || pmcid, authors: textOf(record.authorString) || undefined, year: textOf(record.pubYear) || undefined,
-    venue: textOf(record.journalTitle) || undefined, url: `https://europepmc.org/article/PMC/${pmcid}` }];
+  return [{ key: `europe_pmc:${pmcid}`, source: 'europe_pmc', externalId: pmcid, title: plainTitle(textOf(record.title)) || pmcid, authors: plainTitle(textOf(record.authorString)) || undefined, year: textOf(record.pubYear) || undefined,
+    venue: plainTitle(textOf(record.journalTitle)) || undefined, url: `https://europepmc.org/article/PMC/${pmcid}` }];
 }
 
 /** A license statement as a name: "CC BY 4.0" from the Creative Commons boilerplate, else its first sentence. */
@@ -56,7 +56,7 @@ const methodsLike = /method|material|procedure|protocol|experimental/i;
 
 /** JATS full text → the Methods-like sections (whole article when none is marked), the license statement and a readable title. */
 export function parseFullText(xml: string, pmcid: string): MethodText {
-  const title = stripHtml(xml.match(/<article-title[^>]*>([\s\S]*?)<\/article-title>/i)?.[1] ?? '') || pmcid;
+  const title = plainTitle(xml.match(/<article-title[^>]*>([\s\S]*?)<\/article-title>/i)?.[1] ?? '') || pmcid;
   const license = shortLicense(stripHtml(xml.match(/<license[^>]*>([\s\S]*?)<\/license>/i)?.[1] ?? ''));
   const body = xml.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? xml;
   // Top-level sections only: nested <sec> stay inside their parent's text.

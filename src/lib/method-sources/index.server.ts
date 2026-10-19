@@ -53,20 +53,21 @@ export async function enabledAdapters(): Promise<MethodSourceAdapter[]> {
 }
 
 /** Searches every enabled source, logs each outside request, and keeps going when one source fails. */
-export async function searchMethods(sessionId: string, query: string): Promise<{ hits: MethodHit[]; errors: string[] }> {
+export async function searchMethods(sessionId: string, query: string): Promise<{ hits: MethodHit[]; errors: string[]; failed: MethodSourceId[] }> {
   const adapters = await enabledAdapters();
-  const hits: MethodHit[] = [], errors: string[] = [];
+  const hits: MethodHit[] = [], errors: string[] = [], failed: MethodSourceId[] = [];
   for (const adapter of adapters) {
     try {
       const found = await adapter.search(query);
       hits.push(...found);
       if (adapter.id !== 'local') await prisma.activityLog.create({ data: { action: 'method_search', targetType: 'method_design_session', targetId: sessionId, metadataJson: { source: adapter.id, query, results: found.length } } });
     } catch (error) {
+      failed.push(adapter.id);
       errors.push(`${adapter.id}：${error instanceof Error ? error.message : '检索失败'}`);
       if (adapter.id !== 'local') await prisma.activityLog.create({ data: { action: 'method_search_failed', targetType: 'method_design_session', targetId: sessionId, metadataJson: { source: adapter.id, query, error: String(error instanceof Error ? error.message : error) } } });
     }
   }
-  return { hits, errors };
+  return { hits, errors, failed };
 }
 
 export async function fetchMethodText(sessionId: string, hit: Pick<MethodHit, 'source' | 'externalId'>) {

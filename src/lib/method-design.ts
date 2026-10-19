@@ -1,5 +1,5 @@
 import type { MethodCard } from './method-card';
-import type { MethodHit, MethodText } from './method-sources/types';
+import type { MethodHit, MethodHitSource, MethodText } from './method-sources/types';
 import { recognizeQuantity, splitDimension, splitLookupSource } from './protocol-chips';
 import { createEmptyProtocolDocument, type ProtocolContentBlock, type ProtocolDocument, type ProtocolSource } from './protocol-document';
 import { blankProtocolSystems, type ProtocolSystems } from './protocol-systems-schema';
@@ -41,6 +41,20 @@ export function chipifyText(text: string, systems: ProtocolSystems, newId: (pref
 const paragraph = (text: string) => ({ type: 'paragraph' as const, content: [{ text }] });
 const headerLike = /^(description|materials?|abstract|introduction|background|说明|材料|背景)$/i;
 const sourceKind = (hit: MethodHit): ProtocolSource['kind'] => hit.source === 'protocols_io' ? 'protocols_io' : hit.source === 'europe_pmc' ? 'pmc' : hit.source === 'manual' && hit.url ? 'url' : 'other';
+
+/**
+ * 换个关键词再搜 (search again): the new search's hits come first, in its own order, so the list reads as that search; a hit
+ * found again keeps what was done with it (its fetched text). An earlier hit stays only when someone worked on it (fetched
+ * or pasted text, a method card, a saved choice) or when its source failed this time, so nothing reviewable disappears and
+ * a failed source does not wipe its earlier results.
+ */
+export function mergeSearchHits(known: MethodHit[], found: MethodHit[], keep: { keys?: Iterable<string>; failedSources?: Iterable<MethodHitSource> } = {}): MethodHit[] {
+  const byKey = new Map(known.map(hit => [hit.key, hit]));
+  const fresh = new Map<string, MethodHit>();
+  for (const hit of found) if (!fresh.has(hit.key)) fresh.set(hit.key, byKey.get(hit.key) ?? hit);
+  const keys = new Set(keep.keys), failed = new Set(keep.failedSources);
+  return [...fresh.values(), ...known.filter(hit => !fresh.has(hit.key) && (hit.attachmentId || hit.source === 'manual' || keys.has(hit.key) || failed.has(hit.source)))];
+}
 
 export type DesignDraftInput = { goal: string; sampleType?: string; conditions?: string; hit: MethodHit; text: MethodText; card?: MethodCard; sessionId: string; newId: (prefix: string) => string };
 

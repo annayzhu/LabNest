@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Pause, Play, Square, Timer, X } from 'lucide-react';
 import { convert, normalizeUnit, parseScalar, units } from '@/lib/calculators/quantities';
-import { chipAmount, chipParameterIds, parameterLongName } from '@/lib/protocol-chips';
+import { chipAmount, chipParameterIds } from '@/lib/protocol-chips';
+import { parameterLongNameText, protocolLabelText } from '@/lib/protocol-label-text';
 import { adoptableCalculation, calculationGroups, protocolCalculations } from '@/lib/protocol-calculations';
 import { calculationReceiptMatches, previewProtocolCalculation, protocolCalculationFingerprint, resolveProtocolSystem, type ProtocolCalculation, type ResolvedProtocolParameter, type StepActualField } from '@/lib/structured-protocol';
 import type { ProtocolSystems } from '@/lib/protocol-systems-schema';
@@ -68,10 +69,10 @@ function RunChipPanel({ id, ids, step, anchor, onClose }: { id: string; ids: str
   const act = (run: () => Promise<{ error?: string }>) => startTransition(async () => { setError(''); const result = await run(); if (result.error) setError(readableError(result.error)); else router.refresh(); });
   const locked = !step.editable || step.completed;
   return createPortal(<div ref={panel} className="ln-chip-popover" style={style} role="dialog" aria-label="This run’s values" onMouseDown={event => event.stopPropagation()}>
-    <header className="ln-chip-popover-header"><strong>{parameters.length === 1 ? parameterLongName(parameters[0], step.systems) : step.systems.tools?.find(t => t.id === id)?.method || 'This run’s values'}</strong><span className="flex-1" /><button type="button" className="focus-ring ln-chip-icon-button" aria-label="Close" onClick={onClose}><X aria-hidden /></button></header>
+    <header className="ln-chip-popover-header"><strong>{parameters.length === 1 ? parameterLongNameText(parameters[0], step.systems) : protocolLabelText(step.systems.tools?.find(t => t.id === id)?.method || 'This run’s values')}</strong><span className="flex-1" /><button type="button" className="focus-ring ln-chip-icon-button" aria-label="Close" onClick={onClose}><X aria-hidden /></button></header>
     <div className="ln-chip-popover-body">
       {calculated ? <StepCalculation parameter={calculated} step={step} disabled={locked || pending} onConfirm={(ids, inputs) => act(async () => { const { updateStepInputs } = await import('@/app/experiments/[id]/run/actions'); return updateStepInputs({ experimentId: step.experimentId, versionId: step.versionId, expectedRevision: step.revision, actualInputs: inputs, confirmCalculations: ids }); })} />
-        : parameters.map(parameter => <ParameterRow key={parameter.id} label={ids.length > 1 ? parameterLongName(parameter, step.systems) : undefined} parameter={parameter} resolved={resolution[parameter.id]} step={step} disabled={locked || pending}
+        : parameters.map(parameter => <ParameterRow key={parameter.id} label={ids.length > 1 ? parameterLongNameText(parameter, step.systems) : undefined} parameter={parameter} resolved={resolution[parameter.id]} step={step} disabled={locked || pending}
           onInput={value => act(async () => { const { updateStepInputs } = await import('@/app/experiments/[id]/run/actions'); return updateStepInputs({ experimentId: step.experimentId, versionId: step.versionId, expectedRevision: step.revision, actualInputs: { [parameter.id]: { value, unit: parameter.unit } } }); })}
           onActual={value => act(async () => { const { saveStructuredStepRecord } = await import('@/app/experiments/[id]/run/actions'); const form = new FormData(); form.set('experimentId', step.experimentId); form.set('stepId', step.stepId); form.set('executionPlanRevision', String(step.revision)); form.set('clientMutationId', newClientMutationId()); form.set('intent', 'actual'); form.set('values', JSON.stringify({ [parameter.id]: { value, unit: parameter.unit } })); return saveStructuredStepRecord({}, form); })}
           onTimer={intent => act(async () => { const { updateStepTimer } = await import('@/app/experiments/[id]/run/actions'); const form = new FormData(); form.set('experimentId', step.experimentId); form.set('stepId', step.stepId); form.set('timerIntent', intent); form.set('executionPlanRevision', String(step.revision)); form.set('parameterId', parameter.id); return updateStepTimer({}, form); })} />)}
@@ -137,11 +138,12 @@ function StepCalculation({ parameter, step, disabled, onConfirm }: { parameter: 
     <p className="ln-chip-note">{spec.label} · {spec.note}</p>
     <dl className="ln-run-calc-inputs">{spec.inputs.map(input => {
       const id = group.source.inputs[input.key] ?? '', source = step.systems.parameters.find(p => p.id === id), value = resolution.parameters[id];
-      return <div key={input.key}><dt>{input.label}</dt><dd>{source?.source.kind === 'actual'
-        ? <span className="ln-run-chip-input"><input className="ln-chip-input is-number" inputMode="decimal" aria-label={input.label} disabled={disabled} value={inputs[id] ?? (step.actualInputs[id] ? String(step.actualInputs[id].value) : '')} onChange={event => setInputs(current => ({ ...current, [id]: event.target.value }))} /><span className="ln-chip-note">{source.unit}</span></span>
+      const label = protocolLabelText(input.label);
+      return <div key={input.key}><dt>{label}</dt><dd>{source?.source.kind === 'actual'
+        ? <span className="ln-run-chip-input"><input className="ln-chip-input is-number" inputMode="decimal" aria-label={label} disabled={disabled} value={inputs[id] ?? (step.actualInputs[id] ? String(step.actualInputs[id].value) : '')} onChange={event => setInputs(current => ({ ...current, [id]: event.target.value }))} /><span className="ln-chip-note">{source.unit}</span></span>
         : value?.status === 'resolved' ? chipAmount(value.value!, value.unit) : input.optional ? '—' : 'To fill in'}</dd></div>;
     })}</dl>
-    <ul className="ln-run-calc-results">{rows.map(row => <li key={row.result.id}><span>{parameterLongName(row.result, step.systems)}</span><strong>{row.preview ? chipAmount(row.preview.value, row.preview.unit, true) : '—'}</strong><small>{row.current ? 'Adopted' : row.preview ? 'Preview, not adopted yet' : row.error}</small></li>)}</ul>
+    <ul className="ln-run-calc-results">{rows.map(row => <li key={row.result.id}><span>{parameterLongNameText(row.result, step.systems)}</span><strong>{row.preview ? chipAmount(row.preview.value, row.preview.unit, true) : '—'}</strong><small>{row.current ? 'Adopted' : row.preview ? 'Preview, not adopted yet' : row.error}</small></li>)}</ul>
     {shown?.snapshot.warnings.length ? <ul className="ln-chip-error">{shown.snapshot.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul> : null}
     {shown ? <p className="ln-chip-note">{`Method version ${shown.snapshot.methodVersion}${rows.every(row => row.current) && step.receipts[parameter.id] ? ` · confirmed ${new Date(step.receipts[parameter.id].confirmedAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { hour12: false })}` : ''}`}</p> : null}
     <button type="button" className="focus-ring ln-chip-done" disabled={disabled || !pending.length} onClick={() => onConfirm(pending, typed)}>{pending.length ? 'Calculate and adopt' : 'Confirmed'}</button>

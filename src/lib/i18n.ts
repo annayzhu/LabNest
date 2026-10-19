@@ -7,9 +7,42 @@ export function resolveAppLocale(value: unknown, fallback: AppLocale = "en"): Ap
   return value === "zh" || value === "en" ? value : fallback;
 }
 
+/**
+ * Chip labels LabNest writes into Protocols in Chinese (chipKindLabels, toolSpecs, calculation inputs and results, mix
+ * methods), by English name. protocolLabelText (protocol-label-text.ts) reads them backwards for display; the stored
+ * label stays Chinese. Each English name is unique, so the Chinese interface shows the stored label byte for byte.
+ */
+export const protocolLabelsZh: Record<string, string> = {
+  // What a chip measures
+  Volume: "体积", Mass: "质量", "Amount of substance": "物质的量", Concentration: "浓度", Time: "时间", Temperature: "温度",
+  "Centrifugal force": "离心力", "Rotation speed": "转速", Voltage: "电压", "Electric current": "电流", Pressure: "压力",
+  "Electrical value": "电参数", Repetitions: "次数", Percentage: "比例", Parameter: "参数",
+  // Equipment and their settings
+  Centrifuge: "离心", Mix: "混匀", Incubate: "孵育", Shaker: "摇床", Vacuum: "真空", Electrophoresis: "电泳",
+  Electroporation: "电转", Gas: "气体", "Protect from light": "避光", Gradient: "梯度",
+  "Spin speed": "离心力／转速", "Shaking speed": "摇速", Capacitance: "电容", Resistance: "电阻", Pulse: "脉冲",
+  "Start value": "起始", "End value": "终止",
+  "Vortex mix": "涡旋混匀", "Invert to mix": "颠倒混匀", "Pipette to mix": "吹打混匀", "Flick to mix": "轻弹混匀",
+  Vortex: "涡旋", Invert: "颠倒", Pipette: "吹打", Flick: "轻弹",
+  // Calculation inputs and results
+  "Stock concentration": "母液浓度", "Target concentration": "目标浓度", "Final volume": "终体积", "Stock volume": "母液取液体积",
+  "Diluent to add": "稀释液加入量", "Concentrate fold": "浓缩倍数", "Target fold": "目标倍数", Concentrate: "浓缩液", "Water to add": "补水",
+  "Molecular weight": "分子量", "Make-up volume": "定容体积", Purity: "纯度", "Mass to weigh": "称取质量",
+  "Count 1": "计数 1", "Count 2": "计数 2", "Count 3": "计数 3", "Count 4": "计数 4", "Dilution factor": "稀释倍数", "Cell viability": "活率",
+  "Viable cell concentration": "活细胞浓度", "Cell concentration": "细胞浓度", "Number of wells": "孔数", "Cells per well": "每孔细胞数",
+  "Volume per well": "每孔体积", Overage: "余量", "Cell suspension": "细胞悬液", "Culture medium": "培养基", "DNA per well": "每孔 DNA",
+  "DNA stock concentration": "DNA 母液浓度", "Reagent per µg DNA": "每 µg DNA 试剂量", "Complex volume per well": "每孔复合物体积",
+  "DNA stock": "DNA 原液", "Transfection reagent": "转染试剂", Diluent: "稀释液", "Cell number": "细胞数", "Target MOI": "目标 MOI",
+  "Virus titer": "病毒滴度", "Virus volume": "病毒液",
+  // Calculations (interface text in protocolCalculations; listed for "Cell count calculation" and the like)
+  Dilution: "稀释", "Fold dilution": "倍数稀释", "Solution by weight": "称量配液", "Cell count": "细胞计数", "Cell seeding": "细胞铺板",
+  "Transfection mix": "转染体系", "Infection MOI": "感染 MOI",
+};
+
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  ...protocolLabelsZh,
   "Unsaved draft restored": "已恢复未提交草稿",
   "Draft storage unavailable": "草稿存储不可用",
   "Cannot save draft; keep this page": "无法保存草稿，请保留页面",
@@ -2578,6 +2611,13 @@ export const zhUi: Record<string, string> = {
   "Optional step: may be skipped at run time and does not count toward required progress": "可选步骤：执行时可跳过，不计入必需进度",
   // Chip popover (protocol editor)
   "Not a number; not used": "不是数字，未采用",
+  "Dilute the stock to the target concentration (C1V1 = C2V2).": "母液稀释到目标浓度（C1V1 = C2V2）。",
+  "Make the working solution from a 10× (or other) concentrate.": "由 10× 等浓缩液配成工作液。",
+  "Weigh, dissolve and make up to volume; for a hydrate or salt form, enter that form’s molecular weight.": "称取后溶解并定容；含结晶水或盐形式时填写对应分子量。",
+  "Hemocytometer large squares: average cells per square × dilution factor × 10⁴ cells/mL; counting 1–4 squares is enough.": "血球计数板标准大方格：平均每格细胞数 × 稀释倍数 × 10⁴ cells/mL；可只数 1–4 格。",
+  "Make the cell suspension for all wells (overage included), mix, then dispense into each well.": "按总孔数（含余量）配制细胞悬液，混匀后分装到各孔。",
+  "Reagents, diluent and mixing order follow the transfection reagent’s instructions.": "试剂、稀释液及混合顺序按所用转染试剂说明书。",
+  "The titer must be a functional titer (TU, IU or PFU); VG cannot be used for MOI.": "滴度须为功能性滴度（TU、IU 或 PFU）；VG 不能用于 MOI。",
   "Unit suggestions": "单位建议",
   "Some inputs are filled in or confirmed at run time; it is calculated then and adopted once confirmed.": "有输入在执行时填写或确认：届时计算，确认后采用。",
   "This parameter shows": "这个参数块显示",
@@ -2906,12 +2946,23 @@ function translateDynamic(value: string): string {
   if (match) return `实际 ${match[1]}`;
   match = value.match(/^([\s\S]*[\u3400-\u9fff][\s\S]*) calculation$/);
   if (match) return `${match[1]}计算`;
+  // Chip labels shown in English (protocolLabelText) read back as the stored Chinese, joined as before.
+  match = value.match(/^(Dilution|Fold dilution|Solution by weight|Cell count|Cell seeding|Transfection mix|Infection MOI) calculation$/);
+  if (match) return `${protocolLabelsZh[match[1]]}计算`;
+  match = value.match(/^([\s\S]+) \(optional\)$/);
+  if (match && protocolLabelsZh[match[1]]) return `${protocolLabelsZh[match[1]]}（可选）`;
+  match = value.match(/^([\s\S]+) source$/);
+  if (match && protocolLabelsZh[match[1]]) return `${protocolLabelsZh[match[1]]}来源`;
+  match = value.match(/^(?:Edit|Remove) ([\s\S]+)$/);
+  if (match && protocolLabelsZh[match[1]]) return `${value.startsWith("Edit") ? "编辑" : "移除"}${protocolLabelsZh[match[1]]}`;
+  match = value.match(/^([^·]+) · ([^·]+)$/);
+  if (match && protocolLabelsZh[match[1]] && protocolLabelsZh[match[2]]) return `${protocolLabelsZh[match[1]]} · ${protocolLabelsZh[match[2]]}`;
   match = value.match(/^Method version (\S+)(?: · confirmed ([\s\S]+))?$/);
   if (match) return `方法版本 ${match[1]}${match[2] ? ` · 确认于 ${match[2]}` : ""}`;
   match = value.match(/^Unrecognized unit; still ([\s\S]+)$/);
   if (match) return `未识别的单位，仍按 ${match[1]}`;
   match = value.match(/^Fill in ([\s\S]+) to see the expected result\.$/);
-  if (match) return `填写${match[1].split(", ").join("、")}后显示预计结果。`;
+  if (match) return `填写${match[1].split(", ").map((label) => protocolLabelsZh[label] ?? label).join("、")}后显示预计结果。`;
   match = value.match(/^About ([\s\S]+) with the current inputs; adopted once confirmed at run time\.$/);
   if (match) return `按当前输入约 ${match[1]}，执行时确认后采用。`;
   match = value.match(/^([\s\S]*[㐀-鿿][\s\S]*) \(optional\)$/);
@@ -3422,6 +3473,9 @@ function translateDynamic(value: string): string {
   if (match) return `结构化${zhUi[match[1]] ?? match[1]}导入`;
   match = value.match(/^Export (.+) with stable field names$/);
   if (match) return `使用稳定字段名导出${zhUi[match[1]] ?? match[1]}`;
+  // A yes/no condition answered no (conditionTagLabel): "not fatty tissue" reads 非富脂组织.
+  match = value.match(/^not ([\s\S]+)$/);
+  if (match) return `非${zhSystemLabel(match[1])}`;
   return value;
 }
 

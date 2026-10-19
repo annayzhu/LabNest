@@ -1,5 +1,13 @@
-/** A yes/no condition reads as its name: "富脂组织" or "非富脂组织". */
+/**
+ * A yes/no condition reads as its name: "fatty tissue" or "not fatty tissue"; another option as "Tissue: liver".
+ * Interface text; the Chinese interface reads it 富脂组织 / 非富脂组织 / 组织：肝 (conditionTagLabelZh).
+ */
 export function conditionTagLabel(dimension: string, option: string) {
+  const name = systemLabelText(dimension);
+  return option === '是' ? name : option === '否' ? `not ${name}` : `${name}: ${systemLabelText(option)}`;
+}
+/** conditionTagLabel in Chinese, for text the page translator cannot reach (the editor's CSS tags). */
+export function conditionTagLabelZh(dimension: string, option: string) {
   return option === '是' ? dimension : option === '否' ? `非${dimension}` : `${dimension}：${option}`;
 }
 

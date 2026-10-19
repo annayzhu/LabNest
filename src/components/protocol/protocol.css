@@ -76,6 +76,8 @@
 .ln-has-condition::before { content: attr(data-condition); display: block; margin-bottom: 0.15rem; font: var(--ln-control-font-size-xs)/1.35 var(--font-ui); color: var(--muted); }
 .ln-has-condition.is-lens-dimmed { opacity: 0.35; }
 [data-column-tag]::before { content: attr(data-column-tag); display: block; font: var(--ln-control-font-size-xs)/1.3 var(--font-ui); color: var(--muted); font-weight: 400; }
+:root[data-locale="zh"] .ln-has-condition::before { content: attr(data-condition-zh); }
+:root[data-locale="zh"] [data-column-tag]::before { content: attr(data-column-tag-zh); }
 
 /* ——— Systems legend and lens ——— */
 .ln-systems-bar { display: grid; gap: 0.2rem; margin: 0 0 1rem; padding: 0.15rem 0 0.65rem; border-bottom: 1px solid var(--hairline); font: var(--ln-control-font-size-md)/1.4 var(--font-ui); color: var(--graphite); }

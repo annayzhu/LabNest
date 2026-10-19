@@ -14,6 +14,7 @@ export type CalculationInput = { key: string; label: string; unit: string; value
   from?: { calculatorId: ProtocolCalculatorId; output: string } };
 export type CalculationOutput = { key: string; label: string; unit: string };
 export type ProtocolCalculationSpec = {
+  /** `label` and `note` are interface text in English; input and result labels are written into the Protocol's chips (shown through protocolLabelText). */
   label: string; engine: string; inputs: CalculationInput[]; outputs: CalculationOutput[]; note: string;
   /** Request values that are not chips: the calculator mode the chip always uses. */
   fixed?: Record<string, unknown>;
@@ -24,26 +25,26 @@ export type ProtocolCalculationSpec = {
 const counts = ['count1', 'count2', 'count3', 'count4'];
 /** Calculations a Protocol step can carry; each reuses an existing calculator, never its own formula. */
 export const protocolCalculations: Record<ProtocolCalculatorId, ProtocolCalculationSpec> = {
-  dilution: { label: '稀释', engine: 'dilution', fixed: { mode: 'final' }, note: '母液稀释到目标浓度（C1V1 = C2V2）。',
+  dilution: { label: 'Dilution', engine: 'dilution', fixed: { mode: 'final' }, note: 'Dilute the stock to the target concentration (C1V1 = C2V2).',
     inputs: [{ key: 'stockConcentration', label: '母液浓度', unit: 'mM' }, { key: 'targetConcentration', label: '目标浓度', unit: 'mM' }, { key: 'finalVolume', label: '终体积', unit: 'µL' }],
     outputs: [{ key: 'stockVolumeUl', label: '母液取液体积', unit: 'µL' }, { key: 'diluentVolume', label: '稀释液加入量', unit: 'µL' }] },
-  'fold-dilution': { label: '倍数稀释', engine: 'fold-dilution', fixed: { mode: 'fold' }, note: '由 10× 等浓缩液配成工作液。',
+  'fold-dilution': { label: 'Fold dilution', engine: 'fold-dilution', fixed: { mode: 'fold' }, note: 'Make the working solution from a 10× (or other) concentrate.',
     inputs: [{ key: 'stockFold', label: '浓缩倍数', unit: '×', value: 10 }, { key: 'targetFold', label: '目标倍数', unit: '×', value: 1 }, { key: 'finalVolume', label: '终体积', unit: 'mL' }],
     outputs: [{ key: 'stockVolumeUl', label: '浓缩液', unit: 'mL' }, { key: 'diluentVolume', label: '补水', unit: 'mL' }] },
-  molarity: { label: '称量配液', engine: 'molarity', fixed: { mode: 'mass' }, note: '称取后溶解并定容；含结晶水或盐形式时填写对应分子量。',
+  molarity: { label: 'Solution by weight', engine: 'molarity', fixed: { mode: 'mass' }, note: 'Weigh, dissolve and make up to volume; for a hydrate or salt form, enter that form’s molecular weight.',
     inputs: [{ key: 'molecularWeight', label: '分子量', unit: 'g/mol' }, { key: 'concentrationM', label: '目标浓度', unit: 'mM' }, { key: 'volumeL', label: '定容体积', unit: 'mL' }, { key: 'purityPercent', label: '纯度', unit: '%', value: 100, optional: true }],
     outputs: [{ key: 'massG', label: '称取质量', unit: 'g' }] },
-  hemocytometer: { label: '细胞计数', engine: 'hemocytometer', fixed: { countRegion: 'standard' }, list: { key: 'counts', from: counts },
-    note: '血球计数板标准大方格：平均每格细胞数 × 稀释倍数 × 10⁴ cells/mL；可只数 1–4 格。',
+  hemocytometer: { label: 'Cell count', engine: 'hemocytometer', fixed: { countRegion: 'standard' }, list: { key: 'counts', from: counts },
+    note: 'Hemocytometer large squares: average cells per square × dilution factor × 10⁴ cells/mL; counting 1–4 squares is enough.',
     inputs: [...counts.map((key, index) => ({ key, label: `计数 ${index + 1}`, unit: 'cells', actual: true, optional: index > 0 })), { key: 'dilutionFactor', label: '稀释倍数', unit: '×', value: 2 }, { key: 'viabilityPercent', label: '活率', unit: '%', actual: true }],
     outputs: [{ key: 'viableCellsPerMl', label: '活细胞浓度', unit: 'cells/mL' }, { key: 'concentrationCellsPerMl', label: '细胞浓度', unit: 'cells/mL' }] },
-  seeding: { label: '细胞铺板', engine: 'seeding', note: '按总孔数（含余量）配制细胞悬液，混匀后分装到各孔。',
+  seeding: { label: 'Cell seeding', engine: 'seeding', note: 'Make the cell suspension for all wells (overage included), mix, then dispense into each well.',
     inputs: [{ key: 'stockCellsPerMl', label: '活细胞浓度', unit: 'cells/mL', actual: true, from: { calculatorId: 'hemocytometer', output: 'viableCellsPerMl' } }, { key: 'wells', label: '孔数', unit: '孔' }, { key: 'cellsPerWell', label: '每孔细胞数', unit: 'cells' }, { key: 'volumePerWellUl', label: '每孔体积', unit: 'µL' }, { key: 'overagePercent', label: '余量', unit: '%', value: 10 }],
     outputs: [{ key: 'stockVolumeMl', label: '细胞悬液', unit: 'mL' }, { key: 'mediumVolumeMl', label: '培养基', unit: 'mL' }] },
-  transfection: { label: '转染体系', engine: 'transfection', fixed: { complexMode: 'combined', replicates: 1 }, note: '试剂、稀释液及混合顺序按所用转染试剂说明书。',
+  transfection: { label: 'Transfection mix', engine: 'transfection', fixed: { complexMode: 'combined', replicates: 1 }, note: 'Reagents, diluent and mixing order follow the transfection reagent’s instructions.',
     inputs: [{ key: 'wells', label: '孔数', unit: '孔' }, { key: 'dnaUgPerWell', label: '每孔 DNA', unit: 'µg' }, { key: 'dnaConcentrationUgUl', label: 'DNA 母液浓度', unit: 'ng/µL', actual: true }, { key: 'reagentUlPerUg', label: '每 µg DNA 试剂量', unit: 'µL/µg' }, { key: 'complexVolumeUlPerWell', label: '每孔复合物体积', unit: 'µL' }, { key: 'overagePercent', label: '余量', unit: '%', value: 10 }],
     outputs: [{ key: 'dnaVolumeUl', label: 'DNA 原液', unit: 'µL' }, { key: 'reagentUl', label: '转染试剂', unit: 'µL' }, { key: 'diluentUl', label: '稀释液', unit: 'µL' }] },
-  moi: { label: '感染 MOI', engine: 'moi', note: '滴度须为功能性滴度（TU、IU 或 PFU）；VG 不能用于 MOI。',
+  moi: { label: 'Infection MOI', engine: 'moi', note: 'The titer must be a functional titer (TU, IU or PFU); VG cannot be used for MOI.',
     inputs: [{ key: 'cells', label: '细胞数', unit: 'cells' }, { key: 'desiredMoi', label: '目标 MOI', unit: 'MOI' }, { key: 'titer', label: '病毒滴度', unit: 'TU/mL', actual: true, unitKey: 'titerUnit' }],
     outputs: [{ key: 'virusVolumeUl', label: '病毒液', unit: 'µL' }] },
 };

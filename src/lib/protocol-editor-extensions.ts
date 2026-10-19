@@ -5,7 +5,7 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { optionMarks, recognizeQuantity, type RecognizedQuantity } from './protocol-chips';
 import type { ProtocolSystems } from './protocol-systems-schema';
 import { evaluateProtocolCondition, type ProtocolSelection } from './structured-protocol';
-import { conditionTagLabel } from './protocol-conditions';
+import { conditionTagLabel, conditionTagLabelZh } from './protocol-conditions';
 import { slashOpensMenu } from './editor-slash';
 
 /** What the editor's extensions call back into. The React editor refreshes these after every render. */
@@ -101,7 +101,8 @@ export const ProtocolConditionDecorations = Extension.create({
       const systems = getSystems();
       if (!systems) return DecorationSet.create(state.doc, decorations);
       const lens = getLens(), marks = optionMarks(systems);
-      const tag = (rule: ProtocolSystems['rules'][number]) => [...(rule.when.all ?? []), ...(rule.when.any ?? [])].map(p => { const mark = marks.get(`${p.dimensionId}:${p.optionId}`); const dimension = systems.dimensions.find(d => d.id === p.dimensionId); return mark?.glyph ? `${mark.glyph} ${mark.label}` : conditionTagLabel(dimension?.label ?? '', mark?.label ?? ''); }).join(' / ');
+      // CSS draws these tags from attributes the page translator cannot reach: each carries its English and Chinese text.
+      const tag = (rule: ProtocolSystems['rules'][number], label: typeof conditionTagLabel) => [...(rule.when.all ?? []), ...(rule.when.any ?? [])].map(p => { const mark = marks.get(`${p.dimensionId}:${p.optionId}`); const dimension = systems.dimensions.find(d => d.id === p.dimensionId); return mark?.glyph ? `${mark.glyph} ${mark.label}` : label(dimension?.label ?? '', mark?.label ?? ''); }).join(' / ');
       state.doc.descendants((node, pos, parent) => {
         if (!parent || !['protocolSection', 'protocolStep'].includes(parent.type.name)) return node.type.name === 'protocolSection' || node.type.name === 'protocolStep' || node.type.name === 'doc';
         // A step is a container: its own scope is drawn by its node view; its blocks are visited below.
@@ -110,13 +111,14 @@ export const ProtocolConditionDecorations = Extension.create({
           const [dimensionId, optionId] = typeof cell.attrs.protocolColumn === 'string' ? cell.attrs.protocolColumn.split(':') : [];
           const mark = dimensionId ? marks.get(`${dimensionId}:${optionId}`) : undefined;
           // pos + 2: inside the table, then the first row.
-          if (mark) decorations.push(Decoration.node(pos + 2 + offset, pos + 2 + offset + cell.nodeSize, { 'data-column-tag': `仅 ${mark.glyph ? `${mark.glyph} ` : ''}${mark.label}` }));
+          const option = mark ? `${mark.glyph ? `${mark.glyph} ` : ''}${mark.label}` : '';
+          if (mark) decorations.push(Decoration.node(pos + 2 + offset, pos + 2 + offset + cell.nodeSize, { 'data-column-tag': `Only ${option}`, 'data-column-tag-zh': `仅 ${option}` }));
         });
         const id = blockId(node);
         const rules = id ? systems.rules.filter(rule => rule.target === 'block' && rule.targetId === id && [rule.when.all, rule.when.any, rule.when.not].some(p => p?.length)) : [];
         if (rules.length) {
           const dimmed = rules.some(rule => evaluateProtocolCondition(rule.when, lens) === 'not-applicable');
-          decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: `ln-has-condition${dimmed ? ' is-lens-dimmed' : ''}`, 'data-condition': `仅 ${rules.map(tag).join('；')}` }));
+          decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: `ln-has-condition${dimmed ? ' is-lens-dimmed' : ''}`, 'data-condition': `Only ${rules.map(rule => tag(rule, conditionTagLabel)).join('; ')}`, 'data-condition-zh': `仅 ${rules.map(rule => tag(rule, conditionTagLabelZh)).join('；')}` }));
         }
         return false;
       });

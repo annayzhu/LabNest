@@ -1,5 +1,6 @@
 import { Calculator, Clock, FlaskConical, Gauge, Hash, MoonStar, Percent, Pipette, Repeat, RotateCw, Shuffle, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Zap, type LucideIcon } from 'lucide-react';
 import { chipViewText, unitPlacement, type ChipKind, type ChipView, type OptionMark, type ToolKind } from '@/lib/protocol-chips';
+import { protocolLabelText } from '@/lib/protocol-label-text';
 import type { ProtocolSelection } from '@/lib/structured-protocol';
 import { MarkGroup } from './SystemMark';
 import { useI18n } from '../I18nProvider';
@@ -34,12 +35,12 @@ export function ProtocolChip({ view, lens, calculated = false }: { view: ChipVie
   if (view.type === 'missing') return <span className="ln-chip" data-state="missing" title={t('The referenced parameter was deleted')}>{t('Parameter deleted')}</span>;
   if (view.type === 'pending') {
     const Icon = calculated ? Calculator : kindIcons[view.kind];
-    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.name}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
+    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{t(protocolLabelText(view.name))}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
   }
   if (view.type === 'tool') {
     const Icon = toolIcons[view.tool];
-    return <span className="ln-chip" data-state="tool" data-tool={view.tool} title={label}><Icon aria-hidden className="ln-chip-icon" /><span className="ln-chip-tool-label">{view.label}</span>
-      {view.fields.map(field => <span key={field.key} className="ln-chip-field" title={field.label}>{field.view.type === 'value' ? <Values view={field.view} lens={lens} /> : field.view.type === 'pending' ? <><span className="ln-chip-blank" aria-label={`${field.label}${field.view.reason}`}>—</span><span className="ln-chip-unit">{field.view.displayUnit}</span></> : <span className="ln-chip-reason">{chipViewText(field.view)}</span>}{view.tool === 'gas' ? <span className="ln-chip-unit">{field.label}</span> : null}</span>)}
+    return <span className="ln-chip" data-state="tool" data-tool={view.tool} title={label}><Icon aria-hidden className="ln-chip-icon" /><span className="ln-chip-tool-label">{t(protocolLabelText(view.label))}</span>
+      {view.fields.map(field => <span key={field.key} className="ln-chip-field" title={t(protocolLabelText(field.label))}>{field.view.type === 'value' ? <Values view={field.view} lens={lens} /> : field.view.type === 'pending' ? <><span className="ln-chip-blank" aria-label={`${field.label}${field.view.reason}`}>—</span><span className="ln-chip-unit">{field.view.displayUnit}</span></> : <span className="ln-chip-reason">{chipViewText(field.view)}</span>}{view.tool === 'gas' ? <span className="ln-chip-unit">{field.label}</span> : null}</span>)}
     </span>;
   }
   const Icon = calculated ? Calculator : kindIcons[view.kind];

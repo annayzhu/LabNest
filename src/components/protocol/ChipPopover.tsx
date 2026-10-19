@@ -3,8 +3,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, X } from 'lucide-react';
 import { compatibleUnits, normalizeUnit, parseScalar, units } from '@/lib/calculators/quantities';
-import { chipAmount, chipKindForUnit, chipKindLabels, optionMarks, parameterDisplayName, splitLookupSource, toolSpecs, type OptionMark } from '@/lib/protocol-chips';
+import { chipAmount, chipKindForUnit, chipKindLabels, optionMarks, splitLookupSource, toolSpecs, type OptionMark } from '@/lib/protocol-chips';
 import { computedTogether, protocolCalculations, siblingResult, type CalculationInput } from '@/lib/protocol-calculations';
+import { parameterNameText, protocolLabelText } from '@/lib/protocol-label-text';
+import { systemLabelText } from '@/lib/protocol-conditions';
 import { previewProtocolCalculation, resolveProtocolSystem } from '@/lib/structured-protocol';
 import type { ProtocolSystems } from '@/lib/protocol-systems-schema';
 import { prefixedClientId as uid } from '@/lib/client-mutation-id';
@@ -57,7 +59,7 @@ function UnitField({ unit, onChange, choices }: { unit: string; onChange: (unit:
 }
 
 function OptionLabel({ mark, dimension, option }: { mark?: OptionMark; dimension: Dimension; option: Dimension['options'][number] }) {
-  return <span className="ln-chip-option" data-tone={mark?.tone}>{mark?.symbol ? <SystemMark mark={mark} /> : null}<span>{dimension.kind === 'condition' ? `${dimension.label}：${option.label}` : option.label}</span></span>;
+  return <span className="ln-chip-option" data-tone={mark?.tone}>{mark?.symbol ? <SystemMark mark={mark} /> : null}<span>{dimension.kind === 'condition' ? `${systemLabelText(dimension.label)}: ${systemLabelText(option.label)}` : option.label}</span></span>;
 }
 
 /** How a lookup is laid out for editing: one dimension (rows) or two (grid). */
@@ -92,7 +94,7 @@ function CalculationEditor({ parameter, systems, onChange, onInsert }: { paramet
   };
   // What the author sees while writing: what is still to fill here, what waits for the Run, or the result for these inputs.
   const required = spec.inputs.filter(input => !input.optional).map(input => ({ input, chip: systems.parameters.find(p => p.id === source.inputs[input.key]) }));
-  const unfilled = required.filter(({ chip }) => !chip || (chip.source.kind === 'fixed' && chip.source.value === null)).map(({ input }) => input.label);
+  const unfilled = required.filter(({ chip }) => !chip || (chip.source.kind === 'fixed' && chip.source.value === null)).map(({ input }) => protocolLabelText(input.label));
   const later = required.some(({ chip }) => chip && chip.source.kind !== 'fixed');
   let estimate: string;
   if (unfilled.length) estimate = `Fill in ${unfilled.join(', ')} to see the expected result.`;
@@ -102,21 +104,22 @@ function CalculationEditor({ parameter, systems, onChange, onInsert }: { paramet
     estimate = `About ${chipAmount(preview.value, preview.unit, true)} with the current inputs; adopted once confirmed at run time.`;
   } catch (error) { estimate = error instanceof Error ? error.message : 'Calculation failed'; }
   return <div className="ln-chip-lookup">
-    {spec.outputs.length > 1 ? <div className="ln-chip-modes" role="radiogroup" aria-label="This parameter shows">{spec.outputs.map(item => <button key={item.key} type="button" role="radio" className="focus-ring" aria-checked={source.output === item.key} onClick={() => showOutput(item.key)}>{item.label}</button>)}</div> : null}
+    {spec.outputs.length > 1 ? <div className="ln-chip-modes" role="radiogroup" aria-label="This parameter shows">{spec.outputs.map(item => <button key={item.key} type="button" role="radio" className="focus-ring" aria-checked={source.output === item.key} onClick={() => showOutput(item.key)}>{protocolLabelText(item.label)}</button>)}</div> : null}
     {spec.inputs.map(input => {
       const current = systems.parameters.find(p => p.id === source.inputs[input.key]);
       const own = ownInput(input, current);
       const mode = !current ? 'here' : own ? current.source.kind === 'actual' ? 'actual' : 'here' : current.id;
       // Another chip of the same kind can supply this input; the calculation's own inputs and results cannot.
+      const label = protocolLabelText(input.label);
       const others = systems.parameters.filter(p => p.id !== parameter.id && !p.ownerToolId && !computedTogether(p, parameter) && (p.id === current?.id ? !own : !Object.values(source.inputs).includes(p.id)) && dimension(p.unit) === dimension(input.unit));
       return <div key={input.key} className="ln-chip-row is-calc">
-        <span className="ln-chip-field-label">{input.optional ? `${input.label} (optional)` : input.label}</span>
-        {mode === 'here' && current?.source.kind === 'fixed' ? <NumberField label={input.label} value={current.source.value} onChange={value => setInput({ ...current, source: { ...current.source as Extract<Parameter['source'], { kind: 'fixed' }>, value } })} />
-          : <span className="ln-chip-note">{mode === 'actual' ? 'Filled in at run time' : current ? parameterDisplayName(current) : '—'}</span>}
+        <span className="ln-chip-field-label">{input.optional ? `${label} (optional)` : label}</span>
+        {mode === 'here' && current?.source.kind === 'fixed' ? <NumberField label={label} value={current.source.value} onChange={value => setInput({ ...current, source: { ...current.source as Extract<Parameter['source'], { kind: 'fixed' }>, value } })} />
+          : <span className="ln-chip-note">{mode === 'actual' ? 'Filled in at run time' : current ? parameterNameText(current) : '—'}</span>}
         {own && current ? <UnitField unit={current.unit} choices={compatibleUnits(input.unit)} onChange={unit => setInput({ ...current, unit, source: current.source.kind === 'fixed' ? { ...current.source, unit } : current.source })} /> : <span />}
-        <select aria-label={`${input.label} source`} className="ln-chip-input" value={mode} onChange={event => chooseSource(input, event.target.value)}>
+        <select aria-label={`${label} source`} className="ln-chip-input" value={mode} onChange={event => chooseSource(input, event.target.value)}>
           <option value="here">Fill in here</option><option value="actual">Filled in at run time</option>
-          {others.map(p => <option key={p.id} value={p.id}>{parameterDisplayName(p)}</option>)}
+          {others.map(p => <option key={p.id} value={p.id}>{parameterNameText(p)}</option>)}
         </select>
       </div>;
     })}
@@ -124,7 +127,7 @@ function CalculationEditor({ parameter, systems, onChange, onInsert }: { paramet
       const sibling = siblingResult(parameter, item.key, systems.parameters, uid);
       if (sibling.created) updateSystems(current => ({ ...current, parameters: [...current.parameters, sibling.parameter] }));
       onInsert(sibling.parameter.id);
-    }}><Plus aria-hidden />{item.label}</button>)}</span> : null}
+    }}><Plus aria-hidden />{protocolLabelText(item.label)}</button>)}</span> : null}
     <p className="ln-chip-note">{estimate}</p>
     <p className="ln-chip-note">{spec.note}</p>
   </div>;
@@ -184,6 +187,7 @@ function NameField({ parameter, onChange }: { parameter: Parameter; onChange: (n
   </span>;
 }
 
+// Stored as the method's Chinese name; the button shows its English verb (Vortex, Invert…), which the Chinese interface reads 涡旋, 颠倒….
 const mixMethods = ['涡旋混匀', '颠倒混匀', '吹打混匀', '轻弹混匀'];
 
 function ToolEditor({ toolId, systems, update }: { toolId: string; systems: ProtocolSystems; update: (fn: (s: ProtocolSystems) => ProtocolSystems) => void }) {
@@ -195,12 +199,12 @@ function ToolEditor({ toolId, systems, update }: { toolId: string; systems: Prot
   const addField = (key: string, unit: string) => { const id = uid('p'); update(s => ({ ...s, parameters: [...s.parameters, { id, label: '', unit, ownerToolId: tool.id, source: { kind: 'fixed', value: null, unit } }], tools: (s.tools ?? []).map(t => t.id === tool.id ? { ...t, fields: [...t.fields, { key, parameterId: id }] } : t) })); };
   const removeField = (key: string) => update(s => ({ ...s, tools: (s.tools ?? []).map(t => t.id === tool.id ? { ...t, fields: t.fields.filter(f => f.key !== key) } : t) }));
   return <div className="ln-chip-tool">
-    {tool.kind === 'mix' ? <div className="ln-chip-modes" role="radiogroup" aria-label="Mixing method">{mixMethods.map(method => <button className="focus-ring" key={method} type="button" role="radio" aria-checked={(tool.method ?? '') === method} onClick={() => update(s => ({ ...s, tools: (s.tools ?? []).map(t => t.id === tool.id ? { ...t, method } : t) }))}>{method.replace('混匀', '')}</button>)}</div> : null}
-    {spec.fields.map((field, index) => { const parameter = parameterFor(field.key); return parameter ? <div key={field.key} className="ln-chip-row is-field"><span className="ln-chip-field-label">{field.label}</span>
-      {parameter.source.kind === 'fixed' ? <NumberField label={field.label} value={parameter.source.value} autoFocus={index === 0} onChange={value => setParameter({ ...parameter, source: { ...parameter.source as Extract<Parameter['source'], { kind: 'fixed' }>, value } })} /> : <span className="ln-chip-note">Values by system</span>}
+    {tool.kind === 'mix' ? <div className="ln-chip-modes" role="radiogroup" aria-label="Mixing method">{mixMethods.map(method => <button className="focus-ring" key={method} type="button" role="radio" aria-checked={(tool.method ?? '') === method} onClick={() => update(s => ({ ...s, tools: (s.tools ?? []).map(t => t.id === tool.id ? { ...t, method } : t) }))}>{protocolLabelText(method.replace('混匀', ''))}</button>)}</div> : null}
+    {spec.fields.map((field, index) => { const parameter = parameterFor(field.key), label = protocolLabelText(field.label); return parameter ? <div key={field.key} className="ln-chip-row is-field"><span className="ln-chip-field-label">{label}</span>
+      {parameter.source.kind === 'fixed' ? <NumberField label={label} value={parameter.source.value} autoFocus={index === 0} onChange={value => setParameter({ ...parameter, source: { ...parameter.source as Extract<Parameter['source'], { kind: 'fixed' }>, value } })} /> : <span className="ln-chip-note">Values by system</span>}
       <UnitField unit={parameter.unit} choices={field.units} onChange={unit => setParameter({ ...parameter, unit, source: parameter.source.kind === 'fixed' ? { ...parameter.source, unit } : parameter.source })} />
-      {field.optional ? <button type="button" className="focus-ring ln-chip-icon-button" aria-label={`Remove ${field.label}`} onClick={() => removeField(field.key)}><X aria-hidden /></button> : null}
-    </div> : field.optional ? <button key={field.key} type="button" className="focus-ring ln-chip-link is-add" onClick={() => addField(field.key, field.units[0])}>＋ {field.label}</button> : null; })}
+      {field.optional ? <button type="button" className="focus-ring ln-chip-icon-button" aria-label={`Remove ${label}`} onClick={() => removeField(field.key)}><X aria-hidden /></button> : null}
+    </div> : field.optional ? <button key={field.key} type="button" className="focus-ring ln-chip-link is-add" onClick={() => addField(field.key, field.units[0])}>＋ {label}</button> : null; })}
     {tool.kind === 'dark' ? <p className="ln-chip-note">A reminder to work protected from light; no values.</p> : null}
   </div>;
 }
@@ -231,7 +235,7 @@ export function ChipPopover({ target, onDelete, onClose }: ChipPopoverProps) {
   const tool = systems.tools?.find(t => t.id === target.id);
   const parameter = systems.parameters.find(p => p.id === target.id);
   const setParameter = (next: Parameter) => api.updateSystems(s => ({ ...s, parameters: s.parameters.map(p => p.id === next.id ? next : p) }));
-  const kindLabel = tool ? toolSpecs[tool.kind].label : parameter?.source.kind === 'calculator' ? protocolCalculations[parameter.source.calculatorId].label : parameter ? chipKindLabels[parameter.kind ?? chipKindForUnit(parameter.unit)] : 'Parameter';
+  const kindLabel = tool ? protocolLabelText(toolSpecs[tool.kind].label) : parameter?.source.kind === 'calculator' ? protocolCalculations[parameter.source.calculatorId].label : parameter ? protocolLabelText(chipKindLabels[parameter.kind ?? chipKindForUnit(parameter.unit)]) : 'Parameter';
   let body: ReactNode;
   if (tool) body = <ToolEditor toolId={tool.id} systems={systems} update={api.updateSystems} />;
   // Results added one after another keep the order they were chosen in.

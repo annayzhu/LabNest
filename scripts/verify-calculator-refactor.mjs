@@ -17,11 +17,11 @@ try {
  assert.equal(await page.getByText('Valid conditions',{exact:true}).count(),0);
  await fill('Stock concentration',10);await fill('Target concentration',10);await fill('Final / initial volume',2);
  await page.locator('[data-calculator-result]').waitFor();
- await page.getByRole('combobox',{name:'Stock concentration unit'}).selectOption('µM');assert.equal(await input('Stock concentration').inputValue(),'10000');
+ await page.getByRole('combobox',{name:'Stock concentration unit'}).selectOption('µM');assert.equal(await input('Stock concentration').inputValue(),'10');await fill('Stock concentration',10000);
  await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);
  await page.getByRole('button',{name:'Save to local history'}).click();
  const snapshot=await page.evaluate(()=>JSON.parse(localStorage.getItem('labnest.calculators.v1')).history[0]);assert.equal(snapshot.snapshot.outputMap.stockVolumeUl,2);assert.equal(snapshot.inputUnits.stockConcentration,'µM');
- await fill('Target concentration','');assert.equal(await page.getByRole('button',{name:'Save to local history'}).count(),0);checks.push('UX-05/06 invalidation and physical unit preservation');
+ await fill('Target concentration','');assert.equal(await page.getByRole('button',{name:'Save to local history'}).count(),0);checks.push('UX-05/06 invalidation and unit relabelling');
  await fill('Target concentration',10);await page.reload({waitUntil:'networkidle'});assert.equal(await input('Stock concentration').inputValue(),'');await page.getByRole('button',{name:'Restore draft'}).click();assert.equal(await input('Stock concentration').inputValue(),'10000');checks.push('draft explicit restoration');
  await page.goto(`${base}/tools/calculator/master-mix`,{waitUntil:'networkidle'});await page.getByRole('button',{name:'Load example'}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);assert(await page.getByRole('button',{name:'Save to local history'}).isDisabled());assert((await page.locator('main').innerText()).includes('514.8'));checks.push('NUM-20 UI and UX-16 example guard');
  for(const width of [360,390]){

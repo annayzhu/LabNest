@@ -112,7 +112,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
 
 
   useEffect(()=>{
-    if(!plateContext?.requestId || window.parent===window)return;
+    if(!initialized || !plateContext?.requestId || window.parent===window)return;
     const receive=(event:MessageEvent)=>{
       if(event.source!==window.parent||event.origin!==window.location.origin||event.data?.type!=='labnest:calculator-inputs'||event.data?.requestId!==plateContext.requestId||event.data?.calculatorId!==calculatorId)return;
       if(!event.data.inputs||typeof event.data.inputs!=='object'||Array.isArray(event.data.inputs))return;
@@ -121,7 +121,7 @@ export function CalculatorWorkbench({ calculatorId, initialInputs = {}, plateCon
     window.addEventListener('message',receive);
     window.parent.postMessage({type:'labnest:calculator-ready',calculatorId,plateContext},window.location.origin);
     return()=>window.removeEventListener('message',receive);
-  },[calculatorId,defaults,plateContext]);
+  },[calculatorId,defaults,plateContext,initialized]);
 
   const transfectionEditor=useRef<TransfectionEditorHandle>(null);
   function runCalculation(event?: FormEvent) {

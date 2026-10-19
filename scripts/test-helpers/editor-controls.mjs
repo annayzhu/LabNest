@@ -65,8 +65,10 @@ export async function uploadImages(page, files, kind = 'image', target) {
 }
 
 export async function caretAtEnd(editor) {
-  await editor.evaluate(el => {
+  await editor.evaluate(async el => {
     (el.closest('[contenteditable=true]') ?? el).focus(); const range=document.createRange(); range.selectNodeContents(el); range.collapse(false);
     const selection=getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    // Let the native selectionchange reach the editor before the next key replaces its selection.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
 }

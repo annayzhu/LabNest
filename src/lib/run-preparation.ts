@@ -1,4 +1,4 @@
-import { convert, normalizeUnit, units } from './calculators/quantities';
+import { compatibleUnits, convert, normalizeUnit, units } from './calculators/quantities';
 import { calculationGroups } from './protocol-calculations';
 import { chipAmount, parameterLongName, toolSpecs } from './protocol-chips';
 import { mixQuantityLabel, mixTitle, runQuantityLabels } from './protocol-mix';
@@ -22,12 +22,22 @@ type PlateAttachment = { id: string; name: string };
 export type PreparationStock = { name: string; unit: string; currentQuantity: number; quantityRecorded: boolean };
 type Options = { plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }> };
 
-const stepLabel = (step: StructuredRunView['steps'][string]) => `第 ${step.order} 步`;
 const isTime = (unit: string) => units[normalizeUnit(unit)]?.dimension === 'time';
 /** "10 min", "1 h 30 min", "45 s". */
 export const formatDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
   return [h ? `${h} h` : '', m ? `${m} min` : '', s || (!h && !m) ? `${s} s` : ''].filter(Boolean).join(' ');
+};
+/** The unit 1000 times larger in the same material scale (µL → mL, mg → g, nmol → µmol); none past the largest. */
+const largerUnit = (unit: string) => {
+  const from = units[normalizeUnit(unit)];
+  return from && ['volume', 'mass', 'amount'].includes(from.dimension) ? compatibleUnits(unit).find(key => Math.abs(units[key].factor / from.factor / 1000 - 1) < 1e-9) : undefined;
+};
+/** An amount as the bench reads it: from 1000 on in the next larger unit (2000 µL → 2 mL); the number by the site-wide rule (chipAmount). */
+const benchAmount = (value: number, unit: string) => {
+  let amount = Number(value.toPrecision(6)), shown = unit;
+  for (let larger = largerUnit(shown); larger && Math.abs(amount) >= 1000; larger = largerUnit(shown)) { amount = convert(amount, shown, larger); shown = larger; }
+  return chipAmount(amount, shown);
 };
 /** Whether the stock holds less than this run's expected use; false when the two cannot be compared. */
 const isShort = (expected: number, unit: string, item: PreparationStock) => {
@@ -57,6 +67,12 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
   const steps = Object.entries(run.steps).filter(([id, step]) => step.applicability !== 'not-applicable' && !run.plan.skips[id]).sort((a, b) => a[1].order - b[1].order);
   // A shared-preparation step belongs to every group: its version is the first group's, as stepVersion resolves it.
   const versionOf = (stepId: string) => stepVersion(run, stepId);
+  // With several Protocols a bare "第 3 步" is ambiguous: the step names its Protocol by code (by title when the snapshot has no code).
+  const several = new Set(run.versions.map(version => version.sourceVersionId)).size > 1;
+  const stepLabel = (step: StructuredRunView['steps'][string]) => {
+    const version = several ? run.versions.find(item => item.id === step.versionId || item.sourceVersionId === step.versionId) : undefined;
+    return `${version ? `${version.code ?? version.title} ` : ''}第 ${step.order} 步`;
+  };
   for (const version of run.versions) {
     const adopted = run.plan.versions[version.id], systems = version.document.systems;
     const name = version.groupLabel ? `${version.groupLabel} · ${version.title}` : version.title;
@@ -77,9 +93,9 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
   // Materials: the run's expected use, summed over mix cards and material-linked chips.
   for (const line of runConsumption(run, stepLabel)) {
     const stock = options.stock ? matchStock(line.name, options.stock) : undefined;
-    const amount = consumptionAmount(line);
+    const amount = line.expected === undefined ? consumptionAmount(line) : benchAmount(line.expected, line.unit);
     // The stock on hand, when it is short of this run's expected use.
-    const short = stock && line.expected !== undefined && isShort(line.expected, line.unit, stock) ? chipAmount(Number(stock.currentQuantity.toPrecision(6)), stock.unit) : undefined;
+    const short = stock && line.expected !== undefined && isShort(line.expected, line.unit, stock) ? benchAmount(stock.currentQuantity, stock.unit) : undefined;
     items.push({ key: `material:${line.key}`, kind: 'material', label: line.name, detail: `${amount} · ${line.sources.join('；')}`,
       ...(line.expected === undefined ? { warning: amount } : short !== undefined ? { warning: `库存 ${short}，不足本次用量` } : {}),
       ...(options.recorded && consumptionRecorded(line, options.recorded) ? { badge: '已记录' } : {}) });

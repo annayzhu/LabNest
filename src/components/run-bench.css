@@ -1,4 +1,4 @@
-/* The preparation checklist, attached plate layouts and 台面模式 (bench mode). Tokens come from the active theme. */
+/* The preparation checklist, attached plate layouts and 现场模式 (bench mode). Tokens come from the active theme. */
 
 /* ——— 准备清单 ——— */
 .ln-prep { display: grid; gap: 0.6rem; padding: 0.65rem 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); }
@@ -51,7 +51,7 @@
 .ln-plate-figure img { max-width: min(100%, 46rem); height: auto; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: white; }
 .ln-plate-status { margin: 0; font-size: var(--ln-control-font-size-xs); color: var(--muted); }
 
-/* ——— 台面模式 ——— */
+/* ——— 现场模式 ——— */
 .ln-bench-controls { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
 .ln-bench { font-size: 1.08rem; }
 .ln-bench .run-step-content { font-size: 1.04em; line-height: 1.65; }

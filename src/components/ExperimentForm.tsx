@@ -5,7 +5,7 @@ import { ExecutionRecordPreview } from "./ExecutionRecordPreview";
 import { ExecutionRecordBlocks, ExecutionRecordProvider } from "./ExecutionRecordSteps";
 import { isRecordLocked } from "@/lib/record-lifecycle";
 import { newClientMutationId } from "@/lib/client-mutation-id";
-import { structuredRunView } from '@/lib/structured-run';
+import { runProgressFromSource, structuredRunView } from '@/lib/structured-run';
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ExperimentProtocolPicker, type ExperimentProtocolVersionOption } from "@/components/ExperimentProtocolPicker";
@@ -21,7 +21,7 @@ import type { ScientificDocument } from "@/lib/scientific-document";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 
 type PlanOption = { id: string; code: string | null; title: string; project: { name: string } };
-type StepOption = { evidence?: ScientificDocument["sections"][number]["blocks"]; groupOrder?:number;groupTitle?:string;deviationType?:string|null;deviationImpact?:string|null;deviationAuthor?:string|null; id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null };
+type StepOption = { evidence?: ScientificDocument["sections"][number]["blocks"]; groupOrder?:number;groupTitle?:string;deviationType?:string|null;deviationImpact?:string|null;deviationAuthor?:string|null; id: string; order: number; title: string; description: string; completed: boolean; deviationNote?: string | null; groupKey?: string; protocolStepRef?: string | null };
 export type ExperimentFormState = { error?: string };
 export type ExperimentFormAction = (
   previousState: ExperimentFormState,
@@ -67,7 +67,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const executionUnconfirmed=selectedVersions.some(version=>version.execution?.executionNeedsReview) || (selectedVersions.length>0 && selectedVersions.every(version=>version.execution && !version.execution.steps.length));
   const structuredRun = initial.id ? structuredRunView(initial.protocolSnapshotJson, initial.executionPlan, []) : undefined;
   const structuredExecution = structuredRun ? structuredRun.hasSystems : selectedVersions.some(version => version.hasSystems);
-  const completedStepCount = initial.steps?.filter((step) => step.completed).length ?? 0;
+  const stepProgress = runProgressFromSource(initial.protocolSnapshotJson, initial.executionPlan, initial.steps?.map(step => ({ ...step, groupKey: step.groupKey ?? "manual", protocolStepRef: step.protocolStepRef ?? null })) ?? []);
   // A saved Experiment's run, as in the record: steps are checked and deviations recorded one at a time, apart from this form.
   const runRecord = initial.id && initial.steps?.length ? experimentExecutionDocument(undefined, initial.steps.map(step => ({ ...step, groupOrder: step.groupOrder ?? 0, groupTitle: step.groupTitle ?? "步骤" })), initial.executionParameters, initial.protocolSnapshotJson, initial.executionPlan) : undefined;
   const recordBlocks = (key: string) => runRecord?.sections.find(section => section.key === key)?.blocks.filter(block => block.id.startsWith("run-derived:")) ?? [];
@@ -127,7 +127,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
 
     {initial.id && initial.steps?.length ? <Card>
       <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />
-      <CardBody className="space-y-2 text-sm leading-6 text-graphite">{completedStepCount}/{initial.steps.length} executed steps · {initial.steps.filter((step) => Boolean(step.deviationNote)).length} deviations</CardBody>
+      <CardBody className="space-y-2 text-sm leading-6 text-graphite">{stepProgress.done}/{stepProgress.total} executed steps · {initial.steps.filter((step) => Boolean(step.deviationNote)).length} deviations</CardBody>
     </Card> : null}
       </aside>
     </DocumentEditorLayout>

@@ -8,7 +8,6 @@ import {
   BookOpen,
   Boxes,
   ClipboardList,
-  Clock3,
   FileBarChart,
   Database,
   Dna,
@@ -20,6 +19,7 @@ import {
   PanelLeftOpen,
   Search,
   Settings,
+  TabletSmartphone,
   Bot,
   Trash2,
   Wrench,
@@ -172,7 +172,7 @@ export function MobileBottomNav() {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const items = [
     { href: "/", label: "Today", icon: Home },
-    { href: "/protocol-run", label: "Runs", icon: Clock3 },
+    { href: "/protocol-run", label: "现场模式", icon: TabletSmartphone },
     { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];

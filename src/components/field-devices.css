@@ -1,0 +1,35 @@
+/* 现场模式 on other devices: a QR code for the tablet or phone, a pairing code for the watch. Tokens come from the active theme. */
+.ln-field-devices { width: min(46rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; margin: auto; padding: 1.25rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); }
+.ln-field-devices::backdrop { background: rgb(0 0 0 / .35); }
+.ln-field-devices > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.ln-field-devices h2 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+.ln-field-devices > header p { margin: 0.2rem 0 0; color: var(--muted); font-size: var(--ln-control-font-size-sm); overflow-wrap: anywhere; }
+
+.ln-field-lan { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 1rem 0 0; padding: 0.6rem 0.75rem; border-radius: var(--ln-radius-control-lg); background: var(--warm); font-size: var(--ln-control-font-size-sm); color: var(--graphite); }
+.ln-field-lan.is-asking { display: grid; gap: 0.5rem; }
+.ln-field-lan p { margin: 0; }
+.ln-field-lan label { display: grid; gap: 0.25rem; font-weight: 600; color: var(--ink); }
+.ln-field-lan input { min-height: 2.75rem; padding: 0 0.75rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: 400 1rem/1.4 var(--font-data); }
+.ln-field-lan strong { font: 500 var(--ln-control-font-size-sm)/1.4 var(--font-data); color: var(--ink); }
+
+.ln-field-devices-cards { display: grid; gap: 1rem; margin-top: 1rem; }
+@media (min-width: 720px) { .ln-field-devices-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ln-field-card { display: grid; align-content: start; justify-items: start; gap: 0.6rem; padding: 1rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--surface); }
+.ln-field-card h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
+.ln-field-card p { margin: 0; font-size: var(--ln-control-font-size-sm); line-height: 1.55; }
+.ln-field-qr { width: min(15rem, 100%); height: auto; justify-self: center; border-radius: var(--ln-radius-control-md); }
+.ln-field-url { max-width: 100%; font: 400 var(--ln-control-font-size-xs)/1.4 var(--font-data); color: var(--muted); overflow-wrap: anywhere; user-select: all; }
+.ln-field-wait { color: var(--muted); }
+.ln-field-code { justify-self: center; margin: 0.25rem 0; font: 600 clamp(1.6rem, 4vw, 2.1rem)/1.2 var(--font-data); letter-spacing: 0.08em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ln-field-expiry { justify-self: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ln-field-steps { display: grid; gap: 0.3rem; margin: 0; padding-left: 1.2rem; font-size: var(--ln-control-font-size-sm); line-height: 1.55; color: var(--graphite); }
+.ln-field-steps strong { font: 500 var(--ln-control-font-size-sm)/1.4 var(--font-data); color: var(--ink); overflow-wrap: anywhere; }
+.ln-field-connected { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--moss); }
+@media (pointer: coarse) { .ln-field-devices button { min-height: 2.75rem; } }
+@media print { .ln-field-devices { display: none !important; } }
+
+/* The home page's way to the bench: the theme's key action color, a full-width card on the phone, a wide button beside the title on the computer. */
+.ln-field-entry { display: flex; align-items: center; gap: 0.75rem; min-height: 3.5rem; padding: 0.55rem 1rem; border-radius: var(--ln-radius-panel); background: var(--action); color: var(--warm); text-decoration: none; }
+.ln-field-entry:hover { background: var(--action-hover); }
+.ln-field-entry-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 999px; background: color-mix(in srgb, var(--warm) 18%, transparent); }
+@media (min-width: 1024px) { .ln-field-entry { min-width: 19rem; } }

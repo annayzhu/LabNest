@@ -11,13 +11,24 @@ const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 /** A mix card as the watch reads it: lines only once confirmed; otherwise a note to confirm on the phone. */
 type WatchMix = { id: string; title: string; per: string; stale: boolean; note?: string; quantity?: number; aliquot?: string; lines?: Array<{ id: string; name: string; mode: 'premix' | 'separate'; total: string; perReaction: string; struck: boolean }> };
 
-/** Pairing is initiated from the existing same-origin Run action, for one experiment only. */
+/** Pairing is initiated from 现场模式 on the computer or phone, for one experiment only. The code works once, for 10 minutes. */
 export async function createWatchPairing(experimentId: string) {
   const experiment = await prisma.experiment.findUniqueOrThrow({ where: { id: experimentId } });
   assertRecordEditable(experiment.recordStatus);
   const code = randomBytes(6).toString('hex').toUpperCase();
-  await prisma.activityLog.create({ data: { action: 'watch_pairing_created', targetType: 'experiment', targetId: experimentId, metadataJson: { codeHash: hash(code), expiresAt: new Date(Date.now() + 600_000).toISOString() } } });
-  return code;
+  const expiresAt = new Date(Date.now() + 600_000).toISOString();
+  await prisma.activityLog.create({ data: { action: 'watch_pairing_created', targetType: 'experiment', targetId: experimentId, metadataJson: { codeHash: hash(code), expiresAt } } });
+  return { code, expiresAt };
+}
+/** Whether a watch currently follows this experiment: the latest claim, unless it has expired or was revoked since. */
+export async function watchConnection(experimentId: string) {
+  const [claim, revoked] = await Promise.all([
+    prisma.activityLog.findFirst({ where: { action: 'watch_pairing_claimed', targetType: 'experiment', targetId: experimentId }, orderBy: { createdAt: 'desc' } }),
+    prisma.activityLog.findFirst({ where: { action: 'watch_pairings_revoked', targetType: 'experiment', targetId: experimentId }, orderBy: { createdAt: 'desc' } }),
+  ]);
+  const expiresAt = (claim?.metadataJson as { expiresAt?: string } | null)?.expiresAt;
+  const connected = Boolean(claim && expiresAt && Date.parse(expiresAt) > Date.now() && (!revoked || revoked.createdAt < claim.createdAt));
+  return connected && claim ? { connected: true as const, since: claim.createdAt.toISOString() } : { connected: false as const };
 }
 export async function claimWatchPairing(rawCode: string, rawDeviceId: string) {
   const code = z.string().regex(/^[A-F0-9]{12}$/).parse(rawCode.trim().toUpperCase());

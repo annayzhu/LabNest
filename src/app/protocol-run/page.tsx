@@ -1,17 +1,28 @@
-import { ArrowRight, FlaskConical, Plus } from "lucide-react";
+import { Plus, TabletSmartphone } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { FieldDevices } from "@/components/FieldDevices";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { ExperimentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { normalizeProtocolDocument } from "@/lib/protocol-document";
+import { isRecordLocked } from "@/lib/record-lifecycle";
+import { runProgressFromSource } from "@/lib/structured-run";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 
 export const dynamic = "force-dynamic";
 
 const primaryButton = buttonStyles({ variant: "primary", size: "md" });
+const secondaryButton = buttonStyles({ variant: "secondary", size: "md" });
+
+/** The watch follows runs whose Protocol is in step blocks (a document with systems), the same test the run page uses. */
+function watchCanFollow(snapshot: unknown) {
+  const versions = (snapshot as { versions?: Array<{ contentJson?: unknown }> } | null)?.versions;
+  return Array.isArray(versions) && versions.some((version) => Boolean(normalizeProtocolDocument(version.contentJson)?.systems));
+}
 
 export default async function ProtocolRunIndex({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
@@ -23,7 +34,8 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
     include: {
       researchPlan: true,
       primaryProtocolVersion: { include: { protocol: true } },
-      steps: { select: { completed: true } },
+      steps: { select: { id: true, protocolStepRef: true, groupKey: true, completed: true } },
+      protocolRun: { select: { executionPlanJson: true } },
       _count: { select: { results: true } },
     },
     orderBy: [{ status: "asc" }, { date: "desc" }],
@@ -34,27 +46,23 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
     <AppShell>
       <div className="space-y-4">
         <PageHeader
-          title="Protocol Run"
-          actions={<Link href="/experiments/new" className={primaryButton}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>}
+          title="现场模式"
+          description="在实验台上用平板、手机和 Apple Watch 做实验：选一个实验，在这台设备上打开，或扫码发到其他设备。"
+          actions={<Link href="/experiments/new" className={secondaryButton}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>}
         />
         {experiments.length ? (
           <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
             {experiments.map((experiment) => {
-              const completed = experiment.steps.filter((step) => step.completed).length;
-              const total = experiment.steps.length;
-              const progress = total ? Math.round((completed / total) * 100) : 0;
+              const { done, total } = runProgressFromSource(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+              const progress = total ? Math.round((done / total) * 100) : 0;
               return (
-                <Link
-                  key={experiment.id}
-                  href={`/experiments/${experiment.id}/run`}
-                  className="focus-ring group grid gap-3 px-4 py-4 transition hover:bg-warm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-                >
+                <div key={experiment.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="record-identifier text-xs text-muted">{experiment.runCode}</span>
                       <StatusPill status={experiment.status} />
                     </div>
-                    <h2 className="mt-2 truncate text-lg font-semibold text-ink">{experiment.title}</h2>
+                    <h2 className="mt-2 truncate text-lg font-semibold text-ink"><Link href={`/experiments/${experiment.id}/run`} className="focus-ring hover:text-moss">{experiment.title}</Link></h2>
                     <p className="mt-1 text-xs text-muted">
                       {experiment.researchPlan?.code ?? "Unassigned plan"}
                       {experiment.primaryProtocolVersion ? ` · ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} · ${experiment.primaryProtocolVersion.protocol.humanCode ?? "Uncoded"} · ${experiment.primaryProtocolVersion.displayVersion}` : ""}
@@ -63,13 +71,14 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
                       <div className="h-1.5 max-w-72 flex-1 overflow-hidden rounded-full bg-stone">
                         <div className="h-full rounded-full bg-moss" style={{ width: `${progress}%` }} />
                       </div>
-                      <span className="shrink-0 text-xs text-muted">{completed}/{total} steps · {experiment._count.results} results</span>
+                      <span className="shrink-0 text-xs text-muted">{done}/{total} steps · {experiment._count.results} results</span>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-moss">
-                    <FlaskConical className="h-4 w-4" aria-hidden />Open run<ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
-                  </span>
-                </Link>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <Link href={`/experiments/${experiment.id}/run?view=bench`} className={primaryButton}><TabletSmartphone className="h-4 w-4" aria-hidden />在这台设备上打开</Link>
+                    <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!watchCanFollow(experiment.protocolSnapshotJson) ? "legacy" : isRecordLocked(experiment.recordStatus) ? "locked" : "ready"} />
+                  </div>
+                </div>
               );
             })}
           </div>

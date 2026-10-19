@@ -61,7 +61,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   /** Materials this run used and not yet recorded: completing the run first asks whether to deduct them. */
   consumption?: ConsumptionLine[];
   stock?: ConsumptionStock[];
-  /** 台面模式: one step at a time at any width, with a step rail beside it. */
+  /** 现场模式: one step at a time at any width, with a step rail beside it. */
   bench?: boolean;
   structured?: Pick<StructuredRunView, 'steps' | 'plan'>;
   chipContexts?: Record<string, ChipRender>;

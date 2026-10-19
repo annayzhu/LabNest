@@ -14,7 +14,7 @@ export function TopBar() {
   const mobileTitle = pathname === "/" ? "LabNest"
     : pathname === "/ai" ? "AI settings"
     : pathname.startsWith("/actions") ? "Manual AI"
-    : pathname.startsWith("/protocol-run") || pathname.includes("/run") ? "Runs"
+    : pathname.startsWith("/protocol-run") || pathname.includes("/run") ? "现场模式"
     : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results") ? "Records"
     : pathname.startsWith("/inventory") ? "Inventory"
     : "LabNest";

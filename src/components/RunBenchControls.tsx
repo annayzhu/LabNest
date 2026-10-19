@@ -15,7 +15,7 @@ type Doc = Document & { webkitFullscreenElement?: Element | null; webkitExitFull
 type Root = HTMLElement & { webkitRequestFullscreen?: () => void };
 
 /**
- * 台面模式: chosen by hand and remembered on this device, never sniffed from the device. While on, the screen can be kept
+ * 现场模式: chosen by hand and remembered on this device, never sniffed from the device. While on, the screen can be kept
  * awake and the page taken full screen. The run itself is the same page with the same actions; only the layout changes.
  */
 export function RunBenchControls({ bench }: { bench: boolean }) {
@@ -27,7 +27,7 @@ export function RunBenchControls({ bench }: { bench: boolean }) {
   const wanted = useRef(false);
   const lock = useRef<WakeLock | null>(null);
   useEffect(() => {
-    // Opening the run on the device that chose 台面模式 keeps it, unless the address says otherwise.
+    // Opening the run on the device that chose 现场模式 keeps it, unless the address says otherwise.
     try { if (!bench && localStorage.getItem(preferenceKey) === 'bench' && !new URLSearchParams(window.location.search).has('view')) router.replace(`${pathname}?view=bench`); } catch {}
   }, [bench, pathname, router]);
   const request = async () => {
@@ -55,10 +55,10 @@ export function RunBenchControls({ bench }: { bench: boolean }) {
     if (fullscreen) void (document.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
     else void (root.requestFullscreen?.() ?? root.webkitRequestFullscreen?.());
   };
-  if (!bench) return <Button type="button" onClick={() => choose('bench')} title="适合平板放在实验台上：步骤、配液卡、孔板和计时并排"><TabletSmartphone className="h-4 w-4" aria-hidden />台面模式</Button>;
-  return <div className="ln-bench-controls" role="group" aria-label="台面模式">
+  if (!bench) return <Button type="button" onClick={() => choose('bench')} title="适合平板放在实验台上：步骤、配液卡、孔板和计时并排"><TabletSmartphone className="h-4 w-4" aria-hidden />进入现场模式</Button>;
+  return <div className="ln-bench-controls" role="group" aria-label="现场模式">
     {features.wake ? <Button type="button" aria-pressed={awake} onClick={toggleWake} title="操作期间屏幕不熄灭；离开页面后自动恢复"><Sun className="h-4 w-4" aria-hidden />{awake ? '常亮中' : '屏幕常亮'}</Button> : null}
     {features.fullscreen ? <Button type="button" aria-pressed={fullscreen} onClick={toggleFullscreen}>{fullscreen ? <Minimize2 className="h-4 w-4" aria-hidden /> : <Maximize2 className="h-4 w-4" aria-hidden />}{fullscreen ? '退出全屏' : '全屏'}</Button> : null}
-    <Button type="button" onClick={() => choose('list')}>退出台面模式</Button>
+    <Button type="button" onClick={() => choose('list')}>退出现场模式</Button>
   </div>;
 }

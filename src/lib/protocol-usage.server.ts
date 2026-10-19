@@ -6,7 +6,7 @@ export type ProtocolUsageRow = {
   experimentId: string; runCode: string; title: string; status: string; date: string;
   /** This Protocol's versions the Experiment used, e.g. "v0.3". */
   versions: string[];
-  /** The system each group ran under, e.g. "裂解液 ▲ 350 µL"; empty when the version has no systems or none was confirmed. */
+  /** The system each group ran under, each choice with its dimension's name, e.g. "裂解液：▲ 350 µL · 加 DNase：否"; empty when the version has no systems. */
   systems: string[];
   quantities: string[];
   stepsDone: number; stepsTotal: number; actualValues: number; deviations: number; results: number;
@@ -40,7 +40,8 @@ export async function protocolUsageHistory(protocolId: string): Promise<Protocol
         const adopted = view.plan.versions[version.id], systems = version.document.systems;
         if (systems?.dimensions.length) {
           const marks = optionMarks(systems);
-          const choice = adopted ? systems.dimensions.map(d => { const option = d.options.find(o => o.id === adopted.selections[d.id]); return option ? [marks.get(`${d.id}:${option.id}`)?.glyph, option.label].filter(Boolean).join(' ') : '未选'; }).join(' · ') : '未确认';
+          // Named as the record's 本次体系 line names them: "新引物：否", never a bare "否".
+          const choice = adopted ? systems.dimensions.map(d => { const option = d.options.find(o => o.id === adopted.selections[d.id]); return `${d.label}：${option ? [marks.get(`${d.id}:${option.id}`)?.glyph, option.label].filter(Boolean).join(' ') : '未选'}`; }).join(' · ') : '未确认';
           row.systems.push(`${version.groupLabel ? `${version.groupLabel}：` : ''}${choice}`);
         }
         for (const [label, value] of Object.entries(view.plan.quantities[version.id] ?? {})) row.quantities.push(`${version.groupLabel ? `${version.groupLabel} ` : ''}${label} ${value}`);

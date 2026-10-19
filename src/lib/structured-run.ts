@@ -53,7 +53,7 @@ type SourceStep = { id: string; protocolStepRef: string | null; groupKey: string
 type ResolvedStep = ReturnType<typeof resolveProtocolDocument>['steps'][number] & { versionId: string; groupId?: string; groupLabel?: string; timerDurationSeconds?: number };
 export type StructuredRunView = {
   plan: ExecutionPlan; hasSystems: boolean;
-  versions: Array<{ id: string; sourceVersionId: string; groupId?: string; groupLabel?: string; title: string; displayVersion: string; document: ProtocolDocument; commonBlocks: ReturnType<typeof resolveProtocolDocument>['commonBlocks']; notePlacement: ReturnType<typeof resolveProtocolDocument>['notePlacement']; stepRefs: string[]; parameters: ReturnType<typeof resolveProtocolDocument>['parameters'] }>;
+  versions: Array<{ id: string; sourceVersionId: string; groupId?: string; groupLabel?: string; title: string; /** The Protocol's code, e.g. PRT-100003, when the snapshot captured it. */ code?: string; displayVersion: string; document: ProtocolDocument; commonBlocks: ReturnType<typeof resolveProtocolDocument>['commonBlocks']; notePlacement: ReturnType<typeof resolveProtocolDocument>['notePlacement']; stepRefs: string[]; parameters: ReturnType<typeof resolveProtocolDocument>['parameters'] }>;
   steps: Record<string, ResolvedStep>;
 };
 
@@ -69,7 +69,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
   if (new Set(plan.groups.map(group => group.id)).size !== plan.groups.length || plan.groups.some(group => group.id === 'shared')) throw new Error('实验组标识重复或无效');
   if (Object.values(plan.stepGroups).some(id => id !== 'shared' && !plan.groups.some(group => group.id === id))) throw new Error('步骤引用了不存在的实验组');
   const view: StructuredRunView = { plan, hasSystems: false, versions: [], steps: {} };
-  const versions = (snapshot && typeof snapshot === 'object' ? (snapshot as { versions?: unknown }).versions : []) as Array<{ protocolVersionId: string; protocolTitle?: string; title?: string; displayVersion?: string; contentJson: unknown }>;
+  const versions = (snapshot && typeof snapshot === 'object' ? (snapshot as { versions?: unknown }).versions : []) as Array<{ protocolVersionId: string; humanCode?: string; protocolTitle?: string; title?: string; displayVersion?: string; contentJson: unknown }>;
   if (!Array.isArray(versions)) return view;
   for (const version of versions) {
     const document = normalizeProtocolDocument(version.contentJson);
@@ -82,7 +82,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
       const adopted = plan.versions[id];
       const resolved = resolveProtocolDocument(document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations ?? {});
       groupResolutions[scope.id] = resolved;
-      view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks, notePlacement: resolved.notePlacement, stepRefs: resolved.steps.map(step => step.source_ref!), parameters: resolved.parameters });
+      view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', ...(version.humanCode ? { code: version.humanCode } : {}), displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks, notePlacement: resolved.notePlacement, stepRefs: resolved.steps.map(step => step.source_ref!), parameters: resolved.parameters });
       for (const step of steps.filter(s => s.groupKey === version.protocolVersionId && (!plan.groups.length || plan.stepGroups[s.id] === scope.id))) {
         const source = resolved.steps.find(s => step.protocolStepRef === `${version.protocolVersionId}:${s.source_ref}`);
         if (!source) throw new Error('执行快照缺少已保存步骤 / Captured operation is missing');
@@ -142,6 +142,20 @@ export function stepMixes(view: Pick<StructuredRunView, 'steps' | 'plan'>, stepI
 export function stepVersion(view: Pick<StructuredRunView, 'steps' | 'versions'>, stepId: string) {
   const step = view.steps[stepId];
   return step ? view.versions.find(version => version.id === step.versionId) ?? view.versions.find(version => version.sourceVersionId === step.versionId) : undefined;
+}
+
+/**
+ * A run's step progress as the run page lists its steps: another system's (not applicable) steps count in neither number.
+ * A skipped step stays in the total; steps outside the structured view (legacy, custom) all count.
+ */
+export function runStepProgress(view: Pick<StructuredRunView, 'steps'>, steps: ReadonlyArray<{ id: string; completed: boolean }>) {
+  const counted = steps.filter(step => view.steps[step.id]?.applicability !== 'not-applicable');
+  return { done: counted.filter(step => step.completed).length, total: counted.length };
+}
+/** runStepProgress from the saved snapshot and plan: an unreadable snapshot counts every step rather than failing the page. */
+export function runProgressFromSource(snapshot: unknown, plan: unknown, steps: ReadonlyArray<SourceStep>) {
+  try { return runStepProgress(structuredRunView(snapshot, plan, [...steps]), steps); }
+  catch { return { done: steps.filter(step => step.completed).length, total: steps.length }; }
 }
 
 type RunNote = StructuredRunView['versions'][number]['commonBlocks'][number];

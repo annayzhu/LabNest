@@ -3,7 +3,7 @@ import { EntrySourceCards } from "@/components/EntrySourceCards";
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { ExperimentBrief } from "@/components/ExperimentBrief";
 import { ExecutionRecordProvider } from "@/components/ExecutionRecordSteps";
-import { structuredRunView } from "@/lib/structured-run";
+import { runStepProgress, structuredRunView } from "@/lib/structured-run";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
 import { CopyExperimentButton } from "@/components/CopyExperimentButton";
 import { Lock, Play } from "lucide-react";
@@ -47,8 +47,8 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
   ]);
   if (!experiment) notFound();
   const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson);
-  const completed = experiment.steps.filter((step) => step.completed).length;
   const structuredRun = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
+  const progress = runStepProgress(structuredRun, experiment.steps);
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,
@@ -73,7 +73,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
   const recycledKeys = new Set(recycledAssociations.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
     ...experiment._count,
-    completedSteps: completed,
+    completedSteps: experiment.steps.filter((step) => step.completed).length,
     deviations: experiment.steps.filter((step) => Boolean(step.deviationNote)).length,
     attachments: attachmentLinks.length,
     reportSourceReferences,
@@ -81,7 +81,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     proposedActions,
   });
   return <AppShell><div className="space-y-6">
-    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "未分配研究计划"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<>{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}{experiment.status !== "archived" && experiment.steps.length ? <Link href={`/experiments/${experiment.id}/run?view=bench`} className={secondaryButton}>台面模式</Link> : null}{locked ? null : <Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link>}<PageActionsMenu><Link href={resultRecordingHref}>Record results</Link>{experiment.steps.some(step => step.protocolStepRef) ? <Link href={`/experiments/${experiment.id}/revise`}>整理成规程修订</Link> : null}<CopyExperimentButton id={experiment.id} /><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></PageActionsMenu></>} />
+    <PageHeader className="experiment-page-header" identifier={experiment.runCode} eyebrow={experiment.researchPlan?.code ?? "未分配研究计划"} title={experiment.title} description={experiment.purpose ?? "Purpose not recorded."} actions={<>{experiment.status !== "archived" ? <Link href={`/experiments/${experiment.id}/run`} className={primaryButton}><Play className="h-4 w-4" aria-hidden />Run</Link> : null}{experiment.status !== "archived" && experiment.steps.length ? <Link href={`/experiments/${experiment.id}/run?view=bench`} className={secondaryButton}>现场模式</Link> : null}{locked ? null : <Link href={`/experiments/${experiment.id}/edit`} className={secondaryButton}>Edit experiment</Link>}<PageActionsMenu><Link href={resultRecordingHref}>Record results</Link>{experiment.steps.some(step => step.protocolStepRef) ? <Link href={`/experiments/${experiment.id}/revise`}>整理成规程修订</Link> : null}<CopyExperimentButton id={experiment.id} /><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={experiment.id} identifier={experiment.runCode} title={experiment.title} recordLabel="Experiment" recordLabelZh="实验" blockers={deletionBlockers} archived={experiment.status === "archived"} deleteAction={deleteExperiment} archiveAction={archiveExperiment} editHref={`/experiments/${experiment.id}/edit`} /></PageActionsMenu></>} />
     {recycledAssociations.some((row) => row.targetType === "research_plan") ? <RecycleBinWarning label="Research Plan" labelZh="研究方案" /> : null}
     {recycledAssociations.some((row) => row.targetType === "protocol") ? <RecycleBinWarning label="Protocol" labelZh="实验规程" /> : null}
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
@@ -96,7 +96,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       <aside className="document-preview-sidebar" aria-label="Experiment controls and result recording">
         <Card><CardHeader className="min-h-10 px-3 py-2" title="Execution control" eyebrow="Plan and exact method provenance" action={<div className="flex gap-1"><StatusPill status={experiment.status} />{locked ? <Badge tone="neutral"><Lock className="mr-1 h-3 w-3" aria-hidden />Locked</Badge> : null}</div>} /><CardBody className="space-y-2.5 p-3">
           <div className="grid grid-cols-2 gap-x-3"><Control label="Research Plan">{experiment.researchPlan ? <span className="flex flex-wrap items-center gap-1"><Link href={`/research-plans/${experiment.researchPlan.id}`} className="text-moss hover:underline">{experiment.researchPlan.code ?? experiment.researchPlan.title}</Link>{recycledKeys.has(`research_plan:${experiment.researchPlan.id}`) ? <Badge tone="warning" className="min-h-5 px-1.5 py-0 text-xs leading-4">In Recycle Bin</Badge> : null}</span> : <span className="text-warning">未分配</span>}</Control><Control label="Project">{experiment.project?.name ?? <span className="text-warning">未分配</span>}</Control></div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Date" value={experiment.date.toLocaleDateString()} /><CompactStat label="Steps" value={`${completed}/${experiment.steps.length}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline pt-2"><CompactStat label="Date" value={experiment.date.toLocaleDateString()} /><CompactStat label="Steps" value={`${progress.done}/${progress.total}`} /><CompactStat label="Results" value={experiment.results.length} /><CompactStat label="Attachments" value={attachmentLinks.length} /></div>
           {experiment.primaryProtocolVersion ? <Link aria-label={`Primary protocol: ${experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title}`} href={`/protocols/${experiment.primaryProtocolVersion.protocolId}?version=${experiment.primaryProtocolVersion.id}`} className="block border-t border-hairline pt-2 text-moss hover:underline"><ProtocolIdentity compact title={experiment.primaryProtocolVersion.protocol.canonicalTitle ?? experiment.primaryProtocolVersion.protocol.title} code={experiment.primaryProtocolVersion.protocol.humanCode} version={experiment.primaryProtocolVersion.displayVersion} meta={experiment.tags.join(" · ") || undefined} /></Link> : experiment.tags.length ? <p className="border-t border-hairline pt-2 text-xs text-muted">{experiment.tags.join(" · ")}</p> : null}
           <div className="border-t border-hairline pt-2"><RecordStatusControl targetType="experiment" id={experiment.id} recordStatus={experiment.recordStatus} /></div>
         </CardBody></Card>

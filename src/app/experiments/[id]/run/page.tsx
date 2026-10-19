@@ -1,7 +1,8 @@
 import { RunNotificationStatus } from '@/components/RunNotificationStatus';
-import { WatchRunConnection } from '@/components/WatchRunConnection';
+import { FieldDevices } from '@/components/FieldDevices';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { runStepNotes, structuredRunView } from '@/lib/structured-run';
+import { formatQuantity } from '@/lib/calculators/quantity-format';
 import { RunSystemPreparation } from '@/components/RunSystemPreparation';
 import { RunBenchControls } from "@/components/RunBenchControls";
 import { consumptionRecorded, runConsumption } from "@/lib/run-consumption";
@@ -34,7 +35,7 @@ const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-m
 
 export default async function ProtocolRunPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
-  // 台面模式: a layout the user switches on; the run and its actions are the same.
+  // 现场模式: a layout the user switches on; the run and its actions are the same.
   const bench = (await searchParams)?.view === 'bench';
   const [experiment, attachmentLinks, inventoryItems, transactions] = await Promise.all([
     prisma.experiment.findUnique({
@@ -115,7 +116,8 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           title={experiment.title}
           actions={<>
             <RunBenchControls bench={bench} />
-            <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Runs</Link>
+            <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!structured.hasSystems ? "legacy" : editable ? "ready" : "locked"} />
+            <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />现场模式</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
           </>}
         />
@@ -137,7 +139,6 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
-        {editable && structured.hasSystems ? <WatchRunConnection experimentId={id}/> : null}
         <RunSystemPreparation experimentId={id} view={structured} editable={editable} plates={attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} stock={inventoryItems.map(item => ({ name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }))} recorded={experiment.materialUses.map(row => ({ source: row.source }))}/>
         {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>本次采用体系 · {experiment.runCode}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
         <RunNotificationStatus/>
@@ -175,7 +176,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
 
         </div>
 
-        {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">已执行库存交易</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {t.quantityChange} {t.unit}</li>)}</ul></section>:null}
+        {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">已执行库存交易</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {formatQuantity(t.quantityChange)} {t.unit}</li>)}</ul></section>:null}
         </details>
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>

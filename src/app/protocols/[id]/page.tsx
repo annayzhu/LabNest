@@ -58,7 +58,7 @@ export default async function ProtocolDetailPage({
         include: {
           derivedFromVersion: { include: { protocol: true } },
           previousVersion: true,
-          _count: { select: { primaryExperiments: true, experimentLinks: true, protocolRuns: true, results: true } },
+          _count: { select: { experimentLinks: true, protocolRuns: true, results: true } },
         },
       },
     },
@@ -139,7 +139,8 @@ export default async function ProtocolDetailPage({
                 <Control label="Review stage"><StatusPill status={version.reviewStage} /></Control>
                 <Control label="Scope"><Badge tone={protocol.scope === "general" ? "info" : "sage"}>{protocol.scope}</Badge></Control>
                 <Control label="Source"><Badge>{version.sourceType.replaceAll("_", " ")}</Badge></Control>
-                <Control label="Usage">{version._count.primaryExperiments} primary runs</Control>
+                {/* Every Experiment that ran this version, as its first Protocol or alongside another one. */}
+                <Control label="Usage">{`${version._count.experimentLinks} ${version._count.experimentLinks === 1 ? "experiment" : "experiments"}`}</Control>
                 <Control label="Updated">{protocol.updatedAt.toLocaleDateString()}</Control>
                 <div className="sm:col-span-2 flex flex-wrap gap-2 border-t border-hairline pt-3">
                   {protocol.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}

@@ -1,4 +1,5 @@
 import { inventoryQuantityLabel } from "@/lib/inventory";
+import { formatQuantity } from "@/lib/calculators/quantity-format";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Filter, MapPin, Plus, Search, ShoppingCart, X } from "lucide-react";
@@ -211,7 +212,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
                   render: (row) => (
                     <div>
                       <span className="font-mono">{inventoryQuantityLabel(row)}</span>
-                      {row.lowThreshold == null ? null : <p className="mt-0.5 text-xs text-muted">safety {row.lowThreshold} {row.unit}</p>}
+                      {row.lowThreshold == null ? null : <p className="mt-0.5 text-xs text-muted">safety {formatQuantity(row.lowThreshold)} {row.unit}</p>}
                     </div>
                   ),
                 },

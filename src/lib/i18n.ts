@@ -296,7 +296,6 @@ export const zhUi: Record<string, string> = {
   "Active plans": "在研方案",
   "No active research plans.": "暂无进行中的研究方案。",
   "Capture a quick observation or note.": "快速记录观察、备注或现场信息。",
-  "Experiment run mode": "实验现场模式",
   "Open a planned or running Experiment at the bench.": "打开计划中或执行中的实验，进入现场操作。",
   "New experiment result": "新建实验结果",
   "Record structured evidence from an Experiment.": "为实验新建结构化结果记录。",
@@ -647,11 +646,11 @@ export const zhUi: Record<string, string> = {
   "Today at the bench": "今日实验台",
   "Active run": "正在进行的实验",
   "Current step": "当前步骤",
-  "Continue run": "继续实验",
-  "View runs": "查看实验运行",
+  "All steps completed": "步骤已全部完成",
+  "No experiment is running. Start from today’s plan when you reach the bench.": "现在没有进行中的实验。到实验台后，从今日计划开始。",
+  "Nothing is scheduled for today.": "今天没有安排实验。",
   "Photo, observation, or measurement": "照片、观察或测量",
   "Today’s plan": "今日计划",
-  "All runs": "全部运行",
   "Open monthly calendar": "打开月历",
   "Back to Today": "返回今日",
   "Quick capture": "快速记录",
@@ -1235,10 +1234,6 @@ export const zhUi: Record<string, string> = {
   "plasmid": "质粒",
   "primer": "引物",
   "sample": "样本",
-  "Protocol Run": "实验现场执行",
-  "Run mode": "现场模式",
-  "Runs": "执行列表",
-  "Open run": "打开执行",
   "Run": "执行",
   "Run progress": "执行进度",
   "Experiment record": "实验记录",
@@ -1409,7 +1404,6 @@ export const zhUi: Record<string, string> = {
   "Cells wrap and grow with content. Paste a rectangular range from Excel; rows and columns expand automatically.": "单元格会自动换行并随内容增高；可直接从 Excel 粘贴矩形区域，行列将自动扩展。",
   "Plan control": "方案管理",
   "plans ·": "个方案 ·",
-  "primary runs": "次主要执行",
   "Principal investigator": "负责人",
   "Principal investigator (PI)": "负责人（PI）",
   "Prof. Zhang / Zhang Lab": "张教授 / 张老师课题组",
@@ -1911,8 +1905,6 @@ function translateDynamic(value: string): string {
   if (match) return `记录于 ${translateDynamic(match[1])} · 已重试 ${match[2]} 次`;
   match = value.match(/^(.+) saved on this device · waiting to sync\.$/);
   if (match) return `${match[1]} 已保存在本机 · 等待同步。`;
-  match = value.match(/^(\d+) primary runs?$/);
-  if (match) return `${match[1]} 次主要实验`;
   match = value.match(/^(\d+) experiments?$/);
   if (match) return `${match[1]} 个实验`;
   match = value.match(/^(\d+) experiments? · (\d+) entries$/);

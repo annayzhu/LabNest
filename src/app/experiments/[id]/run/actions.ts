@@ -364,12 +364,16 @@ export async function saveRunParameters(_previous:ProtocolRunProgressState,form:
  }catch(error){return {error:formActionErrorMessage(error,'Could not save parameters.')};}
 }
 
-export async function connectWatchRun(_previous: { code?: string; error?: string }, form: FormData): Promise<{ code?: string; error?: string }> {
-  try { const { createWatchPairing } = await import('@/lib/watch-execution.server'); return { code: await createWatchPairing(String(form.get('experimentId'))) }; }
+export async function connectWatchRun(experimentId: string): Promise<{ code?: string; expiresAt?: string; error?: string }> {
+  try { const { createWatchPairing } = await import('@/lib/watch-execution.server'); return await createWatchPairing(experimentId); }
   catch (error) { return { error: formActionErrorMessage(error, '配对码创建失败') }; }
 }
-export async function disconnectWatchRun(_previous: { message?: string; error?: string }, form: FormData): Promise<{ message?: string; error?: string }> {
-  try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(String(form.get('experimentId'))); return { message: '此实验的已连接手表已断开。' }; }
+export async function watchRunConnection(experimentId: string): Promise<{ connected: boolean; since?: string }> {
+  const { watchConnection } = await import('@/lib/watch-execution.server');
+  return watchConnection(experimentId);
+}
+export async function disconnectWatchRun(experimentId: string): Promise<{ error?: string }> {
+  try { const { revokeWatchPairings } = await import('@/lib/watch-execution.server'); await revokeWatchPairings(experimentId); return {}; }
   catch (error) { return { error: formActionErrorMessage(error, '断开失败') }; }
 }
 

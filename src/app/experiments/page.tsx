@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play, Plus } from "lucide-react";
+import { Plus, TabletSmartphone } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
@@ -63,7 +63,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
           { value: "title_asc", label: "Title A–Z" },
         ]}
         actions={<>
-          <Link href="/protocol-run" className={collectionSecondaryActionClass}><Play className="h-4 w-4" aria-hidden />Run mode</Link>
+          <Link href="/protocol-run" className={collectionSecondaryActionClass}><TabletSmartphone className="h-4 w-4" aria-hidden />现场模式</Link>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/experiments/export" importHref="/experiments/import" />
           <Link href="/experiments/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>
         </>}

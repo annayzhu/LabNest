@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
-import { structuredRunView, assertStructuredStepExecutable, runStepNotes, stepQuantities } from './structured-run';
+import { structuredRunView, assertStructuredStepExecutable, runStepNotes, runStepProgress, stepQuantities } from './structured-run';
 
 it('resolves treatment groups independently and never borrows one group value for shared work', () => {
   const source = createEmptyProtocolDocument();
@@ -80,4 +80,20 @@ it('keeps the Protocol\'s notes where they were written, per group: once for sha
   const ids = (record: Record<string, Array<{ id: string }>>) => Object.fromEntries(Object.entries(record).map(([step, blocks]) => [step, blocks.map(block => block.id)]));
   expect(ids(notes.before)).toEqual({ prep: ['intro'], 'a-spin': ['ice'], 'b-wash': ['ice'] });
   expect(ids(notes.after)).toEqual({ 'a-spin': ['store'], 'b-spin': ['store'] });
+});
+
+it('counts progress over the adopted system\'s steps only: another system\'s step is in neither number, a skipped one stays in the total', () => {
+  const source = createEmptyProtocolDocument();
+  source.executionConfirmed = true;
+  source.systems = { schemaVersion: 1, dimensions: [{ id: 'volume', label: '体积', options: [{ id: 's', label: '350 µL' }, { id: 'l', label: '600 µL' }] }], presets: [], parameters: [], restrictions: [], rules: [{ id: 'only-large', target: 'step', targetId: 'wash', when: { all: [{ dimensionId: 'volume', optionId: 'l' }] }, parameterIds: [], optional: false, actualFields: [] }] };
+  const text = (id: string, value: string) => ({ id, type: 'rich_text' as const, nodes: [{ type: 'paragraph' as const, content: [{ text: value }] }], execution: { role: 'step' as const, stepId: id, format: 'block' as const } });
+  source.sections.find(s => s.key === 'steps')!.blocks = [text('prep', '预冷离心机。'), text('wash', '大体系洗一次。'), text('spin', '离心 5 min。')];
+  const steps = [{ id: 'run-prep', ref: 'prep', completed: true }, { id: 'run-wash', ref: 'wash', completed: false }, { id: 'run-spin', ref: 'spin', completed: false }]
+    .map(({ id, ref, completed }) => ({ id, groupKey: 'v1', protocolStepRef: `v1:${ref}`, completed }));
+  const plan = { schemaVersion: 1, revision: 1, versions: { v1: { selections: { volume: 's' }, actualInputs: {}, confirmedAt: '2026-10-15T01:00:00Z' } }, actualValues: {}, skips: { 'run-spin': { reason: '样本量不足', recordedAt: '2026-10-15T02:00:00Z' } } };
+  const view = structuredRunView({ versions: [{ protocolVersionId: 'v1', contentJson: source }] }, plan, steps);
+  // The small system has no wash: of prep and spin, prep is done and spin was skipped.
+  expect(runStepProgress(view, steps)).toEqual({ done: 1, total: 2 });
+  // A step outside any structured Protocol (custom) is counted as it is.
+  expect(runStepProgress(view, [...steps, { id: 'custom-1', completed: true }])).toEqual({ done: 2, total: 3 });
 });

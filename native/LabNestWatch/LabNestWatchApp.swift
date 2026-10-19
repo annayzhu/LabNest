@@ -16,7 +16,7 @@ struct WatchRunView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if model.credential == nil || settings {
-                        Text("在手机 Run 中生成配对码").font(.headline)
+                        Text("在电脑或手机的现场模式中生成配对码").font(.headline)
                         TextField("服务器地址", text: $model.baseURL).textContentType(.URL).disabled(model.busy)
                         TextField("12 位配对码", text: $code).disabled(model.busy)
                         Button("配对本次实验") { Task { if await model.pair(code: code) { await model.refresh(); settings = false } } }.disabled(model.busy || model.pending != nil)

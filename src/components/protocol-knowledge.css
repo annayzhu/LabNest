@@ -22,6 +22,8 @@
 .ln-usage-table td.is-num, .ln-usage-table th.is-num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-data); }
 .ln-usage-table a { color: var(--moss); font-weight: 600; }
 .ln-usage-wrap, .ln-diff-wrap { overflow-x: auto; }
+/* In the Protocol side panel the table scrolls inside the panel's width instead of widening the panel past the screen. */
+.ln-usage-wrap { contain: inline-size; }
 .ln-diff-table td.is-before { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 50%, transparent); }
 .ln-diff-table tr[data-change="added"] td.is-after { background: color-mix(in srgb, var(--success, var(--moss)) 10%, transparent); }
 .ln-diff-table tr[data-change="removed"] td.is-before { background: color-mix(in srgb, var(--error) 8%, transparent); text-decoration: line-through; }

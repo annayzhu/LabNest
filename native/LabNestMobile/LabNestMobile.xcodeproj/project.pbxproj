@@ -1,0 +1,368 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000008 /* ../LabNestWatch/LabNestWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000006 /* ../LabNestWatch/LabNestWatchApp.swift */; };
+		000000000000000000000009 /* ../LabNestWatch/WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000007 /* ../LabNestWatch/WatchModel.swift */; };
+		000000000000000000000015 /* ../LabNestWatch/PairingLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000014 /* ../LabNestWatch/PairingLink.swift */; };
+		000000000000000000000017 /* ../LabNestWatch/WatchPhoneReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000016 /* ../LabNestWatch/WatchPhoneReceiver.swift */; };
+		00000000000000000000001F /* LabNestMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001E /* LabNestMobileApp.swift */; };
+		000000000000000000000021 /* PhoneConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000020 /* PhoneConnection.swift */; };
+		000000000000000000000023 /* ../LabNestWatch/PairingLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000014 /* ../LabNestWatch/PairingLink.swift */; };
+		000000000000000000000027 /* LabNestWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 000000000000000000000005 /* LabNestWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		000000000000000000000033 /* ../SharedAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* ../SharedAssets.xcassets */; };
+		000000000000000000000034 /* ../SharedAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* ../SharedAssets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000029 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000004;
+			remoteInfo = LabNestWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		000000000000000000000028 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				000000000000000000000027 /* LabNestWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000005 /* LabNestWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LabNestWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000006 /* ../LabNestWatch/LabNestWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatch/LabNestWatchApp.swift; sourceTree = "<group>"; };
+		000000000000000000000007 /* ../LabNestWatch/WatchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatch/WatchModel.swift; sourceTree = "<group>"; };
+		000000000000000000000014 /* ../LabNestWatch/PairingLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatch/PairingLink.swift; sourceTree = "<group>"; };
+		000000000000000000000016 /* ../LabNestWatch/WatchPhoneReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatch/WatchPhoneReceiver.swift; sourceTree = "<group>"; };
+		00000000000000000000001E /* LabNestMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabNestMobileApp.swift; sourceTree = "<group>"; };
+		000000000000000000000020 /* PhoneConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnection.swift; sourceTree = "<group>"; };
+		000000000000000000000022 /* LabNestMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = LabNestMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000032 /* ../SharedAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ../SharedAssets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		00000000000000000000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000025 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000006 /* ../LabNestWatch/LabNestWatchApp.swift */,
+				000000000000000000000007 /* ../LabNestWatch/WatchModel.swift */,
+				000000000000000000000014 /* ../LabNestWatch/PairingLink.swift */,
+				000000000000000000000016 /* ../LabNestWatch/WatchPhoneReceiver.swift */,
+				00000000000000000000001E /* LabNestMobileApp.swift */,
+				000000000000000000000020 /* PhoneConnection.swift */,
+				000000000000000000000032 /* ../SharedAssets.xcassets */,
+				000000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000005 /* LabNestWatch.app */,
+				000000000000000000000022 /* LabNestMobile.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		000000000000000000000004 /* LabNestWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000000E /* Build configuration list for PBXNativeTarget "LabNestWatch" */;
+			buildPhases = (
+				00000000000000000000000A /* Sources */,
+				00000000000000000000000B /* Frameworks */,
+				00000000000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LabNestWatch;
+			productName = LabNestWatch;
+			productReference = 000000000000000000000005 /* LabNestWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		00000000000000000000002E /* LabNestMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000002D /* Build configuration list for PBXNativeTarget "LabNestMobile" */;
+			buildPhases = (
+				000000000000000000000024 /* Sources */,
+				000000000000000000000025 /* Frameworks */,
+				000000000000000000000026 /* Resources */,
+				000000000000000000000028 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				00000000000000000000002A /* PBXTargetDependency */,
+			);
+			name = LabNestMobile;
+			productName = LabNestMobile;
+			productReference = 000000000000000000000022 /* LabNestMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 2600;
+			};
+			buildConfigurationList = 00000000000000000000000D /* Build configuration list for PBXProject "LabNestMobile" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 000000000000000000000002;
+			productRefGroup = 000000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				000000000000000000000004 /* LabNestWatch */,
+				00000000000000000000002E /* LabNestMobile */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		00000000000000000000000C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000033 /* ../SharedAssets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000026 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000034 /* ../SharedAssets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00000000000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000008 /* ../LabNestWatch/LabNestWatchApp.swift in Sources */,
+				000000000000000000000009 /* ../LabNestWatch/WatchModel.swift in Sources */,
+				000000000000000000000015 /* ../LabNestWatch/PairingLink.swift in Sources */,
+				000000000000000000000017 /* ../LabNestWatch/WatchPhoneReceiver.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000024 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00000000000000000000001F /* LabNestMobileApp.swift in Sources */,
+				000000000000000000000021 /* PhoneConnection.swift in Sources */,
+				000000000000000000000023 /* ../LabNestWatch/PairingLink.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		00000000000000000000002A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000004 /* LabNestWatch */;
+			targetProxy = 000000000000000000000029 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00000000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		000000000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		000000000000000000000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../LabNestWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "连接你选择的本地 LabNest 服务器，读取当前实验并同步你确认的操作。";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = org.labnest.mobile;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.watch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		000000000000000000000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../LabNestWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "连接你选择的本地 LabNest 服务器，读取当前实验并同步你确认的操作。";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = org.labnest.mobile;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.watch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		00000000000000000000002B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		00000000000000000000002C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		00000000000000000000000D /* Build configuration list for PBXProject "LabNestMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000F /* Debug */,
+				000000000000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000000E /* Build configuration list for PBXNativeTarget "LabNestWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000011 /* Debug */,
+				000000000000000000000012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000002D /* Build configuration list for PBXNativeTarget "LabNestMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000002B /* Debug */,
+				00000000000000000000002C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000001 /* Project object */;
+}

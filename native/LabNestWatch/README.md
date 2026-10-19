@@ -4,6 +4,8 @@ This is a separate SwiftUI watchOS client, not a web layout. It uses the same ca
 
 ## Build and install
 
+For easier pairing, use the new [iPhone companion project](../LabNestMobile/README.md): open `../LabNestMobile/LabNestMobile.xcodeproj`. It embeds this Watch app and sends the server address and one-use code from the phone through WatchConnectivity. The Watch needs no browser. The standalone project below remains available for manual pairing. Physical installation still requires a real signing team and paired devices; TestFlight has not been published.
+
 Open `LabNestWatch.xcodeproj` in Xcode. Select your own signing team and connected Apple Watch (watchOS 10 or later). Build and run on that device. No signing account or provisioning profile is committed; deployment to port3001 does **not** install this app. The user has requested Apple Watch support, but no connected watch or iPhone was discoverable during development. Xcode26.6 / watchOS simulator SDK26.5 compile checks do not prove runtime behavior. The user subsequently installed watchOS26.5. A Series11(46mm) simulator was installed and exercised; see the follow-up evidence below.
 
 For a reproducible unsigned compile:

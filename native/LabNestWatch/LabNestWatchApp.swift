@@ -16,7 +16,9 @@ struct WatchRunView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if model.credential == nil || settings {
-                        Text("在电脑或手机的现场模式中生成配对码").font(.headline)
+                        Text("在 iPhone 上连接").font(.headline)
+                        Text("打开 iPhone 的 LabNest，扫码后点「连接 Apple Watch」。请保持本页打开。").font(.footnote).fixedSize(horizontal: false, vertical: true)
+                        Text("也可以手动连接").font(.headline)
                         TextField("服务器地址", text: $model.baseURL).textContentType(.URL).disabled(model.busy)
                         TextField("12 位配对码", text: $code).disabled(model.busy)
                         Button("配对本次实验") { Task { if await model.pair(code: code) { await model.refresh(); settings = false } } }.disabled(model.busy || model.pending != nil)
@@ -60,7 +62,8 @@ struct WatchRunView: View {
                     Button("连接设置") { settings.toggle() }
                 }.padding(.horizontal, 6)
             }.navigationTitle("LabNest")
-        }.task { await model.refresh() }
+        }.task { model.startPhoneConnection(); await model.refresh() }
+        .onChange(of: model.credential?.pairingRequestId) { _, id in if id != nil { settings = false } }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await model.refresh() } } }
         .confirmationDialog("确认已经完成此实验操作？", isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })) { if let step = confirming { Button("确认完成") { Task { await model.operate("complete", step: step) }; confirming = nil } } }
         .confirmationDialog("此操作尚未同步。确认删除本机副本？", isPresented: $discard) { Button("确认丢弃", role: .destructive) { model.discardPending() } }

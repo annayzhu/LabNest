@@ -15,7 +15,7 @@ struct RunStep: Codable, Identifiable {
 }
 struct RunSnapshot: Codable { var experimentId: String; var title: String; var revision: Int; var serverTime: Double; var capturedAt: String; var steps: [RunStep] }
 struct WatchGrant: Codable { var token: String; var experimentId: String }
-struct WatchCredential: Codable { var token: String; var experimentId: String; var serverOrigin: String }
+struct WatchCredential: Codable { var token: String; var experimentId: String; var serverOrigin: String; var pairingRequestId: String? = nil }
 struct RunMutation: Codable { var intent: String; var stepId: String; var revision: Int; var clientMutationId: String; var deviceCreatedAt: String; var sourceRef: String; var mixId: String? = nil; var lineId: String? = nil; var struck: Bool? = nil }
 struct PendingMutation: Codable { var request: RunMutation; var conflict: String? }
 struct ServerMessage: Codable { var error: String? }
@@ -62,6 +62,10 @@ enum WatchStorage {
     @Published var baseURL = UserDefaults.standard.string(forKey: "server") ?? ""
     @Published var reminders = UserDefaults.standard.bool(forKey: "reminders")
     private var serverOffset: TimeInterval = 0
+    private var phoneReceiver: WatchPhoneReceiver?
+    func startPhoneConnection() {
+        if phoneReceiver == nil { phoneReceiver = WatchPhoneReceiver(model: self) }
+    }
     private var deviceId: String {
         if let value = UserDefaults.standard.string(forKey: "deviceId") { return value }
         let value = UUID().uuidString; UserDefaults.standard.set(value, forKey: "deviceId"); return value
@@ -89,15 +93,16 @@ enum WatchStorage {
         }
         return data
     }
-    func pair(code: String) async -> Bool {
+    func pair(code: String, server: URL? = nil, requestId: String? = nil) async -> Bool {
         guard !busy, pending == nil else { return false }; busy = true; defer { busy = false }
         pairingError = nil
         do {
-            let destination = try endpoint("/api/watch/pair")
-            let body = try JSONSerialization.data(withJSONObject: ["code": code, "deviceId": deviceId])
+            let destination = try server.map { $0.appendingPathComponent("api/watch/pair") } ?? endpoint("/api/watch/pair")
+            let normalizedCode = code.filter { !$0.isWhitespace }.uppercased()
+            let body = try JSONSerialization.data(withJSONObject: ["code": normalizedCode, "deviceId": deviceId])
             let grant = try JSONDecoder().decode(WatchGrant.self, from: await request("/api/watch/pair", body: body, authenticated: false, targetURL: destination))
-            let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString)
-            try WatchStorage.saveCredential(next); credential = next; snapshot = nil
+            let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString, pairingRequestId: requestId)
+            try WatchStorage.saveCredential(next); credential = next; snapshot = nil; connected = false
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             try? FileManager.default.removeItem(at: WatchStorage.url("snapshot.json"))
             baseURL = URL(string: "/", relativeTo: destination)!.absoluteString

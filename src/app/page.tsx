@@ -32,7 +32,7 @@ const quickActions = [
     icon: BookOpen,
   },
   {
-    label: "现场模式",
+    label: "Run mode",
     href: "/protocol-run",
     icon: TabletSmartphone,
   },
@@ -204,7 +204,7 @@ export default async function OverviewPage({
                   <StepTimerReadout remainingSeconds={activeTimer.timerRemainingSeconds} startedAt={activeTimer.timerStartedAt.toISOString()} />
                 </div> : null}
                 <Link href={`/experiments/${activeRun.id}/run?view=bench`} className="focus-ring mt-4 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] bg-action px-4 text-sm font-semibold text-warm">
-                  在现场模式中继续 <ArrowRight className="h-4 w-4" aria-hidden />
+                  Continue in run mode <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
             );
@@ -212,14 +212,14 @@ export default async function OverviewPage({
             <div className="px-4 py-5">
               <p className="text-sm leading-6 text-muted">No experiment is running. Start from today’s plan when you reach the bench.</p>
               <Link href="/protocol-run" className="focus-ring mt-3 flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] border border-hairline px-4 text-sm font-semibold text-moss">
-                进入现场模式 <ArrowRight className="h-4 w-4" aria-hidden />
+                Enter run mode <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
           );
   // 现场模式 is the way to the bench from any device: the first thing on the home page, on the phone and on the computer.
   const fieldModeEntry = <Link href="/protocol-run" className="ln-field-entry focus-ring">
     <span className="ln-field-entry-icon"><TabletSmartphone className="h-5 w-5" aria-hidden /></span>
-    <span className="min-w-0 flex-1"><span className="block font-semibold">进入现场模式</span><span className="block text-xs opacity-80">平板、手机和 Apple Watch 一起做实验</span></span>
+    <span className="min-w-0 flex-1"><span className="block font-semibold">Enter run mode</span><span className="block text-xs opacity-80">Work with a tablet, phone and Apple Watch together</span></span>
     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
   </Link>;
   const todayPlanRows = todayExperiments.length ? todayExperiments.map((experiment) => (
@@ -267,7 +267,7 @@ export default async function OverviewPage({
         <section aria-labelledby="today-plan-title">
           <div className="mb-2 flex items-center justify-between gap-3">
             <h2 id="today-plan-title" className="text-base font-semibold text-ink">Today’s plan</h2>
-            <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">现场模式</Link>
+            <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">Run mode</Link>
           </div>
           <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
             {todayPlanRows}
@@ -304,7 +304,7 @@ export default async function OverviewPage({
               <div className="min-w-0">
                 <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3">
                   <h2 className="text-base font-semibold text-ink">Today’s plan <span className="ml-1 text-sm font-normal text-muted" data-i18n-ignore>{format(today, "MMM d")}</span></h2>
-                  <Link href="/protocol-run" className="text-xs font-medium text-moss hover:underline">现场模式</Link>
+                  <Link href="/protocol-run" className="text-xs font-medium text-moss hover:underline">Run mode</Link>
                 </div>
                 <div className="divide-y divide-hairline">{todayPlanRows}</div>
               </div>

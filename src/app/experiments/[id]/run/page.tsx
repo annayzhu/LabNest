@@ -117,7 +117,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           actions={<>
             <RunBenchControls bench={bench} />
             <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!structured.hasSystems ? "legacy" : editable ? "ready" : "locked"} />
-            <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />现场模式</Link>
+            <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
           </>}
         />

@@ -123,4 +123,11 @@ describe("LabNest UI translations", () => {
     expect(translateUiText("Wash step 2", "zh")).toBe("Wash step 2");
     expect(translateUiText("Master mix · Confirmed by PI", "zh")).toBe("Master mix · Confirmed by PI");
   });
+
+  it("translates the run mode device panel's live countdown, connection time and pairing code label", () => {
+    expect(translateUiText("Expires in 9:58 · single use", "zh")).toBe("9:58 后失效 · 只能用一次");
+    expect(translateUiText("Watch connected since 01:45", "zh")).toBe("手表已连接（01:45 起）");
+    expect(translateUiText("Pairing code A1B2C3D4E5F6", "zh")).toBe("配对码 A1B2C3D4E5F6");
+    expect(translateUiText("Enter run mode", "zh")).toBe("进入现场模式");
+  });
 });

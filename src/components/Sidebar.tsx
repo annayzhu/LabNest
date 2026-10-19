@@ -172,7 +172,7 @@ export function MobileBottomNav() {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const items = [
     { href: "/", label: "Today", icon: Home },
-    { href: "/protocol-run", label: "现场模式", icon: TabletSmartphone },
+    { href: "/protocol-run", label: "Run mode", icon: TabletSmartphone },
     { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];

@@ -649,6 +649,46 @@ export const zhUi: Record<string, string> = {
   "All steps completed": "步骤已全部完成",
   "No experiment is running. Start from today’s plan when you reach the bench.": "现在没有进行中的实验。到实验台后，从今日计划开始。",
   "Nothing is scheduled for today.": "今天没有安排实验。",
+  "Run mode": "现场模式",
+  "Enter run mode": "进入现场模式",
+  "Exit run mode": "退出现场模式",
+  "Continue in run mode": "在现场模式中继续",
+  "Open on this device": "在这台设备上打开",
+  "Work with a tablet, phone and Apple Watch together": "平板、手机和 Apple Watch 一起做实验",
+  "Run experiments at the bench on a tablet, phone or Apple Watch: choose an experiment, open it on this device, or scan to send it to another device.": "在实验台上用平板、手机和 Apple Watch 做实验：选一个实验，在这台设备上打开，或扫码发到其他设备。",
+  "For a tablet on the bench: steps, mix cards, plates and timers side by side": "适合平板放在实验台上：步骤、配液卡、孔板和计时并排",
+  "Keeps the screen awake while you work; restored when you leave the page": "操作期间屏幕不熄灭；离开页面后自动恢复",
+  "Keep screen on": "屏幕常亮",
+  "Screen stays on": "常亮中",
+  "Full screen": "全屏",
+  "Exit full screen": "退出全屏",
+  "Other devices": "其他设备",
+  "Scan to open on a tablet or phone, or pair an Apple Watch": "扫码在平板或手机上打开，或配对 Apple Watch",
+  "Continue on another device": "在其他设备上继续",
+  "LAN address": "局域网地址",
+  "This computer opened LabNest as localhost. Tablets, phones and watches need the computer’s LAN address to connect.": "这台电脑是用 localhost 打开的，平板、手机和手表需要电脑在局域网里的地址才能连上。",
+  "e.g. http://192.168.0.102:3001": "例如 http://192.168.0.102:3001",
+  "Use this address": "使用这个地址",
+  "Invalid address: enter the computer’s LAN IP and port, e.g. 192.168.0.102:3001.": "地址无效：请填写电脑在局域网中的 IP 和端口，例如 192.168.0.102:3001。",
+  "Tablet or phone": "平板或手机",
+  "Scan with the camera to open this experiment in run mode.": "用相机扫码，直接打开这次实验的现场模式。",
+  "Copied": "已复制",
+  "Copy link": "复制链接",
+  "Enter the LAN address above first.": "先在上方填写局域网地址。",
+  "Run mode QR code": "现场模式二维码",
+  "Could not create a pairing code": "配对码创建失败",
+  "This experiment uses a Protocol in the old format, which the watch does not support. Once the Protocol is converted to step blocks, new experiments can run on the watch.": "这次实验用的是旧格式规程，手表暂不支持。规程转换为步骤块后，新建的实验就能在手表上执行。",
+  "The experiment is submitted or finished, so a watch can no longer be paired.": "实验已提交或已结束，不能再配对手表。",
+  "Watch connected": "手表已连接",
+  "The watch shows the current step and timers; tick off the mix card line by line.": "手表上可以看当前步骤和计时，逐行划掉配液卡。",
+  "Disconnect watch": "断开手表",
+  "The watch follows this experiment: the current step and timers, and the mix card ticked off line by line.": "手表会跟着这次实验：看当前步骤和计时，逐行划掉配液卡。",
+  "On the watch, open LabNest and tap “连接设置” (connection settings).": "在手表上打开 LabNest，点「连接设置」。",
+  "Server address:": "服务器地址填",
+  "the computer’s LAN address (enter it above first)": "电脑的局域网地址（先在上方填写）",
+  "Pairing code: the 12 characters above, then tap “配对本次实验” (pair this experiment).": "配对码填上面的 12 位字符，点「配对本次实验」。",
+  "Code expired. Generate a new one": "配对码已失效，重新生成",
+  "Generate pairing code": "生成配对码",
   "Photo, observation, or measurement": "照片、观察或测量",
   "Today’s plan": "今日计划",
   "Open monthly calendar": "打开月历",
@@ -2140,7 +2180,13 @@ const dynamicNouns: Record<string, string> = {
 };
 
 function translateDynamic(value: string): string {
-  let match = value.match(/^Edit (.+)$/);
+  let match = value.match(/^Expires in (\d+:\d{2}) · single use$/);
+  if (match) return `${match[1]} 后失效 · 只能用一次`;
+  match = value.match(/^Watch connected since (\d{2}:\d{2})$/);
+  if (match) return `手表已连接（${match[1]} 起）`;
+  match = value.match(/^Pairing code ([A-Z0-9]{12})$/);
+  if (match) return `配对码 ${match[1]}`;
+  match = value.match(/^Edit (.+)$/);
   if (match) return `编辑 ${match[1]}`;
   match = value.match(/^New (Entry|Experiment|Result|Report|Protocol|Research Plan|Project)$/);
   if (match) return `新建${dynamicNouns[match[1]]}`;

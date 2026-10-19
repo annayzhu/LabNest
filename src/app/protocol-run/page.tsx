@@ -46,8 +46,8 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
     <AppShell>
       <div className="space-y-4">
         <PageHeader
-          title="现场模式"
-          description="在实验台上用平板、手机和 Apple Watch 做实验：选一个实验，在这台设备上打开，或扫码发到其他设备。"
+          title="Run mode"
+          description="Run experiments at the bench on a tablet, phone or Apple Watch: choose an experiment, open it on this device, or scan to send it to another device."
           actions={<Link href="/experiments/new" className={secondaryButton}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>}
         />
         {experiments.length ? (
@@ -75,7 +75,7 @@ export default async function ProtocolRunIndex({ searchParams }: { searchParams?
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <Link href={`/experiments/${experiment.id}/run?view=bench`} className={primaryButton}><TabletSmartphone className="h-4 w-4" aria-hidden />在这台设备上打开</Link>
+                    <Link href={`/experiments/${experiment.id}/run?view=bench`} className={primaryButton}><TabletSmartphone className="h-4 w-4" aria-hidden />Open on this device</Link>
                     <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!watchCanFollow(experiment.protocolSnapshotJson) ? "legacy" : isRecordLocked(experiment.recordStatus) ? "locked" : "ready"} />
                   </div>
                 </div>

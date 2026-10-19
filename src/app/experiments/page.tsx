@@ -63,7 +63,7 @@ export default async function ExperimentsPage({ searchParams }: { searchParams?:
           { value: "title_asc", label: "Title A–Z" },
         ]}
         actions={<>
-          <Link href="/protocol-run" className={collectionSecondaryActionClass}><TabletSmartphone className="h-4 w-4" aria-hidden />现场模式</Link>
+          <Link href="/protocol-run" className={collectionSecondaryActionClass}><TabletSmartphone className="h-4 w-4" aria-hidden />Run mode</Link>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/experiments/export" importHref="/experiments/import" />
           <Link href="/experiments/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Experiment</Link>
         </>}

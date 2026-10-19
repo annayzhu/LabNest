@@ -22,19 +22,19 @@ export async function createRevisionFromExperiment(_previous: ReviseState, formD
   let target: { protocolId: string; versionId: string } | undefined;
   try {
     const experiment = await prisma.experiment.findUnique({ where: { id: experimentId }, include: { protocolRun: true, steps: true } });
-    if (!experiment) throw new Error("实验不存在");
+    if (!experiment) throw new Error("Experiment not found");
     const view = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
     const chosen = revisionCandidates(view, experiment.steps).filter(candidate => keys.has(candidate.key));
-    if (!chosen.length) throw new Error("请至少选择一项要采纳的内容");
+    if (!chosen.length) throw new Error("Choose at least one item to adopt");
     const bySource = new Map<string, typeof chosen>();
     for (const candidate of chosen) bySource.set(candidate.sourceVersionId, [...(bySource.get(candidate.sourceVersionId) ?? []), candidate]);
     for (const [sourceVersionId, group] of bySource) {
       const created = await prisma.$transaction(async tx => {
         const source = await tx.protocolVersion.findUnique({ where: { id: sourceVersionId }, include: { protocol: true } });
-        if (!source) throw new Error("本次实验所用的规程版本已不存在");
+        if (!source) throw new Error("The Protocol version this experiment used no longer exists");
         await tx.$queryRaw`SELECT id FROM "Protocol" WHERE id=${source.protocolId} FOR UPDATE`;
         const document = normalizeProtocolDocument(source.contentJson);
-        if (!document) throw new Error(`${source.protocol.humanCode} 是旧格式规程，请先在编辑器中打开并保存，再整理`);
+        if (!document) throw new Error(`${source.protocol.humanCode} is a Protocol in the old format: open it in the editor and save it before revising`);
         const { document: revised, changes } = revisionFromExperiment(document, { id: experiment.id, runCode: experiment.runCode }, group.map(candidate => candidate.adoption));
         const { version, displayVersion } = await createDraftRevision(tx, source, revised, `来自 ${experiment.runCode} 的整理：${changes.join("；")}`);
         await tx.activityLog.create({ data: { action: "create_revision", targetType: "protocol", targetId: source.protocolId, metadataJson: json({ sourceVersionId: source.id, savedVersionId: version.id, displayVersion, fromExperimentId: experiment.id, changes }) } });
@@ -46,7 +46,7 @@ export async function createRevisionFromExperiment(_previous: ReviseState, formD
     }
     revalidatePath(`/experiments/${experimentId}`);
   } catch (error) {
-    return { error: formActionErrorMessage(error, "未能生成修订，请重试") };
+    return { error: formActionErrorMessage(error, "Couldn’t create the revision. Try again") };
   }
   // The first new draft opens in the editor; a run of several Protocols lists the rest on its Protocol pages.
   redirect(`/protocols/${target!.protocolId}/versions/${target!.versionId}/edit`);

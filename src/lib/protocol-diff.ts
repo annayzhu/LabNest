@@ -18,19 +18,19 @@ const readable = (block: ProtocolContentBlock, systems: ProtocolSystems | undefi
 
 const whenLabel = (when: ProtocolCondition, systems: ProtocolSystems) => {
   const name = (dimensionId: string, optionId: string) => { const dimension = systems.dimensions.find(d => d.id === dimensionId); return dimension?.options.find(o => o.id === optionId)?.label ?? optionId; };
-  return [...(when.all ?? []).map(p => name(p.dimensionId, p.optionId)), ...(when.any ?? []).map(p => `或 ${name(p.dimensionId, p.optionId)}`), ...(when.not ?? []).map(p => `非 ${name(p.dimensionId, p.optionId)}`)].join(' + ') || '默认';
+  return [...(when.all ?? []).map(p => name(p.dimensionId, p.optionId)), ...(when.any ?? []).map(p => `or ${name(p.dimensionId, p.optionId)}`), ...(when.not ?? []).map(p => `not ${name(p.dimensionId, p.optionId)}`)].join(' + ') || 'Default';
 };
-const amount = (value: number | null | undefined, unit: string) => value === null || value === undefined ? `未填（${unit}）` : chipAmount(value, unit);
-/** What a parameter is set to, in words: a fixed value, one value per system, filled at execution, or computed. */
+const amount = (value: number | null | undefined, unit: string) => value === null || value === undefined ? `Not filled (${unit})` : chipAmount(value, unit);
+/** What a parameter is set to, in words: a fixed value, one value per system, filled at execution, or computed. The Chinese interface translates it. */
 export function parameterSetting(parameter: ProtocolSystems['parameters'][number], systems: ProtocolSystems) {
   const source = parameter.source;
   if (source.kind === 'fixed') return amount(source.value, source.unit);
-  if (source.kind === 'lookup') return source.values.map(value => `${whenLabel(value.when, systems)}：${amount(value.value, value.unit)}`).join('；') || '按体系（未填）';
-  if (source.kind === 'actual') return '执行时填写';
-  return `计算（${source.calculatorId} → ${source.output}）`;
+  if (source.kind === 'lookup') return source.values.length ? `By system: ${source.values.map(value => `${whenLabel(value.when, systems)} → ${amount(value.value, value.unit)}`).join('; ')}` : 'By system (not filled)';
+  if (source.kind === 'actual') return 'Filled in at run time';
+  return `Calculated (${source.calculatorId} → ${source.output})`;
 }
 
-/** How a reader finds a block: its step number ("第 3 步", "第 3 步 · 说明") or its place in the section ("第 2 块"). */
+/** How a reader finds a block: its step number ("Step 3", "Step 3 · details") or its place in the section ("Block 2"). */
 function blockLabels(blocks: ProtocolContentBlock[]) {
   const labels = new Map<string, string>();
   let step = 0;
@@ -38,7 +38,7 @@ function blockLabels(blocks: ProtocolContentBlock[]) {
   blocks.forEach((block, index) => {
     const stepId = block.execution?.stepId ?? (block.execution?.role === 'step' ? block.id : undefined);
     if (block.execution?.role === 'step' && stepId) { step += 1; numbers.set(stepId, step); }
-    labels.set(block.id, stepId && numbers.has(stepId) ? `第 ${numbers.get(stepId)} 步${block.execution?.role === 'detail' ? ' · 说明' : ''}` : `第 ${index + 1} 块`);
+    labels.set(block.id, stepId && numbers.has(stepId) ? `Step ${numbers.get(stepId)}${block.execution?.role === 'detail' ? ' · details' : ''}` : `Block ${index + 1}`);
   });
   return labels;
 }

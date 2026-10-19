@@ -34,20 +34,20 @@ export function RunPreparationChecklist({ experimentId, view, editable, plates =
     router.refresh();
   });
   const kinds = (Object.keys(preparationKindLabels) as PreparationKind[]).filter(kind => list.items.some(item => item.kind === kind));
-  return <section id="run-preparation" className="ln-prep" aria-label="实验准备清单">
+  return <section id="run-preparation" className="ln-prep" aria-label="Run preparation checklist">
     <header className="ln-prep-head">
-      <h3>准备清单</h3>
-      <span className="ln-prep-progress" role="status">{list.items.length ? `已备 ${progress.done}/${progress.total}` : '待体系确认'}</span>
+      <h3>Preparation checklist</h3>
+      <span className="ln-prep-progress" role="status">{list.items.length ? `Ready ${progress.done}/${progress.total}` : 'Awaiting system confirmation'}</span>
     </header>
-    {list.warnings.length ? <ul className="ln-prep-warnings" role="status" aria-label="执行前检查">{list.warnings.map(warning => <li key={warning}><AlertTriangle aria-hidden />{warning}</li>)}</ul> : null}
+    {list.warnings.length ? <ul className="ln-prep-warnings" role="status" aria-label="Checks before running">{list.warnings.map(warning => <li key={warning}><AlertTriangle aria-hidden />{warning}</li>)}</ul> : null}
     {kinds.map(kind => <div key={kind} className="ln-prep-group">
       <h4>{preparationKindLabels[kind]}</h4>
       <ul>{list.items.filter(item => item.kind === kind).map(item => <ChecklistItem key={item.key} item={item} state={ticks[item.key]} editable={editable && !pending} onChange={patch => write(item.key, patch)}>
         {kind === 'plate' ? <PlateLayoutView attachment={plates.find(plate => `plate:${plate.id}` === item.key)!} /> : null}
       </ChecklistItem>)}</ul>
     </div>)}
-    {!list.items.length ? <p className="ln-prep-empty">确认体系并填写本次数量后，这里列出要准备的材料、配液、孔板、设备和计时。</p> : null}
-    {list.reminders.length ? <p className="ln-prep-reminders">{list.reminders.join('；')}</p> : null}
+    {!list.items.length ? <p className="ln-prep-empty">Once the systems are confirmed and the run quantities filled in, the materials, mixes, plates, equipment and timers to prepare are listed here.</p> : null}
+    {list.reminders.length ? <p className="ln-prep-reminders">{list.reminders.join('; ')}</p> : null}
     {message ? <p role="alert" className="ln-prep-error">{message}</p> : null}
   </section>;
 }
@@ -66,8 +66,8 @@ function ChecklistItem({ item, state, editable, onChange, children }: { item: Pr
         {state?.note && !noteOpen ? <span className="ln-prep-note">{state.note}</span> : null}
       </span>
     </label>
-    {editable ? <button type="button" className="focus-ring ln-prep-note-toggle" aria-label={`${item.label} 备注`} aria-expanded={noteOpen} onClick={() => { setDraft(state?.note ?? ''); setNoteOpen(open => !open); }}><StickyNote aria-hidden /></button> : null}
-    {noteOpen ? <input className="ln-prep-note-input" autoFocus value={draft} placeholder="备注，如批号、放哪里" aria-label={`${item.label} 备注`} onChange={event => setDraft(event.target.value)} onBlur={saveNote} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); saveNote(); } if (event.key === 'Escape') { event.preventDefault(); setNoteOpen(false); } }} /> : null}
+    {editable ? <button type="button" className="focus-ring ln-prep-note-toggle" aria-label={`Note for ${item.label}`} aria-expanded={noteOpen} onClick={() => { setDraft(state?.note ?? ''); setNoteOpen(open => !open); }}><StickyNote aria-hidden /></button> : null}
+    {noteOpen ? <input className="ln-prep-note-input" autoFocus value={draft} placeholder="Note, e.g. lot number or where it is" aria-label={`Note for ${item.label}`} onChange={event => setDraft(event.target.value)} onBlur={saveNote} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); saveNote(); } if (event.key === 'Escape') { event.preventDefault(); setNoteOpen(false); } }} /> : null}
     {children}
   </li>;
 }

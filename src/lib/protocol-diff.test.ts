@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
+import { translateUiText } from './i18n';
 import { diffProtocolVersions } from './protocol-diff';
 
 function base() {
@@ -28,9 +29,11 @@ describe('版本对比', () => {
     b.sources = [{ id: 'src-1', kind: 'doi', title: 'Qiagen DNeasy handbook', citation: '10.1000/handbook' }, { id: 'src-exp-1', kind: 'experiment', title: 'EXP-012' }];
     const diff = diffProtocolVersions(a, b);
     expect(diff.sections).toEqual([{ key: 'steps', title: 'Steps', entries: [
-      { id: 'b2', label: '第 2 步', before: '孵育 10 min。', after: '孵育 12 min。', change: 'changed' },
-      { id: 'b3', label: '第 3 步', after: '离心 12,000 ×g。', change: 'added' },
+      { id: 'b2', label: 'Step 2', before: '孵育 10 min。', after: '孵育 12 min。', change: 'changed' },
+      { id: 'b3', label: 'Step 3', after: '离心 12,000 ×g。', change: 'added' },
     ] }]);
+    // The Chinese interface numbers them 第 N 步.
+    expect(diff.sections[0].entries.map(entry => translateUiText(entry.label, 'zh'))).toEqual(['第 2 步', '第 3 步']);
     expect(diff.parameters).toEqual([
       { id: 'time', label: '时间', before: '10 min', after: '12 min', change: 'changed' },
       { id: 'spin', label: '离心', after: '12,000 ×g', change: 'added' },
@@ -45,8 +48,9 @@ describe('版本对比', () => {
     b.systems!.parameters[0].source = { kind: 'lookup', values: [{ id: 'a', when: { all: [{ dimensionId: 'volume', optionId: 's' }] }, value: 55, unit: 'µL' }, { id: 'b', when: { all: [{ dimensionId: 'volume', optionId: 'l' }] }, value: 80, unit: 'µL' }] };
     const diff = diffProtocolVersions(a, b);
     // The lysis step reads differently too, because its chip now shows 55 µL for the small system.
-    expect(diff.sections[0].entries).toEqual([expect.objectContaining({ id: 'b1', change: 'changed' }), { id: 'b2', label: '第 2 步', before: '孵育 10 min。', change: 'removed' }]);
-    expect(diff.parameters).toEqual([{ id: 'pk', label: 'Proteinase K', before: '350 µL：50 µL；600 µL：80 µL', after: '350 µL：55 µL；600 µL：80 µL', change: 'changed' }]);
+    expect(diff.sections[0].entries).toEqual([expect.objectContaining({ id: 'b1', change: 'changed' }), { id: 'b2', label: 'Step 2', before: '孵育 10 min。', change: 'removed' }]);
+    expect(diff.parameters).toEqual([{ id: 'pk', label: 'Proteinase K', before: 'By system: 350 µL → 50 µL; 600 µL → 80 µL', after: 'By system: 350 µL → 55 µL; 600 µL → 80 µL', change: 'changed' }]);
+    expect(translateUiText(diff.parameters[0].before!, 'zh')).toBe('350 µL：50 µL；600 µL：80 µL');
     expect(diffProtocolVersions(a, a).counts).toEqual({ added: 0, removed: 0, changed: 0 });
   });
 });

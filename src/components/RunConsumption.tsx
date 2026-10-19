@@ -30,7 +30,7 @@ export async function recordRunConsumption(experimentId: string, choices: Consum
 }
 
 /**
- * At completion: "按本次用量扣减库存？" Each line can be changed to the actual amount or left out; only checked lines with a stock item
+ * At completion: "Deduct this run’s use from stock?" Each line can be changed to the actual amount or left out; only checked lines with a stock item
  * are deducted. Nothing is written here: the run is completed first and the choices are recorded only once that succeeds.
  */
 export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, onDeduct }: { lines: ConsumptionLine[]; stock: ConsumptionStock[]; onCancel: () => void; onSkip: () => void; onDeduct: (choices: ConsumptionChoice[]) => void }) {
@@ -43,22 +43,22 @@ export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, on
   useEffect(() => { const element = dialog.current; if (element && !element.open) element.showModal(); return () => element?.close(); }, []);
   // A native modal: Escape cancels, focus stays inside, the page behind is inert.
   return createPortal(<dialog ref={dialog} aria-labelledby="consumption-title" className="ln-material-dialog ln-consumption-dialog bg-surface text-ink" onCancel={event => { event.preventDefault(); onCancel(); }}>
-      <h2 id="consumption-title" className="text-lg font-semibold text-ink">按本次用量扣减库存？</h2>
-      <p className="mt-1 text-sm text-muted">实际用量可逐项修改；只有勾选且选了库存的项目会扣减。实验完成后才写入；不扣减也可以直接完成，之后仍能在“本次使用的试剂与耗材”中登记。</p>
+      <h2 id="consumption-title" className="text-lg font-semibold text-ink">Deduct this run’s use from stock?</h2>
+      <p className="mt-1 text-sm text-muted">Change any actual amount; only ticked lines with a stock item are deducted. Nothing is written until the experiment is completed; you can also complete without deducting and record use later under “Reagents and consumables used in this run”.</p>
       <table className="ln-consumption-table mt-3 w-full text-sm">
-        <thead><tr><th scope="col"><span className="sr-only">扣减</span></th><th scope="col">材料</th><th scope="col">预计</th><th scope="col">实际</th><th scope="col">库存</th></tr></thead>
+        <thead><tr><th scope="col"><span className="sr-only">Deduct</span></th><th scope="col">Material</th><th scope="col">Expected use</th><th scope="col">Actual use</th><th scope="col">Stock</th></tr></thead>
         <tbody>{draft.map((item, index) => <tr key={item.line.key}>
-          <td><input type="checkbox" aria-label={`扣减 ${item.line.name}`} checked={item.include} onChange={event => patch(index, { include: event.target.checked })} /></td>
+          <td><input type="checkbox" aria-label={`Deduct ${item.line.name}`} checked={item.include} onChange={event => patch(index, { include: event.target.checked })} /></td>
           <th scope="row">{item.line.name}<small>{item.line.sources.join('；')}</small></th>
           <td className="font-mono">{consumptionAmount(item.line)}</td>
-          <td><span className="ln-consumption-actual"><input inputMode="decimal" aria-label={`${item.line.name} 实际用量`} disabled={!item.include} value={item.actual} onChange={event => patch(index, { actual: event.target.value })} />{item.line.unit}</span></td>
-          <td><select aria-label={`${item.line.name} 库存`} disabled={!item.include} value={item.stockId} onChange={event => patch(index, { stockId: event.target.value })}><option value="">只记录，不扣库存</option>{stock.map(entry => <option key={entry.id} value={entry.id}>{entry.name} · {entry.lotNumber ?? '批号未记录'}{entry.managementMode !== 'precise' ? '（非精确管理）' : ''}</option>)}</select></td>
+          <td><span className="ln-consumption-actual"><input inputMode="decimal" aria-label={`Actual amount of ${item.line.name}`} disabled={!item.include} value={item.actual} onChange={event => patch(index, { actual: event.target.value })} />{item.line.unit}</span></td>
+          <td><select aria-label={`Stock item for ${item.line.name}`} disabled={!item.include} value={item.stockId} onChange={event => patch(index, { stockId: event.target.value })}><option value="">Record only, don’t deduct</option>{stock.map(entry => <option key={entry.id} value={entry.id}>{`${entry.name} · ${entry.lotNumber ?? 'Lot not recorded'}${entry.managementMode !== 'precise' ? ' (not precisely tracked)' : ''}`}</option>)}</select></td>
         </tr>)}</tbody>
       </table>
       <div className="mt-4 flex flex-wrap justify-end gap-2">
-        <Button type="button" onClick={onCancel}>返回</Button>
-        <Button type="button" onClick={onSkip}>不扣减，直接完成</Button>
-        <Button type="button" variant="primary" disabled={!chosen.length || invalid} onClick={deduct}>{`完成并记录用量（${chosen.length} 项）`}</Button>
+        <Button type="button" onClick={onCancel}>Back</Button>
+        <Button type="button" onClick={onSkip}>Complete without deducting</Button>
+        <Button type="button" variant="primary" disabled={!chosen.length || invalid} onClick={deduct}>{`Complete and record use (${chosen.length})`}</Button>
       </div>
   </dialog>, document.body);
 }

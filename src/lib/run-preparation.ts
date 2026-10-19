@@ -1,6 +1,7 @@
 import { compatibleUnits, convert, normalizeUnit, units } from './calculators/quantities';
+import { toolFieldNamesZh } from './i18n';
 import { calculationGroups } from './protocol-calculations';
-import { chipAmount, parameterLongName, toolSpecs } from './protocol-chips';
+import { chipAmount, parameterLongName, toolSpecs, type ToolKind } from './protocol-chips';
 import { mixQuantityLabel, mixTitle, runQuantityLabels } from './protocol-mix';
 import { consumptionAmount, consumptionRecorded, matchStock, runConsumption } from './run-consumption';
 import { mixState, stepMixes, stepVersion, type ExecutionPlan, type StructuredRunView } from './structured-run';
@@ -9,14 +10,18 @@ export type PreparationKind = 'material' | 'mix' | 'plate' | 'equipment' | 'time
 export type PreparationItem = { key: string; kind: PreparationKind; label: string; detail?: string; warning?: string; badge?: string; stepId?: string };
 export type PreparationState = ExecutionPlan['preparation'][string];
 export type PreparationChecklist = {
-  /** What to have ready, in bench order: materials, mix cards, plates, equipment, timers. Each can be ticked "已备". */
+  /** What to have ready, in bench order: materials, mix cards, plates, equipment, timers. Each can be ticked ready. */
   items: PreparationItem[];
   /** What still stops the run or its quantities: an unconfirmed system, a missing 本次数量, a calculation not yet confirmed, stock short. */
   warnings: string[];
   /** Values the Protocol asks to be recorded while executing; nothing to prepare, good to know before starting. */
   reminders: string[];
 };
-export const preparationKindLabels: Record<PreparationKind, string> = { material: '材料与用量', mix: '配液卡', plate: '孔板布局', equipment: '设备准备', timer: '计时' };
+export const preparationKindLabels: Record<PreparationKind, string> = { material: 'Materials and amounts', mix: 'Mix cards', plate: 'Plate layouts', equipment: 'Equipment setup', timer: 'Timers' };
+// The checklist's text is English; the Chinese interface translates it (translateDynamic in i18n.ts), names and codes untouched.
+const equipmentNames: Record<ToolKind, string> = { centrifuge: 'Centrifuge', mix: 'Mix', incubate: 'Incubate', shake: 'Shaker', vacuum: 'Vacuum', electrophoresis: 'Electrophoresis', electroporation: 'Electroporation', gas: 'Gas', dark: 'Protect from light', gradient: 'Gradient' };
+/** A tool field still open, named in English by its toolSpecs label. */
+const toolFieldNames = Object.fromEntries(Object.entries(toolFieldNamesZh).map(([english, chinese]) => [chinese, english]));
 
 type PlateAttachment = { id: string; name: string };
 export type PreparationStock = { name: string; unit: string; currentQuantity: number; quantityRecorded: boolean };
@@ -51,10 +56,10 @@ const isShort = (expected: number, unit: string, item: PreparationStock) => {
 function equipmentDetail(kind: keyof typeof toolSpecs, values: Array<{ key: string; text: string }>) {
   const temperature = values.find(value => value.key === 'temperature')?.text;
   const rest = values.filter(value => value.key !== 'temperature').map(value => value.text).join(' · ');
-  if (kind === 'centrifuge' && temperature) return `预冷至 ${temperature}${rest ? ` · ${rest}` : ''}`;
-  if (kind === 'incubate' && temperature) return `预热至 ${temperature}${rest ? ` · ${rest}` : ''}`;
+  if (kind === 'centrifuge' && temperature) return `Pre-cool to ${temperature}${rest ? ` · ${rest}` : ''}`;
+  if (kind === 'incubate' && temperature) return `Pre-warm to ${temperature}${rest ? ` · ${rest}` : ''}`;
   const settings = values.map(value => value.text).join(' · ');
-  if (kind === 'gas') return settings ? `设定 ${settings}` : '';
+  if (kind === 'gas') return settings ? `Set to ${settings}` : '';
   return settings;
 }
 
@@ -67,27 +72,27 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
   const steps = Object.entries(run.steps).filter(([id, step]) => step.applicability !== 'not-applicable' && !run.plan.skips[id]).sort((a, b) => a[1].order - b[1].order);
   // A shared-preparation step belongs to every group: its version is the first group's, as stepVersion resolves it.
   const versionOf = (stepId: string) => stepVersion(run, stepId);
-  // With several Protocols a bare "第 3 步" is ambiguous: the step names its Protocol by code (by title when the snapshot has no code).
+  // With several Protocols a bare "Step 3" is ambiguous: the step names its Protocol by code (by title when the snapshot has no code).
   const several = new Set(run.versions.map(version => version.sourceVersionId)).size > 1;
   const stepLabel = (step: StructuredRunView['steps'][string]) => {
     const version = several ? run.versions.find(item => item.id === step.versionId || item.sourceVersionId === step.versionId) : undefined;
-    return `${version ? `${version.code ?? version.title} ` : ''}第 ${step.order} 步`;
+    return version ? `${version.code ?? version.title} step ${step.order}` : `Step ${step.order}`;
   };
   for (const version of run.versions) {
     const adopted = run.plan.versions[version.id], systems = version.document.systems;
     const name = version.groupLabel ? `${version.groupLabel} · ${version.title}` : version.title;
-    if (!adopted && systems?.dimensions.length) warnings.push(`尚未确认本次体系：${name}`);
+    if (!adopted && systems?.dimensions.length) warnings.push(`Systems for this run not confirmed: ${name}`);
     // A draft generated from a search still carries what the method card could not verify.
-    if (version.document.provenance?.design?.unverified) warnings.push(`${name} 由方案设计生成，方法卡有 ${version.document.provenance.design.unverified} 条未核实，请先核对原文`);
-    if (version.document.provenance?.recognition?.unverified) warnings.push(`${name} 由 AI 整理说明书生成，有 ${version.document.provenance.recognition.unverified} 行未在原文中找到出处，请先核对原文`);
-    for (const label of runQuantityLabels(version.document)) if (run.plan.quantities[version.id]?.[label] === undefined) warnings.push(`尚未填写${label}：${name}`);
+    if (version.document.provenance?.design?.unverified) warnings.push(`${name} was generated by method design; its method card has ${version.document.provenance.design.unverified} unverified items. Check the original first`);
+    if (version.document.provenance?.recognition?.unverified) warnings.push(`${name} was generated by AI from instructions; ${version.document.provenance.recognition.unverified} lines have no source in the original. Check the original first`);
+    for (const label of runQuantityLabels(version.document)) if (run.plan.quantities[version.id]?.[label] === undefined) warnings.push(`Run quantity not filled in: ${label} · ${name}`);
     if (!systems) continue;
     const used = new Set(steps.filter(([id]) => versionOf(id)?.id === version.id).flatMap(([, step]) => step.chipIds ?? []));
     for (const group of calculationGroups(systems.parameters)) {
       const result = group.results.find(item => used.has(item.id)) ?? group.results[0];
       if (!used.has(result.id) || adopted?.calculations[result.id]) continue;
       const step = steps.find(([id, item]) => versionOf(id)?.id === version.id && item.chipIds?.includes(result.id))?.[1];
-      warnings.push(`计算待确认：${parameterLongName(result, systems)}${step ? `（${stepLabel(step)}）` : ''}`);
+      warnings.push(`Calculation to confirm: ${parameterLongName(result, systems)}${step ? ` (${stepLabel(step)})` : ''}`);
     }
   }
   // Materials: the run's expected use, summed over mix cards and material-linked chips.
@@ -96,17 +101,17 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
     const amount = line.expected === undefined ? consumptionAmount(line) : benchAmount(line.expected, line.unit);
     // The stock on hand, when it is short of this run's expected use.
     const short = stock && line.expected !== undefined && isShort(line.expected, line.unit, stock) ? benchAmount(stock.currentQuantity, stock.unit) : undefined;
-    items.push({ key: `material:${line.key}`, kind: 'material', label: line.name, detail: `${amount} · ${line.sources.join('；')}`,
-      ...(line.expected === undefined ? { warning: amount } : short !== undefined ? { warning: `库存 ${short}，不足本次用量` } : {}),
-      ...(options.recorded && consumptionRecorded(line, options.recorded) ? { badge: '已记录' } : {}) });
-    if (short !== undefined) warnings.push(`库存不足：${line.name}（库存 ${short}，本次约需 ${amount}）`);
+    items.push({ key: `material:${line.key}`, kind: 'material', label: line.name, detail: `${amount} · used in ${line.sources.join('; ')}`,
+      ...(line.expected === undefined ? { warning: amount } : short !== undefined ? { warning: `Stock ${short}, short of this run’s use` } : {}),
+      ...(options.recorded && consumptionRecorded(line, options.recorded) ? { badge: 'Recorded' } : {}) });
+    if (short !== undefined) warnings.push(`Stock short: ${line.name} (in stock ${short}, this run needs about ${amount})`);
   }
   for (const [stepId, step] of steps) for (const mix of stepMixes(run, stepId)) {
     const state = mixState(run, stepId, mix), label = mixQuantityLabel(mix);
-    const quantity = state.quantity === undefined ? `未填写${label}` : `${state.quantity} ${label}`;
-    items.push({ key: `mix:${stepId}:${mix.id}`, kind: 'mix', stepId, label: `${mixTitle(mix)} · ${stepLabel(step)}`, detail: `${quantity} · ${state.current && state.receipt ? '已确认' : '待确认'}`, ...(state.quantity === undefined ? { warning: quantity } : {}) });
+    const quantity = state.quantity === undefined ? `Not filled in: ${label}` : `${state.quantity} ${label}`;
+    items.push({ key: `mix:${stepId}:${mix.id}`, kind: 'mix', stepId, label: `${mixTitle(mix)} · ${stepLabel(step)}`, detail: `${quantity} · ${state.current && state.receipt ? 'Confirmed' : 'Not confirmed'}`, ...(state.quantity === undefined ? { warning: quantity } : {}) });
   }
-  for (const plate of options.plates ?? []) items.push({ key: `plate:${plate.id}`, kind: 'plate', label: plate.name, detail: '孔板布局附件' });
+  for (const plate of options.plates ?? []) items.push({ key: `plate:${plate.id}`, kind: 'plate', label: plate.name, detail: 'Plate layout attachment' });
   // Equipment: each tool a step uses, with this run's settings.
   for (const version of run.versions) {
     const systems = version.document.systems;
@@ -115,8 +120,8 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
       if (!using.length) continue;
       const spec = toolSpecs[tool.kind];
       const values = tool.fields.flatMap(field => { const resolved = version.parameters[field.parameterId]; const label = spec.fields.find(item => item.key === field.key)?.label ?? field.key;
-        return resolved?.status === 'resolved' && resolved.value !== undefined && resolved.value !== null ? [{ key: field.key, text: chipAmount(resolved.value, resolved.unit) }] : [{ key: field.key, text: `${label}待定` }]; });
-      items.push({ key: `equipment:${version.id}:${tool.id}`, kind: 'equipment', label: `${spec.label}${tool.method?.trim() ? ` · ${tool.method.trim()}` : ''}`, detail: [equipmentDetail(tool.kind, values), using.map(([, step]) => stepLabel(step)).join('、')].filter(Boolean).join(' · ') });
+        return resolved?.status === 'resolved' && resolved.value !== undefined && resolved.value !== null ? [{ key: field.key, text: chipAmount(resolved.value, resolved.unit) }] : [{ key: field.key, text: `${toolFieldNames[label] ?? label} to be determined` }]; });
+      items.push({ key: `equipment:${version.id}:${tool.id}`, kind: 'equipment', label: `${equipmentNames[tool.kind]}${tool.method?.trim() ? ` · ${tool.method.trim()}` : ''}`, detail: [equipmentDetail(tool.kind, values), using.map(([, step]) => stepLabel(step)).join(', ')].filter(Boolean).join(' · ') });
     }
   }
   // Timers: a step's rule timer, else every time chip it holds (each can start the countdown).
@@ -125,9 +130,9 @@ export function preparationChecklist(run: Pick<StructuredRunView, 'steps' | 'pla
     const chips = (step.chipIds ?? []).flatMap(id => { const parameter = systems?.parameters.find(p => p.id === id); return parameter && isTime(parameter.unit) && version?.parameters[id]?.status === 'resolved' ? [parameter] : []; });
     const durations = step.timerDurationSeconds ? [formatDuration(step.timerDurationSeconds)] : chips.map(p => { const resolved = version!.parameters[p.id]; return formatDuration(Math.round(convert(resolved.value!, resolved.unit, 's'))); });
     if (durations.length) items.push({ key: `timer:${stepId}`, kind: 'timer', stepId, label: stepLabel(step), detail: durations.join(' · ') });
-    for (const field of step.actualFields) if (field.required && !run.plan.actualValues[stepId]?.[field.id]) reminders.push(`执行时必填：${stepLabel(step)} · ${field.label}`);
-    // 执行时填写 values (actual-source chips) are entered at the step; until then the step waits.
-    for (const id of step.chipIds ?? []) { const parameter = systems?.parameters.find(p => p.id === id); if (parameter?.source.kind === 'actual' && version && !run.plan.versions[version.id]?.actualInputs[id]) reminders.push(`执行时填写：${stepLabel(step)} · ${parameterLongName(parameter, systems!)}`); }
+    for (const field of step.actualFields) if (field.required && !run.plan.actualValues[stepId]?.[field.id]) reminders.push(`Required at run time: ${stepLabel(step)} · ${field.label}`);
+    // Values filled in at run time (actual-source chips) are entered at the step; until then the step waits.
+    for (const id of step.chipIds ?? []) { const parameter = systems?.parameters.find(p => p.id === id); if (parameter?.source.kind === 'actual' && version && !run.plan.versions[version.id]?.actualInputs[id]) reminders.push(`Filled in at run time: ${stepLabel(step)} · ${parameterLongName(parameter, systems!)}`); }
   }
   return { items, warnings, reminders };
 }

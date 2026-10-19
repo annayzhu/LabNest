@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
 import { structuredRunView } from './structured-run';
+import { translateUiText } from './i18n';
 import { formatDuration, preparationChecklist, preparationProgress } from './run-preparation';
 
 /** A qPCR Protocol: a mix card (SYBR premixed, cDNA added separately), a pre-cooled centrifuge, a 10 min incubation and a value to record. */
@@ -28,6 +29,9 @@ function qpcr() {
   return { snapshot, steps, adopted };
 }
 
+/** What the Chinese interface shows for a checklist string. */
+const zh = (text?: string) => text === undefined ? undefined : translateUiText(text, 'zh');
+
 describe('实验准备清单', () => {
   it('lists materials, the mix card, the pre-cooled centrifuge and the timer from the confirmed plan and 本次数量', () => {
     const { snapshot, steps, adopted } = qpcr();
@@ -37,25 +41,35 @@ describe('实验准备清单', () => {
     const byKind = (kind: string) => list.items.filter(item => item.kind === kind);
     // 24 reactions × 10 µL × 110% premixed; cDNA 24 × 2 µL added separately, already written as used.
     expect(byKind('material').map(item => [item.label, item.detail, item.badge])).toEqual([
-      ['2× SYBR Mix', '264 µL · 第 1 步 · qPCR 预混液', undefined], ['cDNA', '48 µL · 第 1 步 · qPCR 预混液', '已记录']]);
-    expect(byKind('mix')[0]).toMatchObject({ key: 'mix:run-1:b1-mix', label: 'qPCR 预混液 · 第 1 步', detail: '24 反应数 · 待确认', stepId: 'run-1' });
-    expect(byKind('equipment')[0]).toMatchObject({ key: 'equipment:v1:tool-1', label: '离心', detail: '预冷至 4 °C · 12,000 ×g · 第 1 步' });
-    expect(byKind('timer')[0]).toMatchObject({ key: 'timer:run-2', label: '第 2 步', detail: '10 min', stepId: 'run-2' });
-    expect(list.reminders).toEqual(['执行时填写：第 2 步 · OD600']);
+      ['2× SYBR Mix', '264 µL · used in Step 1 · qPCR 预混液', undefined], ['cDNA', '48 µL · used in Step 1 · qPCR 预混液', 'Recorded']]);
+    expect(byKind('material').map(item => [zh(item.detail), zh(item.badge)])).toEqual([['264 µL · 第 1 步 · qPCR 预混液', undefined], ['48 µL · 第 1 步 · qPCR 预混液', '已记录']]);
+    expect(byKind('mix')[0]).toMatchObject({ key: 'mix:run-1:b1-mix', label: 'qPCR 预混液 · Step 1', detail: '24 反应数 · Not confirmed', stepId: 'run-1' });
+    expect([zh(byKind('mix')[0].label), zh(byKind('mix')[0].detail)]).toEqual(['qPCR 预混液 · 第 1 步', '24 反应数 · 待确认']);
+    expect(byKind('equipment')[0]).toMatchObject({ key: 'equipment:v1:tool-1', label: 'Centrifuge', detail: 'Pre-cool to 4 °C · 12,000 ×g · Step 1' });
+    expect([zh(byKind('equipment')[0].label), zh(byKind('equipment')[0].detail)]).toEqual(['离心', '预冷至 4 °C · 12,000 ×g · 第 1 步']);
+    expect(byKind('timer')[0]).toMatchObject({ key: 'timer:run-2', label: 'Step 2', detail: '10 min', stepId: 'run-2' });
+    expect(zh(byKind('timer')[0].label)).toBe('第 2 步');
+    expect(list.reminders).toEqual(['Filled in at run time: Step 2 · OD600']);
+    expect(zh(list.reminders.join('; '))).toBe('执行时填写：第 2 步 · OD600');
   });
 
   it('warns about a missing 本次数量 and short stock instead of guessing amounts', () => {
     const { snapshot, steps, adopted } = qpcr();
     const bare = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {} }, steps);
     const list = preparationChecklist(bare);
-    expect(list.warnings).toEqual(['尚未填写反应数：qPCR']);
-    expect(list.items.find(item => item.kind === 'material')).toMatchObject({ label: '2× SYBR Mix', warning: '未填写反应数' });
-    expect(list.items.find(item => item.kind === 'mix')).toMatchObject({ detail: '未填写反应数 · 待确认', warning: '未填写反应数' });
+    expect(list.warnings).toEqual(['Run quantity not filled in: 反应数 · qPCR']);
+    expect(list.warnings.map(zh)).toEqual(['尚未填写反应数：qPCR']);
+    const material = list.items.find(item => item.kind === 'material')!, mix = list.items.find(item => item.kind === 'mix')!;
+    expect(material).toMatchObject({ label: '2× SYBR Mix', warning: 'Not filled in: 反应数' });
+    expect(mix).toMatchObject({ detail: 'Not filled in: 反应数 · Not confirmed', warning: 'Not filled in: 反应数' });
+    expect([zh(material.warning), zh(material.detail), zh(mix.detail)]).toEqual(['未填写反应数', '未填写反应数 · 第 1 步 · qPCR 预混液', '未填写反应数 · 待确认']);
     const counted = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
     // 264 µL needed, 0.1 mL on the shelf; cDNA is compared in µL and suffices.
     const short = preparationChecklist(counted, { stock: [{ name: '2× SYBR Mix', unit: 'mL', currentQuantity: 0.1, quantityRecorded: true }, { name: 'cDNA', unit: 'µL', currentQuantity: 100, quantityRecorded: true }] });
-    expect(short.warnings).toEqual(['库存不足：2× SYBR Mix（库存 0.1 mL，本次约需 264 µL）']);
-    expect(short.items[0].warning).toBe('库存 0.1 mL，不足本次用量');
+    expect(short.warnings).toEqual(['Stock short: 2× SYBR Mix (in stock 0.1 mL, this run needs about 264 µL)']);
+    expect(short.warnings.map(zh)).toEqual(['库存不足：2× SYBR Mix（库存 0.1 mL，本次约需 264 µL）']);
+    expect(short.items[0].warning).toBe('Stock 0.1 mL, short of this run’s use');
+    expect(zh(short.items[0].warning)).toBe('库存 0.1 mL，不足本次用量');
     expect(short.items[1].warning).toBeUndefined();
   });
 
@@ -73,7 +87,8 @@ describe('实验准备清单', () => {
     const { snapshot, steps, adopted } = qpcr();
     snapshot.versions[0].contentJson.provenance = { fromExperimentIds: [], design: { sessionId: 'sess-1', hitKey: 'europe_pmc:PMC1', unverified: 2, generatedAt: '2026-10-15T00:00:00Z' } };
     const view = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
-    expect(preparationChecklist(view).warnings).toEqual(['qPCR 由方案设计生成，方法卡有 2 条未核实，请先核对原文']);
+    expect(preparationChecklist(view).warnings).toEqual(['qPCR was generated by method design; its method card has 2 unverified items. Check the original first']);
+    expect(preparationChecklist(view).warnings.map(zh)).toEqual(['qPCR 由方案设计生成，方法卡有 2 条未核实，请先核对原文']);
   });
 
   it('formats durations the way a bench reads them', () => {

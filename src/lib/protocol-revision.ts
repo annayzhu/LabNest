@@ -1,8 +1,10 @@
 import { chipAmount, parameterLongName } from './protocol-chips';
 import type { ProtocolDocument } from './protocol-document';
-import { deviationTypeLabel } from './experiment-document';
 import { evaluateProtocolCondition } from './structured-protocol';
 import type { StructuredRunView } from './structured-run';
+
+/** How a candidate's deviation reads; the Chinese interface translates it. Nothing here is written into the revision. */
+const deviationKinds: Record<string, string> = { method: 'Method change', timing: 'Timing', material: 'Material or reagent', equipment: 'Equipment', incident: 'Incident', abnormal: 'Abnormal', other: 'Other' };
 
 export type Adoption =
   | { kind: 'value'; parameterId: string; value: number; unit: string; selections: Record<string, string>; stepRef: string }
@@ -26,7 +28,7 @@ export function revisionCandidates(view: Pick<StructuredRunView, 'steps' | 'plan
       const current = candidates.get(key);
       if (current && current.recordedAt > actual.recordedAt) continue;
       candidates.set(key, { key, sourceVersionId: version.sourceVersionId, versionTitle: version.title, kind: 'value', recordedAt: actual.recordedAt, label: parameterLongName(parameter, systems),
-        detail: `${chipAmount(planned.value!, planned.unit)} → ${chipAmount(actual.value, actual.unit)}（第 ${step.order} 步${version.groupLabel ? ` · ${version.groupLabel}` : ''}）`,
+        detail: `${chipAmount(planned.value!, planned.unit)} → ${chipAmount(actual.value, actual.unit)} (step ${step.order}${version.groupLabel ? ` · ${version.groupLabel}` : ''})`,
         adoption: { kind: 'value', parameterId, value: actual.value, unit: actual.unit, selections: view.plan.versions[version.id]?.selections ?? {}, stepRef: step.source_ref } });
     }
   }
@@ -35,7 +37,7 @@ export function revisionCandidates(view: Pick<StructuredRunView, 'steps' | 'plan
     if (!version || !step?.source_ref || !source.deviationNote?.trim()) continue;
     const key = `note:${version.sourceVersionId}:${step.source_ref}`;
     if (candidates.has(key)) continue;
-    candidates.set(key, { key, sourceVersionId: version.sourceVersionId, versionTitle: version.title, kind: 'note', recordedAt: '', label: `第 ${step.order} 步 · ${deviationTypeLabel(source.deviationType)}`, detail: source.deviationNote.trim(),
+    candidates.set(key, { key, sourceVersionId: version.sourceVersionId, versionTitle: version.title, kind: 'note', recordedAt: '', label: `Step ${step.order} · ${deviationKinds[source.deviationType ?? 'other'] ?? 'Other'}`, detail: source.deviationNote.trim(),
       adoption: { kind: 'note', stepRef: step.source_ref, text: source.deviationNote.trim(), stepLabel: `第 ${step.order} 步` } });
   }
   return [...candidates.values()].map(({ recordedAt: _, ...candidate }) => { void _; return candidate; });

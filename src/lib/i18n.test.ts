@@ -90,4 +90,37 @@ describe("LabNest UI translations", () => {
       .map(([source]) => source);
     expect(untranslatedEntries).toEqual([]);
   });
+
+  it("translates the editor menus, run preparation, stock dialog and version pages", () => {
+    const zh = (text: string) => translateUiText(text, "zh");
+    expect(["Turn into", "Bold ⌘B", "＋ Row", "－ This column", "Applies to…", "Turn into mix card", "Equipment operations", "Mix card", "Bullet points"].map(zh))
+      .toEqual(["转换为", "加粗 ⌘B", "＋ 行", "－ 本列", "适用范围…", "转为配液卡", "设备操作", "配液卡", "项目列表"]);
+    expect(zh("Type / to insert a parameter, tool or content")).toBe("输入 / 插入参数、工具或内容");
+    expect(zh("PCR / thermal cycler")).toBe("PCR／热循环");
+    expect(zh("Insert 14:05")).toBe("插入 14:05");
+    expect([zh("New Protocol"), zh("New Experiment")]).toEqual(["新建实验规程", "新建实验"]);
+    expect(zh("New from Protocol PRT-100003 v1.0 “SYBR Green qPCR”. Confirm the experiment name, research plan and date; once saved, the steps come from the Protocol and are ticked off one by one on the run page."))
+      .toBe("从规程 PRT-100003 v1.0「SYBR Green qPCR」新建。先确认实验名称、所属研究计划和日期；保存后，步骤按规程生成，在执行页逐步勾选。");
+    expect(["Preparation · systems and groups", "Run quantities", "Save quantities", "Confirm systems for this run", "Preparation checklist", "Mix cards", "Equipment setup", "Timers"].map(zh))
+      .toEqual(["实验准备 · 体系与分组", "本次数量", "保存数量", "确认本次体系", "准备清单", "配液卡", "设备准备", "计时"]);
+    expect(["PRT-100003 step 2", "Step 2", "Ready 3/7", "A组 · Run quantities", "Group 2", "Note for 2× SYBR Mix"].map(zh))
+      .toEqual(["PRT-100003 第 2 步", "第 2 步", "已备 3/7", "A组 · 本次数量", "第 2 组", "2× SYBR Mix 备注"]);
+    expect(zh("Centrifuge · Pre-cool to 4 °C · 12,000 ×g · PRT-100001 step 2, PRT-100003 step 1")).toBe("Centrifuge · 预冷至 4 °C · 12,000 ×g · PRT-100001 第 2 步、PRT-100003 第 1 步");
+    expect(zh("Centrifuge · 低速")).toBe("离心 · 低速");
+    expect(zh("Calculation to confirm: Cell suspension (PRT-100003 step 2)")).toBe("计算待确认：Cell suspension（PRT-100003 第 2 步）");
+    expect(zh("Required at run time: Step 3 · Ct value; Filled in at run time: Step 4 · OD600")).toBe("执行时必填：第 3 步 · Ct value；执行时填写：第 4 步 · OD600");
+    expect(zh("Continuing from: Lyse cells. Operations completed earlier are not copied as completed in this run.")).toBe("本次继续位置：Lyse cells。此前已完成操作并未复制为本次完成。");
+    expect(zh("2 calculations are confirmed in the steps that use them: click a calculation result in a step to fill it in and confirm.")).toBe("2 项计算在使用它的步骤里确认：点步骤中的计算结果即可填写并确认。");
+    expect([zh("Deduct this run’s use from stock?"), zh("Complete and record use (3)"), zh("Tris buffer · Lot not recorded (not precisely tracked)"), zh("Actual amount of Tris buffer")])
+      .toEqual(["按本次用量扣减库存？", "完成并记录用量（3 项）", "Tris buffer · 批号未记录（非精确管理）", "Tris buffer 实际用量"]);
+    expect([zh("RNA extraction · Version comparison"), zh("Compare versions"), zh("Revise protocol from this run"), zh("Back to tools"), zh("Step 2 · details"), zh("Block 4")])
+      .toEqual(["RNA extraction · 版本对比", "版本对比", "整理成规程修订", "返回工具目录", "第 2 步 · 说明", "第 4 块"]);
+    expect(zh("By system: 350 µL + not 富脂 → 50 µL; Default → Not filled (µL)")).toBe("350 µL + 非 富脂：50 µL；默认：未填（µL）");
+    expect(zh("Systems adopted · EXP-000123")).toBe("本次采用体系 · EXP-000123");
+  });
+
+  it("leaves names and step titles that only look like the checklist's wording alone", () => {
+    expect(translateUiText("Wash step 2", "zh")).toBe("Wash step 2");
+    expect(translateUiText("Master mix · Confirmed by PI", "zh")).toBe("Master mix · Confirmed by PI");
+  });
 });

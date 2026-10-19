@@ -168,7 +168,7 @@ export default async function ProtocolDetailPage({
             </Card>
 
             <Card>
-              <CardHeader title="Version history" eyebrow="Immutable lineage" action={protocol.versions.length > 1 ? <Link href={`/protocols/${protocol.id}/compare`} className="text-xs font-medium text-moss hover:underline">版本对比</Link> : undefined} />
+              <CardHeader title="Version history" eyebrow="Immutable lineage" action={protocol.versions.length > 1 ? <Link href={`/protocols/${protocol.id}/compare`} className="text-xs font-medium text-moss hover:underline">Compare versions</Link> : undefined} />
               <CardBody>
                 <ul className="divide-y divide-hairline">
                   {protocol.versions.map((row) => <li key={row.id} className="space-y-2 py-4 first:pt-0 last:pb-0">

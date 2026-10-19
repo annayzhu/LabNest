@@ -11,7 +11,7 @@ import { structuredRunView } from "@/lib/structured-run";
 
 export const dynamic = "force-dynamic";
 
-/** 整理成规程修订: choose which of this run's actual values and deviation notes go into a new draft version. */
+/** Revise protocol from this run (整理成规程修订): choose which of this run's actual values and deviation notes go into a new draft version. */
 export default async function ReviseFromExperimentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const experiment = await prisma.experiment.findUnique({ where: { id }, include: { protocolRun: true, steps: true } });
@@ -29,9 +29,9 @@ export default async function ReviseFromExperimentPage({ params }: { params: Pro
   });
   return <AppShell>
     <div className="space-y-5">
-      <PageHeader identifier={experiment.runCode} title="整理成规程修订"
-        actions={<Link href={`/experiments/${experiment.id}`} className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}><ArrowLeft className="h-4 w-4" aria-hidden />返回实验记录</Link>} />
-      {groups.length ? <ReviseForm experimentId={experiment.id} groups={groups} /> : <p className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-4 py-3 text-sm text-graphite">本次实验记录的实际值都与规程一致，也没有偏差说明，没有需要整理的内容。</p>}
+      <PageHeader identifier={experiment.runCode} title="Revise protocol from this run"
+        actions={<Link href={`/experiments/${experiment.id}`} className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}><ArrowLeft className="h-4 w-4" aria-hidden />Back to experiment record</Link>} />
+      {groups.length ? <ReviseForm experimentId={experiment.id} groups={groups} /> : <p className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-4 py-3 text-sm text-graphite">Every actual value recorded in this run matches the Protocol and there are no deviation notes, so there is nothing to revise.</p>}
     </div>
   </AppShell>;
 }

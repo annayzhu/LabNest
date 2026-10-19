@@ -128,7 +128,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2"><StatusPill status={experiment.status} /><StatusPill status={experiment.recordStatus} /></div>
-              <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "未分配研究计划"} · {experiment.project?.name ?? "未分配项目"}</p>
+              <p className="mt-2 text-sm text-graphite">{experiment.researchPlan?.code ?? "Research plan not assigned"} · {experiment.project?.name ?? "Project not assigned"}</p>
               <p className="mt-1 text-xs text-muted">{lockedProtocol ? `${lockedProtocol.protocol.canonicalTitle ?? lockedProtocol.protocol.title} · ${lockedProtocol.protocol.humanCode ?? "Uncoded"} · ${lockedProtocol.displayVersion}` : "No locked ProtocolVersion"}</p>
             </div>
 
@@ -140,7 +140,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
         <RunSystemPreparation experimentId={id} view={structured} editable={editable} plates={attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} stock={inventoryItems.map(item => ({ name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }))} recorded={experiment.materialUses.map(row => ({ source: row.source }))}/>
-        {structured.hasSystems ? <div className="protocol-system-context" aria-label="当前实验体系"><strong>本次采用体系 · {experiment.runCode}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
+        {structured.hasSystems ? <div className="protocol-system-context" aria-label="Systems in this run"><strong>{`Systems adopted · ${experiment.runCode}`}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
         <RunNotificationStatus/>
         <ProtocolRunProgressForm
           key={`${structured.plan.revision}:${experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}`}
@@ -159,7 +159,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
           consumption={consumption.filter(line => !consumptionRecorded(line, experiment.materialUses))}
           stock={inventoryItems.map(item => ({ id: item.id, name: item.name, managementMode: item.managementMode, lotNumber: item.lotNumber }))}
         />
-        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>查看其他体系内容（不适用，不计入本次进度）</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · 不适用</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
+        {Object.values(structured.steps).some(step => step.applicability === 'not-applicable') ? <details className="rounded border border-hairline p-3" data-not-applicable><summary>Show other systems’ content (not applicable, not counted in this run’s progress)</summary>{Object.values(structured.steps).filter(step => step.applicability === 'not-applicable').map(step => <section key={`${step.versionId}:${step.source_ref}`} className="mt-3"><h3>{step.title} · not applicable</h3>{step.content_blocks?.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}</section>)}</details> : null}
 
 
 
@@ -176,7 +176,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
 
         </div>
 
-        {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">已执行库存交易</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {formatQuantity(t.quantityChange)} {t.unit}</li>)}</ul></section>:null}
+        {transactions.length?<section className="border-t border-hairline py-3"><h2 className="font-semibold">Inventory transactions made</h2><ul>{transactions.map(t=><li key={t.id} className="py-2 text-sm">{t.inventoryItem.name} · {formatQuantity(t.quantityChange)} {t.unit}</li>)}</ul></section>:null}
         </details>
         <ExperimentResultRecordingCard experimentId={experiment.id} recording={resultRecording} />
       </div>

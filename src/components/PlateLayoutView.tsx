@@ -23,7 +23,7 @@ export function parsePlateLayouts(raw: unknown): Plate[] {
       if (/^[A-Z]\d+$/.test(wellId) && params && typeof params === 'object') wells[wellId] = Object.fromEntries(Object.entries(params as Record<string, unknown>).filter(([, value]) => typeof value === 'string' || typeof value === 'number') as Array<[string, string | number]>);
     }
     const dimensions = Array.isArray(item.dimensions) ? item.dimensions.filter((d): d is { id: string; name: string; unit?: string } => Boolean(d && typeof d === 'object' && typeof (d as { id?: unknown }).id === 'string' && typeof (d as { name?: unknown }).name === 'string')) : [];
-    return [{ id: String(item.id ?? ''), name: String(item.name ?? `${size} 孔板`), plateSize: size, dimensions, colorDimension: typeof item.colorDimension === 'string' ? item.colorDimension : dimensions[0]?.id ?? '', wells }];
+    return [{ id: String(item.id ?? ''), name: String(item.name ?? `${size}-well plate`), plateSize: size, dimensions, colorDimension: typeof item.colorDimension === 'string' ? item.colorDimension : dimensions[0]?.id ?? '', wells }];
   });
 }
 
@@ -42,15 +42,15 @@ export function PlateLayoutView({ attachment }: { attachment: PlateAttachment })
   // The planner's export is served by our own attachment route; next/image would need a loader for it.
   // eslint-disable-next-line @next/next/no-img-element
   if (image) return <figure className="ln-plate-figure"><img src={`/api/attachments/${attachment.id}`} alt={attachment.originalFilename} loading="lazy" /></figure>;
-  if (plates === null) return <p className="ln-plate-status">正在读取孔板布局…</p>;
-  if (plates === 'invalid') return <p className="ln-plate-status">不是规划器的项目备份；<a className="text-moss underline" href={`/api/attachments/${attachment.id}`}>下载文件</a></p>;
+  if (plates === null) return <p className="ln-plate-status">Loading the plate layout…</p>;
+  if (plates === 'invalid') return <p className="ln-plate-status">Not a planner project backup; <a className="text-moss underline" href={`/api/attachments/${attachment.id}`}>Download the file</a></p>;
   return <div className="ln-plate-list">{plates.map(plate => {
     const spec = specs[plate.plateSize], dimension = plate.dimensions.find(d => d.id === plate.colorDimension);
     const values = new Map<string, number>();
     for (const params of Object.values(plate.wells)) { const value = String(params[plate.colorDimension] ?? ''); if (value && !values.has(value)) values.set(value, tone(value)); }
     return <figure key={plate.id || plate.name} className="ln-plate">
-      <figcaption><strong>{plate.name}</strong><span>{plate.plateSize} 孔{dimension ? ` · 按${dimension.name}着色` : ''}</span></figcaption>
-      <div className="ln-plate-grid" style={{ gridTemplateColumns: `1.4rem repeat(${spec.columns}, minmax(0, 1fr))` }} data-size={plate.plateSize} role="img" aria-label={`${plate.name}，${Object.keys(plate.wells).length} 个已标记的孔`}>
+      <figcaption><strong>{plate.name}</strong><span>{`${plate.plateSize}-well${dimension ? ` · colored by ${dimension.name}` : ''}`}</span></figcaption>
+      <div className="ln-plate-grid" style={{ gridTemplateColumns: `1.4rem repeat(${spec.columns}, minmax(0, 1fr))` }} data-size={plate.plateSize} role="img" aria-label={`${plate.name}, ${Object.keys(plate.wells).length} marked wells`}>
         <span />{Array.from({ length: spec.columns }, (_, column) => <span key={column} className="ln-plate-axis">{column + 1}</span>)}
         {Array.from({ length: spec.rows }, (_, row) => [<span key={`r${row}`} className="ln-plate-axis">{rowLabel(row)}</span>, ...Array.from({ length: spec.columns }, (_, column) => {
           const id = `${rowLabel(row)}${column + 1}`, params = plate.wells[id], value = params ? String(params[plate.colorDimension] ?? '') : '';

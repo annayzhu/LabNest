@@ -29,7 +29,7 @@ export default async function NewExperimentPage({ searchParams }: { searchParams
   const suggestedCode = suggestNextRecordCode("experiment", existingExperimentCodes.map((experiment) => experiment.runCode), counter?.value);
   const fromVersion = protocolVersionsRaw.find((version) => version.id === selectedProtocolVersionId);
   const intro = fromVersion
-    ? `从规程 ${fromVersion.protocol.humanCode} v${fromVersion.displayVersion}「${fromVersion.protocol.canonicalTitle ?? fromVersion.protocol.title}」新建。先确认实验名称、所属研究计划和日期；保存后，步骤按规程生成，在执行页逐步勾选。`
-    : "先填实验名称、研究计划和日期。方法来源可以依据实验规程（步骤按规程生成），也可以自行记录。";
-  return <AppShell><div className="space-y-6"><PageHeader eyebrow="实验" title="新建实验" /><ExperimentForm intro={intro} action={createExperiment} plans={plans} protocolVersions={protocolVersions} initial={{ researchPlanId: selectedPlanId, methodMode: "protocol", selectedProtocolVersionIds: selectedProtocolVersionId ? [selectedProtocolVersionId] : [], suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
+    ? `New from Protocol ${fromVersion.protocol.humanCode} v${fromVersion.displayVersion} “${fromVersion.protocol.canonicalTitle ?? fromVersion.protocol.title}”. Confirm the experiment name, research plan and date; once saved, the steps come from the Protocol and are ticked off one by one on the run page.`
+    : "Enter the experiment name, research plan and date first. The method can follow a Protocol (steps generated from it) or be recorded freely.";
+  return <AppShell><div className="space-y-6"><PageHeader eyebrow="Experiment" title="New Experiment" /><ExperimentForm intro={intro} action={createExperiment} plans={plans} protocolVersions={protocolVersions} initial={{ researchPlanId: selectedPlanId, methodMode: "protocol", selectedProtocolVersionIds: selectedProtocolVersionId ? [selectedProtocolVersionId] : [], suggestedCodeSuffix: suggestedCode.slice("EXP-".length), document: createScientificDocument(experimentSections) }} /></div></AppShell>;
 }

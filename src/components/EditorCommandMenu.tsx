@@ -4,16 +4,19 @@ import { createPortal } from 'react-dom';
 import type { Editor } from '@tiptap/core';
 import type { LucideIcon } from 'lucide-react';
 import { setSlashHandlers, slashQuery, type MenuAnchor } from '@/lib/editor-slash';
+import { translateUiText } from '@/lib/i18n';
 import { useAnchoredPosition, useDismiss } from './protocol/popover';
 import './editor-command-menu.css';
 
-/** One choice in a "/" or "＋" menu. `keywords` hold pinyin initials and English, so "bg" or "table" finds 表格. */
+/** One choice in a "/" or "＋" menu. `keywords` hold pinyin initials and English, so "bg" or "table" finds Table (表格). */
 export type EditorCommand<C> = { id: string; group: string; label: string; hint: string; keywords: string; icon: LucideIcon; choice: C };
 /** Opened by "/" while writing (the query is what follows it in the text) or by a button (the menu has its own search field). */
 export type EditorCommandMenuState = { mode: 'slash'; from: number; query: string; anchor: MenuAnchor } | { mode: 'button'; query: ''; anchor: MenuAnchor };
 export type CommandKeyHandler = React.RefObject<((event: KeyboardEvent) => boolean) | null>;
 
-const matches = (command: EditorCommand<unknown>, query: string) => !query || command.label.toLowerCase().includes(query) || command.keywords.includes(query) || command.hint.toLowerCase().includes(query);
+// The label and hint match in English and in Chinese, so "volume" and 体积 both find Volume in either interface.
+const matches = (command: EditorCommand<unknown>, query: string) => !query || command.keywords.includes(query)
+  || [command.label, command.hint].some(text => text.toLowerCase().includes(query) || translateUiText(text, 'zh').includes(query));
 
 /** Keeps a "/" menu's query in step with the text typed after the slash and closes it when that text ends. An IME's interim pinyin never closes it. */
 export function useSlashQuery(editor: Editor | null, menu: EditorCommandMenuState | null, setMenu: (menu: EditorCommandMenuState | null) => void) {
@@ -90,6 +93,6 @@ export function EditorCommandMenu<C>({ state, commands, label, searchPlaceholder
         </button></div>; })}
       {!visible.length ? <p className="ln-insert-empty">{emptyText}</p> : null}
     </div>
-    {state.mode === 'slash' && visible.length ? <p className="ln-insert-keys" aria-hidden><span><kbd>↑</kbd><kbd>↓</kbd>选择</span><span><kbd>↵</kbd>插入</span><span><kbd>Esc</kbd>关闭</span></p> : null}
+    {state.mode === 'slash' && visible.length ? <p className="ln-insert-keys" aria-hidden><span><kbd>↑</kbd><kbd>↓</kbd>Select</span><span><kbd>↵</kbd>Insert</span><span><kbd>Esc</kbd>Close</span></p> : null}
   </div>, document.body);
 }

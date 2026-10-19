@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
 import { structuredRunView } from './structured-run';
+import { translateUiText } from './i18n';
 import { preparationChecklist } from './run-preparation';
 
 /** A Protocol whose steps each add one material per reaction: [text, material, µL per reaction]. */
@@ -24,6 +25,9 @@ function rnaThenQpcr(codes = true) {
   return { snapshot: { versions: [rna, qpcr] }, plan, steps };
 }
 
+/** What the Chinese interface shows for a checklist string. */
+const zh = (text?: string) => text === undefined ? undefined : translateUiText(text, 'zh');
+
 describe('实验准备清单 with several Protocols', () => {
   it('names each step\'s Protocol and writes 1000 µL and more in mL', () => {
     const { snapshot, plan, steps } = rnaThenQpcr();
@@ -31,21 +35,25 @@ describe('实验准备清单 with several Protocols', () => {
     expect(list.warnings).toEqual([]);
     // 4 × 500 µL isopropanol = 2000 µL = 2 mL; water 4 × 30 µL + 24 × 8 µL = 312 µL from two Protocols' steps.
     expect(list.items.filter(item => item.kind === 'material').map(item => [item.label, item.detail])).toEqual([
-      ['异丙醇', '2 mL · PRT-100001 第 1 步'], ['无酶水', '312 µL · PRT-100001 第 2 步；PRT-100003 第 1 步']]);
+      ['异丙醇', '2 mL · used in PRT-100001 step 1'], ['无酶水', '312 µL · used in PRT-100001 step 2; PRT-100003 step 1']]);
+    expect(list.items.filter(item => item.kind === 'material').map(item => zh(item.detail))).toEqual(['2 mL · PRT-100001 第 1 步', '312 µL · PRT-100001 第 2 步；PRT-100003 第 1 步']);
   });
 
   it('names a Protocol by its title when the snapshot has no code, and keeps a bare 第 1 步 for a single Protocol', () => {
     const untitled = rnaThenQpcr(false);
-    expect(preparationChecklist(structuredRunView(untitled.snapshot, untitled.plan, untitled.steps)).items.find(item => item.label === '无酶水')?.detail)
-      .toBe('312 µL · 细胞总 RNA 提取 第 2 步；SYBR Green qPCR 第 1 步');
+    const water = preparationChecklist(structuredRunView(untitled.snapshot, untitled.plan, untitled.steps)).items.find(item => item.label === '无酶水')?.detail;
+    expect(water).toBe('312 µL · used in 细胞总 RNA 提取 step 2; SYBR Green qPCR step 1');
+    expect(zh(water)).toBe('312 µL · 细胞总 RNA 提取 第 2 步；SYBR Green qPCR 第 1 步');
     const { snapshot, plan, steps } = rnaThenQpcr();
     const single = preparationChecklist(structuredRunView({ versions: [snapshot.versions[1]] }, plan, steps.filter(step => step.groupKey === 'v-qpcr')));
-    expect(single.items.map(item => item.detail)).toEqual(['192 µL · 第 1 步']);
+    expect(single.items.map(item => item.detail)).toEqual(['192 µL · used in Step 1']);
+    expect(single.items.map(item => zh(item.detail))).toEqual(['192 µL · 第 1 步']);
   });
 
   it('writes stock that falls short in the same way', () => {
     const { snapshot, plan, steps } = rnaThenQpcr();
     const list = preparationChecklist(structuredRunView(snapshot, plan, steps), { stock: [{ name: '异丙醇', unit: 'µL', currentQuantity: 1500, quantityRecorded: true }] });
-    expect(list.warnings).toEqual(['库存不足：异丙醇（库存 1.5 mL，本次约需 2 mL）']);
+    expect(list.warnings).toEqual(['Stock short: 异丙醇 (in stock 1.5 mL, this run needs about 2 mL)']);
+    expect(list.warnings.map(zh)).toEqual(['库存不足：异丙醇（库存 1.5 mL，本次约需 2 mL）']);
   });
 });

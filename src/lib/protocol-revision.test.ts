@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
 import { structuredRunView } from './structured-run';
+import { translateUiText } from './i18n';
 import { revisionCandidates, revisionFromExperiment } from './protocol-revision';
 
 /** A lysis Protocol with one value per system (350/600 µL → 50/80 µL Proteinase K) and a fixed incubation time. */
@@ -30,9 +31,12 @@ describe('整理成规程修订', () => {
     const candidates = revisionCandidates(view, steps);
     // The incubation time was recorded exactly as planned: nothing to tidy there.
     expect(candidates.map(candidate => [candidate.key, candidate.label, candidate.detail])).toEqual([
-      ['value:v1:pk', 'Proteinase K', '50 µL → 55 µL（第 1 步）'],
-      ['note:v1:s1', '第 1 步 · 材料或试剂', '样本偏粘，多加 5 µL'],
+      ['value:v1:pk', 'Proteinase K', '50 µL → 55 µL (step 1)'],
+      ['note:v1:s1', 'Step 1 · Material or reagent', '样本偏粘，多加 5 µL'],
     ]);
+    // The same candidates in the Chinese interface.
+    expect(candidates.map(candidate => [translateUiText(candidate.label, 'zh'), translateUiText(candidate.detail, 'zh')])).toEqual([
+      ['Proteinase K', '50 µL → 55 µL（第 1 步）'], ['第 1 步 · 材料或试剂', '样本偏粘，多加 5 µL']]);
   });
 
   it('writes an adopted value into the system the run used, adds the note under its step, and cites the Experiment', () => {

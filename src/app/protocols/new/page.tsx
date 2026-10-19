@@ -27,7 +27,7 @@ export default async function NewProtocolPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader eyebrow="实验规程" title="新建实验规程" />
+        <PageHeader eyebrow="Protocol" title="New Protocol" />
         <ProtocolDocumentEditor
           action={createProtocolDocument}
           mode="create"

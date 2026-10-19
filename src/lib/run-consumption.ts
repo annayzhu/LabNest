@@ -18,7 +18,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
     // No "|" in the key: stored sources are "Chip:<key>|<where>" and the part before "|" identifies the line.
     const key = `${name.trim().toLowerCase()}#${dimension ?? unit}`;
     const line = lines.get(key) ?? { key, name: name.trim(), unit, expected: 0, sources: [] };
-    if (value === undefined || line.expected === undefined) { line.expected = undefined; line.pending ??= pending ?? '待确定'; }
+    if (value === undefined || line.expected === undefined) { line.expected = undefined; line.pending ??= pending ?? 'To be determined'; }
     else line.expected += convert(value, unit, line.unit);
     if (!line.sources.includes(source)) line.sources.push(source);
     lines.set(key, line);
@@ -38,7 +38,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
         const parameter = systems.parameters.find(p => p.id === id);
         const name = parameter?.materialRef?.name ?? (component.name.trim() || parameter?.label.trim());
         if (!name || !line?.unit || !isMaterialAmount(line.unit)) continue;
-        add(name, line.unit, line.total, `${where} · ${mixTitle(mix)}`, state.quantity === undefined ? `未填写${mixQuantityLabel(mix)}` : undefined);
+        add(name, line.unit, line.total, `${where} · ${mixTitle(mix)}`, state.quantity === undefined ? `Not filled in: ${mixQuantityLabel(mix)}` : undefined);
       }
     }
     const reactions = stepQuantities(view, stepId).quantities['反应数'];
@@ -49,7 +49,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
       if (resolved?.status !== 'resolved') { add(parameter.materialRef.name, parameter.unit, undefined, where); continue; }
       if (!isMaterialAmount(resolved.unit)) continue;
       if (parameter.perRun) add(parameter.materialRef.name, resolved.unit, resolved.value, where);
-      else add(parameter.materialRef.name, resolved.unit, reactions === undefined ? undefined : resolved.value! * reactions, where, '未填写反应数');
+      else add(parameter.materialRef.name, resolved.unit, reactions === undefined ? undefined : resolved.value! * reactions, where, 'Not filled in: 反应数');
     }
   }
   return [...lines.values()];
@@ -60,7 +60,7 @@ export const consumptionSource = (line: Pick<ConsumptionLine, 'key'>) => `Chip:$
 export const consumptionRecorded = (line: Pick<ConsumptionLine, 'key'>, rows: Array<{ source: string }>) => rows.some(row => row.source === consumptionSource(line) || row.source.startsWith(`${consumptionSource(line)}|`));
 
 /** A line's amount as the bench reads it: the expected total, or why it is still open. */
-export const consumptionAmount = (line: ConsumptionLine) => line.expected === undefined ? line.pending ?? '待确定' : chipAmount(Number(line.expected.toPrecision(6)), line.unit);
+export const consumptionAmount = (line: ConsumptionLine) => line.expected === undefined ? line.pending ?? 'To be determined' : chipAmount(Number(line.expected.toPrecision(6)), line.unit);
 
 /** The stock item a line's material names: the same name first, else one name containing the other. */
 export function matchStock<T extends { name: string }>(name: string, stock: T[]) {

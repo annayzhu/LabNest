@@ -105,13 +105,13 @@ function insertWidget(editor: Editor, block: ScientificWidgetBlock) {
   editor.chain().focus().insertContent({ type: "scientificWidget", attrs: { block } }).run();
 }
 
-/** What an experiment record, result, plan or report adds to "/" → 插入, by its insert profile. */
+/** What an experiment record, result, plan or report adds to "/" → Insert, by its insert profile. */
 function scientificInserts(profile: DocumentInsertProfile): WritingInsert[] {
   const allowed = new Set(insertActionIdsForProfile(profile));
   const inserts: WritingInsert[] = [
-    { id: "metric", label: "指标", hint: "数值与单位", keywords: "zhibiao zb metric value shuzhi", icon: BarChart3, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("metric"), type: "metric", label: "Metric", value: "", unit: "" }) },
-    { id: "callout", label: "提示", hint: "限定条件、注意或风险", keywords: "tishi ts callout warning zhuyi", icon: AlertTriangle, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("callout"), type: "callout", tone: "note", text: "" }) },
-    { id: "dataset", label: "数据集", hint: "引用结构化数据", keywords: "shujuji sjj dataset data", icon: Database, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("dataset"), type: "dataset", datasetId: "", label: "" }) },
+    { id: "metric", label: "Metric", hint: "Value with unit", keywords: "zhibiao zb metric value shuzhi", icon: BarChart3, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("metric"), type: "metric", label: "Metric", value: "", unit: "" }) },
+    { id: "callout", label: "Tip", hint: "Qualifier, caution or risk", keywords: "tishi ts callout warning zhuyi", icon: AlertTriangle, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("callout"), type: "callout", tone: "note", text: "" }) },
+    { id: "dataset", label: "Dataset", hint: "Reference structured data", keywords: "shujuji sjj dataset data", icon: Database, insert: (editor) => insertWidget(editor, { id: uniqueBlockId("dataset"), type: "dataset", datasetId: "", label: "" }) },
   ];
   return inserts.filter((insert) => allowed.has(insert.id));
 }

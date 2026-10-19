@@ -23,7 +23,7 @@ type EditorSurfaceProps = {
   editor: Editor;
   /** ＋ and ⋮⋮ beside the blocks; an editor inside a widget has only the bubble. */
   handles?: boolean;
-  /** The kinds 转换为 offers in this editor (a Protocol has no checklist). */
+  /** The kinds Turn into offers in this editor (a Protocol has no checklist). */
   kinds?: BlockKind[];
   /** ＋ opens this editor's "/" menu with its own search field. */
   openCommands: (anchor: MenuAnchor) => void;
@@ -36,8 +36,8 @@ type EditorSurfaceProps = {
 };
 
 const kindChoices: Array<{ kind: BlockKind; label: string; icon: LucideIcon }> = [
-  { kind: 'paragraph', label: '正文', icon: Pilcrow }, { kind: 'heading', label: '标题', icon: Heading2 }, { kind: 'subheading', label: '小标题', icon: Heading3 }, { kind: 'quote', label: '引用', icon: Quote },
-  { kind: 'bullet', label: '项目列表', icon: List }, { kind: 'ordered', label: '编号列表', icon: ListOrdered }, { kind: 'task', label: '待办清单', icon: ListChecks },
+  { kind: 'paragraph', label: 'Body', icon: Pilcrow }, { kind: 'heading', label: 'Heading', icon: Heading2 }, { kind: 'subheading', label: 'Subheading', icon: Heading3 }, { kind: 'quote', label: 'Quote', icon: Quote },
+  { kind: 'bullet', label: 'Bullet points', icon: List }, { kind: 'ordered', label: 'Numbered list', icon: ListOrdered }, { kind: 'task', label: 'To-do list', icon: ListChecks },
 ];
 const allKinds = kindChoices.map(choice => choice.kind);
 
@@ -121,8 +121,8 @@ function BlockHandle({ editor, hover, surface, menuOpen, onMenu, openCommands, o
   if (!place) return null;
   const dragStart = (event: React.DragEvent<HTMLButtonElement>) => { const unit = currentBlockUnit(editor.state.doc, hover.unit); if (unit) startBlockDrag(editor.view, unit, event.dataTransfer, hover.dom); };
   return <div ref={box} className="ln-block-handle" style={{ top: place.top, left: place.left }} data-open={menuOpen || undefined} contentEditable={false} data-print-hidden onMouseEnter={onEnter}>
-    <button type="button" className="focus-ring" aria-label="在下方插入（按住 ⌥ 在上方）" title="在下方插入 · ⌥ 在上方" onMouseDown={event => event.preventDefault()} onClick={event => addLine(editor, hover.unit, event.altKey, openCommands)}><Plus aria-hidden /></button>
-    <button type="button" className="focus-ring" draggable aria-label="拖动移动，点击打开菜单" title="拖动移动 · 点击打开菜单" aria-haspopup="menu" aria-expanded={menuOpen}
+    <button type="button" className="focus-ring" aria-label="Insert below (hold ⌥ for above)" title="Insert below · ⌥ above" onMouseDown={event => event.preventDefault()} onClick={event => addLine(editor, hover.unit, event.altKey, openCommands)}><Plus aria-hidden /></button>
+    <button type="button" className="focus-ring" draggable aria-label="Drag to move, click for the menu" title="Drag to move · click for the menu" aria-haspopup="menu" aria-expanded={menuOpen}
       onDragStart={dragStart} onDragEnd={() => endBlockDrag(editor.view)} onClick={event => onMenu(event.currentTarget)}><GripVertical aria-hidden /></button>
   </div>;
 }
@@ -140,34 +140,34 @@ function BlockMenu({ editor, unit: opened, anchor, kinds, blockItems, afterDelet
   const media = unit.node.type.name === 'documentMedia';
   const choices = blockTakesKinds(unit.node) ? kindChoices.filter(choice => kinds.includes(choice.kind)) : [];
   const items = blockItems?.(unit) ?? [];
-  return createPortal(<div ref={panel} className="ln-block-menu" style={style} role="menu" aria-label="块操作">
-    {choices.length ? <section aria-label="转换为"><p>转换为</p><div className="ln-block-menu-kinds">
+  return createPortal(<div ref={panel} className="ln-block-menu" style={style} role="menu" aria-label="Block actions">
+    {choices.length ? <section aria-label="Turn into"><p>Turn into</p><div className="ln-block-menu-kinds">
       {choices.map(({ kind, label, icon: Icon }) => <button key={kind} type="button" role="menuitemradio" aria-checked={current === kind} onClick={() => run(() => turnInto(editor, selectBlock(editor, unit), kind).run())}><Icon aria-hidden /><span>{label}</span></button>)}
     </div></section> : null}
-    {blockTakesFormat(unit.node) ? <section aria-label="格式"><p>格式</p>
-      <div className="ln-block-menu-row" role="group" aria-label="对齐">
-        {([['left', AlignLeft, '左对齐'], ['center', AlignCenter, '居中'], ['right', AlignRight, '右对齐'], ['justify', AlignJustify, '两端对齐']] as const).map(([align, Icon, label]) =>
+    {blockTakesFormat(unit.node) ? <section aria-label="Format"><p>Format</p>
+      <div className="ln-block-menu-row" role="group" aria-label="Text alignment">
+        {([['left', AlignLeft, 'Align left'], ['center', AlignCenter, 'Align center'], ['right', AlignRight, 'Align right'], ['justify', AlignJustify, 'Justify']] as const).map(([align, Icon, label]) =>
           <button key={align} type="button" role="menuitemradio" aria-checked={(attrs.textAlign ?? 'left') === align} aria-label={label} title={label} onClick={() => run(() => selectBlock(editor, unit).setTextAlign(align).run())}><Icon aria-hidden /></button>)}
         <span className="ln-block-menu-gap" />
-        <button type="button" role="menuitem" aria-label="减少缩进" title="减少缩进" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(-1).run())}><IndentDecrease aria-hidden /></button>
-        <button type="button" role="menuitem" aria-label="增加缩进" title="增加缩进" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(1).run())}><IndentIncrease aria-hidden /></button>
+        <button type="button" role="menuitem" aria-label="Decrease indent" title="Decrease indent" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(-1).run())}><IndentDecrease aria-hidden /></button>
+        <button type="button" role="menuitem" aria-label="Increase indent" title="Increase indent" disabled={unit.node.type.name !== 'paragraph'} onClick={() => run(() => selectBlock(editor, unit).indentDocumentParagraph(1).run())}><IndentIncrease aria-hidden /></button>
       </div>
-      <label className="ln-block-menu-field"><span>字号</span><select defaultValue="" onChange={event => { const value = event.target.value; run(() => { selectBlock(editor, unit).run(); setSelectionFontSize(editor, value === 'default' ? null : Number(value)); }); }}>
-        <option value="" disabled>选择…</option><option value="default">默认</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
+      <label className="ln-block-menu-field"><span>Font size</span><select defaultValue="" onChange={event => { const value = event.target.value; run(() => { selectBlock(editor, unit).run(); setSelectionFontSize(editor, value === 'default' ? null : Number(value)); }); }}>
+        <option value="" disabled>Choose…</option><option value="default">Default</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
       </select></label>
-      <label className="ln-block-menu-field"><span>行距</span><select defaultValue={String(attrs.documentLineHeight ?? '')} onChange={event => { const value = event.target.value; run(() => selectBlock(editor, unit).setDocumentBlockLineHeight(value).run()); }}>
-        <option value="" disabled>默认</option>{RICH_TEXT_LINE_HEIGHTS.map(height => <option key={height} value={String(height)}>{height}×</option>)}
+      <label className="ln-block-menu-field"><span>Line spacing</span><select defaultValue={String(attrs.documentLineHeight ?? '')} onChange={event => { const value = event.target.value; run(() => selectBlock(editor, unit).setDocumentBlockLineHeight(value).run()); }}>
+        <option value="" disabled>Default</option>{RICH_TEXT_LINE_HEIGHTS.map(height => <option key={height} value={String(height)}>{height}×</option>)}
       </select></label>
-      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => selectBlock(editor, unit).unsetAllMarks().resetAttributes('paragraph', ['textAlign', 'documentIndent', 'spaceBeforePt', 'spaceAfterPt', 'documentLineHeight']).resetAttributes('heading', ['textAlign', 'documentLineHeight']).run())}><RemoveFormatting aria-hidden />清除格式</button>
+      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => selectBlock(editor, unit).unsetAllMarks().resetAttributes('paragraph', ['textAlign', 'documentIndent', 'spaceBeforePt', 'spaceAfterPt', 'documentLineHeight']).resetAttributes('heading', ['textAlign', 'documentLineHeight']).run())}><RemoveFormatting aria-hidden />Clear formatting</button>
     </section> : null}
-    {items.length ? <section aria-label="此块">{items.map(({ id, label, icon: Icon, run: action }) => <button key={id} type="button" role="menuitem" className="ln-block-menu-item" onClick={() => { const { top, left, bottom } = anchor.getBoundingClientRect(); run(() => action(unit, { top, left, bottom })); }}><Icon aria-hidden />{label}</button>)}</section> : null}
-    <section aria-label="块">
+    {items.length ? <section aria-label="This block">{items.map(({ id, label, icon: Icon, run: action }) => <button key={id} type="button" role="menuitem" className="ln-block-menu-item" onClick={() => { const { top, left, bottom } = anchor.getBoundingClientRect(); run(() => action(unit, { top, left, bottom })); }}><Icon aria-hidden />{label}</button>)}</section> : null}
+    <section aria-label="Block">
       {/* Touch screens have no ＋ beside the block: it is here instead. */}
-      <button type="button" role="menuitem" className="ln-block-menu-item is-touch" onClick={() => run(() => addLine(editor, unit, false, openCommands))}><Plus aria-hidden />在下方插入…</button>
-      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, -1)))}><ArrowUp aria-hidden />上移<kbd>⌘⇧↑</kbd></button>
-      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, 1)))}><ArrowDown aria-hidden />下移<kbd>⌘⇧↓</kbd></button>
-      <button type="button" role="menuitem" className="ln-block-menu-item" disabled={!canDuplicateBlock(unit)} onClick={() => run(() => dispatch(duplicateBlock(editor.state, unit)))}><Copy aria-hidden />复制</button>
-      <button type="button" role="menuitem" className="ln-block-menu-item is-danger" onClick={() => run(() => { dispatch(deleteBlock(editor.state, unit)); afterDelete?.(unit); })}><Trash2 aria-hidden />{media ? '移除（保留原文件）' : '删除'}</button>
+      <button type="button" role="menuitem" className="ln-block-menu-item is-touch" onClick={() => run(() => addLine(editor, unit, false, openCommands))}><Plus aria-hidden />Insert below…</button>
+      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, -1)))}><ArrowUp aria-hidden />Move up<kbd>⌘⇧↑</kbd></button>
+      <button type="button" role="menuitem" className="ln-block-menu-item" onClick={() => run(() => dispatch(moveBlock(editor.state, unit, 1)))}><ArrowDown aria-hidden />Move down<kbd>⌘⇧↓</kbd></button>
+      <button type="button" role="menuitem" className="ln-block-menu-item" disabled={!canDuplicateBlock(unit)} onClick={() => run(() => dispatch(duplicateBlock(editor.state, unit)))}><Copy aria-hidden />Duplicate</button>
+      <button type="button" role="menuitem" className="ln-block-menu-item is-danger" onClick={() => run(() => { dispatch(deleteBlock(editor.state, unit)); afterDelete?.(unit); })}><Trash2 aria-hidden />{media ? 'Remove (keeps the file)' : 'Delete'}</button>
     </section>
   </div>, document.body);
 }
@@ -199,8 +199,8 @@ function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Edito
   const [href, setHref] = useState('');
   const chain = () => editor.chain().focus(undefined, { scrollIntoView: false });
   const marks: Array<[keyof typeof state, LucideIcon, string, () => void]> = [
-    ['bold', Bold, '加粗 ⌘B', () => chain().toggleBold().run()], ['italic', Italic, '斜体 ⌘I', () => chain().toggleItalic().run()],
-    ['underline', Underline, '下划线 ⌘U', () => chain().toggleUnderline().run()], ['strike', Strikethrough, '删除线 ⌘⇧S', () => chain().toggleStrike().run()],
+    ['bold', Bold, 'Bold ⌘B', () => chain().toggleBold().run()], ['italic', Italic, 'Italic ⌘I', () => chain().toggleItalic().run()],
+    ['underline', Underline, 'Underline ⌘U', () => chain().toggleUnderline().run()], ['strike', Strikethrough, 'Strikethrough ⌘⇧S', () => chain().toggleStrike().run()],
   ];
   // CO₂ and 10⁶: one of the two at a time.
   const toggleScript = (mark: 'superscript' | 'subscript') => chain().unsetMark(mark === 'superscript' ? 'subscript' : 'superscript').toggleMark(mark).run();
@@ -212,33 +212,33 @@ function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Edito
   const applyLink = (value: string) => { const range = chain().extendMarkRange('link'); (value ? range.setLink({ href: value }) : range.unsetLink()).run(); setLinking(false); };
   const choices = kindChoices.filter(choice => kinds.includes(choice.kind));
   return <BubbleMenu editor={editor} pluginKey="selectionBubble" appendTo={onPage} style={{ zIndex: 60 }} options={overText} shouldShow={textSelected}>
-    <div className="ln-selection-bubble" role="toolbar" aria-label="文字格式" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
+    <div className="ln-selection-bubble" role="toolbar" aria-label="Text formatting" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
       {/* No <form> here: the editor sits inside the page's form, and React would pass a submit up to it. */}
       {linking ? <div className="ln-selection-link">
-        <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="粘贴或输入链接，回车确定" aria-label="链接地址" onKeyDown={event => {
+        <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="Paste or type a link, then Enter" aria-label="Link address" onKeyDown={event => {
           event.stopPropagation();
           if (event.key === 'Enter') { event.preventDefault(); applyLink(href.trim()); }
           else if (event.key === 'Escape') { event.preventDefault(); setLinking(false); editor.view.focus(); }
         }} />
-        {state.link ? <button type="button" aria-label="移除链接" title="移除链接" onClick={() => applyLink('')}><Unlink aria-hidden /></button> : null}
+        {state.link ? <button type="button" aria-label="Remove link" title="Remove link" onClick={() => applyLink('')}><Unlink aria-hidden /></button> : null}
       </div> : <>
-        {state.kind && choices.length ? <select className="ln-selection-select" aria-label="转换为" title="转换为" value={state.kind} onChange={event => { turnInto(editor, chain(), event.target.value as BlockKind).run(); }}>
+        {state.kind && choices.length ? <select className="ln-selection-select" aria-label="Turn into" title="Turn into" value={state.kind} onChange={event => { turnInto(editor, chain(), event.target.value as BlockKind).run(); }}>
           {choices.map(choice => <option key={choice.kind} value={choice.kind}>{choice.label}</option>)}
         </select> : null}
-        <select className="ln-selection-select is-size" aria-label="字号" title="字号" value={state.fontSize ?? ''} onChange={event => { const value = event.target.value; setSelectionFontSize(editor, value ? Number(value) : null); editor.view.focus(); }}>
-          <option value="">字号</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
+        <select className="ln-selection-select is-size" aria-label="Font size" title="Font size" value={state.fontSize ?? ''} onChange={event => { const value = event.target.value; setSelectionFontSize(editor, value ? Number(value) : null); editor.view.focus(); }}>
+          <option value="">Font size</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
         </select>
         <span className="ln-selection-divider" aria-hidden />
         {marks.map(([key, Icon, label, toggle]) => <button key={key} type="button" aria-label={label} title={label} aria-pressed={Boolean(state[key])} onClick={toggle}><Icon aria-hidden /></button>)}
         {scripts ? <>
-          <button type="button" aria-label="上标" title="上标（10⁶、m²）" aria-pressed={state.superscript} onClick={() => toggleScript('superscript')}><Superscript aria-hidden /></button>
-          <button type="button" aria-label="下标" title="下标（CO₂、H₂O）" aria-pressed={state.subscript} onClick={() => toggleScript('subscript')}><Subscript aria-hidden /></button>
+          <button type="button" aria-label="Superscript" title="Superscript (10⁶, m²)" aria-pressed={state.superscript} onClick={() => toggleScript('superscript')}><Superscript aria-hidden /></button>
+          <button type="button" aria-label="Subscript" title="Subscript (CO₂, H₂O)" aria-pressed={state.subscript} onClick={() => toggleScript('subscript')}><Subscript aria-hidden /></button>
         </> : null}
-        <button type="button" aria-label="代码" title="代码（序列、命令）" aria-pressed={state.code} onClick={() => chain().toggleCode().run()}><Code aria-hidden /></button>
+        <button type="button" aria-label="Inline code" title="Inline code (sequences, commands)" aria-pressed={state.code} onClick={() => chain().toggleCode().run()}><Code aria-hidden /></button>
         <span className="ln-selection-divider" aria-hidden />
-        <button type="button" aria-label="链接 ⌘K" title="链接 ⌘K" aria-pressed={Boolean(state.link)} onClick={() => { setHref(state.link ?? ''); setLinking(true); }}><Link2 aria-hidden /></button>
-        <button type="button" className="ln-selection-risk" aria-label="风险红" title={state.risk ? '恢复默认颜色' : '标为风险红'} aria-pressed={state.risk} onClick={() => (state.risk ? chain().unsetColor() : chain().setColor(RICH_TEXT_RISK_COLOR_HEX)).run()}>A</button>
-        <button type="button" aria-label="清除格式" title="清除格式（链接保留）" onClick={clearFormatting}><RemoveFormatting aria-hidden /></button>
+        <button type="button" aria-label="Link ⌘K" title="Link ⌘K" aria-pressed={Boolean(state.link)} onClick={() => { setHref(state.link ?? ''); setLinking(true); }}><Link2 aria-hidden /></button>
+        <button type="button" className="ln-selection-risk" aria-label="Risk red" title={state.risk ? 'Restore default color' : 'Mark in risk red'} aria-pressed={state.risk} onClick={() => (state.risk ? chain().unsetColor() : chain().setColor(RICH_TEXT_RISK_COLOR_HEX)).run()}>A</button>
+        <button type="button" aria-label="Clear formatting" title="Clear formatting (links kept)" onClick={clearFormatting}><RemoveFormatting aria-hidden /></button>
       </>}
     </div>
   </BubbleMenu>;
@@ -256,11 +256,11 @@ function TableBar({ editor, items }: { editor: Editor; items?: () => TableBarIte
     return null;
   }, [editor]);
   return <BubbleMenu editor={editor} pluginKey="tableBar" appendTo={onPage} style={{ zIndex: 55 }} options={overTable} getReferencedVirtualElement={besideTable} shouldShow={caretInTable}>
-    <div className="ln-table-bar" role="toolbar" aria-label="表格" data-print-hidden onMouseDown={event => event.preventDefault()}>
-      <button type="button" onClick={() => chain().addRowAfter().run()}>＋ 行</button>
-      <button type="button" onClick={() => chain().addColumnAfter().run()}>＋ 列</button>
-      <button type="button" onClick={() => chain().deleteRow().run()}>－ 本行</button>
-      <button type="button" onClick={() => chain().deleteColumn().run()}>－ 本列</button>
+    <div className="ln-table-bar" role="toolbar" aria-label="Table" data-print-hidden onMouseDown={event => event.preventDefault()}>
+      <button type="button" onClick={() => chain().addRowAfter().run()}>＋ Row</button>
+      <button type="button" onClick={() => chain().addColumnAfter().run()}>＋ Column</button>
+      <button type="button" onClick={() => chain().deleteRow().run()}>－ This row</button>
+      <button type="button" onClick={() => chain().deleteColumn().run()}>－ This column</button>
       {items?.().map(item => <button key={item.id} type="button" onClick={item.run}>{item.label}</button>)}
     </div>
   </BubbleMenu>;

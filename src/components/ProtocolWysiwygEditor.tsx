@@ -63,6 +63,7 @@ import { resultTemplateFieldsToRows } from "@/lib/result-templates";
 import { emptyRecordTemplate, keepWrittenLines } from "@/lib/result-record-line";
 import { RecordTemplateEditor } from "./protocol/RecordTemplate";
 import { useI18n } from "@/components/I18nProvider";
+import { resolveAppLocale, translateUiText } from "@/lib/i18n";
 import { labToolManifest } from "@/lib/tool-manifest";
 import { createDocumentBlockLineHeightExtension, createDocumentLegacyAttributesExtension, createDocumentSectionExtension, createDocumentWidgetExtension, createResizableDocumentTableExtension } from "@/lib/tiptap-document-extensions";
 
@@ -79,10 +80,12 @@ function embeddableToolUrl(value: string) {
 
 /** What each opening section is for, shown on its empty line. */
 const sectionPlaceholders: Partial<Record<ProtocolSectionKey, string>> = {
-  description: '一句话说明这份规程做什么、适用于什么样本',
-  purpose: '要得到什么，如：从培养细胞中提取总 RNA，用于 qPCR',
-  background: '原理、依据或注意事项，可以留空',
+  description: 'One sentence on what this Protocol does and which samples it suits',
+  purpose: 'What it should give, e.g. total RNA from cultured cells for qPCR',
+  background: 'Principle, rationale or cautions; may stay empty',
 };
+/** Placeholders live inside the editable page, which the page translator leaves alone; the provider's locale is on <html>. */
+const shownPlaceholder = (text: string) => translateUiText(text, resolveAppLocale(document.documentElement.dataset.locale));
 
 function ProtocolSectionNodeView({ node }: NodeViewProps) {
   const sectionKey = node.attrs.sectionKey as ProtocolSectionKey;
@@ -91,10 +94,10 @@ function ProtocolSectionNodeView({ node }: NodeViewProps) {
   return <NodeViewWrapper as="section" id={`protocol-section-${sectionKey}`} className="ln-protocol-section" data-section-key={sectionKey}>
     <header className="ln-protocol-section-heading" contentEditable={false}>
       <span className="ln-protocol-section-rule" aria-hidden />
-      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{sectionKey === "consumption_rules" ? "旧公式表（仅说明）" : t(protocolSectionLabels[sectionKey] ?? sectionKey)}</h2>
-      {sectionKey === "consumption_rules" ? <small>执行时不再按它计算；用量来自步骤里的参数块和配液卡。转换为步骤块时并入材料表。</small> : null}
-      {sectionKey === "steps" ? <details className="ln-writing-hint" data-print-hidden><summary>写法</summary>
-        <p>一步一段，回车新建下一步。数值直接写，如“50 µL”“10 min”；不同体系写“50/80 µL”；只对部分样本的操作写“仅富脂样本：…”。要记录的结果写在“结果模板”里：“记录：浓度 ng/µL、A260/280、胶图”。</p>
+      <h2 style={node.attrs.titleFontSizePt ? {fontSize: `${node.attrs.titleFontSizePt}pt`} : undefined}>{t(sectionKey === "consumption_rules" ? "Old formula table (reference only)" : protocolSectionLabels[sectionKey] ?? sectionKey)}</h2>
+      {sectionKey === "consumption_rules" ? <small>{t("No longer used to calculate at run time: amounts come from the parameter blocks and mix cards in the steps. Converting to step blocks merges it into the materials table.")}</small> : null}
+      {sectionKey === "steps" ? <details className="ln-writing-hint" data-print-hidden><summary>{t("How to write")}</summary>
+        <p>{t("One step per paragraph; Enter starts the next step. Write values as they are, e.g. “50 µL”, “10 min”; when systems differ write “50/80 µL”. Start a step done on only some samples with “仅富脂样本：…” (lipid-rich samples only). Put results to record in the “Result template”: “记录：浓度 ng/µL、A260/280、胶图”.")}</p>
       </details> : null}
     </header>
     <NodeViewContent as="div" className="ln-protocol-section-content" />
@@ -198,11 +201,11 @@ function protocolEditorExtensions() {
           if (ancestor.type.name === 'protocolStep') {
             // The first step of an empty section shows how a step reads; later ones only say how to go on.
             const section = $pos.node(depth - 1);
-            return section.childCount === 1 && !section.textContent.trim() ? '写下第一步，如：加入 Proteinase K 50 µL，混匀。回车新建下一步' : '写下这一步。回车新建下一步，Shift+回车换行';
+            return shownPlaceholder(section.childCount === 1 && !section.textContent.trim() ? 'Write the first step, e.g. Add 50 µL Proteinase K and mix. Enter starts the next step' : 'Write this step. Enter starts the next one, Shift+Enter breaks the line');
           }
-          if (ancestor.type.name === 'protocolSection') return sectionPlaceholders[ancestor.attrs.sectionKey as ProtocolSectionKey] ?? '输入 / 插入参数、工具或内容';
+          if (ancestor.type.name === 'protocolSection') return shownPlaceholder(sectionPlaceholders[ancestor.attrs.sectionKey as ProtocolSectionKey] ?? 'Type / to insert a parameter, tool or content');
         }
-        return '输入 / 插入参数、工具或内容';
+        return shownPlaceholder('Type / to insert a parameter, tool or content');
       } }),
       // "1/2" must stay a split value, never become "½".
       Typography.configure({ oneHalf: false, oneQuarter: false, threeQuarters: false }),
@@ -566,7 +569,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     const step = unit.node.type.name === 'protocolStep' ? unit.node.attrs.stepId as string | null : null;
     const id = step ?? unit.node.attrs.protocolBlockId ?? unit.node.attrs.block?.id;
     if (typeof id !== 'string') return [];
-    return [{ id: 'scope', label: step ? '适用范围与可选…' : '适用范围…', icon: Filter, run: (target, anchor) => setConditionTarget({ kind: step ? 'step' : 'block', id, anchor, pos: target.pos }) }];
+    return [{ id: 'scope', label: step ? 'Applies to & optional…' : 'Applies to…', icon: Filter, run: (target, anchor) => setConditionTarget({ kind: step ? 'step' : 'block', id, anchor, pos: target.pos }) }];
   };
   /** A recipe column's 适用范围 is set on its header cell, wherever the caret is in the column. */
   const columnScope = () => {
@@ -579,8 +582,8 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     setConditionTarget({ kind: 'column', id: editor.state.doc.nodeAt(pos)?.attrs.protocolColumn ?? '', anchor: { top, left, bottom }, pos });
   };
   const tableItems = () => [
-    { id: 'column-scope', label: '本列适用范围…', run: columnScope },
-    { id: 'to-mix', label: '转为配液卡', run: tableToMix },
+    { id: 'column-scope', label: 'Column applies to…', run: columnScope },
+    { id: 'to-mix', label: 'Turn into mix card', run: tableToMix },
   ];
   return <ProtocolEditorContext.Provider value={api}><>
     <section className="ln-wysiwyg-editor" data-lens={Object.keys(lens).length ? '' : undefined}>

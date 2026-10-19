@@ -21,7 +21,7 @@ export async function saveStructuredStepRecord(_previous: ProtocolRunProgressSta
     const experimentId = String(form.get('experimentId'));
     await recordStructuredStep({ experimentId, stepId: String(form.get('stepId')), expectedRevision: Number(form.get('executionPlanRevision')), clientMutationId: String(form.get('clientMutationId')), intent: z.enum(['actual', 'skip', 'unskip']).parse(form.get('intent')), reason: String(form.get('reason') ?? ''), values: JSON.parse(String(form.get('values') ?? '{}')) });
     revalidatePath(`/experiments/${experimentId}/run`);
-    return { message: '记录已保存', savedAt: new Date().toISOString() };
+    return { message: 'Record saved', savedAt: new Date().toISOString() };
   } catch (error) { return { error: formActionErrorMessage(error, '记录保存失败') }; }
 }
 
@@ -30,7 +30,7 @@ export async function confirmRunSystems(_previous: ProtocolRunProgressState, for
     const versionId = String(form.get('versionId'));
     const result = await updateRunSystemSelections({ experimentId: String(form.get('experimentId')), versionId, expectedRevision: Number(form.get('executionPlanRevision')), confirmCalculations: form.getAll('confirmCalculations').flatMap(value => String(value).split(/\s+/)).filter(Boolean), selections: JSON.parse(String(form.get('selections'))), actualInputs: JSON.parse(String(form.get('actualInputs') ?? '{}')), ...(form.get('intent') === 'continue' ? { continuationKey: String(form.get('continuationKey')), continuationStartRef: String(form.get('continuationStartRef') ?? ''), cancelAffectedTimers: form.get('cancelAffectedTimers') === 'yes' } : {}) }, [versionId, ...form.getAll('applyToVersionIds').map(String)]);
     revalidatePath(`/experiments/${result.experimentId}/run`);
-    return { message: '本次体系已确认并保存', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
+    return { message: 'Systems for this run confirmed and saved', savedAt: new Date().toISOString(), ...(result.experimentId !== String(form.get('experimentId')) ? { continuationUrl: `/experiments/${result.experimentId}/run` } : {}) };
   } catch (error) { return { error: formActionErrorMessage(error, '体系未保存，请重试') }; }
 }
 
@@ -39,7 +39,7 @@ export async function saveRunGroups(_previous: ProtocolRunProgressState, form: F
     const experimentId = String(form.get('experimentId'));
     await configureRunGroups({ experimentId, expectedRevision: Number(form.get('executionPlanRevision')), groups: JSON.parse(String(form.get('groups'))) });
     revalidatePath(`/experiments/${experimentId}/run`);
-    return { message: '实验组已保存，请逐组确认实际采用体系。' };
+    return { message: 'Groups saved; confirm the systems actually used for each group.' };
   } catch (error) { return { error: formActionErrorMessage(error, '实验组未保存') }; }
 }
 

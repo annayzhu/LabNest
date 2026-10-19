@@ -85,16 +85,16 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
     {lockedPlan ? <input type="hidden" name="researchPlanId" value={planId} /> : null}
     <DocumentEditorLayout initialView={initial.id ? "document" : "metadata"}>
       <div className="document-editor-main"><ScientificDocumentEditor initialDocument={initial.document} compact sectionAddons={executionPreview ? { execution: executionPreview } : runAddons} documentType="Experiment" identifier={identifier} title={title} titlePlaceholder="Untitled Experiment" titleEditor={<input required value={title} onChange={(event) => setTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Experiment" aria-label="Experiment title" />} subtitle={purpose} hiddenSectionKeys={activeMethodMode === "protocol" ? ["background"] : []} headerFacts={[
-        { label: "研究计划", value: plan?.title ?? "未选择" },
-        { label: "实验日期", value: date || "未填写" },
+        { label: "Plan", value: plan?.title ?? "No plan chosen" },
+        { label: "Experiment date", value: date || "Not set" },
       ]} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
       {intro ? <p className="ln-form-intro">{intro}</p> : null}
-      <label className="block"><span className={formLabelClass}>研究计划</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan ? `${plan.project.name} · ${plan.title}` : "未选择"}</div> : <select name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}><option value="">未选择</option>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}{!lockedPlan && !planId ? <span className="mt-1 block text-xs leading-5 text-muted">可以先不选，之后在元数据里补选；补选时一并归入该计划的项目。</span> : null}</label>
-    {!initial.id ? <section className="ln-method-source space-y-2 border-b border-hairline py-3" aria-label="方法来源"><div className="flex items-center justify-between gap-3"><h3 className={formLabelClass}>方法来源</h3>
-      <div className="ln-segmented" role="group" aria-label="方法来源">
-        <button type="button" aria-pressed={methodMode === "protocol"} onClick={() => setMethodMode("protocol")} className="focus-ring">依据实验规程</button>
-        <button type="button" aria-pressed={methodMode === "custom"} onClick={() => setMethodMode("custom")} className="focus-ring">自行记录</button>
+      <label className="block"><span className={formLabelClass}>Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan ? `${plan.project.name} · ${plan.title}` : "No plan chosen"}</div> : <select name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}><option value="">No plan chosen</option>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}{!lockedPlan && !planId ? <span className="mt-1 block text-xs leading-5 text-muted">You can leave it empty and choose a plan later in the metadata; the experiment then also joins that plan’s project.</span> : null}</label>
+    {!initial.id ? <section className="ln-method-source space-y-2 border-b border-hairline py-3" aria-label="Method source"><div className="flex items-center justify-between gap-3"><h3 className={formLabelClass}>Method source</h3>
+      <div className="ln-segmented" role="group" aria-label="Method source">
+        <button type="button" aria-pressed={methodMode === "protocol"} onClick={() => setMethodMode("protocol")} className="focus-ring">Follow a Protocol</button>
+        <button type="button" aria-pressed={methodMode === "custom"} onClick={() => setMethodMode("custom")} className="focus-ring">Write my own steps</button>
       </div></div>
         {methodMode === "protocol" ? <>
         <ExperimentProtocolPicker versions={[...protocolVersions].sort((a,b)=>Number(b.researchPlanIds?.includes(planId)??false)-Number(a.researchPlanIds?.includes(planId)??false))} initialSelectedIds={initialSelectedIds} onSelectionChange={setSelectedIds} />
@@ -106,10 +106,10 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
             onChange={(event) => setCustomChecklistEnabled(event.target.checked)}
             className="mt-1 h-4 w-4 shrink-0 accent-[var(--moss)]"
           />
-          <span><span className="font-medium text-ink">执行时逐步勾选</span><span className="mt-0.5 block text-xs leading-5 text-muted">勾选后，下面每行成为执行时可勾选的一步。</span></span>
+          <span><span className="font-medium text-ink">Tick off step by step during the run</span><span className="mt-0.5 block text-xs leading-5 text-muted">When ticked, each line below becomes a step to tick off during the run.</span></span>
         </label>
         {customChecklistEnabled ? (
-          <label className="block"><span className={formLabelClass}>执行步骤 · 每行一步</span><textarea name="customSteps" className={`${formTextareaClass} min-h-32`} placeholder={"铺板 | 每孔 2.0 × 10^5 个细胞\n孵育过夜\n拍照 | 20× 物镜"} /><span className="mt-1 block text-xs leading-5 text-muted">竖线后可写这一步的补充说明。</span></label>
+          <label className="block"><span className={formLabelClass}>Steps · one per line</span><textarea name="customSteps" className={`${formTextareaClass} min-h-32`} placeholder={"Seed cells | 2.0 × 10^5 cells per well\nIncubate overnight\nImage | 20× objective"} /><span className="mt-1 block text-xs leading-5 text-muted">After a vertical bar, add a note for that step.</span></label>
         ) : null}
       </>}
     </section> : null}
@@ -120,7 +120,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
       <label className="md:col-span-2 xl:col-span-4"><span className={formLabelClass}>Objective / purpose · optional</span><input name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="One line: what this planned execution is meant to establish" className={formInputClass} /></label>
-      {structuredExecution ? <div className="md:col-span-2"><input type="hidden" name="status" value={initial.id ? initial.status : 'planned'}/><p>Execution status · {initial.id ? initial.status : 'planned'}</p><p className="text-xs text-muted">执行状态由 Run 中的操作管理。</p></div> : <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />}
+      {structuredExecution ? <div className="md:col-span-2"><input type="hidden" name="status" value={initial.id ? initial.status : 'planned'}/><p>Execution status · {initial.id ? initial.status : 'planned'}</p><p className="text-xs text-muted">The execution status follows what is done in Run.</p></div> : <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />}
       <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
       <label className="md:col-span-2 xl:col-span-4"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
     </div></section>

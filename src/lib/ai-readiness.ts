@@ -27,8 +27,8 @@ export function aiSetupSteps(settings: AISettingsView): AiSetupStep[] {
 export type AiPlace = { key: 'recognize' | 'design' | 'entry' | 'workbench'; label: string; detail: string; href?: string; here: boolean };
 
 const places: Array<Omit<AiPlace, 'here'> & { href: string; at: (pathname: string) => boolean }> = [
-  { key: 'recognize', label: '整理说明书或非模板规程', detail: 'PDF、Word 或粘贴的文字整理成规程，每行都回查原文', href: '/protocols/import/recognize', at: pathname => pathname.startsWith('/protocols/import') },
-  { key: 'design', label: '按目标设计规程', detail: '按实验目标检索方法，AI 归纳成方法卡，再生成规程草稿', href: '/protocols/design', at: pathname => pathname === '/protocols' || pathname.startsWith('/protocols/design') },
+  { key: 'recognize', label: 'Organize instructions or a non-template Protocol', detail: 'A PDF, Word file or pasted text made into a Protocol, every line checked against the original', href: '/protocols/import/recognize', at: pathname => pathname.startsWith('/protocols/import') },
+  { key: 'design', label: 'Design a Protocol from a goal', detail: 'Search methods by experiment goal, have AI summarize them as method cards, then generate a draft Protocol', href: '/protocols/design', at: pathname => pathname === '/protocols' || pathname.startsWith('/protocols/design') },
   { key: 'entry', label: '从快速记录提议后续操作', detail: '在快速记录页右上角点“Propose with AI”，提议等你确认后才生效', href: '/entries', at: pathname => pathname === '/entries' || pathname.startsWith('/entries/') },
   { key: 'workbench', label: 'AI 工作台', detail: '没有联网的模型时，复制提示词给任意 AI，再把回答贴回来', href: '/actions/manual', at: pathname => pathname.startsWith('/actions/manual') },
 ];

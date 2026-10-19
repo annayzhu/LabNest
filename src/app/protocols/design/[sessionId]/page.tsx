@@ -17,9 +17,9 @@ export default async function DesignSessionPage({ params }: { params: Promise<{ 
   const inputs = (session.inputsJson && typeof session.inputsJson === "object" ? session.inputsJson : {}) as { query?: string; errors?: string[] };
   return <AppShell>
     <div className="space-y-5">
-      <PageHeader identifier="方案设计" title={session.goal}
-        actions={<Link href="/protocols/design" className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}>新的设计</Link>} />
-      {session.sampleType || session.conditions ? <p className="text-sm text-muted">{[session.sampleType ? `样本：${session.sampleType}` : "", session.conditions ? `条件：${session.conditions}` : ""].filter(Boolean).join(" · ")}</p> : null}
+      <PageHeader identifier="Method design" title={session.goal}
+        actions={<Link href="/protocols/design" className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}>New design</Link>} />
+      {session.sampleType || session.conditions ? <p className="text-sm text-muted">{[session.sampleType ? `Sample: ${session.sampleType}` : "", session.conditions ? `Conditions: ${session.conditions}` : ""].filter(Boolean).join(" · ")}</p> : null}
       <MethodDesignWorkspace sessionId={session.id} hits={session.hits} cards={session.cards} chosen={session.chosen} searchErrors={inputs.errors ?? []} lastQuery={inputs.query ?? session.goal}
         draft={draft ? { protocolId: draft.protocol.id, versionId: draft.id, humanCode: draft.protocol.humanCode, title: draft.protocol.canonicalTitle ?? draft.protocol.title, displayVersion: draft.displayVersion, reviewStage: draft.reviewStage } : null} />
     </div>

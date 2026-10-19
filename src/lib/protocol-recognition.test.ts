@@ -104,7 +104,7 @@ describe('AI 识别 with one repair round', () => {
   it('turns the layout into step blocks, a system, a scoped step and a result template', () => {
     const { document, summary, title } = habitTextProtocol(faithful, ids());
     expect(title).toBe('XX 总 RNA 提取试剂盒 使用说明书');
-    expect(summary).toMatchObject({ steps: 5, systems: ['体系：少于 5×10^6 个细胞 / 5×10^6 至 1×10^7 个细胞'], conditions: ['第 2 步 · 仅富脂样本'], recordLines: 1, resultTemplates: 1 });
+    expect(summary).toMatchObject({ steps: 5, systems: ['体系：少于 5×10^6 个细胞 / 5×10^6 至 1×10^7 个细胞'], conditions: ['Step 2 · only 富脂样本'], recordLines: 1, resultTemplates: 1 });
     expect(summary.chips).toContain('350/600 µL');
     const template = document.sections.find(section => section.key === 'result_templates')!.blocks[0];
     expect(template.type === 'table' && template.resultTemplate?.fields.map(field => [field.label, field.dataType])).toEqual([['RNA 浓度', 'number'], ['A260/280', 'number']]);

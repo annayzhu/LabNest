@@ -19,7 +19,7 @@ import {
   resultTemplateFieldsToRows,
   resultTemplateInputSchema,
 } from "./result-templates";
-import { emptyRecordTemplate } from "./result-record-line";
+import { emptyRecordTemplate, templateFromRecordLines } from "./result-record-line";
 import { parseRichTextFontFamily, type RichTextFontFamily } from "./rich-text-font-family";
 import { richTextFontSizeSchema } from "./rich-text-font-size-schema";
 import { RICH_TEXT_COLORS } from "./rich-text-color";
@@ -234,17 +234,18 @@ export function richTextPlainText(nodes: ProtocolRichTextNode[]) {
   }).join("\n");
 }
 
-export function createProtocolTemplateDocument(): ProtocolDocument {
+/** The starting document of a new Protocol, its table headings and result name in the interface language. */
+export function createProtocolTemplateDocument(locale: "zh" | "en" = "zh"): ProtocolDocument {
   const document = createEmptyProtocolDocument();
   const section = (key: ProtocolSectionKey) => document.sections.find((item) => item.key === key)!;
   for (const key of ["description", "purpose", "background"] as const) {
     section(key).blocks.push({ id: `${key}-rich-1`, type: "rich_text", nodes: richTextFromPlainText("") });
   }
-  section("material").blocks.push({ id: "material-table-1", type: "table", caption: "材料", rows: [["名称", "用量", "说明"], ["", "", ""]] });
+  section("material").blocks.push({ id: "material-table-1", type: "table", caption: locale === "en" ? "Materials" : "材料", rows: [locale === "en" ? ["Name", "Amount", "Description"] : ["名称", "用量", "说明"], ["", "", ""]] });
   // New Protocols start with one step block: Enter makes the next step.
   section("steps").blocks.push({ id: "steps-step-1", type: "rich_text", nodes: [{ type: "paragraph", content: [{ text: "" }] }], execution: { role: "step", stepId: "step-1", format: "block" } });
   // What to record is one written line ("记录：…"); amounts used come from the steps, so there is no formula table.
-  const resultTemplate = emptyRecordTemplate();
+  const resultTemplate = locale === "en" ? templateFromRecordLines({}, undefined, "Result record") : emptyRecordTemplate();
   section("result_templates").blocks.push({ id: "result-template-1", type: "table", caption: resultTemplate.title, rows: resultTemplateFieldsToRows(resultTemplate), resultTemplate });
   return document;
 }

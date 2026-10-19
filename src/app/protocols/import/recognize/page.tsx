@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default function RecognizeProtocolPage() {
   return <AppShell>
     <div className="space-y-5">
-      <PageHeader eyebrow="实验规程" title="整理说明书或非模板规程" actions={<Link href="/protocols/import" className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}><ArrowLeft className="h-4 w-4" aria-hidden />返回导入</Link>} />
+      <PageHeader eyebrow="Protocols" title="Organize instructions or a non-template Protocol" actions={<Link href="/protocols/import" className={buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" })}><ArrowLeft className="h-4 w-4" aria-hidden />Back to import</Link>} />
       <RecognitionWorkspace />
     </div>
   </AppShell>;

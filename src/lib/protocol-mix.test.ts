@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mixView, recipeTableToMix, type ProtocolMix } from './protocol-mix';
+import { mixPerText, mixView, recipeTableToMix, runQuantityLabelText, runQuantityText, type ProtocolMix } from './protocol-mix';
 import { resolveProtocolSystem, type ProtocolSystems } from './structured-protocol';
 
 type Parameter = ProtocolSystems['parameters'][number];
@@ -17,6 +17,7 @@ describe('A mix card scaled to this run', () => {
     expect(view.lines.map(line => [line.name, Number(line.total!.toFixed(4))])).toEqual([['2× SYBR Mix', 264], ['Primer F', 10.56], ['Primer R', 10.56], ['水', 190.08], ['cDNA', 48]]);
     expect(view.premixPerReaction).toEqual({ value: 18, unit: 'µL' });
     expect(view.aliquot).toBe('每反应分装预混液 18 µL，再加 cDNA 2 µL。');
+    expect(view.aliquotText).toBe('Aliquot 18 µL of premix per reaction, then add cDNA 2 µL.');
     expect(view).toMatchObject({ ready: true, warnings: [] });
   });
 
@@ -31,8 +32,8 @@ describe('A mix card scaled to this run', () => {
     const mix: ProtocolMix = { ...qpcr, components: [component('enzyme', 'RNase 抑制剂'), component('template', '模板', 'separate')] };
     // 0.01 µL × 10 × 1.1 = 0.11 µL in the premix; 0.2 µL added to each reaction.
     expect(mixView(mix, systems, resolveProtocolSystem(systems, {}).parameters, 10).warnings).toEqual([
-      'RNase 抑制剂合计 0.11 µL，低于移液下限 0.5 µL；可先稀释或增加反应数。',
-      '模板每反应 0.2 µL，低于移液下限 0.5 µL；可先稀释或增加反应数。',
+      'RNase 抑制剂 total 0.11 µL is below the pipetting minimum of 0.5 µL; dilute it first or increase the number of reactions.',
+      '模板 per reaction 0.2 µL is below the pipetting minimum of 0.5 µL; dilute it first or increase the number of reactions.',
     ]);
   });
 
@@ -41,10 +42,19 @@ describe('A mix card scaled to this run', () => {
     const reagent: Parameter = { id: 'lipo', label: 'Lipofectamine', unit: 'µL', source: { kind: 'lookup', values: [{ id: 'a', when: { all: [{ dimensionId: 'plate', optionId: 'p6' }] }, value: 7.5, unit: 'µL' }, { id: 'b', when: { all: [{ dimensionId: 'plate', optionId: 'p12' }] }, value: 3, unit: 'µL' }] } };
     const systems = systemsOf([reagent, fixed('opti', 'Opti-MEM', 125)], dimensions);
     const mix: ProtocolMix = { ...qpcr, per: '孔', components: [component('lipo', 'Lipofectamine'), component('opti', 'Opti-MEM')] };
-    expect(mixView(mix, systems, resolveProtocolSystem(systems, {}).parameters, 6).lines[0]).toMatchObject({ pending: '待选体系' });
+    expect(mixView(mix, systems, resolveProtocolSystem(systems, {}).parameters, 6).lines[0]).toMatchObject({ pending: 'System to choose' });
     const chosen = mixView(mix, systems, resolveProtocolSystem(systems, { plate: 'p12' }).parameters, 6);
     expect(chosen.lines.map(line => Number(line.total!.toFixed(3)))).toEqual([19.8, 825]);
     expect(chosen.aliquot).toBe('每孔分装预混液 128 µL。');
+    expect(chosen.aliquotText).toBe('Aliquot 128 µL of premix per well.');
+  });
+
+  it('names the stored per words and run quantity keys in English for display only, and passes typed ones through', () => {
+    expect([mixPerText('反应'), mixPerText('孔', 6), mixPerText('样本', 1), mixPerText('板', 2)]).toEqual(['reaction', 'wells', 'sample', '板']);
+    expect([runQuantityLabelText('反应数'), runQuantityLabelText('管数', true), runQuantityLabelText('板数')]).toEqual(['number of reactions', 'Number of tubes', '板数']);
+    expect([runQuantityText(24, '反应数'), runQuantityText(1, '孔数'), runQuantityText(3, '板数')]).toEqual(['24 reactions', '1 well', '3 板数']);
+    const separate: ProtocolMix = { ...qpcr, components: [component('cdna', 'cDNA', 'separate'), component('f', 'Primer F', 'separate')] };
+    expect(mixView(separate, qpcrSystems, resolveProtocolSystem(qpcrSystems, {}).parameters, 4)).toMatchObject({ aliquot: '每反应加 cDNA 2 µL、Primer F 0.4 µL。', aliquotText: 'Add cDNA 2 µL, Primer F 0.4 µL per reaction.' });
   });
 });
 

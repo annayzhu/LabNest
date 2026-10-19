@@ -14,6 +14,6 @@ export async function addAnalysisResult(experimentId: string, _previous: Analysi
     revalidatePath("/results");
     return { resultId };
   } catch (error) {
-    return { error: formActionErrorMessage(error, "没有添加成功，请重试") };
+    return { error: formActionErrorMessage(error, "Couldn’t add the result. Try again") };
   }
 }

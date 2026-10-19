@@ -10,7 +10,8 @@ import { newClientMutationId } from '@/lib/client-mutation-id';
 
 import { useActionState, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { runQuantityLabels } from '@/lib/protocol-mix';
+import { runQuantityLabels, runQuantityLabelText } from '@/lib/protocol-mix';
+import { systemLabelText } from '@/lib/protocol-conditions';
 import { confirmRunSystems, type ProtocolRunProgressState } from '@/app/experiments/[id]/run/actions';
 import { resolveProtocolSystem, resolveProtocolDocument } from '@/lib/structured-protocol';
 import Link from 'next/link';
@@ -43,7 +44,7 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
   // Chips are often nameless: name them by material, tool field or what they measure.
   const nameOf = (parameter: typeof systems.parameters[number]) => parameterLongName(parameter, systems);
   return <details className="protocol-system-section" open={expanded || dirty || Boolean(state.error)} onToggle={event => setExpanded(event.currentTarget.open)}>
-    <summary className="min-h-11 cursor-pointer font-medium">{version.groupLabel ?? version.title} · {adopted ? 'Confirmed · view or change systems' : 'Systems to confirm'}{adopted ? <span className="ml-2 text-sm font-normal text-muted">{systems.dimensions.map(d => d.options.find(o => o.id === adopted.selections[d.id])?.label ?? 'not chosen').join(' · ')}</span> : null}</summary>
+    <summary className="min-h-11 cursor-pointer font-medium">{version.groupLabel ?? version.title} · {adopted ? 'Confirmed · view or change systems' : 'Systems to confirm'}{adopted ? <span className="ml-2 text-sm font-normal text-muted">{systems.dimensions.flatMap((d, index) => { const option = d.options.find(o => o.id === adopted.selections[d.id]); const text = option ? systemLabelText(option.label) : 'not chosen'; return index ? [' · ', text] : [text]; })}</span> : null}</summary>
     <form action={action} className="protocol-system-section" data-run-system-selection>
     <input type="hidden" name="experimentId" value={experimentId}/><input type="hidden" name="versionId" value={version.id}/><input type="hidden" name="executionPlanRevision" value={view.plan.revision}/><input type="hidden" name="selections" value={JSON.stringify(selections)}/><input type="hidden" name="actualInputs" value={JSON.stringify(actualInputs)}/>
     <input type="hidden" name="continuationKey" value={continuationKey}/>
@@ -51,7 +52,7 @@ function VersionSelection({ experimentId, version, view, editable }: { experimen
     <p>{adopted ? <>Confirmed · <time dateTime={adopted.confirmedAt} suppressHydrationWarning>{new Date(adopted.confirmedAt).toLocaleString()}</time></> : 'Systems not confirmed yet; operations that depend on these choices can’t run yet.'}</p>
     <fieldset disabled={!editable || pending} className="protocol-system-section">
       {systems.presets.length ? <div className="flex flex-wrap gap-2">{systems.presets.map(p => <Button className="min-h-11 whitespace-normal md:min-h-0" type="button" key={p.id} size="sm" onClick={() => setSelections({ ...p.selections })}>{p.label}</Button>)}</div> : null}
-      <div className="protocol-system-fields">{systems.dimensions.map(d => <label key={d.id}>{d.label}<select className={formInputClass} value={selections[d.id] ?? ''} onChange={event => { const next = { ...selections }; if (event.target.value) next[d.id] = event.target.value; else delete next[d.id]; setSelections(next); }}><option value="">Not chosen</option>{d.options.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}</select></label>)}</div>
+      <div className="protocol-system-fields">{systems.dimensions.map(d => <label key={d.id}>{systemLabelText(d.label)}<select className={formInputClass} value={selections[d.id] ?? ''} onChange={event => { const next = { ...selections }; if (event.target.value) next[d.id] = event.target.value; else delete next[d.id]; setSelections(next); }}><option value="">Not chosen</option>{d.options.map(o => <option key={o.id} value={o.id}>{systemLabelText(o.label)}</option>)}</select></label>)}</div>
       {systems.parameters.filter(p => p.source.kind === 'actual' && !shownInSteps.has(p.id)).map(p => <label key={p.id}>{nameOf(p)} · {p.unit}<input aria-label={nameOf(p)} className={formInputClass} type="number" step="any" value={actualInputs[p.id]?.value ?? ''} onChange={e => { const next = { ...actualInputs }; if (e.target.value === '') delete next[p.id]; else next[p.id] = { value: Number(e.target.value), unit: p.unit }; setActualInputs(next); }}/></label>)}
       <div className="protocol-system-legend">{Object.entries(selections).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={dimensionId} systems={systems} dimensionId={dimensionId} optionId={optionId}/>)}</div>
       {inSteps.length ? <p className="text-sm text-muted">{`${inSteps.length === 1 ? '1 calculation is' : `${inSteps.length} calculations are`} confirmed in the steps that use them: click a calculation result in a step to fill it in and confirm.`}</p> : null}
@@ -94,7 +95,7 @@ function RunQuantities({ experimentId, version, view, editable }: { experimentId
   });
   return <div className="ln-run-quantities" role="group" aria-label={`${version.groupLabel ?? version.title} · Run quantities`}>
     <span className="ln-run-quantities-title">Run quantities{version.groupLabel ? ` · ${version.groupLabel}` : ''}</span>
-    {labels.map(label => <label key={label}>{label}<input inputMode="numeric" disabled={!editable || pending} value={draft[label] ?? String(saved[label] ?? '')} placeholder="—" onChange={event => setDraft(current => ({ ...current, [label]: event.target.value }))} /></label>)}
+    {labels.map(label => <label key={label}>{runQuantityLabelText(label, true)}<input inputMode="numeric" disabled={!editable || pending} value={draft[label] ?? String(saved[label] ?? '')} placeholder="—" onChange={event => setDraft(current => ({ ...current, [label]: event.target.value }))} /></label>)}
     {editable ? <Button type="button" size="sm" disabled={pending || !changed.length || !valid} onClick={save}>{pending ? 'Saving quantities…' : 'Save quantities'}</Button> : null}
     {message ? <small role="status">{message}</small> : null}
   </div>;

@@ -11,6 +11,24 @@ type Resolved = { status: string; value?: number; unit: string };
 export const mixPer = (mix: Pick<ProtocolMix, 'per'>) => mix.per || '反应';
 export const mixTitle = (mix: Pick<ProtocolMix, 'title'>) => mix.title || '配液卡';
 export const mixQuantityLabel = (mix: Pick<ProtocolMix, 'per'>) => `${mixPer(mix)}数`;
+/**
+ * The per words a mix card offers, as the interface shows them (one, several). Display only: the stored per (反应) and run
+ * quantity key (反应数) stay as they are, a word someone typed passes through, and the Chinese interface reads these back.
+ */
+const perWords = new Map<string, readonly [string, string]>([['反应', ['reaction', 'reactions']], ['孔', ['well', 'wells']], ['样本', ['sample', 'samples']], ['管', ['tube', 'tubes']]]);
+const quantityWords = (label: string) => label.endsWith('数') ? perWords.get(label.slice(0, -1)) : undefined;
+/** "reaction" for 反应, "reactions" for any other count than 1. */
+export const mixPerText = (per: string, count = 1) => perWords.get(per)?.[count === 1 ? 0 : 1] ?? per;
+/** "number of reactions" for the run quantity key 反应数, "Number of reactions" as a field label. */
+export function runQuantityLabelText(label: string, capital = false) {
+  const words = quantityWords(label);
+  return words ? `${capital ? 'Number' : 'number'} of ${words[1]}` : label;
+}
+/** "24 reactions" for 24 under 反应数; a key someone typed reads "24 板数". */
+export function runQuantityText(quantity: number, label: string) {
+  const words = quantityWords(label);
+  return words ? `${quantity} ${words[quantity === 1 ? 0 : 1]}` : `${quantity} ${label}`;
+}
 /** A bench-made mix card offered from a run to its Protocol. */
 export type MixProposal = { id: string; mix: ProtocolMix; stepRef?: string; stepTitle?: string; runCode?: string; createdAt: string };
 const isVolume = (unit: string) => units[normalizeUnit(unit)]?.dimension === 'volume';
@@ -22,7 +40,8 @@ export type MixView = {
   lines: MixLine[]; quantity?: number; overagePercent: number;
   /** Premixed volume each reaction receives, when every premixed part is a volume. */
   premixPerReaction?: { value: number; unit: string };
-  aliquot: string; warnings: string[]; ready: boolean; fingerprint: string;
+  /** `aliquot` is the wording a confirmed card stores (receipt, watch, Experiment document); `aliquotText` is what the interface shows. */
+  aliquot: string; aliquotText: string; warnings: string[]; ready: boolean; fingerprint: string;
 };
 
 /**
@@ -35,7 +54,7 @@ export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, 
     const id = chipReferenceId(component.amount), parameter = id ? systems?.parameters.find(p => p.id === id) : undefined;
     const name = component.name.trim() || (parameter ? parameterDisplayName(parameter) : '组分');
     const resolved = id ? resolution[id] : undefined;
-    if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? '用量已删除' : parameter.source.kind === 'lookup' ? '待选体系' : parameter.source.kind === 'actual' ? '执行时填写' : '待填写' };
+    if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? 'Amount deleted' : parameter.source.kind === 'lookup' ? 'System to choose' : parameter.source.kind === 'actual' ? 'Filled in at run time' : 'To fill in' };
     const perReaction = resolved.value!;
     return { id: component.id, name, mode: component.mode, unit: resolved.unit, perReaction,
       ...(quantity ? { total: perReaction * quantity * (component.mode === 'premix' ? factor : 1) } : {}) };
@@ -45,21 +64,24 @@ export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, 
     ? { value: premix.reduce((sum, line) => sum + convert(line.perReaction!, line.unit, 'µL'), 0), unit: 'µL' } : undefined;
   const separate = lines.filter(line => line.mode === 'separate');
   const amount = (line: MixLine) => line.perReaction === undefined ? '—' : chipAmount(line.perReaction, line.unit);
+  const premixAmount = premixPerReaction ? chipAmount(Number(premixPerReaction.value.toPrecision(6)), 'µL') : '—';
   const aliquot = [
-    premix.length ? `每${per}分装预混液 ${premixPerReaction ? chipAmount(Number(premixPerReaction.value.toPrecision(6)), 'µL') : '—'}` : '',
+    premix.length ? `每${per}分装预混液 ${premixAmount}` : '',
     separate.length ? `${premix.length ? '再加' : '每' + per + '加'} ${separate.map(line => `${line.name} ${amount(line)}`).join('、')}` : '',
   ].filter(Boolean).join('，') + '。';
+  const perText = mixPerText(per), additions = separate.map(line => `${line.name} ${amount(line)}`).join(', ');
+  const aliquotText = premix.length ? `Aliquot ${premixAmount} of premix per ${perText}${separate.length ? `, then add ${additions}` : ''}.` : separate.length ? `Add ${additions} per ${perText}.` : '';
   const warnings: string[] = [];
   const minimum = mix.minPipetteUl;
   for (const line of lines) {
     if (line.perReaction === undefined || !isVolume(line.unit)) continue;
     const pipetted = line.mode === 'premix' ? line.total : line.perReaction;
-    if (pipetted !== undefined && convert(pipetted, line.unit, 'µL') < minimum) warnings.push(`${line.name}${line.mode === 'premix' ? '合计' : `每${per}`} ${chipAmount(Number(pipetted.toPrecision(4)), line.unit)}，低于移液下限 ${minimum} µL；可先稀释或增加${mixQuantityLabel(mix)}。`);
+    if (pipetted !== undefined && convert(pipetted, line.unit, 'µL') < minimum) warnings.push(`${line.name} ${line.mode === 'premix' ? 'total' : `per ${perText}`} ${chipAmount(Number(pipetted.toPrecision(4)), line.unit)} is below the pipetting minimum of ${minimum} µL; dilute it first or increase the ${runQuantityLabelText(mixQuantityLabel(mix))}.`);
   }
-  if (premix.some(line => line.perReaction !== undefined && !isVolume(line.unit))) warnings.push('预混液中有不是体积的组分，分装体积未计入它。');
+  if (premix.some(line => line.perReaction !== undefined && !isVolume(line.unit))) warnings.push('The premix has a component that is not a volume; the aliquot volume leaves it out.');
   const ready = Boolean(quantity && quantity > 0) && lines.every(line => line.perReaction !== undefined);
   const fingerprint = JSON.stringify({ quantity: quantity ?? null, overage: mix.overagePercent, lines: lines.map(line => [line.id, line.mode, line.unit, line.perReaction === undefined ? null : Number(line.perReaction.toPrecision(12))]) });
-  return { lines, quantity, overagePercent: mix.overagePercent, premixPerReaction, aliquot, warnings, ready, fingerprint };
+  return { lines, quantity, overagePercent: mix.overagePercent, premixPerReaction, aliquot, aliquotText, warnings, ready, fingerprint };
 }
 
 /** A new mix card with one empty component; amounts are chips so they can differ by system. */

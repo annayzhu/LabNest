@@ -68,7 +68,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         ]}
         actions={<>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
-          <AiLink href="/protocols/design"><Sparkles className="h-4 w-4" aria-hidden />按目标设计</AiLink>
+          <AiLink href="/protocols/design"><Sparkles className="h-4 w-4" aria-hidden />Design from a goal</AiLink>
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}
       />

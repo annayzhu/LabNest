@@ -11,9 +11,9 @@ export const isAnalysisTool = (value: string): value is AnalysisTool => Object.h
 
 /** Why a chosen file cannot be added, or undefined when it can. */
 export function workbookProblem(file: { name: string; size: number }) {
-  if (!file.size) return '请选择导出的工作簿';
-  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) return '只接受分析工作台导出的 .xlsx、.xls 或 .csv 文件';
-  if (file.size > MAX_ATTACHMENT_BYTES) return '文件不能超过 25 MB';
+  if (!file.size) return 'Choose the exported workbook';
+  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) return 'Only .xlsx, .xls or .csv files exported from an analysis workbench are accepted';
+  if (file.size > MAX_ATTACHMENT_BYTES) return 'The file can’t be larger than 25 MB';
 }
 
 /** The result's body: the result sections, with the workbook as a file under 数据与媒体. */

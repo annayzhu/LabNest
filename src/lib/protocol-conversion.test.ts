@@ -108,7 +108,7 @@ describe('A Protocol written by habit, as a Word file reads in', () => {
     const split = systems.parameters.find(parameter => parameter.source.kind === 'lookup')!;
     expect(split.source).toMatchObject({ kind: 'lookup', values: [{ value: 350, unit: 'µL', when: { all: [{ dimensionId: systems.dimensions[0].id, optionId: systems.dimensions[0].options[0].id }] } }, { value: 600 }] });
     expect(systems.rules).toEqual([expect.objectContaining({ target: 'step', targetId: blocks[1].id, when: { all: [{ dimensionId: systems.dimensions[1].id, optionId: systems.dimensions[1].options[0].id }] } })]);
-    expect(summary).toMatchObject({ steps: 3, systems: ['体系：350 µL / 600 µL'], conditions: ['第 2 步 · 仅富脂样本'], recordLines: 1, resultTemplates: 1, chips: ['15 s', '350/600 µL', '200 µL', '2 min', '12000 ×g'] });
+    expect(summary).toMatchObject({ steps: 3, systems: ['体系：350 µL / 600 µL'], conditions: ['Step 2 · only 富脂样本'], recordLines: 1, resultTemplates: 1, chips: ['15 s', '350/600 µL', '200 µL', '2 min', '12000 ×g'] });
     const template = section(document, 'result_templates').blocks[0];
     expect(template.type === 'table' && template.resultTemplate).toMatchObject({ title: 'RNA 质检', authored: { record: '记录：浓度 ng/µL、A260/280、胶图', perSample: '每个样本：样本名、Ct 值' } });
   });

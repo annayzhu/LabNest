@@ -162,7 +162,7 @@ export default async function ProtocolDetailPage({
             </Card>
 
             <Card>
-              <details open={Boolean(firstSearchParam(query, "usage"))}><summary className="focus-ring cursor-pointer px-3 py-2 text-sm font-medium"><span>使用记录</span> · {usage.length}</summary>
+              <details open={Boolean(firstSearchParam(query, "usage"))}><summary className="focus-ring cursor-pointer px-3 py-2 text-sm font-medium"><span>Usage history</span> · {usage.length}</summary>
               <CardBody><ProtocolUsageHistory rows={usage} /></CardBody>
               </details>
             </Card>

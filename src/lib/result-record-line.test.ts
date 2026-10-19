@@ -62,8 +62,8 @@ describe('A result template written as "记录：…"', () => {
   it('says back what it understood', () => {
     const template = templateFromRecordLines({ record: '记录：浓度 ng/µL*、结果（阳性/阴性）、胶图', perSample: '每个样本：样本名、Ct 值' });
     expect(readBackTemplate(template)).toEqual({
-      items: ['浓度 · 数值 · ng/µL · 必填', '结果 · 选项 · 阳性/阴性', '胶图 · 图片'],
-      perSample: ['样本名 · 文字', 'Ct 值 · 数值'],
+      items: ['浓度 (number, ng/µL, required)', '结果 (choice, 阳性/阴性)', '胶图 (image)'],
+      perSample: ['样本名 (text)', 'Ct 值 (number)'],
     });
   });
 });

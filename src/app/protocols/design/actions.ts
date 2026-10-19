@@ -24,9 +24,9 @@ const fail = (error: unknown, fallback: string): DesignActionState => ({ error: 
 async function loadFetchedHit(sessionId: string, hitKey: string) {
   const session = await loadDesignSession(sessionId);
   const hit = session?.hits.find(item => item.key === hitKey);
-  if (!session || !hit?.attachmentId) throw new Error("请先抓取原文");
+  if (!session || !hit?.attachmentId) throw new Error("Fetch the original text first");
   const stored = await readMethodText(hit.attachmentId);
-  if (!stored) throw new Error("原文附件不可读，请重新抓取");
+  if (!stored) throw new Error("The fetched original can’t be read; fetch it again");
   return { session, hit, text: stored.text };
 }
 
@@ -36,11 +36,11 @@ export async function saveMethodSearchSettings(_previous: DesignActionState, for
     const sources = formData.getAll("sources").map(String).filter((id): id is MethodSourceId => methodSourceIds.includes(id as MethodSourceId));
     await writeMethodSearchSettings({ enabled: formData.get("enabled") === "on", sources, protocolsIoToken: String(formData.get("protocolsIoToken") ?? ""), clearProtocolsIoToken: formData.get("clearToken") === "on" });
     revalidatePath("/protocols/design");
-    return { message: "检索设置已保存。" };
-  } catch (error) { return fail(error, "设置未保存"); }
+    return { message: "Search settings saved." };
+  } catch (error) { return fail(error, "Settings not saved"); }
 }
 
-const startInput = z.object({ goal: z.string().trim().min(2, "请写出实验目标").max(600), sampleType: z.string().trim().max(200).optional(), conditions: z.string().trim().max(1000).optional() });
+const startInput = z.object({ goal: z.string().trim().min(2, "Write the experiment goal").max(600), sampleType: z.string().trim().max(200).optional(), conditions: z.string().trim().max(1000).optional() });
 
 /** A new design session: the goal is searched in every enabled source at once, and only the goal and the sample type are sent out. */
 export async function startDesignSession(_previous: DesignActionState, formData: FormData): Promise<DesignActionState> {
@@ -51,20 +51,20 @@ export async function startDesignSession(_previous: DesignActionState, formData:
     sessionId = session.id;
     const { hits, errors } = await searchMethods(session.id, [input.goal, input.sampleType].filter(Boolean).join(" "));
     await prisma.methodDesignSession.update({ where: { id: session.id }, data: { hitsJson: json(hits), inputsJson: json({ query: input.goal, errors }) } });
-  } catch (error) { return fail(error, "无法开始检索"); }
+  } catch (error) { return fail(error, "Couldn’t start the search"); }
   redirect(`/protocols/design/${sessionId}`);
 }
 
 export async function searchAgain(sessionId: string, query: string): Promise<DesignActionState & { hits?: number }> {
   try {
     const session = await loadDesignSession(sessionId);
-    if (!session) throw new Error("设计会话不存在");
+    if (!session) throw new Error("Design session not found");
     const { hits, errors, failed } = await searchMethods(sessionId, query.trim() || session.goal);
     const merged = mergeSearchHits(session.hits, hits, { keys: [...Object.keys(session.cards), ...session.chosen.map(item => item.key)], failedSources: failed });
     await prisma.methodDesignSession.update({ where: { id: sessionId }, data: { hitsJson: json(merged), inputsJson: json({ query, errors }) } });
     revalidatePath(`/protocols/design/${sessionId}`);
     return { hits: hits.length, ...(errors.length ? { error: errors.join("；") } : {}) };
-  } catch (error) { return fail(error, "检索失败"); }
+  } catch (error) { return fail(error, "Search failed"); }
 }
 
 /** Fetch one method's text and keep it as an attachment of the session (what was seen stays reviewable). */
@@ -72,17 +72,17 @@ export async function fetchMethod(sessionId: string, hitKey: string): Promise<De
   try {
     const session = await loadDesignSession(sessionId);
     const hit = session?.hits.find(item => item.key === hitKey);
-    if (!session || !hit) throw new Error("结果不存在");
+    if (!session || !hit) throw new Error("Search result not found");
     const text = await fetchMethodText(sessionId, hit);
     const attachmentId = await keepMethodText(sessionId, hit, text);
     await saveHits(sessionId, session.hits.map(item => item.key === hitKey ? { ...item, attachmentId, fetchedAt: text.fetchedAt, textChars: text.text.length, license: text.license ?? item.license, fetchError: undefined } : item));
     revalidatePath(`/protocols/design/${sessionId}`);
-    return { message: `已抓取 ${text.text.length} 字` };
+    return { message: `Fetched ${text.text.length} characters` };
   } catch (error) {
     const session = await loadDesignSession(sessionId);
-    if (session) await saveHits(sessionId, session.hits.map(item => item.key === hitKey ? { ...item, fetchError: error instanceof Error ? error.message : "抓取失败" } : item));
+    if (session) await saveHits(sessionId, session.hits.map(item => item.key === hitKey ? { ...item, fetchError: error instanceof Error ? error.message : "Fetch failed" } : item));
     revalidatePath(`/protocols/design/${sessionId}`);
-    return fail(error, "抓取失败");
+    return fail(error, "Fetch failed");
   }
 }
 
@@ -93,7 +93,7 @@ export async function summarizeMethod(sessionId: string, hitKey: string): Promis
     // A full card takes a slow model a few minutes; the request still ends on its own.
     const resolved = await resolveConnectedAdapter({ timeoutMs: 240_000 });
     if (!resolved.ok) throw new Error(resolved.error);
-    if (!resolved.adapter.complete) throw new Error(`模型服务“${resolved.config.name}”不支持归纳；请手工填写方法卡`);
+    if (!resolved.adapter.complete) throw new Error(`The model service “${resolved.config.name}” can’t summarize; fill in the method card by hand`);
     const prompt = buildMethodCardPrompt({ goal: session.goal, sampleType: session.sampleType ?? undefined, conditions: session.conditions ?? undefined, title: source.title, text: source.text });
     const { text, model } = await resolved.adapter.complete(prompt.system, prompt.user);
     await resolved.gate.assertAllowed();
@@ -101,30 +101,30 @@ export async function summarizeMethod(sessionId: string, hitKey: string): Promis
     await saveCards(sessionId, { ...session.cards, [hitKey]: card });
     await prisma.activityLog.create({ data: { action: "method_card_generated", targetType: "method_design_session", targetId: sessionId, metadataJson: json({ hitKey, provider: resolved.config.name, model: model ?? null, unverified: card.unverified, truncated: prompt.truncated }) } });
     revalidatePath(`/protocols/design/${sessionId}`);
-    return { message: card.unverified ? `方法卡已生成，${card.unverified} 条未核实` : "方法卡已生成，全部核实" };
-  } catch (error) { return fail(error, error instanceof AIProviderError ? "模型请求失败" : "无法生成方法卡"); }
+    return { message: card.unverified ? `Method card generated; ${card.unverified} unverified` : "Method card generated; everything verified" };
+  } catch (error) { return fail(error, error instanceof AIProviderError ? "The model request failed" : "Couldn’t generate the method card"); }
 }
 
 /** A card written by hand when no model is connected (or the model's card is not trusted). */
 export async function saveManualCard(sessionId: string, hitKey: string, input: { summary: string } & Partial<Record<(typeof methodCardSections)[number]["key"], string>>): Promise<DesignActionState> {
   try {
     const session = await loadDesignSession(sessionId);
-    if (!session?.hits.some(item => item.key === hitKey)) throw new Error("结果不存在");
+    if (!session?.hits.some(item => item.key === hitKey)) throw new Error("Search result not found");
     const lines = Object.fromEntries(methodCardSections.map(section => [section.key, (input[section.key] ?? "").split(/\n+/)])) as Partial<Record<(typeof methodCardSections)[number]["key"], string[]>>;
     await saveCards(sessionId, { ...session.cards, [hitKey]: manualMethodCard(input.summary, lines) });
     revalidatePath(`/protocols/design/${sessionId}`);
-    return { message: "方法卡已保存" };
-  } catch (error) { return fail(error, "方法卡未保存"); }
+    return { message: "Method card saved" };
+  } catch (error) { return fail(error, "Method card not saved"); }
 }
 
-const pasteInput = z.object({ title: z.string().trim().min(1, "请写标题").max(300), url: z.string().trim().max(2000).optional(), license: z.string().trim().max(120).optional(), text: z.string().trim().min(40, "请粘贴方法原文（至少几句话）").max(200_000) });
+const pasteInput = z.object({ title: z.string().trim().min(1, "Write a title").max(300), url: z.string().trim().max(2000).optional(), license: z.string().trim().max(120).optional(), text: z.string().trim().min(40, "Paste the method text (a few sentences at least)").max(200_000) });
 
 /** Text pasted from a site without an API (JoVE, Bio-protocol, a PDF): kept as an attachment like a fetched text, then the same card and draft path. */
 export async function addPastedMethod(sessionId: string, raw: z.input<typeof pasteInput>): Promise<DesignActionState> {
   try {
     const input = pasteInput.parse(raw);
     const session = await loadDesignSession(sessionId);
-    if (!session) throw new Error("设计会话不存在");
+    if (!session) throw new Error("Design session not found");
     const id = randomUUID();
     const hit = { key: `manual:${id}`, source: "manual" as const, externalId: id, title: input.title, url: input.url || undefined, license: input.license || undefined, venue: input.url ? new URL(input.url).hostname.replace(/^www\./, "") : "粘贴", snippet: input.text.slice(0, 200) };
     // Each paragraph is a section, so the draft reads one paragraph as one step.
@@ -134,18 +134,18 @@ export async function addPastedMethod(sessionId: string, raw: z.input<typeof pas
     await saveHits(sessionId, [...session.hits, { ...hit, attachmentId, fetchedAt: text.fetchedAt, textChars: text.text.length }]);
     await prisma.activityLog.create({ data: { action: "method_pasted", targetType: "method_design_session", targetId: sessionId, metadataJson: json({ title: input.title, url: input.url ?? null, chars: text.text.length }) } });
     revalidatePath(`/protocols/design/${sessionId}`);
-    return { message: `已加入「${input.title}」，${text.text.length} 字` };
-  } catch (error) { return fail(error, "未能加入粘贴的原文"); }
+    return { message: `Added “${input.title}”, ${text.text.length} characters` };
+  } catch (error) { return fail(error, "Couldn’t add the pasted text"); }
 }
 
 export async function chooseMethods(sessionId: string, keys: string[], reason: string): Promise<DesignActionState> {
   try {
     const session = await loadDesignSession(sessionId);
-    if (!session) throw new Error("设计会话不存在");
+    if (!session) throw new Error("Design session not found");
     await saveChosen(sessionId, keys.filter(key => session.hits.some(hit => hit.key === key)).map(key => ({ key, reason: reason.trim() || undefined })));
     revalidatePath(`/protocols/design/${sessionId}`);
     return {};
-  } catch (error) { return fail(error, "未保存选择"); }
+  } catch (error) { return fail(error, "Choice not saved"); }
 }
 
 /** 生成规程草稿: always a draft; the editor opens on it. */
@@ -156,7 +156,7 @@ export async function generateDraft(sessionId: string, hitKey: string): Promise<
     target = await createDesignDraft(session, hit, text, session.cards[hitKey]);
     revalidatePath(`/protocols/design/${sessionId}`);
     revalidatePath("/protocols");
-  } catch (error) { return fail(error, "无法生成草稿"); }
+  } catch (error) { return fail(error, "Couldn’t generate the draft"); }
   redirect(`/protocols/${target.protocolId}/versions/${target.versionId}/edit`);
 }
 
@@ -167,10 +167,10 @@ export async function scaleDraft(raw: z.input<typeof scaleInput>): Promise<Desig
   try {
     const input = scaleInput.parse(raw);
     const version = await prisma.protocolVersion.findUnique({ where: { id: input.versionId }, include: { protocol: true } });
-    if (!version) throw new Error("规程版本不存在");
-    if (version.reviewStage !== "draft") throw new Error("只能调整草稿版本；已审阅的版本请先派生修订");
+    if (!version) throw new Error("Protocol version not found");
+    if (version.reviewStage !== "draft") throw new Error("Only a draft version can be scaled; derive a revision from a reviewed version first");
     const document = normalizeProtocolDocument(version.contentJson);
-    if (!document) throw new Error("旧格式规程无法调整");
+    if (!document) throw new Error("A Protocol in the old format can’t be scaled");
     const { document: scaled, changes } = scaleProtocol(document, { value: input.fromValue, unit: input.fromUnit }, { value: input.toValue, unit: input.toUnit }, { label: input.label || undefined, newId: prefix => `${prefix}-${randomUUID()}` });
     let explanation: string | undefined;
     if (input.explain) {
@@ -188,7 +188,7 @@ export async function scaleDraft(raw: z.input<typeof scaleInput>): Promise<Desig
     // Activity entries print their fields as text: keep them flat.
     await prisma.activityLog.create({ data: { action: "design_draft_scaled", targetType: "protocol", targetId: version.protocolId, metadataJson: json({ versionId: version.id, from: `${input.fromValue} ${input.fromUnit}`, to: `${input.toValue} ${input.toUnit}`, scaled: changes.filter(change => change.rule === "linear").length, kept: changes.filter(change => change.rule === "kept").length, manual: changes.filter(change => change.rule === "manual").length }) } });
     revalidatePath(`/protocols/${version.protocolId}`);
-    return { changes, explanation, message: "已写入草稿：新的“反应体系”维度，执行时选择即可" };
-  } catch (error) { return fail(error, "体系调整失败"); }
+    return { changes, explanation, message: "Written into the draft as a new system dimension; choose it at run time" };
+  } catch (error) { return fail(error, "Scaling failed"); }
 }
 

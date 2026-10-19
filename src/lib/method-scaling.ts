@@ -10,6 +10,13 @@ export type ScaleTarget = { value: number; unit: string };
 export const scaleRuleLabels: Record<ScaleRule, string> = { linear: '按比例', kept: '保持', manual: '请人工确认' };
 /** "Tris：20 µL → 10 µL", with the rule when the amount did not simply scale, and the note. */
 export const describeScaleChange = (change: ScaleChange) => `${change.label}：${change.before} → ${change.after}${change.rule === 'linear' ? '' : `（${scaleRuleLabels[change.rule]}）`}${change.note ? `，${change.note}` : ''}`;
+const scaleRuleNames: Record<ScaleRule, string> = { linear: 'in proportion', kept: 'kept', manual: 'confirm by hand' };
+/** The notes scaleProtocol writes, as they read on screen. */
+const scaleNoteLine = (note: string) => note
+  .replace(/^低于移液下限 (\S+) µL，建议配预混液或换体系$/, 'below the pipetting minimum of $1 µL; use a premix or another system')
+  .replace(/^细胞数、酶活单位等不按比例换算，请人工确认$/, 'cell numbers, enzyme units and the like don’t scale; confirm by hand');
+/** describeScaleChange on screen, in the interface's English source text (the Chinese interface reads describeScaleChange's wording). */
+export const scaleChangeLine = (change: ScaleChange) => `${change.label}: ${change.before} → ${change.after}${change.rule === 'linear' ? '' : ` (${scaleRuleNames[change.rule]})`}${change.note ? `, ${scaleNoteLine(change.note)}` : ''}`;
 
 /** Amounts of material scale with the reaction; settings, times, temperatures and concentrations do not; cell and unit counts need a person. */
 const ruleFor = (unit: string): ScaleRule => {
@@ -27,7 +34,7 @@ const round = (value: number) => Number(value.toPrecision(4));
  */
 export function scaleProtocol(document: ProtocolDocument, from: ScaleTarget, to: ScaleTarget, options: { label?: string; minPipetteUl?: number; newId: (prefix: string) => string }): { document: ProtocolDocument; changes: ScaleChange[]; dimensionId: string } {
   const factor = convert(to.value, to.unit, from.unit) / from.value;
-  if (!Number.isFinite(factor) || factor <= 0) throw new Error('目标体系必须是正数，且与原体系单位可换算');
+  if (!Number.isFinite(factor) || factor <= 0) throw new Error('The new system must be a positive number in a unit that converts from the original’s');
   const next: ProtocolDocument = JSON.parse(JSON.stringify(document));
   const systems: ProtocolSystems = next.systems ?? blankProtocolSystems();
   next.systems = systems;

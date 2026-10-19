@@ -4,17 +4,19 @@ import { ClipboardList } from 'lucide-react';
 import { readBackTemplate, recordLinesOf, templateFromRecordLines, type RecordLines } from '@/lib/result-record-line';
 import { normalizeResultTemplate, resultTemplateFieldsToRows } from '@/lib/result-templates';
 import type { ResultTemplate } from '@/lib/types';
+import { useI18n } from '@/components/I18nProvider';
 import './protocol.css';
 
 /** A result template as a reader sees it: its name, the lines as written, and what they record. */
 export function RecordTemplateSummary({ template, details }: { template: ResultTemplate; details?: ReactNode }) {
+  const { t } = useI18n();
   const lines = recordLinesOf(template);
   return <figure className="ln-record-card">
     <figcaption><ClipboardList aria-hidden /><strong>{template.title ?? template.result_type}</strong></figcaption>
     {lines.record ? <p className="ln-record-line">{lines.record}</p> : null}
     {lines.perSample ? <p className="ln-record-line">{lines.perSample}</p> : null}
     <ReadBack template={template} />
-    {details ? <details className="ln-record-details"><summary>字段详情</summary>{details}</details> : null}
+    {details ? <details className="ln-record-details"><summary>{t('Field details')}</summary>{details}</details> : null}
   </figure>;
 }
 
@@ -39,28 +41,33 @@ export function RecordTemplateEditor<B extends { caption?: string; rows: string[
   };
   const focus = () => { base.current = template; };
   const blur = () => setTyping(undefined);
+  // A node view inside the editor: the interface translation skips it, so its words go through t(). The placeholders keep
+  // the Chinese 记录： / 每个样本： a pasted Protocol is read by.
+  const { t } = useI18n();
   return <div className="ln-record-editor">
-    <label className="ln-record-name"><ClipboardList aria-hidden /><span className="sr-only">结果名称</span>
-      <input value={shown('title', template.title)} placeholder="结果名称，如 RNA 质检" onBlur={blur} onChange={event => { setTyping({ field: 'title', text: event.target.value }); rename(event.target.value); }} />
+    <label className="ln-record-name"><ClipboardList aria-hidden /><span className="sr-only">{t('Result name')}</span>
+      <input value={shown('title', template.title)} placeholder={t('Result name, e.g. RNA QC')} onBlur={blur} onChange={event => { setTyping({ field: 'title', text: event.target.value }); rename(event.target.value); }} />
     </label>
-    <label className="ln-record-input"><span className="sr-only">记录</span>
-      <textarea rows={1} value={shown('record', lines.record)} placeholder="记录：浓度 ng/µL、A260/280、胶图" onFocus={focus} onBlur={blur} onChange={event => { setTyping({ field: 'record', text: event.target.value }); update({ ...lines, record: event.target.value }); }} />
+    <label className="ln-record-input"><span className="sr-only">{t('Items to record')}</span>
+      <textarea rows={1} value={shown('record', lines.record)} placeholder={t('记录：concentration ng/µL, A260/280, gel image')} onFocus={focus} onBlur={blur} onChange={event => { setTyping({ field: 'record', text: event.target.value }); update({ ...lines, record: event.target.value }); }} />
     </label>
-    <label className="ln-record-input"><span className="sr-only">每个样本</span>
-      <textarea rows={1} value={shown('perSample', lines.perSample)} placeholder="每个样本：样本名、Ct 值（每个样本一行时才写）" onFocus={focus} onBlur={blur} onChange={event => { setTyping({ field: 'perSample', text: event.target.value }); update({ ...lines, perSample: event.target.value }); }} />
+    <label className="ln-record-input"><span className="sr-only">{t('per sample')}</span>
+      <textarea rows={1} value={shown('perSample', lines.perSample)} placeholder={t('每个样本：sample name, Ct value (only when there is one row per sample)')} onFocus={focus} onBlur={blur} onChange={event => { setTyping({ field: 'perSample', text: event.target.value }); update({ ...lines, perSample: event.target.value }); }} />
     </label>
     <ReadBack template={template} />
-    <p className="ln-record-hint">带单位的是数值；图、照片是图片；文件、原始数据是文件；“是否…”是是否；写选项用（阳性/阴性）；名称后加 * 表示必填。</p>
-    <details className="ln-record-details"><summary>高级设置</summary>{advanced}</details>
+    <p className="ln-record-hint">{t('An item with a unit is a number; one ending in 图, 照片, image or photo is an image; one ending in 文件, 原始数据, file or raw data is a file; one starting with “是否” or ending in ? is yes/no; write options in brackets, e.g. (positive/negative); a * after the name makes it required.')}</p>
+    <details className="ln-record-details"><summary>{t('Advanced')}</summary>{advanced}</details>
   </div>;
 }
 
 /** What LabNest understood from the lines, said back in one line each. */
 function ReadBack({ template }: { template: ResultTemplate }) {
+  // Also shown inside the editor, where only t() translates.
+  const { t } = useI18n();
   const said = readBackTemplate(template);
-  if (!said.items.length && !said.perSample.length) return <p className="ln-record-readback is-empty">还没有要记录的项目。</p>;
+  if (!said.items.length && !said.perSample.length) return <p className="ln-record-readback is-empty">{t('Nothing to record yet.')}</p>;
   return <div className="ln-record-readback">
-    {said.items.length ? <p><span>将记录</span>{said.items.join(' ｜ ')}</p> : null}
-    {said.perSample.length ? <p><span>每个样本一行</span>{said.perSample.join(' ｜ ')}</p> : null}
+    {said.items.length ? <p><span>{t('Will record')}</span>{t(said.items.join(' ｜ '))}</p> : null}
+    {said.perSample.length ? <p><span>{t('One row per sample')}</span>{t(said.perSample.join(' ｜ '))}</p> : null}
   </div>;
 }

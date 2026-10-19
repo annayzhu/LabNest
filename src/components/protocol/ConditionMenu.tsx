@@ -30,7 +30,7 @@ export function ConditionMenu({ target, onColumn, onClose }: { target: Condition
       <span className="ln-condition-menu-dimension">{dimension.label}</span>
       <span className="ln-condition-menu-options">{dimension.options.map(option => { const key = `${dimension.id}:${option.id}`, mark = marks.get(key); return <button className="focus-ring" key={option.id} type="button" aria-pressed={target.id === key} data-tone={mark?.tone} onClick={() => onColumn(target.id === key ? null : key)}>{mark?.symbol ? <SystemMark mark={mark} /> : null}{option.label}</button>; })}</span>
     </div>)}
-    {!systems.dimensions.some(d => d.kind !== 'condition') ? <p className="ln-condition-menu-note">先在上方添加体系，再把配方表的列标给对应选项。</p> : <p className="ln-condition-menu-note">执行时只保留所选体系的列；阅读全部体系时表头带符号。</p>}
+    {!systems.dimensions.some(d => d.kind !== 'condition') ? <p className="ln-condition-menu-note">Add systems above first, then mark the recipe table’s columns with their options.</p> : <p className="ln-condition-menu-note">At run time only the chosen system’s columns are kept; when reading all systems the column headers carry symbols.</p>}
   </div>, document.body);
   const own = systems.rules.filter(rule => rule.target === target.kind && rule.targetId === target.id);
   const selected = (dimensionId: string, optionId: string) => own.some(rule => predicates(rule).some(p => p.dimensionId === dimensionId && p.optionId === optionId));

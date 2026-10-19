@@ -14,7 +14,7 @@ export async function recordRunConsumption(experimentId: string, choices: Consum
   const post = async (body: unknown) => {
     const response = await fetch(`/api/experiments/${experimentId}/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const result = await response.json();
-    if (!response.ok || result?.error) throw new Error(result?.error ?? '保存失败');
+    if (!response.ok || result?.error) throw new Error(result?.error ?? 'Save failed');
     return result;
   };
   const ids: string[] = [];
@@ -26,7 +26,7 @@ export async function recordRunConsumption(experimentId: string, choices: Consum
   if (!ids.length) return;
   const outcomes = await post({ action: 'confirm', ids }) as Array<{ status: string; error?: string }>;
   const failed = outcomes.filter(outcome => outcome.error);
-  if (failed.length) throw new Error(`部分扣减未完成：${failed.map(outcome => outcome.error).join('；')}。使用记录已保留，可在“本次使用的试剂与耗材”中重试。`);
+  if (failed.length) throw new Error(`Some deductions did not go through · ${failed.map(outcome => outcome.error).join('; ')}. The use records are kept; retry under “Reagents and consumables used in this run”.`);
 }
 
 /**

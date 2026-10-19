@@ -7,6 +7,7 @@ import { useI18n } from './I18nProvider';
 import { paragraphLayoutStyle } from "@/lib/document-paragraph-layout";
 import { resolveProtocolSystem, tableForSelection, targetApplicability, type ProtocolSelection, type ProtocolSystems } from '@/lib/structured-protocol';
 import { optionMarks } from '@/lib/protocol-chips';
+import { systemLabelText } from '@/lib/protocol-conditions';
 import { ChipRenderContext, ChipText } from './protocol/ChipText';
 import { MixCard } from './protocol/MixCard';
 import { protocolUsage } from '@/lib/protocol-mix';
@@ -251,11 +252,11 @@ function useRememberedLens(key: string | undefined, systems: ProtocolSystems | u
 
 function PreviewLens({ systems, lens, onChange }: { systems: ProtocolSystems; lens: ProtocolSelection; onChange: (lens: ProtocolSelection) => void }) {
   const marks = optionMarks(systems);
-  return <section className="ln-systems-bar" aria-label="体系图例与预览">
-    {systems.dimensions.map(dimension => <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={lens} onChange={onChange} label={`预览：${dimension.label}`} optionTitle={option => `按${option.label}阅读：其余内容折叠`} />)}
+  return <section className="ln-systems-bar" aria-label="System legend and preview">
+    {systems.dimensions.map(dimension => <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={lens} onChange={onChange} label={`Preview by ${systemLabelText(dimension.label)}`} optionTitle={option => `Read as ${systemLabelText(option.label)}: the rest folds away`} />)}
     <div className="ln-systems-footer" data-print-hidden>
       <LensPresets systems={systems} lens={lens} onChange={onChange} />
-      <span className="ln-systems-spacer" /><span className="text-xs text-muted">预览只改变阅读，不改变任何实验</span>
+      <span className="ln-systems-spacer" /><span className="text-xs text-muted">Preview changes only what you read, never an experiment</span>
     </div>
   </section>;
 }

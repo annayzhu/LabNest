@@ -523,7 +523,7 @@ export function EntryComposer({
             aria-label="Entry title"
           />
           <dl className="document-page-facts">
-            <div><dt>实验／观察时间（可留空）</dt><dd><input type={fields.eventTimePrecision === "date" ? "date" : "datetime-local"} value={fields.occurredAt} onChange={(event) => { updateField("occurredAt", event.target.value); updateField("eventTimePrecision", editedEventPrecision(fields.eventTimePrecision, event.target.value)); }} className="focus-ring w-full rounded-[4px] border border-transparent bg-transparent p-0 text-graphite hover:border-hairline" /></dd></div>
+            <div><dt>Experiment / observation time (optional)</dt><dd><input type={fields.eventTimePrecision === "date" ? "date" : "datetime-local"} value={fields.occurredAt} onChange={(event) => { updateField("occurredAt", event.target.value); updateField("eventTimePrecision", editedEventPrecision(fields.eventTimePrecision, event.target.value)); }} className="focus-ring w-full rounded-[4px] border border-transparent bg-transparent p-0 text-graphite hover:border-hairline" /></dd></div>
             <div><dt>Project</dt><dd>{selectedProject?.name ?? "Unassigned"}</dd></div>
             <div><dt>Research Plan</dt><dd>{selectedPlan ? selectedPlan.code ?? selectedPlan.title : "Unassigned"}</dd></div>
             <div><dt>Source</dt><dd>{fields.sourceType.replaceAll("_", " ")}</dd></div>
@@ -602,7 +602,7 @@ export function EntryComposer({
             const plan = researchPlans.find((candidate) => candidate.id === value);
             if (plan) updateField("projectId", plan.projectId);
           }} options={[{ value: "", label: "Unassigned" }, ...availablePlans.map((plan) => ({ value: plan.id, label: `${plan.projectName} · ${plan.code ?? plan.title}` }))]} />
-          <ComposerSelect label="记录类型" value={fields.entryType} onChange={(value) => updateField("entryType", value)} options={entryTypes.map(value=>({value,label:entryTypeLabels[value]}))} />
+          <ComposerSelect label="Entry type" value={fields.entryType} onChange={(value) => updateField("entryType", value)} options={entryTypes.map(value=>({value,label:entryTypeLabels[value]}))} />
           <ComposerSelect label="Source" value={fields.sourceType} onChange={(value) => updateField("sourceType", value)} options={["text", "photo", "file", "voice", "manual"].map((value) => ({ value, label: value }))} />
           <ComposerInput label="State" value={fields.moodStatus} onChange={(value) => updateField("moodStatus", value)} placeholder="needs follow-up" />
           <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} density="compact" className="md:col-span-2 xl:col-span-5" />
@@ -631,20 +631,20 @@ export function EntryComposer({
       </DocumentEditorLayout>
       </div>
 
-      {conflict ? <section aria-label="正文冲突核对" className="space-y-3 rounded-xl border border-warning p-4">
-        <h2 className="font-semibold">另一窗口已保存新版本，未覆盖任何一方</h2>
-        <p className="text-sm">本机草稿基于 {fields.expectedUpdatedAt}；服务器版本为 {conflict.updatedAt}。请复制需要保留的段落，再打开服务器记录核对。此处不会自动采用新版本号重试。</p>
+      {conflict ? <section aria-label="Compare the conflicting texts" className="space-y-3 rounded-xl border border-warning p-4">
+        <h2 className="font-semibold">Another window saved a newer version; neither was overwritten</h2>
+        <p className="text-sm">{`This draft is based on ${fields.expectedUpdatedAt}; the server version is ${conflict.updatedAt}. Copy the paragraphs you want to keep, then open the server record to compare. Nothing is retried here with the new version number.`}</p>
         <div className="grid gap-3 md:grid-cols-2">
-          <label>本机草稿<textarea readOnly aria-label="本机草稿对照" value={fields.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
-          <label>服务器正文<textarea readOnly aria-label="服务器正文对照" value={conflict.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
+          <label>This draft<textarea readOnly aria-label="This draft, for comparison" value={fields.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
+          <label>Server text<textarea readOnly aria-label="Server text, for comparison" value={conflict.contentMarkdown} className="mt-2 h-64 w-full rounded-lg border border-hairline bg-surface p-3 text-sm" /></label>
         </div>
-        <p className="text-sm">本机标题：{fields.title} · 服务器标题：{conflict.title}；本机文件仍保留在编辑区，请一并核对。</p>
-        <a className="inline-flex min-h-11 items-center text-moss underline" href={`/entries/${entry?.id}`} target="_blank" rel="noreferrer">另开服务器记录</a>
+        <p className="text-sm">{`This title: ${fields.title} · Server title: ${conflict.title}. Files added here stay in the editor; check them too.`}</p>
+        <a className="inline-flex min-h-11 items-center text-moss underline" href={`/entries/${entry?.id}`} target="_blank" rel="noreferrer">Open the server record</a>
       </section> : null}
       {submitStatus ? <div role="alert" className="rounded-[var(--ln-radius-panel)] border border-error/35 bg-error-surface px-4 py-3 text-sm leading-6 text-error">{submitStatus}</div> : null}
       <div className="entry-editor-save-bar pointer-events-none sticky bottom-3 z-30 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>button]:pointer-events-auto">
         {submitStatus && !isSubmitting ? <Button type="submit" size="lg"><RotateCcw className="h-4 w-4" />Try again</Button> : null}
-        <Button type="submit" size="lg" variant="secondary" disabled={isSubmitting} onClick={() => { fileAfterSave.current = true; }}>保存并归入…</Button>
+        <Button type="submit" size="lg" variant="secondary" disabled={isSubmitting} onClick={() => { fileAfterSave.current = true; }}>Save and file…</Button>
         <Button type="submit" size="lg" variant="primary" disabled={isSubmitting}>
           <Save className="h-4 w-4" />
           {isSubmitting ? "Saving originals…" : entry ? "Save changes" : "Save Entry"}

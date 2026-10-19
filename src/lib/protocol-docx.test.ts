@@ -149,7 +149,7 @@ describe("Protocol DOCX parser", () => {
     expect(parsed.document.sections).toHaveLength(7);
     let n = 0;
     const { document, summary } = convertLegacyProtocol(parsed.document, (prefix) => `${prefix}-${++n}`);
-    expect(summary).toMatchObject({ steps: 5, systems: ["体系：350 µL / 600 µL"], conditions: ["第 2 步 · 仅富脂样本"], keptAsText: ["1.5 mL"], recordLines: 1, resultTemplates: 1 });
+    expect(summary).toMatchObject({ steps: 5, systems: ["体系：350 µL / 600 µL"], conditions: ["Step 2 · only 富脂样本"], keptAsText: ["1.5 mL"], recordLines: 1, resultTemplates: 1 });
     expect(summary.chips).toContain("350/600 µL");
     const projection = projectProtocolDocument(document);
     expect(projection.steps.map((step) => step.title.replace(/\{\{[\w-]+\}\}/g, "〔〕"))).toEqual([

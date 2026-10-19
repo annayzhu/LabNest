@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formInputClass, preventImplicitEnterSubmit } from "./forms";
 import { Button } from "./ui/Button";
+import { useI18n } from "./I18nProvider";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
 type Row = {
   id: string;
@@ -41,6 +42,8 @@ export function RunMaterials({
   editable: boolean;
 }) {
   const router = useRouter();
+  // The phone layout shows column names from data-label, which the page translator does not reach.
+  const { t } = useI18n();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -69,8 +72,8 @@ export function RunMaterials({
       const response = await fetch(`/api/experiments/${experimentId}/materials`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id})});
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      setStatus('使用记录已删除；库存未改变。'); router.refresh();
-    } catch(error) { setStatus(error instanceof Error ? error.message : '删除失败，请重试'); }
+      setStatus('Usage record deleted; stock unchanged.'); router.refresh();
+    } catch(error) { setStatus(error instanceof Error ? error.message : 'Couldn’t delete. Try again'); }
     finally {setBusy(false);}
   }
   const [name, setName] = useState("");
@@ -87,7 +90,7 @@ export function RunMaterials({
   function adjustment(row: Row) {
     const original = rows.find(r=>r.id===row.correctionOfId);
     if (!original || original.actual===null || row.actual===null) return '';
-    try {const prior=original.unit===row.unit?original.actual:convert(original.actual,original.unit,row.unit);const delta=Number((prior-row.actual).toPrecision(12));return `；账面调整 ${delta>0?'+':''}${delta} ${row.unit}（更正用量，不代表实物退库）`;} catch{return '；单位不兼容，不能扣减';}
+    try {const prior=original.unit===row.unit?original.actual:convert(original.actual,original.unit,row.unit);const delta=Number((prior-row.actual).toPrecision(12));return `; book adjustment ${delta>0?'+':''}${delta} ${row.unit} (corrected use, not a physical return)`;} catch{return '; units are not compatible, cannot deduct';}
   }
   const selected = stock.find((s) => s.id === inventory);
   async function save(event: React.FormEvent) {
@@ -118,7 +121,7 @@ export function RunMaterials({
           retryCount: 0,
           payload: { experimentId, row: payload },
         });
-        setStatus("已存本机，等待同步；尚未扣减库存。");
+        setStatus("Saved on this device, waiting to sync; stock not deducted yet.");
       } else {
         const r = await fetch(`/api/experiments/${experimentId}/materials`, {
           method: "POST",
@@ -127,7 +130,7 @@ export function RunMaterials({
         });
         const result = await r.json();
         if (!r.ok) throw new Error(result.error);
-        setStatus("使用记录已保存，尚未执行库存扣减。");
+        setStatus("Usage record saved; stock not deducted yet.");
         router.refresh();
       }
       if ((event.nativeEvent as SubmitEvent).submitter?.getAttribute("data-continue") !== "true") closeDialog();
@@ -140,7 +143,7 @@ export function RunMaterials({
       delete drafts.current[sessionKey];setSessionKey('create');applyDraft(drafts.current.create ?? blankDraft);
     } catch (error) {
       setStatus(
-        error instanceof Error ? error.message : "保存失败，输入仍保留",
+        error instanceof Error ? error.message : "Couldn’t save; your input is kept",
       );
     } finally {
       setBusy(false);
@@ -161,25 +164,25 @@ export function RunMaterials({
       if (!r.ok) throw new Error(result.error);
       setStatus(
         result.some((r: { status: string }) => !["submitted","recorded"].includes(r.status))
-          ? "部分扣减待处理，使用记录已保留。"
-          : "已完成确认。",
+          ? "Some deductions are still pending; the usage records are kept."
+          : "Deduction confirmed.",
       );
       router.refresh();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "提交失败，可重试");
+      setStatus(error instanceof Error ? error.message : "Couldn’t submit; you can try again");
     } finally {
       setBusy(false);
     }
   }
   return (
     <section className="border-t border-hairline py-4">
-      <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-base font-semibold">本次使用的试剂与耗材</h2>{editable ? <button ref={triggerRef} type="button" className="focus-ring min-h-11 px-3 text-moss" onClick={()=>openDialog()}>添加</button> : null}</div>
-      {!rows.length ? <p className="text-sm text-muted">尚未记录</p> : null}
+      <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-base font-semibold">Reagents and consumables used in this run</h2>{editable ? <button ref={triggerRef} type="button" className="focus-ring min-h-11 px-3 text-moss" onClick={()=>openDialog()}>Add</button> : null}</div>
+      {!rows.length ? <p className="text-sm text-muted">Nothing recorded yet</p> : null}
       <div className="overflow-x-auto" hidden={!rows.length}>
         <table className="ln-run-material-table w-full text-left text-sm">
           <thead>
             <tr>
-              {["物料", "预计", "实际", "库存处理", "操作"].map((h) => (
+              {["Reagent or consumable", "Expected use", "Actual use", "Stock handling", "Actions"].map((h) => (
                 <th key={h} className="px-2 py-2">
                   {h}
                 </th>
@@ -189,20 +192,20 @@ export function RunMaterials({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-hairline">
-                <td data-label="物料" className="p-2">{row.name}</td>
-                <td data-label="预计" className="p-2 text-right tabular-nums">
-                  {row.expected ?? "未记录"} {row.unit}
+                <td data-label={t("Reagent or consumable")} className="p-2">{row.name}</td>
+                <td data-label={t("Expected use")} className="p-2 text-right tabular-nums">
+                  {row.expected ?? "not recorded"} {row.unit}
                 </td>
-                <td data-label="实际" className="p-2 text-right tabular-nums">
-                  {row.actual ?? "未确认"} {row.unit}
+                <td data-label={t("Actual use")} className="p-2 text-right tabular-nums">
+                  {row.actual ?? "not confirmed"} {row.unit}
                 </td>
-                <td data-label="来源" className="p-2">
-                  {row.status === "pending" && editable ? <label className="flex gap-2"><input type="checkbox" aria-label={`选择扣减 ${row.name}`} checked={selection.includes(row.id)} onChange={event=>setSelection(old=>event.target.checked?[...old,row.id]:old.filter(id=>id!==row.id))}/>待确认扣减</label> : row.status === 'submitted' ? '已扣减' : '仅记录'}
-                  <details><summary className="cursor-pointer text-muted">来源与详情</summary><p>{row.source === 'manual' ? '手动填写' : row.source.startsWith('correction:') ? '更正记录' : '依据规程'}</p>{row.source.startsWith('Consumption:') ? <p className="break-words">{row.source.split('|').slice(1).join('|') || row.source}</p> : null}<p>{stock.find(s=>s.id===row.inventoryItemId)?.name ?? '不管理库存'}</p>{row.containerId ? <><p>已领实物：{row.containerId}</p><p>持有人：{stock.find(s=>s.id===row.inventoryItemId)?.containers?.find(c=>c.id===row.containerId)?.holder ?? '请查看实物记录'}</p><a className="text-moss underline" href={`/inventory/${row.inventoryItemId}`}>查看持有状态与余量观察</a></> : null}{row.error ? <p role="alert" className="text-error">{row.error}</p> : null}</details>
+                <td data-label={t("Source")} className="p-2">
+                  {row.status === "pending" && editable ? <label className="flex gap-2"><input type="checkbox" aria-label={`Select ${row.name} for deduction`} checked={selection.includes(row.id)} onChange={event=>setSelection(old=>event.target.checked?[...old,row.id]:old.filter(id=>id!==row.id))}/>Deduction to confirm</label> : row.status === 'submitted' ? 'Deducted' : 'Recorded only'}
+                  <details><summary className="cursor-pointer text-muted">Source and details</summary><p>{row.source === 'manual' ? 'Entered by hand' : row.source.startsWith('correction:') ? 'Correction' : 'From the Protocol'}</p>{row.source.startsWith('Consumption:') ? <p className="break-words">{row.source.split('|').slice(1).join('|') || row.source}</p> : null}<p>{stock.find(s=>s.id===row.inventoryItemId)?.name ?? 'Stock not managed'}</p>{row.containerId ? <><p>{`Container taken: ${row.containerId}`}</p><p>{`Holder: ${stock.find(s=>s.id===row.inventoryItemId)?.containers?.find(c=>c.id===row.containerId)?.holder ?? 'see the container record'}`}</p><a className="text-moss underline" href={`/inventory/${row.inventoryItemId}`}>View holder and remaining amount</a></> : null}{row.error ? <p role="alert" className="text-error">{row.error}</p> : null}</details>
                 </td>
-                <td data-label="操作" className="p-2">
-                  {row.status !== "submitted" && editable ? <button type="button" className="focus-ring ml-2 min-h-11 text-moss" onClick={()=>openDialog(`edit:${row.id}`,rowDraft(row))}>编辑</button>:null}
-                  {row.status !== "submitted" && editable ? <button type="button" disabled={busy} className="focus-ring ml-2 min-h-11 text-error" onClick={()=>remove(row.id)}>删除</button>:null}
+                <td data-label={t("Actions")} className="p-2">
+                  {row.status !== "submitted" && editable ? <button type="button" className="focus-ring ml-2 min-h-11 text-moss" onClick={()=>openDialog(`edit:${row.id}`,rowDraft(row))}>Edit</button>:null}
+                  {row.status !== "submitted" && editable ? <button type="button" disabled={busy} className="focus-ring ml-2 min-h-11 text-error" onClick={()=>remove(row.id)}>Delete</button>:null}
                   {row.status === "submitted" &&
                   editable &&
                   !rows.some((r) => r.correctionOfId === row.id) ? (
@@ -211,7 +214,7 @@ export function RunMaterials({
                       className="focus-ring ml-2 min-h-11 text-moss"
                       onClick={()=>openDialog(`correction:${row.id}`,rowDraft(row,true))}
                     >
-                      登记更正
+                      Record a correction
                     </button>
                   ) : null}
                 </td>
@@ -222,8 +225,8 @@ export function RunMaterials({
       </div>
       {editable ? (
         <>
-          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="添加耗材" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
-          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? '更正耗材记录' : sessionKey.startsWith('edit:') ? '编辑耗材' : '添加耗材'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>关闭</Button></div>
+          {mounted ? createPortal(<dialog ref={dialogRef} aria-label="Add consumable" className="ln-material-dialog bg-surface text-ink" onCancel={event=>{if(busy){event.preventDefault();return;}setDialogActive(false);triggerRef.current?.focus();}}>
+          <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{correction ? 'Correct consumable record' : sessionKey.startsWith('edit:') ? 'Edit consumable' : 'Add consumable'}</h3><Button type="button" disabled={busy} onClick={closeDialog}>Close</Button></div>
           {status && dialogActive ? <p role="alert" className="my-2 text-sm">{status}</p> : null}
           <form
             onSubmit={save}
@@ -232,7 +235,7 @@ export function RunMaterials({
           >
             <fieldset disabled={busy} className="contents">
             <label className="text-sm">
-              名称
+              Name
               <input
                 required
                 className={formInputClass}
@@ -240,17 +243,17 @@ export function RunMaterials({
                 onChange={(e) => setName(e.target.value)}
               />
             </label>
-            <QuantityInput label="预计" name="expected" value={expected} unit={unit || "mL"} onChange={(next,nextUnit)=>{
+            <QuantityInput label="Expected use" name="expected" value={expected} unit={unit || "mL"} onChange={(next,nextUnit)=>{
               try {const nextActual=nextUnit!==unit && actual.trim()?String(Number(convert(parseScalar(actual),unit,nextUnit).toPrecision(14))):actual;setExpected(next);setActual(nextActual);setUnit(nextUnit);}
-              catch {setStatus("请先完成实际用量，再切换单位。");}
+              catch {setStatus("Fill in the actual amount before switching units.");}
             }}/>
-            <QuantityInput label="实际" name="actual" value={actual} unit={unit || "mL"} onChange={(next, nextUnit) => {
+            <QuantityInput label="Actual use" name="actual" value={actual} unit={unit || "mL"} onChange={(next, nextUnit) => {
               try { const nextExpected = nextUnit !== unit && expected.trim() ? String(Number(convert(parseScalar(expected),unit,nextUnit).toPrecision(14))) : expected; setExpected(nextExpected); setActual(next); setUnit(nextUnit); }
-              catch { setStatus("请先完成预计用量，再切换单位。"); }
+              catch { setStatus("Fill in the expected amount before switching units."); }
             }} />
-            <p className="w-full text-sm text-muted">{source === 'manual' ? '手动填写' : correction ? '更正已扣减记录：保存后仍需明确确认库存调整。' : '依据规程：'+(source.split('|').slice(1).join('|') || '已保存的版本规则')}</p>
+            <p className="w-full text-sm text-muted">{source === 'manual' ? 'Entered by hand' : correction ? 'Correcting a deducted record: after saving, confirm the stock adjustment explicitly.' : `From the Protocol: ${source.split('|').slice(1).join('|') || 'the saved version rule'}`}</p>
             <label className="text-sm">
-              库存来源
+              Stock source
               <select
                 className={formInputClass}
                 value={inventory}
@@ -260,37 +263,37 @@ export function RunMaterials({
                   setContainer("");
                 }}
               >
-                <option value="">不管理库存</option>
+                <option value="">Stock not managed</option>
                 {stock.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} · {s.lotNumber ?? "批号未记录"} · {s.id.slice(-6)}
+                    {`${s.name} · ${s.lotNumber ?? "Lot not recorded"} · ${s.id.slice(-6)}`}
                   </option>
                 ))}
               </select>
             </label>
             {selected?.managementMode === "package" ? (
               <label className="text-sm">
-                实际瓶
+                Container used
                 <select
                   required
                   className={formInputClass}
                   value={container}
                   onChange={(e) => setContainer(e.target.value)}
                 >
-                  <option value="">请选择已领用的瓶</option>
+                  <option value="">Choose a container you took out</option>
                   {selected.containers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.id} · {c.holder ?? "持有人未记录"}
+                      {`${c.id} · ${c.holder ?? "Holder not recorded"}`}
                     </option>
                   ))}
                 </select>
               </label>
             ) : null}
-            <Button type="button" disabled={!expected.trim()} onClick={()=>setActual(expected)}>将预计量确认为实际量</Button>
+            <Button type="button" disabled={!expected.trim()} onClick={()=>setActual(expected)}>Use the expected amount as actual</Button>
             <Button type="submit" disabled={busy}>
-              {correction ? "保存更正" : "保存使用记录"}
+              {correction ? "Save correction" : "Save usage record"}
             </Button>
-            <Button type="submit" data-continue="true" disabled={busy}>添加并继续</Button>
+            <Button type="submit" data-continue="true" disabled={busy}>Add and continue</Button>
           </fieldset></form></dialog>, document.body) : null}
           {selection.length ? (
             <Button
@@ -299,10 +302,10 @@ export function RunMaterials({
               disabled={busy}
               onClick={()=>setReview(true)}
             >
-              核对所选 {selection.length} 项扣减
+              {`Review ${selection.length} selected deductions`}
             </Button>
           ) : null}
-          {review ? <div className="mt-3 border-t border-hairline py-3"><p>仅扣减以下已选用量；保存记录本身不会扣库。</p><ul>{rows.filter(r=>selection.includes(r.id)).map(r=><li key={r.id}>{r.name}：{r.actual ?? '未确认'} {r.unit}{adjustment(r)}</li>)}</ul><Button type="button" disabled={busy || !selection.length} onClick={async()=>{await confirm();setReview(false);setSelection([]);}}>确认扣减所选项</Button><Button type="button" onClick={()=>setReview(false)}>取消</Button></div> : null}
+          {review ? <div className="mt-3 border-t border-hairline py-3"><p>Only the selected amounts below are deducted; saving a record never deducts stock.</p><ul>{rows.filter(r=>selection.includes(r.id)).map(r=><li key={r.id}>{`${r.name} — deduct ${r.actual ?? 'not confirmed'} ${r.unit}${adjustment(r)}`}</li>)}</ul><Button type="button" disabled={busy || !selection.length} onClick={async()=>{await confirm();setReview(false);setSelection([]);}}>Deduct the selected items</Button><Button type="button" onClick={()=>setReview(false)}>Cancel</Button></div> : null}
         </>
       ) : null}
       {status && !dialogActive ? (

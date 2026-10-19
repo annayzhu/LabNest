@@ -62,15 +62,18 @@ export function recordLinesOf(template: ResultTemplate): RecordLines {
   return { record: items.length ? `记录：${items.join('、')}` : undefined, perSample: columns.length ? `每个样本：${columns.join('、')}` : undefined };
 }
 
-/** What LabNest understood, one short phrase per item: "浓度 · 数值 · ng/µL". */
+/**
+ * What LabNest understood, one short phrase per item: "浓度 (number, ng/µL, required)". Interface text: the Chinese interface
+ * reads it back as "浓度 · 数值 · ng/µL · 必填".
+ */
 export function readBackTemplate(template: ResultTemplate) {
-  const phrase = (label: string, type: string, extra?: string, required?: boolean) => [label, type, extra].filter(Boolean).join(' · ') + (required ? ' · 必填' : '');
+  const phrase = (label: string, type: string, extra?: string, required?: boolean) => `${label ? `${label} ` : ''}(${[type, extra, required ? 'required' : ''].filter(Boolean).join(', ')})`;
   return {
     items: [
-      ...template.fields.map(field => phrase(field.label ?? field.name ?? field.key ?? '', typeWords[field.dataType ?? field.type ?? 'text'] ?? '文字', field.unit ?? field.options?.join('/'), field.required)),
-      ...(template.artifacts ?? []).map(artifact => phrase(artifact.label, artifactWords[artifact.kind] ?? '文件', undefined, artifact.required)),
+      ...template.fields.map(field => phrase(field.label ?? field.name ?? field.key ?? '', typeWords[field.dataType ?? field.type ?? 'text'] ?? 'text', field.unit ?? field.options?.join('/'), field.required)),
+      ...(template.artifacts ?? []).map(artifact => phrase(artifact.label, artifactWords[artifact.kind] ?? 'file', undefined, artifact.required)),
     ],
-    perSample: template.datasets?.[0]?.columns.map(column => phrase(column.label ?? column.key, typeWords[column.dataType ?? 'text'] ?? '文字', column.unit)) ?? [],
+    perSample: template.datasets?.[0]?.columns.map(column => phrase(column.label ?? column.key, typeWords[column.dataType ?? 'text'] ?? 'text', column.unit)) ?? [],
   };
 }
 
@@ -185,5 +188,5 @@ function keyed<T extends { label: string }>(items: T[], previous: Array<{ key: s
 
 const unitLabel = (item: { unit?: string; options?: string[] }) => item.unit ? ` ${item.unit}` : item.options?.length ? `（${item.options.join('/')}）` : '';
 
-const typeWords: Record<string, string> = { text: '文字', number: '数值', select: '选项', boolean: '是否', date: '日期', datetime: '时间', 'attachment[]': '附件', category: '分类' };
-const artifactWords = { image: '图片', file: '文件', video: '视频' } as const;
+const typeWords: Record<string, string> = { text: 'text', number: 'number', select: 'choice', boolean: 'yes/no', date: 'date', datetime: 'time', 'attachment[]': 'attachments', category: 'category' };
+const artifactWords = { image: 'image', file: 'file', video: 'video' } as const;

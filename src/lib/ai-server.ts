@@ -65,11 +65,11 @@ export async function getAIAvailability(): Promise<AIAvailability> {
 }
 export function availabilityFromSettings(settings: AvailabilitySettings): AIAvailability {
   if (!settings?.enabled) {
-    return { enabled: false, connected: false, reason: "已关闭 AI，现有记录保持不变。" };
+    return { enabled: false, connected: false, reason: "AI is off; existing records stay as they are." };
   }
   const provider = settings.defaultProvider;
   if (!provider) {
-    return { enabled: true, connected: false, reason: "请先选择默认模型服务。" };
+    return { enabled: true, connected: false, reason: "Choose a default model service first." };
   }
   const base = {
     enabled: true,
@@ -79,19 +79,19 @@ export function availabilityFromSettings(settings: AvailabilitySettings): AIAvai
     model: provider.defaultModel ?? undefined,
   };
   if (!provider.enabled) {
-    return { ...base, connected: false, reason: `服务“${provider.name}”已停用。` };
+    return { ...base, connected: false, reason: `The service “${provider.name}” is turned off.` };
   }
   if (!isConnectedProviderType(provider.type)) {
-    return { ...base, connected: false, reason: "当前默认服务使用手动复制粘贴，不进行联网调用。" };
+    return { ...base, connected: false, reason: "The default service uses manual copy and paste and makes no network calls." };
   }
   if (!isEncryptedSecret(provider.apiKeyEncrypted)) {
-    return { ...base, connected: false, reason: `服务“${provider.name}”尚未保存 API 密钥。` };
+    return { ...base, connected: false, reason: `The service “${provider.name}” has no saved API key yet.` };
   }
   if ((provider.type === "openai_compatible" || provider.type === "dify") && !provider.baseUrl?.trim()) {
-    return { ...base, connected: false, reason: "请填写模型服务地址。" };
+    return { ...base, connected: false, reason: "Enter the model service address." };
   }
   if (provider.type !== "dify" && !provider.defaultModel?.trim()) {
-    return { ...base, connected: false, reason: "请填写模型名称。" };
+    return { ...base, connected: false, reason: "Enter the model name." };
   }
   return { ...base, connected: true };
 }

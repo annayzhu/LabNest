@@ -25,11 +25,11 @@ export async function readSourceFile(name: string, bytes: Uint8Array): Promise<S
   }
   if (extension === 'pdf') {
     const { text, pages } = await pdfText(bytes);
-    const warnings = text.replace(/\s/g, '').length < 40 ? ['这份 PDF 里几乎没有可读的文字，可能是扫描件：请先转成文字，再粘贴进来。'] : [];
+    const warnings = text.replace(/\s/g, '').length < 40 ? ['This PDF has almost no readable text; it may be a scan. Convert it to text first, then paste it in.'] : [];
     return { kind: 'pdf', text, pages, warnings };
   }
   if (extension === 'txt' || extension === 'md' || extension === 'markdown') return { kind: 'text', text: new TextDecoder().decode(bytes), warnings: [] };
-  throw new Error('只支持 PDF、Word（.docx）、TXT 和 Markdown 文件');
+  throw new Error('Only PDF, Word (.docx), TXT and Markdown files are supported');
 }
 
 const pageFurniture = /^(?:第\s*\d+\s*页(?:\s*[/，,]?\s*共\s*\d+\s*页)?|page\s*\d+(?:\s*(?:of|\/)\s*\d+)?|\d+\s*\/\s*\d+|\d+)$/i;

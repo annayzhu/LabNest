@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
 import { resolveProtocolDocument } from './structured-protocol';
-import { buildScalingPrompt, scaleProtocol } from './method-scaling';
+import { buildScalingPrompt, describeScaleChange, scaleChangeLine, scaleProtocol } from './method-scaling';
 
 let counter = 0;
 const newId = (prefix: string) => `${prefix}-${++counter}`;
@@ -37,6 +37,10 @@ describe('体系调整', () => {
       ['温度', '95 °C', '95 °C', 'kept', undefined],
       ['细胞', '200,000 cells', '200,000 cells', 'manual', '细胞数、酶活单位等不按比例换算，请人工确认'],
     ]);
+    // The stored callout keeps the Chinese line; the screen reads the English one.
+    expect(describeScaleChange(changes[1])).toBe('体积：0.4 µL → 0.2 µL，低于移液下限 0.5 µL，建议配预混液或换体系');
+    expect(changes.slice(1).map(scaleChangeLine)).toEqual(['体积: 0.4 µL → 0.2 µL, below the pipetting minimum of 0.5 µL; use a premix or another system', '质量: 50 ng → 25 ng',
+      '时间: 10 min → 10 min (kept)', '温度: 95 °C → 95 °C (kept)', '细胞: 200,000 cells → 200,000 cells (confirm by hand), cell numbers, enzyme units and the like don’t scale; confirm by hand']);
     const dimension = document.systems!.dimensions.find(item => item.id === dimensionId)!;
     expect(dimension).toMatchObject({ label: '反应体系', options: [{ label: '20 µL' }, { label: '10 µL' }] });
     // The run chooses the system; the original values are the first option, the scaled ones the second.

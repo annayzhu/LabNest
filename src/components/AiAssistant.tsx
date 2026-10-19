@@ -65,14 +65,14 @@ export function AiButton({ needs = 'model', variant = 'ai', ...props }: AiButton
   const ai = useAiStatus();
   if (needs === 'switch' ? ai.enabled : ai.ready) return <Button variant={variant} {...props} />;
   return <Button {...props} type="button" variant="ai-off" disabled={false} aria-busy={undefined} aria-haspopup="dialog" data-ai-off
-    title={ai.state === 'checking' ? '正在读取 AI 设置…' : 'AI 未开启：点击查看如何配置'} onClick={ai.openPanel} />;
+    title={ai.state === 'checking' ? 'Reading AI settings…' : 'AI is off: click to see how to set it up'} onClick={ai.openPanel} />;
 }
 
 /** An entry into a tool that also works without AI: in the AI color when AI is ready, quiet gray otherwise; it always opens. */
 export function AiLink({ href, size, className, children }: { href: string; size?: ButtonSize; className?: string; children: ReactNode }) {
   const { ready, state } = useAiStatus();
   return <Link href={href} className={buttonStyles({ variant: ready ? 'ai' : 'ai-off', size, className })}
-    title={ready || state === 'checking' ? undefined : 'AI 未开启：里面的 AI 功能暂不可用，其余照常'}>{children}</Link>;
+    title={ready || state === 'checking' ? undefined : 'AI is off: the AI features inside are unavailable for now; everything else works'}>{children}</Link>;
 }
 
 /** The top-bar button for the AI 助手 panel: filled in the AI color when AI is ready, gray otherwise; it counts suggestions waiting for you. */

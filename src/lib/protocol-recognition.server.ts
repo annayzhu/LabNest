@@ -26,7 +26,7 @@ export const keepRecognitionSource = (file: File) => keepAttachment(file, { targ
 /** A kept source and its text; only files kept for recognition can be read this way. */
 export async function loadRecognitionSource(sourceId: string) {
   const attachment = await prisma.attachment.findFirst({ where: { id: sourceId, links: { some: { linkType: 'recognition_source' } } } });
-  if (!attachment) throw new Error('原始文件不存在，请重新上传');
+  if (!attachment) throw new Error('The original file is missing; upload it again');
   const bytes = new Uint8Array(await readFile(resolveAttachmentPath(attachment.storagePath)));
   return { sourceId, fileName: attachment.originalFilename, source: await readSourceFile(attachment.originalFilename, bytes) };
 }

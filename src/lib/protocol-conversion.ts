@@ -14,7 +14,7 @@ export type ConversionSummary = {
   keptAsText: string[];
   /** Choices declared by a line such as "体系：350 µL / 600 µL". */
   systems: string[];
-  /** Steps written as "仅…：", e.g. "第 2 步 · 仅富脂样本". */
+  /** Steps written as "仅…：", as they read on screen, e.g. "Step 2 · only 富脂样本". */
   conditions: string[];
   /** Rows of the old formula table now in the material table, and those skipped because the material was already listed. */
   formulaRows: number;
@@ -69,7 +69,7 @@ export function convertLegacyProtocol(document: ProtocolDocument, newId: (prefix
       option = dimension.options[0];
     }
     systems.rules.push({ id: newId('rule'), target: 'step', targetId: stepId, when: { all: [{ dimensionId: dimension.id, optionId: option.id }] }, parameterIds: [], actualFields: [], optional: false });
-    conditions.push(`第 ${order} 步 · 仅${label}`);
+    conditions.push(`Step ${order} · only ${label}`);
   };
 
   const stepIds = new Map<string, string>();
@@ -179,6 +179,14 @@ export function convertLegacyProtocol(document: ProtocolDocument, newId: (prefix
 export function conversionSummaryText(summary: ConversionSummary) {
   return [`转换为步骤块：${summary.steps} 步`, summary.chips.length ? `${summary.chips.length} 个参数块` : '', summary.systems.length ? `${summary.systems.length} 个体系` : '',
     summary.formulaRows ? `旧公式表 ${summary.formulaRows} 行并入材料表` : ''].filter(Boolean).join('，');
+}
+
+/** conversionSummaryText on screen, in the interface's English source text (the stored change summary keeps the Chinese). */
+export function conversionSummaryLine(summary: ConversionSummary) {
+  const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  return [`Converted to step blocks: ${count(summary.steps, 'step', 'steps')}`, summary.chips.length ? count(summary.chips.length, 'parameter block', 'parameter blocks') : '',
+    summary.systems.length ? count(summary.systems.length, 'system', 'systems') : '',
+    summary.formulaRows ? `old formula table: ${count(summary.formulaRows, 'row', 'rows')} moved into the material table` : ''].filter(Boolean).join(', ');
 }
 
 const stepNumber = /^\s*(?:\d+\s*(?:[、)）．]|\.(?!\d))|第\s*\d+\s*步\s*[：:、.]?|step\s*\d+\s*[:.)]?)\s*/i;

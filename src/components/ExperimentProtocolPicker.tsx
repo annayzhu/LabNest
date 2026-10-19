@@ -68,7 +68,7 @@ function versionTitleIsRedundant(version: ExperimentProtocolVersionOption) {
 
 function protocolVersionMeta(version: ExperimentProtocolVersionOption) {
   const titlePart = versionTitleIsRedundant(version) ? "" : `${version.versionTitle} · `;
-  return `${titlePart}v${version.displayVersion} · ${protocolStateLabel(version.reviewStage, "zh")} · ${version.protocol.projectName ?? "规程库"} · ${version.stepCount} 步`;
+  return `${titlePart}v${version.displayVersion} · ${protocolStateLabel(version.reviewStage, "en")} · ${version.protocol.projectName ?? "Protocol library"} · ${version.stepCount} ${version.stepCount === 1 ? "step" : "steps"}`;
 }
 
 function ProtocolVersionAddButton({ latestId, onAdd, version }: { latestId: string; onAdd: (id: string) => void; version: ExperimentProtocolVersionOption }) {
@@ -76,11 +76,11 @@ function ProtocolVersionAddButton({ latestId, onAdd, version }: { latestId: stri
     <span className="min-w-0 flex-1">
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="truncate text-[length:var(--ln-experiment-protocol-picker-title-size)] font-medium text-ink" title={version.protocol.title}>{version.protocol.title}</span>
-        {version.id === latestId ? null : <span className="shrink-0 rounded-full bg-stone px-1.5 text-[length:var(--ln-experiment-protocol-picker-badge-size)] leading-5 text-muted">历史版本</span>}
+        {version.id === latestId ? null : <span className="shrink-0 rounded-full bg-stone px-1.5 text-[length:var(--ln-experiment-protocol-picker-badge-size)] leading-5 text-muted">Earlier version</span>}
       </span>
       <span className="block truncate text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">{version.protocol.humanCode} · {protocolVersionMeta(version)}</span>
     </span>
-    <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-moss"><Plus className="h-3.5 w-3.5" aria-hidden />添加</span>
+    <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-moss"><Plus className="h-3.5 w-3.5" aria-hidden />Add</span>
   </button>;
 }
 
@@ -156,28 +156,28 @@ export function ExperimentProtocolPicker({
     <div className="space-y-3">
       {selectedIds.map((id) => <input key={id} type="hidden" name="protocolVersionIds" value={id} />)}
       <div>
-        <p className={formLabelClass}>已选规程 · 按执行顺序</p>
+        <p className={formLabelClass}>Chosen Protocols · in run order</p>
         {selectedIds.length ? <ol className="mt-1">
           {selectedIds.map((id, index) => {
             const version = versionMap.get(id)!;
             return <li key={id} className="flex min-w-0 items-center gap-2 border-b border-hairline py-1.5">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm" aria-label={`第 ${index + 1} 个`}>{index + 1}</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-moss font-mono text-xs font-semibold text-warm" aria-label={`Position ${index + 1}`}>{index + 1}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium" title={version.protocol.title}>{version.protocol.title}</span>
-                <span className="block truncate text-xs text-muted">v{version.displayVersion} · {version.stepCount} 步</span>
+                <span className="block truncate text-xs text-muted">{`v${version.displayVersion} · ${version.stepCount} ${version.stepCount === 1 ? "step" : "steps"}`}</span>
               </span>
               <span className="flex shrink-0 items-center">
-                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="上移规程" className="focus-ring flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" aria-hidden /></button>
-                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="下移规程" className="focus-ring flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" aria-hidden /></button>
-                <button type="button" onClick={() => commit(selectedIds.filter((item) => item !== id))} aria-label={`移除 ${version.protocol.title}`} className="focus-ring flex h-7 w-7 items-center justify-center rounded text-error hover:bg-error-surface"><X className="h-4 w-4" aria-hidden /></button>
+                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Move Protocol up" className="focus-ring flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-stone disabled:opacity-30"><ArrowUp className="h-4 w-4" aria-hidden /></button>
+                <button type="button" onClick={() => move(index, 1)} disabled={index === selectedIds.length - 1} aria-label="Move Protocol down" className="focus-ring flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-stone disabled:opacity-30"><ArrowDown className="h-4 w-4" aria-hidden /></button>
+                <button type="button" onClick={() => commit(selectedIds.filter((item) => item !== id))} aria-label={`Remove ${version.protocol.title} from the chosen Protocols`} className="focus-ring flex h-7 w-7 items-center justify-center rounded text-error hover:bg-error-surface"><X className="h-4 w-4" aria-hidden /></button>
               </span>
             </li>;
           })}
-        </ol> : <p className="mt-1 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-2 text-sm text-muted">尚未选择规程。</p>}
+        </ol> : <p className="mt-1 rounded-[var(--ln-radius-control-lg)] border border-dashed border-hairline px-3 py-2 text-sm text-muted">No Protocol chosen yet.</p>}
       </div>
 
       <div>
-        <label><span className={formLabelClass}>从实验规程库添加</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 mt-[calc(var(--ln-form-field-gap)/2)] h-4 w-4 -translate-y-1/2 text-muted" aria-hidden /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索名称、版本或编号…" className={`${formInputClass} pl-9`} /></span></label>
+        <label><span className={formLabelClass}>Add from Protocol library</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 mt-[calc(var(--ln-form-field-gap)/2)] h-4 w-4 -translate-y-1/2 text-muted" aria-hidden /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name, version or code…" className={`${formInputClass} pl-9`} /></span></label>
         <div className="mt-1.5 max-h-72 divide-y divide-hairline overflow-y-auto rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface">
           {protocolGroups.length ? protocolGroups.map((group) => {
             const expanded = group.searchMode || expandedProtocolIds.has(group.protocolId);
@@ -185,16 +185,16 @@ export function ExperimentProtocolPicker({
             return <div key={group.protocolId} className="bg-surface">
               {group.primary ? <ProtocolVersionAddButton version={group.primary} latestId={group.latest.id} onAdd={add} /> : <div className="px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-[var(--ln-experiment-protocol-picker-row-padding-y)]">
                 <ProtocolIdentity compact title={group.latest.protocol.title} code={group.latest.protocol.humanCode} />
-                <span className="mt-0.5 block text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">最新版本 v{group.latest.displayVersion} 已选；需要时可展开历史版本。</span>
+                <span className="mt-0.5 block text-[length:var(--ln-experiment-protocol-picker-meta-size)] leading-tight text-muted">{`Latest version v${group.latest.displayVersion} is chosen; open earlier versions if you need one.`}</span>
               </div>}
               {group.history.length ? <div className="border-t border-hairline bg-warm/45 px-[var(--ln-experiment-protocol-picker-row-padding-x)] py-1.5">
-                {group.searchMode ? <span className="text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-medium text-muted">匹配到 {group.history.length + (group.primary ? 1 : 0)} 个版本</span> : <button type="button" onClick={() => toggleHistory(group.protocolId)} className="focus-ring inline-flex items-center gap-1 rounded-[var(--ln-radius-control-sm)] px-1.5 py-1 text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-semibold text-moss hover:bg-sage-surface">{expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}{expanded ? "收起历史版本" : `显示历史版本（${group.history.length}）`}</button>}
+                {group.searchMode ? <span className="text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-medium text-muted">{`${group.history.length + (group.primary ? 1 : 0)} matching versions`}</span> : <button type="button" onClick={() => toggleHistory(group.protocolId)} className="focus-ring inline-flex items-center gap-1 rounded-[var(--ln-radius-control-sm)] px-1.5 py-1 text-[length:var(--ln-experiment-protocol-picker-meta-size)] font-semibold text-moss hover:bg-sage-surface">{expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}{expanded ? "Hide earlier versions" : `Show earlier versions (${group.history.length})`}</button>}
               </div> : null}
               {visibleHistory.length ? <div className="divide-y divide-hairline border-t border-hairline bg-stone/25 pl-[var(--ln-experiment-protocol-picker-history-padding-left)]">
                 {visibleHistory.map((version) => <ProtocolVersionAddButton key={version.id} version={version} latestId={group.latest.id} onAdd={add} />)}
               </div> : null}
             </div>;
-          }) : <p className="px-3 py-6 text-center text-sm text-muted">{versions.length === selectedIds.length ? "全部版本已选择。" : "没有匹配的规程版本。"}</p>}
+          }) : <p className="px-3 py-6 text-center text-sm text-muted">{versions.length === selectedIds.length ? "All versions are chosen." : "No matching Protocol version."}</p>}
         </div>
       </div>
     </div>

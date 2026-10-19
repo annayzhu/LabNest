@@ -18,12 +18,12 @@ export async function POST(request: Request) {
   const resolved = await resolveConnectedAdapter({ timeoutMs: 240_000 });
   if (!resolved.ok) return Response.json({ error: resolved.error }, { status: resolved.status });
   const { adapter, config, gate } = resolved;
-  if (!adapter.complete) return Response.json({ error: `模型服务“${config.name}”不支持整理文本` }, { status: 409 });
+  if (!adapter.complete) return Response.json({ error: `The model service “${config.name}” can’t organize text` }, { status: 409 });
   const body = await request.json().catch(() => ({})) as { sourceId?: unknown };
   let loaded;
   try { loaded = await loadRecognitionSource(String(body.sourceId ?? "")); }
-  catch (error) { return Response.json({ error: error instanceof Error ? error.message : "原始文件不存在" }, { status: 404 }); }
-  if (!loaded.source.text.trim()) return Response.json({ error: "这份文件里没有可读的文字" }, { status: 422 });
+  catch (error) { return Response.json({ error: error instanceof Error ? error.message : "The original file is missing" }, { status: 404 }); }
+  if (!loaded.source.text.trim()) return Response.json({ error: "There is no readable text in this file" }, { status: 422 });
   try {
     const result = await recognizeProtocolText(loaded.source.text, (system, user) => adapter.complete!(system, user));
     await gate.assertAllowed();
@@ -34,6 +34,6 @@ export async function POST(request: Request) {
     } } });
     return Response.json({ view });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "模型请求失败" }, { status: error instanceof AIProviderError && error.status === 403 ? 403 : 502 });
+    return Response.json({ error: error instanceof Error ? error.message : "The model request failed" }, { status: error instanceof AIProviderError && error.status === 403 ? 403 : 502 });
   }
 }

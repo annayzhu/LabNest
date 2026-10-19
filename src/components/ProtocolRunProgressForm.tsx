@@ -97,8 +97,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     consumptionChoices.current = null;
     if (result.error && data.get("intent") === "complete") consumptionReviewed.current = false; // ask again on the next try
     if (choices?.length && !result.error && data.get("intent") === "complete") {
-      try { await recordRunConsumption(experimentId, choices); return { ...result, message: `${result.message ?? ""} 已记录本次用量${choices.some(choice => choice.stockId) ? "并扣减库存" : ""}。` }; }
-      catch (cause) { return { ...result, error: `实验已完成，但用量未全部写入：${cause instanceof Error ? cause.message : "请在“本次使用的试剂与耗材”中登记"}` }; }
+      try { await recordRunConsumption(experimentId, choices); return { ...result, message: `${result.message ?? ""} This run’s use is recorded${choices.some(choice => choice.stockId) ? " and deducted from stock" : ""}.` }; }
+      catch (cause) { return { ...result, error: `The run is complete, but not all of its use was written · ${cause instanceof Error ? cause.message : "record it under “Reagents and consumables used in this run”"}` }; }
     }
     if (!result.error && result.completedStepIds) {
       const saved = new Set(result.completedStepIds);
@@ -136,7 +136,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
     if(draftInitialized.current)return;draftInitialized.current=true;
-    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){if (structured && saved.revision !== structured.plan.revision) { if (Object.keys(saved.fields ?? {}).length) { setOlderDraft(saved.fields); setDraftNotice('执行记录已更新，旧草稿保留供核对。'); } } else { setDraftFields(saved.fields??{}); if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id)))); } if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length && (!structured || saved.revision === structured.plan.revision))setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
+    const frame=requestAnimationFrame(()=>{try{const saved=JSON.parse(sessionStorage.getItem(`labnest.run-draft:${experimentId}`)??'null');if(saved){if (structured && saved.revision !== structured.plan.revision) { if (Object.keys(saved.fields ?? {}).length) { setOlderDraft(saved.fields); setDraftNotice('The run record was updated; the older draft is kept for checking.'); } } else { setDraftFields(saved.fields??{}); if(Array.isArray(saved.completed))setCompletedIds(new Set(saved.completed.filter((id:string)=>steps.some(s=>s.id===id)))); } if(steps.some(s=>s.id===saved.selectedStepId)&&!window.location.hash)setSelectedStepId(saved.selectedStepId);window.scrollTo(0,saved.scrollY??0);if(Object.keys(saved.fields??{}).length && (!structured || saved.revision === structured.plan.revision))setDraftNotice('Unsaved draft restored');}}catch{setDraftNotice('Draft storage unavailable');}setDraftReady(true);});
     return()=>cancelAnimationFrame(frame);
   },[experimentId,steps,structured,setSelectedStepId]);
   useEffect(()=>{
@@ -174,7 +174,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     const data = new FormData(form);
     const optional = (name: string) => String(data.get(name) ?? "").trim() || undefined;
     let queueContext;
-    try { queueContext = runQueueContext(steps.find(step => step.id === stepId)?.protocolStepRef ?? stepId); } catch { setOfflineStatus("本机存储不可用，未保存。请保留页面。"); return; }
+    try { queueContext = runQueueContext(steps.find(step => step.id === stepId)?.protocolStepRef ?? stepId); } catch { setOfflineStatus("Storage on this device is unavailable; nothing was saved. Keep this page open."); return; }
     void enqueueMobileMutation({
       clientMutationId,
       actionType: "step.complete",
@@ -237,11 +237,11 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   return <form id="run-execution" ref={formRef} action={formAction} onSubmit={prepareMutation} className="space-y-4">
     <input type="hidden" name="experimentId" value={experimentId} />
     {structured ? <input type="hidden" name="executionPlanRevision" value={structured.plan.revision}/> : null}
-    {queued.length ? <p role="status" className="text-warning">本机待同步 {queued.length} 条，其中冲突 {queued.filter(item => item.state === "conflict").length} 条。下方完成计数尚未代表全部已同步。</p> : null}
-    {structured ? <p role="status" data-structured-progress>必需操作：{requiredCompleted}/{requiredSteps.length} 完成 · 可选：{steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/{steps.filter(s => structured.steps[s.id]?.optional).length} · 跳过：{Object.keys(structured.plan.skips).length} · 待确定：{steps.filter(s => structured.steps[s.id]?.blocked).length}</p> : null}
+    {queued.length ? <p role="status" className="text-warning">{`${queued.length} record${queued.length === 1 ? "" : "s"} on this device waiting to sync, ${queued.filter(item => item.state === "conflict").length} in conflict. The completion count below does not cover them all yet.`}</p> : null}
+    {structured ? <p role="status" data-structured-progress>{`Required ${requiredCompleted}/${requiredSteps.length} done · optional ${steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/${steps.filter(s => structured.steps[s.id]?.optional).length} · skipped ${Object.keys(structured.plan.skips).length} · to be determined ${steps.filter(s => structured.steps[s.id]?.blocked).length}`}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
-    {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>执行记录已更新。请核对服务器记录与旧草稿，再决定是否继续使用。</p><details><summary>查看旧草稿</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('已恢复核对后的草稿，尚未保存'); }}>已核对，继续使用这些草稿</button></aside> : null}
+    {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>The run record was updated. Compare the server record with the older draft before deciding whether to keep using it.</p><details><summary>Show the older draft</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('Checked draft restored, not saved yet'); }}>Checked; keep using these drafts</button></aside> : null}
     {[...completedIds].map((id) => <input key={`mobile-completed-${id}`} type="hidden" name="completedStepIds" value={id} />)}
 
     <div className={bench ? "ln-bench-grid" : "contents"}>
@@ -387,7 +387,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
           const heading = experimentStepGroupHeading(group.title);
           return <section key={group.key} aria-labelledby={`run-group-${group.key}`}>
             <label className="flex cursor-pointer items-start gap-3 border-b border-hairline bg-sage-surface/55 px-4 py-3">
-              <button type="button" onClick={()=>setGroup(group.steps,!allCompleted)} disabled={!editable||pending||group.steps.some(s => unavailable(s.id))} className="focus-ring min-h-11 rounded border border-hairline px-2 text-xs">{allCompleted?"取消整组勾选":"勾选整组"}</button>
+              <button type="button" onClick={()=>setGroup(group.steps,!allCompleted)} disabled={!editable||pending||group.steps.some(s => unavailable(s.id))} className="focus-ring min-h-11 rounded border border-hairline px-2 text-xs">{allCompleted?"Untick the whole group":"Tick the whole group"}</button>
               <span className="min-w-0"><strong id={`run-group-${group.key}`} className="block text-sm font-semibold text-ink">{group.order + 1}. {heading.title}</strong><span className="mt-0.5 block text-xs text-muted">{heading.detail ? `${heading.detail} · ` : ""}Whole block · {groupCompleted}/{group.steps.length} steps checked</span></span>
             </label>
             <div className="divide-y divide-hairline">
@@ -403,7 +403,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   <StructuredStepRecord key={`${step.id}:${structured?.plan.revision}`} experimentId={experimentId} stepId={step.id} structured={structured} editable={editable} completed={step.completed}/>
                   {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
-                  <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring inline-flex min-h-9 items-center text-sm text-moss">记一笔</Link>
+                  <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring inline-flex min-h-9 items-center text-sm text-moss">Jot a note</Link>
                   {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</Fragment>)}

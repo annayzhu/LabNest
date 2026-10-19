@@ -5,9 +5,9 @@ describe('An analysis workbook as an experiment result', () => {
   it('accepts the files the analysis tools export and nothing else', () => {
     expect(workbookProblem({ name: 'qPCR_GAPDH.xlsx', size: 120_000 })).toBeUndefined();
     expect(workbookProblem({ name: 'cnv.CSV', size: 2_000 })).toBeUndefined();
-    expect(workbookProblem({ name: 'gel.png', size: 2_000 })).toBe('只接受分析工作台导出的 .xlsx、.xls 或 .csv 文件');
-    expect(workbookProblem({ name: 'big.xlsx', size: 26 * 1024 * 1024 })).toBe('文件不能超过 25 MB');
-    expect(workbookProblem({ name: 'empty.xlsx', size: 0 })).toBe('请选择导出的工作簿');
+    expect(workbookProblem({ name: 'gel.png', size: 2_000 })).toBe('Only .xlsx, .xls or .csv files exported from an analysis workbench are accepted');
+    expect(workbookProblem({ name: 'big.xlsx', size: 26 * 1024 * 1024 })).toBe('The file can’t be larger than 25 MB');
+    expect(workbookProblem({ name: 'empty.xlsx', size: 0 })).toBe('Choose the exported workbook');
   });
 
   it('knows only its own analysis tools', () => {

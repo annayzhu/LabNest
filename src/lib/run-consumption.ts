@@ -1,5 +1,5 @@
 import { convert, normalizeUnit, units } from './calculators/quantities';
-import { mixQuantityLabel, mixTitle } from './protocol-mix';
+import { mixQuantityLabel, mixTitle, runQuantityLabelText } from './protocol-mix';
 import { chipAmount, chipReferenceId, isMaterialAmount } from './protocol-chips';
 import { mixState, stepMixes, stepQuantities, stepVersion, type StructuredRunView } from './structured-run';
 
@@ -38,7 +38,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
         const parameter = systems.parameters.find(p => p.id === id);
         const name = parameter?.materialRef?.name ?? (component.name.trim() || parameter?.label.trim());
         if (!name || !line?.unit || !isMaterialAmount(line.unit)) continue;
-        add(name, line.unit, line.total, `${where} · ${mixTitle(mix)}`, state.quantity === undefined ? `Not filled in: ${mixQuantityLabel(mix)}` : undefined);
+        add(name, line.unit, line.total, `${where} · ${mixTitle(mix)}`, state.quantity === undefined ? `Not filled in: ${runQuantityLabelText(mixQuantityLabel(mix))}` : undefined);
       }
     }
     const reactions = stepQuantities(view, stepId).quantities['反应数'];
@@ -49,7 +49,7 @@ export function runConsumption(view: Pick<StructuredRunView, 'steps' | 'plan' | 
       if (resolved?.status !== 'resolved') { add(parameter.materialRef.name, parameter.unit, undefined, where); continue; }
       if (!isMaterialAmount(resolved.unit)) continue;
       if (parameter.perRun) add(parameter.materialRef.name, resolved.unit, resolved.value, where);
-      else add(parameter.materialRef.name, resolved.unit, reactions === undefined ? undefined : resolved.value! * reactions, where, 'Not filled in: 反应数');
+      else add(parameter.materialRef.name, resolved.unit, reactions === undefined ? undefined : resolved.value! * reactions, where, `Not filled in: ${runQuantityLabelText('反应数')}`);
     }
   }
   return [...lines.values()];

@@ -43,7 +43,7 @@ describe('实验准备清单', () => {
     expect(byKind('material').map(item => [item.label, item.detail, item.badge])).toEqual([
       ['2× SYBR Mix', '264 µL · used in Step 1 · qPCR 预混液', undefined], ['cDNA', '48 µL · used in Step 1 · qPCR 预混液', 'Recorded']]);
     expect(byKind('material').map(item => [zh(item.detail), zh(item.badge)])).toEqual([['264 µL · 第 1 步 · qPCR 预混液', undefined], ['48 µL · 第 1 步 · qPCR 预混液', '已记录']]);
-    expect(byKind('mix')[0]).toMatchObject({ key: 'mix:run-1:b1-mix', label: 'qPCR 预混液 · Step 1', detail: '24 反应数 · Not confirmed', stepId: 'run-1' });
+    expect(byKind('mix')[0]).toMatchObject({ key: 'mix:run-1:b1-mix', label: 'qPCR 预混液 · Step 1', detail: '24 reactions · Not confirmed', stepId: 'run-1' });
     expect([zh(byKind('mix')[0].label), zh(byKind('mix')[0].detail)]).toEqual(['qPCR 预混液 · 第 1 步', '24 反应数 · 待确认']);
     expect(byKind('equipment')[0]).toMatchObject({ key: 'equipment:v1:tool-1', label: 'Centrifuge', detail: 'Pre-cool to 4 °C · 12,000 ×g · Step 1' });
     expect([zh(byKind('equipment')[0].label), zh(byKind('equipment')[0].detail)]).toEqual(['离心', '预冷至 4 °C · 12,000 ×g · 第 1 步']);
@@ -57,11 +57,11 @@ describe('实验准备清单', () => {
     const { snapshot, steps, adopted } = qpcr();
     const bare = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {} }, steps);
     const list = preparationChecklist(bare);
-    expect(list.warnings).toEqual(['Run quantity not filled in: 反应数 · qPCR']);
+    expect(list.warnings).toEqual(['Run quantity not filled in: number of reactions · qPCR']);
     expect(list.warnings.map(zh)).toEqual(['尚未填写反应数：qPCR']);
     const material = list.items.find(item => item.kind === 'material')!, mix = list.items.find(item => item.kind === 'mix')!;
-    expect(material).toMatchObject({ label: '2× SYBR Mix', warning: 'Not filled in: 反应数' });
-    expect(mix).toMatchObject({ detail: 'Not filled in: 反应数 · Not confirmed', warning: 'Not filled in: 反应数' });
+    expect(material).toMatchObject({ label: '2× SYBR Mix', warning: 'Not filled in: number of reactions' });
+    expect(mix).toMatchObject({ detail: 'Not filled in: number of reactions · Not confirmed', warning: 'Not filled in: number of reactions' });
     expect([zh(material.warning), zh(material.detail), zh(mix.detail)]).toEqual(['未填写反应数', '未填写反应数 · 第 1 步 · qPCR 预混液', '未填写反应数 · 待确认']);
     const counted = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
     // 264 µL needed, 0.1 mL on the shelf; cDNA is compared in µL and suffices.

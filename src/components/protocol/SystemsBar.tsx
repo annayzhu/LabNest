@@ -10,6 +10,7 @@ import { useModalDialog } from '@/components/ui/ModalDialogProvider';
 import { SystemMark } from './SystemMark';
 import { LensPresets, LensRow } from './Lens';
 import { useProtocolEditor } from './ProtocolEditorContext';
+import { systemLabelText } from '@/lib/protocol-conditions';
 
 type Dimension = ProtocolSystems['dimensions'][number];
 type Option = Dimension['options'][number];
@@ -22,8 +23,8 @@ function NameInput({ value, label, onCommit }: { value: string; label: string; o
 
 /** What deleting changes, in the author's words; nothing to confirm when nothing uses it. */
 function deletionNotice(name: string, references: { values: number; conditions: number }, keepsFirst: boolean) {
-  const parts = [references.values ? `${references.values} 个参数按它取值，${keepsFirst ? '删除后保留第一个选项的数值' : '它的数值一并删除'}` : '', references.conditions ? `${references.conditions} 处适用范围用到它，删除后这些内容变为通用` : ''].filter(Boolean);
-  return parts.length ? `“${name}”：${parts.join('；')}。` : '';
+  const parts = [references.values ? `${references.values} ${references.values === 1 ? 'parameter takes its' : 'parameters take their'} value from it, and ${keepsFirst ? 'the first option’s values are kept' : 'those values are deleted with it'}` : '', references.conditions ? `${references.conditions} applicability ${references.conditions === 1 ? 'rule uses' : 'rules use'} it, and that content becomes general` : ''].filter(Boolean);
+  return parts.length ? `“${name}”: ${parts.join('; ')}.` : '';
 }
 
 function DimensionEditor({ dimension, systems, onDone }: { dimension: Dimension; systems: ProtocolSystems; onDone: () => void }) {
@@ -36,30 +37,30 @@ function DimensionEditor({ dimension, systems, onDone }: { dimension: Dimension;
   // The next symbol or colour no other option uses; past the palette, the next one in order.
   const nextSymbol = (option: Option) => { const used = new Set(others(option).map(m => m.symbol)); const start = chipSymbols.indexOf(marks.get(`${dimension.id}:${option.id}`)?.symbol ?? 'triangle'); return Array.from({ length: chipSymbols.length }, (_, step) => chipSymbols[(start + step + 1) % chipSymbols.length]).find(symbol => !used.has(symbol)) ?? chipSymbols[(start + 1) % chipSymbols.length]; };
   const nextTone = (option: Option) => { const used = new Set(others(option).map(m => m.tone)); const start = marks.get(`${dimension.id}:${option.id}`)?.tone ?? 0; return Array.from({ length: chipToneCount }, (_, step) => (start + step + 1) % chipToneCount).find(tone => !used.has(tone)) ?? (start + 1) % chipToneCount; };
-  const confirmDeletion = async (notice: string, label: string) => !notice || dialog.confirm({ title: `删除${label}？`, description: notice, confirmLabel: '删除', cancelLabel: '取消', tone: 'destructive' });
+  const confirmDeletion = async (notice: string, label: string) => !notice || dialog.confirm({ title: `Delete ${label}?`, description: notice, confirmLabel: 'Delete', cancelLabel: 'Cancel', tone: 'destructive' });
   const deleteOption = async (option: Option) => {
-    if (await confirmDeletion(deletionNotice(option.label, systemReferences(systems, p => p.dimensionId === dimension.id && p.optionId === option.id), false), `选项“${option.label}”`)) updateSystems(current => withoutOption(current, dimension.id, option.id));
+    if (await confirmDeletion(deletionNotice(option.label, systemReferences(systems, p => p.dimensionId === dimension.id && p.optionId === option.id), false), `option “${option.label}”`)) updateSystems(current => withoutOption(current, dimension.id, option.id));
   };
   const deleteDimension = async () => {
     if (!await confirmDeletion(deletionNotice(dimension.label, systemReferences(systems, p => p.dimensionId === dimension.id), true), `“${dimension.label}”`)) return;
     updateSystems(current => withoutDimension(current, dimension.id));
     onDone();
   };
-  const noun = dimension.kind === 'condition' ? '条件' : '体系';
-  return <div className="ln-systems-editor" role="group" aria-label={`编辑${dimension.label}`}>
-    <label className="ln-systems-field"><span>{noun}名称</span><NameInput label={`${noun}名称`} value={dimension.label} onCommit={label => setDimension({ ...dimension, label })} /></label>
+  const nameLabel = dimension.kind === 'condition' ? 'Condition name' : 'System name';
+  return <div className="ln-systems-editor" role="group" aria-label={`Editing ${dimension.label}`}>
+    <label className="ln-systems-field"><span>{nameLabel}</span><NameInput label={nameLabel} value={dimension.label} onCommit={label => setDimension({ ...dimension, label })} /></label>
     {dimension.options.map(option => { const mark = marks.get(`${dimension.id}:${option.id}`); return <div key={option.id} className={dimension.kind === 'condition' ? 'ln-systems-option-edit is-condition' : 'ln-systems-option-edit'}>
       {dimension.kind !== 'condition' ? <>
-        <button type="button" className="focus-ring ln-systems-symbol" data-tone={mark?.tone} aria-label={`更换${option.label}的符号`} title="更换符号" onClick={() => setOption(option, { symbol: nextSymbol(option) })}>{mark?.symbol ? <SystemMark mark={mark} /> : null}</button>
-        <button type="button" className="focus-ring ln-systems-tone" data-tone={mark?.tone} aria-label={`更换${option.label}的颜色`} title="更换颜色" onClick={() => setOption(option, { tone: nextTone(option) })}><span aria-hidden /></button>
+        <button type="button" className="focus-ring ln-systems-symbol" data-tone={mark?.tone} aria-label={`Change the symbol of ${option.label}`} title="Change symbol" onClick={() => setOption(option, { symbol: nextSymbol(option) })}>{mark?.symbol ? <SystemMark mark={mark} /> : null}</button>
+        <button type="button" className="focus-ring ln-systems-tone" data-tone={mark?.tone} aria-label={`Change the color of ${option.label}`} title="Change color" onClick={() => setOption(option, { tone: nextTone(option) })}><span aria-hidden /></button>
       </> : null}
-      <NameInput label={`选项名称：${option.label}`} value={option.label} onCommit={label => setOption(option, { label })} />
-      <button type="button" className="focus-ring ln-systems-icon" aria-label={`删除选项${option.label}`} disabled={dimension.options.length < 2} onClick={() => void deleteOption(option)}><X aria-hidden /></button>
+      <NameInput label={`Option name: ${option.label}`} value={option.label} onCommit={label => setOption(option, { label })} />
+      <button type="button" className="focus-ring ln-systems-icon" aria-label={`Delete option ${option.label}`} disabled={dimension.options.length < 2} onClick={() => void deleteOption(option)}><X aria-hidden /></button>
     </div>; })}
     <div className="ln-systems-editor-actions">
-      <button type="button" className="focus-ring" onClick={() => setDimension({ ...dimension, options: [...dimension.options, { id: uid('option'), label: dimension.kind === 'condition' ? '新选项' : String.fromCharCode(65 + dimension.options.length) }] })}><Plus aria-hidden />选项</button>
-      <button type="button" className="focus-ring is-danger" onClick={() => void deleteDimension()}><Trash2 aria-hidden />删除</button>
-      <button type="button" className="focus-ring is-primary" onClick={onDone}><Check aria-hidden />完成</button>
+      <button type="button" className="focus-ring" onClick={() => setDimension({ ...dimension, options: [...dimension.options, { id: uid('option'), label: dimension.kind === 'condition' ? '新选项' : String.fromCharCode(65 + dimension.options.length) }] })}><Plus aria-hidden />Option</button>
+      <button type="button" className="focus-ring is-danger" onClick={() => void deleteDimension()}><Trash2 aria-hidden />Delete</button>
+      <button type="button" className="focus-ring is-primary" onClick={onDone}><Check aria-hidden />Done</button>
     </div>
   </div>;
 }
@@ -84,21 +85,21 @@ export function SystemsBar() {
   const issues = systems ? [...new Set(validateProtocolSystems(systems).map(issue => issue.message))] : [];
   const savePreset = () => systems && api.updateSystems(current => ({ ...current, presets: [...current.presets, { id: uid('preset'), label: Object.entries(api.lens).map(([d, o]) => current.dimensions.find(x => x.id === d)?.options.find(x => x.id === o)?.label).filter(Boolean).join(' · ') || '常用组合', selections: { ...api.lens } }] }));
   if (!dimensions.length) return <div className="ln-systems-bar is-empty" data-print-hidden>
-    <span>不同体系用量不同时，直接写 <code>50/80 µL</code>；需要单独标注的样本条件，在步骤或段落左侧 ⋮⋮ 的“适用范围”里设置。</span>
-    <button className="focus-ring" type="button" onClick={() => { if (!systems) api.updateSystems(() => blankProtocolSystems()); addDimension('system'); }}><Plus aria-hidden />体系</button>
+    <span>When systems use different amounts, write <code>50/80 µL</code>; set sample conditions that need their own label in “Applies to…” from ⋮⋮ beside a step or paragraph.</span>
+    <button className="focus-ring" type="button" onClick={() => { if (!systems) api.updateSystems(() => blankProtocolSystems()); addDimension('system'); }}><Plus aria-hidden />System</button>
   </div>;
-  return <section className="ln-systems-bar" aria-label="体系图例与透镜">
+  return <section className="ln-systems-bar" aria-label="System legend and lens">
     {dimensions.map(dimension => editing === dimension.id && systems ? <DimensionEditor key={dimension.id} dimension={dimension} systems={systems} onDone={() => setEditing(null)} />
-      : <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={api.lens} onChange={api.setLens} label={`透镜：${dimension.label}`} optionTitle={option => `只看${option.label}：其余淡化`}>
-        <button type="button" className="focus-ring ln-systems-icon" aria-label={`编辑${dimension.label}`} title="编辑名称、选项、符号和颜色" data-print-hidden onClick={() => setEditing(dimension.id)}><Pencil aria-hidden /></button>
+      : <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={api.lens} onChange={api.setLens} label={`Lens by ${systemLabelText(dimension.label)}`} optionTitle={option => `Only ${systemLabelText(option.label)}: fade the rest`}>
+        <button type="button" className="focus-ring ln-systems-icon" aria-label={`Open ${dimension.label} for editing`} title="Edit the name, options, symbols and colors" data-print-hidden onClick={() => setEditing(dimension.id)}><Pencil aria-hidden /></button>
       </LensRow>)}
     <div className="ln-systems-footer" data-print-hidden>
       {systems ? <LensPresets systems={systems} lens={api.lens} onChange={api.setLens} /> : null}
-      {lensActive && !activePreset ? <button type="button" className="focus-ring is-quiet" onClick={savePreset}><Plus aria-hidden />存为常用组合</button> : null}
-      {activePreset ? <button type="button" className="focus-ring is-quiet" onClick={() => api.updateSystems(current => ({ ...current, presets: current.presets.filter(preset => preset.id !== activePreset.id) }))}><X aria-hidden />删除此组合</button> : null}
+      {lensActive && !activePreset ? <button type="button" className="focus-ring is-quiet" onClick={savePreset}><Plus aria-hidden />Save as a preset</button> : null}
+      {activePreset ? <button type="button" className="focus-ring is-quiet" onClick={() => api.updateSystems(current => ({ ...current, presets: current.presets.filter(preset => preset.id !== activePreset.id) }))}><X aria-hidden />Delete this preset</button> : null}
       <span className="ln-systems-spacer" />
-      <button type="button" className="focus-ring is-quiet" onClick={() => addDimension('system')}><Plus aria-hidden />体系</button>
-      <button type="button" className="focus-ring is-quiet" onClick={() => addDimension('condition')}><Plus aria-hidden />条件</button>
+      <button type="button" className="focus-ring is-quiet" onClick={() => addDimension('system')}><Plus aria-hidden />System</button>
+      <button type="button" className="focus-ring is-quiet" onClick={() => addDimension('condition')}><Plus aria-hidden />Condition</button>
     </div>
     {issues.length ? <ul role="alert" className="ln-systems-issues">{issues.map(message => <li key={message}>{message}</li>)}</ul> : null}
   </section>;

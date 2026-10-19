@@ -21,8 +21,8 @@ export type MethodCard = {
   unverified: number; provider?: string; model?: string; madeAt: string; byHand?: boolean;
 };
 export const methodCardSections: Array<{ key: keyof Pick<MethodCard, 'applicability' | 'sampleRequirements' | 'materials' | 'keyParameters' | 'differences' | 'risks'>; label: string }> = [
-  { key: 'applicability', label: '适用条件' }, { key: 'sampleRequirements', label: '样本要求' }, { key: 'materials', label: '材料与设备' },
-  { key: 'keyParameters', label: '关键参数' }, { key: 'differences', label: '操作差异与要点' }, { key: 'risks', label: '风险与注意' },
+  { key: 'applicability', label: 'When it applies' }, { key: 'sampleRequirements', label: 'Sample requirements' }, { key: 'materials', label: 'Materials and equipment' },
+  { key: 'keyParameters', label: 'Key parameters' }, { key: 'differences', label: 'Differences and key points' }, { key: 'risks', label: 'Risks and cautions' },
 ];
 
 export const MAX_METHOD_TEXT_CHARS = 24_000;

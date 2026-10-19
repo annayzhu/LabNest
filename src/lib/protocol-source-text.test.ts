@@ -23,11 +23,11 @@ describe('Reading a source file', () => {
     expect(source.kind).toBe('pdf');
     expect(source.pages).toBe(1);
     expect(source.text.split('\n')).toEqual(['1. Add 350 uL Buffer RL.', '2. Centrifuge for 2 min.']);
-    expect(source.warnings).toEqual(['这份 PDF 里几乎没有可读的文字，可能是扫描件：请先转成文字，再粘贴进来。']);
+    expect(source.warnings).toEqual(['This PDF has almost no readable text; it may be a scan. Convert it to text first, then paste it in.']);
   });
 
   it('reads plain text and refuses other files', async () => {
     expect((await readSourceFile('steps.md', new TextEncoder().encode('1. 加入 PBS 1 mL'))).text).toBe('1. 加入 PBS 1 mL');
-    await expect(readSourceFile('photo.png', new Uint8Array([1, 2]))).rejects.toThrow('只支持 PDF');
+    await expect(readSourceFile('photo.png', new Uint8Array([1, 2]))).rejects.toThrow('Only PDF');
   });
 });

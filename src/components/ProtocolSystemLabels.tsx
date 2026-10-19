@@ -1,4 +1,5 @@
 import { optionMarks } from '@/lib/protocol-chips';
+import { systemLabelText } from '@/lib/protocol-conditions';
 import type { ProtocolSystems } from '@/lib/structured-protocol';
 import { SystemMark } from './protocol/SystemMark';
 import './ProtocolSystems.css';
@@ -9,5 +10,5 @@ export function ProtocolSystemChoice({ systems, dimensionId, optionId }: { syste
   const dimension = systems.dimensions.find(d => d.id === dimensionId);
   const option = dimension?.options.find(o => o.id === optionId);
   const mark = optionMarks(systems).get(`${dimensionId}:${optionId}`);
-  return <span className="protocol-system-choice">{mark?.symbol ? <SystemMark mark={mark} /> : null}{dimension?.label}：{option?.label ?? '待选择'}</span>;
+  return <span className="protocol-system-choice">{mark?.symbol ? <SystemMark mark={mark} /> : null}{systemLabelText(dimension?.label ?? '')}{`: ${option ? systemLabelText(option.label) : 'not chosen'}`}</span>;
 }

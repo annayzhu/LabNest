@@ -17,6 +17,7 @@ const db = new pg.Client({ connectionString: database.toString() });
 await db.connect();
 const report = [];
 const failures = [];
+const cancelledPreloads = [];
 const routes = ["/protocols", "/projects", "/experiments", "/results", "/reports", "/research-plans", "/sequences", "/inventory"];
 
 async function check(name, work, page) {
@@ -60,7 +61,14 @@ try {
         const page = await context.newPage();
         page.setDefaultTimeout(12_000);
         const errors = [];
-        page.on("pageerror", error => errors.push(error.message));
+        const recordError = (error) => {
+          // WebKit reports detached-document Next preloads as access-control failures during goto().
+          // Keep these in the evidence; actual navigation and all other runtime errors still fail.
+          if (browserName === "webkit" && /[?&]_rsc=.+ due to access control checks\.$/.test(error.message)) {
+            cancelledPreloads.push(error.message);
+          } else errors.push(error.message);
+        };
+        page.on("pageerror", recordError);
         const label = `${browserName}-${width}-${locale}`;
         for (const route of routes) {
           await check(`${label}-${route.slice(1)}-menus`, async () => {
@@ -139,10 +147,12 @@ try {
             await page.locator('select[name="type"]').selectOption("consume");
             await page.locator('input[name="quantity"]').fill("1");
             await page.locator('input[name="performedBy"]').fill("Mobile QA");
-            await Promise.all([
+            const [response] = await Promise.all([
               page.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/inventory/mobile-qr")),
               page.getByRole("button", { name: "Record Movement", exact: true }).click(),
             ]);
+            await response.finished();
+            await page.waitForLoadState("networkidle");
             const after = (await db.query('SELECT "currentQuantity" FROM "InventoryItem" WHERE id=$1', ["mobile-qr"])).rows[0].currentQuantity;
             assert.equal(after, before - 1);
             await page.reload({ waitUntil: "networkidle" });
@@ -170,7 +180,7 @@ try {
           await check(`${label}-http-photo-barcodes`, async () => {
             // Keep the localhost page alive: changing its origin can cancel pending Next link preloads.
             const scanPage = await context.newPage();
-            scanPage.on("pageerror", error => errors.push(error.message));
+            scanPage.on("pageerror", recordError);
             const address = Object.values(networkInterfaces()).flat().find(item => item?.family === "IPv4" && !item.internal)?.address;
             assert(address, "A local LAN address is needed to verify the non-secure HTTP path.");
             const insecure = new URL(baseUrl);
@@ -196,7 +206,7 @@ try {
   }
 } finally {
   await db.end();
-  await writeFile(path.join(evidence, "report.json"), JSON.stringify({ checks: report, failures }, null, 2));
+  await writeFile(path.join(evidence, "report.json"), JSON.stringify({ checks: report, failures, cancelledPreloads }, null, 2));
 }
 console.log(JSON.stringify({ passed: report.length, failed: failures.length, failures, evidence }, null, 2));
 assert.equal(failures.length, 0, "Mobile repair acceptance failed; see report.json.");

@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import { Check, Copy, QrCode, Watch } from 'lucide-react';
 import { connectWatchRun, disconnectWatchRun, watchRunConnection } from '@/app/experiments/[id]/run/actions';
-import { fieldRunUrl, groupPairingCode, isLocalHost, lanOrigin, watchPairingLink } from '@/lib/field-mode';
+import { fieldRunUrl, isLocalHost, lanOrigin, watchPairingLink } from '@/lib/field-mode';
 import { Button } from './ui/Button';
 import './field-devices.css';
 
@@ -133,13 +133,13 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
             <p className="text-muted">已安装 iPhone 和手表 App：用 iPhone 相机扫码，在手机确认连接。手表上的 LabNest 请保持打开。</p>
             <a className="text-moss underline" href={phoneLink}>在此 iPhone 的 LabNest App 中连接</a>
           </> : null}
-          <p className="ln-field-code" aria-label={`Pairing code ${pairing.code}`} data-i18n-ignore>{groupPairingCode(pairing.code)}</p>
+          <p className="ln-field-code" aria-label={`Pairing code ${pairing.code}`} data-i18n-ignore>{pairing.code}</p>
           <p className="ln-field-expiry" role="status">{`Expires in ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} · single use`}</p>
           <p className="text-muted">也可以在手表上手动输入：</p>
           <ol className="ln-field-steps">
             <li>On the watch, open LabNest and tap “连接设置” (connection settings).</li>
             <li>Server address: {origin ? <strong data-i18n-ignore>{origin}</strong> : 'the computer’s LAN address (enter it above first)'}</li>
-            <li>Pairing code: the 12 characters above, then tap “配对本次实验” (pair this experiment).</li>
+            <li>Pairing code: the 4 digits above, then tap “配对本次实验” (pair this experiment).</li>
           </ol>
         </> : <Button type="button" variant="primary" disabled={busy} onClick={() => void create()}>{pairing ? 'Code expired. Generate a new one' : 'Generate pairing code'}</Button>}
       </>}

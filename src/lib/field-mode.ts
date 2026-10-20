@@ -24,16 +24,11 @@ export function fieldRunUrl(origin: string, experimentId: string) {
   return `${origin}/experiments/${encodeURIComponent(experimentId)}/run?view=bench`;
 }
 
-/** "A1B2C3D4E5F6" → "A1B2 C3D4 E5F6", easier to read off the screen and type on a watch. */
-export function groupPairingCode(code: string) {
-  return code.replace(/(.{4})(?=.)/g, '$1 ');
-}
-
 /** Opens the installed iPhone companion. Only the short-lived pairing code is shared, never a bearer token. */
 export function watchPairingLink(origin: string, rawCode: string) {
   const server = lanOrigin(origin);
-  const code = rawCode.replace(/\s/g, '').toUpperCase();
-  if (!server || !/^[A-F0-9]{12}$/.test(code)) return undefined;
+  const code = rawCode.replace(/\s/g, '');
+  if (!server || !/^[0-9]{4}$/.test(code)) return undefined;
   const parsed = new URL(origin.includes('://') ? origin : `http://${origin}`);
   if (parsed.username || parsed.password) return undefined;
   return `labnest://watch-pair?${new URLSearchParams({ server, code })}`;

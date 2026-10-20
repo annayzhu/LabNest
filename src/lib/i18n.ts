@@ -719,7 +719,7 @@ export const zhUi: Record<string, string> = {
   "On the watch, open LabNest and tap “连接设置” (connection settings).": "在手表上打开 LabNest，点「连接设置」。",
   "Server address:": "服务器地址填",
   "the computer’s LAN address (enter it above first)": "电脑的局域网地址（先在上方填写）",
-  "Pairing code: the 12 characters above, then tap “配对本次实验” (pair this experiment).": "配对码填上面的 12 位字符，点「配对本次实验」。",
+  "Pairing code: the 4 digits above, then tap “配对本次实验” (pair this experiment).": "配对码填上面的 4 位数字，点「配对本次实验」。",
   "Code expired. Generate a new one": "配对码已失效，重新生成",
   "Generate pairing code": "生成配对码",
   "Photo, observation, or measurement": "照片、观察或测量",

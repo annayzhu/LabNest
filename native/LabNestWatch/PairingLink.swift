@@ -17,8 +17,8 @@ struct PairingLink: Equatable {
         }
         parts.path = ""; parts.query = nil; parts.fragment = nil
         guard let url = parts.url else { throw PairingError.invalidServer }
-        let normalized = code.filter { !$0.isWhitespace }.uppercased()
-        guard normalized.range(of: "^[A-F0-9]{12}$", options: .regularExpression) != nil else {
+        let normalized = code.filter { !$0.isWhitespace }
+        guard normalized.range(of: "^[0-9]{4}$", options: .regularExpression) != nil else {
             throw PairingError.invalidCode
         }
         self.server = url; self.code = normalized
@@ -44,7 +44,7 @@ enum PairingError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidServer: "请填写手机和手表可访问的 http:// 或 https:// 地址；不能使用 localhost。"
-        case .invalidCode: "请填写网页生成的 12 位配对码。"
+        case .invalidCode: "请填写网页生成的 4 位数字配对码。"
         case .invalidLink: "这不是有效的 LabNest 手表配对链接，请重新扫码。"
         }
     }

@@ -16,9 +16,9 @@ xcodebuild -project native/LabNestWatch/LabNestWatch.xcodeproj -target LabNestWa
 
 ## Connect and use
 
-1. On the phone/desktop Run, choose and confirm experimental systems. Expand **Apple Watch 执行端 · 预览**, then generate a one-use pairing code (10 minutes).
+1. On the phone/desktop Run, choose and confirm experimental systems. Expand **Apple Watch 执行端 · 预览**, then generate a four-digit numeric, one-use pairing code (10 minutes).
 2. In the installed watch app enter the reachable LabNest base URL and code. Use the phone keyboard offered by watchOS if available. `localhost` on the watch is not your Mac. Use a trusted HTTPS endpoint where possible; local HTTP networking depends on the device/ATS configuration and remains unverified here.
-3. Refresh, select the exact experimental group/step, scroll through the full text and quantities. No fixed line limit is imposed. Complex tables/images and required actual-value entry stay on the phone.
+3. Refresh, select the exact experimental group/step, read the instruction and quantities. Long Protocol notes are available under **备注与详情**; neither view truncates the text. Connection and reminder controls live in **连接设置**. Complex tables/images and required actual-value entry stay on the phone.
 4. Start/pause/finish a timer online. Timer expiry does not complete a step. Explicitly confirm completion only after doing the operation.
 5. An offline completion is atomically persisted and labelled pending. Only one pending action is allowed; it retains the original revision. Foreground refresh retries that same operation ID. Conflicts remain local for review; no silent revision replacement. Offline timer controls are deliberately unavailable.
 6. Enable reminders only on the intended reminder device. Notifications use timer/experiment/revision IDs; fresh sync removes earlier scheduled reminders and schedules current deadlines. Permissions and actual delivery are separate. Offline watches cannot immediately learn cancellation from another device.

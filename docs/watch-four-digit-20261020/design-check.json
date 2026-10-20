@@ -1,0 +1,24 @@
+[
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/annayzhu/.codex/worktrees/watch-four-digit/LabNest/src/components/field-devices.css",
+    "line": 3,
+    "snippet": "Undocumented color rgb(0 0 0 / .35) is outside DESIGN.md colors",
+    "ignoreValue": "rgb(0 0 0 / .35)"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/annayzhu/.codex/worktrees/watch-four-digit/LabNest/src/components/field-devices.css",
+    "line": 5,
+    "snippet": "font-size: 1.15rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.15rem"
+  }
+]

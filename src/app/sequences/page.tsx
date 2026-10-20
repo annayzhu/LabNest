@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Filter, Layers3, Plus, Search, Upload } from "lucide-react";
+import { Layers3, Plus, Search, Upload } from "lucide-react";
+import { Filter } from "lucide-react";
+import { FilterPopover } from "@/components/ui/FilterPopover";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
@@ -164,9 +166,7 @@ function SequenceColumnFilter({ label, children, className = "" }: { label: stri
 
 function SequenceMobileFilters({ query, designType, moleculeType, status, validationStatus, sort, activeFilterCount }: { query?: string; designType?: string; moleculeType?: string; status?: string; validationStatus?: string; sort: string; activeFilterCount: number }) {
   return (
-    <details className="relative md:hidden">
-      <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite"><Filter className="h-3.5 w-3.5" aria-hidden />Filters{activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">{activeFilterCount}</span> : null}</summary>
-      <div className="absolute left-0 z-30 mt-2 w-[min(88vw,360px)] rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-3 shadow-soft">
+    <FilterPopover count={activeFilterCount}>
         <form action="/sequences" className="grid gap-2">
           <input name="q" defaultValue={query ?? ""} placeholder="Name, code, target…" className={tableFilterClass} />
           <select name="designType" defaultValue={designType ?? ""} className={tableFilterClass}><option value="">All design types</option>{sequenceDesignTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
@@ -176,7 +176,6 @@ function SequenceMobileFilters({ query, designType, moleculeType, status, valida
           <select name="sort" defaultValue={sort} className={tableFilterClass}><option value="updated_desc">Recently updated</option><option value="name_asc">Name A–Z</option><option value="code_asc">Sequence code</option></select>
           <div className="mt-1 flex justify-end gap-2"><Link href="/sequences" className={filterClearButtonClass}>Clear</Link><button type="submit" className={filterApplyButtonClass}>Apply</button></div>
         </form>
-      </div>
-    </details>
+    </FilterPopover>
   );
 }

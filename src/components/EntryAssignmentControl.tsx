@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { formInputClass } from "./forms";
+import { PageActionsMenu } from "./PageActionsMenu";
 
 type Target = { type: string; id: string; title: string; invalid: boolean };
 type Options = {
@@ -83,7 +84,7 @@ export function EntryAssignmentControl({ id, target, initialOpen = false }: { id
   const results = options?.results.filter(item => item.experimentId === experimentId && item.title.toLowerCase().includes(search.toLowerCase())) ?? [];
   return <div className="flex flex-wrap items-center gap-2 text-sm" data-print-hidden>
     {activeTarget ? activeTarget.invalid ? <span className="text-warning">原归属已失效</span> : <Link href={`/${activeTarget.type === "result" ? "results" : "experiments"}/${activeTarget.id}`} className="text-moss underline">{activeTarget.title}</Link> : <span className="text-muted">未归入</span>}
-    {activeTarget ? <details className="relative"><summary aria-label="更多归属操作" className="min-h-10 cursor-pointer list-none rounded-[var(--ln-radius-control-md)] border border-hairline px-3 py-2">⋯</summary><div className="absolute right-0 z-20 min-w-40 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface p-1 shadow-paper"><button type="button" onClick={() => void open()} className="min-h-11 w-full px-3 text-left text-moss">更改或取消归属…</button></div></details> : <button type="button" onClick={() => void open()} className="min-h-10 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-moss">归入…</button>}
+    {activeTarget ? <PageActionsMenu label="更多归属操作"><button type="button" onClick={() => void open()} className="min-h-11 w-full px-3 text-left text-moss">更改或取消归属…</button></PageActionsMenu> : <button type="button" onClick={() => void open()} className="min-h-10 rounded-[var(--ln-radius-control-md)] border border-hairline px-3 text-moss">归入…</button>}
     {message ? <span role="status">{message}</span> : null}
     <dialog aria-label="整理快速记录" ref={dialog} className="m-auto w-[min(32rem,calc(100%-24px))] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-5 text-ink backdrop:bg-black/30">
       <h2 className="text-lg font-semibold">整理快速记录</h2><p className="mt-1 text-sm text-muted">引用同一条原始记录，保留正文、图片和原记录时间。</p>

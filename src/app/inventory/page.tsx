@@ -3,6 +3,7 @@ import { formatQuantity } from "@/lib/calculators/quantity-format";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Filter, MapPin, Plus, Search, ShoppingCart, X } from "lucide-react";
+import { FilterPopover } from "@/components/ui/FilterPopover";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import {
@@ -42,6 +43,8 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
     ...(query ? {
       OR: [
         { name: { contains: query, mode: "insensitive" as const } },
+        { positionCode: { contains: query, mode: "insensitive" as const } },
+        { location: { name: { contains: query, mode: "insensitive" as const } } },
         { englishName: { contains: query, mode: "insensitive" as const } },
         { principalInvestigator: { contains: query, mode: "insensitive" as const } },
         { barcode: { contains: query, mode: "insensitive" as const } },
@@ -93,16 +96,21 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
 
         <MobileInventoryBench
           query={query}
-          attentionCount={lowCount + depletedCount + expiryRiskCount}
-          items={items.slice(0, 12).map((item) => ({
+          key={JSON.stringify([query, status, locationId, category, principalInvestigator, flag, sort])}
+          totalCount={totalCount}
+          filters={{ status, location: locationId, category, pi: principalInvestigator, flag, sort: sort === "updated_desc" ? undefined : sort }}
+          riskCounts={{ low: lowCount, depleted: depletedCount, expired: stockRisk.filter(flags => flags.includes("expired")).length, expiring: stockRisk.filter(flags => flags.includes("expiring")).length }}
+          items={items.map((item) => ({
             id: item.id,
             name: item.name,
             subtitle: item.brand ?? item.vendor ?? item.category ?? "Unclassified",
             code: item.aliquotCode ?? item.barcode ?? item.lotNumber ?? item.catalogNumber ?? "",
             quantity: item.currentQuantity,
+            quantityRecorded: item.quantityRecorded,
+            lot: item.lotNumber ?? "",
             unit: item.unit,
-            location: item.location?.name ?? "Unassigned",
-            risk: item.riskFlags.length > 0,
+            location: [item.location?.name, item.positionCode].filter(Boolean).join(" · "),
+            riskFlags: item.riskFlags,
           }))}
         />
 
@@ -312,13 +320,8 @@ function InventoryMobileFilters({
   activeFilterCount: number;
 }) {
   return (
-    <details className="relative md:hidden">
-      <summary className="focus-ring flex h-9 cursor-pointer list-none items-center gap-2 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-[13px] font-medium text-graphite hover:bg-warm">
-        <Filter className="h-3.5 w-3.5" aria-hidden />
-        Filters
-        {activeFilterCount ? <span className="rounded-full bg-sage-surface px-1.5 py-0.5 font-mono text-xs text-moss">{activeFilterCount}</span> : null}
-      </summary>
-      <form action="/inventory" method="get" className="absolute left-0 top-11 z-30 grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-soft">
+    <FilterPopover count={activeFilterCount}>
+      <form action="/inventory" method="get" className="grid gap-3">
         <MobileFilterField label="Item">
           <input name="q" defaultValue={query ?? ""} placeholder="Name, PI, barcode, lot, catalog…" className={tableFilterClass} />
         </MobileFilterField>
@@ -369,7 +372,7 @@ function InventoryMobileFilters({
           <button type="submit" className={collectionPrimaryActionClass}><Filter className="h-3.5 w-3.5" aria-hidden />Apply</button>
         </div>
       </form>
-    </details>
+    </FilterPopover>
   );
 }
 

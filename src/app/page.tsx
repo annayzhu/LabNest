@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { addDays, addMonths, format, startOfDay, startOfMonth } from "date-fns";
-import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Camera, Database, FlaskConical, TabletSmartphone, Timer } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Database, FlaskConical, TabletSmartphone, Timer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
 import { CalculatorIcon, calculatorToolIcon } from "@/components/calculators/CalculatorIcon";
-import { TodayCalculators } from "@/components/calculators/TodayCalculators";
-import { MobileBenchStatus } from "@/components/MobileBenchStatus";
+import { MobileToday } from "@/components/MobileToday";
 import "@/components/field-devices.css";
 import { prisma } from "@/lib/db";
 import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
@@ -127,11 +126,12 @@ export default async function OverviewPage({
     }),
     prisma.experiment.findMany({
       where: {
-        status: { in: [ExperimentStatus.running, ExperimentStatus.planned] },
-        date: { gte: startOfDay(today), lt: addDays(startOfDay(today), 1) },
+        OR: [
+          { status: ExperimentStatus.running },
+          { status: ExperimentStatus.planned, date: { gte: startOfDay(today), lt: addDays(startOfDay(today), 1) } },
+        ],
       },
       orderBy: { date: "asc" },
-      take: 50,
       select: {
         id: true,
         runCode: true,
@@ -222,7 +222,8 @@ export default async function OverviewPage({
     <span className="min-w-0 flex-1"><span className="block font-semibold">Enter run mode</span><span className="block text-xs opacity-80">Work with a tablet, phone and Apple Watch together</span></span>
     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
   </Link>;
-  const todayPlanRows = todayExperiments.length ? todayExperiments.map((experiment) => (
+  const scheduledToday = todayExperiments.filter((experiment) => calendarDateKey(experiment.date) === todayKey);
+  const todayPlanRows = scheduledToday.length ? scheduledToday.map((experiment) => (
               <Link key={experiment.id} href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-14 items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warm text-moss"><FlaskConical className="h-4 w-4" aria-hidden /></span>
                 <span className="min-w-0 flex-1">
@@ -237,47 +238,7 @@ export default async function OverviewPage({
 
   return (
     <AppShell>
-      {!mobileCalendarOpen ? <section className="bench-mobile space-y-5 lg:hidden">
-        <div>
-          <h1 className="page-header-title tracking-[-0.02em] text-ink">Today at the bench</h1>
-          <p className="mt-1 text-sm text-muted" data-i18n-ignore>{format(today, "EEEE, MMMM d")}</p>
-        </div>
-
-        {fieldModeEntry}
-
-        <section aria-labelledby="active-run-title" className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-          <div className="border-b border-hairline/70 px-4 py-3">
-            <h2 id="active-run-title" className="text-sm font-semibold text-ink">Active run</h2>
-          </div>
-          {activeRunBody}
-        </section>
-
-        <Link href="/entries/new?mode=capture" className="focus-ring flex min-h-14 items-center gap-3 rounded-[var(--ln-radius-panel)] border border-action-border bg-action-surface px-4 text-moss">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface"><Camera className="h-4 w-4" aria-hidden /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">Quick capture</span>
-            <span className="mt-0.5 block text-xs text-muted">Photo, observation, or measurement</span>
-          </span>
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-
-        <MobileBenchStatus />
-        <TodayCalculators />
-
-        <section aria-labelledby="today-plan-title">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 id="today-plan-title" className="text-base font-semibold text-ink">Today’s plan</h2>
-            <Link href="/protocol-run" className="focus-ring flex min-h-11 items-center px-2 text-xs font-semibold text-moss">Run mode</Link>
-          </div>
-          <div className="divide-y divide-hairline overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
-            {todayPlanRows}
-          </div>
-        </section>
-
-        <Link href={`/?month=${viewMonthKey}&view=calendar`} className="focus-ring flex min-h-11 items-center justify-between rounded-[var(--ln-radius-control-lg)] px-2 text-sm font-semibold text-moss">
-          Open monthly calendar <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </section> : <section className="bench-mobile space-y-3 lg:hidden">
+      {!mobileCalendarOpen ? <MobileToday experiments={todayExperiments} today={today} monthKey={viewMonthKey} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
         <Link href="/" className="focus-ring inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-moss">
           <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />Back to Today
         </Link>

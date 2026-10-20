@@ -208,7 +208,7 @@ export function OverviewCalendar({
                     <span className="mt-1.5 line-clamp-3 text-xs leading-5 text-graphite" data-i18n-ignore>{activity.summary}</span>
                   ) : null}
                   <span className="mt-2 block truncate text-xs text-muted">
-                    {activity.kind === "entry" ? format(new Date(activity.startsAt), "HH:mm") : t("Experiment date")}
+                    {activity.kind === "entry" ? activity.timeLabel : t("Experiment date")}
                     {activity.context ? <> · <span data-i18n-ignore>{activity.context}</span></> : null}
                   </span>
                 </Link>

@@ -11,6 +11,7 @@ export type OverviewCalendarActivity = {
   title: string;
   dateKey: string;
   startsAt: string;
+  timeLabel?: string;
   href: string;
   status: string;
   context?: string;

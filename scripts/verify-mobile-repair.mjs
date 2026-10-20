@@ -56,7 +56,7 @@ try {
     try {
       for (const [width, locale, colorScheme] of [[320, "en", "light"], [390, "en", "light"], [430, "zh", "dark"], [1440, "en", "light"]]) {
         const height = width === 1440 ? 1000 : 844;
-        const context = await browser.newContext({ viewport: { width, height }, isMobile: width < 1024, hasTouch: width < 1024, colorScheme });
+        const context = await browser.newContext({ viewport: { width, height }, isMobile: width < 1024, hasTouch: width < 1024, colorScheme, timezoneId: width === 390 ? "America/Los_Angeles" : "Asia/Shanghai" });
         await context.addCookies([{ name: "labnest_locale", value: locale, url: baseUrl }]);
         const page = await context.newPage();
         page.setDefaultTimeout(12_000);

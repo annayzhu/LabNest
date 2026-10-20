@@ -154,6 +154,8 @@ export default async function OverviewPage({
       title: entry.title,
       dateKey: calendarDateKey(entry.occurredAt),
       startsAt: entry.occurredAt.toISOString(),
+      // Use the same lab clock for the date and time, including on a phone in another timezone.
+      timeLabel: format(entry.occurredAt, "HH:mm"),
       href: `/entries/${entry.id}`,
       status: entry.recordStatus,
       context: entry.researchPlan?.title ?? entry.project?.name ?? undefined,

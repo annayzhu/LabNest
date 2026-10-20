@@ -10,6 +10,7 @@ import { StepTimerReadout } from "@/components/StepTimerReadout";
 import { CalculatorIcon, calculatorToolIcon } from "@/components/calculators/CalculatorIcon";
 import { TodayCalculators } from "@/components/calculators/TodayCalculators";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
+import { BackupAlert } from "@/components/BackupAlert";
 import "@/components/field-devices.css";
 import { prisma } from "@/lib/db";
 import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
@@ -237,6 +238,7 @@ export default async function OverviewPage({
 
   return (
     <AppShell>
+      <BackupAlert />
       {!mobileCalendarOpen ? <section className="bench-mobile space-y-5 lg:hidden">
         <div>
           <h1 className="page-header-title tracking-[-0.02em] text-ink">Today at the bench</h1>

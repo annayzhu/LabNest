@@ -1,0 +1,27 @@
+/* Settings → Backup and the overview reminder. */
+.backup-panel { display: grid; gap: 14px; }
+.backup-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 10px 20px; margin: 0; }
+.backup-facts dt { font-size: 12px; color: var(--muted); }
+.backup-facts dd { margin: 2px 0 0; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.backup-facts code { font: 13px var(--font-data, ui-monospace, monospace); }
+.backup-warning { font-size: 14px; }
+.backup-detail { display: block; margin-top: 2px; font: 12px var(--font-data, ui-monospace, monospace); color: var(--muted); overflow-wrap: anywhere; }
+.backup-list { width: 100%; border-collapse: collapse; font-size: 14px; }
+.backup-list th { padding: 6px 8px; text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--hairline); }
+.backup-list td { padding: 6px 8px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+.backup-list td:nth-child(3), .backup-list td:nth-child(4) { font-variant-numeric: tabular-nums; }
+.backup-download { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--moss); font-size: 13px; }
+.backup-download svg { width: 14px; height: 14px; }
+.backup-help summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; font-size: 14px; color: var(--moss); }
+.backup-help p { margin: 6px 0; font-size: 13px; line-height: 1.55; color: var(--graphite); }
+.backup-help pre { margin: 6px 0; padding: 8px 10px; overflow-x: auto; border-radius: var(--ln-radius-control-md); background: var(--warm); font: 12px/1.6 var(--font-data, ui-monospace, monospace); }
+.backup-now { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.backup-now p { max-width: 22rem; font-size: 12px; text-align: right; }
+.backup-alert { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--hairline)); border-radius: var(--ln-radius-panel); background: var(--warning-surface); color: var(--ink); font-size: 14px; }
+.backup-alert svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--warning); }
+.backup-alert-action { margin-left: auto; color: var(--moss); font-size: 13px; white-space: nowrap; }
+@media (max-width: 640px) {
+  .backup-list th:nth-child(3), .backup-list td:nth-child(3), .backup-list th:nth-child(4), .backup-list td:nth-child(4) { display: none; }
+  .backup-now { align-items: stretch; }
+  .backup-now p { text-align: left; }
+}

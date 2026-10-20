@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { labToolManifest, standaloneToolDefaultUrls } from "./tool-manifest";
+import { labToolManifest } from "./tool-manifest";
 
 describe("lab tool manifest", () => {
   it("lists the six studios plus Calculator in the requested groups", () => {
@@ -9,19 +9,14 @@ describe("lab tool manifest", () => {
     expect(labToolManifest.filter((tool) => tool.category === "Analysis")).toHaveLength(3);
   });
 
-  it("opens the qPCR planner at its maintained Site and leaves other bundled tools internal", () => {
-    expect(Object.values(standaloneToolDefaultUrls)).toHaveLength(4);
-    for (const launchUrl of Object.values(standaloneToolDefaultUrls)) {
-      expect(new URL(launchUrl).protocol).toBe("https:");
+  it("opens all six bundled tools in the current LabNest deployment", () => {
+    const bundledTools = labToolManifest.filter((tool) => tool.id !== "visualization-studio");
+    expect(bundledTools).toHaveLength(6);
+    for (const tool of bundledTools) {
+      expect(tool.launchUrl).toMatch(/^\/tools\//);
+      expect(tool.external).toBe(false);
     }
-
-    const standaloneTools = labToolManifest.filter((tool) => tool.originalLaunchUrl);
-    expect(standaloneTools).toHaveLength(4);
-    expect(labToolManifest.find((tool) => tool.id === "qpcr-plate-layout")).toMatchObject({
-      launchUrl: standaloneToolDefaultUrls.qpcrLayout,
-      external: true,
-    });
-    expect(standaloneTools.filter((tool) => tool.id !== "qpcr-plate-layout").every((tool) => tool.launchUrl?.startsWith("/tools/") && !tool.external)).toBe(true);
+    expect(bundledTools.find((tool) => tool.id === "qpcr-plate-layout")?.launchUrl).toBe("/tools/qpcr-plate-layout");
   });
 
   it("offers the Studio migration route when unconfigured and preserves free plate planning", () => {
@@ -34,16 +29,14 @@ describe("lab tool manifest", () => {
   });
 });
 
-it("uses the configured qPCR Site for both the catalog and legacy entry", async () => {
-  vi.stubEnv("QPCR_LAYOUT_TOOL_URL", "https://lab.example/qpcr/");
+it("does not redirect bundled tools when legacy external URL overrides are present", async () => {
+  for (const name of ["QPCR_LAYOUT_TOOL_URL", "CNV_LAYOUT_TOOL_URL", "QPCR_ANALYSIS_TOOL_URL", "CNV_ANALYSIS_TOOL_URL"]) {
+    vi.stubEnv(name, "https://lab.example/legacy/");
+  }
   vi.resetModules();
   try {
     const { labToolManifest: configured } = await import("./tool-manifest");
-    expect(configured.find((tool) => tool.id === "qpcr-plate-layout")).toMatchObject({
-      launchUrl: "https://lab.example/qpcr/",
-      originalLaunchUrl: "https://lab.example/qpcr/",
-      external: true,
-    });
+    expect(configured).toEqual(labToolManifest);
   } finally {
     vi.unstubAllEnvs();
     vi.resetModules();

@@ -1,0 +1,320 @@
+{
+  "base": "http://127.0.0.1:3340",
+  "configuredBase": "http://127.0.0.1:3341",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "id": "qpcr-plate-layout",
+      "sampleImport": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "id": "cnv-plate-layout",
+      "sampleImport": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 834,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "workflow": "English import → generate → confirm → export/readback → save/reload",
+      "usedWells": 12,
+      "status": "passed"
+    },
+    {
+      "engine": "chromium",
+      "studioUnconfigured": "passed",
+      "legacyQpcrHtml": "passed"
+    },
+    {
+      "engine": "chromium",
+      "studioConfigured": "catalog new tab and compatibility redirect passed",
+      "endpoint": "local fixture; validates integration only"
+    },
+    {
+      "engine": "chromium",
+      "studioLegacyPreferences": "exported without clearing storage; return to Tools passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "id": "qpcr-plate-layout",
+      "sampleImport": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "id": "cnv-plate-layout",
+      "sampleImport": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 834,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "free-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/free-plate-layout/index.html?v=20261009-unified-release",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "qpcr-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/qpcr-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "cnv-plate-layout",
+      "url": "http://127.0.0.1:3340/tools/cnv-plate-layout",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "calculator",
+      "url": "http://127.0.0.1:3340/tools/calculator",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "qpcr-analysis",
+      "url": "http://127.0.0.1:3340/tools/qpcr-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "id": "cnv-analysis",
+      "url": "http://127.0.0.1:3340/tools/cnv-analysis",
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "workflow": "English import → generate → confirm → export/readback → save/reload",
+      "usedWells": 12,
+      "status": "passed"
+    },
+    {
+      "engine": "webkit",
+      "studioUnconfigured": "passed",
+      "legacyQpcrHtml": "passed"
+    },
+    {
+      "engine": "webkit",
+      "studioConfigured": "catalog new tab and compatibility redirect passed",
+      "endpoint": "local fixture; validates integration only"
+    },
+    {
+      "engine": "webkit",
+      "studioLegacyPreferences": "exported without clearing storage; return to Tools passed"
+    }
+  ],
+  "errors": [],
+  "externalRequests": []
+}

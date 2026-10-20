@@ -1,0 +1,3 @@
+﻿构建日期：20261020
+源码版本：8fd1ce7ef032eacdc6d0c2313bb9d7fc35d02524
+格式：单文件离线 HTML（CSS、JavaScript 及 Excel 导出组件均已内嵌）

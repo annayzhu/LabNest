@@ -1,13 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [{
-      source: "/tools/qpcr-plate-layout/index.html",
-      destination: "/tools/qpcr-plate-layout",
-      permanent: false,
-    }];
-  },
   async headers(){return [{source:"/tools/calculator/worker.js",headers:[{key:"Service-Worker-Allowed",value:"/"}]}];},
   distDir: process.env.LABNEST_BUILD_DIR || ".next",
   typescript: { tsconfigPath: process.env.LABNEST_TSCONFIG_PATH || "tsconfig.json" },

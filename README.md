@@ -97,7 +97,10 @@ npm run start
 | `LABNEST_HOST_PORT` | Docker 网页端口，默认 `3001`。源码运行通过 `PORT` 调整。 |
 | `TZ` | Compose 的服务器时区，默认 `Asia/Shanghai`。 |
 | `VISUALIZATION_STUDIO_URL` | 独立 Visualization Studio 的地址，应能被实际使用设备访问；该应用需单独部署。 |
-| `QPCR_LAYOUT_TOOL_URL`、`CNV_LAYOUT_TOOL_URL`、`QPCR_ANALYSIS_TOOL_URL`、`CNV_ANALYSIS_TOOL_URL` | 覆盖对应独立工具的链接地址，留空使用仓库配置的发布地址。 |
+
+Tools 中的三个排板工具、实验计算器、qPCR Analysis 和 CNV Analysis 均随 LabNest 部署，在本站打开，无需另外配置网址。旧的四项 `*_TOOL_URL` 配置不再改变这些入口。
+
+Visualization Studio 单独部署后，将其实际访问网址填入 `VISUALIZATION_STUDIO_URL`；留空时显示配置提示。具体部署、容器更新和验收步骤见 [Tools 部署说明](docs/tools-deployment.md)。
 
 首次使用可从创建项目、研究计划和 Protocol 开始，再创建实验并进入准备与执行页面。需要 AI 时，在侧栏的 **AI settings** 中配置服务地址、模型和凭据，测试连接后启用；AI 服务的 API 凭据与上述加密密钥是两项不同配置。
 

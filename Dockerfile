@@ -7,7 +7,8 @@ RUN npm ci
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-RUN apk add --no-cache openssl
+# postgresql16-client: pg_dump/pg_restore for backups, matching the postgres:16 server.
+RUN apk add --no-cache openssl postgresql16-client
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \

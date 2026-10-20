@@ -9,6 +9,7 @@ import { StaggeredText } from "@/components/StaggeredText";
 import { StepTimerReadout } from "@/components/StepTimerReadout";
 import { CalculatorIcon, calculatorToolIcon } from "@/components/calculators/CalculatorIcon";
 import { MobileToday } from "@/components/MobileToday";
+import { BackupAlert } from "@/components/BackupAlert";
 import "@/components/field-devices.css";
 import { prisma } from "@/lib/db";
 import { localeCookieName, resolveAppLocale, translateUiText } from "@/lib/i18n";
@@ -240,6 +241,7 @@ export default async function OverviewPage({
 
   return (
     <AppShell>
+      <BackupAlert />
       {!mobileCalendarOpen ? <MobileToday experiments={todayExperiments} today={today} monthKey={viewMonthKey} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
         <Link href="/" className="focus-ring inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-moss">
           <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />Back to Today

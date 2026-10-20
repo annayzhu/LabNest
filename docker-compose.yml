@@ -38,10 +38,14 @@ services:
       PORT: "3000"
       # Server-rendered record times (run steps, activity) follow the lab clock, not UTC.
       TZ: ${TZ:-Asia/Shanghai}
+      # Daily backups go to a folder on the computer, outside Docker (see Settings → Backup).
+      LABNEST_BACKUP_ROOT: /backups
+      LABNEST_BACKUP_HOST_DIR: ${LABNEST_BACKUP_HOST_DIR:-${HOME}/LabNest备份}
     ports:
       - "${LABNEST_HOST_PORT:-3001}:3000"
     volumes:
       - labnest-attachments:/app/storage/attachments
+      - ${LABNEST_BACKUP_HOST_DIR:-${HOME}/LabNest备份}:/backups
     command: sh scripts/docker-start.sh
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"]

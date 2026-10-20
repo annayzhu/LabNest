@@ -11,23 +11,11 @@ export type LabToolManifestItem = {
   produces: string[];
   launchUrl?: string;
   external?: boolean;
-  originalLaunchUrl?: string;
 };
 
-export const standaloneToolDefaultUrls = {
-  qpcrLayout: "https://rt-qpcr-plate-planner.pountneycitlali784.chatgpt.site",
-  cnvLayout: "https://taqman-cnv-plate-planner-anna.pountneycitlali784.chatgpt.site",
-  qpcrAnalysis: "https://qpcr-analysis-studio.pountneycitlali784.chatgpt.site",
-  cnvAnalysis: "https://cnv-analysis-tool.pountneycitlali784.chatgpt.site",
-} as const;
-
-function configuredToolUrl(value: string | undefined, fallback: string) {
-  return value?.trim() || fallback;
-}
-
 /**
- * External tools remain independently deployable applications. LabNest is the
- * directory and future provenance hub; the tool itself owns its calculations.
+ * Planning, calculation and analysis tools ship with LabNest.
+ * Only Visualization Studio requires a separately deployed, configured URL.
  */
 export const labToolManifest: LabToolManifestItem[] = [
   {
@@ -38,10 +26,8 @@ export const labToolManifest: LabToolManifestItem[] = [
     description: "Design sample, target, control, and replicate placement before a qPCR run.",
     accepts: ["sample list", "assay list", "plate format"],
     produces: ["plate map", "run sheet", "layout export"],
-    // Use the maintained release instead of an independently ageing HTML copy.
-    launchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
-    originalLaunchUrl: configuredToolUrl(process.env.QPCR_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.qpcrLayout),
-    external: true,
+    launchUrl: "/tools/qpcr-plate-layout",
+    external: false,
   },
   {
     id: "cnv-plate-layout",
@@ -52,7 +38,6 @@ export const labToolManifest: LabToolManifestItem[] = [
     accepts: ["sample list", "assay configuration", "replicate policy"],
     produces: ["plate map", "pipetting plan", "layout export"],
     launchUrl: "/tools/cnv-plate-layout",
-    originalLaunchUrl: configuredToolUrl(process.env.CNV_LAYOUT_TOOL_URL, standaloneToolDefaultUrls.cnvLayout),
     external: false,
   },
   {
@@ -86,7 +71,6 @@ export const labToolManifest: LabToolManifestItem[] = [
     accepts: ["instrument export", "sample metadata", "layout file"],
     produces: ["QC table", "analysis table", "figures"],
     launchUrl: "/tools/qpcr-analysis",
-    originalLaunchUrl: configuredToolUrl(process.env.QPCR_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.qpcrAnalysis),
     external: false,
   },
   {
@@ -98,7 +82,6 @@ export const labToolManifest: LabToolManifestItem[] = [
     accepts: ["instrument export", "calibrator", "layout file"],
     produces: ["copy-number calls", "QC report", "analysis export"],
     launchUrl: "/tools/cnv-analysis",
-    originalLaunchUrl: configuredToolUrl(process.env.CNV_ANALYSIS_TOOL_URL, standaloneToolDefaultUrls.cnvAnalysis),
     external: false,
   },
   {

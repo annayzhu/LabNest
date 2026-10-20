@@ -1,0 +1,10 @@
+{
+  "format": "visualization-studio-preferences",
+  "schemaVersion": 1,
+  "source": "LabNest embedded",
+  "preferences": {
+    "labnest:visualization-studio:palette": {
+      "themeId": "cn-beihai"
+    }
+  }
+}

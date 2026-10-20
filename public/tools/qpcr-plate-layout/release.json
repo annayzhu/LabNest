@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/annayzhu/qPCR-Plate-Layout-Planner",
+  "commit": "8fd1ce7ef032eacdc6d0c2313bb9d7fc35d02524",
+  "source": "git archive of the committed revision; uncommitted files excluded",
+  "build": "node scripts/build-portable.mjs",
+  "node": "v22.23.1",
+  "lockfileSha256": "838600def2475cb4129ba48105ecf9bf7fef7ca5866b582313b39b8662f3f22b",
+  "files": {
+    "index.html": {
+      "sha256": "37735235e1806630618ff31c69439973e03eecf2b81879b7e299e98f9485c933",
+      "bytes": 1822605
+    },
+    "README_CN_EN.txt": {
+      "sha256": "c0b0961b3e60c56ba4ce8b005da3b7267c2308ec5ee2190762ebd8cf52123557",
+      "bytes": 4041
+    },
+    "VERSION.txt": {
+      "sha256": "9938e7187568cda91e676274641d8f323ccabf25c3907909d73a6b1a002de283",
+      "bytes": 170
+    },
+    "THIRD_PARTY_LICENSES.txt": {
+      "sha256": "22b6018941da2d15df99b68b84bad3101c63f1405e038c98de7a74e90af26566",
+      "bytes": 53151
+    }
+  }
+}

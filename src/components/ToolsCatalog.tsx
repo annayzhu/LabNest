@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
+  ArrowRight,
   ArrowUpRight,
   Binary,
   Calculator,
@@ -86,7 +87,7 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
               {tool.id==="calculator"?<CalculatorIcon name={calculatorToolIcon} size={20}/>:<Icon className="h-5 w-5" strokeWidth={1.7} aria-hidden />}
             </span>
             <div className="min-w-0">
-              <p className="text-xs text-muted">{tool.category} · v{tool.version}</p>
+              <p className="text-xs text-muted">{tool.category} · {tool.version === "Independent" ? tool.version : `v${tool.version}`}</p>
               <h2 id={`tool-preview-${tool.id}`} className="mt-1 text-xl font-semibold leading-tight text-ink">{tool.name}</h2>
             </div>
           </div>
@@ -99,7 +100,7 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
           <div>
             <h3 className="text-xs font-semibold text-ink">What it does</h3>
             <p className="mt-1.5 text-sm leading-6 text-graphite">{tool.description}</p>
-            <p className="mt-3 text-xs leading-5 text-muted">{tool.external ? "Opens as an independent application in a new tab." : "Runs inside the LabNest workspace."}</p>
+            <p className="mt-3 text-xs leading-5 text-muted">{tool.id === "visualization-studio" ? "Deploy Visualization Studio separately, then configure its address in LabNest." : "Runs inside the LabNest workspace."}</p>
           </div>
           <dl className="grid content-start gap-3 text-xs">
             <div><dt className="font-semibold text-ink">Input</dt><dd className="mt-1 leading-5 text-graphite">{tool.accepts.join(", ")}</dd></div>
@@ -110,7 +111,7 @@ function ToolPreviewModal({ tool, onClose }: { tool: LabToolManifestItem; onClos
         <div className="flex items-center justify-end gap-2 border-t border-hairline bg-warm/55 px-4 py-3 sm:px-5">
           <button type="button" onClick={onClose} className="focus-ring h-9 rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface px-3 text-xs font-medium text-graphite hover:border-border-strong hover:text-ink">Close</button>
           <Link href={tool.launchUrl ?? "#"} target={tool.external ? "_blank" : undefined} rel={tool.external ? "noreferrer" : undefined} className="ln-key-action focus-ring inline-flex h-9 items-center gap-1.5 rounded-[var(--ln-radius-control-md)] border px-3 text-xs font-semibold" onClick={onClose}>
-            Open tool <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+            Open tool {tool.external ? <ArrowUpRight className="h-3.5 w-3.5" aria-hidden /> : <ArrowRight className="h-3.5 w-3.5" aria-hidden />}
           </Link>
         </div>
       </section>
@@ -153,7 +154,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                     <article key={tool.id} className={`group relative flex min-h-[156px] flex-col rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 transition-colors hover:border-action-border hover:bg-warm ${presentation.tileClassName}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className={`ln-tool-card-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] ${presentation.iconClassName}`}>{tool.id==="calculator"?<CalculatorIcon name={calculatorToolIcon} size={18}/>:<Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden />}</div>
-                        <span className="font-mono text-xs leading-none tabular-nums text-muted">v{tool.version}</span>
+                        <span className="font-mono text-xs leading-none tabular-nums text-muted">{tool.version === "Independent" ? tool.version : `v${tool.version}`}</span>
                       </div>
                       <div className="mt-3 flex-1">
                         <h3 className="text-base font-semibold leading-tight tracking-[-0.01em] text-ink">{tool.name}</h3>
@@ -168,7 +169,7 @@ export function ToolsCatalog({ tools }: { tools: LabToolManifestItem[] }) {
                           <Eye className="h-3.5 w-3.5" aria-hidden /> Preview
                         </button>
                         <Link href={tool.launchUrl ?? "#"} target={tool.external ? "_blank" : undefined} rel={tool.external ? "noreferrer" : undefined} aria-label={`Open ${tool.name}${tool.external ? " in a new tab" : ""}`} className="focus-ring flex items-center gap-1.5 rounded-[var(--ln-radius-control-md)] px-1.5 py-1 text-xs font-semibold text-action after:absolute after:inset-0 after:content-['']">
-                          Open tool <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                          Open tool {tool.external ? <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden /> : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />}
                         </Link>
                       </div>
                     </article>

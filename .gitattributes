@@ -1,3 +1,6 @@
 
 # Preserve downloaded acceptance artifacts and raw logs byte-for-byte.
 docs/debug-20260909/evidence/** -whitespace
+
+# Keep the upstream bundle's character tables byte-for-byte; review its source revision and hashes.
+public/tools/qpcr-plate-layout/index.html -whitespace linguist-generated=true

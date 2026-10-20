@@ -34,8 +34,8 @@ struct ConnectionView: View {
                     TextField("例如 http://192.168.1.10:3001", text: $connection.server)
                         .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                         .accessibilityLabel("LabNest 服务器地址").accessibilityIdentifier("server-address")
-                    TextField("12 位配对码", text: $connection.code)
-                        .textInputAutocapitalization(.characters).autocorrectionDisabled()
+                    TextField("4 位数字配对码", text: $connection.code)
+                        .keyboardType(.numberPad).textContentType(.oneTimeCode).autocorrectionDisabled()
                         .accessibilityLabel("配对码").accessibilityIdentifier("pairing-code")
                 } header: { Text("连接信息") } footer: {
                     Text("在电脑的「其他设备」中生成配对码，用 iPhone 相机扫码即可填入。也可以在此手动输入；请确认地址属于你的 LabNest。")
@@ -51,8 +51,8 @@ struct ConnectionView: View {
                 }
                 Section {
                     Button("在手机打开 LabNest", systemImage: "safari") {
-                        if let link = try? PairingLink(server: connection.server, code: "000000000000") { openURL(link.server) }
-                    }.disabled((try? PairingLink(server: connection.server, code: "000000000000")) == nil)
+                        if let link = try? PairingLink(server: connection.server, code: "0000") { openURL(link.server) }
+                    }.disabled((try? PairingLink(server: connection.server, code: "0000")) == nil)
                 } footer: { Text("首次安装：在 iPhone 的 Watch App 中确认 LabNest 已安装到手表。连接时让手表上的 LabNest 保持打开。") }
             }
             .navigationTitle("LabNest")

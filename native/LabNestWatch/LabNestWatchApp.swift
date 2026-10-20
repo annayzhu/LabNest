@@ -6,7 +6,6 @@ import SwiftUI
 struct WatchRunView: View {
     @EnvironmentObject var model: WatchModel
     @Environment(\.scenePhase) private var scenePhase
-    @State private var code = ""
     @State private var selected = ""
     @State private var settings = false
     @State private var confirming: RunStep?
@@ -15,58 +14,81 @@ struct WatchRunView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    if model.credential == nil || settings {
-                        Text("在 iPhone 上连接").font(.headline)
-                        Text("打开 iPhone 的 LabNest，扫码后点「连接 Apple Watch」。请保持本页打开。").font(.footnote).fixedSize(horizontal: false, vertical: true)
-                        Text("也可以手动连接").font(.headline)
-                        TextField("服务器地址", text: $model.baseURL).textContentType(.URL).disabled(model.busy)
-                        TextField("12 位配对码", text: $code).disabled(model.busy)
-                        Button("配对本次实验") { Task { if await model.pair(code: code) { await model.refresh(); settings = false } } }.disabled(model.busy || model.pending != nil)
-                        if let error = model.pairingError { Text(error).foregroundStyle(.orange).font(.footnote).fixedSize(horizontal: false, vertical: true) }
-                        Text("使用手表可访问的内网地址或受信任 HTTPS；localhost 指的是手表自身。").font(.footnote)
+                    if model.credential == nil {
+                        Text("连接实验").font(.headline)
+                        Text("用 iPhone 扫码连接。").foregroundStyle(.secondary)
                     }
                     if let snapshot = model.snapshot {
-                        Text(snapshot.title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                        Text(model.connected ? "当前服务器快照" : "离线快照 · 可能已变化").foregroundStyle(model.connected ? Color.secondary : Color.orange)
+                        if !model.connected { Text("离线 · 数据待同步").foregroundStyle(.orange).font(.footnote) }
                         // A wheel picker collapses inside a watch ScrollView; use a full-screen list.
                         Picker("当前操作", selection: Binding(get: { snapshot.steps.contains(where: { $0.id == selected }) ? selected : snapshot.steps.first?.id ?? "" }, set: { selected = $0 })) {
                             ForEach(snapshot.steps) { step in Text("\(step.group) · \(step.title)").tag(step.id) }
                         }.pickerStyle(.navigationLink).frame(minHeight: 44)
                         if let step = snapshot.steps.first(where: { $0.id == selected }) ?? snapshot.steps.first {
-                            Text(step.group).font(.subheadline)
-                            Text(step.title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                            Text(step.text).fixedSize(horizontal: false, vertical: true)
-                            if step.blocked { Text("参数待确认，请回到手机处理。").foregroundStyle(.orange) }
+                            Text(step.instruction ?? step.text).fixedSize(horizontal: false, vertical: true)
+                            if step.blocked { Text("请在手机确认参数").foregroundStyle(.orange) }
                             if let reason = step.skipped { Text("已跳过：\(reason)") }
                             if step.timer.durationSeconds != nil {
-                                TimelineView(.periodic(from: .now, by: 1)) { context in Text("计时 \(model.remaining(step, now: context.date) / 60):\(String(format: "%02d", model.remaining(step, now: context.date) % 60))").monospacedDigit() }
-                                Text("计时到零不会完成实验步骤。").font(.footnote)
+                                TimelineView(.periodic(from: .now, by: 1)) { context in
+                                    Text("\(model.remaining(step, now: context.date) / 60):\(String(format: "%02d", model.remaining(step, now: context.date) % 60))")
+                                        .font(.title2).monospacedDigit().accessibilityLabel("剩余 \(model.remaining(step, now: context.date)) 秒")
+                                }
                                 HStack { Button(step.timer.startedAt == nil ? "开始" : "暂停") { Task { await model.operate(step.timer.startedAt == nil ? "start" : "pause", step: step) } }; Button("结束计时") { Task { await model.operate("finish", step: step) } } }.disabled(model.busy || !model.connected || !step.canTime || model.pending != nil)
                             }
                             ForEach(step.mixes ?? []) { mix in
                                 if mix.stale { Text("\(mix.title)：\(mix.note ?? "请在手机上确认。")").foregroundStyle(.orange).font(.footnote).fixedSize(horizontal: false, vertical: true) }
                                 else { NavigationLink("配液卡 · \(mix.title)") { MixPagerView(stepId: step.id, mixId: mix.id).environmentObject(model) }.frame(minHeight: 44) }
                             }
-                            Button(step.completed ? "已完成" : "确认完成操作") { confirming = step }.disabled(!step.canComplete || model.busy || model.pending != nil)
-                            if !step.canComplete && !step.completed { Text("必填记录、配液卡、体系或计时状态不满足时，请在手机核对。").font(.footnote) }
+                            Button(step.completed ? "已完成" : "完成步骤") { confirming = step }.disabled(!step.canComplete || model.busy || model.pending != nil)
+                            if !step.canComplete && !step.completed && !step.blocked && step.skipped == nil && step.timer.startedAt == nil {
+                                Text("请在手机核对记录与配液").font(.footnote).foregroundStyle(.orange)
+                            }
+                            if let instruction = step.instruction, instruction != step.text {
+                                NavigationLink("备注与详情") {
+                                    ScrollView { Text(step.text).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 6) }
+                                        .navigationTitle(step.title)
+                                }
+                            }
                         }
                     }
-                    Text(model.message).font(.footnote).fixedSize(horizontal: false, vertical: true)
+                    if !model.message.isEmpty { Text(model.message).font(.footnote).fixedSize(horizontal: false, vertical: true) }
                     if let pending = model.pending {
                         Text("本机待同步：\(["complete": "完成操作", "start": "开始计时", "pause": "暂停计时", "finish": "结束计时"][pending.request.intent] ?? "实验操作")").foregroundStyle(.orange)
                         if let conflict = pending.conflict { Text(conflict).font(.footnote); Button("丢弃本机未同步操作", role: .destructive) { discard = true } }
                     }
-                    Button("刷新与同步") { Task { await model.refresh() } }.disabled(model.busy)
-                    Button("在此表启用计时提醒") { Task { await model.enableReminders() } }
-                    Text(model.notificationStatus).font(.footnote)
-                    Button("连接设置") { settings.toggle() }
+                    if model.credential != nil { Button("同步") { Task { await model.refresh() } }.disabled(model.busy) }
+                    Button("连接设置") { settings = true }
                 }.padding(.horizontal, 6)
-            }.navigationTitle("LabNest")
+            }.navigationTitle(model.snapshot?.title ?? "LabNest").navigationBarTitleDisplayMode(.inline)
         }.task { model.startPhoneConnection(); await model.refresh() }
+        .sheet(isPresented: $settings) { WatchSettingsView().environmentObject(model) }
         .onChange(of: model.credential?.pairingRequestId) { _, id in if id != nil { settings = false } }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await model.refresh() } } }
         .confirmationDialog("确认已经完成此实验操作？", isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })) { if let step = confirming { Button("确认完成") { Task { await model.operate("complete", step: step) }; confirming = nil } } }
         .confirmationDialog("此操作尚未同步。确认删除本机副本？", isPresented: $discard) { Button("确认丢弃", role: .destructive) { model.discardPending() } }
+    }
+}
+
+struct WatchSettingsView: View {
+    @EnvironmentObject var model: WatchModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var code = ""
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    TextField("服务器地址", text: $model.baseURL).textContentType(.URL).disabled(model.busy)
+                    TextField("4 位数字配对码", text: $code).textContentType(.oneTimeCode).disabled(model.busy)
+                    Button("配对本次实验") {
+                        Task { if await model.pair(code: code) { await model.refresh(); dismiss() } }
+                    }.disabled(model.busy || model.pending != nil)
+                    if let error = model.pairingError { Text(error).foregroundStyle(.orange).font(.footnote).fixedSize(horizontal: false, vertical: true) }
+                    if model.pending != nil { Text("请先处理未同步操作").foregroundStyle(.orange).font(.footnote) }
+                    Button("启用计时提醒") { Task { await model.enableReminders() } }
+                    Text(model.notificationStatus).font(.footnote).foregroundStyle(.secondary)
+                }.padding(.horizontal, 6)
+            }.navigationTitle("连接设置")
+        }
     }
 }
 
@@ -86,7 +108,7 @@ struct MixPagerView: View {
                         Text(line.name).font(.headline).multilineTextAlignment(.center).strikethrough(line.struck).fixedSize(horizontal: false, vertical: true)
                         Text(line.total).font(.system(size: 34, weight: .semibold, design: .rounded)).monospacedDigit().minimumScaleFactor(0.6).lineLimit(1).strikethrough(line.struck)
                         Text(line.mode == "separate" ? "每\(mix.per)单独加 \(line.perReaction)" : "每\(mix.per) \(line.perReaction)").font(.footnote).foregroundStyle(.secondary)
-                        Text(line.struck ? "已加 · 轻点撤销" : "加完轻点划掉").font(.footnote).foregroundStyle(line.struck ? Color.secondary : Color.accentColor)
+                        Text(line.struck ? "已加" : "轻点标记已加").font(.footnote).foregroundStyle(line.struck ? Color.secondary : Color.accentColor)
                     }
                     .opacity(line.struck ? 0.55 : 1)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

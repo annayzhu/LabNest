@@ -10,6 +10,7 @@ struct RunMix: Codable, Identifiable { var id: String; var title: String; var pe
 struct RunStep: Codable, Identifiable {
     struct TimerState: Codable { var durationSeconds: Int?; var remainingSeconds: Int?; var startedAt: String?; var pausedAt: String? }
     var id: String; var sourceRef: String; var title: String; var group: String; var text: String
+    var instruction: String?
     var completed: Bool; var canComplete: Bool; var blocked: Bool; var skipped: String?; var timer: TimerState; var canTime: Bool
     var mixes: [RunMix]?
 }
@@ -53,7 +54,7 @@ enum WatchStorage {
 @MainActor final class WatchModel: ObservableObject {
     @Published var snapshot: RunSnapshot? = WatchStorage.load(RunSnapshot.self, "snapshot.json")
     @Published var pending: PendingMutation? = WatchStorage.load(PendingMutation.self, "pending.json")
-    @Published var message = "尚未连接。离线快照仅供核对。"
+    @Published var message = ""
     @Published var busy = false
     @Published var connected = false
     @Published var pairingError: String?
@@ -97,16 +98,16 @@ enum WatchStorage {
         guard !busy, pending == nil else { return false }; busy = true; defer { busy = false }
         pairingError = nil
         do {
-            let destination = try server.map { $0.appendingPathComponent("api/watch/pair") } ?? endpoint("/api/watch/pair")
-            let normalizedCode = code.filter { !$0.isWhitespace }.uppercased()
-            let body = try JSONSerialization.data(withJSONObject: ["code": normalizedCode, "deviceId": deviceId])
+            let link = try PairingLink(server: server?.absoluteString ?? baseURL, code: code)
+            let destination = link.server.appendingPathComponent("api/watch/pair")
+            let body = try JSONSerialization.data(withJSONObject: ["code": link.code, "deviceId": deviceId])
             let grant = try JSONDecoder().decode(WatchGrant.self, from: await request("/api/watch/pair", body: body, authenticated: false, targetURL: destination))
             let next = WatchCredential(token: grant.token, experimentId: grant.experimentId, serverOrigin: destination.absoluteString, pairingRequestId: requestId)
             try WatchStorage.saveCredential(next); credential = next; snapshot = nil; connected = false
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             try? FileManager.default.removeItem(at: WatchStorage.url("snapshot.json"))
             baseURL = URL(string: "/", relativeTo: destination)!.absoluteString
-            UserDefaults.standard.set(baseURL, forKey: "server"); message = "已配对，请刷新实验。"
+            UserDefaults.standard.set(baseURL, forKey: "server"); message = ""
             return true
         } catch {
             pairingError = "配对未成功：\(error.localizedDescription) 当前连接未改变。"
@@ -134,7 +135,7 @@ enum WatchStorage {
             let value = try JSONDecoder().decode(RunSnapshot.self, from: await request("/api/watch/runs/\(credential.experimentId)"))
             try WatchStorage.save(value, "snapshot.json"); snapshot = value; connected = true
             serverOffset = value.serverTime / 1000 - Date().timeIntervalSince1970
-            message = pending == nil ? "已同步 · \(value.capturedAt)" : "本机有冲突，未覆盖服务器。"
+            message = pending == nil ? "" : "本机有冲突，未覆盖服务器。"
             await scheduleReminders()
         } catch { connected = false; message = "未同步：\(error.localizedDescription)。已保留本机快照与待发送操作。" }
     }
@@ -173,7 +174,7 @@ enum WatchStorage {
     }
     func scheduleReminders() async {
         let center = UNUserNotificationCenter.current(), settings = await UNUserNotificationCenter.current().notificationSettings()
-        notificationStatus = settings.authorizationStatus == .authorized ? "本表通知已授权；实际锁屏送达待真机验证。" : "本表通知未授权；只显示计时。"
+        notificationStatus = settings.authorizationStatus == .authorized ? "计时提醒已开启" : "计时提醒未开启"
         let old = await center.pendingNotificationRequests(); center.removePendingNotificationRequests(withIdentifiers: old.filter { $0.identifier.hasPrefix("labnest:") }.map(\.identifier))
         guard reminders, connected, settings.authorizationStatus == .authorized, let snapshot else { return }
         for step in snapshot.steps where step.timer.startedAt != nil && remaining(step) > 0 {

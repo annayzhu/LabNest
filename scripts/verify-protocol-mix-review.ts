@@ -11,7 +11,7 @@ import { mixState, stepMixes, structuredRunView } from '../src/lib/structured-ru
 
 async function main() {
   const db = new URL(process.env.DATABASE_URL!);
-  assert(['127.0.0.1', 'localhost'].includes(db.hostname) && ((db.port === '5543' && db.pathname === '/labnest_calculator_review') || (process.env.CI === 'true' && db.port === '5432' && db.pathname === '/labnest_test')), 'Dedicated synthetic database only');
+  assert(['127.0.0.1', 'localhost'].includes(db.hostname) && ((db.port === '5543' && db.pathname === '/labnest_calculator_review') || (process.env.CI === 'true' && db.port === '5432' && db.pathname === '/labnest_calculator_acceptance_20260906')), 'Dedicated synthetic database only');
   const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3339';
   assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && !['3001', '3002', '3005'].includes(new URL(base).port));
   const out = process.env.CALCULATOR_REVIEW_EVIDENCE_DIR ?? '/tmp/labnest-calculator-review-evidence';

@@ -90,7 +90,11 @@ await check('UI A1 actual-value drafts never display a stale saved receipt and c
   await other.getByRole('button', { name: /^(记录跳过|Record skip)$/, exact: true }).click();
   await waitRecord(experimentId, e => Boolean(e.protocolRun.executionPlanJson.skips[steps.prepare.id]));
   await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);
-  if(!await other.locator('details').evaluate(el=>el.open))await other.locator('details > summary').click(); await other.getByRole('button', { name: /^(撤销跳过|Undo skip)$/, exact: true }).click();
+  const undoSkip = other.getByRole('button', { name: /^(撤销跳过|Undo skip)$/, exact: true, includeHidden: true });
+  // The server refresh may replace the open details node; wait for the updated control before opening it.
+  await undoSkip.waitFor({ state: 'attached' });
+  if (!await undoSkip.isVisible()) await other.locator('details > summary').click();
+  await undoSkip.click();
   await waitRecord(experimentId, e => !e.protocolRun.executionPlanJson.skips[steps.prepare.id]);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(id => document.querySelector(`#step-${id} input[aria-label="实际 Proteinase K"]`)?.value === '55', steps.dose.id);

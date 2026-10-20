@@ -75,6 +75,7 @@ jobs:
       - run: node scripts/verify-calculator-v13-acceptance.mjs
       - run: npx tsx scripts/verify-protocol-mix-review.ts
         env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_calculator_acceptance_20260906
           CALCULATOR_REVIEW_EVIDENCE_DIR: docs/calculator/review-evidence
       - run: UI_PHASE=after node scripts/verify-calculator-ui-consistency-20261007.mjs
       - run: node scripts/verify-calculator-ui-state-20261007.mjs

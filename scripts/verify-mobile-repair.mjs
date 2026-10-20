@@ -21,11 +21,21 @@ const cancelledPreloads = [];
 const routes = ["/protocols", "/projects", "/experiments", "/results", "/reports", "/research-plans", "/sequences", "/inventory"];
 
 async function check(name, work, page) {
-  try { await work(); report.push({ name, passed: true }); }
+  console.log(`START ${name}`);
+  // A streaming response can outlive Playwright's action timeout. Save the
+  // exact stalled check and fail the process rather than leave CI silent.
+  const deadline = setTimeout(async () => {
+    failures.push({ name, message: "Check exceeded 90 seconds." });
+    await writeFile(path.join(evidence, "report.json"), JSON.stringify({ checks: report, failures, cancelledPreloads }, null, 2));
+    console.error(`TIMEOUT ${name}`);
+    process.exit(1);
+  }, 90_000);
+  try { await work(); report.push({ name, passed: true }); console.log(`PASS ${name}`); }
   catch (error) {
     failures.push({ name, message: error.message });
+    console.error(`FAIL ${name}: ${error.message}`);
     await page?.screenshot({ path: path.join(evidence, `${name.replaceAll(/[^a-z0-9-]/gi, "_")}-failed.png`), fullPage: true }).catch(() => {});
-  }
+  } finally { clearTimeout(deadline); }
 }
 async function withinViewport(panel, width, height, name) {
   const box = await panel.boundingBox();
@@ -146,17 +156,21 @@ try {
             assert((await movement.boundingBox()).y < (await material.boundingBox()).y, "Operations must precede reference metadata on phone.");
             await page.locator('select[name="type"]').selectOption("consume");
             await page.locator('input[name="quantity"]').fill("1");
-            await page.locator('input[name="performedBy"]').fill("Mobile QA");
+            const performer = `Mobile QA ${browserName} ${Date.now()}`;
+            await page.locator('input[name="performedBy"]').fill(performer);
             const [response] = await Promise.all([
               page.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/inventory/mobile-qr")),
               page.getByRole("button", { name: "Record Movement", exact: true }).click(),
             ]);
-            await response.finished();
+            assert(response.ok() || response.status() === 303, `Stock action returned ${response.status()}.`);
+            // Wait for the committed movement to render; a redirected RSC
+            // response can remain open even after the server action succeeds.
+            await page.getByRole("cell", { name: performer, exact: true }).waitFor();
             await page.waitForLoadState("networkidle");
             const after = (await db.query('SELECT "currentQuantity" FROM "InventoryItem" WHERE id=$1', ["mobile-qr"])).rows[0].currentQuantity;
             assert.equal(after, before - 1);
             await page.reload({ waitUntil: "networkidle" });
-            assert.match(await page.locator("main").innerText(), /Mobile QA/);
+            assert((await page.locator("main").innerText()).includes(performer));
           }, page);
           await check(`${label}-package-workflow`, async () => {
             await page.goto(baseUrl + "/inventory/mobile-package", { waitUntil: "networkidle" });

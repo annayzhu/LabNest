@@ -49,6 +49,7 @@ jobs:
         if: always()
         with:
           name: mobile-browser-evidence
+          overwrite: true
           path: |
             docs/qa/evidence/mobile-repair
             mobile-server.log

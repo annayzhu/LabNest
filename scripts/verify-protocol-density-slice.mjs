@@ -69,13 +69,13 @@ async function assertDesktopSlice(page, routes) {
   const sectionHeaders = page.locator(".document-section > header");
   assert(await sectionHeaders.count() > 0, "The Protocol document needs at least one visible section heading for the heading seam.");
   assert(await sectionHeaders.locator("svg").count() === 0, "Protocol section headings should not include decorative icons.");
-  await page.locator(".protocol-export-menu > summary").click();
+  await page.locator(".protocol-export-menu > button").click();
   assert(await page.locator(".protocol-export-menu-popover a").count() === 2, "The compact Export menu must expose both DOCX and JSON.");
   await assertNoPageOverflow(page, "Protocol detail desktop");
 
   if (screenshotDir) {
     await mkdir(screenshotDir, { recursive: true });
-    await page.locator(".protocol-export-menu > summary").click();
+    await page.locator(".protocol-export-menu > button").click();
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: path.join(screenshotDir, "protocol-density-slice-detail-desktop.png"), fullPage: true });
   }

@@ -81,14 +81,14 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
           )}
         />
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
           <Metric label="Current stock" value={inventoryQuantityLabel(item)} detail={item.lowThreshold == null ? "No safety stock set" : `Safety stock ${formatQuantity(item.lowThreshold)} ${item.unit}`} />
           <Metric label="Location" value={item.location?.name ?? "Unassigned"} detail={item.positionCode ?? item.location?.temperature ?? "No position recorded"} />
           <Metric label="Risk status" value={<InventoryRiskBadges flags={riskFlags} showHealthy />} detail={item.expiryDate ? `Expires ${item.expiryDate.toLocaleDateString()}` : "No expiry date recorded"} />
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <Card>
+          <Card className="order-last xl:order-first">
             <CardHeader title="Material record" />
             <CardBody className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
               <Field label="English name" value={item.englishName} />
@@ -110,15 +110,13 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             </CardBody>
           </Card>
 
-          <Card>
+          {item.managementMode === "package" ? <InventoryContainers itemId={item.id} containers={JSON.parse(JSON.stringify(item.containers))} /> : <Card>
             <CardHeader title="Record stock movement" />
             <CardBody>
-              {item.managementMode === "precise" && item.quantityRecorded ? <InventoryTransactionForm action={transactionAction} inventoryItemId={item.id} unit={item.unit} experiments={experiments} purchases={purchases} /> : <p className="text-sm">{item.managementMode === "package" ? "请在实物包装中登记领用、归还与用完。" : "余量未管理；需要扣减时先编辑并登记实际盘点余额。"}</p>}
+              {item.managementMode === "precise" && item.quantityRecorded ? <InventoryTransactionForm action={transactionAction} inventoryItemId={item.id} unit={item.unit} experiments={experiments} purchases={purchases} /> : <p className="text-sm">余量未管理；需要扣减时先编辑并登记实际盘点余额。</p>}
             </CardBody>
-          </Card>
+          </Card>}
         </section>
-
-        {item.managementMode === "package" ? <InventoryContainers itemId={item.id} containers={JSON.parse(JSON.stringify(item.containers))} /> : null}
 
         {item.childInventoryItems.length ? (
           <Card>
@@ -169,9 +167,9 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
 
 function Metric({ label, value, detail }: { label: string; value: React.ReactNode; detail: string }) {
   return (
-    <div className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4 shadow-paper">
+    <div className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-3 md:p-4">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <div className="mt-2 min-h-7 text-xl font-semibold text-ink">{value}</div>
+      <div className="mt-2 min-h-7 text-base font-semibold text-ink md:text-xl">{value}</div>
       <p className="mt-1 text-xs text-muted">{detail}</p>
     </div>
   );

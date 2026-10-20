@@ -1,0 +1,55 @@
+name: Mobile bench acceptance
+on:
+  pull_request:
+    paths: ['src/**', 'scripts/*mobile*', 'scripts/fixtures/mobile-barcodes/**', 'package*.json', 'prisma/**', '.github/workflows/mobile-bench.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_mobile_qa
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_mobile_qa
+      LABNEST_E2E_BASE_URL: http://127.0.0.1:3219
+      MOBILE_REPAIR_EVIDENCE: docs/qa/evidence/mobile-repair
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - run: npm run prisma:seed
+      - run: npx tsx scripts/seed-mobile-repair.ts
+      - name: Start isolated production server
+        run: |
+          npm run start -- --port 3219 > mobile-server.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail http://127.0.0.1:3219/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat mobile-server.log
+          exit 1
+      - run: node scripts/verify-mobile-repair.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-browser-evidence
+          overwrite: true
+          path: |
+            docs/qa/evidence/mobile-repair
+            mobile-server.log

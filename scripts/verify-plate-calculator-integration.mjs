@@ -68,8 +68,12 @@ for(const [engine,type] of Object.entries(process.env.PLATE_BROWSER==='chromium'
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const id=`${engine}-${width}`;
   try{
-   await page.goto(`${base}/tools`,{waitUntil:'networkidle'});
-   const launch=page.locator('a[href*="/tools/free-plate-layout/index.html"]').first();
+   // Keep the catalog document alive while its links preload. A hard goto
+   // otherwise cancels those requests and WebKit reports spurious pageerrors.
+   const catalogPage=await context.newPage();
+   catalogPage.on('pageerror',e=>errors.push(e.message));
+   await catalogPage.goto(`${base}/tools`,{waitUntil:'networkidle'});
+   const launch=catalogPage.locator('a[href*="/tools/free-plate-layout/index.html"]').first();
    assert(await launch.count(),'Tools must expose the planner');const href=await launch.getAttribute('href');assert(href.includes('v=20261009-unified-release'));
    // Follow exactly the link exposed by Tools in an isolated browser context.
    await page.goto(new URL(href,base).href,{waitUntil:'networkidle'});

@@ -134,7 +134,7 @@ export async function structuredExportRecords(
       await prisma.inventoryItem.findMany({ include: { location: true }, orderBy: { updatedAt: "desc" } }),
       selection,
       (row) => ({
-        search: [row.name, row.englishName, row.principalInvestigator, row.barcode, row.aliquotCode, row.lotNumber, row.vendor, row.brand, row.catalogNumber, row.casNumber],
+        search: [row.name, row.englishName, row.principalInvestigator, row.barcode, row.aliquotCode, row.lotNumber, row.vendor, row.brand, row.catalogNumber, row.casNumber, row.positionCode, row.location?.name],
         filters: { status: row.status, category: row.category, location: row.locationId, pi: row.principalInvestigator, flag: getInventoryRiskFlags(row) },
       }),
     );

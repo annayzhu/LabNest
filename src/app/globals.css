@@ -1140,7 +1140,7 @@ details > summary:active { transform: scale(0.985); }
   min-width: 0;
 }
 
-.protocol-export-menu > summary {
+.protocol-export-menu > button {
   font-size: var(--ln-page-action-font-size);
   height: var(--ln-page-action-height);
   min-height: var(--ln-page-action-height);
@@ -1164,7 +1164,7 @@ details > summary:active { transform: scale(0.985); }
   position: relative;
 }
 
-.protocol-export-menu > summary {
+.protocol-export-menu > button {
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--hairline);
@@ -1179,18 +1179,14 @@ details > summary:active { transform: scale(0.985); }
   white-space: nowrap;
 }
 
-.protocol-export-menu > summary::-webkit-details-marker {
-  display: none;
-}
-
-.protocol-export-menu > summary:hover,
-.protocol-export-menu[open] > summary {
+.protocol-export-menu > button:hover,
+.protocol-export-menu > button[aria-expanded="true"] {
   background: var(--warm);
   border-color: var(--border-strong);
   color: var(--ink);
 }
 
-.protocol-export-menu > summary svg {
+.protocol-export-menu > button svg {
   height: 0.8rem;
   width: 0.8rem;
 }
@@ -1199,11 +1195,11 @@ details > summary:active { transform: scale(0.985); }
   transition: transform 140ms ease;
 }
 
-.protocol-export-menu[open] .protocol-export-menu-chevron {
+.protocol-export-menu > button[aria-expanded="true"] .protocol-export-menu-chevron {
   transform: rotate(180deg);
 }
 
-.protocol-export-menu-popover {
+.protocol-export-menu-popover:popover-open {
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--ln-radius-control-lg);

@@ -82,3 +82,19 @@ No new schema migration or bulk historical rewrite. Existing executionPlanJson s
 ## PR #103 verification refresh — 2026-10-19
 
 The original matrix and evidence above describe their historical revisions. The current repair candidate is based on `f1864d53` on `codex/review-3001-20261019`; see [the CI repair record](../../releases/20261019-github-sync.md) for source changes, test coverage, exact-commit CI links and local logs. Fresh browser screenshots, traces and rendered PDF evidence are retained in `/tmp/pr103-ci-evidence.tar.gz`. Physical iPhone/iPad/Watch, hardware input/camera and real-provider checks remain unexecuted.
+
+## Calculator review repairs — 2026-10-19
+
+The PR #103 review found three defects despite its passing CI. These additional checks cover the repaired behavior; the historical matrix above is not a whole-system acceptance of this revision.
+
+| Check | Result and evidence |
+| --- | --- |
+| Two system columns reference 250 µL and 125 µL | Actual editor conversion → save → reopen → select the second system → confirm 6 reactions with 10% overage stores and displays **825 µL**. Both system values survive Tiptap/document serialization. |
+| Negative amount −5 µL, 24 reactions | Shared validation prevents totals and aliquot instructions. The public server confirmation service rejects the submission; the synthetic database plan stays unchanged and no confirmation event is written. Empty, missing, nonfinite and overflow inputs also have unit coverage. |
+| Small nonzero quantities | Actual Unit Converter screen and clipboard retain **1e-15 kg** for **1 pg → kg**. Shared formatting also updates the generated Free Plate calculator bundle. |
+| Conditional references | Unit tests retain nested lookup conditions, compatible mixed units and single-column conditions. Ambiguous columns or runtime/calculator-dependent multi-column references stop conversion with the original table intact. |
+| Responsive Run display | Chromium at 1440, 820 and 390 CSS pixels displays the saved 825 µL receipt without page overflow. Physical touch devices remain untested. |
+
+Reproduction: `scripts/verify-protocol-mix-review.ts` uses only a dedicated synthetic database and is included in Calculator CI. Its `report.json` and screenshots are uploaded with `calculator-browser-evidence`; local copies are in `/tmp/labnest-calculator-review-evidence`. The script exercises the real editor and server service, not a replacement calculator implementation.
+
+Ponytail cleanup removes the obsolete decimal-place truncation and redundant table-value parsing/first-column selection. No dependency, schema migration or historical record rewrite is introduced. A previously converted table that already lost its second value cannot reconstruct that value automatically; re-convert its intact source table. Existing negative receipts no longer qualify as current confirmations. This does not certify private historical records or physical laboratory execution.

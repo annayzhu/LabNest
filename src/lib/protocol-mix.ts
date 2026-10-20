@@ -50,14 +50,20 @@ export type MixView = {
  */
 export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, resolution: Record<string, Resolved>, quantity?: number): MixView {
   const per = mixPer(mix), factor = 1 + mix.overagePercent / 100;
+  const validQuantity = quantity !== undefined && Number.isFinite(quantity) && quantity > 0;
+  const validOverage = Number.isFinite(mix.overagePercent) && mix.overagePercent >= 0 && mix.overagePercent <= 100;
   const lines: MixLine[] = mix.components.map(component => {
     const id = chipReferenceId(component.amount), parameter = id ? systems?.parameters.find(p => p.id === id) : undefined;
     const name = component.name.trim() || (parameter ? parameterDisplayName(parameter) : '组分');
     const resolved = id ? resolution[id] : undefined;
     if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? 'Amount deleted' : parameter.source.kind === 'lookup' ? 'System to choose' : parameter.source.kind === 'actual' ? 'Filled in at run time' : 'To fill in' };
-    const perReaction = resolved.value!;
-    return { id: component.id, name, mode: component.mode, unit: resolved.unit, perReaction,
-      ...(quantity ? { total: perReaction * quantity * (component.mode === 'premix' ? factor : 1) } : {}) };
+    const line = { id: component.id, name, mode: component.mode, unit: resolved.unit };
+    const perReaction = resolved.value;
+    if (perReaction === undefined || !Number.isFinite(perReaction) || perReaction < 0) return { ...line, pending: 'Amount must be finite and nonnegative' };
+    const total = validQuantity && validOverage ? perReaction * quantity * (component.mode === 'premix' ? factor : 1) : undefined;
+    if (total !== undefined && !Number.isFinite(total)) return { ...line, pending: 'Total amount is too large' };
+    return { ...line, perReaction,
+      ...(total !== undefined ? { total } : {}) };
   });
   const premix = lines.filter(line => line.mode === 'premix');
   const premixPerReaction = premix.length && premix.every(line => line.perReaction !== undefined && isVolume(line.unit))
@@ -79,9 +85,11 @@ export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, 
     if (pipetted !== undefined && convert(pipetted, line.unit, 'µL') < minimum) warnings.push(`${line.name} ${line.mode === 'premix' ? 'total' : `per ${perText}`} ${chipAmount(Number(pipetted.toPrecision(4)), line.unit)} is below the pipetting minimum of ${minimum} µL; dilute it first or increase the ${runQuantityLabelText(mixQuantityLabel(mix))}.`);
   }
   if (premix.some(line => line.perReaction !== undefined && !isVolume(line.unit))) warnings.push('The premix has a component that is not a volume; the aliquot volume leaves it out.');
-  const ready = Boolean(quantity && quantity > 0) && lines.every(line => line.perReaction !== undefined);
+  const amountsValid = lines.length > 0 && lines.every(line => line.perReaction !== undefined) && (!premixPerReaction || Number.isFinite(premixPerReaction.value));
+  const ready = validQuantity && validOverage && amountsValid;
   const fingerprint = JSON.stringify({ quantity: quantity ?? null, overage: mix.overagePercent, lines: lines.map(line => [line.id, line.mode, line.unit, line.perReaction === undefined ? null : Number(line.perReaction.toPrecision(12))]) });
-  return { lines, quantity, overagePercent: mix.overagePercent, premixPerReaction, aliquot, aliquotText, warnings, ready, fingerprint };
+  return { lines, quantity, overagePercent: mix.overagePercent, premixPerReaction: amountsValid ? premixPerReaction : undefined,
+    aliquot: amountsValid && validOverage ? aliquot : '', aliquotText: amountsValid && validOverage ? aliquotText : 'Resolve invalid or missing amounts before preparing this mix.', warnings, ready, fingerprint };
 }
 
 /** A new mix card with one empty component; amounts are chips so they can differ by system. */
@@ -95,7 +103,7 @@ export function newMixParameter(newId: (prefix: string) => string, label = '', v
 
 /** "10 µL", "4uL", "2.5 mg" as an amount in a registered unit; anything else is not an amount. */
 function cellQuantity(cell: string) {
-  const match = /^\s*([-−]?[\d.,]+)\s*(\S+)\s*$/.exec(cell);
+  const match = /^\s*([-−]?[\d.,]+(?:e[+-]?\d+)?)\s*(\S+)\s*$/i.exec(cell);
   if (!match) return undefined;
   const unit = normalizeUnit(match[2]);
   try { return units[unit] ? { value: parseScalar(match[1].replace(/,/g, '').replace('−', '-')), unit } : undefined; } catch { return undefined; }
@@ -104,22 +112,31 @@ function cellQuantity(cell: string) {
  * A recipe table ("组分 | 每反应" or "组分 | 6 孔板 | 12 孔板") as a mix card. The first column names the component; a cell holding a
  * chip keeps it; "10 µL" becomes a fixed amount; columns marked for a system option become one value per option.
  */
-export function recipeTableToMix(table: Extract<ProtocolContentBlock, { type: 'table' }>, newId: (prefix: string) => string): { block: ProtocolMix; parameters: Parameter[] } {
+export function recipeTableToMix(table: Extract<ProtocolContentBlock, { type: 'table' }>, newId: (prefix: string) => string, systems?: ProtocolSystems): { block: ProtocolMix; parameters: Parameter[] } {
   const parameters: Parameter[] = [];
   const valueColumns = table.rows[0]?.map((_, index) => index).filter(index => index > 0) ?? [];
   const systemColumns = valueColumns.filter(index => table.columnConditions?.[index]);
   const components = table.rows.slice(1).flatMap(row => {
     const name = row[0]?.replace(/\{\{[\w-]+\}\}/g, '').trim();
     if (!name) return [];
-    const chip = valueColumns.map(index => chipReferenceId(row[index] ?? '')).find(Boolean);
-    if (chip) return [{ id: newId('component'), name, amount: `{{${chip}}}`, mode: 'premix' as const }];
+    const cells = valueColumns.map(index => row[index]?.trim() ?? '');
+    const chip = chipReferenceId(cells[0] ?? '');
+    if (chip && valueColumns.length === 1 && !systemColumns.length) return [{ id: newId('component'), name, amount: `{{${chip}}}`, mode: 'premix' as const }];
+    if (valueColumns.length > 1 && systemColumns.length !== valueColumns.length) throw new Error('请先为每个用量列指定体系；原表格已保留。 / Assign a system to each amount column before conversion.');
     let parameter: Parameter;
     if (systemColumns.length) {
-      const values = systemColumns.map(index => ({ when: table.columnConditions![index]!, quantity: cellQuantity(row[index] ?? '') }));
-      const unit = values.find(value => value.quantity)?.quantity?.unit ?? 'µL';
-      parameter = { ...newMixParameter(newId, name, null, unit), source: { kind: 'lookup', values: values.map(value => ({ id: newId('value'), when: { all: [value.when] }, value: value.quantity ? convert(value.quantity.value, value.quantity.unit, unit) : null, unit })) } };
+      const values = systemColumns.flatMap(index => {
+        const id = chipReferenceId(row[index] ?? '');
+        const quantity = id ? undefined : cellQuantity(row[index] ?? '');
+        const source = id ? systems?.parameters.find(p => p.id === id)?.source : { kind: 'fixed' as const, value: quantity?.value ?? null, unit: quantity?.unit ?? 'µL' };
+        if (!source || (source.kind !== 'fixed' && source.kind !== 'lookup')) throw new Error('此列引用未确定的参数或计算结果；请保留原表格。 / This column references a missing, runtime or calculated amount; keep the original table.');
+        const rows = source.kind === 'lookup' ? source.values : [{ ...source, when: { all: [] } }];
+        return rows.map(value => ({ ...value, when: { ...value.when, all: [...(value.when.all ?? []), table.columnConditions![index]!] } }));
+      });
+      const unit = values.find(value => value.value !== null)?.unit ?? 'µL';
+      parameter = { ...newMixParameter(newId, name, null, unit), source: { kind: 'lookup', values: values.map(value => ({ id: newId('value'), when: value.when, value: value.value === null ? null : convert(value.value, value.unit, unit), unit })) } };
     } else {
-      const quantity = valueColumns.map(index => cellQuantity(row[index] ?? '')).find(Boolean);
+      const quantity = cellQuantity(cells[0] ?? '');
       parameter = newMixParameter(newId, name, quantity?.value ?? null, quantity?.unit ?? 'µL');
     }
     parameters.push(parameter);

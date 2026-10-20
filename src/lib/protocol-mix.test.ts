@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mixPerText, mixView, recipeTableToMix, runQuantityLabelText, runQuantityText, type ProtocolMix } from './protocol-mix';
+import { createEmptyProtocolDocument, protocolDocumentSchema } from './protocol-document';
+import { protocolDocumentToTiptap, tiptapToProtocolDocument } from './protocol-tiptap';
 import { resolveProtocolSystem, type ProtocolSystems } from './structured-protocol';
 
 type Parameter = ProtocolSystems['parameters'][number];
@@ -71,4 +73,69 @@ describe('Turning a recipe table into a mix card', () => {
       columnConditions: [null, { dimensionId: 'plate', optionId: 'p6' }, { dimensionId: 'plate', optionId: 'p12' }] }, newId);
     expect(bySystem.parameters[0].source).toMatchObject({ kind: 'lookup', values: [{ when: { all: [{ dimensionId: 'plate', optionId: 'p6' }] }, value: 250 }, { when: { all: [{ dimensionId: 'plate', optionId: 'p12' }] }, value: 125 }] });
   });
+});
+describe('Calculator review regressions', () => {
+  it('keeps a single conditional reference conditional instead of making it global', () => {
+    let id = 0;
+    const systems = systemsOf([fixed('volume', 'Medium', 125)], [{ id: 'plate', label: 'Plate', options: [{ id: 'small', label: 'Small' }, { id: 'large', label: 'Large' }] }]);
+    const converted = recipeTableToMix({ id: 'table', type: 'table', rows: [['Reagent', 'Small'], ['Medium', '{{volume}}']], columnConditions: [null, { dimensionId: 'plate', optionId: 'small' }] }, prefix => `${prefix}-${++id}`, systems);
+    const saved = { ...systems, parameters: [...systems.parameters, ...converted.parameters] };
+    expect(mixView(converted.block, saved, resolveProtocolSystem(saved, { plate: 'small' }).parameters, 6).lines[0].total).toBeCloseTo(825);
+    expect(mixView(converted.block, saved, resolveProtocolSystem(saved, { plate: 'large' }).parameters, 6).ready).toBe(false);
+  });
+
+  it('preserves both referenced system amounts through table conversion and document serialization', () => {
+    let id = 0;
+    const dimensions = [{ id: 'plate', label: 'Plate', options: [{ id: 'p6', label: '6 wells' }, { id: 'p12', label: '12 wells' }] }];
+    const systems = systemsOf([fixed('large', 'Opti-MEM', 250), fixed('small', 'Opti-MEM', 125)], dimensions);
+    const converted = recipeTableToMix({ id: 'table', type: 'table', rows: [['Reagent', '6 wells', '12 wells'], ['Opti-MEM', '{{large}}', '{{small}}']], columnConditions: [null, { dimensionId: 'plate', optionId: 'p6' }, { dimensionId: 'plate', optionId: 'p12' }] }, prefix => `${prefix}-${++id}`, systems);
+    const document = createEmptyProtocolDocument();
+    document.systems = { ...systems, parameters: [...systems.parameters, ...converted.parameters] };
+    document.sections.find(section => section.key === 'material')!.blocks = [converted.block];
+    const reopened = protocolDocumentSchema.parse(tiptapToProtocolDocument(protocolDocumentToTiptap(document), [], false, document.systems));
+    const saved = reopened.systems!;
+    expect(reopened.sections.find(section => section.key === 'material')!.blocks).toContainEqual(converted.block);
+    for (const [option, expected] of [['p6', 1650], ['p12', 825]] as const) {
+      const view = mixView(converted.block, saved, resolveProtocolSystem(saved, { plate: option }).parameters, 6);
+      expect(view.ready).toBe(true);
+      expect(view.lines[0].total).toBeCloseTo(expected);
+    }
+    expect(mixView(converted.block, saved, resolveProtocolSystem(saved, {}).parameters, 6).ready).toBe(false);
+  });
+
+  it('rejects negative, nonfinite and missing resolved amounts before generating totals or instructions', () => {
+    const mix = { ...qpcr, components: [component('bad', 'Invalid volume')] };
+    const systems = systemsOf([fixed('bad', '', 1)]);
+    for (const value of [-5, NaN, Infinity, undefined]) {
+      const view = mixView(mix, systems, { bad: { status: 'resolved', value, unit: 'µL' } }, 24);
+      expect(view.ready).toBe(false);
+      expect(view.lines[0].total).toBeUndefined();
+      expect(view.premixPerReaction).toBeUndefined();
+      expect(view.aliquot).toBe('');
+    }
+    const resolution = resolveProtocolSystem(qpcrSystems, {}).parameters;
+    for (const quantity of [0, -1, Infinity, NaN]) expect(mixView(qpcr, qpcrSystems, resolution, quantity).ready).toBe(false);
+    expect(mixView({ ...qpcr, components: [] }, qpcrSystems, resolution, 24).ready).toBe(false);
+    expect(mixView({ ...qpcr, overagePercent: -200 }, qpcrSystems, resolution, 24).ready).toBe(false);
+    expect(mixView(mix, systems, { bad: { status: 'resolved', value: 1e308, unit: 'µL' } }, 24).ready).toBe(false);
+    expect(mixView(mix, systems, { bad: { status: 'resolved', value: 0, unit: 'µL' } }, 24).ready).toBe(true);
+  });
+});
+
+it('retains nested lookup conditions and mixed units; refuses ambiguous or runtime-dependent columns without changing the table', () => {
+  let id = 0;
+  const newId = (prefix: string) => `${prefix}-${++id}`;
+  const plate = { id: 'plate', label: 'Plate', options: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }] };
+  const sample = { id: 'sample', label: 'Sample', options: [{ id: 'x', label: 'X' }, { id: 'y', label: 'Y' }] };
+  const systems = systemsOf([fixed('a', '', 0.25, 'mL'), { id: 'b', label: '', unit: 'µL', source: { kind: 'lookup', values: [{ id: 'x', when: { all: [{ dimensionId: 'sample', optionId: 'x' }] }, value: 125, unit: 'µL' }, { id: 'y', when: { all: [{ dimensionId: 'sample', optionId: 'y' }] }, value: 75, unit: 'µL' }] } }], [plate, sample]);
+  const table = { id: 'table', type: 'table' as const, rows: [['Reagent', 'A', 'B'], ['Medium', '{{a}}', '{{b}}']], columnConditions: [null, { dimensionId: 'plate', optionId: 'a' }, { dimensionId: 'plate', optionId: 'b' }] };
+  const original = structuredClone(table);
+  const { block, parameters } = recipeTableToMix(table, newId, systems);
+  const saved = { ...systems, parameters: [...systems.parameters, ...parameters] };
+  expect(mixView(block, saved, resolveProtocolSystem(saved, { plate: 'b', sample: 'x' }).parameters, 6).lines[0].total).toBeCloseTo(0.825);
+  expect(mixView(block, saved, resolveProtocolSystem(saved, { plate: 'b' }).parameters, 6).ready).toBe(false);
+  expect(() => recipeTableToMix({ ...table, columnConditions: undefined }, newId, systems)).toThrow(/Assign a system/);
+  systems.parameters[1].source = { kind: 'actual' };
+  expect(() => recipeTableToMix(table, newId, systems)).toThrow(/runtime/);
+  expect(table).toEqual(original);
 });

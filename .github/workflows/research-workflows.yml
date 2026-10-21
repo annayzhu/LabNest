@@ -35,11 +35,12 @@ jobs:
       - run: npm ci
       - run: npx prisma generate && npx prisma migrate deploy
       - run: npx playwright install --with-deps chromium
-      # Local stand-in URLs are deliberately disabled in production. Exercise these
-      # mocked network flows in development; the other acceptance jobs build/run production.
-      - name: Start isolated application with local stand-ins
+      - run: npm run build
+      # Only this acceptance process remaps known service URLs to loopback fixtures.
+      # App code still disables stand-in URLs in production.
+      - name: Start isolated production application with local stand-ins
         run: |
-          PORT=3339 npm run dev -- --webpack > research-server.log 2>&1 &
+          node --import ./scripts/test-helpers/research-fetch-fixtures.mjs node_modules/next/dist/bin/next start -p 3339 > research-server.log 2>&1 &
           for attempt in $(seq 1 90); do
             if curl --fail http://localhost:3339/api/health; then exit 0; fi
             sleep 1

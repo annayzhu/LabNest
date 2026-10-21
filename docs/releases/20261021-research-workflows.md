@@ -16,7 +16,7 @@ Review corrections:
 - Manuals: inventory upload/readback, internal search with AI off, extraction into a Protocol, one web search on allowed vendors, encrypted key retained without exposing it in the page.
 - Copilot: purpose-only start, five stages with tool calls, full-text/abstract distinction, adoption/ignore and database writes, stop/resume between stages, create/adjust from the overview, and uncertainty/source preservation when creating an experiment.
 
-The three feature browser scripts use an isolated development server and local model/search/literature stand-ins. Production disables those stand-in URLs; production compilation and the existing production browser suites are separate checks. These tests do not establish real model transcription accuracy, literature completeness or scientific validity. Physical iPhone/HEIC camera behavior and Chinese IME were not exercised.
+The three feature browser scripts run against an isolated production build with local model/search/literature stand-ins. A test-only preload remaps the two known search-service URLs to loopback and rejects unexpected outside fetches. App code continues to disable stand-in URL overrides in production; the preload requires the disposable test database and is never loaded by normal startup. These tests do not establish real model transcription accuracy, literature completeness or scientific validity. Physical iPhone/HEIC camera behavior and Chinese IME were not exercised.
 
 ## Editor acceptance scope
 

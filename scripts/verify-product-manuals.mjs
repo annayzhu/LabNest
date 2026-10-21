@@ -50,7 +50,12 @@ const db = new pg.Client({ connectionString: database.toString() });
 const report = { base, at: new Date().toISOString(), synthetic: true, liveProviders: false, checks: [], failures: [] };
 async function check(name, run) {
   try { await run(); report.checks.push({ name, status: "passed" }); console.log("PASS", name); }
-  catch (error) { report.failures.push({ name, error: String(error) }); throw error; }
+  catch (error) {
+    const page = browser?.contexts()[0]?.pages().at(-1);
+    report.failures.push({ name, error: String(error), ...(page ? { url: page.url(), body: (await page.locator('body').innerText().catch(() => '')).slice(0, 6000) } : {}) });
+    await page?.screenshot({ path: `${evidenceDir}/failure.png`, fullPage: true }).catch(() => undefined);
+    throw error;
+  }
   finally { await writeFile(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2)); }
 }
 

@@ -47,8 +47,8 @@ try {
       await page.getByRole('button', { name: 'Save Entry', exact: true }).filter({ visible: true }).click();
       await page.waitForURL(/\/entries\/(?!new)[^/?]+$/);
       const id = new URL(page.url()).pathname.split('/').pop();
-      const result = await db.query('select "contentMarkdown" from "Entry" where id=$1', [id]);
-      const content = result.rows[0].contentMarkdown;
+      const result = await db.query('select "contentJson" from "Entry" where id=$1', [id]);
+      const content = result.rows[0].contentJson.blocks.filter(block => block.type === "text").map(block => block.markdown).join("\n");
       const media = [...content.matchAll(/<!--labnest-media:([^\s]+)-->/g)].map(match => JSON.parse(decodeURIComponent(match[1])));
       assert.equal(media.length, 4);
       assert.equal(new Set(media.map(item => item.attachmentId)).size, 4);

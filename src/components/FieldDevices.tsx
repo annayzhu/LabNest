@@ -119,7 +119,7 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
   const phoneLink = origin && pairing ? watchPairingLink(origin, pairing.code) : undefined;
   return <section className="ln-field-card" aria-labelledby="field-watch-title">
     <h3 id="field-watch-title"><Watch className="h-4 w-4" aria-hidden />Apple Watch</h3>
-    {watch === 'legacy' ? <p className="text-muted">This experiment uses a Protocol in the old format, which the watch does not support. Once the Protocol is converted to step blocks, new experiments can run on the watch.</p>
+    {watch === 'legacy' ? <p className="text-muted">This experiment has not adopted a structured Protocol, so Apple Watch cannot connect. Tablets and phones can still open it. To use the watch, create an experiment from a Protocol with step blocks.</p>
       : watch === 'locked' ? <p className="text-muted">The experiment is submitted or finished, so a watch can no longer be paired.</p>
       : status?.connected ? <>
         <p className="ln-field-connected" role="status"><Check className="h-4 w-4" aria-hidden />{status?.since ? `Watch connected since ${new Date(status.since).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : 'Watch connected'}</p>

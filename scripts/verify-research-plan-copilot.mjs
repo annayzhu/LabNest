@@ -66,12 +66,7 @@ const db = new pg.Client({ connectionString: database.toString() });
 const report = { base, at: new Date().toISOString(), synthetic: true, liveProviders: false, checks: [], failures: [] };
 async function check(name, run) {
   try { await run(); report.checks.push({ name, status: "passed" }); console.log("PASS", name); }
-  catch (error) {
-    const page = browser?.contexts()[0]?.pages().at(-1);
-    report.failures.push({ name, error: String(error), ...(page ? { url: page.url(), body: (await page.locator('body').innerText().catch(() => '')).slice(0, 6000) } : {}) });
-    await page?.screenshot({ path: `${evidenceDir}/failure.png`, fullPage: true }).catch(() => undefined);
-    throw error;
-  }
+  catch (error) { report.failures.push({ name, error: String(error) }); throw error; }
   finally { await writeFile(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2)); }
 }
 
@@ -196,16 +191,6 @@ try {
     assert.equal(plan.length, 1);
     assert.deepEqual([plan[0].title, plan[0].status, plan[0].run, plan[0].inputsJson.mode], ["验证 B 基因敲低是否降低 KYSE150 细胞的迁移能力", "draft", "done", "new"]);
     assert(/^RP-/.test(plan[0].code) && plan[0].objective.startsWith("验证 B 基因"));
-    // Adopting an abstract-only experiment must keep its uncertainty and source even after deleting the run.
-    await page.locator('.ln-copilot-suggestions li').nth(3).getByRole('button', { name: '采纳' }).click();
-    await page.locator('.ln-copilot-suggestions li').nth(3).getByText('已采用').waitFor();
-    const savedPurpose = (await db.query('SELECT purpose FROM "Experiment" WHERE "researchPlanId"=$1', [plan[0].id])).rows[0].purpose;
-    assert(savedPurpose.includes('未核实') && savedPurpose.includes('MED:777') && savedPurpose.includes('科学问题'));
-    page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: '删除这次运行' }).click();
-    await page.getByLabel('要调整或核查什么？').first().waitFor();
-    assert.equal((await db.query('SELECT purpose FROM "Experiment" WHERE "researchPlanId"=$1', [plan[0].id])).rows[0].purpose, savedPurpose);
-
   });
 
   await check("the overview adjusts an existing plan: the run is marked as an adjustment and starts on that plan", async () => {

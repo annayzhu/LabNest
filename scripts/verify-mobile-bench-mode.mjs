@@ -18,7 +18,7 @@ try {
   await mobileNav.waitFor();
   assert.deepEqual(
     await mobileNav.locator("a, button").allTextContents(),
-    ["Today", "Run mode", "Quick capture", "Inventory", "More"],
+    ["Today", "Run mode", "Records", "Inventory", "More"],
     "Mobile navigation must use task-oriented Bench Mode destinations.",
   );
 
@@ -52,23 +52,22 @@ try {
   await syncDialog.getByText("The selected experiment step is no longer available.", { exact: true }).waitFor();
   await syncDialog.getByRole("button", { name: "Discard local copy" }).click();
   await syncDialog.waitFor({ state: "hidden" });
-  await page.locator(".bench-mobile").getByRole("link", { name: /Quick capture/i }).waitFor();
-  await page.getByRole("heading", { name: "Today’s experiments" }).waitFor();
-  await page.locator(".bench-mobile").getByRole("link", { name: /Quick capture/i }).click();
+  await page.getByRole("link", { name: /Quick capture/i }).waitFor();
+  await page.getByRole("heading", { name: "Today’s plan" }).waitFor();
+  await page.getByRole("link", { name: /Quick capture/i }).click();
   await page.getByRole("heading", { name: "Quick capture" }).waitFor();
   await page.getByPlaceholder("What did you observe?").waitFor();
   await page.getByPlaceholder("Title is generated automatically · optional").waitFor();
   await page.getByRole("button", { name: "Take photo", exact: true }).waitFor();
   await page.goBack({ waitUntil: "networkidle" });
-  await page.getByRole("link", { name: "Calendar", exact: true }).click();
+  await page.getByRole("link", { name: "Open monthly calendar" }).click();
   await page.getByRole("heading", { name: "Calendar" }).waitFor();
   await page.getByRole("link", { name: "Back to Today" }).click();
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
   await mobileNav.getByRole("button", { name: "Open more navigation" }).click();
   await page.getByRole("group", { name: "Switch language" }).waitFor();
   await page.getByRole("dialog", { name: "All modules" }).getByRole("button", { name: "Close menu" }).click();
-  await mobileNav.getByRole("button", { name: "Open more navigation" }).click();
-  await page.getByRole("dialog", { name: "All modules" }).getByRole("link", { name: "Record history", exact: true }).click();
+  await mobileNav.getByRole("link", { name: "Records" }).click();
   await page.getByRole("heading", { name: "Records" }).waitFor();
   const experimentRecord = page.locator('main a[href^="/experiments/"]').first();
   assert.equal(await experimentRecord.count(), 1, "Seeded journey requires at least one Experiment record.");

@@ -52,12 +52,7 @@ const db = new pg.Client({ connectionString: database.toString() });
 const report = { base, at: new Date().toISOString(), synthetic: true, liveProviders: false, checks: [], failures: [] };
 async function check(name, run) {
   try { await run(); report.checks.push({ name, status: "passed" }); console.log("PASS", name); }
-  catch (error) {
-    const page = browser?.contexts()[0]?.pages().at(-1);
-    report.failures.push({ name, error: String(error), ...(page ? { url: page.url(), body: (await page.locator('body').innerText().catch(() => '')).slice(0, 6000) } : {}) });
-    await page?.screenshot({ path: `${evidenceDir}/failure.png`, fullPage: true }).catch(() => undefined);
-    throw error;
-  }
+  catch (error) { report.failures.push({ name, error: String(error) }); throw error; }
   finally { await writeFile(`${evidenceDir}/report.json`, JSON.stringify(report, null, 2)); }
 }
 const picture = (width, height = 200) => sharp({ create: { width, height, channels: 3, background: { r: 240, g: 240, b: 240 } } }).jpeg().toBuffer();
@@ -96,7 +91,7 @@ try {
 
   await check("without a photo service the picture button is gray and opens the setup note", async () => {
     await page.goto(`${base}/protocols/import/recognize`, { waitUntil: "networkidle" });
-    await page.getByLabel(/^(选择图片|Choose pictures)$/).setInputFiles([{ name: "a.jpg", mimeType: "image/jpeg", buffer: await picture(301) }]);
+    await page.getByLabel("选择图片").setInputFiles([{ name: "a.jpg", mimeType: "image/jpeg", buffer: await picture(301) }]);
     const button = page.getByRole("button", { name: /识别图片（1 张）/ });
     assert.equal(await button.getAttribute("data-ai-off"), "true");
     await button.click();
@@ -109,7 +104,7 @@ try {
   await check("more than 50 pictures are cut to 50 with a note", async () => {
     await page.goto(`${base}/protocols/import/recognize`, { waitUntil: "networkidle" });
     const tiny = await picture(8, 8);
-    await page.getByLabel(/^(选择图片|Choose pictures)$/).setInputFiles(Array.from({ length: 52 }, (_, index) => ({ name: `p${index}.jpg`, mimeType: "image/jpeg", buffer: tiny })));
+    await page.getByLabel("选择图片").setInputFiles(Array.from({ length: 52 }, (_, index) => ({ name: `p${index}.jpg`, mimeType: "image/jpeg", buffer: tiny })));
     await page.getByText("最多 50 张，已忽略多出的 2 张。").waitFor();
     assert.equal(await page.locator(".ln-photo").count(), 50);
   });
@@ -118,7 +113,7 @@ try {
     await page.goto(`${base}/protocols/import/recognize`, { waitUntil: "networkidle" });
     // Chosen out of order, then put right with the move buttons.
     const widths = [302, 301, 303, 304, 305];
-    await page.getByLabel(/^(选择图片|Choose pictures)$/).setInputFiles(await Promise.all(widths.map(async width => ({ name: `w${width}.jpg`, mimeType: "image/jpeg", buffer: await picture(width) }))));
+    await page.getByLabel("选择图片").setInputFiles(await Promise.all(widths.map(async width => ({ name: `w${width}.jpg`, mimeType: "image/jpeg", buffer: await picture(width) }))));
     assert.equal(await page.locator(".ln-photo").count(), 5);
     await page.getByRole("button", { name: "第 1 张下移" }).click();
     await page.getByText("将把 5 张图片发给“Photo mock”，每张单独发送。").waitFor();
@@ -149,7 +144,7 @@ try {
     assert.equal(version.stepsJson.length, 4);
   });
 } finally {
-  if (providerId && browser) { const cleanup = await browser.newContext(); await cleanup.addCookies([{ name: "labnest_locale", value: "zh", url: base }]); const page = await cleanup.newPage(); await savePreferences(page, { enabled: false, defaultId: null, visionId: null }).catch(() => undefined); }
+  if (providerId && browser) { const page = await (await browser.newContext()).newPage(); await savePreferences(page, { enabled: false, defaultId: null, visionId: null }).catch(() => undefined); }
   await browser?.close();
   mock.closeAllConnections(); await new Promise(resolve => mock.close(resolve));
   await db.end();

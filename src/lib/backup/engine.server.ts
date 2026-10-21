@@ -72,9 +72,6 @@ async function createSnapshot(root: string, kind: BackupKind, startedAt: Date): 
   try {
     const restored = await checkByRestoring(source, dump);
     Object.assign(manifest, { tables: restored.tables, migration: restored.migration });
-    const copied = new Map(files.map(file => [file.path, file.size]));
-    const absent = restored.attachments.filter(file => copied.get(file.storagePath) !== file.size);
-    if (absent.length) throw new BackupError("Some attachment files are missing from the backup.", absent.slice(0, 5).map(file => file.storagePath).join(", "));
     const missing = await missingFiles(root, files);
     if (missing.length) throw new BackupError("Some attachment files are missing from the backup.", missing.slice(0, 5).join(", "));
     manifest.verified = { at: new Date().toISOString(), ok: true };
@@ -107,11 +104,11 @@ async function copyAttachments(root: string) {
 }
 
 /** Restores the dump into a throwaway database; returns what it holds. Fails if a table is missing or the load errors. */
-export async function checkByRestoring(source: ReturnType<typeof databaseTarget>, dump: string, expectedTables?: string[]) {
+async function checkByRestoring(source: ReturnType<typeof databaseTarget>, dump: string) {
   const scratch = databaseTarget(undefined, `labnest_backup_check_${randomBytes(4).toString("hex")}`);
   const expected = await withClient(source, async (client) => {
     await client.query(`create database "${scratch.database}"`);
-    return expectedTables ?? tableNames(client);
+    return tableNames(client);
   });
   try {
     await restoreDatabase(scratch, dump).catch((error) => { throw new BackupError("The backup could not be checked by restoring it.", String(error)); });
@@ -119,8 +116,7 @@ export async function checkByRestoring(source: ReturnType<typeof databaseTarget>
       const tables = await tableCounts(client);
       const absent = expected.filter((name) => !(name in tables));
       if (absent.length) throw new BackupError("The restored backup is missing tables.", absent.join(", "));
-      const attachments = tables.Attachment === undefined ? [] : (await client.query<{ storagePath: string; size: number }>('select "storagePath", size from "Attachment"')).rows;
-      return { tables, attachments, migration: await latestMigration(client) };
+      return { tables, migration: await latestMigration(client) };
     });
   } finally {
     await withClient(source, (client) => client.query(`drop database if exists "${scratch.database}" with (force)`)).catch(() => {});

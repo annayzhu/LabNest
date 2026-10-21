@@ -8,8 +8,6 @@ import {
   BookOpen,
   Boxes,
   ClipboardList,
-  Camera,
-  History,
   FileBarChart,
   Database,
   Dna,
@@ -30,7 +28,6 @@ import {
 import { TraditionalMotif } from "@/components/TraditionalMotif";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { cn } from "@/lib/cn";
-import { useI18n } from "@/components/I18nProvider";
 
 const sidebarStorageKey = "labnest.sidebar.collapsed";
 
@@ -169,7 +166,6 @@ export function Sidebar() {
 }
 
 export function MobileBottomNav() {
-  const zh = useI18n().locale === "zh";
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -177,21 +173,16 @@ export function MobileBottomNav() {
   const items = [
     { href: "/", label: "Today", icon: Home },
     { href: "/protocol-run", label: "Run mode", icon: TabletSmartphone },
-    { href: "/entries/new?mode=capture", label: "Quick capture", icon: Camera },
+    { href: "/records", label: "Records", icon: BookOpen },
     { href: "/inventory", label: "Inventory", icon: Boxes },
   ];
   const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const runPage = /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname);
-  // The center action creates a capture; historical records remain under More.
+  // Records is the hub for entries, experiments and results, so their pages light it instead of "More".
   const active = (href: string) => href === "/" ? pathname === "/"
     : href === "/protocol-run" ? under(href) || runPage
-    : href === "/entries/new?mode=capture" ? pathname === "/entries/new"
+    : href === "/records" ? !runPage && ["/records", "/entries", "/experiments", "/results"].some(under)
     : under(href);
-  const mobileModules = [
-    { href: "/entries/new?mode=capture", label: zh ? "快速记录" : "Quick capture", icon: Camera },
-    { href: "/records", label: zh ? "记录历史" : "Record history", icon: History },
-    ...navItems.map((item) => item.href === "/entries" ? { ...item, label: zh ? "全部记录" : "All entries" } : item),
-  ];
   const moreActive = !items.some((item) => active(item.href));
 
   useEffect(() => {
@@ -285,7 +276,7 @@ export function MobileBottomNav() {
             </div>
 
             <nav aria-label="All modules" className="grid grid-cols-2 gap-2">
-              {mobileModules.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 const isCurrent = active(item.href);
                 return (

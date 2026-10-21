@@ -2,10 +2,8 @@
 
 import { AlertTriangle, Cloud, CloudOff, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useI18n } from "@/components/I18nProvider";
-import Link from "next/link";
 import { countEntryDrafts } from "@/lib/entry-draft-store";
-import { listMobileMutations, mobileQueueChangedEvent, removeMobileMutation, requestMobileMutationSync, type MobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
+import { listMobileMutations, mobileMutationStatusLabel, mobileQueueChangedEvent, removeMobileMutation, requestMobileMutationSync, type MobileMutation, updateMobileMutation } from "@/lib/mobile-mutation-queue";
 
 const actionLabels: Record<MobileMutation["actionType"], string> = {
   "calculation.create": "Calculation",
@@ -19,7 +17,6 @@ const actionLabels: Record<MobileMutation["actionType"], string> = {
 };
 
 export function MobileBenchStatus() {
-  const zh = useI18n().locale === "zh";
   const [online, setOnline] = useState(true);
   const [drafts, setDrafts] = useState(0);
   const [items, setItems] = useState<MobileMutation[]>([]);
@@ -75,17 +72,17 @@ export function MobileBenchStatus() {
   if (!storageError && online && drafts === 0 && pending === 0 && conflicts.length === 0) return null;
   return (
     <>
-    <section aria-label="Save and sync status" className="border-t border-hairline pt-3">
+    <section aria-label="Save and sync status" className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4">
       <div className="flex items-center gap-2">
         {online ? <Cloud className="h-4 w-4 text-moss" aria-hidden /> : <CloudOff className="h-4 w-4 text-warning" aria-hidden />}
         <h2 className="text-sm font-semibold text-ink">Save & sync</h2>
       </div>
-      <div className="mt-1 space-y-1 text-sm text-muted">
+      <div className="mt-3 space-y-2 text-sm text-graphite">
         {storageError ? <p role="alert" className="text-error">{storageError}</p> : null}
         {!online ? <p className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />Offline. Captures remain on this device until you reconnect and save them.</p> : null}
-        {drafts ? <Link href="/entries/new?mode=capture" className="focus-ring flex min-h-11 items-center text-moss">{zh ? `${drafts} 份本机草稿 · 继续记录` : `${drafts} local ${drafts === 1 ? "draft" : "drafts"} · Continue writing`}</Link> : null}
-        {pending ? <p>{zh ? `${pending} 条记录待同步` : `${pending} waiting to sync.`}</p> : null}
-        {conflicts.length ? <p className="text-error">{zh ? `${conflicts.length} 条同步问题需要核对` : `${conflicts.length} sync issues requiring review.`}</p> : null}
+        {drafts ? <p>{drafts} recoverable local {drafts === 1 ? "draft" : "drafts"} on this device.</p> : null}
+        {pending ? <p>{pending} {mobileMutationStatusLabel("pending").toLowerCase()}.</p> : null}
+        {conflicts.length ? <p className="text-error">{conflicts.length} {mobileMutationStatusLabel("conflict").toLowerCase()} requiring review.</p> : null}
       </div>
       {conflicts.length ? <button ref={reviewTrigger} type="button" onClick={() => setReviewOpen(true)} className="focus-ring mt-3 min-h-11 w-full rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 text-sm font-semibold text-error">Review sync issues</button> : null}
     </section>

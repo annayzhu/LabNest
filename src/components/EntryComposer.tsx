@@ -11,7 +11,6 @@ import {
   Cloud,
   Download,
   File,
-  Paperclip,
   RotateCcw,
   Save,
   X,
@@ -33,7 +32,6 @@ import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { deleteEntryDraft, loadEntryDraft, saveEntryDraft, type StoredEntryDraft } from "@/lib/entry-draft-store";
 import { migrateEntryDraftFields } from "@/lib/entry-draft-migration";
 import { entryDraftKey, entryDraftMatchesContext } from "@/lib/entry-draft-context";
-import { MAX_ENTRY_FILES, MAX_ENTRY_TOTAL_BYTES } from "@/lib/attachment-limits";
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
@@ -97,7 +95,6 @@ export type EntryComposerInitialEntry = {
   attachments: EntryComposerAttachment[];
 };
 
-const maxFileBytes = 25 * 1024 * 1024;
 const entryDocumentOutline: DocumentOutlineItem[] = [
   { id: "entry-document-overview", label: "Entry details" },
   { id: "entry-document-content", label: "Record content" },
@@ -194,7 +191,6 @@ export function EntryComposer({
   const mediaInputPrefix = useId();
   const actionsHostId = `${mediaInputPrefix}-document-actions`;
   const cameraInputId = `${mediaInputPrefix}-camera`;
-  const fileInputId = `${mediaInputPrefix}-files`;
   const previewUrls = useRef(new Set<string>());
   const bodyEditors = useRef(new Set<Editor>());
   const registerBodyEditor = useCallback((editor: Editor) => { bodyEditors.current.add(editor); return () => { bodyEditors.current.delete(editor); }; }, []);
@@ -286,7 +282,6 @@ export function EntryComposer({
   }, [draftKey, fields, hydrated, isSubmitting, media]);
 
   const availablePlans = fields.projectId ? researchPlans.filter((plan) => plan.projectId === fields.projectId) : researchPlans;
-  const totalBytes = media.reduce((total, item) => total + item.size, 0);
   const selectedProject = projects.find((project) => project.id === fields.projectId);
   const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
   const selectedProtocol = protocols.find((protocol) => protocol.id === fields.protocolVersionId);
@@ -296,44 +291,13 @@ export function EntryComposer({
     setFields((current) => ({ ...current, [key]: value }));
   }
 
-  /** The camera and file buttons sit outside the page, so what they bring goes into the page at its end. */
+  /** The camera button sits outside the page, so its photo goes into the page at its end, like everything else added to an Entry. */
   function addFiles(fileList: FileList | File[]) {
-    const bodyEditor = [...bodyEditors.current].find(editor => !editor.isDestroyed && editor.view.dom.getClientRects().length > 0);
-    if (bodyEditor) { appendToPage(bodyEditor, Array.from(fileList)); return; }
-    const files = Array.from(fileList);
+    const live = [...bodyEditors.current].filter(editor => !editor.isDestroyed);
+    const bodyEditor = live.find(editor => editor.view.dom.getClientRects().length > 0) ?? live[0];
+    if (!bodyEditor) { setSubmitStatus("The page is still loading; try again."); return; }
     setSubmitStatus("");
-    if (!files.length) return;
-    if (media.length + files.length > MAX_ENTRY_FILES) {
-      setSubmitStatus(`An Entry can contain at most ${MAX_ENTRY_FILES} files.`);
-      return;
-    }
-    const invalid = files.find((file) => file.size === 0 || file.size > maxFileBytes);
-    if (invalid) {
-      setSubmitStatus(`${invalid.name} is empty or exceeds the 25 MB per-file limit.`);
-      return;
-    }
-    const nextTotal = totalBytes + files.reduce((sum, file) => sum + file.size, 0);
-    if (nextTotal > MAX_ENTRY_TOTAL_BYTES) {
-      setSubmitStatus("Combined Entry attachments cannot exceed 100 MB.");
-      return;
-    }
-
-    const next = files.map<NewMedia>((file) => {
-      const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
-      if (previewUrl) previewUrls.current.add(previewUrl);
-      return {
-        kind: "new",
-        id: newId(),
-        file,
-        originalFilename: file.name,
-        mimeType: file.type || "application/octet-stream",
-        size: file.size,
-        previewUrl,
-        status: "ready",
-      };
-    });
-    setMedia((current) => [...current, ...next]);
-    // Attachments are evidence, not the Entry's source classification.
+    appendToPage(bodyEditor, Array.from(fileList));
   }
 
   function removeMedia(id: string) {
@@ -439,7 +403,6 @@ export function EntryComposer({
   return (
     <form inert={isSubmitting} aria-busy={isSubmitting} onSubmit={submit} className="space-y-5">
       <input id={cameraInputId} className="sr-only" disabled={isSubmitting} type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
-      <input id={fileInputId} className="sr-only" disabled={isSubmitting} type="file" multiple onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
       {captureMode ? (
         <section className="space-y-5 lg:hidden">
           <div>
@@ -464,9 +427,9 @@ export function EntryComposer({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-t border-hairline p-3">
+            <div className="flex flex-col gap-1 border-t border-hairline p-3">
               <MediaPickerLabel htmlFor={cameraInputId} disabled={isSubmitting} spacious><Camera className="h-5 w-5" />Take photo</MediaPickerLabel>
-              <MediaPickerLabel htmlFor={fileInputId} disabled={isSubmitting} spacious><Paperclip className="h-5 w-5" />Add files</MediaPickerLabel>
+              <span className="text-center text-xs text-muted">Added at the end of the page</span>
             </div>
             {media.length ? (
               <ul className="divide-y divide-hairline border-t border-hairline">

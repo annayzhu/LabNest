@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { copyFile, mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { getAttachmentRoot } from "../src/lib/attachments";
-import { missingFiles, runBackup } from "../src/lib/backup/engine.server";
+import { checkByRestoring, missingFiles, runBackup } from "../src/lib/backup/engine.server";
 import { databaseTarget, restoreDatabase, tableCounts, withClient } from "../src/lib/backup/postgres.server";
 import { backupRoot, filesDir, listSnapshots, readManifest, snapshotDir } from "../src/lib/backup/store.server";
 
@@ -36,6 +36,15 @@ async function main() {
   }
 
   const target = databaseTarget();
+  // A nonempty dump can still be corrupt. Prove it restores before making any change to the target database.
+  const checked = await checkByRestoring(target, path.join(snapshotDir(root, id), "database.dump"), Object.keys(manifest.tables));
+  if (Object.entries(manifest.tables).some(([table, count]) => checked.tables[table] !== count)) {
+    throw new Error("The backup's restored row counts do not match its manifest.");
+  }
+  const listedFiles = new Map(manifest.files.map(file => [file.path, file.size]));
+  if (checked.attachments.some(file => listedFiles.get(file.storagePath) !== file.size)) {
+    throw new Error("The backup does not contain every attachment referenced by its database.");
+  }
   const hasData = await withClient(target, async (client) => (await client.query("select to_regclass('public._prisma_migrations') as name")).rows[0].name !== null);
   if (hasData) {
     const before = await runBackup("pre-restore", { protect: [id] });

@@ -45,6 +45,7 @@ jobs:
           cat mobile-server.log
           exit 1
       - run: node scripts/verify-mobile-repair.mjs
+      - run: node scripts/verify-mobile-home-calendar.mjs
       - run: node scripts/verify-mobile-capture-release.mjs
         env:
           CAPTURE_RELEASE_EVIDENCE: docs/qa/evidence/mobile-repair/capture-release

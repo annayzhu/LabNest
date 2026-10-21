@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { addDays, addMonths, format, startOfDay, startOfMonth } from "date-fns";
+import { addDays, format, startOfDay } from "date-fns";
 import { ArrowRight, ArrowUpRight, Beaker, BookOpen, Calculator, Database, FlaskConical, TabletSmartphone, Timer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCalendar } from "@/components/OverviewCalendar";
@@ -19,6 +19,7 @@ import { runProgressFromSource } from "@/lib/structured-run";
 import {
   calendarDateKey,
   calendarMonthKey,
+  getCalendarGrid,
   parseCalendarMonth,
   type OverviewCalendarActivity,
 } from "@/lib/overview-calendar";
@@ -60,7 +61,10 @@ export default async function OverviewPage({
   const mobileCalendarOpen = params?.view === "calendar";
   const today = new Date();
   const viewMonth = parseCalendarMonth(requestedMonth, today);
-  const nextMonth = startOfMonth(addMonths(viewMonth, 1));
+  // Load the whole six-week grid so the phone's week strip also shows the days that spill into the
+  // neighbouring months; the desktop month view ignores them.
+  const calendarStart = getCalendarGrid(viewMonth)[0];
+  const calendarEnd = addDays(calendarStart, 42);
   const [
     activeResearchPlans,
     calendarEntries,
@@ -81,7 +85,7 @@ export default async function OverviewPage({
       },
     }),
     prisma.entry.findMany({
-      where: { occurredAt: { gte: viewMonth, lt: nextMonth } },
+      where: { occurredAt: { gte: calendarStart, lt: calendarEnd } },
       orderBy: { occurredAt: "asc" },
       select: {
         id: true,
@@ -94,7 +98,7 @@ export default async function OverviewPage({
       },
     }),
     prisma.experiment.findMany({
-      where: { date: { gte: viewMonth, lt: nextMonth } },
+      where: { date: { gte: calendarStart, lt: calendarEnd } },
       orderBy: { date: "asc" },
       select: {
         id: true,
@@ -178,7 +182,7 @@ export default async function OverviewPage({
   const todayKey = calendarDateKey(today);
   const initialSelectedDateKey = viewMonthKey === calendarMonthKey(today)
     ? todayKey
-    : calendarActivities[0]?.dateKey ?? format(viewMonth, "yyyy-MM-dd");
+    : calendarActivities.find((activity) => activity.dateKey.startsWith(viewMonthKey))?.dateKey ?? format(viewMonth, "yyyy-MM-dd");
   const activeRun = activeRuns[0];
   // Shared by the mobile bench view and the desktop Today panel.
   const activeRunBody = activeRun ? (() => {
@@ -242,7 +246,7 @@ export default async function OverviewPage({
   return (
     <AppShell>
       <BackupAlert />
-      {!mobileCalendarOpen ? <MobileToday experiments={todayExperiments} today={today} monthKey={viewMonthKey} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
+      {!mobileCalendarOpen ? <MobileToday experiments={todayExperiments} today={today} monthKey={viewMonthKey} initialSelectedDateKey={initialSelectedDateKey} activities={calendarActivities} locale={locale} /> : <section className="bench-mobile space-y-3 lg:hidden">
         <Link href="/" className="focus-ring inline-flex min-h-11 items-center gap-2 px-2 text-sm font-semibold text-moss">
           <ArrowRight className="h-4 w-4 rotate-180" aria-hidden />Back to Today
         </Link>

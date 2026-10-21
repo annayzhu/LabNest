@@ -95,7 +95,7 @@ try {
             assert.deepEqual(await mobile.locator("nav a").evaluateAll(nodes => nodes.map(node => node.getAttribute("href"))),
               ["/protocol-run", "/entries/new?mode=capture", "/tools/calculator", "/tools"]);
             assert.equal(await mobile.locator('a[href="/protocol-run"]').count(), 1, "No duplicate run-mode CTA.");
-            const links = await mobile.locator('a[href^="/experiments/"]').allTextContents();
+            const links = await mobile.locator('section[aria-labelledby="mobile-today-title"] a[href^="/experiments/"]').allTextContents();
             assert(links[0].includes("QA overnight experiment"), "Cross-day running experiment must lead.");
             assert(links.some(text => text.includes("QA planned today")));
             assert(!links.some(text => /QA (future|completed)/.test(text)));

@@ -1,51 +1,121 @@
 import Link from "next/link";
-import { ArrowRight, Calculator, Camera, TabletSmartphone, Wrench } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Calculator, Camera, FlaskConical, TabletSmartphone, Wrench } from "lucide-react";
 import { MobileBenchStatus } from "@/components/MobileBenchStatus";
+import { MobileWeekCalendar } from "@/components/MobileWeekCalendar";
 import type { AppLocale } from "@/lib/i18n";
+import { calendarDateKey, type OverviewCalendarActivity } from "@/lib/overview-calendar";
 
 type Experiment = { id: string; title: string; runCode: string; status: string; date: Date };
 
-export function MobileToday({ experiments, today, monthKey, locale }: {
-  experiments: Experiment[]; today: Date; monthKey: string; locale: AppLocale;
+export function MobileToday({ experiments, today, monthKey, initialSelectedDateKey, activities, locale }: {
+  experiments: Experiment[];
+  today: Date;
+  monthKey: string;
+  initialSelectedDateKey: string;
+  activities: OverviewCalendarActivity[];
+  locale: AppLocale;
 }) {
   const zh = locale === "zh";
   const actions = [
-    { href: "/protocol-run", label: zh ? "现场模式" : "Run mode", icon: TabletSmartphone },
-    { href: "/entries/new?mode=capture", label: zh ? "快速记录" : "Quick capture", icon: Camera },
-    { href: "/tools/calculator", label: zh ? "计算器" : "Calculator", icon: Calculator },
-    { href: "/tools", label: zh ? "工具" : "Tools", icon: Wrench },
+    { href: "/protocol-run", label: zh ? "现场模式" : "Run mode", hint: zh ? "平板 · 手机 · 手表" : "Tablet, phone, watch", icon: TabletSmartphone },
+    { href: "/entries/new?mode=capture", label: zh ? "快速记录" : "Quick capture", hint: zh ? "照片、观察或测量" : "Photo, note, measurement", icon: Camera },
+    { href: "/tools/calculator", label: zh ? "计算器" : "Calculator", hint: zh ? "配液与单位换算" : "Mixes and conversions", icon: Calculator },
+    { href: "/tools", label: zh ? "工具" : "Tools", hint: zh ? "分析与作图" : "Analysis and plots", icon: Wrench },
   ];
   const ordered = [...experiments].sort((a, b) =>
     Number(b.status === "running") - Number(a.status === "running") || a.date.getTime() - b.date.getTime());
+  const running = experiments.filter((experiment) => experiment.status === "running").length;
+  const planned = experiments.length - running;
+  const dateLabel = today.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "long", day: "numeric", weekday: "long" });
 
-  return <section className="bench-mobile space-y-5 lg:hidden">
-    <header>
-      <h1 className="page-header-title text-ink">{zh ? "今日实验台" : "Today at the bench"}</h1>
-      <p className="mt-1 text-sm text-muted" data-i18n-ignore>{today.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "long", day: "numeric", weekday: "long" })}</p>
-    </header>
-    <nav aria-label={zh ? "实验台快捷入口" : "Bench shortcuts"} className="grid grid-cols-2 gap-3">
-      {actions.map(({ href, label, icon: Icon }, index) => <Link key={href} href={href}
-        className={`focus-ring flex min-h-20 items-center gap-3 rounded-[var(--ln-radius-panel)] border px-4 text-base font-semibold ${index === 0 ? "ln-key-action" : "border-hairline bg-surface text-moss hover:bg-warm"}`}>
-        <Icon className="h-6 w-6 shrink-0" aria-hidden /><span>{label}</span>
-      </Link>)}
-    </nav>
-    <section aria-labelledby="mobile-today-title">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 id="mobile-today-title" className="text-base font-semibold text-ink">{zh ? "今日实验" : "Today’s experiments"}</h2>
-        <Link href={`/?month=${monthKey}&view=calendar`} className="focus-ring flex min-h-11 items-center px-2 text-sm text-moss">{zh ? "日历" : "Calendar"}</Link>
+  return <section className="bench-mobile space-y-6 lg:hidden">
+    <header className="flex items-end justify-between gap-4 pt-1">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-moss" data-i18n-ignore>{dateLabel}</p>
+        <h1 className="mt-1 text-2xl font-semibold leading-tight tracking-[-0.02em] text-ink">{zh ? "今日实验台" : "Today at the bench"}</h1>
       </div>
-      <div className="divide-y divide-hairline border-y border-hairline">
-        {ordered.length ? ordered.map((experiment) => <Link key={experiment.id} href={`/experiments/${experiment.id}/run`}
-          className="focus-ring flex min-h-20 items-center gap-3 py-3">
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-semibold leading-6 text-ink">{experiment.title}</span>
-            <span className="mt-1 block text-sm text-muted" data-i18n-ignore>{experiment.runCode} · {experiment.date.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "numeric", day: "numeric" })}</span>
+      <dl className="flex shrink-0 divide-x divide-hairline text-right">
+        <div className="pr-3">
+          <dt className="text-xs text-muted">{zh ? "进行中" : "Running"}</dt>
+          <dd className={`font-mono text-xl font-medium leading-7 ${running ? "text-moss" : "text-ink"}`} data-i18n-ignore>{running}</dd>
+        </div>
+        <div className="pl-3">
+          <dt className="text-xs text-muted">{zh ? "待开始" : "Planned"}</dt>
+          <dd className="font-mono text-xl font-medium leading-7 text-ink" data-i18n-ignore>{planned}</dd>
+        </div>
+      </dl>
+    </header>
+
+    <nav aria-label={zh ? "实验台快捷入口" : "Bench shortcuts"} className="grid grid-cols-2 gap-3">
+      {actions.map(({ href, label, hint, icon: Icon }, index) => {
+        const key = index === 0;
+        return <Link key={href} href={href}
+          className={`focus-ring relative flex min-h-[6.5rem] flex-col justify-between overflow-hidden rounded-[var(--ln-radius-panel)] border p-3.5 transition-colors ${key ? "ln-key-action" : "border-hairline bg-surface text-ink hover:border-border-strong active:bg-warm"}`}>
+          <span className="flex items-start justify-between">
+            <span className={`flex h-10 w-10 items-center justify-center rounded-full ${key ? "bg-warm/15 text-warm" : "bg-action-surface text-moss"}`}>
+              <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden />
+            </span>
+            <ArrowUpRight className={`h-4 w-4 ${key ? "text-warm/70" : "text-muted"}`} aria-hidden />
           </span>
-          <span className="shrink-0 text-sm font-medium text-moss">{experiment.status === "running" ? (zh ? "继续实验" : "Continue") : (zh ? "开始实验" : "Start")}</span>
-          <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
-        </Link>) : <p className="py-5 text-sm leading-6 text-muted">{zh ? "今天没有待做或正在进行的实验。" : "No planned or running experiments for today."}</p>}
+          <span className="mt-3 block">
+            <span className="block text-base font-semibold leading-5">{label}</span>
+            <span className={`mt-1 block truncate text-xs ${key ? "text-warm/75" : "text-muted"}`}>{hint}</span>
+          </span>
+        </Link>;
+      })}
+    </nav>
+
+    <section aria-labelledby="mobile-today-title">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h2 id="mobile-today-title" className="text-base font-semibold text-ink">{zh ? "今日实验" : "Today’s experiments"}</h2>
+        <span className="font-mono text-xs text-muted" data-i18n-ignore>{zh ? `${ordered.length} 项` : `${ordered.length} ${ordered.length === 1 ? "item" : "items"}`}</span>
+      </div>
+      <div className="overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-surface">
+        {ordered.length ? <ul className="divide-y divide-hairline">
+          {ordered.map((experiment) => {
+            const isRunning = experiment.status === "running";
+            return <li key={experiment.id}>
+              <Link href={`/experiments/${experiment.id}/run`} className="focus-ring flex min-h-[4.5rem] items-center gap-3 px-4 py-3 transition-colors active:bg-warm">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isRunning ? "bg-action text-warm" : "bg-action-surface text-moss"}`}>
+                  <FlaskConical className="h-4 w-4" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block text-sm font-semibold leading-5 text-ink">{experiment.title}</span>
+                  <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                    <span className="record-identifier truncate" data-i18n-ignore>{experiment.runCode}</span>
+                    <span aria-hidden>·</span>
+                    <span className="shrink-0" data-i18n-ignore>{experiment.date.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "numeric", day: "numeric" })}</span>
+                    {isRunning ? <span className="shrink-0 text-moss">· {zh ? "进行中" : "Running"}</span> : null}
+                  </span>
+                </span>
+                <span className={`flex h-8 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold ${isRunning ? "bg-action text-warm" : "border border-action-border text-moss"}`}>
+                  {isRunning ? (zh ? "继续" : "Continue") : (zh ? "开始" : "Start")}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </span>
+              </Link>
+            </li>;
+          })}
+        </ul> : <div className="flex items-center gap-3 px-4 py-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone text-muted"><FlaskConical className="h-4 w-4" aria-hidden /></span>
+          <p className="text-sm leading-6 text-muted">{zh ? "今天没有待做或正在进行的实验。" : "No planned or running experiments for today."}</p>
+        </div>}
       </div>
     </section>
+
+    <section aria-labelledby="mobile-calendar-title">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 id="mobile-calendar-title" className="text-base font-semibold text-ink">{zh ? "日程" : "Schedule"}</h2>
+        <Link href={`/?month=${monthKey}&view=calendar`} className="focus-ring -mr-2 flex min-h-11 items-center px-2 text-sm font-medium text-moss">{zh ? "日历" : "Calendar"}</Link>
+      </div>
+      <MobileWeekCalendar
+        key={monthKey}
+        monthKey={monthKey}
+        todayKey={calendarDateKey(today)}
+        initialSelectedDateKey={initialSelectedDateKey}
+        activities={activities}
+      />
+    </section>
+
     <MobileBenchStatus />
   </section>;
 }

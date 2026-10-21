@@ -16,6 +16,7 @@ LabNest 是面向个人研究者与小型实验室的实验设计与执行平台
 | 孔板规划与数据分析 | 规划多块孔板、样本和重复，汇总配液并导出移液工作表；提供 qPCR、TaqMan CNV 排板与分析工具入口，以及独立 Visualization Studio 的连接入口。 |
 | 物料与序列管理 | 管理试剂、耗材和样本的存放位置、数量与使用记录，跟踪库存变动、询价和采购；维护序列资料及其关联记录。 |
 | 可选 AI 辅助 | 辅助方法整理、Protocol 识别和记录解析，生成可审核的草稿与建议。支持 OpenAI、Anthropic、OpenAI 兼容服务及 Dify，也支持手动复制粘贴。 |
+| 自动备份与恢复 | 每天备份整个数据库和附件，自动试恢复检查；在设置中查看状态、立即备份或下载，使用命令恢复历史备份。 |
 | 多设备使用 | 浏览器界面适配电脑、平板和手机；支持实验台操作、局部离线记录和恢复联网后的同步。仓库另提供 iPhone / Apple Watch 配套工程，用于连接实验及查看步骤和计时。 |
 
 全局搜索可查找实验、方法、记录和物料等内容。附件随关联记录保存；字体、主题及常用工具可按个人习惯设置。
@@ -114,7 +115,7 @@ docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
 
 ### 更新与日常维护
 
-Docker 使用命名卷保存数据库和附件，更新应用会沿用这些数据。更新前备份数据库、附件和 `.env`，然后在仓库目录执行：
+Docker 使用命名卷保存数据库和附件，更新应用会沿用这些数据。更新前先备份（见下文“备份与恢复”）并另存 `.env`，然后在仓库目录执行：
 
 ```bash
 git pull --ff-only origin main
@@ -125,4 +126,22 @@ curl --fail http://localhost:3001/api/health
 
 查看日志使用 `docker compose logs -f app`；暂停服务使用 `docker compose stop`，重新启动使用 `docker compose start`。保留数据时不要使用 `docker compose down -v`，因为它会删除数据库和附件卷。
 
-源码部署更新后，依次运行 `npm ci`、`npx prisma migrate deploy`、`npm run build`，再重新启动服务。数据库中的附件元数据不包含文件本体，备份时需要同时保留附件目录或附件卷。更换访问地址或端口前，先在原地址完成待同步操作；浏览器草稿和离线队列按访问地址分别保存。
+源码部署更新后，依次运行 `npm ci`、`npx prisma migrate deploy`、`npm run build`，再重新启动服务。更换访问地址或端口前，先在原地址完成待同步操作；浏览器草稿和离线队列按访问地址分别保存。
+
+### 备份与恢复
+
+恢复前会先在临时数据库中试读所选备份并核对记录数和附件，校验失败时保留当前数据库。
+
+LabNest 每天 03:00 自动备份一次，内容是全部数据库表和全部附件文件；当时电脑在睡眠的话，醒来后补做。Docker 部署默认存到本机的 `~/LabNest备份`，在 Docker 卷之外；要换位置（例如 iCloud 云盘或移动硬盘），在 `.env` 中设置 `LABNEST_BACKUP_HOST_DIR=/完整/路径` 后重新启动 app。源码运行时用 `LABNEST_BACKUP_ROOT` 指定文件夹；不设置则不备份。
+
+- **设置 → 备份**：上次成功备份的时间、位置与占用空间，“立即备份”，每份备份的下载（.zip）。超过 36 小时没有成功备份或最近一次失败时，总览页顶部会提醒。
+- **保留**：最近 7 天的全部备份，以及再往前 4 周每周一份；附件文件只存一份，所有备份共用。
+- **检查**：每份备份做完后都会还原到一个临时数据库，通过后才标为“已验证”。
+- **恢复**：恢复会替换整个数据库，在命令行进行，并先自动把当前状态备份一份：
+
+```bash
+docker exec -it labnest-app npx tsx scripts/restore-backup.ts
+docker exec -it labnest-app npx tsx scripts/restore-backup.ts <备份编号> --yes
+```
+
+第一条列出备份，第二条恢复其中一份。下载的 .zip 解压后与备份文件夹结构相同，把 `LABNEST_BACKUP_ROOT` 指向它即可恢复。备份不包含 `.env` 中解密 AI 密钥用的 `LABNEST_AI_ENCRYPTION_KEY`：换电脑恢复后，在 AI 设置里重新填写 API 密钥。只存在浏览器里的内容（计算器配方与计算记录、常用任务、外观设置、Entry 未保存的草稿）不在备份中。

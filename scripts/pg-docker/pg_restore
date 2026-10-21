@@ -1,0 +1,4 @@
+#!/bin/sh
+# Development only: the Mac has no Postgres client, so run pg_restore inside the labnest-postgres container.
+# Used by setting LABNEST_PG_BIN=scripts/pg-docker; files travel through stdin/stdout.
+exec docker exec -i -e PGPASSWORD labnest-postgres pg_restore "$@"

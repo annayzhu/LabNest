@@ -5255,3 +5255,8 @@ main.embedded-tool-workspace { padding: 0 !important; }
 
 /* The first thing a new Experiment's drawer says: where it comes from and what to fill in first. */
 .ln-form-intro { margin: 0 0 0.75rem; padding: 0.55rem 0.7rem; border-left: 2px solid var(--moss); background: var(--warm); border-radius: 0 var(--ln-radius-control-md) var(--ln-radius-control-md) 0; font-size: var(--ln-control-font-size-md); line-height: 1.55; color: var(--graphite); }
+
+/* iOS Safari zooms the whole page into any editable field under 16px; the quick-capture editor must not shift the layout. */
+@media (pointer: coarse) {
+  .ln-protocol-tiptap.ln-compact-rich-tiptap { font-size: max(16px, var(--ln-rich-text-editor-font-size)); }
+}

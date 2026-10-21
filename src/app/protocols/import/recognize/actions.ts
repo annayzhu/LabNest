@@ -12,7 +12,9 @@ export async function readRecognitionSource(formData: FormData): Promise<Recogni
   try {
     const upload = formData.get("file");
     const pasted = String(formData.get("text") ?? "").trim();
-    const file = upload instanceof File && upload.size ? upload : pasted ? new File([pasted], "粘贴的文字.txt", { type: "text/plain" }) : undefined;
+    // Text read from photos is kept under a name that says so; any other pasted text is just pasted text.
+    const name = String(formData.get("name") ?? "").trim().replace(/[\\/:*?"<>|]/g, " ").slice(0, 120) || "粘贴的文字.txt";
+    const file = upload instanceof File && upload.size ? upload : pasted ? new File([pasted], name.endsWith(".txt") ? name : `${name}.txt`, { type: "text/plain" }) : undefined;
     if (!file) throw new Error("Choose a file, or paste the text");
     if (file.size > MAX_ATTACHMENT_BYTES) throw new Error("The file can’t be larger than 25 MB");
     const sourceId = await keepRecognitionSource(file);

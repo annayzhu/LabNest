@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const revision = z.string().min(1).max(40);
 const changeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("enabled"), enabled: z.boolean(), revision }).strict(),
-  z.object({ kind: z.literal("configuration"), defaultProviderId: z.string().min(1).nullable(), attachmentsEnabled: z.boolean(), revision }).strict(),
+  z.object({ kind: z.literal("configuration"), defaultProviderId: z.string().min(1).nullable(), attachmentsEnabled: z.boolean(), visionProviderId: z.string().min(1).nullable().optional(), revision }).strict(),
 ]);
 export async function GET() {
   try { return Response.json(await readAISettings(), { headers: { "Cache-Control": "no-store" } }); }

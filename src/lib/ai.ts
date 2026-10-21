@@ -1,3 +1,4 @@
+import { toolArguments, type ChatMessage, type ChatToolSpec, type ChatTurn } from "./ai-chat";
 import { proposedActionSchema } from "./validation";
 import type { ProposedAction } from "./types";
 
@@ -88,7 +89,14 @@ export interface AIProviderAdapter {
   generateProposedActions?(input: EntryToActionPromptInput): Promise<AIGenerationResult>;
   /** Raw completion for feature-specific prompts. Absent on manual copy-paste mode. */
   complete?(system: string, user: string): Promise<{ text: string; model?: string }>;
+  /** Reads one picture with a model that can see; absent when the service cannot (manual mode, Dify). */
+  describeImage?(system: string, user: string, image: ImageInput): Promise<{ text: string; model?: string }>;
+  /** One turn of a conversation where the model may call tools; absent when the service cannot (manual mode, Dify). */
+  chat?(system: string, messages: ChatMessage[], tools: ChatToolSpec[]): Promise<ChatTurn>;
 }
+
+/** A picture sent to a model: its type and its bytes as base64 (never a link, never stored by LabNest). */
+export type ImageInput = { mimeType: string; base64: string };
 
 export class AIProviderError extends Error {
   readonly status?: number;
@@ -437,6 +445,51 @@ export class OpenAICompatibleProvider extends ConnectedProvider {
     const payload = (await response.json()) as OpenAIChatResponse;
     return { text: openAIContentToText(payload.choices), model: typeof payload.model === "string" ? payload.model : model, returnedModel: typeof payload.model === "string" ? payload.model : undefined, truncated: payload.choices?.[0]?.finish_reason === "length" };
   }
+
+  async chat(system: string, messages: ChatMessage[], tools: ChatToolSpec[]): Promise<ChatTurn> {
+    const apiKey = this.requireApiKey();
+    const model = this.requireModel();
+    const response = await this.request("/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        ...(this.config.type === "openai" ? { max_completion_tokens: 4096 } : { max_tokens: 4096 }),
+        messages: [{ role: "system", content: system }, ...messages.map(message => message.role === "tool"
+          ? { role: "tool", tool_call_id: message.toolCallId, content: message.content }
+          : message.role === "assistant"
+            ? { role: "assistant", content: message.content ?? null, ...(message.toolCalls?.length ? { tool_calls: message.toolCalls.map(call => ({ id: call.id, type: "function", function: { name: call.name, arguments: JSON.stringify(call.arguments) } })) } : {}) }
+            : { role: "user", content: message.content })],
+        ...(tools.length ? { tools: tools.map(tool => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } })) } : {}),
+      }),
+    });
+    const payload = (await response.json()) as OpenAIChatResponse & { choices?: { message?: { tool_calls?: { id?: string; function?: { name?: string; arguments?: unknown } }[] } }[] };
+    const message = payload.choices?.[0]?.message;
+    if (!message) throw new AIProviderError("The model response did not contain a message.");
+    const content = message.content;
+    const text = typeof content === "string" ? content : Array.isArray(content) ? content.map(part => (typeof part.text === "string" ? part.text : "")).join("") : "";
+    const toolCalls = (message.tool_calls ?? []).flatMap((call, index) => call.function?.name ? [{ id: call.id || `call-${index}`, name: call.function.name, arguments: toolArguments(call.function.arguments) }] : []);
+    return { text, toolCalls, model: typeof payload.model === "string" ? payload.model : model };
+  }
+
+  async describeImage(system: string, user: string, image: ImageInput) {
+    const apiKey = this.requireApiKey();
+    const model = this.requireModel();
+    const response = await this.request("/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        ...(this.config.type === "openai" ? { max_completion_tokens: 4096 } : { max_tokens: 4096 }),
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: [{ type: "text", text: user }, { type: "image_url", image_url: { url: `data:${image.mimeType};base64,${image.base64}` } }] },
+        ],
+      }),
+    });
+    const payload = (await response.json()) as OpenAIChatResponse;
+    return { text: openAIContentToText(payload.choices), model: typeof payload.model === "string" ? payload.model : model };
+  }
 }
 
 type AnthropicMessageResponse = { model?: string; content?: { type?: string; text?: string }[] };
@@ -473,6 +526,53 @@ export class AnthropicProvider extends ConnectedProvider {
       .join("");
     if (!text) throw new AIProviderError("The model response did not contain text content.");
     return { text, model: typeof payload.model === "string" ? payload.model : model, returnedModel: typeof payload.model === "string" ? payload.model : undefined };
+  }
+
+  async chat(system: string, messages: ChatMessage[], tools: ChatToolSpec[]): Promise<ChatTurn> {
+    const apiKey = this.requireApiKey();
+    const model = this.requireModel();
+    // Anthropic wants the results of tool calls inside the next user message, one block each.
+    const turns: { role: "user" | "assistant"; content: unknown }[] = [];
+    for (const message of messages) {
+      if (message.role === "tool") {
+        const block = { type: "tool_result", tool_use_id: message.toolCallId, content: message.content };
+        const last = turns.at(-1);
+        if (last?.role === "user" && Array.isArray(last.content)) (last.content as unknown[]).push(block); else turns.push({ role: "user", content: [block] });
+      } else if (message.role === "assistant") {
+        turns.push({ role: "assistant", content: [...(message.content ? [{ type: "text", text: message.content }] : []), ...(message.toolCalls ?? []).map(call => ({ type: "tool_use", id: call.id, name: call.name, input: call.arguments }))] });
+      } else turns.push({ role: "user", content: message.content });
+    }
+    const response = await this.request("/messages", {
+      method: "POST",
+      headers: this.headers(apiKey),
+      body: JSON.stringify({ model, max_tokens: 4096, system, messages: turns, ...(tools.length ? { tools: tools.map(tool => ({ name: tool.name, description: tool.description, input_schema: tool.parameters })) } : {}) }),
+    });
+    const payload = (await response.json()) as { model?: string; content?: { type?: string; text?: string; id?: string; name?: string; input?: unknown }[] };
+    const blocks = payload.content ?? [];
+    return {
+      text: blocks.filter(block => block.type === "text" && typeof block.text === "string").map(block => block.text).join(""),
+      toolCalls: blocks.flatMap((block, index) => block.type === "tool_use" && block.name ? [{ id: block.id || `call-${index}`, name: block.name, arguments: toolArguments(block.input) }] : []),
+      model: typeof payload.model === "string" ? payload.model : model,
+    };
+  }
+
+  async describeImage(system: string, user: string, image: ImageInput) {
+    const apiKey = this.requireApiKey();
+    const model = this.requireModel();
+    const response = await this.request("/messages", {
+      method: "POST",
+      headers: this.headers(apiKey),
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system,
+        messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: image.mimeType, data: image.base64 } }, { type: "text", text: user }] }],
+      }),
+    });
+    const payload = (await response.json()) as AnthropicMessageResponse;
+    const text = (payload.content ?? []).filter((block) => block.type === "text" && typeof block.text === "string").map((block) => block.text).join("");
+    if (!text) throw new AIProviderError("The model response did not contain text content.");
+    return { text, model: typeof payload.model === "string" ? payload.model : model };
   }
 }
 

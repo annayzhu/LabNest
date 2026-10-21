@@ -248,6 +248,10 @@ A sparkle button in the top bar, filled with the second color when AI is ready a
 - **Focus:** Border changes to the primary color; standalone controls also use the shared focus outline and halo.
 - **Error / Disabled:** Errors use the semantic error pair and `role="alert"`; disabled actions remain visible with reduced opacity.
 
+### Few Questions per Panel
+
+A form or properties panel opens on what it needs to save: one primary question (the purpose, the title, the project) and one primary action. Everything optional sits in a `Disclosure` (`ui/Disclosure.tsx`): one row with the group's title and its current value ("RP-003 · Draft"), open by default only when it already holds content. A required field inside a closed group opens it when the browser rejects the form. Consent is a sentence beside the action, not a checkbox; a field that already lives on the page (the title in the document header) is not repeated in the panel.
+
 ### Page Actions
 
 A page header shows at most its primary action, Edit, and one More (⋯) menu. Print, copy, export, secondary links, and Delete/archive live in the menu as plain text rows, with the destructive row last and separated by a hairline.

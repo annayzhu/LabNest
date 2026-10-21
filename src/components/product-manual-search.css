@@ -1,0 +1,13 @@
+.ln-manuals { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel); display: grid; gap: 0.75rem; padding: 1rem; }
+.ln-manuals h2 { color: var(--ink); font-size: 14px; font-weight: 600; }
+.ln-manuals-search { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ln-manuals-search input { background: var(--warm); border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-lg); flex: 1 1 16rem; min-height: 2.5rem; padding: 0 0.75rem; }
+.ln-manual-list { display: grid; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+.ln-manual { align-items: center; background: var(--warm); border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); display: grid; gap: 0.75rem; grid-template-columns: auto minmax(0, 1fr) auto; padding: 0.5rem 0.75rem; }
+.ln-manual-title { color: var(--ink); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.ln-manual-title a:hover { text-decoration: underline; }
+.ln-manual-source, .ln-manual-snippet { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.ln-manuals-settings summary { color: var(--moss); cursor: pointer; font-size: 12px; }
+.ln-manuals-settings .ln-design-form { margin-top: 0.5rem; }
+.ln-manuals-check { align-items: center; display: flex; gap: 0.5rem; }
+@media (max-width: 560px) { .ln-manual { grid-template-columns: auto minmax(0, 1fr); } .ln-manual > :last-child { grid-column: 1 / -1; } }

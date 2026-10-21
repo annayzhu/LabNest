@@ -14,8 +14,8 @@ const stateLabels: Record<AiState, string> = { checking: "Reading settings…", 
 
 export function AISettingsPanel({ providers }: { providers: { id: string; name: string }[] }) {
   const { saved, error, refresh, accept, state } = useAiStatus();
-  const [editedDraft, setDraft] = useState<{ defaultProviderId: string; attachmentsEnabled: boolean }>();
-  const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
+  const [editedDraft, setDraft] = useState<{ defaultProviderId: string; visionProviderId: string; attachmentsEnabled: boolean }>();
+  const draft = editedDraft ?? { defaultProviderId: saved?.defaultProviderId ?? "", visionProviderId: saved?.visionProviderId ?? "", attachmentsEnabled: saved?.attachmentsEnabled ?? false };
   const dirty = editedDraft !== undefined;
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string>();
@@ -26,7 +26,7 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
     submitting.current = true; setBusy(true); setFailure(undefined); setMessage("");
     const change: AISettingsChange = kind === "enabled"
       ? { kind, revision: saved.revision, enabled: !saved.enabled }
-      : { kind, revision: saved.revision, defaultProviderId: draft.defaultProviderId || null, attachmentsEnabled: draft.attachmentsEnabled };
+      : { kind, revision: saved.revision, defaultProviderId: draft.defaultProviderId || null, visionProviderId: draft.visionProviderId || null, attachmentsEnabled: draft.attachmentsEnabled };
     try {
       const response = await fetch("/api/ai/settings", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(change) });
       const result = await response.json();
@@ -61,6 +61,7 @@ export function AISettingsPanel({ providers }: { providers: { id: string; name: 
       <h2 className="text-sm font-semibold text-ink">Feature settings</h2>
       <div className="grid items-end gap-3 sm:grid-cols-2">
         <label className="block"><span className={formLabelClass}>Default AI service</span><Select id="default-provider" name="defaultProviderId" disabled={busy || !saved || Boolean(error)} value={draft.defaultProviderId} onChange={event => { setDraft({ ...draft, defaultProviderId: event.target.value }); setMessage(""); }}><option value="">None chosen</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select></label>
+        <label className="block"><span className={formLabelClass}>Service that reads photos</span><Select id="vision-provider" name="visionProviderId" disabled={busy || !saved || Boolean(error)} value={draft.visionProviderId} onChange={event => { setDraft({ ...draft, visionProviderId: event.target.value }); setMessage(""); }}><option value="">Same as the default service (OpenAI and Anthropic only)</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</Select><span className="mt-1 block text-xs leading-5 text-muted">Used to turn pictures of a manual into text. DeepSeek cannot read pictures; choose a service with a vision model, such as Qwen-VL or Gemini.</span>{saved?.vision && !saved.vision.ready && saved.enabled && saved.vision.reason ? <span className="mt-1 block text-xs leading-5 text-warning">{saved.vision.reason}</span> : null}</label>
         <label className="flex min-h-10 items-center gap-2 text-sm"><input name="attachmentsEnabled" type="checkbox" disabled={busy || !saved || Boolean(error)} checked={draft.attachmentsEnabled} onChange={event => { setDraft({ ...draft, attachmentsEnabled: event.target.checked }); setMessage(""); }} className="h-4 w-4 accent-[var(--ink)]" />Allow attachments the user explicitly chooses</label>
       </div>
       <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={busy || !saved || Boolean(error)} size="sm">Save feature settings</Button><span className="text-xs text-muted">{dirty ? "Unsaved changes; the main switch does not submit them." : "Only explicitly chosen context is sent; it does not authorize uploading the whole project."}</span></div>

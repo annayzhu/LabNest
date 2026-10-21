@@ -1,4 +1,5 @@
 import { InventoryContainers } from "@/components/InventoryContainers";
+import { InventoryManuals } from "@/components/InventoryManuals";
 import { inventoryNoteText, inventoryQuantityLabel } from "@/lib/inventory";
 import { formatQuantity } from "@/lib/calculators/quantity-format";
 import Link from "next/link";
@@ -62,6 +63,8 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
   ]);
 
   if (!item) notFound();
+  const manualLinks = await prisma.attachmentLink.findMany({ where: { targetType: "inventory_item", targetId: item.id, linkType: "product_manual" }, include: { attachment: { select: { originalFilename: true, size: true } } }, orderBy: { createdAt: "asc" } });
+  const manuals = manualLinks.map((link) => ({ attachmentId: link.attachmentId, linkId: link.id, filename: link.attachment.originalFilename, size: link.attachment.size }));
 
   const riskFlags = getInventoryRiskFlags(item);
   const categoryLabel = inventoryCategories.find((category) => category.value === item.category)?.label ?? item.category ?? "Unclassified";
@@ -117,6 +120,11 @@ export default async function InventoryItemPage({ params }: { params: Promise<{ 
             </CardBody>
           </Card>}
         </section>
+
+        <Card>
+          <CardHeader title="Product manuals" />
+          <CardBody><InventoryManuals itemId={item.id} manuals={manuals} /></CardBody>
+        </Card>
 
         {item.childInventoryItems.length ? (
           <Card>

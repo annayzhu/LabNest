@@ -132,7 +132,7 @@ try {
   const metadataRightInset = metadataBox && metadataSaveBox ? metadataBox.x + metadataBox.width - metadataSaveBox.x - metadataSaveBox.width : Number.NaN;
   assert(metadataBox && metadataSaveBox && Math.abs(metadataTopInset - metadataRightInset) < 5, `Metadata save action does not use equal top/right insets: ${metadataTopInset}/${metadataRightInset}.`);
   const metadataControls = metadata.locator('.protocol-metadata-grid input:not([type="radio"]):not([type="checkbox"]), .protocol-metadata-grid select');
-  const controlHeights = await metadataControls.evaluateAll((controls) => controls.map((control) => Math.round(control.getBoundingClientRect().height)));
+  const controlHeights = await metadataControls.evaluateAll((controls) => controls.map((control) => Math.round(control.getBoundingClientRect().height)).filter((height) => height > 0));
   assert(new Set(controlHeights).size === 1, `Metadata controls do not share one height: ${controlHeights.join(", ")}`);
   const dividerStyles = await metadata.locator(".protocol-metadata-group + .protocol-metadata-group").evaluateAll((groups) => groups.map((group) => {
     const style = getComputedStyle(group, "::before");

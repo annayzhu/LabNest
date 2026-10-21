@@ -96,6 +96,33 @@ export function availabilityFromSettings(settings: AvailabilitySettings): AIAvai
   return { ...base, connected: true };
 }
 
+export type VisionAvailability = {
+  /** A picture can be read now: AI is on and the reading service is set up. */
+  ready: boolean;
+  providerId?: string;
+  providerName?: string;
+  model?: string;
+  reason?: string;
+};
+
+type VisionSettings = { enabled: boolean; defaultProvider: AIProviderRecord | null; visionProvider: AIProviderRecord | null } | null;
+
+/**
+ * The service that reads pictures: the one chosen for photos, else the default service when it is OpenAI or Anthropic
+ * (they read pictures); any other default must be chosen on purpose, since LabNest cannot tell which models can see.
+ */
+export function visionFromSettings(settings: VisionSettings): VisionAvailability {
+  if (!settings?.enabled) return { ready: false, reason: "AI is off; existing records stay as they are." };
+  const fallback = settings.defaultProvider && (settings.defaultProvider.type === "openai" || settings.defaultProvider.type === "anthropic") ? settings.defaultProvider : null;
+  const provider = settings.visionProvider ?? fallback;
+  if (!provider) return { ready: false, reason: "Choose a service that can read pictures, such as Qwen-VL, Gemini, GPT-4o or Claude." };
+  if (provider.type === "dify") return { ready: false, providerName: provider.name, reason: "A Dify app cannot read pictures here; choose another service." };
+  const connected = availabilityFromSettings({ enabled: true, defaultProvider: provider });
+  return connected.connected
+    ? { ready: true, providerId: provider.id, providerName: provider.name, model: provider.defaultModel ?? undefined }
+    : { ready: false, providerId: provider.id, providerName: provider.name, model: provider.defaultModel ?? undefined, reason: connected.reason };
+}
+
 export type ResolvedAdapter =
   | { ok: true; adapter: AIProviderAdapter; config: AIProviderConfig; gate: ReturnType<typeof createAIGate> }
   | { ok: false; status: number; error: string; field?: string };
@@ -137,6 +164,15 @@ export async function resolveDraftAdapter(input: unknown, signal?: AbortSignal):
     const gate = createAIGate(settings.updatedAt.toISOString(), record ? { id: record.id, revision: record.updatedAt.toISOString() } : undefined, signal);
     return { ok: true, adapter: createAIProviderAdapter(config, { fetchImpl: gate.fetch, timeoutMs: 30_000 }), config, gate };
   } catch { return { ok: false, status: 500, error: "Cannot read the connection credentials; check the server encryption setup." }; }
+}
+
+/** The service that reads pictures, under the same switch and gate as every other AI request. */
+export async function resolveVisionAdapter(options: { timeoutMs?: number } = {}): Promise<ResolvedAdapter> {
+  const settings = await prisma.aISettings.findUnique({ where: { id: "default" }, include: { defaultProvider: true, visionProvider: true } });
+  const vision = visionFromSettings(settings);
+  if (!settings?.enabled) return { ok: false, status: 403, error: vision.reason ?? "AI is disabled." };
+  if (!vision.ready || !vision.providerId) return { ok: false, status: 409, error: vision.reason ?? "No service can read pictures." };
+  return resolveAdapterForProvider(vision.providerId, settings.updatedAt.toISOString(), options);
 }
 
 /** The default provider, only when the master switch is on and the provider is a connected adapter. */

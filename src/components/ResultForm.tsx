@@ -10,6 +10,7 @@ import { ResultTypePicker } from "@/components/ResultTypePicker";
 import type { ResultTypeDefinitionItem } from "@/app/results/result-type-actions";
 import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnterSubmit } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
 import { resultDocumentWithLegacyValues } from "@/lib/result-document";
@@ -133,16 +134,20 @@ export function ResultForm({ action, experiments, resultTypes, quickEntries = []
         onSelectedModuleIdsChange={setSelectedModuleIds}
       /> : undefined} /></div>
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Result metadata">
-        <details className="rounded-[var(--ln-radius-panel)] border border-hairline bg-surface" open={!hasTemplate ? true : undefined}><summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-ink">报告设置 <span className="ml-1 text-xs font-normal text-muted">状态与来源</span></summary><div className="grid min-w-0 gap-3 border-t border-hairline p-3">
+        <section className="grid min-w-0 gap-3 border-b border-hairline p-4">
+          <input type="hidden" name="title" value={title} />
           {quickEntries.length ? <label className="min-w-0"><span className={formLabelClass}>从快速实验记录导入 · 可选</span><select name="sourceEntryId" value={initial.sourceEntryId ?? ""} onChange={(event) => { const params = new URLSearchParams(searchParams.toString()); params.set("manual", "1"); if (event.target.value) params.set("entry", event.target.value); else params.delete("entry"); if (experimentId) params.set("experiment", experimentId); router.replace(`/results/new?${params.toString()}`); }} className={formInputClass}><option value="">不导入快速记录</option>{quickEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.title} · {entry.occurredAt.slice(0, 10)}{entry.projectName ? ` · ${entry.projectName}` : ""}</option>)}</select><span className="mt-1 block text-xs leading-5 text-muted">导入正文、来源链接和附件引用；分析与解释仍由你确认填写。</span></label> : null}
           <label className="min-w-0"><span className={formLabelClass}>实验</span>{lockedExperiment ? <div className={`${formInputClass} flex h-auto min-h-10 items-center break-words bg-stone/50 py-2`}>{experiment?.project?.name} · {experiment?.researchPlan?.code ?? experiment?.researchPlan?.title} · {experiment?.runCode ?? experiment?.title}</div> : <select required name="experimentId" value={experimentId} onChange={(event) => setExperimentId(event.target.value)} className={formInputClass}><option value="" disabled>Select Experiment</option>{experiments.map((item) => <option key={item.id} value={item.id}>{item.project?.name} · {item.researchPlan?.code ?? item.researchPlan?.title ?? "No plan"} · {item.runCode ?? item.title}</option>)}</select>}</label>
-          <label className="min-w-0"><span className={formLabelClass}>标题</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
+        </section>
+        <Disclosure title="类型与来源" summary={`${resultType || template?.result_type || "measurement"} · ${sourceType || "manual"}`}>
           {hasTemplate ? <label className="min-w-0"><span className={formLabelClass}>结果类型 · 由模板锁定</span><input readOnly name="resultType" value={resultType || template?.result_type || "measurement"} className={`${formInputClass} bg-stone/50`} /></label> : <ResultTypePicker initialTypes={resultTypes} value={resultType} onChange={setResultType} />}
           {hasTemplate ? <label className="min-w-0"><span className={formLabelClass}>来源 · 已锁定</span><input readOnly name="sourceType" value={sourceType || "protocol_template"} className={`${formInputClass} bg-stone/50`} /></label> : <label className="min-w-0"><span className={formLabelClass}>来源</span><select name="sourceType" value={sourceType} onChange={(event) => setSourceType(event.target.value)} className={formInputClass}><option value="manual">Manual</option><option value="file_import">File import</option><option value="tool">External tool</option><option value="analysis">Analysis</option></select></label>}
+          <label className="min-w-0"><span className={formLabelClass}>分析方法 / 软件</span><input name="analysisMethod" defaultValue={initial.analysisMethod ?? ""} placeholder="方法、版本、参数或工具" className={formInputClass} /></label>
+        </Disclosure>
+        <Disclosure title="状态与质控" summary={`${recordStatus} · ${qualityStatus}`}>
           <StatusRadioGroup label="记录状态" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required optionsClassName="grid grid-cols-2 gap-2 [&>label]:min-w-0 [&>label]:px-2 [&>label>span]:min-w-0 [&>label>span]:break-words" />
           <StatusRadioGroup label="质控状态" name="qualityStatus" options={resultQualityStatusOptions} value={qualityStatus} onValueChange={setQualityStatus} required optionsClassName="grid grid-cols-2 gap-2 [&>label]:min-w-0 [&>label]:px-2 [&>label>span]:min-w-0 [&>label>span]:break-words" />
-          <label className="min-w-0"><span className={formLabelClass}>分析方法 / 软件</span><input name="analysisMethod" defaultValue={initial.analysisMethod ?? ""} placeholder="方法、版本、参数或工具" className={formInputClass} /></label>
-        </div></details>
+        </Disclosure>
       </aside>
     </DocumentEditorLayout>
     <div className="document-editor-save-bar sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">

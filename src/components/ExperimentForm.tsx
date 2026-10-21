@@ -16,6 +16,7 @@ import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { formInputClass, formLabelClass, formTextareaClass, preventImplicitEnterSubmit } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
@@ -60,6 +61,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
   const [recordStatus, setRecordStatus] = useState(initial.recordStatus ?? "draft");
   const [purpose, setPurpose] = useState(initial.purpose ?? "");
   const [customChecklistEnabled, setCustomChecklistEnabled] = useState(false);
+  const statusSummary = `${status} · ${recordStatus}`;
   const identifier = initial.runCode ?? (runCodeSuffix ? `EXP-${runCodeSuffix}` : "Draft Experiment");
   const lockedMethodMode = initialSelectedIds.length ? "protocol" : "custom";
   const activeMethodMode = initial.id ? lockedMethodMode : methodMode;
@@ -91,7 +93,7 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
       <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Experiment metadata">
       {intro ? <p className="ln-form-intro">{intro}</p> : null}
       <label className="block"><span className={formLabelClass}>Plan</span>{lockedPlan ? <div className={`${formInputClass} flex items-center bg-stone/50`}>{plan ? `${plan.project.name} · ${plan.title}` : "No plan chosen"}</div> : <select name="researchPlanId" value={planId} onChange={(event) => setPlanId(event.target.value)} className={formInputClass}><option value="">No plan chosen</option>{plans.map((item) => <option key={item.id} value={item.id}>{item.project.name} · {item.title}</option>)}</select>}{!lockedPlan && !planId ? <span className="mt-1 block text-xs leading-5 text-muted">You can leave it empty and choose a plan later in the metadata; the experiment then also joins that plan’s project.</span> : null}</label>
-    {!initial.id ? <section className="ln-method-source space-y-2 border-b border-hairline py-3" aria-label="Method source"><div className="flex items-center justify-between gap-3"><h3 className={formLabelClass}>Method source</h3>
+    {!initial.id ? <section className="ln-method-source space-y-2 border-b border-hairline py-3" aria-label="Method source"><div className="flex items-center justify-between gap-3"><h3 className={`${formLabelClass} shrink-0 whitespace-nowrap`}>Method source</h3>
       <div className="ln-segmented" role="group" aria-label="Method source">
         <button type="button" aria-pressed={methodMode === "protocol"} onClick={() => setMethodMode("protocol")} className="focus-ring">Follow a Protocol</button>
         <button type="button" aria-pressed={methodMode === "custom"} onClick={() => setMethodMode("custom")} className="focus-ring">Write my own steps</button>
@@ -114,16 +116,21 @@ export function ExperimentForm({ intro, action, plans, protocolVersions = [], in
       </>}
     </section> : null}
 
-    <section className="border-b border-hairline py-3"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-
-      <RecordCodeField label="Experiment code" prefix="EXP-" name="runCodeSuffix" minimumDigits={3} placeholder="001" value={runCodeSuffix} onValueChange={setRunCodeSuffix} existingCode={initial.id ? initial.runCode : undefined} />
+    <section className="border-b border-hairline py-3">
+      <input type="hidden" name="title" value={title} />
+      <div className="grid gap-3">
       <label><span className={formLabelClass}>Planned date</span><input required name="date" type="date" value={date} onChange={(event) => setDate(event.target.value)} className={formInputClass} /></label>
-      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
-      <label className="md:col-span-2 xl:col-span-4"><span className={formLabelClass}>Objective / purpose · optional</span><input name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="One line: what this planned execution is meant to establish" className={formInputClass} /></label>
-      {structuredExecution ? <div className="md:col-span-2"><input type="hidden" name="status" value={initial.id ? initial.status : 'planned'}/><p>Execution status · {initial.id ? initial.status : 'planned'}</p><p className="text-xs text-muted">The execution status follows what is done in Run.</p></div> : <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />}
-      <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required className="md:col-span-2" />
-      <label className="md:col-span-2 xl:col-span-4"><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
-    </div></section>
+      </div>
+    </section>
+    <Disclosure title="Purpose" summary={purpose.trim() || "One line: what this run should establish"} defaultOpen={Boolean(purpose.trim())}>
+      <label><span className={formLabelClass}>Objective / purpose · optional</span><input name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="One line: what this planned execution is meant to establish" className={formInputClass} /></label>
+    </Disclosure>
+    <Disclosure title="Code, status and tags" summary={`EXP-${runCodeSuffix} · ${statusSummary}`}>
+      <RecordCodeField label="Experiment code" prefix="EXP-" name="runCodeSuffix" minimumDigits={3} placeholder="001" value={runCodeSuffix} onValueChange={setRunCodeSuffix} existingCode={initial.id ? initial.runCode : undefined} />
+      {structuredExecution ? <div><input type="hidden" name="status" value={initial.id ? initial.status : 'planned'}/><p>Execution status · {initial.id ? initial.status : 'planned'}</p><p className="text-xs text-muted">The execution status follows what is done in Run.</p></div> : <StatusRadioGroup label="Execution status" name="status" options={experimentStatusOptions} value={status} onValueChange={setStatus} required />}
+      <StatusRadioGroup label="Record status" name="recordStatus" options={recordStatusOptions} value={recordStatus} onValueChange={setRecordStatus} required />
+      <label><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
+    </Disclosure>
 
     {initial.id && initial.steps?.length ? <Card>
       <CardHeader title="Execution record" eyebrow="Update completion and notes from run mode" action={<Link href={`/experiments/${initial.id}/run`} className="inline-flex h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 py-1 text-xs font-medium text-moss hover:bg-warm">Open run mode</Link>} />

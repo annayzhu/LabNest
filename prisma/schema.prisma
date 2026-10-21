@@ -425,6 +425,7 @@ model ResearchPlan {
 
   @@index([projectId])
   @@index([status])
+  copilotRuns ResearchPlanCopilotRun[]
 }
 
 model ResearchPlanProtocol {
@@ -1470,7 +1471,8 @@ model AIProvider {
   enabled          Boolean        @default(false)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  aisettings       AISettings[]
+  aisettings       AISettings[] @relation("DefaultProvider")
+  visionSettings   AISettings[] @relation("VisionProvider")
 
   @@index([type])
   @@index([enabled])
@@ -1480,12 +1482,16 @@ model AISettings {
   id                 String      @id @default("default")
   enabled            Boolean     @default(false)
   defaultProviderId  String?
-  defaultProvider    AIProvider? @relation(fields: [defaultProviderId], references: [id], onDelete: SetNull)
+  defaultProvider    AIProvider? @relation("DefaultProvider", fields: [defaultProviderId], references: [id], onDelete: SetNull)
+  /// The service that reads photos (transcribes pictures of a manual); empty means the default service when it can.
+  visionProviderId   String?
+  visionProvider     AIProvider? @relation("VisionProvider", fields: [visionProviderId], references: [id], onDelete: SetNull)
   externalDataPolicy String      @default("explicit_context")
   attachmentsEnabled Boolean     @default(false)
   updatedAt          DateTime    @updatedAt
 
   @@index([defaultProviderId])
+  @@index([visionProviderId])
 }
 
 model ReferenceConnector {
@@ -1644,5 +1650,33 @@ model MethodSearchSettings {
   enabled                   Boolean  @default(false)
   sourcesJson               Json     @default("[\"local\"]")
   protocolsIoTokenEncrypted String?
+  /// The web search key for 产品说明书 (Tavily), kept encrypted like the protocols.io token.
+  webSearchKeyEncrypted     String?
+  /// The vendor domains searched for manuals; empty means the default list.
+  manualVendorsJson         Json?
   updatedAt                 DateTime @updatedAt
+}
+
+/// 研究方案 Copilot: one run from a research purpose to a design of experiments, kept with its log and suggestions.
+model ResearchPlanCopilotRun {
+  id              String       @id @default(cuid())
+  researchPlanId  String
+  researchPlan    ResearchPlan @relation(fields: [researchPlanId], references: [id], onDelete: Cascade)
+  purpose         String
+  inputsJson      Json         @default("{}")
+  status          String       @default("ready")
+  stage           String       @default("split")
+  autoContinue    Boolean      @default(true)
+  budgetJson      Json         @default("{}")
+  stateJson       Json         @default("{\"done\":[]}")
+  logJson         Json         @default("[]")
+  suggestionsJson Json         @default("[]")
+  provider        String?
+  model           String?
+  modelCalls      Int          @default(0)
+  error           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([researchPlanId, createdAt])
 }

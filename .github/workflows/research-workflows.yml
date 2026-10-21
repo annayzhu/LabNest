@@ -1,0 +1,65 @@
+name: Research workflows acceptance
+on:
+  pull_request:
+    paths: ['src/lib/ai*', 'src/lib/copilot/**', 'src/lib/product-manuals*', 'src/lib/inventory-manuals*', 'src/lib/protocol-photo*', 'src/app/api/research-plans/**', 'src/app/api/protocols/recognize/photo/**', 'src/app/protocols/import/**', 'src/app/inventory/**', 'src/app/research-plans/**', 'src/components/**', 'prisma/**', 'scripts/verify-product-manuals.mjs', 'scripts/verify-protocol-photos.mjs', 'scripts/verify-research-plan-copilot.mjs', '.github/workflows/research-workflows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: labnest_protocol_ai_extraction_20261009
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/labnest_protocol_ai_extraction_20261009
+      LABNEST_AI_ENCRYPTION_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      LABNEST_E2E_BASE_URL: http://localhost:3339
+      LABNEST_MANUAL_SEARCH_URL: http://127.0.0.1:4852/search
+      LABNEST_EUROPE_PMC_BASE: http://127.0.0.1:4854
+      LABNEST_ATTACHMENT_ROOT: /tmp/labnest-research-qa-attachments
+      NEXT_TELEMETRY_DISABLED: '1'
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate && npx prisma migrate deploy
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # Only this acceptance process remaps known service URLs to loopback fixtures.
+      # App code still disables stand-in URLs in production.
+      - name: Start isolated production application with local stand-ins
+        run: |
+          node --import ./scripts/test-helpers/research-fetch-fixtures.mjs node_modules/next/dist/bin/next start -p 3339 > research-server.log 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail http://localhost:3339/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat research-server.log
+          exit 1
+      - run: node scripts/verify-protocol-photos.mjs
+        env:
+          AI_EVIDENCE_DIR: research-evidence/photos
+      - run: node scripts/verify-product-manuals.mjs
+        env:
+          AI_EVIDENCE_DIR: research-evidence/manuals
+      - run: node scripts/verify-research-plan-copilot.mjs
+        env:
+          AI_EVIDENCE_DIR: research-evidence/copilot
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: research-workflows-evidence
+          path: |
+            research-evidence
+            research-server.log

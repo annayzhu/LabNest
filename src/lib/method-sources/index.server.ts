@@ -6,10 +6,12 @@ import { protocolsIoAdapter, protocolsIoHost } from './protocols-io';
 import { methodSourceIds, type MethodHit, type MethodSourceAdapter, type MethodSourceId } from './types';
 
 /** Only these hosts are ever contacted, and only when the user searches or fetches. */
-const allowedHosts = new Set([protocolsIoHost, europePmcHost]);
+/** Browser checks may point Europe PMC at a local stand-in; a production build never does. */
+export const europePmcBase = process.env.NODE_ENV !== 'production' && process.env.LABNEST_EUROPE_PMC_BASE ? process.env.LABNEST_EUROPE_PMC_BASE : `https://${europePmcHost}`;
+const allowedHosts = new Set([protocolsIoHost, europePmcHost, new URL(europePmcBase).hostname]);
 const timeoutMs = 15_000, maxBytes = 2_000_000;
 
-async function fetchLimited(url: string, init?: RequestInit) {
+export async function fetchLimited(url: string, init?: RequestInit) {
   const host = new URL(url).hostname;
   if (!allowedHosts.has(host)) throw new Error(`Address not on the allow list: ${host}`);
   const controller = new AbortController();

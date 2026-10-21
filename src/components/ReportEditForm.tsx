@@ -5,7 +5,8 @@ import { ScientificDocumentEditor } from "@/components/ScientificDocumentEditor"
 import { DocumentEditorLayout } from "@/components/DocumentEditorLayout";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import type { ScientificDocument } from "@/lib/scientific-document";
@@ -27,12 +28,13 @@ export function ReportEditForm({ action, initial }: { action: FormAction; initia
       { label: "Scope", value: scope },
       { label: "Status", value: status.replaceAll("_", " ") },
       { label: "Period", value: period },
-    ]} /></div><aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Report metadata"><Card><CardHeader title="Report control" eyebrow="Scope is locked; narrative remains editable" /><CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <label className="md:col-span-2"><span className={formLabelClass}>Scope</span><div className={`${formInputClass} flex items-center bg-stone/50`}>{scope}</div></label>
-      <label className="md:col-span-2"><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
-      <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} value={status} onValueChange={setStatus} required className="md:col-span-2" />
-      <label><span className={formLabelClass}>Period start</span><input name="periodStart" type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input name="periodEnd" type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className={formInputClass} /></label>
+    ]} /></div><aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Report metadata"><Card><CardBody className="grid gap-4">
+      <input type="hidden" name="title" value={title} />
+      <label><span className={formLabelClass}>Scope</span><div className={`${formInputClass} flex items-center bg-stone/50`}>{scope}</div></label>
+      <div className="grid grid-cols-2 gap-3"><label><span className={formLabelClass}>Period start</span><input name="periodStart" type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className={formInputClass} /></label><label><span className={formLabelClass}>Period end</span><input name="periodEnd" type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className={formInputClass} /></label></div>
+    </CardBody></Card><Disclosure title="Status and tags" summary={status.replaceAll("_", " ")}>
+      <StatusRadioGroup label="Status" name="status" options={reportStatusOptions} value={status} onValueChange={setStatus} required />
       <label><TagFieldLabel /><input name="tags" defaultValue={initial.tags.join(", ")} placeholder="monthly, internal-review" className={formInputClass} /></label>
-    </CardBody></Card></aside></DocumentEditorLayout><div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}<Button type="submit" variant="primary" size="lg" disabled={pending} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Report"}</Button></div>
+    </Disclosure></aside></DocumentEditorLayout><div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-end gap-3">{state.error ? <p role="alert" className="max-w-xl rounded-[var(--ln-radius-control-lg)] border border-error/30 bg-error-surface px-3 py-2 text-sm text-error shadow-soft">{state.error}</p> : null}<Button type="submit" variant="primary" size="lg" disabled={pending} aria-busy={pending} className="shadow-soft">{pending ? "Saving…" : "Save Report"}</Button></div>
   </form>;
 }

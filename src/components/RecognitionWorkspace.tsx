@@ -6,6 +6,10 @@ import { conversionSummaryLine } from '@/lib/protocol-conversion';
 import type { RecognitionView } from '@/lib/protocol-recognition.server';
 import { AiButton, useAiStatus } from './AiAssistant';
 import { ProtocolDocumentView } from './ProtocolDocumentView';
+import { photoSourceName } from '@/lib/protocol-photo';
+import { ProductManualSearch } from './ProductManualSearch';
+import { RecognitionPhotos } from './RecognitionPhotos';
+import type { ProductSearchSettingsView } from '@/lib/product-manuals.server';
 import { Button } from './ui/Button';
 import './method-design.css';
 
@@ -24,7 +28,7 @@ const problemLine = (problem: string): string => {
  * 整理说明书或非模板规程: read the source as written first (no AI); when that reads badly, the connected model lays it
  * out and every line is checked against the original. Nothing is saved until 存为草稿规程.
  */
-export function RecognitionWorkspace() {
+export function RecognitionWorkspace({ manualSettings }: { manualSettings: ProductSearchSettingsView }) {
   const ai = useAiStatus();
   const [view, setView] = useState<RecognitionView>();
   const [title, setTitle] = useState('');
@@ -48,6 +52,13 @@ export function RecognitionWorkspace() {
     data.set('text', pasted);
     show(await readRecognitionSource(data));
   });
+  // Text read from pictures goes the way pasted text does, kept under a name that says the pictures were not kept.
+  const readPhotos = (text: string, count: number) => start(async () => {
+    const data = new FormData();
+    data.set('text', text);
+    data.set('name', photoSourceName(count));
+    show(await readRecognitionSource(data));
+  });
   const recognize = async () => {
     if (!view) return;
     setThinking(true); setError(undefined);
@@ -59,10 +70,12 @@ export function RecognitionWorkspace() {
   };
   const busy = pending || thinking;
   return <div className="space-y-5">
+    <ProductManualSearch settings={manualSettings} onTake={show} disabled={busy} />
     <section className="ln-design-form rounded-[var(--ln-radius-panel)] border border-hairline bg-surface p-4" aria-label="Choose the source">
       <label>Protocol name (optional; you can change it after reading)<input value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Total RNA extraction from cells (Vazyme RC112)" /></label>
       <label>Instructions or Protocol file (PDF, Word, TXT, Markdown)<input ref={file} type="file" accept=".pdf,.docx,.txt,.md" /></label>
       <label>Or paste the text<textarea rows={6} value={pasted} onChange={event => setPasted(event.target.value)} placeholder="Paste the procedure part of the instructions, or the whole Protocol" /></label>
+      <RecognitionPhotos onText={readPhotos} disabled={busy} />
       <div className="flex flex-wrap items-center gap-3"><Button type="button" variant="primary" disabled={busy} onClick={read}>{pending && !view ? 'Reading the source…' : 'Read source'}</Button>
         <span className="ln-design-note">It is first read as written, without AI; if that reads badly, click “Organize with AI”: only then is the text sent to the model.</span></div>
     </section>

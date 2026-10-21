@@ -128,7 +128,7 @@ export async function decideCopilotSuggestion(planId: string, runId: string, sug
       await tx.$queryRaw`SELECT id FROM "ResearchPlan" WHERE id=${planId} FOR UPDATE`;
       const plan = await tx.researchPlan.findUniqueOrThrow({ where: { id: planId } });
       if (suggestion.kind === 'experiment') {
-        const experiment = await tx.experiment.create({ data: { title: suggestion.experimentName, runCode: await reserveRecordCode(tx, 'experiment'), projectId: plan.projectId, researchPlanId: plan.id, status: 'planned', recordStatus: 'draft' } });
+        const experiment = await tx.experiment.create({ data: { title: suggestion.experimentName, purpose: suggestion.purpose ?? `未核实：${suggestion.note ?? '请回到研究方案核对来源'}`, runCode: await reserveRecordCode(tx, 'experiment'), projectId: plan.projectId, researchPlanId: plan.id, status: 'planned', recordStatus: 'draft' } });
         experimentId = experiment.id;
         suggestion.adoptedExperimentId = experiment.id;
       } else {

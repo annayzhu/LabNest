@@ -29,6 +29,8 @@ export function buildSuggestions(runId: string, design: Design, subQuestions: Su
   design.items.forEach(item => item.experiments.forEach((experiment, index) => suggestions.push({
     id: `${runId}-experiment-${item.subQuestionId}-${index}`, kind: 'experiment', title: `建成计划中的实验：${experiment.name}`, status: 'pending', experimentName: experiment.name,
     note: experiment.priority === 'must' ? '必做' : '可选', verified: experiment.verified,
+    purpose: [`科学问题：${subQuestions.find(question => question.id === item.subQuestionId)?.question ?? item.subQuestionId}`, line(experiment),
+      ...experiment.evidence.flatMap(key => { const paper = papers.find(candidate => candidate.key === key); return paper ? [`${key}：${paper.title}${paper.url ? ` ${paper.url}` : ''}`] : []; })].join('\n'),
   })));
   return suggestions;
 }

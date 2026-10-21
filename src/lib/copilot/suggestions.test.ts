@@ -17,6 +17,15 @@ const design: Design = { summary: '先验证表型，再找通路。', gaps: ['�
 describe('A design as suggestions', () => {
   const suggestions = buildSuggestions('run1', design, subQuestions, papers, '2026-10-20');
 
+  it('keeps the question, evidence and unverified label in the experiment purpose', () => {
+    const suggestion = buildSuggestions('run1', design, subQuestions, papers, '2026-10-21').find(item => item.kind === 'experiment' && !item.verified);
+    expect(suggestion?.kind).toBe('experiment');
+    if (suggestion?.kind !== 'experiment') throw new Error('Missing experiment suggestion');
+    expect(suggestion.purpose).toContain('未核实');
+    expect(suggestion.purpose).toContain('MED:2');
+    expect(suggestion.purpose).toContain('通过哪条通路');
+  });
+
   it('writes the design under each sub-question, cites papers by number and flags what is 未核实', () => {
     const card = suggestions.find(item => item.kind === 'design');
     expect(card?.kind === 'design' && card.blocks.map(block => block.text)).toEqual([

@@ -78,7 +78,7 @@ export type Design = { summary: string; items: { subQuestionId: string; experime
 export type Suggestion =
   | { id: string; kind: 'design'; title: string; status: SuggestionStatus; blocks: { type: 'heading' | 'text'; text: string }[] }
   | { id: string; kind: 'references'; title: string; status: SuggestionStatus; blocks: { type: 'heading' | 'text'; text: string }[] }
-  | { id: string; kind: 'experiment'; title: string; status: SuggestionStatus; experimentName: string; note?: string; verified: boolean; adoptedExperimentId?: string };
+  | { id: string; kind: 'experiment'; title: string; status: SuggestionStatus; experimentName: string; note?: string; purpose?: string; verified: boolean; adoptedExperimentId?: string };
 export type SuggestionStatus = 'pending' | 'adopted' | 'ignored';
 
 export type CopilotEvent = { at: string; stage: CopilotStage | 'run'; kind: 'stage' | 'tool' | 'model' | 'note' | 'error'; text: string };

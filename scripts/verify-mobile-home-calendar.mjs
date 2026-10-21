@@ -31,7 +31,7 @@ try {
     const browser = await type.launch();
     try {
       for (const [width, locale] of [[320, 'en'], [390, 'zh'], [820, 'en'], [1440, 'en']]) {
-        const context = await browser.newContext({ viewport: { width, height: 1000 }, isMobile: width < 1024, hasTouch: width < 1024, locale: locale === 'zh' ? 'zh-CN' : 'en-US', timezoneId: 'America/Los_Angeles', reducedMotion: 'reduce' });
+        const context = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 1000 }, isMobile: width < 1024, hasTouch: width < 1024, locale: locale === 'zh' ? 'zh-CN' : 'en-US', timezoneId: 'America/Los_Angeles', reducedMotion: 'reduce' });
         await context.addCookies([{ name: 'labnest_locale', value: locale, url: base }]);
         const page = await context.newPage(); page.setDefaultTimeout(15_000);
         const errors = []; page.on('pageerror', error => errors.push(error.message));
@@ -70,7 +70,8 @@ try {
             const before = await calendar.locator('button[aria-pressed="true"]').getAttribute('aria-label');
             await next.click(); assert.notEqual(await calendar.locator('button[aria-pressed="true"]').getAttribute('aria-label'), before);
             await calendar.getByRole('button', { name: locale === 'zh' ? '上一周' : 'Previous week', exact: true }).click();
-            await page.screenshot({ path: `${evidence}/${engine}-${width}-${locale}.png`, fullPage: true });
+            await page.evaluate(() => scrollTo(0, 0));
+            await page.screenshot({ path: `${evidence}/${engine}-${width}-${locale}.png` });
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
           }
           assert.deepEqual(errors, [], 'No hydration or browser errors when the phone timezone differs from the server.');

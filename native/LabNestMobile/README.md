@@ -51,6 +51,6 @@ npm run typecheck
 
 未签名编译只检查代码，不能证明 Keychain 或 WatchConnectivity 可运行。模拟器临时签名只用于本地 QA，不能用于真机安装。
 
-验收记录与截图见 `../../docs/watch-companion-20261019/`。完整通过标准包括真机安装、扫码填入、手表保存并读取正确实验、失败时保留旧连接、重试不重复消费配对码、未同步操作阻止切换。未通过的项目必须在验收记录中保留。
+验收记录与截图见 `../../docs/watch-companion-20261019/`。 [2026-10-21 真机安装记录](../../docs/watch-device-install-20261021/verification.md)已验证 iPhone 与 Apple Watch 的签名安装和启动；本次安装会话尚未验证实际实验配对、真实计时和通知送达。完整通过标准包括真机安装、扫码填入、手表保存并读取正确实验、失败时保留旧连接、重试不重复消费配对码、未同步操作阻止切换。未通过的项目必须在验收记录中保留。
 
 参考：[Apple WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity/wcsession)、[TestFlight 安装说明](https://testflight.apple.com/)。

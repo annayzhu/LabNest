@@ -747,7 +747,7 @@ export const zhUi: Record<string, string> = {
   "Enter the LAN address above first.": "先在上方填写局域网地址。",
   "Run mode QR code": "现场模式二维码",
   "Could not create a pairing code": "配对码创建失败",
-  "This experiment uses a Protocol in the old format, which the watch does not support. Once the Protocol is converted to step blocks, new experiments can run on the watch.": "这次实验用的是旧格式规程，手表暂不支持。规程转换为步骤块后，新建的实验就能在手表上执行。",
+  "This experiment has not adopted a structured Protocol, so Apple Watch cannot connect. Tablets and phones can still open it. To use the watch, create an experiment from a Protocol with step blocks.": "本次实验未采用结构化规程，暂不能连接 Apple Watch。平板和手机仍可扫码打开。如需使用手表，请使用带步骤块的规程创建实验。",
   "The experiment is submitted or finished, so a watch can no longer be paired.": "实验已提交或已结束，不能再配对手表。",
   "Watch connected": "手表已连接",
   "The watch shows the current step and timers; tick off the mix card line by line.": "手表上可以看当前步骤和计时，逐行划掉配液卡。",

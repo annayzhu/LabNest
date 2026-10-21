@@ -23,6 +23,8 @@ type AiStatus = ReturnType<typeof useAISettings> & {
   ready: boolean;
   /** The switch is on, whether or not the default service is set up. */
   enabled: boolean;
+  /** A service that can read pictures is set up (photos of a manual). */
+  vision: boolean;
   panelOpen: boolean;
   openPanel: () => void;
   closePanel: () => void;
@@ -40,7 +42,7 @@ export function AiStatusProvider({ initial, pending = [], children }: { initial?
   const togglePanel = useCallback(() => setPanelOpen(open => !open), []);
   const state = aiState(settings.saved, settings.error);
   const waiting = pending.reduce((total, entry) => total + entry.count, 0);
-  return <AiStatusContext.Provider value={{ ...settings, state, ready: state === 'ready', enabled: state === 'ready' || state === 'incomplete', pending, waiting, panelOpen, openPanel, closePanel, togglePanel }}>
+  return <AiStatusContext.Provider value={{ ...settings, state, ready: state === 'ready', enabled: state === 'ready' || state === 'incomplete', vision: state !== 'error' && Boolean(settings.saved?.vision.ready), pending, waiting, panelOpen, openPanel, closePanel, togglePanel }}>
     {children}
     <AiAssistantPanel />
   </AiStatusContext.Provider>;
@@ -53,8 +55,8 @@ export function useAiStatus() {
 }
 
 type AiButtonProps = ComponentProps<typeof Button> & {
-  /** 'model' calls a model (the default); 'switch' only needs AI switched on, as in the copy-paste workbench. */
-  needs?: 'model' | 'switch';
+  /** 'model' calls a model (the default); 'switch' only needs AI switched on, as in the copy-paste workbench; 'vision' needs a service that reads pictures. */
+  needs?: 'model' | 'switch' | 'vision';
 };
 
 /**
@@ -63,9 +65,9 @@ type AiButtonProps = ComponentProps<typeof Button> & {
  */
 export function AiButton({ needs = 'model', variant = 'ai', ...props }: AiButtonProps) {
   const ai = useAiStatus();
-  if (needs === 'switch' ? ai.enabled : ai.ready) return <Button variant={variant} {...props} />;
-  return <Button {...props} type="button" variant="ai-off" disabled={false} aria-busy={undefined} aria-haspopup="dialog" data-ai-off
-    title={ai.state === 'checking' ? 'Reading AI settings…' : 'AI is off: click to see how to set it up'} onClick={ai.openPanel} />;
+  if (needs === 'switch' ? ai.enabled : needs === 'vision' ? ai.vision : ai.ready) return <Button variant={variant} {...props} />;
+  const title = ai.state === 'checking' ? 'Reading AI settings…' : needs === 'vision' && ai.ready ? 'No service reads pictures yet: click to see how to set one up' : 'AI is off: click to see how to set it up';
+  return <Button {...props} type="button" variant="ai-off" disabled={false} aria-busy={undefined} aria-haspopup="dialog" data-ai-off title={title} onClick={ai.openPanel} />;
 }
 
 /** An entry into a tool that also works without AI: in the AI color when AI is ready, quiet gray otherwise; it always opens. */
@@ -144,6 +146,7 @@ function AiAssistantPanel() {
       </div>
       {ai.pending.length ? <PendingList entries={ai.pending} total={ai.waiting} labelId={`${titleId}-pending`} onPick={closePanel} /> : null}
       {!ai.ready && ai.saved ? <SetupCard settings={ai.saved} onPick={closePanel} /> : null}
+      {ai.ready && !ai.vision && ai.saved ? <VisionNote reason={ai.saved.vision.reason} onPick={closePanel} /> : null}
       <section className="ln-ai-places" aria-labelledby={`${titleId}-places`}>
         <h3 id={`${titleId}-places`}>Where you can use AI</h3>
         <ul>{aiPlaces(pathname).map(place => {
@@ -175,6 +178,15 @@ function PendingList({ entries, total, labelId, onPick }: { entries: PendingSugg
       </Link>
     </li>)}</ul>
     {entries.length > 5 ? <p className="ln-ai-places-note">{`${entries.length - 5} more quick entries have suggestions waiting.`}</p> : null}
+  </section>;
+}
+
+/** AI works, but no service reads pictures yet: what to do, and the way to AI 设置. */
+function VisionNote({ reason, onPick }: { reason?: string; onPick: () => void }) {
+  return <section className="ln-ai-setup" aria-label="识别图片">
+    <h3>识别图片还差一步</h3>
+    <p className="ln-ai-setup-detail">{reason ?? '还没有选择能识别图片的服务。'}</p>
+    <Link href="/ai#vision-provider" className={buttonStyles({ variant: 'ai', size: 'lg', className: 'w-full' })} onClick={onPick}>去 AI 设置</Link>
   </section>;
 }
 

@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveAIProvider } from "@/app/settings/actions";
-import { deepseekProviderPreset } from "@/lib/ai-provider-presets";
+import { providerPresets } from "@/lib/ai-provider-presets";
 import { sameProviderTarget } from "@/lib/ai-provider-input";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Select } from "./ui/Select";
@@ -50,7 +50,7 @@ export function AiProviderForm({ provider }: { provider?: AiProviderFormValues }
   const inputClass = `${formInputClass} min-w-0`;
   return <form ref={form} action={formAction} className="space-y-4" autoComplete="off" onChangeCapture={() => setEpoch(value => value + 1)}>
     {original ? <><input type="hidden" name="id" value={original.id} /><input type="hidden" name="revision" value={original.revision} /></> : null}
-    {!original ? <div><Button type="button" disabled={pending} onClick={() => { setType(deepseekProviderPreset.type); setName(deepseekProviderPreset.name); setBaseUrl(deepseekProviderPreset.baseUrl); setDefaultModel(deepseekProviderPreset.defaultModel); setApiKey(""); setEpoch(value => value + 1); }}>Use DeepSeek</Button><p className="mt-1 text-xs leading-5 text-muted">Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro.</p></div> : null}
+    {!original ? <div className="space-y-1"><div className="flex flex-wrap gap-2">{providerPresets.map(({ label, preset }) => <Button key={label} type="button" disabled={pending} onClick={() => { setType(preset.type); setName(preset.name); setBaseUrl(preset.baseUrl); setDefaultModel(preset.defaultModel); setApiKey(""); setEpoch(value => value + 1); }}>{`Use ${label}`}</Button>)}</div><p className="text-xs leading-5 text-muted">{providerPresets.map(({ note }) => t(note)).join(" ")}</p></div> : null}
     <fieldset disabled={pending || stale} className="min-w-0 space-y-4">
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <label className="block min-w-0"><span className={formLabelClass}>Service name</span><input name="name" required maxLength={80} value={name} onChange={event => setName(event.target.value)} placeholder="Such as DeepSeek official" className={inputClass} /><span className="mt-1 block text-xs leading-5 text-muted">Only for you to recognize it; it does not set the provider or protocol.</span></label>

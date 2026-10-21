@@ -3,7 +3,7 @@ import { aiPlaces, aiSetupSteps, aiState } from './ai-readiness';
 import type { AISettingsView } from './ai-settings';
 
 const view = (change: Partial<AISettingsView> = {}): AISettingsView => ({
-  enabled: false, defaultProviderId: null, attachmentsEnabled: false, externalDataPolicy: 'explicit_context', revision: 'unset',
+  enabled: false, defaultProviderId: null, visionProviderId: null, vision: { ready: false, reason: 'AI is off.' }, attachmentsEnabled: false, externalDataPolicy: 'explicit_context', revision: 'unset',
   availability: { enabled: false, connected: false, reason: '已关闭 AI，现有记录保持不变。' },
   providerCount: 0, setup: { enabled: true, connected: false, reason: '请先选择默认模型服务。' },
   ...change,

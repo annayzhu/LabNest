@@ -138,7 +138,7 @@ async function assertProtocolWorkspaceTabs(page, route) {
   const metadataPanel = page.locator("#document-editor-panel-metadata");
   const metadataCard = metadataPanel.locator(".protocol-metadata-card");
   await metadataCard.waitFor();
-  assert.equal(await metadataCard.locator(".protocol-metadata-group").count(), 3, "Protocol metadata should be grouped into Identity, Governance, and Revision.");
+  assert.equal(await metadataCard.locator(".ln-disclosure").count(), 3, "Protocol metadata should be three disclosures: Names and ID, Availability and review, Version.");
   assert.equal(await metadataCard.locator("header > p").count(), 0, "Protocol metadata should not render a redundant eyebrow.");
   assert.equal(await page.locator(".protocol-density-primary-action").textContent(), "Save metadata", "Metadata should expose a contextual save action.");
   const metadataGeometry = await page.evaluate(() => {

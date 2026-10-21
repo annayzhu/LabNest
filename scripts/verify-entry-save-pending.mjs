@@ -19,6 +19,7 @@ try {
       await page.getByRole('tab',{name:'Metadata',exact:true}).click();
       portal=page.locator('.context-properties:visible');
       await portal.getByRole('button',{name:'Keep the panel open',exact:true}).click();
+      await portal.getByText('Type, source and status').click();
       await portal.getByRole('textbox',{name:'State',exact:true}).fill('PRE-SAVE');
     } else if(mode==='format-menu') {
       portal=await openBlockMenu(page,editor.locator('p').first());

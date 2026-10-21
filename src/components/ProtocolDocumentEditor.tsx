@@ -13,6 +13,7 @@ import { ProtocolRelevantItemsEditor, type ProtocolRelevantItems } from "@/compo
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { hasLegacyFormulas, type ProtocolDocument } from "@/lib/protocol-document";
 import { isLegacyProtocol } from "@/lib/protocol-conversion";
@@ -142,23 +143,24 @@ export function ProtocolDocumentEditor({
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>
           <div className="protocol-metadata-sections">
-            <fieldset className="protocol-metadata-group"><legend className="sr-only">Identity</legend><div className="protocol-metadata-grid">
-              <label className="protocol-metadata-span-full"><span className={formLabelClass}>Protocol title</span><input value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className={formInputClass} aria-label="Protocol metadata title" /></label>
+            {mode === "create" ? <div className="protocol-metadata-grid" style={{ padding: "0.65rem 1rem" }}>
+              {mode === "create" ? <label><span className={formLabelClass}>Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={formInputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div className="protocol-metadata-readonly"><span className={formLabelClass}>Scope</span><strong>{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</strong><small>Use Adapt to project to preserve lineage.</small></div>}
+              {mode === "create" ? <label><span className={formLabelClass}>Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={formInputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
+            </div> : null}
+            <Disclosure title="Names and ID" summary={identifier}><div className="protocol-metadata-grid">
               <RecordCodeField className="protocol-metadata-code-field" label="Protocol ID" prefix="PRT-" name="humanCodeSuffix" minimumDigits={6} placeholder="100001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={mode === "edit" ? protocol.humanCode : undefined} />
               <label><span className={formLabelClass}>Short title</span><input name="shortTitle" defaultValue={protocol.shortTitle} className={formInputClass} /></label>
               <label><span className={formLabelClass}>English title</span><input name="englishTitle" defaultValue={protocol.englishTitle} className={formInputClass} /></label>
-              {mode === "create" ? <label><span className={formLabelClass}>Protocol scope</span><select name="protocolScope" value={scope} onChange={(event) => { const next = event.target.value as "general" | "project"; setScope(next); if (next === "general") setProjectId(""); }} className={formInputClass}><option value="general">General library</option><option value="project">Project-adapted</option></select></label> : <div className="protocol-metadata-readonly"><span className={formLabelClass}>Scope</span><strong>{protocol.scope}{protocol.projectName ? ` · ${protocol.projectName}` : ""}</strong><small>Use Adapt to project to preserve lineage.</small></div>}
-              {mode === "create" ? <label><span className={formLabelClass}>Project {scope === "project" ? "· required" : ""}</span><select name="projectId" value={projectId} onChange={(event) => { setProjectId(event.target.value); setSelectedPlanIds([]); setPrimaryPlanIds([]); }} required={scope === "project"} disabled={scope === "general"} className={formInputClass}><option value="">None</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
-            </div></fieldset>
-            <fieldset className="protocol-metadata-group"><legend>Governance</legend><div className="protocol-metadata-grid">
+            </div></Disclosure>
+            <Disclosure title="Availability and review" summary={`${availability} · ${reviewStage}`}><div className="protocol-metadata-grid">
               <StatusRadioGroup label="Availability" name="availability" options={protocolAvailabilityOptions} value={availability} onValueChange={setAvailability} required density="compact" />
               <StatusRadioGroup label="Review stage" name="reviewStage" options={protocolReviewStageOptions} value={reviewStage} onValueChange={setReviewStage} required density="compact" />
               <label className="protocol-metadata-span-full"><TagFieldLabel /><input name="tags" defaultValue={protocol.tags.join(", ")} placeholder="cell-culture, qc" className={formInputClass} /></label>
-            </div></fieldset>
-            <fieldset className="protocol-metadata-group"><legend>Revision</legend><div className="protocol-metadata-grid">
+            </div></Disclosure>
+            <Disclosure title="Version" summary={displayVersion} defaultOpen={reviewed}><div className="protocol-metadata-grid">
               <label><span className={formLabelClass}>{reviewed ? "New version" : "Version"}</span><input required name="displayVersion" value={displayVersion} onChange={(event) => setDisplayVersion(event.target.value)} className={formInputClass} /></label>
               <label className="protocol-metadata-span-full"><span className={formLabelClass}>Change summary {reviewed ? "· required" : ""}</span><textarea required={reviewed} name="changeSummary" defaultValue={reviewed ? "" : version.changeSummary} className={textareaClass} placeholder={mode === "create" ? "Initial version." : "What changed and why?"} /></label>
-            </div></fieldset>
+            </div></Disclosure>
             <ProtocolSourcesEditor sources={document.sources ?? []} onChange={sources => setDocument(current => ({ ...current, sources }))} fromExperiments={fromExperiments} />
             <ProtocolImportHistory entries={importHistory} />
           </div>

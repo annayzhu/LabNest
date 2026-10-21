@@ -9,7 +9,8 @@ import { ResearchPlanProtocolPicker } from "@/components/ResearchPlanProtocolPic
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { formInputClass, formLabelClass } from "@/components/forms";
 import { Button } from "@/components/ui/Button";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import type { ScientificDocument } from "@/lib/scientific-document";
 import type { ResearchPlanProtocolOption } from "@/lib/research-plan-protocol-picker";
@@ -59,6 +60,7 @@ export function ResearchPlanForm({
   const [hypothesis, setHypothesis] = useState(initial.hypothesis ?? "");
   const [rationale, setRationale] = useState(initial.rationale ?? "");
   const project = projects.find((item) => item.id === projectId);
+  const statusLabel = researchPlanStatusOptions.find((option) => option.value === status)?.label ?? status;
   const identifier = initial.code ?? (codeSuffix ? `RP-${codeSuffix}` : "Draft Research Plan");
 
   return (
@@ -72,19 +74,19 @@ export function ResearchPlanForm({
         ]} leadingContent={<div className="document-print-only"><ResearchPlanPremiseView objective={objective} hypothesis={hypothesis} rationale={rationale} /></div>} /></div>
         <aside className="document-editor-sidebar" data-document-metadata="true" aria-label="Research Plan metadata">
           <Card>
-            <CardHeader title="Scientific premise" eyebrow="Objective, hypothesis, and rationale" />
-            <CardBody><ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} /></CardBody>
-          </Card>
-          <Card>
-            <CardHeader title="Plan identity" eyebrow="Project-level scientific design" />
-            <CardBody className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <CardBody>
+              <input type="hidden" name="title" value={title} />
               <label><span className={formLabelClass}>Project</span><select required name="projectId" value={projectId} onChange={(event) => setProjectId(event.target.value)} className={formInputClass}><option value="" disabled>Select project</option>{projects.map((projectOption) => <option key={projectOption.id} value={projectOption.id}>{projectOption.name}</option>)}</select></label>
-              <RecordCodeField label="Plan code" prefix="RP-" name="codeSuffix" minimumDigits={3} placeholder="001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={initial.id ? initial.code : undefined} />
-              <StatusRadioGroup label="Status" name="status" options={researchPlanStatusOptions} value={status} onValueChange={setStatus} required />
-              <label><span className={formLabelClass}>Title</span><input required name="title" value={title} onChange={(event) => setTitle(event.target.value)} className={formInputClass} /></label>
-              <label><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
             </CardBody>
           </Card>
+          <Disclosure title="Code, status and tags" summary={`RP-${codeSuffix} · ${statusLabel}`}>
+            <RecordCodeField label="Plan code" prefix="RP-" name="codeSuffix" minimumDigits={3} placeholder="001" value={codeSuffix} onValueChange={setCodeSuffix} existingCode={initial.id ? initial.code : undefined} />
+            <StatusRadioGroup label="Status" name="status" options={researchPlanStatusOptions} value={status} onValueChange={setStatus} required />
+            <label><TagFieldLabel /><input name="tags" defaultValue={(initial.tags ?? []).join(", ")} placeholder="RNA, qPCR, imaging" className={formInputClass} /></label>
+          </Disclosure>
+          <Disclosure title="Scientific premise" summary={objective.trim() || "Objective, hypothesis, rationale"} defaultOpen={Boolean(objective.trim() || hypothesis.trim() || rationale.trim())}>
+            <ResearchPlanPremiseEditor objective={objective} hypothesis={hypothesis} rationale={rationale} onObjectiveChange={setObjective} onHypothesisChange={setHypothesis} onRationaleChange={setRationale} />
+          </Disclosure>
           <ResearchPlanProtocolPicker workspaceId={workspaceId} protocols={protocols} initialSelectedIds={initial.selectedProtocolIds} initialPrimaryProtocolId={initial.primaryProtocolId} />
         </aside>
       </DocumentEditorLayout>

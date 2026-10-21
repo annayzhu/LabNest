@@ -28,6 +28,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { MarkdownRichTextEditor } from "@/components/MarkdownRichTextEditor";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
 import { Button } from "@/components/ui/Button";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { StatusRadioGroup } from "@/components/ui/StatusRadioGroup";
 import { deleteEntryDraft, loadEntryDraft, saveEntryDraft, type StoredEntryDraft } from "@/lib/entry-draft-store";
 import { migrateEntryDraftFields } from "@/lib/entry-draft-migration";
@@ -554,7 +555,7 @@ export function EntryComposer({
       <div className="entry-editor-sidebar-column" role="region" data-document-metadata="true" aria-label={t("Entry metadata")}>
       <section className="entry-editor-context">
         <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Entry metadata")}</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-2">
           <ComposerSelect label="Project" value={fields.projectId} onChange={(value) => {
             updateField("projectId", value);
             const selectedPlan = researchPlans.find((plan) => plan.id === fields.researchPlanId);
@@ -565,30 +566,33 @@ export function EntryComposer({
             const plan = researchPlans.find((candidate) => candidate.id === value);
             if (plan) updateField("projectId", plan.projectId);
           }} options={[{ value: "", label: "Unassigned" }, ...availablePlans.map((plan) => ({ value: plan.id, label: `${plan.projectName} · ${plan.code ?? plan.title}` }))]} />
+        </div>
+      </section>
+      <Disclosure title={t("Type, source and status")} summary={`${entryTypeLabels[fields.entryType as keyof typeof entryTypeLabels] ?? fields.entryType} · ${fields.recordStatus}`}>
+        <div className="grid gap-3 md:grid-cols-2">
           <ComposerSelect label="Entry type" value={fields.entryType} onChange={(value) => updateField("entryType", value)} options={entryTypes.map(value=>({value,label:entryTypeLabels[value]}))} />
           <ComposerSelect label="Source" value={fields.sourceType} onChange={(value) => updateField("sourceType", value)} options={["text", "photo", "file", "voice", "manual"].map((value) => ({ value, label: value }))} />
           <ComposerInput label="State" value={fields.moodStatus} onChange={(value) => updateField("moodStatus", value)} placeholder="needs follow-up" />
-          <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} density="compact" className="md:col-span-2 xl:col-span-5" />
+          <StatusRadioGroup label="Record status" value={fields.recordStatus} onValueChange={(value) => updateField("recordStatus", value)} options={recordStatusOptions} density="compact" className="md:col-span-2 " />
         </div>
-        <div className="mt-3">
+        <div>
           <label className="block">
             <TagFieldLabel />
             <input value={fields.tags} onChange={(event) => updateField("tags", event.target.value)} placeholder="transfection, observation" className={formInputClass} />
           </label>
         </div>
-      </section>
+      </Disclosure>
 
       {!entry && !fields.experimentId ? (
-        <details className="entry-editor-experiment">
-          <summary className="cursor-pointer text-[14px] font-semibold tracking-[-0.01em] text-ink">{t("Protocol-based experiment")} <span className="ml-1.5 text-xs font-normal text-muted">{t("Optional")}</span></summary>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <Disclosure title={t("Protocol-based experiment")} summary={t("Optional")} className="entry-editor-experiment">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2"><ComposerSelect label="Protocol version" value={fields.protocolVersionId} onChange={(value) => setFields((current) => value ? { ...current, protocolVersionId: value } : { ...current, protocolVersionId: "", createInitialResult: "false", resultTitle: "", resultType: "" })} options={[{ value: "", label: "Standalone entry" }, ...protocols.map((protocol) => ({ value: protocol.id, label: protocol.label }))]} /></div>
             <ComposerInput label="Experiment title" value={fields.experimentTitle} onChange={(value) => updateField("experimentTitle", value)} placeholder="Defaults to Entry title" />
             <StatusRadioGroup label="Experiment status" value={fields.experimentStatus} onValueChange={(value) => updateField("experimentStatus", value)} options={experimentStatusOptions} density="compact" className="md:col-span-2" />
             <label className="md:col-span-2 flex items-start gap-2 border-t border-hairline pt-3 text-xs text-graphite"><input type="checkbox" disabled={!fields.protocolVersionId} checked={fields.createInitialResult === "true"} onChange={(event) => setFields((current) => event.target.checked ? { ...current, createInitialResult: "true" } : { ...current, createInitialResult: "false", resultTitle: "", resultType: "" })} className="mt-0.5 h-3.5 w-3.5 accent-moss disabled:cursor-not-allowed disabled:opacity-45" /><span><strong className="font-medium text-ink">{t("Create an initial Result from this Entry")}</strong><span className="mt-0.5 block leading-5 text-muted">{t(fields.protocolVersionId ? "The rich Entry content becomes the Result summary; tables, media, and datasets remain editable in the Result document." : "Choose a Protocol version first; a Result must belong to an Experiment.")}</span></span></label>
             {fields.createInitialResult === "true" ? <><ComposerInput label="Result title" value={fields.resultTitle} onChange={(value) => updateField("resultTitle", value)} placeholder="Defaults to Experiment title" /><ComposerInput label="Result type" value={fields.resultType} onChange={(value) => updateField("resultType", value)} placeholder="manual_result" /></> : null}
           </div>
-        </details>
+        </Disclosure>
       ) : null}
       </div>
       </DocumentEditorLayout>

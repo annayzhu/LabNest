@@ -1386,7 +1386,6 @@ export const zhUi: Record<string, string> = {
   "· Maximum 25 MB and 500 records": "· 最大 25 MB、500 条记录",
   "· SHA-256": "· SHA-256 校验值",
   "Accepted:": "支持格式：",
-  "Add files": "添加文件",
   "Add inventory location": "添加库存位置",
   "Add photos": "添加照片",
   "AI workflows are currently disabled. Manual records, protocols, experiments, inventory, and results remain fully available.": "AI 工作流当前已关闭；手动记录、实验规程、实验、库存和结果功能仍可完整使用。",
@@ -2378,6 +2377,7 @@ export const zhUi: Record<string, string> = {
   "Write it the way you usually do, or import an existing Protocol": "按平常的写法写，或导入现有规程",
   "Download the Word template": "下载 Word 模板",
   "One paragraph per step, numbers written as they are; for different systems write “350/600 µL” and put the line “体系：350 µL / 600 µL” before the first step; start an operation for some samples only with “仅…：”; write what to record as “记录：浓度 ng/µL、A260/280、胶图”. On import, steps become step blocks and numbers become parameter blocks, to check in the editor. For instructions or a Protocol not written to the template (PDF, Word or pasted text), use “Organize instructions or a non-template Protocol”: it is first read as written, and organized with AI only if that reads badly.": "一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：350 µL / 600 µL”；只对部分样本的操作写“仅…：”；要记录的写“记录：浓度 ng/µL、A260/280、胶图”。导入后步骤成为步骤块、数值成为参数块，在编辑器里核对。说明书或没按模板写的规程（PDF、Word 或粘贴的文字），用“整理说明书或非模板规程”：先按写法读取，读得不好再用 AI 整理。",
+  "One paragraph per step, numbers written as they are; for different systems write “350/600 µL” and put the line “体系：350 µL / 600 µL” before the first step; start an operation for some samples only with “仅…：”; write what to record as “记录：浓度 ng/µL、A260/280、胶图”. On import, steps become step blocks and numbers become parameter blocks, to check in the editor. For instructions or a Protocol not written to the template (PDF, Word, pasted text or pictures), use “Organize instructions or a non-template Protocol”: it is first read as written, and organized with AI only if that reads badly.": "一步一段，数值直接写；不同体系写“350/600 µL”，并在第一步前写一行“体系：350 µL / 600 µL”；只对部分样本的操作写“仅…：”；要记录的写“记录：浓度 ng/µL、A260/280、胶图”。导入后步骤成为步骤块、数值成为参数块，在编辑器里核对。说明书或没按模板写的规程（PDF、Word、粘贴的文字或图片），用“整理说明书或非模板规程”：先按写法读取，读得不好再用 AI 整理。",
   "A PDF, Word file or pasted text made into a Protocol, every line checked against the original": "PDF、Word 或粘贴的文字整理成规程，每行都回查原文",
   "Design a Protocol from a goal": "按目标设计规程",
   "Search methods by experiment goal, have AI summarize them as method cards, then generate a draft Protocol": "按实验目标检索方法，AI 归纳成方法卡，再生成规程草稿",
@@ -2824,6 +2824,132 @@ export const zhUi: Record<string, string> = {
   "Not needed.": "无需填写。",
   "Use DeepSeek": "使用 DeepSeek",
   "Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro.": "填入官方地址和 deepseek-flash；使用 V4 Pro 时将模型 ID 改为 deepseek-v4-pro。",
+  "Fills in the official address and deepseek-flash; for V4 Pro, change the model ID to deepseek-v4-pro. DeepSeek cannot read pictures.": "填入官方地址和 deepseek-flash；使用 V4 Pro 时将模型 ID 改为 deepseek-v4-pro。DeepSeek 不能识别图片。",
+  "Fills in the compatible-mode address and qwen-plus. To read photos, add another service with the model qwen-vl-max.": "填入兼容模式地址和 qwen-plus。要识别照片，请再添加一个服务，模型填 qwen-vl-max。",
+  "Fills in the compatible address and gemini-2.5-flash, which can also read pictures.": "填入兼容地址和 gemini-2.5-flash，它也能识别图片。",
+  "Use 通义千问": "使用通义千问",
+  "Use Gemini": "使用 Gemini",
+  "Service that reads photos": "识别图片用的服务",
+  "Upload pictures": "上传图片",
+  "Choose pictures": "选择图片",
+  "Some files are not pictures and were ignored.": "有文件不是图片，已忽略。",
+  "No text was read": "没有读出文字",
+  "Waiting": "待识别",
+  "Reading…": "识别中…",
+  "Could not read": "没读出来",
+  "View and edit the text read": "看和改识别出的文字",
+  "Read these texts again": "用这些文字重新读取",
+  "Reading pictures needs a service that can read them, chosen in AI settings.": "识别图片需要先在 AI 设置里选好能识别图片的服务。",
+  "Find the manual of a product": "按产品查找说明书",
+  "Search by product name, catalogue number or vendor. Manuals kept on inventory items come first; with AI on and a search key saved, the vendors’ own sites are searched too.": "按产品名、货号或厂商搜索。先查库存物品上挂的说明书；AI 开启并保存了搜索密钥时，也会搜厂商自己的网站。",
+  "e.g. RNeasy Mini 74104": "例如：RNeasy Mini 74104",
+  "Product name, catalogue number or vendor": "产品名、货号或厂商",
+  "Organize into a Protocol": "整理成规程",
+  "Taking it in…": "读取中…",
+  "A web page, not a PDF: save it as PDF and upload it below.": "这是网页，不是 PDF：请存成 PDF 后在下面上传。",
+  "No manual found. Try the catalogue number, or add the manual to the inventory item.": "没有找到说明书。试试货号，或把说明书传到库存物品上。",
+  "Open item": "打开物品",
+  "Web search settings": "网页搜索设置",
+  "Search key (Tavily)": "搜索密钥（Tavily）",
+  "— a key is saved": "— 已保存密钥",
+  "Remove the saved key": "删除已保存的密钥",
+  "Vendor sites searched (one per line)": "搜索的厂商网站（每行一个）",
+  "— the default list": "— 默认名单",
+  "The key is kept encrypted and used only while AI is on. Only the sites listed here are searched and downloaded from. An empty list goes back to the default.": "密钥加密保存，只在 AI 开启时使用。只会搜索和下载这里列出的网站。留空则恢复默认名单。",
+  "Not saved": "没有保存",
+  "AI is off, so only the manuals kept on inventory items were searched.": "AI 未开启，只搜了库存物品上挂的说明书。",
+  "No web search key is saved, so only the manuals kept on inventory items were searched.": "没有保存网页搜索密钥，只搜了库存物品上挂的说明书。",
+  "Write a product name, a catalogue number or a vendor": "请写产品名、货号或厂商",
+  "The search did not finish; try again": "搜索没有完成，请重试",
+  "Could not take this manual in": "没能读取这份说明书",
+  "The link is not on a vendor site in the list": "这个链接不在名单里的厂商网站上",
+  "The link did not give a PDF": "这个链接给出的不是 PDF",
+  "The file is larger than 25 MB": "文件超过 25 MB",
+  "Too many redirects": "跳转次数太多",
+  "This manual is no longer on the inventory item": "这份说明书已不在库存物品上",
+  "The vendor site redirected without saying where": "厂商网站跳转时没有给出地址",
+  "Product manuals": "产品说明书",
+  "No manual is kept on this item.": "这个物品上还没有挂说明书。",
+  "Manual file": "说明书文件",
+  "Add manual": "添加说明书",
+  "Manual added": "已添加说明书",
+  "Choose the manual file": "请选择说明书文件",
+  "A manual can be a PDF, Word, text or Markdown file": "说明书可以是 PDF、Word、文本或 Markdown 文件",
+  "The inventory item no longer exists": "库存物品已不存在",
+  "The manual was not added": "没有添加成功",
+  "A manual kept here is found by 按产品查找说明书, and can be organized into a Protocol from there.": "挂在这里的说明书可以被“按产品查找说明书”搜到，并从那里整理成规程。",
+  "Find a manual": "查找说明书",
+  "Find a product manual": "查找产品说明书",
+  "Copilot for this plan": "本方案的 Copilot",
+  "From a research purpose to a design of experiments": "从研究目的到实验设计",
+  "Research purpose": "研究目的",
+  "More settings": "更多设置",
+  "Type, source and status": "类型、来源与状态",
+  "Status and tags": "状态与标签",
+  "One line: what this run should establish": "一句话：这次实验要确定什么",
+  "Availability and review": "可用性与评审",
+  "Names and ID": "名称与编号",
+  "Objective, hypothesis, rationale": "目标、假设、理论基础",
+  "Code, status and tags": "编号、状态和标签",
+  "Sample or model": "样本或模型",
+  "What you already have": "已有的条件",
+  "e.g. qPCR and Western blot are set up": "例如：已有 qPCR 和 Western blot",
+  "Stop after each stage so I can look": "每个阶段结束后先停下来让我看",
+  "What should change, or be checked?": "要调整或核查什么？",
+  "e.g. The plan only covers proliferation; add what is needed to show through which pathway": "例如：方案目前只涉及增殖，请补上证明它通过哪条通路所需的实验",
+  "In project": "所在项目",
+  "Plan to adjust": "要调整的方案",
+  "Design a new plan": "设计新方案",
+  "Adjust a plan": "调整已有方案",
+  "What to do": "要做什么",
+  "A plan belongs to a project.": "方案要属于一个项目。",
+  "Create a project first": "先创建项目",
+  "Choose a project for the plan": "请为方案选一个项目",
+  "e.g. Show that CHMP2A knockdown inhibits growth and invasion of esophageal squamous cell carcinoma cells, and find out through which pathway": "例如：证明敲低 CHMP2A 能抑制食管鳞癌细胞的生长和侵袭，并找出它通过哪条通路起作用",
+  "e.g. KYSE150 and KYSE30 cells": "例如：KYSE150 和 KYSE30 细胞",
+  "Papers to read": "读几篇论文",
+  "Of them, full texts": "其中读全文的",
+  "The default AI service cannot work with tools. Choose DeepSeek, OpenAI, Anthropic, Qwen or Gemini as the default service in AI settings.": "默认的 AI 服务不能用工具调用的方式工作。请在 AI 设置里把 DeepSeek、OpenAI、Anthropic、通义千问或 Gemini 选为默认服务。",
+  "Searching Europe PMC is off. Turn on outside method search and tick Europe PMC in the search settings of": "Europe PMC 检索没有开启。请在下面页面的检索设置里打开外部方法检索并勾选 Europe PMC：",
+  "Start": "开始",
+  "Stages": "阶段",
+  "Split the question": "拆科学问题",
+  "Find papers": "查文献",
+  "Read the experiments": "读论文里的实验",
+  "Combine into a design": "汇总成实验设计",
+  "Write suggestions": "写成建议",
+  "Stop after this step": "做完这一步就停",
+  "Continue with the next stage": "继续下一阶段",
+  "Continue": "继续",
+  "Try this step again": "重试这一步",
+  "Remove this run": "删除这次运行",
+  "Remove this run, its log and its suggestions? What you adopted stays in the plan.": "删除这次运行、它的记录和建议？已采纳的内容会留在方案里。",
+  "open access": "开放获取",
+  "read: full text": "读了全文",
+  "read: abstract only": "只读了摘要",
+  "Must": "必做",
+  "Suggestions": "建议",
+  "Nothing is written into the plan until you adopt it.": "你采纳之前，不会往方案里写任何东西。",
+  "Adopt": "采纳",
+  "Ignore": "忽略",
+  "Ignored": "已忽略",
+  "Open experiment": "打开实验",
+  "Something went wrong; try again": "出了点问题，请重试",
+  "This step did not finish": "这一步没有完成",
+  "The run did not start": "运行没有开始",
+  "The change was not saved": "修改没有保存",
+  "The suggestion was not handled": "建议没有处理成功",
+  "The run was not removed": "运行没有删除",
+  "Splitting the purpose into questions": "正在把研究目的拆成科学问题",
+  "Searching the literature": "正在查文献",
+  "Combining into a design": "正在汇总成实验设计",
+  "Writing suggestions": "正在写成建议",
+  "Finished": "已完成",
+  "No service reads pictures yet: click to see how to set one up": "还没有设置识别图片的服务：点击查看如何设置",
+  "Choose a service that can read pictures, such as Qwen-VL, Gemini, GPT-4o or Claude.": "请选择能识别图片的服务，例如通义千问 VL、Gemini、GPT-4o 或 Claude。",
+  "A Dify app cannot read pictures here; choose another service.": "Dify 应用在这里不能识别图片，请选择其他服务。",
+  "Same as the default service (OpenAI and Anthropic only)": "与默认服务相同（仅限 OpenAI 和 Anthropic）",
+  "Used to turn pictures of a manual into text. DeepSeek cannot read pictures; choose a service with a vision model, such as Qwen-VL or Gemini.": "用来把说明书的照片转成文字。DeepSeek 不能识别图片，请选择带视觉模型的服务，例如通义千问 VL 或 Gemini。",
   "Service name": "服务名称",
   "Such as DeepSeek official": "例如 DeepSeek 官方",
   "Only for you to recognize it; it does not set the provider or protocol.": "仅供自己识别，不决定服务商或协议。",
@@ -2973,6 +3099,63 @@ const dynamicNouns: Record<string, string> = {
 };
 
 function translateDynamic(value: string): string {
+  // Research plan Copilot: counts, labels and the run log
+  let copilot = value.match(/^Starting sends your purpose and its keywords to the AI service and Europe PMC, about (\d+) model calls\. You can stop at any time\.$/);
+  if (copilot) return `点“开始”会把研究目的和关键词发给 AI 服务和 Europe PMC，约调用模型 ${copilot[1]} 次，随时可以停止。`;
+  copilot = value.match(/^Model calls so far: (\d+)((?: · [\s\S]+)?)$/);
+  if (copilot) return `到目前为止调用了模型 ${copilot[1]} 次${copilot[2]}`;
+  copilot = value.match(/^(Questions|Papers|Experiments found in the papers|Run log) \((\d+)\)$/);
+  if (copilot) return `${{ Questions: "科学问题", Papers: "论文", "Experiments found in the papers": "论文里找到的实验", "Run log": "运行记录" }[copilot[1]]}（${copilot[2]}）`;
+  copilot = value.match(/^Question (q\d+\w*)$/);
+  if (copilot) return `问题 ${copilot[1]}`;
+  copilot = value.match(/^Do not read ([\s\S]+)$/);
+  if (copilot) return `不读这篇：${copilot[1]}`;
+  copilot = value.match(/^(split|search|extract|design|write) finished$/);
+  if (copilot) return `${{ split: "拆问题", search: "查文献", extract: "读实验", design: "汇总设计", write: "写建议" }[copilot[1]]}阶段完成`;
+  copilot = value.match(/^(\d+) questions$/);
+  if (copilot) return `${copilot[1]} 个科学问题`;
+  copilot = value.match(/^(\d+) papers chosen of (\d+) found$/);
+  if (copilot) return `找到 ${copilot[2]} 篇，选了 ${copilot[1]} 篇`;
+  copilot = value.match(/^Reading paper (\d+) of (\d+): ([\s\S]*)$/);
+  if (copilot) return `正在读第 ${copilot[1]} / ${copilot[2]} 篇：${copilot[3]}`;
+  copilot = value.match(/^(\d+) experiments \((\d+) with a verified quote\)$/);
+  if (copilot) return `${copilot[1]} 个实验（${copilot[2]} 个引文已核实）`;
+  copilot = value.match(/^(\d+) experiments in the design$/);
+  if (copilot) return `设计里有 ${copilot[1]} 个实验`;
+  copilot = value.match(/^Paper (\d+) could not be read: ([\s\S]*)$/);
+  if (copilot) return `第 ${copilot[1]} 篇没能读完：${copilot[2]}`;
+  copilot = value.match(/^The model did not name the papers it chose; the first results were taken$/);
+  if (copilot) return "模型没有说明选了哪些论文，已取前几条结果";
+  // Product manuals: where a hit comes from, and failures of the search or the download
+  let manual = value.match(/^Kept on inventory item “([\s\S]+?)”((?: · [\s\S]+)?)$/);
+  if (manual) return `库存物品“${manual[1]}”上挂的说明书${manual[2]}`;
+  manual = value.match(/^From ([a-z0-9][a-z0-9.-]+\.[a-z]{2,})$/);
+  if (manual) return `来自 ${manual[1]}`;
+  manual = value.match(/^Web search failed: ([\s\S]+)$/);
+  if (manual) return `网页搜索失败：${translateDynamic(manual[1]) === manual[1] ? manual[1] : translateDynamic(manual[1])}`;
+  manual = value.match(/^The (search service|vendor site) answered (\d+)$/);
+  if (manual) return manual[1] === "search service" ? `搜索服务返回了 ${manual[2]}` : `厂商网站返回了 ${manual[2]}`;
+  // Pictures of a manual: counts, per-picture labels and the service they go to
+  let photo = value.match(/^At most (\d+) pictures; (\d+) extra ignored\.$/);
+  if (photo) return `最多 ${photo[1]} 张，已忽略多出的 ${photo[2]} 张。`;
+  photo = value.match(/^On a phone or iPad you can take photos or choose from the library; up to (\d+)\. Pictures stay on this page and are not archived after reading\.$/);
+  if (photo) return `手机和 iPad 上可以现拍，也可以从相册选；最多 ${photo[1]} 张。照片只在这一页显示，识别完不会存档。`;
+  photo = value.match(/^Picture (\d+)$/);
+  if (photo) return `第 ${photo[1]} 张`;
+  photo = value.match(/^Read · (\d+) characters$/);
+  if (photo) return `已识别 · ${photo[1]} 字`;
+  photo = value.match(/^(Text read from|Move|Retry|Delete) picture (\d+)( up| down)?$/);
+  if (photo) return photo[1] === "Text read from" ? `第 ${photo[2]} 张识别出的文字` : photo[1] === "Move" ? `第 ${photo[2]} 张${photo[3] === " up" ? "上移" : "下移"}` : photo[1] === "Retry" ? `重试第 ${photo[2]} 张` : `删除第 ${photo[2]} 张`;
+  photo = value.match(/^Reading… (\d+) \/ (\d+)$/);
+  if (photo) return `识别中… ${photo[1]} / ${photo[2]}`;
+  photo = value.match(/^Try the (\d+) that failed again$/);
+  if (photo) return `重试 ${photo[1]} 张没读出来的`;
+  photo = value.match(/^Read pictures \((\d+)\)$/);
+  if (photo) return `识别图片（${photo[1]} 张）`;
+  photo = value.match(/^Sending (\d+) pictures to “([\s\S]+)”, one at a time\.$/);
+  if (photo) return `将把 ${photo[1]} 张图片发给“${photo[2]}”，每张单独发送。`;
+  photo = value.match(/^The text has (\d+) “【看不清】” marks: check them against the pictures, or edit the text and click “Read these texts again”\.$/);
+  if (photo) return `文字里有 ${photo[1]} 处“【看不清】”：请对着照片补上，或改完后点“用这些文字重新读取”。`;
   let match = value.match(/^Expires in (\d+:\d{2}) · single use$/);
   if (match) return `${match[1]} 后失效 · 只能用一次`;
   match = value.match(/^Watch connected since (\d{2}:\d{2})$/);

@@ -58,8 +58,15 @@ const methodsLike = /method|material|procedure|protocol|experimental/i;
 export function parseFullText(xml: string, pmcid: string): MethodText {
   const title = plainTitle(xml.match(/<article-title[^>]*>([\s\S]*?)<\/article-title>/i)?.[1] ?? '') || pmcid;
   const license = shortLicense(stripHtml(xml.match(/<license[^>]*>([\s\S]*?)<\/license>/i)?.[1] ?? ''));
+  const sections = topLevelSections(xml);
+  const methods = sections.filter(section => methodsLike.test(section.title));
+  const kept = methods.length ? methods : sections;
+  return { title, sections: kept, text: joinSections(kept), license, url: `https://europepmc.org/article/PMC/${pmcid}`, fetchedAt: new Date().toISOString() };
+}
+
+/** The article's top-level sections, each with its title and plain text; nested sections stay inside their parent. */
+export function topLevelSections(xml: string) {
   const body = xml.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? xml;
-  // Top-level sections only: nested <sec> stay inside their parent's text.
   const sections: Array<{ title: string; text: string }> = [];
   const pattern = /<sec\b[^>]*>/gi;
   let match: RegExpExecArray | null;
@@ -75,7 +82,5 @@ export function parseFullText(xml: string, pmcid: string): MethodText {
     if (content) sections.push({ title: heading || `Section ${sections.length + 1}`, text: content });
     pattern.lastIndex = cursor;
   }
-  const methods = sections.filter(section => methodsLike.test(section.title));
-  const kept = methods.length ? methods : sections;
-  return { title, sections: kept, text: joinSections(kept), license, url: `https://europepmc.org/article/PMC/${pmcid}`, fetchedAt: new Date().toISOString() };
+  return sections;
 }

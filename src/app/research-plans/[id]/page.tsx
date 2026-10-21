@@ -6,6 +6,7 @@ import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
+import { ResearchPlanCopilot } from "@/components/ResearchPlanCopilot";
 import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecycleBinWarning } from "@/components/RecycleBinWarning";
 import { ResearchPlanPremiseView } from "@/components/ResearchPlanPremiseView";
@@ -14,7 +15,10 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
+import { copilotReadiness } from "@/lib/copilot/deps.server";
+import { listRuns } from "@/lib/copilot/runs.server";
 import { prisma } from "@/lib/db";
+import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { normalizeResearchPlanDocument } from "@/lib/scientific-document";
 import { researchPlanDeleteBlockerItems } from "@/lib/record-lifecycle";
 import { archiveResearchPlan, deleteResearchPlan, updateResearchPlanKeyInformation } from "../actions";
@@ -23,8 +27,9 @@ export const dynamic = "force-dynamic";
 const primaryButton = buttonStyles({ variant: "primary", size: "md" });
 const secondaryButton = buttonStyles({ size: "md", className: "bg-surface font-medium text-moss hover:bg-warm" });
 
-export default async function ResearchPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ResearchPlanDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: PageSearchParams }) {
   const { id } = await params;
+  const autoStartRunId = firstSearchParam(searchParams ? await searchParams : undefined, "autostart");
   const plan = await prisma.researchPlan.findUnique({
     where: { id },
     include: {
@@ -49,6 +54,9 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
   const recycledKeys = new Set(recycledRecords.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = researchPlanDeleteBlockerItems(plan.status, { ...plan._count, reportSourceReferences });
   const document = normalizeResearchPlanDocument(plan.contentJson, plan.design);
+  const [copilotRuns, copilotReady] = await Promise.all([listRuns(plan.id), copilotReadiness()]);
+  // A plan with nothing written yet opens the Copilot, which starts from the research purpose.
+  const planIsEmpty = !plan.objective?.trim() && !plan.hypothesis?.trim() && document.sections.every((section) => !section.blocks.length);
   return (
     <AppShell><div className="space-y-6">
       <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<>{recycledKeys.has(`research_plan:${plan.id}`) ? <><Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link><DocumentPrintButton showLabel /></> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><PageActionsMenu><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></PageActionsMenu></>}</>} />
@@ -56,6 +64,7 @@ export default async function ResearchPlanDetailPage({ params }: { params: Promi
       {recycledRecords.some((row) => row.targetType !== "research_plan") ? <RecycleBinWarning label="record" labelZh="记录" /> : null}
       <div className="document-preview-layout">
         <div className="document-preview-main space-y-5">
+          {!recycledKeys.has(`research_plan:${plan.id}`) ? <ResearchPlanCopilot planId={plan.id} initialRuns={copilotRuns} readiness={copilotReady} startOpen={planIsEmpty || copilotRuns.length > 0} mode={planIsEmpty ? "new" : "adjust"} autoStartRunId={autoStartRunId} /> : null}
           <ScientificDocumentView document={document} showEmptySections title={plan.title} identifier={plan.code} subtitle={plan.project.name} leadingContent={<ResearchPlanPremiseView objective={plan.objective} hypothesis={plan.hypothesis} rationale={plan.rationale} />} />
           {plan.results.length ? <Card><CardHeader title="Recent Results" eyebrow="Evidence produced by this plan" /><CardBody><DataTable rows={plan.results} getRowKey={(row) => row.id} columns={[
             { key: "result", header: "Result", render: (row) => <div className="flex flex-wrap items-center gap-2"><Link href={`/results/${row.id}`} className="font-semibold text-moss hover:underline">{row.title}</Link>{recycledKeys.has(`result:${row.id}`) ? <Badge tone="warning">In Recycle Bin</Badge> : null}</div> },

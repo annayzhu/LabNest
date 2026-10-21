@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Plus, Sparkles } from "lucide-react";
+import { BookSearch, Plus, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { AiLink } from "@/components/AiAssistant";
-import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolIdentity } from "@/components/ProtocolIdentity";
 import { BadgeLink, StatusPill } from "@/components/ui/Badge";
@@ -68,6 +68,7 @@ export default async function ProtocolsPage({ searchParams }: { searchParams?: P
         ]}
         actions={<>
           <CollectionExportMenu filteredHref={exportHref} exportPath="/protocols/export" importHref="/protocols/import" />
+          <Link href="/protocols/import/recognize#manuals" className={collectionSecondaryActionClass}><BookSearch className="h-4 w-4" aria-hidden />Find a product manual</Link>
           <AiLink href="/protocols/design"><Sparkles className="h-4 w-4" aria-hidden />Design from a goal</AiLink>
           <Link href="/protocols/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New Protocol</Link>
         </>}

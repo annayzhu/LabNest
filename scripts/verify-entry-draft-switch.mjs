@@ -24,6 +24,7 @@ try {
     originals.push(await editor().locator('[data-document-media]').getAttribute('data-document-media'));
     attachments.push((await editor().locator('[data-document-media] img').getAttribute('src')).match(/\/api\/attachments\/([^?]+)/)[1]);
     await page.getByRole('tab',{name:'Metadata',exact:true}).click();
+    await page.getByText('Type, source and status').click();
     await page.getByRole('combobox',{name:'Entry type',exact:true}).selectOption(index?'observation':'idea');
     await page.getByRole('textbox',{name:'State',exact:true}).fill('TEST-STATE-'+index);
     await closeProperties(page);

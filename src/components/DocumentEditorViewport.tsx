@@ -8,6 +8,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { DOCUMENT_ZOOM_MAX, DOCUMENT_ZOOM_MIN, documentFitScale, normalizeDocumentZoom } from "@/lib/document-editor-workbench";
+import { PageActions } from "@/components/MobilePageMenu";
 
 export type DocumentZoomMode = "custom" | "fit";
 
@@ -98,7 +99,8 @@ export function StandaloneDocumentEditorViewport({ children, toolbar, label, out
   const { panelRef, stageRef, zoomMode, setZoomMode, zoomPercent, setZoomPercent, updateFitScale, viewStyle } = useDocumentViewport();
   return <section className={cn("standalone-document-editor-viewport", className)} data-zoom-mode={zoomMode}>
     <div className="document-canvas-toolbar standalone-document-editor-toolbar" data-print-hidden>
-      <div className="document-editor-toolbar-format">{toolbar}</div>
+      {/* Export, print and attachments: in the header on a computer, behind ··· on a phone. */}
+      <PageActions className="document-editor-toolbar-format">{toolbar}</PageActions>
       <DocumentZoomControls zoomMode={zoomMode} setZoomMode={setZoomMode} zoomPercent={zoomPercent} setZoomPercent={setZoomPercent} updateFitScale={updateFitScale} />
     </div>
     <div className="document-editor-workbench">

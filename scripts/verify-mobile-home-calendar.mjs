@@ -43,7 +43,7 @@ try {
           } else {
             assert.deepEqual(await home.locator(':scope > header dd').allTextContents(), [String(running), String(planned)]);
             const actions = home.locator('nav a');
-            assert.deepEqual(await actions.evaluateAll(nodes => nodes.map(node => node.getAttribute('href'))), ['/protocol-run', '/entries/new?mode=capture', '/tools/calculator', '/tools']);
+            assert.deepEqual(await actions.evaluateAll(nodes => nodes.map(node => node.getAttribute('href'))), ['/protocol-run', '/entries/new?mode=capture&experiment=active', '/tools/calculator', '/tools']);
             assert((await actions.nth(2).innerText()).includes(locale === 'zh' ? '配液与单位换算' : 'Mixes and conversions'));
             const today = home.locator('section[aria-labelledby="mobile-today-title"]');
             assert((await today.innerText()).includes('QA overnight experiment')); assert(!(await today.innerText()).includes('QA completed experiment'));

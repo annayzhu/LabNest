@@ -53,6 +53,7 @@
 				<string>000000000000000000000007</string>
 				<string>000000000000000000000014</string>
 				<string>000000000000000000000016</string>
+				<string>000000000000000000000018</string>
 				<string>000000000000000000000032</string>
 				<string>000000000000000000000003</string>
 			</array>
@@ -158,6 +159,7 @@
 				<string>000000000000000000000009</string>
 				<string>000000000000000000000015</string>
 				<string>000000000000000000000017</string>
+				<string>000000000000000000000019</string>
 			</array>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -371,6 +373,24 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000016</string>
+		</dict>
+		<key>000000000000000000000018</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>WatchWidgetState.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>000000000000000000000019</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000018</string>
 		</dict>
 		<key>000000000000000000000032</key>
 		<dict>

@@ -13,6 +13,21 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>扫描电脑上的 LabNest 二维码，以及在实验记录中拍照。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>从相册选择照片放进实验记录。</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>连接你选择的 LabNest 服务器（电脑上的 LabNest）。</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { PageActions } from "@/components/MobilePageMenu";
 
 export function PageHeader({
   identifier,
@@ -26,7 +27,8 @@ export function PageHeader({
           </h1>
         </div>
       </div>
-      {actions ? <div className="page-actions flex flex-wrap gap-1.5">{actions}</div> : null}
+      {/* On a phone they move into ··· in the top bar. */}
+      {actions ? <PageActions className="page-actions flex flex-wrap gap-1.5">{actions}</PageActions> : null}
     </header>
   );
 }

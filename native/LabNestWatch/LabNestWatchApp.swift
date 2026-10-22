@@ -61,6 +61,7 @@ struct WatchRunView: View {
                 }.padding(.horizontal, 6)
             }.navigationTitle(model.snapshot?.title ?? "LabNest").navigationBarTitleDisplayMode(.inline)
         }.task { model.startPhoneConnection(); await model.refresh() }
+        .onChange(of: selected) { _, id in model.focusStepId = id.isEmpty ? nil : id }
         .sheet(isPresented: $settings) { WatchSettingsView().environmentObject(model) }
         .onChange(of: model.credential?.pairingRequestId) { _, id in if id != nil { settings = false } }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await model.refresh() } } }

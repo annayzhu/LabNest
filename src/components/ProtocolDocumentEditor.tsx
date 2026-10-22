@@ -23,6 +23,7 @@ import { protocolAvailabilityOptions, protocolReviewStageOptions } from "@/lib/s
 import type { ManualRelevantLink, RelevantCatalogItem } from "@/lib/protocol-relevant-items";
 import { ProtocolImportHistory } from "@/components/ProtocolImportHistory";
 import type { ProtocolImportHistoryEntry } from "@/lib/protocol-import-history";
+import { PageActions } from "@/components/MobilePageMenu";
 
 export type ProtocolEditorState = { error?: string };
 export type ProtocolEditorAction = (
@@ -124,7 +125,7 @@ export function ProtocolDocumentEditor({
       <DocumentEditorWorkspace
         outline={document.sections.filter((section) => section.key !== "consumption_rules" || hasLegacyFormulas(document)).map((section) => ({ id: `protocol-section-${section.key}`, label: section.title }))}
         onActiveTabChange={setActiveWorkspaceTab}
-        actions={<><div id="protocol-document-actions" className="ln-document-actions-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring ln-document-action" title="Exports the saved version; save your changes first."><Download aria-hidden />Export Word</a> : null}<DocumentPrintButton /><div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div></>}
+        actions={<><PageActions className="contents"><div id="protocol-document-actions" className="ln-document-actions-host" />{docxExportHref ? <a href={docxExportHref} className="focus-ring ln-document-action" title="Exports the saved version; save your changes first."><Download aria-hidden />Export Word</a> : null}<DocumentPrintButton /></PageActions><div className="protocol-workbench-save" data-active-tab={activeWorkspaceTab}><span className="sr-only" role="status" aria-live="polite">{pending ? "Saving changes" : saveHint}</span><Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending} className="protocol-density-primary-action"><span className="protocol-save-label-full">{pending ? "Saving…" : saveLabel}</span><span className="protocol-save-label-compact">{pending ? "Saving…" : "Save"}</span></Button></div></>}
         document={<DocumentCanvas label={canonicalTitle || "Protocol document editor"}>
           <DocumentPageHeader documentType="Protocol" identifier={identifier} title={canonicalTitle} titlePlaceholder="Untitled Protocol" titleEditor={<input required name="canonicalTitle" value={canonicalTitle} onChange={(event) => setCanonicalTitle(event.target.value)} className="document-page-title-input" placeholder="Untitled Protocol" aria-label="Protocol title" />} facts={[
             { label: "Version", value: displayVersion, mono: true },

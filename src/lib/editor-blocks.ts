@@ -45,6 +45,21 @@ export function moveBlock(state: EditorState, unit: BlockUnit, direction: -1 | 1
   return tr.setSelection(caretIn(tr.doc, at)).scrollIntoView();
 }
 
+/**
+ * Drop a block into the gap before child `gap` of its container (0 … childCount), as a long-press drag on a phone does.
+ * Null when the gap is on either side of the block, where it already is. The caret follows the block.
+ */
+export function moveBlockTo(state: EditorState, unit: BlockUnit, gap: number): Transaction | null {
+  const $pos = state.doc.resolve(unit.pos), index = $pos.index(), parent = $pos.parent;
+  if (gap === index || gap === index + 1 || gap < 0 || gap > parent.childCount) return null;
+  let at = $pos.start();
+  for (let child = 0; child < gap; child += 1) at += parent.child(child).nodeSize;
+  const tr = state.tr.delete(unit.pos, unit.pos + unit.node.nodeSize);
+  const target = tr.mapping.map(at);
+  tr.insert(target, unit.node);
+  return tr.setSelection(caretIn(tr.doc, target)).scrollIntoView();
+}
+
 const pendingUpload = (node: ProseMirrorNode) => { let pending = false; node.descendants(child => { if (child.attrs.block?.pendingUploadId) pending = true; }); return pending || Boolean(node.attrs.block?.pendingUploadId); };
 export const canDuplicateBlock = (unit: BlockUnit) => !pendingUpload(unit.node);
 

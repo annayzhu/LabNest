@@ -93,7 +93,7 @@ try {
           if (width < 1024) {
             const mobile = page.locator(".bench-mobile");
             assert.deepEqual(await mobile.locator("nav a").evaluateAll(nodes => nodes.map(node => node.getAttribute("href"))),
-              ["/protocol-run", "/entries/new?mode=capture", "/tools/calculator", "/tools"]);
+              ["/protocol-run", "/entries/new?mode=capture&experiment=active", "/tools/calculator", "/tools"]);
             assert.equal(await mobile.locator('a[href="/protocol-run"]').count(), 1, "No duplicate run-mode CTA.");
             const links = await mobile.locator('section[aria-labelledby="mobile-today-title"] a[href^="/experiments/"]').allTextContents();
             assert(links[0].includes("QA overnight experiment"), "Cross-day running experiment must lead.");
@@ -108,20 +108,32 @@ try {
         }, page);
         if (width === 390) {
           await check(`${label}-capture-entrypoints`, async () => {
+            // The bar is Home · Search · Run mode · ＋; ＋ writes a note on the experiment in progress.
             const nav = page.getByRole("navigation", { name: "Mobile navigation" });
-            await nav.getByRole("link", { name: "Quick capture", exact: true }).click();
-            await page.waitForURL("**/entries/new?mode=capture");
+            assert.deepEqual(await nav.locator("a, button").allTextContents(), ["Home", "Search", "Run mode", "New"]);
+            await nav.getByRole("button", { name: "New quick capture" }).click();
+            await page.waitForURL("**/entries/new?mode=capture&experiment=active");
             await page.getByRole("heading", { name: "Quick capture", exact: true }).waitFor();
+            // Every other module is in the drawer behind ☰, named as in #109; ＋ is not repeated there.
             await page.goto(baseUrl + "/inventory", { waitUntil: "networkidle" });
-            await nav.getByRole("button", { name: "Open more navigation" }).click();
-            const more = page.getByRole("dialog", { name: "All modules" });
-            assert.equal(await more.getByRole("link", { name: "Quick capture", exact: true }).getAttribute("href"), "/entries/new?mode=capture");
-            assert.equal(await more.getByRole("link", { name: "Record history", exact: true }).getAttribute("href"), "/records");
-            assert.equal(await more.getByRole("link", { name: "All entries", exact: true }).getAttribute("href"), "/entries");
-            await more.getByRole("link", { name: "Quick capture", exact: true }).click();
-            await page.waitForURL("**/entries/new?mode=capture");
-            await page.getByRole("heading", { name: "Quick capture", exact: true }).waitFor();
-            await more.waitFor({ state: "hidden" });
+            await page.getByRole("button", { name: "Open navigation" }).click();
+            const drawer = page.getByRole("dialog", { name: "Navigation" });
+            assert.equal(await drawer.getByRole("link", { name: "Record history", exact: true }).getAttribute("href"), "/records");
+            assert.equal(await drawer.getByRole("link", { name: "All entries", exact: true }).getAttribute("href"), "/entries");
+            assert.equal(await drawer.getByRole("link", { name: "Quick capture", exact: true }).count(), 0);
+            await drawer.getByRole("link", { name: "All entries", exact: true }).click();
+            await page.waitForURL("**/entries");
+            await drawer.waitFor({ state: "hidden" });
+            // A page's header actions are behind ··· in the top bar.
+            await page.getByRole("button", { name: "Page actions" }).click();
+            const sheet = page.getByRole("dialog", { name: "Page actions" });
+            await sheet.waitFor();
+            // A bottom sheet rests on the bottom edge; once it has slid in, all of it is on screen.
+            await page.waitForTimeout(400);
+            const box = await sheet.boundingBox();
+            assert(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= width + 1 && box.y + box.height <= height + 1, `${label}-page-actions: sheet off screen: ${JSON.stringify(box)}`);
+            await page.keyboard.press("Escape");
+            await sheet.waitFor({ state: "hidden" });
             await page.waitForLoadState("networkidle");
           }, page);
           await check(`${label}-filter-submission`, async () => {

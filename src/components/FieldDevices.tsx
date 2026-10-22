@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { Check, Copy, QrCode, Watch } from 'lucide-react';
 import { connectWatchRun, disconnectWatchRun, watchRunConnection } from '@/app/experiments/[id]/run/actions';
 import { fieldRunUrl, isLocalHost, lanOrigin, watchPairingLink } from '@/lib/field-mode';
+import { inNativeApp, onNativeEvent, postNative, type NativeEvent } from '@/lib/native-bridge';
 import { Button } from './ui/Button';
 import './field-devices.css';
 
@@ -89,6 +90,10 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const ready = watch === 'ready';
+  // In the iPhone app the code goes straight to the paired watch: no code to read off or type in.
+  const [app] = useState(inNativeApp);
+  const [sent, setSent] = useState<NativeEvent>();
+  useEffect(() => app ? onNativeEvent(event => { if (event.type === 'watchPair') { setSent(event); setBusy(false); } }) : undefined, [app]);
   // While the panel is open: notice the watch connecting (after it takes the code) without reloading.
   useEffect(() => {
     if (!ready) return;
@@ -110,6 +115,12 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
     setBusy(false);
     if (result.code && result.expiresAt) { setPairing({ code: result.code, expiresAt: result.expiresAt }); setNow(Date.now()); } else setError(result.error ?? 'Could not create a pairing code');
   };
+  const send = async () => {
+    setBusy(true); setError(''); setSent(undefined);
+    const result = await connectWatchRun(experimentId);
+    if (!result.code) { setBusy(false); setError(result.error ?? 'Could not create a pairing code'); return; }
+    if (!postNative({ type: 'watchPair', server: window.location.origin, code: result.code })) { setBusy(false); setError('The app could not reach the watch.'); }
+  };
   const disconnect = async () => {
     setBusy(true); setError('');
     const result = await disconnectWatchRun(experimentId);
@@ -125,6 +136,11 @@ function WatchCard({ origin, experimentId, watch }: { origin?: string; experimen
         <p className="ln-field-connected" role="status"><Check className="h-4 w-4" aria-hidden />{status?.since ? `Watch connected since ${new Date(status.since).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : 'Watch connected'}</p>
         <p className="text-muted">The watch shows the current step and timers; tick off the mix card line by line.</p>
         <Button type="button" variant="ghost" disabled={busy} onClick={() => void disconnect()}>Disconnect watch</Button>
+      </> : app ? <>
+        <p className="text-muted">The watch follows this experiment: the current step and timers, and the mix card ticked off line by line.</p>
+        <p className="text-muted">Open LabNest on the watch and keep its screen on, then send this experiment to it.</p>
+        <Button type="button" variant="primary" disabled={busy} onClick={() => void send()}><Watch className="h-4 w-4" aria-hidden />{busy ? 'Sending…' : 'Send to Apple Watch'}</Button>
+        {sent ? <p role="status" className={sent.ok ? 'ln-field-connected' : 'text-error'}>{sent.message}</p> : null}
       </> : <>
         <p className="text-muted">The watch follows this experiment: the current step and timers, and the mix card ticked off line by line.</p>
         {pairing && left > 0 ? <>

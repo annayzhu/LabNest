@@ -17,6 +17,19 @@
 		000000000000000000000027 /* LabNestWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 000000000000000000000005 /* LabNestWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		000000000000000000000033 /* ../SharedAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* ../SharedAssets.xcassets */; };
 		000000000000000000000034 /* ../SharedAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000032 /* ../SharedAssets.xcassets */; };
+		000000000000000000000050 /* ServerAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000040 /* ServerAddress.swift */; };
+		000000000000000000000051 /* WebContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000041 /* WebContainer.swift */; };
+		000000000000000000000052 /* NativeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000042 /* NativeBridge.swift */; };
+		000000000000000000000053 /* ServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000043 /* ServerSetupView.swift */; };
+		000000000000000000000054 /* TimerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000044 /* TimerCenter.swift */; };
+		000000000000000000000055 /* TimerActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000045 /* TimerActivity.swift */; };
+		000000000000000000000056 /* TimerActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000045 /* TimerActivity.swift */; };
+		000000000000000000000057 /* LabNestTimers/LabNestTimersWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000046 /* LabNestTimers/LabNestTimersWidget.swift */; };
+		000000000000000000000058 /* LabNestTimers.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 000000000000000000000048 /* LabNestTimers.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		000000000000000000000059 /* ../LabNestWatch/WatchWidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000049 /* ../LabNestWatch/WatchWidgetState.swift */; };
+		00000000000000000000005A /* ../LabNestWatch/WatchWidgetState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000049 /* ../LabNestWatch/WatchWidgetState.swift */; };
+		00000000000000000000005B /* ../LabNestWatchWidget/LabNestWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000004A /* ../LabNestWatchWidget/LabNestWatchWidget.swift */; };
+		00000000000000000000005C /* LabNestWatchWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 00000000000000000000004B /* LabNestWatchWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,6 +39,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 000000000000000000000004;
 			remoteInfo = LabNestWatch;
+		};
+		000000000000000000000064 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 00000000000000000000005F;
+			remoteInfo = LabNestTimers;
+		};
+		00000000000000000000006C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000067;
+			remoteInfo = LabNestWatchWidget;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -41,6 +68,28 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		000000000000000000000063 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				000000000000000000000058 /* LabNestTimers.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000006B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				00000000000000000000005C /* LabNestWatchWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +102,19 @@
 		000000000000000000000020 /* PhoneConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneConnection.swift; sourceTree = "<group>"; };
 		000000000000000000000022 /* LabNestMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = LabNestMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000032 /* ../SharedAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ../SharedAssets.xcassets; sourceTree = "<group>"; };
+		000000000000000000000040 /* ServerAddress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerAddress.swift; sourceTree = "<group>"; };
+		000000000000000000000041 /* WebContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContainer.swift; sourceTree = "<group>"; };
+		000000000000000000000042 /* NativeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeBridge.swift; sourceTree = "<group>"; };
+		000000000000000000000043 /* ServerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSetupView.swift; sourceTree = "<group>"; };
+		000000000000000000000044 /* TimerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerCenter.swift; sourceTree = "<group>"; };
+		000000000000000000000045 /* TimerActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivity.swift; sourceTree = "<group>"; };
+		000000000000000000000046 /* LabNestTimers/LabNestTimersWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabNestTimers/LabNestTimersWidget.swift; sourceTree = "<group>"; };
+		000000000000000000000049 /* ../LabNestWatch/WatchWidgetState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatch/WatchWidgetState.swift; sourceTree = "<group>"; };
+		00000000000000000000004A /* ../LabNestWatchWidget/LabNestWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../LabNestWatchWidget/LabNestWatchWidget.swift; sourceTree = "<group>"; };
+		00000000000000000000004C /* ../LabNestWatch/LabNestWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ../LabNestWatch/LabNestWatch.entitlements; sourceTree = "<group>"; };
+		00000000000000000000004D /* ../LabNestWatchWidget/LabNestWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ../LabNestWatchWidget/LabNestWatchWidget.entitlements; sourceTree = "<group>"; };
+		000000000000000000000048 /* LabNestTimers.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LabNestTimers.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		00000000000000000000004B /* LabNestWatchWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LabNestWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +126,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		000000000000000000000025 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000061 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000069 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -82,6 +158,17 @@
 				000000000000000000000016 /* ../LabNestWatch/WatchPhoneReceiver.swift */,
 				00000000000000000000001E /* LabNestMobileApp.swift */,
 				000000000000000000000020 /* PhoneConnection.swift */,
+				000000000000000000000040 /* ServerAddress.swift */,
+				000000000000000000000041 /* WebContainer.swift */,
+				000000000000000000000042 /* NativeBridge.swift */,
+				000000000000000000000043 /* ServerSetupView.swift */,
+				000000000000000000000044 /* TimerCenter.swift */,
+				000000000000000000000045 /* TimerActivity.swift */,
+				000000000000000000000046 /* LabNestTimers/LabNestTimersWidget.swift */,
+				000000000000000000000049 /* ../LabNestWatch/WatchWidgetState.swift */,
+				00000000000000000000004A /* ../LabNestWatchWidget/LabNestWatchWidget.swift */,
+				00000000000000000000004C /* ../LabNestWatch/LabNestWatch.entitlements */,
+				00000000000000000000004D /* ../LabNestWatchWidget/LabNestWatchWidget.entitlements */,
 				000000000000000000000032 /* ../SharedAssets.xcassets */,
 				000000000000000000000003 /* Products */,
 			);
@@ -92,6 +179,8 @@
 			children = (
 				000000000000000000000005 /* LabNestWatch.app */,
 				000000000000000000000022 /* LabNestMobile.app */,
+				000000000000000000000048 /* LabNestTimers.appex */,
+				00000000000000000000004B /* LabNestWatchWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -106,10 +195,12 @@
 				00000000000000000000000A /* Sources */,
 				00000000000000000000000B /* Frameworks */,
 				00000000000000000000000C /* Resources */,
+				00000000000000000000006B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				00000000000000000000006D /* PBXTargetDependency */,
 			);
 			name = LabNestWatch;
 			productName = LabNestWatch;
@@ -124,16 +215,52 @@
 				000000000000000000000025 /* Frameworks */,
 				000000000000000000000026 /* Resources */,
 				000000000000000000000028 /* Embed Watch Content */,
+				000000000000000000000063 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				00000000000000000000002A /* PBXTargetDependency */,
+				000000000000000000000065 /* PBXTargetDependency */,
 			);
 			name = LabNestMobile;
 			productName = LabNestMobile;
 			productReference = 000000000000000000000022 /* LabNestMobile.app */;
 			productType = "com.apple.product-type.application";
+		};
+		00000000000000000000005F /* LabNestTimers */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000066 /* Build configuration list for PBXNativeTarget "LabNestTimers" */;
+			buildPhases = (
+				000000000000000000000060 /* Sources */,
+				000000000000000000000061 /* Frameworks */,
+				000000000000000000000062 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LabNestTimers;
+			productName = LabNestTimers;
+			productReference = 000000000000000000000048 /* LabNestTimers.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		000000000000000000000067 /* LabNestWatchWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000006E /* Build configuration list for PBXNativeTarget "LabNestWatchWidget" */;
+			buildPhases = (
+				000000000000000000000068 /* Sources */,
+				000000000000000000000069 /* Frameworks */,
+				00000000000000000000006A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LabNestWatchWidget;
+			productName = LabNestWatchWidget;
+			productReference = 00000000000000000000004B /* LabNestWatchWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -158,6 +285,8 @@
 			targets = (
 				000000000000000000000004 /* LabNestWatch */,
 				00000000000000000000002E /* LabNestMobile */,
+				00000000000000000000005F /* LabNestTimers */,
+				000000000000000000000067 /* LabNestWatchWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -179,6 +308,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		000000000000000000000062 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000006A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -190,6 +333,7 @@
 				000000000000000000000009 /* ../LabNestWatch/WatchModel.swift in Sources */,
 				000000000000000000000015 /* ../LabNestWatch/PairingLink.swift in Sources */,
 				000000000000000000000017 /* ../LabNestWatch/WatchPhoneReceiver.swift in Sources */,
+				000000000000000000000059 /* ../LabNestWatch/WatchWidgetState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,6 +344,30 @@
 				00000000000000000000001F /* LabNestMobileApp.swift in Sources */,
 				000000000000000000000021 /* PhoneConnection.swift in Sources */,
 				000000000000000000000023 /* ../LabNestWatch/PairingLink.swift in Sources */,
+				000000000000000000000050 /* ServerAddress.swift in Sources */,
+				000000000000000000000051 /* WebContainer.swift in Sources */,
+				000000000000000000000052 /* NativeBridge.swift in Sources */,
+				000000000000000000000053 /* ServerSetupView.swift in Sources */,
+				000000000000000000000054 /* TimerCenter.swift in Sources */,
+				000000000000000000000055 /* TimerActivity.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000060 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000056 /* TimerActivity.swift in Sources */,
+				000000000000000000000057 /* LabNestTimers/LabNestTimersWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000068 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00000000000000000000005A /* ../LabNestWatch/WatchWidgetState.swift in Sources */,
+				00000000000000000000005B /* ../LabNestWatchWidget/LabNestWatchWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,12 +379,23 @@
 			target = 000000000000000000000004 /* LabNestWatch */;
 			targetProxy = 000000000000000000000029 /* PBXContainerItemProxy */;
 		};
+		000000000000000000000065 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 00000000000000000000005F /* LabNestTimers */;
+			targetProxy = 000000000000000000000064 /* PBXContainerItemProxy */;
+		};
+		00000000000000000000006D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000067 /* LabNestWatchWidget */;
+			targetProxy = 00000000000000000000006C /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		00000000000000000000000F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
@@ -239,6 +418,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UWNRX8D849;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = ../LabNestWatch/LabNestWatch.entitlements;
 				INFOPLIST_FILE = ../LabNestWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "连接你选择的本地 LabNest 服务器，读取当前实验并同步你确认的操作。";
@@ -266,6 +446,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = UWNRX8D849;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = ../LabNestWatch/LabNestWatch.entitlements;
 				INFOPLIST_FILE = ../LabNestWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "连接你选择的本地 LabNest 服务器，读取当前实验并同步你确认的操作。";
@@ -332,6 +513,114 @@
 			};
 			name = Release;
 		};
+		000000000000000000000070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LabNestTimers/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.timers;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		000000000000000000000071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LabNestTimers/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.timers;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		000000000000000000000072 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ../LabNestWatchWidget/LabNestWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../LabNestWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.watch.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		000000000000000000000073 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ../LabNestWatchWidget/LabNestWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UWNRX8D849;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../LabNestWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LabNest;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.labnest.mobile.watch.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -358,6 +647,24 @@
 			buildConfigurations = (
 				00000000000000000000002B /* Debug */,
 				00000000000000000000002C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		000000000000000000000066 /* Build configuration list for PBXNativeTarget "LabNestTimers" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000070 /* Debug */,
+				000000000000000000000071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000006E /* Build configuration list for PBXNativeTarget "LabNestWatchWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000072 /* Debug */,
+				000000000000000000000073 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

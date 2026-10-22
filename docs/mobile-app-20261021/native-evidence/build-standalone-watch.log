@@ -1,0 +1,639 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project native/LabNestWatch/LabNestWatch.xcodeproj -target LabNestWatch -configuration Debug -sdk watchsimulator SYMROOT=/private/tmp/labnest-watch-standalone-20261021 CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    SDKROOT = watchsimulator26.5
+    SYMROOT = /private/tmp/labnest-watch-standalone-20261021
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'LabNestWatch' in project 'LabNestWatch' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 1fb90bf1e5c36eb007cf48f8f643f8b5
+Build description path: /private/tmp/labnest-watch-standalone-20261021/XCBuildData/1fb90bf1e5c36eb007cf48f8f643f8b5.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -o /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache
+
+CreateBuildDirectory /private/tmp/labnest-watch-standalone-20261021
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    builtin-create-build-directory /private/tmp/labnest-watch-standalone-20261021
+
+CreateBuildDirectory /private/tmp/labnest-watch-standalone-20261021/ExplicitPrecompiledModules
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    builtin-create-build-directory /private/tmp/labnest-watch-standalone-20261021/ExplicitPrecompiledModules
+
+CreateBuildDirectory /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    builtin-create-build-directory /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    builtin-create-build-directory /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator
+
+CreateBuildDirectory /private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    builtin-create-build-directory /private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch-f324e0b304f067b0ad19202a63da6dd4-VFS-watchsimulator/all-product-headers.yaml
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatch.xcodeproj
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch-f324e0b304f067b0ad19202a63da6dd4-VFS-watchsimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_const_extract_protocols.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_const_extract_protocols.json
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyMetadataFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyMetadataFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyStaticMetadataFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.hmap
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.LinkFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.LinkFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftConstValuesFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-OutputFileMap.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-OutputFileMap.json
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-OutputFileMap.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-OutputFileMap.json
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.LinkFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.LinkFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftConstValuesFileList (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_const_extract_protocols.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_const_extract_protocols.json
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap
+
+WriteAuxiliaryFile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-non-framework-target-headers.hmap (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    write-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-non-framework-target-headers.hmap
+
+MkDir /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /bin/mkdir -p /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app
+
+MkDir /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/unthinned (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /bin/mkdir -p /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/unthinned
+
+MkDir /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/thinned (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /bin/mkdir -p /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/thinned
+
+GenerateAssetSymbols /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets --compile /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app --output-format human-readable-text --notices --warnings --export-dependency-info /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_dependencies --output-partial-info-plist /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region en --target-device watch --minimum-deployment-target 10.0 --platform watchsimulator --bundle-identifier org.labnest.watch --generate-swift-asset-symbol-extensions NO --generate-swift-asset-symbols /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.h
+/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets --compile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_dependencies_thinned --output-partial-info-plist /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region en --target-device watch --minimum-deployment-target 10.0 --platform watchsimulator
+/* com.apple.actool.compilation-results */
+/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist_thinned
+/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/thinned/Assets.car
+
+
+LinkAssetCatalog /Users/annayzhu/Developer/LabNest/native/SharedAssets.xcassets (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-linkAssetCatalog --thinned /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/thinned --thinned-dependencies /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist_thinned --unthinned /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_output/unthinned --unthinned-dependencies /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist_unthinned --output /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app --plist-output /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist
+note: Emplaced /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Assets.car (in target 'LabNestWatch' from project 'LabNestWatch')
+
+ProcessInfoPlistFile /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Info.plist /Users/annayzhu/Developer/LabNest/native/LabNestWatch/Info.plist (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-infoPlistUtility /Users/annayzhu/Developer/LabNest/native/LabNestWatch/Info.plist -producttype com.apple.product-type.application -genpkginfo /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/PkgInfo -expandbuildsettings -format binary -platform watchsimulator -additionalcontentfile /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/assetcatalog_generated_info.plist -o /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Info.plist
+
+SwiftDriver LabNestWatch normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target arm64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+SwiftDriver LabNestWatch normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target x86_64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ptrcheck-DTG6VLMDQUBTPWWS02BBQLDD2.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stddef-CKZ0B4WI2QGCIKY635D9PA7TY.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_float-E4F2C7GG2FTOEBVSX1ISW39WB.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdbool-2SBDT5LXAJ63J1NEG7YO9TA86.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/DeveloperToolsSupport-742IFRCA1B5XHQR7AXICNZVUB.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_SwiftConcurrencyShims-DX8ISXZDT4BJBNRWM39UN0I7Y.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ptrauth-ALHS2FWARLIDKFELZ3E01ZWB4.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftShims-8YW2VG8IUJJHBH58WS2NGG2UT.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_AvailabilityInternal-7ZTV7XYZGD46XIRFCV8LAF6US.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdarg-2WJLNTGBGD9IN3JNEYIY4F9N4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ptrcheck-59PJCNONQ0PAU5US0OSBDPFEG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ptrauth-58DRPG1MEMPYN3GCOCPTEMG7W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_SwiftConcurrencyShims-B0PB8ZTY3EB8BDOTXX3W6ZPPA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdarg-2KI8DO8PLFNRZU49ELUAYE1IH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/DeveloperToolsSupport-4J0JEN0WVEPQKKEBU84L11UL9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stddef-4RL3VR49JPLDH8I4K1QEEZRI2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_AvailabilityInternal-8NULT1ZE2CKZN4RUCUVEQC6S8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftShims-A89MOERFFHEH2ZD767EPHBZB5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_float-8LTY96KSABJSJ393V0OG9JNC1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdbool-88LEKL1I32CEBZNDWVR7P0RK9.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation1-3UVW0FYOT7WLLZVCX7Q4V4OEK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation1-1UQG6O0P3V0OJ7VR3RGIGOR43.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ExtensionFoundation-D6SW5Q4C1GZ1810KC2NLDN3PB.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation2-C27SSBEP6ORGUS0ZIWD08O3UV.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_limits-4R3OHT4MENIX058URV1K8NTF9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_limits-CRO777L8OZTAID08CKTK9IPU5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation2-9H1K3FDHD208FK6F9GB7LH2S5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ExtensionFoundation-2TQCD9M622PAN3PR8WROLQQCU.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_tgmath-F1S7I53S91RASGWJDIS9UH7SO.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdint-1OOY7AI1R6PC9HZH6RR29UIJZ.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/sys_types-63JPZSQ146VPYRN2PML5ISD8X.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation3-EVRILLZIRUGMGIYTVOW24O5CK.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdatomic-25D37XPV27NMI4N3NSP0MUXRL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_tgmath-1QMB4JV5Y1333KXI5SWPWQ1LW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdint-4VTF33T5QZTCEM8LFS6SL2ZU6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/sys_types-D4O8XKARLB4JRB45RFWLZJ1TK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_intrinsics-4RTCL2M5DR5Z97DDOZ1VYSX4I.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_DarwinFoundation3-74U0KUQB3OUI5UUUJS39N98D.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_stdatomic-1CJM3CBJG8HZ0PO1YLHJT9M0P.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_intrinsics-EMNE1DOXY6JENOZE3Z673G1S5.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_inttypes-70FTKXX9SI5NM2PY32NGSPMLT.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Darwin-DZSIEYWY3EUKUFS9UD04Q1T1X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_Builtin_inttypes-DDPNHYIC9SO7J5B3RJPKRJN3J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Darwin-97QBLQI6MEIWNXGD9HLNC1CXO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/simd-28TBM5U1I16LI1TT2H95YM9P2.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/MachO-5TV3XQSJBB9DXRXXNJHD0UY0I.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ObjectiveC-8W5VT7R9R5B4MD5ZHL599BNYR.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/simd-MX9VICZB128HW57FYQG549DS.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os_object-F8CC2BMOFG9DNIW8BK101PBT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/MachO-7OUFUK6SLZZ2D0AGCIORTMKVY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/ObjectiveC-NU05ATX66MB7WZC7H3ORHE5G.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os_workgroup-6AZL2P1I3J7S1F7P43MOJHWIV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os_object-D4IK8R15S5CNVF5X5PJS7QSM.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Dispatch-23TZI62XFR2XHG7L4P45G4WPH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os_workgroup-7ZZH4M50U9SQEJGWAUIG4VBAS.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/dnssd-M82J2373IRGHPGVVRPTOU4JI.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreFoundation-DMOCSHKOY4SZJ0V3LUCQBIBU2.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/XPC-CBXCJEY68517ZOJIMNZZJCH0H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Spatial-9ZPTFQB2CRV70IEN3ETZ6HYFD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Dispatch-5UVBKE3RZXGATK0ZTR0W8XYO0.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os-29SS1C9JWFZN5RN4S5P1W7CG4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreFoundation-7X5VCNX6AEJMUUS7XADYWIBVY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/XPC-30JG3OYON62XO4Q9X3MADQ8S4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/dnssd-4EGJL3TUM9ISGYL8UFK7VWXF8.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Security-13EPHWJEG188HR4AHI9480A1N.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreGraphics-DDUNYO42UDUKF08ALLP74HK7Y.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Spatial-2SN8I3ZKMG69JDWD8HAQFKU5S.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/os-AQ8LYOWES3F7OK82WRL3FEC7B.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Foundation-71JMG61HFBBRTUJ2WJNAQYFPY.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreText-1UKZ2IB4WHA351RQFGS9KY9ER.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreVideo-84289H41ABILUH4KV75IFLIG3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Security-BIAN5C7YL2UH4WKZIUGJA78GU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreGraphics-81G68BM05V32WUNIJD4V9PGD3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Foundation-B4FNSTYN8MOMSZ4JUWMTX31ZW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreVideo-BK78M8FMRS1STSASGB6MBNINE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreText-QK8TN4SGNAK59LPDGT7R7M9I.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/RelevanceKit-4AXX3JSGLR58S1BPSAE9ZQFIZ.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UIUtilities-A0AN0BPOW4SG1EHSP758BF7V6.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/QuartzCore-2JVJMHOFSLKCEDHW4QLI6AAKS.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Accessibility-4UZHJ2IP7JKB6NMM8E3EKM023.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Network-9LJLXD0Y2X5601C50P4SZBG7Y.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreData-F42NORA7LZQTI22VLZX40VIM.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SceneKit-FAFRUZQTYIJL3C9T89QPYPFD.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/OSLog-9VXDIKXJFRSZSP9V3VYO60YSH.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreTransferable-73KN99DFDCPFS3JT1APW71WGT.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Symbols-BH752XEF0M9UNGE8VK9J78UR2.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UserNotifications-EF60SSFRE9V2FZQJKIKFWDD5F.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UniformTypeIdentifiers-DN17Z0LTVL88WH1WHW6318JXK.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WatchConnectivity-95OLB4VSAESG816VNY6F4O7UN.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/AppIntents-DLYOOIA26WXXF6FHRCHOTOLMY.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WidgetKit-1UDBX4HW3L86P5XNXGJ9YWC4F.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/DataDetection-341NQPDJTG12O2YPJQI6HE9BX.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_LocationEssentials-2HT48K1NS5302AACE2S3WBGIO.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftUICore-EK7XT580WHV7Q907OXCJV4KFG.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UIKit-3MHI7PS1CVQU0QOII97SBI6G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Accessibility-C7NMSOG00Z7W8B9ACN1MC8SPE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Network-3XXB98DL6SG2K8BDS9VAVTY77.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/RelevanceKit-41KHWFOKCI19FF0Y1WO1UMLNC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreTransferable-8EBVZJ2PNUQ5ACGB7EGEK6QCN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Symbols-C66AH70YWTOB1BTIJ4RLUTGE9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WidgetKit-A1NB1I5JI5K91K0ULSCXJBJ2L.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SceneKit-EBUHODHWG2MWPWPZAN0OGCJL2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UserNotifications-4S0TR6YW9VUIN8JPD2Y33N63F.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/QuartzCore-C1LE8LCBDFJF1OFGD5Y88BS8X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/_LocationEssentials-3I382C6LVVL8K3CPXJ7HHO74B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreData-DQCBUKSWGPCPO1VNQSZCQ06A6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/OSLog-EO58HFW0FNQOUC1HCHRM78VHE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/AppIntents-5XS49ZRYS7BP6SQOT9MMSXIMM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UniformTypeIdentifiers-DENV2D3VUER5RHOXUTU28KMQ5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WatchConnectivity-EI9FYVNY0BNJ2JK0O0UN30V33.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/DataDetection-8H6NU7ZS0MDGPWOHS18F1NFX4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UIUtilities-5QED4FSB8HVNAIH5QUB3K14AI.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreLocation-38RM3L7JSQUKZHPD780KED37J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/CoreLocation-6K2L2SA6D3H2TFMKW5M4817MJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftUICore-C1O04K7PUP9Z9W33MRN4K0I0Z.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/UIKit-6VIJT8B3VT5MWD61LMPGJTJY.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Intents-32MN6UYP4LOL5N6468RORB2PV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/Intents-2EYIGBIVNHR54ON1TSQFNYLWW.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/MapKit-D2F0035CYWB1V9HJFU91L14ZI.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/HomeKit-6LEHRAE2IYPE48B2AA2GYHL9Q.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WatchKit-D6AV59B6VCICF84MOM7Y5U67P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/HomeKit-49TRU0B01IDULET880ZT4YAQU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/MapKit-6LDXTZEAPTEK09C4GORUED6S6.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftUI-634AP137D725RC8P8UQRK3DLO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/WatchKit-5WQVYIZA3ZSYCZKWX8JFOJPPD.pcm
+
+SwiftEmitModule normal x86_64 Emitting\ module\ for\ LabNestWatch (in target 'LabNestWatch' from project 'LabNestWatch')
+EmitSwiftModule normal x86_64 (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ GeneratedAssetSymbols.swift /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal x86_64 /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ WatchModel.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+SwiftCompile normal x86_64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ PairingLink.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal x86_64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ WatchPhoneReceiver.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal x86_64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ WatchWidgetState.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal x86_64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal x86_64 Compiling\ LabNestWatchApp.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+SwiftCompile normal x86_64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftExplicitDependencyGeneratePcm arm64 /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules/SwiftUI-BMNOH3XIFUTB6FRYLE34GJOUG.pcm
+
+SwiftDriverJobDiscovery normal x86_64 Compiling GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ LabNestWatch (in target 'LabNestWatch' from project 'LabNestWatch')
+
+EmitSwiftModule normal arm64 (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ LabNestWatchApp.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+SwiftCompile normal arm64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ GeneratedAssetSymbols.swift /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal arm64 /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ PairingLink.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal arm64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ WatchModel.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal arm64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ WatchPhoneReceiver.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal arm64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftCompile normal arm64 Compiling\ WatchWidgetState.swift /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftCompile normal arm64 /Users/annayzhu/Developer/LabNest/native/LabNestWatch/WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    
+
+SwiftDriverJobDiscovery normal x86_64 Emitting module for LabNestWatch (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriver\ Compilation\ Requirements LabNestWatch normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target x86_64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.swiftmodule /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.swiftmodule
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.swiftdoc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftdoc (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftdoc /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.swiftdoc
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.abi.json /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.abi.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.abi.json /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/x86_64-apple-watchos-simulator.abi.json
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/Project/x86_64-apple-watchos-simulator.swiftsourceinfo /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftsourceinfo (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftsourceinfo /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/Project/x86_64-apple-watchos-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling GeneratedAssetSymbols.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for LabNestWatch (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriver\ Compilation\ Requirements LabNestWatch normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target arm64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/LabNestWatch-Swift.h /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-Swift.h /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-Swift.h (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-swiftHeaderTool -arch arm64 /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-Swift.h -arch x86_64 /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-Swift.h -o /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/LabNestWatch-Swift.h
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.swiftmodule /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.swiftmodule
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.swiftdoc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftdoc (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftdoc /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.swiftdoc
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.abi.json /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.abi.json (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.abi.json /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/arm64-apple-watchos-simulator.abi.json
+
+Copy /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/Project/arm64-apple-watchos-simulator.swiftsourceinfo /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftsourceinfo (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -strip-unsigned-binaries -strip-deterministic -strip-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/strip -resolve-src-symlinks -rename /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftsourceinfo /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.swiftmodule/Project/arm64-apple-watchos-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal x86_64 Compiling WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WatchWidgetState.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WatchPhoneReceiver.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal arm64 Compiling PairingLink.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WatchModel.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriver\ Compilation LabNestWatch normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target x86_64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/x86_64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+Ld /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/Binary/LabNestWatch normal x86_64 (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target x86_64-apple-watchos10.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -Os -L/private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator -L/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F/private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator -F/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -filelist /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_lto.o -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/watchsimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.swiftmodule @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch-linker-args.resp -o /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/Binary/LabNestWatch
+
+SwiftDriverJobDiscovery normal arm64 Compiling LabNestWatchApp.swift (in target 'LabNestWatch' from project 'LabNestWatch')
+
+SwiftDriver\ Compilation LabNestWatch normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LabNestWatch -O @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -target arm64-apple-watchos10.0-simulator -g -Xfrontend -serialize-debugging-options -swift-version 5 -I /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode/SDKStatCaches.noindex/watchsimulator26.5-23T570-1651579a441f1322ae888f0ed545cb80.sdkstatcache -output-file-map /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /private/tmp/labnest-watch-standalone-20261021/SwiftExplicitPrecompiledModules -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule -validate-clang-modules-once -clang-build-session-file /var/folders/vj/3g826vc96kv1l69pn_1shw400000gn/C/org.llvm.clang/ModuleCache.noindex/Session.modulevalidation -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_const_extract_protocols.json -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-generated-files.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-own-target-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-all-target-headers.hmap -Xcc -iquote -Xcc /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch-project-headers.hmap -Xcc -I/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/include -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources-normal/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources/arm64 -Xcc -I/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/DerivedSources -emit-objc-header -emit-objc-header-path /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-Swift.h -working-directory /Users/annayzhu/Developer/LabNest/native/LabNestWatch -experimental-emit-module-separately -disable-cmo
+
+Ld /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/Binary/LabNestWatch normal arm64 (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-watchos10.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk -Os -L/private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator -L/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -F/private/tmp/labnest-watch-standalone-20261021/EagerLinkingTBDs/Debug-watchsimulator -F/private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator -filelist /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_lto.o -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/watchsimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.swiftmodule @/private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch-linker-args.resp -o /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/Binary/LabNestWatch
+
+CreateUniversalBinary /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch normal arm64\ x86_64 (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/lipo -create /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/Binary/LabNestWatch /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/Binary/LabNestWatch -output /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch
+
+CopySwiftLibs /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch --scan-folder /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Frameworks --scan-folder /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/PlugIns --scan-folder /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/SystemExtensions --scan-folder /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Extensions --platform watchsimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name LabNestWatch --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/WatchSimulator.platform/Developer/SDKs/WatchSimulator26.5.sdk --xcode-version 17F113 --platform-family watchOS --deployment-target 10.0 --bundle-identifier org.labnest.watch --output /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app --target-triple arm64-apple-watchos10.0-simulator --target-triple x86_64-apple-watchos10.0-simulator --binary-file /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch --dependency-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch_dependency_info.dat --dependency-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch_dependency_info.dat --stringsdata-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --stringsdata-file /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftFileList --source-file-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftFileList --metadata-file-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyMetadataFileList --static-metadata-file-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/LabNestWatch.DependencyStaticMetadataFileList --swift-const-vals-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/arm64/LabNestWatch.SwiftConstValuesFileList --swift-const-vals-list /private/tmp/labnest-watch-standalone-20261021/LabNestWatch.build/Debug-watchsimulator/LabNestWatch.build/Objects-normal/x86_64/LabNestWatch.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-21 09:21:54.930 appintentsmetadataprocessor[92475:11463578] Starting appintentsmetadataprocessor export
+2026-10-21 09:21:54.941 appintentsmetadataprocessor[92475:11463578] Extracted no relevant App Intents symbols, skipping writing output
+
+GenerateDSYMFile /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app.dSYM /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app/LabNestWatch -o /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app.dSYM
+
+RegisterExecutionPolicyException /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-RegisterExecutionPolicyException /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app
+
+Validate /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    builtin-validationUtility /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app (in target 'LabNestWatch' from project 'LabNestWatch')
+    cd /Users/annayzhu/Developer/LabNest/native/LabNestWatch
+    /usr/bin/touch -c /private/tmp/labnest-watch-standalone-20261021/Debug-watchsimulator/LabNestWatch.app
+
+warning: Traditional headermap style is no longer supported; please migrate to using separate headermaps and set 'ALWAYS_SEARCH_USER_PATHS' to NO. (in target 'LabNestWatch' from project 'LabNestWatch')
+** BUILD SUCCEEDED **
+

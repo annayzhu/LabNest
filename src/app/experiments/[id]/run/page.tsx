@@ -1,5 +1,6 @@
 import { RunNotificationStatus } from '@/components/RunNotificationStatus';
 import { FieldDevices } from '@/components/FieldDevices';
+import { NativeRunTimers } from '@/components/NativeRunTimers';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { runStepNotes, structuredRunView } from '@/lib/structured-run';
 import { formatQuantity } from '@/lib/calculators/quantity-format';
@@ -111,13 +112,15 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
       <RunStepSelectionProvider key={experiment.id} initialStepId={currentStep?.id ?? renderedSteps[0]?.id ?? ""}>
       {runOfflineImagePaths(experiment.protocolSnapshotJson).map(path=><meta key={path} name="labnest-offline-image" content={path}/>)}
       <div className={bench ? "ln-bench space-y-4" : "space-y-4"}>
+        <NativeRunTimers experimentId={experiment.id} title={experiment.title} steps={renderedSteps.map(({ id, title, timerRemainingSeconds, timerStartedAt, timerPausedAt }) => ({ id, title, timerRemainingSeconds, timerStartedAt, timerPausedAt }))} />
         <PageHeader
           identifier={experiment.runCode}
           title={experiment.title}
           actions={<>
             <RunBenchControls bench={bench} />
             <FieldDevices experimentId={experiment.id} title={experiment.title} watch={!structured.hasSystems ? "legacy" : editable ? "ready" : "locked"} />
-            <Link href="/protocol-run" className={secondaryButton}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
+            {/* A phone has 现场模式 in its bottom bar. */}
+            <Link href="/protocol-run" className={`${secondaryButton} max-lg:hidden`}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
           </>}
         />

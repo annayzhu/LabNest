@@ -68,16 +68,41 @@
 
 .ln-block-menu-item.is-touch { display: none; }
 @media (pointer: coarse) {
-  /* Touch: only ⋮⋮ beside the block (its menu has 在下方插入), so it fits a phone's narrow margin. */
-  .ln-block-handle { transform: translate(calc(-100% - 0.1rem), -50%); }
-  .ln-block-handle button:first-child { display: none; }
-  .ln-block-handle button { position: relative; width: 1.4rem; height: 1.9rem; color: var(--muted); }
-  .ln-block-handle button::after { content: ""; position: absolute; inset: -0.45rem -0.35rem; }
+  /* Touch: no handle beside the block; its menu opens from the bar over the keyboard or a long press, and has 在下方插入. */
   .ln-block-menu-item.is-touch { display: flex; }
   .ln-block-menu-item, .ln-block-menu-kinds button, .ln-block-menu-row button { min-height: 2.75rem; }
   .ln-block-menu-row button { width: 2.75rem; }
   .ln-block-menu-field select { height: 2.75rem; }
-  .ln-selection-bubble button, .ln-table-bar button { min-width: 2.75rem; min-height: 2.75rem; }
+  .ln-table-bar button { min-width: 2.75rem; min-height: 2.75rem; }
 }
-@media (prefers-reduced-motion: reduce) { .ln-block-handle { animation: none; } }
-@media print { .ln-block-handle, .ln-selection-bubble, .ln-table-bar { display: none !important; } }
+
+/* Over the keyboard on a touch screen: one scrolling row, and 收起键盘 always at the end. */
+.ln-keyboard-bar {
+  position: fixed; left: 0; right: 0; z-index: 65; display: flex; align-items: center; gap: 0.25rem;
+  padding: 0.25rem 0.35rem; border-top: 1px solid var(--hairline); background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(12px); color: var(--graphite); font: var(--ln-control-font-size-sm)/1.4 var(--font-ui);
+}
+.ln-keyboard-bar-scroll { display: flex; flex: 1 1 auto; align-items: center; gap: 0.15rem; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ln-keyboard-bar-scroll::-webkit-scrollbar { display: none; }
+.ln-keyboard-bar button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-width: 2.75rem; height: 2.75rem; padding: 0 0.4rem; border-radius: var(--ln-radius-control-md); color: var(--graphite); }
+.ln-keyboard-bar button:disabled { opacity: 0.35; }
+.ln-keyboard-bar button[aria-pressed="true"] { background: var(--action-surface); color: var(--moss); }
+.ln-keyboard-bar svg { width: 19px; height: 19px; }
+.ln-keyboard-bar .ln-selection-select { flex-shrink: 0; height: 2.75rem; font-size: 16px; }
+.ln-keyboard-bar .ln-selection-link { flex: 1 1 auto; }
+.ln-keyboard-bar .ln-selection-link input { width: 100%; max-width: none; height: 2.5rem; font-size: 16px; }
+.ln-keyboard-bar .ln-keyboard-bar-done { border-left: 1px solid var(--hairline); border-radius: 0; }
+
+/* A long press lifts a copy of the block that follows the finger; the line shows where it will land. */
+.ln-dragging-block .ln-editor-surface { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.ln-block-ghost {
+  position: fixed !important; z-index: 69; margin: 0; padding: 0.25rem 0.5rem; min-height: 0 !important; pointer-events: none; opacity: 0.92;
+  border-radius: var(--ln-radius-control-md); background: var(--surface); box-shadow: var(--shadow-soft), 0 8px 22px rgba(32, 40, 37, 0.18);
+  transform: scale(1.02); transform-origin: center; animation: ln-block-lift 140ms ease both;
+}
+.ln-block-ghost > * { margin: 0 !important; }
+@keyframes ln-block-lift { from { transform: scale(1); box-shadow: none; } }
+.ln-block-drop-line { position: fixed; z-index: 70; height: 3px; border-radius: 2px; background: var(--action); pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) { .ln-block-handle, .ln-block-ghost { animation: none; } }
+@media print { .ln-block-handle, .ln-selection-bubble, .ln-table-bar, .ln-keyboard-bar { display: none !important; } }

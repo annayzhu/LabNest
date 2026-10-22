@@ -1,24 +1,24 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Beaker,
   BookOpen,
   Boxes,
   ClipboardList,
-  Camera,
-  History,
   FileBarChart,
   Database,
   Dna,
   FolderKanban,
+  History,
   Home,
   Lightbulb,
-  Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
   Search,
   Settings,
   TabletSmartphone,
@@ -31,6 +31,9 @@ import { TraditionalMotif } from "@/components/TraditionalMotif";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/components/I18nProvider";
+import { holdKeyboard } from "@/lib/keep-keyboard";
+import { inNativeApp, postNative } from "@/lib/native-bridge";
+import "./mobile-shell.css";
 
 const sidebarStorageKey = "labnest.sidebar.collapsed";
 
@@ -54,6 +57,16 @@ const utilityItems = [
   { href: "/trash", label: "Recycle Bin", icon: Trash2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+
+/** The top bar's title on a phone: the module the page belongs to. */
+export function sectionLabel(pathname: string) {
+  if (pathname === "/") return "LabNest";
+  if (pathname.startsWith("/protocol-run") || /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname)) return "Run mode";
+  if (pathname.startsWith("/records")) return "Records";
+  if (pathname.startsWith("/actions")) return "Manual AI";
+  const item = [...navItems, ...utilityItems].find((candidate) => candidate.href !== "/" && (pathname === candidate.href || pathname.startsWith(`${candidate.href}/`)));
+  return item?.label ?? "LabNest";
+}
 
 function desktopNavItemClass(active: boolean, collapsed: boolean) {
   return cn(
@@ -168,171 +181,144 @@ export function Sidebar() {
   );
 }
 
+/** ＋ writes a quick note on the experiment in progress; the page resolves "active". */
+const quickNoteHref = "/entries/new?mode=capture&experiment=active";
+
+function mobileNavItemClass(current: boolean) {
+  return cn(
+    "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
+    current ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
+  );
+}
+
+/** A phone's bar, Notion-style: Home · Search · Run mode · ＋. Every other module is in the drawer behind ☰. */
 export function MobileBottomNav() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const runPage = /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname);
+  const items = [
+    { href: "/", label: "Home", icon: Home, current: pathname === "/" },
+    { href: "/search", label: "Search", icon: Search, current: pathname === "/search" },
+    { href: "/protocol-run", label: "Run mode", icon: TabletSmartphone, current: pathname === "/protocol-run" || runPage },
+  ];
+  return (
+    <nav
+      aria-label="Mobile navigation"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-hairline bg-surface/95 px-1 pt-1 shadow-soft backdrop-blur-md pb-[calc(0.35rem+env(safe-area-inset-bottom))] lg:hidden"
+    >
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <Link
+            prefetch={pathname === "/ai" ? false : undefined}
+            key={item.href}
+            href={item.href}
+            aria-current={item.current ? "page" : undefined}
+            className={mobileNavItemClass(item.current)}
+          >
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="max-w-full whitespace-nowrap">{item.label}</span>
+          </Link>
+        );
+      })}
+      <button
+        type="button"
+        aria-label="New quick capture"
+        // The keyboard can only open inside the tap; the note's editor takes it over once the page has changed.
+        onClick={() => { holdKeyboard(); router.push(quickNoteHref); }}
+        className={mobileNavItemClass(false)}
+      >
+        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="whitespace-nowrap">New</span>
+      </button>
+    </nav>
+  );
+}
+
+/**
+ * The drawer behind ☰: the computer's sidebar plus the record timeline. Home and Search are already in the bar. As in #109,
+ * on a phone the timeline is "Record history" and Entries is "All entries", so neither reads as the quick capture (＋).
+ */
+const drawerItems = (zh: boolean) => [
+  { href: "/records", label: zh ? "记录历史" : "Record history", icon: History },
+  ...navItems.filter((item) => item.href !== "/").map((item) => item.href === "/entries" ? { ...item, label: zh ? "全部记录" : "All entries" } : item),
+];
+const drawerUtilities = utilityItems.filter((item) => item.href !== "/search");
+
+export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const zh = useI18n().locale === "zh";
   const pathname = usePathname();
-  const [moreOpen, setMoreOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const moreButtonRef = useRef<HTMLButtonElement>(null);
-  const items = [
-    { href: "/", label: "Today", icon: Home },
-    { href: "/protocol-run", label: "Run mode", icon: TabletSmartphone },
-    { href: "/entries/new?mode=capture", label: "Quick capture", icon: Camera },
-    { href: "/inventory", label: "Inventory", icon: Boxes },
-  ];
-  const under = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const runPage = /^\/experiments\/[^/]+\/run(\/|$)/.test(pathname);
-  // The center action creates a capture; historical records remain under More.
-  const active = (href: string) => href === "/" ? pathname === "/"
-    : href === "/protocol-run" ? under(href) || runPage
-    : href === "/entries/new?mode=capture" ? pathname === "/entries/new"
-    : under(href);
-  const mobileModules = [
-    { href: "/entries/new?mode=capture", label: zh ? "快速记录" : "Quick capture", icon: Camera },
-    { href: "/records", label: zh ? "记录历史" : "Record history", icon: History },
-    ...navItems.map((item) => item.href === "/entries" ? { ...item, label: zh ? "全部记录" : "All entries" } : item),
-  ];
-  const moreActive = !items.some((item) => active(item.href));
 
   useEffect(() => {
-    if (!moreOpen) return;
+    if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMoreOpen(false);
-        moreButtonRef.current?.focus();
-      }
-    };
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [moreOpen]);
+  }, [open, onClose]);
 
-  function closeMoreMenu(restoreFocus = false) {
-    setMoreOpen(false);
-    if (restoreFocus) queueMicrotask(() => moreButtonRef.current?.focus());
-  }
-
-  return (
-    <>
-      <nav
-        aria-label="Mobile navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-hairline bg-surface/95 px-1 pt-1 shadow-soft backdrop-blur-md pb-[calc(0.35rem+env(safe-area-inset-bottom))] lg:hidden"
+  if (!open) return null;
+  const row = (item: { href: string; label: string; icon: typeof Home }) => {
+    const Icon = item.icon;
+    const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return (
+      <Link
+        prefetch={pathname === "/ai" ? false : undefined}
+        key={item.href}
+        href={item.href}
+        onClick={onClose}
+        aria-current={current ? "page" : undefined}
+        className={cn(
+          "focus-ring flex min-h-11 items-center gap-3 rounded-[var(--ln-radius-control-lg)] px-3 text-[0.95rem]",
+          current ? "bg-action-surface/55 font-semibold text-moss" : "text-graphite",
+        )}
       >
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isCurrent = active(item.href);
-          return (
-            <Link
-              prefetch={pathname === "/ai" ? false : undefined}
-              key={item.href}
-              href={item.href}
-              aria-current={isCurrent ? "page" : undefined}
-              className={cn(
-                "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
-                isCurrent ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="max-w-full whitespace-nowrap">{item.label}</span>
-            </Link>
-          );
-        })}
-        <button
-          ref={moreButtonRef}
-          type="button"
-          aria-label="Open more navigation"
-          aria-expanded={moreOpen}
-          aria-controls="mobile-more-navigation"
-          onClick={() => setMoreOpen(true)}
-          className={cn(
-            "focus-ring flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--ln-radius-control-lg)] px-0.5 text-center text-xs font-normal leading-none tracking-[-0.005em]",
-            moreOpen || moreActive ? "bg-action-surface/45 font-semibold text-moss" : "text-muted",
-          )}
-        >
-          <Menu className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="whitespace-nowrap">More</span>
-        </button>
-      </nav>
-
-      {moreOpen ? (
-        <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
-          <button type="button" aria-label="Close menu" onClick={() => closeMoreMenu(true)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
-          <section
-            id="mobile-more-navigation"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mobile-more-navigation-title"
-            className="ln-modal-card ln-modal-sheet absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-[var(--ln-radius-panel)] border-t border-hairline bg-surface px-4 pt-4 shadow-soft pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 id="mobile-more-navigation-title" className="text-xl font-semibold text-ink">All modules</h2>
-                <p className="mt-1 text-xs text-muted">Open any LabNest workspace or utility.</p>
-              </div>
-              <button ref={closeButtonRef} type="button" onClick={() => closeMoreMenu(true)} aria-label="Close menu" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-warm text-muted">
-                <X className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm px-3 py-2">
-              <span className="text-sm font-medium text-graphite">Language</span>
-              <LanguageToggle spacious />
-            </div>
-
-            <nav aria-label="All modules" className="grid grid-cols-2 gap-2">
-              {mobileModules.map((item) => {
-                const Icon = item.icon;
-                const isCurrent = active(item.href);
-                return (
-                  <Link
-                    prefetch={pathname === "/ai" ? false : undefined}
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => closeMoreMenu()}
-                    aria-current={isCurrent ? "page" : undefined}
-                    className={cn(
-                      "focus-ring flex min-h-12 items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-2.5 text-sm",
-                      isCurrent ? "border-action-border bg-action-surface/55 font-semibold text-moss" : "border-hairline bg-warm text-graphite",
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <h3 className="mb-2 mt-5 text-xs font-medium text-muted">Utilities</h3>
-            <nav aria-label="Utilities" className="grid grid-cols-2 gap-2">
-              {utilityItems.map((item) => {
-                const Icon = item.icon;
-                const isCurrent = active(item.href);
-                return (
-                  <Link
-                    prefetch={pathname === "/ai" ? false : undefined}
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => closeMoreMenu()}
-                    aria-current={isCurrent ? "page" : undefined}
-                    className={cn(
-                      "focus-ring flex min-h-12 items-center gap-3 rounded-[var(--ln-radius-panel-inner)] border px-3 py-2.5 text-sm",
-                      isCurrent ? "border-action-border bg-action-surface/55 font-semibold text-moss" : "border-hairline bg-warm text-graphite",
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </section>
+        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  };
+  // On the page, not inside the top bar: its backdrop blur would become the drawer's frame.
+  return createPortal(
+    <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
+      <button type="button" aria-label="Close navigation" onClick={onClose} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
+      <section
+        id="mobile-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        className="ln-mobile-drawer absolute inset-y-0 left-0 flex w-[min(20rem,86vw)] flex-col overflow-y-auto border-r border-hairline bg-surface px-3 shadow-soft pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
+      >
+        <div className="mb-3 flex items-center justify-between gap-3 px-1">
+          <Link href="/" onClick={onClose} className="focus-ring flex items-center gap-2.5 rounded-[var(--ln-radius-control-lg)] py-1.5">
+            <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-[var(--ln-radius-control-lg)] border">
+              <TraditionalMotif motif="huiwen" className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="text-base font-semibold tracking-[-0.02em] text-ink">LabNest</span>
+          </Link>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close navigation" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-muted">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
         </div>
-      ) : null}
-    </>
+        {/* In the iPhone app, like Notion's workspace switcher: which LabNest this is, and another one. */}
+        {inNativeApp() ? <div className="mb-3 flex items-center justify-between gap-2 rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2">
+          <span className="min-w-0 truncate text-sm text-muted" data-i18n-ignore>{window.location.host}</span>
+          <button type="button" onClick={() => { onClose(); postNative({ type: "changeServer" }); }} className="focus-ring min-h-11 shrink-0 px-1 text-sm font-semibold text-moss">Change server</button>
+        </div> : null}
+        <nav aria-label="Primary navigation" className="space-y-0.5">{drawerItems(zh).map(row)}</nav>
+        <nav aria-label="Utilities" className="mt-3 space-y-0.5 border-t border-hairline pt-3">{drawerUtilities.map(row)}</nav>
+        <div className="mt-auto flex items-center justify-between gap-3 px-3 pt-4">
+          <span className="text-sm text-muted">Language</span>
+          <LanguageToggle spacious />
+        </div>
+      </section>
+    </div>,
+    document.body,
   );
 }

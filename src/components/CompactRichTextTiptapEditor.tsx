@@ -17,7 +17,7 @@ import { SlashCommandTrigger } from "@/lib/editor-slash";
 import { BlockHandles } from "@/lib/editor-block-handle";
 import { HeadingShortcuts, savedBlocksOnly, writingPlaceholder } from "@/lib/editor-writing";
 import { DocumentMediaNode } from "./DocumentMediaNode";
-import { useDocumentMediaUploads } from "./DocumentMediaUploads";
+import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { useCommandMenu } from "./EditorCommandMenu";
 import { EditorSurface } from "./EditorSurface";
 import { WritingCommandMenu } from "./WritingCommandMenu";
@@ -82,7 +82,7 @@ export function CompactRichTextTiptapEditor({ content, onChange, placeholder = "
 
   if (!editor) return <div className="ln-wysiwyg-loading">Loading editor…</div>;
   return <div className={cn("ln-compact-rich-editor", className)}>
-    <EditorSurface editor={editor} handles={page} openCommands={commands.openSearch}><EditorContent editor={editor} /></EditorSurface>
+    <EditorSurface editor={editor} handles={page} openCommands={commands.openSearch} insertImage={media ? () => chooseFiles(editor, mediaDraftId, "image/*") : undefined}><EditorContent editor={editor} /></EditorSurface>
     {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} media={media} /> : null}
     {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </div>;

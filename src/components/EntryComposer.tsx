@@ -37,6 +37,7 @@ import { cn } from "@/lib/cn";
 import type { DocumentOutlineItem } from "@/lib/document-outline";
 import { experimentStatusOptions, recordStatusOptions } from "@/lib/status-options";
 import { enqueueMobileMutation } from "@/lib/mobile-mutation-queue";
+import { keyboardHeld, releaseKeyboard } from "@/lib/keep-keyboard";
 
 export type EntryComposerProject = { id: string; name: string };
 export type EntryComposerResearchPlan = { id: string; title: string; code?: string; projectId: string; projectName: string };
@@ -195,6 +196,12 @@ export function EntryComposer({
   const previewUrls = useRef(new Set<string>());
   const bodyEditors = useRef(new Set<Editor>());
   const registerBodyEditor = useCallback((editor: Editor) => { bodyEditors.current.add(editor); return () => { bodyEditors.current.delete(editor); }; }, []);
+  // After ＋ the keyboard is already up on a hidden field: the quick note's editor takes it over.
+  const registerCaptureEditor = useCallback((editor: Editor) => {
+    const unregister = registerBodyEditor(editor);
+    if (keyboardHeld()) { editor.commands.focus("end"); releaseKeyboard(); }
+    return unregister;
+  }, [registerBodyEditor]);
   const baselineFields = useMemo(
     () => initialFields(defaultOccurredAt, defaultSource, defaultProtocolVersionId, defaultExperimentId, defaultExperimentStepId, entry),
     [defaultOccurredAt, defaultProtocolVersionId, defaultSource, defaultExperimentId, defaultExperimentStepId, entry],
@@ -421,7 +428,7 @@ export function EntryComposer({
                 aria-label="Entry title"
               />
               <MarkdownRichTextEditor
-                registerEditor={registerBodyEditor}
+                registerEditor={registerCaptureEditor}
                 value={fields.contentMarkdown}
                 onChange={(value) => updateField("contentMarkdown", value)}
                 placeholder="What did you observe?"

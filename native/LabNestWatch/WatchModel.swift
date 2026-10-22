@@ -136,8 +136,13 @@ enum WatchStorage {
             try WatchStorage.save(value, "snapshot.json"); snapshot = value; connected = true
             serverOffset = value.serverTime / 1000 - Date().timeIntervalSince1970
             message = pending == nil ? "" : "本机有冲突，未覆盖服务器。"
+            publishWidget()
             await scheduleReminders()
-        } catch { connected = false; message = "未同步：\(error.localizedDescription)。已保留本机快照与待发送操作。" }
+        } catch {
+            connected = false; message = "未同步：\(error.localizedDescription)。已保留本机快照与待发送操作。"
+            // The saved snapshot is still the best the face can show.
+            publishWidget()
+        }
     }
     func operate(_ intent: String, step: RunStep) async {
         guard let snapshot, pending == nil, !busy else { return }
@@ -156,6 +161,27 @@ enum WatchStorage {
             _ = try await request("/api/watch/runs/\(credential.experimentId)", body: JSONEncoder().encode(operation))
             await refresh()
         } catch { message = "未划掉：\(error.localizedDescription)" }
+    }
+    /// The step chosen on the watch; the face follows it unless a timer runs.
+    var focusStepId: String? { didSet { if focusStepId != oldValue { publishWidget() } } }
+
+    /// The watch face: the timer ending first, else the chosen or next open step, else "all done".
+    func publishWidget() {
+        guard credential != nil, let snapshot else { WatchWidgetState.publish(nil); return }
+        let now = Date()
+        let running = snapshot.steps.filter { $0.timer.startedAt != nil && remaining($0, now: now) > 0 }.min { remaining($0, now: now) < remaining($1, now: now) }
+        if let running {
+            let end = Date(timeIntervalSince1970: (now.timeIntervalSince1970 + Double(remaining(running, now: now))).rounded())
+            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: running.title, endsAt: end))
+            return
+        }
+        let open = snapshot.steps.filter { !$0.completed && $0.skipped == nil }
+        guard let focus = open.first(where: { $0.id == focusStepId }) ?? open.first else {
+            WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, finished: true)); return
+        }
+        var paused: Int?
+        if let total = focus.timer.durationSeconds, let left = focus.timer.remainingSeconds, left > 0, left < total { paused = left }
+        WatchWidgetState.publish(WatchWidgetState(experimentTitle: snapshot.title, stepTitle: focus.title, pausedSeconds: paused))
     }
     func discardPending() {
         do { try FileManager.default.removeItem(at: WatchStorage.url("pending.json")); pending = nil; message = "已丢弃未同步操作，请在手机核对当前状态。" }

@@ -12,13 +12,16 @@ export function useAnchoredPosition(anchor: PopoverAnchor | null, panel: React.R
       const element = panel.current;
       if (!anchor || !element || (anchor instanceof HTMLElement && !anchor.isConnected)) return;
       const rect = anchor instanceof HTMLElement ? anchor.getBoundingClientRect() : anchor, width = element.offsetWidth, height = element.offsetHeight;
-      const below = rect.bottom + 6 + height <= window.innerHeight - 8 || rect.top < height + 14;
-      setStyle({ top: below ? rect.bottom + 6 : Math.max(8, rect.top - height - 6), left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), visibility: 'visible' });
+      // The visible part of the page: on a phone the keyboard covers the bottom of the window.
+      const view = window.visualViewport, top = view?.offsetTop ?? 0, bottom = top + (view?.height ?? window.innerHeight);
+      const below = rect.bottom + 6 + height <= bottom - 8 || rect.top - top < height + 14;
+      setStyle({ top: below ? rect.bottom + 6 : Math.max(top + 8, rect.top - height - 6), left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), visibility: 'visible' });
     };
     place();
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
-    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); };
+    window.visualViewport?.addEventListener('resize', place);
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); window.visualViewport?.removeEventListener('resize', place); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, panel, ...deps]);
   return style;

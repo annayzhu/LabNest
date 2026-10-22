@@ -18,8 +18,8 @@ try {
   await mobileNav.waitFor();
   assert.deepEqual(
     await mobileNav.locator("a, button").allTextContents(),
-    ["Today", "Run mode", "Quick capture", "Inventory", "More"],
-    "Mobile navigation must use task-oriented Bench Mode destinations.",
+    ["Home", "Search", "Run mode", "New"],
+    "The phone bar is Notion-style: Home · Search · Run mode · ＋.",
   );
 
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
@@ -51,12 +51,14 @@ try {
   await syncDialog.getByText("Step completion", { exact: true }).waitFor();
   await syncDialog.getByText("The selected experiment step is no longer available.", { exact: true }).waitFor();
   await syncDialog.getByRole("button", { name: "Discard local copy" }).click();
+  // Discarding asks for confirmation.
+  await syncDialog.getByRole("button", { name: "确认丢弃" }).click();
   await syncDialog.waitFor({ state: "hidden" });
-  await page.locator(".bench-mobile").getByRole("link", { name: /Quick capture/i }).waitFor();
   await page.getByRole("heading", { name: "Today’s experiments" }).waitFor();
-  await page.locator(".bench-mobile").getByRole("link", { name: /Quick capture/i }).click();
+  await mobileNav.getByRole("button", { name: "New quick capture" }).click();
   await page.getByRole("heading", { name: "Quick capture" }).waitFor();
-  await page.getByPlaceholder("What did you observe?").waitFor();
+  // ＋ lands in the note's editor, ready to type.
+  await page.waitForFunction(() => document.activeElement?.getAttribute("contenteditable") === "true");
   await page.getByPlaceholder("Title is generated automatically · optional").waitFor();
   await page.getByRole("button", { name: "Take photo", exact: true }).waitFor();
   await page.goBack({ waitUntil: "networkidle" });
@@ -64,18 +66,22 @@ try {
   await page.getByRole("heading", { name: "Calendar" }).waitFor();
   await page.getByRole("link", { name: "Back to Today" }).click();
   await page.getByRole("heading", { name: "Today at the bench" }).waitFor();
-  await mobileNav.getByRole("button", { name: "Open more navigation" }).click();
-  await page.getByRole("group", { name: "Switch language" }).waitFor();
-  await page.getByRole("dialog", { name: "All modules" }).getByRole("button", { name: "Close menu" }).click();
-  await mobileNav.getByRole("button", { name: "Open more navigation" }).click();
-  await page.getByRole("dialog", { name: "All modules" }).getByRole("link", { name: "Record history", exact: true }).click();
+  const openDrawer = () => page.getByRole("button", { name: "Open navigation" }).click();
+  const drawer = page.getByRole("dialog", { name: "Navigation" });
+  await openDrawer();
+  await drawer.getByRole("group", { name: "Switch language" }).waitFor();
+  await drawer.getByRole("button", { name: "Close navigation" }).click();
+  await openDrawer();
+  await drawer.getByRole("link", { name: "Record history", exact: true }).click();
   await page.getByRole("heading", { name: "Records" }).waitFor();
   const experimentRecord = page.locator('main a[href^="/experiments/"]').first();
   assert.equal(await experimentRecord.count(), 1, "Seeded journey requires at least one Experiment record.");
   const experimentHref = await experimentRecord.getAttribute("href");
   assert(experimentHref, "Experiment record must have a destination.");
   assert.deepEqual(errors, [], `Browser errors after opening Records: ${errors.join("\n")}`);
-  await mobileNav.getByRole("link", { name: "Inventory" }).click();
+  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await openDrawer();
+  await drawer.getByRole("link", { name: "Inventory" }).click();
   await page.getByRole("heading", { name: "Inventory at the bench" }).waitFor();
   await page.getByRole("button", { name: "Scan barcode" }).waitFor();
   await page.getByRole("textbox", { name: "Search inventory" }).waitFor();

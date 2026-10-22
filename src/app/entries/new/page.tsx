@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { EntryComposer } from "@/components/EntryComposer";
 import { PageHeader } from "@/components/PageHeader";
 import { prisma } from "@/lib/db";
+import { ExperimentStatus } from "@/generated/prisma/enums";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { entrySourceTypes } from "@/lib/entry-mutations";
 
@@ -13,8 +14,14 @@ export default async function NewEntryPage({ searchParams }: { searchParams?: Pa
   const requestedSource = firstSearchParam(params, "source");
   const protocolVersionId = firstSearchParam(params, "protocolVersionId") ?? "";
   const captureMode = firstSearchParam(params, "mode") === "capture";
-  const experimentId = firstSearchParam(params, "experiment") ?? "";
-  const experimentStepId = firstSearchParam(params, "step") ?? "";
+  const requestedExperiment = firstSearchParam(params, "experiment") ?? "";
+  // ＋ on a phone asks for "active": the experiment in progress, at its first unfinished step.
+  const active = requestedExperiment === "active" ? await prisma.experiment.findFirst({
+    where: { status: ExperimentStatus.running }, orderBy: { updatedAt: "desc" },
+    select: { id: true, steps: { where: { completed: false }, orderBy: [{ groupOrder: "asc" }, { order: "asc" }], take: 1, select: { id: true } } },
+  }) : null;
+  const experimentId = active?.id ?? (requestedExperiment === "active" ? "" : requestedExperiment);
+  const experimentStepId = active ? active.steps[0]?.id ?? "" : firstSearchParam(params, "step") ?? "";
   const defaultSource = entrySourceTypes.includes(requestedSource as (typeof entrySourceTypes)[number]) ? requestedSource : "text";
   const [projects, researchPlans, protocols, experiment] = await Promise.all([
     prisma.project.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),

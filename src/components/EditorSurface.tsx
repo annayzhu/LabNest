@@ -1,19 +1,20 @@
 'use client';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Editor } from '@tiptap/core';
 import { useEditorState } from '@tiptap/react';
 import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react/menus';
 import { NodeSelection, TextSelection, type Transaction } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Code, Copy, GripVertical, Heading2, Heading3, IndentDecrease, IndentIncrease, Italic, Link2, List, ListChecks, ListOrdered, Pilcrow, Plus, Quote, RemoveFormatting, Strikethrough, Subscript, Superscript, Trash2, Underline, Unlink, type LucideIcon } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Code, Copy, GripVertical, Heading2, Heading3, ImagePlus, IndentDecrease, IndentIncrease, Italic, KeyboardOff, Link2, List, ListChecks, ListOrdered, Pilcrow, Plus, Quote, Redo2, RemoveFormatting, Strikethrough, Subscript, Superscript, Trash2, Type, Underline, Undo2, Unlink, type LucideIcon } from 'lucide-react';
 import { setSelectionFontSize } from '@/lib/document-text-formatting';
 import { RICH_TEXT_FONT_SIZES_PT } from '@/lib/rich-text-font-size';
 import { RICH_TEXT_LINE_HEIGHTS } from '@/lib/rich-text-line-height';
 import { RICH_TEXT_RISK_COLOR_HEX } from '@/lib/rich-text-color';
 import { endBlockDrag, setBlockHandleHandlers, startBlockDrag, type BlockHover } from '@/lib/editor-block-handle';
-import { blockKind, blockTakesFormat, blockTakesKinds, canDuplicateBlock, currentBlockUnit, deleteBlock, duplicateBlock, lineUnitAt, moveBlock, selectBlock, turnInto, type BlockKind, type BlockUnit } from '@/lib/editor-blocks';
+import { blockKind, blockTakesFormat, blockTakesKinds, blockUnitAt, canDuplicateBlock, currentBlockUnit, deleteBlock, duplicateBlock, lineUnitAt, moveBlock, moveBlockTo, selectBlock, turnInto, type BlockKind, type BlockUnit } from '@/lib/editor-blocks';
 import type { MenuAnchor } from '@/lib/editor-slash';
+import { postNative } from '@/lib/native-bridge';
 import { useAnchoredPosition, useDismiss } from './protocol/popover';
 import { useEditorPortalPending } from './useEditorPortalPending';
 import './editor-surface.css';
@@ -28,6 +29,8 @@ type EditorSurfaceProps = {
   kinds?: BlockKind[];
   /** ＋ opens this editor's "/" menu with its own search field. */
   openCommands: (anchor: MenuAnchor) => void;
+  /** The picture button over a phone's keyboard; an editor whose document keeps no pictures has none. */
+  insertImage?: () => void;
   /** Items only this editor has, e.g. a Protocol block's 适用范围. */
   blockItems?: (unit: BlockUnit) => BlockMenuItem[];
   tableItems?: () => TableBarItem[];
@@ -50,11 +53,22 @@ function firstLine(view: EditorView, unit: BlockUnit) {
   try { const { top, bottom } = view.coordsAtPos(textPos); return { top, bottom }; } catch { return null; }
 }
 
+const touchQuery = '(pointer: coarse)';
+function useTouchScreen() {
+  return useSyncExternalStore(
+    onChange => { const query = window.matchMedia(touchQuery); query.addEventListener('change', onChange); return () => query.removeEventListener('change', onChange); },
+    () => window.matchMedia(touchQuery).matches,
+    () => false,
+  );
+}
+
 /**
- * The page an editor is written on, Notion-style: ＋ and ⋮⋮ beside the block under the pointer, a bubble over selected text,
- * and a bar over the table with the caret. There is no toolbar: everything else is "/" or a shortcut.
+ * The page an editor is written on, Notion-style. With a mouse: ＋ and ⋮⋮ beside the block under the pointer and a bubble over
+ * selected text. On a touch screen: a bar over the keyboard and a long press on a block. Either way a bar over the table
+ * with the caret. There is no toolbar at the top: everything else is "/" or a shortcut.
  */
-export function EditorSurface({ editor, handles = true, kinds = allKinds, openCommands, blockItems, tableItems, afterDelete, children }: EditorSurfaceProps) {
+export function EditorSurface({ editor, handles = true, kinds = allKinds, openCommands, insertImage, blockItems, tableItems, afterDelete, children }: EditorSurfaceProps) {
+  const touch = useTouchScreen();
   const [surface, setSurface] = useState<HTMLDivElement | null>(null);
   const [hover, setHover] = useState<BlockHover | null>(null);
   const [menu, setMenu] = useState<{ unit: BlockUnit; anchor: HTMLElement } | null>(null);
@@ -64,18 +78,21 @@ export function EditorSurface({ editor, handles = true, kinds = allKinds, openCo
   const menuOpen = useRef(false);
   useEffect(() => { menuOpen.current = Boolean(menu); }, [menu]);
   useEffect(() => {
-    setBlockHandleHandlers(editor, { show: handles ? next => { if (menuOpen.current) return; if (leave.current) clearTimeout(leave.current); setHover(next); } : null, link: () => setLinking(true) });
+    setBlockHandleHandlers(editor, { show: handles && !touch ? next => { if (menuOpen.current) return; if (leave.current) clearTimeout(leave.current); setHover(next); } : null, link: () => setLinking(true) });
     return () => setBlockHandleHandlers(editor, { show: null, link: null });
-  }, [editor, handles]);
+  }, [editor, handles, touch]);
+  useLongPressBlocks(editor, touch && handles, (unit, anchor) => setMenu({ unit, anchor }));
   useEffect(() => () => { if (leave.current) clearTimeout(leave.current); }, []);
   const stay = () => { if (leave.current) clearTimeout(leave.current); };
   // Crossing the margin to the handle must not hide it.
   const later = () => { stay(); leave.current = setTimeout(() => { if (!menuOpen.current) setHover(null); }, 320); };
   return <div ref={setSurface} className="ln-editor-surface" onMouseLeave={later} onMouseEnter={stay}>
     {children}
-    {hover && surface ? <BlockHandle key={hover.unit.pos} editor={editor} hover={hover} surface={surface} menuOpen={Boolean(menu)} onMenu={anchor => setMenu(current => current ? null : { unit: hover.unit, anchor })} openCommands={openCommands} onEnter={stay} /> : null}
+    {hover && surface && !touch ? <BlockHandle key={hover.unit.pos} editor={editor} hover={hover} surface={surface} menuOpen={Boolean(menu)} onMenu={anchor => setMenu(current => current ? null : { unit: hover.unit, anchor })} openCommands={openCommands} onEnter={stay} /> : null}
     {menu ? <BlockMenu editor={editor} unit={menu.unit} anchor={menu.anchor} kinds={kinds} blockItems={blockItems} afterDelete={afterDelete} openCommands={openCommands} onClose={() => { setMenu(null); setHover(null); }} /> : null}
-    <SelectionBubble editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} />
+    {touch ? <KeyboardBar editor={editor} blocks={handles} kinds={kinds} openCommands={openCommands} insertImage={insertImage} linking={linking} setLinking={setLinking}
+      onBlockMenu={anchor => { const unit = blockUnitAt(editor.state.doc, editor.state.selection.from); if (unit) setMenu({ unit, anchor }); }} />
+      : <SelectionBubble editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} />}
     <TableBar editor={editor} items={tableItems} />
   </div>;
 }
@@ -184,13 +201,23 @@ const textSelected: BubbleMenuProps['shouldShow'] = ({ editor, state, from, to }
 // The caret in a table; selected text there gets the text bubble instead.
 const caretInTable: BubbleMenuProps['shouldShow'] = ({ editor, from, to }) => editor.isEditable && from === to && editor.isActive('table');
 
-/**
- * Over selected text, Notion-style: the block's kind, the font size, the marks, superscript and subscript, code, a link,
- * the risk colour, and clearing all of it. Only what this editor's document can keep is offered.
- */
+/** Over selected text with a mouse: the formatting controls in a bubble. */
 function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Editor; linking: boolean; setLinking: (value: boolean) => void; kinds: BlockKind[] }) {
   const panel = useRef<HTMLDivElement>(null);
   const pending = useEditorPortalPending(editor, panel);
+  return <BubbleMenu editor={editor} pluginKey="selectionBubble" appendTo={onPage} style={{ zIndex: 60 }} options={overText} shouldShow={textSelected}>
+    <div ref={panel} inert={pending} className="ln-selection-bubble" role="toolbar" aria-label="Text formatting" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
+      <FormattingControls editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} />
+    </div>
+  </BubbleMenu>;
+}
+
+/**
+ * For selected text, Notion-style: the block's kind, the font size, the marks, superscript and subscript, code, a link,
+ * the risk colour, and clearing all of it. Only what this editor's document can keep is offered. In the bubble with a mouse,
+ * in the bar over the keyboard on a touch screen.
+ */
+function FormattingControls({ editor, linking, setLinking, kinds }: { editor: Editor; linking: boolean; setLinking: (value: boolean) => void; kinds: BlockKind[] }) {
   const scripts = Boolean(editor.schema.marks.superscript && editor.schema.marks.subscript);
   const state = useEditorState({ editor, selector: ({ editor: current }) => {
     const unit = lineUnitAt(current.state.doc, current.state.selection.from);
@@ -217,37 +244,201 @@ function SelectionBubble({ editor, linking, setLinking, kinds }: { editor: Edito
   // An empty address removes the link.
   const applyLink = (value: string) => { const range = chain().extendMarkRange('link'); (value ? range.setLink({ href: value }) : range.unsetLink()).run(); setLinking(false); };
   const choices = kindChoices.filter(choice => kinds.includes(choice.kind));
-  return <BubbleMenu editor={editor} pluginKey="selectionBubble" appendTo={onPage} style={{ zIndex: 60 }} options={overText} shouldShow={textSelected}>
-    <div ref={panel} inert={pending} className="ln-selection-bubble" role="toolbar" aria-label="Text formatting" data-print-hidden onMouseDown={event => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); }}>
-      {/* No <form> here: the editor sits inside the page's form, and React would pass a submit up to it. */}
-      {linking ? <div className="ln-selection-link">
-        <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="Paste or type a link, then Enter" aria-label="Link address" onKeyDown={event => {
-          event.stopPropagation();
-          if (event.key === 'Enter') { event.preventDefault(); applyLink(href.trim()); }
-          else if (event.key === 'Escape') { event.preventDefault(); setLinking(false); editor.view.focus(); }
-        }} />
-        {state.link ? <button type="button" aria-label="Remove link" title="Remove link" onClick={() => applyLink('')}><Unlink aria-hidden /></button> : null}
-      </div> : <>
-        {state.kind && choices.length ? <select className="ln-selection-select" aria-label="Turn into" title="Turn into" value={state.kind} onChange={event => { turnInto(editor, chain(), event.target.value as BlockKind).run(); }}>
-          {choices.map(choice => <option key={choice.kind} value={choice.kind}>{choice.label}</option>)}
-        </select> : null}
-        <select className="ln-selection-select is-size" aria-label="Font size" title="Font size" value={state.fontSize ?? ''} onChange={event => { const value = event.target.value; setSelectionFontSize(editor, value ? Number(value) : null); editor.view.focus(); }}>
-          <option value="">Font size</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
-        </select>
-        <span className="ln-selection-divider" aria-hidden />
-        {marks.map(([key, Icon, label, toggle]) => <button key={key} type="button" aria-label={label} title={label} aria-pressed={Boolean(state[key])} onClick={toggle}><Icon aria-hidden /></button>)}
-        {scripts ? <>
-          <button type="button" aria-label="Superscript" title="Superscript (10⁶, m²)" aria-pressed={state.superscript} onClick={() => toggleScript('superscript')}><Superscript aria-hidden /></button>
-          <button type="button" aria-label="Subscript" title="Subscript (CO₂, H₂O)" aria-pressed={state.subscript} onClick={() => toggleScript('subscript')}><Subscript aria-hidden /></button>
+  /* No <form> here: the editor sits inside the page's form, and React would pass a submit up to it. */
+  if (linking) return <div className="ln-selection-link">
+    <input autoFocus value={href} onChange={event => setHref(event.target.value)} placeholder="Paste or type a link, then Enter" aria-label="Link address" onKeyDown={event => {
+      event.stopPropagation();
+      if (event.key === 'Enter') { event.preventDefault(); applyLink(href.trim()); }
+      else if (event.key === 'Escape') { event.preventDefault(); setLinking(false); editor.view.focus(); }
+    }} />
+    {state.link ? <button type="button" aria-label="Remove link" title="Remove link" onClick={() => applyLink('')}><Unlink aria-hidden /></button> : null}
+  </div>;
+  return <>
+    {state.kind && choices.length ? <select className="ln-selection-select" aria-label="Turn into" title="Turn into" value={state.kind} onChange={event => { turnInto(editor, chain(), event.target.value as BlockKind).run(); }}>
+      {choices.map(choice => <option key={choice.kind} value={choice.kind}>{choice.label}</option>)}
+    </select> : null}
+    <select className="ln-selection-select is-size" aria-label="Font size" title="Font size" value={state.fontSize ?? ''} onChange={event => { const value = event.target.value; setSelectionFontSize(editor, value ? Number(value) : null); editor.view.focus(); }}>
+      <option value="">Font size</option>{RICH_TEXT_FONT_SIZES_PT.map(size => <option key={size} value={size}>{size} pt</option>)}
+    </select>
+    <span className="ln-selection-divider" aria-hidden />
+    {marks.map(([key, Icon, label, toggle]) => <button key={key} type="button" aria-label={label} title={label} aria-pressed={Boolean(state[key])} onClick={toggle}><Icon aria-hidden /></button>)}
+    {scripts ? <>
+      <button type="button" aria-label="Superscript" title="Superscript (10⁶, m²)" aria-pressed={state.superscript} onClick={() => toggleScript('superscript')}><Superscript aria-hidden /></button>
+      <button type="button" aria-label="Subscript" title="Subscript (CO₂, H₂O)" aria-pressed={state.subscript} onClick={() => toggleScript('subscript')}><Subscript aria-hidden /></button>
+    </> : null}
+    <button type="button" aria-label="Inline code" title="Inline code (sequences, commands)" aria-pressed={state.code} onClick={() => chain().toggleCode().run()}><Code aria-hidden /></button>
+    <span className="ln-selection-divider" aria-hidden />
+    <button type="button" aria-label="Link ⌘K" title="Link ⌘K" aria-pressed={Boolean(state.link)} onClick={() => { setHref(state.link ?? ''); setLinking(true); }}><Link2 aria-hidden /></button>
+    <button type="button" className="ln-selection-risk" aria-label="Risk red" title={state.risk ? 'Restore default color' : 'Mark in risk red'} aria-pressed={state.risk} onClick={() => (state.risk ? chain().unsetColor() : chain().setColor(RICH_TEXT_RISK_COLOR_HEX)).run()}>A</button>
+    <button type="button" aria-label="Clear formatting" title="Clear formatting (links kept)" onClick={clearFormatting}><RemoveFormatting aria-hidden /></button>
+  </>;
+}
+
+/** How far the keyboard pushes up the bottom of what is visible: fixed elements stay with the window, not with the keyboard. */
+function useKeyboardInset() {
+  return useSyncExternalStore(
+    onChange => { const view = window.visualViewport; view?.addEventListener('resize', onChange); view?.addEventListener('scroll', onChange); return () => { view?.removeEventListener('resize', onChange); view?.removeEventListener('scroll', onChange); }; },
+    () => { const view = window.visualViewport; return view ? Math.max(0, Math.round(window.innerHeight - view.height - view.offsetTop)) : 0; },
+    () => 0,
+  );
+}
+
+/** A tap on the bar must leave the caret and the keyboard where they are; its own fields (a link, the font size) still take the focus. */
+const keepFocus = (event: React.PointerEvent | React.MouseEvent) => { if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) event.preventDefault(); };
+
+/**
+ * On a touch screen, Notion-style: one row over the keyboard while the editor has the focus. With the caret it inserts
+ * ("/"), opens the block's menu (turn into, format, move, delete), adds a picture, marks the line in risk red, indents, undoes and
+ * hides the keyboard; with text selected it carries what the bubble carries with a mouse. An editor inside a widget (`blocks`
+ * false) has only the marks, undo and the keyboard.
+ */
+function KeyboardBar({ editor, blocks, kinds, openCommands, insertImage, linking, setLinking, onBlockMenu }: {
+  editor: Editor; blocks: boolean; kinds: BlockKind[]; openCommands: EditorSurfaceProps['openCommands']; insertImage?: () => void;
+  linking: boolean; setLinking: (value: boolean) => void; onBlockMenu: (anchor: HTMLElement) => void;
+}) {
+  const bar = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(() => editor.isFocused);
+  const inset = useKeyboardInset();
+  useEffect(() => {
+    const show = () => setVisible(true);
+    // Leaving for the bar's own field keeps it.
+    const hide = () => setTimeout(() => { if (!editor.isFocused && !bar.current?.contains(document.activeElement)) { setVisible(false); setLinking(false); } }, 0);
+    editor.on('focus', show);
+    editor.on('blur', hide);
+    return () => { editor.off('focus', show); editor.off('blur', hide); };
+  }, [editor, setLinking]);
+  const state = useEditorState({ editor, selector: ({ editor: current }) => ({
+    selected: !current.state.selection.empty && !(current.state.selection instanceof NodeSelection),
+    undo: current.can().undo(), redo: current.can().redo(),
+    risk: current.getAttributes('textStyle').color === RICH_TEXT_RISK_COLOR_HEX,
+  }) });
+  if (!visible || !editor.isEditable) return null;
+  const chain = () => editor.chain().focus(undefined, { scrollIntoView: false });
+  // Like a block's colour in Notion: the whole line, and the caret stays where it was.
+  const markLine = () => {
+    const line = lineUnitAt(editor.state.doc, editor.state.selection.from);
+    if (!line) return;
+    const { from, to } = editor.state.selection, range = { from: line.pos + 1, to: line.pos + line.node.nodeSize - 1 };
+    const marked = chain().setTextSelection(range);
+    (state.risk ? marked.unsetColor() : marked.setColor(RICH_TEXT_RISK_COLOR_HEX)).setTextSelection({ from, to }).run();
+  };
+  const indent = (direction: 1 | -1) => {
+    for (const item of ['taskItem', 'listItem']) if (editor.isActive(item)) { (direction === 1 ? chain().sinkListItem(item) : chain().liftListItem(item)).run(); return; }
+    if (editor.isActive('paragraph') && typeof (editor.commands as Record<string, unknown>).indentDocumentParagraph === 'function') chain().indentDocumentParagraph(direction).run();
+  };
+  return createPortal(<div ref={bar} className="ln-keyboard-bar" role="toolbar" aria-label="Editing" style={{ bottom: inset }} onPointerDown={keepFocus} onMouseDown={keepFocus}
+    onBlur={event => { if (!editor.isFocused && !bar.current?.contains(event.relatedTarget as Node | null)) { setVisible(false); setLinking(false); } }} data-print-hidden>
+    <div className="ln-keyboard-bar-scroll">
+      {state.selected || linking ? <FormattingControls editor={editor} linking={linking} setLinking={setLinking} kinds={kinds} /> : <>
+        {blocks ? <>
+          <button type="button" aria-label="Insert" title="Insert (same as /)" onClick={() => { const unit = blockUnitAt(editor.state.doc, editor.state.selection.from); if (unit) addLine(editor, unit, false, openCommands); }}><Plus aria-hidden /></button>
+          <button type="button" aria-label="Turn into and format" title="Turn into, format, move or delete this block" onClick={event => onBlockMenu(event.currentTarget)}><Type aria-hidden /></button>
+          {insertImage ? <button type="button" aria-label="Image" title="Take or choose a photo" onClick={insertImage}><ImagePlus aria-hidden /></button> : null}
         </> : null}
-        <button type="button" aria-label="Inline code" title="Inline code (sequences, commands)" aria-pressed={state.code} onClick={() => chain().toggleCode().run()}><Code aria-hidden /></button>
-        <span className="ln-selection-divider" aria-hidden />
-        <button type="button" aria-label="Link ⌘K" title="Link ⌘K" aria-pressed={Boolean(state.link)} onClick={() => { setHref(state.link ?? ''); setLinking(true); }}><Link2 aria-hidden /></button>
-        <button type="button" className="ln-selection-risk" aria-label="Risk red" title={state.risk ? 'Restore default color' : 'Mark in risk red'} aria-pressed={state.risk} onClick={() => (state.risk ? chain().unsetColor() : chain().setColor(RICH_TEXT_RISK_COLOR_HEX)).run()}>A</button>
-        <button type="button" aria-label="Clear formatting" title="Clear formatting (links kept)" onClick={clearFormatting}><RemoveFormatting aria-hidden /></button>
+        <button type="button" className="ln-selection-risk" aria-label="Risk red" title={state.risk ? 'Restore default color' : 'Mark this line in risk red'} aria-pressed={state.risk} onClick={markLine}>A</button>
+        {blocks ? <>
+          <button type="button" aria-label="Decrease indent" title="Decrease indent" onClick={() => indent(-1)}><IndentDecrease aria-hidden /></button>
+          <button type="button" aria-label="Increase indent" title="Increase indent" onClick={() => indent(1)}><IndentIncrease aria-hidden /></button>
+        </> : null}
+        <button type="button" aria-label="Undo" title="Undo" disabled={!state.undo} onClick={() => chain().undo().run()}><Undo2 aria-hidden /></button>
+        <button type="button" aria-label="Redo" title="Redo" disabled={!state.redo} onClick={() => chain().redo().run()}><Redo2 aria-hidden /></button>
       </>}
     </div>
-  </BubbleMenu>;
+    <button type="button" className="ln-keyboard-bar-done" aria-label="Hide keyboard" title="Hide keyboard" onClick={() => editor.commands.blur()}><KeyboardOff aria-hidden /></button>
+  </div>, document.body);
+}
+
+/**
+ * On a touch screen with the keyboard down: hold a block until it lifts (a haptic tap in the app), drag it and let go where
+ * the line shows; holding without moving opens its menu. While typing a long press is left to the phone, to place the caret or select.
+ */
+function useLongPressBlocks(editor: Editor, enabled: boolean, onMenu: (unit: BlockUnit, anchor: HTMLElement) => void) {
+  const menu = useRef(onMenu);
+  useEffect(() => { menu.current = onMenu; });
+  useEffect(() => {
+    if (!enabled) return;
+    const root = editor.view.dom as HTMLElement;
+    // The editor redraws a block whose classes change, and the finger's later events would go to the old, detached block;
+    // so the lifted block is a copy over the page, and nothing inside the editor is touched until the drop.
+    type Press = { x: number; y: number; unit: BlockUnit; dom: HTMLElement; timer: ReturnType<typeof setTimeout>; ghost: HTMLElement | null; line: HTMLElement | null; gap: number | null };
+    let press: Press | null = null;
+    const end = () => {
+      if (!press) return;
+      clearTimeout(press.timer);
+      press.ghost?.remove();
+      press.line?.remove();
+      document.documentElement.classList.remove('ln-dragging-block');
+      press = null;
+    };
+    const lift = () => {
+      if (!press) return;
+      const rect = press.dom.getBoundingClientRect(), frame = document.createElement('div'), copy = press.dom.cloneNode(true) as HTMLElement;
+      frame.className = `${root.className} ln-block-ghost`;
+      frame.setAttribute('aria-hidden', 'true');
+      Object.assign(frame.style, { top: `${rect.top}px`, left: `${rect.left}px`, width: `${rect.width}px` });
+      frame.appendChild(copy);
+      document.body.appendChild(frame);
+      press.ghost = frame;
+      document.documentElement.classList.add('ln-dragging-block');
+      postNative({ type: 'haptic', style: 'medium' });
+      navigator.vibrate?.(10);
+    };
+    const start = (event: TouchEvent) => {
+      end();
+      if (event.touches.length !== 1 || editor.isFocused || !editor.isEditable) return;
+      const touch = event.touches[0];
+      const found = editor.view.posAtCoords({ left: touch.clientX, top: touch.clientY });
+      const unit = found ? blockUnitAt(editor.state.doc, found.inside >= 0 ? found.inside : found.pos) : null;
+      const dom = unit ? editor.view.nodeDOM(unit.pos) : null;
+      if (!unit || !(dom instanceof HTMLElement)) return;
+      // Before the phone's own long press (about half a second) starts selecting text.
+      press = { x: touch.clientX, y: touch.clientY, unit, dom, ghost: null, line: null, gap: null, timer: setTimeout(lift, 420) };
+    };
+    const move = (event: TouchEvent) => {
+      if (!press) return;
+      const touch = event.touches[0];
+      if (!press.ghost) { if (Math.hypot(touch.clientX - press.x, touch.clientY - press.y) > 10) end(); return; }
+      event.preventDefault();
+      press.ghost.style.transform = `translateY(${touch.clientY - press.y}px) scale(1.02)`;
+      const $pos = editor.state.doc.resolve(press.unit.pos), parent = $pos.parent, rects: DOMRect[] = [];
+      for (let index = 0, pos = $pos.start(); index < parent.childCount; pos += parent.child(index).nodeSize, index += 1) {
+        const dom = editor.view.nodeDOM(pos);
+        if (dom instanceof HTMLElement) rects.push(dom.getBoundingClientRect());
+      }
+      if (!rects.length) return;
+      const after = rects.findIndex(rect => touch.clientY < (rect.top + rect.bottom) / 2);
+      press.gap = after < 0 ? rects.length : after;
+      const y = press.gap < rects.length ? rects[press.gap].top : rects[rects.length - 1].bottom, frame = root.getBoundingClientRect();
+      if (!press.line) { press.line = document.createElement('div'); press.line.className = 'ln-block-drop-line'; document.body.appendChild(press.line); }
+      Object.assign(press.line.style, { top: `${y - 1.5}px`, left: `${frame.left}px`, width: `${frame.width}px` });
+      // Near the top or bottom of the screen the page follows the finger.
+      const bottom = (window.visualViewport?.height ?? window.innerHeight) - 72;
+      if (touch.clientY < 72) window.scrollBy(0, -12); else if (touch.clientY > bottom) window.scrollBy(0, 12);
+    };
+    const release = (event: TouchEvent) => {
+      if (!press) return;
+      if (!press.ghost) { end(); return; }
+      // The hold must not also place the caret and bring up the keyboard.
+      event.preventDefault();
+      const { unit, dom, gap } = press;
+      end();
+      if (gap === null) { menu.current(unit, dom); return; }
+      const current = currentBlockUnit(editor.state.doc, unit);
+      const tr = current && moveBlockTo(editor.state, current, gap);
+      if (tr) editor.view.dispatch(tr);
+    };
+    root.addEventListener('touchstart', start, { passive: true });
+    root.addEventListener('touchmove', move, { passive: false });
+    root.addEventListener('touchend', release);
+    root.addEventListener('touchcancel', end);
+    return () => {
+      end();
+      root.removeEventListener('touchstart', start);
+      root.removeEventListener('touchmove', move);
+      root.removeEventListener('touchend', release);
+      root.removeEventListener('touchcancel', end);
+    };
+  }, [editor, enabled]);
 }
 
 /** Over the table with the caret: rows and columns where the caret is. Deleting the table is ⋮⋮. */

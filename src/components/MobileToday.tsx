@@ -18,7 +18,8 @@ export function MobileToday({ experiments, today, monthKey, initialSelectedDateK
   const zh = locale === "zh";
   const actions = [
     { href: "/protocol-run", label: zh ? "现场模式" : "Run mode", hint: zh ? "平板 · 手机 · 手表" : "Tablet, phone, watch", icon: TabletSmartphone },
-    { href: "/entries/new?mode=capture", label: zh ? "快速记录" : "Quick capture", hint: zh ? "照片、观察或测量" : "Photo, note, measurement", icon: Camera },
+    // Same as ＋ in the bar: the note goes with the experiment in progress.
+    { href: "/entries/new?mode=capture&experiment=active", label: zh ? "快速记录" : "Quick capture", hint: zh ? "照片、观察或测量" : "Photo, note, measurement", icon: Camera },
     { href: "/tools/calculator", label: zh ? "计算器" : "Calculator", hint: zh ? "配液与单位换算" : "Mixes and conversions", icon: Calculator },
     { href: "/tools", label: zh ? "工具" : "Tools", hint: zh ? "分析与作图" : "Analysis and plots", icon: Wrench },
   ];

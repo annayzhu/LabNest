@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useI18n } from "@/components/I18nProvider";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 import { DocumentMediaNode } from "./DocumentMediaNode";
-import { useDocumentMediaUploads } from "./DocumentMediaUploads";
+import { chooseFiles, useDocumentMediaUploads } from "./DocumentMediaUploads";
 import { type Editor, type JSONContent } from "@tiptap/core";
 import { EditorContent, NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor, type NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -180,7 +180,7 @@ export function ScientificWysiwygEditor({ document, actionsHostId, hiddenSection
   if (!editor) return <div className="ln-wysiwyg-loading">Loading document editor…</div>;
   return <section className="ln-wysiwyg-editor ln-scientific-wysiwyg-editor">
     <input type="hidden" name="mediaDraftId" value={mediaDraftId} />
-    <EditorSurface editor={editor} kinds={checklist ? undefined : ["paragraph", "heading", "subheading", "quote", "bullet", "ordered"]} openCommands={commands.openSearch}><EditorContent editor={editor} /></EditorSurface>
+    <EditorSurface editor={editor} kinds={checklist ? undefined : ["paragraph", "heading", "subheading", "quote", "bullet", "ordered"]} openCommands={commands.openSearch} insertImage={() => chooseFiles(editor, mediaDraftId, "image/*")}><EditorContent editor={editor} /></EditorSurface>
     {commands.menu ? <WritingCommandMenu editor={editor} state={commands.menu} draftId={mediaDraftId} keyRef={commands.keyRef} onClose={commands.close} checklist={checklist} inserts={inserts} /> : null}
     {actionsHostId ? <DocumentAttachmentsButton editor={editor} hostId={actionsHostId} /> : null}
   </section>;

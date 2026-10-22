@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Schema, type Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { EditorState, TextSelection } from '@tiptap/pm/state';
-import { blockUnitAt, clearToParagraphs, deleteBlock, duplicateBlock, lineUnitAt, moveBlock } from './editor-blocks';
+import { blockUnitAt, clearToParagraphs, deleteBlock, duplicateBlock, lineUnitAt, moveBlock, moveBlockTo } from './editor-blocks';
 
 const schema = new Schema({ nodes: {
   doc: { content: 'scientificSection+' },
@@ -29,6 +29,19 @@ describe('Block handles', () => {
     expect(blockUnitAt(doc, inside(doc, 1) + 6)?.node.attrs.stepId).toBe('wash');
     expect(blockUnitAt(doc, inside(doc, 2) - 1)?.node.type.name).toBe('widget');
     expect(blockUnitAt(doc, 0)).toBeNull();
+  });
+
+  it('drop a dragged block into any gap of its section', () => {
+    const start = state(p('一'), p('二'), p('三'), p('四'));
+    const second = blockUnitAt(start.doc, inside(start.doc, 1))!;
+    // Its own gaps leave it where it is.
+    expect(moveBlockTo(start, second, 1)).toBeNull();
+    expect(moveBlockTo(start, second, 2)).toBeNull();
+    expect(texts(start.apply(moveBlockTo(start, second, 0)!).doc)).toEqual(['二', '一', '三', '四']);
+    expect(texts(start.apply(moveBlockTo(start, second, 4)!).doc)).toEqual(['一', '三', '四', '二']);
+    const moved = start.apply(moveBlockTo(start, second, 3)!);
+    expect(texts(moved.doc)).toEqual(['一', '三', '二', '四']);
+    expect(moved.doc.resolve(moved.selection.from).parent.textContent).toBe('二');
   });
 
   it('move a block past its neighbour and stop at either end', () => {

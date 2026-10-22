@@ -1,30 +1,42 @@
 "use client";
 
-import Link from "next/link";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Command, Search } from "lucide-react";
+import { ArrowLeft, Command, Menu, Search } from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { AiAssistantButton } from "@/components/AiAssistant";
+import { MobileDrawer, sectionLabel } from "@/components/Sidebar";
+import { PageMenuButton, PageMenuSheet } from "@/components/MobilePageMenu";
+
+/** A module's own page (one level deep) opens the drawer; a page inside it goes back. The calculator works offline as its own app. */
+const rootPage = (pathname: string) => pathname.split("/").filter(Boolean).length <= 1 || pathname.startsWith("/tools/calculator");
 
 export function TopBar() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
   const query = pathname === "/search" ? searchParams.get("q") ?? "" : "";
-  const mobileTitle = pathname === "/" ? "LabNest"
-    : pathname === "/ai" ? "AI settings"
-    : pathname.startsWith("/actions") ? "Manual AI"
-    : pathname.startsWith("/protocol-run") || pathname.includes("/run") ? "Run mode"
-    : pathname.startsWith("/records") || pathname.startsWith("/entries") || pathname.startsWith("/results") ? "Records"
-    : pathname.startsWith("/inventory") ? "Inventory"
-    : "LabNest";
 
   return (
     <header className="sticky top-0 z-30 border-b border-hairline/80 bg-paper/92 px-3 py-2 backdrop-blur-xl md:px-5">
       <div className="mx-auto flex min-h-11 max-w-[1480px] items-center gap-2 md:gap-3">
         <div className="flex min-w-0 flex-1 items-center justify-between lg:hidden">
-          <div className="flex min-w-0 items-center gap-2">
-            {pathname !== "/" && !pathname.startsWith("/tools/calculator") ? (
+          <div className="flex min-w-0 items-center gap-1">
+            {rootPage(pathname) ? (
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Open navigation"
+                aria-haspopup="dialog"
+                aria-expanded={drawerOpen}
+                aria-controls="mobile-drawer"
+                className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] text-moss"
+              >
+                <Menu className="h-5 w-5" aria-hidden />
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={() => router.back()}
@@ -33,19 +45,12 @@ export function TopBar() {
               >
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
-            ) : null}
-            <span className="truncate text-lg font-semibold text-ink">{mobileTitle}</span>
+            )}
+            <span className="truncate text-lg font-semibold text-ink">{sectionLabel(pathname)}</span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-          <AiAssistantButton large />
-          <Link
-            prefetch={pathname === "/ai" ? false : undefined}
-            href="/search"
-            aria-label="Search LabNest"
-            className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--ln-radius-control-lg)] text-moss"
-          >
-            <Search className="h-5 w-5" aria-hidden />
-          </Link>
+            <AiAssistantButton large />
+            <PageMenuButton />
           </div>
         </div>
         <form action="/search" className="hidden min-w-0 flex-1 lg:block">
@@ -67,6 +72,8 @@ export function TopBar() {
         </form>
         <div className="hidden items-center gap-2 lg:flex"><AiAssistantButton /><LanguageToggle /></div>
       </div>
+      <MobileDrawer open={drawerOpen} onClose={closeDrawer} />
+      <PageMenuSheet />
     </header>
   );
 }

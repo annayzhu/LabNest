@@ -1,7 +1,8 @@
 "use client";
 
 import { MoreHorizontal } from "lucide-react";
-import { type ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
+import { InPageMenu } from "./MobilePageMenu";
 import { anchoredPopoverStyle, useAnchoredPopover } from "@/components/ui/useAnchoredPopover";
 
 /**
@@ -9,6 +10,11 @@ import { anchoredPopoverStyle, useAnchoredPopover } from "@/components/ui/useAnc
  * action bar and stays mounted while closed, so dialogs opened from it (portaled) keep their state.
  */
 export function PageActionsMenu({ children, label = "More actions" }: { children: ReactNode; label?: string }) {
+  if (useContext(InPageMenu)) return <div className="ln-actions-menu ln-actions-menu-inline">{children}</div>;
+  return <PopoverActionsMenu label={label}>{children}</PopoverActionsMenu>;
+}
+
+function PopoverActionsMenu({ children, label }: { children: ReactNode; label: string }) {
   const { id, button, panel, close } = useAnchoredPopover();
 
   return <span className="contents">

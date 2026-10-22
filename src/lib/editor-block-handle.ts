@@ -3,11 +3,10 @@ import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import { blockUnitAt, moveBlock, type BlockUnit } from './editor-blocks';
 
-/** The block under the pointer (on touch screens, the block with the caret), for its ＋ and ⋮⋮ handle. */
+/** The block under the pointer, for its ＋ and ⋮⋮ handle. EditorSurface sets no `show` on a touch screen, which has no handle. */
 export type BlockHover = { unit: BlockUnit; dom: HTMLElement };
 type HandleStorage = { show: ((hover: BlockHover | null) => void) | null; link: (() => void) | null };
 
-const coarsePointer = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 const report = (storage: HandleStorage, view: EditorView, pos: number | null) => {
   const unit = pos === null ? null : blockUnitAt(view.state.doc, pos);
   const dom = unit ? view.nodeDOM(unit.pos) : null;
@@ -52,17 +51,14 @@ export const BlockHandles = Extension.create<unknown, HandleStorage>({
       key: new PluginKey('blockHandles'),
       props: { handleDOMEvents: {
         mousemove(view, event) {
-          if (coarsePointer()) return false;
+          if (!storage.show) return false;
           const found = view.posAtCoords({ left: event.clientX, top: event.clientY });
           if (found) report(storage, view, found.inside >= 0 ? found.inside : found.pos);
           return false;
         },
-        keydown() { if (!coarsePointer()) storage.show?.(null); return false; },
+        keydown() { storage.show?.(null); return false; },
       } },
-      view: () => ({ update(view, previous) {
-        if (coarsePointer()) { if (view.hasFocus() && (!previous.selection.eq(view.state.selection) || !previous.doc.eq(view.state.doc))) report(storage, view, view.state.selection.from); }
-        else if (!previous.doc.eq(view.state.doc)) storage.show?.(null);
-      } }),
+      view: () => ({ update(view, previous) { if (!previous.doc.eq(view.state.doc)) storage.show?.(null); } }),
     })];
   },
 });

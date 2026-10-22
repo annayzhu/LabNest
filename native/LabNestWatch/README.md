@@ -49,3 +49,23 @@ A step whose mix card (配液卡) was confirmed on the phone or computer shows *
 Server contract: `GET /api/watch/runs/:id` adds `mixes` to each step (`stale`, `note`, `quantity`, `aliquot`, `lines[{ id, name, mode, total, perReaction, struck }]`); `POST` accepts `intent: "strike"` with `mixId`, one `lineId` and its new `struck` state (one line per request, so phone and watch never undo each other). Older snapshots without `mixes` still decode.
 
 Verification so far: the unsigned watchsimulator build compiles, and the server snapshot was checked against a confirmed 24-reaction card. The new screens have **not** been exercised in the simulator or on a device.
+
+## Watch face widget (2026-10-21)
+
+A WidgetKit extension, `LabNestWatchWidget` (`../LabNestWatchWidget/`), puts the current step on the watch face as a complication and in the Smart Stack. It comes in rectangular, circular, corner and inline sizes:
+
+- When a timer is running, it shows that step with a live countdown (`Text(timerInterval:)`).
+- Otherwise it shows the step chosen on the watch, or the next unfinished one, with a paused timer's remaining time.
+- When every step is done, it says so.
+- When the watch is not paired, it shows "LabNest".
+
+The app writes a small `watch-widget.json` to the App Group `group.org.labnest.mobile`. It does this after every sync (and after a failed sync, from the saved snapshot), after every operation, and whenever a different step is chosen. It reloads the face only when the content changed. When a running timer reaches zero, the face switches to "计时结束" by itself.
+
+The widget is embedded only in the companion project, `../LabNestMobile/LabNestMobile.xcodeproj`. This standalone project compiles the shared `WatchWidgetState.swift`, but has no App Group and no widget, so nothing is written there. App Groups need a paid developer team; see the iPhone README for the Personal Team workaround.
+
+Simulator evidence (`docs/mobile-app-20261021/native-evidence/`):
+
+- The extension is registered with the system: `pluginkit` lists `org.labnest.mobile.watch.widget`.
+- The app wrote the step from its saved snapshot into the App Group file.
+
+The face itself was **not** looked at: adding a complication needs touch input on the simulator, and it was not available.

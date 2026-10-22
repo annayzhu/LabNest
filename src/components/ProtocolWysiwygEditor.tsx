@@ -596,7 +596,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     <SystemsBar />
     {conversionError ? <p role="alert" className="ln-chip-error">{conversionError}</p> : null}
     <MixProposals proposals={mixProposals} onAdd={addProposedMix} onDismiss={onDismissMixProposal} />
-    <EditorSurface editor={editor} kinds={['paragraph', 'heading', 'subheading', 'quote', 'bullet', 'ordered']} openCommands={anchor => setInsertMenu({ mode: 'button', query: '', anchor })} blockItems={blockItems} tableItems={tableItems} afterDelete={forgetRules}><EditorContent editor={editor} /></EditorSurface>
+    <EditorSurface editor={editor} kinds={['paragraph', 'heading', 'subheading', 'quote', 'bullet', 'ordered']} openCommands={anchor => setInsertMenu({ mode: 'button', query: '', anchor })} insertImage={() => chooseFiles(editor, uploadDraftId, 'image/*')} blockItems={blockItems} tableItems={tableItems} afterDelete={forgetRules}><EditorContent editor={editor} /></EditorSurface>
     </section>
     {chipTarget ? <ChipPopover key={`${chipTarget.pos}:${chipTarget.id}`} target={chipTarget} onDelete={deleteChip} onClose={closeChip} /> : null}
     {splitPrompt ? <SplitPrompt prompt={splitPrompt} systems={document.systems} keyRef={splitKeyRef} onChoose={chooseSplit} onClose={closeSplit} /> : null}

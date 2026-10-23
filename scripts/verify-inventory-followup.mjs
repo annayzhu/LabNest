@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const f = JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));
+const f = JSON.parse(readFileSync('docs/qa/history/stage-20260908/A/run-fixture.json'));
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const checks = [];
@@ -72,6 +72,6 @@ try {
   assert.equal(await (await page.request.get(`${base}/api/purchases/export?snapshot=${snapshot}`)).text(), content);
   checks.push('Later inventory association does not receive stock; prior CSV snapshot is byte-identical after purchase amount correction');
 } finally {
-  writeFileSync('docs/stage-20260908/A/evidence/followup.json', JSON.stringify({ checks }, null, 2));
+  writeFileSync('docs/qa/history/stage-20260908/A/evidence/followup.json', JSON.stringify({ checks }, null, 2));
   await browser.close();
 }

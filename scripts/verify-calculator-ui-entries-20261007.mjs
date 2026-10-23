@@ -4,7 +4,7 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {startStandalonePlateServer} from './test-helpers/standalone-plate-server.mjs';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
-const dir=process.env.UI_ENTRY_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007/evidence/entries';
+const dir=process.env.UI_ENTRY_EVIDENCE_DIR??'docs/modules/calculator/ui-consistency-20261007/evidence/entries';
 await mkdir(dir,{recursive:true});
 const standalone=await startStandalonePlateServer();
 const report={base,standaloneBase:standalone.base,at:new Date().toISOString(),checks:[],errors:[]};
@@ -41,7 +41,7 @@ for(const [engine,type] of Object.entries({chromium,webkit})){
   report.checks.push({engine,width,status:'passed',name:'paired reaction tools navigate on demand without alternate-tool prefetch',alternatePrefetches});
   report.checks.push({engine,width,status:'passed',name:'Tools and Today use the current catalog and segmented reaction-mix workspace'});
   if(width===1440){
-   const fixture=JSON.parse(await readFile('docs/calculator/v1.2/evidence/run-browser-report.json','utf8'));
+   const fixture=JSON.parse(await readFile('docs/modules/calculator/v1.2/evidence/run-browser-report.json','utf8'));
    assert.equal(new URL(fixture.runUrl).origin,new URL(base).origin,'Run fixture must belong to this isolated test server');
    await page.goto(fixture.runUrl,{waitUntil:'networkidle'});
    await page.getByRole('button',{name:'Calculator',exact:true}).first().click();

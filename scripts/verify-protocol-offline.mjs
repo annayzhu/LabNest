@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3341';assert(['localhost','127.0.0.1'].includes(new URL(base).hostname)&&new URL(base).port!=='3001');
-const out='docs/structured-protocol/20261014/followup-evidence',f=JSON.parse(await readFile(`${out}/groups-fixture.json`,'utf8'));
+const out='docs/modules/structured-protocol/20261014/followup-evidence',f=JSON.parse(await readFile(`${out}/groups-fixture.json`,'utf8'));
 const browser=await chromium.launch(),context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage();context.setDefaultTimeout(20000);
 await context.addCookies([{name:'labnest_locale',value:'zh',url:base}]);
 const report={synthetic:true,browser:browser.version(),checks:[],requests:[]};

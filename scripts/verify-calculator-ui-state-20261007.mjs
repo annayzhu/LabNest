@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3334';
-const root=process.env.UI_STATE_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007/evidence/state';
+const root=process.env.UI_STATE_EVIDENCE_DIR??'docs/modules/calculator/ui-consistency-20261007/evidence/state';
 await mkdir(root,{recursive:true});
 const report={base,at:new Date().toISOString(),checks:[]};
 const types=process.env.UI_BROWSER==='chromium'?{chromium}:{chromium,webkit};

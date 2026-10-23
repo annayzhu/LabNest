@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
-const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3251',dir='docs/calculator/presets-20260915/evidence';await mkdir(dir,{recursive:true});
+const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3251',dir='docs/modules/calculator/presets-20260915/evidence';await mkdir(dir,{recursive:true});
 const browser=await chromium.launch();const checks=[];
 try{for(const width of [1440,390])for(const mode of ['light','dark']){
  const context=await browser.newContext({viewport:{width,height:900},colorScheme:mode});const p=await context.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));

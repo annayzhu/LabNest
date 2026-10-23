@@ -25,7 +25,7 @@ async function main(){
  await prisma.$transaction(async tx=>{await lockEntrySourceGraph(tx);await freezeEntrySources(tx,'result',result.id);await tx.result.update({where:{id:result.id},data:{recordStatus:'reviewed'}});});
  await updateEntryWithFiles(resultEntry.id,input('RESULT-SOURCE-AFTER',{expectedUpdatedAt:(await prisma.entry.findUniqueOrThrow({where:{id:resultEntry.id}})).updatedAt.toISOString()}),[],[],[]);
  assert.equal((await getEntrySources('result',result.id,true)).sources[0].markdown,'RESULT-SOURCE-BEFORE');
- await writeFile('docs/structured-protocol/20261014/followup-evidence/entry-fixture.json',JSON.stringify({experimentId:experiment.id,entryId:entry.id,resultId:result.id,resultEntryId:resultEntry.id,attachmentId:sources.sources[0].attachments[0].id,createdAt:before.createdAt.toISOString(),occurredAt:before.occurredAt.toISOString()},null,2));
+ await writeFile('docs/modules/structured-protocol/20261014/followup-evidence/entry-fixture.json',JSON.stringify({experimentId:experiment.id,entryId:entry.id,resultId:result.id,resultEntryId:resultEntry.id,attachmentId:sources.sources[0].attachments[0].id,createdAt:before.createdAt.toISOString(),occurredAt:before.occurredAt.toISOString()},null,2));
  console.log('PASS Entry filing preserves creation/observation times and original attachment; assignedAt separate; reviewed result retains frozen source after later edit (synthetic records)');
 }
 main().finally(()=>prisma.$disconnect());

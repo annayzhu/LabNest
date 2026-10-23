@@ -2,7 +2,7 @@ import {showCalculatorResult} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
-const dir='docs/calculator/v1.3/evidence/copy-recent';mkdirSync(dir,{recursive:true});
+const dir='docs/modules/calculator/v1.3/evidence/copy-recent';mkdirSync(dir,{recursive:true});
 const browser=await chromium.launch();const context=await browser.newContext({permissions:['clipboard-read','clipboard-write']});const page=await context.newPage();const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3224';
 const report={base,at:new Date().toISOString(),checks:[],unexecuted:['Real phone 160% pinch zoom']};
 try{

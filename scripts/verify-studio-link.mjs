@@ -5,7 +5,7 @@ import {mkdir,writeFile,readFile} from 'node:fs/promises';
 const studioRoot=process.env.STUDIO_TEST_ROOT;
 if(!studioRoot)throw new Error('Set STUDIO_TEST_ROOT to the independently built Studio checkout.');
 const destination='http://127.0.0.1:33117/',base='http://127.0.0.1:33118';
-const evidence='docs/visualization/20260930/evidence';await mkdir(evidence,{recursive:true});
+const evidence='docs/modules/visualization/20260930/evidence';await mkdir(evidence,{recursive:true});
 const servers=[];
 function start(cwd,args,environment){const child=spawn(process.execPath,args,{cwd,env:{...process.env,...environment},stdio:['ignore','pipe','pipe']});let logs='';child.stdout.on('data',chunk=>logs+=chunk);child.stderr.on('data',chunk=>logs+=chunk);servers.push(child);return ()=>logs;}
 async function ready(url,logs){for(let n=0;n<100;n++){try{const response=await fetch(url);if(response.ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,200));}throw new Error(`Server unavailable: ${url}\n${logs()}`);}

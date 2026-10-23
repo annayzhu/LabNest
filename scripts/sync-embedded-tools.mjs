@@ -8,7 +8,7 @@ if(!root)throw Error('Set LABNEST_TOOL_SOURCE_ROOT to the existing C_材料方�
 const records=[];
 const copy=(source,target)=>{mkdirSync(path.dirname(target),{recursive:true});copyFileSync(source,target);records.push({source,target,sha256:createHash('sha256').update(readFileSync(target)).digest('hex')});};
 // Rebuild the maintained qPCR source independently; this script does not refresh it.
-// See scripts/sync-qpcr-planner.mjs and docs/tools-deployment.md.
+// See scripts/sync-qpcr-planner.mjs and docs/operations/tools-deployment.md.
 copy(path.join(root,'qpcr-analysis-studio/outputs/offline/qPCR-Analysis-Studio_Offline_20260828/index.html'),'public/tools/qpcr-analysis/index.html');
 const analyzer=path.join(root,'C_Taqman_CNV/CopyNumber_Analyzer');
 for(const file of ['cnvtool.html','app.js','diagnostics.js','core.js','layout.js','styles.css','vendor/xlsx.full.min.js','THIRD_PARTY_NOTICES.md'])copy(path.join(analyzer,file),'public/tools/cnv-analysis/'+(file==='cnvtool.html'?'index.html':file));
@@ -16,4 +16,4 @@ const planner=path.join(root,'C_Taqman_CNV/CNV_Plate_Planner');
 execFileSync(path.join(planner,'node_modules/.bin/vite'),['build','scripts/embedded-cnv-planner','--config','scripts/embedded-cnv-planner/vite.config.mjs'],{stdio:'inherit',env:{...process.env,CNV_PLANNER_SOURCE:planner,LABNEST_ROOT:process.cwd()}});
 for(const file of ['app/CnvPlanner.tsx','lib/cnvPlanner.ts','lib/reactionCalculator.ts','lib/exportWorkbook.ts','package-lock.json'])records.push({source:path.join(planner,file),sha256:createHash('sha256').update(readFileSync(path.join(planner,file))).digest('hex')});
 for(const file of readdirSync('public/tools/cnv-plate-layout/assets'))records.push({target:'public/tools/cnv-plate-layout/assets/'+file,sha256:createHash('sha256').update(readFileSync('public/tools/cnv-plate-layout/assets/'+file)).digest('hex')});
-writeFileSync('docs/stage-20260908/D/SOURCES.json',JSON.stringify(records,null,2));
+writeFileSync('docs/qa/history/stage-20260908/D/SOURCES.json',JSON.stringify(records,null,2));

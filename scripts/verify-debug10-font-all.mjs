@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3240';assert(['http://localhost:3240','http://localhost:3235'].includes(base));
-const dir='docs/debug-20260910/evidence/fonts';mkdirSync(dir,{recursive:true});
-const fixtures=JSON.parse(readFileSync('docs/debug-20260910/evidence/font-fixtures.json'));
+const dir='docs/qa/history/debug-20260910/evidence/fonts';mkdirSync(dir,{recursive:true});
+const fixtures=JSON.parse(readFileSync('docs/qa/history/debug-20260910/evidence/font-fixtures.json'));
 const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:1000}});const checks=[];
 try{for(const item of fixtures.cases){
  await page.emulateMedia({media:'screen'});await page.goto(base+item.edit,{waitUntil:'networkidle'});const editor=page.locator('[contenteditable=true]').first();await editor.locator('p').filter({hasText:item.name==='entry'?'Editor acceptance body':'Alpha sample beta'}).first().click();await page.keyboard.press('End');

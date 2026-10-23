@@ -48,5 +48,5 @@ jobs:
         with:
           name: editor-browser-evidence
           path: |
-            docs/editor-repair/evidence
+            docs/modules/editor-repair/evidence
             editor-server.log

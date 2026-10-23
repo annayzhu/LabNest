@@ -20,7 +20,7 @@ const base = process.env.LABNEST_E2E_BASE_URL ?? "http://localhost:3339";
 assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(base).port !== "3001");
 const searchUrl = new URL(process.env.LABNEST_MANUAL_SEARCH_URL ?? "");
 assert(searchUrl.hostname === "127.0.0.1", "the web search must be the local stand-in");
-const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/structured-protocol/20261014-redesign/manual-evidence";
+const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/modules/structured-protocol/20261014-redesign/manual-evidence";
 await mkdir(evidenceDir, { recursive: true });
 
 /** A one-page PDF with a few steps of text; the reader finds the text without needing a perfect cross-reference table. */

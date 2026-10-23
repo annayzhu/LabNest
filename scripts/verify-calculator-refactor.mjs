@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3220';
-const output='docs/calculator/evidence';await mkdir(output,{recursive:true});
+const output='docs/modules/calculator/evidence';await mkdir(output,{recursive:true});
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:390,height:844}});const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
 const input=name=>page.getByRole('textbox',{name:new RegExp(`^${name}`)});
 const fill=async(name,value)=>input(name).fill(String(value));

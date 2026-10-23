@@ -6,8 +6,8 @@ import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import pg from 'pg';
 import readXlsxFile from 'read-excel-file/node';
-const dir='docs/calculator/v1.3/evidence/formal-exports',base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3223';await mkdir(dir,{recursive:true});
-const fixture=JSON.parse(await readFile('docs/calculator/v1.1/evidence/appearance-browser-report.json','utf8'));assert(fixture.wbResultId);const url=new URL(process.env.DATABASE_URL);assert(['localhost','127.0.0.1'].includes(url.hostname));url.pathname='/labnest_calculator_acceptance_20260906';const db=new pg.Client({connectionString:url.toString()});await db.connect();
+const dir='docs/modules/calculator/v1.3/evidence/formal-exports',base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3223';await mkdir(dir,{recursive:true});
+const fixture=JSON.parse(await readFile('docs/modules/calculator/v1.1/evidence/appearance-browser-report.json','utf8'));assert(fixture.wbResultId);const url=new URL(process.env.DATABASE_URL);assert(['localhost','127.0.0.1'].includes(url.hostname));url.pathname='/labnest_calculator_acceptance_20260906';const db=new pg.Client({connectionString:url.toString()});await db.connect();
 const snapshot=(await db.query('SELECT "valuesJson" FROM "Result" WHERE id=$1',[fixture.wbResultId])).rows[0].valuesJson;await db.end();
 const browser=await chromium.launch(),p=await browser.newPage();const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),resultId:fixture.wbResultId,files:[]};
 try{

@@ -4,7 +4,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240';
 const phase=process.env.LABNEST_UI_PHASE||'after';
-const dir=`docs/calculator/ui-20260915/evidence/${phase}`;await mkdir(dir,{recursive:true});
+const dir=`docs/modules/calculator/ui-20260915/evidence/${phase}`;await mkdir(dir,{recursive:true});
 const ids='hemocytometer,seeding,hydrogel,split,freezing,transfection,viability,dilution,serial-dilution,molarity,percent-solution,media-recipe,buffer-recipe,master-mix,resuspension,normalization,kill-curve,ligation,tm,dna-rna-conversion,bradford-bca,elisa-4pl,ic50-ec50,wb-loading,od600,cfu,colony-counter,moi,virus-titer,unit-converter,centrifuge,reagent-dosing,fold-dilution'.split(',');
 const browser=await chromium.launch();const context=await browser.newContext({recordVideo:{dir:`${dir}/video`,size:{width:1440,height:900}}});const page=await context.newPage();const checks=[];
 try {

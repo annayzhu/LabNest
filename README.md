@@ -1,5 +1,7 @@
 # LabNest · 研巢
 
+开发任务书、架构、移动端和验收资料见[文档导航](docs/README.md)。
+
 ## 系统功能
 
 LabNest 是面向个人研究者与小型实验室的实验设计与执行平台，将研究目标、方法准备、体系计算、实验操作和结果整理连接在同一工作区。系统支持本地部署，核心实验流程可在关闭 AI 的情况下使用。
@@ -101,7 +103,7 @@ npm run start
 
 Tools 中的三个排板工具、实验计算器、qPCR Analysis 和 CNV Analysis 均随 LabNest 部署，在本站打开，无需另外配置网址。旧的四项 `*_TOOL_URL` 配置不再改变这些入口。
 
-Visualization Studio 单独部署后，将其实际访问网址填入 `VISUALIZATION_STUDIO_URL`；留空时显示配置提示。具体部署、容器更新和验收步骤见 [Tools 部署说明](docs/tools-deployment.md)。
+Visualization Studio 单独部署后，将其实际访问网址填入 `VISUALIZATION_STUDIO_URL`；留空时显示配置提示。具体部署、容器更新和验收步骤见 [Tools 部署说明](docs/operations/tools-deployment.md)。
 
 首次使用可从创建项目、研究计划和 Protocol 开始，再创建实验并进入准备与执行页面。需要 AI 时，在侧栏的 **AI settings** 中配置服务地址、模型和凭据，测试连接后启用；AI 服务的 API 凭据与上述加密密钥是两项不同配置。
 

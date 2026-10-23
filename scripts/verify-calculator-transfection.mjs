@@ -6,7 +6,7 @@ import {readFile} from 'node:fs/promises';
 import readXlsxFile from 'read-excel-file/node';
 import {csvRows} from './calculator-csv-read.mjs';
 import {execFileSync} from 'node:child_process';
-const dir='docs/calculator/v1.3/evidence/transfection';mkdirSync(dir,{recursive:true});const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3224';
+const dir='docs/modules/calculator/v1.3/evidence/transfection';mkdirSync(dir,{recursive:true});const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3224';
 const browser=await chromium.launch(),context=await browser.newContext({permissions:['clipboard-read','clipboard-write']}),p=await context.newPage();p.setDefaultTimeout(15000);
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base,at:new Date().toISOString(),checks:[],unexecuted:['Real phone soft keyboard and 160% zoom','Wet-lab user validation']};
 const fill=(name,value)=>p.getByRole('textbox',{name,exact:true}).fill(value);const select=(name,value)=>selectCalculatorOption(p,name,value);const calc=async()=>{await p.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(p);};const check=(name)=>report.checks.push({name,status:'passed'});

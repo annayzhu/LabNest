@@ -19,6 +19,6 @@ coverage
 docs/qa/evidence
 
 .next-*
-docs/structured-protocol/20261014/evidence
+docs/modules/structured-protocol/20261014/evidence
 
-docs/structured-protocol/20261014/followup-evidence
+docs/modules/structured-protocol/20261014/followup-evidence

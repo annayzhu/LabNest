@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {mkdir,writeFile} from 'node:fs/promises';
-const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240',out='docs/calculator/ui-20260915/evidence/tools';await mkdir(out,{recursive:true});const browser=await chromium.launch(),page=await browser.newPage(),checks=[];
+const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240',out='docs/modules/calculator/ui-20260915/evidence/tools';await mkdir(out,{recursive:true});const browser=await chromium.launch(),page=await browser.newPage(),checks=[];
 try{for(const width of [1440,390])for(const id of ['calculator','qpcr-plate-layout','cnv-plate-layout','qpcr-analysis','cnv-analysis','free-plate-layout','visualization']){
  await page.setViewportSize({width,height:900});await page.goto(base+'/tools');const href=id==='free-plate-layout'?'/tools/free-plate-layout/index.html?v=20260826-2':'/tools/'+id;
  const link=page.locator(`a[href="${href}"]`).first();assert.ok(await link.count(),id+' Tools link');await link.click();await page.waitForURL(new URL(href,base).href);await page.waitForLoadState('networkidle');

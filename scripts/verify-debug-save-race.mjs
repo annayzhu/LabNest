@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
-const { experimentId } = JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));
+const { experimentId } = JSON.parse(readFileSync('docs/qa/history/debug-20260909/evidence/run-fixture.json'));
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 try {
@@ -31,5 +31,5 @@ try {
   await dialog.getByRole('button', { name: '关闭', exact: true }).click();
   await page.getByRole('button', { name: '添加', exact: true }).click();
   assert.equal(await dialog.getByLabel('名称', { exact: true }).inputValue(), '延迟保存草稿');
-  writeFileSync('docs/debug-20260909/evidence/final-save-race.json', JSON.stringify({ checks: ['Pending request disables close', 'Escape keeps current session', 'Failed response retains draft', 'Reopen restores draft'], result: 'passed' }, null, 2));
+  writeFileSync('docs/qa/history/debug-20260909/evidence/final-save-race.json', JSON.stringify({ checks: ['Pending request disables close', 'Escape keeps current session', 'Failed response retains draft', 'Reopen restores draft'], result: 'passed' }, null, 2));
 } finally { await browser.close(); }

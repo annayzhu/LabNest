@@ -10,7 +10,7 @@ const database=new URL(process.env.DATABASE_URL??'');
 assert(['/labnest_ai_connection_20261014','/labnest_ai_provider_acceptance_20261008'].includes(database.pathname));
 assert(['localhost','127.0.0.1'].includes(database.hostname));
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3338';assert.notEqual(new URL(base).port,'3001');
-const dir=process.env.AI_DRAFT_EVIDENCE_DIR??'docs/ai/20261014-v1.1/evidence';await mkdir(dir,{recursive:true});
+const dir=process.env.AI_DRAFT_EVIDENCE_DIR??'docs/modules/ai/20261014-v1.1/evidence';await mkdir(dir,{recursive:true});
 const db=new pg.Client({connectionString:database.href});
 const report={revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),synthetic:true,liveProvider:false,checks:[]};
 let currentCheck='setup';

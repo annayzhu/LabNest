@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import {readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
-const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/calculator/v1.2/evidence';
+const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/modules/calculator/v1.2/evidence';
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1440,height:1000}});const p=await context.newPage();
 const report={checks:[],startedAt:new Date().toISOString()};
 try{
@@ -13,5 +13,5 @@ doc.sections[0].blocks.splice(firstTable+1,0,{id:'a-image',type:'media',mediaTyp
 await p.locator('input[name=contentJson]').evaluate((el,value)=>el.value=JSON.stringify(value),doc);
 await p.locator('button[type=submit]').first().click();await p.waitForURL(/\/protocols\/(?!new)/,{timeout:15000});report.protocolUrl=p.url();
 await p.goto(base+'/experiments/new',{waitUntil:'networkidle'});await p.getByRole('tab',{name:'Metadata',exact:true}).click();await p.getByRole('button').filter({hasText:title}).click();await p.locator('[name=title]').fill('V12 synthetic run');if(await p.getByRole('button',{name:'收起属性',exact:true}).isVisible())await p.getByRole('button',{name:'收起属性',exact:true}).click();await p.getByRole('button',{name:'Save Experiment',exact:true}).click();await p.waitForURL(/\/experiments\/(?!new)/,{timeout:15000});report.experimentUrl=p.url();await p.goto(p.url()+'/run',{waitUntil:'networkidle'});report.runUrl=p.url();
-await writeFile('docs/debug-20260910/evidence/synthetic-run.json',JSON.stringify(report,null,2));
+await writeFile('docs/qa/history/debug-20260910/evidence/synthetic-run.json',JSON.stringify(report,null,2));
 }catch(error){report.error=String(error);throw error;}finally{await browser.close();}

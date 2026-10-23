@@ -23,4 +23,4 @@ try {
     if (inventory) { const {result} = await confirmed.json(); const saved = await (await api.get(`/api/inventory/${result.targets[0].targetId}/containers`)).json(); assert.equal(saved.transactions[0].type, 'adjust', 'Opening balance is not a fabricated arrival'); }
     checks.push(`${moduleKey}: XLSX custom column mapping imports independently; altered mapping rejected until re-preview`);
   }
-} finally { writeFileSync('docs/stage-20260908/A/evidence/xlsx.json', JSON.stringify({ checks }, null, 2)); await api.dispose(); }
+} finally { writeFileSync('docs/qa/history/stage-20260908/A/evidence/xlsx.json', JSON.stringify({ checks }, null, 2)); await api.dispose(); }

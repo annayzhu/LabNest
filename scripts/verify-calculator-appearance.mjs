@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {unzipSync,strFromU8} from 'fflate';
-const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/calculator/v1.1/evidence';await mkdir(dir,{recursive:true});
+const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/modules/calculator/v1.1/evidence';await mkdir(dir,{recursive:true});
 const browser=await chromium.launch();const report={checks:[],geometry:[],errors:[],completedAt:null};
 const check=text=>{report.checks.push(text);console.log(text);};
 const state={version:2,favorites:[],favoritesConfigured:false,history:[],presets:[],recent:[],drafts:{}};

@@ -13,7 +13,7 @@ const db=new pg.Client({connectionString:database.toString()});
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3338';
 const mockPort=Number(process.env.AI_MOCK_PORT??4848);
 const mockBase=process.env.AI_MOCK_BASE_URL??`http://127.0.0.1:${mockPort}/v1`;
-const dir=process.env.AI_EVIDENCE_DIR??'docs/ai/20261008/evidence/browser';
+const dir=process.env.AI_EVIDENCE_DIR??'docs/modules/ai/20261008/evidence/browser';
 await mkdir(dir,{recursive:true});
 const report={sha:process.env.AI_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base,at:new Date().toISOString(),synthetic:true,liveProviders:false,checks:[],failures:[]};
 const token='acceptance-fake-token';

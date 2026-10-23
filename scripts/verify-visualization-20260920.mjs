@@ -3,7 +3,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const base = process.env.BASE_URL || 'http://localhost:32120/tools/visualization';
 const phase = process.env.PHASE || 'after';
-const out = process.env.EVIDENCE_DIR || `docs/visualization/20260920/evidence/${phase}`;
+const out = process.env.EVIDENCE_DIR || `docs/modules/visualization/20260920/evidence/${phase}`;
 await mkdir(out, {recursive:true});
 const browser = await chromium.launch();
 const page = await browser.newPage({viewport:{width:1440,height:900}});

@@ -1,6 +1,6 @@
 import {selectCalculatorOption,showCalculatorResult,openCalculatorDisclosure,prepareCalculatorOffline} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFile,writeFile} from 'node:fs/promises';
-const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/calculator/v1.2/evidence';const b=await chromium.launch(),c=await b.newContext({viewport:{width:390,height:844},permissions:['clipboard-read','clipboard-write']}),p=await c.newPage();p.setDefaultTimeout(15000);const report={startedAt:new Date().toISOString(),checks:[]};
+const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/modules/calculator/v1.2/evidence';const b=await chromium.launch(),c=await b.newContext({viewport:{width:390,height:844},permissions:['clipboard-read','clipboard-write']}),p=await c.newPage();p.setDefaultTimeout(15000);const report={startedAt:new Date().toISOString(),checks:[]};
 try{
 const run=JSON.parse(await readFile(dir+'/run-browser-report.json','utf8'));const experimentId=new URL(run.experimentUrl).pathname.split('/').at(-1),experimentStepId=run.stepId;assert(experimentStepId);report.experimentId=experimentId;report.experimentStepId=experimentStepId;
 await p.goto(`${base}/tools/calculator/percent-solution?experimentId=${experimentId}&experimentStepId=${experimentStepId}`,{waitUntil:'networkidle'});

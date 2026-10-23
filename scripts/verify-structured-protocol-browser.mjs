@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import readXlsxFile from 'read-excel-file/node';
 const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338';
 assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && new URL(base).port !== '3001', 'Isolated acceptance server only');
-const dir = 'docs/structured-protocol/20261014/evidence', fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
+const dir = 'docs/modules/structured-protocol/20261014/evidence', fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
 await mkdir(dir, { recursive: true });
 const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'America/Los_Angeles' });
 await context.addCookies([{ name: 'labnest_locale', value: 'zh', url: base }]);

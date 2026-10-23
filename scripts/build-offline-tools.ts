@@ -1,6 +1,6 @@
 /**
  * Offline packages for the two tools that the portable bundle (scripts/build-portable-tools.mjs, maintained separately)
- * does not include: the 实验计算器 and the 可视化工作台. That script empties outputs/portable-tools, so run this after it:
+ * does not include: the 实验计算器 and the 可视化工作台. That script empties outputs/tools/portable-tools, so run this after it:
  *
  *   node scripts/build-portable-tools.mjs && npx tsx scripts/build-offline-tools.ts
  *
@@ -17,7 +17,7 @@ import path from 'node:path';
 import { appearanceThemeCssText, systemThemeCssText } from '../src/lib/system-theme';
 
 const root = process.cwd();
-const outputRoot = path.join(root, 'outputs', 'portable-tools');
+const outputRoot = path.join(root, 'outputs', 'tools', 'portable-tools');
 const studioRoot = path.resolve(process.env.VISUALIZATION_STUDIO_ROOT ?? path.join(root, '..', 'Visualization-studio'));
 
 const readme = (name: string, extra: string[] = []) => [

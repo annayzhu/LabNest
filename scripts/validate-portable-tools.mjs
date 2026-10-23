@@ -2,7 +2,7 @@ import { chromium } from "playwright";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 
-const root = process.env.PORTABLE_TOOLS_ROOT || path.join(process.cwd(), "outputs", "portable-tools");
+const root = process.env.PORTABLE_TOOLS_ROOT || path.join(process.cwd(), "outputs", "tools", "portable-tools");
 const mobileViewport = process.env.MOBILE === "1";
 const cases = [
   ["qPCR Plate Layout Planner", "01_qPCR_Plate_Layout_Planner/Open_qPCR_Plate_Layout_Planner.html", "qPCR", "button"],

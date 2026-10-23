@@ -2,7 +2,7 @@ import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
-const out='docs/calculator/ui-consistency-20261007/evidence/selectors';
+const out='docs/modules/calculator/ui-consistency-20261007/evidence/selectors';
 await mkdir(out,{recursive:true});
 const report={base,checks:[]};
 const style=n=>({appearance:getComputedStyle(n).appearance,padding:getComputedStyle(n).paddingRight,position:getComputedStyle(n).backgroundPosition,outline:getComputedStyle(n).outlineStyle});

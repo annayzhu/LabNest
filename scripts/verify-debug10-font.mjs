@@ -2,8 +2,8 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3240';assert(['http://localhost:3240','http://localhost:3235'].includes(base));
-const out='docs/debug-20260910/evidence/fonts';mkdirSync(out,{recursive:true});
-const fixture=JSON.parse(readFileSync('docs/debug-20260910/evidence/font-fixtures.json')).cases.find(c=>c.name==='experiment');
+const out='docs/qa/history/debug-20260910/evidence/fonts';mkdirSync(out,{recursive:true});
+const fixture=JSON.parse(readFileSync('docs/qa/history/debug-20260910/evidence/font-fixtures.json')).cases.find(c=>c.name==='experiment');
 const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:1000}});const report={checks:[]};
 try {
  await page.goto(base+fixture.edit,{waitUntil:'networkidle'});

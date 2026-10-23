@@ -5,7 +5,7 @@ description: Use when changing LabNest Protocol structure, system dimensions, co
 
 # LabNest Structured Protocol
 
-Resolve the repository root from this project's `.agents/skills` location. Read `docs/structured-protocol/20261014/CONTRACT.md`, `CONTEXT.md` and the applicable requirements sections 4–8 and 13. These files and the implementation are authoritative; do not copy their rules into a second schema.
+Resolve the repository root from this project's `.agents/skills` location. Read `docs/modules/structured-protocol/20261014/CONTRACT.md`, `CONTEXT.md` and the applicable requirements sections 4–8 and 13. These files and the implementation are authoritative; do not copy their rules into a second schema.
 
 Inspect the affected path through `src/lib/protocol-document.ts`, `protocol-tiptap.ts`, `protocol-execution.ts`, `structured-protocol.ts`, `experiments.ts`, `run-step-content.ts`, the Protocol edit actions, and Run write actions. Record the current commit and the actual serialized schema. Stable IDs and captured source ownership must survive every changed boundary.
 

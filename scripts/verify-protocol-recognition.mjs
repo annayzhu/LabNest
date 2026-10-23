@@ -19,7 +19,7 @@ assert(["localhost", "127.0.0.1"].includes(database.hostname));
 const base = process.env.LABNEST_E2E_BASE_URL ?? "http://localhost:3339";
 assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(base).port !== "3001");
 const mockPort = Number(process.env.AI_MOCK_PORT ?? 4849);
-const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/structured-protocol/20261014-redesign/recognition-evidence";
+const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/modules/structured-protocol/20261014-redesign/recognition-evidence";
 await mkdir(evidenceDir, { recursive: true });
 
 /** A made-up kit manual, and its faithful layout (the same pair as src/lib/protocol-recognition.test.ts). */

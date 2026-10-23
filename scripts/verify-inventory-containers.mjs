@@ -38,4 +38,4 @@ try {
  inventory=await state();assert.equal(inventory.warehouse,4);assert.equal(inventory.empty,1);
  await page.reload();assert.ok(await page.getByText('余量未记录',{exact:false}).count());
  results.push('Empty bottle is unavailable but retained');
-}finally{mkdirSync('docs/stage-20260908/A/evidence',{recursive:true});writeFileSync('docs/stage-20260908/A/evidence/containers.json',JSON.stringify({results},null,2));await browser.close();}
+}finally{mkdirSync('docs/qa/history/stage-20260908/A/evidence',{recursive:true});writeFileSync('docs/qa/history/stage-20260908/A/evidence/containers.json',JSON.stringify({results},null,2));await browser.close();}

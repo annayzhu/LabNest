@@ -20,7 +20,7 @@ assert(["localhost", "127.0.0.1"].includes(database.hostname));
 const base = process.env.LABNEST_E2E_BASE_URL ?? "http://localhost:3339";
 assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(base).port !== "3001");
 const mockPort = Number(process.env.AI_MOCK_PORT ?? 4851);
-const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/structured-protocol/20261014-redesign/photo-evidence";
+const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/modules/structured-protocol/20261014-redesign/photo-evidence";
 await mkdir(evidenceDir, { recursive: true });
 
 // Five pages of a made-up kit manual; the width of a picture says which page it is.

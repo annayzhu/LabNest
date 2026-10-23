@@ -4,7 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
 const workspace = process.cwd();
-const outputRoot = path.join(workspace, "outputs", "portable-tools");
+const outputRoot = path.join(workspace, "outputs", "tools", "portable-tools");
 const materialRoot = process.env.LABNEST_TOOL_SOURCE_ROOT;
 if (!materialRoot) {
   throw new Error("Set LABNEST_TOOL_SOURCE_ROOT to the directory containing the portable tool source projects.");

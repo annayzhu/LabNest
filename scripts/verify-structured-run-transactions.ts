@@ -15,7 +15,7 @@ import { structuredProtocolFixture } from './fixtures/structured-protocol';
 async function main() {
 const db = new URL(process.env.DATABASE_URL!);
 assert(['127.0.0.1', 'localhost'].includes(db.hostname) && ((db.port === '55439' && db.pathname === '/labnest_structured_20261014') || (process.env.CI === 'true' && db.port === '5432' && db.pathname === '/labnest_protocol_consistency_ci')), 'Use the dedicated synthetic database only.');
-const out = 'docs/structured-protocol/20261014/evidence';
+const out = 'docs/modules/structured-protocol/20261014/evidence';
 await mkdir(out, { recursive: true });
 try {
   const key = randomUUID();

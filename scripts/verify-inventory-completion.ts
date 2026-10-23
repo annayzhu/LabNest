@@ -7,7 +7,7 @@ async function main() {
   if (new URL(process.env.DATABASE_URL!).pathname !== '/labnest_stage_a_acceptance') throw new Error('Synthetic database only');
   const base=process.env.LABNEST_ACCEPTANCE_URL??'http://localhost:3233';
   if(!['http://localhost:3232','http://localhost:3233'].includes(base))throw new Error('Isolated server only');
-  const fixture=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json','utf8'));
+  const fixture=JSON.parse(readFileSync('docs/qa/history/stage-20260908/A/run-fixture.json','utf8'));
   const browser=await chromium.launch(); const page=await browser.newPage();const checks:string[]=[];
   try {
     await prisma.experimentStep.create({data:{experimentId:fixture.experimentId,order:999,title:"Synthetic timer copy",description:"Timer reset fixture"}});
@@ -53,6 +53,6 @@ async function main() {
     const bottle=await prisma.inventoryContainer.findUniqueOrThrow({where:{id:item.containers[0].id},include:{observations:true}});
     assert.equal(bottle.observations[0].experimentId,copied.id);assert.equal(bottle.observations[0].remaining,180);assert.equal(bottle.observations[0].quality,'estimated');assert.equal(await prisma.inventoryTransaction.count({where:{inventoryItemId:item.id}}),0);
     checks.push('Bottle observation180mL linked to experiment through page; estimate retained after reload without stock transaction');
-  } finally {writeFileSync('docs/stage-20260908/A/evidence/completion.json',JSON.stringify({checks},null,2));await browser.close();await prisma.$disconnect();}
+  } finally {writeFileSync('docs/qa/history/stage-20260908/A/evidence/completion.json',JSON.stringify({checks},null,2));await browser.close();await prisma.$disconnect();}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

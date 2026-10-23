@@ -5,7 +5,7 @@ description: Use when editing LabNest text inputs, rich text, Protocol scientifi
 
 # LabNest Editor QA
 
-Read `docs/structured-protocol/20261014/REQUIREMENTS.md` sections 3, 9–13 and C/E/F acceptance, `DESIGN.md`, and the current `EDITOR-INVENTORY.txt`. Regenerate the route/component inventory when callers change. Do not assume every use of the shared editor is already covered.
+Read `docs/modules/structured-protocol/20261014/REQUIREMENTS.md` sections 3, 9–13 and C/E/F acceptance, `DESIGN.md`, and the current `EDITOR-INVENTORY.txt`. Regenerate the route/component inventory when callers change. Do not assume every use of the shared editor is already covered.
 
 Trace the real editor → serializer → action/schema → database → readonly/export renderer. Inspect `ProtocolWysiwygEditor`, `ScientificDocumentEditor`, `CompactRichTextTiptapEditor`, `DocumentMediaNode`, `DocumentMediaUploads`, `DocumentMediaView`, `protocol-tiptap.ts` and applicable table serializers. Preserve unknown historical content and original asset references.
 

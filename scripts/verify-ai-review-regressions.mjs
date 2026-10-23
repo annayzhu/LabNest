@@ -7,7 +7,7 @@ const url=new URL(process.env.DATABASE_URL);
 assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_20261008','labnest_ai_connection_20261014'].includes(url.pathname.slice(1)));
 assert(['localhost','127.0.0.1'].includes(url.hostname));assert.notEqual(new URL(base).port,'3001');
 const db=new pg.Client({connectionString:url.href});
-const dir=process.env.AI_MODULE_EVIDENCE_DIR??'docs/ai/20261014/evidence';await mkdir(dir,{recursive:true});
+const dir=process.env.AI_MODULE_EVIDENCE_DIR??'docs/modules/ai/20261014/evidence';await mkdir(dir,{recursive:true});
 const results=[];const browser=await chromium.launch();
 async function eventually(fn){let error;for(let i=0;i<50;i++){try{return await fn();}catch(e){error=e;await new Promise(r=>setTimeout(r,100));}}throw error;}
 async function check(name,fn){try{await fn();results.push({name,status:'passed'});}catch(e){results.push({name,status:'failed',error:String(e)});}}

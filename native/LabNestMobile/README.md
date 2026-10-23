@@ -93,6 +93,6 @@ xcrun swiftc -module-cache-path /tmp/labnest-swift-modules \
 - `-LabNestSetupAddress <地址>`：按手动填写的流程连接服务器。
 - `-LabNestEval <脚本>`：页面加载后执行一段脚本，例如向 App 发一条桥接消息；随后打印页面写入 `window.__labnestQA` 的内容。
 
-验收记录：`../../docs/mobile-app-20261021/NATIVE.md`。
+验收记录：`../../docs/mobile/mobile-app-20261021/NATIVE.md`。
 
-验收记录与截图见 `../../docs/watch-companion-20261019/`。 [2026-10-21 真机安装记录](../../docs/watch-device-install-20261021/verification.md)已验证 iPhone 与 Apple Watch 的签名安装和启动；本次安装会话尚未验证实际实验配对、真实计时和通知送达。完整通过标准包括真机安装、扫码填入、手表保存并读取正确实验、失败时保留旧连接、重试不重复消费配对码、未同步操作阻止切换。未通过的项目必须在验收记录中保留。
+验收记录与截图见 `../../docs/mobile/watch-companion-20261019/`。 [2026-10-21 真机安装记录](../../docs/mobile/watch-device-install-20261021/verification.md)已验证 iPhone 与 Apple Watch 的签名安装和启动；本次安装会话尚未验证实际实验配对、真实计时和通知送达。完整通过标准包括真机安装、扫码填入、手表保存并读取正确实验、失败时保留旧连接、重试不重复消费配对码、未同步操作阻止切换。未通过的项目必须在验收记录中保留。

@@ -26,9 +26,9 @@ try {
    assert(pairs.length>0,`Missing number/unit pairs: ${task}`);
    assert(pairs.every(pair=>pair.sameLine&&pair.inside),JSON.stringify({task,width,pairs}));
    checks.push({task,width,pairs});
-   if(width===390)await page.screenshot({path:`docs/calculator/evidence/${task}-compact-390.png`,fullPage:true});
+   if(width===390)await page.screenshot({path:`docs/modules/calculator/evidence/${task}-compact-390.png`,fullPage:true});
   }
  }
- await writeFile('docs/calculator/evidence/compact-ui-report.json',JSON.stringify({completedAt:new Date().toISOString(),checks},null,2));
+ await writeFile('docs/modules/calculator/evidence/compact-ui-report.json',JSON.stringify({completedAt:new Date().toISOString(),checks},null,2));
  console.log('Number/unit pairs remain on one line at 360, 390 and 1280 px, including structured concentrations.');
 } finally {await browser.close();}

@@ -7,7 +7,7 @@ import { prisma } from '../src/lib/db';
 async function main() {
   if (new URL(process.env.DATABASE_URL!).pathname !== '/labnest_stage_a_acceptance') throw new Error('Isolated synthetic database only');
   const base = 'http://localhost:3233';
-  const f = JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json', 'utf8'));
+  const f = JSON.parse(readFileSync('docs/qa/history/stage-20260908/A/run-fixture.json', 'utf8'));
   const browser = await chromium.launch(); const page = await browser.newPage(); const checks: string[] = [];
   try {
     const id = crypto.randomUUID();
@@ -42,6 +42,6 @@ async function main() {
     assert.equal((await prisma.procurementQuoteLine.findUniqueOrThrow({ where: { id: quote.id } })).status, 'not_selected');
     const downloaded = page.waitForEvent('download'); await page.getByRole('link', { name: '导出报价比较', exact: true }).click(); assert.ok((await downloaded).suggestedFilename().endsWith('.csv'));
     checks.push('Quote decision saved through page and retained after reload; export link downloads CSV');
-  } finally { writeFileSync('docs/stage-20260908/A/evidence/edge-cases.json', JSON.stringify({ checks }, null, 2)); await browser.close(); await prisma.$disconnect(); }
+  } finally { writeFileSync('docs/qa/history/stage-20260908/A/evidence/edge-cases.json', JSON.stringify({ checks }, null, 2)); await browser.close(); await prisma.$disconnect(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

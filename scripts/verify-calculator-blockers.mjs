@@ -3,7 +3,7 @@ import {chromium} from 'playwright';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
-const dir='docs/calculator/blockers/evidence',base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';await mkdir(dir,{recursive:true});
+const dir='docs/modules/calculator/blockers/evidence',base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';await mkdir(dir,{recursive:true});
 const browser=await chromium.launch();const c=await browser.newContext({permissions:['clipboard-read','clipboard-write']});const p=await c.newPage();
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),checks:[],screenshots:[]};
 try{

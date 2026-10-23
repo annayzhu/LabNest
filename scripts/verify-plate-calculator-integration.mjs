@@ -6,7 +6,7 @@ import {unzipSync,strFromU8} from 'fflate';
 import {DOMParser} from '@xmldom/xmldom';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221';
-const dir=process.env.PLATE_EVIDENCE_DIR??'docs/calculator/plate-integration-20261007/evidence';
+const dir=process.env.PLATE_EVIDENCE_DIR??'docs/modules/calculator/plate-integration-20261007/evidence';
 await mkdir(dir,{recursive:true});
 const report={base,sha:process.env.PLATE_APPLICATION_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),fixture:'Synthetic local browser workspaces; no production database writes',toolChecks:[],checks:[],failures:[]};
 const key='plate-layout-studio:workspace:v2';

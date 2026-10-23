@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const {experimentId}=JSON.parse(readFileSync('docs/debug-20260909/evidence/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();const base='http://localhost:3232';const endpoint=`${base}/api/experiments/${experimentId}/materials`;
+const {experimentId}=JSON.parse(readFileSync('docs/qa/history/debug-20260909/evidence/run-fixture.json'));const browser=await chromium.launch();const page=await browser.newPage();const base='http://localhost:3232';const endpoint=`${base}/api/experiments/${experimentId}/materials`;
 try {
  const id=crypto.randomUUID(),name=`Synthetic original ${id.slice(0,6)}`;
  let response=await page.request.post(endpoint,{data:{action:'save',id,name}});assert.equal(response.status(),200);
@@ -16,5 +16,5 @@ try {
  await dialog.getByRole('button',{name:'保存使用记录',exact:true}).click();
  try{assert.equal(await dialog.getByRole('button',{name:'关闭',exact:true}).isDisabled(),true,'Saving must block switching to another draft');await page.keyboard.press('Escape');assert.equal(await dialog.isVisible(),true);}finally{release();}
  await dialog.waitFor({state:'hidden'});
- writeFileSync('docs/debug-20260909/evidence/material-sessions.json',JSON.stringify({checks:['Edit-close-add creates distinct identity','Original record unchanged','Unsubmitted edit draft restored','Save error visible inside modal and draft retained']},null,2));
+ writeFileSync('docs/qa/history/debug-20260909/evidence/material-sessions.json',JSON.stringify({checks:['Edit-close-add creates distinct identity','Original record unchanged','Unsubmitted edit draft restored','Save error visible inside modal and draft retained']},null,2));
 }finally{await browser.close();}

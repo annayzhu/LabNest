@@ -3,7 +3,7 @@ import { readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-const root = path.join(process.cwd(), "outputs", "portable-tools");
+const root = path.join(process.cwd(), "outputs", "tools", "portable-tools");
 const entries = (await readdir(root, { withFileTypes: true }))
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)

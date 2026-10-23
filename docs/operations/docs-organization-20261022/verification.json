@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-22",
+  "sourceCommit": "601f815b4fc1c93b3d139aaf3a78100f248df3a1",
+  "inventorySha256": "a2e1f5b2f54588278bd9734af3e71ff3744e790f3972de80e622b50e85fd1265",
+  "preservation": {
+    "originalFiles": 6715,
+    "originalBytes": 680518841,
+    "preservedByteExact": 6679,
+    "pathOnlyDocEdits": 36,
+    "externalPathEdits": 176,
+    "missingLinks": [
+      {
+        "owner": "docs/qa/entry-richtext-acceptance.md",
+        "raw": "../../src/components/DocumentWysiwygToolbar.tsx",
+        "target": "src/components/DocumentWysiwygToolbar.tsx",
+        "exists": false,
+        "preexisting": true
+      }
+    ],
+    "errors": []
+  },
+  "references": {
+    "syntaxChecks": {
+      "javascript": 134,
+      "typescript": 34,
+      "python": 1,
+      "yaml": 4
+    },
+    "rootIgnoreRulesPreservedForAllOriginalDocs": true,
+    "staleActivePathReferences": [],
+    "gitDiffCheck": true,
+    "errors": []
+  },
+  "applicationTestsRun": false,
+  "applicationDeployed": false
+}

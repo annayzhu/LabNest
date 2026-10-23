@@ -12,6 +12,6 @@ async function main(){
   const experiment=await prisma.experiment.create({data:{projectId:plan.projectId,researchPlanId:plan.id,runCode:`EXP-${Date.now()+index}`,title:`Sep10 synthetic legacy ${kind}`,protocolSnapshotJson:snapshot,steps:{create:captured.map(step=>({order:step.order,title:step.title,description:step.description,groupKey:'synthetic-frozen-v1',groupTitle:'Synthetic frozen v1',protocolStepRef:`synthetic-frozen-v1:${step.order}`,completed:step.order===1}))}},include:{steps:{orderBy:{order:'asc'}}}});
   cases.push({kind,id:experiment.id,steps:experiment.steps.map(s=>({id:s.id,ref:s.protocolStepRef})),snapshotHash:createHash('sha256').update(JSON.stringify(experiment.protocolSnapshotJson)).digest('hex')});
  }
- writeFileSync('docs/debug-20260910/evidence/legacy-fixtures.json',JSON.stringify({synthetic:true,cases},null,2));
+ writeFileSync('docs/qa/history/debug-20260910/evidence/legacy-fixtures.json',JSON.stringify({synthetic:true,cases},null,2));
 }
 main().finally(()=>prisma.$disconnect());

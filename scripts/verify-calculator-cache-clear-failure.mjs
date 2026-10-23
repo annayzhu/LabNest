@@ -39,6 +39,6 @@ try {
   report.error = String(error);
   throw error;
 } finally {
-  await writeFile('docs/calculator/v1.3/evidence/cache-clear-report.json', JSON.stringify(report, null, 2));
+  await writeFile('docs/modules/calculator/v1.3/evidence/cache-clear-report.json', JSON.stringify(report, null, 2));
   await browser.close();
 }

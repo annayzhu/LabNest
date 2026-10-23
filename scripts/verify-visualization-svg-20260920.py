@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-base = Path('docs/visualization/20260920/evidence/after')
+base = Path('docs/modules/visualization/20260920/evidence/after')
 attributes = ['x', 'y', 'cx', 'cy', 'width', 'height', 'r', 'd', 'points',
               'fill', 'stroke', 'opacity', 'fill-opacity']
 

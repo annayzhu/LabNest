@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import {readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
-const dir='docs/debug-20260910/evidence/format';const fixtures=JSON.parse(await readFile(dir+'/fixtures.json','utf8'));const b=await chromium.launch();const p=await b.newPage({viewport:{width:1440,height:1000}});const checks=[];
+const dir='docs/qa/history/debug-20260910/evidence/format';const fixtures=JSON.parse(await readFile(dir+'/fixtures.json','utf8'));const b=await chromium.launch();const p=await b.newPage({viewport:{width:1440,height:1000}});const checks=[];
 try{for(const item of fixtures.cases){
  await p.goto('http://localhost:3240'+item.edit,{waitUntil:'networkidle'});
  const target=p.locator('.tiptap p').filter({hasText:'Editor acceptance body'}).first();await target.click();

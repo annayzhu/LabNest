@@ -1,5 +1,5 @@
 /** Volume-balance primitives. Callers supply compatible concentrations and µL.
- * Methods and independent worked examples: docs/calculator/spec-v1.0.md §7, §14.
+ * Methods and independent worked examples: docs/modules/calculator/spec-v1.0.md §7, §14.
  */
 import { operation } from './operations';
 import { parseScalar, convert } from './quantities';

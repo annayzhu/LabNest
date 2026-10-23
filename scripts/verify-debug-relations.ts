@@ -21,7 +21,7 @@ async function main(){
   await page.getByLabel('关联筛选').selectOption('linked');await page.getByLabel(`选择 ${protocols[0].title}`,{exact:true}).check();await page.getByRole('button',{name:'解除所选关联'}).click();assert.equal(await page.locator('input[name="protocolIds"]').count(),7);await page.getByRole('button',{name:'完成管理'}).click();assert.equal(await page.getByLabel('Research Plan title',{exact:true}).inputValue(),'Synthetic unsaved B '+stamp);
    await page.getByRole('button',{name:/Save Research Plan|保存研究/}).click();await page.waitForURL(base+`/research-plans/${plan.id}`);
   const saved=await prisma.researchPlan.findUniqueOrThrow({where:{id:plan.id},include:{protocols:true}});assert.equal(saved.protocols.length,7);assert.equal(saved.title,'Synthetic unsaved B '+stamp);assert.equal(await prisma.protocol.count({where:{id:{in:protocols.map(p=>p.id)}}}),8);checks.push('Eight protocols: sidebar3, search/filter/bulk add/remove, unsaved title retained, save/reload7 associations and8 originals');
-  writeFileSync('docs/debug-20260909/evidence/shared-relations.json',JSON.stringify({planId:plan.id,checks},null,2));
+  writeFileSync('docs/qa/history/debug-20260909/evidence/shared-relations.json',JSON.stringify({planId:plan.id,checks},null,2));
  }catch(error){console.log(await page.locator('[role=alert]').allTextContents()); console.log(await page.locator('input[name=title],select[name=projectId],input[name=protocolIds]').evaluateAll(es=>es.map(e=>({name:(e as HTMLInputElement).name,form:(e as HTMLInputElement).form?.id,value:(e as HTMLInputElement).value}))));throw error;}finally{await browser.close();await prisma.$disconnect();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -80,8 +80,8 @@ async function main() {
  const browserExperiment=await create();
  const offlineBrowser=await create();
  await updateRunSystemSelection({...request,experimentId:offlineBrowser.id,versionId:version.id,expectedRevision:0});
- await mkdir('docs/structured-protocol/20261014/followup-evidence',{recursive:true});
- await writeFile('docs/structured-protocol/20261014/followup-evidence/groups-fixture.json',JSON.stringify({legacyExperimentId:legacyBrowser.id,copyExperimentId:copied.id,versionId:version.id,protocolId:protocol.id,experimentId:browserExperiment.id,offlineExperimentId:offlineBrowser.id,verifiedExperimentId:experiment.id,continuationId:continuation.id,planId:plan.id},null,2));
+ await mkdir('docs/modules/structured-protocol/20261014/followup-evidence',{recursive:true});
+ await writeFile('docs/modules/structured-protocol/20261014/followup-evidence/groups-fixture.json',JSON.stringify({legacyExperimentId:legacyBrowser.id,copyExperimentId:copied.id,versionId:version.id,protocolId:protocol.id,experimentId:browserExperiment.id,offlineExperimentId:offlineBrowser.id,verifiedExperimentId:experiment.id,continuationId:continuation.id,planId:plan.id},null,2));
  console.log('PASS shared preparation counted once; 50/80 group isolation; atomic explicit batch rollback; group export; recorded effects protected; continuation stays in selected group; prior actual values unchanged');
 }
 main().finally(()=>prisma.$disconnect());

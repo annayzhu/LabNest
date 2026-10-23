@@ -671,7 +671,7 @@ sequenceDiagram
 
 ## 19. Labguru 与 LabNest 当前模型映射
 
-当前 LabNest 的领域模型见 [Prisma schema](../prisma/schema.prisma)，产品原则见 [README](../README.md)，项目工作区方向见 [ADR-0001](architecture/ADR-0001-weaver-ecology-project-workspace-architecture.md)。
+当前 LabNest 的领域模型见 [Prisma schema](../../prisma/schema.prisma)，产品原则见 [README](../../README.md)，项目工作区方向见 [ADR-0001](ADR-0001-weaver-ecology-project-workspace-architecture.md)。
 
 | Labguru 概念 | LabNest 当前对象 | 对齐程度 | 主要问题或建议 |
 |---|---|---:|---|

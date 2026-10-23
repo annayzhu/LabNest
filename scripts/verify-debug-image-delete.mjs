@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFileSync,writeFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/debug-20260909/evidence/editor/fixtures.json'));const browser=await chromium.launch();const page=await browser.newPage();const records=[];
+const f=JSON.parse(readFileSync('docs/qa/history/debug-20260909/evidence/editor/fixtures.json'));const browser=await chromium.launch();const page=await browser.newPage();const records=[];
 try{
  for(const item of f.cases){
  await page.goto('http://localhost:3232'+item.edit);const body=page.locator('[contenteditable="true"]').first();await body.click();await page.keyboard.press('End');await page.keyboard.press('Enter');
@@ -13,5 +13,5 @@ try{
  assert.ok((await body.innerText()).includes('删除后继续中文'),`${item.name}: focus not restored to editor after delete`);
  records.push({entry:item.name,before,after});
  }
- writeFileSync('docs/debug-20260909/evidence/image-delete.json',JSON.stringify(records,null,2));
+ writeFileSync('docs/qa/history/debug-20260909/evidence/image-delete.json',JSON.stringify(records,null,2));
 }finally{await browser.close();}

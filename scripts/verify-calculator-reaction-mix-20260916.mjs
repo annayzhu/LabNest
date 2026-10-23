@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
-const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3221',dir='docs/calculator/reaction-mix-20260916/evidence';await mkdir(dir,{recursive:true});
+const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3221',dir='docs/modules/calculator/reaction-mix-20260916/evidence';await mkdir(dir,{recursive:true});
 const rows=[{name:'Master mix',volume:'5',premix:true},{name:'H2O',volume:'3.6',premix:true},{name:'GAPDH-F',volume:'0.2',premix:true},{name:'GAPDH-R',volume:'0.2',premix:true}];
 const fixture={reactionVolumeUl:9,overagePercent:10,groups:[{name:'G_mix',reactions:'24',rows}],__context:{wellIds:Array.from({length:24},(_,i)=>`synthetic-${i+1}`)}};
 const expected='独立配液组: 1\n各组预混总量（分别配制）: 237.6 µL\n\nG_mix: 预混液: 9 µL × 24\nMaster mix每反应: 5 µL; 预混; 整批: 132 µL;\nH2O每反应: 3.6 µL; 预混; 整批: 95.04 µL;\nGAPDH-F每反应: 0.2 µL; 预混; 整批: 5.28 µL;\nGAPDH-R每反应: 0.2 µL; 预混; 整批: 5.28 µL;';

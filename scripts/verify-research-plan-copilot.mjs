@@ -21,7 +21,7 @@ assert(["localhost", "127.0.0.1"].includes(new URL(base).hostname) && new URL(ba
 const literature = new URL(process.env.LABNEST_EUROPE_PMC_BASE ?? "");
 assert(literature.hostname === "127.0.0.1", "Europe PMC must be the local stand-in");
 const mockPort = Number(literature.port);
-const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/structured-protocol/20261014-redesign/copilot-evidence";
+const evidenceDir = process.env.AI_EVIDENCE_DIR ?? "docs/modules/structured-protocol/20261014-redesign/copilot-evidence";
 await mkdir(evidenceDir, { recursive: true });
 
 const token = "copilot-fake-token";

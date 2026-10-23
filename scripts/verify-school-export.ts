@@ -21,8 +21,8 @@ async function main(){
   const snapshot=response.headers()['x-export-snapshot'];assert.ok(snapshot);
   await prisma.procurementQuoteLine.update({where:{id:line.id},data:{amountExclTax:200}});
   assert.deepEqual(await (await api.get(base+'/purchases/school-template?snapshot='+snapshot)).body(),bytes);
-  writeFileSync('docs/stage-20260908/A/evidence/school-export.xlsx',bytes);
-  writeFileSync('docs/stage-20260908/A/evidence/school-export.json',JSON.stringify({checks:['Missing category/money rejected at export','XLSX parsed: product, quantity2, ex-tax100 and tax13 match','After price change, snapshot returns identical bytes']},null,2));
+  writeFileSync('docs/qa/history/stage-20260908/A/evidence/school-export.xlsx',bytes);
+  writeFileSync('docs/qa/history/stage-20260908/A/evidence/school-export.json',JSON.stringify({checks:['Missing category/money rejected at export','XLSX parsed: product, quantity2, ex-tax100 and tax13 match','After price change, snapshot returns identical bytes']},null,2));
  }finally{await api.dispose();await prisma.$disconnect();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

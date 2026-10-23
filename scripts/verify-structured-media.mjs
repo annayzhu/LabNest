@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
-const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338', dir = 'docs/structured-protocol/20261014/evidence';
+const base = process.env.LABNEST_E2E_BASE_URL ?? 'http://localhost:3338', dir = 'docs/modules/structured-protocol/20261014/evidence';
 assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname) && new URL(base).port !== '3001');
 const fixture = JSON.parse(await readFile(`${dir}/fixtures.json`, 'utf8'));
 const browser = await chromium.launch(), context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read','clipboard-write'] });

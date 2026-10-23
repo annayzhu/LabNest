@@ -9,7 +9,7 @@ assert(['labnest_ai_module_acceptance_20261014','labnest_ai_provider_acceptance_
 assert(['127.0.0.1','localhost'].includes(dbURL.hostname));
 assert.notEqual(new URL(base).port, '3001');
 const db = new pg.Client({ connectionString: dbURL.href });
-const dir = process.env.AI_MODULE_EVIDENCE_DIR ?? 'docs/ai/20261014/evidence';
+const dir = process.env.AI_MODULE_EVIDENCE_DIR ?? 'docs/modules/ai/20261014/evidence';
 await mkdir(dir, { recursive: true });
 const report = { synthetic: true, liveProvider: false, checks: [] };
 const call = async (path, data, method = 'POST') => fetch(base + path, {method, headers:{origin:base,'content-type':'application/json'}, body:JSON.stringify(data)});

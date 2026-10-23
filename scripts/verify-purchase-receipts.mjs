@@ -9,4 +9,4 @@ try{
  saved=await (await api.get('/api/purchases/'+purchase.id)).json();assert.equal(saved.status,'received');assert.equal(saved.invoiceStatus,'pending');assert.equal(saved.receipts.length,2);
  checks.push('Independent order: receive 2 without stock then 3 into new stock; replay is idempotent; invoice remains pending');
  r=await api.get('/api/purchases/export');assert.equal(r.status(),200);const csv=await r.text();assert.ok(csv.includes('420.00'));assert.ok(csv.includes(purchase.id));checks.push('Actual purchasing export includes actual amount and stable record ID');
-}finally{writeFileSync('docs/stage-20260908/A/evidence/purchases.json',JSON.stringify({checks},null,2));await api.dispose();}
+}finally{writeFileSync('docs/qa/history/stage-20260908/A/evidence/purchases.json',JSON.stringify({checks},null,2));await api.dispose();}

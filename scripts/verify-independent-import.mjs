@@ -8,4 +8,4 @@ try{
   const repeat=await api.post(`/api/structured-import/${module}/confirm`,{multipart:{file,checksum:preview.checksum,confirmationToken:preview.confirmationToken}});assert.notEqual(repeat.status(),201);
   checks.push(module+' imports without other modules or fabricated zero; identical file cannot import twice');
  }
-}finally{writeFileSync('docs/stage-20260908/A/evidence/imports.json',JSON.stringify({checks},null,2));await api.dispose();}
+}finally{writeFileSync('docs/qa/history/stage-20260908/A/evidence/imports.json',JSON.stringify({checks},null,2));await api.dispose();}

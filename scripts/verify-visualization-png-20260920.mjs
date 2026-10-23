@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const base = process.env.BASE_URL || 'http://localhost:32121/tools/visualization';
-const directory = 'docs/visualization/20260920/evidence/png';
+const directory = 'docs/modules/visualization/20260920/evidence/png';
 const names = ['柴染棕','橙绯红','淡藤萝紫','瓜瓤粉','蓝墨茶','棉絮灰','珊瑚朱','杏叶黄','中国红'];
 await mkdir(directory, { recursive: true });
 const browser = await chromium.launch();

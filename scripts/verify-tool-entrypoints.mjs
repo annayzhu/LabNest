@@ -10,7 +10,7 @@ const studio = process.env.LABNEST_STUDIO_TEST_URL || "http://127.0.0.1:3342/stu
 for (const url of [base, configuredBase, studio]) {
   assert(["127.0.0.1", "localhost"].includes(new URL(url).hostname), "Acceptance must use isolated local services");
 }
-const out = process.env.LABNEST_TOOL_EVIDENCE_DIR || "docs/tools-entrypoints-20261020/evidence";
+const out = process.env.LABNEST_TOOL_EVIDENCE_DIR || "docs/modules/tools-entrypoints-20261020/evidence";
 await mkdir(out, { recursive: true });
 const checks = [];
 const errors = [];

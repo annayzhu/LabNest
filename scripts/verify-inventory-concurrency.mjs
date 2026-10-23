@@ -1,6 +1,6 @@
 import {acceptanceBase} from './stage-acceptance-env.mjs';
 import {request} from 'playwright';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-const f=JSON.parse(readFileSync('docs/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:acceptanceBase});
+const f=JSON.parse(readFileSync('docs/qa/history/stage-20260908/A/run-fixture.json'));const api=await request.newContext({baseURL:acceptanceBase});
 try{
  for(let i=0;i<12;i++){
   const id=crypto.randomUUID();const endpoint=`/api/experiments/${f.experimentId}/materials`;const data={action:'save',id,name:'Synthetic concurrent material',actual:1,unit:'mL',source:'manual',inventoryItemId:f.inventoryItemId};

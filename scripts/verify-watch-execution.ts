@@ -7,7 +7,7 @@ import { createWatchPairing, claimWatchPairing, authorizeWatch, revokeWatchPairi
 const db=new URL(process.env.DATABASE_URL!);
 assert(['localhost','127.0.0.1'].includes(db.hostname)&&((db.port==='55439'&&db.pathname==='/labnest_structured_20261014')||(process.env.CI==='true'&&db.pathname==='/labnest_protocol_consistency_ci')));
 async function main(){
- const fixture=JSON.parse(await readFile('docs/structured-protocol/20261014/followup-evidence/groups-fixture.json','utf8'));
+ const fixture=JSON.parse(await readFile('docs/modules/structured-protocol/20261014/followup-evidence/groups-fixture.json','utf8'));
  const {code}=await createWatchPairing(fixture.verifiedExperimentId);
  const paired=await claimWatchPairing(code,randomUUID());
  assert.equal(paired.experimentId,fixture.verifiedExperimentId);

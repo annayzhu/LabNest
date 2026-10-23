@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3001';
 const phase=process.env.UI_PHASE??'before';
-const root=process.env.UI_EVIDENCE_DIR??'docs/calculator/ui-consistency-20261007/evidence';
+const root=process.env.UI_EVIDENCE_DIR??'docs/modules/calculator/ui-consistency-20261007/evidence';
 const dir=`${root}/${phase}`;
 await mkdir(dir,{recursive:true});
 const {catalog,aliases}=JSON.parse(execFileSync(process.execPath,['--require','tsx/cjs','-e',"const {getCalculatorCatalog}=require('./src/lib/calculators/catalog.ts');const {legacyTaskMap}=require('./src/lib/calculators/task-definitions.ts');console.log(JSON.stringify({catalog:getCalculatorCatalog(),aliases:legacyTaskMap}))"],{encoding:'utf8'}));

@@ -1,7 +1,7 @@
 import {convertLegacySteps,closeProperties} from './test-helpers/editor-controls.mjs';
 import {prepareCalculatorOffline} from './calculator-ui-test-helpers.mjs';
 import {chromium} from 'playwright';import {readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
-const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/calculator/v1.2/evidence';
+const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3221',dir='docs/modules/calculator/v1.2/evidence';
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1440,height:1000}});const p=await context.newPage();
 const report={checks:[],startedAt:new Date().toISOString()};
 try{

@@ -67,6 +67,6 @@ jobs:
           name: protocol-consistency-synthetic-evidence
           path: |
             docs/qa/protocol-consistency-20261007/evidence
-            docs/structured-protocol/20261014/evidence
-            docs/structured-protocol/20261014/followup-evidence
+            docs/modules/structured-protocol/20261014/evidence
+            docs/modules/structured-protocol/20261014/followup-evidence
             protocol-server.log

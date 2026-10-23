@@ -31,5 +31,5 @@ try {
   }
   const items = (await client.query('SELECT "managementMode","quantityRecorded" FROM "InventoryItem"')).rows;
   assert.ok(items.every(x => x.managementMode === 'precise' && x.quantityRecorded === true));
-  writeFileSync('docs/stage-20260908/A/evidence/legacy.json', JSON.stringify({ database: name, fixture: 'synthetic rows inserted into pre-A schema; no user records or actual attachment bytes', passed: tables, migrationCount: migrations.length, checks: ['Old IDs, quantities, transaction and experiment link, aliquot parent and attachment link unchanged', 'Legacy known quantities remain precise/recorded, not reset to unknown'] }, null, 2));
+  writeFileSync('docs/qa/history/stage-20260908/A/evidence/legacy.json', JSON.stringify({ database: name, fixture: 'synthetic rows inserted into pre-A schema; no user records or actual attachment bytes', passed: tables, migrationCount: migrations.length, checks: ['Old IDs, quantities, transaction and experiment link, aliquot parent and attachment link unchanged', 'Legacy known quantities remain precise/recorded, not reset to unknown'] }, null, 2));
 } finally { await client.end(); }

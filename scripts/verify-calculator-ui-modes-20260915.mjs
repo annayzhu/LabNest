@@ -2,8 +2,8 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {showCalculatorResult} from './calculator-ui-test-helpers.mjs';
-const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240';const out=process.env.CALCULATOR_MODE_EVIDENCE_DIR||'docs/calculator/ui-20260915/evidence/modes';await mkdir(out,{recursive:true});
-const cases=JSON.parse(await readFile('docs/calculator/ui-20260915/evidence/mode-cases.json','utf8'));const browser=await chromium.launch(),page=await browser.newPage({viewport:{width:390,height:844}}),checks=[];
+const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240';const out=process.env.CALCULATOR_MODE_EVIDENCE_DIR||'docs/modules/calculator/ui-20260915/evidence/modes';await mkdir(out,{recursive:true});
+const cases=JSON.parse(await readFile('docs/modules/calculator/ui-20260915/evidence/mode-cases.json','utf8'));const browser=await chromium.launch(),page=await browser.newPage({viewport:{width:390,height:844}}),checks=[];
 try{for(const item of cases){
  // The historical synthetic fixtures predate explicit unit metadata. Supply their
  // documented units; do not bypass the protection for ambiguous real legacy drafts.

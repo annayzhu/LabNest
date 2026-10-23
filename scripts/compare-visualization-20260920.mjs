@@ -1,7 +1,7 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-const dir='docs/visualization/20260920/evidence';
+const dir='docs/modules/visualization/20260920/evidence';
 const plots=['bar','scatter','heatmap','heatmap-sequential'];
 const names=['柴染棕','橙绯红','淡藤萝紫','瓜瓤粉','蓝墨茶','棉絮灰','珊瑚朱','杏叶黄','中国红'];
 const changed=['categoricalColors','continuousLow','continuousHigh','divergingLow','divergingMid','divergingHigh','barBorderColor'];

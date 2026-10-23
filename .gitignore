@@ -26,6 +26,9 @@
 /output
 /outputs
 
+# Local file inventory contains private working paths; publish the summary only.
+/docs/operations/docs-organization-20261022/inventory-before.json
+
 # local assistant settings
 /.claude
 /.codex
@@ -58,4 +61,4 @@ docs/qa/evidence/entry-richtext/**/*.zip
 
 # Isolated release build and browser traces (CI publishes full traces).
 /.next-*/
-docs/structured-protocol/20261014/evidence/*.zip
+docs/modules/structured-protocol/20261014/evidence/*.zip

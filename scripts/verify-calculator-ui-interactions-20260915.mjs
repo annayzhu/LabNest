@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3240';
-const out='docs/calculator/ui-20260915/evidence/interactions';await mkdir(out,{recursive:true});
+const out='docs/modules/calculator/ui-20260915/evidence/interactions';await mkdir(out,{recursive:true});
 const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1366,height:768}});const checks=[];
 async function check(name,fn){await fn();checks.push({name,status:'passed'});console.log('passed',name);}
 async function example(id){await page.goto(`${base}/tools/calculator/${id}`);await page.getByRole('button',{name:'Load example',exact:true}).click();}

@@ -6,7 +6,7 @@ import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import readXlsxFile from 'read-excel-file/node';
 import {csvRows} from './calculator-csv-read.mjs';
-const dir='docs/calculator/v1.3/evidence',base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3223';await mkdir(dir,{recursive:true});
+const dir='docs/modules/calculator/v1.3/evidence',base=process.env.LABNEST_E2E_BASE_URL||'http://localhost:3223';await mkdir(dir,{recursive:true});
 const browser=await chromium.launch(),context=await browser.newContext({permissions:['clipboard-read','clipboard-write']}),p=await context.newPage();p.setDefaultTimeout(15000);
 const report={sha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),at:new Date().toISOString(),base,browser:browser.version(),checks:[],layouts:[],tools:[],unexecuted:['Real phone keyboard','Real phone zoom 100/160%','Laboratory user trials']};
 const check=(id,detail)=>report.checks.push({id,status:'passed',detail});

@@ -33,5 +33,5 @@ try {
   }
 } finally {
   await browser.close();
-  await writeFile('docs/calculator/v1.3/evidence/performance-image.json', JSON.stringify(report, null, 2));
+  await writeFile('docs/modules/calculator/v1.3/evidence/performance-image.json', JSON.stringify(report, null, 2));
 }

@@ -1,7 +1,7 @@
 import {closeProperties} from './test-helpers/editor-controls.mjs';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import {readFile,writeFile} from 'node:fs/promises';import os from 'node:os';
-const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3341',out='docs/structured-protocol/20261014/followup-evidence';assert(['localhost','127.0.0.1'].includes(new URL(base).hostname)&&new URL(base).port!=='3001');
-const f=JSON.parse(await readFile('docs/structured-protocol/20261014/evidence/fixtures.json','utf8')),browser=await chromium.launch(),context=await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']}),page=await context.newPage();page.setDefaultTimeout(20000);
+const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3341',out='docs/modules/structured-protocol/20261014/followup-evidence';assert(['localhost','127.0.0.1'].includes(new URL(base).hostname)&&new URL(base).port!=='3001');
+const f=JSON.parse(await readFile('docs/modules/structured-protocol/20261014/evidence/fixtures.json','utf8')),browser=await chromium.launch(),context=await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']}),page=await context.newPage();page.setDefaultTimeout(20000);
 const report={browser:browser.version(),platform:os.platform(),arch:os.arch(),cpu:os.cpus()[0].model,synthetic:true,checks:[]};const read=async()=>JSON.parse(await page.locator('input[name=contentJson]').inputValue());
 try{
  await page.goto(`${base}/protocols/${f.protocolId}/versions/${f.versionId}/edit`,{waitUntil:'networkidle'});const before=await read();report.bytes=JSON.stringify(before).length;report.images=before.sections.flatMap(s=>s.blocks).filter(b=>b.type==='media').length;report.backgroundBlocks=before.sections.find(s=>s.key==='background').blocks.length;assert(report.bytes>16000&&report.images>=4);

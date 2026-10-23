@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3338';
 assert(['localhost','127.0.0.1'].includes(new URL(base).hostname)&&new URL(base).port!=='3001');
-const out='docs/structured-protocol/20261014/followup-evidence'; await mkdir(out,{recursive:true});
+const out='docs/modules/structured-protocol/20261014/followup-evidence'; await mkdir(out,{recursive:true});
 const f=JSON.parse(await readFile(`${out}/groups-fixture.json`,'utf8'));
 const browser=await chromium.launch(),context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
 await context.addCookies([{name:'labnest_locale',value:'zh',url:base}]);

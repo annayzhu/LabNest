@@ -12,7 +12,7 @@
 | 左侧导航没有独立设备入口 | [Sidebar.tsx:40](../../../src/components/Sidebar.tsx:40) | 必须先新建实验才是合理的产品限制 |
 | localhost 场景从 localStorage 读取手填地址 | [FieldDevices.tsx:29](../../../src/components/FieldDevices.tsx:29) | 浏览器已经自动找到了手机可用的地址 |
 | 地址函数只验证 URL 格式 | [field-mode.ts:10](../../../src/lib/field-mode.ts:10) | 地址可访问，或访问到的是原来的 LabNest |
-| 默认主机端口映射为 3001:3000 | [docker-compose.yml:37](../../../docker-compose.yml:37) | 容器网卡地址、容器 3000 端口可直接给手机使用；实际部署端口仍需运行时核对 |
+| 默认主机端口映射为 3001:3000 | [docker-compose.yml:45](../../../docker-compose.yml:45) | 容器网卡地址、容器 3000 端口可直接给手机使用；实际部署端口仍需运行时核对 |
 | 手机二维码是实验网页链接 | [FieldDevices.tsx:62](../../../src/components/FieldDevices.tsx:62)；[field-mode.ts:23](../../../src/lib/field-mode.ts:23) | 手机已经取得可撤销的设备身份 |
 | Watch 使用一次码和 bearer grant | [watch-execution.server.ts:26](../../../src/lib/watch-execution.server.ts:26) | grant 可直接扩大为永久的整个数据库访问权限 |
 | 一次码 10 分钟；grant 30 天；grant 绑定一个实验 | [watch-execution.server.ts:56](../../../src/lib/watch-execution.server.ts:56) | 短暂断网一定会删除配对关系 |
@@ -26,6 +26,8 @@
 | Watch 离线计时控制受限，地址变化要求重新配对 | [WatchModel.swift:79](../../../native/LabNestWatch/WatchModel.swift:79)；[WatchModel.swift:147](../../../native/LabNestWatch/WatchModel.swift:147) | 所有失败都来自 Wi-Fi 不稳定 |
 | WatchConnectivity 目前只转发配对消息 | [PhoneConnection.swift:31](../../../native/LabNestMobile/PhoneConnection.swift:31)；[WatchPhoneReceiver.swift:17](../../../native/LabNestWatch/WatchPhoneReceiver.swift:17) | iPhone 已经替手表转发业务请求 |
 | iPhone 与 Watch 已有本地通知相关代码 | [TimerCenter.swift:5](../../../native/LabNestMobile/TimerCenter.swift:5)；[WatchModel.swift:190](../../../native/LabNestWatch/WatchModel.swift:190) | 真机锁屏、系统限制、取消提醒传播已全部验收 |
+| LabNest 没有登录：仓库中没有 `proxy`/`middleware` 请求拦截文件，3001 监听所有网卡（运行中容器为 `0.0.0.0:3001`），同一 Wi-Fi 上的设备都能读写 | [docker-compose.yml:45](../../../docker-compose.yml:45) | 加了私有通道就等于有了权限控制；P0 仍须交付全路由登录 |
+| 离线业务规则在 TypeScript：体系与条件解析、规程文档、执行步骤内容、执行计划，以及计算器引擎 | [structured-protocol.ts](../../../src/lib/structured-protocol.ts)、[protocol-document.ts](../../../src/lib/protocol-document.ts)、[run-step-content.ts](../../../src/lib/run-step-content.ts)、[structured-run.ts](../../../src/lib/structured-run.ts)、[calculator-engine.ts](../../../src/lib/calculators/calculator-engine.ts)；测试 [structured-protocol.test.ts:69](../../../src/lib/structured-protocol.test.ts:69) | 这些规则可以不经改造直接在手机离线运行；路线 A/B 的取舍由 M0 判定 |
 | 当前没有完整 User／Workspace／Membership 模型 | [schema.prisma](../../../prisma/schema.prisma)；[固定 actor:189](../../../src/lib/mobile-mutation-queue.ts:189) | 已支持可靠的多人身份、权限隔离或公开部署 |
 
 ## 2. 可复用的现有积累
@@ -43,9 +45,9 @@
 | 历史决定 | 本轮处理 |
 |---|---|
 | Q103 首先 Apple 设备 | 用户 Q4 再次确认，保留 |
-| Q104／Q116 首先远程网页容器，以后逐块原生化 | 本轮要求独立离线与大部分功能，必须扩展数据层；单纯网页容器不能作为最终验收 |
-| Q106 Tailscale 固定私有 HTTPS | 作为手机跨隔离 Wi-Fi 的优先验证路径；需机构允许及 Mac/iPhone 配置，不宣称已可用 |
-| Q107 暂无账号 | 被本轮确认替代：账号、工作区与全路径后端授权进入 P1，不再新建无账号试用流程；仍不默认公开服务 |
+| Q104／Q116 首先远程网页容器，以后逐块原生化 | 本轮要求独立离线与大部分功能，必须扩展数据层；单纯远程网页容器不能作为最终验收。v1.2：页面与规则的实现方式在 M0 比较 A（App 内打包的 Web 客户端，复用 TypeScript）与 B（原生），倾向 A；这不是远程网页容器 |
+| Q106 Tailscale 固定私有 HTTPS | 作为手机跨隔离 Wi-Fi 的优先验证路径；需机构允许及 Mac/iPhone 配置，不宣称已可用。v1.2：作为 P0 先交付 |
+| Q107 暂无账号 | 被本轮确认替代：账号、工作区与全路径后端授权进入 P1，不再新建无账号试用流程；仍不默认公开服务。v1.2：单人登录与全路由登录要求在 P0 交付；P1 为单一默认工作区，多工作区在 W 阶段 |
 | Q108 Mac 继续作为服务器 | 用户 Q1 确认本地优先；未来可以迁到常开服务器，不引入第二套业务数据源 |
 | Q109 Watch 直接连服务器，必要时才手机转发 | 本轮确认默认手机持久转发，同网也如此；无 Watch 蜂窝为必测；旧直连仅受保护兼容，源码尚未因此改变 |
 | Q112–Q115 手机交互规则 | 尽量继承，不在本批顺带重做整体 UI |
@@ -57,6 +59,7 @@
 - 账号纳入第一阶段；旧 Q8 的无账号先行安排被明确替代。身份、设备、网络与离线同步是同一产品的不同职责。
 - P1 联合交付任务书一的接入/权限与任务书二 M0–M1 的核心离线链路；P2 扩展全部主要模块。源码事实表不是已完成清单。
 - v1.1 修订前 fetch 后本地 HEAD 与 origin/main 为同一提交，ahead/behind 0/0；未核对本次运行服务或真机状态，不把源码同步当作功能上线。
+- v1.2（同日晚）：用户确认增加 P0 跨网快路、P1 改为单一工作区、M0 先定离线路线（倾向复用 TypeScript）、写明各阶段可用成果并设 M0 决策关卡。修订前 fetch 核对本地 main 与 origin/main 为 `7e5e88cc`，ahead/behind 0/0；本表新增两行事实于此时核对。
 
 ## 5. 官方资料核验
 

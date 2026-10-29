@@ -39,11 +39,21 @@ export function formatEntryDetailTimestamp(value: string | Date, locale: AppLoca
     : format(date, "EEEE, MMMM d, yyyy · HH:mm", { locale: dateLocale(locale) });
 }
 
+/** An explicit experiment date drives the journal; creation stays in the audit history. */
+export function entryTimelineTimestamp(entry: Pick<Entry, "occurredAt" | "createdAt" | "eventTimePrecision">) {
+  return entry.eventTimePrecision === "date" || entry.eventTimePrecision === "datetime"
+    ? entry.occurredAt
+    : entry.createdAt ?? entry.occurredAt;
+}
+
 export function groupEntriesByMonth(entries: Entry[], locale: AppLocale = "en"): EntryMonthGroup[] {
   const groups = new Map<string, EntryMonthGroup>();
+  const chronologicalEntries = [...entries].sort((left, right) =>
+    new Date(entryTimelineTimestamp(right)).getTime() - new Date(entryTimelineTimestamp(left)).getTime(),
+  );
 
-  entries.forEach((entry) => {
-    const occurredAt = new Date(entry.createdAt ?? entry.occurredAt);
+  chronologicalEntries.forEach((entry) => {
+    const occurredAt = new Date(entryTimelineTimestamp(entry));
     const key = format(occurredAt, "yyyy-MM");
     const existing = groups.get(key);
 

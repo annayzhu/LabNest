@@ -1,7 +1,7 @@
 import { ArrowUpRight, Link2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import type { Entry } from "@/lib/types";
-import { formatEntryCardTimestamp, type EntryCardLayout } from "@/lib/entry-timeline";
+import { entryTimelineTimestamp, formatEntryCardTimestamp, type EntryCardLayout } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import type { AppLocale } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
@@ -15,6 +15,7 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
   const visibleTagCount = featured ? 5 : 3;
   const visibleTags = entry.tags.slice(0, visibleTagCount);
   const remainingTagCount = entry.tags.length - visibleTags.length;
+  const timelineTimestamp = entryTimelineTimestamp(entry);
 
   return (
     <article className={cn(
@@ -25,8 +26,8 @@ export function EntryCard({ entry, locale = "en", layout = "standard" }: { entry
       <div className={cn("flex flex-1 flex-col", featured ? "p-5 sm:p-6" : "p-4 sm:p-5")}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <time className="font-mono text-xs text-muted" dateTime={entry.createdAt ?? entry.occurredAt}>
-              {formatEntryCardTimestamp(entry.createdAt ?? entry.occurredAt, locale)}
+            <time className="font-mono text-xs text-muted" dateTime={timelineTimestamp}>
+              {formatEntryCardTimestamp(timelineTimestamp, locale)}
             </time>
             <h3 className={cn("mt-2 line-clamp-2 font-semibold leading-snug tracking-[-0.02em] text-ink", featured ? "text-xl sm:text-2xl" : "text-base")}>
               <Link href={entryHref} className="focus-ring rounded-[var(--ln-radius-control-sm)] transition hover:text-moss">

@@ -46,4 +46,41 @@ describe("entry timeline", () => {
 
     expect(summarizeProjectCollections(entries)).toEqual([{ id: "p1", name: "Alpha", count: 2 }]);
   });
+
+  it("places an explicitly dated experiment in its experiment month", () => {
+    const record = entry({
+      id: "historical",
+      createdAt: "2026-10-29T07:00:00.000Z",
+      occurredAt: "2025-06-22T12:00:00.000Z",
+      eventTimePrecision: "datetime",
+    });
+
+    expect(groupEntriesByMonth([record])[0].key).toBe("2025-06");
+    expect(record.createdAt).toBe("2026-10-29T07:00:00.000Z");
+  });
+
+  it("sorts months and entries by experiment date without mutating the input", () => {
+    const records = [
+      entry({ id: "june", createdAt: "2026-10-29T07:00:00.000Z", occurredAt: "2025-06-22T12:00:00.000Z", eventTimePrecision: "date" }),
+      entry({ id: "july-older", createdAt: "2026-10-29T06:00:00.000Z", occurredAt: "2026-07-06T12:00:00.000Z", eventTimePrecision: "datetime" }),
+      entry({ id: "july-newer", createdAt: "2026-10-28T06:00:00.000Z", occurredAt: "2026-07-09T12:00:00.000Z", eventTimePrecision: "datetime" }),
+    ];
+
+    const groups = groupEntriesByMonth(records);
+
+    expect(groups.map(group => group.key)).toEqual(["2026-07", "2025-06"]);
+    expect(groups[0].entries.map(item => item.id)).toEqual(["july-newer", "july-older"]);
+    expect(records.map(item => item.id)).toEqual(["june", "july-older", "july-newer"]);
+  });
+
+  it("uses creation time when the experiment date is explicitly unknown", () => {
+    const record = entry({
+      id: "unknown",
+      createdAt: "2026-10-29T07:00:00.000Z",
+      occurredAt: "2025-06-22T12:00:00.000Z",
+      eventTimePrecision: "unknown",
+    });
+
+    expect(groupEntriesByMonth([record])[0].key).toBe("2026-10");
+  });
 });

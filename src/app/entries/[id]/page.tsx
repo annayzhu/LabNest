@@ -20,7 +20,7 @@ import { RecordLifecycleControl } from "@/components/RecordLifecycleControl";
 import { RecordStatusControl } from "@/components/RecordStatusControl";
 import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
 import { getEntryDetailRecord } from "@/lib/entries";
-import { formatEntryDetailTimestamp } from "@/lib/entry-timeline";
+import { entryTimelineTimestamp, formatEntryDetailTimestamp } from "@/lib/entry-timeline";
 import { filterHref } from "@/lib/filters";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { collectDocumentMedia, documentMediaAttachmentId } from "@/lib/document-media";
@@ -59,6 +59,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
   const locale = resolveAppLocale((await cookies()).get(localeCookieName)?.value);
   const entry = await getEntryDetailRecord(id);
   if (!entry) notFound();
+  const timelineTimestamp = entryTimelineTimestamp(entry);
 
   const inlineIds = new Set(collectDocumentMedia(entry.contentMarkdown).map(documentMediaAttachmentId));
   const imageAttachments = entry.attachments.filter((attachment) => attachment.mimeType.startsWith("image/") && !inlineIds.has(attachment.id));
@@ -80,7 +81,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          eyebrow={formatEntryDetailTimestamp(entry.createdAt ?? entry.occurredAt, locale)}
+          eyebrow={formatEntryDetailTimestamp(timelineTimestamp, locale)}
           title={entry.title}
           description="A journal entry remains a lightweight source record until its observations or decisions are reviewed and formalized elsewhere."
           actions={<div className="flex flex-wrap gap-2">
@@ -103,7 +104,7 @@ export default async function EntryDetailPage({ params, searchParams }: { params
             <DocumentOutlineWorkbench items={[{ id: "entry-preview-content", label: "Record content" }]} className="document-preview-workbench">
             <DocumentCanvas label={entry.title}>
               <header id="entry-preview-content" className="mb-8 border-b border-hairline pb-6">
-                <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(entry.createdAt ?? entry.occurredAt), "yyyy-MM-dd HH:mm")}</p>
+                <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted">Entry · {format(new Date(timelineTimestamp), "yyyy-MM-dd HH:mm")}</p>
                 <h1 className="document-page-title mt-2 font-serif font-medium leading-tight text-ink">{entry.title}</h1>
               </header>
               <EntryContentView markdown={entry.contentMarkdown ?? entry.body} />

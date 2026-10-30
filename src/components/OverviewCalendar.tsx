@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { CalendarExportButton } from "@/components/CalendarExportButton";
 import { useI18n } from "@/components/I18nProvider";
 import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -91,6 +92,7 @@ export function OverviewCalendar({
               >
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </Link>
+              <CalendarExportButton scope={`month=${monthKey}`} iconOnly />
               <Link
                 href="/?view=calendar"
                 className="focus-ring ml-1 hidden h-8 items-center rounded-[var(--ln-radius-control-md)] border border-hairline px-2.5 text-xs text-moss transition hover:border-border-strong hover:bg-warm sm:inline-flex"

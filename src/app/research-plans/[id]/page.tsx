@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ControlKeyInformationForm } from "@/components/ControlKeyInformationForm";
+import { CalendarExportButton } from "@/components/CalendarExportButton";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
@@ -59,7 +60,7 @@ export default async function ResearchPlanDetailPage({ params, searchParams }: {
   const planIsEmpty = !plan.objective?.trim() && !plan.hypothesis?.trim() && document.sections.every((section) => !section.blocks.length);
   return (
     <AppShell><div className="space-y-6">
-      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<>{recycledKeys.has(`research_plan:${plan.id}`) ? <><Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link><DocumentPrintButton showLabel /></> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><PageActionsMenu><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></PageActionsMenu></>}</>} />
+      <PageHeader identifier={plan.code ?? undefined} eyebrow={plan.project.name} title={plan.title} actions={<>{recycledKeys.has(`research_plan:${plan.id}`) ? <><Link href="/trash" className={primaryButton}>Restore from Recycle Bin</Link><DocumentPrintButton showLabel /></> : <><Link href={`/experiments/new?plan=${plan.id}`} className={primaryButton}>New Experiment</Link><Link href={`/research-plans/${plan.id}/edit`} className={secondaryButton}>Edit plan</Link><PageActionsMenu><CalendarExportButton scope={`plan=${plan.id}`} /><DocumentPrintButton showLabel /><RecordLifecycleControl menuItem id={plan.id} identifier={plan.code} title={plan.title} recordLabel="Research Plan" recordLabelZh="研究方案" blockers={deletionBlockers} archived={plan.status === "archived"} deleteAction={deleteResearchPlan} archiveAction={archiveResearchPlan} editHref={`/research-plans/${plan.id}/edit`} allowLinkedRecycle /></PageActionsMenu></>}</>} />
       {recycledKeys.has(`research_plan:${plan.id}`) ? <RecycleBinWarning kind="self" label="Research Plan" labelZh="研究方案" /> : null}
       {recycledRecords.some((row) => row.targetType !== "research_plan") ? <RecycleBinWarning label="record" labelZh="记录" /> : null}
       <div className="document-preview-layout">

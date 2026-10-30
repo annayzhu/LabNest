@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, X } from 'lucide-react';
-import { compatibleUnits, normalizeUnit, parseScalar, units } from '@/lib/calculators/quantities';
-import { chipAmount, chipKindForUnit, chipKindLabels, optionMarks, splitLookupSource, toolSpecs, type OptionMark } from '@/lib/protocol-chips';
+import { compatibleUnits, convert, normalizeUnit, parseScalar, units } from '@/lib/calculators/quantities';
+import { chipAmount, chipKindForUnit, chipKindLabels, isMaterialAmount, optionMarks, splitLookupSource, toolSpecs, filledAtRun, withinRange, type OptionMark } from '@/lib/protocol-chips';
 import { computedTogether, protocolCalculations, siblingResult, type CalculationInput } from '@/lib/protocol-calculations';
 import { parameterNameText, protocolLabelText } from '@/lib/protocol-label-text';
 import { systemLabelText } from '@/lib/protocol-conditions';
@@ -133,12 +133,41 @@ function CalculationEditor({ parameter, systems, onChange, onInsert }: { paramet
   </div>;
 }
 
+/**
+ * 原文范围 under the adopted value: the source's two ends, a one-tap pick of either end, and "not a range". Without an adopted
+ * value the run asks for one at the step.
+ */
+function RangeEditor({ parameter, onChange }: { parameter: Parameter & { range: NonNullable<Parameter['range']> }; onChange: (next: Parameter) => void }) {
+  const { range, source } = parameter;
+  if (source.kind !== 'fixed') return null;
+  const setEnd = (end: 'min' | 'max', value: number | null) => { if (value !== null) onChange({ ...parameter, range: { ...range, [end]: { ...range[end], value } } }); };
+  const pick = (end: { value: number; unit: string }) => { try { onChange({ ...parameter, source: { ...source, value: Number(convert(end.value, end.unit, parameter.unit).toPrecision(6)) } }); } catch { /* units that cannot convert are not offered */ } };
+  const outside = source.value !== null && !withinRange(source.value, source.unit, range);
+  const sameUnit = normalizeUnit(range.min.unit) === normalizeUnit(range.max.unit);
+  return <div className="ln-chip-range" role="group" aria-label="Source range">
+    <div className="ln-chip-row is-range">
+      <span className="ln-chip-field-label">Source range</span>
+      <NumberField label="Range from" value={range.min.value} onChange={value => setEnd('min', value)} />
+      {sameUnit ? null : <span className="ln-chip-note">{range.min.unit}</span>}
+      <span aria-hidden>–</span>
+      <NumberField label="Range to" value={range.max.value} onChange={value => setEnd('max', value)} />
+      <span className="ln-chip-note">{range.max.unit}</span>
+    </div>
+    <span className="ln-chip-more">{[range.min, range.max].map((end, index) => <button key={index} type="button" className="focus-ring ln-chip-link" onClick={() => pick(end)}>{`Adopt ${chipAmount(end.value, end.unit)}`}</button>)}<button type="button" className="focus-ring ln-chip-link" onClick={() => onChange({ ...parameter, range: undefined })}>Not a range</button></span>
+    {source.value === null ? <p className="ln-chip-note">Adopt one value for this Protocol. Until then it is filled in at the step during the run.</p> : outside ? <p role="alert" className="ln-chip-error">Outside the source range</p> : null}
+  </div>;
+}
+
 function ValueEditor({ parameter, systems, onChange, autoFocus }: { parameter: Parameter; systems: ProtocolSystems; onChange: (next: Parameter) => void; autoFocus?: boolean }) {
   const { locale } = useI18n();
   const marks = optionMarks(systems);
   const { source } = parameter;
   const setUnit = (unit: string) => onChange({ ...parameter, unit, source: source.kind === 'fixed' ? { ...source, unit } : source.kind === 'lookup' ? { ...source, values: source.values.map(v => ({ ...v, unit })) } : source });
-  if (source.kind === 'fixed') return <div className="ln-chip-row"><NumberField label="Numeric value" value={source.value} autoFocus={autoFocus} onChange={value => onChange({ ...parameter, source: { ...source, value } })} /><UnitField unit={parameter.unit} onChange={setUnit} /></div>;
+  if (source.kind === 'fixed') return <>
+    <div className="ln-chip-row">{parameter.range ? <span className="ln-chip-field-label">Adopted value</span> : null}<NumberField label={parameter.range ? 'Adopted value' : 'Numeric value'} value={source.value} autoFocus={autoFocus} onChange={value => onChange({ ...parameter, source: { ...source, value } })} /><UnitField unit={parameter.unit} onChange={setUnit} /></div>
+    {parameter.range ? <RangeEditor parameter={{ ...parameter, range: parameter.range }} onChange={onChange} />
+      : parameter.ownerToolId ? null : <button type="button" className="focus-ring ln-chip-link is-add" onClick={() => onChange({ ...parameter, range: { min: { value: source.value ?? 0, unit: parameter.unit }, max: { value: source.value ?? 0, unit: parameter.unit } } })}>＋ Source range</button>}
+  </>;
   if (source.kind === 'actual') return <div className="ln-chip-row"><span className="ln-chip-note">The actual value is recorded in the experiment at run time</span><UnitField unit={parameter.unit} onChange={setUnit} /></div>;
   if (source.kind === 'calculator') return null; // Calculation chips have their own editor.
   const shape = lookupShape(source.values);
@@ -173,17 +202,43 @@ function SourceChoice({ parameter, systems, onChange }: { parameter: Parameter; 
   </div>;
 }
 
-function NameField({ parameter, onChange }: { parameter: Parameter; onChange: (next: Parameter) => void }) {
-  const { materials } = useProtocolEditor();
-  const [open, setOpen] = useState(false);
+/** A unit for an amount drawn from a stock item kept in `unit`: the chip's own when they measure the same thing. */
+function stockAmountUnit(chipUnit: string, stockUnit: string) {
+  const dimension = units[normalizeUnit(stockUnit)]?.dimension;
+  if (!dimension || !['volume', 'mass', 'amount'].includes(dimension) || units[normalizeUnit(chipUnit)]?.dimension === dimension) return chipUnit;
+  return dimension === 'volume' ? 'µL' : dimension === 'mass' ? 'mg' : normalizeUnit(stockUnit);
+}
+
+/**
+ * The chip's name: a row of the materials table, or a stock item (linked so the run deducts that item). Typing another
+ * name drops the link. `stock`: opened from "/库存物料", so it searches stock first.
+ */
+function NameField({ parameter, onChange, stock }: { parameter: Parameter; onChange: (next: Parameter) => void; stock?: boolean }) {
+  const { materials, inventory, addMaterial } = useProtocolEditor();
+  const [open, setOpen] = useState(Boolean(stock));
   const query = parameter.label.trim().toLowerCase();
-  const matches = materials.filter(m => !query || m.name.toLowerCase().includes(query)).slice(0, 6);
+  const matches = (stock ? [] : materials.filter(m => !query || m.name.toLowerCase().includes(query))).slice(0, 6);
+  const stockMatches = inventory.filter(item => !query || item.name.toLowerCase().includes(query)).slice(0, stock ? 8 : 4);
+  const linked = parameter.materialRef?.inventoryItemId ? inventory.find(item => item.id === parameter.materialRef!.inventoryItemId) : undefined;
+  const link = (item: typeof inventory[number]) => {
+    const rowId = materials.find(m => m.name === item.name)?.rowId ?? addMaterial(item.name);
+    const unit = stockAmountUnit(parameter.unit, item.unit);
+    onChange({ ...parameter, label: item.name, unit, kind: chipKindForUnit(unit), source: parameter.source.kind === 'fixed' ? { ...parameter.source, unit } : parameter.source, materialRef: { name: item.name, inventoryItemId: item.id, ...(rowId ? { rowId } : {}) } });
+    setOpen(false);
+  };
   return <span className="ln-chip-name">
-    <input aria-label="Name (optional)" placeholder={parameter.materialRef?.name ?? 'Name (optional), such as Proteinase K'} className="ln-chip-input is-name" value={parameter.label}
+    <input aria-label={stock ? 'Search stock' : 'Name (optional)'} placeholder={stock ? 'Search stock by name' : parameter.materialRef?.name ?? 'Name (optional), such as Proteinase K'} className="ln-chip-input is-name" value={parameter.label} autoFocus={stock}
       onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 120)}
       onChange={event => { const label = event.target.value; const material = materials.find(m => m.name === label.trim()); onChange({ ...parameter, label, ...(material ? { materialRef: { name: material.name, ...(material.rowId ? { rowId: material.rowId } : {}) } } : { materialRef: undefined }) }); }} />
-    {parameter.materialRef ? <small className="ln-chip-hint">Linked to the materials table</small> : null}
-    {open && matches.length ? <span className="ln-chip-suggestions is-names" role="listbox" aria-label="Materials table">{matches.map(material => <button className="focus-ring" key={`${material.name}:${material.rowId}`} type="button" role="option" aria-selected={parameter.materialRef?.name === material.name} onMouseDown={event => event.preventDefault()} onClick={() => { onChange({ ...parameter, label: material.name, materialRef: { name: material.name, ...(material.rowId ? { rowId: material.rowId } : {}) } }); setOpen(false); }}>{material.name}</button>)}</span> : null}
+    {parameter.materialRef?.inventoryItemId ? <small className="ln-chip-hint">{linked ? `Deducted from stock: ${linked.name}${linked.lotNumber ? ` · ${linked.lotNumber}` : ''}` : 'The linked stock item is no longer active; matched by name at the run'}
+      {linked && !isMaterialAmount(linked.unit) ? <span className="ln-chip-error is-inline">{`Stock is counted in ${linked.unit}, so it is not deducted automatically`}</span> : null}
+      <button type="button" className="focus-ring ln-chip-link" onClick={() => onChange({ ...parameter, materialRef: { name: parameter.materialRef!.name, ...(parameter.materialRef!.rowId ? { rowId: parameter.materialRef!.rowId } : {}) } })}>Unlink stock</button></small>
+      : parameter.materialRef ? <small className="ln-chip-hint">Linked to the materials table</small> : null}
+    {open && (matches.length || stockMatches.length) ? <span className="ln-chip-suggestions is-names" role="listbox" aria-label={stock ? 'Stock' : 'Materials table and stock'}>
+      {matches.map(material => <button className="focus-ring" key={`${material.name}:${material.rowId}`} type="button" role="option" aria-selected={parameter.materialRef?.name === material.name && !parameter.materialRef.inventoryItemId} onMouseDown={event => event.preventDefault()} onClick={() => { onChange({ ...parameter, label: material.name, materialRef: { name: material.name, ...(material.rowId ? { rowId: material.rowId } : {}) } }); setOpen(false); }}>{material.name}</button>)}
+      {stockMatches.map(item => <button className="focus-ring" key={item.id} type="button" role="option" aria-selected={parameter.materialRef?.inventoryItemId === item.id} onMouseDown={event => event.preventDefault()} onClick={() => link(item)}><span>{item.name}</span><small className="ln-chip-hint"><span className="ln-chip-stock-tag">Stock</span>{`${item.lotNumber ? `${item.lotNumber} · ` : ''}${item.unit}`}</small></button>)}
+    </span> : null}
+    {open && stock && !stockMatches.length ? <span className="ln-chip-suggestions is-names" role="status"><small className="ln-chip-hint">{inventory.length ? 'No active stock item has this name' : 'No active stock items yet'}</small></span> : null}
   </span>;
 }
 
@@ -221,10 +276,12 @@ export function ChipPopover({ target, onDelete, onClose }: ChipPopoverProps) {
   // Inserting a chip settles the editor's selection, which can pull focus back into the text for a moment.
   // Keep the value field focused while that settles, unless the author has moved within the panel.
   useEffect(() => {
-    if (target.focus !== 'value') return;
+    if (!target.focus) return;
+    // From "/库存物料" the stock search takes the caret; otherwise the first value field.
+    const selector = target.focus === 'stock' ? 'input.is-name' : 'input.is-number';
     let checks = 0;
     const timer = window.setInterval(() => {
-      const field = panel.current?.querySelector<HTMLInputElement>('input.is-number'), active = document.activeElement;
+      const field = panel.current?.querySelector<HTMLInputElement>(selector), active = document.activeElement;
       if (field && (!active || active === document.body || active.closest('.ProseMirror'))) field.focus({ preventScroll: true });
       if (++checks >= 6) window.clearInterval(timer);
     }, 50);
@@ -246,7 +303,7 @@ export function ChipPopover({ target, onDelete, onClose }: ChipPopoverProps) {
   </>;
   else body = <p className="ln-chip-note">This parameter has been deleted.</p>;
   // At the bench: whether the actual value must be recorded, and how a material amount counts toward consumption.
-  const fieldParameters = tool ? systems.parameters.filter(p => tool.fields.some(f => f.parameterId === p.id)) : parameter && parameter.source.kind !== 'actual' ? [parameter] : [];
+  const fieldParameters = tool ? systems.parameters.filter(p => tool.fields.some(f => f.parameterId === p.id)) : parameter && !filledAtRun(parameter) ? [parameter] : [];
   const required = fieldParameters.length > 0 && fieldParameters.every(p => p.actual === 'required');
   const setRequired = (on: boolean) => api.updateSystems(s => ({ ...s, parameters: s.parameters.map(p => fieldParameters.some(f => f.id === p.id) ? { ...p, actual: on ? 'required' as const : undefined } : p) }));
   const amount = parameter?.materialRef && ['volume', 'mass', 'amount'].includes(parameter.kind ?? chipKindForUnit(parameter.unit));
@@ -257,7 +314,7 @@ export function ChipPopover({ target, onDelete, onClose }: ChipPopoverProps) {
     {fieldParameters.length ? <label className="ln-chip-check"><input type="checkbox" checked={required} onChange={event => setRequired(event.target.checked)} />Actual value required at run time</label> : null}
   </div> : null;
   return createPortal(<div ref={panel} className={parameter?.source.kind === 'calculator' ? 'ln-chip-popover is-wide' : 'ln-chip-popover'} style={style} role="dialog" aria-label={`Edit ${kindLabel}`} onMouseDown={event => event.stopPropagation()}>
-    <header className="ln-chip-popover-header"><strong>{kindLabel}</strong>{parameter && !tool ? <NameField parameter={parameter} onChange={setParameter} /> : null}<button type="button" className="focus-ring ln-chip-icon-button" aria-label="Done" onClick={onClose}><X aria-hidden /></button></header>
+    <header className="ln-chip-popover-header"><strong>{kindLabel}</strong>{parameter && !tool ? <NameField parameter={parameter} onChange={setParameter} stock={target.focus === 'stock' && !parameter.materialRef} /> : null}<button type="button" className="focus-ring ln-chip-icon-button" aria-label="Done" onClick={onClose}><X aria-hidden /></button></header>
     <div className="ln-chip-popover-body">{body}{execution}</div>
     <footer className="ln-chip-popover-footer"><button type="button" className="focus-ring ln-chip-link is-danger" onClick={onDelete}><Trash2 aria-hidden />Delete parameter</button><button type="button" className="focus-ring ln-chip-done" onClick={onClose}>Done</button></footer>
   </div>, document.body);

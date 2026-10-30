@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recognizeQuantity } from './protocol-chips';
+import { chipWithRangeEnd, filledAtRun, protocolChipText, recognizeQuantity, recognizeRangeEnd, withinRange } from './protocol-chips';
 
 const recognized = (typed: string) => {
   const result = recognizeQuantity(typed);
@@ -35,9 +35,39 @@ describe('Typing a value with its unit becomes a parameter chip', () => {
     expect(recognized('加入 50 / 80 / 100 µL，')).toMatchObject({ values: [50, 80, 100], unit: 'µL' });
   });
 
-  it('leaves ranges, unfinished numbers and words that only contain digits as ordinary text', () => {
-    expect(recognizeQuantity('室温 20–25 °C ')).toBeUndefined();
-    expect(recognizeQuantity('室温 20-25 °C ')).toBeUndefined();
+  it('makes a source range one chip with both ends and no adopted value, however it is written', () => {
+    const range = (typed: string) => { const result = recognizeQuantity(typed); return result && { source: result.source, text: result.text, values: result.values, unit: result.unit, range: result.range }; };
+    const minutes = { min: { value: 20, unit: 'min' }, max: { value: 30, unit: 'min' } };
+    for (const typed of ['冰上 20-30 min ', '冰上 20–30 min，', '20 ~ 30 min ', '20 min - 30 min ', '20 to 30 min ', '20 至 30 min ', '20到30 min '])
+      expect(range(typed)).toMatchObject({ text: '20–30 min', values: [], unit: 'min', range: minutes });
+    expect(range('室温 20–25 °C ')).toMatchObject({ source: '20–25 °C', text: '20–25 °C' });
+    // The two ends may use different units; the chip keeps the upper end's.
+    expect(range('usually 10 pg - 100 ng)')).toMatchObject({ text: '10 pg – 100 ng', unit: 'ng', range: { min: { value: 10, unit: 'pg' }, max: { value: 100, unit: 'ng' } } });
+    // Not a range: ends out of order, or two different kinds of value; each stays what it was.
+    expect(range('30 min - 20 min ')).toMatchObject({ source: '20 min', values: [20] });
+    expect(range('42 °C - 45 s ')).toMatchObject({ source: '45 s', values: [45] });
+  });
+
+  it('turns a chip into a range when the other end is typed after it', () => {
+    expect(recognizeRangeEnd('approximately {{p-1}} - 30 min ')).toEqual({ parameterId: 'p-1', index: 21, source: ' - 30 min', max: { value: 30, unit: 'min' } });
+    expect(recognizeRangeEnd('{{p-1}} 30 min ')).toBeUndefined();
+    const chip = { id: 'p-1', label: '', unit: 'min', origin: 'chip' as const, source: { kind: 'fixed' as const, value: 20, unit: 'min' } };
+    expect(chipWithRangeEnd(chip, { value: 30, unit: 'min' })).toMatchObject({ source: { kind: 'fixed', value: null, unit: 'min' }, range: { min: { value: 20, unit: 'min' }, max: { value: 30, unit: 'min' } } });
+    expect(chipWithRangeEnd(chip, { value: 42, unit: '°C' })).toBeUndefined();
+  });
+
+  it('shows the adopted value with the source range, and a range without one as still to adopt', () => {
+    const systems = { schemaVersion: 1 as const, dimensions: [], presets: [], rules: [], restrictions: [], parameters: [
+      { id: 'set', label: '', unit: 'min', source: { kind: 'fixed' as const, value: 30, unit: 'min' }, range: { min: { value: 20, unit: 'min' }, max: { value: 30, unit: 'min' } } },
+      { id: 'open', label: '', unit: 's', source: { kind: 'fixed' as const, value: null, unit: 's' }, range: { min: { value: 30, unit: 's' }, max: { value: 60, unit: 's' } } },
+    ] };
+    expect(protocolChipText('set', systems)).toBe('30 min（原文 20–30 min）');
+    expect(protocolChipText('open', systems)).toBe('30–60 s（待选采用值）');
+    expect(filledAtRun(systems.parameters[1])).toBe(true);
+    expect([withinRange(25, 'min', systems.parameters[0].range), withinRange(31, 'min', systems.parameters[0].range)]).toEqual([true, false]);
+  });
+
+  it('leaves unfinished numbers and words that only contain digits as ordinary text', () => {
     expect(recognizeQuantity('调至 pH 7.')).toBeUndefined();
     expect(recognizeQuantity('加入 2.')).toBeUndefined();
     expect(recognizeQuantity('使用 A549 细胞 ')).toBeUndefined();

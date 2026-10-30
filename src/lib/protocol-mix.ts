@@ -1,5 +1,5 @@
 import { convert, normalizeUnit, parseScalar, units } from './calculators/quantities';
-import { chipAmount, chipKindForUnit, chipReferenceId, isMaterialAmount, parameterDisplayName } from './protocol-chips';
+import { chipAmount, chipKindForUnit, chipReferenceId, filledAtRun, isMaterialAmount, parameterDisplayName } from './protocol-chips';
 import type { ProtocolContentBlock } from './protocol-document';
 import type { ProtocolSystems } from './protocol-systems-schema';
 
@@ -56,7 +56,7 @@ export function mixView(mix: ProtocolMix, systems: ProtocolSystems | undefined, 
     const id = chipReferenceId(component.amount), parameter = id ? systems?.parameters.find(p => p.id === id) : undefined;
     const name = component.name.trim() || (parameter ? parameterDisplayName(parameter) : '组分');
     const resolved = id ? resolution[id] : undefined;
-    if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? 'Amount deleted' : parameter.source.kind === 'lookup' ? 'System to choose' : parameter.source.kind === 'actual' ? 'Filled in at run time' : 'To fill in' };
+    if (!parameter || resolved?.status !== 'resolved') return { id: component.id, name, mode: component.mode, unit: parameter?.unit ?? '', pending: !parameter ? 'Amount deleted' : parameter.source.kind === 'lookup' ? 'System to choose' : filledAtRun(parameter) ? 'Filled in at run time' : 'To fill in' };
     const line = { id: component.id, name, mode: component.mode, unit: resolved.unit };
     const perReaction = resolved.value;
     if (perReaction === undefined || !Number.isFinite(perReaction) || perReaction < 0) return { ...line, pending: 'Amount must be finite and nonnegative' };

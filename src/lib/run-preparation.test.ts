@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyProtocolDocument } from './protocol-document';
 import { structuredRunView } from './structured-run';
 import { translateUiText } from './i18n';
-import { formatDuration, preparationChecklist, preparationProgress } from './run-preparation';
+import { preparationChecklist, preparationProgress } from './run-preparation';
 import { preparationWorkbook } from './run-preparation-workbook';
 
 /** A qPCR Protocol: a mix card (SYBR premixed, cDNA added separately), a pre-cooled centrifuge, a 10 min incubation and a value to record. */
@@ -34,7 +34,7 @@ function qpcr() {
 const zh = (text?: string) => text === undefined ? undefined : translateUiText(text, 'zh');
 
 describe('实验准备清单', () => {
-  it('lists materials, the mix card, the pre-cooled centrifuge and the timer from the confirmed plan and 本次数量', () => {
+  it('lists materials, the mix card and the pre-cooled centrifuge from the confirmed plan and 本次数量; timers and run-time values stay in their steps', () => {
     const { snapshot, steps, adopted } = qpcr();
     const view = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
     const list = preparationChecklist(view, { recorded: [{ source: 'Chip:cdna#volume|第 1 步' }] });
@@ -48,10 +48,8 @@ describe('实验准备清单', () => {
     expect([zh(byKind('mix')[0].label), zh(byKind('mix')[0].detail)]).toEqual(['qPCR 预混液 · 第 1 步', '24 反应数 · 待确认']);
     expect(byKind('equipment')[0]).toMatchObject({ key: 'equipment:v1:tool-1', label: 'Centrifuge', detail: 'Pre-cool to 4 °C · 12,000 ×g · Step 1' });
     expect([zh(byKind('equipment')[0].label), zh(byKind('equipment')[0].detail)]).toEqual(['离心', '预冷至 4 °C · 12,000 ×g · 第 1 步']);
-    expect(byKind('timer')[0]).toMatchObject({ key: 'timer:run-2', label: 'Step 2', detail: '10 min', stepId: 'run-2' });
-    expect(zh(byKind('timer')[0].label)).toBe('第 2 步');
-    expect(list.reminders).toEqual(['Filled in at run time: Step 2 · OD600']);
-    expect(zh(list.reminders.join('; '))).toBe('执行时填写：第 2 步 · OD600');
+    expect(list.items.map(item => item.kind)).toEqual(['material', 'material', 'mix', 'equipment']);
+    expect(list.needsInput).toBe(false);
   });
 
   it('warns about a missing 本次数量 and short stock instead of guessing amounts', () => {
@@ -59,6 +57,7 @@ describe('实验准备清单', () => {
     const bare = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {} }, steps);
     const list = preparationChecklist(bare);
     expect(list.warnings).toEqual(['Run quantity not filled in: number of reactions · qPCR']);
+    expect(list.needsInput).toBe(true);
     expect(list.warnings.map(zh)).toEqual(['尚未填写反应数：qPCR']);
     const material = list.items.find(item => item.kind === 'material')!, mix = list.items.find(item => item.kind === 'mix')!;
     expect(material).toMatchObject({ label: '2× SYBR Mix', warning: 'Not filled in: number of reactions' });
@@ -78,10 +77,11 @@ describe('实验准备清单', () => {
     const { snapshot, steps, adopted } = qpcr();
     const view = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, versions: { v1: adopted }, actualValues: {}, skips: {}, quantities: { v1: { 反应数: 24 } } }, steps);
     const { items } = preparationChecklist(view, { plates: [{ id: 'att-1', name: '96 孔板布局.json' }] });
-    expect(items.map(item => item.kind)).toEqual(['material', 'material', 'mix', 'plate', 'equipment', 'timer']);
-    const progress = preparationProgress(items, { 'timer:run-2': { done: true, doneAt: '2026-10-15T02:00:00Z' }, 'plate:att-1': { done: true }, 'plate:gone': { done: true } });
-    expect(progress).toMatchObject({ done: 2, total: 6 });
-    expect(progress.pending.map(item => item.key)).toEqual(['material:2× sybr mix#volume', 'material:cdna#volume', 'mix:run-1:b1-mix', 'equipment:v1:tool-1']);
+    expect(items.map(item => item.kind)).toEqual(['material', 'material', 'mix', 'plate', 'equipment']);
+    // A tick on an item no longer listed (an earlier run's timer row) is kept but not counted.
+    const progress = preparationProgress(items, { 'timer:run-2': { done: true, doneAt: '2026-10-15T02:00:00Z' }, 'mix:run-1:b1-mix': { done: true }, 'plate:att-1': { done: true }, 'plate:gone': { done: true } });
+    expect(progress).toMatchObject({ done: 2, total: 5 });
+    expect(progress.pending.map(item => item.key)).toEqual(['material:2× sybr mix#volume', 'material:cdna#volume', 'equipment:v1:tool-1']);
   });
 
   it('warns before the bench when the Protocol is a search-generated draft with unverified card lines', () => {
@@ -92,8 +92,22 @@ describe('实验准备清单', () => {
     expect(preparationChecklist(view).warnings.map(zh)).toEqual(['qPCR 由方案设计生成，方法卡有 2 条未核实，请先核对原文']);
   });
 
-  it('formats durations the way a bench reads them', () => {
-    expect([600, 5400, 45, 3600].map(formatDuration)).toEqual(['10 min', '1 h 30 min', '45 s', '1 h']);
+  it('gives two groups one row for what they share and names the group on what is their own', () => {
+    const { snapshot } = qpcr();
+    snapshot.versions[0].contentJson.provenance = { fromExperimentIds: [], recognition: { sourceAttachmentId: 'att-src', unverified: 2, recognizedAt: '2026-10-15T00:00:00Z' } };
+    const groups = [{ id: 'ga', label: 'PAX2' }, { id: 'gb', label: 'pMD.G' }];
+    const steps = groups.flatMap(group => [{ id: `${group.id}-1`, protocolStepRef: 'v1:s1', groupKey: 'v1', completed: false }, { id: `${group.id}-2`, protocolStepRef: 'v1:s2', groupKey: 'v1', completed: false }]);
+    const adopted = { selections: {}, actualInputs: {}, confirmedAt: '2026-10-15T01:00:00Z' };
+    const view = structuredRunView(snapshot, { schemaVersion: 1, revision: 1, groups, stepGroups: Object.fromEntries(steps.map(step => [step.id, step.id.split('-')[0]])), versions: { 'v1@ga': adopted, 'v1@gb': adopted }, actualValues: {}, skips: {}, quantities: { 'v1@ga': { 反应数: 1 }, 'v1@gb': { 反应数: 2 } } }, steps);
+    const list = preparationChecklist(view);
+    // The AI-provenance warning is about the Protocol, so it is said once.
+    expect(list.warnings).toEqual(['qPCR was generated by AI from instructions; 2 lines have no source in the original. Check the original first']);
+    expect(list.items.filter(item => item.kind === 'equipment')).toEqual([{ key: 'equipment:v1:tool-1', kind: 'equipment', label: 'Centrifuge', detail: 'Pre-cool to 4 °C · 12,000 ×g · PAX2 · pMD.G · Step 1' }]);
+    expect(zh(list.items.find(item => item.kind === 'equipment')?.detail)).toBe('预冷至 4 °C · 12,000 ×g · PAX2 · pMD.G · 第 1 步');
+    expect(list.items.filter(item => item.kind === 'mix').map(item => zh(item.label))).toEqual(['PAX2 · qPCR 预混液 · 第 1 步', 'pMD.G · qPCR 预混液 · 第 1 步']);
+    expect(list.items.filter(item => item.kind === 'mix').map(item => [item.label, item.detail])).toEqual([['PAX2 · qPCR 预混液 · Step 1', '1 reaction · Not confirmed'], ['pMD.G · qPCR 预混液 · Step 1', '2 reactions · Not confirmed']]);
+    // Materials add up over both groups: (1 + 2) × 10 µL × 110%.
+    expect(list.items.find(item => item.kind === 'material')?.detail).toMatch(/^33 µL/);
   });
 });
 
@@ -113,7 +127,6 @@ describe('操作工作簿', () => {
     expect(mixes.rows).toContainEqual(['2× SYBR Mix', '预混', '10 µL', '264 µL']);
     expect(mixes.rows).toContainEqual(['cDNA', '单独加', '2 µL', '48 µL']);
     expect(notes.rows[0]).toEqual(['类型', '内容']);
-    expect(notes.rows.slice(1).every(row => ['开始前要处理', '执行时要记录'].includes(row[0]))).toBe(true);
-    expect(notes.rows.some(row => row[0] === '执行时要记录' && row[1].includes('OD600'))).toBe(true);
+    expect(notes.rows.slice(1).every(row => row[0] === '开始前要处理')).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { Extension, InputRule } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { optionMarks, recognizeQuantity, type RecognizedQuantity } from './protocol-chips';
+import { optionMarks, recognizeQuantity, recognizeRangeEnd, type RecognizedQuantity } from './protocol-chips';
 import type { ProtocolSystems } from './protocol-systems-schema';
 import { evaluateProtocolCondition, type ProtocolSelection } from './structured-protocol';
 import { conditionTagLabel, conditionTagLabelZh } from './protocol-conditions';
@@ -12,6 +12,8 @@ import { slashOpensMenu } from './editor-slash';
 export type ProtocolEditorHandlers = {
   /** Create the parameter for a typed quantity at `pos`; returns the chip's node attributes. */
   createChip: (quantity: RecognizedQuantity, pos: number) => Record<string, unknown> | null;
+  /** "20 min" then " - 30 min": the chip at `pos` becomes the range ending at `max`; returns its node attributes, or null. */
+  extendChipToRange: (pos: number, max: { value: number; unit: string }) => Record<string, unknown> | null;
   /** Open the chip editor for the chip at `pos` (keyboard: Enter on a selected chip). */
   openChip: (pos: number) => void;
   /** "/" was typed at a word start: the menu tracks the text typed after `from`. */
@@ -33,11 +35,31 @@ export function setProtocolHandlers(editor: { storage: unknown }, handlers: Prot
   if (storage) storage.current = handlers;
 }
 
-/** Typing "50 µL", "37 ℃", "50/80 µL" or "pH 7.4" followed by a space or punctuation makes a chip. Undo or Backspace restores the text. */
+/**
+ * Typing "50 µL", "37 ℃", "50/80 µL", "20–30 min" or "pH 7.4" followed by a space or punctuation makes a chip; " - 30 min"
+ * right after a chip makes that chip a range. Undo or Backspace restores the text.
+ */
 export const ProtocolChipInput = Extension.create({
   name: 'protocolChipInput',
   addInputRules() {
     return [new InputRule({
+      find: text => { const end = recognizeRangeEnd(text); return end ? { index: end.index, text: text.slice(end.index), data: { end } } : null; },
+      handler: ({ state, range, match }) => {
+        const end = match.data?.end as ReturnType<typeof recognizeRangeEnd>;
+        if (!end || match.input === undefined) return null;
+        // Measured back from the insertion point, as below: everything between the chip and the caret is plain text.
+        const insertAt = state.selection.from;
+        const typedLength = match[0].length - (insertAt - range.from);
+        const textBefore = match.input.length - typedLength;
+        const tail = insertAt + (end.index - textBefore), chip = state.doc.nodeAt(tail - 1);
+        if (chip?.type.name !== 'protocolParameter' || chip.attrs.parameterId !== end.parameterId) return null;
+        const attrs = protocolHandlers(this.editor)?.extendChipToRange(tail - 1, end.max);
+        if (!attrs) return null;
+        const typed = match.input.slice(textBefore);
+        if (typed) state.tr.insertText(typed, insertAt, range.to);
+        state.tr.delete(tail, tail + end.source.length).setNodeMarkup(tail - 1, undefined, attrs);
+      },
+    }), new InputRule({
       find: text => { const quantity = recognizeQuantity(text); return quantity ? { index: quantity.index, text: text.slice(quantity.index), data: { quantity } } : null; },
       handler: ({ state, range, match }) => {
         const quantity = match.data?.quantity as RecognizedQuantity | undefined;

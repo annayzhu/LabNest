@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import type { Editor } from '@tiptap/core';
-import { AlertTriangle, Beaker, Biohazard, Calculator, ClipboardList, Clock, Dna, FlaskConical, Gauge, Grid3x3, Heading2, Heading3, ImagePlus, Layers, LayoutGrid, List, ListOrdered, MoonStar, Paperclip, Percent, Pilcrow, Pipette, Quote, RotateCw, Scale, Shuffle, Table2, Tag, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Wrench, Zap } from 'lucide-react';
+import { AlertTriangle, Beaker, Biohazard, Calculator, ClipboardList, Clock, Dna, FlaskConical, Gauge, Grid3x3, Heading2, Heading3, ImagePlus, Layers, LayoutGrid, List, ListOrdered, MoonStar, Package, Paperclip, Percent, Pilcrow, Pipette, Quote, RotateCw, Scale, Shuffle, Table2, Tag, TestTube, Thermometer, TrendingUp, Vibrate, Weight, Wind, Wrench, Zap } from 'lucide-react';
 import type { BlockKind } from '@/lib/editor-blocks';
 import { parameterDisplayName, protocolChipText, type ToolKind } from '@/lib/protocol-chips';
 import type { ProtocolCalculatorId } from '@/lib/protocol-calculations';
@@ -11,7 +11,7 @@ import { EditorCommandMenu, type CommandKeyHandler, type EditorCommand, type Edi
 export type InsertChoice =
   | { type: 'step' }
   | { type: 'block'; kind: BlockKind }
-  | { type: 'quantity'; unit: string }
+  | { type: 'quantity'; unit: string } | { type: 'stock' }
   | { type: 'tool'; tool: ToolKind }
   | { type: 'parameter'; id: string }
   | { type: 'program' } | { type: 'mix' } | { type: 'calculation'; calculator: ProtocolCalculatorId }
@@ -21,6 +21,7 @@ type Item = EditorCommand<InsertChoice>;
 const items: Item[] = [
   { id: 'step', group: 'Steps', label: 'New step', hint: 'Each block is one action to carry out', keywords: 'buzhou bz step', icon: ListOrdered, choice: { type: 'step' } },
   { id: 'volume', group: 'Amounts', label: 'Volume', hint: 'µL · mL', keywords: 'tiji tj volume ul ml', icon: Pipette, choice: { type: 'quantity', unit: 'µL' } },
+  { id: 'stock', group: 'Amounts', label: 'Stock material', hint: 'Amount of an inventory item · deducted when the run completes', keywords: 'kucun kc wuliao wl inventory stock material reagent', icon: Package, choice: { type: 'stock' } },
   { id: 'mass', group: 'Amounts', label: 'Mass', hint: 'mg · µg · ng', keywords: 'zhiliang zl mass mg ug', icon: Weight, choice: { type: 'quantity', unit: 'mg' } },
   { id: 'concentration', group: 'Amounts', label: 'Concentration', hint: 'mM · µM · mg/mL', keywords: 'nongdu nd concentration mm um', icon: FlaskConical, choice: { type: 'quantity', unit: 'mM' } },
   { id: 'percent', group: 'Amounts', label: 'Percentage', hint: '% v/v', keywords: 'bili bl percent', icon: Percent, choice: { type: 'quantity', unit: '%' } },

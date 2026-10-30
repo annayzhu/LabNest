@@ -173,7 +173,7 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
   // 实验准备: what was ticked ready, once the bench used the list. Attached plates are not counted here.
   if (Object.keys(structured.plan.preparation).length) {
     const progress = preparationProgress(preparationChecklist(structured).items, structured.plan.preparation);
-    blocks.push(detail({ id: 'run-derived:preparation', type: 'text', text: `实验准备 · 已备 ${progress.done}/${progress.total} 项${progress.pending.length ? `；未备：${progress.pending.map(item => item.kind === 'timer' ? `计时 ${item.label}` : item.label).join('、')}` : ''}` }));
+    blocks.push(detail({ id: 'run-derived:preparation', type: 'text', text: `实验准备 · 已备 ${progress.done}/${progress.total} 项${progress.pending.length ? `；未备：${progress.pending.map(item => item.label).join('、')}` : ''}` }));
   }
   const groupIndex = (id: string) => structured.plan.stepGroups[id] === 'shared' ? -1 : structured.plan.groups.findIndex(group => group.id === structured.plan.stepGroups[id]);
   const parts = new Map<string, ExecutionRecordStep[]>();
@@ -198,7 +198,8 @@ export function experimentExecutionDocument(contentJson: unknown, steps: readonl
       const adopted = structured.plan.versions[version.id], systems = version.document.systems!;
       const marks = optionMarks(systems);
       const choice = systems.dimensions.map(d => { const option = d.options.find(o => o.id === adopted?.selections[d.id]); return `${d.label}：${option ? [marks.get(`${d.id}:${option.id}`)?.glyph, option.label].filter(Boolean).join(' ') : '待选择'}`; }).join('；');
-      if (systems.dimensions.length || !adopted) blocks.push(detail({ id: `run-derived:system:${key}`, type: 'text', text: adopted ? `本次体系 · ${choice || '无需选择'}（确认于 ${recordTime(adopted.confirmedAt)}）` : '尚未确认本次体系' }));
+      // A Protocol without systems has nothing to confirm, so the record says nothing about them.
+      if (systems.dimensions.length) blocks.push(detail({ id: `run-derived:system:${key}`, type: 'text', text: adopted ? `本次体系 · ${choice}（确认于 ${recordTime(adopted.confirmedAt)}）` : '尚未确认本次体系' }));
     }
     for (const step of applicable) {
       const adoptedStep = structured.steps[step.id];

@@ -9,7 +9,8 @@ const containerAfter = /^\s*(?:离心管|收集管|冻存管|PCR\s*管|EP\s*管|
 
 /**
  * Every quantity in a line becomes a chip, the way typing it in the editor would: one value is a fixed chip; "50/80 µL"
- * gives one value per option of the only system with that many options, and stays text when there is no such system.
+ * gives one value per option of the only system with that many options, and stays text when there is no such system;
+ * "20–30 min" (or "20 min - 30 min") is one chip with the source range and no adopted value yet.
  * Container sizes ("1.5 mL 离心管") stay text too: they are not amounts. `kept` collects those sizes, so a conversion can
  * say so.
  */
@@ -18,13 +19,16 @@ export function chipifyText(text: string, systems: ProtocolSystems, newId: (pref
   const found = new Map<number, ReturnType<typeof recognizeQuantity> & object>();
   for (let end = 1; end <= padded.length; end += 1) {
     const quantity = recognizeQuantity(padded.slice(0, end));
-    if (quantity && !found.has(quantity.index)) found.set(quantity.index, quantity);
+    // "20 min" is recognized before "20 min - 30 min" grows from the same start; the longer reading wins.
+    if (quantity && (found.get(quantity.index)?.source.length ?? 0) < quantity.source.length) found.set(quantity.index, quantity);
   }
+  const ordered = [...found.values()].sort((a, b) => a.index - b.index);
+  const separate = ordered.filter((quantity, index) => !ordered.some((other, at) => at !== index && other.index <= quantity.index && quantity.index < other.index + other.source.length && other.source.length > quantity.source.length));
   let out = text;
-  for (const quantity of [...found.values()].sort((a, b) => b.index - a.index)) {
+  for (const quantity of separate.reverse()) {
     if (quantity.index + quantity.source.length > text.length) continue;
     if (containerAfter.test(text.slice(quantity.index + quantity.source.length))) { kept?.push(quantity.source.trim()); continue; }
-    let source: ProtocolSystems['parameters'][number]['source'] = { kind: 'fixed', value: quantity.values[0], unit: quantity.unit };
+    let source: ProtocolSystems['parameters'][number]['source'] = { kind: 'fixed', value: quantity.range ? null : quantity.values[0], unit: quantity.unit };
     if (quantity.values.length > 1) {
       const choice = splitDimension(quantity.values.length, systems);
       const dimension = 'dimensionId' in choice ? systems.dimensions.find(item => item.id === choice.dimensionId) : undefined;
@@ -32,7 +36,7 @@ export function chipifyText(text: string, systems: ProtocolSystems, newId: (pref
       source = splitLookupSource(quantity.values, quantity.unit, dimension, () => newId('value'));
     }
     const id = newId('p');
-    systems.parameters.push({ id, label: '', unit: quantity.unit, kind: quantity.kind, origin: 'chip', source });
+    systems.parameters.push({ id, label: '', unit: quantity.unit, kind: quantity.kind, origin: 'chip', source, ...(quantity.range ? { range: quantity.range } : {}) });
     out = `${out.slice(0, quantity.index)}{{${id}}}${out.slice(quantity.index + quantity.source.length)}`;
   }
   return out;

@@ -7,6 +7,8 @@ import { prisma } from './db';
 import { assertRecordEditable } from './record-lifecycle';
 import { proposedExecutionPlan, structuredRunView, changedStructuredSteps, assertStructuredStepExecutable, type StructuredRunView } from './structured-run';
 import { resolveProtocolSystem, previewProtocolCalculation } from './structured-protocol';
+import { filledAtRun } from './protocol-chips';
+import { actualDeviations, noteWithDeviations } from './run-deviation';
 import { convert } from './calculators/quantities';
 import { reserveRecordCode } from './record-codes';
 import { remainingStepTimerSeconds } from './step-timer';
@@ -52,7 +54,7 @@ async function updateSelectionInTransaction(tx: Prisma.TransactionClient, input:
     if (before.plan.revision !== input.expectedRevision) throw new Error('执行方案已变更，请刷新核对 / Execution plan changed');
     const version = before.versions.find(v => v.id === input.versionId);
     if (!version?.document.systems || !experiment.protocolRun) throw new Error('所选规程不属于本次执行 / Protocol is not in this captured execution');
-    for (const id of Object.keys(input.actualInputs)) if (!version.document.systems.parameters.some(p => p.id === id && p.source.kind === 'actual')) throw new Error('只能填写实际值来源的参数 / Parameter source is fixed by the Protocol');
+    for (const id of Object.keys(input.actualInputs)) if (!version.document.systems.parameters.some(p => p.id === id && filledAtRun(p))) throw new Error('只能填写实际值来源的参数 / Parameter source is fixed by the Protocol');
     const calculations = { ...before.plan.versions[input.versionId]?.calculations };
     const now = new Date().toISOString();
     for (const id of input.confirmCalculations) {
@@ -191,6 +193,12 @@ export async function recordStructuredStep(raw: z.input<typeof recordInput>) {
         values[id] = { value: convert(value.value, value.unit, field.unit), unit: field.unit, recordedAt: now };
       }
       next.actualValues[input.stepId] = { ...next.actualValues[input.stepId], ...values };
+      // A value other than the adopted one is a deviation: its line goes into the step's deviation record.
+      const row = experiment.steps.find(s => s.id === input.stepId)!, deviations = actualDeviations(view, input.stepId, values);
+      const note = row.allowsDeviation ? noteWithDeviations(row.deviationNote, deviations) : row.deviationNote;
+      if (note !== row.deviationNote) await tx.experimentStep.update({ where: { id: input.stepId }, data: note
+        ? { deviationNote: note, deviationType: row.deviationType ?? deviations.find(item => item.line)?.type ?? 'method', deviationAt: row.deviationAt ?? new Date(now) }
+        : { deviationNote: null, deviationType: null, deviationImpact: null, deviationAuthor: null, deviationAt: null } });
     } else if (input.intent === 'skip') {
       if (!input.reason) throw new Error('跳过步骤必须记录原因');
       next.skips[input.stepId] = { reason: input.reason, recordedAt: now };

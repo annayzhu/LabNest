@@ -2189,10 +2189,7 @@ export const zhUi: Record<string, string> = {
   "Systems in this run": "当前实验体系",
   "Show other systems’ content (not applicable, not counted in this run’s progress)": "查看其他体系内容（不适用，不计入本次进度）",
   "Inventory transactions made": "已执行库存交易",
-  "Confirmed · view or change systems": "已确认 · 查看／修改体系",
-  "Systems to confirm": "待确认体系",
   "Confirmed ·": "已确认 ·",
-  "Systems not confirmed yet; operations that depend on these choices can’t run yet.": "尚未确认体系；依赖这些选择的操作暂不可执行。",
   "Not chosen": "待选择",
   "Selection changed: above is a preview of the change, not yet applied. It is refused if it would overwrite existing run records.": "选择已修改，以上是变更预览，尚未应用。影响已有执行记录时将拒绝覆盖。",
   "Effect of the change": "变更影响",
@@ -2210,21 +2207,13 @@ export const zhUi: Record<string, string> = {
   "Keep the original record and create a continuation": "保留原记录，创建继续实例",
   "Open the continuation run": "打开继续执行实例",
   "Preparation and system choice": "实验准备与体系选择",
-  "Preparation · systems and groups": "实验准备 · 体系与分组",
-  "Start or continue the current step": "开始／继续当前步骤",
   "Preparation items don’t count toward step progress. The adopted source versions are fixed; the run works with AI turned off.": "准备项不计入操作进度。采用的源版本已固定；AI关闭也可执行。",
   "View the earlier run and its original records": "查看此前执行及原始记录",
   "Earlier handling and adopted parameters (read-only history)": "此前处理与原采用参数（只读历史）",
   "Completed earlier": "此前已完成",
   "Not completed in the original record": "原记录未完成",
-  "Attach a plate layout (the planner’s “Back up project” JSON, or an exported SVG or image)": "附加孔板布局（规划器的“备份项目”JSON，或导出的 SVG／图片）",
   "Plate layout file": "孔板布局文件",
-  "Saved; mix cards that use it need confirming for the new quantity.": "已保存；用到它的配液卡需按新数量确认。",
-  "Run quantities": "本次数量",
-  "Saving quantities…": "正在保存…",
-  "Save quantities": "保存数量",
   "Experiment groups set up": "已配置实验组",
-  "Running as a single group. If you need different treatment groups, set them up before you start.": "当前按单组执行。需要不同处理组时，请在开始操作前建立分组。",
   "Set up several groups": "设置多个实验组",
   "Groups in this run": "本次实验分组",
   "Remove": "移除",
@@ -2239,10 +2228,46 @@ export const zhUi: Record<string, string> = {
   "Plate layout attachment": "孔板布局附件",
   "To be determined": "待确定",
   "Run preparation checklist": "实验准备清单",
-  "Preparation checklist": "准备清单",
-  "Awaiting system confirmation": "待体系确认",
   "Checks before running": "执行前检查",
-  "Once the systems are confirmed and the run quantities filled in, the materials, mixes, plates, equipment and timers to prepare are listed here.": "确认体系并填写本次数量后，这里列出要准备的材料、配液、孔板、设备和计时。",
+  "Preparation": "准备",
+  "To be determined · enter the values marked “Filled in at run time” in this step": "待确定 · 请先在本步骤填写标为“执行时填写”的数值",
+  "Run preparation": "实验准备",
+  "Materials, mix cards, plates and equipment to have ready are listed here once the run quantities are filled in.": "填好本次数量后，这里列出要备好的材料、配液卡、孔板和设备。",
+  "Only the Protocol’s own systems can be chosen. One it lacks is added to the Protocol as a new version.": "只能选择规程中已有的体系；规程里没有的体系，请到规程中添加（会生成新版本）。",
+  "Save values": "保存数值",
+  "Enter a number above 0": "请输入大于 0 的数",
+  "Group": "分组",
+  "Protocol systems": "规程体系",
+  "Choose systems": "选择体系",
+  "Fill in values": "填写数值",
+  "Attach a plate layout": "附上孔板布局",
+  "The planner’s “Back up project” JSON, or an exported SVG or image.": "孔板规划器“备份项目”导出的 JSON，或导出的 SVG、图片。",
+  "Export run workbook": "导出操作工作簿",
+  "Use this experiment offline…": "离线使用本次实验…",
+  "Use this experiment offline": "离线使用本次实验",
+  "Protocol original": "规程原文",
+  "Alert me when time is up": "计时结束时提醒我",
+  "Turn on": "开启",
+  "Not now": "暂不",
+  "Outside the source range": "超出原文范围",
+  "Value to adopt": "待选采用值",
+  "Source range": "原文范围",
+  "Range from": "范围下限",
+  "Range to": "范围上限",
+  "Adopted value": "采用值",
+  "＋ Source range": "＋ 原文范围",
+  "Not a range": "不是范围",
+  "Adopt one value for this Protocol. Until then it is filled in at the step during the run.": "请为本规程选定一个采用值；选定前，执行时在步骤里填写。",
+  "Adopt a value": "去选定",
+  "Stock material": "库存物料",
+  "Amount of an inventory item · deducted when the run completes": "库存物料的用量 · 实验完成时扣减",
+  "Search stock": "搜索库存",
+  "Search stock by name": "按名称搜索库存",
+  "The linked stock item is no longer active; matched by name at the run": "链接的库存条目已不在用；执行时按名称匹配",
+  "Unlink stock": "取消库存链接",
+  "Materials table and stock": "材料表与库存",
+  "No active stock item has this name": "没有同名的在用库存",
+  "No active stock items yet": "还没有在用的库存",
   "Note, e.g. lot number or where it is": "备注，如批号、放哪里",
   // Method design and recognition pages, the run page and mix cards, the New Experiment and Entry forms, Protocol usage.
   "Searching methods": "检索中",
@@ -2543,9 +2568,6 @@ export const zhUi: Record<string, string> = {
   "Condition": "条件",
   "Exports the saved version; save your changes first.": "导出当前已保存的版本；改动后请先保存。",
   "Export Word": "导出 Word",
-  "Checking what reminders this device supports…": "正在检查本设备提醒能力…",
-  "Timer reminders on this device": "本设备的计时提醒能力",
-  "A reminder does not complete the step. While offline, a timer cancelled or reset on another device may not withdraw this device’s reminder right away; check against the server once reconnected.": "提醒不代表步骤完成。离线期间其他设备取消或重置的计时器无法保证立即撤销本机提醒，重连后以服务器状态核对。",
   "Saved on this device, waiting to sync; the actual values on the server have not changed yet.": "已保存至本机，等待同步；服务端实际记录尚未改变。",
   "Storage on this device is unavailable; nothing was saved. Keep this page open.": "本机存储不可用，未保存。请保留页面。",
   "This operation or its saved record has changed, so the draft on this device was not applied. Check it first.": "此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。",
@@ -3061,7 +3083,6 @@ export const zhUi: Record<string, string> = {
 const stepRefPattern = String.raw`(?:Step \d+|[A-Z][A-Z0-9]*-[\w.-]+ step \d+)`;
 const stepRefList = new RegExp(String.raw`^(?:([\s\S]+) · )?(${stepRefPattern}(?:, ${stepRefPattern})*)$`);
 const calculationToConfirm = new RegExp(String.raw`^Calculation to confirm: ([\s\S]+?)(?: \((${stepRefPattern})\))?$`);
-const runReminder = new RegExp(String.raw`^(Required|Filled in) at run time: (${stepRefPattern}) · ([\s\S]*)$`);
 const zhStepRef = (ref: string) => ref.replace(/^Step (\d+)$/, "第 $1 步").replace(/^(.+) step (\d+)$/, "$1 第 $2 步");
 const zhPending = (text: string) => text === "To be determined" ? "待确定" : text.replace(/^Not filled in: (.+)$/, (_, label: string) => `未填写${zhRunQuantityLabel(label)}`);
 const zhConsumptionSource = (source: string) => source.replace(/(^|· )Step (\d+)(?= · |$)/, "$1第 $2 步").replace(/ step (\d+)(?= · |$)/, " 第 $1 步");
@@ -3306,18 +3327,26 @@ function translateDynamic(value: string): string {
   if (match) return `${zhPending(zhRunQuantity(match[1]))} · ${match[2] === "Confirmed" ? "已确认" : "待确认"}`;
   match = value.match(/^Not filled in: (.+)$/);
   if (match) return `未填写${zhRunQuantityLabel(match[1])}`;
-  if (/^(?:Required|Filled in) at run time: /.test(value)) {
-    return value.split(/; (?=(?:Required|Filled in) at run time: )/).map((piece) => {
-      const parts = piece.match(runReminder);
-      return parts ? `${parts[1] === "Required" ? "执行时必填" : "执行时填写"}：${zhStepRef(parts[2])} · ${parts[3]}` : piece.replace(/^Required at run time: /, "执行时必填：").replace(/^Filled in at run time: /, "执行时填写：");
-    }).join("；");
-  }
   match = value.match(stepRefList);
   if (match) return `${match[1] ? `${match[1].split(" · ").map(zhEquipmentPart).join(" · ")} · ` : ""}${match[2].split(", ").map(zhStepRef).join("、")}`;
   match = value.match(equipmentLine);
   if (match) return `${zhUi[match[1]]} · ${match[2]}`;
   match = value.match(/^Ready (\d+)\/(\d+)$/);
   if (match) return `已备 ${match[1]}/${match[2]}`;
+  match = value.match(/^(?:(?:Materials|Mix cards|Plates|Equipment) \d+(?: · |$))+$/);
+  if (match) return value.replace(/Materials|Mix cards|Plates|Equipment/g, (word: string) => ({ Materials: "材料", "Mix cards": "配液卡", Plates: "孔板", Equipment: "设备" } as Record<string, string>)[word]);
+  match = value.match(/^(\d+) to check$/);
+  if (match) return `${match[1]} 项待核对`;
+  match = value.match(/^(\d+) source (?:range has|ranges have) no adopted value yet; until adopted, it is filled in at the step during the run\.$/);
+  if (match) return `有 ${match[1]} 处原文范围还没选定采用值；选定前，执行时在步骤里填写。`;
+  match = value.match(/^Adopt (\d[\s\S]*)$/);
+  if (match) return `采用 ${match[1]}`;
+  match = value.match(/^Source range (\d[\s\S]*)$/);
+  if (match) return `原文范围 ${match[1]}`;
+  match = value.match(/^Deducted from stock: ([\s\S]+)$/);
+  if (match) return `从库存扣减：${match[1]}`;
+  match = value.match(/^Stock is counted in (.+), so it is not deducted automatically$/);
+  if (match) return `库存以 ${match[1]} 计，不会自动扣减`;
   match = value.match(/^Note for ([\s\S]+)$/);
   if (match) return `${match[1]} 备注`;
   match = value.match(/^Deduct (.+)$/);
@@ -3360,8 +3389,6 @@ function translateDynamic(value: string): string {
   if (match) return `${match[1]} 孔${match[2] ? ` · 按${match[2]}着色` : ''}`;
   match = value.match(/^(.+), (\d+) marked wells$/);
   if (match) return `${match[1]}，${match[2]} 个已标记的孔`;
-  match = value.match(/^Systems adopted · (.+)$/);
-  if (match) return `本次采用体系 · ${match[1]}`;
   match = value.match(/^(\d+) calculations? (?:is|are) confirmed in the steps that use them: click a calculation result in a step to fill it in and confirm\.$/);
   if (match) return `${match[1]} 项计算在使用它的步骤里确认：点步骤中的计算结果即可填写并确认。`;
   match = value.match(/^Continuing from: ([\s\S]*)\. Operations completed earlier are not copied as completed in this run\.$/);
@@ -3370,10 +3397,6 @@ function translateDynamic(value: string): string {
   if (match) return `原实际记录：${match[1]}`;
   match = value.match(/^Original note: ([\s\S]+)$/);
   if (match) return `原备注：${match[1]}`;
-  match = value.match(/^(.+) · Run quantities$/);
-  if (match) return `${match[1]} · 本次数量`;
-  match = value.match(/^Groups: ([\s\S]+)\. Shared preparation counts once; each group confirms its own systems\.$/);
-  if (match) return `实验组：${match[1]}。共同准备只计一次，各组分别确认体系。`;
   match = value.match(/^Group (\d+)$/);
   if (match) return `第 ${match[1]} 组`;
   match = value.match(/^Method cards are summarized by ([\s\S]+?); every statement is checked against the original, and those that don’t match are marked unverified\.$/);

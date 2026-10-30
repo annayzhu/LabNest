@@ -2,6 +2,7 @@
 import {useI18n} from "@/components/I18nProvider";
 
 import { useRunClock } from "./useRunClock";
+import { TimerAlertPrompt } from "./TimerAlerts";
 import { Pause, Play, RotateCcw, Timer, Square } from "lucide-react";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { updateStepTimer, type StepTimerActionState } from "@/app/experiments/[id]/run/actions";
@@ -70,6 +71,7 @@ export function StepTimerControls({ experimentId, step, compact=false, execution
       <button type="button" onClick={() => submitTimerIntent("reset")} disabled={pending || disabled || clockWarning || !clock.online} aria-label="Reset timer" className="focus-ring flex h-11 w-11 items-center justify-center rounded-[var(--ln-radius-control-md)] border border-hairline bg-surface text-muted"><RotateCcw className="h-4 w-4" aria-hidden /></button>
     </div>
     {configured && (step.timerStartedAt || (step.timerRemainingSeconds ?? 0) > 0) ? <button type="button" disabled={pending || disabled || clockWarning || !clock.online} className="focus-ring mt-2 flex min-h-11 items-center gap-2 text-sm text-moss" onClick={() => submitTimerIntent('finish')}><Square size={14}/>End timer (the step still needs confirming)</button> : null}
+    {running ? <TimerAlertPrompt /> : null}
     {configured && remaining === 0 ? <p role="status" className="mt-2 text-sm">The timer reached zero; the step is not completed automatically. Reset before timing again.</p> : null}
     {!clock.online ? <p role="status" className="text-warning">Offline, the timer keeps showing; start, pause and reset need a connection to confirm, so nothing runs late after reconnecting.</p> : null}
     {clockWarning ? <p role="alert" className="text-warning">The clock is not calibrated yet or the device time changed; check it once online. The current display is not a precise timing reference.</p> : null}

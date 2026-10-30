@@ -4,11 +4,10 @@ import { useRunStepSelection } from "./RunStepSelection";
 import { MobileMeasurementCapture } from "@/components/MobileMeasurementCapture";
 import Link from "next/link";
 import { useI18n } from "@/components/I18nProvider";
-import { OfflineCalculator } from "@/components/calculators/OfflineCalculator";
 import { ProtocolContentBlockView } from "@/components/ProtocolDocumentView";
 import { newClientMutationId } from "@/lib/client-mutation-id";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronDown, Circle, Play, Save, X } from "lucide-react";
 import { Fragment, useActionState, useEffect, useMemo, useState, useRef } from "react";
 import { saveProtocolRunProgress, type ProtocolRunProgressState } from "@/app/experiments/[id]/run/actions";
 import { formLabelClass, formTextareaClass } from "@/components/forms";
@@ -17,6 +16,7 @@ import { StepCalculator } from "@/components/calculators/StepCalculator";
 import { StepTimerControls } from "@/components/StepTimerControls";
 import { stepQuantities, type StructuredRunView } from '@/lib/structured-run';
 import { StructuredStepRecord } from './StructuredStepRecord';
+import { ProtocolReferenceSheet } from './ProtocolReferenceSheet';
 import { ChipRenderContext, type ChipRender } from './protocol/ChipText';
 import { RunChipContext, type RunChipStep } from './protocol/RunChip';
 import { RunStepMixes } from './protocol/MixCard';
@@ -132,6 +132,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
   const [recordOpen,setRecordOpen]=useState(false);
   const [allStepsOpen, setAllStepsOpen] = useState(false);
   const [offlineStatus, setOfflineStatus] = useState("");
+  // 规程原文 opened beside a step: the step's source reference, null for the whole Protocol, undefined while closed.
+  const [referenceFor, setReferenceFor] = useState<string | null | undefined>(undefined);
+  const originalButton = (step: RunStep) => referenceGroups.length ? <button type="button" className="focus-ring ln-original-link" onClick={() => setReferenceFor(step.protocolStepRef ?? null)}><BookOpen aria-hidden />{zh ? "原文" : "Original"}</button> : null;
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? currentStep ?? steps[0];
   useEffect(()=>{
@@ -238,7 +241,8 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     <input type="hidden" name="experimentId" value={experimentId} />
     {structured ? <input type="hidden" name="executionPlanRevision" value={structured.plan.revision}/> : null}
     {queued.length ? <p role="status" className="text-warning">{`${queued.length} record${queued.length === 1 ? "" : "s"} on this device waiting to sync, ${queued.filter(item => item.state === "conflict").length} in conflict. The completion count below does not cover them all yet.`}</p> : null}
-    {structured ? <p role="status" data-structured-progress>{`Required ${requiredCompleted}/${requiredSteps.length} done · optional ${steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/${steps.filter(s => structured.steps[s.id]?.optional).length} · skipped ${Object.keys(structured.plan.skips).length} · to be determined ${steps.filter(s => structured.steps[s.id]?.blocked).length}`}</p> : null}
+    {/* 现场模式's step rail already counts progress. */}
+    {structured && !bench ? <p role="status" data-structured-progress>{`Required ${requiredCompleted}/${requiredSteps.length} done · optional ${steps.filter(s => structured.steps[s.id]?.optional && completedIds.has(s.id)).length}/${steps.filter(s => structured.steps[s.id]?.optional).length} · skipped ${Object.keys(structured.plan.skips).length} · to be determined ${steps.filter(s => structured.steps[s.id]?.blocked).length}`}</p> : null}
     <input type="hidden" name="clientMutationId" />
     <input type="hidden" name="deviceCreatedAt" />
     {olderDraft ? <aside className="m-3 border border-warning p-3" role="status"><p>The run record was updated. Compare the server record with the older draft before deciding whether to keep using it.</p><details><summary>Show the older draft</summary>{Object.entries(olderDraft).map(([key,value]) => <p key={key} className="whitespace-pre-wrap">{value}</p>)}</details><button type="button" className="focus-ring min-h-11 text-moss" onClick={() => { setDraftFields(olderDraft); setOlderDraft(null); setDraftNotice('Checked draft restored, not saved yet'); }}>Checked; keep using these drafts</button></aside> : null}
@@ -271,9 +275,9 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
         <div className="p-4">
           {groups.length>1 ? <p className="text-xs text-muted">{experimentStepGroupHeading(selectedStep.groupTitle).title}</p> : null}
           <RunStepNotes blocks={selectedStep.richContent?.notesBefore} className="mb-3" />
-          {selectedStep.richContent?.derivedTitle ? <p className="mt-1 font-mono text-xs text-muted">{completedIds.has(selectedStep.id)?"✓ ":""}{zh ? `第 ${selectedStepIndex + 1} 步` : `Step ${selectedStepIndex + 1}`}</p> : <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>}
+          <div className="flex items-start justify-between gap-3">{selectedStep.richContent?.derivedTitle ? <p className="mt-1 font-mono text-xs text-muted">{completedIds.has(selectedStep.id)?"✓ ":""}{zh ? `第 ${selectedStepIndex + 1} 步` : `Step ${selectedStepIndex + 1}`}</p> : <h3 className="mt-1 text-base font-semibold leading-6 text-ink">{completedIds.has(selectedStep.id)?"✓ ":""}{selectedStep.title}</h3>}{originalButton(selectedStep)}</div>
 
-          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content><RunChipContext.Provider value={runChips.get(selectedStep.id) ?? null}><ChipRenderContext.Provider value={chipContexts[selectedStep.richContent?.chipVersion ?? ''] ?? null}>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可查看规程参考。" : "Full formatting for this older step is unverified. See Protocol reference."}</p> : null}</>}{runChips.get(selectedStep.id) ? <RunStepMixes step={runChips.get(selectedStep.id)!} mixes={structured?.plan.runMixes[selectedStep.id] ?? []} /> : null}</ChipRenderContext.Provider></RunChipContext.Provider></div>
+          <div className="run-step-content mt-3 min-w-0 space-y-3" data-run-step-content><RunChipContext.Provider value={runChips.get(selectedStep.id) ?? null}><ChipRenderContext.Provider value={chipContexts[selectedStep.richContent?.chipVersion ?? ''] ?? null}>{selectedStep.richContent?.blocks.length?selectedStep.richContent.blocks.map(block=><ProtocolContentBlockView key={block.id} block={block} executionContext/>):<><p className="whitespace-pre-wrap text-base leading-7 text-graphite">{selectedStep.description}</p>{selectedStep.richContent?.source === "legacy-text" ? <p className="text-xs text-warning">{zh ? "此旧步骤的完整格式尚未确认，可点“原文”查看。" : "Full formatting for this older step is unverified. See the original."}</p> : null}</>}{runChips.get(selectedStep.id) ? <RunStepMixes step={runChips.get(selectedStep.id)!} mixes={structured?.plan.runMixes[selectedStep.id] ?? []} /> : null}</ChipRenderContext.Provider></RunChipContext.Provider></div>
           <RunStepNotes blocks={selectedStep.richContent?.notesAfter} className="mt-3" />
           <div data-run-tools className="mt-3 grid grid-cols-2 min-[360px]:grid-cols-3 gap-2">{editable ? <StepCalculator experimentId={experimentId} stepId={selectedStep.id} /> : null}
           <StepTimerControls compact key={selectedStep.id} experimentId={experimentId} step={selectedStep} executionPlanRevision={structured?.plan.revision} disabled={!editable || Boolean(structured?.steps[selectedStep.id] && (selectedStep.completed || structured.steps[selectedStep.id].blocked))}/>
@@ -343,21 +347,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
     </section>
     </div>
 
-    <details className="rounded-[var(--ln-radius-control-lg)] border border-hairline px-3 py-2" data-run-reference>
-      <summary className="focus-ring cursor-pointer text-sm font-medium text-moss">{zh ? "规程参考与离线设置" : "Protocol reference and offline settings"}</summary>
-      <div className="mt-3 space-y-3">
-        <OfflineCalculator run zh={zh}/>
-        {referenceGroups.map(group => <details key={group.key}>
-          <summary className="focus-ring cursor-pointer text-sm font-medium">{group.title}</summary>
-          <div className="run-step-content mt-2 min-w-0 space-y-3">
-            <ChipRenderContext.Provider value={chipContexts[group.key] ?? null}>{(frozenReferences?.[group.key] ?? []).map(section => <section key={section.key}>
-              <h3 className="mb-2 text-sm font-semibold">{section.title}</h3>
-              {section.blocks.map(block => <ProtocolContentBlockView key={block.id} block={block} executionContext/>)}
-            </section>)}</ChipRenderContext.Provider>
-          </div>
-        </details>)}
-      </div>
-    </details>
+    {referenceFor !== undefined ? <ProtocolReferenceSheet groups={referenceGroups} references={frozenReferences ?? {}} chipContexts={chipContexts} stepRef={referenceFor} onClose={() => setReferenceFor(undefined)} /> : null}
 
     {allStepsOpen ? <div className="ln-modal-layer fixed inset-0 z-50 lg:hidden">
       <button type="button" aria-label="Close all steps" onClick={() => setAllStepsOpen(false)} className="ln-modal-backdrop absolute inset-0 bg-ink/25 backdrop-blur-[1px]" />
@@ -404,6 +394,7 @@ export function ProtocolRunProgressForm({ experimentId, status, steps, editable,
                   {structured?.steps[step.id] ? <StepTimerControls compact experimentId={experimentId} step={step} executionPlanRevision={structured.plan.revision} disabled={!editable || step.completed || structured.steps[step.id].blocked}/> : null}
                   {editable ? <StepCalculator experimentId={experimentId} stepId={step.id}/> : null}
                   <Link onClick={() => window.dispatchEvent(new Event("labnest:preserve-run-draft"))} href={`/entries/new?mode=capture&experiment=${experimentId}&step=${step.id}`} className="focus-ring inline-flex min-h-9 items-center text-sm text-moss">Jot a note</Link>
+                  {originalButton(step)}
                   {step.allowsDeviation ? <><label><span className={formLabelClass}>Deviation or incident</span><textarea name={`deviation:${step.id}`} value={draftFields[`deviation:${step.id}`] ?? step.deviationNote ?? ""} onChange={e => setDraftFields(current => ({ ...current, [`deviation:${step.id}`]: e.target.value }))} disabled={!editable || pending} placeholder="Only record what differed from the planned method" className={`${fieldClass} min-h-20 resize-y`} /></label></> : <p className="rounded-[var(--ln-radius-control-lg)] bg-warm px-3 py-2 text-xs text-muted">Deviation recording is disabled by the locked Protocol step.</p>}
                 </div>
               </div>{step.richContent?.notesAfter?.length ? <div className="px-4 py-3"><RunStepNotes blocks={step.richContent.notesAfter} /></div> : null}</Fragment>)}

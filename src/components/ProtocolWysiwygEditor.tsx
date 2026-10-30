@@ -1,13 +1,13 @@
 "use client";
 import { documentScriptMarks } from "@/lib/tiptap-document-extensions";
-import { TextSelection } from '@tiptap/pm/state';
-import type { ResolvedPos } from '@tiptap/pm/model';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
+import type { Node as ProseMirrorNode, ResolvedPos } from '@tiptap/pm/model';
 import { ProtocolParameterNode } from '@/lib/protocol-parameter-node';
 import { ProtocolEditorIdentities } from '@/lib/protocol-editor-identities';
 import { ProtocolStepNode } from '@/lib/protocol-step-node';
 import { ProtocolDocumentNode } from '@/lib/protocol-document-node';
 import { ProtocolChipInput, ProtocolConditionDecorations, ProtocolEditorHandlerStorage, ProtocolSlashMenu, setProtocolHandlers } from '@/lib/protocol-editor-extensions';
-import { parameterDisplayName, splitDimension, splitLookupSource, toolSpecs, type RecognizedQuantity } from '@/lib/protocol-chips';
+import { chipWithRangeEnd, parameterDisplayName, splitDimension, splitLookupSource, toolSpecs, type RecognizedQuantity } from '@/lib/protocol-chips';
 import { blankProtocolSystems, type ProtocolSystems } from '@/lib/protocol-systems-schema';
 import type { ProtocolSelection } from '@/lib/structured-protocol';
 import { prefixedClientId as uid } from '@/lib/client-mutation-id';
@@ -32,7 +32,7 @@ import { defaultPcrProgram } from '@/lib/protocol-program';
 import { newMix, recipeTableToMix, type MixProposal } from '@/lib/protocol-mix';
 import { MixEditor, MixProposals } from './protocol/MixCard';
 import { newCalculation } from '@/lib/protocol-calculations';
-import { ProtocolEditorContext, type ChipTarget, type ConditionTarget, type ProtocolEditorApi } from './protocol/ProtocolEditorContext';
+import { ProtocolEditorContext, type ChipTarget, type ConditionTarget, type ProtocolEditorApi, type ProtocolStockItem } from './protocol/ProtocolEditorContext';
 import './protocol/protocol.css';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -227,7 +227,7 @@ function protocolEditorExtensions() {
   ];
 }
 
-export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploadDraftId, mixProposals, onDismissMixProposal }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; actionsHostId?: string; uploadDraftId: string; mixProposals: MixProposal[]; onDismissMixProposal?: (proposalId: string) => Promise<{ error?: string }> }) {
+export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploadDraftId, mixProposals, onDismissMixProposal, inventory = [] }: { document: ProtocolDocument; onChange: (document: ProtocolDocument) => void; actionsHostId?: string; uploadDraftId: string; mixProposals: MixProposal[]; onDismissMixProposal?: (proposalId: string) => Promise<{ error?: string }>; inventory?: ProtocolStockItem[] }) {
   const [initialContent] = useState(() => protocolDocumentToTiptap(document)); // The form owns one document for the lifetime of this editor.
   const onChangeRef = useRef(onChange);
   const importWarningsRef = useRef(document.importWarnings);
@@ -291,7 +291,8 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
   const createChip = useCallback((quantity: RecognizedQuantity, pos: number) => {
     const systems = systemsRef.current ?? blankProtocolSystems();
     const id = uid('p');
-    let source: ProtocolSystems['parameters'][number]['source'] = { kind: 'fixed', value: quantity.values[0], unit: quantity.unit };
+    // A range keeps the source's two ends; the author adopts one value within it in the chip.
+    let source: ProtocolSystems['parameters'][number]['source'] = { kind: 'fixed', value: quantity.range ? null : quantity.values[0], unit: quantity.unit };
     if (quantity.values.length > 1) {
       const match = splitDimension(quantity.values.length, systems);
       const dimension = 'dimensionId' in match ? systems.dimensions.find(d => d.id === match.dimensionId) : undefined;
@@ -307,11 +308,23 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
       }
       source = splitLookupSource(quantity.values, quantity.unit, dimension, () => uid('value'));
     }
-    const created = { id, label: '', unit: quantity.unit, origin: 'chip' as const, source };
+    const created = { id, label: '', unit: quantity.unit, origin: 'chip' as const, source, ...(quantity.range ? { range: quantity.range } : {}) };
     systemsRef.current = { ...systems, parameters: [...systems.parameters, created] };
     // The chip carries its final display attributes so no follow-up transaction breaks ⌘Z/Backspace undo of the input rule.
     return { parameterId: id, label: parameterDisplayName(created), unit: created.unit };
   }, []);
+
+  /** "20 min" then " - 30 min": the chip keeps its identity and becomes the range; the author adopts a value in it. */
+  const extendChipToRange = useCallback((pos: number, max: { value: number; unit: string }) => {
+    const id = editorRef.current?.state.doc.nodeAt(pos)?.attrs.parameterId, systems = systemsRef.current;
+    const parameter = systems?.parameters.find(item => item.id === id);
+    const next = parameter && chipWithRangeEnd(parameter, max);
+    if (!systems || !next) return null;
+    systemsRef.current = { ...systems, parameters: systems.parameters.map(item => item.id === next.id ? next : item) };
+    // The text can end exactly as it was (the second end replaced by the chip), and then the editor reports no update.
+    queueMicrotask(() => { const current = editorRef.current; if (current && !current.isDestroyed) onChangeRef.current(serialize(current.getJSON())); });
+    return { parameterId: next.id, label: parameterDisplayName(next), unit: next.unit };
+  }, [serialize]);
 
   /** The author's answer for "50/80 µL": the chip replaces exactly the text that was typed. */
   const chooseSplit = useCallback((choice: SplitChoice) => {
@@ -364,7 +377,7 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
   useLayoutEffect(() => {
     if (!editor) return;
     setProtocolHandlers(editor, {
-      createChip, openChip: pos => openChipAt(pos, 'value'),
+      createChip, extendChipToRange, openChip: pos => openChipAt(pos, 'value'),
       // "/" opens the grouped menu at the caret; the typed query follows the text after it.
       openMenu: from => { const coords = editor.view.coordsAtPos(from); setInsertMenu({ mode: 'slash', from, query: '', anchor: { top: coords.top, left: coords.left, bottom: coords.bottom } }); },
       menuKey: event => insertKeyRef.current?.(event) ?? splitKeyRef.current?.(event) ?? false,
@@ -443,11 +456,43 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
     current.chain().insertContentAt(pos + 1, [{ type: 'text', text: ' ' }, { type: 'protocolParameter', attrs: { parameterId, label: parameterDisplayName(parameter), unit: parameter.unit } }]).run();
     return pos + 2;
   }, []);
+  const revealParameter = useCallback((parameterIds: string[]) => {
+    const current = editorRef.current;
+    if (!current || current.isDestroyed) return;
+    let found = -1;
+    current.state.doc.descendants((node, pos) => { if (found < 0 && node.type.name === 'protocolParameter' && parameterIds.includes(node.attrs.parameterId)) found = pos; return found < 0; });
+    if (found < 0) return;
+    current.view.dispatch(current.state.tr.setSelection(NodeSelection.create(current.state.doc, found)));
+    const chip = current.view.nodeDOM(found);
+    if (chip instanceof HTMLElement) chip.scrollIntoView({ block: 'center' });
+    requestAnimationFrame(() => openChipAt(found, 'value'));
+  }, [openChipAt]);
+  // A stock item linked from a chip joins the materials table, so the list of materials stays whole.
+  const addMaterial = useCallback((name: string) => {
+    const current = editorRef.current;
+    if (!current || current.isDestroyed) return undefined;
+    let table: { pos: number; node: ProseMirrorNode } | undefined;
+    current.state.doc.descendants((node, pos) => {
+      if (table) return false;
+      if (node.type.name === 'protocolSection') return node.attrs.sectionKey === 'material';
+      if (node.type.name === 'table') { table = { pos, node }; return false; }
+      return true;
+    });
+    const header = table?.node.firstChild;
+    if (!table || !header) return undefined;
+    const headers: string[] = [];
+    header.forEach(cell => { headers.push(cell.textContent); });
+    const nameIndex = protocolTableColumnIndex(headers, ["name", "material", "reagent", "名称", "材料", "试剂"], 0), rowId = `row-${uid('material')}`;
+    const { schema } = current.state, cells: ProseMirrorNode[] = [];
+    header.forEach((_cell, _offset, index) => { cells.push(schema.nodes.tableCell.create(null, schema.nodes.paragraph.create(null, index === nameIndex ? schema.text(name) : null))); });
+    current.view.dispatch(current.state.tr.insert(table.pos + table.node.nodeSize - 1, schema.nodes.tableRow.create({ protocolRowId: rowId }, cells)));
+    return rowId;
+  }, []);
   const stepsAllowed = stepsAllowedIn(document);
   const api = useMemo<ProtocolEditorApi>(() => ({
-    systems: document.systems, updateSystems, lens, setLens, materials: protocolMaterials(document),
-    openChip: setChipTarget, insertChipAfter, stepsAllowed,
-  }), [document, updateSystems, lens, setLens, insertChipAfter, stepsAllowed]);
+    systems: document.systems, updateSystems, lens, setLens, materials: protocolMaterials(document), inventory, addMaterial,
+    openChip: setChipTarget, revealParameter, insertChipAfter, stepsAllowed,
+  }), [document, updateSystems, lens, setLens, inventory, addMaterial, revealParameter, insertChipAfter, stepsAllowed]);
 
   /** Insert from "/" or "＋": chips open their editor at once so the value is typed next. */
   const insertChoice = useCallback((choice: InsertChoice) => {
@@ -502,9 +547,10 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
       const created = newCalculation(choice.calculator, systems, uid);
       id = created.resultId;
       systemsRef.current = { ...systems, parameters: [...systems.parameters, ...created.parameters] };
-    } else if (choice.type === 'quantity') {
+    } else if (choice.type === 'quantity' || choice.type === 'stock') {
       id = uid('p');
-      systemsRef.current = { ...(systemsRef.current ?? blankProtocolSystems()), parameters: [...(systemsRef.current?.parameters ?? []), { id, label: '', unit: choice.unit, origin: 'chip', source: { kind: 'fixed', value: null, unit: choice.unit } }] };
+      const unit = choice.type === 'stock' ? 'µL' : choice.unit;
+      systemsRef.current = { ...(systemsRef.current ?? blankProtocolSystems()), parameters: [...(systemsRef.current?.parameters ?? []), { id, label: '', unit, origin: 'chip', source: { kind: 'fixed', value: null, unit } }] };
     } else {
       id = uid('tool');
       const spec = toolSpecs[choice.tool];
@@ -514,7 +560,8 @@ export function ProtocolWysiwygEditor({ document, onChange, actionsHostId, uploa
         tools: [...(systems.tools ?? []), { id, kind: choice.tool, fields: fields.map(({ key, parameterId }) => ({ key, parameterId })) }] };
     }
     chain.insertContent([{ type: 'protocolParameter', attrs: { parameterId: id, label: '', unit: '' } }, { type: 'text', text: ' ' }]).run();
-    requestAnimationFrame(() => openChipAt(pos, 'value'));
+    // A stock material is named first (from stock), then given its amount.
+    requestAnimationFrame(() => openChipAt(pos, choice.type === 'stock' ? 'stock' : 'value'));
   }, [openChipAt, uploadDraftId, updateSystems]);
 
   // A recipe table becomes a mix card: names from the first column, amounts (and per-system columns) as chips.

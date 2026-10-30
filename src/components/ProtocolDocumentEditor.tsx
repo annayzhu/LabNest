@@ -9,6 +9,7 @@ import { DocumentPageHeader } from "@/components/DocumentPageHeader";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { formInputClass, formLabelClass, formTextareaClass } from "@/components/forms";
 import { ProtocolWysiwygEditor } from "@/components/ProtocolWysiwygEditor";
+import type { ProtocolStockItem } from "@/components/protocol/ProtocolEditorContext";
 import { ProtocolRelevantItemsEditor, type ProtocolRelevantItems } from "@/components/ProtocolRelevantItemsEditor";
 import { RecordCodeField } from "@/components/RecordCodeField";
 import { TagFieldLabel } from "@/components/TagFieldLabel";
@@ -54,6 +55,7 @@ export function ProtocolDocumentEditor({
   relevantCatalog = [],
   initialManualRelevantLinks = [],
   importHistory = [],
+  inventory = [],
 }: {
   /** Bench-made mix cards offered from runs. */
   mixProposals?: MixProposal[];
@@ -74,6 +76,8 @@ export function ProtocolDocumentEditor({
   relevantCatalog?: RelevantCatalogItem[];
   initialManualRelevantLinks?: ManualRelevantLink[];
   importHistory?: ProtocolImportHistoryEntry[];
+  /** Stock a chip's material can be linked to, so the run deducts it. */
+  inventory?: ProtocolStockItem[];
 }) {
   const reviewed = mode === "edit" && version.reviewStage === "reviewed";
   const [document, setDocument] = useState(initialDocument);
@@ -139,7 +143,7 @@ export function ProtocolDocumentEditor({
             {protocol.id && version.id ? <a href={`/protocols/${protocol.id}/versions/${version.id}/convert`} className="focus-ring inline-flex min-h-9 items-center rounded-[var(--ln-radius-control-lg)] border border-hairline bg-surface px-3 text-sm font-medium text-moss hover:bg-warm">转换为步骤块</a> : null}
             <span className="text-xs text-muted">这份规程还是旧格式。转换后每步一块、数值成为参数块，可用配液卡、准备清单和体系调整；先预览，再存为新草稿。请先保存这里的改动。</span>
           </nav> : null}
-          <ProtocolWysiwygEditor document={document} onChange={setDocument} actionsHostId="protocol-document-actions" uploadDraftId={uploadDraftId} mixProposals={mixProposals} onDismissMixProposal={dismissMixProposal && protocol.id ? proposalId => dismissMixProposal(protocol.id!, proposalId) : undefined} />
+          <ProtocolWysiwygEditor document={document} onChange={setDocument} inventory={inventory} actionsHostId="protocol-document-actions" uploadDraftId={uploadDraftId} mixProposals={mixProposals} onDismissMixProposal={dismissMixProposal && protocol.id ? proposalId => dismissMixProposal(protocol.id!, proposalId) : undefined} />
         </DocumentCanvas>}
         metadata={<section className="document-editor-properties-card protocol-metadata-card" aria-label="Protocol metadata">
           <header><h2>Protocol metadata</h2><Button type="submit" variant="primary" size="sm" disabled={pending} className="protocol-properties-save">{pending ? "Saving…" : saveLabel}</Button><span>Governance and revision details.</span></header>

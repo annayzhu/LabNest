@@ -5,7 +5,7 @@ import type { ProtocolContentBlock, ProtocolDocument } from './protocol-document
 import { executionBlockText, projectProtocolExecution } from './protocol-execution';
 import { calculate, type CalculatorResult } from './calculators/calculator-engine';
 import { adoptableCalculation, calculationRequest, calculationIssues, protocolCalculations, readableCalculationError } from './protocol-calculations';
-import { chipParameterIds, mapChipReferences, optionMarks, parameterDisplayName, parameterLongName, protocolChipText } from './protocol-chips';
+import { chipParameterIds, filledAtRun, mapChipReferences, optionMarks, parameterDisplayName, parameterLongName, protocolChipText } from './protocol-chips';
 export type { ProtocolSystems, ProtocolCondition } from './protocol-systems-schema';
 
 export type Applicability = 'applicable' | 'not-applicable' | 'unknown';
@@ -97,7 +97,8 @@ export function resolveProtocolSystem(input: ProtocolSystems, selections: Protoc
     const label = parameterDisplayName(parameter);
     let resolved: ResolvedProtocolParameter = { status: 'unknown', unit: parameter.unit };
     if (source.kind === 'fixed' && source.value !== null) candidate = { ...source, value: source.value };
-    if (source.kind === 'actual') candidate = actualValues[parameter.id];
+    // A source range without an adopted value is entered at the bench, like "执行时填写".
+    if (filledAtRun(parameter)) candidate = actualValues[parameter.id];
     if (source.kind === 'lookup') {
       const matched = source.values.filter(row => evaluateProtocolCondition(row.when, selections) === 'applicable');
       const unresolved = source.values.some(row => evaluateProtocolCondition(row.when, selections) === 'unknown');
@@ -221,13 +222,16 @@ export function resolveProtocolDocument(document: ProtocolDocument, selections: 
     const referenced = new Set(stepRules.flatMap(r => [...r.parameterIds, ...(r.timerParameterId ? [r.timerParameterId] : [])]));
     mapChipReferences([step.title, ...blocks], key => { chipParameterIds(key, systems).forEach(id => referenced.add(id)); return key; });
     const unknownContent = blocks.some(b => state('block', b.id) === 'unknown' || b.type === 'table' && b.rowIds?.some(rowId => state('row', rowId) === 'unknown'));
-    const blocked = globalBlock || applicability !== 'applicable' || unknownContent || [...referenced].some(key => resolution.parameters[key]?.status !== 'resolved');
+    const unresolved = [...referenced].filter(key => resolution.parameters[key]?.status !== 'resolved');
+    const blocked = globalBlock || applicability !== 'applicable' || unknownContent || unresolved.length > 0;
+    // Waiting only for values entered at the bench (执行时填写, an unfixed source range): the step itself asks for them.
+    const awaitingInput = !globalBlock && applicability === 'applicable' && !unknownContent && unresolved.length > 0 && unresolved.every(key => { const parameter = systems?.parameters.find(p => p.id === key); return parameter && filledAtRun(parameter); });
     // Every chip in the step can take an actual value; those marked "执行时必填" must. A value filled at execution is an input, not an actual.
     const ruleFields = stepRules.flatMap(r => r.actualFields);
-    const chipFields = [...referenced].flatMap(key => { const parameter = systems?.parameters.find(p => p.id === key); return parameter && parameter.source.kind !== 'actual' && !ruleFields.some(f => f.id === key) ? [{ id: key, label: parameterLongName(parameter, systems!), unit: parameter.unit, required: parameter.actual === 'required', source: 'chip' as const }] : []; });
+    const chipFields = [...referenced].flatMap(key => { const parameter = systems?.parameters.find(p => p.id === key); return parameter && !filledAtRun(parameter) && !ruleFields.some(f => f.id === key) ? [{ id: key, label: parameterLongName(parameter, systems!), unit: parameter.unit, required: parameter.actual === 'required', source: 'chip' as const }] : []; });
     const content_blocks = render(blocks);
     // `source_blocks` keep chip references for interface rendering; `content_blocks` are plain reading text.
-    return { ...step, title: render(step.title), content_blocks, source_blocks: blocks, description: content_blocks.map(executionBlockText).join('\n'), applicability, blocked,
+    return { ...step, title: render(step.title), content_blocks, source_blocks: blocks, description: content_blocks.map(executionBlockText).join('\n'), applicability, blocked, ...(awaitingInput ? { awaitingInput } : {}),
       optional: stepRules.some(r => r.optional),
       actualFields: [...ruleFields, ...chipFields] as StepActualField[],
       chipIds: [...referenced],

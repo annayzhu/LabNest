@@ -1,25 +1,26 @@
 'use client';
-import { useMemo, useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Download, StickyNote } from 'lucide-react';
+import { AlertTriangle, ChevronDown, StickyNote } from 'lucide-react';
 import { readableError } from '@/lib/form-actions';
-import { preparationChecklist, preparationKindLabels, preparationProgress, type PreparationItem, type PreparationKind, type PreparationState, type PreparationStock } from '@/lib/run-preparation';
-import { preparationWorkbook } from '@/lib/run-preparation-workbook';
+import { preparationKindLabels, preparationProgress, type PreparationChecklist, type PreparationItem, type PreparationKind, type PreparationState } from '@/lib/run-preparation';
 import type { StructuredRunView } from '@/lib/structured-run';
-import { Button } from './ui/Button';
 import { PlateLayoutView, type PlateAttachment } from './PlateLayoutView';
 import './run-bench.css';
 
+/** The bar's short names for what is listed: "Materials 4 · Mix cards 2". */
+const kindCounts: Record<PreparationKind, string> = { material: 'Materials', mix: 'Mix cards', plate: 'Plates', equipment: 'Equipment' };
 
 /**
- * 实验准备清单: what to have ready before the bench, derived from the frozen Protocols, the confirmed plan and 本次数量.
- * Ticks are a bench aid saved per item without touching progress; the list itself is never stored, so it follows every change.
+ * 实验准备: one quiet bar above the steps that opens into the groups' quantities and systems (`children`), what still
+ * needs attention, and what to have ready. Ticks are a bench aid saved per item without touching progress; the list itself
+ * is derived, never stored, so it follows every change. It opens by itself only while something must be entered first.
  */
-export function RunPreparationChecklist({ experimentId, runLabel, view, editable, plates = [], stock = [], recorded = [] }: {
-  experimentId: string; runLabel: string; view: StructuredRunView; editable: boolean; plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>;
+export function RunPreparationChecklist({ experimentId, view, list, editable, plates = [], startOpen, children, footer }: {
+  experimentId: string; view: StructuredRunView; list: PreparationChecklist; editable: boolean; plates?: PlateAttachment[]; startOpen: boolean; children?: ReactNode; footer?: ReactNode;
 }) {
   const router = useRouter();
-  const list = useMemo(() => preparationChecklist(view, { plates: plates.map(plate => ({ id: plate.id, name: plate.originalFilename })), stock, recorded }), [view, plates, stock, recorded]);
+  const [open, setOpen] = useState(startOpen);
   const [ticks, setTicks] = useState<Record<string, PreparationState | undefined>>(view.plan.preparation);
   const [seen, setSeen] = useState(view.plan.preparation);
   if (seen !== view.plan.preparation) { setSeen(view.plan.preparation); setTicks(view.plan.preparation); }
@@ -36,33 +37,30 @@ export function RunPreparationChecklist({ experimentId, runLabel, view, editable
     router.refresh();
   });
   const kinds = (Object.keys(preparationKindLabels) as PreparationKind[]).filter(kind => list.items.some(item => item.kind === kind));
-  // The 操作工作簿 is written in the browser from what this card shows, ticks included.
-  const exportWorkbook = async () => {
-    const { default: writeXlsxFile } = await import('write-excel-file/browser');
-    const sheets = preparationWorkbook(view, list, ticks);
-    await writeXlsxFile(sheets.map(sheet => ({ sheet: sheet.name, columns: sheet.widths.map(width => ({ width })),
-      data: sheet.rows.map((row, index) => row.map(value => ({ value, ...(index === 0 ? { fontWeight: 'bold' as const } : {}) }))) }))).toFile(`${runLabel}-实验准备.xlsx`);
-  };
-  return <section id="run-preparation" className="ln-prep" aria-label="Run preparation checklist">
-    <header className="ln-prep-head">
-      <h3>Preparation checklist</h3>
-      <span className="ln-prep-progress" role="status">{list.items.length ? `Ready ${progress.done}/${progress.total}` : 'Awaiting system confirmation'}</span>
-      {list.items.length ? <Button size="sm" onClick={() => void exportWorkbook()}><Download className="h-4 w-4" aria-hidden />导出操作工作簿</Button> : null}
-    </header>
-    {list.warnings.length ? <ul className="ln-prep-warnings" role="status" aria-label="Checks before running">{list.warnings.map(warning => <li key={warning}><AlertTriangle aria-hidden />{warning}</li>)}</ul> : null}
-    {kinds.map(kind => <div key={kind} className="ln-prep-group">
-      <h4>{preparationKindLabels[kind]}</h4>
-      <ul>{list.items.filter(item => item.kind === kind).map(item => <ChecklistItem key={item.key} item={item} state={ticks[item.key]} editable={editable && !pending} onChange={patch => write(item.key, patch)}>
-        {kind === 'plate' ? <PlateLayoutView attachment={plates.find(plate => `plate:${plate.id}` === item.key)!} /> : null}
-      </ChecklistItem>)}</ul>
-    </div>)}
-    {!list.items.length ? <p className="ln-prep-empty">Once the systems are confirmed and the run quantities filled in, the materials, mixes, plates, equipment and timers to prepare are listed here.</p> : null}
-    {list.reminders.length ? <p className="ln-prep-reminders">{list.reminders.join('; ')}</p> : null}
-    {message ? <p role="alert" className="ln-prep-error">{message}</p> : null}
-  </section>;
+  return <details id="run-preparation" className="ln-prep" open={open} onToggle={event => setOpen(event.currentTarget.open)} aria-label="Run preparation">
+    <summary className="ln-prep-bar focus-ring">
+      <strong>Preparation</strong>
+      {list.items.length ? <span className="ln-prep-progress" role="status">{`Ready ${progress.done}/${progress.total}`}</span> : null}
+      {kinds.length ? <span className="ln-prep-counts">{kinds.map(kind => `${kindCounts[kind]} ${list.items.filter(item => item.kind === kind).length}`).join(' · ')}</span> : null}
+      {list.warnings.length ? <span className="ln-prep-alert" aria-label={`${list.warnings.length} to check`}><AlertTriangle aria-hidden />{list.warnings.length}</span> : null}
+      <ChevronDown aria-hidden className="ln-prep-chevron" />
+    </summary>
+    <div className="ln-prep-body">
+      {children}
+      {list.warnings.length ? <ul className="ln-prep-warnings" role="status" aria-label="Checks before running">{list.warnings.map(warning => <li key={warning}><AlertTriangle aria-hidden />{warning}</li>)}</ul> : null}
+      {kinds.length ? <div className="ln-prep-modules">{kinds.map(kind => <section key={kind} className="ln-prep-group" aria-label={preparationKindLabels[kind]}>
+        <h4>{preparationKindLabels[kind]}</h4>
+        <ul>{list.items.filter(item => item.kind === kind).map(item => <ChecklistItem key={item.key} item={item} state={ticks[item.key]} editable={editable && !pending} onChange={patch => write(item.key, patch)}>
+          {kind === 'plate' ? <PlateLayoutView attachment={plates.find(plate => `plate:${plate.id}` === item.key)!} /> : null}
+        </ChecklistItem>)}</ul>
+      </section>)}</div> : <p className="ln-prep-empty">Materials, mix cards, plates and equipment to have ready are listed here once the run quantities are filled in.</p>}
+      {footer ? <div className="ln-prep-footer">{footer}</div> : null}
+      {message ? <p role="alert" className="ln-prep-error">{message}</p> : null}
+    </div>
+  </details>;
 }
 
-function ChecklistItem({ item, state, editable, onChange, children }: { item: PreparationItem; state: PreparationState | undefined; editable: boolean; onChange: (patch: { done: boolean; note?: string }) => void; children?: React.ReactNode }) {
+function ChecklistItem({ item, state, editable, onChange, children }: { item: PreparationItem; state: PreparationState | undefined; editable: boolean; onChange: (patch: { done: boolean; note?: string }) => void; children?: ReactNode }) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [draft, setDraft] = useState(state?.note ?? '');
   const saveNote = () => { setNoteOpen(false); if (draft.trim() !== (state?.note ?? '')) onChange({ done: Boolean(state?.done), note: draft.trim() }); };

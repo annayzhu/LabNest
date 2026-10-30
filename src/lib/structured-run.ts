@@ -80,6 +80,8 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
     for (const scope of scopes) {
       const id = scope.id ? `${version.protocolVersionId}@${scope.id}` : version.protocolVersionId;
       const adopted = plan.versions[id];
+      // Systems are confirmed only where the Protocol offers a choice; without one there is nothing to confirm.
+      const confirmed = Boolean(adopted?.confirmedAt) || !document.systems.dimensions.length;
       const resolved = resolveProtocolDocument(document, adopted?.selections ?? {}, adopted?.actualInputs ?? {}, adopted?.calculations ?? {});
       groupResolutions[scope.id] = resolved;
       view.versions.push({ id, sourceVersionId: version.protocolVersionId, groupId: scope.id || undefined, groupLabel: scope.label || undefined, document, title: version.protocolTitle ?? version.title ?? 'Protocol', ...(version.humanCode ? { code: version.humanCode } : {}), displayVersion: version.displayVersion ?? '', commonBlocks: resolved.commonBlocks, notePlacement: resolved.notePlacement, stepRefs: resolved.steps.map(step => step.source_ref!), parameters: resolved.parameters });
@@ -91,7 +93,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
         const timer = timerId ? resolved.parameters[timerId] : undefined;
         const timerDurationSeconds = timer?.status === 'resolved' ? Math.round(convert(timer.value!, timer.unit, 's')) : undefined;
         const dependsOnChoice = rules.some(r => [r.when.all, r.when.any, r.when.not].some(p => p?.length)) || dependsOnAdoptedValue(document, source.source_ref!);
-        view.steps[step.id] = { ...source, versionId: id, groupId: scope.id || undefined, groupLabel: scope.label || undefined, blocked: source.blocked || Boolean(dependsOnChoice && !adopted?.confirmedAt), timerDurationSeconds };
+        view.steps[step.id] = { ...source, versionId: id, groupId: scope.id || undefined, groupLabel: scope.label || undefined, blocked: source.blocked || (dependsOnChoice && !confirmed), ...(dependsOnChoice && !confirmed ? { awaitingInput: undefined } : {}), timerDurationSeconds };
       }
     }
     for (const step of steps.filter(s => s.groupKey === version.protocolVersionId && plan.groups.length && plan.stepGroups[s.id] === 'shared')) {
@@ -103,7 +105,7 @@ export function structuredRunView(snapshot: unknown, planValue: unknown, steps: 
       const timers = scopes.map(scope => timerId ? groupResolutions[scope.id].parameters[timerId] : undefined);
       const consistent = candidates.every(candidate => JSON.stringify(candidate) === JSON.stringify(first)) && timers.every(timer => JSON.stringify(timer) === JSON.stringify(timers[0]));
       const timerDurationSeconds = timers[0]?.status === 'resolved' ? Math.round(convert(timers[0].value!, timers[0].unit, 's')) : undefined;
-      const allConfirmed = scopes.every(scope => plan.versions[`${version.protocolVersionId}@${scope.id}`]?.confirmedAt);
+      const allConfirmed = !document.systems.dimensions.length || scopes.every(scope => plan.versions[`${version.protocolVersionId}@${scope.id}`]?.confirmedAt);
       // Shared work must agree across every group. An unconfirmed/unknown group is never ignored.
       view.steps[step.id] = { ...first, versionId: version.protocolVersionId, groupId: 'shared', groupLabel: '共同准备', timerDurationSeconds, blocked: !consistent || !allConfirmed || candidates.some(s => s!.blocked), ...(!consistent ? { description: '各组的共同操作参数或适用条件不同；请在规程中拆为组级操作后创建新实验。', content_blocks: [] } : {}) };
     }

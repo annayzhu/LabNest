@@ -94,10 +94,11 @@ function conditionMarks(when: ProtocolCondition, marks: Map<string, OptionMark>)
 }
 
 /** A chip as seen by a reader: shared by the plain-text renderer and the interface chip. */
+/** `range`: the source's range ("20–30 min") beside the value this Protocol adopted within it. */
 export type ChipView =
   | { type: 'missing' }
-  | { type: 'pending'; name: string; reason: '待选体系' | '待填写' | '执行时填写' | '计算后确认' | '取值冲突' | '单位不兼容'; unit?: string; kind: ChipKind; displayUnit: string }
-  | { type: 'value'; values: Array<{ marks: OptionMark[]; text: string }>; unit: string; kind: ChipKind; name?: string }
+  | { type: 'pending'; name: string; reason: '待选体系' | '待填写' | '待选采用值' | '执行时填写' | '计算后确认' | '取值冲突' | '单位不兼容'; unit?: string; kind: ChipKind; displayUnit: string; range?: string }
+  | { type: 'value'; values: Array<{ marks: OptionMark[]; text: string }>; unit: string; kind: ChipKind; name?: string; range?: string }
   | { type: 'tool'; tool: ToolKind; label: string; fields: Array<{ key: string; label: string; view: ChipView }> };
 
 export function protocolChipView(id: string, systems: ProtocolSystems | undefined, resolution?: Record<string, Resolved>): ChipView {
@@ -107,27 +108,40 @@ export function protocolChipView(id: string, systems: ProtocolSystems | undefine
   return parameter && systems ? parameterView(parameter, systems, resolution) : { type: 'missing' };
 }
 
+/** "20–30 min", or "10 pg – 100 ng" when the two ends use different units. */
+export function rangeText(range: NonNullable<Parameter['range']>) {
+  if (normalizeUnit(range.min.unit) === normalizeUnit(range.max.unit)) return formatChipValue(`${numberText(range.min.value, range.min.unit)}–${numberText(range.max.value, range.max.unit)}`, range.max.unit);
+  return `${chipAmount(range.min.value, range.min.unit)} – ${chipAmount(range.max.value, range.max.unit)}`;
+}
+/** Whether a value lies within the source range; false when the units cannot be compared. */
+export function withinRange(value: number, unit: string, range: NonNullable<Parameter['range']>) {
+  try { return convert(range.min.value, range.min.unit, unit) <= value * (1 + 1e-9) && value <= convert(range.max.value, range.max.unit, unit) * (1 + 1e-9); } catch { return false; }
+}
+/** A value entered at the bench: "执行时填写", or a source range the Protocol has not fixed yet. */
+export const filledAtRun = (parameter: Pick<Parameter, 'source' | 'range'>) => parameter.source.kind === 'actual' || (parameter.source.kind === 'fixed' && parameter.source.value === null && Boolean(parameter.range));
+
 function parameterView(parameter: Parameter, systems: ProtocolSystems, resolution?: Record<string, Resolved>): ChipView {
   const name = parameterDisplayName(parameter), kind = parameter.kind ?? chipKindForUnit(parameter.unit), named = parameter.label.trim() || parameter.materialRef?.name;
-  const pending = (reason: Extract<ChipView, { type: 'pending' }>['reason'], unit?: string): ChipView => ({ type: 'pending', name, reason, kind, displayUnit: parameter.unit, ...(unit ? { unit } : {}) });
-  const value = (text: string, unit: string, marks: OptionMark[] = []): ChipView => ({ type: 'value', values: [{ marks, text }], unit, kind, ...(named ? { name: named } : {}) });
+  const range = parameter.range ? { range: rangeText(parameter.range) } : {};
+  const pending = (reason: Extract<ChipView, { type: 'pending' }>['reason'], unit?: string): ChipView => ({ type: 'pending', name, reason, kind, displayUnit: parameter.unit, ...(unit ? { unit } : {}), ...range });
+  const value = (text: string, unit: string, marks: OptionMark[] = []): ChipView => ({ type: 'value', values: [{ marks, text }], unit, kind, ...(named ? { name: named } : {}), ...range });
   if (resolution) {
     const resolved = resolution[parameter.id];
     if (resolved?.status === 'resolved') return value(numberText(resolved.value!, resolved.unit, parameter.source.kind === 'calculator'), resolved.unit);
     if (resolved?.status === 'conflict') return pending('取值冲突');
     if (resolved?.status === 'invalid') return pending('单位不兼容');
-    if (parameter.source.kind === 'actual') return pending('执行时填写');
+    if (filledAtRun(parameter)) return pending('执行时填写');
     if (parameter.source.kind === 'calculator') return pending('计算后确认');
     return pending(parameter.source.kind === 'lookup' ? '待选体系' : '待填写');
   }
   const { source } = parameter;
   const amount = (number: number | null, unit: string) => { if (number === null) return '—'; try { return numberText(convert(number, unit, parameter.unit), parameter.unit); } catch { return '单位不兼容'; } };
-  if (source.kind === 'fixed') return source.value === null ? pending('待填写') : value(amount(source.value, source.unit), parameter.unit);
+  if (source.kind === 'fixed') return source.value === null ? pending(parameter.range ? '待选采用值' : '待填写') : value(amount(source.value, source.unit), parameter.unit);
   if (source.kind === 'actual') return pending('执行时填写', parameter.unit);
   if (source.kind === 'calculator') return pending('计算后确认', parameter.unit);
   if (!source.values.length) return pending('待填写');
   const marks = optionMarks(systems);
-  return { type: 'value', values: source.values.map(v => ({ marks: conditionMarks(v.when, marks), text: amount(v.value, v.unit) })), unit: parameter.unit, kind, ...(named ? { name: named } : {}) };
+  return { type: 'value', values: source.values.map(v => ({ marks: conditionMarks(v.when, marks), text: amount(v.value, v.unit) })), unit: parameter.unit, kind, ...(named ? { name: named } : {}), ...range };
 }
 
 function toolView(tool: Tool, systems: ProtocolSystems, resolution?: Record<string, Resolved>): ChipView {
@@ -140,8 +154,9 @@ const markText = (marks: OptionMark[]) => marks.map((mark, index) => `${mark.any
 /** Plain reading text of a chip view; exports, titles and the watch use this. */
 export function chipViewText(view: ChipView): string {
   if (view.type === 'missing') return '〔参数已删除〕';
-  if (view.type === 'pending') return `〔${view.name}：${view.reason}${view.unit ? ` · ${view.unit}` : ''}〕`;
-  if (view.type === 'value') return formatChipValue(view.values.map(v => { const mark = markText(v.marks); return `${mark}${/\p{L}$/u.test(mark) ? ' ' : ''}${v.text}`; }).join(' / '), view.unit);
+  // A range still to settle reads as the range itself: "20–30 min（执行时填写）".
+  if (view.type === 'pending') return view.range ? `${view.range}（${view.reason}）` : `〔${view.name}：${view.reason}${view.unit ? ` · ${view.unit}` : ''}〕`;
+  if (view.type === 'value') return `${formatChipValue(view.values.map(v => { const mark = markText(v.marks); return `${mark}${/\p{L}$/u.test(mark) ? ' ' : ''}${v.text}`; }).join(' / '), view.unit)}${view.range ? `（原文 ${view.range}）` : ''}`;
   const field = (key: string) => view.fields.find(f => f.key === key);
   if (view.tool === 'dark') return view.label;
   if (view.tool === 'gas') return view.fields.map(f => `${chipViewText(f.view)} ${f.label}`).join(' · ') || view.label;
@@ -162,13 +177,17 @@ export const isMaterialAmount = (unit: string) => ['volume', 'mass', 'amount'].i
 const chipReference = /\{\{([\w-]+)\}\}/g;
 // Identities, links and file names are never authored text, even when they happen to contain braces.
 const literalKeys = new Set(['id', 'stepId', 'source_ref', 'attachmentId', 'url', 'link', 'filename', 'rowIds', 'execution']);
-/** Rewrite every chip reference in authored content (text, rich runs, table cells), leaving identities untouched. */
-export function mapChipReferences<T>(value: T, replace: (id: string) => string, key = ''): T {
+/** Rewrite every authored string (text, rich runs, table cells), leaving identities untouched. */
+export function mapAuthoredStrings<T>(value: T, replace: (text: string) => string, key = ''): T {
   if (literalKeys.has(key)) return value;
-  if (typeof value === 'string') return value.replace(chipReference, (_, id: string) => replace(id)) as T;
-  if (Array.isArray(value)) return value.map(item => mapChipReferences(item, replace)) as T;
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, mapChipReferences(v, replace, k)])) as T;
+  if (typeof value === 'string') return replace(value) as T;
+  if (Array.isArray(value)) return value.map(item => mapAuthoredStrings(item, replace)) as T;
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, mapAuthoredStrings(v, replace, k)])) as T;
   return value;
+}
+/** Rewrite every chip reference in authored content, leaving identities untouched. */
+export function mapChipReferences<T>(value: T, replace: (id: string) => string, key = ''): T {
+  return mapAuthoredStrings(value, text => text.replace(chipReference, (_, id: string) => replace(id)), key);
 }
 
 /** Before saving: drop typed chips (and tool fields) the author has since deleted. Named parameters always stay. */
@@ -234,18 +253,60 @@ const quantityPattern = new RegExp(String.raw`${valueStart}(([-−]?(?:${number}
 // No "." trigger: "pH 7." is still being typed.
 const phPattern = new RegExp(String.raw`(?<![A-Za-z0-9_])(pH\s?=?\s?(${number}))(?:[ \t ,，;；:：、)）\]】!！?？]|[㐀-鿿]+)$`, 'u');
 
-/** `source` is exactly what the author typed (to replace in the document); `text` is its display. */
-export type RecognizedQuantity = { index: number; source: string; text: string; values: number[]; unit: string; kind: ChipKind };
+// "20-30 min", "20–30 min", "20 ~ 30 min", "20 min - 30 min", "20 to 30 min", "20 至 30 min": one range, not two values.
+const rangeSeparator = String.raw`\s*(?:[-–—−~～〜]|至|到)\s*|\s+to\s+`;
+const unitSpelling = spellings.map(escape).join('|');
+const rangePattern = new RegExp(String.raw`${valueStart}((${number})(?:[  ]?(${unitSpelling}))?(?:${rangeSeparator})(${number})[  ]?(${unitSpelling}))(?:${trigger})$`, 'u');
+// The second half typed after a value that is already a chip ("{{p-1}} - 30 min"): the chip becomes the range.
+const rangeAfterChipPattern = new RegExp(String.raw`\{\{([\w-]+)\}\}((?:${rangeSeparator})(${number})[  ]?(${unitSpelling}))(?:${trigger})$`, 'u');
+
+/**
+ * `source` is exactly what the author typed (to replace in the document); `text` is its display. A range has no value
+ * yet (`values` is empty): the author adopts one within it.
+ */
+export type RecognizedQuantity = { index: number; source: string; text: string; values: number[]; unit: string; kind: ChipKind; range?: NonNullable<Parameter['range']> };
 const numeric = (text: string) => Number(text.replace(/,/g, '').replace('−', '-'));
+const sameDimension = (a: string, b: string) => normalizeUnit(a) === normalizeUnit(b) || Boolean(units[normalizeUnit(a)] && units[normalizeUnit(a)].dimension === units[normalizeUnit(b)]?.dimension);
+
+/** A range from its two ends: none when the units measure different things or the ends are not in order. */
+function quantityRange(min: { value: number; unit: string }, max: { value: number; unit: string }): RecognizedQuantity['range'] {
+  if (![min.value, max.value].every(Number.isFinite) || !sameDimension(min.unit, max.unit)) return;
+  try { if (convert(min.value, min.unit, max.unit) >= max.value) return; } catch { return; }
+  return { min, max };
+}
 
 /** Recognize the quantity the author just finished typing; `typed` ends with the character typed after it. */
 export function recognizeQuantity(typed: string): RecognizedQuantity | undefined {
   const ph = phPattern.exec(typed);
   if (ph) return { index: ph.index, source: ph[1], text: `pH ${ph[2]}`, values: [numeric(ph[2])], unit: 'pH', kind: 'ph' };
+  const ranged = rangePattern.exec(typed);
+  if (ranged) {
+    const unit = normalizeUnit(ranged[5]);
+    const range = quantityRange({ value: numeric(ranged[2]), unit: ranged[3] ? normalizeUnit(ranged[3]) : unit }, { value: numeric(ranged[4]), unit });
+    if (range) return { index: ranged.index, source: ranged[1], text: rangeText(range), values: [], unit, kind: chipKindForUnit(unit), range };
+  }
   const match = quantityPattern.exec(typed);
   if (!match) return;
   const unit = normalizeUnit(match[3]);
   const values = match[2].split('/').map(part => numeric(part.trim()));
   if (values.some(value => !Number.isFinite(value))) return;
   return { index: match.index, source: match[1], text: `${values.join('/')} ${unit}`, values, unit, kind: chipKindForUnit(unit) };
+}
+
+/**
+ * " - 30 min" typed right after a chip (the editor reads a chip as "{{id}}"): the upper end of a range whose lower end is
+ * that chip. `index` is where the typed end starts, `source` what was typed for it.
+ */
+export function recognizeRangeEnd(typed: string): { parameterId: string; index: number; source: string; max: { value: number; unit: string } } | undefined {
+  const match = rangeAfterChipPattern.exec(typed);
+  if (!match) return;
+  const value = numeric(match[3]);
+  return Number.isFinite(value) ? { parameterId: match[1], index: match.index + `{{${match[1]}}}`.length, source: match[2], max: { value, unit: normalizeUnit(match[4]) } } : undefined;
+}
+
+/** A fixed chip turned into a range ending at `max`; undefined when the chip is not a value of the same kind below it. */
+export function chipWithRangeEnd(parameter: Parameter, max: { value: number; unit: string }): Parameter | undefined {
+  if (parameter.source.kind !== 'fixed' || parameter.source.value === null || parameter.range || parameter.ownerToolId) return;
+  const range = quantityRange({ value: parameter.source.value, unit: parameter.source.unit }, max);
+  return range ? { ...parameter, unit: max.unit, kind: chipKindForUnit(max.unit), source: { kind: 'fixed', value: null, unit: max.unit }, range } : undefined;
 }

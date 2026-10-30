@@ -26,7 +26,7 @@ export function preparationWorkbook(view: Pick<StructuredRunView, 'steps' | 'pla
     if (live.aliquot) mixes.push(['分装', live.aliquot]);
     for (const warning of live.warnings) mixes.push(['注意', warning]);
   }
-  const notes = [['类型', '内容'], ...list.warnings.map(text => ['开始前要处理', text]), ...list.reminders.map(text => ['执行时要记录', text])];
+  const notes = [['类型', '内容'], ...list.warnings.map(text => ['开始前要处理', text])];
   return [
     { name: '准备清单', rows: checklist, widths: [12, 36, 48, 28, 8, 24] },
     ...(mixes.length ? [{ name: '配液卡', rows: mixes, widths: [32, 22, 18, 18] }] : []),

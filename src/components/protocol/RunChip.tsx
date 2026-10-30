@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Pause, Play, Square, Timer, X } from 'lucide-react';
 import { convert, normalizeUnit, parseScalar, units } from '@/lib/calculators/quantities';
-import { chipAmount, chipParameterIds } from '@/lib/protocol-chips';
+import { chipAmount, chipParameterIds, filledAtRun, rangeText, withinRange } from '@/lib/protocol-chips';
+import { sameAmount } from '@/lib/run-deviation';
 import { parameterLongNameText, protocolLabelText } from '@/lib/protocol-label-text';
 import { adoptableCalculation, calculationGroups, protocolCalculations } from '@/lib/protocol-calculations';
 import { calculationReceiptMatches, previewProtocolCalculation, protocolCalculationFingerprint, resolveProtocolSystem, type ProtocolCalculation, type ResolvedProtocolParameter, type StepActualField } from '@/lib/structured-protocol';
@@ -13,6 +14,7 @@ import type { ProtocolSystems } from '@/lib/protocol-systems-schema';
 import { formatStepTimer, remainingStepTimerSeconds } from '@/lib/step-timer';
 import { newClientMutationId } from '@/lib/client-mutation-id';
 import { useRunClock } from '../useRunClock';
+import { TimerAlertPrompt } from '../TimerAlerts';
 import { useI18n } from '../I18nProvider';
 import { useAnchoredPosition, useDismiss } from './popover';
 import type { ExecutionPlan } from '@/lib/structured-run';
@@ -46,11 +48,14 @@ export function RunChipTrigger({ id, step, children }: { id: string; step: RunCh
   const missing = ids.some(pid => step.fields.find(f => f.id === pid)?.required && !step.actualValues[pid]);
   const recorded = ids.filter(pid => step.actualValues[pid]);
   const running = step.timer.startedAt && step.timer.parameterId && ids.includes(step.timer.parameterId) ? secondsLeft(step.timer, clock.now) : undefined;
+  // A recorded value other than the adopted one is a deviation; the step's deviation record carries the line.
+  const planned = recorded.length ? stepResolution(step) : {};
+  const deviates = recorded.some(pid => { const plan = planned[pid]; return plan?.status === 'resolved' && !sameAmount(step.actualValues[pid], { value: plan.value!, unit: plan.unit }); });
   return <>
     <button type="button" className="ln-run-chip focus-ring" data-missing={missing || undefined} data-running={running !== undefined || undefined} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} onClick={event => { const target = event.currentTarget; setAnchor(current => current ? null : target); }}>
       {children}
       {running !== undefined ? <span className="ln-run-chip-timer" aria-label={`${formatStepTimer(running)} left`}><Timer aria-hidden />{formatStepTimer(running)}</span> : null}
-      {recorded.length ? <span className="ln-run-chip-actual">{`Actual ${recorded.map(pid => chipAmount(step.actualValues[pid].value, step.actualValues[pid].unit)).join(' · ')}`}</span> : missing ? <span className="ln-run-chip-required">To record</span> : null}
+      {recorded.length ? <span className="ln-run-chip-actual" data-deviation={deviates || undefined}>{`Actual ${recorded.map(pid => chipAmount(step.actualValues[pid].value, step.actualValues[pid].unit)).join(' · ')}`}</span> : missing ? <span className="ln-run-chip-required">To record</span> : null}
     </button>
     {anchor ? <RunChipPanel id={id} ids={ids} step={step} anchor={anchor} onClose={() => setAnchor(null)} /> : null}
   </>;
@@ -89,7 +94,8 @@ function ParameterRow({ label, parameter, resolved, step, disabled, onInput, onA
   const clock = useRunClock();
   const actual = step.actualValues[parameter.id];
   const planned = resolved?.status === 'resolved' ? chipAmount(resolved.value!, resolved.unit, parameter.source.kind === 'calculator') : undefined;
-  const [text, setText] = useState(actual ? String(actual.value) : parameter.source.kind === 'actual' && resolved?.status === 'resolved' ? String(resolved.value) : '');
+  const input = filledAtRun(parameter);
+  const [text, setText] = useState(actual ? String(actual.value) : input && resolved?.status === 'resolved' ? String(resolved.value) : '');
   let value: number | undefined; try { value = text.trim() ? parseScalar(text.replace(/,/g, '')) : undefined; } catch { value = undefined; }
   const field = step.fields.find(f => f.id === parameter.id);
   const ownTimer = step.timer.parameterId === parameter.id;
@@ -98,18 +104,20 @@ function ParameterRow({ label, parameter, resolved, step, disabled, onInput, onA
   const otherRunning = Boolean(step.timer.startedAt) && !ownTimer;
   return <div className="ln-run-chip-row">
     {label ? <span className="ln-chip-field-label">{label}</span> : null}
-    {parameter.source.kind === 'actual'
-      ? <label className="ln-run-chip-input">Value this run<span><input className="ln-chip-input is-number" inputMode="decimal" value={text} disabled={disabled} onChange={event => setText(event.target.value)} autoFocus /><span className="ln-chip-note">{parameter.unit}</span></span></label>
-      : <p className="ln-run-chip-planned">Specified <strong>{planned ?? 'To be determined'}</strong></p>}
-    {parameter.source.kind === 'actual'
+    {input
+      ? <label className="ln-run-chip-input">Value this run<span><input className="ln-chip-input is-number" inputMode="decimal" value={text} placeholder={parameter.range ? rangeText(parameter.range) : undefined} disabled={disabled} onChange={event => setText(event.target.value)} autoFocus /><span className="ln-chip-note">{parameter.unit}</span></span></label>
+      : <p className="ln-run-chip-planned">Specified <strong>{planned ?? 'To be determined'}</strong>{parameter.range ? <span className="ln-chip-note ln-run-chip-range">{`Source range ${rangeText(parameter.range)}`}</span> : null}</p>}
+    {input
       ? <button type="button" className="focus-ring ln-chip-done" disabled={disabled || value === undefined} onClick={() => value !== undefined && onInput(value)}>Save</button>
       : field ? <label className="ln-run-chip-input">{field.required ? 'Actual (required)' : 'Actual'}<span><input className="ln-chip-input is-number" inputMode="decimal" placeholder={resolved?.status === 'resolved' ? String(Number(resolved.value!.toPrecision(6))) : '—'} value={text} disabled={disabled || step.blocked} onChange={event => setText(event.target.value)} /><span className="ln-chip-note">{parameter.unit}</span><button type="button" className="focus-ring ln-chip-done" disabled={disabled || step.blocked || value === undefined || value === actual?.value} onClick={() => value !== undefined && onActual(value)}>Record value</button></span></label> : null}
+    {input && parameter.range && value !== undefined && !withinRange(value, parameter.unit, parameter.range) ? <p role="status" className="ln-chip-error">Outside the source range</p> : null}
     {isTime(parameter.unit) && resolved?.status === 'resolved' && parameter.source.kind !== 'actual' ? <div className="ln-run-chip-countdown" data-running={running || undefined}>
       <span className="ln-run-chip-clock">{formatStepTimer(remaining ?? Math.round(convert(resolved.value!, resolved.unit, 's')))}</span>
       {running ? <button type="button" className="focus-ring" disabled={disabled} onClick={() => onTimer('pause')}><Pause aria-hidden />Pause</button>
         : <button type="button" className="focus-ring is-primary" disabled={disabled || step.blocked || otherRunning || remaining === 0} onClick={() => onTimer('start')}><Play aria-hidden />{ownTimer && step.timer.pausedAt && remaining ? 'Resume' : 'Start countdown'}</button>}
       {ownTimer && (step.timer.startedAt || step.timer.pausedAt) ? <button type="button" className="focus-ring" disabled={disabled} onClick={() => onTimer('finish')}><Square aria-hidden />Finish</button> : null}
       {ownTimer && remaining === 0 ? <button type="button" className="focus-ring" disabled={disabled} onClick={() => onTimer('reset')}>Restart timer</button> : null}
+      {running ? <TimerAlertPrompt /> : null}
       {otherRunning ? <p className="ln-chip-note">Another timer is running in this step.</p> : null}
       {remaining === 0 ? <p className="ln-chip-note" role="status">Time is up; the step still needs checking off.</p> : null}
     </div> : null}

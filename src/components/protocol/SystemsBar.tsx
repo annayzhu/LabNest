@@ -84,10 +84,13 @@ export function SystemsBar() {
   // Imported or older systems can still disagree with themselves; say so where they are edited.
   const issues = systems ? [...new Set(validateProtocolSystems(systems).map(issue => issue.message))] : [];
   const savePreset = () => systems && api.updateSystems(current => ({ ...current, presets: [...current.presets, { id: uid('preset'), label: Object.entries(api.lens).map(([d, o]) => current.dimensions.find(x => x.id === d)?.options.find(x => x.id === o)?.label).filter(Boolean).join(' · ') || '常用组合', selections: { ...api.lens } }] }));
-  if (!dimensions.length) return <div className="ln-systems-bar is-empty" data-print-hidden>
+  // Source ranges this Protocol has not fixed a value for yet; each opens where it is written.
+  const openRanges = (systems?.parameters ?? []).filter(p => p.range && p.source.kind === 'fixed' && p.source.value === null);
+  const ranges = openRanges.length ? <p className="ln-systems-ranges" role="status" data-print-hidden>{`${openRanges.length} source ${openRanges.length === 1 ? 'range has' : 'ranges have'} no adopted value yet; until adopted, it is filled in at the step during the run.`}<button type="button" className="focus-ring is-quiet" onClick={() => api.revealParameter(openRanges.map(parameter => parameter.id))}>Adopt a value</button></p> : null;
+  if (!dimensions.length) return <>{ranges}<div className="ln-systems-bar is-empty" data-print-hidden>
     <span>When systems use different amounts, write <code>50/80 µL</code>; set sample conditions that need their own label in “Applies to…” from ⋮⋮ beside a step or paragraph.</span>
     <button className="focus-ring" type="button" onClick={() => { if (!systems) api.updateSystems(() => blankProtocolSystems()); addDimension('system'); }}><Plus aria-hidden />System</button>
-  </div>;
+  </div></>;
   return <section className="ln-systems-bar" aria-label="System legend and lens">
     {dimensions.map(dimension => editing === dimension.id && systems ? <DimensionEditor key={dimension.id} dimension={dimension} systems={systems} onDone={() => setEditing(null)} />
       : <LensRow key={dimension.id} dimension={dimension} marks={marks} lens={api.lens} onChange={api.setLens} label={`Lens by ${systemLabelText(dimension.label)}`} optionTitle={option => `Only ${systemLabelText(option.label)}: fade the rest`}>
@@ -102,5 +105,6 @@ export function SystemsBar() {
       <button type="button" className="focus-ring is-quiet" onClick={() => addDimension('condition')}><Plus aria-hidden />Condition</button>
     </div>
     {issues.length ? <ul role="alert" className="ln-systems-issues">{issues.map(message => <li key={message}>{message}</li>)}</ul> : null}
+    {ranges}
   </section>;
 }

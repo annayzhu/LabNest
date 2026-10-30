@@ -173,7 +173,7 @@ await check('E01 actual light/dark responsive Run retains readable system labels
     await go(`/experiments/${experimentId}/run`);
     assert.equal(await page.locator('html').getAttribute('data-labnest-mode'),mode);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
-    assert(await page.locator('.protocol-system-preparation').evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=12));
+    assert(await page.locator('.ln-prep-bar').evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=12));
     await shot(`final-run-${mode}-${width}`);
   }
 });

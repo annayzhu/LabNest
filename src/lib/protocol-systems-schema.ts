@@ -26,7 +26,13 @@ export const protocolSystemsSchema = z.object({
     label: z.string(), unit: z.string().min(1), kind: z.enum(chipKinds).optional(),
     /** "chip": created by typing; dropped on save once no longer referenced. */
     origin: z.literal('chip').optional(), ownerToolId: id.optional(),
-    materialRef: z.object({ name: z.string().min(1), rowId: z.string().min(1).optional() }).optional(),
+    /** `inventoryItemId`: the stock item this material is deducted from when the run completes. */
+    materialRef: z.object({ name: z.string().min(1), rowId: z.string().min(1).optional(), inventoryItemId: z.string().min(1).optional() }).optional(),
+    /**
+     * 原文范围: the source gave a range ("20–30 min"). The fixed value is the one this Protocol adopts within it; while that is
+     * still empty, the run asks for the value at the step. The two ends may use different units ("10 pg – 100 ng").
+     */
+    range: z.object({ min: z.object({ value: z.number().finite(), unit: z.string().min(1) }), max: z.object({ value: z.number().finite(), unit: z.string().min(1) }) }).optional(),
     /** "执行时必填": the step cannot be completed until its actual value is recorded. Recording is optional otherwise. */
     actual: z.literal('required').optional(),
     /** A material amount for the whole run rather than per reaction; consumption does not multiply it by the run's quantity. */

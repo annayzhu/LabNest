@@ -1,0 +1,46 @@
+{
+  "apply": true,
+  "drafts": 15,
+  "changed": 1,
+  "originalHash": "6aa22984a5d4b944e1db44dcdcc6b7ce79c11b207f5eaaa354ea67f32e91197b",
+  "report": [
+    {
+      "versionId": "cmvta9liq00056cpl84qpg6lh",
+      "protocol": "PRT-200003",
+      "title": "Bacterial Transformation v0.1",
+      "displayVersion": "0.1",
+      "merged": [
+        {
+          "id": "p-a07d24e0-7ed7-4bbe-a06e-dfec169bbdea",
+          "removed": "p-81070951-d540-4aa2-b274-c33b84b76c22",
+          "range": "20–30 min"
+        },
+        {
+          "id": "p-76dd099a-19bc-4d75-b439-5023d3c7cbf7",
+          "removed": "p-a4c15e61-ce75-4d57-a1be-add8635f31c1",
+          "range": "1–5 µL"
+        },
+        {
+          "id": "p-6d07232e-2570-49c8-997d-17b1730bc55b",
+          "removed": "p-3c1fc752-bea5-4799-889a-45957fc61847",
+          "range": "10 pg – 100 ng"
+        },
+        {
+          "id": "p-296cdc27-0ecb-42a8-bd56-0170a8901cbe",
+          "removed": "p-ba3285b6-95c3-463a-a1f9-25c8c2b9a82c",
+          "range": "20–50 µL"
+        },
+        {
+          "id": "p-bb973805-5072-4aa0-939a-308c4764aac6",
+          "removed": "p-3b99b913-aa1c-4488-b049-e2ba5173c2c6",
+          "range": "30 s – 60 min"
+        },
+        {
+          "id": "p-65c64103-7227-4439-a8f4-3d8e283da2e3",
+          "removed": "p-3a316821-0122-46b2-9f2b-7d3dd3fab87b",
+          "range": "250–1000 µL"
+        }
+      ]
+    }
+  ]
+}

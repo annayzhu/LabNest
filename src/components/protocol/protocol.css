@@ -35,6 +35,8 @@
 .ln-chip-tool-label { font-weight: 600; color: var(--ink); margin-right: 0.3em; }
 .ln-chip-field + .ln-chip-field::before { content: "·"; color: var(--muted); margin: 0 0.32em; }
 .ln-chip-reason { color: var(--muted); margin-left: 0.3em; font-size: 0.92em; }
+/* The source range beside the adopted value: "30 min 20–30". */
+.ln-chip-range-text { margin-left: 0.35em; color: var(--muted); font-size: 0.82em; font-variant-numeric: tabular-nums; }
 .ln-chip-blank { color: var(--muted); font-family: var(--font-data); }
 .ln-chip[data-state="pending"] { border-style: dashed; background: transparent; color: var(--graphite); }
 .ln-chip[data-state="missing"] { color: var(--error); background: var(--error-surface); border-color: color-mix(in srgb, var(--error) 30%, transparent); }
@@ -95,6 +97,15 @@
 .ln-systems-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; padding-top: 0.3rem; }
 .ln-systems-footer .is-quiet, .ln-systems-bar.is-empty button { border-color: transparent; background: transparent; color: var(--moss); }
 .ln-systems-spacer { flex: 1; }
+.ln-systems-ranges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; margin: 0 0 0.5rem; padding: 0.35rem 0.55rem; border-radius: var(--ln-radius-control-md); background: var(--warning-surface, var(--warm)); color: var(--warning); font-size: var(--ln-control-font-size-xs); }
+.ln-systems-ranges button { min-height: 1.75rem; padding: 0 0.4rem; border-radius: var(--ln-radius-control-md); color: var(--moss); font-weight: 600; }
+.ln-systems-bar .ln-systems-ranges { margin: 0.2rem 0 0; }
+.ln-chip-error.is-inline, .ln-chip-stock-tag { margin-right: 0.35em; }
+.ln-chip-stock-tag { padding: 0 0.35em; border: 1px solid var(--hairline); border-radius: 999px; }
+.ln-run-chip-range { display: block; }
+.ln-chip-range { display: grid; gap: 0.3rem; padding-top: 0.35rem; border-top: 1px dashed var(--hairline); }
+.ln-chip-row.is-range { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.ln-chip-row.is-range .ln-chip-input.is-number { width: 4.5rem; }
 .ln-systems-issues { margin: 0.2rem 0 0; padding: 0.35rem 0.55rem; list-style: none; border-radius: var(--ln-radius-control-md); background: var(--error-surface); color: var(--error); font-size: var(--ln-control-font-size-xs); }
 .ln-systems-icon, .ln-chip-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; border-radius: var(--ln-radius-control-sm); color: var(--muted); }
 .ln-systems-icon:hover, .ln-chip-icon-button:hover { background: var(--stone); color: var(--ink); }
@@ -259,6 +270,7 @@
 .ln-run-chip[data-running] .ln-run-chip-timer { animation: ln-run-chip-pulse 2s ease-in-out infinite; }
 @keyframes ln-run-chip-pulse { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--moss) 22%, transparent); } }
 .ln-run-chip-actual { background: var(--action-surface); color: var(--moss); font-weight: 500; }
+.ln-run-chip-actual[data-deviation] { background: var(--warning-surface, var(--warm)); color: var(--warning); }
 .ln-run-chip-required { border: 1px dashed var(--warning); color: var(--warning); font-family: var(--font-ui); font-weight: 500; }
 .ln-run-chip-row { display: grid; gap: 0.45rem; }
 .ln-run-chip-row + .ln-run-chip-row { padding-top: 0.55rem; border-top: 1px solid var(--hairline); }
@@ -349,11 +361,7 @@
 .ln-mix-amount { padding: 0; border: 0; background: none; cursor: pointer; }
 .ln-mix-editor-table .ln-chip-modes { display: inline-flex; flex-wrap: nowrap; }
 .ln-mix-editor-table td:last-child { width: 2rem; }
-.ln-run-quantities { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; margin: 0.25rem 0 0.75rem; padding: 0.5rem 0.65rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-panel-inner); background: var(--warm); font-size: var(--ln-control-font-size-sm); color: var(--graphite); }
-.ln-run-quantities-title { font-weight: 600; color: var(--ink); }
-.ln-run-quantities label { display: inline-flex; align-items: center; gap: 0.35rem; }
-.ln-run-quantities input { width: 4.5rem; height: 2rem; padding: 0 0.45rem; border: 1px solid var(--hairline); border-radius: var(--ln-radius-control-md); background: var(--surface); color: var(--ink); font: 600 var(--ln-control-font-size-md) var(--font-data); text-align: right; }
-@media (pointer: coarse) { .ln-mix-actions button, .ln-mix-quantity input, .ln-run-quantities input, .ln-consumption-actual input, .ln-consumption-table select { min-height: 2.75rem; } .ln-mix-card.is-run tbody :is(th, td) { padding-block: 0.55rem; } }
+@media (pointer: coarse) { .ln-mix-actions button, .ln-mix-quantity input, .ln-prep-quantity input, .ln-consumption-actual input, .ln-consumption-table select { min-height: 2.75rem; } .ln-mix-card.is-run tbody :is(th, td) { padding-block: 0.55rem; } }
 @media print { .ln-mix-actions, .ln-run-mix-chooser { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ln-mix-card.is-run tbody tr { transition: none; } }
 .ln-mix-proposals { display: grid; gap: 0.35rem; margin: 0 0 0.75rem; }

@@ -1,6 +1,7 @@
-import { RunNotificationStatus } from '@/components/RunNotificationStatus';
 import { FieldDevices } from '@/components/FieldDevices';
 import { NativeRunTimers } from '@/components/NativeRunTimers';
+import { RunTimerAlerts } from '@/components/TimerAlerts';
+import { RunPageMenu } from '@/components/RunPageMenu';
 import { normalizeProtocolDocument } from "@/lib/protocol-document";
 import { runStepNotes, structuredRunView } from '@/lib/structured-run';
 import { formatQuantity } from '@/lib/calculators/quantity-format';
@@ -8,7 +9,6 @@ import { RunSystemPreparation } from '@/components/RunSystemPreparation';
 import { RunBenchControls } from "@/components/RunBenchControls";
 import { consumptionRecorded, runConsumption } from "@/lib/run-consumption";
 import { ProtocolContentBlockView } from '@/components/ProtocolDocumentView';
-import { ProtocolSystemChoice } from '@/components/ProtocolSystemLabels';
 import {RunMaterials} from "@/components/RunMaterials";
 import {RunParameterEditor} from "@/components/RunParameterEditor";
 import {runParameterKeys} from "@/lib/run-parameters";
@@ -99,6 +99,9 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
     frozenReferenceTitles[version.protocolVersionId]=`${version.protocolTitle??"Captured Protocol"} · v${version.displayVersion??"unknown"}`;
     frozenReferences[version.protocolVersionId]??=normalizeProtocolDocument(version.contentJson)?.sections??[];
   }
+  const plates = attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }));
+  const prepStock = inventoryItems.map(item => ({ id: item.id, name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }));
+  const recordedUses = experiment.materialUses.map(row => ({ source: row.source }));
   const resultRecording = buildExperimentResultRecording(experiment.protocolVersions.map((link) => ({
     protocolVersionId: link.protocolVersionId,
     protocolCode: link.protocolVersion.protocol.humanCode,
@@ -113,6 +116,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
       {runOfflineImagePaths(experiment.protocolSnapshotJson).map(path=><meta key={path} name="labnest-offline-image" content={path}/>)}
       <div className={bench ? "ln-bench space-y-4" : "space-y-4"}>
         <NativeRunTimers experimentId={experiment.id} title={experiment.title} steps={renderedSteps.map(({ id, title, timerRemainingSeconds, timerStartedAt, timerPausedAt }) => ({ id, title, timerRemainingSeconds, timerStartedAt, timerPausedAt }))} />
+        <RunTimerAlerts title={experiment.title} steps={renderedSteps.map(({ id, title, timerRemainingSeconds, timerDurationSeconds, timerStartedAt }) => ({ id, title, timerRemainingSeconds, timerDurationSeconds, timerStartedAt }))} />
         <PageHeader
           identifier={experiment.runCode}
           title={experiment.title}
@@ -122,6 +126,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
             {/* A phone has 现场模式 in its bottom bar. */}
             <Link href="/protocol-run" className={`${secondaryButton} max-lg:hidden`}><ArrowLeft className="h-4 w-4" aria-hidden />Run mode</Link>
             <Link href={`/experiments/${experiment.id}`} className={secondaryButton}>Experiment record</Link>
+            <RunPageMenu view={structured} runLabel={experiment.runCode ?? experiment.title} plates={plates} stock={prepStock} recorded={recordedUses} />
           </>}
         />
 
@@ -142,9 +147,7 @@ export default async function ProtocolRunPage({ params, searchParams }: { params
         </details>
 
         {locked ? <p role="status" className="rounded-[var(--ln-radius-control-lg)] border border-hairline bg-warm px-3 py-2 text-sm text-graphite">This run is submitted or reviewed and read-only. Reopen it from the experiment record to change steps or deviations.</p> : null}
-        <RunSystemPreparation experimentId={id} runLabel={experiment.runCode ?? experiment.title} view={structured} editable={editable} plates={attachmentLinks.filter(link => link.linkType === 'plate_layout').map(link => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} stock={inventoryItems.map(item => ({ name: item.name, unit: item.unit, currentQuantity: item.currentQuantity, quantityRecorded: item.quantityRecorded }))} recorded={experiment.materialUses.map(row => ({ source: row.source }))}/>
-        {structured.hasSystems ? <div className="protocol-system-context" aria-label="Systems in this run"><strong>{`Systems adopted · ${experiment.runCode}`}</strong>{structured.versions.map(v => <div key={v.id} className="protocol-system-legend"><span>{v.groupLabel ?? v.title}</span>{Object.entries(structured.plan.versions[v.id]?.selections ?? {}).map(([dimensionId, optionId]) => <ProtocolSystemChoice key={`${v.id}:${dimensionId}`} systems={v.document.systems!} dimensionId={dimensionId} optionId={optionId}/>)}</div>)}</div> : null}
-        <RunNotificationStatus/>
+        <RunSystemPreparation experimentId={id} view={structured} editable={editable} started={experiment.steps.some(step => step.completed || step.completedAt || step.timerStartedAt || step.timerPausedAt)} plates={plates} stock={prepStock} recorded={recordedUses}/>
         <ProtocolRunProgressForm
           key={`${structured.plan.revision}:${experiment.steps.map((step) => `${step.id}:${step.completed ? 1 : 0}:${step.deviationNote ?? ""}`).join("|")}`}
           structured={structured.hasSystems ? { plan: structured.plan, steps: structured.steps } : undefined}

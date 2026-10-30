@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { prisma } from "@/lib/db";
+import { protocolInventoryChoices } from "@/lib/protocol-inventory.server";
 import { storedProtocolDocument, upgradeProtocolDocumentForEditing } from "@/lib/protocol-document";
 import { dismissProtocolMixProposal, saveProtocolDocument } from "./actions";
 import { protocolMixProposals } from "@/lib/protocol-mix-proposals.server";
@@ -16,7 +17,7 @@ import { getProtocolImportHistory } from "@/lib/protocol-import-history-server";
 
 export default async function EditProtocolVersionPage({ params }: { params: Promise<{ id: string; versionId: string }> }) {
   const { id, versionId } = await params;
-  const [version, projects, researchPlans, attachmentLinks, experimentCatalog, resultCatalog, attachmentCatalog, manualItemLinks] = await Promise.all([
+  const [version, projects, researchPlans, attachmentLinks, experimentCatalog, resultCatalog, attachmentCatalog, manualItemLinks, inventory] = await Promise.all([
     prisma.protocolVersion.findUnique({
       where: { id: versionId },
       include: { protocol: { include: {
@@ -47,6 +48,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
     prisma.result.findMany({ orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, title: true, recordStatus: true } }),
     prisma.attachment.findMany({ orderBy: { uploadedAt: "desc" }, take: 200, select: { id: true, originalFilename: true, mimeType: true, size: true } }),
     prisma.itemLink.findMany({ where: { sourceType: "protocol", sourceId: id, linkType: "manually_related", createdBy: "user" }, select: { targetType: true, targetId: true } }),
+    protocolInventoryChoices(),
   ]);
   if (!version || version.protocolId !== id) notFound();
   if (protocolCompatibilityIssue(version.contentJson)) return <AppShell><ProtocolCompatibilityView value={version.contentJson}/></AppShell>;
@@ -98,6 +100,7 @@ export default async function EditProtocolVersionPage({ params }: { params: Prom
           mixProposals={await protocolMixProposals(version.protocol.id, version.contentJson)}
           dismissMixProposal={dismissProtocolMixProposal}
           importHistory={importHistory}
+          inventory={inventory}
           suggestedDisplayVersion={nextDisplayVersion(version.displayVersion)}
           projects={projects}
           researchPlans={researchPlans.map((plan) => ({

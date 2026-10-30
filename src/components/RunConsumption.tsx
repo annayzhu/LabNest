@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { newClientMutationId } from '@/lib/client-mutation-id';
-import { consumptionAmount, consumptionSource, matchStock, type ConsumptionLine } from '@/lib/run-consumption';
+import { consumptionAmount, consumptionSource, lineStock, type ConsumptionLine } from '@/lib/run-consumption';
 import { Button } from './ui/Button';
 import './protocol/protocol.css';
 
@@ -34,7 +34,7 @@ export async function recordRunConsumption(experimentId: string, choices: Consum
  * are deducted. Nothing is written here: the run is completed first and the choices are recorded only once that succeeds.
  */
 export function CompletionConsumptionDialog({ lines, stock, onCancel, onSkip, onDeduct }: { lines: ConsumptionLine[]; stock: ConsumptionStock[]; onCancel: () => void; onSkip: () => void; onDeduct: (choices: ConsumptionChoice[]) => void }) {
-  const [draft, setDraft] = useState(() => lines.map(line => ({ line, include: line.expected !== undefined, actual: line.expected === undefined ? '' : String(Number(line.expected.toPrecision(6))), stockId: matchStock(line.name, stock)?.id ?? '' })));
+  const [draft, setDraft] = useState(() => lines.map(line => ({ line, include: line.expected !== undefined, actual: line.expected === undefined ? '' : String(Number(line.expected.toPrecision(6))), stockId: lineStock(line, stock)?.id ?? '' })));
   const patch = (index: number, change: Partial<typeof draft[number]>) => setDraft(current => current.map((row, i) => i === index ? { ...row, ...change } : row));
   const chosen = draft.filter(item => item.include);
   const invalid = chosen.some(item => !(Number(item.actual) >= 0) || !item.actual.trim());

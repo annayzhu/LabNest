@@ -9,9 +9,6 @@ const zh = (text: string) => translateUiText(text, 'zh');
 
 /** Run page, mix card, Lens and result template text: English source, and the Chinese the interface showed before. */
 const entries: Array<[string, string]> = [
-  ["Checking what reminders this device supports…", "正在检查本设备提醒能力…"],
-  ["Timer reminders on this device", "本设备的计时提醒能力"],
-  ["A reminder does not complete the step. While offline, a timer cancelled or reset on another device may not withdraw this device’s reminder right away; check against the server once reconnected.", "提醒不代表步骤完成。离线期间其他设备取消或重置的计时器无法保证立即撤销本机提醒，重连后以服务器状态核对。"],
   ["Saved on this device, waiting to sync; the actual values on the server have not changed yet.", "已保存至本机，等待同步；服务端实际记录尚未改变。"],
   ["Storage on this device is unavailable; nothing was saved. Keep this page open.", "本机存储不可用，未保存。请保留页面。"],
   ["This operation or its saved record has changed, so the draft on this device was not applied. Check it first.", "此操作或已保存记录发生变更，本机草稿尚未应用，请先核对。"],

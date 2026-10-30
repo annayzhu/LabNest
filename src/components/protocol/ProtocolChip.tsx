@@ -6,7 +6,9 @@ import { MarkGroup } from './SystemMark';
 import { useI18n } from '../I18nProvider';
 
 /** A pending chip's reason is stored chip text; it is shown in the interface language. */
-const pendingReasons: Record<Extract<ChipView, { type: 'pending' }>['reason'], string> = { 待选体系: 'System to choose', 待填写: 'To fill in', 执行时填写: 'Filled in at run time', 计算后确认: 'Confirm after calculating', 取值冲突: 'Conflicting values', 单位不兼容: 'Incompatible unit' };
+const pendingReasons: Record<Extract<ChipView, { type: 'pending' }>['reason'], string> = { 待选体系: 'System to choose', 待填写: 'To fill in', 待选采用值: 'Value to adopt', 执行时填写: 'Filled in at run time', 计算后确认: 'Confirm after calculating', 取值冲突: 'Conflicting values', 单位不兼容: 'Incompatible unit' };
+/** The source's range beside the value, quieter than it. */
+const Range = ({ text }: { text?: string }) => text ? <span className="ln-chip-range-text">{text}</span> : null;
 
 const kindIcons: Record<ChipKind, LucideIcon> = {
   volume: Pipette, mass: Weight, amount: FlaskConical, concentration: FlaskConical, time: Clock, temperature: Thermometer, rcf: RotateCw, speed: RotateCw,
@@ -35,7 +37,7 @@ export function ProtocolChip({ view, lens, calculated = false }: { view: ChipVie
   if (view.type === 'missing') return <span className="ln-chip" data-state="missing" title={t('The referenced parameter was deleted')}>{t('Parameter deleted')}</span>;
   if (view.type === 'pending') {
     const Icon = calculated ? Calculator : kindIcons[view.kind];
-    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{t(protocolLabelText(view.name))}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
+    return <span className="ln-chip" data-state="pending" title={label}><Icon aria-hidden className="ln-chip-icon" /><span>{view.range ?? t(protocolLabelText(view.name))}</span><span className="ln-chip-reason">{t(pendingReasons[view.reason])}</span></span>;
   }
   if (view.type === 'tool') {
     const Icon = toolIcons[view.tool];
@@ -45,7 +47,7 @@ export function ProtocolChip({ view, lens, calculated = false }: { view: ChipVie
   }
   const Icon = calculated ? Calculator : kindIcons[view.kind];
   return <span className="ln-chip" data-state={view.values.length > 1 ? 'split' : 'value'} data-kind={view.kind} title={view.name ? `${view.name} · ${label}` : label}>
-    <Icon aria-hidden className="ln-chip-icon" /><Values view={view} lens={lens} />
+    <Icon aria-hidden className="ln-chip-icon" /><Values view={view} lens={lens} /><Range text={view.range} />
   </span>;
 }
 

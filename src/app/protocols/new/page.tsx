@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProtocolDocumentEditor } from "@/components/ProtocolDocumentEditor";
 import { createProtocolDocument } from "@/app/protocols/new/actions";
 import { prisma } from "@/lib/db";
+import { protocolInventoryChoices } from "@/lib/protocol-inventory.server";
 import { cookies } from "next/headers";
 import { localeCookieName, resolveAppLocale } from "@/lib/i18n";
 import { createProtocolTemplateDocument } from "@/lib/protocol-document";
@@ -12,7 +13,7 @@ import { buildProtocolRelevantCatalog } from "@/lib/protocol-relevant-items";
 export const dynamic = "force-dynamic";
 
 export default async function NewProtocolPage() {
-  const [projects, researchPlans, existingProtocolCodes, counter, experiments, results, attachments] = await Promise.all([
+  const [projects, researchPlans, existingProtocolCodes, counter, experiments, results, attachments, inventory] = await Promise.all([
     prisma.project.findMany({ where: { status: "active" }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.researchPlan.findMany({
       include: { project: { select: { name: true } } },
@@ -23,6 +24,7 @@ export default async function NewProtocolPage() {
     prisma.experiment.findMany({ orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, runCode: true, title: true, status: true } }),
     prisma.result.findMany({ orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, title: true, recordStatus: true } }),
     prisma.attachment.findMany({ orderBy: { uploadedAt: "desc" }, take: 200, select: { id: true, originalFilename: true, mimeType: true, size: true } }),
+    protocolInventoryChoices(),
   ]);
   const suggestedCode = suggestNextRecordCode("protocol", existingProtocolCodes.map((protocol) => protocol.humanCode), counter?.value);
 
@@ -31,6 +33,7 @@ export default async function NewProtocolPage() {
       <div className="space-y-6">
         <PageHeader eyebrow="Protocol" title="New Protocol" />
         <ProtocolDocumentEditor
+          inventory={inventory}
           action={createProtocolDocument}
           mode="create"
           protocol={{ canonicalTitle: "", suggestedCodeSuffix: suggestedCode.slice("PRT-".length), availability: "draft", tags: [], scope: "general" }}

@@ -2,6 +2,7 @@ import {showCalculatorResult,prepareCalculatorOffline} from './calculator-ui-tes
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
+const loadExample=async p=>{const menu=p.getByRole('combobox',{name:'Load example'});if(await menu.count())await menu.selectOption({index:1});else await p.getByRole('button',{name:'Load example'}).click();};
 const base=process.env.LABNEST_E2E_BASE_URL??'http://localhost:3220';
 const output='docs/modules/calculator/evidence';await mkdir(output,{recursive:true});
 const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:390,height:844}});const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -23,12 +24,12 @@ try {
  const snapshot=await page.evaluate(()=>JSON.parse(localStorage.getItem('labnest.calculators.v1')).history[0]);assert.equal(snapshot.snapshot.outputMap.stockVolumeUl,2);assert.equal(snapshot.inputUnits.stockConcentration,'µM');
  await fill('Target concentration','');assert.equal(await page.getByRole('button',{name:'Save to local history'}).count(),0);checks.push('UX-05/06 invalidation and unit relabelling');
  await fill('Target concentration',10);await page.reload({waitUntil:'networkidle'});assert.equal(await input('Stock concentration').inputValue(),'');await page.getByRole('button',{name:'Restore draft'}).click();assert.equal(await input('Stock concentration').inputValue(),'10000');checks.push('draft explicit restoration');
- await page.goto(`${base}/tools/calculator/master-mix`,{waitUntil:'networkidle'});await page.getByRole('button',{name:'Load example'}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);assert(await page.getByRole('button',{name:'Save to local history'}).isDisabled());assert((await page.locator('main').innerText()).includes('514.8'));checks.push('NUM-20 UI and UX-16 example guard');
+ await page.goto(`${base}/tools/calculator/master-mix`,{waitUntil:'networkidle'});await loadExample(page);await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);assert(await page.getByRole('button',{name:'Save to local history'}).isDisabled());assert((await page.locator('main').innerText()).includes('514.8'));checks.push('NUM-20 UI and UX-16 example guard');
  for(const width of [360,390]){
   await page.setViewportSize({width,height:844});
   for(const id of ['dilution','molarity','seeding','master-mix','wb-loading','centrifuge','normalization','resuspension']){
    await page.goto(`${base}/tools/calculator/${id}`,{waitUntil:'networkidle'});
-   await page.getByRole('button',{name:'Load example'}).click();await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);
+   await loadExample(page);await page.getByRole('button',{name:'Calculate',exact:true}).click();await showCalculatorResult(page);
    assert.equal(await page.locator('main').getByRole('alert').count(),0,`${id} must calculate its explicit example`);
    const layout=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));assert(layout.scroll<=layout.width+1,`${id} overflows at ${width}: ${layout.scroll}`);
    const clipped=await page.locator('main input, main select, main button').evaluateAll(elements=>elements.filter(element=>element.getClientRects().length&&!element.closest('.calculator-data-scroll')).filter(element=>{const rect=element.getBoundingClientRect();return rect.left < -1 || rect.right > window.innerWidth+1;}).map(element=>({text:element.getAttribute('aria-label')??element.textContent,right:element.getBoundingClientRect().right})));assert.deepEqual(clipped,[],`${id} has clipped controls at ${width}`);

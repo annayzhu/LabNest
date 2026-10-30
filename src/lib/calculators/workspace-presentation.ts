@@ -10,15 +10,17 @@ const layouts: Record<string, WorkspaceLayout> = {
 };
 export function workspaceLayout(id: string): WorkspaceLayout { return layouts[id] ?? 'simple'; }
 export function hasPipettingSettings(id: string) { return !operationCoverage[id]?.startsWith('not-applicable'); }
+/** A choice that changes what is entered (mode, type, direction); unit choices stay dropdowns. */
+export function isModeField(field: CalculatorDefinition['fields'][number]) { return field.type === 'select' && !/unit/i.test(field.key); }
 export function fieldWidth(field: CalculatorDefinition['fields'][number]) {
-  if (field.type === 'textarea') return 'wide';
+  if (field.type === 'textarea' || isModeField(field)) return 'wide';
   if (field.type === 'select' || field.type === 'text') return 'flexible';
   return field.unit === 'integer' || ['%', '×'].includes(field.unit ?? '') ? 'short' : 'quantity';
 }
 /** Compact layouts change presentation only; conditions remain in isFieldVisible. */
 export function orderedFields(fields: CalculatorDefinition['fields'], layout: WorkspaceLayout) {
   return [...fields].sort((a, b) => {
-    const priority = (field: typeof a) => field.type === 'select' ? 0 : field.type === 'textarea' && layout !== 'curve' ? 2 : 1;
+    const priority = (field: typeof a) => isModeField(field) ? 0 : field.type === 'textarea' && layout !== 'curve' ? 2 : 1;
     return priority(a) - priority(b);
   });
 }

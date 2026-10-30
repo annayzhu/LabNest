@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculate, getCalculatorCatalog } from "./calculator-engine";
+import { calculatorExamples } from "./examples";
 
 it("fits a descending remaining-response IC50 with known midpoint 10", () => {
   const points = "0.1,99.00990099\n1,90.90909091\n10,50\n100,9.09090909\n1000,0.99009901";
@@ -118,6 +119,13 @@ describe("calculator module interface", () => {
       expect(result.calculatorId).toBe(definition.id);
       expect(result.outputs.length).toBeGreaterThan(0);
       expect(result.methodVersion).toBeTruthy();
+    }
+  });
+
+  it("computes every named example in the example menu", () => {
+    for (const [calculatorId, examples] of Object.entries(calculatorExamples)) for (const example of examples) {
+      const result = calculate({ calculatorId, inputs: example.inputs });
+      expect(result.outputs.length, `${calculatorId}: ${example.name}`).toBeGreaterThan(0);
     }
   });
 

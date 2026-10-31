@@ -83,6 +83,15 @@ export const sampleBankResultPushSchema = z.object({
   .refine((push) => push.status !== "failed" || push.error, "A failed push says why.")
   .refine((push) => new Set(push.records.map((record) => `${record.source}\n${record.externalId}`)).size === push.records.length, "A push lists each sample once.");
 
+/** LabNest → bank, the answer to an accepted push; `duplicate` marks a page LabNest already had. */
+export const sampleBankPushReceiptSchema = z.object({
+  contract: z.literal(SAMPLE_BANK_CONTRACT),
+  requestId,
+  page: z.number().int().min(1),
+  received: z.literal(true),
+  duplicate: z.literal(true).optional(),
+}).strict();
+
 export type SampleBankQuery = z.infer<typeof sampleBankQuerySchema>;
 export type SampleBankSearchRequest = z.infer<typeof sampleBankSearchRequestSchema>;
 export type SampleBankSearchAck = z.infer<typeof sampleBankSearchAckSchema>;
@@ -94,5 +103,6 @@ export const sampleBankSchemas = {
   searchAck: sampleBankSearchAckSchema,
   resultPush: sampleBankResultPushSchema,
   record: sampleBankRecordSchema,
+  pushReceipt: sampleBankPushReceiptSchema,
   error: z.object({ contract: z.literal(SAMPLE_BANK_CONTRACT), requestId: requestId.optional(), error: sampleBankErrorSchema }).strict(),
 } as const;

@@ -1,8 +1,8 @@
-# 外部样本库接口契约（v1，预留）
+# 外部样本库接口契约（v1）
 
 日期：2026-10-31
 对应问题：S16
-状态：只定契约，未接入。LabNest 现在不发出检索请求，不开放接收地址，不保存连接配置。
+状态：S16 定契约；S17–S30（2026-10-31，[方案](../sample-bank-20261031/PLAN.md)）实现了 LabNest 一侧：连接配置、发出检索、接收推送、存档、结果页与导入。还没有连接真实样本库，用模拟样本库 `scripts/mock-sample-bank.ts` 验证。
 
 契约版本：`labnest.sample-bank/v1`。代码里的校验器在 `src/lib/sample-bank/contract.ts`，连接器接口在 `src/lib/sample-bank/connector.ts`。本文每个 JSON 示例都由 `src/lib/sample-bank/contract.test.ts` 按其上方注明的结构校验，文档和代码不会各说各的。
 
@@ -148,6 +148,20 @@
 | `attributes` | 否 | 其余属性，键值都是文字 | 与类型字段同名的进入类型字段，其余写入备注 |
 | `updatedAt` | 否 | 样本库最后修改时间 | 以后用于判断是否需要更新 |
 
+### 4.2 LabNest 的应答
+
+收下一页时回 200；同一页再推送一次时同样回 200，并带 `duplicate: true`，样本库不必重推：
+
+<!-- schema: pushReceipt -->
+```json
+{
+  "contract": "labnest.sample-bank/v1",
+  "requestId": "sbr_7f3aK2Lq9xZ4",
+  "page": 1,
+  "received": true
+}
+```
+
 ## 5. 错误
 
 错误对象：`{ "code": …, "message": … }`。
@@ -172,16 +186,19 @@ LabNest 拒绝推送时的应答：
 }
 ```
 
-## 6. 鉴权与传输（接入时实现）
+## 6. 鉴权与传输
 
-- 只在实验室内网通过 HTTPS 传输。
-- 双方各持一个共享令牌，放在 `Authorization: Bearer …`。LabNest 一侧的令牌与 AI 服务密钥一样加密保存。
-- 推送另带 `X-LabNest-Signature: sha256=<对原始请求体的 HMAC>`，LabNest 校验后才处理。
-- LabNest 只接受自己发出过的请求号的推送；同一请求号、同一页重复推送只处理一次。
+- 只在实验室内网传输，能用 HTTPS 时用 HTTPS。
+- 检索请求带样本库给的令牌：`Authorization: Bearer <样本库令牌>`。LabNest 把它和 AI 服务密钥一样加密保存，设置页只显示末四位。
+- 推送带 LabNest 的推送令牌：`Authorization: Bearer <推送令牌>`。推送令牌在 LabNest 设置页生成，只显示一次，重新生成后旧的立即失效。
+- 推送另带签名 `X-LabNest-Signature: sha256=<hex>`。签名是以推送令牌为密钥、对原始请求体计算的 HMAC-SHA256，LabNest 先校验签名再处理。
+- LabNest 只接受自己发给这个样本库的请求号，而且记录的 `source` 必须是这个样本库的短名。同一请求号的同一页只处理一次，几页先后到达的顺序不限，全部页到齐才算完成。
+- 拒绝时回第 5 节的错误：令牌或签名不对、连接已关闭为 401/403 `unauthorized`；格式不对为 400 `invalid_request`；超过 500 条为 413 `too_many_records`；请求号不认识为 404 `unknown_request`。每次拒绝都写进活动日志，不记录请求体。
 
-## 7. 接入时还要做的事
+## 7. 接入真实样本库（S30）
 
-1. 在设置里加连接配置：样本库地址、令牌、`source` 短名，默认关闭。
-2. 实现一个 `SampleBankConnector`（发出检索）和接收推送的接口（`/api/sample-bank/results`），按本契约校验。
-3. 加检索请求和推送结果的存档表。
-4. 样本模块加“外部样本库检索”入口和结果页，用户勾选后按 `sampleRowFromBankRecord` 导入或更新。
+LabNest 一侧已经就绪。接入时先请样本库管理员确认：
+
+1. 能按本契约实现 `POST /searches` 和推送：在设置里填地址、短名、样本库令牌，把推送令牌交给对方，再发一次测试检索。
+2. 已有自己的接口：在 LabNest 写一个适配它的 `SampleBankConnector`，本契约中 LabNest 这一侧不变。
+3. 只能导出表格：过渡期用样本的表格导入，另加「外部来源」「外部编号」两列。

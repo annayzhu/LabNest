@@ -410,10 +410,10 @@ model ResearchPlan {
   protocols   ResearchPlanProtocol[]
   results     Result[]
   reports     Report[]
+  copilotRuns ResearchPlanCopilotRun[]
 
   @@index([projectId])
   @@index([status])
-  copilotRuns ResearchPlanCopilotRun[]
 }
 
 model ResearchPlanProtocol {
@@ -430,30 +430,30 @@ model ResearchPlanProtocol {
 }
 
 model Entry {
-  entryType        String                @default("unclassified")
-  eventTimePrecision String              @default("unknown")
-  id               String                @id @default(cuid())
-  title            String
-  body             String
-  occurredAt       DateTime              @default(now())
-  projectId        String?
-  project          Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  researchPlanId   String?
-  researchPlan     ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
-  experimentId     String?
-  experiment       Experiment?           @relation(fields: [experimentId], references: [id], onDelete: SetNull)
-  experimentStepId String?
-  experimentStep   ExperimentStep?       @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
-  tags             String[]              @default([])
-  moodStatus       String?
-  sourceType       EntrySourceType       @default(text)
-  recordStatus     RecordLifecycleStatus @default(draft)
-  contentJson      Json                  @default("{}")
-  archivedAt       DateTime?
-  clientMutationId String?               @unique
-  deviceCreatedAt  DateTime?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  entryType          String                @default("unclassified")
+  eventTimePrecision String                @default("unknown")
+  id                 String                @id @default(cuid())
+  title              String
+  body               String
+  occurredAt         DateTime              @default(now())
+  projectId          String?
+  project            Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  researchPlanId     String?
+  researchPlan       ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  experimentId       String?
+  experiment         Experiment?           @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  experimentStepId   String?
+  experimentStep     ExperimentStep?       @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
+  tags               String[]              @default([])
+  moodStatus         String?
+  sourceType         EntrySourceType       @default(text)
+  recordStatus       RecordLifecycleStatus @default(draft)
+  contentJson        Json                  @default("{}")
+  archivedAt         DateTime?
+  clientMutationId   String?               @unique
+  deviceCreatedAt    DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
 
   @@index([recordStatus])
   @@index([occurredAt])
@@ -465,30 +465,30 @@ model Entry {
 }
 
 model Experiment {
-  materialUses RunMaterialUse[]
-  inventoryObservations InventoryObservation[]
-  id                       String                @id @default(cuid())
-  runCode                  String                @unique
-  creationKey              String?               @unique
+  materialUses             RunMaterialUse[]
+  inventoryObservations    InventoryObservation[]
+  id                       String                 @id @default(cuid())
+  runCode                  String                 @unique
+  creationKey              String?                @unique
   title                    String
   projectId                String?
-  project                  Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project                  Project?               @relation(fields: [projectId], references: [id], onDelete: SetNull)
   researchPlanId           String?
-  researchPlan             ResearchPlan?         @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
-  status                   ExperimentStatus      @default(planned)
-  recordStatus             RecordLifecycleStatus @default(draft)
-  date                     DateTime              @default(now())
+  researchPlan             ResearchPlan?          @relation(fields: [researchPlanId], references: [id], onDelete: SetNull)
+  status                   ExperimentStatus       @default(planned)
+  recordStatus             RecordLifecycleStatus  @default(draft)
+  date                     DateTime               @default(now())
   purpose                  String?
-  contentJson              Json                  @default("{}")
+  contentJson              Json                   @default("{}")
   /// Derived plain-text mirror of purpose + contentJson. Written on every save,
   /// never edited directly; exists only so search does not need per-section columns.
   searchText               String?
-  protocolSnapshotJson     Json                  @default("{}")
-  primaryProtocolVersionId String?               @map("protocolVersionId")
-  primaryProtocolVersion   ProtocolVersion?      @relation("PrimaryExperimentProtocol", fields: [primaryProtocolVersionId], references: [id], onDelete: SetNull)
-  tags                     String[]              @default([])
-  createdAt                DateTime              @default(now())
-  updatedAt                DateTime              @updatedAt
+  protocolSnapshotJson     Json                   @default("{}")
+  primaryProtocolVersionId String?                @map("protocolVersionId")
+  primaryProtocolVersion   ProtocolVersion?       @relation("PrimaryExperimentProtocol", fields: [primaryProtocolVersionId], references: [id], onDelete: SetNull)
+  tags                     String[]               @default([])
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
 
   protocolRun           ProtocolRun?
   steps                 ExperimentStep[]
@@ -696,10 +696,10 @@ model Entity {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  inventoryItems InventoryItem[]
+  inventoryItems    InventoryItem[]
   inventoryProducts InventoryProduct[]
-  sequenceLinks  EntitySequenceLink[]
-  results        Result[]
+  sequenceLinks     EntitySequenceLink[]
+  results           Result[]
 
   @@index([type])
   @@index([status])
@@ -721,10 +721,10 @@ model InventoryLocation {
   gridRows         Int?
   gridColumns      Int?
 
-  itemsFrom        InventoryTransaction[] @relation("FromLocation")
-  itemsTo          InventoryTransaction[] @relation("ToLocation")
-  items            InventoryItem[]
-  samples          Sample[]
+  itemsFrom InventoryTransaction[] @relation("FromLocation")
+  itemsTo   InventoryTransaction[] @relation("ToLocation")
+  items     InventoryItem[]
+  samples   Sample[]
 
   @@index([type])
   @@index([status])
@@ -771,7 +771,7 @@ model InventoryItem {
   updatedAt             DateTime           @updatedAt
 
   materialUses RunMaterialUse[]
-  receipts PurchaseReceipt[]
+  receipts     PurchaseReceipt[]
   containers   InventoryContainer[]
   transactions InventoryTransaction[]
   purchases    PurchaseRequest[]
@@ -788,34 +788,34 @@ model InventoryItem {
 }
 
 model InventoryTransaction {
-  materialUse RunMaterialUse?
-  id               String                   @id @default(cuid())
-  inventoryItemId  String
-  inventoryItem    InventoryItem            @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
-  type             InventoryTransactionType
-  quantityChange   Float
-  unit             String
-  fromLocationId   String?
-  fromLocation     InventoryLocation?       @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
-  toLocationId     String?
-  toLocation       InventoryLocation?       @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
-  experimentId     String?
-  experiment       Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
-  experimentStepId String?
-  experimentStep   ExperimentStep?          @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
-  purchaseId       String?
-  purchase         PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
-  proposedActionId String?
-  proposedAction   ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
-  performedBy      String?
-  notes            String?
-  clientMutationId String?                  @unique
-  deviceCreatedAt  DateTime?
+  materialUse           RunMaterialUse?
+  id                    String                   @id @default(cuid())
+  inventoryItemId       String
+  inventoryItem         InventoryItem            @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  type                  InventoryTransactionType
+  quantityChange        Float
+  unit                  String
+  fromLocationId        String?
+  fromLocation          InventoryLocation?       @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocationId          String?
+  toLocation            InventoryLocation?       @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
+  experimentId          String?
+  experiment            Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  experimentStepId      String?
+  experimentStep        ExperimentStep?          @relation(fields: [experimentStepId], references: [id], onDelete: SetNull)
+  purchaseId            String?
+  purchase              PurchaseRequest?         @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  proposedActionId      String?
+  proposedAction        ProposedAction?          @relation(fields: [proposedActionId], references: [id], onDelete: SetNull)
+  performedBy           String?
+  notes                 String?
+  clientMutationId      String?                  @unique
+  deviceCreatedAt       DateTime?
   /// A reversal points at the movement it undoes; the original stays as recorded.
-  reversesTransactionId String?             @unique
-  reverses         InventoryTransaction?    @relation("TransactionReversal", fields: [reversesTransactionId], references: [id], onDelete: Restrict)
-  reversedBy       InventoryTransaction?    @relation("TransactionReversal")
-  createdAt        DateTime                 @default(now())
+  reversesTransactionId String?                  @unique
+  reverses              InventoryTransaction?    @relation("TransactionReversal", fields: [reversesTransactionId], references: [id], onDelete: Restrict)
+  reversedBy            InventoryTransaction?    @relation("TransactionReversal")
+  createdAt             DateTime                 @default(now())
 
   @@index([inventoryItemId])
   @@index([type])
@@ -909,6 +909,104 @@ model ExperimentSample {
   @@index([experimentId, role, sortOrder])
 }
 
+/// The connection to the lab's external sample bank (S17–S19); one row per bank, the settings page edits one.
+model SampleBankConnection {
+  id                     String              @id @default(cuid())
+  /// The bank's short name, written on imported samples as their external source; fixed once a sample uses it.
+  source                 String              @unique
+  name                   String
+  baseUrl                String
+  /// Where the bank pushes results: this LabNest's address and /api/sample-bank/results.
+  callbackUrl            String
+  /// The bank's token, sent with every search; encrypted like an AI service key.
+  outboundTokenEncrypted String?
+  outboundTokenHint      String?
+  /// LabNest's token, which the bank sends with each push and signs it with; encrypted.
+  inboundTokenEncrypted  String?
+  inboundTokenCreatedAt  DateTime?
+  enabled                Boolean             @default(false)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  searches               SampleBankSearch[]
+  typeMaps               SampleBankTypeMap[]
+}
+
+enum SampleBankSearchStatus {
+  sent
+  accepted
+  rejected
+  receiving
+  complete
+  failed
+}
+
+/// One search sent to the bank and the pages it pushed back (S21).
+model SampleBankSearch {
+  id            String                 @id @default(cuid())
+  requestId     String                 @unique
+  connectionId  String
+  connection    SampleBankConnection   @relation(fields: [connectionId], references: [id], onDelete: Restrict)
+  bankRequestId String?
+  query         Json
+  limit         Int
+  /// A connection test: a one-record search whose pushed answer shows that results come back.
+  test          Boolean                @default(false)
+  requestedBy   String?
+  status        SampleBankSearchStatus @default(sent)
+  pageCount     Int?
+  pagesReceived Int[]                  @default([])
+  total         Int?
+  error         Json?
+  requestedAt   DateTime               @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime               @updatedAt
+  records       SampleBankRecord[]
+  imports       SampleBankImport[]
+
+  @@index([connectionId, requestedAt])
+}
+
+/// A sample as the bank pushed it, kept as received.
+model SampleBankRecord {
+  id         String           @id @default(cuid())
+  searchId   String
+  search     SampleBankSearch @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  page       Int
+  source     String
+  externalId String
+  record     Json
+  receivedAt DateTime         @default(now())
+
+  @@unique([searchId, source, externalId])
+  @@index([source, externalId])
+}
+
+/// A bank's own type word and the LabNest sample type it means (S27).
+model SampleBankTypeMap {
+  id           String                     @id @default(cuid())
+  connectionId String
+  connection   SampleBankConnection       @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  /// The bank's word as matchKey reads it.
+  bankType     String
+  typeId       String
+  type         ScientificSchemaDefinition @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime                   @default(now())
+
+  @@unique([connectionId, bankType])
+}
+
+/// One import from a search. Its id is the batch of the samples it made; `updated` keeps what each updated sample was
+/// before, so undoing the batch can put it back (S26).
+model SampleBankImport {
+  id         String           @id
+  searchId   String
+  search     SampleBankSearch @relation(fields: [searchId], references: [id], onDelete: Restrict)
+  created    Int
+  updated    Json             @default("[]")
+  importedAt DateTime         @default(now())
+  undoneAt   DateTime?
+}
+
 model Result {
   id                    String                 @id @default(cuid())
   experimentId          String?
@@ -988,24 +1086,25 @@ model ResultTypeDefinition {
 }
 
 model ScientificSchemaDefinition {
-  id               String     @id @default(cuid())
-  key              String     @unique
-  label            String
+  id                 String              @id @default(cuid())
+  key                String              @unique
+  label              String
   /// Empty for types only inventory uses (objectKind "inventory").
-  entityType       EntityType?
-  objectKind       String     @default("entity")
+  entityType         EntityType?
+  objectKind         String              @default("entity")
   /// The 大类 an inventory type belongs to; empty when inventory does not use the type.
-  inventoryGroupKey String?
-  inventoryGroup   InventoryGroup? @relation(fields: [inventoryGroupKey], references: [key], onDelete: Restrict)
-  inventoryProducts InventoryProduct[]
+  inventoryGroupKey  String?
+  inventoryGroup     InventoryGroup?     @relation(fields: [inventoryGroupKey], references: [key], onDelete: Restrict)
+  inventoryProducts  InventoryProduct[]
   /// Sample types (objectKind "sample") belong to no 大类.
-  samples          Sample[]
-  prefix           String?
-  fieldDefinitions Json       @default("[]")
-  defaultSettings  Json       @default("{}")
-  enabled          Boolean    @default(true)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  samples            Sample[]
+  sampleBankTypeMaps SampleBankTypeMap[]
+  prefix             String?
+  fieldDefinitions   Json                @default("[]")
+  defaultSettings    Json                @default("{}")
+  enabled            Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([enabled, label])
   @@index([entityType])
@@ -1108,13 +1207,13 @@ model PurchaseRequest {
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @updatedAt
 
-  transactions InventoryTransaction[]
-  receipts PurchaseReceipt[]
-  actualAmount Decimal? @db.Decimal(18, 2)
-  currency String @default("CNY")
-  invoiceStatus String @default("pending")
+  transactions     InventoryTransaction[]
+  receipts         PurchaseReceipt[]
+  actualAmount     Decimal?               @db.Decimal(18, 2)
+  currency         String                 @default("CNY")
+  invoiceStatus    String                 @default("pending")
   invoiceReference String?
-  clientMutationId String? @unique
+  clientMutationId String?                @unique
 
   @@index([status])
   @@index([linkedInventoryItemId])
@@ -1495,7 +1594,7 @@ model ProposedAction {
 }
 
 model AIProvider {
-  id               String         @id @default(cuid())
+  id               String             @id @default(cuid())
   name             String
   type             AIProviderType
   baseUrl          String?
@@ -1503,12 +1602,12 @@ model AIProvider {
   defaultModel     String?
   /// How hard a ChatGPT subscription model reasons (low … max); empty means the model's own default.
   reasoningEffort  String?
-  capabilitiesJson Json           @default("[]")
-  enabled          Boolean        @default(false)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  aisettings       AISettings[] @relation("DefaultProvider")
-  visionSettings   AISettings[] @relation("VisionProvider")
+  capabilitiesJson Json               @default("[]")
+  enabled          Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  aisettings       AISettings[]       @relation("DefaultProvider")
+  visionSettings   AISettings[]       @relation("VisionProvider")
   session          AIProviderSession?
 
   @@index([type])
@@ -1590,40 +1689,42 @@ model DeletedRecord {
 
 // Physical identity survives issue, return and transfer. Amount observations are not stock transactions.
 model InventoryContainer {
-  materialUses RunMaterialUse[]
-  id              String @id @default(cuid())
+  materialUses    RunMaterialUse[]
+  id              String                    @id @default(cuid())
   inventoryItemId String
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
-  state           String @default("warehouse")
+  inventoryItem   InventoryItem             @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  state           String                    @default("warehouse")
   /// Bottle, box or cylinder number people write on it.
   label           String?
   holder          String?
   location        String?
   openedAt        DateTime?
   /// Kit components used up or missing in this box, by component ID; absent means present.
-  componentStates Json @default("{}")
-  version         Int @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  componentStates Json                      @default("{}")
+  version         Int                       @default(0)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
   events          InventoryContainerEvent[]
   observations    InventoryObservation[]
+
   @@index([inventoryItemId, state])
 }
 
 model InventoryContainerEvent {
-  id               String @id @default(cuid())
+  id               String             @id @default(cuid())
   containerId      String
   container        InventoryContainer @relation(fields: [containerId], references: [id], onDelete: Restrict)
   action           String
   performedBy      String?
   snapshotJson     Json
-  clientMutationId String @unique
-  createdAt        DateTime @default(now())
+  clientMutationId String             @unique
+  createdAt        DateTime           @default(now())
+
   @@index([containerId, createdAt])
 }
 
 model InventoryObservation {
-  id           String @id @default(cuid())
+  id           String             @id @default(cuid())
   containerId  String
   container    InventoryContainer @relation(fields: [containerId], references: [id], onDelete: Restrict)
   remaining    Float
@@ -1631,51 +1732,55 @@ model InventoryObservation {
   quality      String
   performedBy  String
   experimentId String?
-  experiment Experiment? @relation(fields:[experimentId],references:[id],onDelete:Restrict)
-  createdAt    DateTime @default(now())
+  experiment   Experiment?        @relation(fields: [experimentId], references: [id], onDelete: Restrict)
+  createdAt    DateTime           @default(now())
+
   @@index([containerId, createdAt])
 }
 
 model PurchaseReceipt {
-  id String @id @default(cuid())
-  purchaseId String
-  purchase PurchaseRequest @relation(fields:[purchaseId],references:[id],onDelete:Restrict)
-  quantity Float
-  inventoryItemId String?
-  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
-  clientMutationId String @unique
-  createdAt DateTime @default(now())
+  id               String          @id @default(cuid())
+  purchaseId       String
+  purchase         PurchaseRequest @relation(fields: [purchaseId], references: [id], onDelete: Restrict)
+  quantity         Float
+  inventoryItemId  String?
+  inventoryItem    InventoryItem?  @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  clientMutationId String          @unique
+  createdAt        DateTime        @default(now())
+
   @@index([purchaseId])
 }
+
 model PurchaseExportSnapshot {
-  id String @id @default(cuid())
-  content String
-  format String
+  id        String   @id @default(cuid())
+  content   String
+  format    String
   createdAt DateTime @default(now())
 }
 
 model RunMaterialUse {
-  id String @id
-  experimentId String
-  experiment Experiment @relation(fields:[experimentId],references:[id],onDelete:Restrict)
-  name String
-  expected Float?
-  actual Float?
-  unit String
-  source String
+  id              String                @id
+  experimentId    String
+  experiment      Experiment            @relation(fields: [experimentId], references: [id], onDelete: Restrict)
+  name            String
+  expected        Float?
+  actual          Float?
+  unit            String
+  source          String
   inventoryItemId String?
-  inventoryItem InventoryItem? @relation(fields:[inventoryItemId],references:[id],onDelete:Restrict)
-  containerId String?
-  container InventoryContainer? @relation(fields:[containerId],references:[id],onDelete:Restrict)
-  status String @default("recorded")
-  transactionId String? @unique
-  transaction InventoryTransaction? @relation(fields:[transactionId],references:[id],onDelete:Restrict)
-  correctionOfId String? @unique
-  correctionOf RunMaterialUse? @relation("MaterialCorrection",fields:[correctionOfId],references:[id],onDelete:Restrict)
-  correction RunMaterialUse? @relation("MaterialCorrection")
-  error String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  inventoryItem   InventoryItem?        @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+  containerId     String?
+  container       InventoryContainer?   @relation(fields: [containerId], references: [id], onDelete: Restrict)
+  status          String                @default("recorded")
+  transactionId   String?               @unique
+  transaction     InventoryTransaction? @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  correctionOfId  String?               @unique
+  correctionOf    RunMaterialUse?       @relation("MaterialCorrection", fields: [correctionOfId], references: [id], onDelete: Restrict)
+  correction      RunMaterialUse?       @relation("MaterialCorrection")
+  error           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
   @@index([experimentId])
 }
 
@@ -1749,26 +1854,26 @@ model InventoryGroup {
 
 /// One catalogue entry (brand + catalogue number) or one self-made design; inventory items are its lots.
 model InventoryProduct {
-  id               String       @id @default(cuid())
+  id               String                      @id @default(cuid())
   name             String
   englishName      String?
   brand            String?
   catalogNumber    String?
   casNumber        String?
   groupKey         String?
-  group            InventoryGroup? @relation(fields: [groupKey], references: [key], onDelete: Restrict)
+  group            InventoryGroup?             @relation(fields: [groupKey], references: [key], onDelete: Restrict)
   typeId           String?
   type             ScientificSchemaDefinition? @relation(fields: [typeId], references: [id], onDelete: Restrict)
   entityId         String?
-  entity           Entity?      @relation(fields: [entityId], references: [id], onDelete: SetNull)
-  fieldValues      Json         @default("{}")
-  controlLevels    String[]     @default([])
+  entity           Entity?                     @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  fieldValues      Json                        @default("{}")
+  controlLevels    String[]                    @default([])
   lowThreshold     Float?
   lowThresholdUnit String?
   notes            String?
-  status           ObjectStatus @default(active)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  status           ObjectStatus                @default(active)
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
 
   items         InventoryItem[]
   kitComponents InventoryKitComponent[]
@@ -1782,15 +1887,15 @@ model InventoryProduct {
 
 /// A component every box of a kit product should contain.
 model InventoryKitComponent {
-  id               String   @id @default(cuid())
+  id               String           @id @default(cuid())
   productId        String
   product          InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   name             String
   spec             String?
   storageCondition String?
-  sortOrder        Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  sortOrder        Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([productId, sortOrder])
 }

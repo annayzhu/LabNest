@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { SampleTypeRef } from "../samples";
-import { newSampleBankSearch, noSampleBankConnector, parseResultPush, sampleRowFromBankRecord } from "./connector";
+import { newSampleBankSearch, parseResultPush, sampleRowFromBankRecord } from "./connector";
 import { SAMPLE_BANK_CONTRACT, sampleBankRecordSchema, sampleBankSchemas } from "./contract";
 
 const contractDoc = readFileSync(fileURLToPath(new URL("../../../docs/modules/samples/20261031/SAMPLE-BANK-CONTRACT.md", import.meta.url)), "utf8");
@@ -16,7 +16,7 @@ const types: SampleTypeRef[] = [
 
 describe("the written contract", () => {
   it("has examples of every message, and each one passes the schema named above it", () => {
-    expect(new Set(examples.map((example) => example.schema))).toEqual(new Set(["searchRequest", "searchAck", "resultPush", "error"]));
+    expect(new Set(examples.map((example) => example.schema))).toEqual(new Set(["searchRequest", "searchAck", "resultPush", "pushReceipt", "error"]));
     for (const example of examples) expect(sampleBankSchemas[example.schema].safeParse(example.body).error?.issues ?? []).toEqual([]);
   });
 
@@ -32,13 +32,12 @@ describe("the written contract", () => {
 });
 
 describe("the connector seam", () => {
-  it("makes searches with a fresh request ID and refuses them until a bank is connected", async () => {
+  it("makes searches with a fresh request ID", () => {
     const search = newSampleBankSearch({ text: "ESCC" }, { callbackUrl: "https://labnest.lab.local/api/sample-bank/results", now: new Date("2026-10-31T00:00:00Z") });
     expect(search).toMatchObject({ contract: SAMPLE_BANK_CONTRACT, requestedAt: "2026-10-31T00:00:00.000Z", limit: 500, query: { text: "ESCC" } });
     expect(search.requestId).toMatch(/^sbr_[\w-]{8,}$/);
     expect(newSampleBankSearch({ text: "ESCC" }, { callbackUrl: "https://x.local/cb" }).requestId).not.toBe(search.requestId);
     expect(() => newSampleBankSearch({}, { callbackUrl: "https://x.local/cb" })).toThrow(/at least one condition/);
-    expect(await noSampleBankConnector.requestSearch(search)).toMatchObject({ accepted: false, error: { code: "bank_unavailable" } });
   });
 
   it("turns a bank record into a sample row keyed by source and external ID", () => {
@@ -46,7 +45,7 @@ describe("the connector seam", () => {
     const [tissue, rna] = push.records.map((record) => sampleRowFromBankRecord(record, types));
     expect(tissue.warnings).toEqual([]);
     expect(tissue.row).toMatchObject({ name: "P001-T", typeId: "t-tissue", origin: "P001", collectedAt: "2024-05-12", amount: "50", amountUnit: "mg", biosafetyLevel: "BSL-2", externalSource: "hospital-biobank", externalId: "BB-2024-000123", fields: { site: "食管中段", pathology: "鳞癌" } });
-    expect(tissue.row.notes).toBe("Location in hospital-biobank: 3号冰箱 / B架 / 12盒 / A5\nstage: IIIA");
+    expect(tissue.row.notes).toBe("样本库位置：3号冰箱 / B架 / 12盒 / A5\nstage: IIIA");
     expect(rna.row).toMatchObject({ typeId: "t-rna", concentration: "412.5", concentrationUnit: "ng/µL", parentExternalId: "BB-2024-000123", fields: { rin: "8.1" } });
     const saliva = sampleRowFromBankRecord({ source: "hospital-biobank", externalId: "BB-9", name: "S9", sampleType: "Saliva" }, types);
     expect(saliva.row.typeId).toBe("t-other");

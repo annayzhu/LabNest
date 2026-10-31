@@ -8,6 +8,7 @@ import { SampleBatchBanner } from "@/components/SampleBatchBanner";
 import { SamplePlace, SampleQuantity, SampleStatusBadge } from "@/components/SampleBits";
 import { SampleBulkActions } from "@/components/SampleBulkActions";
 import { SampleNav } from "@/components/SampleNav";
+import { Badge } from "@/components/ui/Badge";
 import { DataTable } from "@/components/ui/DataTable";
 import { buttonStyles } from "@/components/ui/Button";
 import { prisma } from "@/lib/db";
@@ -28,6 +29,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
   const locationId = firstSearchParam(params, "location");
   const projectId = firstSearchParam(params, "project");
   const batchId = firstSearchParam(params, "batch");
+  const source = firstSearchParam(params, "source");
   const sort = firstSearchParam(params, "sort") ?? "created_desc";
   const page = Math.max(1, Number(firstSearchParam(params, "page")) || 1);
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
@@ -38,10 +40,11 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
     ...(locationId ? { locationId } : {}),
     ...(projectId ? { projectId: projectId === "none" ? null : projectId } : {}),
     ...(batchId ? { batchId } : {}),
+    ...(source === "lab" ? { externalSource: null } : source === "bank" ? { externalSource: { not: null } } : {}),
     ...(query ? { OR: [{ code: contains(query) }, { name: contains(query) }, { origin: contains(query) }, { externalId: contains(query) }] } : {}),
   };
   const orderBy: Prisma.SampleOrderByWithRelationInput[] = sort === "code_asc" ? [{ code: "asc" }] : sort === "name_asc" ? [{ name: "asc" }, { code: "asc" }] : sort === "place_asc" ? [{ locationId: "asc" }, { position: "asc" }] : [{ createdAt: "desc" }, { code: "asc" }];
-  const [samples, matching, total, types, locations, projects, batchUses] = await Promise.all([
+  const [samples, matching, total, types, locations, projects, batchUses, bankImport] = await Promise.all([
     prisma.sample.findMany({
       where, orderBy, skip: (page - 1) * pageSize, take: pageSize,
       include: {
@@ -59,7 +62,9 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
       prisma.experimentSample.count({ where: { sample: { batchId }, role: "input" } }),
       prisma.sample.count({ where: { parent: { batchId }, NOT: { batchId } } }),
     ]) : Promise.resolve([0, 0]),
+    batchId ? prisma.sampleBankImport.findUnique({ where: { id: batchId }, select: { updated: true, undoneAt: true } }) : Promise.resolve(null),
   ]);
+  const restoring = bankImport && !bankImport.undoneAt && Array.isArray(bankImport.updated) ? bankImport.updated.length : 0;
   const placeLabel = new Map(locations.map((location) => [location.id, location.label]));
   const pages = Math.max(1, Math.ceil(matching / pageSize));
   const pageHref = (nextPage: number) => {
@@ -73,7 +78,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
       <div className="space-y-4">
         <PageHeader title="Samples" />
         <SampleNav current="samples" />
-        {batchId && matching ? <SampleBatchBanner batchId={batchId} count={matching} undoable={batchUses[0] + batchUses[1] === 0} /> : null}
+        {batchId && matching ? <SampleBatchBanner batchId={batchId} count={matching} restoring={restoring} undoable={batchUses[0] + batchUses[1] === 0} /> : null}
         <CollectionToolbar
           path="/samples"
           query={query}
@@ -85,6 +90,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
           filters={[
             { name: "type", label: "types", value: typeId, options: types.map((type) => ({ value: type.id, label: type.label })) },
             { name: "status", label: "statuses", value: status, options: sampleStatuses.map((value) => ({ value, label: sampleStatusLabels[value] })) },
+            { name: "source", label: "sources", value: source, options: [{ value: "lab", label: "This lab" }, { value: "bank", label: "External sample bank" }] },
             { name: "location", label: "places", value: locationId, options: locations.map((location) => ({ value: location.id, label: location.label })) },
             { name: "project", label: "projects", value: projectId, options: [...projects.map((project) => ({ value: project.id, label: project.name })), { value: "none", label: "No project" }] },
             ...(batchId ? [{ name: "batch", label: "batch", value: batchId, options: [{ value: batchId, label: "This batch" }] }] : []),
@@ -103,7 +109,7 @@ export default async function SamplesPage({ searchParams }: { searchParams?: Pag
           columns={[
             {
               key: "sample", header: "Sample", width: 200, minWidth: 160,
-              render: (row) => <div className="min-w-0"><Link href={`/samples/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="record-identifier mt-0.5 text-xs text-muted">{row.code}</p></div>,
+              render: (row) => <div className="min-w-0"><Link href={`/samples/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="record-identifier mt-0.5 text-xs text-muted">{row.code}{row.externalSource ? <span title={`${row.externalSource} · ${row.externalId}`}><Badge tone="info" className="ml-1.5 align-middle">Sample bank</Badge></span> : null}</p></div>,
             },
             { key: "type", header: "Type", width: 88, render: (row) => row.type.label },
             { key: "origin", header: "Origin", width: 140, render: (row) => row.origin ?? <span className="text-muted">—</span> },

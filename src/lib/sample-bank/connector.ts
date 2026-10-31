@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { sampleTypeNamed, sampleUnit, type SampleRowInput, type SampleTypeRef } from "../samples";
+import { zhUi } from "../i18n";
+import { matchKey, sampleTypeNamed, sampleUnit, type SampleRowInput, type SampleTypeRef } from "../samples";
 import {
   MAX_RECORDS_PER_PUSH, SAMPLE_BANK_CONTRACT, sampleBankResultPushSchema, sampleBankSearchRequestSchema,
   type SampleBankQuery, type SampleBankRecord, type SampleBankResultPush, type SampleBankSearchAck, type SampleBankSearchRequest,
@@ -8,21 +9,13 @@ import {
 /**
  * The seam where a real sample bank plugs in (S16). Searching is asynchronous: requestSearch only hands the search over;
  * the bank pushes the results to the request's callbackUrl later, and those pushes are checked with parseResultPush.
- * Nothing in LabNest calls a connector yet, no endpoint receives pushes and no connection settings are stored.
+ * LabNest sends searches with httpSampleBankConnector; pushes arrive at /api/sample-bank/results.
  */
 export interface SampleBankConnector {
   /** The bank's short name, stored on imported samples as their external source. */
   readonly source: string;
   requestSearch(request: SampleBankSearchRequest): Promise<SampleBankSearchAck>;
 }
-
-/** The connector until a bank is connected: it refuses every search, saying so. */
-export const noSampleBankConnector: SampleBankConnector = {
-  source: "none",
-  async requestSearch(request) {
-    return { contract: SAMPLE_BANK_CONTRACT, requestId: request.requestId, accepted: false, error: { code: "bank_unavailable", message: "No external sample bank is connected yet." } };
-  },
-};
 
 /** A search ready to send: a fresh request ID, the time, and where the bank pushes the results. */
 export function newSampleBankSearch(query: SampleBankQuery, options: { callbackUrl: string; requestedBy?: string; limit?: number; now?: Date }): SampleBankSearchRequest {
@@ -45,21 +38,39 @@ export function parseResultPush(body: unknown): SampleBankResultPush {
   throw new Error(`${issue.path.join(".") || "push"}: ${issue.message}`);
 }
 
+/** The first notes line of a sample from the bank: where the bank keeps it (S23). */
+export const BANK_LOCATION_PREFIX = "样本库位置：";
+
+/** Notes with the bank's location as their first line, replacing an earlier one; other lines stay as they were. */
+export function withBankLocation(notes: string | null | undefined, location: string | undefined) {
+  const lines = (notes ?? "").split("\n").filter((line) => !line.startsWith(BANK_LOCATION_PREFIX));
+  const joined = [location ? `${BANK_LOCATION_PREFIX}${location}` : "", ...lines].filter(Boolean).join("\n");
+  return joined || null;
+}
+
+/** The bank's location as a sample's notes record it, or undefined. */
+export const bankLocationOf = (notes: string | null | undefined) =>
+  notes?.split("\n").find((line) => line.startsWith(BANK_LOCATION_PREFIX))?.slice(BANK_LOCATION_PREFIX.length);
+
 /**
- * How a bank record would become a LabNest sample row when imports are wired: its type matched by key, name or prefix
- * (else Other), its amount and concentration with units, the bank's location and attributes kept in notes.
+ * A bank record as a LabNest sample row. The type comes from the bank's remembered pairs (S27), else by key, name or
+ * prefix, else Other with a warning. Attributes named like one of the type's fields (by key, or by the field's name in
+ * English or Chinese) fill that field; the bank's location and the other attributes go into notes.
  */
-export function sampleRowFromBankRecord(record: SampleBankRecord, types: SampleTypeRef[]) {
+export function sampleRowFromBankRecord(record: SampleBankRecord, types: SampleTypeRef[], typeMap: ReadonlyMap<string, string> = new Map()) {
   const warnings: string[] = [];
-  const matched = sampleTypeNamed(types, record.sampleType);
+  const mapped = types.find((candidate) => candidate.id === typeMap.get(matchKey(record.sampleType)));
+  const matched = mapped ?? sampleTypeNamed(types, record.sampleType);
   const type = matched ?? types.find((candidate) => candidate.key === "sample_other");
   if (!matched) warnings.push(`Sample type ${record.sampleType} has no match; it is kept as ${type?.label ?? "no type"}.`);
-  const fields = Object.fromEntries(Object.entries(record.attributes ?? {}).filter(([key]) => type?.fields.some((field) => field.key === key)));
-  const extra = Object.entries(record.attributes ?? {}).filter(([key]) => !(key in fields));
-  const notes = [
-    record.location ? `Location in ${record.source}: ${record.location}` : "",
-    ...extra.map(([key, value]) => `${key}: ${value}`),
-  ].filter(Boolean).join("\n");
+  const fieldFor = (name: string) => type?.fields.find((field) => [field.key, field.label, zhUi[field.label] ?? ""].some((candidate) => candidate && matchKey(candidate) === matchKey(name)));
+  const fields: Record<string, string> = {};
+  const extra: string[] = [];
+  for (const [name, value] of Object.entries(record.attributes ?? {})) {
+    const field = fieldFor(name);
+    if (field && !(field.key in fields)) fields[field.key] = value;
+    else extra.push(`${name}: ${value}`);
+  }
   const row: SampleRowInput & { externalSource: string; externalId: string; parentExternalId?: string } = {
     ...(record.code ? { code: record.code } : {}),
     name: record.name,
@@ -71,11 +82,11 @@ export function sampleRowFromBankRecord(record: SampleBankRecord, types: SampleT
     concentration: record.concentration ? String(record.concentration.value) : undefined,
     concentrationUnit: record.concentration ? sampleUnit(record.concentration.unit) : undefined,
     biosafetyLevel: record.biosafetyLevel,
-    notes: notes || undefined,
+    notes: withBankLocation(extra.join("\n"), record.location) ?? undefined,
     ...(Object.keys(fields).length ? { fields } : {}),
     externalSource: record.source,
     externalId: record.externalId,
     ...(record.parentExternalId ? { parentExternalId: record.parentExternalId } : {}),
   };
-  return { row, warnings };
+  return { row, warnings, typeMatched: Boolean(matched) };
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/samples";
 import { createSampleBatch, openExperiment, SampleBatchError, sampleBatchContext, sampleLocationOptions, sampleReferenceCounts, type SampleBatchProblem } from "@/lib/samples.server";
 import type { BulkEntry } from "@/lib/inventory-bulk";
+import type { BankImportUpdate } from "@/lib/sample-bank/import.server";
 
 type Tx = Prisma.TransactionClient;
 
@@ -176,12 +177,15 @@ export async function deleteSample(_previous: FormActionState, formData: FormDat
 
 /** Removes a whole batch while none of it is used by an experiment or has children outside the batch (S8). */
 export async function undoSampleBatch(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
-  let count = 0;
+  let removed = 0, restored = 0;
   try {
     const batchId = z.string().min(1).parse(formData.get("batchId"));
-    count = await prisma.$transaction(async (tx) => {
+    ({ removed, restored } = await prisma.$transaction(async (tx) => {
       const samples = await tx.sample.findMany({ where: { batchId }, select: { id: true } });
-      if (!samples.length) throw new Error("This batch has no samples left.");
+      // A bank import's batch also holds the samples it updated; undoing puts their bank-owned values back (S26).
+      const bankImport = await tx.sampleBankImport.findUnique({ where: { id: batchId } });
+      const updates = bankImport && !bankImport.undoneAt ? bankImport.updated as unknown as BankImportUpdate[] : [];
+      if (!samples.length && !updates.length) throw new Error("This batch has no samples left.");
       const ids = samples.map((sample) => sample.id);
       const [outsideChildren, uses] = await Promise.all([
         tx.sample.count({ where: { parentId: { in: ids }, NOT: { batchId } } }),
@@ -193,15 +197,20 @@ export async function undoSampleBatch(_previous: FormActionState, formData: Form
       await tx.experimentSample.deleteMany({ where: { sampleId: { in: ids } } });
       await tx.sample.updateMany({ where: { id: { in: ids } }, data: { parentId: null } });
       await tx.sample.deleteMany({ where: { id: { in: ids } } });
-      await tx.activityLog.create({ data: { action: "undo_batch", targetType: "sample_batch", targetId: batchId, metadataJson: { count: ids.length, sampleIds: ids } } });
-      return ids.length;
-    });
+      for (const { sampleId, before } of updates) {
+        await tx.sample.updateMany({ where: { id: sampleId }, data: { ...before, collectedAt: before.collectedAt ? new Date(before.collectedAt) : null, fieldValues: before.fieldValues as Prisma.InputJsonValue } });
+      }
+      if (bankImport && !bankImport.undoneAt) await tx.sampleBankImport.update({ where: { id: batchId }, data: { undoneAt: new Date() } });
+      await tx.activityLog.create({ data: { action: "undo_batch", targetType: "sample_batch", targetId: batchId, metadataJson: { count: ids.length, sampleIds: ids, restored: updates.map((update) => update.sampleId) } } });
+      return { removed: ids.length, restored: updates.length };
+    }));
   } catch (error) {
     return { error: formActionErrorMessage(error, "The batch could not be undone.") };
   }
   revalidateSamples();
   revalidatePath("/experiments");
-  return { success: `${count} sample${count === 1 ? "" : "s"} removed.` };
+  const removedText = `${removed} sample${removed === 1 ? "" : "s"} removed`;
+  return { success: restored ? `${removedText}; ${restored} put back as they were.` : `${removedText}.` };
 }
 
 /** A box's rows and columns (S7); refused while a sample sits outside the new size. Empty clears the grid. */

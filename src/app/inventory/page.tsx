@@ -3,6 +3,7 @@ import { Plus, ShoppingCart } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CollectionExportMenu } from "@/components/CollectionExportMenu";
 import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { InventoryBulkActions } from "@/components/InventoryBulkActions";
 import { InventoryNav } from "@/components/InventoryNav";
 import { InventoryRiskBadges } from "@/components/InventoryRiskBadges";
 import { MobileInventoryBench } from "@/components/MobileInventoryBench";
@@ -14,6 +15,7 @@ import { prisma } from "@/lib/db";
 import { filterHref, firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { isStrictlyControlled, lotRiskFlags, type InventoryRiskFlag } from "@/lib/inventory";
 import { QuantityText } from "@/components/InventoryDetail";
+import { duplicateOverview } from "@/lib/inventory-products.server";
 import { inventoryGroupName } from "@/lib/inventory-types";
 import { objectStatusOptions } from "@/lib/status-options";
 
@@ -54,7 +56,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
   };
   const orderBy = sort === "name_asc" ? { name: "asc" as const } : sort === "expiry_asc" ? { expiryDate: { sort: "asc" as const, nulls: "last" as const } } : { updatedAt: "desc" as const };
 
-  const [matchedItems, totalCount, locations, groups, types, principalInvestigators, allStock, openPurchaseCount, strictProducts] = await Promise.all([
+  const [matchedItems, totalCount, locations, groups, types, principalInvestigators, allStock, openPurchaseCount, strictProducts, duplicates] = await Promise.all([
     prisma.inventoryItem.findMany({ where, include: { location: true, product: { include: { type: { select: { label: true } } } } }, orderBy }),
     prisma.inventoryItem.count(),
     prisma.inventoryLocation.findMany({ select: { id: true, name: true, status: true }, orderBy: { name: "asc" } }),
@@ -64,6 +66,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
     prisma.inventoryItem.findMany({ select: { id: true, productId: true, currentQuantity: true, unit: true, quantityRecorded: true, status: true, lowThreshold: true, expiryDate: true, product: { select: { lowThreshold: true, lowThresholdUnit: true } } } }),
     prisma.purchaseRequest.count({ where: { status: { in: [PurchaseStatus.planned, PurchaseStatus.ordered, PurchaseStatus.received] } } }),
     prisma.inventoryProduct.findMany({ where: { controlLevels: { hasSome: ["highly_toxic", "precursor"] } }, select: { id: true, controlLevels: true } }),
+    duplicateOverview(prisma),
   ]);
 
   const lotsByProduct = Map.groupBy(allStock, (lot) => lot.productId ?? lot.id);
@@ -83,6 +86,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
     { label: "Expired", value: count("expired"), href: "/inventory?flag=expired", tone: "danger" as const },
     { label: "Expires in 30 days", value: count("expiring"), href: "/inventory?flag=expiring", tone: "warning" as const },
     { label: "SDS missing", value: sdsMissing, href: "/inventory/products?flag=sds", tone: "danger" as const },
+    { label: "Possible duplicates", value: duplicates.productPairs.length + duplicates.lotGroups.length, href: "/inventory/products/duplicates", tone: "warning" as const },
     { label: "Open purchases", value: openPurchaseCount, href: "/purchases", tone: "info" as const },
   ].filter((entry) => entry.value > 0);
 
@@ -155,7 +159,7 @@ export default async function InventoryPage({ searchParams }: { searchParams?: P
             rows={items}
             getRowKey={(row) => row.id}
             emptyMessage="No stock matches this view."
-            selection={{ exportPath: "/inventory/export" }}
+            selection={{ exportPath: "/inventory/export", actions: <InventoryBulkActions kind="stock" locations={locations.filter((location) => location.status !== "archived").map((location) => ({ value: location.id, label: location.name }))} /> }}
             columns={[
               {
                 key: "name",

@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { deleteBlockers, isStrictlyControlled } from "./inventory";
+import { catalogKey, duplicateLotGroups, duplicateProductPairs, pairKey } from "./inventory-duplicates";
 import { inventoryClassFromCategory, inventoryGroupName, inventoryTypeDefaults, inventoryTypeFields, isInventoryGroupKey, type InventoryGroupKey } from "./inventory-types";
 
 type Tx = Prisma.TransactionClient;
@@ -50,15 +51,7 @@ export async function linkInventoryProduct(tx: Tx, identity: ProductIdentity) {
   const catalogNumber = blank(identity.catalogNumber);
   const maker = blank(identity.brand) ?? blank(identity.vendor);
   const existing = catalogNumber
-    ? await tx.inventoryProduct.findFirst({
-      where: {
-        catalogNumber: { equals: catalogNumber, mode: "insensitive" },
-        // A catalogue number is only unique within a maker; without a maker, match only products without one.
-        ...(maker ? { OR: [{ brand: { equals: maker, mode: "insensitive" } }, { brand: null }] } : { brand: null }),
-      },
-      orderBy: { createdAt: "asc" },
-      include: withTypeKey,
-    })
+    ? await productWithCatalog(tx, { brand: maker, catalogNumber }, { orUnbranded: true })
     : identity.entityId
       ? await tx.inventoryProduct.findFirst({ where: { entityId: identity.entityId, catalogNumber: null }, orderBy: { createdAt: "asc" }, include: withTypeKey })
       : null;
@@ -84,6 +77,38 @@ export async function linkInventoryProduct(tx: Tx, identity: ProductIdentity) {
     },
     include: withTypeKey,
   });
+}
+
+/**
+ * The product with this brand and catalogue number, compared without case, spaces or hyphens. A catalogue number is only
+ * unique within a maker: without a brand, only products without one match; `orUnbranded` lets a branded search also find
+ * a product saved without a brand.
+ */
+export async function productWithCatalog(tx: Tx, identity: { brand: string | null; catalogNumber: string | null }, options: { orUnbranded?: boolean; excludeId?: string } = {}) {
+  const key = catalogKey(identity.catalogNumber);
+  if (!key) return null;
+  const brand = blank(identity.brand);
+  const brands = brand ? [{ brand: { equals: brand, mode: "insensitive" as const } }, ...(options.orUnbranded ? [{ brand: null }] : [])] : [{ brand: null }];
+  const candidates = await tx.inventoryProduct.findMany({
+    where: { catalogNumber: { not: null }, OR: brands, ...(options.excludeId ? { id: { not: options.excludeId } } : {}) },
+    orderBy: { createdAt: "asc" },
+    include: withTypeKey,
+  });
+  return candidates.find((product) => catalogKey(product.catalogNumber) === key) ?? null;
+}
+
+/** Removes a stock item nothing refers to (see stockItemBlockers): its opening balance, containers and document links go with it. */
+export async function deleteStockItem(tx: Tx, id: string) {
+  await tx.inventoryTransaction.deleteMany({ where: { inventoryItemId: id } });
+  await tx.inventoryContainer.deleteMany({ where: { inventoryItemId: id } });
+  await tx.attachmentLink.deleteMany({ where: { targetType: "inventory_item", targetId: id } });
+  await tx.inventoryItem.delete({ where: { id } });
+}
+
+/** Removes a product without lots; its document links go with it and its kit components cascade. */
+export async function deleteProduct(tx: Tx, id: string) {
+  await tx.attachmentLink.deleteMany({ where: { targetType: "inventory_product", targetId: id } });
+  await tx.inventoryProduct.delete({ where: { id } });
 }
 
 /**
@@ -117,4 +142,19 @@ export async function inventoryFormOptions(prisma: Pick<Tx, "inventoryProduct" |
     types: types.map((type) => ({ id: type.id, label: type.label, groupKey: type.inventoryGroupKey!, groupName: groupNames.get(type.inventoryGroupKey!) ?? type.inventoryGroupKey!, defaults: inventoryTypeDefaults(type.defaultSettings), fields: inventoryTypeFields(type.fieldDefinitions), enabled: type.enabled })),
     groups: groups.map((group) => ({ key: group.key, name: inventoryGroupName(group), hidden: group.hidden })),
   };
+}
+
+/** Products and stock lots that may be duplicates, oldest first, without the pairs someone marked as not duplicates. */
+export async function duplicateOverview(db: Pick<Tx, "inventoryProduct" | "inventoryItem" | "inventoryDuplicateDismissal">) {
+  const [products, lots, dismissals] = await Promise.all([
+    db.inventoryProduct.findMany({ select: { id: true, name: true, englishName: true, brand: true, catalogNumber: true, casNumber: true, status: true, _count: { select: { items: true } } }, orderBy: { createdAt: "asc" } }),
+    db.inventoryItem.findMany({
+      where: { status: "active", productId: { not: null }, lotNumber: { not: null } },
+      select: { id: true, name: true, productId: true, lotNumber: true, locationId: true, status: true, currentQuantity: true, unit: true, quantityRecorded: true, location: { select: { name: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.inventoryDuplicateDismissal.findMany({ select: { firstId: true, secondId: true } }),
+  ]);
+  const dismissed = new Set(dismissals.map((pair) => pairKey(pair.firstId, pair.secondId)));
+  return { products, productPairs: duplicateProductPairs(products, dismissed), lotGroups: duplicateLotGroups(lots, dismissed) };
 }

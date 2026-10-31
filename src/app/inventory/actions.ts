@@ -7,7 +7,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { controlledUseProblem, isStrictlyControlled, movementReversalProblem } from "@/lib/inventory";
-import { linkInventoryProduct, lotIdentity, stockItemBlockers } from "@/lib/inventory-products.server";
+import { deleteStockItem, linkInventoryProduct, lotIdentity, stockItemBlockers } from "@/lib/inventory-products.server";
 
 type Tx = Prisma.TransactionClient;
 
@@ -305,10 +305,7 @@ export async function deleteInventoryItem(_previous: FormActionState, formData: 
       if (confirmation !== item.name) throw new Error(`Enter ${item.name} exactly to confirm permanent deletion.`);
       const blockers = await stockItemBlockers(tx, id);
       if (blockers.length) throw new Error(`This item has ${blockers.join(", ")}, so it cannot be deleted. Archive it instead.`);
-      await tx.inventoryTransaction.deleteMany({ where: { inventoryItemId: id } });
-      await tx.inventoryContainer.deleteMany({ where: { inventoryItemId: id } });
-      await tx.attachmentLink.deleteMany({ where: { targetType: "inventory_item", targetId: id } });
-      await tx.inventoryItem.delete({ where: { id } });
+      await deleteStockItem(tx, id);
       await tx.activityLog.create({ data: { action: "delete", targetType: "inventory_item", targetId: id, metadataJson: { name: item.name, productId: item.productId, lotNumber: item.lotNumber, currentQuantity: item.currentQuantity, unit: item.unit } } });
     });
   } catch (error) {

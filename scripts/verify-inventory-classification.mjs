@@ -1,13 +1,13 @@
-// Read-only check of the inventory pages (docs/modules/inventory/classification-20261030): every page loads in Chinese,
-// has no horizontal overflow at 1440 and 390 px, and its screenshot lands in the batch's evidence folder.
-// Usage: node scripts/verify-inventory-classification.mjs [base URL] [stock item id] [product id]
+// Read-only check of the inventory pages (docs/modules/inventory/classification-20261030, bulk-duplicates-20261030):
+// every page loads in Chinese, has no horizontal overflow at 1440 and 390 px, and its screenshot lands in an evidence folder.
+// Usage: node scripts/verify-inventory-classification.mjs [base URL] [stock item id] [product id] [evidence folder]
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const base = process.argv[2] ?? "http://localhost:3002";
 const itemId = process.argv[3] ?? "i_rneasy";
 const productId = process.argv[4] ?? "p_rneasy";
-const out = "docs/modules/inventory/classification-20261030/evidence";
+const out = process.argv[5] ?? "docs/modules/inventory/classification-20261030/evidence";
 const pages = [
   ["stock", "/inventory"],
   ["stock-item", `/inventory/${itemId}`],
@@ -17,6 +17,8 @@ const pages = [
   ["product-edit", `/inventory/products/${productId}/edit`],
   ["types", "/inventory/types"],
   ["locations", "/inventory/locations"],
+  ["duplicates", "/inventory/products/duplicates"],
+  ["merge", `/inventory/products/merge?keep=${productId}`],
 ];
 
 await mkdir(out, { recursive: true });
@@ -33,6 +35,15 @@ for (const [width, height] of [[1440, 900], [390, 844]]) {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     if (overflow > 0) failures.push(`${path} at ${width}px overflows by ${overflow}px`);
     await page.screenshot({ path: `${out}/${name}-${width}.png`, fullPage: true });
+    // Lists with bulk actions: check two rows (nothing is sent) and capture the action bar.
+    const rows = page.locator("table input.selection-checkbox");
+    if (width === 1440 && (await page.locator("thead input[type=checkbox]").count()) && (await rows.count()) > 1) {
+      await rows.nth(0).check();
+      await rows.nth(1).check();
+      await page.screenshot({ path: `${out}/${name}-selected-${width}.png` });
+      await rows.nth(0).uncheck();
+      await rows.nth(1).uncheck();
+    }
   }
   await context.close();
 }

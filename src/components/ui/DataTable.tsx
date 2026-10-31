@@ -2,12 +2,14 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { buttonStyles } from "@/components/ui/Button";
 import { ResizableTableFrame } from "@/components/ui/ResizableTableFrame";
+import { SelectAllRows } from "@/components/ui/SelectAllRows";
 
 const selectionExportButtonClass = buttonStyles({
   variant: "primary",
   size: "sm",
   className: "font-medium",
 });
+const selectionBarExportButtonClass = buttonStyles({ variant: "secondary", size: "sm", className: "font-medium" });
 
 export type TableColumn<T> = {
   key: string;
@@ -37,9 +39,12 @@ export function DataTable<T>({
   className?: string;
   emptyMessage?: string;
   selection?: {
-    exportPath: string;
+    /** Where "Export selected" sends the checked rows; without it the table has no export. */
+    exportPath?: string;
     fieldName?: string;
     label?: string;
+    /** Bulk actions for the checked rows, in a bar above the table; the header then gets a select-all box. */
+    actions?: ReactNode;
   };
 }) {
   const table = (
@@ -54,7 +59,7 @@ export function DataTable<T>({
           </colgroup>
           <thead>
             <tr>
-              {selection ? <th className="ln-data-table-selection-col"><span className="sr-only">Select</span></th> : null}
+              {selection ? <th className="ln-data-table-selection-col">{selection.actions ? <SelectAllRows /> : <span className="sr-only">Select</span>}</th> : null}
               {columns.map((column, index) => {
                 const columnIndex = selection ? index + 1 : index;
                 return <th key={column.key} data-resizable-column-cell={columnIndex} className={column.className}>
@@ -101,15 +106,22 @@ export function DataTable<T>({
   );
 
   if (!selection) return table;
+  const exportLabel = selection.label ?? "Export selected…";
   return (
     <form action={selection.exportPath} method="get" className="group/selection space-y-2">
       <input type="hidden" name="exportScope" value="selected" />
+      {selection.actions ? (
+        <div className="hidden flex-wrap items-center gap-2 rounded-[var(--ln-radius-panel)] border border-hairline bg-surface px-3 py-2 group-has-[.selection-checkbox:checked]/selection:flex">
+          {selection.actions}
+          {selection.exportPath ? <button type="submit" className={selectionBarExportButtonClass}>{exportLabel}</button> : null}
+        </div>
+      ) : null}
       {table}
-      <div className="hidden justify-end group-has-[.selection-checkbox:checked]:flex">
-        <button type="submit" className={selectionExportButtonClass}>
-          {selection.label ?? "Export selected…"}
-        </button>
-      </div>
+      {!selection.actions && selection.exportPath ? (
+        <div className="hidden justify-end group-has-[.selection-checkbox:checked]/selection:flex">
+          <button type="submit" className={selectionExportButtonClass}>{exportLabel}</button>
+        </div>
+      ) : null}
     </form>
   );
 }

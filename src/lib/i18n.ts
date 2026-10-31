@@ -746,6 +746,75 @@ export const zhUi: Record<string, string> = {
   "refreeze": "复冻",
   "Quantity not recorded": "数量未记录",
   "Inventory sections": "库存分页",
+  // Bulk actions, duplicate check and product merge (docs/modules/inventory/bulk-duplicates-20261030)
+  "Move…": "换库位…",
+  "Change PI…": "改负责人…",
+  "Change type…": "改类型…",
+  "Add control level…": "加管控等级…",
+  "Remove control level…": "去掉管控等级…",
+  "New PI": "新的负责人",
+  "Move to": "换到",
+  "Select all rows": "全选",
+  "Archive the selected records?": "归档所选记录？",
+  "Restore the selected records?": "恢复所选记录？",
+  "Move the selected stock?": "把所选库存换到这个库位？",
+  "Change the PI of the selected stock?": "修改所选库存的负责人？",
+  "Change the type of the selected products?": "修改所选产品的类型？",
+  "Add this control level to the selected products?": "给所选产品加上这个管控等级？",
+  "Remove this control level from the selected products?": "去掉所选产品的这个管控等级？",
+  "Delete the selected records?": "删除所选记录？",
+  "Type the number of selected records to confirm": "输入所选条数以确认",
+  "Nothing to change": "没有需要修改的记录",
+  "Already archived.": "已归档。",
+  "Not archived.": "没有归档。",
+  "Archived; restore it first.": "已归档，请先恢复。",
+  "Already in this location.": "已在这个库位。",
+  "Already has this PI.": "负责人相同。",
+  "Already classified this way.": "已是这个分类。",
+  "Already has this control level.": "已有这个管控等级。",
+  "Does not have this control level.": "没有这个管控等级。",
+  "Select at least one record.": "请至少选择一条记录。",
+  "This storage location no longer exists.": "这个库位已不存在。",
+  "Choose a control level.": "请选择管控等级。",
+  "The selection could not be checked.": "无法检查所选记录。",
+  "The selected stock could not be changed.": "所选库存未能修改。",
+  "The selected products could not be changed.": "所选产品未能修改。",
+  "Location transfer from a bulk move.": "批量换库位时记录的转移。",
+  "Duplicate check": "重复检查",
+  "Possible duplicates": "疑似重复",
+  "Products that may be the same": "可能相同的产品",
+  "Lots that may be registered twice": "可能重复登记的批次",
+  "Same catalogue number": "货号相同",
+  "Same CAS number": "CAS 号相同",
+  "Same name": "名称相同",
+  "Same brand and catalogue number": "品牌和货号都相同",
+  "Merge…": "合并…",
+  "Not a duplicate": "不是重复",
+  "No products look the same.": "没有看起来相同的产品。",
+  "No lots look registered twice.": "没有看起来重复登记的批次。",
+  "Nothing here is merged automatically. Lots are never merged: open one to correct, archive or delete it.": "这里不会自动合并任何记录。批次永不合并：打开其中一条去更正、归档或删除。",
+  "Marked as not duplicates.": "已标记为不是重复。",
+  "Choose at least two records.": "请至少选择两条记录。",
+  "The records could not be marked.": "未能标记。",
+  "Merge products": "合并产品",
+  "Keep": "保留",
+  "Merge into it, then remove": "并入后删除",
+  "Moves with it": "随之并入",
+  "Keep the other one instead": "改为保留另一个",
+  "Merge into it": "要并入的产品",
+  "Merge another product into this…": "把另一个产品并入这个…",
+  "Merge these products?": "合并这两个产品？",
+  "The other product is removed once its lots, documents and kit components have moved over. This cannot be undone.": "另一个产品的批次、文档和试剂盒组分并入后，它会被删除，无法撤销。",
+  "Both set a safety stock. Keep": "两个产品都设了安全库存，保留",
+  "kept product": "保留的产品",
+  "merged product": "并入的产品",
+  "Lots, documents, kit components and control levels move to the kept product. Its own values stay; empty ones are filled from the other product, which is then removed.": "批次、文档、试剂盒组分和管控等级并入保留的产品；它已有的信息不变，空着的由另一个产品补上，之后删除另一个产品。",
+  "Merging…": "正在合并…",
+  "Choose which safety stock to keep.": "请选择保留哪一个安全库存。",
+  "Choose two different products.": "请选择两个不同的产品。",
+  "Choose the product to merge into this one.": "请选择要并入的产品。",
+  "One of these products no longer exists.": "其中一个产品已不存在。",
+  "The products could not be merged.": "产品未能合并。",
   "Products": "产品",
   "Types": "类型",
   "Storage locations": "库位",
@@ -3549,6 +3618,19 @@ function translateDynamic(value: string): string {
   if (stock) return `请准确输入 ${stock[1]} 以确认永久删除。`;
   stock = value.match(/^Merged; (\d+) products? moved\.$/);
   if (stock) return `已合并，移动了 ${stock[1]} 个产品。`;
+  // Bulk actions: the preview and the result, record by record
+  stock = value.match(/^(\d+) (will be changed|will be deleted|changed|deleted)\.$/);
+  if (stock) return `${{ "will be changed": "将修改", "will be deleted": "将删除", changed: "已修改", deleted: "已删除" }[stock[2]]} ${stock[1]} 条。`;
+  stock = value.match(/^(\d+) (will be archived instead|archived instead|will be skipped|skipped):$/);
+  if (stock) return { "will be archived instead": `${stock[1]} 条仍被引用，将改为归档：`, "archived instead": `${stock[1]} 条已改为归档：`, "will be skipped": `跳过 ${stock[1]} 条：`, skipped: `跳过了 ${stock[1]} 条：` }[stock[2]]!;
+  stock = value.match(/^…and (\d+) more\.$/);
+  if (stock) return `……另有 ${stock[1]} 条。`;
+  stock = value.match(/^Still referred to: ([\s\S]+)\.$/);
+  if (stock) return `仍在引用：${stock[1].split(", ").map(zhInventoryBlocker).join("、")}。`;
+  stock = value.match(/^(\d+) lots? (?:is|are) not recorded precisely\.$/);
+  if (stock) return `有 ${stock[1]} 个批次不是精确用量登记。`;
+  stock = value.match(/^Enter (\d+) to confirm\.$/);
+  if (stock) return `请输入 ${stock[1]} 确认。`;
   stock = value.match(/^([\s\S]+) must be a (number|date)\.$/);
   if (stock) return `${zhUi[stock[1]] ?? stock[1]}必须是${stock[2] === "number" ? "数字" : "日期"}。`;
   stock = value.match(/^Choose one of the options for ([\s\S]+)\.$/);

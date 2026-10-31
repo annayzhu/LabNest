@@ -1759,3 +1759,12 @@ model InventoryKitComponent {
 
   @@index([productId, sortOrder])
 }
+
+/// Two products, or two stock lots, someone marked as not duplicates; stored with the smaller id first.
+model InventoryDuplicateDismissal {
+  firstId   String
+  secondId  String
+  createdAt DateTime @default(now())
+
+  @@id([firstId, secondId])
+}

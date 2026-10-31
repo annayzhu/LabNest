@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { CopyCheck, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
+import { CollectionToolbar, collectionPrimaryActionClass, collectionSecondaryActionClass } from "@/components/CollectionToolbar";
+import { InventoryBulkActions } from "@/components/InventoryBulkActions";
 import { InventoryNav } from "@/components/InventoryNav";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/Badge";
@@ -10,6 +11,7 @@ import { QuantityText } from "@/components/InventoryDetail";
 import { prisma } from "@/lib/db";
 import { firstOptionSearchParam, firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { controlLevelName, isStrictlyControlled, productSafetyStock } from "@/lib/inventory";
+import { duplicateOverview } from "@/lib/inventory-products.server";
 import { inventoryGroupName } from "@/lib/inventory-types";
 import { objectStatusOptions } from "@/lib/status-options";
 
@@ -26,7 +28,7 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
   const sort = firstSearchParam(params, "sort") ?? "name_asc";
   const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
 
-  const [products, totalCount, groups, types, sdsLinks] = await Promise.all([
+  const [products, totalCount, groups, types, sdsLinks, duplicates] = await Promise.all([
     prisma.inventoryProduct.findMany({
       where: {
         ...(status ? { status } : {}),
@@ -39,9 +41,16 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
     }),
     prisma.inventoryProduct.count(),
     prisma.inventoryGroup.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, label: true }, orderBy: { label: "asc" } }),
+    prisma.scientificSchemaDefinition.findMany({ where: { inventoryGroupKey: { not: null } }, select: { id: true, label: true, inventoryGroupKey: true, enabled: true }, orderBy: { label: "asc" } }),
     prisma.attachmentLink.findMany({ where: { targetType: "inventory_product", linkType: "sds" }, select: { targetId: true } }),
+    duplicateOverview(prisma),
   ]);
+  const duplicateCount = duplicates.productPairs.length + duplicates.lotGroups.length;
+  // Bulk "Change type" offers each 大类 without a type, then its types in use.
+  const classes = groups.filter((group) => !group.hidden).map((group) => ({
+    label: inventoryGroupName(group),
+    options: [{ value: `group:${group.key}`, label: "Not subdivided" }, ...types.filter((type) => type.inventoryGroupKey === group.key && type.enabled).map((type) => ({ value: `type:${type.id}`, label: type.label }))],
+  }));
 
   const withSds = new Set(sdsLinks.map((link) => link.targetId));
   const groupNames = new Map(groups.map((group) => [group.key, inventoryGroupName(group)]));
@@ -74,12 +83,16 @@ export default async function InventoryProductsPage({ searchParams }: { searchPa
             { name: "status", label: "statuses", value: status, options: objectStatusOptions },
           ]}
           sortOptions={[{ value: "name_asc", label: "Name A–Z" }, { value: "updated_desc", label: "Recently updated" }]}
-          actions={<Link href="/inventory/products/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New product</Link>}
+          actions={<>
+            <Link href="/inventory/products/duplicates" className={collectionSecondaryActionClass}><CopyCheck className="h-4 w-4" aria-hidden />Duplicate check{duplicateCount ? <span className="tabular-nums font-semibold text-warning">{duplicateCount}</span> : null}</Link>
+            <Link href="/inventory/products/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New product</Link>
+          </>}
         />
         <DataTable
           rows={rows}
           getRowKey={(row) => row.id}
           emptyMessage="No products match this view."
+          selection={{ actions: <InventoryBulkActions kind="product" classes={classes} /> }}
           columns={[
             {
               key: "name",

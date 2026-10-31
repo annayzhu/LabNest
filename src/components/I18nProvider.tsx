@@ -13,7 +13,8 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null);
 const translatedText = new WeakMap<Node, string>();
 const translatedAttributes = new WeakMap<Element, Map<string, string>>();
-const translatableAttributes = ["placeholder", "aria-label", "title"] as const;
+// `label` is read only on <optgroup>, where it is the visible heading of a group of options.
+const translatableAttributes = ["placeholder", "aria-label", "title", "label"] as const;
 
 function shouldIgnore(node: Node) {
   const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
@@ -40,6 +41,7 @@ function localizeElement(element: Element, locale: AppLocale) {
   if (shouldIgnore(element)) return;
   let originals = translatedAttributes.get(element);
   for (const attribute of translatableAttributes) {
+    if (attribute === "label" && element.tagName !== "OPTGROUP") continue;
     const current = element.getAttribute(attribute);
     if (current === null) continue;
     const original = originals?.get(attribute);

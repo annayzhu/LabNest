@@ -8,8 +8,9 @@ import { keepAttachment } from "@/lib/attachment-files";
 import { prisma } from "@/lib/db";
 import { formActionErrorMessage, type FormActionState } from "@/lib/form-actions";
 import { deleteBlockers, inventoryControlKeys, isStrictlyControlled, productDocumentKinds } from "@/lib/inventory";
+import { mergeProductPlan, pairKey } from "@/lib/inventory-duplicates";
 import { manualFileProblem } from "@/lib/inventory-manuals";
-import { syncProductLots } from "@/lib/inventory-products.server";
+import { deleteProduct, productWithCatalog, syncProductLots } from "@/lib/inventory-products.server";
 import { inventoryTypeFields, isInventoryGroupKey, type InventoryTypeField } from "@/lib/inventory-types";
 
 type Tx = Prisma.TransactionClient;
@@ -74,15 +75,7 @@ async function classify(tx: Tx, parsed: z.infer<typeof productSchema>, currentTy
 }
 
 async function assertNoDuplicate(tx: Tx, parsed: z.infer<typeof productSchema>) {
-  if (!parsed.catalogNumber) return;
-  const duplicate = await tx.inventoryProduct.findFirst({
-    where: {
-      ...(parsed.id ? { id: { not: parsed.id } } : {}),
-      catalogNumber: { equals: parsed.catalogNumber, mode: "insensitive" },
-      brand: parsed.brand ? { equals: parsed.brand, mode: "insensitive" } : null,
-    },
-    select: { name: true },
-  });
+  const duplicate = await productWithCatalog(tx, { brand: parsed.brand ?? null, catalogNumber: parsed.catalogNumber ?? null }, { excludeId: parsed.id });
   if (duplicate) throw new Error(`“${duplicate.name}” already has this brand and catalogue number.`);
 }
 
@@ -188,8 +181,7 @@ export async function deleteInventoryProduct(_previous: FormActionState, formDat
       if (confirmation !== product.name) throw new Error(`Enter ${product.name} exactly to confirm permanent deletion.`);
       const blockers = deleteBlockers({ lots: await tx.inventoryItem.count({ where: { productId: id } }) });
       if (blockers.length) throw new Error(`This product has ${blockers.join(", ")}, so it cannot be deleted. Archive it, or move its lots to another product first.`);
-      await tx.attachmentLink.deleteMany({ where: { targetType: "inventory_product", targetId: id } });
-      await tx.inventoryProduct.delete({ where: { id } });
+      await deleteProduct(tx, id);
       await tx.activityLog.create({ data: { action: "delete", targetType: "inventory_product", targetId: id, metadataJson: { name: product.name, brand: product.brand, catalogNumber: product.catalogNumber } } });
     });
   } catch (error) {
@@ -282,5 +274,72 @@ export async function setProductDocumentKind(_previous: FormActionState, formDat
     return { success: "Document kind saved." };
   } catch (error) {
     return { error: formActionErrorMessage(error, "The document kind was not saved.") };
+  }
+}
+
+// Duplicates: merging one product into another, and pairs someone checked and found to be different.
+
+const mergeChoice = z.enum(["keep", "other"]).optional();
+
+/**
+ * Merges a duplicate product into the one kept: its lots, documents (except copies of files the kept product already
+ * has), kit components and control levels move over, its other values fill the kept product's gaps, and it is removed.
+ */
+export async function mergeInventoryProducts(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
+  let keepId: string;
+  try {
+    keepId = z.string().trim().min(1, "Product ID is required.").parse(formData.get("keepId"));
+    const otherId = z.string().trim().min(1, "Choose the product to merge into this one.").parse(formData.get("otherId") ?? "");
+    if (keepId === otherId) throw new Error("Choose two different products.");
+    const safetyStock = mergeChoice.parse(text(formData.get("safetyStock")));
+    await prisma.$transaction(async (tx) => {
+      const keep = await tx.inventoryProduct.findUnique({ where: { id: keepId } });
+      const other = await tx.inventoryProduct.findUnique({ where: { id: otherId } });
+      if (!keep || !other) throw new Error("One of these products no longer exists.");
+      const plan = mergeProductPlan(keep, other, safetyStock);
+      if (plan.needsSafetyStockChoice) throw new Error("Choose which safety stock to keep.");
+      if (isStrictlyControlled(plan.data.controlLevels)) {
+        const loose = await tx.inventoryItem.count({ where: { productId: { in: [keep.id, other.id] }, managementMode: { not: "precise" } } });
+        if (loose) throw new Error(`Highly toxic and drug-precursor stock must be recorded with precise use; switch ${loose} lot${loose === 1 ? "" : "s"} to precise use first.`);
+      }
+      const lots = await tx.inventoryItem.updateMany({ where: { productId: other.id }, data: { productId: keep.id } });
+      const linkKey = (link: { attachmentId: string; linkType: string }) => `${link.attachmentId}|${link.linkType}`;
+      const kept = new Set((await tx.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: keep.id }, select: { attachmentId: true, linkType: true } })).map(linkKey));
+      const twins = (await tx.attachmentLink.findMany({ where: { targetType: "inventory_product", targetId: other.id }, select: { id: true, attachmentId: true, linkType: true } })).filter((link) => kept.has(linkKey(link)));
+      await tx.attachmentLink.deleteMany({ where: { id: { in: twins.map((link) => link.id) } } });
+      const documents = await tx.attachmentLink.updateMany({ where: { targetType: "inventory_product", targetId: other.id }, data: { targetId: keep.id } });
+      const last = await tx.inventoryKitComponent.findFirst({ where: { productId: keep.id }, orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
+      const components = await tx.inventoryKitComponent.updateMany({ where: { productId: other.id }, data: { productId: keep.id, sortOrder: { increment: last?.sortOrder ?? 0 } } });
+      await tx.inventoryDuplicateDismissal.deleteMany({ where: { OR: [{ firstId: other.id }, { secondId: other.id }] } });
+      await tx.inventoryProduct.delete({ where: { id: other.id } });
+      await tx.inventoryProduct.update({ where: { id: keep.id }, data: plan.data });
+      await syncProductLots(tx, keep.id);
+      await tx.activityLog.create({ data: { action: "merge", targetType: "inventory_product", targetId: keep.id, metadataJson: { mergedId: other.id, mergedName: other.name, lots: lots.count, documents: documents.count, components: components.count, safetyStock: safetyStock ?? null } } });
+    });
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The products could not be merged.") };
+  }
+  revalidateProduct(keepId);
+  redirect(`/inventory/products/${keepId}`);
+}
+
+/** Marks every pair among these products or lots as not duplicates, so the duplicate check stops listing them. */
+export async function setNotDuplicate(_previous: FormActionState, formData: FormData): Promise<FormActionState> {
+  try {
+    const ids = [...new Set(formData.getAll("id").map((value) => String(value).trim()).filter(Boolean))];
+    if (ids.length < 2) throw new Error("Choose at least two records.");
+    const pairs = ids.flatMap((first, index) => ids.slice(index + 1).map((second) => {
+      const [firstId, secondId] = pairKey(first, second).split("|");
+      return { firstId, secondId };
+    }));
+    await prisma.$transaction([
+      prisma.inventoryDuplicateDismissal.createMany({ data: pairs, skipDuplicates: true }),
+      prisma.activityLog.create({ data: { action: "not_duplicate", targetType: "inventory_duplicates", targetId: [...ids].sort().join("|"), metadataJson: { ids } } }),
+    ]);
+    revalidatePath("/inventory/products");
+    revalidatePath("/inventory/products/duplicates");
+    return { success: "Marked as not duplicates." };
+  } catch (error) {
+    return { error: formActionErrorMessage(error, "The records could not be marked.") };
   }
 }

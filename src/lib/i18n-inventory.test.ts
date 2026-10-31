@@ -15,5 +15,14 @@ describe("Inventory in Chinese", () => {
     ["Purity must be a number.", "纯度必须是数字。"],
     ["groups: Consumables", "大类：耗材"],
     ["All groups", "全部大类"],
+    ["3 will be changed.", "将修改 3 条。"],
+    ["1 deleted.", "已删除 1 条。"],
+    ["2 will be archived instead:", "2 条仍被引用，将改为归档："],
+    ["4 skipped:", "跳过了 4 条："],
+    ["…and 7 more.", "……另有 7 条。"],
+    ["Still referred to: 2 stock movements, 1 aliquot.", "仍在引用：2 条出入库流水、1 个分装。"],
+    ["2 lots are not recorded precisely.", "有 2 个批次不是精确用量登记。"],
+    ["Enter 5 to confirm.", "请输入 5 确认。"],
+    ["Same brand and catalogue number", "品牌和货号都相同"],
   ])("%s", (english, chinese) => expect(translateUiText(english, "zh")).toBe(chinese));
 });

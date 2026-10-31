@@ -18,6 +18,7 @@ vi.mock("@/lib/db", () => {
       findUnique: async ({ where }: { where: { id: string } }) => db.products.get(where.id) ?? null,
       findUniqueOrThrow: async ({ where }: { where: { id: string } }) => db.products.get(where.id)!,
       findFirst: async () => null,
+      findMany: async () => [],
       update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         const next = { ...db.products.get(where.id), ...data };
         db.products.set(where.id, next);

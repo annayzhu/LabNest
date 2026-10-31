@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Plus } from "lucide-react";
+import { GitMerge, Pencil, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { InventoryDocuments } from "@/components/InventoryDocuments";
 import { Fact, Panel, QuantityText, Row, SideSection } from "@/components/InventoryDetail";
@@ -55,6 +55,7 @@ export default async function InventoryProductPage({ params }: { params: Promise
             {product.status === "active" ? <Link href={`/inventory/new?product=${product.id}`} className={primary}><Plus className="h-4 w-4" aria-hidden />Register stock</Link> : null}
             <Link href={`/inventory/products/${product.id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
             <PageActionsMenu>
+              <Link href={`/inventory/products/merge?keep=${product.id}`}><GitMerge className="h-4 w-4" aria-hidden />Merge another product into this…</Link>
               <InventoryLifecycleMenu id={product.id} name={product.name} archived={product.status === "archived"} blockers={deleteBlockers({ lots: product.items.length })} archiveAction={setInventoryProductArchived} deleteAction={deleteInventoryProduct} />
             </PageActionsMenu>
           </>}

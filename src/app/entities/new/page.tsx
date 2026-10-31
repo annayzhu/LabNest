@@ -6,7 +6,7 @@ import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { createEntity } from "../actions";
 
 export const dynamic = "force-dynamic";
-const types = ["plasmid", "primer", "oligo", "cell_line", "antibody", "protein", "reagent", "compound", "bacteria", "mixture", "sample", "other"] as const;
+const types = ["plasmid", "primer", "oligo", "cell_line", "antibody", "protein", "reagent", "compound", "bacteria", "mixture", "other"] as const;
 
 export default async function NewEntityPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
@@ -19,5 +19,5 @@ export default async function NewEntityPage({ searchParams }: { searchParams?: P
     // Types only inventory uses (no entity type) are not entity schemas.
     prisma.scientificSchemaDefinition.findMany({ where: { enabled: true, entityType: { not: null } }, select: { key: true, label: true, entityType: true }, orderBy: { label: "asc" } }),
   ]);
-  return <AppShell><div className="space-y-4"><PageHeader title={initialType === "mixture" ? `New Mixture ${mixtureKind}` : "New Entity from schema"} /><EntityCreateForm action={createEntity} projects={projects} schemas={schemas.flatMap((schema) => schema.entityType ? [{ ...schema, entityType: schema.entityType }] : [])} initialType={initialType} initialMixtureKind={mixtureKind} initialProjectId={initialProjectId} /></div></AppShell>;
+  return <AppShell><div className="space-y-4"><PageHeader title={initialType === "mixture" ? `New Mixture ${mixtureKind}` : "New Entity from schema"} /><EntityCreateForm action={createEntity} projects={projects} schemas={schemas.flatMap((schema) => schema.entityType && schema.entityType !== "sample" ? [{ ...schema, entityType: schema.entityType }] : [])} initialType={initialType} initialMixtureKind={mixtureKind} initialProjectId={initialProjectId} /></div></AppShell>;
 }

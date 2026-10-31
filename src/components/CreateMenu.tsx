@@ -91,7 +91,7 @@ const mobileItems = [
   { label: "Entity from schema", href: "/entities/new" },
   { label: "Mixture recipe", href: "/entities/new?type=mixture&mixtureKind=recipe" },
   { label: "Mixture preparation", href: "/entities/new?type=mixture&mixtureKind=preparation" },
-  { label: "Add Sample", href: "/samples" },
+  { label: "Add Sample", href: "/samples/new" },
 ];
 
 export function CreateMenu() {

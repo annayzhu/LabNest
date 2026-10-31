@@ -1,306 +1,131 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, ClipboardList, TestTube2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import type { Prisma } from "@/generated/prisma/client";
 import { AppShell } from "@/components/AppShell";
-import { ActiveFilterBar, type ActiveFilter } from "@/components/ActiveFilterBar";
+import { CollectionToolbar, collectionPrimaryActionClass } from "@/components/CollectionToolbar";
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, BadgeLink, StatusPill } from "@/components/ui/Badge";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { SampleBatchBanner } from "@/components/SampleBatchBanner";
+import { SamplePlace, SampleQuantity, SampleStatusBadge } from "@/components/SampleBits";
+import { SampleBulkActions } from "@/components/SampleBulkActions";
+import { SampleNav } from "@/components/SampleNav";
 import { DataTable } from "@/components/ui/DataTable";
-import { filterHref, firstSearchParam, type PageSearchParams } from "@/lib/filters";
-import { getSampleLedger } from "@/lib/live-data";
-import {
-  calculateSampleQuantityFromAliquots,
-  countActionableSampleWarnings,
-  getSampleAliquots,
-  sortSampleEventsByTime,
-} from "@/lib/samples";
-import type { SampleWarning, StatusTone } from "@/lib/types";
-
-const warningTone: Record<SampleWarning["severity"], StatusTone> = {
-  watch: "warning",
-  action: "danger",
-};
+import { buttonStyles } from "@/components/ui/Button";
+import { prisma } from "@/lib/db";
+import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
+import { isSampleStatus, sampleStatuses, sampleStatusLabels } from "@/lib/samples";
+import { sampleLocationOptions, sampleTypes } from "@/lib/samples.server";
 
 export const dynamic = "force-dynamic";
+const pageSize = 200;
+const pageLink = buttonStyles({ size: "sm", variant: "ghost" });
 
 export default async function SamplesPage({ searchParams }: { searchParams?: PageSearchParams }) {
   const params = searchParams ? await searchParams : undefined;
-  const { inventoryItems, sampleLifecycleEvents, sampleProfiles } = await getSampleLedger();
-  const status = firstSearchParam(params, "status");
-  const warning = firstSearchParam(params, "warning");
-  const aliquotStatus = firstSearchParam(params, "aliquotStatus");
-  const eventType = firstSearchParam(params, "eventType");
-  const sampleRows = sampleProfiles.map((sample) => ({
-    ...sample,
-    derivedQuantity: calculateSampleQuantityFromAliquots(sample, inventoryItems),
-  }));
-  const aliquotRows = sampleProfiles.flatMap((sample) =>
-    getSampleAliquots(sample, inventoryItems).map((item) => ({
-      ...item,
-      sampleName: sample.name,
-      sampleCode: sample.sampleCode,
-    })),
-  );
-  const eventRows = sortSampleEventsByTime(sampleLifecycleEvents);
-  const filteredSampleRows = sampleRows.filter((sample) => {
-    return (!status || sample.status === status) && (!warning || sample.warnings.some((item) => item.type === warning));
-  });
-  const filteredAliquotRows = aliquotRows.filter((item) => !aliquotStatus || item.status === aliquotStatus);
-  const filteredEventRows = eventRows.filter((event) => !eventType || event.type === eventType);
-  const sampleFilters: ActiveFilter[] = [];
-  const aliquotFilters: ActiveFilter[] = [];
-  const eventFilters: ActiveFilter[] = [];
+  const query = firstSearchParam(params, "q")?.trim();
+  const typeId = firstSearchParam(params, "type");
+  const statusParam = firstSearchParam(params, "status");
+  const status = isSampleStatus(statusParam) ? statusParam : undefined;
+  const locationId = firstSearchParam(params, "location");
+  const projectId = firstSearchParam(params, "project");
+  const batchId = firstSearchParam(params, "batch");
+  const sort = firstSearchParam(params, "sort") ?? "created_desc";
+  const page = Math.max(1, Number(firstSearchParam(params, "page")) || 1);
+  const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
 
-  if (status) sampleFilters.push({ label: "status", value: status });
-  if (warning) sampleFilters.push({ label: "warning", value: warning.replaceAll("_", " ") });
-  if (aliquotStatus) aliquotFilters.push({ label: "aliquot", value: aliquotStatus });
-  if (eventType) eventFilters.push({ label: "event", value: eventType.replaceAll("_", " ") });
-
-  const stockedSamples = sampleProfiles.filter((sample) => sample.status === "stocked").length;
-  const stockedAliquots = aliquotRows.filter((item) => item.status === "active").length;
-  const warningCount = sampleProfiles.reduce((count, sample) => count + sample.warnings.length, 0);
+  const where: Prisma.SampleWhereInput = {
+    ...(typeId ? { typeId } : {}),
+    ...(status ? { status } : {}),
+    ...(locationId ? { locationId } : {}),
+    ...(projectId ? { projectId: projectId === "none" ? null : projectId } : {}),
+    ...(batchId ? { batchId } : {}),
+    ...(query ? { OR: [{ code: contains(query) }, { name: contains(query) }, { origin: contains(query) }, { externalId: contains(query) }] } : {}),
+  };
+  const orderBy: Prisma.SampleOrderByWithRelationInput[] = sort === "code_asc" ? [{ code: "asc" }] : sort === "name_asc" ? [{ name: "asc" }, { code: "asc" }] : sort === "place_asc" ? [{ locationId: "asc" }, { position: "asc" }] : [{ createdAt: "desc" }, { code: "asc" }];
+  const [samples, matching, total, types, locations, projects, batchUses] = await Promise.all([
+    prisma.sample.findMany({
+      where, orderBy, skip: (page - 1) * pageSize, take: pageSize,
+      include: {
+        type: { select: { label: true } },
+        parent: { select: { id: true, code: true } },
+        experiments: { where: { role: "output" }, select: { experiment: { select: { id: true, runCode: true } } } },
+      },
+    }),
+    prisma.sample.count({ where }),
+    prisma.sample.count(),
+    sampleTypes(prisma, { includeDisabled: true }),
+    sampleLocationOptions(prisma),
+    prisma.project.findMany({ where: { status: { not: "archived" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    batchId ? Promise.all([
+      prisma.experimentSample.count({ where: { sample: { batchId }, role: "input" } }),
+      prisma.sample.count({ where: { parent: { batchId }, NOT: { batchId } } }),
+    ]) : Promise.resolve([0, 0]),
+  ]);
+  const placeLabel = new Map(locations.map((location) => [location.id, location.label]));
+  const pages = Math.max(1, Math.ceil(matching / pageSize));
+  const pageHref = (nextPage: number) => {
+    const search = new URLSearchParams(Object.entries(params ?? {}).flatMap(([key, value]) => typeof value === "string" && key !== "page" ? [[key, value]] : []));
+    if (nextPage > 1) search.set("page", String(nextPage));
+    return `/samples${search.size ? `?${search}` : ""}`;
+  };
 
   return (
     <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          eyebrow="Sample ledger"
-          title="Samples"
-          description="Biological identity, aliquots, storage, and experiment provenance in one ledger."
+      <div className="space-y-4">
+        <PageHeader title="Samples" />
+        <SampleNav current="samples" />
+        {batchId && matching ? <SampleBatchBanner batchId={batchId} count={matching} undoable={batchUses[0] + batchUses[1] === 0} /> : null}
+        <CollectionToolbar
+          path="/samples"
+          query={query}
+          searchPlaceholder="Code, name, origin, external ID…"
+          resultCount={matching}
+          totalCount={total}
+          sort={sort}
+          defaultSort="created_desc"
+          filters={[
+            { name: "type", label: "types", value: typeId, options: types.map((type) => ({ value: type.id, label: type.label })) },
+            { name: "status", label: "statuses", value: status, options: sampleStatuses.map((value) => ({ value, label: sampleStatusLabels[value] })) },
+            { name: "location", label: "places", value: locationId, options: locations.map((location) => ({ value: location.id, label: location.label })) },
+            { name: "project", label: "projects", value: projectId, options: [...projects.map((project) => ({ value: project.id, label: project.name })), { value: "none", label: "No project" }] },
+            ...(batchId ? [{ name: "batch", label: "batch", value: batchId, options: [{ value: batchId, label: "This batch" }] }] : []),
+          ]}
+          sortOptions={[{ value: "created_desc", label: "Recently added" }, { value: "code_asc", label: "Code A–Z" }, { value: "name_asc", label: "Name A–Z" }, { value: "place_asc", label: "By place" }]}
+          actions={<Link href="/samples/new" className={collectionPrimaryActionClass}><Plus className="h-4 w-4" aria-hidden />New samples</Link>}
         />
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SampleMetric icon={TestTube2} label="Stocked samples" value={stockedSamples} />
-          <SampleMetric icon={Boxes} label="Active aliquots" value={stockedAliquots} />
-          <SampleMetric icon={ClipboardList} label="Lifecycle events" value={eventRows.length} />
-          <SampleMetric icon={ArrowRight} label="Warnings" value={warningCount} />
-        </section>
-
-        <Card>
-          <CardHeader
-            title="Sample Profiles"
-            eyebrow="Identity layer"
-            action={
-              <Link href="/inventory" className="text-sm font-medium text-moss hover:underline">
-                View aliquots
-              </Link>
-            }
-          />
-          <CardBody>
-            <ActiveFilterBar
-              filters={sampleFilters}
-              clearHref="/samples"
-              resultCount={filteredSampleRows.length}
-              totalCount={sampleRows.length}
-            />
-            <DataTable
-              rows={filteredSampleRows}
-              getRowKey={(row) => row.id}
-              className="mt-4"
-              columns={[
-                {
-                  key: "sample",
-                  header: "Sample",
-                  render: (row) => (
-                    <div>
-                      <p className="font-semibold text-ink">{row.name}</p>
-                      <p className="record-identifier mt-1 text-xs text-muted">{row.sampleCode}</p>
-                    </div>
-                  ),
-                },
-                { key: "type", header: "Type", render: (row) => row.sampleType.replaceAll("_", " ") },
-                {
-                  key: "quantity",
-                  header: "Remaining",
-                  render: (row) => (
-                    <span className="font-mono">
-                      {row.derivedQuantity} {row.unit}
-                    </span>
-                  ),
-                },
-                {
-                  key: "storage",
-                  header: "Primary Location",
-                  render: (row) => row.primaryLocation ?? "not placed",
-                },
-                {
-                  key: "status",
-                  header: "Status",
-                  render: (row) => <StatusPill status={row.status} href={filterHref("/samples", { status: row.status })} />,
-                },
-                {
-                  key: "warnings",
-                  header: "Warnings",
-                  render: (row) => (
-                    <div className="flex flex-wrap gap-2">
-                      {row.warnings.length ? (
-                        row.warnings.map((warning) => (
-                          <BadgeLink
-                            key={`${row.id}-${warning.type}`}
-                            href={filterHref("/samples", { warning: warning.type })}
-                            tone={warningTone[warning.severity]}
-                          >
-                            {warning.type.replaceAll("_", " ")}
-                          </BadgeLink>
-                        ))
-                      ) : (
-                        <Badge tone="success">clear</Badge>
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </CardBody>
-        </Card>
-
-        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-          <Card>
-            <CardHeader title="Aliquots and Positions" eyebrow="Physical layer" />
-            <CardBody>
-              <ActiveFilterBar
-                filters={aliquotFilters}
-                clearHref="/samples"
-                resultCount={filteredAliquotRows.length}
-                totalCount={aliquotRows.length}
-              />
-              <DataTable
-                rows={filteredAliquotRows}
-                getRowKey={(row) => row.id}
-                className="mt-4"
-                columns={[
-                  {
-                    key: "aliquot",
-                    header: "Aliquot",
-                    render: (row) => (
-                      <div>
-                        <p className="font-semibold text-ink">{row.aliquotCode ?? row.name}</p>
-                        <p className="mt-1 text-xs text-muted">{row.sampleCode}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: "quantity",
-                    header: "Qty",
-                    render: (row) => (
-                      <span className="font-mono">
-                        {row.currentQuantity} {row.unit}
-                      </span>
-                    ),
-                  },
-                  { key: "position", header: "Position", render: (row) => row.positionCode ?? "not set" },
-                  { key: "freezeThaw", header: "F/T", render: (row) => row.freezeThawCount ?? 0 },
-                  {
-                    key: "status",
-                    header: "Status",
-                    render: (row) => <StatusPill status={row.status} href={filterHref("/samples", { aliquotStatus: row.status })} />,
-                  },
-                ]}
-              />
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader title="Lifecycle Events" eyebrow="Provenance trail" />
-            <CardBody>
-              <ActiveFilterBar
-                filters={eventFilters}
-                clearHref="/samples"
-                resultCount={filteredEventRows.length}
-                totalCount={eventRows.length}
-              />
-              <DataTable
-                rows={filteredEventRows}
-                getRowKey={(row) => row.id}
-                className="mt-4"
-                columns={[
-                  {
-                    key: "event",
-                    header: "Event",
-                    render: (row) => (
-                      <div>
-                        <p className="font-semibold text-ink">{row.title}</p>
-                        <p className="mt-1 font-mono text-xs text-muted">{row.occurredAt}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: "type",
-                    header: "Type",
-                    render: (row) => (
-                      <BadgeLink href={filterHref("/samples", { eventType: row.type })} tone="sage">
-                        {row.type.replaceAll("_", " ")}
-                      </BadgeLink>
-                    ),
-                  },
-                  {
-                    key: "link",
-                    header: "Linked Record",
-                    render: (row) => row.experimentTitle ?? row.aliquotCode ?? "sample profile",
-                  },
-                  {
-                    key: "change",
-                    header: "Change",
-                    render: (row) =>
-                      row.quantityChange === undefined ? (
-                        "context"
-                      ) : (
-                        <span className="font-mono">
-                          {row.quantityChange > 0 ? "+" : ""}
-                          {row.quantityChange} {row.unit}
-                        </span>
-                      ),
-                  },
-                ]}
-              />
-            </CardBody>
-          </Card>
-        </section>
-
-        <Card>
-          <CardHeader title="Open Sample Flags" eyebrow="Review queue" />
-          <CardBody className="grid gap-3 md:grid-cols-2">
-            {sampleProfiles.flatMap((sample) =>
-              sample.warnings.map((warning) => (
-                <div key={`${sample.id}-${warning.type}`} className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-ink">{sample.name}</p>
-                    <Badge tone={warningTone[warning.severity]}>{warning.severity}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-graphite">{warning.message}</p>
-                  <p className="record-identifier mt-2 text-xs text-muted">{sample.sampleCode}</p>
-                </div>
-              )),
-            )}
-            {countActionableSampleWarnings(sampleProfiles) === 0 ? (
-              <div className="rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-warm p-3">
-                <p className="font-semibold text-ink">No action-level sample flags</p>
-                <p className="mt-2 text-sm leading-6 text-graphite">Watch-level flags remain visible in the profile table.</p>
-              </div>
-            ) : null}
-          </CardBody>
-        </Card>
+        <DataTable
+          rows={samples}
+          getRowKey={(row) => row.id}
+          emptyMessage={total ? "No samples match this view." : "No samples yet. Add them with New samples, or register what an experiment produced."}
+          selection={{
+            exportPath: "/api/exports/samples.csv",
+            actions: <SampleBulkActions locations={locations.map((location) => ({ value: location.id, label: location.label, grid: Boolean(location.geometry) }))} projects={projects.map((project) => ({ value: project.id, label: project.name }))} />,
+          }}
+          columns={[
+            {
+              key: "sample", header: "Sample", width: 200, minWidth: 160,
+              render: (row) => <div className="min-w-0"><Link href={`/samples/${row.id}`} className="font-semibold text-ink hover:text-moss">{row.name}</Link><p className="record-identifier mt-0.5 text-xs text-muted">{row.code}</p></div>,
+            },
+            { key: "type", header: "Type", width: 88, render: (row) => row.type.label },
+            { key: "origin", header: "Origin", width: 140, render: (row) => row.origin ?? <span className="text-muted">—</span> },
+            { key: "parent", header: "Parent sample", width: 112, render: (row) => row.parent ? <Link href={`/samples/${row.parent.id}`} className="record-identifier text-moss hover:underline">{row.parent.code}</Link> : <span className="text-muted">—</span> },
+            { key: "place", header: "Place", width: 220, minWidth: 160, render: (row) => <SamplePlace location={row.locationId ? placeLabel.get(row.locationId) ?? null : null} position={row.position} /> },
+            { key: "amount", header: "Amount", width: 88, render: (row) => <SampleQuantity value={row.amount} unit={row.amountUnit} /> },
+            { key: "concentration", header: "Concentration", width: 110, render: (row) => <SampleQuantity value={row.concentration} unit={row.concentrationUnit} /> },
+            { key: "status", header: "Status", width: 80, render: (row) => <SampleStatusBadge status={row.status} /> },
+            {
+              key: "source", header: "Produced by", width: 88,
+              render: (row) => row.experiments[0] ? <Link href={`/experiments/${row.experiments[0].experiment.id}`} className="record-identifier text-moss hover:underline">{row.experiments[0].experiment.runCode}</Link> : <span className="text-muted">—</span>,
+            },
+          ]}
+        />
+        {pages > 1 ? (
+          <nav aria-label="Pages" className="flex items-center justify-end gap-2 text-sm text-muted">
+            {page > 1 ? <Link href={pageHref(page - 1)} className={pageLink}>Previous</Link> : null}
+            <span className="tabular-nums">{page} / {pages}</span>
+            {page < pages ? <Link href={pageHref(page + 1)} className={pageLink}>Next</Link> : null}
+          </nav>
+        ) : null}
       </div>
     </AppShell>
-  );
-}
-
-function SampleMetric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof TestTube2;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="flex min-h-[94px] min-w-0 flex-col justify-between rounded-[var(--ln-radius-panel-inner)] border border-hairline bg-surface p-4 shadow-paper">
-      <Icon className="h-4 w-4 shrink-0 text-moss" aria-hidden />
-      <div>
-        <p className="text-2xl font-semibold leading-none text-ink">{value}</p>
-        <p className="mt-2 text-xs font-medium leading-none text-muted">{label}</p>
-      </div>
-    </div>
   );
 }

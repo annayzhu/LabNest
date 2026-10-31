@@ -156,8 +156,9 @@ async function resetDatabase() {
   await prisma.itemLink.deleteMany();
   await prisma.attachmentLink.deleteMany();
   await prisma.attachment.deleteMany();
-  await prisma.sampleLifecycleEvent.deleteMany();
-  await prisma.sampleProfile.deleteMany();
+  await prisma.experimentSample.deleteMany();
+  await prisma.sample.updateMany({ data: { parentId: null } });
+  await prisma.sample.deleteMany();
   await prisma.purchaseRequest.deleteMany();
   await prisma.procurementQuoteLine.deleteMany();
   await prisma.procurementInquiry.deleteMany();
@@ -279,7 +280,7 @@ async function main() {
   const hekWorkingCellBank = await prisma.entity.create({
     data: {
       name: "HEK293T working cell bank",
-      type: "sample",
+      type: "cell_line",
       code: "SMP-HEK-WCB-001",
       projectId: project.id,
       parentEntityId: hek.id,
@@ -641,82 +642,23 @@ async function main() {
     ],
   });
 
-  const sampleProfile = await prisma.sampleProfile.create({
-    data: {
-      entityId: hekWorkingCellBank.id,
-      sampleCode: "SMP-HEK-WCB-001",
-      sampleType: "cell_line_bank",
-      sourceLabel: "HEK293T master culture P18",
-      sourceType: "cell_culture",
-      collectedAt: new Date("2026-07-06T07:30:00Z"),
-      preparedAt: new Date("2026-07-06T08:50:00Z"),
-      status: "stocked",
-      biosafetyLevel: "BSL-2",
-      storageRequirement: "-80 C cryovial storage",
-      freezeThawCount: 1,
-      notes: "Sample-level identity is separated from vial-level aliquots so experiments can cite the same biological source.",
-      metadataJson: {
-        primary_location: "-80C freezer A",
-        active_aliquot_count: 1,
-        related_experiment_ids: [experiment.id],
+  // The migration presets the sample types; a demo cell pellet is the transfection pilot's input.
+  const cellsType = await prisma.scientificSchemaDefinition.findUnique({ where: { key: "sample_cells" } });
+  if (cellsType) {
+    const pellet = await prisma.sample.create({
+      data: {
+        code: "CEL-0001",
+        name: "HEK293T P18 pellet",
+        typeId: cellsType.id,
+        origin: "HEK293T master culture P18",
+        locationId: minus80Freezer.id,
+        collectedAt: new Date("2026-07-06T07:30:00Z"),
+        biosafetyLevel: "BSL-2",
+        notes: "Demo sample used by the GFP transfection pilot.",
       },
-    },
-  });
-
-  await prisma.sampleLifecycleEvent.createMany({
-    data: [
-      {
-        sampleProfileId: sampleProfile.id,
-        type: "register",
-        title: "Registered working cell bank profile",
-        occurredAt: new Date("2026-07-06T07:30:00Z"),
-        notes: "Created as a sample profile linked to the GFP optimization project.",
-      },
-      {
-        sampleProfileId: sampleProfile.id,
-        type: "aliquot",
-        title: "Created cryovial aliquot A01",
-        occurredAt: new Date("2026-07-06T09:00:00Z"),
-        inventoryItemId: hekWcbA01.id,
-        toLocationId: minus80Freezer.id,
-        quantityChange: 1,
-        unit: "vial",
-        metadataJson: { aliquot_code: "HEK-WCB-A01" },
-      },
-      {
-        sampleProfileId: sampleProfile.id,
-        type: "aliquot",
-        title: "Created cryovial aliquot A02",
-        occurredAt: new Date("2026-07-06T09:02:00Z"),
-        inventoryItemId: hekWcbA02.id,
-        toLocationId: minus80Freezer.id,
-        quantityChange: 1,
-        unit: "vial",
-        metadataJson: { aliquot_code: "HEK-WCB-A02" },
-      },
-      {
-        sampleProfileId: sampleProfile.id,
-        type: "thaw",
-        title: "Thawed aliquot A01 for transfection setup",
-        occurredAt: new Date("2026-07-07T05:20:00Z"),
-        experimentId: experiment.id,
-        inventoryItemId: hekWcbA01.id,
-        fromLocationId: minus80Freezer.id,
-        quantityChange: -1,
-        unit: "vial",
-        notes: "Lifecycle event mirrors the inventory transaction and keeps the sample lineage visible.",
-        metadataJson: { aliquot_code: "HEK-WCB-A01" },
-      },
-      {
-        sampleProfileId: sampleProfile.id,
-        type: "result_link",
-        title: "Linked to pending 24 h fluorescence readout",
-        occurredAt: new Date("2026-07-07T06:00:00Z"),
-        experimentId: experiment.id,
-        notes: "No biological conclusion is recorded yet; this only preserves provenance.",
-      },
-    ],
-  });
+    });
+    await prisma.experimentSample.create({ data: { experimentId: experiment.id, sampleId: pellet.id, role: "input" } });
+  }
 
   await prisma.proposedAction.createMany({
     data: [

@@ -203,7 +203,7 @@ export async function deleteInventoryLocation(
     await prisma.$transaction(async (tx) => {
       const location = await tx.inventoryLocation.findUnique({
         where: { id: parsed.id },
-        include: { _count: { select: { items: true, itemsFrom: true, itemsTo: true, sampleEventsFrom: true, sampleEventsTo: true, childLocations: true } } },
+        include: { _count: { select: { items: true, itemsFrom: true, itemsTo: true, samples: true, childLocations: true } } },
       });
       if (!location) throw new Error("This inventory location no longer exists.");
       if (parsed.confirmation !== location.name) throw new Error(`Enter ${location.name} exactly to confirm permanent deletion.`);

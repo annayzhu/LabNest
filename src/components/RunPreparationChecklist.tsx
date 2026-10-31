@@ -9,7 +9,7 @@ import { PlateLayoutView, type PlateAttachment } from './PlateLayoutView';
 import './run-bench.css';
 
 /** The bar's short names for what is listed: "Materials 4 · Mix cards 2". */
-const kindCounts: Record<PreparationKind, string> = { material: 'Materials', mix: 'Mix cards', plate: 'Plates', equipment: 'Equipment' };
+const kindCounts: Record<PreparationKind, string> = { sample: 'Samples', material: 'Materials', mix: 'Mix cards', plate: 'Plates', equipment: 'Equipment' };
 
 /**
  * 实验准备: one quiet bar above the steps that opens into the groups' quantities and systems (`children`), what still

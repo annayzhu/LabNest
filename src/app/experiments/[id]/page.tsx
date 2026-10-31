@@ -16,6 +16,8 @@ import { AppShell } from "@/components/AppShell";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
 import { AttachmentDeleteButton } from "@/components/AttachmentDeleteButton";
 import { ExperimentResultRecordingCard } from "@/components/ExperimentResultRecording";
+import { ExperimentSamples } from "@/components/ExperimentSamples";
+import { sampleLocationOptions, sampleTypes } from "@/lib/samples.server";
 import { DocumentPrintButton } from "@/components/DocumentPrintButton";
 import { PageActionsMenu } from "@/components/PageActionsMenu";
 import { PageHeader } from "@/components/PageHeader";
@@ -43,11 +45,21 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
       project: true, researchPlan: true, primaryProtocolVersion: { include: { protocol: true } },
       protocolVersions: { orderBy: { order: "asc" }, include: { protocolVersion: { include: { protocol: true } } } },
       protocolRun: true, steps: { orderBy: [{ groupOrder: "asc" }, { order: "asc" }] }, results: { orderBy: { updatedAt: "desc" }, include: { _count: { select: { datasets: true } } } },
-      _count: { select: { results: true, inventoryTransactions: true, sampleEvents: true } },
+      _count: { select: { results: true, inventoryTransactions: true } },
+      samples: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { sample: { select: { id: true, code: true, name: true, locationId: true, position: true, amountUnit: true, type: { select: { label: true } }, parent: { select: { code: true } } } } } },
+      sampleGroups: { orderBy: { sortOrder: "asc" }, select: { id: true, label: true } },
     } }),
     prisma.attachmentLink.findMany({ where: { targetType: "experiment", targetId: id }, include: { attachment: true }, orderBy: { createdAt: "desc" } }),
   ]);
   if (!experiment) notFound();
+  const [sampleLocations, sampleTypeOptions] = await Promise.all([sampleLocationOptions(prisma), sampleTypes(prisma)]);
+  const placeOf = new Map(sampleLocations.map((location) => [location.id, location]));
+  const sampleRows = experiment.samples.map((link) => ({
+    linkId: link.id, sampleId: link.sample.id, role: link.role, code: link.sample.code, name: link.sample.name, type: link.sample.type.label, groupId: link.groupId,
+    place: link.sample.locationId ? `${placeOf.get(link.sample.locationId)?.name ?? ""}${link.sample.position ? ` ${link.sample.position}` : ""}` : null,
+    placePath: link.sample.locationId ? placeOf.get(link.sample.locationId)?.label ?? null : null,
+    usedAmount: link.usedAmount, usedUnit: link.usedUnit, amountUnit: link.sample.amountUnit, parentCode: link.sample.parent?.code ?? null,
+  }));
   const document = experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson,experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson);
   const structuredRun = structuredRunView(experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson, experiment.steps);
   const progress = runStepProgress(structuredRun, experiment.steps);
@@ -75,6 +87,8 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
   const recycledKeys = new Set(recycledAssociations.map((row) => `${row.targetType}:${row.targetId}`));
   const deletionBlockers = experimentDeleteBlockers(experiment.status, experiment.recordStatus, {
     ...experiment._count,
+    samplesProduced: experiment.samples.filter((link) => link.role === "output").length,
+    samplesUsed: experiment.samples.filter((link) => link.role === "input" && link.usedAmount !== null).length,
     completedSteps: experiment.steps.filter((step) => step.completed).length,
     deviations: experiment.steps.filter((step) => Boolean(step.deviationNote)).length,
     attachments: attachmentLinks.length,
@@ -89,7 +103,7 @@ export default async function ExperimentDetailPage({ params }: { params: Promise
     {recycledAssociations.some((row) => row.targetType === "result") ? <RecycleBinWarning label="Result" labelZh="结果" /> : null}
     <div className="document-preview-layout">
       <main className="document-preview-main space-y-6">
-        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} /></ExecutionRecordProvider>
+        <ExecutionRecordProvider value={{ experimentId: experiment.id, revision: structuredRun.plan.revision, editable: !locked && experiment.status !== "archived" && !(structuredRun.hasSystems && experiment.status === "completed") }}><ScientificDocumentView document={document} title={experiment.title} identifier={experiment.runCode} subtitle={experiment.purpose} leadingContent={<ExperimentBrief id={experiment.runCode} plan={experiment.researchPlan?.title ?? null} snapshot={experiment.protocolSnapshotJson} date={experiment.date} />} sectionLeading={{ setup: <ExperimentSamples experimentId={experiment.id} editable={!locked && experiment.status !== "archived"} inputs={sampleRows.filter((row) => row.role === "input")} outputs={sampleRows.filter((row) => row.role === "output")} groups={experiment.sampleGroups} plates={attachmentLinks.filter((link) => link.linkType === "plate_layout").map((link) => ({ id: link.attachment.id, originalFilename: link.attachment.originalFilename, mimeType: link.attachment.mimeType }))} types={sampleTypeOptions.map((type) => ({ value: type.id, label: type.label }))} locations={sampleLocations.map((location) => ({ value: location.id, label: location.label }))} /> }} /></ExecutionRecordProvider>
 
         {experiment.status==="planned" && experiment.recordStatus==="draft" && experiment.steps.length?<ExperimentStepOrderEditor experimentId={experiment.id} updatedAt={experiment.updatedAt.toISOString()} steps={experiment.steps.map(({id,groupKey,title})=>({id,groupKey,title}))}/>:null}
         <EntrySourceCards type="experiment" id={experiment.id} locked={locked} />

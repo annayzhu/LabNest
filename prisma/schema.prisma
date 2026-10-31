@@ -139,31 +139,17 @@ enum ObjectStatus {
   archived
 }
 
-enum SampleLifecycleStatus {
-  registered
-  prepared
-  stocked
-  in_use
+/// Only a sample in storage holds a box position; the others free it.
+enum SampleStatus {
+  available
   depleted
   discarded
-  archived
+  sent_out
 }
 
-enum SampleLifecycleEventType {
-  register
-  collect
-  prepare
-  aliquot
-  receive
-  store
-  transfer
-  thaw
-  refreeze
-  consume
-  qc
-  discard
-  result_link
-  note
+enum ExperimentSampleRole {
+  input
+  output
 }
 
 enum InventoryLocationType {
@@ -395,6 +381,7 @@ model Project {
   results              Result[]
   reports              Report[]
   procurementInquiries ProcurementInquiry[]
+  samples              Sample[]
 
   @@index([status])
   @@index([createdAt])
@@ -505,7 +492,8 @@ model Experiment {
   protocolRun           ProtocolRun?
   steps                 ExperimentStep[]
   inventoryTransactions InventoryTransaction[]
-  sampleEvents          SampleLifecycleEvent[]
+  samples               ExperimentSample[]
+  sampleGroups          ExperimentSampleGroup[]
   results               Result[]
   entries               Entry[]
   protocolVersions      ExperimentProtocolVersion[]
@@ -711,7 +699,6 @@ model Entity {
   inventoryProducts InventoryProduct[]
   sequenceLinks  EntitySequenceLink[]
   results        Result[]
-  sampleProfile  SampleProfile?
 
   @@index([type])
   @@index([status])
@@ -729,12 +716,14 @@ model InventoryLocation {
   childLocations   InventoryLocation[]   @relation("LocationHierarchy")
   temperature      String?
   description      String?
+  /// A box or plate's rows and columns (9 × 9, 8 × 12…); samples then sit at A1-style positions inside it.
+  gridRows         Int?
+  gridColumns      Int?
 
   itemsFrom        InventoryTransaction[] @relation("FromLocation")
   itemsTo          InventoryTransaction[] @relation("ToLocation")
   items            InventoryItem[]
-  sampleEventsFrom SampleLifecycleEvent[] @relation("SampleEventFromLocation")
-  sampleEventsTo   SampleLifecycleEvent[] @relation("SampleEventToLocation")
+  samples          Sample[]
 
   @@index([type])
   @@index([status])
@@ -785,7 +774,6 @@ model InventoryItem {
   containers   InventoryContainer[]
   transactions InventoryTransaction[]
   purchases    PurchaseRequest[]
-  sampleEvents SampleLifecycleEvent[]
 
   @@unique([aliquotCode])
   @@index([productId])
@@ -835,61 +823,89 @@ model InventoryTransaction {
   @@index([purchaseId])
 }
 
-model SampleProfile {
-  id                 String                @id @default(cuid())
-  entityId           String                @unique
-  entity             Entity                @relation(fields: [entityId], references: [id], onDelete: Cascade)
-  sampleCode         String                @unique
-  sampleType         String
-  sourceLabel        String?
-  sourceType         String?
-  parentSampleId     String?
-  parentSample       SampleProfile?        @relation("SampleLineage", fields: [parentSampleId], references: [id], onDelete: SetNull)
-  childSamples       SampleProfile[]       @relation("SampleLineage")
-  collectedAt        DateTime?
-  preparedAt         DateTime?
-  status             SampleLifecycleStatus @default(registered)
-  biosafetyLevel     String?
-  storageRequirement String?
-  freezeThawCount    Int                   @default(0)
-  notes              String?
-  metadataJson       Json                  @default("{}")
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+/// One tube, block or slide, collected or produced by an experiment and used by later ones. Shares only the location tree with inventory.
+model Sample {
+  id                String                     @id @default(cuid())
+  /// Unique across all samples: the type's prefix and a running number unless typed in.
+  code              String                     @unique
+  /// The lab's own name; it may repeat (an RNA and the cDNA made from it often share one).
+  name              String
+  typeId            String
+  type              ScientificSchemaDefinition @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  /// The individual it comes from: a patient, an animal, a cell line and its treatment. Children inherit it.
+  origin            String?
+  parentId          String?
+  parent            Sample?                    @relation("SampleLineage", fields: [parentId], references: [id], onDelete: Restrict)
+  children          Sample[]                   @relation("SampleLineage")
+  projectId         String?
+  project           Project?                   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  locationId        String?
+  location          InventoryLocation?         @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  /// A1-style inside a box with rows and columns, free text otherwise.
+  position          String?
+  amount            Float?
+  amountUnit        String?
+  concentration     Float?
+  concentrationUnit String?
+  status            SampleStatus               @default(available)
+  biosafetyLevel    String?
+  collectedAt       DateTime?
+  fieldValues       Json                       @default("{}")
+  notes             String?
+  /// Samples saved together; the batch can be undone while none of them is used or derived from.
+  batchId           String?
+  /// The external sample bank a sample came from and its ID there; a later sync updates the same sample.
+  externalSource    String?
+  externalId        String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 
-  events SampleLifecycleEvent[]
+  experiments ExperimentSample[]
 
-  @@index([sampleType])
+  @@unique([externalSource, externalId])
+  @@unique([locationId, position])
+  @@index([typeId])
+  @@index([parentId])
+  @@index([projectId])
   @@index([status])
-  @@index([parentSampleId])
+  @@index([batchId])
+  @@index([name])
 }
 
-model SampleLifecycleEvent {
-  id              String                   @id @default(cuid())
-  sampleProfileId String
-  sampleProfile   SampleProfile            @relation(fields: [sampleProfileId], references: [id], onDelete: Cascade)
-  type            SampleLifecycleEventType
-  title           String
-  occurredAt      DateTime                 @default(now())
-  experimentId    String?
-  experiment      Experiment?              @relation(fields: [experimentId], references: [id], onDelete: SetNull)
-  inventoryItemId String?
-  inventoryItem   InventoryItem?           @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
-  fromLocationId  String?
-  fromLocation    InventoryLocation?       @relation("SampleEventFromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
-  toLocationId    String?
-  toLocation      InventoryLocation?       @relation("SampleEventToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
-  quantityChange  Float?
-  unit            String?
-  notes           String?
-  metadataJson    Json                     @default("{}")
-  createdAt       DateTime                 @default(now())
+/// An experiment's design groups (control / treated, tumour / normal). They do not split Protocol steps.
+model ExperimentSampleGroup {
+  id           String             @id @default(cuid())
+  experimentId String
+  experiment   Experiment         @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  label        String
+  sortOrder    Int                @default(0)
+  samples      ExperimentSample[]
 
-  @@index([sampleProfileId])
-  @@index([type])
-  @@index([occurredAt])
-  @@index([experimentId])
-  @@index([inventoryItemId])
+  @@unique([experimentId, label])
+  @@index([experimentId, sortOrder])
+}
+
+/// A sample an experiment took (input) or produced (output), in the experiment's order.
+model ExperimentSample {
+  id           String                 @id @default(cuid())
+  experimentId String
+  experiment   Experiment             @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  sampleId     String
+  sample       Sample                 @relation(fields: [sampleId], references: [id], onDelete: Restrict)
+  role         ExperimentSampleRole
+  groupId      String?
+  group        ExperimentSampleGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  sortOrder    Int                    @default(0)
+  /// What the experiment took; subtracted from the sample's amount when the units compare, given back when removed.
+  usedAmount   Float?
+  usedUnit     String?
+  /// What was actually subtracted, in the sample's unit; null when nothing was.
+  deducted     Float?
+  createdAt    DateTime               @default(now())
+
+  @@unique([experimentId, sampleId])
+  @@index([sampleId])
+  @@index([experimentId, role, sortOrder])
 }
 
 model Result {
@@ -981,6 +997,8 @@ model ScientificSchemaDefinition {
   inventoryGroupKey String?
   inventoryGroup   InventoryGroup? @relation(fields: [inventoryGroupKey], references: [key], onDelete: Restrict)
   inventoryProducts InventoryProduct[]
+  /// Sample types (objectKind "sample") belong to no 大类.
+  samples          Sample[]
   prefix           String?
   fieldDefinitions Json       @default("[]")
   defaultSettings  Json       @default("{}")

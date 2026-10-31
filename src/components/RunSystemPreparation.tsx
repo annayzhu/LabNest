@@ -2,9 +2,9 @@
 import { readableError } from '@/lib/form-actions';
 import { RunGroupPreparation } from './RunGroupPreparation';
 import { RunPreparationChecklist } from './RunPreparationChecklist';
-import { preparationChecklist, type PreparationStock } from '@/lib/run-preparation';
+import { preparationChecklist, type PreparationSamples, type PreparationStock } from '@/lib/run-preparation';
+import { runSampleCount } from '@/lib/experiment-samples';
 import type { PlateAttachment } from './PlateLayoutView';
-import { AttachmentUploadForm } from './AttachmentUploadForm';
 
 import { newClientMutationId } from '@/lib/client-mutation-id';
 
@@ -76,8 +76,8 @@ function SystemsForm({ experimentId, version, view, editable }: { experimentId: 
   </form>;
 }
 
-/** 本次数量 typed straight into the table: saved when the field is left, cleared when emptied. */
-function QuantityInput({ experimentId, version, label, name, view, editable }: { experimentId: string; version: Version; label: string; name: string; view: StructuredRunView; editable: boolean }) {
+/** 本次数量 typed straight into the table: saved when the field is left, cleared when emptied. 样本数 can take the experiment's chosen samples (S15). */
+function QuantityInput({ experimentId, version, label, name, view, editable, suggested }: { experimentId: string; version: Version; label: string; name: string; view: StructuredRunView; editable: boolean; suggested?: number }) {
   const router = useRouter();
   const saved = view.plan.quantities[version.id]?.[label];
   const [text, setText] = useState(saved === undefined ? '' : String(saved));
@@ -85,8 +85,8 @@ function QuantityInput({ experimentId, version, label, name, view, editable }: {
   if (seen !== saved) { setSeen(saved); setText(saved === undefined ? '' : String(saved)); }
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState('');
-  const save = () => {
-    const next = text.trim() ? Number(text.trim()) : null;
+  const save = (value = text) => {
+    const next = value.trim() ? Number(value.trim()) : null;
     if ((next ?? undefined) === saved) { setError(''); return; }
     if (next !== null && !(next > 0 && Number.isFinite(next))) { setError('Enter a number above 0'); return; }
     startTransition(async () => {
@@ -98,13 +98,14 @@ function QuantityInput({ experimentId, version, label, name, view, editable }: {
   };
   return <span className="ln-prep-quantity">
     <input inputMode="numeric" aria-label={`${runQuantityLabelText(label, true)} · ${name}`} value={text} placeholder="—" disabled={!editable || pending} aria-invalid={Boolean(error) || undefined} data-missing={saved === undefined || undefined}
-      onChange={event => setText(event.target.value)} onBlur={save} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
+      onChange={event => setText(event.target.value)} onBlur={() => save()} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
+    {suggested !== undefined && suggested !== saved && editable ? <button type="button" className="focus-ring ln-prep-link" disabled={pending} onClick={() => { setText(String(suggested)); save(String(suggested)); }}>{`Use the ${suggested} samples chosen`}</button> : null}
     {error ? <small role="alert">{error}</small> : null}
   </span>;
 }
 
 /** One row per group (or the Protocol, run as one group): its 本次数量 and its Protocol systems. Nothing to set, no table. */
-function RunGroupTable({ experimentId, view, editable }: { experimentId: string; view: StructuredRunView; editable: boolean }) {
+function RunGroupTable({ experimentId, view, editable, inputGroups }: { experimentId: string; view: StructuredRunView; editable: boolean; inputGroups: Array<string | null> }) {
   const rows = view.versions.map(version => ({ version, labels: runQuantityLabels(version.document), inputs: preparationInputs(version, view), choice: version.document.systems!.dimensions.length > 0 }));
   // The first group whose systems are still to choose starts open.
   const [openRow, setOpenRow] = useState<string | null>(() => rows.find(row => row.choice && !view.plan.versions[row.version.id])?.version.id ?? null);
@@ -123,7 +124,7 @@ function RunGroupTable({ experimentId, view, editable }: { experimentId: string;
       return <Fragment key={version.id}>
         <tr>
           <th scope="row">{nameOf(version)}</th>
-          {labels.map(label => <td key={label}>{own.includes(label) ? <QuantityInput experimentId={experimentId} version={version} label={label} name={nameOf(version)} view={view} editable={editable} /> : '—'}</td>)}
+          {labels.map(label => <td key={label}>{own.includes(label) ? <QuantityInput experimentId={experimentId} version={version} label={label} name={nameOf(version)} view={view} editable={editable} suggested={label === '样本数' ? runSampleCount(inputGroups, version.groupLabel) : undefined} /> : '—'}</td>)}
           {settable ? <td>{choice || extra ? <button type="button" className="focus-ring ln-prep-systems-toggle" aria-expanded={open} data-missing={(choice && !adopted) || undefined} onClick={() => setOpenRow(open ? null : version.id)}>{choice ? chosen || 'Choose systems' : 'Fill in values'}</button> : '—'}</td> : null}
         </tr>
         {open ? <tr className="ln-prep-groups-form"><td colSpan={labels.length + 2}><SystemsForm key={`${version.id}:${view.plan.revision}`} experimentId={experimentId} version={version} view={view} editable={editable} /></td></tr> : null}
@@ -132,13 +133,18 @@ function RunGroupTable({ experimentId, view, editable }: { experimentId: string;
   </table>;
 }
 
-export function RunSystemPreparation({ experimentId, view, editable, started, plates = [], stock = [], recorded = [] }: { experimentId: string; view: StructuredRunView; editable: boolean; started: boolean; plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }> }) {
-  const list = useMemo(() => preparationChecklist(view, { plates: plates.map(plate => ({ id: plate.id, name: plate.originalFilename })), stock, recorded }), [view, plates, stock, recorded]);
+export function RunSystemPreparation({ experimentId, view, editable, started, plates = [], stock = [], recorded = [], samples, inputGroups = [], sampleGroupLabels = [] }: {
+  experimentId: string; view: StructuredRunView; editable: boolean; started: boolean; plates?: PlateAttachment[]; stock?: PreparationStock[]; recorded?: Array<{ source: string }>;
+  /** The boxes the experiment's samples come out of; their group names; the experiment's design groups (S13, S15). */
+  samples?: PreparationSamples; inputGroups?: Array<string | null>; sampleGroupLabels?: string[];
+}) {
+  const list = useMemo(() => preparationChecklist(view, { plates: plates.map(plate => ({ id: plate.id, name: plate.originalFilename })), stock, recorded, samples }), [view, plates, stock, recorded, samples]);
   if (!view.hasSystems) return null;
   const continuation = view.plan.continuation;
+  // Samples, their plate layouts and outputs live in 实验设置与样本; the bench only links there.
   return <RunPreparationChecklist experimentId={experimentId} view={view} list={list} editable={editable} plates={plates} startOpen={list.needsInput && !started}
-    footer={editable ? <><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable && !started} /><details className="ln-prep-upload"><summary>Attach a plate layout</summary><p className="text-xs text-muted">The planner’s “Back up project” JSON, or an exported SVG or image.</p><AttachmentUploadForm targetType="experiment" targetId={experimentId} hideTargetFields fileLabel="Plate layout file" accept=".json,.svg,image/*" linkType="plate_layout"/></details></> : null}>
+    footer={editable ? <><RunGroupPreparation experimentId={experimentId} plan={view.plan} editable={editable && !started} suggestedLabels={sampleGroupLabels} /><span className="flex flex-wrap gap-x-4 gap-y-1"><Link className="focus-ring ln-prep-link" href={`/experiments/${experimentId}#section-setup`}>Samples and plate layouts</Link><Link className="focus-ring ln-prep-link" href={`/samples/new?experiment=${experimentId}`}>Register outputs</Link></span></> : null}>
     {continuation ? <div className="ln-prep-continuation"><Link className="text-moss underline" href={`/experiments/${continuation.experimentId}/run`}>View the earlier run and its original records</Link><p>{`Continuing from: ${Object.values(view.steps).find(s => `${s.versionId}:${s.source_ref}` === continuation.startSourceRef)?.title ?? ''}. Operations completed earlier are not copied as completed in this run.`}</p><details><summary>Earlier handling and adopted parameters (read-only history)</summary>{continuation.history.map(s => <div key={s.sourceRef} className="my-3"><strong>{s.title} · {s.completed ? 'Completed earlier' : 'Not completed in the original record'}</strong><p className="whitespace-pre-wrap">{s.description}</p>{Object.entries(s.actualValues).map(([id, v]) => <p key={id}>{`Original actual value: ${v.value} ${v.unit} · ${v.recordedAt}`}</p>)}{s.deviationNote ? <p>{`Original note: ${s.deviationNote}`}</p> : null}</div>)}</details></div> : null}
-    <RunGroupTable experimentId={experimentId} view={view} editable={editable} />
+    <RunGroupTable experimentId={experimentId} view={view} editable={editable} inputGroups={inputGroups} />
   </RunPreparationChecklist>;
 }

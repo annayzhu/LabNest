@@ -1,3 +1,5 @@
+import { samplesZh, translateSamplesDynamic } from "./i18n-samples";
+
 export type AppLocale = "en" | "zh";
 
 export const localeStorageKey = "labnest.locale";
@@ -42,6 +44,7 @@ export const protocolLabelsZh: Record<string, string> = {
 // Exact UI-source translations deliberately avoid translating user-authored
 // scientific content. English is the canonical source string in the codebase.
 export const zhUi: Record<string, string> = {
+  ...samplesZh,
   "Verification": "验证",
   "Backup": "备份",
   "Backups are not set up on this server (LABNEST_BACKUP_ROOT is not set).": "这台服务器还没有设置备份（未设置 LABNEST_BACKUP_ROOT）。",
@@ -3670,8 +3673,8 @@ const inventoryNounsZh: Record<string, string> = { item: "物品", product: "产
 const inventoryBlockersZh: [RegExp, string][] = [
   [/^(\d+) stock movements?$/, "$1 条出入库流水"], [/^(\d+) experiment material uses?$/, "$1 条实验用量"], [/^(\d+) purchase receipts?$/, "$1 次采购入库"],
   [/^(\d+) linked purchases?$/, "$1 条关联采购"], [/^(\d+) container actions?$/, "$1 次实物流转"], [/^(\d+) remaining-amount readings?$/, "$1 条余量登记"],
-  [/^(\d+) aliquots?$/, "$1 个分装"], [/^(\d+) sample events?$/, "$1 条样本事件"], [/^(\d+) lots?$/, "$1 个批次"], [/^(\d+) products?$/, "$1 个产品"],
-  [/^(\d+) assigned inventory items?$/, "$1 个库存物品"], [/^(\d+) stock-movement references?$/, "$1 条流水引用"], [/^(\d+) sample-event references?$/, "$1 条样本事件引用"], [/^(\d+) child locations?$/, "$1 个下级位置"],
+  [/^(\d+) aliquots?$/, "$1 个分装"], [/^(\d+) samples?$/, "$1 个样本"], [/^(\d+) lots?$/, "$1 个批次"], [/^(\d+) products?$/, "$1 个产品"],
+  [/^(\d+) assigned inventory items?$/, "$1 个库存物品"], [/^(\d+) stock-movement references?$/, "$1 条流水引用"], [/^(\d+) child locations?$/, "$1 个下级位置"],
 ];
 const containerActionsZh: Record<string, string> = { issue: "领用", open: "开封", transfer: "转交", return: "归还", empty: "用完", observe: "登记余量", edit: "编号与位置", return_supplier: "退瓶", component: "试剂盒组分" };
 const zhInventoryBlocker = (phrase: string) => {
@@ -3975,8 +3978,8 @@ function translateDynamic(value: string): string {
   if (match) return `${zhUi[match[1]]} · ${match[2]}`;
   match = value.match(/^Ready (\d+)\/(\d+)$/);
   if (match) return `已备 ${match[1]}/${match[2]}`;
-  match = value.match(/^(?:(?:Materials|Mix cards|Plates|Equipment) \d+(?: · |$))+$/);
-  if (match) return value.replace(/Materials|Mix cards|Plates|Equipment/g, (word: string) => ({ Materials: "材料", "Mix cards": "配液卡", Plates: "孔板", Equipment: "设备" } as Record<string, string>)[word]);
+  match = value.match(/^(?:(?:Samples|Materials|Mix cards|Plates|Equipment) \d+(?: · |$))+$/);
+  if (match) return value.replace(/Samples|Materials|Mix cards|Plates|Equipment/g, (word: string) => ({ Samples: "样本", Materials: "材料", "Mix cards": "配液卡", Plates: "孔板", Equipment: "设备" } as Record<string, string>)[word]);
   match = value.match(/^(\d+) to check$/);
   if (match) return `${match[1]} 项待核对`;
   match = value.match(/^(\d+) source (?:range has|ranges have) no adopted value yet; until adopted, it is filled in at the step during the run\.$/);
@@ -4400,6 +4403,8 @@ export function translateUiText(input: string, locale: AppLocale) {
   const trailing = input.match(/\s*$/)?.[0] ?? "";
   const value = input.trim();
   if (!value) return input;
-  const translated = zhUi[value] ?? translateDynamic(value);
+  const dynamic = zhUi[value] ?? translateDynamic(value);
+  // Sample messages come last, so their general patterns never take over text another module already translates.
+  const translated = dynamic === value ? translateSamplesDynamic(value) ?? value : dynamic;
   return translated === value ? input : `${leading}${translated}${trailing}`;
 }

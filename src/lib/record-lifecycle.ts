@@ -131,7 +131,8 @@ export function protocolRequiresAssociationPreservingRecycle(counts: ProtocolDep
 export type ExperimentDependencyCounts = {
   results: number;
   inventoryTransactions: number;
-  sampleEvents: number;
+  samplesProduced: number;
+  samplesUsed: number;
   completedSteps: number;
   deviations: number;
   attachments: number;
@@ -153,7 +154,8 @@ export function experimentDeleteBlockers(
     ...dependencyBlockers(counts, [
       { key: "results", label: "Results", labelZh: "结果" },
       { key: "inventoryTransactions", label: "Inventory transactions", labelZh: "库存操作" },
-      { key: "sampleEvents", label: "Sample lifecycle events", labelZh: "样本生命周期事件" },
+      { key: "samplesProduced", label: "Samples produced", labelZh: "产出的样本" },
+      { key: "samplesUsed", label: "Samples taken from", labelZh: "取用过的样本" },
       { key: "completedSteps", label: "Completed steps", labelZh: "已完成步骤" },
       { key: "deviations", label: "Recorded deviations", labelZh: "偏差记录" },
       { key: "attachments", label: "Attachments", labelZh: "附件" },

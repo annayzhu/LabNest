@@ -35,9 +35,11 @@ describe("two-tier record lifecycle deletion policy", () => {
   });
 
   it("protects Experiments as soon as execution evidence exists", () => {
-    const empty = { results: 0, inventoryTransactions: 0, sampleEvents: 0, completedSteps: 0, deviations: 0, attachments: 0, reportSourceReferences: 0, entryReferences: 0, proposedActions: 0 };
+    const empty = { results: 0, inventoryTransactions: 0, samplesProduced: 0, samplesUsed: 0, completedSteps: 0, deviations: 0, attachments: 0, reportSourceReferences: 0, entryReferences: 0, proposedActions: 0 };
     expect(experimentDeleteBlockers("planned", "draft", empty)).toEqual([]);
     expect(experimentDeleteBlockers("running", "draft", empty)[0]?.key).toBe("status");
+    expect(experimentDeleteBlockers("planned", "draft", { ...empty, samplesProduced: 2 })[0]).toMatchObject({ key: "samplesProduced", count: 2 });
+    expect(experimentDeleteBlockers("planned", "draft", { ...empty, samplesUsed: 1 })[0]?.key).toBe("samplesUsed");
   });
 
   it("protects Result data and downstream report use", () => {

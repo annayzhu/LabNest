@@ -1,14 +1,13 @@
 import { zhUi } from "./i18n";
 
-/** The five lifecycle 大类: fixed keys, renamed or hidden in InventoryGroup, never added or removed. */
-export const inventoryGroupKeys = ["reagent", "consumable", "biological", "sample", "equipment"] as const;
+/** The four lifecycle 大类: fixed keys, renamed or hidden in InventoryGroup, never added or removed. Samples are their own module. */
+export const inventoryGroupKeys = ["reagent", "consumable", "biological", "equipment"] as const;
 export type InventoryGroupKey = (typeof inventoryGroupKeys)[number];
 
 export const inventoryGroupNames: Record<InventoryGroupKey, string> = {
   reagent: "Reagents & chemicals",
   consumable: "Consumables",
   biological: "Biological materials",
-  sample: "Samples",
   equipment: "Instruments & equipment",
 };
 

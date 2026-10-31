@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { experimentExecutionDocument } from "@/lib/experiment-document";
+import { withExperimentSamples } from "@/lib/experiment-samples";
+import { experimentSampleLines } from "@/lib/samples.server";
 import { experimentReportBlocks, resultReportBlocks } from "@/lib/report-content";
 import { stepsWithExecutionEvidence } from "@/lib/run-evidence.server";
 import { createScientificDocument, normalizeResultDocument, type ScientificDocument, reportSections } from "@/lib/scientific-document";
@@ -41,8 +43,9 @@ export async function collectReportSources(projectId: string, researchPlanId?: s
     sourceIds: sources.map((source) => ({ type: source.sourceType, id: source.sourceId })),
   };
   // Each run's record as the Experiment page shows it, so the report can carry its steps, values and deviations.
+  const sampleLines = await experimentSampleLines(prisma, experiments.map((experiment) => experiment.id));
   const records = Object.fromEntries(await Promise.all(experiments.map(async (experiment) => [experiment.id,
-    experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson, experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson)] as const)));
+    withExperimentSamples(experimentExecutionDocument(experiment.contentJson, await stepsWithExecutionEvidence(experiment.steps), experiment.protocolRun?.parametersJson, experiment.protocolSnapshotJson, experiment.protocolRun?.executionPlanJson), sampleLines.get(experiment.id) ?? [])] as const)));
   return { project, plans, experiments, results, entries, sources, snapshot, records };
 }
 

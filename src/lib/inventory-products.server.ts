@@ -116,7 +116,7 @@ export async function deleteProduct(tx: Tx, id: string) {
  * What still refers to a stock item ("2 stock movements"); it can be deleted only when nothing does. The opening balance
  * booked when it was registered or imported does not count.
  */
-export async function stockItemBlockers(db: Pick<Tx, "inventoryTransaction" | "runMaterialUse" | "purchaseReceipt" | "purchaseRequest" | "inventoryContainerEvent" | "inventoryObservation" | "inventoryItem" | "sampleLifecycleEvent">, id: string) {
+export async function stockItemBlockers(db: Pick<Tx, "inventoryTransaction" | "runMaterialUse" | "purchaseReceipt" | "purchaseRequest" | "inventoryContainerEvent" | "inventoryObservation" | "inventoryItem">, id: string) {
   return deleteBlockers({
     // A movement without a note is never an opening balance, and SQL's NOT LIKE alone would skip it.
     movements: await db.inventoryTransaction.count({ where: { inventoryItemId: id, OR: [{ notes: null }, { NOT: { notes: { startsWith: "Opening balance" } } }] } }),
@@ -126,7 +126,6 @@ export async function stockItemBlockers(db: Pick<Tx, "inventoryTransaction" | "r
     containerActions: await db.inventoryContainerEvent.count({ where: { container: { inventoryItemId: id } } }),
     observations: await db.inventoryObservation.count({ where: { container: { inventoryItemId: id } } }),
     aliquots: await db.inventoryItem.count({ where: { parentInventoryItemId: id } }),
-    sampleEvents: await db.sampleLifecycleEvent.count({ where: { inventoryItemId: id } }),
   });
 }
 

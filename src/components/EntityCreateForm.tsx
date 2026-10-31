@@ -7,7 +7,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import type { FormAction, FormActionState } from "@/lib/form-actions";
 
 const initialState: FormActionState = {};
-const entityTypes = ["plasmid", "primer", "oligo", "cell_line", "antibody", "protein", "reagent", "compound", "bacteria", "mixture", "sample", "other"] as const;
+const entityTypes = ["plasmid", "primer", "oligo", "cell_line", "antibody", "protein", "reagent", "compound", "bacteria", "mixture", "other"] as const;
 
 export function EntityCreateForm({ action, projects, schemas, initialType = "other", initialMixtureKind, initialProjectId }: {
   action: FormAction;

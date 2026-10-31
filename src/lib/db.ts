@@ -1,11 +1,15 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
+import { formalDatabaseProblem } from "./formal-database";
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to initialize Prisma.");
 }
+
+const problem = formalDatabaseProblem(process.env);
+if (problem) throw new Error(problem);
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;

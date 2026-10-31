@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GitBranchPlus, Pencil } from "lucide-react";
+import { ArrowLeft, GitBranchPlus, Pencil } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { SamplePlace, SampleQuantity, SampleStatusBadge } from "@/components/SampleBits";
@@ -53,12 +53,15 @@ export default async function SamplePage({ params }: { params: Promise<{ id: str
   return (
     <AppShell>
       <div className="space-y-4">
-        <PageHeader identifier={sample.code} title={sample.name} actions={<>
-          <Link href={`/samples/${id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
-          <Link href={`/samples/new?aliquot=${id}`} className={secondary}><GitBranchPlus className="h-4 w-4" aria-hidden />Aliquot…</Link>
-          <SampleDeleteButton id={id} code={sample.code} blockers={sampleDeleteBlockers(counts.get(id)!)} />
-        </>} />
         <SampleNav current="samples" />
+        <div className="space-y-1">
+          <Link href="/samples" className="focus-ring -ml-1 inline-flex min-h-8 items-center gap-1.5 rounded-[var(--ln-radius-control-sm)] px-1 text-sm text-graphite hover:text-moss"><ArrowLeft className="h-4 w-4" aria-hidden /><span>Samples</span></Link>
+          <PageHeader identifier={sample.code} title={sample.name} actions={<>
+            <Link href={`/samples/${id}/edit`} className={secondary}><Pencil className="h-4 w-4" aria-hidden />Edit</Link>
+            <Link href={`/samples/new?aliquot=${id}`} className={secondary}><GitBranchPlus className="h-4 w-4" aria-hidden />Aliquot…</Link>
+            <SampleDeleteButton id={id} code={sample.code} blockers={sampleDeleteBlockers(counts.get(id)!)} />
+          </>} />
+        </div>
 
         <section className="grid gap-px overflow-hidden rounded-[var(--ln-radius-panel)] border border-hairline bg-hairline sm:grid-cols-2 xl:grid-cols-4">
           <Fact label="Type">{sample.type.label}</Fact>

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { SampleEntryTable } from "@/components/SampleEntryTable";
-import { SampleNav } from "@/components/SampleNav";
 import { prisma } from "@/lib/db";
 import { firstSearchParam, type PageSearchParams } from "@/lib/filters";
 import { suggestedOutputType } from "@/lib/experiment-samples";
@@ -89,7 +88,6 @@ export default async function NewSamplesPage({ searchParams }: { searchParams?: 
     <AppShell>
       <div className="space-y-4">
         <PageHeader title={experiment ? "Register outputs" : aliquot ? "Aliquot" : "New samples"} />
-        {experiment ? null : <SampleNav current="samples" />}
         <SampleEntryTable
           types={types}
           locations={locations.map((location) => ({ id: location.id, label: location.label, name: location.name, geometry: location.geometry }))}
